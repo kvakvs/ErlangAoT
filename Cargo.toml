@@ -1,0 +1,10 @@
+[package]
+name = "erlang_aot"
+version = "0.1.0"
+authors = ["Dmytro Lytovchenko <dmytro.lytovchenko@gmail.com>"]
+
+[dependencies]
+llvm-sys = "60"
+erl_aotc = {path = "./erl_aotc"}
+erl_shared = {path = "./erl_shared"}
+erl_runtime = {path = "./erl_runtime"}

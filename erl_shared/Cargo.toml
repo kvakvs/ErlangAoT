@@ -1,0 +1,6 @@
+[package]
+name = "erl_shared"
+version = "0.1.0"
+authors = ["Dmytro Lytovchenko <dmytro.lytovchenko@gmail.com>"]
+
+[dependencies]

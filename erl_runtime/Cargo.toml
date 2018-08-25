@@ -1,0 +1,10 @@
+[package]
+name = "erl_runtime"
+version = "0.1.0"
+authors = ["Dmytro Lytovchenko <dmytro.lytovchenko@gmail.com>"]
+
+[dependencies]
+erl_shared = {path = "../erl_shared"}
+
+[lib]
+crate-type = ["staticlib"]

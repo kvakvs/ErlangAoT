@@ -1,0 +1,8 @@
+[package]
+name = "erl_aotc"
+version = "0.1.0"
+authors = ["Dmytro Lytovchenko <dmytro.lytovchenko@gmail.com>"]
+
+[dependencies]
+erl_shared = {path = "../erl_shared"}
+llvm-sys = "60"
