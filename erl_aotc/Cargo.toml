@@ -4,5 +4,13 @@ version = "0.1.0"
 authors = ["Dmytro Lytovchenko <dmytro.lytovchenko@gmail.com>"]
 
 [dependencies]
+# A man has got to have latest changes from the runtime
 erl_shared = {path = "../erl_shared"}
+# A man has got to emit LLVM IR
 llvm-sys = "60"
+lalrpop-util = "0.15.2"
+regex = "0.2.1"
+
+[build-dependencies]
+# A man has got to parse stuff
+lalrpop = "0.15.2"
