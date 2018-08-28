@@ -18,4 +18,5 @@ compile-runtime:
 
 .PHONY: test
 test:
-	cd erl_aotc_parser && cargo test
+	cd erl_aotc_parser && \
+	cargo test

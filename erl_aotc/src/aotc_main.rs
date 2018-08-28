@@ -1,4 +1,4 @@
-use erl_shared::fterm::FTerm;
+//use erl_shared::fterm::FTerm;
 use std::fs::File;
 use std::io::Read;
 use erl_aotc_parser::parse;

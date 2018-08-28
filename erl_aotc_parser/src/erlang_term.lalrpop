@@ -24,41 +24,15 @@ pub Term: FTerm = {
   },
   <s:StringLiteral> => FTerm::String(s),
   <a:AtomLiteral> => FTerm::Atom(a),
-//  QuotedStr,
-//  QuotedAtom,
-//  NakedAtom,
-//  Int64,
 };
-
-//Int64: FTerm = {
-//  // An integer has an optional sign followed by digits
-//  <i: r"[+-]?[0-9]+"> => FTerm::Int64(i64::from_str(i).unwrap()),
-//}
-//
-//// A quoted atom
-//QuotedAtom: FTerm = {
-//  <qa: r#"'[^']+'"#> => FTerm::Atom(qa[1..qa.len() - 1].to_string())
-//}
-//
-//// A double-quoted string consisting of any characters other than `"`, allowed
-//// to contain escaped `\"`
-//QuotedStr: FTerm = {
-//  <s: r#""((?:[^"]|\\")*)""#> => FTerm::String(s[1..s.len() - 1].to_string())
-//}
-//
-//// An atom is a word starting with lowercase or underscore, followed by any
-//// letter, digit or underscore
-//NakedAtom: FTerm = {
-//  <na:r"[a-z_][A-Za-z0-9_]*"> => FTerm::Atom(na.to_string())
-//}
 
 // Comma-separated list of Terms
 Terms = CommaMacro<Term>; // (0)
 
 // A generic macro which defines a comma-separated list of T (see the LALRPOP
 // tutorial, section on Macros)
-CommaMacro<T>: Vec<T> = { // (1)
-  <v:(<T> Comma)*> <e:T?> => match e { // (2)
+CommaMacro<T>: Vec<T> = {
+  <v:(<T> Comma)*> <e:T?> => match e {
     None => v,
     Some(e) => {
       let mut v1 = v;
