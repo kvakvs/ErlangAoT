@@ -1,7 +1,7 @@
 //use erl_shared::fterm::FTerm;
 use std::fs::File;
 use std::io::Read;
-use erl_aotc_parser::parse;
+use erl_aotc_parser::parse_nodot;
 
 
 pub fn compile(filename: &str) {
@@ -10,6 +10,6 @@ pub fn compile(filename: &str) {
   let mut contents = String::new();
   file.read_to_string(&mut contents).unwrap();
 
-  let out_term = parse(contents.as_str());
+  let out_term = parse_nodot(contents.as_str());
   println!("Parsed: {:?}", out_term)
 }

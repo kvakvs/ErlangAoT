@@ -24,6 +24,7 @@ pub Term: FTerm = {
   },
   <s:StringLiteral> => FTerm::String(s),
   <a:AtomLiteral> => FTerm::Atom(a),
+  <i:IntLiteral> => FTerm::Int64(i),
 };
 
 // Comma-separated list of Terms
@@ -61,5 +62,6 @@ extern {
 
     StringLiteral => Token::StringLiteral(<String>),
     AtomLiteral => Token::AtomLiteral(<String>),
+    IntLiteral => Token::IntLiteral(<i64>),
   }
 }

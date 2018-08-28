@@ -9,7 +9,7 @@ pub enum LexicalError {
   UnterminatedStringLiteral,
   UnexpectedEscapeCode(char),
   UnexpectedEndOfFile,
-  Unexpected(char, usize),
+  Unexpected(char),
 }
 
 
@@ -33,6 +33,10 @@ pub struct Lexer<'input> {
 
 
 impl<'input> Lexer<'input> {
+  fn err<T>(&self, e: LexicalError) -> Result<T, LexicalError> {
+    Err(e)
+  }
+
   pub fn new(input_str: &'input str) -> Self {
     let mut input = input_str.char_indices();
 
@@ -112,13 +116,13 @@ impl<'input> Lexer<'input> {
     };
     self.un_consume();
     let val = i64::from_str(out_str.as_str()).unwrap();
-    Ok((start, Token::IntLiteral(val), 0))
+    Ok((start, Token::IntLiteral(val), self.current_index))
   }
 
 
   fn un_consume(&mut self) {
     if let Some(prev) = self.past.pop() {
-      println!("unconsume: {}", prev.1);
+      //println!("unconsume: {}", prev.1);
       self.upcoming.push(prev)
     }
   }
@@ -130,7 +134,7 @@ impl<'input> Lexer<'input> {
     // Take if upcoming has some
     match self.upcoming.pop() {
       Some(curr) => {
-        println!("next: {}", curr.1);
+        //println!("next: {} at {}", curr.1, curr.0);
         // If no more upcoming, fetch another one from `input`
         if self.upcoming.is_empty() {
           if let Some(nxt) = self.input.next() {
@@ -142,7 +146,7 @@ impl<'input> Lexer<'input> {
         Some(curr)
       },
       None => {
-        println!("next: None");
+        //println!("next: None");
         None
       },
     }
@@ -160,14 +164,20 @@ impl<'input> Lexer<'input> {
           'n' => Ok('\n'),
           'r' => Ok('\r'),
           't' => Ok('\t'),
-          other => Err(LexicalError::UnexpectedEscapeCode(other)),
+          'e' => Ok('\x1e'), // ESC code
+          's' => Ok(' '),
+          'v' => Ok('\x0b'), // vertical tab
+          'f' => Ok('\x0c'), // form feed
+          'b' => Ok('\x08'), // bell
+          'd' => Ok('\x7f'), // ASCII delete
+          other => self.err(LexicalError::UnexpectedEscapeCode(other)),
         }
       },
-      None => Err(LexicalError::UnexpectedEndOfFile),
+      None => self.err(LexicalError::UnexpectedEndOfFile),
     }
   }
 
-  fn mk_stoken(&self, t: Token) -> SpannedToken {
+  fn mk_tok(&self, t: Token) -> SpannedToken {
     (self.current_index, t, self.current_index)
   }
 
@@ -196,17 +206,17 @@ impl<'input> Iterator for Lexer<'input> {
       match self.consume() {
         Some((i, ch)) => {
           match ch {
-            '-' => return Some(Ok(self.mk_stoken(Token::Minus))),
-            ',' => return Some(Ok(self.mk_stoken(Token::Comma))),
-            '.' => return Some(Ok(self.mk_stoken(Token::Dot))),
+            '-' => return Some(Ok(self.mk_tok(Token::Minus))),
+            ',' => return Some(Ok(self.mk_tok(Token::Comma))),
+            '.' => return Some(Ok(self.mk_tok(Token::Dot))),
 
-            '[' => return Some(Ok(self.mk_stoken(Token::LSquareBracket))),
-            '{' => return Some(Ok(self.mk_stoken(Token::LCurlyBracket))),
-            '(' => return Some(Ok(self.mk_stoken(Token::LParen))),
+            '[' => return Some(Ok(self.mk_tok(Token::LSquareBracket))),
+            '{' => return Some(Ok(self.mk_tok(Token::LCurlyBracket))),
+            '(' => return Some(Ok(self.mk_tok(Token::LParen))),
 
-            ']' => return Some(Ok(self.mk_stoken(Token::RSquareBracket))),
-            '}' => return Some(Ok(self.mk_stoken(Token::RCurlyBracket))),
-            ')' => return Some(Ok(self.mk_stoken(Token::RParen))),
+            ']' => return Some(Ok(self.mk_tok(Token::RSquareBracket))),
+            '}' => return Some(Ok(self.mk_tok(Token::RCurlyBracket))),
+            ')' => return Some(Ok(self.mk_tok(Token::RParen))),
 
             '"' => return Some(self.string_literal()),
             '\'' => return Some(self.quoted_atom_literal()),
@@ -217,7 +227,7 @@ impl<'input> Iterator for Lexer<'input> {
             ch if is_atom_start(ch) => return Some(self.atom_literal(ch)),
 
             ch if is_whitespace(ch) => continue, // skip
-            ch => return Some(Err(LexicalError::Unexpected(ch, i))),
+            ch => return Some(self.err(LexicalError::Unexpected(ch))),
           };
         },
         None => return None,
