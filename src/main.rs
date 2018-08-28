@@ -2,8 +2,8 @@
 
 extern crate llvm_sys as llvm;
 
-use llvm::core as ll;
-use erl_aotc::codegen::Codegen;
+//use llvm::core as ll;
+//use erl_aotc::codegen::Codegen;
 
 extern crate erl_shared;
 extern crate erl_aotc;

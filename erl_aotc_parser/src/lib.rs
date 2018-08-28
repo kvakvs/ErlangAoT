@@ -1,6 +1,6 @@
 extern crate erl_shared;
 
-use erlang_term::DottedTermParser;
+use erlang_term::{DottedTermParser, TermParser};
 use erl_shared::fterm::FTerm;
 
 pub mod erlang_term;
@@ -15,6 +15,12 @@ pub fn parse(input: &str) -> FTerm {
 }
 
 
+pub fn parse_nodot(input: &str) -> FTerm {
+  let lexr = lexer::Lexer::new(input);
+  TermParser::new().parse(lexr).unwrap()
+}
+
+
 #[cfg(test)]
 mod tests {
   use erlang_term::TermParser;
@@ -23,41 +29,41 @@ mod tests {
 
   #[test]
     fn erlang_term_parser_atoms() {
-        let expr = ::parse("atom");
+        let expr = ::parse_nodot("atom");
         assert_eq!(expr, FTerm::Atom("atom".to_string()));
 
-        let expr = ::parse("'aaa@example.com'");
+        let expr = ::parse_nodot("'aaa@example.com'");
         assert_eq!(expr, FTerm::Atom("aaa@example.com".to_string()));
     }
 
     #[test]
     fn erlang_term_parser_str() {
-        let expr = ::parse(r#""""#);
+        let expr = ::parse_nodot(r#""""#);
         assert_eq!(expr, FTerm::String(String::new()));
 
-        let expr = ::parse(r#""str""#);
+        let expr = ::parse_nodot(r#""str""#);
         assert_eq!(expr, FTerm::String("str".to_string()));
     }
 
     #[test]
     fn erlang_term_parser_escaped_str() {
-        let expr = ::parse(r#""\"""#);
+        let expr = ::parse_nodot(r#""\"""#);
         assert_eq!(expr, FTerm::String(r#"""#.to_string()));
     }
 
     #[test]
     fn erlang_term_parser_list() {
-        let expr = ::parse("[atom]");
+        let expr = ::parse_nodot("[atom]");
         assert_eq!(expr, FTerm::List(vec![FTerm::Atom("atom".to_string())]));
 
-        let expr = ::parse("[atom, atom]");
+        let expr = ::parse_nodot("[atom, atom]");
         assert_eq!(expr, FTerm::List(vec![FTerm::Atom("atom".to_string()),
                                           FTerm::Atom("atom".to_string())]));
 
-        let expr = ::parse("{atom}");
+        let expr = ::parse_nodot("{atom}");
         assert_eq!(expr, FTerm::Tuple(vec![FTerm::Atom("atom".to_string())]));
 
-        let expr = ::parse("{atom, atom}");
+        let expr = ::parse_nodot("{atom, atom}");
         assert_eq!(expr, FTerm::Tuple(vec![FTerm::Atom("atom".to_string()),
                                            FTerm::Atom("atom".to_string())]));
     }

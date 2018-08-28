@@ -1,7 +1,7 @@
 #[derive(Clone, PartialEq, Debug)]
 pub enum Token {
   StringLiteral(String),
-  Atom(String),
+  AtomLiteral(String),
   IntLiteral(i64),
   FloatLiteral(f64),
   Comment,

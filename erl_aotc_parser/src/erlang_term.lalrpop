@@ -8,20 +8,22 @@ use lexer::{LexicalError};
 grammar;
 
 pub DottedTerm: FTerm = {
-  <t:Term> "." => t
+  <t:Term> Dot => t
 };
 
 pub Term: FTerm = {
   // A list is 0 or more terms separated by comma (tolerates trailing comma)
-  "[" <lst:Terms> "]" => match lst.len() {
+  LSquareBracket <lst:Terms> RSquareBracket => match lst.len() {
     0 => FTerm::EmptyList,
     _ => FTerm::List(lst),
   },
   // A tuple is 0 or more terms separated by comma (tolerates trailing comma)
-  "{" <lst:Terms> "}" => match lst.len() {
+  LCurlyBracket <lst:Terms> RCurlyBracket => match lst.len() {
     0 => FTerm::EmptyTuple,
     _ => FTerm::Tuple(lst),
   },
+  <s:StringLiteral> => FTerm::String(s),
+  <a:AtomLiteral> => FTerm::Atom(a),
 //  QuotedStr,
 //  QuotedAtom,
 //  NakedAtom,
@@ -51,12 +53,12 @@ pub Term: FTerm = {
 //}
 
 // Comma-separated list of Terms
-Terms = Comma<Term>; // (0)
+Terms = CommaMacro<Term>; // (0)
 
 // A generic macro which defines a comma-separated list of T (see the LALRPOP
 // tutorial, section on Macros)
-Comma<T>: Vec<T> = { // (1)
-  <v:(<T> ",")*> <e:T?> => match e { // (2)
+CommaMacro<T>: Vec<T> = { // (1)
+  <v:(<T> Comma)*> <e:T?> => match e { // (2)
     None => v,
     Some(e) => {
       let mut v1 = v;
@@ -72,15 +74,18 @@ extern {
   type Error = LexicalError;
 
   enum Token {
-    "." => Token::Dot,
-    "," => Token::Comma,
-    "[" => Token::LSquareBracket,
-    "{" => Token::LCurlyBracket,
-    "(" => Token::LParen,
-    "]" => Token::RSquareBracket,
-    "}" => Token::RCurlyBracket,
-    ")" => Token::RParen,
+    Dot => Token::Dot,
+    Comma => Token::Comma,
+ 
+    LSquareBracket => Token::LSquareBracket,
+    LCurlyBracket => Token::LCurlyBracket,
+    LParen => Token::LParen,
 
-    "StringLiteral" => Token::StringLiteral(<String>),
+    RSquareBracket => Token::RSquareBracket,
+    RCurlyBracket => Token::RCurlyBracket,
+    RParen => Token::RParen,
+
+    StringLiteral => Token::StringLiteral(<String>),
+    AtomLiteral => Token::AtomLiteral(<String>),
   }
 }
