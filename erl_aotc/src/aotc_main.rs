@@ -2,6 +2,7 @@
 use std::fs::File;
 use std::io::Read;
 use erl_aotc_parser::parse_nodot;
+use k_module::process_module;
 
 
 pub fn compile(filename: &str) {
@@ -10,6 +11,7 @@ pub fn compile(filename: &str) {
   let mut contents = String::new();
   file.read_to_string(&mut contents).unwrap();
 
-  let out_term = parse_nodot(contents.as_str());
-  println!("Parsed: {:?}", out_term)
+  let mod_root = parse_nodot(contents.as_str());
+  //println!("Parsed: {:?}", out_term)
+  process_module(mod_root);
 }

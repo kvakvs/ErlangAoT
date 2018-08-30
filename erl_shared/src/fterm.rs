@@ -13,3 +13,19 @@ pub enum FTerm {
   EmptyTuple,
   Float(f64),
 }
+
+impl FTerm {
+  pub fn atom_text(&self) -> String {
+    if let FTerm::Atom(s) = self {
+      return s.clone();
+    }
+    panic!("Atom is expected, got {:?}", self)
+  }
+
+  pub fn int_val(&self) -> i64 {
+    if let FTerm::Int64(i) = self {
+      return *i;
+    }
+    panic!("Int64 is expected, got {:?}", self)
+  }
+}
