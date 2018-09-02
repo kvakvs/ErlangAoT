@@ -10,8 +10,8 @@ pub fn process_module(mroot: FTerm) {
       let m_exports = &mdef[3];
       let m_attrs = &mdef[4];
       let m_fdefs = &mdef[5];
-      println!("module {:?}", m_name);
-      println!("exports {:?}", m_exports);
+      println!("module {}", m_name);
+      println!("exports {}", m_exports);
 
       let erlm = Module::new(m_name.atom_text(),
                              parse_mfa_list(m_imports),
@@ -39,10 +39,10 @@ fn parse_mfa_list(lst: &FTerm) -> Vec<MFA> {
                                      tvec[1].atom_text(),
                                      tvec[2].int_val() as usize)),
             _ =>
-              panic!("FTerm::Tuple of 2 or 3 is expected, got {:?}", tvec)
+              panic!("FTerm::Tuple of 2 or 3 is expected")
           }
         } else {
-          panic!("FTerm::Tuple of 2 or 3 is expected, got {:?}", lst)
+          panic!("FTerm::Tuple of 2 or 3 is expected, got {}", lst)
         }
       }
       return outp;
@@ -50,6 +50,6 @@ fn parse_mfa_list(lst: &FTerm) -> Vec<MFA> {
     FTerm::EmptyList => {
       return outp;
     },
-    _ => { panic!("FTerm::List is expected, got {:?}", lst) },
+    _ => { panic!("FTerm::List is expected, got {}", lst) },
   };
 }

@@ -1,4 +1,5 @@
-#[derive(Debug)]
+use std::fmt;
+
 pub struct MFA {
   m: String,
   f: String,
@@ -14,6 +15,26 @@ impl MFA {
     MFA { m, f, a }
   }
 }
+
+
+impl fmt::Debug for MFA {
+  #[inline]
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self)
+  }
+}
+
+
+impl fmt::Display for MFA {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    if self.m.is_empty() {
+      write!(f, "{}/{}", self.f, self.a)
+    } else {
+      write!(f, "{}:{}/{}", self.m, self.f, self.a)
+    }
+  }
+}
+
 
 #[derive(Debug)]
 pub struct Module {
