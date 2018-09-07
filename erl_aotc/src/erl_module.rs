@@ -1,4 +1,5 @@
 use std::fmt;
+use erl_shared::fterm::FTerm;
 
 pub struct MFA {
   m: String,
@@ -41,16 +42,19 @@ pub struct Module {
   name: String,
   imports: Vec<MFA>,
   exports: Vec<MFA>,
+  attrs: FTerm,
 }
 
 impl Module {
   pub fn new(name: String,
              imports: Vec<MFA>,
-             exports: Vec<MFA>) -> Module {
+             exports: Vec<MFA>,
+             attrs: FTerm) -> Module {
     Module {
       name,
       imports,
       exports,
+      attrs,
     }
   }
 }

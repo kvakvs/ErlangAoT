@@ -30,13 +30,79 @@ impl FTerm {
     }
     panic!("Int64 is expected, got {}", self)
   }
+
+  pub fn get_vec(&self) -> Vec<FTerm> {
+    match self {
+      FTerm::List(v) => v.clone(),
+      FTerm::EmptyList => Vec::<FTerm>::new(),
+      FTerm::Tuple(v) => v.clone(),
+      FTerm::EmptyTuple => Vec::<FTerm>::new(),
+      _ => panic!("Term must be a tuple or a list, got {}", self),
+    }
+  }
+}
+
+
+impl IntoIterator for FTerm {
+  type Item = FTerm;
+  type IntoIter = ::std::vec::IntoIter<FTerm>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    match self {
+      FTerm::List(v) => v.into_iter(),
+      FTerm::Tuple(v) => v.into_iter(),
+      _ => panic!("into_iter: Not iterable {}", self),
+    }
+  }
+}
+
+
+impl fmt::Debug for FTerm {
+  #[inline]
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", self)
+  }
+}
+
+
+/// Check whether a character belongs to an atom which can be printed without
+/// enclosing it in 'quotes'. First character also cannot begin with a digit
+/// but it is not checked here.
+#[inline]
+fn is_unquoted_atom_character(c: char) -> bool {
+  c.is_ascii_alphanumeric() || c == '_'
+}
+
+
+#[inline]
+fn is_first_unquoted_atom_character(c: char) -> bool {
+  c.is_ascii_lowercase() || c.is_digit(10) || c == '_'
+}
+
+
+/// Check whether a string contains only characters that do not require enclosing
+/// atom with 'single quotes'
+#[inline]
+fn is_unquoted_atom(s: &String) -> bool {
+  if s.is_empty() { return false };
+
+  let (_, first) = s.char_indices().next().unwrap();
+  if !is_first_unquoted_atom_character(first) { return false };
+
+  for (_, c) in s.char_indices() {
+    if !is_unquoted_atom_character(c) { return false }
+  }
+  true
 }
 
 
 impl fmt::Display for FTerm {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
-      FTerm::Atom(s) => write!(f, "{}", s),
+      FTerm::Atom(s) => {
+        if is_unquoted_atom(s) { write!(f, "{}", s) }
+        else { write!(f, "'{}'", s) }
+      },
       FTerm::String(s) => write!(f, "\"{}\"", s),
       FTerm::Int64(i) => write!(f, "{}", i),
       FTerm::Float(flt) => write!(f, "{}", flt),
