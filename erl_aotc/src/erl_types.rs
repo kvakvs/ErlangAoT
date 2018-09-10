@@ -1,10 +1,11 @@
 use std::fmt;
-use erl_shared::fterm::FTerm;
+//use erl_shared::fterm::FTerm;
 
+#[derive(PartialOrd, PartialEq, Eq, Ord, Clone)]
 pub struct MFA {
-  m: String,
-  f: String,
-  a: usize,
+  pub m: String,
+  pub f: String,
+  pub a: usize,
 }
 
 impl MFA {
@@ -32,29 +33,6 @@ impl fmt::Display for MFA {
       write!(f, "{}/{}", self.f, self.a)
     } else {
       write!(f, "{}:{}/{}", self.m, self.f, self.a)
-    }
-  }
-}
-
-
-#[derive(Debug)]
-pub struct Module {
-  name: String,
-  imports: Vec<MFA>,
-  exports: Vec<MFA>,
-  attrs: FTerm,
-}
-
-impl Module {
-  pub fn new(name: String,
-             imports: Vec<MFA>,
-             exports: Vec<MFA>,
-             attrs: FTerm) -> Module {
-    Module {
-      name,
-      imports,
-      exports,
-      attrs,
     }
   }
 }

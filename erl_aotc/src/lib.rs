@@ -1,9 +1,12 @@
 extern crate erl_aotc_parser;
 extern crate erl_shared;
 extern crate llvm_sys as llvm;
+//#[macro_use]
+//extern crate matches;
 
-mod erl_module;
 mod codegen;
-pub mod ll_types;
+mod erl_types;
+mod kernel_eterm;
+mod kernel;
 pub mod aotc_main;
-mod k_module;
+pub mod ll_types;

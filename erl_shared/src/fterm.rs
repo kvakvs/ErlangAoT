@@ -24,12 +24,14 @@ impl FTerm {
     panic!("Atom is expected, got {}", self)
   }
 
+
   pub fn int_val(&self) -> i64 {
     if let FTerm::Int64(i) = self {
       return *i;
     }
     panic!("Int64 is expected, got {}", self)
   }
+
 
   pub fn get_vec(&self) -> Vec<FTerm> {
     match self {
@@ -38,6 +40,14 @@ impl FTerm {
       FTerm::Tuple(v) => v.clone(),
       FTerm::EmptyTuple => Vec::<FTerm>::new(),
       _ => panic!("Term must be a tuple or a list, got {}", self),
+    }
+  }
+
+
+  pub fn is_atom(&self, s: &str) -> bool {
+    match self {
+      FTerm::Atom(s2) => s == s2,
+      _ => false,
     }
   }
 }
@@ -103,7 +113,14 @@ impl fmt::Display for FTerm {
         if is_unquoted_atom(s) { write!(f, "{}", s) }
         else { write!(f, "'{}'", s) }
       },
-      FTerm::String(s) => write!(f, "\"{}\"", s),
+      FTerm::String(s) => {
+        write!(f, "\"");
+        for (_, c) in s.char_indices() {
+          if c as usize <= 32usize { write!(f, "\\x{:x}", c as usize); }
+          else { write!(f, "{}", c); }
+        }
+        write!(f, "\"")
+      },
       FTerm::Int64(i) => write!(f, "{}", i),
       FTerm::Float(flt) => write!(f, "{}", flt),
       FTerm::EmptyList => write!(f, "[]"),
