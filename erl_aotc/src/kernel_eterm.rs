@@ -27,7 +27,7 @@ pub fn create_kmod(mdef: Vec<FTerm>) -> (Module, FTerm) {
   let m_attrs = &mdef[4];
   let m_fdefs = &mdef[5];
 
-  let m = Module::new(m_name.atom_text(),
+  let m = Module::new(m_name.get_text(),
                       parse_mfa_list(m_imports),
                       parse_mfa_list(m_exports),
                       m_attrs.clone());
@@ -46,11 +46,11 @@ fn parse_mfa_list(lst: &FTerm) -> Vec<MFA> {
       for listeach in vec {
         if let FTerm::Tuple(tvec) = listeach {
           match tvec.len() {
-            2 => outp.push(MFA::new2(tvec[0].atom_text(),
-                                     tvec[1].int_val() as usize)),
-            3 => outp.push(MFA::new3(tvec[0].atom_text(),
-                                     tvec[1].atom_text(),
-                                     tvec[2].int_val() as usize)),
+            2 => outp.push(MFA::new2(tvec[0].get_text(),
+                                     tvec[1].get_i64() as usize)),
+            3 => outp.push(MFA::new3(tvec[0].get_text(),
+                                     tvec[1].get_text(),
+                                     tvec[2].get_i64() as usize)),
             _ =>
               panic!("FTerm::Tuple of 2 or 3 is expected")
           }
@@ -80,6 +80,7 @@ fn process_kmod_fdefs(mut kmod: Module, fdefs: FTerm) -> Module {
 
 
 fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
+  assert!(fdef_vec[0].is_atom("k_fdef"), "Expected 'f_def', got {:?}", fdef_vec);
   let fname = &fdef_vec[2];
   let farity = &fdef_vec[3];
   let fattrs = &fdef_vec[4];
@@ -92,8 +93,8 @@ fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
 
   println!("}}");
 
-  FunDef::new(fname.atom_text(),
-              farity.int_val() as usize,
+  FunDef::new(fname.get_text(),
+              farity.get_i64() as usize,
               k_code)
 }
 
@@ -105,16 +106,15 @@ fn ii(indent: u32) -> String {
 }
 
 
-fn process_code_block(indent: u32, fdef: Vec<FTerm>) -> KernlOp {
-  assert!(fdef[0].is_atom("k_fdef"), "Expected 'f_def', got {:?}", fdef);
-  match fdef[0].atom_text().as_ref() {
-    "k_match" => process_kmatch(indent + 1, &fdef),
-    "k_seq" => process_kseq(indent + 1, &fdef),
-    "k_alt" => process_kalt(indent + 1, &fdef),
-    "k_enter" => process_kenter(indent + 1, &fdef),
-    "k_return" => process_kreturn(indent + 1, &fdef),
-    "k_select" => process_kselect(indent + 1, &fdef),
-    "k_guard" => process_kguard(indent + 1, &fdef),
+fn process_code_block(indent: u32, code_term: Vec<FTerm>) -> KernlOp {
+  match code_term[0].get_text().as_ref() {
+    "k_match" => process_kmatch(indent + 1, &code_term),
+    "k_seq" => process_kseq(indent + 1, &code_term),
+    "k_alt" => process_kalt(indent + 1, &code_term),
+    "k_enter" => process_kenter(indent + 1, &code_term),
+    "k_return" => process_kreturn(indent + 1, &code_term),
+    "k_select" => process_kselect(indent + 1, &code_term),
+    "k_guard" => process_kguard(indent + 1, &code_term),
     ref other => panic!("{} -skip {}", ii(indent), other),
   }
 }
@@ -152,7 +152,7 @@ fn parse_val_list(vars: Vec<FTerm>) -> Vec<Value> {
 
 
 fn parse_val(vvec: Vec<FTerm>) -> Value {
-  match vvec[0].atom_text().as_ref() {
+  match vvec[0].get_text().as_ref() {
     "k_var" => {
       // {k_var, anno, name}
       assert!(vvec[0].is_atom("k_var"));
@@ -161,6 +161,13 @@ fn parse_val(vvec: Vec<FTerm>) -> Value {
         FTerm::Int64(i) => Value::Variable(i.to_string()),
         _ => panic!("Don't know how to parse val {}", vvec[2]),
       }
+    },
+    "k_bif" => Value::Bif(Box::new(parse_kbif(vvec))),
+    "k_atom" => { // {k_atom, anno, val}
+      Value::Atom(vvec[2].get_text())
+    },
+    "k_int" => { // {k_int, anno, val}
+      Value::Int64(vvec[2].get_i64())
     },
     other => panic!("parse_val doesn't know how to handle {}", vvec[0])
   }
@@ -211,13 +218,37 @@ fn process_kenter(indent: u32, kenter: &Vec<FTerm>) -> KernlOp {
 
 
 fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
-  let tag = kvec[0].atom_text();
+  let tag = kvec[0].get_text();
   match tag.as_ref() {
-    "k_local" => {
-      return FunRef::Local(kvec[2].atom_text(),
-                           kvec[3].int_val() as usize)
+    "k_local" => { // {k_local, anno, name, arity}
+      return FunRef::MFA(MFA::new2(kvec[2].get_text(),
+                                   kvec[3].get_i64() as usize))
     },
+    "k_internal" => { // {k_internal, anno, name, arity}
+      return FunRef::Internal(parse_kinternal(kvec))
+    },
+    "k_bif" => { // {k_bif, anno, op, args, ret=[]}
+      return FunRef::Bif(parse_kbif(kvec))
+    }
     other => panic!("Don't know how to parse fun ref {}", other)
+  }
+}
+
+
+fn parse_kinternal(kvec: Vec<FTerm>) -> MFA {
+  // {k_internal, anno, name, arity}
+  MFA::new2(kvec[2].get_text(), kvec[3].get_i64() as usize)
+}
+
+
+fn parse_kbif(kvec: Vec<FTerm>) -> KBif {
+  // {k_bif, anno, op, args, ret=[]}
+  let op_mfa= parse_funref(kvec[2].get_vec());
+  KBif {
+    anno: kvec[1].clone(),
+    op: op_mfa.get_mfa(),
+    args: parse_val_list(kvec[3].get_vec()),
+    ret: parse_val(kvec[4].get_vec()),
   }
 }
 

@@ -17,7 +17,7 @@ pub enum FTerm {
 }
 
 impl FTerm {
-  pub fn atom_text(&self) -> String {
+  pub fn get_text(&self) -> String {
     if let FTerm::Atom(s) = self {
       return s.clone();
     }
@@ -25,7 +25,7 @@ impl FTerm {
   }
 
 
-  pub fn int_val(&self) -> i64 {
+  pub fn get_i64(&self) -> i64 {
     if let FTerm::Int64(i) = self {
       return *i;
     }
