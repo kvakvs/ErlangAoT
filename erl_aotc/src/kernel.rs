@@ -4,40 +4,42 @@ use std::collections::BTreeMap;
 
 
 #[derive(Debug, Clone)]
- pub enum Value {
+pub enum Value {
   Atom(String),
   Int64(i64),
   Variable(String),
   Nil,
-  Literal(FTerm),
-  Bif(Box<KBif>),
-}
-
-
-#[derive(Debug, Clone)]
-pub struct KBif {
-  pub anno: FTerm,
-  pub op: MFA,
-  pub args: Vec<Value>,
-  pub ret: Value,
+  Literal { anno: FTerm, val: FTerm },
+  Bif(Box<KCall>),
+  Call(Box<KCall>),
 }
 
 
 #[derive(Debug, Clone)]
 pub enum FunRef {
-  MFA(MFA),
-  Bif(KBif),
+  MFArity { m: Value, f: Value, arity: Value },
+  FArity { f: Value, arity: Value },
+  Bif(Box<KCall>),
   Internal(MFA),
 }
 
+
+#[derive(Debug, Clone)]
+pub struct KCall {
+  pub anno: FTerm,
+  pub op: FunRef,
+  pub args: Vec<Value>,
+  pub ret: Vec<Value>
+}
+
 impl FunRef {
-  pub fn get_mfa(&self) -> MFA {
-    match self {
-      FunRef::MFA(m) => m.clone(),
-      FunRef::Internal(m) => m.clone(),
-      _ => panic!("{:?} is not an FunRef::MFA", self),
-    }
-  }
+//  pub fn get_mfa(&self) -> MFA {
+//    match self {
+//      FunRef::MFA(m) => m.clone(),
+//      FunRef::Internal(m) => m.clone(),
+//      _ => panic!("{:?} is not an FunRef::MFA", self),
+//    }
+//  }
 }
 
 

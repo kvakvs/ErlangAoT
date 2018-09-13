@@ -145,13 +145,17 @@ fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
 fn parse_val_list(vars: Vec<FTerm>) -> Vec<Value> {
   let mut result = Vec::<Value>::new();
   for v in vars {
-    result.push(parse_val(v.get_vec()))
+    result.push(parse_val(&v))
   }
   result
 }
 
 
-fn parse_val(vvec: Vec<FTerm>) -> Value {
+fn parse_val(val: &FTerm) -> Value {
+  // TODO: Check if val is a simple value not a k_* tuple
+
+  // So val is a tuple, parse it as a k_* tuple or something
+  let vvec = val.get_vec();
   match vvec[0].get_text().as_ref() {
     "k_var" => {
       // {k_var, anno, name}
@@ -162,14 +166,22 @@ fn parse_val(vvec: Vec<FTerm>) -> Value {
         _ => panic!("Don't know how to parse val {}", vvec[2]),
       }
     },
-    "k_bif" => Value::Bif(Box::new(parse_kbif(vvec))),
+    "k_bif" => Value::Bif(Box::new(parse_kcall(vvec))),
     "k_atom" => { // {k_atom, anno, val}
       Value::Atom(vvec[2].get_text())
     },
     "k_int" => { // {k_int, anno, val}
       Value::Int64(vvec[2].get_i64())
     },
-    other => panic!("parse_val doesn't know how to handle {}", vvec[0])
+    "k_call" => Value::Call(Box::new(parse_kcall(vvec))),
+    "k_literal" => // {k_literal, anno, val}
+      Value::Literal {
+        anno: vvec[1].clone(),
+        val: vvec[2].clone()
+      },
+
+    other => panic!("parse_val doesn't know how to handle {} in {:?}",
+                    vvec[0], vvec)
   }
 }
 
@@ -194,7 +206,7 @@ fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSeq {
     anno: kseq[1].clone(),
-    arg: parse_val(arg.get_vec()),
+    arg: parse_val(arg),
     body: k_code,
   };
   KernlOp::Seq(ks)
@@ -221,14 +233,25 @@ fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
   let tag = kvec[0].get_text();
   match tag.as_ref() {
     "k_local" => { // {k_local, anno, name, arity}
-      return FunRef::MFA(MFA::new2(kvec[2].get_text(),
-                                   kvec[3].get_i64() as usize))
+      return FunRef::FArity {
+        f: parse_val(&kvec[2]),
+        arity: parse_val(&kvec[3])
+      }
+    },
+    "k_remote" => { // {k_remote, anno, mod, name, arity}
+      return FunRef::MFArity {
+        m: parse_val(&kvec[2]),
+        f: parse_val(&kvec[3]),
+        arity: parse_val(&kvec[4])
+      }
     },
     "k_internal" => { // {k_internal, anno, name, arity}
       return FunRef::Internal(parse_kinternal(kvec))
     },
     "k_bif" => { // {k_bif, anno, op, args, ret=[]}
-      return FunRef::Bif(parse_kbif(kvec))
+      return FunRef::Bif(
+        Box::new(parse_kcall(kvec))
+      )
     }
     other => panic!("Don't know how to parse fun ref {}", other)
   }
@@ -241,14 +264,15 @@ fn parse_kinternal(kvec: Vec<FTerm>) -> MFA {
 }
 
 
-fn parse_kbif(kvec: Vec<FTerm>) -> KBif {
+fn parse_kcall(kvec: Vec<FTerm>) -> KCall {
   // {k_bif, anno, op, args, ret=[]}
+  // {k_call, anno, op, args, ret}
   let op_mfa= parse_funref(kvec[2].get_vec());
-  KBif {
+  KCall {
     anno: kvec[1].clone(),
-    op: op_mfa.get_mfa(),
+    op: op_mfa,
     args: parse_val_list(kvec[3].get_vec()),
-    ret: parse_val(kvec[4].get_vec()),
+    ret: parse_val_list(kvec[4].get_vec()),
   }
 }
 
@@ -304,7 +328,7 @@ fn process_kselect(indent: u32, kselect: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSelect {
     anno: kselect[1].clone(),
-    var: parse_val(var.get_vec()),
+    var: parse_val(&var),
 
   };
   KernlOp::Select(ks)
