@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub enum Value {
+  MultipleValues(Vec<Value>),
   Atom(String),
   Int64(i64),
   Variable(String),

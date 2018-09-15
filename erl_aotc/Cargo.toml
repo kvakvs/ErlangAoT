@@ -8,4 +8,6 @@ erl_aotc_parser = {path = "../erl_aotc_parser"}
 erl_shared = {path = "../erl_shared"}
 # A man has got to emit LLVM IR
 llvm-sys = "60"
+
 # matches = "*"
+# futures-preview = "*"

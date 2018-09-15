@@ -17,7 +17,7 @@ pub enum FTerm {
 }
 
 impl FTerm {
-  pub fn get_text(&self) -> String {
+  pub fn get_atom_text(&self) -> String {
     if let FTerm::Atom(s) = self {
       return s.clone();
     }
@@ -44,7 +44,59 @@ impl FTerm {
   }
 
 
-  pub fn is_atom(&self, s: &str) -> bool {
+  pub fn is_int(&self) -> bool {
+    match self {
+      FTerm::Int64(_) => true,
+      _ => false,
+    }
+  }
+
+
+  pub fn is_atom(&self) -> bool {
+    match self {
+      FTerm::Atom(_) => true,
+      _ => false,
+    }
+  }
+
+
+  pub fn is_tuple(&self) -> bool {
+    match self {
+      FTerm::Tuple(v) => true,
+      FTerm::EmptyTuple => true,
+      _ => false,
+    }
+  }
+
+
+  pub fn get_tuple_vec(&self) -> Vec<FTerm> {
+    match self {
+      FTerm::Tuple(v) => v.clone(),
+      FTerm::EmptyTuple => Vec::<FTerm>::new(),
+      _ => panic!("Term must be a tuple, got {}", self),
+    }
+  }
+
+
+  pub fn is_list(&self) -> bool {
+    match self {
+      FTerm::List(v) => true,
+      FTerm::EmptyList => true,
+      _ => false,
+    }
+  }
+
+
+  pub fn get_list_vec(&self) -> Vec<FTerm> {
+    match self {
+      FTerm::List(v) => v.clone(),
+      FTerm::EmptyList => Vec::<FTerm>::new(),
+      _ => panic!("Term must be a list, got {}", self),
+    }
+  }
+
+
+  pub fn is_atom_of(&self, s: &str) -> bool {
     match self {
       FTerm::Atom(s2) => s == s2,
       _ => false,

@@ -1,3 +1,4 @@
+//extern crate futures;
 extern crate erl_aotc_parser;
 extern crate erl_shared;
 extern crate llvm_sys as llvm;

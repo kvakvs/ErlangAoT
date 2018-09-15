@@ -1,7 +1,7 @@
-use erl_shared::fterm::FTerm;
 /// Parses Kernel Erlang input as Erlang Term in text.
 /// Outputs a similar kernel::Kerl structure
 
+use erl_shared::fterm::FTerm;
 use erl_types::MFA;
 use kernel::*;
 
@@ -27,7 +27,7 @@ pub fn create_kmod(mdef: Vec<FTerm>) -> (Module, FTerm) {
   let m_attrs = &mdef[4];
   let m_fdefs = &mdef[5];
 
-  let m = Module::new(m_name.get_text(),
+  let m = Module::new(m_name.get_atom_text(),
                       parse_mfa_list(m_imports),
                       parse_mfa_list(m_exports),
                       m_attrs.clone());
@@ -46,10 +46,10 @@ fn parse_mfa_list(lst: &FTerm) -> Vec<MFA> {
       for listeach in vec {
         if let FTerm::Tuple(tvec) = listeach {
           match tvec.len() {
-            2 => outp.push(MFA::new2(tvec[0].get_text(),
+            2 => outp.push(MFA::new2(tvec[0].get_atom_text(),
                                      tvec[1].get_i64() as usize)),
-            3 => outp.push(MFA::new3(tvec[0].get_text(),
-                                     tvec[1].get_text(),
+            3 => outp.push(MFA::new3(tvec[0].get_atom_text(),
+                                     tvec[1].get_atom_text(),
                                      tvec[2].get_i64() as usize)),
             _ =>
               panic!("FTerm::Tuple of 2 or 3 is expected")
@@ -80,7 +80,7 @@ fn process_kmod_fdefs(mut kmod: Module, fdefs: FTerm) -> Module {
 
 
 fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
-  assert!(fdef_vec[0].is_atom("k_fdef"), "Expected 'f_def', got {:?}", fdef_vec);
+  assert!(fdef_vec[0].is_atom_of("k_fdef"), "Expected 'f_def', got {:?}", fdef_vec);
   let fname = &fdef_vec[2];
   let farity = &fdef_vec[3];
   let fattrs = &fdef_vec[4];
@@ -93,7 +93,7 @@ fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
 
   println!("}}");
 
-  FunDef::new(fname.get_text(),
+  FunDef::new(fname.get_atom_text(),
               farity.get_i64() as usize,
               k_code)
 }
@@ -107,7 +107,7 @@ fn ii(indent: u32) -> String {
 
 
 fn process_code_block(indent: u32, code_term: Vec<FTerm>) -> KernlOp {
-  match code_term[0].get_text().as_ref() {
+  match code_term[0].get_atom_text().as_ref() {
     "k_match" => process_kmatch(indent + 1, &code_term),
     "k_seq" => process_kseq(indent + 1, &code_term),
     "k_alt" => process_kalt(indent + 1, &code_term),
@@ -122,7 +122,7 @@ fn process_code_block(indent: u32, code_term: Vec<FTerm>) -> KernlOp {
 
 fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
   // {k_match, anno, vars, body, ret}
-  assert!(kmatch[0].is_atom("k_match"));
+  assert!(kmatch[0].is_atom_of("k_match"));
   let vars = &kmatch[2];
   let body = &kmatch[3];
   let ret = &kmatch[4];
@@ -134,7 +134,7 @@ fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
 
   let km = KMatch {
     anno: kmatch[1].clone(),
-    vars: parse_val_list(vars.get_vec()),
+    vars: parse_val_list(vars),
     body,
     ret: parse_ret(ret),
   };
@@ -142,24 +142,39 @@ fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
 }
 
 
-fn parse_val_list(vars: Vec<FTerm>) -> Vec<Value> {
+fn parse_val_list(vars: &FTerm) -> Vec<Value> {
+  if !vars.is_list() {
+    panic!("List of something is expected, found {}", vars)
+  }
   let mut result = Vec::<Value>::new();
-  for v in vars {
-    result.push(parse_val(&v))
+  for v in vars.get_list_vec() {
+    result.push(_parse_one_val(&v))
   }
   result
 }
 
 
-fn parse_val(val: &FTerm) -> Value {
+fn parse_value(val: &FTerm) -> Value {
+  if val.is_int() {
+    return Value::Int64(val.get_i64())
+  } else if val.is_atom() {
+    return Value::Atom(val.get_atom_text())
+  } else if val.is_list() {
+    return Value::MultipleValues(parse_val_list(val))
+  }
+  return _parse_one_val(val)
+}
+
+
+fn _parse_one_val(val: &FTerm) -> Value {
   // TODO: Check if val is a simple value not a k_* tuple
 
   // So val is a tuple, parse it as a k_* tuple or something
-  let vvec = val.get_vec();
-  match vvec[0].get_text().as_ref() {
+  let vvec = val.get_tuple_vec();
+  match vvec[0].get_atom_text().as_ref() {
     "k_var" => {
       // {k_var, anno, name}
-      assert!(vvec[0].is_atom("k_var"));
+      assert!(vvec[0].is_atom_of("k_var"));
       match &vvec[2] {
         FTerm::Atom(s) => Value::Variable(s.to_string()),
         FTerm::Int64(i) => Value::Variable(i.to_string()),
@@ -168,7 +183,7 @@ fn parse_val(val: &FTerm) -> Value {
     },
     "k_bif" => Value::Bif(Box::new(parse_kcall(vvec))),
     "k_atom" => { // {k_atom, anno, val}
-      Value::Atom(vvec[2].get_text())
+      Value::Atom(vvec[2].get_atom_text())
     },
     "k_int" => { // {k_int, anno, val}
       Value::Int64(vvec[2].get_i64())
@@ -196,7 +211,7 @@ fn parse_ret(ret: &FTerm) -> Value {
 
 fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
   // {k_seq, anno, arg, body}
-  assert!(kseq[0].is_atom("k_seq"));
+  assert!(kseq[0].is_atom_of("k_seq"));
   let arg = &kseq[2];
   let body = &kseq[3];
   println!("{}k_seq -> {}", ii(indent), arg);
@@ -206,7 +221,7 @@ fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSeq {
     anno: kseq[1].clone(),
-    arg: parse_val(arg),
+    arg: parse_value(arg),
     body: k_code,
   };
   KernlOp::Seq(ks)
@@ -215,7 +230,7 @@ fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
 
 fn process_kenter(indent: u32, kenter: &Vec<FTerm>) -> KernlOp {
   // {k_enter, anno, op, args}
-  assert!(kenter[0].is_atom("k_enter"));
+  assert!(kenter[0].is_atom_of("k_enter"));
   let op = &kenter[2];
   let args = &kenter[3];
   println!("{}k_enter {}({})", ii(indent), op, args);
@@ -223,26 +238,26 @@ fn process_kenter(indent: u32, kenter: &Vec<FTerm>) -> KernlOp {
   let ke = KEnter {
     anno: kenter[1].clone(),
     op: parse_funref(op.get_vec()),
-    args: parse_val_list(args.get_vec()),
+    args: parse_val_list(args),
   };
   KernlOp::Enter(ke)
 }
 
 
 fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
-  let tag = kvec[0].get_text();
+  let tag = kvec[0].get_atom_text();
   match tag.as_ref() {
     "k_local" => { // {k_local, anno, name, arity}
       return FunRef::FArity {
-        f: parse_val(&kvec[2]),
-        arity: parse_val(&kvec[3])
+        f: parse_value(&kvec[2]),
+        arity: parse_value(&kvec[3])
       }
     },
     "k_remote" => { // {k_remote, anno, mod, name, arity}
       return FunRef::MFArity {
-        m: parse_val(&kvec[2]),
-        f: parse_val(&kvec[3]),
-        arity: parse_val(&kvec[4])
+        m: parse_value(&kvec[2]),
+        f: parse_value(&kvec[3]),
+        arity: parse_value(&kvec[4])
       }
     },
     "k_internal" => { // {k_internal, anno, name, arity}
@@ -260,7 +275,7 @@ fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
 
 fn parse_kinternal(kvec: Vec<FTerm>) -> MFA {
   // {k_internal, anno, name, arity}
-  MFA::new2(kvec[2].get_text(), kvec[3].get_i64() as usize)
+  MFA::new2(kvec[2].get_atom_text(), kvec[3].get_i64() as usize)
 }
 
 
@@ -271,21 +286,21 @@ fn parse_kcall(kvec: Vec<FTerm>) -> KCall {
   KCall {
     anno: kvec[1].clone(),
     op: op_mfa,
-    args: parse_val_list(kvec[3].get_vec()),
-    ret: parse_val_list(kvec[4].get_vec()),
+    args: parse_val_list(&kvec[3]),
+    ret: parse_val_list(&kvec[4]),
   }
 }
 
 
 fn process_kreturn(indent: u32, kreturn: &Vec<FTerm>) -> KernlOp {
   // {k_return, anno, args}
-  assert!(kreturn[0].is_atom("k_return"));
+  assert!(kreturn[0].is_atom_of("k_return"));
   let args = &kreturn[2];
   println!("{}k_return -> {}", ii(indent), args);
 
   let kret = KReturn {
     anno: kreturn[1].clone(),
-    args: parse_val_list(args.get_vec()),
+    args: parse_val_list(args),
   };
   KernlOp::Return(kret)
 }
@@ -293,7 +308,7 @@ fn process_kreturn(indent: u32, kreturn: &Vec<FTerm>) -> KernlOp {
 
 fn process_kalt(indent: u32, kalt: &Vec<FTerm>) -> KernlOp {
   // {k_alt, anno, first, then}
-  assert!(kalt[0].is_atom("k_alt"));
+  assert!(kalt[0].is_atom_of("k_alt"));
 
   println!("{}k_alt first {{", ii(indent));
   let first = &kalt[2];
@@ -319,7 +334,7 @@ fn process_kalt(indent: u32, kalt: &Vec<FTerm>) -> KernlOp {
 fn process_kselect(indent: u32, kselect: &Vec<FTerm>) -> KernlOp {
   // Assert kselect contains only type_clauses
   // {k_select, var, types}
-  assert!(kselect[0].is_atom("k_select"));
+  assert!(kselect[0].is_atom_of("k_select"));
   let var = &kselect[2];
   let type_clauses = &kselect[3];
   println!("{}k_select {} {{", ii(indent), var);
@@ -328,7 +343,7 @@ fn process_kselect(indent: u32, kselect: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSelect {
     anno: kselect[1].clone(),
-    var: parse_val(&var),
+    var: parse_value(&var),
 
   };
   KernlOp::Select(ks)
@@ -339,7 +354,7 @@ fn process_k_type_clauses(indent: u32, tclauses: Vec<FTerm>) {
   for tclause in tclauses {
     let tclause_vec = tclause.get_vec();
     // {k_type_clause, anno, type, values}
-    assert!(tclause_vec[0].is_atom("k_type_clause"));
+    assert!(tclause_vec[0].is_atom_of("k_type_clause"));
 
     let typeclause_type = &tclause_vec[2];
     let typeclause_valclauses = &tclause_vec[3];
@@ -355,7 +370,7 @@ fn process_k_val_clauses(indent: u32, vclauses: Vec<FTerm>) {
   for vc in vclauses {
     // {k_val_clause, anno, val, body}
     let vclause_vec = vc.get_vec();
-    assert!(vclause_vec[0].is_atom("k_val_clause"));
+    assert!(vclause_vec[0].is_atom_of("k_val_clause"));
 
     let vclause_val = &vclause_vec[2];
     let vclause_body = &vclause_vec[3];
@@ -366,7 +381,7 @@ fn process_k_val_clauses(indent: u32, vclauses: Vec<FTerm>) {
 
 fn process_kguard(indent: u32, kguard: &Vec<FTerm>) -> KernlOp {
   // {k_guard, anno, clauses}
-  assert!(kguard[0].is_atom("k_guard"));
+  assert!(kguard[0].is_atom_of("k_guard"));
   let guard_clauses = &kguard[2];
   let guard_clauses_vec = guard_clauses.get_vec();
 
