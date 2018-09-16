@@ -79,7 +79,9 @@ fn process_kmod_fdefs(mut kmod: Module, fdefs: FTerm) -> Module {
 }
 
 
-fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
+fn process_fun(_kmod: &mut Module,
+               fdef_vec: Vec<FTerm>) -> FunDef
+{
   assert!(fdef_vec[0].is_atom_of("k_fdef"), "Expected 'f_def', got {:?}", fdef_vec);
   let fname = &fdef_vec[2];
   let farity = &fdef_vec[3];
@@ -89,7 +91,7 @@ fn process_fun(kmod: &mut Module, fdef_vec: Vec<FTerm>) -> FunDef {
   println!("------ {}/{} ------", fname, farity);
   println!("fn attrs={} {{", fattrs);
 
-  let k_code = process_code_block(0, fbody.get_vec());
+  let k_code = parse_expr(0, &fbody);
 
   println!("}}");
 
@@ -106,67 +108,83 @@ fn ii(indent: u32) -> String {
 }
 
 
-fn process_code_block(indent: u32, code_term: Vec<FTerm>) -> KernlOp {
-  match code_term[0].get_atom_text().as_ref() {
-    "k_match" => process_kmatch(indent + 1, &code_term),
-    "k_seq" => process_kseq(indent + 1, &code_term),
-    "k_alt" => process_kalt(indent + 1, &code_term),
-    "k_enter" => process_kenter(indent + 1, &code_term),
-    "k_return" => process_kreturn(indent + 1, &code_term),
-    "k_select" => process_kselect(indent + 1, &code_term),
-    "k_guard" => process_kguard(indent + 1, &code_term),
-    ref other => panic!("{} -skip {}", ii(indent), other),
-  }
-}
+//fn parse_code(indent: u32, code_term: &FTerm) -> Expr {
+//  if code_term.is_tuple() {
+//    // Single op
+//    return _parse_code_2(indent, code_term)
+//  }
+//  // List of ops
+//  let mut result = Vec::with_capacity(code_term.list_size());
+//  for op in code_term.get_vec() {
+//    result.push(_parse_code_2(indent, &op))
+//  }
+//  KernlOp::MultipleOps(result)
+//}
 
 
-fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
+//fn _parse_code_2(indent: u32, code_term: &FTerm) -> KernlOp {
+//  let ct = code_term.get_tuple_vec();
+//  match ct[0].get_atom_text().as_ref() {
+//    "k_match" => process_kmatch(indent + 1, &ct),
+//    "k_seq" => parse_kseq(indent + 1, &code_term),
+//    "k_alt" => process_kalt(indent + 1, &ct),
+//    "k_enter" => process_kenter(indent + 1, &ct),
+//    "k_return" => process_kreturn(indent + 1, &ct),
+//    "k_select" => parse_kselect(indent + 1, &ct),
+//    "k_guard" => parse_kguard(indent + 1, &ct),
+//    "k_guard_break" => parse_kguard_break(indent + 1, &code_term),
+//    ref other => panic!("---skip {}", other),
+//  }
+//}
+
+
+fn parse_match(indent: u32, kmatch: &FTerm) -> Expr {
   // {k_match, anno, vars, body, ret}
-  assert!(kmatch[0].is_atom_of("k_match"));
-  let vars = &kmatch[2];
-  let body = &kmatch[3];
-  let ret = &kmatch[4];
+  let match_vec = kmatch.get_tuple_vec();
+  assert!(match_vec[0].is_atom_of("k_match"));
+
+  let vars = &match_vec[2];
+  let body = &match_vec[3];
+  let ret = &match_vec[4];
   println!("{}k_match {} -> ret {} {{", ii(indent), vars, ret);
-  let body = Box::new(
-    process_code_block(indent + 1, body.get_vec())
-  );
+  let body = Box::new(parse_expr(indent + 1, body));
   println!("{}}} % end match", ii(indent));
 
   let km = KMatch {
-    anno: kmatch[1].clone(),
-    vars: parse_expr_list(vars),
+    anno: match_vec[1].clone(),
+    vars: parse_expr_list(indent, vars),
     body,
     ret: parse_ret(ret),
   };
-  KernlOp::Match(km)
+  Expr::Match(Box::new(km))
 }
 
 
-fn parse_expr_list(vars: &FTerm) -> Vec<Expr> {
+fn parse_expr_list(indent: u32, vars: &FTerm) -> Vec<Expr> {
   if !vars.is_list() {
     panic!("List of something is expected, found {}", vars)
   }
   let mut result = Vec::<Expr>::new();
   for v in vars.get_list_vec() {
-    result.push(_parse_expr_2(&v))
+    result.push(_parse_expr_2(indent, &v))
   }
   result
 }
 
 
-fn parse_expr(expr: &FTerm) -> Expr {
+fn parse_expr(indent: u32, expr: &FTerm) -> Expr {
   if expr.is_int() {
     return Expr::Int64(expr.get_i64())
   } else if expr.is_atom() {
     return Expr::Atom(expr.get_atom_text())
   } else if expr.is_list() {
-    return Expr::MultipleExprs(parse_expr_list(expr))
+    return Expr::MultipleExprs(parse_expr_list(indent, expr))
   }
-  return _parse_expr_2(expr)
+  return _parse_expr_2(indent, expr)
 }
 
 
-fn _parse_expr_2(expr: &FTerm) -> Expr {
+fn _parse_expr_2(indent: u32, expr: &FTerm) -> Expr {
   // So val is a tuple, parse it as a k_* tuple or something
   let vvec = expr.get_tuple_vec();
   match vvec[0].get_atom_text().as_ref() {
@@ -179,35 +197,81 @@ fn _parse_expr_2(expr: &FTerm) -> Expr {
         _ => panic!("Don't know how to parse val {}", vvec[2]),
       }
     },
-    "k_bif" => Expr::Bif(Box::new(parse_kcall(vvec))),
+    "k_bif" => Expr::Bif(Box::new(parse_kcall(indent, vvec))),
     "k_atom" => { // {k_atom, anno, val}
       Expr::Atom(vvec[2].get_atom_text())
     },
     "k_int" => { // {k_int, anno, val}
       Expr::Int64(vvec[2].get_i64())
     },
-    "k_call" => Expr::Call(Box::new(parse_kcall(vvec))),
+    "k_call" => Expr::Call(Box::new(parse_kcall(indent, vvec))),
     "k_literal" => // {k_literal, anno, val}
-      Expr::Literal {
+      Expr::Value {
         anno: vvec[1].clone(),
-        val: vvec[2].clone()
+        val: vvec[2].clone(),
       },
     "k_put" => {
-      
+      Expr::Put {
+        anno: vvec[1].clone(),
+        arg: Box::new(parse_expr(indent, &vvec[2])),
+        ret: Box::new(parse_expr(indent, &vvec[3])),
+      }
     },
-    // TODO: k_test
+    "k_cons" => {
+      Expr::Cons {
+        anno: vvec[1].clone(),
+        hd: Box::new(parse_expr(indent, &vvec[2])),
+        tl: Box::new(parse_expr(indent, &vvec[3])),
+      }
+    },
+    "k_nil" => Expr::Nil,
+    "k_protected" => { // {k_protected, anno, arg, ret}
+      Expr::Protected {
+        anno: vvec[1].clone(),
+        arg: Box::new(parse_expr(indent, &vvec[2])),
+        ret: Box::new(parse_expr(indent, &vvec[3])),
+      }
+    },
+    "k_test" => {
+      Expr::Test {
+        anno: vvec[1].clone(),
+        op: Box::new(parse_funref(indent, &vvec[2])),
+        args: parse_expr_list(indent, &vvec[3]),
+        inverted: vvec[4].get_bool(),
+      }
+    },
+    "k_guard_match" => { // {k_guard_match, anno, vars, body, ret}
+      let km = Box::new(KMatch {
+        anno: vvec[1].clone(),
+        vars: parse_expr_list(indent, &vvec[2]),
+        body: Box::new(parse_expr(indent+1, &vvec[3])),
+        ret: parse_expr(indent, &vvec[4]),
+      });
+      Expr::GuardMatch(km)
+    },
+    "k_tuple" => { // {k_tuple, anno, elements}
+      Expr::Tuple {
+        anno: vvec[1].clone(),
+        elements: parse_expr_list(indent, &vvec[2]),
+      }
+    },
+    "k_match" => parse_match(indent + 1, &expr),
+    "k_seq" => parse_seq(indent + 1, &expr),
+    "k_alt" => parse_alt(indent + 1, &expr),
+    "k_enter" => parse_enter(indent + 1, &expr),
+    "k_return" => parse_return(indent + 1, &expr),
+    "k_select" => parse_select(indent + 1, &expr),
+    "k_guard" => parse_guard(indent + 1, &expr),
+    "k_guard_break" => parse_kguard_break(indent + 1, &expr),
+
     // TODO: k_enter
-    // TODO: k_match
-    // TODO: k_guard_match
     // TODO: k_try, k_try_enter
     // TODO: k_catch
     // TODO: k_receive, k_receive_accept, k_receive_next
     // TODO: k_break
-    // TODO: k_guard_break
-    // TODO: k_return
 
-    other => panic!("_parse_expr_2 doesn't know how to handle {} in {:?}",
-                    vvec[0], vvec)
+    _other => panic!("_parse_expr_2 doesn't know how to handle {} in {:?}",
+                     vvec[0], vvec)
   }
 }
 
@@ -215,60 +279,61 @@ fn _parse_expr_2(expr: &FTerm) -> Expr {
 fn parse_ret(ret: &FTerm) -> Expr {
   match ret {
     FTerm::EmptyList => Expr::Nil,
-    other => panic!("TODO parse_ret for {}", ret),
+    _other => panic!("TODO parse_ret for {}", ret),
   }
 }
 
 
-fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
+fn parse_seq(indent: u32, kseq: &FTerm) -> Expr {
   // {k_seq, anno, arg, body}
-  assert!(kseq[0].is_atom_of("k_seq"));
-  let arg = &kseq[2];
-  let body = &kseq[3];
+  let seq_vec = kseq.get_tuple_vec();
+  assert!(seq_vec[0].is_atom_of("k_seq"));
+
+  let arg = &seq_vec[2];
   println!("{}k_seq -> {}", ii(indent), arg);
-  let k_code = Box::new(
-    process_code_block(indent + 1, body.get_vec())
-  );
 
   let ks = KSeq {
-    anno: kseq[1].clone(),
-    arg: parse_expr(arg),
-    body: k_code,
+    anno: seq_vec[1].clone(),
+    arg: parse_expr(indent, arg),
+    body: parse_expr(indent + 1, &seq_vec[3]),
   };
-  KernlOp::Seq(ks)
+  Expr::Seq(Box::new(ks))
 }
 
 
-fn process_kenter(indent: u32, kenter: &Vec<FTerm>) -> KernlOp {
+fn parse_enter(indent: u32, enter: &FTerm) -> Expr {
   // {k_enter, anno, op, args}
-  assert!(kenter[0].is_atom_of("k_enter"));
-  let op = &kenter[2];
-  let args = &kenter[3];
+  let enter_vec = enter.get_tuple_vec();
+  assert!(enter_vec[0].is_atom_of("k_enter"));
+
+  let op = &enter_vec[2];
+  let args = &enter_vec[3];
   println!("{}k_enter {}({})", ii(indent), op, args);
 
   let ke = KEnter {
-    anno: kenter[1].clone(),
-    op: parse_funref(op.get_vec()),
-    args: parse_expr_list(args),
+    anno: enter_vec[1].clone(),
+    op: parse_funref(indent, &op),
+    args: parse_expr_list(indent, args),
   };
-  KernlOp::Enter(ke)
+  Expr::Enter(Box::new(ke))
 }
 
 
-fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
+fn parse_funref(indent: u32, funref: &FTerm) -> FunRef {
+  let kvec = funref.get_tuple_vec();
   let tag = kvec[0].get_atom_text();
   match tag.as_ref() {
     "k_local" => { // {k_local, anno, name, arity}
       return FunRef::FArity {
-        f: parse_expr(&kvec[2]),
-        arity: parse_expr(&kvec[3])
+        f: parse_expr(indent, &kvec[2]),
+        arity: parse_expr(indent, &kvec[3])
       }
     },
     "k_remote" => { // {k_remote, anno, mod, name, arity}
       return FunRef::MFArity {
-        m: parse_expr(&kvec[2]),
-        f: parse_expr(&kvec[3]),
-        arity: parse_expr(&kvec[4])
+        m: parse_expr(indent, &kvec[2]),
+        f: parse_expr(indent, &kvec[3]),
+        arity: parse_expr(indent, &kvec[4])
       }
     },
     "k_internal" => { // {k_internal, anno, name, arity}
@@ -276,7 +341,7 @@ fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
     },
     "k_bif" => { // {k_bif, anno, op, args, ret=[]}
       return FunRef::Bif(
-        Box::new(parse_kcall(kvec))
+        Box::new(parse_kcall(indent, kvec))
       )
     }
     other => panic!("Don't know how to parse fun ref {}", other)
@@ -290,78 +355,81 @@ fn parse_kinternal(kvec: Vec<FTerm>) -> MFA {
 }
 
 
-fn parse_kcall(kvec: Vec<FTerm>) -> KCall {
+fn parse_kcall(indent: u32, kvec: Vec<FTerm>) -> KCall {
   // {k_bif, anno, op, args, ret=[]}
   // {k_call, anno, op, args, ret}
-  let op_mfa= parse_funref(kvec[2].get_vec());
+  let op_mfa= parse_funref(indent, &kvec[2]);
   KCall {
     anno: kvec[1].clone(),
     op: op_mfa,
-    args: parse_expr_list(&kvec[3]),
-    ret: parse_expr_list(&kvec[4]),
+    args: parse_expr_list(indent, &kvec[3]),
+    ret: parse_expr_list(indent, &kvec[4]),
   }
 }
 
 
-fn process_kreturn(indent: u32, kreturn: &Vec<FTerm>) -> KernlOp {
+fn parse_return(indent: u32, ret: &FTerm) -> Expr {
   // {k_return, anno, args}
-  assert!(kreturn[0].is_atom_of("k_return"));
-  let args = &kreturn[2];
+  let ret_vec = ret.get_tuple_vec();
+  assert!(ret_vec[0].is_atom_of("k_return"));
+
+  let args = &ret_vec[2];
   println!("{}k_return -> {}", ii(indent), args);
 
   let kret = KReturn {
-    anno: kreturn[1].clone(),
-    args: parse_expr_list(args),
+    anno: ret_vec[1].clone(),
+    args: parse_expr_list(indent, args),
   };
-  KernlOp::Return(kret)
+  Expr::Return(kret)
 }
 
 
-fn process_kalt(indent: u32, kalt: &Vec<FTerm>) -> KernlOp {
+fn parse_alt(indent: u32, alt: &FTerm) -> Expr {
   // {k_alt, anno, first, then}
-  assert!(kalt[0].is_atom_of("k_alt"));
+  let alt_vec = alt.get_tuple_vec();
+  assert!(alt_vec[0].is_atom_of("k_alt"));
 
   println!("{}k_alt first {{", ii(indent));
-  let first = &kalt[2];
+  let first = &alt_vec[2];
   let kfirst = Box::new(
-    process_code_block(indent + 1, first.get_vec())
+    parse_expr(indent + 1, first)
   );
 
   println!("{}}} k_alt then {{", ii(indent));
-  let then = &kalt[3];
-  let kthen = Box::new(
-    process_code_block(indent + 1, then.get_vec())
-  );
+  let then = &alt_vec[3];
+  let kthen = Box::new(parse_expr(indent + 1, then));
   println!("{}}} % end alt", ii(indent));
 
   let ka = KAlt {
-    anno: kalt[1].clone(),
+    anno: alt_vec[1].clone(),
     first: kfirst,
     then: kthen,
   };
-  KernlOp::Alt(ka)
+  Expr::Alt(ka)
 }
 
-fn process_kselect(indent: u32, kselect: &Vec<FTerm>) -> KernlOp {
+fn parse_select(indent: u32, sel: &FTerm) -> Expr {
   // Assert kselect contains only type_clauses
   // {k_select, var, types}
-  assert!(kselect[0].is_atom_of("k_select"));
-  let var = &kselect[2];
-  let type_clauses = &kselect[3];
+  let sel_vec = sel.get_tuple_vec();
+  assert!(sel_vec[0].is_atom_of("k_select"));
+
+  let var = &sel_vec[2];
+  let type_clauses = &sel_vec[3];
   println!("{}k_select {} {{", ii(indent), var);
-  process_k_type_clauses(indent + 1, type_clauses.get_vec());
+  parse_ktype_clauses(indent + 1, type_clauses.get_vec());
   println!("{}}} % end select", ii(indent));
 
   let ks = KSelect {
-    anno: kselect[1].clone(),
-    var: parse_expr(&var),
+    anno: sel_vec[1].clone(),
+    var: parse_expr(indent, &var),
 
   };
-  KernlOp::Select(ks)
+  Expr::Select(Box::new(ks))
 }
 
 
-fn process_k_type_clauses(indent: u32, tclauses: Vec<FTerm>) {
+fn parse_ktype_clauses(indent: u32, tclauses: Vec<FTerm>) {
   for tclause in tclauses {
     let tclause_vec = tclause.get_vec();
     // {k_type_clause, anno, type, values}
@@ -371,43 +439,72 @@ fn process_k_type_clauses(indent: u32, tclauses: Vec<FTerm>) {
     let typeclause_valclauses = &tclause_vec[3];
 
     println!("{}k_type_clause {} {{", ii(indent), typeclause_type);
-    process_k_val_clauses(indent + 1, typeclause_valclauses.get_vec());
+    parse_kval_clauses(indent + 1, typeclause_valclauses.get_vec());
     println!("{}}}", ii(indent))
   }
 }
 
 
-fn process_k_val_clauses(indent: u32, vclauses: Vec<FTerm>) {
+fn parse_kval_clauses(indent: u32, vclauses: Vec<FTerm>) {
   for vc in vclauses {
     // {k_val_clause, anno, val, body}
     let vclause_vec = vc.get_vec();
     assert!(vclause_vec[0].is_atom_of("k_val_clause"));
 
     let vclause_val = &vclause_vec[2];
-    let vclause_body = &vclause_vec[3];
+    let _vclause_body = &vclause_vec[3];
     println!("{}k_val_clause {}", ii(indent), vclause_val)
   }
 }
 
 
-fn process_kguard(indent: u32, kguard: &Vec<FTerm>) -> KernlOp {
+fn parse_guard(indent: u32, guard: &FTerm) -> Expr {
   // {k_guard, anno, clauses}
-  assert!(kguard[0].is_atom_of("k_guard"));
-  let guard_clauses = &kguard[2];
-  let guard_clauses_vec = guard_clauses.get_vec();
+  let guard_vec = guard.get_tuple_vec();
+  assert!(guard_vec[0].is_atom_of("k_guard"));
 
-  let mut clauses = Vec::<Box<KernlOp>>::new();
-  if !guard_clauses_vec.is_empty() {
+  let gclauses_term = &guard_vec[2];
+  let mut clauses = Vec::<KGuardClause>::new();
+  for gclause in gclauses_term.get_list_vec() {
     println!("{}k_guard {{", ii(indent));
-    let clause = Box::new(
-      process_code_block(indent + 1, guard_clauses_vec)
-    );
+    let clause = parse_kguard_clauses(indent + 1, &gclause);
     clauses.push(clause);
     println!("{}}} % end guard", ii(indent));
   }
   let kg = KGuard {
-    anno: kguard[1].clone(),
+    anno: guard_vec[1].clone(),
     clauses
   };
-  KernlOp::Guard(kg)
+  Expr::Guard(kg)
+}
+
+
+fn parse_kguard_clauses(indent: u32, kgc_tuple: &FTerm) -> KGuardClause {
+  assert!(kgc_tuple.is_tuple());
+  let v = kgc_tuple.get_tuple_vec();
+  assert!(v[0].is_atom_of("k_guard_clause"));
+
+  println!("{}kguardclause {{", ii(indent));
+  let body = parse_expr(indent + 1, &v[3]);
+  println!("{}}}", ii(indent));
+
+  KGuardClause {
+    anno: v[1].clone(),
+    guard: parse_expr(indent, &v[2]),
+    body,
+  }
+}
+
+
+fn parse_kguard_break(indent: u32, k_gb: &FTerm) -> Expr {
+  // {k_guard_break, anno, args}
+  let gbvec = k_gb.get_tuple_vec();
+  assert!(gbvec[0].is_atom_of("k_guard_break"));
+
+  let args = parse_expr_list(indent, &gbvec[2]);
+  println!("{}kguard_break {:?}", ii(indent), args);
+  Expr::GuardBreak {
+    anno: gbvec[1].clone(),
+    args,
+  }
 }

@@ -62,7 +62,7 @@ impl FTerm {
 
   pub fn is_tuple(&self) -> bool {
     match self {
-      FTerm::Tuple(v) => true,
+      FTerm::Tuple(_) => true,
       FTerm::EmptyTuple => true,
       _ => false,
     }
@@ -78,9 +78,26 @@ impl FTerm {
   }
 
 
+  pub fn get_bool(&self) -> bool {
+    match self {
+      FTerm::Atom(x) => x == "true",
+      _ => panic!("Term must be a true|false atom, got {}", self),
+    }
+  }
+
+
+  pub fn list_size(&self) -> usize {
+    match self {
+      FTerm::List(v) => v.len(),
+      FTerm::EmptyList => 0,
+      _ => panic!("Term must be a list, got {}", self),
+    }
+  }
+
+
   pub fn is_list(&self) -> bool {
     match self {
-      FTerm::List(v) => true,
+      FTerm::List(_) => true,
       FTerm::EmptyList => true,
       _ => false,
     }

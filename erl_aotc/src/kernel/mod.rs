@@ -8,14 +8,28 @@ pub mod parse;
 
 #[derive(Debug, Clone)]
 pub enum Expr {
+  Match(Box<KMatch>),
+  Seq(Box<KSeq>),
+  Alt(KAlt),
+  Enter(Box<KEnter>),
+  Return(KReturn),
+  Select(Box<KSelect>),
+  Guard(KGuard),
+  GuardBreak { anno: FTerm, args: Vec<Expr> },
   MultipleExprs(Vec<Expr>),
   Atom(String),
   Int64(i64),
   Variable(String),
   Nil,
-  Literal { anno: FTerm, val: FTerm },
+  Tuple { anno: FTerm, elements: Vec<Expr> },
+  Value { anno: FTerm, val: FTerm },
+  Cons { anno: FTerm, hd: Box<Expr>, tl: Box<Expr> },
   Bif(Box<KCall>),
   Call(Box<KCall>),
+  Put { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
+  Protected { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
+  Test { anno: FTerm, op: Box<FunRef>, args: Vec<Expr>, inverted: bool },
+  GuardMatch(Box<KMatch>),
 }
 
 
@@ -52,7 +66,7 @@ impl FunRef {
 pub struct KMatch {
   pub anno: FTerm,
   pub vars: Vec<Expr>,
-  pub body: Box<KernlOp>,
+  pub body: Box<Expr>,
   pub ret: Expr,
 }
 
@@ -60,8 +74,8 @@ pub struct KMatch {
 #[derive(Debug, Clone)]
 pub struct KAlt {
   pub anno: FTerm,
-  pub first: Box<KernlOp>,
-  pub then: Box<KernlOp>,
+  pub first: Box<Expr>,
+  pub then: Box<Expr>,
 }
 
 
@@ -91,43 +105,29 @@ pub struct KSelect {
 pub struct KSeq {
   pub anno: FTerm,
   pub arg: Expr,
-  pub body: Box<KernlOp>,
+  pub body: Expr,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct KGuardClause {
+  pub anno: FTerm,
+  pub guard: Expr,
+  pub body: Expr,
 }
 
 
 #[derive(Debug, Clone)]
 pub struct KGuard {
   pub anno: FTerm,
-  pub clauses: Vec<Box<KernlOp>>,
-}
-
-
-#[derive(Debug, Clone)]
-pub enum KernlOp {
-  Match(KMatch),
-  Seq(KSeq),
-  Alt(KAlt),
-  Enter(KEnter),
-  Return(KReturn),
-  Select(KSelect),
-  Guard(KGuard),
-}
-
-
-impl KernlOp {
-  pub fn kmatch(k: &KernlOp) -> KMatch {
-    match k {
-      KernlOp::Match(x) => x.clone(),
-      _ => panic!("KernlOp {:?} is not a Match()", k)
-    }
-  }
+  pub clauses: Vec<KGuardClause>,
 }
 
 
 #[derive(Debug)]
 pub struct FunDef {
   pub funarity: MFA,
-  k_code: KernlOp, // Kernel Code (parsed from Kernel Eterm input)
+  k_code: Expr, // Kernel Code (parsed from Kernel Eterm input)
 }
 
 
@@ -142,7 +142,7 @@ pub struct Module {
 
 
 impl FunDef {
-  pub fn new(name: String, arity: usize, k_code: KernlOp) -> FunDef {
+  pub fn new(name: String, arity: usize, k_code: Expr) -> FunDef {
     FunDef {
       funarity: MFA::new2(name, arity),
       k_code
