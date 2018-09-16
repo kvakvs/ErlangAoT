@@ -186,73 +186,79 @@ fn parse_expr(indent: u32, expr: &FTerm) -> Expr {
 
 fn _parse_expr_2(indent: u32, expr: &FTerm) -> Expr {
   // So val is a tuple, parse it as a k_* tuple or something
-  let vvec = expr.get_tuple_vec();
-  match vvec[0].get_atom_text().as_ref() {
+  let val_vec = expr.get_tuple_vec();
+  match val_vec[0].get_atom_text().as_ref() {
     "k_var" => {
       // {k_var, anno, name}
-      assert!(vvec[0].is_atom_of("k_var"));
-      match &vvec[2] {
+      assert!(val_vec[0].is_atom_of("k_var"));
+      match &val_vec[2] {
         FTerm::Atom(s) => Expr::Variable(s.to_string()),
         FTerm::Int64(i) => Expr::Variable(i.to_string()),
-        _ => panic!("Don't know how to parse val {}", vvec[2]),
+        _ => panic!("Don't know how to parse val {}", val_vec[2]),
       }
     },
-    "k_bif" => Expr::Bif(Box::new(parse_kcall(indent, vvec))),
+    "k_bif" => Expr::Bif(Box::new(parse_kcall(indent, val_vec))),
     "k_atom" => { // {k_atom, anno, val}
-      Expr::Atom(vvec[2].get_atom_text())
+      Expr::Atom(val_vec[2].get_atom_text())
     },
     "k_int" => { // {k_int, anno, val}
-      Expr::Int64(vvec[2].get_i64())
+      Expr::Int64(val_vec[2].get_i64())
     },
-    "k_call" => Expr::Call(Box::new(parse_kcall(indent, vvec))),
+    "k_binary" => { // {k_binary, anno, segs}
+      Expr::ConstructBinary {
+        anno: val_vec[1].clone(),
+        segments: parse_binary_segments(indent, &val_vec[2]),
+      }
+    },
+    "k_call" => Expr::Call(Box::new(parse_kcall(indent, val_vec))),
     "k_literal" => // {k_literal, anno, val}
       Expr::Value {
-        anno: vvec[1].clone(),
-        val: vvec[2].clone(),
+        anno: val_vec[1].clone(),
+        val: val_vec[2].clone(),
       },
     "k_put" => {
       Expr::Put {
-        anno: vvec[1].clone(),
-        arg: Box::new(parse_expr(indent, &vvec[2])),
-        ret: Box::new(parse_expr(indent, &vvec[3])),
+        anno: val_vec[1].clone(),
+        arg: Box::new(parse_expr(indent, &val_vec[2])),
+        ret: Box::new(parse_expr(indent, &val_vec[3])),
       }
     },
     "k_cons" => {
       Expr::Cons {
-        anno: vvec[1].clone(),
-        hd: Box::new(parse_expr(indent, &vvec[2])),
-        tl: Box::new(parse_expr(indent, &vvec[3])),
+        anno: val_vec[1].clone(),
+        hd: Box::new(parse_expr(indent, &val_vec[2])),
+        tl: Box::new(parse_expr(indent, &val_vec[3])),
       }
     },
     "k_nil" => Expr::Nil,
     "k_protected" => { // {k_protected, anno, arg, ret}
       Expr::Protected {
-        anno: vvec[1].clone(),
-        arg: Box::new(parse_expr(indent, &vvec[2])),
-        ret: Box::new(parse_expr(indent, &vvec[3])),
+        anno: val_vec[1].clone(),
+        arg: Box::new(parse_expr(indent, &val_vec[2])),
+        ret: Box::new(parse_expr(indent, &val_vec[3])),
       }
     },
     "k_test" => {
       Expr::Test {
-        anno: vvec[1].clone(),
-        op: Box::new(parse_funref(indent, &vvec[2])),
-        args: parse_expr_list(indent, &vvec[3]),
-        inverted: vvec[4].get_bool(),
+        anno: val_vec[1].clone(),
+        op: Box::new(parse_funref(indent, &val_vec[2])),
+        args: parse_expr_list(indent, &val_vec[3]),
+        inverted: val_vec[4].get_bool(),
       }
     },
     "k_guard_match" => { // {k_guard_match, anno, vars, body, ret}
       let km = Box::new(KMatch {
-        anno: vvec[1].clone(),
-        vars: parse_expr_list(indent, &vvec[2]),
-        body: Box::new(parse_expr(indent+1, &vvec[3])),
-        ret: parse_expr(indent, &vvec[4]),
+        anno: val_vec[1].clone(),
+        vars: parse_expr_list(indent, &val_vec[2]),
+        body: Box::new(parse_expr(indent+1, &val_vec[3])),
+        ret: parse_expr(indent, &val_vec[4]),
       });
       Expr::GuardMatch(km)
     },
     "k_tuple" => { // {k_tuple, anno, elements}
       Expr::Tuple {
-        anno: vvec[1].clone(),
-        elements: parse_expr_list(indent, &vvec[2]),
+        anno: val_vec[1].clone(),
+        elements: parse_expr_list(indent, &val_vec[2]),
       }
     },
     "k_match" => parse_match(indent + 1, &expr),
@@ -271,8 +277,31 @@ fn _parse_expr_2(indent: u32, expr: &FTerm) -> Expr {
     // TODO: k_break
 
     _other => panic!("_parse_expr_2 doesn't know how to handle {} in {:?}",
-                     vvec[0], vvec)
+                     val_vec[0], val_vec)
   }
+}
+
+
+fn parse_binary_segments(indent: u32, seg: &FTerm) -> Option<Box<KBinarySegment>> {
+  // {k_bin_seg, anno = [], size, unit, type ,flags, seg, next}
+  let seg_vec = seg.get_tuple_vec();
+  if seg_vec[0].is_atom_of("k_bin_end") {
+    return None
+  }
+  assert!(seg_vec[0].is_atom_of("k_bin_seg"),
+          "Expected {{k_bin_seg,...}} got {}", seg);
+
+  let bseg = KBinarySegment {
+    anno: seg_vec[1].clone(),
+    size: parse_expr(indent, &seg_vec[2]),
+    unit: seg_vec[3].get_i64() as u32,
+    seg_type: seg_vec[4].get_atom_text(),
+    flags: Vec::new(),
+    seg: parse_expr(indent, &seg_vec[6]),
+    next: parse_binary_segments(indent, &seg_vec[7]),
+  };
+  // Success
+  Some(Box::new(bseg))
 }
 
 

@@ -8,6 +8,7 @@ pub mod parse;
 
 #[derive(Debug, Clone)]
 pub enum Expr {
+  // Logic and actions
   Match(Box<KMatch>),
   Seq(Box<KSeq>),
   Alt(KAlt),
@@ -17,6 +18,14 @@ pub enum Expr {
   Guard(KGuard),
   GuardBreak { anno: FTerm, args: Vec<Expr> },
   MultipleExprs(Vec<Expr>),
+  Bif(Box<KCall>),
+  Call(Box<KCall>),
+  Put { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
+  Protected { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
+  Test { anno: FTerm, op: Box<FunRef>, args: Vec<Expr>, inverted: bool },
+  GuardMatch(Box<KMatch>),
+
+  // Values, literals, constructors and constants
   Atom(String),
   Int64(i64),
   Variable(String),
@@ -24,12 +33,22 @@ pub enum Expr {
   Tuple { anno: FTerm, elements: Vec<Expr> },
   Value { anno: FTerm, val: FTerm },
   Cons { anno: FTerm, hd: Box<Expr>, tl: Box<Expr> },
-  Bif(Box<KCall>),
-  Call(Box<KCall>),
-  Put { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
-  Protected { anno: FTerm, arg: Box<Expr>, ret: Box<Expr> },
-  Test { anno: FTerm, op: Box<FunRef>, args: Vec<Expr>, inverted: bool },
-  GuardMatch(Box<KMatch>),
+  ConstructBinary {
+    anno: FTerm,
+    segments: Option<Box<KBinarySegment>>
+  },
+}
+
+
+#[derive(Debug, Clone)]
+pub struct KBinarySegment {
+  pub anno: FTerm,
+  pub size: Expr,
+  pub unit: u32,
+  pub seg_type: String, // TODO: type this
+  pub flags: Vec<String>, // TODO: type this
+  pub seg: Expr,
+  pub next: Option<Box<KBinarySegment>>,
 }
 
 
