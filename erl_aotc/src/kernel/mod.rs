@@ -2,10 +2,13 @@ use erl_types::MFA;
 use erl_shared::fterm::FTerm;
 use std::collections::BTreeMap;
 
+pub mod expr;
+pub mod parse;
+
 
 #[derive(Debug, Clone)]
-pub enum Value {
-  MultipleValues(Vec<Value>),
+pub enum Expr {
+  MultipleExprs(Vec<Expr>),
   Atom(String),
   Int64(i64),
   Variable(String),
@@ -18,8 +21,8 @@ pub enum Value {
 
 #[derive(Debug, Clone)]
 pub enum FunRef {
-  MFArity { m: Value, f: Value, arity: Value },
-  FArity { f: Value, arity: Value },
+  MFArity { m: Expr, f: Expr, arity: Expr },
+  FArity { f: Expr, arity: Expr },
   Bif(Box<KCall>),
   Internal(MFA),
 }
@@ -29,8 +32,8 @@ pub enum FunRef {
 pub struct KCall {
   pub anno: FTerm,
   pub op: FunRef,
-  pub args: Vec<Value>,
-  pub ret: Vec<Value>
+  pub args: Vec<Expr>,
+  pub ret: Vec<Expr>
 }
 
 impl FunRef {
@@ -48,9 +51,9 @@ impl FunRef {
 #[derive(Debug, Clone)]
 pub struct KMatch {
   pub anno: FTerm,
-  pub vars: Vec<Value>,
+  pub vars: Vec<Expr>,
   pub body: Box<KernlOp>,
-  pub ret: Value,
+  pub ret: Expr,
 }
 
 
@@ -66,28 +69,28 @@ pub struct KAlt {
 pub struct KEnter {
   pub anno: FTerm,
   pub op: FunRef,
-  pub args: Vec<Value>,
+  pub args: Vec<Expr>,
 }
 
 
 #[derive(Debug, Clone)]
 pub struct KReturn {
   pub anno: FTerm,
-  pub args: Vec<Value>,
+  pub args: Vec<Expr>,
 }
 
 
 #[derive(Debug, Clone)]
 pub struct KSelect {
   pub anno: FTerm,
-  pub var: Value,
+  pub var: Expr,
 }
 
 
 #[derive(Debug, Clone)]
 pub struct KSeq {
   pub anno: FTerm,
-  pub arg: Value,
+  pub arg: Expr,
   pub body: Box<KernlOp>,
 }
 

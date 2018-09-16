@@ -2,7 +2,7 @@
 use std::fs::File;
 use std::io::Read;
 use erl_aotc_parser::parse_nodot;
-use kernel_eterm::process_module;
+use kernel::parse::process_module;
 
 
 pub fn compile(filename: &str) {

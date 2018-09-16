@@ -7,7 +7,6 @@ extern crate llvm_sys as llvm;
 
 mod codegen;
 mod erl_types;
-mod kernel_eterm;
 mod kernel;
 pub mod aotc_main;
 pub mod ll_types;

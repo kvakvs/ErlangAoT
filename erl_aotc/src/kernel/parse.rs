@@ -134,7 +134,7 @@ fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
 
   let km = KMatch {
     anno: kmatch[1].clone(),
-    vars: parse_val_list(vars),
+    vars: parse_expr_list(vars),
     body,
     ret: parse_ret(ret),
   };
@@ -142,68 +142,79 @@ fn process_kmatch(indent: u32, kmatch: &Vec<FTerm>) -> KernlOp {
 }
 
 
-fn parse_val_list(vars: &FTerm) -> Vec<Value> {
+fn parse_expr_list(vars: &FTerm) -> Vec<Expr> {
   if !vars.is_list() {
     panic!("List of something is expected, found {}", vars)
   }
-  let mut result = Vec::<Value>::new();
+  let mut result = Vec::<Expr>::new();
   for v in vars.get_list_vec() {
-    result.push(_parse_one_val(&v))
+    result.push(_parse_expr_2(&v))
   }
   result
 }
 
 
-fn parse_value(val: &FTerm) -> Value {
-  if val.is_int() {
-    return Value::Int64(val.get_i64())
-  } else if val.is_atom() {
-    return Value::Atom(val.get_atom_text())
-  } else if val.is_list() {
-    return Value::MultipleValues(parse_val_list(val))
+fn parse_expr(expr: &FTerm) -> Expr {
+  if expr.is_int() {
+    return Expr::Int64(expr.get_i64())
+  } else if expr.is_atom() {
+    return Expr::Atom(expr.get_atom_text())
+  } else if expr.is_list() {
+    return Expr::MultipleExprs(parse_expr_list(expr))
   }
-  return _parse_one_val(val)
+  return _parse_expr_2(expr)
 }
 
 
-fn _parse_one_val(val: &FTerm) -> Value {
-  // TODO: Check if val is a simple value not a k_* tuple
-
+fn _parse_expr_2(expr: &FTerm) -> Expr {
   // So val is a tuple, parse it as a k_* tuple or something
-  let vvec = val.get_tuple_vec();
+  let vvec = expr.get_tuple_vec();
   match vvec[0].get_atom_text().as_ref() {
     "k_var" => {
       // {k_var, anno, name}
       assert!(vvec[0].is_atom_of("k_var"));
       match &vvec[2] {
-        FTerm::Atom(s) => Value::Variable(s.to_string()),
-        FTerm::Int64(i) => Value::Variable(i.to_string()),
+        FTerm::Atom(s) => Expr::Variable(s.to_string()),
+        FTerm::Int64(i) => Expr::Variable(i.to_string()),
         _ => panic!("Don't know how to parse val {}", vvec[2]),
       }
     },
-    "k_bif" => Value::Bif(Box::new(parse_kcall(vvec))),
+    "k_bif" => Expr::Bif(Box::new(parse_kcall(vvec))),
     "k_atom" => { // {k_atom, anno, val}
-      Value::Atom(vvec[2].get_atom_text())
+      Expr::Atom(vvec[2].get_atom_text())
     },
     "k_int" => { // {k_int, anno, val}
-      Value::Int64(vvec[2].get_i64())
+      Expr::Int64(vvec[2].get_i64())
     },
-    "k_call" => Value::Call(Box::new(parse_kcall(vvec))),
+    "k_call" => Expr::Call(Box::new(parse_kcall(vvec))),
     "k_literal" => // {k_literal, anno, val}
-      Value::Literal {
+      Expr::Literal {
         anno: vvec[1].clone(),
         val: vvec[2].clone()
       },
+    "k_put" => {
+      
+    },
+    // TODO: k_test
+    // TODO: k_enter
+    // TODO: k_match
+    // TODO: k_guard_match
+    // TODO: k_try, k_try_enter
+    // TODO: k_catch
+    // TODO: k_receive, k_receive_accept, k_receive_next
+    // TODO: k_break
+    // TODO: k_guard_break
+    // TODO: k_return
 
-    other => panic!("parse_val doesn't know how to handle {} in {:?}",
+    other => panic!("_parse_expr_2 doesn't know how to handle {} in {:?}",
                     vvec[0], vvec)
   }
 }
 
 
-fn parse_ret(ret: &FTerm) -> Value {
+fn parse_ret(ret: &FTerm) -> Expr {
   match ret {
-    FTerm::EmptyList => Value::Nil,
+    FTerm::EmptyList => Expr::Nil,
     other => panic!("TODO parse_ret for {}", ret),
   }
 }
@@ -221,7 +232,7 @@ fn process_kseq(indent: u32, kseq: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSeq {
     anno: kseq[1].clone(),
-    arg: parse_value(arg),
+    arg: parse_expr(arg),
     body: k_code,
   };
   KernlOp::Seq(ks)
@@ -238,7 +249,7 @@ fn process_kenter(indent: u32, kenter: &Vec<FTerm>) -> KernlOp {
   let ke = KEnter {
     anno: kenter[1].clone(),
     op: parse_funref(op.get_vec()),
-    args: parse_val_list(args),
+    args: parse_expr_list(args),
   };
   KernlOp::Enter(ke)
 }
@@ -249,15 +260,15 @@ fn parse_funref(kvec: Vec<FTerm>) -> FunRef {
   match tag.as_ref() {
     "k_local" => { // {k_local, anno, name, arity}
       return FunRef::FArity {
-        f: parse_value(&kvec[2]),
-        arity: parse_value(&kvec[3])
+        f: parse_expr(&kvec[2]),
+        arity: parse_expr(&kvec[3])
       }
     },
     "k_remote" => { // {k_remote, anno, mod, name, arity}
       return FunRef::MFArity {
-        m: parse_value(&kvec[2]),
-        f: parse_value(&kvec[3]),
-        arity: parse_value(&kvec[4])
+        m: parse_expr(&kvec[2]),
+        f: parse_expr(&kvec[3]),
+        arity: parse_expr(&kvec[4])
       }
     },
     "k_internal" => { // {k_internal, anno, name, arity}
@@ -286,8 +297,8 @@ fn parse_kcall(kvec: Vec<FTerm>) -> KCall {
   KCall {
     anno: kvec[1].clone(),
     op: op_mfa,
-    args: parse_val_list(&kvec[3]),
-    ret: parse_val_list(&kvec[4]),
+    args: parse_expr_list(&kvec[3]),
+    ret: parse_expr_list(&kvec[4]),
   }
 }
 
@@ -300,7 +311,7 @@ fn process_kreturn(indent: u32, kreturn: &Vec<FTerm>) -> KernlOp {
 
   let kret = KReturn {
     anno: kreturn[1].clone(),
-    args: parse_val_list(args),
+    args: parse_expr_list(args),
   };
   KernlOp::Return(kret)
 }
@@ -343,7 +354,7 @@ fn process_kselect(indent: u32, kselect: &Vec<FTerm>) -> KernlOp {
 
   let ks = KSelect {
     anno: kselect[1].clone(),
-    var: parse_value(&var),
+    var: parse_expr(&var),
 
   };
   KernlOp::Select(ks)
