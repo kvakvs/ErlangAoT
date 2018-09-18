@@ -46,6 +46,9 @@ mod tests {
     let expr = ::parse_nodot("'a'");
     assert_eq!(expr, mk_atom("a"));
 
+    let expr = ::parse_nodot("'<='");
+    assert_eq!(expr, mk_atom("<="));
+
     let expr = ::parse_nodot("'aaa@example.com'");
     assert_eq!(expr, mk_atom("aaa@example.com"));
   }

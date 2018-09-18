@@ -13,7 +13,8 @@ use erl_aotc::aotc_main;
 
 
 fn main() {
-  aotc_main::compile("experiment/mochijson.kernel.term");
+  //aotc_main::compile("experiment/mochijson.kernel.term");
+  aotc_main::compile("experiment/mochijson2.kernel.term");
 
 //  unsafe {
 //    // Set up a context, module and builder in that context.

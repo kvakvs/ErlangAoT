@@ -446,20 +446,24 @@ fn parse_select(indent: u32, sel: &FTerm) -> Expr {
   let var = &sel_vec[2];
   let type_clauses = &sel_vec[3];
   println!("{}k_select {} {{", ii(indent), var);
-  parse_ktype_clauses(indent + 1, type_clauses.get_vec());
+  let tclauses = parse_type_clauses(indent + 1,
+                                    type_clauses);
   println!("{}}} % end select", ii(indent));
 
   let ks = KSelect {
     anno: sel_vec[1].clone(),
     var: parse_expr(indent, &var),
-
+    type_clauses: tclauses,
   };
   Expr::Select(Box::new(ks))
 }
 
 
-fn parse_ktype_clauses(indent: u32, tclauses: Vec<FTerm>) {
-  for tclause in tclauses {
+fn parse_type_clauses(indent: u32, tclauses: &FTerm) -> Vec<KTypeClause> {
+  let tclauses_vec = tclauses.get_list_vec();
+  let mut result = Vec::<KTypeClause>::with_capacity(tclauses_vec.len());
+
+  for tclause in tclauses_vec {
     let tclause_vec = tclause.get_vec();
     // {k_type_clause, anno, type, values}
     assert!(tclause_vec[0].is_atom_of("k_type_clause"));
@@ -468,22 +472,39 @@ fn parse_ktype_clauses(indent: u32, tclauses: Vec<FTerm>) {
     let typeclause_valclauses = &tclause_vec[3];
 
     println!("{}k_type_clause {} {{", ii(indent), typeclause_type);
-    parse_kval_clauses(indent + 1, typeclause_valclauses.get_vec());
+    let vcs = parse_val_clauses(indent + 1, typeclause_valclauses);
+    let tc = KTypeClause {
+      anno: tclause_vec[1].clone(),
+      type_: tclause_vec[2].clone(),
+      values: vcs,
+    };
+    result.push(tc);
     println!("{}}}", ii(indent))
   }
+  result
 }
 
 
-fn parse_kval_clauses(indent: u32, vclauses: Vec<FTerm>) {
-  for vc in vclauses {
+fn parse_val_clauses(indent: u32, vclauses: &FTerm) -> Vec<KValClause> {
+  let vclause_list = vclauses.get_list_vec();
+  let mut result = Vec::<KValClause>::with_capacity(vclauses.list_size());
+
+  for vc in vclause_list {
     // {k_val_clause, anno, val, body}
     let vclause_vec = vc.get_vec();
     assert!(vclause_vec[0].is_atom_of("k_val_clause"));
 
     let vclause_val = &vclause_vec[2];
-    let _vclause_body = &vclause_vec[3];
-    println!("{}k_val_clause {}", ii(indent), vclause_val)
+    println!("{}k_val_clause {} {{", ii(indent), vclause_val);
+    let vc = KValClause {
+      anno: vclause_vec[1].clone(),
+      val: vclause_vec[2].clone(),
+      body: parse_expr(indent + 1, &vclause_vec[3]),
+    };
+    result.push(vc);
+    println!("{}}}", ii(indent));
   }
+  result
 }
 
 

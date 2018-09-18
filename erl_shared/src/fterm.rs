@@ -14,6 +14,7 @@ pub enum FTerm {
   Tuple(Vec<FTerm>),
   EmptyTuple,
   Float(f64),
+  Binary(Vec<u8>),
 }
 
 impl FTerm {
@@ -196,6 +197,7 @@ impl fmt::Display for FTerm {
       FTerm::List(v) => print_list(f, "[", "]", &v),
       FTerm::EmptyTuple => write!(f, "{{}}"),
       FTerm::Tuple(v) => print_list(f, "{", "}", &v),
+      FTerm::Binary(b) => write!(f, "<<{:?}>>", b),
     }
   }
 }

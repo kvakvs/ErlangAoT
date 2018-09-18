@@ -117,6 +117,23 @@ pub struct KReturn {
 pub struct KSelect {
   pub anno: FTerm,
   pub var: Expr,
+  pub type_clauses: Vec<KTypeClause>,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct KTypeClause {
+  pub anno: FTerm,
+  pub type_: FTerm, // Atom
+  pub values: Vec<KValClause>,
+}
+
+
+#[derive(Debug, Clone)]
+pub struct KValClause {
+  pub anno: FTerm,
+  pub val: FTerm,
+  pub body: Expr,
 }
 
 

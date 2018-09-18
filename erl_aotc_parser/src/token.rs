@@ -2,6 +2,7 @@
 pub enum Token {
   StringLiteral(String),
   AtomLiteral(String),
+  BinaryLiteral(Vec<u8>),
   IntLiteral(i64),
   FloatLiteral(f64),
   Comment,

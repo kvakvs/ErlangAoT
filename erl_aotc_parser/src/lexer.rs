@@ -10,6 +10,7 @@ pub enum LexicalError {
   UnexpectedEscapeCode(char),
   UnexpectedEndOfFile,
   Unexpected(char),
+  Expected(char),
 }
 
 
@@ -104,6 +105,31 @@ impl<'input> Lexer<'input> {
   }
 
 
+  // Having found opening "<<" - parse the following binary string
+  fn binary_literal(&mut self) -> Result<SpannedToken, LexicalError> {
+    self.consume_expect('<')?; // skip the second < in <<
+    self.consume_expect('\"')?; // skip the "
+
+    let mut out_str = String::new();
+    out_str.reserve(32);
+
+    let start = self.current_index;
+
+    while let Some((pos, ch)) = self.consume() {
+      match ch {
+        '\\' => out_str.push(self.escape_code()?),
+        '"' => {
+          self.consume_expect('>')?;
+          self.consume_expect('>')?;
+          return Ok((start, Token::BinaryLiteral(Vec::from(out_str)), pos))
+        },
+        ch => out_str.push(ch),
+      } // match my_next
+    } // while let some
+
+    Err(LexicalError::UnterminatedStringLiteral)  }
+
+
   fn numeric_literal(&mut self, first: char) -> Result<SpannedToken, LexicalError> {
     let mut out_str = String::new();
     out_str.reserve(10);
@@ -124,6 +150,20 @@ impl<'input> Lexer<'input> {
     if let Some(prev) = self.past.pop() {
       //println!("unconsume: {}", prev.1);
       self.upcoming.push(prev)
+    }
+  }
+
+
+  fn consume_expect(&mut self, ch: char) -> Result<(), LexicalError> {
+    match self.consume() {
+      Some((_i, got_ch)) => {
+        if ch == got_ch {
+          return Ok(())
+        } else {
+          self.err(LexicalError::Expected(ch))
+        }
+      },
+      None => self.err(LexicalError::UnexpectedEndOfFile)
     }
   }
 
@@ -181,6 +221,17 @@ impl<'input> Lexer<'input> {
     (self.current_index, t, self.current_index)
   }
 
+
+  #[inline]
+  fn is_char_ahead(&self, c: char) -> bool {
+    if let Some(upcoming) = self.look_ahead() {
+      return upcoming.1 == c
+    };
+    false
+  }
+
+
+  #[inline]
   fn is_digit_ahead(&self) -> bool {
     if let Some(upcoming) = self.look_ahead() {
       return upcoming.1.is_digit(10)
@@ -189,6 +240,7 @@ impl<'input> Lexer<'input> {
   }
 
 
+  #[inline]
   fn look_ahead(&self) -> Option<InputChar> {
     if self.upcoming.len() > 0 {
       let last = self.upcoming[self.upcoming.len() - 1];
@@ -227,6 +279,12 @@ impl<'input> Iterator for Lexer<'input> {
             ch if is_atom_start(ch) => return Some(self.atom_literal(ch)),
 
             ch if is_whitespace(ch) => continue, // skip
+
+            // Binaries
+            '<' if self.is_char_ahead('<') => {
+              return Some(self.binary_literal())
+            },
+
             ch => return Some(self.err(LexicalError::Unexpected(ch))),
           };
         },

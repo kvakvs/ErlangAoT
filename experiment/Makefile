@@ -1,2 +1,4 @@
-x:
-	./to_kern.escript mochijson.erl | iconv -f ISO8859-1 -t UTF8 > mochijson.kernel.term
+x: mochijson.kernel.term mochijson2.kernel.term
+
+%.kernel.term: %.erl
+	./to_kern.escript $< | iconv -f ISO8859-1 -t UTF8 > $@
