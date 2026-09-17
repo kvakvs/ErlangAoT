@@ -10,6 +10,10 @@ The expected modules this project will have:
 - Tests?
 - Interface between compiler stages to be either text or internal parsed data format. Intermediate stage parsers can be done later do not plan more than directory source locations for them.
 
+# Extra Resources
+
+`references/otp` is a gitignored clone of Erlang OTP source repository used to look at tests and other implementation details to comply with.
+
 # End Goal
 
 The source code of existing pure Erlang projects will be buildable via LLVM into runnable executables which retain most of Erlang features

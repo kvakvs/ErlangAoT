@@ -8,6 +8,9 @@ See `README.md` for current commands and `docs/windows.md` for Windows follow-up
 ## Scope and decisions
 
 - Implement the Erlang preprocessor, parser, and ahead-of-time compiler in C++.
+- Use Boost.Parser for composable compiler parsing rules. The preprocessor's
+  implementation sequence is in [`.agents/01-pp.md`](.agents/01-pp.md);
+  dependency integration and preprocessing remain unimplemented.
 - Implement the runtime separately in C++, in the same repository.
 - Use CMake with two principal build targets: the compiler executable and the
   runtime library. Tests may introduce additional internal targets.

@@ -1,5 +1,36 @@
 # Research notes
 
+## 2026-09-18 — Local OTP source and test discovery
+
+- User requested a gitignored OTP checkout and preprocessor test discovery.
+  Cloned --depth 1 --branch OTP-29.1 to references/otp; commit
+  751f87b703fe5948607d08e82599ce644b772e76. Added /references/otp/ ignore rule.
+- Inventory: .agents/01-pp-otp-tests.md. Main suite is stdlib/test/epp_SUITE.erl,
+  many inline source fixtures; features live in erts/test/erlc_SUITE.erl and use
+  OTP_TEST_FEATURES=true synthetic catalog. Compiler integration: compile_SUITE.
+- Pin in 01-pp.md now resolved to local OTP-29.1; no build or suite execution.
+- Concrete regressions: fun_type_arg distinguishes fun types vs end-delimited
+  funs; include_local prioritizes nested header sibling over supplied include dir;
+  test_if treats 42 as false and arithmetic evaluation failure as a skipped body;
+  otp_8130 covers non-parameter ??B behavior. Do not invent stricter semantics.
+
+## 2026-09-18 — Boost.Parser selected; preprocessor plan
+
+- User selected Boost.Parser and requested a step-by-step plan based on the Erlang
+  macros chapter. Saved `.agents/01-pp.md`; no code/dependencies implemented.
+- Plan covers all chapter features in 13 steps with OTP oracle tests, token/source
+  ownership, include resolver, contextual macros, and restricted guard evaluation.
+- Pin exact OTP 29 before implementation: live macros docs reported 29.0.6 while
+  expressions docs reported 29.1. Master epp is navigation only, not the baseline.
+- Internal preprocessing tokens do not select stage interchange formats. Readers
+  remain directory reservations. Proposed CLI preprocessing-check mode avoids
+  prematurely committing to a public preprocessed text format.
+- Verify Boost.Parser token-cursor extension in first spike; don't assume generic
+  token ranges work with character primitives. Keep parser actions transactional.
+- Proposed builtin compatibility values: OTP_RELEASE=29 and MACHINE='BEAM'; explain
+  their meaning in a native compiler. Include guards can allow recursive includes,
+  so don't reject every repeated active path. Runtime stays independent of Boost.
+
 ## 2026-09-17 — Initial CLI and CMake scaffold
 
 - User requested main.cpp and CMake setup for macOS, with Windows notes. Implemented
