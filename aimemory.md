@@ -1,5 +1,25 @@
 # Research notes
 
+## Step 3 implementation — 2026-09-18
+
+- PreprocessorSession emits OrdinaryForm/Directive/Diagnostic, owns reserved macro
+  table + include/conditional stacks + feature/context state. Syntax only: no
+  macro storage effects/expansion, include lookup, branch selection, CLI mode.
+- Pure token-cursor envelopes preserve kinds/locations, arbitrary macro bodies,
+  object-vs-zero-arity distinction. Duplicate formals deferred to step4; if/elif
+  and error/warning term grammars deferred as planned. Includes accept strings
+  and macro-leading operands pending expansion; no host filesystem lookup.
+- Recovery drains lexical tokens to dot/EOF, forces progress after scanner errors,
+  drains pending sigil tokens, and keeps failure latched across later valid forms.
+- Misplacement detection is heuristic: line-leading structural names after arrow;
+  exclude arbitrary attributes, replacement bodies and error/warning unary calls.
+  Full expression ambiguity needs later parser; do not claim full epp behavior.
+- Added pinned punctuation regression (#_ and Latin-1 standalone symbols) after
+  inspecting OTP29 scanner while testing driver boundaries. Six golden fixtures.
+- Validation: seven CTests pass in C++23, C++26, ASan/UBSan, with both live OTP29.1
+  oracles executed. Fresh full compiler/runtime check-quality passes at unchanged
+  CCN/cognitive thresholds; no project warning suppressions introduced.
+
 ## Step 2 implementation — 2026-09-18
 
 - Source ownership/positions, diagnostics, incremental lexer complete; arbitrary

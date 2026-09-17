@@ -35,3 +35,9 @@ add_test(NAME lexer_golden COMMAND "${CMAKE_COMMAND}"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
     "-DDUMP=$<TARGET_FILE:lexer_dump>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/golden.cmake")
+
+add_executable(preprocessor_forms compiler/preprocessor/forms.cpp)
+erlang_aot_project_options(preprocessor_forms)
+target_link_libraries(preprocessor_forms PRIVATE erlang_frontend)
+add_test(NAME preprocessor_forms COMMAND preprocessor_forms)
+set_tests_properties(preprocessor_forms PROPERTIES TIMEOUT 10)

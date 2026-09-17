@@ -40,6 +40,8 @@ public:
     std::optional<Token> next();
     // Collect through the next form-ending dot, leaving later forms unscanned.
     std::vector<Token> form();
+    // Discard through the next lexical form boundary after an error, or stop at EOF.
+    void recover_form();
     // Change keyword classification before scanning the next form.
     void set_keywords(std::set<std::u32string> keywords);
     // Map subsequent tokens to a logical filename and line at the current cursor.

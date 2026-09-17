@@ -92,7 +92,7 @@ Token Lexer::punctuation()
 {
     constexpr std::array operators{U"=:=" , U"=/=", U"<:-", U"<:=", U"...", U"..",
         U"&&", U"?=", U"<<", U"<-", U"<=", U">>", U">=", U"->", U"--", U"++",
-        U"=<", U"=>", U"==", U"/=", U"||", U":=" , U"::"};
+        U"=<", U"=>", U"==", U"/=", U"||", U":=" , U"::", U"#_"};
     const auto begin = cursor_;
     const auto found = std::ranges::find_if(operators, [this](auto value) { return rest().starts_with(value); });
     if (found != operators.end()) {
@@ -102,7 +102,7 @@ Token Lexer::punctuation()
     }
     const auto value = rest().front();
     ++cursor_;
-    if (value > 127) { fail(DiagnosticCode::invalid_character, "invalid source character", begin); }
+    if (value > 255) { fail(DiagnosticCode::invalid_character, "invalid source character", begin); }
     const bool dot = value == U'.' && (rest().empty() || whitespace(rest().front()) || rest().front() == U'%');
     return token(dot ? TokenKind::dot : TokenKind::symbol, std::u32string(1, value), begin, cursor_);
 }
@@ -129,5 +129,20 @@ std::vector<Token> Lexer::form()
         if (kind == TokenKind::dot) { break; }
     }
     return result;
+}
+void Lexer::recover_form()
+{
+    pending_.clear();
+    previous_string_ = false;
+    while (!rest().empty() || !pending_.empty()) {
+        const auto begin = cursor_;
+        try {
+            const auto item = next();
+            if (!item || item->kind == TokenKind::dot) { return; }
+        } catch (const LexicalError&) {
+            // A failed scanner must not repeatedly attempt the same character.
+            if (cursor_ == begin) { ++cursor_; }
+        }
+    }
 }
 } // namespace erlang_aot

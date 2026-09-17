@@ -26,7 +26,7 @@
 - `.agents/plan-windows.md`: Windows toolchain, ABI, paths, runtime, and CI follow-up.
 - `00-plan.md`: preliminary full project structure and deferred design decisions.
 - `.agents/01-pp.md`: ordered Boost.Parser preprocessor plan, feature coverage,
-  proposed files, and OTP compatibility acceptance criteria; steps 1–2 implemented.
+  proposed files, and OTP compatibility acceptance criteria; steps 1–3 implemented.
 - `.agents/01-pp-otp-tests.md`: pinned OTP checkout, upstream suite/case inventory,
   implementation lessons, and test execution prerequisites.
 - `references/otp/` (ignored): OTP-29.1 source; main preprocessor tests are in
@@ -42,5 +42,14 @@
 - `tests/compiler/{lexer,lexer_dump}.cpp`: scanner checks and private token dump.
 - `tests/compiler/preprocessor/{scan.escript,scan.cmake,golden.cmake}`: optional
   live scanner comparison and offline pinned token fixture checks.
-- `tests/fixtures/preprocessor/lexical/`: five inputs and OTP 29.1 token/location
+- `tests/fixtures/preprocessor/lexical/`: six inputs and OTP 29.1 token/location
   records; provenance/serialization documented in the parent README.
+- `compiler/include/erlang_aot/compiler/{directive,preprocessor}.hpp`: directive
+  operand values, isolated session state, and private compiler event interface.
+- `compiler/src/preprocessor/cursor.hpp`: bounded, category-aware token cursor.
+- `compiler/src/preprocessor/directives.cpp`: transactional directive envelopes;
+  raw replacement bodies and deferred conditions/terms, no directive effects.
+- `compiler/src/preprocessor/preprocessor.cpp`: lexical form driver, passthrough,
+  line-leading misplaced-directive heuristic, latched errors, and recovery.
+- `tests/compiler/preprocessor/forms.cpp`: syntax, recovery/progress, ordinary
+  token preservation, lifetime, and session isolation checks.

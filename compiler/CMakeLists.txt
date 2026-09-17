@@ -1,7 +1,8 @@
 include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
 add_library(erlang_frontend STATIC src/parsing/probe.cpp
     src/source/source.cpp src/diagnostics/diagnostic.cpp
-    src/lexer/lexer.cpp src/lexer/numbers.cpp src/lexer/literals.cpp)
+    src/lexer/lexer.cpp src/lexer/numbers.cpp src/lexer/literals.cpp
+    src/preprocessor/directives.cpp src/preprocessor/preprocessor.cpp)
 erlang_aot_project_options(erlang_frontend)
 target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
