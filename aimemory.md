@@ -1,5 +1,21 @@
 # Research notes
 
+## 2026-09-17 — Initial CLI and CMake scaffold
+
+- User requested main.cpp and CMake setup for macOS, with Windows notes. Implemented
+  executable target `erlang_aot`, output name `erlangaot` following current request.
+- CLI supports help/version, one output option, multiple inputs, and `--`.
+  Usage errors exit 2; input/unimplemented compilation errors exit 1; help/version
+  exit 0. Compilation never creates or overwrites output.
+- Separate runtime static library has an empty placeholder translation unit.
+  ABI interface target remains empty; no ABI or runtime functionality invented.
+- C++23 default/26 selectable; CMake 3.28 minimum; no third-party dependencies.
+  README and .agents/plan-windows.md document current behavior and deferred Windows work.
+- Added CTest CLI behavior checks and required `.agents/arch.md` / `.agents/files.md`.
+- Validation: Apple Clang 21 / CMake 4.4.2 on arm64 macOS. Combined C++23 build,
+  runtime-only build, and compiler-only C++26 build passed. CLI CTest passed in
+  C++23 and C++26 builds (14 scenarios each); git diff whitespace check passed.
+
 ## 2026-09-17 — Generated-code/runtime linkage clarification
 
 - User allows any platform-compatible linkage and asks whether C++ linkage is preferable. Updated `00-plan.md` to remove the mandatory C-linkage boundary.

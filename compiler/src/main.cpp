@@ -1,0 +1,118 @@
+#include <exception>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <vector>
+
+namespace {
+
+constexpr std::string_view help = R"(Usage: erlangaot [options] <source.erl>...
+
+Ahead-of-time compiler for Erlang (initial CLI scaffold).
+
+Options:
+  -h, --help           Show this help and exit.
+      --version        Show the tool version and exit.
+  -o, --output <path>  Set the future executable output path (default: a.out).
+      --               Treat all remaining arguments as input paths.
+
+Compilation is not implemented yet. Compilation requests fail without writing
+an output file. Input paths may contain spaces when quoted by the shell.
+)";
+
+struct Options {
+    bool show_help = false;
+    bool show_version = false;
+    std::filesystem::path output = "a.out";
+    std::vector<std::filesystem::path> inputs;
+};
+
+std::optional<std::string> parse_options(int argc, char* argv[], Options& options)
+{
+    bool positional_only = false;
+    bool output_seen = false;
+    for (int i = 1; i < argc; ++i) {
+        const std::string_view argument{argv[i]};
+        if (!positional_only && argument == "--") {
+            positional_only = true;
+        } else if (!positional_only && (argument == "-h" || argument == "--help")) {
+            options.show_help = true;
+        } else if (!positional_only && argument == "--version") {
+            options.show_version = true;
+        } else if (!positional_only && (argument == "-o" || argument == "--output")) {
+            if (output_seen) {
+                return "output path specified more than once";
+            }
+            if (++i == argc || std::string_view{argv[i]}.empty()) {
+                return "expected a path after " + std::string{argument};
+            }
+            options.output = argv[i];
+            output_seen = true;
+        } else if (!positional_only && argument.starts_with('-')) {
+            return "unknown option '" + std::string{argument} + "'";
+        } else if (argument.empty()) {
+            return "input path must not be empty";
+        } else {
+            options.inputs.emplace_back(argument);
+        }
+    }
+    if (!options.show_help && !options.show_version && options.inputs.empty()) {
+        return "no input files";
+    }
+    return std::nullopt;
+}
+
+int run(int argc, char* argv[])
+{
+    Options options;
+    if (const auto error = parse_options(argc, argv, options)) {
+        std::cerr << "erlangaot: error: " << *error
+                  << "\nTry 'erlangaot --help' for usage.\n";
+        return 2;
+    }
+    if (options.show_help) {
+        std::cout << help;
+        return 0;
+    }
+    if (options.show_version) {
+        std::cout << "erlangaot " << ERLANG_AOT_VERSION << '\n';
+        return 0;
+    }
+
+    for (const auto& input : options.inputs) {
+        std::error_code error;
+        const bool regular = std::filesystem::is_regular_file(input, error);
+        if (error) {
+            std::cerr << "erlangaot: error: cannot access " << input
+                      << ": " << error.message() << '\n';
+            return 1;
+        }
+        if (!regular) {
+            std::cerr << "erlangaot: error: input is not a regular file: " << input << '\n';
+            return 1;
+        }
+        if (!std::ifstream{input, std::ios::binary}) {
+            std::cerr << "erlangaot: error: cannot read input: " << input << '\n';
+            return 1;
+        }
+    }
+
+    std::cerr << "erlangaot: error: compilation is not implemented yet; no output was written.\n";
+    return 1;
+}
+
+} // namespace
+
+int main(int argc, char* argv[])
+{
+    try {
+        return run(argc, argv);
+    } catch (const std::exception& error) {
+        std::cerr << "erlangaot: error: " << error.what() << '\n';
+        return 1;
+    }
+}

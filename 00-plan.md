@@ -1,7 +1,9 @@
 # ErlangAoT preliminary project plan
 
-Status: initial structure and build plan, 2026-09-17. This document proposes the
-layout; the directories, CMake files, and commands below are not implemented yet.
+Status: initial structure and build plan, 2026-09-17. The initial CLI and CMake
+targets are implemented for macOS; the runtime is a placeholder archive. The
+remaining directory layout and compiler/runtime behavior below are planned.
+See `README.md` for current commands and `docs/windows.md` for Windows follow-up.
 
 ## Scope and decisions
 
@@ -115,7 +117,7 @@ undecided at this stage.
 
 | Target           | Kind                                 | Purpose and dependencies                                                                      |
 | ---------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `erlang_aot`     | Executable, output name `erlang-aot` | Compiler components; ABI declarations; LLVM libraries only if the selected backend needs them |
+| `erlang_aot`     | Executable, output name `erlangaot` | Compiler components; ABI declarations; LLVM libraries only if the selected backend needs them |
 | `erlang_runtime` | Static library initially             | Runtime components; ABI declarations; OS dependencies such as `Threads::Threads`              |
 | `erlang_aot_abi` | CMake `INTERFACE` target             | Shared include path and contract headers; produces no binary                                  |
 
@@ -208,8 +210,9 @@ Logical flow: source loading → lexing/preprocessing → parsing → semantic a
 Lexing and preprocessing cooperate; this does not imply preprocessing raw text
 without tokens or committing to an intermediate exchange format.
 
-Provisional CLI name: `erlang-aot`. A future invocation could be
-`erlang-aot main.erl -o main`; entry-module/function selection and build-system
+CLI name: `erlangaot`. The initial interface accepts `erlangaot main.erl -o main`,
+but reports compilation as unimplemented. Help/version, argument validation, and
+input file checks are implemented. Entry-module/function selection and build-system
 integration remain to be specified.
 
 Centralize diagnostics and preserve source locations through transformations,
