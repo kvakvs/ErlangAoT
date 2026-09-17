@@ -1,5 +1,21 @@
 # Research notes
 
+## Step 1 implementation — 2026-09-18
+
+- Boost.Parser 1.90.0 checkout in build/deps/boost-parser, commit
+  647cec66831407742a6ad78582f2a9f3cd7d44d3. Standalone include target avoids upstream
+  CMake's mandatory Boost targets. Primary header SHA pinned; installed prefix works.
+- Public parsable_iter accepts only character code units; static_assert documents
+  rejection of struct tokens. Plan's explicit-token-cursor fallback chosen.
+- Recursive character grammar tested via parser_probe. Optional epp harness checks
+  exact OTP29.1; installed OTP currently 28. Building ignored out-of-tree OTP29.1
+  under build/otp29, logs there, prefix build/otp29-install for reference validation.
+- Clang opt-in enum analysis needs the Boost flags forward declaration annotated
+  clang::flag_enum (valid zero/combinations); parsing/boost_parser.hpp supplies
+  the semantic annotation without disabling diagnostics or modifying dependencies.
+- Step 1: C++23 tests and both quality checks pass; optional oracle skips on OTP28.
+  Runtime-only configuration/build succeeds with nonexistent Boost root.
+
 ## 2026-09-18 — Combined clean-commit quality gate
 
 - User requires both Lizard and clang-tidy to pass for a clean commit. Installed

@@ -2,13 +2,31 @@
 
 A C++ ahead-of-time compiler project for Erlang/OTP 29, with a separate C++ runtime.
 Currently implemented: CLI argument handling and independent CMake build targets.
-Parsing, code generation, and runtime behavior are not implemented yet.
+The compiler has a Boost.Parser foundation and optional OTP reference tests.
+Preprocessing, code generation, and runtime behavior are not implemented yet.
 
 ## Build on macOS
 
 Install Apple's Command Line Tools (`xcode-select --install`) and CMake 3.28 or
 newer. C++23 is the default. No LLVM development libraries or Erlang installation
 are required for this scaffold.
+
+Compiler builds use the standalone Boost.Parser headers from Boost 1.90.0:
+
+```sh
+git clone --depth 1 --branch boost-1.90.0 https://github.com/boostorg/parser.git build/deps/boost-parser
+```
+
+The pinned upstream commit is `647cec66831407742a6ad78582f2a9f3cd7d44d3`.
+Alternatively set `ERLANG_AOT_BOOST_PARSER_ROOT` to that source checkout or an
+installed Boost 1.90.0 prefix; CMake verifies the primary parser header checksum.
+No dependency is downloaded during configuration. Runtime-only builds do not
+discover Boost. The frontend uses Boost.Parser's standalone mode without the
+optional Boost.Hana tuple integration.
+
+CTest's `otp_oracle` uses `ERLANG_AOT_ESCRIPT` to record raw epp events from OTP
+29.1. It explicitly skips when that exact release is unavailable; ordinary C++
+tests still run. Outputs under the build tree are private test artifacts.
 
 ```sh
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++

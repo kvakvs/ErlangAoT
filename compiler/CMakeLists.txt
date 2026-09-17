@@ -1,3 +1,9 @@
+include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
+add_library(erlang_frontend STATIC src/parsing/probe.cpp)
+erlang_aot_project_options(erlang_frontend)
+target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
+target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
+
 add_executable(erlang_aot src/main.cpp)
 set_target_properties(erlang_aot PROPERTIES
     OUTPUT_NAME erlangaot
@@ -5,4 +11,4 @@ set_target_properties(erlang_aot PROPERTIES
 )
 erlang_aot_project_options(erlang_aot)
 target_compile_definitions(erlang_aot PRIVATE ERLANG_AOT_VERSION="${PROJECT_VERSION}")
-target_link_libraries(erlang_aot PRIVATE erlang_aot_abi)
+target_link_libraries(erlang_aot PRIVATE erlang_aot_abi erlang_frontend)

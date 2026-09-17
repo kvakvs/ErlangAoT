@@ -2,6 +2,12 @@
 
 - `CMakeLists.txt`: project/version, build switches, standard validation, CTest.
 - `cmake/ProjectOptions.cmake`: target-local C++ standard and warning settings.
+- `cmake/CompilerDependencies.cmake`: local/installed pinned Boost.Parser headers.
+- `compiler/include/erlang_aot/compiler/probe.hpp`, `compiler/src/parsing/probe.cpp`:
+  owned probe result and recursive Boost.Parser grammar; token-iterator constraint.
+- `tests/compiler/probe.cpp`: integration, offsets, malformed input and rollback.
+- `tests/compiler/preprocessor/oracle.{escript,cmake}`: optional OTP 29.1 epp events;
+  `tests/fixtures/preprocessor/{good,bad}.erl`: initial success/error fixtures.
 - `cmake/CheckComplexity.cmake`: standalone/target Lizard gate; CCN limit 10.
 - `.clang-tidy`: required diagnostic checks and cognitive-complexity limit 10.
 - `cmake/CheckClangTidy.cmake`: project translation-unit analysis and failure propagation.

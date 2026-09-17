@@ -1,0 +1,2 @@
+-module(bad).
+value() -> ?MISSING.

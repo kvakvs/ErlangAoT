@@ -1,0 +1,23 @@
+# A missing or different OTP release is an explicit optional-test skip.
+if(NOT EXISTS "${ESCRIPT}")
+    message("SKIP: escript is unavailable")
+    return()
+endif()
+file(MAKE_DIRECTORY "${OUTPUT_DIR}")
+foreach(fixture IN ITEMS good bad)
+    execute_process(COMMAND "${ESCRIPT}" "${HARNESS}"
+        "${FIXTURES}/${fixture}.erl" "${OUTPUT_DIR}/${fixture}.terms"
+        RESULT_VARIABLE result)
+    if(result STREQUAL "77")
+        message("SKIP: OTP 29.1 is required")
+        return()
+    endif()
+    if(NOT result STREQUAL "0")
+        message(FATAL_ERROR "OTP oracle failed: ${result}")
+    endif()
+endforeach()
+file(READ "${OUTPUT_DIR}/good.terms" good)
+file(READ "${OUTPUT_DIR}/bad.terms" bad)
+if(NOT good MATCHES "integer,.*42" OR NOT bad MATCHES "undefined,.*MISSING")
+    message(FATAL_ERROR "Oracle fixtures did not produce the expected events")
+endif()

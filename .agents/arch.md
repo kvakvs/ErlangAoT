@@ -15,8 +15,10 @@
   The compiler does not link the runtime. Neither target currently needs LLVM.
 - CTest exercises CLI exit codes, streams, path/argument handling, and preservation
   of outputs. Compiler stages and intermediate readers remain future work.
-- Boost.Parser is selected for compiler parsing; dependency integration is pending.
-  `.agents/01-pp.md` plans the OTP 29 preprocessor and compatibility tests.
+- `erlang_frontend` is a private static compiler component using standalone
+  Boost.Parser 1.90.0 headers. Runtime-only builds do not discover Boost.
+  The recursive probe and optional exact-version OTP 29.1 oracle implement step 1.
+  Token parsing will use an explicit cursor; Boost's public input is characters.
 - `references/otp/` is an ignored, shallow OTP-29.1 source checkout for research;
   `.agents/01-pp-otp-tests.md` indexes upstream tests. It is not a build dependency.
 - See `00-plan.md` for intended components and `.agents/plan-windows.md` for Windows work.
