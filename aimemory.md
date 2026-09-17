@@ -1,5 +1,18 @@
 # Research notes
 
+## Shared IDE configuration — 2026-09-18
+
+- `CMakePresets.json` schema 3 targets C++23 in build/debug and works with
+  Visual Studio 2022 plus VS Code CMake Tools. No fixed compiler/generator/path.
+- VS Code workspace settings enable the CMake Tools provider for cpptools;
+  fallback include paths cover project and cloned pinned Boost.Parser headers.
+- First configure requires the pinned Boost.Parser checkout or a local override
+  in ignored CMakeUserPresets.json. Check compilation DB for -std=c++23 and Boost
+  include on a configured host. Extension recommendations travel with Git.
+- Validation: preset configure/build/test succeeds on macOS; all seven CTests pass.
+  Compile database has C++23 for compiler units and Boost include for frontend.
+  Required full-build Lizard and clang-tidy gate passes before commit.
+
 ## Makefile entry points — 2026-09-18
 
 - Root Makefile adds build/test for macOS/Linux. Build always configures compiler,

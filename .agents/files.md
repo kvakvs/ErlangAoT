@@ -2,6 +2,10 @@
 
 - `Makefile`: macOS/Linux `build` and `test` wrappers around CMake and CTest;
   configurable build directory/type and extra configure arguments.
+- `CMakePresets.json`: shared C++23 Debug configure/build/test settings for CMake,
+  Visual Studio, and VS Code, with the compiler database in `build/debug`.
+- `.vscode/{settings,extensions}.json`: CMake Tools IntelliSense provider,
+  portable include fallback, and recommended VS Code extensions.
 - `CMakeLists.txt`: project/version, build switches, standard validation, CTest.
 - `cmake/ProjectOptions.cmake`: target-local C++ standard and warning settings.
 - `cmake/CompilerDependencies.cmake`: local/installed pinned Boost.Parser headers.

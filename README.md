@@ -27,6 +27,24 @@ No dependency is downloaded during configuration. Runtime-only builds do not
 discover Boost. The frontend uses Boost.Parser's standalone mode without the
 optional Boost.Hana tuple integration.
 
+For Visual Studio 2022 or VS Code, open the repository root as a CMake project.
+The checked-in `CMakePresets.json` selects C++23 and `build/debug`; configure it
+after cloning the Boost.Parser headers above. In VS Code, install the recommended
+C/C++ and CMake Tools extensions. CMake Tools supplies IntelliSense with the
+actual compiler, C++ standard, and include paths, including Boost. If the editor
+still shows old errors after the first configure, run **CMake: Configure** and
+**C/C++: Reset IntelliSense Database**. A developer using a different Boost
+installation can set `ERLANG_AOT_BOOST_PARSER_ROOT` in an ignored
+`CMakeUserPresets.json`; the shared files contain no host-specific paths.
+
+The same configuration works from a terminal:
+
+```sh
+cmake --preset debug
+cmake --build --preset debug
+ctest --preset debug
+```
+
 CTest's `otp_oracle` uses `ERLANG_AOT_ESCRIPT` to record raw epp events from OTP
 29.1. `scanner_oracle` compares lexical values and locations against that scanner;
 `lexer_golden` checks the same pinned records without Erlang. Optional oracle tests
