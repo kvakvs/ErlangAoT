@@ -14,6 +14,7 @@ struct DirectiveProbe {
     std::size_t end;
 };
 
-// Demonstrate recursive character parsing without committing preprocessing state.
+// Demonstrate recursive character parsing without committing preprocessing
+// state.
 std::optional<DirectiveProbe> probe_directive(std::string_view source);
 } // namespace erlang_aot

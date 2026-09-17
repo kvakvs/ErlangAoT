@@ -11,10 +11,18 @@ struct Span {
     std::size_t end = 0;
 };
 enum class DiagnosticCode : std::uint8_t {
-    invalid_character, invalid_number, invalid_escape, unterminated_literal,
-    string_indentation, adjacent_strings, malformed_directive, missing_terminator,
-    misplaced_directive, resource_limit
+    invalid_character,
+    invalid_number,
+    invalid_escape,
+    unterminated_literal,
+    string_indentation,
+    adjacent_strings,
+    malformed_directive,
+    missing_terminator,
+    misplaced_directive,
+    resource_limit
 };
+
 struct Diagnostic {
     // Keep stable machine-readable identity separately from presentation.
     DiagnosticCode code;
@@ -23,12 +31,14 @@ struct Diagnostic {
     Span primary;
     std::vector<Span> related;
 };
+
 class LexicalError : public std::runtime_error {
-public:
+  public:
     // Transport a source diagnostic from a lexical helper to the form driver.
     explicit LexicalError(Diagnostic diagnostic);
     const Diagnostic diagnostic;
 };
+
 // Render a diagnostic with its physical filename and character coordinates.
-std::string render(const Diagnostic& diagnostic);
+std::string render(const Diagnostic &diagnostic);
 } // namespace erlang_aot

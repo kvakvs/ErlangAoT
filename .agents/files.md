@@ -1,7 +1,7 @@
 # File map
 
-- `Makefile`: macOS/Linux `build` and `test` wrappers around CMake and CTest;
-  configurable build directory/type and extra configure arguments.
+- `Makefile`: macOS/Linux `build` and `test` wrappers around CMake and CTest,
+  plus `format`/`fmt` for project C++ files; configurable tool paths and options.
 - `CMakePresets.json`: shared C++23 Debug configure/build/test settings for CMake,
   Visual Studio, and VS Code, with the compiler database in `build/debug`.
 - `.vscode/{settings,extensions}.json`: CMake Tools IntelliSense provider,
@@ -16,6 +16,8 @@
   `tests/fixtures/preprocessor/{good,bad}.erl`: initial success/error fixtures.
 - `cmake/CheckComplexity.cmake`: standalone/target Lizard gate; CCN limit 10.
 - `.clang-tidy`: required diagnostic checks and cognitive-complexity limit 10.
+- `.clang-format`: four-space LLVM-based formatting with K&R braces, 120 columns,
+  and blank lines between type/function definition blocks.
 - `cmake/CheckClangTidy.cmake`: project translation-unit analysis and failure propagation.
 - `cmake/QualityToolchain.cmake.in`: configured include/SDK paths for clang-tidy.
 - `tools/requirements-quality.txt`: pinned Lizard, clang-tidy, and Python dependencies;

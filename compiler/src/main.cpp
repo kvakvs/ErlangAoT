@@ -36,9 +36,8 @@ struct Options {
 };
 
 // Consume the output operand and reject repeated or incomplete output options.
-std::optional<std::string> parse_output(std::string_view option,
-    std::span<char*>& remaining, Options& options, bool& output_seen)
-{
+std::optional<std::string> parse_output(std::string_view option, std::span<char *> &remaining, Options &options,
+                                        bool &output_seen) {
     if (output_seen) {
         return "output path specified more than once";
     }
@@ -51,10 +50,10 @@ std::optional<std::string> parse_output(std::string_view option,
     return std::nullopt;
 }
 
-// Apply a named option; operands are consumed only by options that require them.
-std::optional<std::string> parse_option(std::string_view argument,
-    std::span<char*>& remaining, Options& options, bool& output_seen)
-{
+// Apply a named option; operands are consumed only by options that require
+// them.
+std::optional<std::string> parse_option(std::string_view argument, std::span<char *> &remaining, Options &options,
+                                        bool &output_seen) {
     if (argument == "-h" || argument == "--help") {
         options.show_help = true;
     } else if (argument == "--version") {
@@ -68,8 +67,7 @@ std::optional<std::string> parse_option(std::string_view argument,
 }
 
 // Walk the arguments in order while respecting the end-of-options marker.
-std::optional<std::string> parse_options(std::span<char*> remaining, Options& options)
-{
+std::optional<std::string> parse_options(std::span<char *> remaining, Options &options) {
     bool positional_only = false;
     bool output_seen = false;
     while (!remaining.empty()) {
@@ -93,12 +91,10 @@ std::optional<std::string> parse_options(std::span<char*> remaining, Options& op
 }
 
 // Validate the request and inputs before reporting the unimplemented backend.
-int run(std::span<char*> arguments)
-{
+int run(std::span<char *> arguments) {
     Options options;
     if (const auto error = parse_options(arguments, options)) {
-        std::cerr << "erlangaot: error: " << *error
-                  << "\nTry 'erlangaot --help' for usage.\n";
+        std::cerr << "erlangaot: error: " << *error << "\nTry 'erlangaot --help' for usage.\n";
         return 2;
     }
     if (options.show_help) {
@@ -110,12 +106,11 @@ int run(std::span<char*> arguments)
         return 0;
     }
 
-    for (const auto& input : options.inputs) {
+    for (const auto &input : options.inputs) {
         std::error_code error;
         const bool regular = std::filesystem::is_regular_file(input, error);
         if (error) {
-            std::cerr << "erlangaot: error: cannot access " << input
-                      << ": " << error.message() << '\n';
+            std::cerr << "erlangaot: error: cannot access " << input << ": " << error.message() << '\n';
             return 1;
         }
         if (!regular) {
@@ -128,18 +123,18 @@ int run(std::span<char*> arguments)
         }
     }
 
-    std::cerr << "erlangaot: error: compilation is not implemented yet; no output was written.\n";
+    std::cerr << "erlangaot: error: compilation is not implemented yet; no "
+                 "output was written.\n";
     return 1;
 }
 
 } // namespace
 
 // Keep unexpected failures inside the CLI diagnostic and exit-code contract.
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
     try {
         return run(std::span{argv, static_cast<std::size_t>(argc)}.subspan(1));
-    } catch (const std::exception& error) {
+    } catch (const std::exception &error) {
         std::cerr << "erlangaot: error: " << error.what() << '\n';
         return 1;
     }

@@ -64,6 +64,7 @@ After installing the Boost.Parser headers above, use the root Makefile:
 ```sh
 make build
 make test
+make format # or: make fmt
 ```
 
 `build` configures and builds the compiler, runtime, and test executables in
@@ -73,6 +74,11 @@ make test
 ```sh
 make test BUILD_DIR=build/release BUILD_TYPE=Release CMAKE_ARGS='-DCMAKE_CXX_COMPILER=clang++'
 ```
+
+`format` and `fmt` apply the repository's `.clang-format` to C++ files under
+`compiler/`, `runtime/`, `abi/`, and `tests/`. On macOS, the Makefile also finds
+Apple's `clang-format` through `xcrun`. Set `CLANG_FORMAT` to another executable
+path if needed.
 
 Builds use two parallel jobs by default; set `JOBS=4` to change this. The equivalent
 direct CMake commands remain available:
