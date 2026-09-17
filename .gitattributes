@@ -1,0 +1,2 @@
+# Preserve the scanner's deliberate Latin-1/CRLF byte fixture on every host.
+tests/fixtures/preprocessor/lexical/latin1.erl -text whitespace=cr-at-eol

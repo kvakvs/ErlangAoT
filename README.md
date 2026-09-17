@@ -2,7 +2,8 @@
 
 A C++ ahead-of-time compiler project for Erlang/OTP 29, with a separate C++ runtime.
 Currently implemented: CLI argument handling and independent CMake build targets.
-The compiler has a Boost.Parser foundation and optional OTP reference tests.
+The compiler has a Boost.Parser foundation, an owned-source Erlang lexer, and
+optional OTP reference tests.
 Preprocessing, code generation, and runtime behavior are not implemented yet.
 
 ## Build on macOS
@@ -25,8 +26,11 @@ discover Boost. The frontend uses Boost.Parser's standalone mode without the
 optional Boost.Hana tuple integration.
 
 CTest's `otp_oracle` uses `ERLANG_AOT_ESCRIPT` to record raw epp events from OTP
-29.1. It explicitly skips when that exact release is unavailable; ordinary C++
-tests still run. Outputs under the build tree are private test artifacts.
+29.1. `scanner_oracle` compares lexical values and locations against that scanner;
+`lexer_golden` checks the same pinned records without Erlang. Optional oracle tests
+explicitly skip when that exact release is unavailable. Fixtures cover UTF-8 and
+Latin-1, CRLF, arbitrary-size integers, based floats, strings/sigils, and form dots.
+Outputs under the build tree are private test artifacts.
 
 ```sh
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++

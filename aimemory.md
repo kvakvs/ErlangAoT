@@ -1,5 +1,18 @@
 # Research notes
 
+## Step 2 implementation — 2026-09-18
+
+- Source ownership/positions, diagnostics, incremental lexer complete; arbitrary
+  decimal integers avoid a runtime dependency. OTP29 based floats included.
+- Oracle built locally at build/otp29-install/bin/escript; set ERLANG_AOT_ESCRIPT.
+  Both epp/scanner oracle tests execute; all six CTests pass in C++23/C++26 and
+  ASan/UBSan. Fresh full-build check-quality passes without suppressions.
+- Five lexical fixtures + exact OTP29.1 generated records run offline too.
+- Encoding marker is case-sensitive coding, value Latin-1 case-insensitive;
+  first marker in first two comment lines decides encoding. Scanner numeric
+  suffix rejection deliberately covers ASCII only, matching OTP29 NAMECHAR.
+- Next: step3 session/directive envelopes; semantics deferred per plan.
+
 ## Step 1 implementation — 2026-09-18
 
 - Boost.Parser 1.90.0 checkout in build/deps/boost-parser, commit
@@ -8,8 +21,9 @@
 - Public parsable_iter accepts only character code units; static_assert documents
   rejection of struct tokens. Plan's explicit-token-cursor fallback chosen.
 - Recursive character grammar tested via parser_probe. Optional epp harness checks
-  exact OTP29.1; installed OTP currently 28. Building ignored out-of-tree OTP29.1
-  under build/otp29, logs there, prefix build/otp29-install for reference validation.
+  exact OTP29.1; system OTP is 28. Built OTP29.1 inside ignored references/otp
+  (configure generates in-source Makefiles); logs in build/otp29 and installed
+  prefix build/otp29-install for reference validation.
 - Clang opt-in enum analysis needs the Boost flags forward declaration annotated
   clang::flag_enum (valid zero/combinations); parsing/boost_parser.hpp supplies
   the semantic annotation without disabling diagnostics or modifying dependencies.

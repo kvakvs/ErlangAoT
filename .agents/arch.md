@@ -19,6 +19,11 @@
   Boost.Parser 1.90.0 headers. Runtime-only builds do not discover Boost.
   The recursive probe and optional exact-version OTP 29.1 oracle implement step 1.
   Token parsing will use an explicit cursor; Boost's public input is characters.
+- Shared source buffers retain bytes, decoded characters, physical positions and
+  logical locations. Incremental lexer forms preserve raw spelling/provenance;
+  Boost lexical rules cover words and digit sequences. OTP 29 sigils, multiline
+  strings and based floats are supported. Scanner golden tests run without Erlang;
+  live comparisons use exact OTP 29.1 when supplied.
 - `references/otp/` is an ignored, shallow OTP-29.1 source checkout for research;
   `.agents/01-pp-otp-tests.md` indexes upstream tests. It is not a build dependency.
 - See `00-plan.md` for intended components and `.agents/plan-windows.md` for Windows work.

@@ -16,3 +16,22 @@ add_test(NAME otp_oracle COMMAND "${CMAKE_COMMAND}"
     "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/oracle"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.cmake")
 set_tests_properties(otp_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:")
+
+add_executable(lexer_tests compiler/lexer.cpp)
+erlang_aot_project_options(lexer_tests)
+target_link_libraries(lexer_tests PRIVATE erlang_frontend)
+add_test(NAME lexer COMMAND lexer_tests)
+add_executable(lexer_dump compiler/lexer_dump.cpp)
+erlang_aot_project_options(lexer_dump)
+target_link_libraries(lexer_dump PRIVATE erlang_frontend)
+add_test(NAME scanner_oracle COMMAND "${CMAKE_COMMAND}"
+    "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+    "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/scan.escript"
+    "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
+    "-DDUMP=$<TARGET_FILE:lexer_dump>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/scan.cmake")
+set_tests_properties(scanner_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:")
+add_test(NAME lexer_golden COMMAND "${CMAKE_COMMAND}"
+    "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
+    "-DDUMP=$<TARGET_FILE:lexer_dump>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/golden.cmake")
