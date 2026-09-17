@@ -1,4 +1,5 @@
 /build/
+/.venv-quality/
 /references/otp/
 /CMakeUserPresets.json
 .DS_Store

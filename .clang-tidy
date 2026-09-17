@@ -1,0 +1,11 @@
+Checks: >-
+  -*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  readability-function-cognitive-complexity
+WarningsAsErrors: '*'
+HeaderFilterRegex: '(^|/)(compiler|runtime|abi)/'
+CheckOptions:
+  readability-function-cognitive-complexity.Threshold: 10
+  readability-function-cognitive-complexity.DescribeBasicIncrements: true

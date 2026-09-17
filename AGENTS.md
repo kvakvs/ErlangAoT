@@ -33,3 +33,10 @@ Use `aimemory.md` for AI notes and memory, this file will not be read by humans.
 The initial directory structure and implementation plan with technology choices is at `00-plan.md`
 - Maintain a compact architecture overview in `.agents/arch.md` update it after major changes. Compact the contents sometimes.
 - Maintain a compact file list and overview of which large group of modules does what, and which exact file implements what in `.agents/files.md`, keep this file updated, and compact its contents sometimes.
+
+## When Coding
+
+- IMPORTANT: Document class fields creation intent, what will they be doing. Document function creation intent. Keep comments down to 1-2 lines.
+- The code will be read by humans, keep it readable.
+- The cyclomatic complexity of new functions and new files must remain low (avoid complex code). Use both Lizard and clang-tidy.
+- Before a clean commit, run `cmake --build build/debug --target check-quality` in a freshly configured build with both compiler and runtime enabled. Both Lizard and clang-tidy must pass; do not bypass findings with threshold increases or suppressions merely to pass the gate.

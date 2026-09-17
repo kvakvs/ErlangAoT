@@ -1,0 +1,5 @@
+# Quality analyzers and runtime dependencies, pinned for comparable reports.
+clang-tidy==22.1.8
+lizard==1.24.0
+pathspec==1.1.1
+Pygments==2.21.0

@@ -2,8 +2,15 @@
 
 - `CMakeLists.txt`: project/version, build switches, standard validation, CTest.
 - `cmake/ProjectOptions.cmake`: target-local C++ standard and warning settings.
+- `cmake/CheckComplexity.cmake`: standalone/target Lizard gate; CCN limit 10.
+- `.clang-tidy`: required diagnostic checks and cognitive-complexity limit 10.
+- `cmake/CheckClangTidy.cmake`: project translation-unit analysis and failure propagation.
+- `cmake/QualityToolchain.cmake.in`: configured include/SDK paths for clang-tidy.
+- `tools/requirements-quality.txt`: pinned Lizard, clang-tidy, and Python dependencies;
+  installed locally in ignored `.venv-quality/`.
 - `compiler/CMakeLists.txt`: compiler executable, version define, output location.
-- `compiler/src/main.cpp`: CLI parsing/help/version, input validation, exit codes.
+- `compiler/src/main.cpp`: CLI argument traversal, named-option/output parsing,
+  help/version, input validation, exit codes; functions meet both complexity limits.
 - `runtime/CMakeLists.txt`: separate runtime archive target.
 - `runtime/src/runtime.cpp`: placeholder translation unit, no runtime behavior.
 - `abi/CMakeLists.txt`: reserved interface target; no ABI declarations yet.

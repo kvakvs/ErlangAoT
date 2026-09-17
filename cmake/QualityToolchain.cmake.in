@@ -1,0 +1,3 @@
+# Supply headers that an independently installed clang-tidy cannot discover.
+set(quality_implicit_includes [==[@CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES@]==])
+set(quality_apple_sysroot [==[@CMAKE_CXX_COMPILER_APPLE_SYSROOT@]==])

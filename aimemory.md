@@ -1,5 +1,36 @@
 # Research notes
 
+## 2026-09-18 — Combined clean-commit quality gate
+
+- User requires both Lizard and clang-tidy to pass for a clean commit. Installed
+  clang-tidy 22.1.8 macOS arm64 wheel into .venv-quality and pinned requirements.
+- .clang-tidy enables clang-analyzer-*, bugprone-*, performance-*, and cognitive
+  complexity <=10; all reported warnings are errors. check-quality requires both
+  project components and depends on check-complexity and check-clang-tidy.
+- No Git hook installed; required pre-commit command documented in AGENTS/README.
+- Clang-tidy's standalone wheel did not find Apple libc++ headers automatically.
+  QualityToolchain.cmake supplies CMake's detected implicit includes and Apple SDK.
+- Refactored CLI parsing with span-based consumption and parse_option/parse_output
+  helpers. Maximum CCN now 10 (previous parse_options 21); cognitive check passes.
+  Added option precedence, output consumption, and end-marker CLI regression cases.
+- Validation: both default quality checks pass; C++23 build and CLI CTest (20
+  scenarios) pass; pip check passes. Partial build's combined gate rejects the
+  request. clang-tidy initially rejected cognitive complexity 24 at threshold 10.
+
+## 2026-09-18 — Complexity tooling installed
+
+- User requested an open-source cyclomatic complexity tool for quality control.
+  Installed Lizard 1.24.0, pathspec 1.1.1, Pygments 2.21.0 in .venv-quality using
+  Python 3.9.6; pinned tools/requirements-quality.txt and ignored environment.
+- cmake -P cmake/CheckComplexity.cmake or optional check-complexity target scans
+  compiler/runtime/abi C++, default CCN 10; normal builds independent of Python.
+- Existing parse_options CCN 21 fails gate; run=8, main=2. No source refactor,
+  suppression, or relaxed default. README documents baseline and report-only mode.
+- Lizard is lexical, not Clang CFG analysis; template/new syntax counts need review.
+- Validation: pip check passed; default standalone and CMake target correctly fail
+  on CCN 21; standalone threshold override 21 passes; report-only mode exits 0.
+  CMake configure/build and existing CLI CTest passed. Default remains 10.
+
 ## 2026-09-18 — Local OTP source and test discovery
 
 - User requested a gitignored OTP checkout and preprocessor test discovery.

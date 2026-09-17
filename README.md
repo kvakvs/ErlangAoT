@@ -54,3 +54,83 @@ Exit codes: `0` for help/version, `2` for command-line usage errors, `1` for inp
 errors or the unimplemented compilation request. Diagnostics go to stderr.
 
 See [the project plan](00-plan.md) and [future Windows support](.agents/plan-windows.md).
+
+## Required quality checks
+
+[Lizard](https://github.com/terryyin/lizard) is an MIT-licensed cyclomatic
+complexity analyzer. Version 1.24.0, clang-tidy 22.1.8, and dependencies are pinned in
+`tools/requirements-quality.txt`. It analyzes source without compiling or
+requiring Clang/LLVM headers. Its lexical measurements are a review aid;
+template-heavy and newer C++ constructs can require manual interpretation.
+
+Install into the ignored project environment (Python 3.9+):
+
+```sh
+python3 -m venv .venv-quality
+.venv-quality/bin/python -m pip install -r tools/requirements-quality.txt
+```
+
+On Windows, use `py -3 -m venv .venv-quality` and
+`.venv-quality\Scripts\python.exe -m pip install -r tools/requirements-quality.txt`.
+The clang-tidy package supplies a native executable for supported wheel platforms.
+If unavailable for a host, install LLVM's clang-tidy separately and set
+`CLANG_TIDY_EXECUTABLE` when invoking the standalone script below.
+
+**Both tools must pass before a clean commit.** From the project root:
+
+```sh
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ \
+  -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
+cmake --build build/debug --target check-quality --parallel
+```
+
+Use a Makefiles or Ninja generator, which produces `compile_commands.json`.
+Reconfigure after changing source lists or build options. The combined target
+requires both compiler and runtime enabled and fails when either tool fails.
+It is the required pre-commit command; Git hooks are not installed automatically.
+
+[Clang-tidy](https://clang.llvm.org/extra/clang-tidy/) uses `.clang-tidy` to enable
+static analyzer, bug-prone code, performance, and cognitive-complexity checks.
+All reported warnings are errors; the per-function cognitive limit is **10**.
+This complements Lizard's cyclomatic metric. It uses the compilation database and
+CMake's detected implicit includes/Apple SDK to analyze configured project
+translation units and their included project headers. Unreferenced headers are
+not standalone translation units. System-header findings are excluded.
+
+Run clang-tidy separately with `cmake --build build/debug --target check-clang-tidy`
+or `cmake -DQUALITY_BUILD_DIR=build/debug -P cmake/CheckClangTidy.cmake`.
+For a separate installation, pass `-DCLANG_TIDY_EXECUTABLE=/path/to/clang-tidy`
+before `-P`. Normal builds remain independent of the quality-tool installation.
+
+Run the check from the project root, without configuring or building C++:
+
+```sh
+cmake -P cmake/CheckComplexity.cmake
+```
+
+After configuring CMake, the same check is available as:
+
+```sh
+cmake --build build/debug --target check-complexity
+```
+
+The initial per-function limit is **CCN 10**; a value above 10 makes the command
+fail for local checks or CI. Lizard's auxiliary defaults also flag function
+length above 1000 lines and more than 100 parameters. Reports include per-file
+averages; there is no separate aggregate file threshold yet. The scan covers C++
+under `compiler/`, `runtime/`, and `abi/`, excluding the OTP reference checkout and
+build/dependency directories. Normal builds do not run this optional target.
+
+For a report that always succeeds despite threshold violations:
+
+```sh
+.venv-quality/bin/python -m lizard -l cpp -C 10 -i -1 compiler runtime abi
+```
+
+The script accepts `-DQUALITY_PYTHON=/absolute/path/to/python` for another
+environment, and `-DCOMPLEXITY_MAX_CCN=N` for threshold experiments; put either
+option before `-P`. Use the default threshold for the project quality gate.
+
+The CLI option parser has been split into argument traversal, named-option
+handling, and output-operand handling. Its maximum CCN is now **10**, down from
+21, and both quality checks pass without suppressions or relaxed thresholds.

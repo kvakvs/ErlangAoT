@@ -1,5 +1,11 @@
 # Architecture
 
+- Required pre-commit `check-quality` target combines Lizard (CCN <=10) and
+  clang-tidy (cognitive <=10, analyzer/bugprone/performance; warnings as errors).
+  Tools live in ignored `.venv-quality/`; both pass. Normal builds stay independent.
+- Clang-tidy uses the full build's compilation database and detected include/SDK
+  paths. Use Makefiles/Ninja and enable both compiler and runtime for the gate.
+
 - CMake/C++23 project; C++26 selectable. macOS is the currently validated platform.
 - `erlang_aot` builds `erlangaot`, the host compiler CLI. It parses arguments and
   checks inputs; compilation is explicitly unimplemented and never writes output.
