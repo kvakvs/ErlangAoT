@@ -1,5 +1,14 @@
 # Research notes
 
+## Makefile entry points — 2026-09-18
+
+- Root Makefile adds build/test for macOS/Linux. Build always configures compiler,
+  runtime and tests; test depends on build and fails on an empty CTest suite.
+- BUILD_DIR defaults build/debug, BUILD_TYPE Debug, JOBS 2; CMAKE_ARGS forwards
+  toolchain/dependency options. Explicit CMake parallelism avoids jobserver
+  forwarding differences between macOS make, CMake, and the generated build tool.
+- No dependency download or quality-gate bypass; CMake remains authoritative.
+
 ## Step 3 implementation — 2026-09-18
 
 - PreprocessorSession emits OrdinaryForm/Directive/Diagnostic, owns reserved macro

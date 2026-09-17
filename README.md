@@ -7,11 +7,12 @@ a per-module form/directive parser with structured diagnostics and recovery.
 Macro expansion and other directive effects, CLI preprocessing, code generation,
 and runtime behavior remain unimplemented.
 
-## Build on macOS
+## Build on macOS and Linux
 
-Install Apple's Command Line Tools (`xcode-select --install`) and CMake 3.28 or
-newer. C++23 is the default. No LLVM development libraries or Erlang installation
-are required for this scaffold.
+On macOS, install Apple's Command Line Tools (`xcode-select --install`). On Linux,
+install a C++23-capable compiler and GNU Make. Both need CMake 3.28 or newer.
+C++23 is the default. No LLVM development libraries or Erlang installation are
+required for this scaffold.
 
 Compiler builds use the standalone Boost.Parser headers from Boost 1.90.0:
 
@@ -39,6 +40,24 @@ and diagnostic terms remain token operands until their planned evaluation stages
 The current misplaced-directive check recognizes line-leading structural directive
 names after a function arrow. It is a syntax heuristic; ambiguous expression calls
 require the future Erlang parser. This internal API does not define stage output.
+
+After installing the Boost.Parser headers above, use the root Makefile:
+
+```sh
+make build
+make test
+```
+
+`build` configures and builds the compiler, runtime, and test executables in
+`build/debug`. `test` builds first and runs CTest, showing failures. Override
+`BUILD_DIR`, `BUILD_TYPE`, or `CMAKE_ARGS` when needed, for example:
+
+```sh
+make test BUILD_DIR=build/release BUILD_TYPE=Release CMAKE_ARGS='-DCMAKE_CXX_COMPILER=clang++'
+```
+
+Builds use two parallel jobs by default; set `JOBS=4` to change this. The equivalent
+direct CMake commands remain available:
 
 ```sh
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++

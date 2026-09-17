@@ -1,5 +1,7 @@
 # File map
 
+- `Makefile`: macOS/Linux `build` and `test` wrappers around CMake and CTest;
+  configurable build directory/type and extra configure arguments.
 - `CMakeLists.txt`: project/version, build switches, standard validation, CTest.
 - `cmake/ProjectOptions.cmake`: target-local C++ standard and warning settings.
 - `cmake/CompilerDependencies.cmake`: local/installed pinned Boost.Parser headers.
