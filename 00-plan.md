@@ -113,22 +113,46 @@ undecided at this stage.
 
 ## Targets and dependencies
 
-| Target | Kind | Purpose and dependencies |
-| --- | --- | --- |
-| `erlang_aot` | Executable, output name `erlang-aot` | Compiler components; ABI declarations; LLVM libraries only if the selected backend needs them |
-| `erlang_runtime` | Static library initially | Runtime components; ABI declarations; OS dependencies such as `Threads::Threads` |
-| `erlang_aot_abi` | CMake `INTERFACE` target | Shared include path and contract headers; produces no binary |
+| Target           | Kind                                 | Purpose and dependencies                                                                      |
+| ---------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `erlang_aot`     | Executable, output name `erlang-aot` | Compiler components; ABI declarations; LLVM libraries only if the selected backend needs them |
+| `erlang_runtime` | Static library initially             | Runtime components; ABI declarations; OS dependencies such as `Threads::Threads`              |
+| `erlang_aot_abi` | CMake `INTERFACE` target             | Shared include path and contract headers; produces no binary                                  |
 
 The compiler executable does not link the runtime library into itself. Its driver
 locates the runtime when linking an Erlang application. The runtime does not
 depend on compiler internals or LLVM libraries. LLVM library discovery, if needed,
 belongs inside the compiler build so runtime-only builds remain independent.
 
-Keep the generated-code/runtime boundary narrow: exported functions should use
-C linkage and explicitly defined ABI types. Keep C++ implementation classes and
-standard-library types behind that boundary. Term layout, calling conventions,
-GC coordination, and ABI versioning require later design; C linkage alone does
-not define them.
+The generated-code/runtime boundary may use any explicitly supported ABI for the
+target platform, including C++ linkage. C linkage is not a requirement. Keep the
+contract in `abi/`; its exact form should follow the chosen code-generation path:
+
+- If emitting C++, generated code can include runtime interface headers and call
+  ordinary C++ functions. Clang then handles name mangling, argument/return
+  lowering, and any C++ object-layout rules used by the interface.
+- If emitting LLVM IR directly, the compiler must generate matching symbol names,
+  calling conventions, argument/return representations, and ABI attributes.
+  A small C-linkage interface implemented in C++ is a simpler initial option here;
+  direct C++ ABI calls are also possible if their lowering is implemented or
+  delegated to Clang. LLVM does not infer a C++ ABI from source-level declarations.
+- Specialized conventions for calls between generated Erlang functions can be
+  considered separately from calls into the C++ runtime.
+
+Matching architecture and OS is necessary but insufficient. Both sides must agree
+on the target ABI/environment, data layout, calling conventions, and relevant
+toolchain settings. If C++ objects or exceptions cross the boundary, their layout,
+lifetime, exception/unwind rules, and any exposed standard-library ABI must also
+match. See the [C++ ABI specification](https://itanium-cxx-abi.github.io/cxx-abi/abi.html),
+[LLVM calling conventions](https://llvm.org/docs/LangRef.html#calling-conventions),
+and [Clang toolchain guidance](https://clang.llvm.org/docs/Toolchain.html).
+
+Initially build generated code and the runtime with one selected compatible target
+toolchain/configuration, and rebuild them together when the contract changes.
+Cross-toolchain or cross-version binary compatibility is not an initial promise.
+Term layout, GC coordination, exception policy, and ABI versioning remain later
+design decisions. C++ linkage by itself supplies neither Erlang semantics nor a
+performance advantage over C-linkage functions implemented in C++.
 
 Initially produce a static runtime archive (`.a`, or `.lib` on Windows). A shared
 runtime can be added later. Dynamic Erlang code loading/upgrades are a separate

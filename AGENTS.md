@@ -22,3 +22,7 @@ The source code of existing pure Erlang projects will be buildable via LLVM into
 - Future directories: `compiler/`, `runtime/`, `abi/`, `cmake/`, `tests/`, `examples/`, and `docs/`; see `00-plan.md` for component locations. Intermediate stage readers have reserved directory locations only.
 
 Use `aimemory.md` for AI notes and memory, this file will not be read by humans.
+
+## Artifacts Produced
+
+The initial directory structure and implementation plan with technology choices is at `00-plan.md`
