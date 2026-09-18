@@ -125,6 +125,9 @@ void PreprocessorSession::State::scan() {
 
 void PreprocessorSession::State::process(std::vector<Token> tokens) {
     const auto kind = directive_kind(tokens);
+    if (kind && conditional(*kind, tokens)) {
+        return;
+    }
     if (!active()) {
         return;
     }

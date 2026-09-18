@@ -178,13 +178,17 @@ void append_segment(Value &result, const Expr &expression, const std::function<b
         count = value.bits.size();
     }
     if (expression.children.size() == 2) {
-        count = index(evaluate(expression.children[1], defined)) * settings.unit;
+        const auto size = evaluate(expression.children[1], defined);
+        if (integral(size) > 1000000 / settings.unit) {
+            throw EvaluationLimit();
+        }
+        count = index(size) * settings.unit;
     }
-    if (value.kind == ValueKind::list && expression.children.front().token.kind == TokenKind::string) {
+    if (expression.children.front().token.kind == TokenKind::string) {
         for (const auto &character : value.elements) {
             append_value(result, character, settings, count);
         }
-    } else if (value.kind != ValueKind::nil) {
+    } else {
         append_value(result, value, settings, count);
     }
 }

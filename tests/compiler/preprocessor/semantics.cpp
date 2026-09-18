@@ -96,8 +96,18 @@ void stringify_arguments() {
             "canonical raw stringification");
 }
 
+void branches() {
+    auto result = run("-ifdef(NO). -include(\"missing\"). ?MISSING. -else. -define(X,2). -endif. ?X.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"2"}, "skipped effects");
+    require(run("-else.").failed, "unbalanced branch");
+    require(run("-ifdef(NO).").failed, "unterminated branch");
+    require(run("-ifdef(NO). -else. -else. -endif.").failed, "repeated else");
+}
+
 int main() {
     objects();
     macros();
     stringify_arguments();
+    branches();
 }

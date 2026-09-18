@@ -49,7 +49,11 @@ double real(const Value &value) {
         return value.real;
     }
     if (value.kind == ValueKind::integer) {
-        return value.integer.convert_to<double>();
+        const auto number = value.integer.convert_to<double>();
+        if (!std::isfinite(number)) {
+            throw EvaluationFailure();
+        }
+        return number;
     }
     throw EvaluationFailure();
 }
