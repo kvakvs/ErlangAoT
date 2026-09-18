@@ -1,5 +1,6 @@
 #pragma once
 #include "ast/builder.hpp"
+#include "parsing/operator_info.hpp"
 #include "parsing/token_cursor.hpp"
 
 namespace erlang_aot {
@@ -29,7 +30,12 @@ class FormParser {
     ast::FileAttribute file_attribute();
     ast::ZeroArgumentFunction function();
     // Parse bounded recursive values without rescanning expanded tokens.
-    ast::ExprId expression();
+    ast::ExprId expression(int minimum = 0);
+    ast::ExprId prefix();
+    ast::ExprId continuation(ast::ExprId left, const OperatorInfo &info);
+    std::optional<OperatorInfo> next_operator() const;
+    ast::ExprId make(ast::ExprValue value, std::size_t begin, std::size_t anchor);
+    void nonassociative(const OperatorInfo &info) const;
     ast::ExprValue primary();
     ast::ExprValue literal();
     ast::ExprValue sigil();

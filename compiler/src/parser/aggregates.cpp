@@ -1,18 +1,6 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-ast::ExprId FormParser::expression() {
-    if (depth_ >= nesting_) {
-        fail(DiagnosticCode::resource_limit, "parser nesting budget exhausted");
-    }
-    ++depth_;
-    const auto begin = cursor_.offset();
-    auto result = primary();
-    node();
-    --depth_;
-    return builder_.expression(std::move(result), builder_.source(begin, cursor_.offset(), begin));
-}
-
 ast::ExprValue FormParser::primary() {
     if (cursor_.empty() || cursor_.anchor().kind == TokenKind::dot) {
         fail(DiagnosticCode::parser_syntax, "expected expression");

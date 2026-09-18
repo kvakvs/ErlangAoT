@@ -155,3 +155,39 @@ ASan/UBSan; the final depth regression also passed natively. Missing/OTP 28 live
 oracles explicitly skipped. Full Lizard and clang-tidy passed at unchanged thresholds
 after adding an explicit active-transaction check identified by optional-access
 analysis. Operators, calls, patterns and full function clauses remain pending.
+
+## Operators and calls (step 6)
+
+Step 5 commit: `a57d8e9`. A bounded Pratt parser consumes shared infix/prefix/call
+metadata. The preprocessor now also uses the shared prefix descriptors; its grammar
+and evaluator remain separate. Public operator enums distinguish unary and binary
+syntax; match, catch, call and remote qualification have dedicated typed payloads.
+No constant folding, callable-target checks, or binding checks occur during parsing.
+
+Precedence follows the pinned grammar: catch 0, match/send 100, orelse 150, andalso
+160, comparisons 200, list operators 300, additive/bitwise operators 400,
+multiplicative operators 500, prefix operators 600, calls 750 and remote colon 800.
+Nonassociative comparison/remote chains require grouping. Match/send/list and
+short-circuit operators associate right; arithmetic associates left. Parentheses
+retain a Group node and reset syntactic association. Separators are left for their
+owning list/tuple/call/form production; expression parsing never consumes them.
+
+Call targets and remote sides retain arbitrary expressions, including parser-valid
+but semantically invalid targets. `M:F(X)` is a call on a remote expression;
+`M:(F(X))` contains a call on the remote's right side. Chained calls are preserved.
+Operator/call/colon tokens anchor diagnostics and nodes; their extents include the
+full expression. Left-associative chains iterate over flat arena handles. Recursive
+right-associative and unary chains use the same configurable nesting bound.
+
+Step 6 fixtures cover every operator, both orders of representative precedence
+pairs, catch, nested grouping, quoted operator atoms, dynamic/chained calls, remote
+expressions and malformed operands/arguments/comparison/colon chains. Native tests
+also inspect typed tree shapes and anchors, rejection rollback, 8,192 left-associated
+operations, and bounded right/unary recursion. Test dump operator spellings are
+independent of the production metadata, so mismapped enums fail OTP comparison.
+
+Step 6 validation (macOS arm64): fresh full C++23 build and all 20 CTests passed,
+including live OTP 29.1. The five preprocessing regressions passed again after
+shared-prefix migration; five AST/form/expression/Phase II suites passed ASan/UBSan.
+Full Lizard and clang-tidy passed without suppressions or relaxed thresholds.
+Patterns, guards, and complete function clauses remain pending step 7.

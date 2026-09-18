@@ -17,3 +17,7 @@ Native tests separately assert richer source metadata and AST ownership invarian
 Step 5 covers literals, variables, aggregates, grouping, concatenation and sigils.
 Sigils use OTP's decoded strings: s/S remain strings, empty/b/B become UTF-8 binaries.
 Malformed separators, tails, prefixes, suffixes and sigil concatenation are rejected.
+
+Step 6 covers every operator, representative cross-precedence pairs in both orders,
+catch, arbitrary remote expressions, dynamic/chained calls and malformed boundaries.
+Operator identities and child order are retained exactly in the projection.

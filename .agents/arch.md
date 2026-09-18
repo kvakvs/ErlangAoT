@@ -30,7 +30,8 @@
   AST parity tests. Shared cursor/syntax/diagnostics/infix metadata also serve preprocessing.
 - Typed AST: move-only module arenas, owner/generation-checked category IDs, owned
   per-form origins and rollback transactions. Only module/file attributes and zero-argument
-  functions with scalar/variable, tuple/list/group and decoded sigil expressions are parsed;
+  functions with scalar/variable, tuple/list/group, decoded sigils, typed operators,
+  match/catch, calls and general remote expressions are parsed;
   later grammar reports explicit unsupported errors. Aggregate children are checked handles.
 - `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages,
   bounds recursive expression nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive

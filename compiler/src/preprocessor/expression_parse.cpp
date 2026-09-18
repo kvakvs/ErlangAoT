@@ -106,9 +106,8 @@ Expr ExpressionParser::scalar() {
         return sigil();
     }
     const auto token = consume();
-    static const std::set<std::u32string_view> unary{U"+", U"-", U"not", U"bnot"};
-    if (unary.contains(token.text()) && token.kind != TokenKind::atom) {
-        return {ExprKind::unary, token, {expression(600)}, {}};
+    if (const auto info = prefix_operator(token)) {
+        return {ExprKind::unary, token, {expression(info->precedence)}, {}};
     }
     if (syntax(token, U"fun")) {
         return external_fun();

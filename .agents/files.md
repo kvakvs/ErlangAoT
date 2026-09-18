@@ -67,6 +67,9 @@
   event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`, `aggregates.cpp`:
   form dispatch, decoded literals/sigils and bounded recursive aggregate grammar.
 - `compiler/src/ast/children.cpp`: exhaustive child ownership validation for expression payloads.
+- `compiler/include/erlang_aot/compiler/ast/operators.hpp`: closed unary/binary identities;
+  `compiler/src/parser/expressions.cpp`: bounded Pratt parser, typed calls/remotes and
+  nonassociative checks. Shared prefix metadata also serves condition parsing.
 - `tests/compiler/parser/expressions.cpp`, `phase2.cmake`, `fixtures/parser/phase2/`:
   structural/provenance/depth checks and native/offline/live OTP Phase II AST/rejection parity.
 - `tests/compiler/parser/{forms,dump}.cpp`, `phase1.cmake`: integration/limit/recovery

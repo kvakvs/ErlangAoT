@@ -81,6 +81,13 @@ project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
     field("function", atom_to_list(Name)), scalar(Expr);
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
+scalar({op, _, Op, Arg}) -> io:format("unary\t~s~n", [Op]), scalar(Arg);
+scalar({op, _, Op, Left, Right}) -> io:format("binary\t~s~n", [Op]), scalar(Left), scalar(Right);
+scalar({match, _, Left, Right}) -> io:format("match~n"), scalar(Left), scalar(Right);
+scalar({'catch', _, Expr}) -> io:format("catch~n"), scalar(Expr);
+scalar({remote, _, Module, Function}) -> io:format("remote~n"), scalar(Module), scalar(Function);
+scalar({call, _, Target, Arguments}) ->
+    io:format("call\t~B~n", [length(Arguments)]), scalar(Target), lists:foreach(fun scalar/1, Arguments);
 scalar({tuple, _, Elements}) ->
     io:format("tuple\t~B~n", [length(Elements)]), lists:foreach(fun scalar/1, Elements);
 scalar({nil, _}) -> io:format("list\t0\t0~n");

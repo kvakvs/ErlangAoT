@@ -268,3 +268,11 @@ Primary sources consulted:
 - Step 5 final verification: 20 CTests, five sanitizer parser suites, missing/wrong
   OTP skips, full fresh Lizard/clang-tidy passed. New child validation explicitly
   checks active_ before dereferencing (tidy optional-access analysis).
+
+- Step 5 committed a57d8e9. Step 6 adds Pratt parsing over shared metadata, including
+  prefix reuse in preprocessing; calls 750 bind below nonassoc remote colon 800.
+  Match/catch/call/remote have dedicated payloads. Test-only enum spelling mapping
+  stays independent of production descriptors. Left chains iterate, right/unary
+  chains consume the depth budget. Step 6 fixtures compare both precedence orders.
+- Step 6 verification: fresh full build, all 20 CTests, preprocessing rerun after
+  shared prefix migration, five sanitizer parser suites, full quality gate passed.

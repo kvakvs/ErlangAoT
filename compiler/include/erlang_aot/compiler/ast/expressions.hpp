@@ -1,4 +1,5 @@
 #pragma once
+#include <erlang_aot/compiler/ast/operators.hpp>
 #include <erlang_aot/compiler/ast/source.hpp>
 #include <erlang_aot/compiler/lexer.hpp>
 #include <optional>
@@ -55,8 +56,45 @@ struct BinarySigilLiteral {
     std::u32string value;
 };
 
+struct UnaryExpression {
+    // Preserve the operator rather than folding constants during parsing.
+    UnaryOperator operation;
+    ExprId operand;
+};
+
+struct BinaryExpression {
+    // Operator identity and ordered operands retain associativity in the tree.
+    BinaryOperator operation;
+    ExprId left;
+    ExprId right;
+};
+
+struct MatchExpression {
+    // The left side is expression syntax; pattern legality is a later check.
+    ExprId left;
+    ExprId right;
+};
+
+struct CatchExpression {
+    // Catch binds below every infix operator, independently of later exception lowering.
+    ExprId expression;
+};
+
+struct CallExpression {
+    // Keep general callable expressions, including dynamic and chained calls.
+    ExprId target;
+    std::vector<ExprId> arguments;
+};
+
+struct RemoteExpression {
+    // Erlang parsing permits general module/function expressions, even without a call.
+    ExprId module;
+    ExprId function;
+};
+
 using ExprValue = std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple,
-                               List, Group, BinarySigilLiteral>;
+                               List, Group, BinarySigilLiteral, UnaryExpression, BinaryExpression, MatchExpression,
+                               CatchExpression, CallExpression, RemoteExpression>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

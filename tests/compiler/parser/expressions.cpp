@@ -66,7 +66,47 @@ void bounds() {
     require(recovery.failed && recovery.module.expression_count() == 2);
 }
 
+// Typed operator trees retain grouping, token anchors and general callable targets.
+void operators() {
+    const auto result = parse("f() -> A = B + C * D.");
+    require(result.succeeded());
+    const auto &match = std::get<ast::MatchExpression>(body(result).value);
+    const auto &sum_node = result.module.expression(match.right);
+    const auto &sum = std::get<ast::BinaryExpression>(sum_node.value);
+    require(sum.operation == ast::BinaryOperator::add);
+    require(std::get<ast::BinaryExpression>(result.module.expression(sum.right).value).operation ==
+            ast::BinaryOperator::multiply);
+    require(result.module.anchor(sum_node.source).location.column == 14);
+    require(result.module.extent(sum_node.source).size() == 5);
+    const auto call = parse("f() -> M:F(X)(Y).");
+    require(call.succeeded());
+    const auto &outer = std::get<ast::CallExpression>(body(call).value);
+    const auto &inner = std::get<ast::CallExpression>(call.module.expression(outer.target).value);
+    require(std::holds_alternative<ast::RemoteExpression>(call.module.expression(inner.target).value));
+    const auto errors = parse("bad() -> A < B < C.\ngood() -> (A < B) < C.");
+    require(errors.failed && errors.diagnostics.front().code == DiagnosticCode::parser_syntax);
+    require(errors.module.expression_count() == 6);
+}
+
+// Left-associative chains use iteration; recursive right/unary chains respect nesting limits.
+void operator_bounds() {
+    ParserLimits limits;
+    limits.nesting = 8;
+    std::string flat = "f() -> A";
+    for (int i = 0; i < 8192; ++i)
+        flat += " + A";
+    const auto left = parse(flat + ".", limits);
+    require(left.succeeded());
+    require(left.module.expression_count() == 16385);
+    const auto right = parse("f() -> A = B = C = D = E = F = G = H = I.", limits);
+    require(right.failed && right.module.expression_count() == 0);
+    const auto unary = parse("f() -> not not not not not not not not A.", limits);
+    require(unary.failed && unary.diagnostics.front().code == DiagnosticCode::resource_limit);
+}
+
 int main() {
     aggregates();
     bounds();
+    operators();
+    operator_bounds();
 }

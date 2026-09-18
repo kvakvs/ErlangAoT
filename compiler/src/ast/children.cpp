@@ -27,6 +27,31 @@ struct Children {
 
     void operator()(const BinarySigilLiteral &) const {}
 
+    void operator()(const UnaryExpression &value) const { child(value.operand); }
+
+    void operator()(const BinaryExpression &value) const {
+        child(value.left);
+        child(value.right);
+    }
+
+    void operator()(const MatchExpression &value) const {
+        child(value.left);
+        child(value.right);
+    }
+
+    void operator()(const CatchExpression &value) const { child(value.expression); }
+
+    void operator()(const RemoteExpression &value) const {
+        child(value.module);
+        child(value.function);
+    }
+
+    void operator()(const CallExpression &value) const {
+        child(value.target);
+        for (const auto &id : value.arguments)
+            child(id);
+    }
+
     void operator()(const Group &value) const { child(value.expression); }
 
     void operator()(const Tuple &value) const {

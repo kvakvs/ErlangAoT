@@ -1,15 +1,51 @@
 #include "../encoding.hpp"
+#include "operators.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <iostream>
 
 using namespace erlang_aot;
 using test_records::hex;
 
-// Exhaustive visitors expose only the Phase I projection shared with the OTP adapter.
+// Exhaustive visitors expose the implemented syntax projection shared with the OTP adapter.
 struct ExpressionDump {
     const ast::Module &module;
 
     void child(const ast::ExprId &id) const { module.visit(id, *this); }
+
+    void operator()(const ast::UnaryExpression &value) const {
+        std::cout << "unary\t" << spelling(value.operation) << '\n';
+        child(value.operand);
+    }
+
+    void operator()(const ast::BinaryExpression &value) const {
+        std::cout << "binary\t" << spelling(value.operation) << '\n';
+        child(value.left);
+        child(value.right);
+    }
+
+    void operator()(const ast::MatchExpression &value) const {
+        std::cout << "match\n";
+        child(value.left);
+        child(value.right);
+    }
+
+    void operator()(const ast::CatchExpression &value) const {
+        std::cout << "catch\n";
+        child(value.expression);
+    }
+
+    void operator()(const ast::RemoteExpression &value) const {
+        std::cout << "remote\n";
+        child(value.module);
+        child(value.function);
+    }
+
+    void operator()(const ast::CallExpression &value) const {
+        std::cout << "call\t" << value.arguments.size() << '\n';
+        child(value.target);
+        for (const auto &id : value.arguments)
+            child(id);
+    }
 
     void operator()(const ast::Tuple &value) const {
         std::cout << "tuple\t" << value.elements.size() << '\n';
