@@ -20,8 +20,9 @@
 - `compiler/src/parsing/{token_cursor,token_syntax,operator_info}.*`: bounded lookahead/
   rollback, category-aware syntax, token diagnostics, and contextual infix metadata.
 - `tests/compiler/parser/tokens.cpp`: shared cursor/operator/terminal/provenance tests.
-- `compiler/include/erlang_aot/compiler/ast/`: typed IDs, origin ranges, expression/form
-  variants and immutable module access. `src/ast/{arena,storage,builder}.*`, `module.cpp`:
+- `compiler/include/erlang_aot/compiler/ast/{ids,source,expressions,forms,module}.hpp`:
+  typed IDs, origin ranges, expression/form variants and immutable module access.
+  `src/ast/{arena,storage,builder}.*`, `module.cpp`:
   checked flat storage, transactional construction, owned provenance and access.
 - `tests/compiler/parser/ast.cpp`: growth/moves, stale/foreign IDs, rollback, exhaustive
   visiting and preprocessing-source lifetime checks, also exercised under sanitizers.
@@ -61,3 +62,9 @@
   OTP parser/epp/lint replay and offline scanner/reference-integrity checks.
 - `tests/fixtures/parser/`: authored probes, pinned records and production/action inventory.
 - `docs/parser.md`: parser implementation progress and validation evidence.
+- `compiler/include/erlang_aot/compiler/{features,parser}.hpp`: immutable feature
+  snapshots, parser limits/results and streaming/module APIs. `src/parser/parser.cpp`:
+  event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`: Phase I grammar.
+- `tests/compiler/parser/{forms,dump}.cpp`, `phase1.cmake`: integration/limit/recovery
+  tests and private native/OTP AST comparison. `tests/compiler/encoding.hpp`: shared
+  scanner/preprocessor/AST test encoding; `fixtures/parser/phase1.*`: include/LF/CRLF probes.

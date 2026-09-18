@@ -89,3 +89,28 @@ erlang_aot_project_options(parser_ast)
 target_include_directories(parser_ast PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
 target_link_libraries(parser_ast PRIVATE erlang_frontend)
 add_test(NAME parser_ast COMMAND parser_ast)
+
+add_executable(parser_forms compiler/parser/forms.cpp)
+erlang_aot_project_options(parser_forms)
+target_link_libraries(parser_forms PRIVATE erlang_frontend)
+add_test(NAME parser_forms COMMAND parser_forms)
+set_tests_properties(parser_forms PROPERTIES TIMEOUT 20)
+
+add_executable(parser_dump compiler/parser/dump.cpp)
+erlang_aot_project_options(parser_dump)
+target_link_libraries(parser_dump PRIVATE erlang_frontend)
+foreach(mode IN ITEMS golden oracle)
+    if(mode STREQUAL "oracle")
+        set(live TRUE)
+    else()
+        set(live FALSE)
+    endif()
+    add_test(NAME parser_phase1_${mode} COMMAND "${CMAKE_COMMAND}"
+        "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+        "-DDUMP=$<TARGET_FILE:parser_dump>"
+        "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
+        "-DLIVE=${live}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase1.cmake")
+endforeach()
+set_tests_properties(parser_phase1_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 60)

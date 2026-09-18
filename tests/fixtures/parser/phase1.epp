@@ -1,0 +1,16 @@
+{ok,{attribute,0,file,{"phase1.erl",1}}}.
+{ok,{attribute,0,module,phase1}}.
+{ok,{attribute,0,file,{"phase1.hrl",1}}}.
+{ok,{attribute,0,file,{"phase1.erl",3}}}.
+{ok,{attribute,0,file,{"phase1.hrl",1}}}.
+{ok,{attribute,0,file,{"phase1.erl",3}}}.
+{ok,{attribute,0,file,{"phase1.hrl",1}}}.
+{ok,{attribute,0,file,{"phase1.erl",4}}}.
+{ok,{attribute,0,file,{"phase1.hrl",1}}}.
+{ok,{attribute,0,file,{"phase1.erl",5}}}.
+{ok,{function,0,integer,0,[{clause,0,[],[],[{integer,0,123456789012345678901234567890}]}]}}.
+{ok,{function,0,atom,0,[{clause,0,[],[],[{atom,0,'end'}]}]}}.
+{ok,{function,0,float,0,[{clause,0,[],[],[{float,0,{float_bits,<<"3ff4000000000000">>}}]}]}}.
+{ok,{function,0,character,0,[{clause,0,[],[],[{char,0,955}]}]}}.
+{ok,{function,0,string,0,[{clause,0,[],[],[{string,0,[104,101,108,108,111,32,955]}]}]}}.
+{ok,{function,0,empty,0,[{clause,0,[],[],[{string,0,[]}]}]}}.

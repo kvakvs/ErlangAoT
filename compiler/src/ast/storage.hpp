@@ -7,6 +7,8 @@ struct OriginTable {
     // Token origins are owned once per form; empty ranges use the separate EOF origin.
     std::vector<TokenOrigin> tokens;
     TokenOrigin eof;
+    // Preserve source feature context even after the preprocessing session is destroyed.
+    FeatureSnapshot features;
 };
 
 struct Storage {
@@ -16,6 +18,8 @@ struct Storage {
     Arena<Form, FormTag> forms{owner};
     Arena<OriginTable, OriginTag> origins{owner};
     std::vector<FormId> roots;
+    // Successful module parsing records the session snapshot observed at EOF.
+    FeatureSnapshot features;
 };
 
 // Validate a node's half-open range and anchor before any origin-table indexing.

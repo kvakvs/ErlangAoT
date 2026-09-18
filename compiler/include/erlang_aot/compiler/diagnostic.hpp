@@ -33,7 +33,10 @@ enum class DiagnosticCode : std::uint8_t {
     invalid_feature,
     user_error,
     user_warning,
-    invalid_encoding
+    invalid_encoding,
+    parser_syntax,
+    unsupported_syntax,
+    parser_contract
 };
 
 enum class Severity : std::uint8_t { error, warning };

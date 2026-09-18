@@ -1,20 +1,11 @@
+#include "encoding.hpp"
 #include <bit>
 #include <erlang_aot/compiler/lexer.hpp>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-// Encode arbitrary token text without ambiguity from tabs, quotes, or newlines.
-std::string hex(std::string_view bytes) {
-    if (bytes.empty()) {
-        return "-";
-    }
-    std::ostringstream output;
-    for (const unsigned char byte : bytes) {
-        output << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned>(byte);
-    }
-    return output.str();
-}
+using test_records::hex;
 
 // Preserve floating-point bits and arbitrary-precision integer digits.
 std::string value(const erlang_aot::Token &token) {
@@ -22,9 +13,7 @@ std::string value(const erlang_aot::Token &token) {
         return hex(integer->decimal);
     }
     if (const auto *floating = std::get_if<double>(&token.value)) {
-        std::ostringstream output;
-        output << std::hex << std::setw(16) << std::setfill('0') << std::bit_cast<std::uint64_t>(*floating);
-        return output.str();
+        return test_records::float_bits(*floating);
     }
     return hex(erlang_aot::utf8(token.text()));
 }

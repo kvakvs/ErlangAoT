@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/compiler/ast/forms.hpp>
+#include <erlang_aot/compiler/features.hpp>
 #include <span>
 
 namespace erlang_aot::ast {
@@ -23,6 +24,9 @@ class Module {
     const Form &form(const FormId &id) const;
     const Expression &expression(const ExprId &id) const;
     std::size_t expression_count() const;
+    // Inspect immutable per-form snapshots and the final module feature context.
+    FeatureSnapshot features(const FormId &id) const;
+    FeatureSnapshot features() const;
     // Resolve owned origins, including explicit EOF anchors for empty extents.
     const TokenOrigin &anchor(const NodeSource &source) const;
     std::span<const TokenOrigin> extent(const NodeSource &source) const;

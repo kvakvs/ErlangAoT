@@ -16,9 +16,8 @@ skip() -> io:format("SKIP: OTP 29.1 is required~n"), halt(77).
 run("raw", Input) ->
     {ok, File} = file:open(Input, [read, {encoding, utf8}]),
     try raw(File, {1,1}) after file:close(File) end;
-run("epp", Input) ->
-    {ok, Epp} = epp:open([{name, Input}, {location, {1,1}}]),
-    try expanded(Epp) after epp:close(Epp) end;
+run("epp", Input) -> with_epp(Input, fun expanded/1);
+run("phase1", Input) -> with_epp(Input, fun phase1/1);
 run("lint", Input) ->
     {ok, Forms} = epp:parse_file(Input, [], []),
     Result = case erl_lint:module(Forms, Input) of
@@ -58,3 +57,33 @@ stable(Value) when is_map(Value) -> {map_value, lists:sort([{stable(K), stable(V
 stable(Value) -> Value.
 
 emit(Value) -> io:format("~0tp.~n", [stable(Value)]).
+
+%% Keep the Phase I projection deliberately closed: unknown forms fail the oracle.
+with_epp(Input, Consumer) ->
+    {ok, Epp} = epp:open([{name, Input}, {location, {1,1}}]),
+    try Consumer(Epp) after epp:close(Epp) end.
+
+phase1(Epp) ->
+    case epp:parse_erl_form(Epp) of
+        {eof, _} -> ok;
+        {ok, Form} -> project(Form), phase1(Epp);
+        Other -> erlang:error({unexpected_phase1_event, Other})
+    end.
+
+project({attribute, _, module, Name}) -> field("module", atom_to_list(Name));
+project({attribute, _, file, {Name, Line}}) ->
+    io:format("file\t~s\t~B~n", [hex(filename:basename(Name)), Line]);
+project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
+    field("function", atom_to_list(Name)), scalar(Expr);
+project(Other) -> erlang:error({unmapped_phase1_form, Other}).
+
+scalar({atom, _, Name}) -> field("atom", atom_to_list(Name));
+scalar({integer, _, Value}) -> io:format("integer\t~B~n", [Value]);
+scalar({float, _, Value}) -> io:format("float\t~s~n", [binary:encode_hex(<<Value:64/float>>, lowercase)]);
+scalar({char, _, Value}) -> io:format("char\t~B~n", [Value]);
+scalar({string, _, Value}) -> field("string", Value);
+scalar(Other) -> erlang:error({unmapped_phase1_expression, Other}).
+
+field(Kind, Value) -> io:format("~s\t~s~n", [Kind, hex(Value)]).
+hex([]) -> "-";
+hex(Value) -> binary:encode_hex(unicode:characters_to_binary(Value), lowercase).

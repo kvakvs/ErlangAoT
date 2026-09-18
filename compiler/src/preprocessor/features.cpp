@@ -45,6 +45,7 @@ void PreprocessorSession::State::feature(const std::string &name, bool enabled, 
         enabled_features.insert(enabled_features.begin(), name);
     }
     macros.definitions.insert_or_assign({U"FEATURE_ENABLED", 1}, query_definition("FEATURE_ENABLED", enabled_features));
+    feature_snapshot = std::make_shared<const FeatureContext>(FeatureContext{enabled_features});
 }
 
 void PreprocessorSession::State::keywords() {

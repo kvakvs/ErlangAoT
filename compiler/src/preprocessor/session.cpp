@@ -23,6 +23,14 @@ std::optional<std::string> environment(std::string_view name) {
 Token start_token(const SourcePtr &source) {
     return {TokenKind::atom, std::u32string{}, {source, 0, 0}, {source->name, 1, 1}, {}};
 }
+
+// OTP consumes one whitespace character after a form dot; only LF advances the return line.
+std::size_t form_resume_line(const Token &dot) {
+    const auto &span = dot.spelling;
+    const auto &text = span.source->text;
+    const bool newline = span.end < text.size() && text[span.end] == U'\n';
+    return dot.location.line + static_cast<std::size_t>(newline);
+}
 } // namespace
 
 PreprocessorSession::State::State(const SourcePtr &source, PreprocessorOptions settings)
@@ -130,10 +138,10 @@ void PreprocessorSession::State::scan() {
             end_file();
             return;
         }
-        files.back().resume_line = tokens.back().location.line;
         if (tokens.back().kind != TokenKind::dot) {
             pp_fail(DiagnosticCode::missing_terminator, "expected form-ending '.'", tokens.back());
         }
+        files.back().resume_line = form_resume_line(tokens.back());
         process(std::move(tokens));
     } catch (const LexicalError &error) {
         files.back().lexer.recover_form();
@@ -215,6 +223,8 @@ PreprocessorSession::PreprocessorSession(const SourcePtr &source, PreprocessorOp
 PreprocessorSession::~PreprocessorSession() = default;
 
 bool PreprocessorSession::failed() const { return state_->failed; }
+
+FeatureSnapshot PreprocessorSession::features() const { return state_->feature_snapshot; }
 
 std::optional<PreprocessorEvent> PreprocessorSession::next() { return state_->next(); }
 } // namespace erlang_aot

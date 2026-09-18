@@ -1,29 +1,19 @@
+#include "../encoding.hpp"
 #include <bit>
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
-// Private test records retain decoded values and normalize only the fixture root path.
-std::string hex(std::string text) {
-    if (text.empty()) {
-        return "-";
-    }
-    std::ostringstream stream;
-    for (const unsigned char c : text) {
-        stream << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned>(c);
-    }
-    return stream.str();
-}
+using test_records::hex;
 
+// Normalize fixture paths while preserving exact literal values.
 std::string value(const erlang_aot::Token &token, const std::string &directory) {
     if (const auto *n = std::get_if<erlang_aot::Integer>(&token.value)) {
         return hex(n->decimal);
     }
     if (const auto *n = std::get_if<double>(&token.value)) {
-        std::ostringstream stream;
-        stream << std::hex << std::setw(16) << std::setfill('0') << std::bit_cast<std::uint64_t>(*n);
-        return stream.str();
+        return test_records::float_bits(*n);
     }
     std::string text = erlang_aot::utf8(token.text());
     if (const auto position = text.find(directory); position != std::string::npos) {

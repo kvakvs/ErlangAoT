@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/compiler/directive.hpp>
+#include <erlang_aot/compiler/features.hpp>
 #include <functional>
 #include <map>
 
@@ -12,8 +13,10 @@ struct MacroKey {
 };
 
 struct OrdinaryForm {
-    // Pass original tokens unchanged to subsequent expansion/parsing stages.
+    // Pass expanded tokens to parsing; DirectiveReader alone returns unexpanded tokens.
     std::vector<Token> tokens;
+    // Keep immutable feature state at emission time; syntax-only readers leave it unspecified.
+    FeatureSnapshot features{};
 };
 
 using PreprocessorEvent = std::variant<OrdinaryForm, Directive, Diagnostic>;
@@ -79,6 +82,8 @@ class PreprocessorSession {
     // Return expanded ordinary forms or diagnostics; EOF never clears prior errors.
     std::optional<PreprocessorEvent> next();
     bool failed() const;
+    // Return current feature state, including final module state after EOF.
+    FeatureSnapshot features() const;
 
   private:
     struct State;

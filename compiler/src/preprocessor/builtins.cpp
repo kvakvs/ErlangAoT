@@ -103,7 +103,7 @@ void PreprocessorSession::State::emit_file(const Token &site, const std::string 
         token.location = site.location;
         token.origins.push_back(site.spelling);
     }
-    pending.emplace_back(OrdinaryForm{std::move(tokens)});
+    pending.emplace_back(OrdinaryForm{std::move(tokens), feature_snapshot});
 }
 
 void PreprocessorSession::State::file_mapping(const std::vector<Token> &tokens) {
@@ -167,6 +167,6 @@ void PreprocessorSession::State::ordinary(std::vector<Token> tokens) {
     } else {
         prefix = false;
     }
-    pending.emplace_back(OrdinaryForm{std::move(tokens)});
+    pending.emplace_back(OrdinaryForm{std::move(tokens), feature_snapshot});
 }
 } // namespace erlang_aot

@@ -51,6 +51,16 @@
   module arenas with retained identity and per-slot generations; rollback cannot
   resurrect IDs. Only literals/variables, module/file attributes and explicit
   ZeroArgumentFunction exist until later grammar steps. Origins are owned per form.
+- Step 3 committed 3b5406b after 14 CTests, sanitizer subset and fixed full quality.
+- Step 4 implements ParserSession/raw form and parse_module APIs, module/file attributes,
+  zero-argument single-scalar functions, diagnostic latching/rollback, bounded work,
+  immutable per-form/final feature context. No CLI mode until step 17.
+- Phase I native AST oracle exposed include-return file line mismatch: OTP scan_dot
+  consumes one whitespace after dot, so only an immediate LF increments return line.
+  Fixed State::scan resume_line; mixed-LF/CRLF include fixture now compares exact file attrs.
+- Final Phase I validation: 17/17 CTests in debug C++23, C++26 and ASan/UBSan,
+  with live OTP29.1 tests executed; runtime-only succeeds with absent Boost roots.
+  Full Lizard/clang-tidy passes unchanged thresholds. Host evidence: macOS arm64.
 
 ## Shared IDE configuration — 2026-09-18
 

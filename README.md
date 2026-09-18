@@ -218,3 +218,12 @@ option before `-P`. Use the default threshold for the project quality gate.
 The CLI option parser has been split into argument traversal, named-option
 handling, and output-operand handling. Its maximum CCN is now **10**, down from
 21, and both quality checks pass without suppressions or relaxed thresholds.
+
+## Parser foundation
+
+Phase I of the [parser plan](.agents/02-parser.md) is implemented as a native C++
+API consuming expanded preprocessor tokens. It produces an owned typed syntax AST
+for module/file attributes and zero-argument functions with a single scalar literal
+body. Other syntax remains explicitly unsupported; no parse-check CLI is exposed
+yet. See [parser behavior and validation](docs/parser.md) for API contracts,
+feature/source ownership, limits, compatibility tests, and remaining phases.

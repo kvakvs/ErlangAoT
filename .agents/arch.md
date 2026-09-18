@@ -26,8 +26,11 @@
   analyzer/bugprone/performance warnings as errors. No threshold relaxation or suppression.
 - `references/otp` is an ignored pinned research checkout, not a build dependency.
   See `docs/preprocessor.md`, `.agents/01-pp-otp-tests.md`, and `00-plan.md`.
-- Parser plan `.agents/02-parser.md`: pinned grammar/action inventories and raw/epp/lint
-  oracle tests. Shared bounded token cursor, syntax/diagnostics, and contextual infix
-  metadata serve directive/condition parsing. Typed AST uses move-only module arenas,
-  owner/generation-checked category IDs, per-form origin tables, and rollback transactions.
-  Literal/variable and minimal form variants exist; grammar integration remains pending.
+- Parser Phase I: pinned grammar/action inventories, raw/epp/lint references and native
+  AST parity tests. Shared cursor/syntax/diagnostics/infix metadata also serve preprocessing.
+- Typed AST: move-only module arenas, owner/generation-checked category IDs, owned
+  per-form origins and rollback transactions. Only module/file attributes and zero-argument
+  scalar-returning functions are parsed yet; later grammar reports explicit unsupported errors.
+- `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages,
+  latches failure and recovers at form boundaries. Immutable feature snapshots survive
+  preprocessing; final module features are recorded at EOF. No parse-check CLI yet.

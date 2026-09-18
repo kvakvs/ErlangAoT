@@ -40,6 +40,8 @@ struct PreprocessorSession::State {
     std::map<std::string, Feature> features{{"maybe_expr", {FeatureLifecycle::approved, true}},
                                             {"compr_assign", {FeatureLifecycle::experimental, false}}};
     std::vector<std::string> enabled_features{"maybe_expr"};
+    // Emitted forms share immutable state until a feature directive changes it.
+    FeatureSnapshot feature_snapshot = std::make_shared<const FeatureContext>(FeatureContext{enabled_features});
     std::optional<Token> module;
     std::optional<Token> base_module;
     bool prefix = true;

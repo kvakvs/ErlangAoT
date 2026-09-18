@@ -1,2 +1,4 @@
 # Preserve the scanner's deliberate Latin-1/CRLF byte fixture on every host.
 tests/fixtures/preprocessor/lexical/latin1.erl -text whitespace=cr-at-eol
+# Preserve mixed LF/CRLF after include dots for exact OTP return-line regression checks.
+tests/fixtures/parser/phase1.erl -text whitespace=cr-at-eol

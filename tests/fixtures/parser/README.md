@@ -45,3 +45,11 @@ OTP; missing/wrong OTP skips only that test. Golden files are never regenerated 
 CTest. To regenerate, run the oracle with `raw`, `epp`, or `lint` and an input path;
 run the existing preprocessor `scan.escript` for tokens, review the changes, then
 update SHA256SUMS. The full upstream Common Test suites have not been executed.
+
+Phase I adds `phase1.erl`/`phase1.hrl` and three `.phase1` records for actual native
+AST parity. This projection accepts only module/file attributes and zero-argument
+single-scalar functions; unknown shapes fail instead of disappearing. The fixture
+contains intentional mixed LF/CRLF bytes (protected by `.gitattributes`) and include
+dots followed by LF, space, comment, and CRLF. Include return-file line values are
+compared exactly. The broad `.raw`/`.epp` corpus remains reference-only for later
+unimplemented grammar families.

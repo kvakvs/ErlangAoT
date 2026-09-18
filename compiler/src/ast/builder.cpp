@@ -7,8 +7,8 @@ namespace {
 TokenOrigin origin(const Token &token) { return {token.spelling, token.location, token.origins}; }
 
 // Empty forms retain their explicitly supplied EOF anchor independently of tokens.
-detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end) {
-    detail::OriginTable table{{}, origin(end)};
+detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
+    detail::OriginTable table{{}, origin(end), std::move(features)};
     table.tokens.reserve(tokens.size());
     for (const auto &token : tokens) {
         table.tokens.push_back(origin(token));
@@ -17,13 +17,14 @@ detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end
 }
 } // namespace
 
-Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end)
+Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
+                                  FeatureSnapshot features)
     : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
       forms_(builder.module_.storage().forms.size()), origins_(builder.module_.storage().origins.size()) {
     if (builder.active_) {
         throw std::logic_error("nested AST form transaction");
     }
-    builder.active_ = builder.module_.storage_->origins.append(origin_table(tokens, end));
+    builder.active_ = builder.module_.storage_->origins.append(origin_table(tokens, end, std::move(features)));
 }
 
 Builder::Transaction::~Transaction() {
@@ -50,8 +51,8 @@ void Builder::Transaction::commit(FormId root) {
     builder_.active_.reset();
 }
 
-Builder::Transaction Builder::begin(std::span<const Token> tokens, const Token &end) {
-    return Transaction(*this, tokens, end);
+Builder::Transaction Builder::begin(std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
+    return Transaction(*this, tokens, end, std::move(features));
 }
 
 NodeSource Builder::source(std::size_t begin, std::size_t end, std::size_t anchor) const {
@@ -96,10 +97,11 @@ FormId Builder::form(FormValue value, NodeSource source) {
 
 const Module &Builder::view() const { return module_; }
 
-Module Builder::finish() && {
+Module Builder::finish(FeatureSnapshot features) && {
     if (active_) {
         throw std::logic_error("cannot finish an active AST transaction");
     }
+    module_.storage_->features = std::move(features);
     return std::move(module_);
 }
 } // namespace erlang_aot::ast

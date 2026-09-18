@@ -18,7 +18,8 @@ class Builder {
       private:
         friend class Builder;
         // Save arena sizes before opening the single active form transaction.
-        explicit Transaction(Builder &builder, std::span<const Token> tokens, const Token &end);
+        explicit Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
+                             FeatureSnapshot features);
         Builder &builder_;
         std::size_t expressions_;
         std::size_t forms_;
@@ -32,14 +33,14 @@ class Builder {
     Builder(const Builder &) = delete;
     Builder &operator=(const Builder &) = delete;
     // A transaction must not outlive its builder; nested transactions are rejected.
-    Transaction begin(std::span<const Token> tokens, const Token &end);
+    Transaction begin(std::span<const Token> tokens, const Token &end, FeatureSnapshot features = {});
     // Construct checked extents and typed nodes only inside the active form.
     NodeSource source(std::size_t begin, std::size_t end, std::size_t anchor) const;
     ExprId expression(ExprValue value, NodeSource source);
     FormId form(FormValue value, NodeSource source);
     // Read-only inspection is valid until the next builder mutation.
     const Module &view() const;
-    Module finish() &&;
+    Module finish(FeatureSnapshot features = {}) &&;
 
   private:
     // Own flat arenas and the origin-table handle of the currently open transaction.

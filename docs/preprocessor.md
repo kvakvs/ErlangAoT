@@ -26,6 +26,14 @@ converted to source text to fit that interface.
 attributes) and structured diagnostics. Its buffers outlive the session through
 shared token/span ownership. `DirectiveReader` retains the earlier syntax-only API.
 This is an internal compiler interface, not a chosen public intermediate format.
+Expanded forms now also retain immutable enabled-feature snapshots, and `features()`
+exposes current/final session state for the parser. Syntax-only forms leave it unspecified.
+
+Parser integration corrected the return-line value in implicit `-file` attributes:
+an immediate LF after an include's terminating dot advances the returned line, while
+space, comment, and CRLF endings follow OTP's one-character `scan_dot` behavior.
+`tests/fixtures/parser/phase1.erl` compares these attributes directly against OTP;
+ordinary token locations, spelling, and existing preprocessor records are unchanged.
 
 ## Compatibility policies
 

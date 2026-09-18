@@ -38,6 +38,12 @@ const Expression &Module::expression(const ExprId &id) const { return storage().
 
 std::size_t Module::expression_count() const { return storage().expressions.size(); }
 
+FeatureSnapshot Module::features(const FormId &id) const {
+    return detail::source_table(storage(), form(id).source).features;
+}
+
+FeatureSnapshot Module::features() const { return storage().features; }
+
 const TokenOrigin &Module::anchor(const NodeSource &source) const {
     const auto &table = detail::source_table(storage(), source);
     return source.anchor == table.tokens.size() ? table.eof : table.tokens[source.anchor];
