@@ -6,7 +6,7 @@ add_library(erlang_frontend STATIC src/parsing/probe.cpp
     src/preprocessor/token_utils.cpp src/preprocessor/arguments.cpp src/preprocessor/macros.cpp
     src/preprocessor/terms.cpp src/preprocessor/value.cpp src/preprocessor/expression_parse.cpp src/preprocessor/expression.cpp
     src/preprocessor/operators.cpp src/preprocessor/guards.cpp src/preprocessor/bits.cpp
-    src/preprocessor/session.cpp src/preprocessor/pending.cpp src/preprocessor/conditions.cpp src/preprocessor/includes.cpp
+    src/preprocessor/session.cpp src/preprocessor/conditions.cpp src/preprocessor/includes.cpp
     src/preprocessor/builtins.cpp src/preprocessor/features.cpp)
 erlang_aot_project_options(erlang_frontend)
 target_include_directories(erlang_frontend PUBLIC include PRIVATE src)

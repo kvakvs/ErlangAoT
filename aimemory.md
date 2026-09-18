@@ -1,3 +1,21 @@
+## 2026-09-18 — Semantic preprocessing (steps 4–13)
+
+- User explicitly requires separate buildable commits per step; preserve their pre-existing
+  AGENTS.md formatting-instruction edit. Each commit requires fresh full check-quality.
+- Native preprocessor and CLI implemented. See docs/preprocessor.md for policies and files.
+- Oracle is build/otp29-install/bin/escript, built from ignored references/otp at OTP-29.1
+  commit 751f87b703fe5948607d08e82599ce644b772e76. Default system OTP is older.
+- Full Boost headers under build/deps/boost_1_90_0 supplement standalone Parser. Compiler only.
+  Use eager cpp_int values; in-place arithmetic avoids expression lifetime/analysis issues.
+- Pinned epp peculiarities: includes require literal strings; object macro bodies rescan
+  before joining caller tokens; static cycles include unused arguments; variable LINE and
+  FUNCTION macros bypass undef table; undefined contextual placeholders satisfy defined()
+  but not ifdef; feature query macros expand to comparison expressions.
+- OTP epp crashes on record construction conditions and binary/fun predefinitions through
+  erl_parse:tokens. Native handles these explicitly; records remain a later parser concern.
+- Native debug, C++26, sanitizer, runtime-only and quality results are recorded with final
+  completion. Other host platforms and full upstream Common Test remain outstanding.
+
 # Research notes
 
 ## Shared IDE configuration — 2026-09-18
@@ -193,6 +211,3 @@ Primary sources consulted:
 - https://github.com/llir/llvm
 - https://go.dev/doc/gc-guide
 - https://kotlinlang.org/docs/native-memory-manager.html
-
-Preprocessor progress: steps 4–12 now have semantic implementation and focused tests.
-Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.

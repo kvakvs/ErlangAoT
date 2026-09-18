@@ -1,11 +1,10 @@
 # ErlangAoT
 
 A C++ ahead-of-time compiler project for Erlang/OTP 29, with a separate C++ runtime.
-Currently implemented: CLI argument handling and independent CMake build targets.
-The compiler has a Boost.Parser foundation, an owned-source Erlang lexer, and
-a per-module form/directive parser with structured diagnostics and recovery.
-Macro expansion and other directive effects, CLI preprocessing, code generation,
-and runtime behavior remain unimplemented.
+The compiler implements OTP 29.1 preprocessing: macros, conditional compilation,
+includes, contextual macros, feature configuration, and diagnostic directives.
+`--preprocess-check` validates modules without an Erlang installation or output files.
+Full Erlang parsing, code generation, and runtime behavior remain unimplemented.
 
 ## Build on macOS and Linux
 
@@ -34,12 +33,12 @@ are header-only and private to the compiler. Boost.Parser uses its standalone mo
 
 For Visual Studio 2022 or VS Code, open the repository root as a CMake project.
 The checked-in `CMakePresets.json` selects C++23 and `build/debug`; configure it
-after cloning the Boost.Parser headers above. In VS Code, install the recommended
+after installing the Boost headers above. In VS Code, install the recommended
 C/C++ and CMake Tools extensions. CMake Tools supplies IntelliSense with the
 actual compiler, C++ standard, and include paths, including Boost. If the editor
 still shows old errors after the first configure, run **CMake: Configure** and
 **C/C++: Reset IntelliSense Database**. A developer using a different Boost
-installation can set `ERLANG_AOT_BOOST_PARSER_ROOT` in an ignored
+installation can set both Boost root variables in an ignored
 `CMakeUserPresets.json`; the shared files contain no host-specific paths.
 
 The same configuration works from a terminal:
@@ -50,21 +49,15 @@ cmake --build --preset debug
 ctest --preset debug
 ```
 
-CTest's `otp_oracle` uses `ERLANG_AOT_ESCRIPT` to record raw epp events from OTP
-29.1. `scanner_oracle` compares lexical values and locations against that scanner;
-`lexer_golden` checks the same pinned records without Erlang. Optional oracle tests
-explicitly skip when that exact release is unavailable. Fixtures cover UTF-8 and
-Latin-1, CRLF, arbitrary-size integers, based floats, strings/sigils, and form dots.
-Outputs under the build tree are private test artifacts.
+CTest's optional oracle tests require exact OTP 29.1 via `ERLANG_AOT_ESCRIPT`;
+they explicitly skip if unavailable. Scanner and expanded-token golden tests use
+checked-in records and run without Erlang. `preprocessor_semantics` checks owned
+sources, error recovery, source order, includes, expression semantics, locations,
+and bounded generated inputs. `preprocessor_oracle` compares expanded tokens and
+diagnostic event order with epp, including real OTP headers.
+See [preprocessor behavior and validation](docs/preprocessor.md).
 
-`preprocessor_forms` tests directive envelopes, raw replacement tokens, ordinary
-attribute passthrough, source locations, recovery, and session isolation. Conditions
-and diagnostic terms remain token operands until their planned evaluation stages.
-The current misplaced-directive check recognizes line-leading structural directive
-names after a function arrow. It is a syntax heuristic; ambiguous expression calls
-require the future Erlang parser. This internal API does not define stage output.
-
-After installing the Boost.Parser headers above, use the root Makefile:
+After installing the Boost headers above, use the root Makefile:
 
 ```sh
 make build
@@ -119,17 +112,30 @@ erlangaot [options] <source.erl>...
   -h, --help           Show help
       --version        Show version
   -o, --output <path>  Future executable output path (default: a.out)
+      --preprocess-check  Preprocess and report diagnostics; write no output
+  -I, --include <dir>  Include directory (last supplied searched first)
+  -D, --define <name[=term]>  Initial macro (default value: true)
+      --app-dir <app=dir>  Explicit include_lib application directory
+      --enable-feature <name>  Enable a baseline feature (or all)
+      --disable-feature <name>  Disable a baseline feature (or all)
       --               End option parsing
 ```
 
-Quote paths containing spaces. The token following `-o`/`--output` is consumed
-as its path, even if it starts with `-`. Options are validated before help/version
-is displayed; help takes precedence over version. Valid compilation requests
-check that inputs are readable regular files, then report that compilation is not
-implemented. No output file is created or overwritten.
+```sh
+./build/debug/bin/erlangaot --preprocess-check -I include -DDEBUG \
+  '-DVERSION={1,0}' --app-dir myapp=/path/to/myapp src/example.erl
+```
 
-Exit codes: `0` for help/version, `2` for command-line usage errors, `1` for input
-errors or the unimplemented compilation request. Diagnostics go to stderr.
+Quote paths and Erlang terms for your shell. Joined `-Ipath` and `-DNAME=TERM`
+spellings are supported. Duplicate macro definitions are errors; application mappings
+use the last value; feature options apply in order. Each input has an isolated session;
+all inputs are processed and any error makes the request fail. Warnings alone succeed.
+`--output` conflicts with `--preprocess-check`. No executable is created or overwritten.
+
+Other compilation requests validate readable inputs, then report the unimplemented
+backend. Options are validated before help/version; help takes precedence over version.
+Exit codes: `0` for help/version or successful preprocessing, `2` for usage errors,
+and `1` for input/preprocessing errors or unimplemented compilation. Diagnostics use stderr.
 
 See [the project plan](00-plan.md) and [future Windows support](.agents/plan-windows.md).
 
@@ -212,6 +218,3 @@ option before `-P`. Use the default threshold for the project quality gate.
 The CLI option parser has been split into argument traversal, named-option
 handling, and output-operand handling. Its maximum CCN is now **10**, down from
 21, and both quality checks pass without suppressions or relaxed thresholds.
-
-Preprocessor implementation progress: steps 1–12 are implemented.
-The internal semantic session is tested; CLI integration follows in step 13.

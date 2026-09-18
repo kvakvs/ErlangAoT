@@ -1,66 +1,48 @@
 # File map
 
-- `Makefile`: macOS/Linux `build` and `test` wrappers around CMake and CTest,
-  plus `format`/`fmt` for project C++ files; configurable tool paths and options.
-- `CMakePresets.json`: shared C++23 Debug configure/build/test settings for CMake,
-  Visual Studio, and VS Code, with the compiler database in `build/debug`.
-- `.vscode/{settings,extensions}.json`: CMake Tools IntelliSense provider,
-  portable include fallback, and recommended VS Code extensions.
-- `CMakeLists.txt`: project/version, build switches, standard validation, CTest.
-- `cmake/ProjectOptions.cmake`: target-local C++ standard and warning settings.
-- `cmake/CompilerDependencies.cmake`: local/installed pinned Boost.Parser headers.
-- `compiler/include/erlang_aot/compiler/probe.hpp`, `compiler/src/parsing/probe.cpp`:
-  owned probe result and recursive Boost.Parser grammar; token-iterator constraint.
-- `tests/compiler/probe.cpp`: integration, offsets, malformed input and rollback.
-- `tests/compiler/preprocessor/oracle.{escript,cmake}`: optional OTP 29.1 epp events;
-  `tests/fixtures/preprocessor/{good,bad}.erl`: initial success/error fixtures.
-- `cmake/CheckComplexity.cmake`: standalone/target Lizard gate; CCN limit 10.
-- `.clang-tidy`: required diagnostic checks and cognitive-complexity limit 10.
-- `.clang-format`: four-space LLVM-based formatting with K&R braces, 120 columns,
-  and blank lines between type/function definition blocks.
-- `cmake/CheckClangTidy.cmake`: project translation-unit analysis and failure propagation.
-- `cmake/QualityToolchain.cmake.in`: configured include/SDK paths for clang-tidy.
-- `tools/requirements-quality.txt`: pinned Lizard, clang-tidy, and Python dependencies;
-  installed locally in ignored `.venv-quality/`.
-- `compiler/CMakeLists.txt`: compiler executable, version define, output location.
-- `compiler/src/main.cpp`: CLI argument traversal, named-option/output parsing,
-  help/version, input validation, exit codes; functions meet both complexity limits.
-- `runtime/CMakeLists.txt`: separate runtime archive target.
-- `runtime/src/runtime.cpp`: placeholder translation unit, no runtime behavior.
-- `abi/CMakeLists.txt`: reserved interface target; no ABI declarations yet.
-- `tests/CMakeLists.txt`: native compiler CLI test registration.
-- `tests/cli.cmake`: executable-level CLI checks and output-preservation checks.
-- `README.md`: current build, usage, status, and configuration options.
-- `.agents/plan-windows.md`: Windows toolchain, ABI, paths, runtime, and CI follow-up.
-- `00-plan.md`: preliminary full project structure and deferred design decisions.
-- `.agents/01-pp.md`: ordered Boost.Parser preprocessor plan, feature coverage,
-  proposed files, and OTP compatibility acceptance criteria; steps 1–3 implemented.
-- `.agents/01-pp-otp-tests.md`: pinned OTP checkout, upstream suite/case inventory,
-  implementation lessons, and test execution prerequisites.
-- `references/otp/` (ignored): OTP-29.1 source; main preprocessor tests are in
-  `lib/stdlib/test/epp_SUITE.erl`, feature tests in `erts/test/erlc_SUITE.erl`.
-- `AGENTS.md`: project intent and agent instructions; `aimemory.md`: working notes.
-- `.gitignore`: build trees, OTP reference checkout, local CMake presets, macOS metadata.
-- `compiler/include/erlang_aot/compiler/{source,diagnostic,lexer}.hpp`: shared
-  source, diagnostic, and internal token/scanner contracts.
-- `compiler/src/source/source.cpp`: UTF-8/Latin-1 decoding and byte/position mapping.
-- `compiler/src/diagnostics/diagnostic.cpp`: lexical errors and source rendering.
-- `compiler/src/lexer/{lexer,numbers,literals}.cpp`: incremental lexical categories,
-  unbounded integers/based floats, escaped/verbatim strings and OTP 29 sigils.
-- `tests/compiler/{lexer,lexer_dump}.cpp`: scanner checks and private token dump.
-- `tests/compiler/preprocessor/{scan.escript,scan.cmake,golden.cmake}`: optional
-  live scanner comparison and offline pinned token fixture checks.
-- `tests/fixtures/preprocessor/lexical/`: six inputs and OTP 29.1 token/location
-  records; provenance/serialization documented in the parent README.
-- `compiler/include/erlang_aot/compiler/{directive,preprocessor}.hpp`: directive
-  operand values, isolated session state, and private compiler event interface.
-- `compiler/src/preprocessor/cursor.hpp`: bounded, category-aware token cursor.
-- `compiler/src/preprocessor/directives.cpp`: transactional directive envelopes;
-  raw replacement bodies and deferred conditions/terms, no directive effects.
-- `compiler/src/preprocessor/preprocessor.cpp`: lexical form driver, passthrough,
-  line-leading misplaced-directive heuristic, latched errors, and recovery.
-- `tests/compiler/preprocessor/forms.cpp`: syntax, recovery/progress, ordinary
-  token preservation, lifetime, and session isolation checks.
-
-Preprocessor progress: steps 4–12 now have semantic implementation and focused tests.
-Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.
+- `CMakeLists.txt`, `CMakePresets.json`, `Makefile`: component switches, C++23/26,
+  portable configure/build/test presets, macOS/Linux build/test/format/fmt targets.
+- `cmake/ProjectOptions.cmake`: target-local language and warning policy.
+- `cmake/CompilerDependencies.cmake`: pinned compiler-only Boost.Parser/Multiprecision.
+- `cmake/CheckComplexity.cmake`, `CheckClangTidy.cmake`, `QualityToolchain.cmake.in`:
+  CCN/cognitive <=10 gates, configured compilation database/includes/SDK.
+- `.clang-format`, `.clang-tidy`, `tools/requirements-quality.txt`: formatting policy,
+  required checks, pinned local tooling. `.vscode/`: portable CMake IntelliSense setup.
+- `compiler/CMakeLists.txt`: frontend static component and `erlangaot` executable.
+- `compiler/src/main.cpp`: CLI validation, preprocessing options/check mode, failure codes.
+- `compiler/include/erlang_aot/compiler/`: owned source/token/diagnostic/directive/session
+  contracts; source/diagnostic/lexer/directive/preprocessor/probe headers.
+- `compiler/src/source/source.cpp`: UTF-8/Latin-1 decoding and byte/character positions.
+- `compiler/src/diagnostics/diagnostic.cpp`: logical diagnostic rendering and physical traces.
+- `compiler/src/lexer/{lexer,numbers,literals}.cpp`: incremental forms, numeric precision,
+  string/sigil decoding, feature-sensitive keywords and logical source mapping.
+- `compiler/src/parsing/{probe.cpp,boost_parser.hpp}`: standalone Boost boundary/probe.
+- `compiler/src/preprocessor/preprocessor.cpp`: syntax-only DirectiveReader/recovery.
+- `preprocessor/{cursor.hpp,directives.cpp}`: bounded cursor and transactional envelopes.
+- `preprocessor/{engine.hpp,session.cpp}`: semantic state, initial definitions, streaming
+  effects, error latching and include-frame lifecycle.
+- `preprocessor/{macros.hpp,macros.cpp,arguments.cpp}`: definition/overload table, static
+  and dynamic cycles, raw arguments, substitution, budgets and object/parameter rescans.
+- `preprocessor/{token_utils.hpp,token_utils.cpp}`: generated tokens, canonical stringification.
+- `preprocessor/{value.hpp,value.cpp,terms.cpp}`: arbitrary integers, Erlang term order,
+  normalized definition tokens and diagnostic terms.
+- `preprocessor/{expression.hpp,expression_parse.cpp}`: private AST and bounded token grammar.
+- `preprocessor/{expression.cpp,operators.cpp,guards.cpp,bits.cpp}`: guard validation,
+  closed BIF/operator dispatch, Erlang evaluation semantics and binary segments.
+- `preprocessor/conditions.cpp`: file-local branch transitions and skipped forms.
+- `preprocessor/includes.cpp`: injectable host-path/environment/application resolution.
+- `preprocessor/builtins.cpp`: module/function macros and logical file mappings.
+- `preprocessor/features.cpp`: pinned feature lifecycle/configuration and query definitions.
+- `runtime/{CMakeLists.txt,src/runtime.cpp}`, `abi/CMakeLists.txt`: independent placeholders.
+- `tests/cli.cmake`: CLI options, module isolation, diagnostics and output preservation.
+- `tests/compiler/{probe,lexer,lexer_dump}.cpp`: parser integration/scanner checks and dump.
+- `tests/compiler/preprocessor/{forms,semantics}.cpp`: syntax and semantic/resource/location tests.
+- `tests/compiler/preprocessor/{oracle,scan,epp_scan}.escript`: OTP 29.1 reference adapters.
+- `tests/compiler/preprocessor/*.cmake`, `dump.cpp`: private scanner/semantic comparisons.
+- `tests/fixtures/preprocessor/{lexical,semantic}/`: authored cases and pinned token records;
+  semantic headers include licensed OTP assert/file smoke fixtures.
+- `README.md`, `docs/preprocessor.md`: setup, usage, coverage, limits and host-validation status.
+- `.agents/{arch,files,01-pp,01-pp-otp-tests,plan-windows}.md`: architecture, file inventory,
+  preprocessor plan/reference inventory and Windows follow-up. `00-plan.md`: wider project.
+- `AGENTS.md`: user instructions; `aimemory.md`: working notes; `.gitignore`: local artifacts.
+- Ignored `references/otp/`: pinned research checkout, never a build dependency.

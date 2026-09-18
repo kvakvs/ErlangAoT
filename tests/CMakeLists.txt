@@ -47,3 +47,22 @@ erlang_aot_project_options(preprocessor_semantics)
 target_link_libraries(preprocessor_semantics PRIVATE erlang_frontend)
 add_test(NAME preprocessor_semantics COMMAND preprocessor_semantics)
 set_tests_properties(preprocessor_semantics PROPERTIES TIMEOUT 20)
+
+add_executable(preprocessor_dump compiler/preprocessor/dump.cpp)
+erlang_aot_project_options(preprocessor_dump)
+target_link_libraries(preprocessor_dump PRIVATE erlang_frontend)
+foreach(mode IN ITEMS golden oracle)
+    if(mode STREQUAL "oracle")
+        set(live TRUE)
+    else()
+        set(live FALSE)
+    endif()
+    add_test(NAME preprocessor_${mode} COMMAND "${CMAKE_COMMAND}"
+        "-DDUMP=$<TARGET_FILE:preprocessor_dump>"
+        "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
+        "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/epp_scan.escript"
+        "-DLIVE=${live}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/semantic.cmake")
+endforeach()
+set_tests_properties(preprocessor_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 60)

@@ -1,0 +1,10 @@
+-module(terms).
+-warning(#{a => <<1,2,3:2>>, b => [1|tail]}).
+-warning(fun erlang:length/1).
+-warning(~s"hello").
+-warning(~b"å").
+-warning(-123456789012345678901234567890).
+-warning(1+2).
+-warning(#{a := b}).
+-warning(<<1:2/utf8>>).
+-warning({true, 'quoted atom', "\n"}).

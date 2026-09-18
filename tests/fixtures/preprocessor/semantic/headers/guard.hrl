@@ -1,0 +1,6 @@
+-ifndef(GUARD_HRL).
+-define(GUARD_HRL,true).
+-define(HEADER_VALUE,7).
+-include("guard.hrl").
+-include("nested.hrl").
+-endif.
