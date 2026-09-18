@@ -194,5 +194,5 @@ Primary sources consulted:
 - https://go.dev/doc/gc-guide
 - https://kotlinlang.org/docs/native-memory-manager.html
 
-Preprocessor progress: steps 4–10 now have semantic implementation and focused tests.
+Preprocessor progress: steps 4–11 now have semantic implementation and focused tests.
 Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.

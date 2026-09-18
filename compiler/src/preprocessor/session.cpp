@@ -41,12 +41,31 @@ PreprocessorSession::State::State(const SourcePtr &source, PreprocessorOptions s
     emit_file(start_token(source), source->name, 1);
 }
 
+void PreprocessorSession::State::initial_feature(const std::string &name, bool enabled) {
+    if (name == "all") {
+        for (const auto &[known, state] : features) {
+            (void)state;
+            feature(known, enabled, start_token(files.front().source));
+        }
+    } else {
+        feature(name, enabled, start_token(files.front().source));
+    }
+}
+
 void PreprocessorSession::State::initialize() {
     macros.reserved = {U"FILE",    U"LINE",          U"FUNCTION_NAME", U"FUNCTION_ARITY",
                        U"MODULE",  U"MODULE_STRING", U"BASE_MODULE",   U"BASE_MODULE_STRING",
                        U"MACHINE", U"BEAM",          U"OTP_RELEASE"};
     macros.undefined = {U"MODULE",        U"MODULE_STRING", U"BASE_MODULE", U"BASE_MODULE_STRING",
                         U"FUNCTION_NAME", U"FUNCTION_ARITY"};
+    feature_macros();
+    for (const auto &[name, enabled] : options.features) {
+        try {
+            initial_feature(name, enabled);
+        } catch (const Diagnostic &error) {
+            diagnostic(error);
+        }
+    }
     for (const auto &definition : options.definitions) {
         try {
             predefine(definition);
@@ -155,6 +174,11 @@ void PreprocessorSession::State::apply(Directive directive, const Token &site) {
     case DirectiveKind::include_lib:
         include(directive, site);
         return;
+    case DirectiveKind::feature: {
+        const auto &setting = std::get<FeatureSetting>(directive.operand);
+        feature(utf8(setting.name.text()), setting.enabled, site);
+        return;
+    }
     default:
         break;
     }

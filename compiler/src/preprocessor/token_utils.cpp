@@ -48,8 +48,15 @@ std::u32string escaped(char32_t value, char32_t quote) {
     std::array<char, 16> digits{};
     const auto end = std::to_chars(digits.data(), digits.data() + digits.size(), static_cast<unsigned>(value), 8).ptr;
     std::u32string result = U"\\";
+    result.append(3 - static_cast<std::size_t>(end - digits.data()), U'0');
     result.append(digits.data(), end);
     return result;
+}
+
+// Character literals quote neither apostrophes nor double quotes; space has a dedicated escape.
+std::u32string character_text(const Integer &number) {
+    const auto value = static_cast<char32_t>(std::stoul(number.decimal));
+    return value == U' ' ? U"$\\s" : U"$" + escaped(value, 0x110000);
 }
 
 // Quote decoded values; original whitespace and literal escapes are not preserved by epp.
@@ -120,7 +127,7 @@ std::u32string atom_text(std::u32string_view text) {
 std::u32string token_text(const Token &token) {
     if (const auto *integer = std::get_if<Integer>(&token.value)) {
         if (token.kind == TokenKind::character) {
-            return U"$" + escaped(static_cast<char32_t>(std::stoul(integer->decimal)), U'\'');
+            return character_text(*integer);
         }
         return {integer->decimal.begin(), integer->decimal.end()};
     }

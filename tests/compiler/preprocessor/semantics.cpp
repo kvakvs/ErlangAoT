@@ -159,6 +159,9 @@ void contextual() {
     require(integers(result) == std::vector<std::string>{"2", "3", "29"}, "function and source context");
     require(run("?MODULE.").failed, "module context unavailable");
     require(run("-custom(?FUNCTION_NAME).").failed, "function context unavailable");
+    successful(run("-feature(maybe_expr,disable). -if(?FEATURE_AVAILABLE(maybe_expr)). yes. -endif."));
+    require(run("-export([]). -feature(maybe_expr,disable).").failed, "late feature directive");
+    require(run("-feature(missing,enable).").failed, "unknown feature");
 }
 
 int main() {
