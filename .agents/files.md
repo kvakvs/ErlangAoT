@@ -42,6 +42,7 @@
 - `tests/fixtures/preprocessor/{lexical,semantic}/`: authored cases and pinned token records;
   semantic headers include licensed OTP assert/file smoke fixtures.
 - `README.md`, `docs/preprocessor.md`: setup, usage, coverage, limits and host-validation status.
+- `regression1.md`: verified OTP 29.1 record-condition compiler crash and upstream report draft.
 - `.agents/{arch,files,01-pp,01-pp-otp-tests,plan-windows}.md`: architecture, file inventory,
   preprocessor plan/reference inventory and Windows follow-up. `00-plan.md`: wider project.
 - `AGENTS.md`: user instructions; `aimemory.md`: working notes; `.gitignore`: local artifacts.

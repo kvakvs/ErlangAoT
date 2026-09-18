@@ -40,4 +40,4 @@ The initial directory structure and implementation plan with technology choices 
 - The code will be read by humans, keep it readable.
 - The cyclomatic complexity of new functions and new files must remain low (avoid complex code). Use both Lizard and clang-tidy.
 - Before a clean commit, run `cmake --build build/debug --target check-quality` in a freshly configured build with both compiler and runtime enabled. Both Lizard and clang-tidy must pass; do not bypass findings with threshold increases or suppressions merely to pass the gate.
-- Keep all code clang-formatted.
+- Keep all code clang-formatted (Use either makefile target 'format' or invoke clang-format)
