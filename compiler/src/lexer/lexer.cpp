@@ -7,19 +7,19 @@
 namespace erlang_aot {
 namespace bp = boost::parser;
 
-bool atom_start(char32_t value) {
+bool atom_start(const char32_t value) {
     return (value >= U'a' && value <= U'z') || (value >= U'ß' && value <= U'ÿ' && value != U'÷');
 }
 
-bool variable_start(char32_t value) {
+bool variable_start(const char32_t value) {
     return value == U'_' || (value >= U'A' && value <= U'Z') || (value >= U'À' && value <= U'Þ' && value != U'×');
 }
 
-bool whitespace(char32_t value) { return value <= 32 || (value >= 128 && value <= 160); }
+bool whitespace(const char32_t value) { return value <= 32 || (value >= 128 && value <= 160); }
 
-std::size_t word_length(std::u32string_view input) {
-    const auto latin = (bp::char_(U'À', U'ÿ') - bp::char_(U"×÷"));
-    const auto part = bp::char_(U'a', U'z') | bp::char_(U'A', U'Z') | bp::char_(U'0', U'9') | bp::char_(U"_@") | latin;
+std::size_t word_length(const std::u32string_view input) {
+    constexpr auto latin = (bp::char_(U'À', U'ÿ') - bp::char_(U"×÷"));
+    constexpr auto part = bp::char_(U'a', U'z') | bp::char_(U'A', U'Z') | bp::char_(U'0', U'9') | bp::char_(U"_@") | latin;
     auto current = input.begin();
     bp::prefix_parse(current, input.end(), bp::omit[*part]);
     return static_cast<std::size_t>(current - input.begin());
@@ -30,7 +30,7 @@ std::u32string_view Token::text() const {
     return text ? std::u32string_view(*text) : std::u32string_view();
 }
 
-Lexer::Lexer(SourcePtr source, bool comments)
+Lexer::Lexer(SourcePtr source, const bool comments)
     : source_(std::move(source)), comments_(comments),
       keywords_{U"after", U"begin", U"case", U"try",     U"cond", U"catch", U"andalso", U"orelse", U"end", U"fun",
                 U"if",    U"let",   U"of",   U"receive", U"when", U"bnot",  U"not",     U"div",    U"rem", U"band",
@@ -43,7 +43,7 @@ std::size_t Lexer::offset() const { return cursor_; }
 
 void Lexer::set_keywords(std::set<std::u32string> keywords) { keywords_ = std::move(keywords); }
 
-void Lexer::set_keyword(std::u32string keyword, bool enabled) {
+void Lexer::set_keyword(std::u32string keyword, const bool enabled) {
     if (enabled) {
         keywords_.insert(std::move(keyword));
     } else {
@@ -51,18 +51,18 @@ void Lexer::set_keyword(std::u32string keyword, bool enabled) {
     }
 }
 
-void Lexer::set_location(std::string file, std::size_t line) {
+void Lexer::set_location(std::string file, const std::size_t line) {
     logical_file_ = std::move(file);
     logical_base_ = line;
     physical_base_ = source_->position(cursor_).line;
 }
 
-LogicalLocation Lexer::logical_location(std::size_t offset) const {
+LogicalLocation Lexer::logical_location(const std::size_t offset) const {
     const auto position = source_->position(offset);
     return {logical_file_, logical_base_ + position.line - physical_base_, position.column};
 }
 
-Token Lexer::token(TokenKind kind, TokenValue value, std::size_t begin, std::size_t end) const {
+Token Lexer::token(const TokenKind kind, TokenValue value, const std::size_t begin, const std::size_t end) const {
     const auto position = source_->position(begin);
     return {kind,
             std::move(value),
@@ -71,7 +71,7 @@ Token Lexer::token(TokenKind kind, TokenValue value, std::size_t begin, std::siz
             {}};
 }
 
-void Lexer::fail(DiagnosticCode code, std::string message, std::size_t begin) const {
+void Lexer::fail(const DiagnosticCode code, std::string message, const std::size_t begin) const {
     const auto position = source_->position(begin);
     throw LexicalError(
         {code,

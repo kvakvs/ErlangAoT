@@ -33,8 +33,7 @@ struct Token {
     // Describe the lexical category and decoded value.
     TokenKind kind;
     TokenValue value;
-    // Keep original spelling and logical position even after source owners
-    // exit.
+    // Keep original spelling and logical position even after source owners exit.
     Span spelling;
     LogicalLocation location;
     // Later expansion/include stages can attach origins without rewriting

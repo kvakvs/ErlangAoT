@@ -5,10 +5,10 @@
 namespace erlang_aot {
 namespace {
 // Accept Unicode scalar values for both ordinary and escaped characters.
-bool valid_scalar(char32_t value) { return value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff); }
+bool valid_scalar(const char32_t value) { return value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff); }
 
 // Decode the standard hexadecimal alphabet.
-unsigned hex_digit(char32_t value) {
+unsigned hex_digit(const char32_t value) {
     if (value >= U'0' && value <= U'9') {
         return static_cast<unsigned>(value - U'0');
     }
@@ -28,7 +28,7 @@ struct EscapeDigits {
 };
 
 // Consume a bounded numeric escape without overflowing a Unicode scalar.
-char32_t numeric_escape(std::u32string_view &input, EscapeDigits syntax) {
+char32_t numeric_escape(std::u32string_view &input, const EscapeDigits syntax) {
     char32_t value = 0;
     std::size_t count = 0;
     while (!input.empty() && count < syntax.limit) {
@@ -79,7 +79,7 @@ char32_t caret(std::u32string_view &input) {
         return 127;
     }
     if ((value >= U'@' && value <= U'_') || (value >= U'a' && value <= U'z')) {
-        return value & 31;
+        return value & 31u;
     }
     throw std::invalid_argument("invalid control escape");
 }
@@ -119,7 +119,7 @@ std::u32string unescape(std::u32string_view input) {
 }
 
 // Return the closing delimiter for an Erlang sigil, or zero for invalid syntax.
-char32_t closing(char32_t opening) {
+char32_t closing(const char32_t opening) {
     constexpr std::u32string_view openings = U"([{</|#`'\"";
     constexpr std::u32string_view closings = U")]}>/|#`'\"";
     const auto index = openings.find(opening);
@@ -149,7 +149,7 @@ Token Lexer::character() {
     return token(TokenKind::character, Integer{std::to_string(static_cast<unsigned>(value))}, begin, cursor_);
 }
 
-Token Lexer::quoted(char32_t delimiter, bool verbatim, TokenKind kind) {
+Token Lexer::quoted(const char32_t delimiter, const bool verbatim, const TokenKind kind) {
     const auto begin = cursor_++;
     std::u32string value;
     while (!rest().empty() && rest().front() != delimiter) {
@@ -169,7 +169,8 @@ Token Lexer::quoted(char32_t delimiter, bool verbatim, TokenKind kind) {
     return token(kind, std::move(value), begin, cursor_);
 }
 
-std::u32string Lexer::strip_indent(std::u32string_view text, Indentation indent, std::size_t begin) const {
+std::u32string Lexer::strip_indent(const std::u32string_view text, const Indentation indent,
+                                   const std::size_t begin) const {
     std::u32string result;
     std::u32string_view remaining(text);
     while (!remaining.empty()) {
@@ -193,7 +194,7 @@ std::u32string Lexer::strip_indent(std::u32string_view text, Indentation indent,
     return result;
 }
 
-Token Lexer::triple(bool verbatim) {
+Token Lexer::triple(const bool verbatim) {
     const auto begin = cursor_;
     while (rest().starts_with(U"\"")) {
         ++cursor_;
@@ -211,7 +212,7 @@ Token Lexer::triple(bool verbatim) {
     return triple_content(begin, delimiter, verbatim);
 }
 
-Token Lexer::triple_content(std::size_t begin, std::u32string_view delimiter, bool verbatim) {
+Token Lexer::triple_content(const std::size_t begin, const std::u32string_view delimiter, const bool verbatim) {
     const auto content = cursor_;
     while (!rest().empty() && !rest().starts_with(delimiter)) {
         if (!verbatim && rest().front() == U'\\') {

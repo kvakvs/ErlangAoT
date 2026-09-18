@@ -55,7 +55,7 @@ struct Diagnostic {
     // Warnings remain observable without marking a module unsuccessful.
     Severity severity = Severity::error;
     // Render logical coordinates while retaining physical spelling and provenance.
-    std::optional<LogicalLocation> location;
+    std::optional<LogicalLocation> location{};
 };
 
 class LexicalError : public std::runtime_error {

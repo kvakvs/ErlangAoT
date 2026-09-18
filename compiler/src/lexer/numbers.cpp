@@ -10,8 +10,8 @@ namespace {
 namespace bp = boost::parser;
 
 // Consume digits with optional single separators between them.
-std::size_t digits(std::u32string_view input, bool letters) {
-    const auto digit = bp::char_(U'0', U'9');
+std::size_t digits(const std::u32string_view input, const bool letters) {
+    constexpr auto digit = bp::char_(U'0', U'9');
     const auto extended = digit | bp::char_(U'a', U'z') | bp::char_(U'A', U'Z');
     auto current = input.begin();
     if (letters) {
@@ -23,7 +23,7 @@ std::size_t digits(std::u32string_view input, bool letters) {
 }
 
 // Convert a digit from Erlang's base-2 through base-36 alphabet.
-unsigned digit_value(char32_t value) {
+unsigned digit_value(const char32_t value) {
     if (value >= U'a' && value <= U'z') {
         return static_cast<unsigned>(value - U'a') + 10;
     }
@@ -34,7 +34,7 @@ unsigned digit_value(char32_t value) {
 }
 
 // Accumulate arbitrary precision using a small decimal representation.
-void multiply_add(std::string &decimal, unsigned base, unsigned carry) {
+void multiply_add(std::string &decimal, const unsigned base, unsigned carry) {
     for (auto digit = decimal.rbegin(); digit != decimal.rend(); ++digit) {
         const auto value = static_cast<unsigned>(*digit - '0') * base + carry;
         *digit = static_cast<char>('0' + value % 10);
@@ -47,7 +47,7 @@ void multiply_add(std::string &decimal, unsigned base, unsigned carry) {
 }
 
 // Parse a based integer without depending on the future Erlang runtime.
-Integer integer(std::u32string_view digits, unsigned base) {
+Integer integer(const std::u32string_view digits, const unsigned base) {
     std::string decimal = "0";
     for (const auto value : digits) {
         if (value == U'_') {
@@ -63,7 +63,7 @@ Integer integer(std::u32string_view digits, unsigned base) {
 }
 
 // Parse floating values with a fixed locale and reject non-finite results.
-double floating(std::u32string_view spelling) {
+double floating(const std::u32string_view spelling) {
     auto text = utf8(spelling);
     std::erase(text, '_');
     std::istringstream input(text);
@@ -77,7 +77,7 @@ double floating(std::u32string_view spelling) {
 }
 
 // Follow OTP's based-float conversion: integer significand times a base power.
-double based_value(std::u32string text, std::u32string exponent, unsigned base) {
+double based_value(std::u32string text, std::u32string exponent, const unsigned base) {
     if (base == 10) {
         return floating(text + exponent);
     }
@@ -122,7 +122,7 @@ Token Lexer::number() {
     }
 }
 
-Token Lexer::based_number(std::size_t begin) {
+Token Lexer::based_number(const std::size_t begin) {
     const auto base_text = integer(std::u32string_view(source_->text).substr(begin, cursor_ - begin), 10).decimal;
     if (base_text.size() > 2) {
         throw std::invalid_argument("invalid integer base");
@@ -154,7 +154,7 @@ void Lexer::number_end() const {
 }
 
 // Consume a decimal exponent after the appropriate float marker.
-std::u32string Lexer::exponent(bool based) {
+std::u32string Lexer::exponent(const bool based) {
     if (based) {
         if (!rest().starts_with(U"#e") && !rest().starts_with(U"#E")) {
             return {};
@@ -175,7 +175,7 @@ std::u32string Lexer::exponent(bool based) {
     return source_->text.substr(begin, cursor_ - begin);
 }
 
-Token Lexer::based_float(std::size_t begin, BasedMantissa syntax) {
+Token Lexer::based_float(const std::size_t begin, const BasedMantissa syntax) {
     ++cursor_;
     const auto count = digits(rest(), true);
     cursor_ += count;
@@ -188,7 +188,7 @@ Token Lexer::based_float(std::size_t begin, BasedMantissa syntax) {
     return token(TokenKind::floating, based_value(mantissa, power, syntax.base), begin, cursor_);
 }
 
-Token Lexer::floating_number(std::size_t begin) {
+Token Lexer::floating_number(const std::size_t begin) {
     ++cursor_;
     cursor_ += digits(rest(), false);
     static_cast<void>(exponent(false));
