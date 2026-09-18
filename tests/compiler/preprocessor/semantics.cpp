@@ -83,7 +83,21 @@ void macros() {
     successful(run("{?A,?B}.", options));
 }
 
+void stringify_arguments() {
+    const auto result = run("-define(S(X), ??X). -define(A,42). {?S(?A + 16#ff), ?S('quoted atom'), ?S(\"str\")}.");
+    successful(result);
+    std::vector<std::u32string> strings;
+    for (const auto &token : result.tokens) {
+        if (token.kind == TokenKind::string) {
+            strings.emplace_back(token.text());
+        }
+    }
+    require(strings == std::vector<std::u32string>{U"? A + 255", U"'quoted atom'", U"\"str\""},
+            "canonical raw stringification");
+}
+
 int main() {
     objects();
     macros();
+    stringify_arguments();
 }

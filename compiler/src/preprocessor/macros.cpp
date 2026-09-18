@@ -130,6 +130,21 @@ void MacroExpander::budget(std::size_t count, const Token &call) {
 }
 
 namespace {
+// Consume the double-question marker only when followed by a formal-shaped variable.
+bool stringify_parameter(std::span<const Token> body, std::size_t &position) {
+    if (position + 2 >= body.size()) {
+        return false;
+    }
+    if (!syntax(body[position], U"?") || !syntax(body[position + 1], U"?")) {
+        return false;
+    }
+    if (body[position + 2].kind != TokenKind::variable) {
+        return false;
+    }
+    position += 2;
+    return true;
+}
+
 // Retain dynamic ancestry too: substitution can manufacture references absent from the static graph.
 void expansion_path(const Definition &definition, const Token &call, std::size_t limit) {
     const auto &site = definition.name.spelling;
@@ -167,10 +182,15 @@ std::vector<Token> MacroExpander::substitute(const Definition &definition, const
     std::vector<Token> result;
     auto location = call;
     for (std::size_t i = 0; i < definition.body.size(); ++i) {
+        const bool stringified = stringify_parameter(definition.body, i);
         const auto &token = definition.body[i];
         const auto found = bindings.find(token.text());
         if (token.kind != TokenKind::variable || found == bindings.end()) {
             result.push_back(replacement(token, location, definition));
+            continue;
+        }
+        if (stringified) {
+            result.push_back(generated(location, TokenKind::string, stringify(*found->second)));
             continue;
         }
         result.insert(result.end(), found->second->begin(), found->second->end());

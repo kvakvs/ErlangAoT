@@ -62,5 +62,5 @@
 - `tests/compiler/preprocessor/forms.cpp`: syntax, recovery/progress, ordinary
   token preservation, lifetime, and session isolation checks.
 
-Preprocessor progress: steps 4–5 now have semantic implementation and focused tests.
+Preprocessor progress: steps 4–6 now have semantic implementation and focused tests.
 Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.
