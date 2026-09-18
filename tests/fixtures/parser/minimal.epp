@@ -1,0 +1,3 @@
+{ok,{attribute,0,file,{"minimal.erl",1}}}.
+{ok,{attribute,0,module,minimal}}.
+{ok,{function,0,answer,0,[{clause,0,[],[],[{integer,0,42}]}]}}.

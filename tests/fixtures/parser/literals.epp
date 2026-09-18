@@ -1,0 +1,3 @@
+{ok,{attribute,0,file,{"literals.erl",1}}}.
+{ok,{attribute,0,module,literals}}.
+{ok,{function,0,f,0,[{clause,0,[],[],[{tuple,0,[{atom,0,ok},{integer,0,123456789012345678901234567890},{float,0,{float_bits,<<"3ff4000000000000">>}},{char,0,97},{string,0,"ab"},{string,0,"text"},{bin,0,[{bin_element,0,{string,0,"bytes"},default,[utf8]}]},{cons,0,{integer,0,1},{cons,0,{integer,0,2},{atom,0,tail}}}]}]}]}}.

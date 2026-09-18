@@ -1,0 +1,5 @@
+{ok,{attribute,0,file,{"bad.erl",1}}}.
+{ok,{attribute,0,module,bad}}.
+{error,erl_parse,{2,8}}.
+{error,erl_parse,{3,12}}.
+{error,erl_parse,{4,9}}.

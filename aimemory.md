@@ -36,6 +36,15 @@
 
 # Research notes
 
+## 2026-09-19 — Parser Phase I execution
+
+- Step 1: 14 authored corpus fixtures, complete pinned grammar/action inventory,
+  private normalized raw/epp/lint records and exact-version escript replay.
+- Offline parser_reference checks native lexer parity and reference integrity;
+  it does not yet claim native AST parity. Live parser_oracle covers all records.
+- Initial full debug suite: 12 CTests passed; missing/OTP28 oracle skips verified.
+- User committed the parser plan during this turn (7987ef0); preserve that commit.
+
 ## Shared IDE configuration — 2026-09-18
 
 - `CMakePresets.json` schema 3 targets C++23 in build/debug and works with

@@ -1,0 +1,3 @@
+{ok,{attribute,0,file,{"patterns.erl",1}}}.
+{ok,{attribute,0,module,patterns}}.
+{ok,{function,0,f,1,[{clause,0,[{match,0,{tuple,0,[{var,0,'X'},{var,0,'Y'}]},{var,0,'A'}}],[[{op,0,'>',{var,0,'X'},{integer,0,0}},{op,0,'<',{var,0,'Y'},{integer,0,2}}],[{op,0,'=:=',{var,0,'X'},{integer,0,0}}]],[{var,0,'A'}]},{clause,0,[{var,0,'_'}],[],[{atom,0,ok}]}]}}.

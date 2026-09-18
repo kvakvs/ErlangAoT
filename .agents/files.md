@@ -45,5 +45,11 @@
 - `regression1.md`: verified OTP 29.1 record-condition compiler crash and upstream report draft.
 - `.agents/{arch,files,01-pp,01-pp-otp-tests,plan-windows}.md`: architecture, file inventory,
   preprocessor plan/reference inventory and Windows follow-up. `00-plan.md`: wider project.
+- `.agents/02-parser.md`: proposed lexer-reuse/parser/typed-AST plan, six phases,
+  18 steps with explicit acceptance and per-step quality/commit requirements.
 - `AGENTS.md`: user instructions; `aimemory.md`: working notes; `.gitignore`: local artifacts.
 - Ignored `references/otp/`: pinned research checkout, never a build dependency.
+- `tests/compiler/parser/{oracle.escript,oracle.cmake,reference.cmake}`: optional
+  OTP parser/epp/lint replay and offline scanner/reference-integrity checks.
+- `tests/fixtures/parser/`: authored probes, pinned records and production/action inventory.
+- `docs/parser.md`: parser implementation progress and validation evidence.

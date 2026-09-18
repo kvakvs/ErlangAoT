@@ -1,0 +1,11 @@
+{ok,{attribute,0,module,attributes}}.
+{ok,{attribute,0,export,[{f,0}]}}.
+{ok,{attribute,0,import,{lists,[{reverse,1}]}}}.
+{ok,{attribute,0,export_type,[{t,0}]}}.
+{ok,{attribute,0,behaviour,gen_server}}.
+{ok,{attribute,0,compile,{parse_transform,example}}}.
+{ok,{attribute,0,import_record,{m,[r]}}}.
+{ok,{attribute,0,export_record,[r]}}.
+{ok,{attribute,0,custom,{{f,1},{map_value,[{key,{f,2}}]}}}}.
+{ok,{attribute,0,doc,{map_value,[{equiv,{call,{10,15},{atom,{10,15},f},[]}},{since,"1"}]}}}.
+{ok,{function,0,f,0,[{clause,0,[],[],[{atom,0,ok}]}]}}.

@@ -66,3 +66,14 @@ foreach(mode IN ITEMS golden oracle)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/semantic.cmake")
 endforeach()
 set_tests_properties(preprocessor_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 60)
+
+add_test(NAME parser_reference COMMAND "${CMAKE_COMMAND}"
+    "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+    "-DDUMP=$<TARGET_FILE:lexer_dump>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/reference.cmake")
+add_test(NAME parser_oracle COMMAND "${CMAKE_COMMAND}"
+    "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+    "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+    "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.cmake")
+set_tests_properties(parser_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 180)

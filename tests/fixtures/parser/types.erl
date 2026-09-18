@@ -1,0 +1,8 @@
+-module(types).
+-type t(A) :: A | {ok,A} | [A,...] | #{atom()=>integer()} | <<_:8,_:_*16>>.
+-opaque o() :: 1..10.
+-nominal n() :: atom().
+-record(r,{x=0 :: integer(), y :: m:t()}).
+-type fn() :: fun((...) -> atom()).
+-spec f(A) -> A when A :: term(); (integer()) -> atom().
+-callback cb(term()) -> ok.

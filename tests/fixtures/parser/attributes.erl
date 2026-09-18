@@ -1,0 +1,11 @@
+-module(attributes).
+-export([f/0]).
+-import(lists,[reverse/1]).
+-export_type([t/0]).
+-behaviour(gen_server).
+-compile({parse_transform,example}).
+-import_record(m,[r]).
+-export_record([r]).
+-custom({f/1,#{key=>f/2}}).
+-doc #{equiv=>f(),since=>"1"}.
+f() -> ok.

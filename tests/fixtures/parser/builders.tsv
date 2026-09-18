@@ -1,0 +1,15 @@
+action	step	AST family	fixture
+build_typed_attribute	14	Type/Record	types
+build_type_spec	15	Specification	types
+build_compat_constraint	15	Constraint	types
+build_constraint	15	Constraint	types
+build_gen_type	14	Type	types
+build_bin_type	14	BinaryType	types
+build_atom	8	RecordName	maps_records
+build_record	13	RecordDeclaration	maps_records
+build_type	14	TypeApplication	types
+build_attribute	13	Attribute	attributes
+build_function	7	Function	patterns
+build_fun	11	Fun	funs_try_maybe
+build_try	11	Try	funs_try_maybe
+build_sigil	5	Literal	literals

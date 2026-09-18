@@ -1,0 +1,9 @@
+{ok,{attribute,0,file,{"types.erl",1}}}.
+{ok,{attribute,0,module,types}}.
+{ok,{attribute,0,type,{t,{type,0,union,[{var,0,'A'},{type,0,tuple,[{atom,0,ok},{var,0,'A'}]},{type,0,nonempty_list,[{var,0,'A'}]},{type,0,map,[{type,0,map_field_assoc,[{type,0,atom,[]},{type,0,integer,[]}]}]},{type,0,binary,[{integer,0,8},{integer,0,16}]}]},[{var,0,'A'}]}}}.
+{ok,{attribute,0,opaque,{o,{type,0,range,[{integer,0,1},{integer,0,10}]},[]}}}.
+{ok,{attribute,0,nominal,{n,{type,0,atom,[]},[]}}}.
+{ok,{attribute,0,record,{r,[{typed_record_field,{record_field,0,{atom,0,x},{integer,0,0}},{type,0,integer,[]}},{typed_record_field,{record_field,0,{atom,0,y}},{remote_type,0,[{atom,0,m},{atom,0,t},[]]}}]}}}.
+{ok,{attribute,0,type,{fn,{type,0,'fun',[{type,0,any},{type,0,atom,[]}]},[]}}}.
+{ok,{attribute,0,spec,{{f,1},[{type,0,bounded_fun,[{type,0,'fun',[{type,0,product,[{var,0,'A'}]},{var,0,'A'}]},[{type,0,constraint,[{atom,0,is_subtype},[{var,0,'A'},{type,0,term,[]}]]}]]},{type,0,'fun',[{type,0,product,[{type,0,integer,[]}]},{type,0,atom,[]}]}]}}}.
+{ok,{attribute,0,callback,{{cb,1},[{type,0,'fun',[{type,0,product,[{type,0,term,[]}]},{atom,0,ok}]}]}}}.

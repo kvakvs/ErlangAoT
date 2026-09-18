@@ -1,0 +1,424 @@
+line	step	AST family	fixture	production
+131	13	Attribute	attributes	form -> attribute dot
+132	13	Attribute	attributes	form -> function dot
+134	13	Attribute	attributes	attribute -> '-' atom attr_val
+135	13	Attribute	attributes	attribute -> '-' atom typed_attr_val
+136	13	Attribute	attributes	attribute -> '-' atom '(' typed_attr_val ')'
+138	13	Attribute	attributes	attribute -> '-' 'record' record_spec
+139	13	Attribute	attributes	attribute -> '-' 'record' typed_record_spec
+140	13	Attribute	attributes	attribute -> '-' 'record' '(' typed_record_spec ')'
+142	13	Attribute	attributes	attribute -> '-' 'spec' type_spec
+143	13	Attribute	attributes	attribute -> '-' 'callback' type_spec
+144	13	Attribute	attributes	attribute -> '-' 'record' type_spec
+146	15	Specification	types	type_spec -> spec_fun type_sigs
+147	15	Specification	types	type_spec -> '(' spec_fun type_sigs ')'
+149	15	Specification	types	spec_fun -> atom
+150	15	Specification	types	spec_fun -> atom ':' atom
+152	14	Type	types	typed_attr_val -> expr ',' typed_record_fields
+153	14	Type	types	typed_attr_val -> expr '::' top_type
+157	13	Attribute	attributes	record_spec -> atom
+158	13	Attribute	attributes	record_spec -> atom ',' exprs
+159	13	Attribute	attributes	record_spec -> '(' atom ',' exprs ')'
+162	13	Attribute	attributes	record_spec -> '#' record_name
+163	13	Attribute	attributes	record_spec -> '#' record_name exprs
+164	13	Attribute	attributes	record_spec -> '(' '#' record_name exprs ')'
+166	14	Type	types	typed_record_spec -> atom ',' typed_record_fields
+167	14	Type	types	typed_record_spec -> '#' record_name typed_record_fields
+169	14	Type	types	typed_record_fields -> '{' typed_exprs '}'
+171	14	Type	types	typed_exprs -> typed_expr
+172	14	Type	types	typed_exprs -> typed_expr ',' typed_exprs
+173	14	Type	types	typed_exprs -> expr ',' typed_exprs
+174	14	Type	types	typed_exprs -> typed_expr ',' exprs
+176	14	Type	types	typed_expr -> expr '::' top_type
+178	15	Specification	types	type_sigs -> type_sig
+179	15	Specification	types	type_sigs -> type_sig ';' type_sigs
+181	15	Specification	types	type_sig -> fun_type
+182	15	Specification	types	type_sig -> fun_type 'when' type_guards
+185	15	Specification	types	type_guards -> type_guard
+186	15	Specification	types	type_guards -> type_guard ',' type_guards
+188	15	Specification	types	type_guard -> atom '(' top_types ')'
+189	15	Specification	types	type_guard -> var '::' top_type
+191	14	Type	types	top_types -> top_type
+192	14	Type	types	top_types -> top_type ',' top_types
+194	14	Type	types	top_type -> var '::' top_type
+195	14	Type	types	top_type -> type '|' top_type
+196	14	Type	types	top_type -> type
+198	14	Type	types	type -> type '..' type
+199	14	Type	types	type -> type add_op type
+200	14	Type	types	type -> type mult_op type
+201	14	Type	types	type -> prefix_op type
+202	14	Type	types	type -> '(' top_type ')'
+203	14	Type	types	type -> var
+204	14	Type	types	type -> atom
+205	14	Type	types	type -> atom '(' ')'
+206	14	Type	types	type -> atom '(' top_types ')'
+207	14	Type	types	type -> atom ':' atom '(' ')'
+209	14	Type	types	type -> atom ':' atom '(' top_types ')'
+211	14	Type	types	type -> '[' ']'
+212	14	Type	types	type -> '[' top_type ']'
+213	14	Type	types	type -> '[' top_type ',' '...' ']'
+215	14	Type	types	type -> '#' '{' '}'
+216	14	Type	types	type -> '#' '{' map_pair_types '}'
+217	14	Type	types	type -> '{' '}'
+218	14	Type	types	type -> '{' top_types '}'
+219	14	Type	types	type -> '#' atom '{' '}'
+220	14	Type	types	type -> '#' atom '{' field_types '}'
+222	14	Type	types	type -> '#' atom ':' record_name '{' '}'
+225	14	Type	types	type -> '#' atom ':' record_name '{' field_types '}'
+228	14	Type	types	type -> binary_type
+229	14	Type	types	type -> integer
+230	14	Type	types	type -> char
+231	14	Type	types	type -> 'fun' '(' ')'
+232	14	Type	types	type -> 'fun' '(' fun_type ')'
+234	14	Type	types	fun_type -> '(' '...' ')' '->' top_type
+236	14	Type	types	fun_type -> '(' ')' '->' top_type
+238	14	Type	types	fun_type -> '(' top_types ')' '->' top_type
+242	14	Type	types	map_pair_types -> map_pair_type
+243	14	Type	types	map_pair_types -> map_pair_type ',' map_pair_types
+245	14	Type	types	map_pair_type -> top_type '=>' top_type
+247	14	Type	types	map_pair_type -> top_type ':=' top_type
+250	14	Type	types	field_types -> field_type
+251	14	Type	types	field_types -> field_type ',' field_types
+253	14	Type	types	field_type -> atom '::' top_type
+256	14	Type	types	binary_type -> '<<' '>>'
+259	14	Type	types	binary_type -> '<<' bin_base_type '>>'
+261	14	Type	types	binary_type -> '<<' bin_unit_type '>>'
+263	14	Type	types	binary_type -> '<<' bin_base_type ',' bin_unit_type '>>'
+266	14	Type	types	bin_base_type -> var ':' type
+268	14	Type	types	bin_unit_type -> var ':' var '*' type
+270	13	Attribute	attributes	attr_val -> expr
+271	13	Attribute	attributes	attr_val -> expr ',' exprs
+272	13	Attribute	attributes	attr_val -> '(' expr ',' exprs ')'
+274	7	Pattern/Clause	patterns	function -> function_clauses
+276	7	Pattern/Clause	patterns	function_clauses -> function_clause
+277	7	Pattern/Clause	patterns	function_clauses -> function_clause ';' function_clauses
+279	7	Pattern/Clause	patterns	function_clause -> atom clause_args clause_guard clause_body
+283	7	Pattern/Clause	patterns	clause_args -> pat_argument_list
+285	7	Pattern/Clause	patterns	clause_guard -> 'when' guard
+286	7	Pattern/Clause	patterns	clause_guard -> '$empty'
+288	7	Pattern/Clause	patterns	clause_body -> '->' clause_body_exprs
+290	6	Expression	operators	expr -> 'catch' expr
+291	6	Expression	operators	expr -> expr '=' expr
+292	6	Expression	operators	expr -> expr '!' expr
+293	6	Expression	operators	expr -> expr 'orelse' expr
+294	6	Expression	operators	expr -> expr 'andalso' expr
+295	6	Expression	operators	expr -> expr comp_op expr
+296	6	Expression	operators	expr -> expr list_op expr
+297	6	Expression	operators	expr -> expr add_op expr
+298	6	Expression	operators	expr -> expr mult_op expr
+299	6	Expression	operators	expr -> prefix_op expr
+300	6	Expression	operators	expr -> map_expr
+301	6	Expression	operators	expr -> function_call
+302	6	Expression	operators	expr -> record_expr
+303	6	Expression	operators	expr -> expr_remote
+304	6	Expression	operators	expr -> expr_max
+306	6	Expression	operators	expr_remote -> expr ':' expr
+308	6	Expression	operators	expr_max -> var
+309	6	Expression	operators	expr_max -> atomic
+310	6	Expression	operators	expr_max -> list
+311	6	Expression	operators	expr_max -> binary
+312	6	Expression	operators	expr_max -> sigil
+313	6	Expression	operators	expr_max -> list_comprehension
+314	6	Expression	operators	expr_max -> map_comprehension
+315	6	Expression	operators	expr_max -> binary_comprehension
+316	6	Expression	operators	expr_max -> tuple
+317	6	Expression	operators	expr_max -> '(' expr ')'
+318	6	Expression	operators	expr_max -> 'begin' exprs 'end'
+319	6	Expression	operators	expr_max -> if_expr
+320	6	Expression	operators	expr_max -> case_expr
+321	6	Expression	operators	expr_max -> receive_expr
+322	6	Expression	operators	expr_max -> fun_expr
+323	6	Expression	operators	expr_max -> try_expr
+324	6	Expression	operators	expr_max -> maybe_expr
+326	7	Pattern/Clause	patterns	pat_expr -> pat_expr '=' pat_expr
+327	7	Pattern/Clause	patterns	pat_expr -> pat_expr comp_op pat_expr
+328	7	Pattern/Clause	patterns	pat_expr -> pat_expr list_op pat_expr
+329	7	Pattern/Clause	patterns	pat_expr -> pat_expr add_op pat_expr
+330	7	Pattern/Clause	patterns	pat_expr -> pat_expr mult_op pat_expr
+331	7	Pattern/Clause	patterns	pat_expr -> prefix_op pat_expr
+332	7	Pattern/Clause	patterns	pat_expr -> map_pat_expr
+333	7	Pattern/Clause	patterns	pat_expr -> record_pat_expr
+334	7	Pattern/Clause	patterns	pat_expr -> pat_expr_max
+336	7	Pattern/Clause	patterns	pat_expr_max -> var
+337	7	Pattern/Clause	patterns	pat_expr_max -> atomic
+338	7	Pattern/Clause	patterns	pat_expr_max -> list
+339	7	Pattern/Clause	patterns	pat_expr_max -> binary
+340	7	Pattern/Clause	patterns	pat_expr_max -> sigil
+341	7	Pattern/Clause	patterns	pat_expr_max -> tuple
+342	7	Pattern/Clause	patterns	pat_expr_max -> '(' pat_expr ')'
+344	8	Map/Record	maps_records	map_pat_expr -> '#' map_tuple
+347	8	Map/Record	maps_records	record_pat_expr -> '#' atom '.' atom
+349	8	Map/Record	maps_records	record_pat_expr -> '#' record_name record_tuple
+351	8	Map/Record	maps_records	record_pat_expr -> '#' atom ':' record_name record_tuple
+354	8	Map/Record	maps_records	record_pat_expr -> '#_' record_tuple
+358	5	Literal	literals	list -> '[' ']'
+359	5	Literal	literals	list -> '[' expr tail
+361	5	Literal	literals	tail -> ']'
+362	5	Literal	literals	tail -> '|' expr ']'
+363	5	Literal	literals	tail -> ',' expr tail
+366	9	Binary	binaries	binary -> '<<' '>>'
+367	9	Binary	binaries	binary -> '<<' bin_elements '>>'
+369	9	Binary	binaries	bin_elements -> bin_element
+370	9	Binary	binaries	bin_elements -> bin_element ',' bin_elements
+372	9	Binary	binaries	bin_element -> bit_expr opt_bit_size_expr opt_bit_type_list
+375	9	Binary	binaries	bit_expr -> prefix_op expr_max
+376	9	Binary	binaries	bit_expr -> expr_max
+378	9	Binary	binaries	opt_bit_size_expr -> ':' bit_size_expr
+379	9	Binary	binaries	opt_bit_size_expr -> '$empty'
+381	9	Binary	binaries	opt_bit_type_list -> '/' bit_type_list
+382	9	Binary	binaries	opt_bit_type_list -> '$empty'
+384	9	Binary	binaries	bit_type_list -> bit_type '-' bit_type_list
+385	9	Binary	binaries	bit_type_list -> bit_type
+387	9	Binary	binaries	bit_type -> atom
+388	9	Binary	binaries	bit_type -> atom ':' integer
+390	9	Binary	binaries	bit_size_expr -> expr_max
+393	9	Binary	binaries	sigil -> sigil_prefix string sigil_suffix
+396	12	Comprehension	comprehensions	list_comprehension -> '[' expr '||' lc_exprs ']'
+398	12	Comprehension	comprehensions	list_comprehension -> '[' expr ',' exprs '||' lc_exprs ']'
+400	12	Comprehension	comprehensions	map_comprehension -> '#' '{' map_field '||' lc_exprs '}'
+402	12	Comprehension	comprehensions	map_comprehension -> '#' '{' map_field ',' map_fields '||' lc_exprs '}'
+404	12	Comprehension	comprehensions	binary_comprehension -> '<<' expr_max '||' lc_exprs '>>'
+407	12	Comprehension	comprehensions	lc_exprs -> lc_expr
+408	12	Comprehension	comprehensions	lc_exprs -> lc_expr ',' lc_exprs
+409	12	Comprehension	comprehensions	lc_exprs -> zc_exprs
+410	12	Comprehension	comprehensions	lc_exprs -> zc_exprs ',' lc_exprs
+412	12	Comprehension	comprehensions	zc_exprs -> lc_expr '&&' lc_expr
+413	12	Comprehension	comprehensions	zc_exprs -> lc_expr '&&' zc_exprs
+415	12	Comprehension	comprehensions	lc_expr -> expr
+416	12	Comprehension	comprehensions	lc_expr -> map_field_exact '<-' expr
+417	12	Comprehension	comprehensions	lc_expr -> map_field_exact '<:-' expr
+418	12	Comprehension	comprehensions	lc_expr -> expr '<-' expr
+419	12	Comprehension	comprehensions	lc_expr -> expr '<:-' expr
+420	12	Comprehension	comprehensions	lc_expr -> binary '<=' expr
+421	12	Comprehension	comprehensions	lc_expr -> binary '<:=' expr
+423	5	Literal	literals	tuple -> '{' '}'
+424	5	Literal	literals	tuple -> '{' exprs '}'
+426	8	Map/Record	maps_records	map_expr -> '#' map_tuple
+428	8	Map/Record	maps_records	map_expr -> expr_max '#' map_tuple
+430	8	Map/Record	maps_records	map_expr -> map_expr '#' map_tuple
+433	8	Map/Record	maps_records	map_tuple -> '{' '}'
+434	8	Map/Record	maps_records	map_tuple -> '{' map_fields '}'
+436	8	Map/Record	maps_records	map_fields -> map_field
+437	8	Map/Record	maps_records	map_fields -> map_field ',' map_fields
+439	8	Map/Record	maps_records	map_field -> map_field_assoc
+440	8	Map/Record	maps_records	map_field -> map_field_exact
+442	8	Map/Record	maps_records	map_field_assoc -> map_key '=>' expr
+445	8	Map/Record	maps_records	map_field_exact -> map_key ':=' expr
+448	8	Map/Record	maps_records	map_key -> expr
+451	8	Map/Record	maps_records	record_expr -> '#' atom '.' atom
+453	8	Map/Record	maps_records	record_expr -> '#' record_name record_tuple
+455	8	Map/Record	maps_records	record_expr -> expr_max '#' record_name '.' atom
+457	8	Map/Record	maps_records	record_expr -> expr_max '#' record_name record_tuple
+459	8	Map/Record	maps_records	record_expr -> record_expr '#' record_name '.' atom
+461	8	Map/Record	maps_records	record_expr -> record_expr '#' record_name record_tuple
+465	8	Map/Record	maps_records	record_expr -> '#' atom ':' record_name record_tuple
+468	8	Map/Record	maps_records	record_expr -> '#_' record_tuple
+471	8	Map/Record	maps_records	record_expr -> expr_max '#' atom ':' record_name '.' atom
+474	8	Map/Record	maps_records	record_expr -> expr_max '#_' '.' atom
+477	8	Map/Record	maps_records	record_expr -> expr_max '#' atom ':' record_name record_tuple
+480	8	Map/Record	maps_records	record_expr -> expr_max '#_' record_tuple
+484	8	Map/Record	maps_records	record_tuple -> '{' '}'
+485	8	Map/Record	maps_records	record_tuple -> '{' record_fields '}'
+487	8	Map/Record	maps_records	record_fields -> record_field
+488	8	Map/Record	maps_records	record_fields -> record_field ',' record_fields
+490	8	Map/Record	maps_records	record_field -> var '=' expr
+491	8	Map/Record	maps_records	record_field -> atom '=' expr
+494	6	Expression	operators	function_call -> expr argument_list
+497	10	Control	control	if_expr -> 'if' if_clauses 'end'
+499	10	Control	control	if_clauses -> if_clause
+500	10	Control	control	if_clauses -> if_clause ';' if_clauses
+502	10	Control	control	if_clause -> guard clause_body
+505	10	Control	control	case_expr -> 'case' expr 'of' cr_clauses 'end'
+508	10	Control	control	cr_clauses -> cr_clause
+509	10	Control	control	cr_clauses -> cr_clause ';' cr_clauses
+515	10	Control	control	cr_clause -> expr clause_guard clause_body
+518	10	Control	control	receive_expr -> 'receive' cr_clauses 'end'
+520	10	Control	control	receive_expr -> 'receive' 'after' expr clause_body 'end'
+522	10	Control	control	receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end'
+526	11	Fun/Try/Maybe	funs_try_maybe	fun_expr -> 'fun' atom '/' integer
+528	11	Fun/Try/Maybe	funs_try_maybe	fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var
+530	11	Fun/Try/Maybe	funs_try_maybe	fun_expr -> 'fun' fun_clauses 'end'
+533	11	Fun/Try/Maybe	funs_try_maybe	atom_or_var -> atom
+534	11	Fun/Try/Maybe	funs_try_maybe	atom_or_var -> var
+536	11	Fun/Try/Maybe	funs_try_maybe	integer_or_var -> integer
+537	11	Fun/Try/Maybe	funs_try_maybe	integer_or_var -> var
+539	11	Fun/Try/Maybe	funs_try_maybe	fun_clauses -> fun_clause
+540	11	Fun/Try/Maybe	funs_try_maybe	fun_clauses -> fun_clause ';' fun_clauses
+542	11	Fun/Try/Maybe	funs_try_maybe	fun_clause -> pat_argument_list clause_guard clause_body
+546	11	Fun/Try/Maybe	funs_try_maybe	fun_clause -> var pat_argument_list clause_guard clause_body
+549	11	Fun/Try/Maybe	funs_try_maybe	try_expr -> 'try' exprs 'of' cr_clauses try_catch
+551	11	Fun/Try/Maybe	funs_try_maybe	try_expr -> 'try' exprs try_catch
+554	11	Fun/Try/Maybe	funs_try_maybe	try_catch -> 'catch' try_clauses 'end'
+556	11	Fun/Try/Maybe	funs_try_maybe	try_catch -> 'catch' try_clauses 'after' exprs 'end'
+558	11	Fun/Try/Maybe	funs_try_maybe	try_catch -> 'after' exprs 'end'
+561	11	Fun/Try/Maybe	funs_try_maybe	try_clauses -> try_clause
+562	11	Fun/Try/Maybe	funs_try_maybe	try_clauses -> try_clause ';' try_clauses
+564	11	Fun/Try/Maybe	funs_try_maybe	try_clause -> pat_expr clause_guard clause_body
+568	11	Fun/Try/Maybe	funs_try_maybe	try_clause -> atom ':' pat_expr try_opt_stacktrace clause_guard clause_body
+572	11	Fun/Try/Maybe	funs_try_maybe	try_clause -> var ':' pat_expr try_opt_stacktrace clause_guard clause_body
+577	11	Fun/Try/Maybe	funs_try_maybe	try_opt_stacktrace -> ':' var
+578	11	Fun/Try/Maybe	funs_try_maybe	try_opt_stacktrace -> '$empty'
+581	11	Fun/Try/Maybe	funs_try_maybe	maybe_expr -> 'maybe' maybe_match_exprs 'end'
+583	11	Fun/Try/Maybe	funs_try_maybe	maybe_expr -> 'maybe' maybe_match_exprs 'else' cr_clauses 'end'
+588	11	Fun/Try/Maybe	funs_try_maybe	maybe_match_exprs -> maybe_match
+589	11	Fun/Try/Maybe	funs_try_maybe	maybe_match_exprs -> maybe_match ',' maybe_match_exprs
+590	11	Fun/Try/Maybe	funs_try_maybe	maybe_match_exprs -> expr
+591	11	Fun/Try/Maybe	funs_try_maybe	maybe_match_exprs -> expr ',' maybe_match_exprs
+593	11	Fun/Try/Maybe	funs_try_maybe	maybe_match -> expr '?=' expr
+595	6	Expression	operators	argument_list -> '(' ')'
+596	6	Expression	operators	argument_list -> '(' exprs ')'
+598	7	Pattern/Clause	patterns	pat_argument_list -> '(' ')'
+599	7	Pattern/Clause	patterns	pat_argument_list -> '(' pat_exprs ')'
+601	7	Pattern/Clause	patterns	exprs -> expr
+602	7	Pattern/Clause	patterns	exprs -> expr ',' exprs
+604	excluded	SSA test annotation	-	clause_body_exprs -> ssa_check_when_clauses exprs
+605	7	Pattern/Clause	patterns	clause_body_exprs -> exprs
+607	7	Pattern/Clause	patterns	pat_exprs -> pat_expr
+608	7	Pattern/Clause	patterns	pat_exprs -> pat_expr ',' pat_exprs
+610	7	Pattern/Clause	patterns	guard -> exprs
+611	7	Pattern/Clause	patterns	guard -> exprs ';' guard
+613	5	Literal	literals	atomic -> char
+614	5	Literal	literals	atomic -> integer
+615	5	Literal	literals	atomic -> float
+616	5	Literal	literals	atomic -> atom
+617	5	Literal	literals	atomic -> strings
+619	5	Literal	literals	strings -> string
+620	5	Literal	literals	strings -> string strings
+623	6	Expression	operators	prefix_op -> '+'
+624	6	Expression	operators	prefix_op -> '-'
+625	6	Expression	operators	prefix_op -> 'bnot'
+626	6	Expression	operators	prefix_op -> 'not'
+628	6	Expression	operators	mult_op -> '/'
+629	6	Expression	operators	mult_op -> '*'
+630	6	Expression	operators	mult_op -> 'div'
+631	6	Expression	operators	mult_op -> 'rem'
+632	6	Expression	operators	mult_op -> 'band'
+633	6	Expression	operators	mult_op -> 'and'
+635	6	Expression	operators	add_op -> '+'
+636	6	Expression	operators	add_op -> '-'
+637	6	Expression	operators	add_op -> 'bor'
+638	6	Expression	operators	add_op -> 'bxor'
+639	6	Expression	operators	add_op -> 'bsl'
+640	6	Expression	operators	add_op -> 'bsr'
+641	6	Expression	operators	add_op -> 'or'
+642	6	Expression	operators	add_op -> 'xor'
+644	6	Expression	operators	list_op -> '++'
+645	6	Expression	operators	list_op -> '--'
+647	6	Expression	operators	comp_op -> '=='
+648	6	Expression	operators	comp_op -> '/='
+649	6	Expression	operators	comp_op -> '=<'
+650	6	Expression	operators	comp_op -> '<'
+651	6	Expression	operators	comp_op -> '>='
+652	6	Expression	operators	comp_op -> '>'
+653	6	Expression	operators	comp_op -> '=:='
+654	6	Expression	operators	comp_op -> '=/='
+656	8	Map/Record	maps_records	record_name -> atom
+657	8	Map/Record	maps_records	record_name -> var
+658	8	Map/Record	maps_records	record_name -> reserved_word
+660	8	Map/Record	maps_records	reserved_word -> 'after'
+661	8	Map/Record	maps_records	reserved_word -> 'and'
+662	8	Map/Record	maps_records	reserved_word -> 'andalso'
+663	8	Map/Record	maps_records	reserved_word -> 'band'
+664	8	Map/Record	maps_records	reserved_word -> 'begin'
+665	8	Map/Record	maps_records	reserved_word -> 'bnot'
+666	8	Map/Record	maps_records	reserved_word -> 'bor'
+667	8	Map/Record	maps_records	reserved_word -> 'bsl'
+668	8	Map/Record	maps_records	reserved_word -> 'bsr'
+669	8	Map/Record	maps_records	reserved_word -> 'bxor'
+670	8	Map/Record	maps_records	reserved_word -> 'case'
+671	8	Map/Record	maps_records	reserved_word -> 'catch'
+672	8	Map/Record	maps_records	reserved_word -> 'cond'
+673	8	Map/Record	maps_records	reserved_word -> 'div'
+674	8	Map/Record	maps_records	reserved_word -> 'else'
+675	8	Map/Record	maps_records	reserved_word -> 'end'
+676	8	Map/Record	maps_records	reserved_word -> 'fun'
+677	8	Map/Record	maps_records	reserved_word -> 'if'
+678	8	Map/Record	maps_records	reserved_word -> 'let'
+679	8	Map/Record	maps_records	reserved_word -> 'maybe'
+680	8	Map/Record	maps_records	reserved_word -> 'not'
+681	8	Map/Record	maps_records	reserved_word -> 'of'
+682	8	Map/Record	maps_records	reserved_word -> 'or'
+683	8	Map/Record	maps_records	reserved_word -> 'orelse'
+684	8	Map/Record	maps_records	reserved_word -> 'receive'
+685	8	Map/Record	maps_records	reserved_word -> 'rem'
+686	8	Map/Record	maps_records	reserved_word -> 'try'
+687	8	Map/Record	maps_records	reserved_word -> 'when'
+688	8	Map/Record	maps_records	reserved_word -> 'xor'
+690	excluded	SSA test annotation	-	ssa_check_when_clauses -> ssa_check_when_clause
+691	excluded	SSA test annotation	-	ssa_check_when_clauses -> ssa_check_when_clause ssa_check_when_clauses
+694	excluded	SSA test annotation	-	ssa_check_when_clause -> '%ssa%' atom ssa_check_clause_args_ls 'when' atom '->' ssa_check_exprs '.'
+697	excluded	SSA test annotation	-	ssa_check_when_clause -> '%ssa%' atom ssa_check_clause_args_ls ssa_check_anno 'when' atom '->' ssa_check_exprs '.'
+701	excluded	SSA test annotation	-	ssa_check_when_clause -> '%ssa%' ssa_check_clause_args_ls 'when' atom '->' ssa_check_exprs '.'
+704	excluded	SSA test annotation	-	ssa_check_when_clause -> '%ssa%' ssa_check_clause_args_ls ssa_check_anno 'when' atom '->' ssa_check_exprs '.'
+708	excluded	SSA test annotation	-	ssa_check_exprs -> ssa_check_expr
+709	excluded	SSA test annotation	-	ssa_check_exprs -> ssa_check_expr ssa_check_anno
+710	excluded	SSA test annotation	-	ssa_check_exprs -> ssa_check_expr ',' ssa_check_exprs
+712	excluded	SSA test annotation	-	ssa_check_exprs -> ssa_check_expr ssa_check_anno ',' ssa_check_exprs
+715	excluded	SSA test annotation	-	ssa_check_anno -> '{' ssa_check_anno_clauses '}'
+717	excluded	SSA test annotation	-	ssa_check_anno_clauses -> ssa_check_anno_clause
+718	excluded	SSA test annotation	-	ssa_check_anno_clauses -> ssa_check_anno_clause ',' ssa_check_anno_clauses
+721	excluded	SSA test annotation	-	ssa_check_anno_clause -> atom '=>' ssa_check_pat
+723	excluded	SSA test annotation	-	ssa_check_expr -> var '=' atom ssa_check_args
+725	excluded	SSA test annotation	-	ssa_check_expr -> atom ssa_check_args
+727	excluded	SSA test annotation	-	ssa_check_expr -> var '=' atom ':' atom ssa_check_args
+729	excluded	SSA test annotation	-	ssa_check_expr -> atom integer
+731	excluded	SSA test annotation	-	ssa_check_expr -> atom var
+734	excluded	SSA test annotation	-	ssa_check_clause_args_ls -> '(' ')'
+735	excluded	SSA test annotation	-	ssa_check_clause_args_ls -> '(' ssa_check_clause_args ')'
+736	excluded	SSA test annotation	-	ssa_check_clause_args_ls -> '(' '...' ')'
+738	excluded	SSA test annotation	-	ssa_check_clause_args -> var
+739	excluded	SSA test annotation	-	ssa_check_clause_args -> var ',' ssa_check_clause_args
+740	excluded	SSA test annotation	-	ssa_check_clause_args -> var ',' '...'
+742	excluded	SSA test annotation	-	ssa_check_args -> '(' ')'
+743	excluded	SSA test annotation	-	ssa_check_args -> '(' ssa_check_pats ')'
+744	excluded	SSA test annotation	-	ssa_check_args -> '(' '...' ')'
+746	excluded	SSA test annotation	-	ssa_check_pats -> ssa_check_pat
+747	excluded	SSA test annotation	-	ssa_check_pats -> ssa_check_pat ',' ssa_check_pats
+748	excluded	SSA test annotation	-	ssa_check_pats -> ssa_check_pat ',' '...'
+750	excluded	SSA test annotation	-	ssa_check_pat -> var
+751	excluded	SSA test annotation	-	ssa_check_pat -> atom
+752	excluded	SSA test annotation	-	ssa_check_pat -> integer
+753	excluded	SSA test annotation	-	ssa_check_pat -> float
+754	excluded	SSA test annotation	-	ssa_check_pat -> float '(' float ')'
+755	excluded	SSA test annotation	-	ssa_check_pat -> ssa_check_fun_ref
+756	excluded	SSA test annotation	-	ssa_check_pat -> '{' '}'
+757	excluded	SSA test annotation	-	ssa_check_pat -> '{' ssa_check_pats '}'
+758	excluded	SSA test annotation	-	ssa_check_pat -> '{' '...' '}'
+759	excluded	SSA test annotation	-	ssa_check_pat -> ssa_check_binary_lit
+760	excluded	SSA test annotation	-	ssa_check_pat -> ssa_check_list_lit
+761	excluded	SSA test annotation	-	ssa_check_pat -> '#' '{' '}'
+762	excluded	SSA test annotation	-	ssa_check_pat -> '#' '{' ssa_check_map_key_elements '}'
+764	excluded	SSA test annotation	-	ssa_check_fun_ref -> 'fun' atom '/' integer
+765	excluded	SSA test annotation	-	ssa_check_fun_ref -> 'fun' atom ':' atom '/' integer
+767	excluded	SSA test annotation	-	ssa_check_binary_lit -> '<<' '>>'
+768	excluded	SSA test annotation	-	ssa_check_binary_lit -> '<<' ssa_check_binary_lit_bytes_ls '>>'
+770	excluded	SSA test annotation	-	ssa_check_binary_lit -> '<<' ssa_check_binary_lit_rest '>>'
+773	excluded	SSA test annotation	-	ssa_check_binary_lit_bytes_ls -> integer
+774	excluded	SSA test annotation	-	ssa_check_binary_lit_bytes_ls -> integer ',' ssa_check_binary_lit_bytes_ls
+776	excluded	SSA test annotation	-	ssa_check_binary_lit_bytes_ls -> integer ',' ssa_check_binary_lit_rest
+779	excluded	SSA test annotation	-	ssa_check_binary_lit_rest -> integer ':' integer
+781	excluded	SSA test annotation	-	ssa_check_list_lit -> '[' ']'
+782	excluded	SSA test annotation	-	ssa_check_list_lit -> '[' ssa_check_list_lit_ls ']'
+785	excluded	SSA test annotation	-	ssa_check_list_lit_ls -> ssa_check_pat
+786	excluded	SSA test annotation	-	ssa_check_list_lit_ls -> ssa_check_pat ',' ssa_check_list_lit_ls
+787	excluded	SSA test annotation	-	ssa_check_list_lit_ls -> ssa_check_pat ',' '...'
+788	excluded	SSA test annotation	-	ssa_check_list_lit_ls -> ssa_check_pat '|' ssa_check_pat
+790	excluded	SSA test annotation	-	ssa_check_map_key -> atom
+791	excluded	SSA test annotation	-	ssa_check_map_key -> integer
+792	excluded	SSA test annotation	-	ssa_check_map_key -> float
+793	excluded	SSA test annotation	-	ssa_check_map_key -> var
+794	excluded	SSA test annotation	-	ssa_check_map_key -> '{' ssa_check_map_key_tuple_elements '}'
+796	excluded	SSA test annotation	-	ssa_check_map_key -> '{' '}'
+797	excluded	SSA test annotation	-	ssa_check_map_key -> ssa_check_binary_lit
+798	excluded	SSA test annotation	-	ssa_check_map_key -> '[' ssa_check_map_key_list ']'
+800	excluded	SSA test annotation	-	ssa_check_map_key -> '[' ']'
+801	excluded	SSA test annotation	-	ssa_check_map_key -> '#' '{' '}'
+802	excluded	SSA test annotation	-	ssa_check_map_key -> '#' '{' ssa_check_map_key_elements '}'
+804	excluded	SSA test annotation	-	ssa_check_map_key_list -> ssa_check_map_key
+805	excluded	SSA test annotation	-	ssa_check_map_key_list -> ssa_check_map_key ',' ssa_check_map_key_list
+807	excluded	SSA test annotation	-	ssa_check_map_key_list -> ssa_check_map_key '|' ssa_check_map_key
+810	excluded	SSA test annotation	-	ssa_check_map_key_elements -> ssa_check_map_key_element
+811	excluded	SSA test annotation	-	ssa_check_map_key_elements -> ssa_check_map_key_element ',' ssa_check_map_key_elements
+814	excluded	SSA test annotation	-	ssa_check_map_key_element -> ssa_check_map_key '=>' ssa_check_map_key
+819	excluded	SSA test annotation	-	ssa_check_map_key_tuple_elements -> ssa_check_map_key
+820	excluded	SSA test annotation	-	ssa_check_map_key_tuple_elements -> ssa_check_map_key ',' ssa_check_map_key_tuple_elements

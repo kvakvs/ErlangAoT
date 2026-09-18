@@ -1,0 +1,2 @@
+{ok,{attribute,0,module,binaries}}.
+{ok,{function,0,f,1,[{clause,0,[{bin,0,[{bin_element,0,{var,0,'X'},{integer,0,8},default},{bin_element,0,{var,0,'Rest'},default,[binary]}]}],[],[{bin,0,[{bin_element,0,{var,0,'X'},{integer,0,8},[integer,unsigned,big]},{bin_element,0,{op,0,'+',{var,0,'X'},{integer,0,1}},{integer,0,8},default},{bin_element,0,{var,0,'Rest'},default,[binary]}]}]}]}}.

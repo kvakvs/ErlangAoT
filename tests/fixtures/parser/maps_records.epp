@@ -1,0 +1,5 @@
+{ok,{attribute,0,file,{"maps_records.erl",1}}}.
+{ok,{attribute,0,module,maps_records}}.
+{ok,{attribute,0,record,{r,[{record_field,0,{atom,0,field},{integer,0,0}}]}}}.
+{ok,{attribute,0,native_record,{'State',[{record_field,{3,16},{atom,{3,16},field},{integer,{3,22},1}}]}}}.
+{ok,{function,0,f,1,[{clause,0,[{var,0,'X'}],[],[{map,0,[{map_field_assoc,0,{atom,0,a},{integer,0,1}}]},{map,0,{var,0,'X'},[{map_field_exact,0,{atom,0,a},{integer,0,2}}]},{record,0,r,[{record_field,0,{atom,0,field},{integer,0,2}}]},{record_field,0,{var,0,'X'},r,{atom,{4,45},field}},{record_index,0,r,{atom,0,field}},{record,0,{mod,rec},[]},{record,0,[],[{record_field,0,{atom,0,field},{integer,0,1}}]},{record_field,0,{var,0,'X'},[],{atom,{4,91},field}}]}]}}.
