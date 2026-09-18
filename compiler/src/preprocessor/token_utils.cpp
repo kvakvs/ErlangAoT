@@ -92,6 +92,19 @@ std::u32string floating_text(double value) {
     return {text.begin(), text.end()};
 }
 
+// epp's generic token writer renders sigil suffix lists as numeric lists, including [].
+std::u32string suffix_text(std::u32string_view text) {
+    std::u32string result = U"[";
+    for (const auto character : text) {
+        if (result.size() != 1) {
+            result += U',';
+        }
+        const auto digits = std::to_string(static_cast<std::uint32_t>(character));
+        result.append(digits.begin(), digits.end());
+    }
+    return result + U"]";
+}
+
 // Atoms that coincide with reserved words need quotes even when their letters are ordinary.
 std::u32string atom_text(std::u32string_view text) {
     if (text.empty() || !atom_start(text.front()) || word_length(text) != text.size()) {
@@ -117,7 +130,10 @@ std::u32string token_text(const Token &token) {
     if (token.kind == TokenKind::string) {
         return quoted(token.text(), U'"');
     }
-    if (token.kind == TokenKind::atom) {
+    if (token.kind == TokenKind::sigil_suffix) {
+        return suffix_text(token.text());
+    }
+    if (token.kind == TokenKind::atom || token.kind == TokenKind::sigil_prefix) {
         return atom_text(token.text());
     }
     return std::u32string(token.text());

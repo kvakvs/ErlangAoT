@@ -94,6 +94,30 @@ void stringify_arguments() {
     }
     require(strings == std::vector<std::u32string>{U"? A + 255", U"'quoted atom'", U"\"str\""},
             "canonical raw stringification");
+    const auto sigil = run("-define(S(X),??X). ?S(~b\"λ\").");
+    successful(sigil);
+    require(sigil.tokens.front().text() == U"b \"λ\" []", "sigil suffix stringification");
+}
+
+void includes() {
+    PreprocessorOptions options;
+    options.working_directory = "/virtual";
+    options.read_file = [](const std::filesystem::path &path) -> std::optional<std::string> {
+        if (path == "/virtual/a.hrl") {
+            return "-ifndef(GUARD). -define(GUARD,true). -define(X,7). -include(\"a.hrl\"). -endif.";
+        }
+        if (path == "/app/include/x.hrl") {
+            return "-define(APP,9).";
+        }
+        return {};
+    };
+    options.applications["test"] = "/app";
+    const auto result = run("-include(\"a.hrl\"). -include_lib(\"test/include/x.hrl\"). {?X,?APP}.", options);
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"7", "9"}, "include definitions and guards");
+    options.limits.include_depth = 1;
+    require(run("-include(\"a.hrl\").", options).diagnostics.front().code == DiagnosticCode::resource_limit,
+            "include limit");
 }
 
 void branches() {
@@ -109,5 +133,6 @@ int main() {
     objects();
     macros();
     stringify_arguments();
+    includes();
     branches();
 }

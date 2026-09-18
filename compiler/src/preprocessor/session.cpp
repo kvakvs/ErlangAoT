@@ -153,7 +153,7 @@ void PreprocessorSession::State::apply(Directive directive, const Token &site) {
         return;
     case DirectiveKind::include:
     case DirectiveKind::include_lib:
-        pp_fail(DiagnosticCode::malformed_directive, "include effects await step 8", site);
+        include(directive, site);
         return;
     default:
         break;
