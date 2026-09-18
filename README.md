@@ -14,18 +14,23 @@ install a C++23-capable compiler and GNU Make. Both need CMake 3.28 or newer.
 C++23 is the default. No LLVM development libraries or Erlang installation are
 required for this scaffold.
 
-Compiler builds use the standalone Boost.Parser headers from Boost 1.90.0:
+Compiler builds use Boost.Parser and Boost.Multiprecision from Boost 1.90.0.
+Install the standalone parser and the full release's headers:
 
 ```sh
 git clone --depth 1 --branch boost-1.90.0 https://github.com/boostorg/parser.git build/deps/boost-parser
+curl -L https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.bz2 -o build/deps/boost_1_90_0.tar.bz2
+tar -xjf build/deps/boost_1_90_0.tar.bz2 -C build/deps boost_1_90_0/boost boost_1_90_0/LICENSE_1_0.txt
 ```
 
-The pinned upstream commit is `647cec66831407742a6ad78582f2a9f3cd7d44d3`.
-Alternatively set `ERLANG_AOT_BOOST_PARSER_ROOT` to that source checkout or an
-installed Boost 1.90.0 prefix; CMake verifies the primary parser header checksum.
-No dependency is downloaded during configuration. Runtime-only builds do not
-discover Boost. The frontend uses Boost.Parser's standalone mode without the
-optional Boost.Hana tuple integration.
+The full archive's SHA-256 is
+`49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305`.
+The parser commit is `647cec66831407742a6ad78582f2a9f3cd7d44d3`.
+Alternatively set `ERLANG_AOT_BOOST_PARSER_ROOT` and `ERLANG_AOT_BOOST_ROOT` to
+local source/install prefixes; both can point to one full Boost 1.90.0 installation.
+CMake verifies the parser header and arithmetic release. No dependency is downloaded
+at configure time, and runtime-only builds do not discover Boost. Both dependencies
+are header-only and private to the compiler. Boost.Parser uses its standalone mode.
 
 For Visual Studio 2022 or VS Code, open the repository root as a CMake project.
 The checked-in `CMakePresets.json` selects C++23 and `build/debug`; configure it
@@ -207,3 +212,6 @@ option before `-P`. Use the default threshold for the project quality gate.
 The CLI option parser has been split into argument traversal, named-option
 handling, and output-operand handling. Its maximum CCN is now **10**, down from
 21, and both quality checks pass without suppressions or relaxed thresholds.
+
+Preprocessor implementation progress: steps 1–4 are implemented.
+The internal semantic session is tested; CLI integration follows in step 13.

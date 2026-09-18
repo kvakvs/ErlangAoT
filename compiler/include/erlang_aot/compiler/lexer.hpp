@@ -29,13 +29,6 @@ struct Integer {
 
 using TokenValue = std::variant<std::u32string, Integer, double>;
 
-struct LogicalLocation {
-    // Preserve logical coordinates separately from the physical spelling span.
-    std::string file;
-    std::size_t line;
-    std::size_t column;
-};
-
 struct Token {
     // Describe the lexical category and decoded value.
     TokenKind kind;
@@ -64,11 +57,15 @@ class Lexer {
     void recover_form();
     // Change keyword classification before scanning the next form.
     void set_keywords(std::set<std::u32string> keywords);
+    // Toggle one feature-sensitive reserved word before the next physical form.
+    void set_keyword(std::u32string keyword, bool enabled);
     // Map subsequent tokens to a logical filename and line at the current
     // cursor.
     void set_location(std::string file, std::size_t line);
     // Expose the current decoded offset for progress and recovery checks.
     std::size_t offset() const;
+    // Map a retained physical offset through the active logical file directive.
+    LogicalLocation logical_location(std::size_t offset) const;
 
   private:
     struct Indentation {

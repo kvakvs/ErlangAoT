@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/compiler/directive.hpp>
+#include <functional>
 #include <map>
 
 namespace erlang_aot {
@@ -10,29 +11,6 @@ struct MacroKey {
     auto operator<=>(const MacroKey &) const = default;
 };
 
-struct ConditionalFrame {
-    // Reserve branch state and its opener for subsequent conditional
-    // processing.
-    Span opening;
-    DirectiveKind family;
-    bool parent_active = true;
-    bool branch_selected = false;
-    bool seen_else = false;
-};
-
-struct FeatureState {
-    // Hold per-module overrides and whether feature changes remain legal.
-    std::map<std::u32string, bool> overrides;
-    bool in_prefix = true;
-};
-
-struct ContextState {
-    // Resolve contextual macros later, independently from token physical
-    // origins.
-    std::optional<std::u32string> module;
-    std::optional<std::pair<std::u32string, std::size_t>> function;
-};
-
 struct OrdinaryForm {
     // Pass original tokens unchanged to subsequent expansion/parsing stages.
     std::vector<Token> tokens;
@@ -40,11 +18,11 @@ struct OrdinaryForm {
 
 using PreprocessorEvent = std::variant<OrdinaryForm, Directive, Diagnostic>;
 
-class PreprocessorSession {
+class DirectiveReader {
   public:
     // Start an isolated module; this foundation parses syntax without applying
     // directives.
-    explicit PreprocessorSession(SourcePtr source);
+    explicit DirectiveReader(SourcePtr source);
     // Return one form/directive/error, or EOF; errors never reset failure
     // status.
     std::optional<PreprocessorEvent> next();
@@ -58,13 +36,8 @@ class PreprocessorSession {
         Lexer lexer;
     };
 
-    // Each module owns its future semantic state; no process-global
-    // definitions.
-    std::map<MacroKey, Definition> macros_;
+    // Syntax reading needs only its owned scanner; semantic state belongs to PreprocessorSession.
     std::vector<IncludeFrame> includes_;
-    std::vector<ConditionalFrame> conditionals_;
-    FeatureState features_;
-    ContextState context_;
     // Latch errors independently of the event stream consumed by the caller.
     bool failed_ = false;
 
@@ -72,5 +45,44 @@ class PreprocessorSession {
     PreprocessorEvent classify(std::vector<Token> tokens);
     // Latch failure before returning any diagnostic event.
     PreprocessorEvent error(Diagnostic diagnostic);
+};
+
+struct PreprocessorLimits {
+    // Bound expansion work and memory independently of language validity.
+    std::size_t expansion_depth = 256;
+    std::size_t tokens = 1000000;
+    std::size_t include_depth = 64;
+    std::size_t expression_depth = 256;
+};
+
+struct PreprocessorOptions {
+    // Resolve host paths independently of the executable's eventual target.
+    std::filesystem::path working_directory;
+    std::vector<std::filesystem::path> include_paths;
+    std::map<std::string, std::filesystem::path> applications;
+    // Initial macro names or NAME=TERM values and ordered feature changes.
+    std::vector<std::string> definitions;
+    std::vector<std::pair<std::string, bool>> features;
+    PreprocessorLimits limits;
+    // Tests/embedders can replace filesystem and environment access.
+    std::function<std::optional<std::string>(const std::filesystem::path &)> read_file;
+    std::function<std::optional<std::string>(std::string_view)> environment;
+};
+
+class PreprocessorSession {
+  public:
+    // Create an isolated semantic session; directives take effect in source order.
+    explicit PreprocessorSession(const SourcePtr &source, PreprocessorOptions options = {});
+    ~PreprocessorSession();
+    PreprocessorSession(const PreprocessorSession &) = delete;
+    PreprocessorSession &operator=(const PreprocessorSession &) = delete;
+    // Return expanded ordinary forms or diagnostics; EOF never clears prior errors.
+    std::optional<PreprocessorEvent> next();
+    bool failed() const;
+
+  private:
+    struct State;
+    // Keep semantic implementation and Boost types outside public compiler headers.
+    std::unique_ptr<State> state_;
 };
 } // namespace erlang_aot

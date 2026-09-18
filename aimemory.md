@@ -193,3 +193,6 @@ Primary sources consulted:
 - https://github.com/llir/llvm
 - https://go.dev/doc/gc-guide
 - https://kotlinlang.org/docs/native-memory-manager.html
+
+Preprocessor progress: steps 4–4 now have semantic implementation and focused tests.
+Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.

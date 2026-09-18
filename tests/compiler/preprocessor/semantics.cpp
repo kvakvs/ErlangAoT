@@ -1,0 +1,69 @@
+#include <erlang_aot/compiler/preprocessor.hpp>
+#include <iostream>
+#include <stdexcept>
+
+using namespace erlang_aot;
+
+struct Result {
+    // Capture forms and errors separately while checking the session's final status.
+    std::vector<Token> tokens;
+    std::vector<Diagnostic> diagnostics;
+    bool failed;
+};
+
+void require(bool value, const char *message) {
+    if (!value) {
+        throw std::runtime_error(message);
+    }
+}
+
+Result run(std::string text, PreprocessorOptions options = {}) {
+    SourceManager sources;
+    PreprocessorSession session(sources.add("module.erl", std::move(text)), std::move(options));
+    Result result{{}, {}, false};
+    while (auto event = session.next()) {
+        if (const auto *form = std::get_if<OrdinaryForm>(&*event)) {
+            if (form->tokens.size() > 1 && form->tokens[1].text() == U"file") {
+                continue;
+            }
+            result.tokens.insert(result.tokens.end(), form->tokens.begin(), form->tokens.end());
+        }
+        if (auto *error = std::get_if<Diagnostic>(&*event)) {
+            result.diagnostics.push_back(*error);
+        }
+    }
+    result.failed = session.failed();
+    return result;
+}
+
+std::vector<std::string> integers(const Result &result) {
+    std::vector<std::string> values;
+    for (const auto &token : result.tokens) {
+        if (const auto *value = std::get_if<Integer>(&token.value)) {
+            values.push_back(value->decimal);
+        }
+    }
+    return values;
+}
+
+void successful(const Result &result) {
+    for (const auto &error : result.diagnostics) {
+        std::cerr << render(error) << '\n';
+    }
+    require(!result.failed, "expected successful preprocessing");
+}
+
+void objects() {
+    auto result = run("-define(A,?B). -define(B,42). ?A. -undef(B). -define(B,7). ?A.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"42", "7"}, "source order");
+    require(run("-define(A,?B). -define(B,?A). ?A.").failed, "cycle");
+    require(run("-define(A,1). -define(A,2).").failed, "redefinition");
+    successful(run("-undef(MISSING). ok."));
+    PreprocessorOptions options;
+    options.definitions = {"A", "B={123,atom}", "N=-7"};
+    successful(run("{?A,?B,?N}.", options));
+    require(run("?A.").failed, "module isolation");
+}
+
+int main() { objects(); }

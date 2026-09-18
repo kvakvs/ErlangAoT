@@ -70,7 +70,9 @@ class DirectiveCursor {
         throw Diagnostic{DiagnosticCode::malformed_directive,
                          std::move(message),
                          tokens_.empty() ? end_ : tokens_.front().spelling,
-                         {}};
+                         {},
+                         Severity::error,
+                         tokens_.empty() ? std::nullopt : std::optional(tokens_.front().location)};
     }
 
   private:

@@ -43,10 +43,23 @@ std::size_t Lexer::offset() const { return cursor_; }
 
 void Lexer::set_keywords(std::set<std::u32string> keywords) { keywords_ = std::move(keywords); }
 
+void Lexer::set_keyword(std::u32string keyword, bool enabled) {
+    if (enabled) {
+        keywords_.insert(std::move(keyword));
+    } else {
+        keywords_.erase(keyword);
+    }
+}
+
 void Lexer::set_location(std::string file, std::size_t line) {
     logical_file_ = std::move(file);
     logical_base_ = line;
     physical_base_ = source_->position(cursor_).line;
+}
+
+LogicalLocation Lexer::logical_location(std::size_t offset) const {
+    const auto position = source_->position(offset);
+    return {logical_file_, logical_base_ + position.line - physical_base_, position.column};
 }
 
 Token Lexer::token(TokenKind kind, TokenValue value, std::size_t begin, std::size_t end) const {
@@ -59,7 +72,14 @@ Token Lexer::token(TokenKind kind, TokenValue value, std::size_t begin, std::siz
 }
 
 void Lexer::fail(DiagnosticCode code, std::string message, std::size_t begin) const {
-    throw LexicalError({code, std::move(message), {source_, begin, cursor_}, {}});
+    const auto position = source_->position(begin);
+    throw LexicalError(
+        {code,
+         std::move(message),
+         {source_, begin, cursor_},
+         {},
+         Severity::error,
+         LogicalLocation{logical_file_, logical_base_ + position.line - physical_base_, position.column}});
 }
 
 std::optional<Token> Lexer::trivia() {

@@ -38,16 +38,16 @@ std::optional<Span> misplaced(std::span<const Token> tokens) {
 }
 } // namespace
 
-PreprocessorSession::PreprocessorSession(SourcePtr source) { includes_.push_back({source, Lexer(std::move(source))}); }
+DirectiveReader::DirectiveReader(SourcePtr source) { includes_.push_back({source, Lexer(std::move(source))}); }
 
-bool PreprocessorSession::failed() const { return failed_; }
+bool DirectiveReader::failed() const { return failed_; }
 
-PreprocessorEvent PreprocessorSession::error(Diagnostic diagnostic) {
+PreprocessorEvent DirectiveReader::error(Diagnostic diagnostic) {
     failed_ = true;
     return diagnostic;
 }
 
-PreprocessorEvent PreprocessorSession::classify(std::vector<Token> tokens) {
+PreprocessorEvent DirectiveReader::classify(std::vector<Token> tokens) {
     if (!directive_kind(tokens)) {
         if (const auto location = misplaced(tokens)) {
             return error({DiagnosticCode::misplaced_directive,
@@ -64,7 +64,7 @@ PreprocessorEvent PreprocessorSession::classify(std::vector<Token> tokens) {
     return std::get<Directive>(std::move(result));
 }
 
-std::optional<PreprocessorEvent> PreprocessorSession::next() {
+std::optional<PreprocessorEvent> DirectiveReader::next() {
     if (includes_.empty()) {
         return std::nullopt;
     }

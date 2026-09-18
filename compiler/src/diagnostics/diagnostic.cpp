@@ -10,7 +10,18 @@ std::string render(const Diagnostic &diagnostic) {
         return diagnostic.message;
     }
     const auto position = span.source->position(span.begin);
-    return span.source->name + ':' + std::to_string(position.line) + ':' + std::to_string(position.column) + ": " +
-           diagnostic.message;
+    const auto location =
+        diagnostic.location.value_or(LogicalLocation{span.source->name, position.line, position.column});
+    auto result = location.file + ':' + std::to_string(location.line) + ':' + std::to_string(location.column) + ": " +
+                  diagnostic.message;
+    for (const auto &origin : diagnostic.related) {
+        if (!origin.source) {
+            continue;
+        }
+        const auto point = origin.source->position(origin.begin);
+        result +=
+            "\n  from " + origin.source->name + ':' + std::to_string(point.line) + ':' + std::to_string(point.column);
+    }
+    return result;
 }
 } // namespace erlang_aot

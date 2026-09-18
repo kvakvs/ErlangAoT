@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/compiler/source.hpp>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -20,7 +21,28 @@ enum class DiagnosticCode : std::uint8_t {
     malformed_directive,
     missing_terminator,
     misplaced_directive,
-    resource_limit
+    resource_limit,
+    undefined_macro,
+    macro_redefinition,
+    macro_arguments,
+    macro_cycle,
+    conditional_structure,
+    invalid_condition,
+    include_not_found,
+    invalid_context,
+    invalid_feature,
+    user_error,
+    user_warning,
+    invalid_encoding
+};
+
+enum class Severity : std::uint8_t { error, warning };
+
+struct LogicalLocation {
+    // Preserve logical coordinates separately from the physical spelling span.
+    std::string file;
+    std::size_t line;
+    std::size_t column;
 };
 
 struct Diagnostic {
@@ -30,6 +52,10 @@ struct Diagnostic {
     // Retain the primary spelling and related expansion/include locations.
     Span primary;
     std::vector<Span> related;
+    // Warnings remain observable without marking a module unsuccessful.
+    Severity severity = Severity::error;
+    // Render logical coordinates while retaining physical spelling and provenance.
+    std::optional<LogicalLocation> location;
 };
 
 class LexicalError : public std::runtime_error {
@@ -39,6 +65,6 @@ class LexicalError : public std::runtime_error {
     const Diagnostic diagnostic;
 };
 
-// Render a diagnostic with its physical filename and character coordinates.
+// Render logical coordinates and related physical expansion/include sites.
 std::string render(const Diagnostic &diagnostic);
 } // namespace erlang_aot

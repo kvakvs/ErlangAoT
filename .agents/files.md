@@ -61,3 +61,6 @@
   line-leading misplaced-directive heuristic, latched errors, and recovery.
 - `tests/compiler/preprocessor/forms.cpp`: syntax, recovery/progress, ordinary
   token preservation, lifetime, and session isolation checks.
+
+Preprocessor progress: steps 4–4 now have semantic implementation and focused tests.
+Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.

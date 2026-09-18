@@ -32,3 +32,6 @@
 - `references/otp/` is an ignored, shallow OTP-29.1 source checkout for research;
   `.agents/01-pp-otp-tests.md` indexes upstream tests. It is not a build dependency.
 - See `00-plan.md` for intended components and `.agents/plan-windows.md` for Windows work.
+
+Preprocessor progress: steps 4–4 now have semantic implementation and focused tests.
+Shared literal-term parsing supports initial macro values; subsequent commits connect later directives.

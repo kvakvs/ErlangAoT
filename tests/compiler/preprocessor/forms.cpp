@@ -13,7 +13,7 @@ void require(bool value, const char *message) {
 // Collect a bounded event stream; exceeding the bound exposes a recovery loop.
 std::vector<PreprocessorEvent> events(std::string text) {
     SourceManager sources;
-    PreprocessorSession session(sources.add("forms.erl", text));
+    DirectiveReader session(sources.add("forms.erl", text));
     std::vector<PreprocessorEvent> result;
     while (auto event = session.next()) {
         require(result.size() <= text.size(), "event stream failed to progress");
@@ -87,7 +87,7 @@ void ordinary_forms() {
     SourceManager sources;
     const auto source = sources.add("ordinary.erl", "-custom([?X, 'if', 16#ff]).");
     auto expected = Lexer(source).form();
-    PreprocessorSession session(source);
+    DirectiveReader session(source);
     auto actual = std::get<OrdinaryForm>(*session.next()).tokens;
     require(expected.size() == actual.size(), "ordinary token count");
     for (std::size_t i = 0; i < actual.size(); ++i) {
@@ -154,8 +154,8 @@ void diagnostics() {
 // interleaved.
 void isolation() {
     SourceManager sources;
-    PreprocessorSession first(sources.add("first", "-undef(). good()."));
-    PreprocessorSession second(sources.add("second", "-define(X, ok). ?X."));
+    DirectiveReader first(sources.add("first", "-undef(). good()."));
+    DirectiveReader second(sources.add("second", "-define(X, ok). ?X."));
     first.next();
     second.next();
     require(first.failed() && !second.failed(), "per-module error isolation");
