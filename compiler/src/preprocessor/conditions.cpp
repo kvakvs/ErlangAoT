@@ -18,6 +18,10 @@ bool PreprocessorSession::State::test_branch(const Directive &directive) {
         return directive.kind == DirectiveKind::ifdef ? present : !present;
     }
     const auto tokens = expand(std::get<TokenOperand>(directive.operand).tokens);
+    if (tokens.empty()) {
+        pp_fail(DiagnosticCode::invalid_condition, "expected condition expression",
+                std::get<TokenOperand>(directive.operand).tokens.front());
+    }
     return condition(tokens, options.limits.expression_depth,
                      [this](std::u32string_view name) { return macros.contains(name, true); });
 }

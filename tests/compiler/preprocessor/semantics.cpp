@@ -162,6 +162,13 @@ void contextual() {
     successful(run("-feature(maybe_expr,disable). -if(?FEATURE_AVAILABLE(maybe_expr)). yes. -endif."));
     require(run("-export([]). -feature(maybe_expr,disable).").failed, "late feature directive");
     require(run("-feature(missing,enable).").failed, "unknown feature");
+    auto warning = run("-warning({hello,1}). ok.");
+    require(!warning.failed && warning.diagnostics.size() == 1, "warning-only success");
+    require(run("-error(problem). ok.").failed, "user error latches failure");
+    require(run("-warning(1+2).").failed, "diagnostic expects term");
+    const auto empty = run("-define(EMPTY,). -warning(?EMPTY).");
+    require(empty.failed && empty.diagnostics.front().primary.source != nullptr,
+            "empty diagnostic keeps source context");
 }
 
 int main() {

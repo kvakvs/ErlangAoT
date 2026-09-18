@@ -84,6 +84,9 @@ void PreprocessorSession::State::predefine(std::string_view definition) {
         pp_fail(DiagnosticCode::macro_arguments, "invalid initial macro name", start_token(files.front().source));
     }
     auto body = fragment(equals == std::string_view::npos ? "true" : std::string(definition.substr(equals + 1)));
+    if (body.empty()) {
+        pp_fail(DiagnosticCode::macro_arguments, "expected initial macro term", name.front());
+    }
     const auto value = parse_term(body, options.limits.expression_depth);
     macros.define({name.front(), std::nullopt, term_tokens(value, name.front())});
 }
@@ -182,7 +185,15 @@ void PreprocessorSession::State::apply(Directive directive, const Token &site) {
     default:
         break;
     }
-    pp_fail(DiagnosticCode::malformed_directive, "directive effect is not implemented at this step", site);
+    prefix = false;
+    const auto tokens = expand(std::get<TokenOperand>(directive.operand).tokens);
+    if (tokens.empty()) {
+        pp_fail(DiagnosticCode::malformed_directive, "expected diagnostic term", site);
+    }
+    const auto value = parse_term(tokens, options.limits.expression_depth);
+    const bool warning = directive.kind == DirectiveKind::warning;
+    diagnostic({warning ? DiagnosticCode::user_warning : DiagnosticCode::user_error, display(value), site.spelling,
+                site.origins, warning ? Severity::warning : Severity::error, site.location});
 }
 
 void PreprocessorSession::State::end_file() {
