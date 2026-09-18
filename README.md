@@ -221,9 +221,9 @@ handling, and output-operand handling. Its maximum CCN is now **10**, down from
 
 ## Parser foundation
 
-Phase I of the [parser plan](.agents/02-parser.md) is implemented as a native C++
-API consuming expanded preprocessor tokens. It produces an owned typed syntax AST
-for module/file attributes and zero-argument functions with a single scalar literal
-body. Other syntax remains explicitly unsupported; no parse-check CLI is exposed
-yet. See [parser behavior and validation](docs/parser.md) for API contracts,
+Phases I–II of the [parser plan](.agents/02-parser.md) are implemented as a native
+C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
+module/file attributes, literals and aggregates, operators/calls, restricted pattern
+syntax, guards, and multi-clause functions. Other syntax remains explicitly
+unsupported; no parse-check CLI is exposed yet. See [parser behavior and validation](docs/parser.md) for API contracts,
 feature/source ownership, limits, compatibility tests, and remaining phases.

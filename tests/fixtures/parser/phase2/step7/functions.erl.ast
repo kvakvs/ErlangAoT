@@ -1,0 +1,127 @@
+file	66756e6374696f6e732e65726c	1
+module	66756e6374696f6e73
+function_full	66	2	2
+clause	2	2	2
+tuple	2
+atom	746167
+var	58
+list	1	1
+var	48
+var	54
+guard	2
+call	1
+atom	69735f696e7465676572
+var	48
+binary	>
+var	48
+integer	0
+guard	1
+binary	==
+var	58
+atom	66616c6c6261636b
+match
+var	41
+binary	+
+var	48
+integer	1
+tuple	2
+var	41
+var	54
+clause	2	0	1
+var	5f
+list	0	0
+atom	656d707479
+function_full	7a65726f	0	2
+clause	0	2	2
+guard	1
+atom	74727565
+guard	1
+atom	66616c7365
+atom	61
+atom	62
+clause	0	0	1
+atom	63
+function_full	7768656e	8	1
+clause	8	0	1
+match
+var	41
+match
+var	42
+var	43
+unary	+
+integer	1
+unary	-
+integer	2
+unary	bnot
+integer	3
+unary	not
+atom	74727565
+binary	<
+var	58
+var	59
+string	6162
+binary_sigil	cebb
+tuple	5
+var	41
+var	42
+var	43
+var	58
+var	59
+function_full	7065726d697373697665	4	1
+clause	4	0	1
+tuple	3
+call	0
+atom	66
+binary	!
+var	41
+var	42
+remote
+var	4d
+var	46
+list	1	1
+call	0
+atom	67
+call	0
+atom	68
+tuple	1
+catch
+call	0
+atom	66
+list	1	0
+binary	andalso
+var	41
+var	42
+var	556e626f756e64
+function_full	677561726473	1	1
+clause	1	2	1
+var	58
+guard	2
+call	1
+atom	637573746f6d
+var	58
+match
+var	58
+integer	1
+guard	1
+binary	!
+var	58
+atom	6d657373616765
+atom	6f6b
+function_full	6475706c6963617465	1	1
+clause	1	0	1
+var	58
+var	58
+function_full	6475706c6963617465	1	1
+clause	1	0	1
+var	58
+var	58
+function_full	67756172645f616c7465726e6174697665	1	1
+clause	1	2	1
+var	58
+guard	1
+atom	74727565
+guard	1
+call	1
+atom	66
+var	59
+atom	6f6b

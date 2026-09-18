@@ -21,9 +21,9 @@ ParseResult parse(std::string text, PreprocessorOptions options = {}, ParserLimi
 }
 
 // Find a named function without assuming how many implicit file attributes were emitted.
-const ast::ZeroArgumentFunction &function(const ast::Module &module, std::u32string_view name) {
+const ast::Function &function(const ast::Module &module, std::u32string_view name) {
     for (const auto &id : module.forms()) {
-        const auto *value = std::get_if<ast::ZeroArgumentFunction>(&module.form(id).value);
+        const auto *value = std::get_if<ast::Function>(&module.form(id).value);
         if (value && value->name.name == name) {
             return *value;
         }
@@ -33,7 +33,7 @@ const ast::ZeroArgumentFunction &function(const ast::Module &module, std::u32str
 
 // Inspect the single scalar expression supported by Phase I function bodies.
 const ast::Expression &body(const ast::Module &module, std::u32string_view name) {
-    return module.expression(function(module, name).body.front());
+    return module.expression(function(module, name).clauses.front().body.front());
 }
 
 // Preserve scalar categories, precision, and decoded character/string values.
@@ -62,7 +62,7 @@ void recovery() {
     require(warning.succeeded() && warning.diagnostics.size() == 1);
     const auto preprocessing = parse("bad() -> ?MISSING.\ngood() -> ok.\n");
     require(preprocessing.failed && preprocessing.diagnostics[0].code == DiagnosticCode::undefined_macro);
-    require(function(preprocessing.module, U"good").body.size() == 1);
+    require(function(preprocessing.module, U"good").clauses.front().body.size() == 1);
 }
 
 // Build raw tokens for entry-point contract and exact form-boundary checks.
@@ -152,7 +152,7 @@ void provenance() {
     const auto error = parse("-include(\"v.hrl\").\nf() -> ?V.\ng() -> ok.\n", options);
     require(error.failed && !error.diagnostics[0].related.empty());
     require(error.diagnostics[0].location->file == "main.erl");
-    require(function(error.module, U"g").body.size() == 1);
+    require(function(error.module, U"g").clauses.front().body.size() == 1);
 }
 
 // Interleave two module sessions to detect accidental global parser/preprocessor state.

@@ -20,7 +20,8 @@ detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end
 Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
                                   FeatureSnapshot features)
     : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
-      forms_(builder.module_.storage().forms.size()), origins_(builder.module_.storage().origins.size()) {
+      forms_(builder.module_.storage().forms.size()), patterns_(builder.module_.storage().patterns.size()),
+      origins_(builder.module_.storage().origins.size()) {
     if (builder.active_) {
         throw std::logic_error("nested AST form transaction");
     }
@@ -31,6 +32,7 @@ Builder::Transaction::~Transaction() {
     if (!committed_) {
         auto &storage = *builder_.module_.storage_;
         storage.forms.truncate(forms_);
+        storage.patterns.truncate(patterns_);
         storage.expressions.truncate(expressions_);
         storage.origins.truncate(origins_);
         builder_.active_.reset();
@@ -69,19 +71,6 @@ void Builder::validate(const NodeSource &source) const {
         throw std::invalid_argument("AST node belongs to another form");
     }
     detail::source_table(module_.storage(), source);
-}
-
-void Builder::validate(const FormValue &value) const {
-    const auto *function = std::get_if<ZeroArgumentFunction>(&value);
-    if (!function) {
-        return;
-    }
-    if (function->body.empty()) {
-        throw std::invalid_argument("empty function body");
-    }
-    for (const auto &child : function->body) {
-        validate(module_.expression(child).source);
-    }
 }
 
 ExprId Builder::expression(ExprValue value, NodeSource source) {

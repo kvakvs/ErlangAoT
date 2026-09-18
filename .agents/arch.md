@@ -28,11 +28,13 @@
   See `docs/preprocessor.md`, `.agents/01-pp-otp-tests.md`, and `00-plan.md`.
 - Parser Phase I: pinned grammar/action inventories, raw/epp/lint references and native
   AST parity tests. Shared cursor/syntax/diagnostics/infix metadata also serve preprocessing.
-- Typed AST: move-only module arenas, owner/generation-checked category IDs, owned
-  per-form origins and rollback transactions. Only module/file attributes and zero-argument
-  functions with scalar/variable, tuple/list/group, decoded sigils, typed operators,
-  match/catch, calls and general remote expressions are parsed;
-  later grammar reports explicit unsupported errors. Aggregate children are checked handles.
-- `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages,
-  bounds recursive expression nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive
+- Typed AST: move-only module arenas, owner/generation-checked expression/pattern/form
+  IDs, owned origins and rollback transactions. Module/file attributes and complete
+  function clauses support scalar/variable, tuple/list/group, sigil, operator, match/catch,
+  call and remote expressions. Restricted pattern roots reuse expression payloads;
+  nested containers remain grammar-permissive. PatternCandidate explicitly defers
+  pattern validation in future permissive positions. Guard alternatives/conjunctions
+  and clause bodies are checked nonempty; semantic binding/guard legality is deferred.
+- `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages
+  and recursive nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive
   preprocessing; final module features are recorded at EOF. No parse-check CLI yet.

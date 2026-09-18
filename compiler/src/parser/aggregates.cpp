@@ -1,12 +1,12 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-ast::ExprValue FormParser::primary() {
+ast::ExprValue FormParser::primary(OperatorContext context) {
     if (cursor_.empty() || cursor_.anchor().kind == TokenKind::dot) {
         fail(DiagnosticCode::parser_syntax, "expected expression");
     }
     if (cursor_.take_syntax(U"(")) {
-        auto child = expression();
+        auto child = expression(0, context);
         expect(U")");
         return ast::Group{std::move(child)};
     }

@@ -20,7 +20,7 @@
 - `compiler/src/parsing/{token_cursor,token_syntax,operator_info}.*`: bounded lookahead/
   rollback, category-aware syntax, token diagnostics, and contextual infix metadata.
 - `tests/compiler/parser/tokens.cpp`: shared cursor/operator/terminal/provenance tests.
-- `compiler/include/erlang_aot/compiler/ast/{ids,source,expressions,forms,module}.hpp`:
+- `compiler/include/erlang_aot/compiler/ast/{ids,source,expressions,patterns,forms,module}.hpp`:
   typed IDs, origin ranges, expression/form variants and immutable module access.
   `src/ast/{arena,storage,builder}.*`, `module.cpp`:
   checked flat storage, transactional construction, owned provenance and access.
@@ -54,7 +54,7 @@
 - `regression1.md`: verified OTP 29.1 record-condition compiler crash and upstream report draft.
 - `.agents/{arch,files,01-pp,01-pp-otp-tests,plan-windows}.md`: architecture, file inventory,
   preprocessor plan/reference inventory and Windows follow-up. `00-plan.md`: wider project.
-- `.agents/02-parser.md`: proposed lexer-reuse/parser/typed-AST plan, six phases,
+- `.agents/02-parser.md`: lexer-reuse/parser/typed-AST implementation plan, six phases,
   18 steps with explicit acceptance and per-step quality/commit requirements.
 - `AGENTS.md`: user instructions; `aimemory.md`: working notes; `.gitignore`: local artifacts.
 - Ignored `references/otp/`: pinned research checkout, never a build dependency.
@@ -67,6 +67,10 @@
   event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`, `aggregates.cpp`:
   form dispatch, decoded literals/sigils and bounded recursive aggregate grammar.
 - `compiler/src/ast/children.cpp`: exhaustive child ownership validation for expression payloads.
+- `compiler/src/ast/clauses.cpp`: pattern storage, checked function clauses and guard groups;
+  `compiler/src/parser/clauses.cpp`: restricted/permissive pattern entries, heads, guard/body
+  sequences and function consistency. `tests/compiler/parser/clauses.cpp`: pattern arena
+  rollback/ownership, clause invariants, grammar-vs-semantics and source tests.
 - `compiler/include/erlang_aot/compiler/ast/operators.hpp`: closed unary/binary identities;
   `compiler/src/parser/expressions.cpp`: bounded Pratt parser, typed calls/remotes and
   nonassociative checks. Shared prefix metadata also serves condition parsing.

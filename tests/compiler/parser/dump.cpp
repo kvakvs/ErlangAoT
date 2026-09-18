@@ -113,12 +113,35 @@ struct FormDump {
         std::cout << "file\t" << hex(name) << '\t' << value.line.decimal << '\n';
     }
 
-    void operator()(const ast::ZeroArgumentFunction &value) const {
-        if (value.body.size() != 1) {
-            throw std::runtime_error("unmapped Phase I function body");
+    void clause(const ast::FunctionClause &value) const {
+        std::cout << "clause\t" << value.arguments.size() << '\t'
+                  << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size() << '\n';
+        for (const auto &id : value.arguments) {
+            const auto &pattern = std::get<ast::RestrictedPattern>(module.pattern(id).value);
+            module.visit(pattern.expression, ExpressionDump{module});
         }
-        std::cout << "function\t" << hex(utf8(value.name.name)) << '\n';
-        module.visit(value.body.front(), ExpressionDump{module});
+        if (value.guard) {
+            for (const auto &alternative : value.guard->alternatives) {
+                std::cout << "guard\t" << alternative.tests.size() << '\n';
+                for (const auto &id : alternative.tests)
+                    module.visit(id, ExpressionDump{module});
+            }
+        }
+        for (const auto &id : value.body)
+            module.visit(id, ExpressionDump{module});
+    }
+
+    void operator()(const ast::Function &value) const {
+        const auto &first = value.clauses.front();
+        if (value.clauses.size() == 1 && first.arguments.empty() && !first.guard && first.body.size() == 1) {
+            std::cout << "function\t" << hex(utf8(value.name.name)) << '\n';
+            module.visit(first.body.front(), ExpressionDump{module});
+            return;
+        }
+        std::cout << "function_full\t" << hex(utf8(value.name.name)) << '\t' << first.arguments.size() << '\t'
+                  << value.clauses.size() << '\n';
+        for (const auto &item : value.clauses)
+            clause(item);
     }
 };
 

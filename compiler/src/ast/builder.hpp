@@ -23,6 +23,7 @@ class Builder {
         Builder &builder_;
         std::size_t expressions_;
         std::size_t forms_;
+        std::size_t patterns_;
         std::size_t origins_;
         // A committed transaction never rolls back its now-published root.
         bool committed_ = false;
@@ -38,6 +39,7 @@ class Builder {
     NodeSource source(std::size_t begin, std::size_t end, std::size_t anchor) const;
     ExprId expression(ExprValue value, NodeSource source);
     FormId form(FormValue value, NodeSource source);
+    PatternSyntaxId pattern(PatternValue value, NodeSource source);
     // Read-only inspection is valid until the next builder mutation.
     const Module &view() const;
     Module finish(FeatureSnapshot features = {}) &&;
@@ -50,5 +52,7 @@ class Builder {
     void validate(const NodeSource &source) const;
     void validate(const FormValue &value) const;
     void validate(const ExprValue &value) const;
+    void validate(const FunctionClause &clause) const;
+    void validate(const GuardSyntax &guard) const;
 };
 } // namespace erlang_aot::ast

@@ -4,7 +4,7 @@
 
 namespace erlang_aot {
 enum class Associativity : std::uint8_t { left, right, none };
-enum class OperatorContext : std::uint8_t { expression, condition, type };
+enum class OperatorContext : std::uint8_t { expression, pattern, condition, type };
 
 struct OperatorInfo {
     // Preserve syntax identity, relative binding strength, and grouping policy.

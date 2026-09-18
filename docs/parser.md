@@ -191,3 +191,53 @@ including live OTP 29.1. The five preprocessing regressions passed again after
 shared-prefix migration; five AST/form/expression/Phase II suites passed ASan/UBSan.
 Full Lizard and clang-tidy passed without suppressions or relaxed thresholds.
 Patterns, guards, and complete function clauses remain pending step 7.
+
+## Patterns, guards and function clauses (step 7)
+
+Step 6 commit: `cb556d6`. `Function` replaces the temporary `ZeroArgumentFunction`.
+Every published function owns a nonempty ordered clause vector; each clause retains
+restricted argument patterns, an optional guard, a nonempty expression body, and
+its complete source extent. The form's name and first clause's arity apply to every
+clause. Name/arity mismatch rejects the entire form at the offending head. Duplicate
+function definitions in separate forms remain available for later semantic checks.
+
+`PatternSyntaxId` now addresses its own transactional arena, with immutable module
+access and exhaustive visiting. `RestrictedPattern` wraps expression payloads
+parsed through the `pat_expr` entry point. Root calls, remote qualification, send,
+short-circuit operators and catch are excluded there; aliases, prefix, arithmetic,
+comparison and list operators follow OTP. Grouping preserves that grammar context.
+The tuple/list productions intentionally parse general expressions inside them:
+`f(g()) -> ok.` fails, while `f({g()}) -> ok.` parses and later fails lint. This is
+syntax classification, not a guarantee of semantic pattern validity. Records and
+binary patterns remain assigned to steps 8–9.
+
+`PatternCandidate` explicitly wraps expressions for permissive pattern positions.
+Its storage, visiting and child-ownership rules are implemented and tested now;
+control-flow productions such as `case X of f() -> ok end` arrive in step 10.
+Function argument construction rejects candidates, since those heads use the
+restricted grammar. Both wrappers reuse expression payloads rather than duplicating
+literal/container/operator structures. Pattern allocations count against the node
+budget and roll back together with expressions and form origins.
+
+`GuardSyntax` contains nonempty alternatives separated by semicolons, each with a
+nonempty comma-conjoined expression sequence and its own origin extent. Missing
+`when` is represented by an absent optional, not an empty guard. Guard calls, match,
+catch, sends and unbound names are retained if the parser grammar accepts them;
+no BIF whitelist or binding analysis is applied. Semicolons before `->` separate
+guard alternatives; those after body expressions separate named function clauses.
+
+Step 7 fixtures cover macros in heads, aliases, every restricted operator, multiple
+clauses/arities, guard conjunctions/alternatives, body sequences, permissive nested
+containers, duplicate definitions, head mismatches and malformed heads/guards/bodies.
+A pinned accepted AST plus lint-error record explicitly checks the parsing/lint
+boundary. Native tests additionally cover pattern owner moves, stale/foreign IDs,
+candidate distinction, source origins, nonempty construction invariants and exact
+node-budget accounting across recovery and multiple forms.
+
+Step 7 validation (macOS arm64): freshly configured full C++23 build and all 21
+CTests passed. All 21 also passed in C++26 and ASan/UBSan builds, including native
+AST/rejection parity and live OTP 29.1 parser/lint comparisons. Runtime-only
+configure/build passed. Full Lizard and clang-tidy passed at unchanged thresholds
+without added suppressions. Phase II is complete; Phase III and subsequent grammar,
+semantic analysis, parse-check CLI and code generation remain future work. These
+host results do not claim Linux/Windows execution coverage.

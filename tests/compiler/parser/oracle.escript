@@ -79,6 +79,9 @@ project({attribute, _, file, {Name, Line}}) ->
     io:format("file\t~s\t~B~n", [hex(filename:basename(Name)), Line]);
 project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
     field("function", atom_to_list(Name)), scalar(Expr);
+project({function, _, Name, Arity, Clauses}) ->
+    io:format("function_full\t~s\t~B\t~B~n", [hex(atom_to_list(Name)), Arity, length(Clauses)]),
+    lists:foreach(fun clause/1, Clauses);
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
 scalar({op, _, Op, Arg}) -> io:format("unary\t~s~n", [Op]), scalar(Arg);
@@ -113,3 +116,11 @@ hex(Value) -> binary:encode_hex(unicode:characters_to_binary(Value), lowercase).
 spine({cons, _, H, T}) -> {Rest, Tail} = spine(T), {[H|Rest], Tail};
 spine({nil, _}) -> {[], none};
 spine(Other) -> {[], Other}.
+
+clause({clause, _, Arguments, Guards, Body}) ->
+    io:format("clause\t~B\t~B\t~B~n", [length(Arguments), length(Guards), length(Body)]),
+    lists:foreach(fun scalar/1, Arguments),
+    lists:foreach(fun(Tests) ->
+        io:format("guard\t~B~n", [length(Tests)]), lists:foreach(fun scalar/1, Tests)
+    end, Guards),
+    lists:foreach(fun scalar/1, Body).

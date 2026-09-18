@@ -81,9 +81,9 @@ struct FormDump {
 
     std::string operator()(const ast::FileAttribute &value) const { return "file:" + utf8(value.name); }
 
-    std::string operator()(const ast::ZeroArgumentFunction &value) const {
+    std::string operator()(const ast::Function &value) const {
         std::string result = utf8(value.name.name);
-        for (const auto &id : value.body) {
+        for (const auto &id : value.clauses.front().body) {
             result += ":" + module.visit(id, LiteralDump{});
         }
         return result;
@@ -101,7 +101,8 @@ void growth_and_moves() {
     }
     const auto first = body.front();
     const auto last = body.back();
-    const auto root = builder.form(ast::ZeroArgumentFunction{{U"f"}, std::move(body)}, builder.source(0, 6, 0));
+    const auto root = builder.form(ast::Function{{U"f"}, {{{}, {}, std::move(body), builder.source(0, 6, 0)}}},
+                                   builder.source(0, 6, 0));
     tx.commit(root);
     auto module = std::move(builder).finish();
     ast::Module moved(std::move(module));
@@ -132,7 +133,8 @@ void rollback() {
     {
         auto tx = builder.begin(input, input.back());
         const auto value = builder.expression(ast::Atom{U"kept"}, builder.source(4, 5, 4));
-        const auto root = builder.form(ast::ZeroArgumentFunction{{U"f"}, {value}}, builder.source(0, 6, 0));
+        const auto root =
+            builder.form(ast::Function{{U"f"}, {{{}, {}, {value}, builder.source(0, 6, 0)}}}, builder.source(0, 6, 0));
         tx.commit(root);
     }
     const auto module = std::move(builder).finish();
@@ -150,9 +152,10 @@ void invariants() {
     auto b = second.begin(input, input.back());
     const auto value = first.expression(ast::Variable{U"X"}, first.source(4, 5, 4));
     rejects<std::invalid_argument>([&] { (void)second.view().expression(value); });
-    rejects<std::invalid_argument>(
-        [&] { second.form(ast::ZeroArgumentFunction{{U"f"}, {value}}, second.source(0, 6, 0)); });
-    rejects<std::invalid_argument>([&] { first.form(ast::ZeroArgumentFunction{{U"f"}, {}}, first.source(0, 6, 0)); });
+    rejects<std::invalid_argument>([&] {
+        second.form(ast::Function{{U"f"}, {{{}, {}, {value}, second.source(0, 6, 0)}}}, second.source(0, 6, 0));
+    });
+    rejects<std::invalid_argument>([&] { first.form(ast::Function{{U"f"}, {}}, first.source(0, 6, 0)); });
     rejects<std::invalid_argument>([&] { second.expression(ast::Tuple{{value}}, second.source(0, 6, 0)); });
     rejects<std::invalid_argument>([&] { second.expression(ast::Group{value}, second.source(0, 6, 0)); });
     rejects<std::invalid_argument>([&] { first.expression(ast::List{{}, value}, first.source(0, 6, 0)); });
@@ -211,7 +214,8 @@ ast::Module expanded_module() {
             }
             auto tx = builder.begin(form->tokens, form->tokens.back());
             const auto literal = builder.expression(ast::IntegerLiteral{Integer{"42"}}, builder.source(4, 5, 4));
-            const auto root = builder.form(ast::ZeroArgumentFunction{{U"f"}, {literal}}, builder.source(0, 6, 0));
+            const auto root = builder.form(ast::Function{{U"f"}, {{{}, {}, {literal}, builder.source(0, 6, 0)}}},
+                                           builder.source(0, 6, 0));
             tx.commit(root);
         }
     }
@@ -224,7 +228,7 @@ void provenance() {
     const auto module = expanded_module();
     require(module.forms().size() == 1);
     const auto &form = module.form(module.forms().front());
-    const auto &body = std::get<ast::ZeroArgumentFunction>(form.value).body;
+    const auto &body = std::get<ast::Function>(form.value).clauses.front().body;
     const auto &literal = module.expression(body.front());
     const auto &origin = module.anchor(literal.source);
     require(origin.location.file == "main.erl" && origin.location.line == 2);

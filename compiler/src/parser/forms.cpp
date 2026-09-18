@@ -33,7 +33,7 @@ void FormParser::terminator() {
         fail(DiagnosticCode::missing_terminator, "expected form-ending '.'");
     }
     if (!cursor_.take(TokenKind::dot, U".")) {
-        fail(DiagnosticCode::unsupported_syntax, "expected form-ending dot after supported expression syntax");
+        fail(DiagnosticCode::parser_syntax, "expected form-ending dot");
     }
     if (!cursor_.empty()) {
         fail(DiagnosticCode::parser_syntax, "unexpected tokens after form-ending '.'");
@@ -77,14 +77,4 @@ ast::FileAttribute FormParser::file_attribute() {
     return {std::move(name), std::move(line)};
 }
 
-ast::ZeroArgumentFunction FormParser::function() {
-    ast::Atom name{value<std::u32string>(category(TokenKind::atom, "function name"))};
-    expect(U"(");
-    if (!cursor_.take(TokenKind::symbol, U")")) {
-        fail(DiagnosticCode::unsupported_syntax, "only zero-argument functions are implemented in Phase I");
-    }
-    expect(U"->");
-    auto result = expression();
-    return {std::move(name), {std::move(result)}};
-}
 } // namespace erlang_aot

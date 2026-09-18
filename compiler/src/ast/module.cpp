@@ -38,6 +38,10 @@ const Expression &Module::expression(const ExprId &id) const { return storage().
 
 std::size_t Module::expression_count() const { return storage().expressions.size(); }
 
+const PatternSyntax &Module::pattern(const PatternSyntaxId &id) const { return storage().patterns.get(id); }
+
+std::size_t Module::pattern_count() const { return storage().patterns.size(); }
+
 FeatureSnapshot Module::features(const FormId &id) const {
     return detail::source_table(storage(), form(id).source).features;
 }

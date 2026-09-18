@@ -1,0 +1,11 @@
+file	6c696e745f6f6e6c792e65726c	1
+module	6c696e745f6f6e6c79
+function_full	66	1	1
+clause	1	1	1
+tuple	1
+call	0
+atom	67
+guard	1
+call	0
+atom	637573746f6d
+var	556e626f756e64

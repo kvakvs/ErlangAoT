@@ -49,6 +49,10 @@ constexpr OperatorInfo type_entries[]{{U"::", 150, right}, {U"|", 170, left}, {U
 
 // Apply the grammar context without changing a shared operator's binding strength.
 bool allowed(const Entry &entry, OperatorContext context) {
+    if (context == OperatorContext::pattern) {
+        const auto name = entry.info.spelling;
+        return name != U"!" && name != U"orelse" && name != U"andalso" && name != U":";
+    }
     if (context == OperatorContext::condition) {
         return entry.condition;
     }

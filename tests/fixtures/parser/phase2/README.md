@@ -21,3 +21,9 @@ Malformed separators, tails, prefixes, suffixes and sigil concatenation are reje
 Step 6 covers every operator, representative cross-precedence pairs in both orders,
 catch, arbitrary remote expressions, dynamic/chained calls and malformed boundaries.
 Operator identities and child order are retained exactly in the projection.
+
+Step 7 covers restricted pattern roots, permissive nested containers, guard groups,
+body sequences and complete function clauses. Optional `.erl.lint` records prove
+that parser acceptance remains separate from semantic validation. `lint_only.erl`
+parses both natively and in OTP but fails OTP lint. Case/receive/fun syntax is still
+assigned to later steps; introducing PatternCandidate does not claim those parsers.

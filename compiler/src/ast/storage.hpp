@@ -16,6 +16,7 @@ struct Storage {
     std::shared_ptr<const Owner> owner = std::make_shared<const Owner>();
     Arena<Expression, ExprTag> expressions{owner};
     Arena<Form, FormTag> forms{owner};
+    Arena<PatternSyntax, PatternSyntaxTag> patterns{owner};
     Arena<OriginTable, OriginTag> origins{owner};
     std::vector<FormId> roots;
     // Successful module parsing records the session snapshot observed at EOF.

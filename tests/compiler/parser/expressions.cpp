@@ -18,8 +18,8 @@ ParseResult parse(std::string text, ParserLimits limits = {}) {
 
 // Locate a completed function after the implicit file attribute.
 const ast::Expression &body(const ParseResult &result) {
-    const auto &function = std::get<ast::ZeroArgumentFunction>(result.module.form(result.module.forms().back()).value);
-    return result.module.expression(function.body.front());
+    const auto &function = std::get<ast::Function>(result.module.form(result.module.forms().back()).value);
+    return result.module.expression(function.clauses.front().body.front());
 }
 
 // Preserve typed aggregates, grouping extents, wildcard spelling and macro origins.

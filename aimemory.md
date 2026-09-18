@@ -276,3 +276,18 @@ Primary sources consulted:
   chains consume the depth budget. Step 6 fixtures compare both precedence orders.
 - Step 6 verification: fresh full build, all 20 CTests, preprocessing rerun after
   shared prefix migration, five sanitizer parser suites, full quality gate passed.
+
+- Step 6 committed cb556d6. Step 7 replaces ZeroArgumentFunction with Function and
+  typed clauses/optional nonempty GuardSyntax. PatternSyntax arena stores either
+  RestrictedPattern or PatternCandidate wrapping ExprId; patterns join node budgets
+  and transactions. pat_expr context excludes root calls/catch/send/short-circuit/
+  remote, while container children still use expr. Parentheses preserve context.
+- Candidate wrapper/storage is implemented now; case/receive grammar remains step10.
+  Function argument builders reject candidates. Guard expressions intentionally
+  preserve parse-valid/lint-invalid syntax; separate duplicate forms are accepted.
+- Step 7 fixture guard_alternative(X) when true; f(Y) -> ok is parser-valid: the
+  semicolon is still within the guard. Do not misclassify it as a clause mismatch.
+- Phase II final verification: all 21 tests pass C++23/C++26/ASan+UBSan with live
+  OTP29.1, runtime-only build passes, full fresh Lizard+clang-tidy passes. Step7
+  complete after its required commit; resume future work at step8. No code-gen/CLI
+  parse-check/control-flow/map/record/general-binary implementation is claimed.

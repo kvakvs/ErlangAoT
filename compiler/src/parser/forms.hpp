@@ -28,15 +28,20 @@ class FormParser {
     ast::FormValue attribute();
     ast::ModuleAttribute module_attribute();
     ast::FileAttribute file_attribute();
-    ast::ZeroArgumentFunction function();
+    ast::Function function();
+    ast::FunctionClause clause(std::size_t begin);
+    std::vector<ast::PatternSyntaxId> arguments();
+    ast::PatternSyntaxId pattern(bool permissive = false);
+    ast::GuardSyntax guard(std::size_t begin);
+    std::vector<ast::ExprId> sequence();
     // Parse bounded recursive values without rescanning expanded tokens.
-    ast::ExprId expression(int minimum = 0);
-    ast::ExprId prefix();
-    ast::ExprId continuation(ast::ExprId left, const OperatorInfo &info);
-    std::optional<OperatorInfo> next_operator() const;
+    ast::ExprId expression(int minimum = 0, OperatorContext context = OperatorContext::expression);
+    ast::ExprId prefix(OperatorContext context);
+    ast::ExprId continuation(ast::ExprId left, const OperatorInfo &info, OperatorContext context);
+    std::optional<OperatorInfo> next_operator(OperatorContext context) const;
     ast::ExprId make(ast::ExprValue value, std::size_t begin, std::size_t anchor);
-    void nonassociative(const OperatorInfo &info) const;
-    ast::ExprValue primary();
+    void nonassociative(const OperatorInfo &info, OperatorContext context) const;
+    ast::ExprValue primary(OperatorContext context);
     ast::ExprValue literal();
     ast::ExprValue sigil();
     ast::Tuple tuple();
