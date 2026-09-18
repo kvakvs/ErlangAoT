@@ -64,7 +64,11 @@
 - `docs/parser.md`: parser implementation progress and validation evidence.
 - `compiler/include/erlang_aot/compiler/{features,parser}.hpp`: immutable feature
   snapshots, parser limits/results and streaming/module APIs. `src/parser/parser.cpp`:
-  event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`: Phase I grammar.
+  event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`, `aggregates.cpp`:
+  form dispatch, decoded literals/sigils and bounded recursive aggregate grammar.
+- `compiler/src/ast/children.cpp`: exhaustive child ownership validation for expression payloads.
+- `tests/compiler/parser/expressions.cpp`, `phase2.cmake`, `fixtures/parser/phase2/`:
+  structural/provenance/depth checks and native/offline/live OTP Phase II AST/rejection parity.
 - `tests/compiler/parser/{forms,dump}.cpp`, `phase1.cmake`: integration/limit/recovery
   tests and private native/OTP AST comparison. `tests/compiler/encoding.hpp`: shared
   scanner/preprocessor/AST test encoding; `fixtures/parser/phase1.*`: include/LF/CRLF probes.

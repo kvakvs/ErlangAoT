@@ -148,7 +148,7 @@ void provenance() {
     const auto &origin = result.module.anchor(expression.source);
     require(origin.location.file == "logical.erl");
     require(!origin.related.empty() && origin.spelling.source->name != "main.erl");
-    options.read_file = [](const auto &) { return std::optional<std::string>("-define(V, {bad}).\n"); };
+    options.read_file = [](const auto &) { return std::optional<std::string>("-define(V, #{bad}).\n"); };
     const auto error = parse("-include(\"v.hrl\").\nf() -> ?V.\ng() -> ok.\n", options);
     require(error.failed && !error.diagnostics[0].related.empty());
     require(error.diagnostics[0].location->file == "main.erl");

@@ -1,3 +1,12 @@
+## 2026-09-19 — Parser Phase II execution
+
+- Step 5 reuses decoded lexer values; flat typed Tuple/List/Group/BinarySigilLiteral
+  nodes, checked children, adjacent strings and OTP build_sigil rules. Depth limit
+  defaults to 256. Phase II fixtures are in a subdirectory to retain Phase I corpus.
+- Phase II dump is private, exhaustive, strips groups and normalizes list spines;
+  native shape/provenance assertions protect the richer AST metadata separately.
+- Step 4 commit was d84bcb2. Continue steps 5–7 with separate clean quality commits.
+
 ## 2026-09-19 — Parser and typed AST plan
 
 - `.agents/02-parser.md`: requested planning only, six phases/18 ordered steps;
@@ -255,3 +264,7 @@ Primary sources consulted:
 - https://github.com/llir/llvm
 - https://go.dev/doc/gc-guide
 - https://kotlinlang.org/docs/native-memory-manager.html
+
+- Step 5 final verification: 20 CTests, five sanitizer parser suites, missing/wrong
+  OTP skips, full fresh Lizard/clang-tidy passed. New child validation explicitly
+  checks active_ before dereferencing (tidy optional-access analysis).

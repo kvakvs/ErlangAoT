@@ -39,6 +39,14 @@ std::vector<Token> tokens() {
 
 // Exhaustive private dump proves typed visiting without an unchecked fallback.
 struct LiteralDump {
+    std::string operator()(const ast::Tuple &) const { return "tuple"; }
+
+    std::string operator()(const ast::List &) const { return "list"; }
+
+    std::string operator()(const ast::Group &) const { return "group"; }
+
+    std::string operator()(const ast::BinarySigilLiteral &) const { return "binary_sigil"; }
+
     std::string operator()(const ast::Atom &atom) const { return "atom:" + utf8(atom.name); }
 
     std::string operator()(const ast::Variable &var) const { return "var:" + utf8(var.name); }
@@ -133,6 +141,9 @@ void invariants() {
     rejects<std::invalid_argument>(
         [&] { second.form(ast::ZeroArgumentFunction{{U"f"}, {value}}, second.source(0, 6, 0)); });
     rejects<std::invalid_argument>([&] { first.form(ast::ZeroArgumentFunction{{U"f"}, {}}, first.source(0, 6, 0)); });
+    rejects<std::invalid_argument>([&] { second.expression(ast::Tuple{{value}}, second.source(0, 6, 0)); });
+    rejects<std::invalid_argument>([&] { second.expression(ast::Group{value}, second.source(0, 6, 0)); });
+    rejects<std::invalid_argument>([&] { first.expression(ast::List{{}, value}, first.source(0, 6, 0)); });
     rejects<std::logic_error>([&] { (void)first.begin(input, input.back()); });
     rejects<std::logic_error>([&] { (void)std::move(first).finish(); });
     rejects<std::out_of_range>([&] { (void)first.source(4, 3, 4); });

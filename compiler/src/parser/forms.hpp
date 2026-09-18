@@ -3,11 +3,17 @@
 #include "parsing/token_cursor.hpp"
 
 namespace erlang_aot {
-// Phase I form grammar constructs only explicitly supported, complete syntax nodes.
+struct GrammarBudget {
+    // Keep allocation and recursive grammar limits distinct at the call boundary.
+    std::size_t nodes;
+    std::size_t nesting;
+};
+
+// Construct only explicitly supported, complete syntax nodes.
 class FormParser {
   public:
     // Borrow one expanded form and the current transaction's remaining node allowance.
-    FormParser(std::span<const Token> tokens, const Token &end, ast::Builder &builder, std::size_t nodes);
+    FormParser(std::span<const Token> tokens, const Token &end, ast::Builder &builder, GrammarBudget budget);
     ast::FormId parse();
 
   private:
@@ -15,12 +21,21 @@ class FormParser {
     TokenCursor cursor_;
     ast::Builder &builder_;
     std::size_t nodes_;
-    // Recognize only Phase I module/file attributes and zero-argument scalar functions.
+    std::size_t nesting_;
+    std::size_t depth_ = 0;
+    // Recognize module/file attributes and the currently supported function syntax.
     ast::FormValue attribute();
     ast::ModuleAttribute module_attribute();
     ast::FileAttribute file_attribute();
     ast::ZeroArgumentFunction function();
-    ast::ExprId literal();
+    // Parse bounded recursive values without rescanning expanded tokens.
+    ast::ExprId expression();
+    ast::ExprValue primary();
+    ast::ExprValue literal();
+    ast::ExprValue sigil();
+    ast::Tuple tuple();
+    ast::List list();
+    std::vector<ast::ExprId> elements(std::u32string_view close);
     ast::ExprValue literal_value(const Token &token) const;
     // Match delimiters/category values without turning quoted atoms into syntax.
     void expect(std::u32string_view text);

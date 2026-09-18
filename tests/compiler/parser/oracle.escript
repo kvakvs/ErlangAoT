@@ -17,6 +17,10 @@ run("raw", Input) ->
     {ok, File} = file:open(Input, [read, {encoding, utf8}]),
     try raw(File, {1,1}) after file:close(File) end;
 run("epp", Input) -> with_epp(Input, fun expanded/1);
+run("accept", Input) ->
+    {ok, Forms} = epp:parse_file(Input, [], []),
+    Failed = lists:any(fun({error, _}) -> true; (_) -> false end, Forms),
+    io:format("~s~n", [case Failed of true -> "rejected"; false -> "accepted" end]);
 run("phase1", Input) -> with_epp(Input, fun phase1/1);
 run("lint", Input) ->
     {ok, Forms} = epp:parse_file(Input, [], []),
@@ -77,6 +81,16 @@ project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
     field("function", atom_to_list(Name)), scalar(Expr);
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
+scalar({tuple, _, Elements}) ->
+    io:format("tuple\t~B~n", [length(Elements)]), lists:foreach(fun scalar/1, Elements);
+scalar({nil, _}) -> io:format("list\t0\t0~n");
+scalar({cons, _, _, _} = List) ->
+    {Elements, Tail} = spine(List),
+    io:format("list\t~B\t~B~n", [length(Elements), case Tail of none -> 0; _ -> 1 end]),
+    lists:foreach(fun scalar/1, Elements),
+    case Tail of none -> ok; _ -> scalar(Tail) end;
+scalar({bin, _, [{bin_element, _, {string, _, Value}, default, [utf8]}]}) -> field("binary_sigil", Value);
+scalar({var, _, Name}) -> field("var", atom_to_list(Name));
 scalar({atom, _, Name}) -> field("atom", atom_to_list(Name));
 scalar({integer, _, Value}) -> io:format("integer\t~B~n", [Value]);
 scalar({float, _, Value}) -> io:format("float\t~s~n", [binary:encode_hex(<<Value:64/float>>, lowercase)]);
@@ -87,3 +101,8 @@ scalar(Other) -> erlang:error({unmapped_phase1_expression, Other}).
 field(Kind, Value) -> io:format("~s\t~s~n", [Kind, hex(Value)]).
 hex([]) -> "-";
 hex(Value) -> binary:encode_hex(unicode:characters_to_binary(Value), lowercase).
+
+%% Preserve explicit list tails when they are not another cons/nil spine.
+spine({cons, _, H, T}) -> {Rest, Tail} = spine(T), {[H|Rest], Tail};
+spine({nil, _}) -> {[], none};
+spine(Other) -> {[], Other}.

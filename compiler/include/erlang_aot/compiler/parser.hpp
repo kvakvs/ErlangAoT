@@ -10,6 +10,8 @@ struct ParserLimits {
     std::size_t nodes = 1000000;
     // One additional reserved diagnostic reports exhaustion of this ordinary-message budget.
     std::size_t diagnostics = 1000;
+    // Bound recursive grammar calls independently of flat AST storage.
+    std::size_t nesting = 256;
 };
 
 struct ParseResult {

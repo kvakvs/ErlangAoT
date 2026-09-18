@@ -114,3 +114,25 @@ foreach(mode IN ITEMS golden oracle)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase1.cmake")
 endforeach()
 set_tests_properties(parser_phase1_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 60)
+
+foreach(mode IN ITEMS golden oracle)
+    if(mode STREQUAL "oracle")
+        set(live TRUE)
+    else()
+        set(live FALSE)
+    endif()
+    add_test(NAME parser_phase2_${mode} COMMAND "${CMAKE_COMMAND}"
+        "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+        "-DDUMP=$<TARGET_FILE:parser_dump>"
+        "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
+        "-DLIVE=${live}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
+endforeach()
+set_tests_properties(parser_phase2_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 180)
+
+add_executable(parser_expressions compiler/parser/expressions.cpp)
+erlang_aot_project_options(parser_expressions)
+target_link_libraries(parser_expressions PRIVATE erlang_frontend)
+add_test(NAME parser_expressions COMMAND parser_expressions)
+set_tests_properties(parser_expressions PROPERTIES TIMEOUT 20)

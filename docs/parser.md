@@ -123,3 +123,35 @@ C++26, and ASan/UBSan builds, including the live OTP 29.1 suites and actual nati
 AST parity. Runtime-only configure/build succeeded with nonexistent Boost paths.
 The final full Lizard/clang-tidy gate passed at unchanged thresholds. Linux and
 Windows execution remain unvalidated; they are not implied by these host results.
+
+## Phase II: literals and aggregates (step 5)
+
+Step 4 commit: `d84bcb2`. Expressions now include variables (including `_`), tuples,
+proper/improper lists, explicit grouping, adjacent string concatenation, and OTP
+29.1 sigils. Existing decoded lexer values are reused unchanged. `s`/`S` sigils
+produce strings; the empty prefix and `b`/`B` produce a typed UTF-8 binary-sigil
+literal pending general binary syntax in step 9. Unknown prefixes and nonempty
+suffixes fail parsing, as does concatenating a sigil with an ordinary string.
+
+Aggregate children remain checked expression handles in flat arenas. Lists retain
+an ordered element vector and optional explicit tail; groups preserve parentheses
+and token extents. The private comparison projection removes groups and normalizes
+list spines to OTP's cons/nil representation. Builder validation rejects foreign
+children and headless tails. Parser nesting defaults to 256 recursive expression
+calls and can be configured independently of token/node budgets. Failure rolls
+back the complete form; arena destruction remains iterative.
+
+`parser_phase2_golden` compares native ASTs with pinned records and checks negative
+fixtures offline. `parser_phase2_oracle` replays them with exact-version OTP 29.1.
+Fixtures cover based large integers, binary64, Unicode characters/strings, multiline
+strings, macros, all supported sigil prefixes, nested/empty aggregates and malformed
+delimiters/tails/sigils. `parser_expressions` additionally checks retained macro
+origins, group/concatenation extents, 8,193-element flat lists, rollback, and rejection
+of 10,000 nested parentheses under a small explicit depth budget.
+
+Step 5 validation (macOS arm64): fresh full C++23 configure/build and all 20 CTests
+passed, including live OTP 29.1. AST/form/expression and both Phase II suites passed
+ASan/UBSan; the final depth regression also passed natively. Missing/OTP 28 live
+oracles explicitly skipped. Full Lizard and clang-tidy passed at unchanged thresholds
+after adding an explicit active-transaction check identified by optional-access
+analysis. Operators, calls, patterns and full function clauses remain pending.

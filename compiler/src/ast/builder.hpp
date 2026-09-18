@@ -49,5 +49,6 @@ class Builder {
     // Reject cross-form sources and invalid child handles before node publication.
     void validate(const NodeSource &source) const;
     void validate(const FormValue &value) const;
+    void validate(const ExprValue &value) const;
 };
 } // namespace erlang_aot::ast

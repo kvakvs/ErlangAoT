@@ -1,0 +1,34 @@
+file	76616c7565732e65726c	1
+module	76616c756573
+function	76616c756573
+tuple	20
+list	0	0
+tuple	0
+list	1	0
+atom	61
+list	2	1
+atom	61
+atom	62
+var	5461696c
+list	2	1
+atom	61
+atom	62
+var	5461696c
+var	5f
+var	5f4e616d6564
+tuple	2
+atom	686561646572
+char	955
+tuple	1
+atom	6f6b
+integer	1208925819614629174706175
+float	3ff4000000000000
+char	65
+integer	65
+string	68c3a9cebb
+string	68656c6c6f0a
+string	68656c6c6f5c6e
+binary_sigil	cebb
+binary_sigil	78
+binary_sigil	5c6e
+string	6d756c74690a6c696e65

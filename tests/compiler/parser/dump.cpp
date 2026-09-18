@@ -7,6 +7,44 @@ using test_records::hex;
 
 // Exhaustive visitors expose only the Phase I projection shared with the OTP adapter.
 struct ExpressionDump {
+    const ast::Module &module;
+
+    void child(const ast::ExprId &id) const { module.visit(id, *this); }
+
+    void operator()(const ast::Tuple &value) const {
+        std::cout << "tuple\t" << value.elements.size() << '\n';
+        for (const auto &id : value.elements)
+            child(id);
+    }
+
+    void operator()(const ast::List &value) const {
+        auto elements = value.elements;
+        auto tail = value.tail;
+        while (tail) {
+            const auto &payload = module.expression(*tail).value;
+            if (const auto *group = std::get_if<ast::Group>(&payload)) {
+                tail = group->expression;
+                continue;
+            }
+            const auto *rest = std::get_if<ast::List>(&payload);
+            if (!rest)
+                break;
+            elements.insert(elements.end(), rest->elements.begin(), rest->elements.end());
+            tail = rest->tail;
+        }
+        std::cout << "list\t" << elements.size() << '\t' << bool(tail) << '\n';
+        for (const auto &id : elements)
+            child(id);
+        if (tail)
+            child(*tail);
+    }
+
+    void operator()(const ast::Group &value) const { child(value.expression); }
+
+    void operator()(const ast::BinarySigilLiteral &value) const {
+        std::cout << "binary_sigil\t" << hex(utf8(value.value)) << '\n';
+    }
+
     void operator()(const ast::Atom &value) const { std::cout << "atom\t" << hex(utf8(value.name)) << '\n'; }
 
     void operator()(const ast::IntegerLiteral &value) const { std::cout << "integer\t" << value.value.decimal << '\n'; }
@@ -23,7 +61,7 @@ struct ExpressionDump {
         std::cout << "string\t" << hex(utf8(value.value)) << '\n';
     }
 
-    void operator()(const ast::Variable &) const { throw std::runtime_error("unmapped Phase I variable"); }
+    void operator()(const ast::Variable &value) const { std::cout << "var\t" << hex(utf8(value.name)) << '\n'; }
 };
 
 struct FormDump {
@@ -44,7 +82,7 @@ struct FormDump {
             throw std::runtime_error("unmapped Phase I function body");
         }
         std::cout << "function\t" << hex(utf8(value.name.name)) << '\n';
-        module.visit(value.body.front(), ExpressionDump{});
+        module.visit(value.body.front(), ExpressionDump{module});
     }
 };
 

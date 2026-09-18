@@ -1,8 +1,8 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-FormParser::FormParser(std::span<const Token> tokens, const Token &end, ast::Builder &builder, std::size_t nodes)
-    : cursor_(tokens, end), builder_(builder), nodes_(nodes) {}
+FormParser::FormParser(std::span<const Token> tokens, const Token &end, ast::Builder &builder, GrammarBudget budget)
+    : cursor_(tokens, end), builder_(builder), nodes_(budget.nodes), nesting_(budget.nesting) {}
 
 void FormParser::fail(DiagnosticCode code, std::string message) const {
     throw token_diagnostic(code, std::move(message), cursor_.anchor());
@@ -33,7 +33,7 @@ void FormParser::terminator() {
         fail(DiagnosticCode::missing_terminator, "expected form-ending '.'");
     }
     if (!cursor_.take(TokenKind::dot, U".")) {
-        fail(DiagnosticCode::unsupported_syntax, "syntax beyond a single scalar body is not implemented in Phase I");
+        fail(DiagnosticCode::unsupported_syntax, "expected form-ending dot after supported expression syntax");
     }
     if (!cursor_.empty()) {
         fail(DiagnosticCode::parser_syntax, "unexpected tokens after form-ending '.'");
@@ -84,7 +84,7 @@ ast::ZeroArgumentFunction FormParser::function() {
         fail(DiagnosticCode::unsupported_syntax, "only zero-argument functions are implemented in Phase I");
     }
     expect(U"->");
-    auto result = literal();
+    auto result = expression();
     return {std::move(name), {std::move(result)}};
 }
 } // namespace erlang_aot

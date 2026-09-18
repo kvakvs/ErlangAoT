@@ -1,6 +1,7 @@
 #pragma once
 #include <erlang_aot/compiler/ast/source.hpp>
 #include <erlang_aot/compiler/lexer.hpp>
+#include <optional>
 
 namespace erlang_aot::ast {
 struct Atom {
@@ -33,7 +34,29 @@ struct StringLiteral {
     std::u32string value;
 };
 
-using ExprValue = std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral>;
+struct Tuple {
+    // Keep element order and distinguish tuples from lists, including empty aggregates.
+    std::vector<ExprId> elements;
+};
+
+struct List {
+    // Flatten the comma spine; an absent tail denotes the implicit empty list.
+    std::vector<ExprId> elements;
+    std::optional<ExprId> tail;
+};
+
+struct Group {
+    // Retain parentheses for source extents and syntactic precedence boundaries.
+    ExprId expression;
+};
+
+struct BinarySigilLiteral {
+    // Decoded Unicode content denotes UTF-8 bytes, without eager runtime allocation.
+    std::u32string value;
+};
+
+using ExprValue = std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple,
+                               List, Group, BinarySigilLiteral>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

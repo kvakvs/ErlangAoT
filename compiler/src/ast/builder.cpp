@@ -86,6 +86,7 @@ void Builder::validate(const FormValue &value) const {
 
 ExprId Builder::expression(ExprValue value, NodeSource source) {
     validate(source);
+    validate(value);
     return module_.storage_->expressions.append({std::move(value), std::move(source)});
 }
 
