@@ -167,3 +167,10 @@ target_include_directories(parser_structural PRIVATE "${PROJECT_SOURCE_DIR}/comp
 target_link_libraries(parser_structural PRIVATE erlang_frontend)
 add_test(NAME parser_structural COMMAND parser_structural)
 set_tests_properties(parser_structural PROPERTIES TIMEOUT 20)
+
+add_executable(parser_binaries compiler/parser/binaries.cpp)
+erlang_aot_project_options(parser_binaries)
+target_include_directories(parser_binaries PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(parser_binaries PRIVATE erlang_frontend)
+add_test(NAME parser_binaries COMMAND parser_binaries)
+set_tests_properties(parser_binaries PROPERTIES TIMEOUT 20)

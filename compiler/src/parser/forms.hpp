@@ -55,6 +55,14 @@ class FormParser {
     ast::RecordField record_field();
     ast::Atom record_name();
     void check_hash_base(const ast::ExprId &base, bool map, bool local) const;
+    // Distinct bit_expr/bit_size_expr entries keep slash/colon outside general precedence.
+    ast::Bitstring binary();
+    ast::BinarySegment binary_segment();
+    ast::ExprId bit_value();
+    ast::ExprId bit_primary();
+    std::optional<std::vector<ast::BinaryModifier>> binary_modifiers();
+    ast::BinaryModifier binary_modifier();
+    ast::Bitstring binary_sigil(std::u32string content, std::size_t begin);
     ast::ExprValue literal();
     ast::ExprValue sigil();
     ast::Tuple tuple();
@@ -66,6 +74,8 @@ class FormParser {
     const Token &category(TokenKind kind, std::string_view description);
     void terminator();
     void node();
+    // Share the nesting bound across ordinary expressions and restricted binary primaries.
+    void enter();
     [[noreturn]] void fail(DiagnosticCode code, std::string message) const;
 
     // Invalid decoded values represent a broken token contract, not Erlang syntax errors.

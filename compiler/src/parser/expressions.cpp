@@ -6,11 +6,15 @@ ast::ExprId FormParser::make(ast::ExprValue value, std::size_t begin, std::size_
     return builder_.expression(std::move(value), builder_.source(begin, cursor_.offset(), anchor));
 }
 
-ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
+void FormParser::enter() {
     if (depth_ >= nesting_) {
         fail(DiagnosticCode::resource_limit, "parser nesting budget exhausted");
     }
     ++depth_;
+}
+
+ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
+    enter();
     auto left = prefix(context);
     while (const auto info = next_operator(context)) {
         if (info->precedence < minimum)

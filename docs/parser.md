@@ -278,3 +278,47 @@ Step 8 validation (macOS arm64): fresh full C++23 build and all 24 CTests passed
 including native/offline/live OTP 29.1 AST and rejection comparisons. Seven relevant
 parser suites passed ASan/UBSan. Full Lizard and clang-tidy passed with unchanged
 thresholds and no added suppressions. Binary syntax remains pending step 9.
+
+## Binary and bitstring syntax (step 9)
+
+Step 8 commit: `d17cda4`. `Bitstring` stores ordered `BinarySegment` values with
+optional explicit sizes and optional nonempty modifier lists. Modifiers retain an
+atom name, optional arbitrary-precision integer parameter, and source extent.
+Omitted size/types are distinct from explicit `default` atoms. Unknown/duplicate
+modifiers, incompatible combinations and out-of-range units remain syntax for later
+validation. No segments are evaluated and no runtime byte layout is imposed.
+
+Segment values use `bit_expr`: `expr_max`, optionally preceded by one unary
+operator. Sizes use `expr_max` without a bare prefix. These productions exclude
+bare calls, maps, records and infix expressions; grouping re-enters the general
+expression grammar. Thus `<<A:B>>` means value A with size B, and `<<(A/B):(N/2)>>`
+contains grouped arithmetic. Unparenthesized arithmetic, calls, repeated prefixes
+and negative sizes are rejected where the pinned grammar rejects them. Pattern
+positions use these same productions without imposing semantic pattern checks.
+
+The temporary `BinarySigilLiteral` payload is replaced by ordinary Bitstring nodes.
+Binary sigils construct a decoded StringLiteral segment with omitted size and one
+`utf8` modifier, matching `erl_parse:build_sigil`. The child string retains its own
+token extent, the implicit modifier points to its prefix origin, and the segment
+covers the sigil with the string as anchor. No escapes are decoded twice. The
+private projection retains its historical `binary_sigil` label for this exact
+abstract shape, including equivalent explicit `<<"text"/utf8>>` syntax, so earlier
+pinned records remain unchanged. Other binaries expose every segment/default/type
+in the projection. String sigils continue to produce StringLiteral nodes.
+
+Native tests cover explicit/omitted defaults, large modifier integers, source
+extents, macro sigil provenance, binary patterns, parser-versus-lint behavior,
+transaction rollback, nested-binary exhaustion under default/custom limits, and
+4,097-element segment/modifier spines. Builder checks include foreign sizes and
+modifier sources and rejection of empty explicit type lists. Restricted binary
+primaries share the ordinary expression nesting guard, closing a separate recursive
+path. The existing preprocessor bitstring evaluator remains unchanged.
+
+Step 9 validation (macOS arm64): freshly configured full C++23 build and all 25
+CTests passed. All 25 also passed in C++26 and ASan/UBSan builds, including live
+OTP 29.1 comparisons. Runtime-only configure/build passed. Missing and OTP 28
+oracles explicitly skipped live Phase III replay while offline/native tests still
+ran. Full Lizard and clang-tidy passed with unchanged thresholds and no added
+suppressions. Phase III is complete; control flow, comprehensions, remaining
+attributes/types, semantic validation and the parse-check CLI remain later steps.
+Linux/Windows execution coverage is still outstanding.

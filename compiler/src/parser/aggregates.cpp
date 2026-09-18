@@ -16,6 +16,9 @@ ast::ExprValue FormParser::primary(OperatorContext context) {
     if (cursor_.take_syntax(U"[")) {
         return list();
     }
+    if (cursor_.take_syntax(U"<<")) {
+        return binary();
+    }
     if (cursor_.anchor().kind == TokenKind::sigil_prefix) {
         return sigil();
     }

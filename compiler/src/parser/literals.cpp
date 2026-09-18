@@ -46,6 +46,7 @@ ast::ExprValue FormParser::literal() {
 }
 
 ast::ExprValue FormParser::sigil() {
+    const auto begin = cursor_.offset();
     const auto &prefix = category(TokenKind::sigil_prefix, "sigil prefix");
     auto content = value<std::u32string>(category(TokenKind::string, "sigil content"));
     const auto &suffix = category(TokenKind::sigil_suffix, "sigil suffix");
@@ -57,7 +58,7 @@ ast::ExprValue FormParser::sigil() {
         return ast::StringLiteral{std::move(content)};
     }
     if (name.empty() || name == U"b" || name == U"B") {
-        return ast::BinarySigilLiteral{std::move(content)};
+        return binary_sigil(std::move(content), begin);
     }
     throw token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil prefix", prefix);
 }

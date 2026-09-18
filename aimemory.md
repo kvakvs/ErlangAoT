@@ -305,3 +305,14 @@ Primary sources consulted:
   Node source/child validation extends to nested map/record fields and identities.
 - Step8 verification: fresh full C++23 build, 24 CTests including live OTP29.1,
   seven sanitizer parser suites, full Lizard/clang-tidy gate passed before commit.
+- Step8 committed d17cda4. Step9 adds Bitstring/BinarySegment/BinaryModifier, preserving
+  optional size/types, ordered unknown/duplicate modifiers and big integer parameters.
+  bit_expr = one optional prefix + expr_max; size = expr_max. Bare calls/maps/records/
+  infix/negative sizes fail; groups re-enter expr. Use primary directly, not structural.
+- BinarySigilLiteral removed: binary sigils lower to ordinary StringLiteral/utf8
+  segments, modifier origin=prefix, string origin=string token. Historical test dump
+  binary_sigil label retained for identical abstract shape (including explicit syntax).
+  enter() shares recursion guard with bit_primary; flat segments/types remain iterative.
+- Step9 final verification: all 25 CTests pass C++23/C++26/ASan+UBSan with live
+  OTP29.1. Runtime-only builds and absent/OTP28 live skip paths pass. Full fresh
+  Lizard/clang-tidy passed before step9 commit. Resume future work at step10.

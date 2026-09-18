@@ -127,8 +127,52 @@ struct ExpressionDump {
 
     void operator()(const ast::Group &value) const { child(value.expression); }
 
-    void operator()(const ast::BinarySigilLiteral &value) const {
-        std::cout << "binary_sigil\t" << hex(utf8(value.value)) << '\n';
+    // Retain the earlier projection for the exact abstract shape used by binary sigils.
+    const ast::StringLiteral *utf8_string(const ast::Bitstring &value) const {
+        if (value.segments.size() != 1)
+            return nullptr;
+        const auto &segment = value.segments.front();
+        if (segment.size || !segment.modifiers || segment.modifiers->size() != 1)
+            return nullptr;
+        const auto &modifier = segment.modifiers->front();
+        if (modifier.name.name != U"utf8" || modifier.parameter)
+            return nullptr;
+        auto id = segment.value;
+        while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value))
+            id = group->expression;
+        return std::get_if<ast::StringLiteral>(&module.expression(id).value);
+    }
+
+    void segment(const ast::BinarySegment &value) const {
+        std::cout << "segment\t" << bool(value.size) << '\t';
+        if (value.modifiers)
+            std::cout << value.modifiers->size();
+        else
+            std::cout << "default";
+        std::cout << '\n';
+        child(value.value);
+        if (value.size)
+            child(*value.size);
+        if (value.modifiers) {
+            for (const auto &modifier : *value.modifiers) {
+                std::cout << "modifier\t" << hex(utf8(modifier.name.name)) << '\t';
+                if (modifier.parameter)
+                    std::cout << modifier.parameter->decimal;
+                else
+                    std::cout << "none";
+                std::cout << '\n';
+            }
+        }
+    }
+
+    void operator()(const ast::Bitstring &value) const {
+        if (const auto *string = utf8_string(value)) {
+            std::cout << "binary_sigil\t" << hex(utf8(string->value)) << '\n';
+            return;
+        }
+        std::cout << "bitstring\t" << value.segments.size() << '\n';
+        for (const auto &item : value.segments)
+            segment(item);
     }
 
     void operator()(const ast::Atom &value) const { std::cout << "atom\t" << hex(utf8(value.name)) << '\n'; }

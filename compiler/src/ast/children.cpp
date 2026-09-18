@@ -63,7 +63,24 @@ struct Children {
 
     void operator()(const StringLiteral &) const {}
 
-    void operator()(const BinarySigilLiteral &) const {}
+    // Explicit type lists must be nonempty; semantic compatibility remains a later check.
+    void segment(const BinarySegment &value) const {
+        source(value.source);
+        child(value.value);
+        if (value.size)
+            child(*value.size);
+        if (value.modifiers) {
+            if (value.modifiers->empty())
+                throw std::invalid_argument("empty binary modifier list");
+            for (const auto &modifier : *value.modifiers)
+                source(modifier.source);
+        }
+    }
+
+    void operator()(const Bitstring &value) const {
+        for (const auto &item : value.segments)
+            segment(item);
+    }
 
     void operator()(const UnaryExpression &value) const { child(value.operand); }
 

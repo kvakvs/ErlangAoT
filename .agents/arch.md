@@ -39,6 +39,10 @@
   local unresolved, qualified native, or inferred identities, ordered assignments,
   field accesses and indexes. Structural postfix grammar restricts chaining separately
   from general operators/calls; no record layout lookup or expansion occurs in parsing.
+- Bitstrings retain ordered value/size/type segments and modifier integer parameters.
+  Restricted bit_expr/expr_max entries protect segment delimiters; grouping admits full
+  expressions. Binary sigils use the same string/UTF-8 segment representation. Type/size
+  legality and runtime layout are deferred; nesting and node limits cover all these paths.
 - `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages
   and recursive nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive
   preprocessing; final module features are recorded at EOF. No parse-check CLI yet.

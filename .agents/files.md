@@ -71,6 +71,9 @@
   identities and assignments, access/index grammar and restricted postfix chains.
   `tests/compiler/parser/structural.cpp`, `fixtures/parser/phase3/`: structural,
   provenance, resource and OTP parity tests; the parameterized Phase II harness is reused.
+- `compiler/src/parser/binaries.cpp`: binary segments, restricted value/size entries,
+  ordered modifiers and binary-sigil conversion. `tests/compiler/parser/binaries.cpp`:
+  defaults/precision, pattern context, sigil origins, limits and builder invariants.
 - `compiler/src/ast/clauses.cpp`: pattern storage, checked function clauses and guard groups;
   `compiler/src/parser/clauses.cpp`: restricted/permissive pattern entries, heads, guard/body
   sequences and function consistency. `tests/compiler/parser/clauses.cpp`: pattern arena

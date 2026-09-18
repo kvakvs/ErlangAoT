@@ -108,6 +108,8 @@ scalar({cons, _, _, _} = List) ->
     lists:foreach(fun scalar/1, Elements),
     case Tail of none -> ok; _ -> scalar(Tail) end;
 scalar({bin, _, [{bin_element, _, {string, _, Value}, default, [utf8]}]}) -> field("binary_sigil", Value);
+scalar({bin, _, Segments}) ->
+    io:format("bitstring\t~B~n", [length(Segments)]), lists:foreach(fun segment/1, Segments);
 scalar({var, _, Name}) -> field("var", atom_to_list(Name));
 scalar({atom, _, Name}) -> field("atom", atom_to_list(Name));
 scalar({integer, _, Value}) -> io:format("integer\t~B~n", [Value]);
@@ -151,3 +153,12 @@ optional({some, Expr}) -> scalar(Expr).
 record_name([]) -> io:format("record_inferred~n");
 record_name({Module, Name}) -> io:format("record_qualified\t~s\t~s~n", [hex(atom_to_list(Module)), hex(atom_to_list(Name))]);
 record_name(Name) when is_atom(Name) -> field("record_local", atom_to_list(Name)).
+
+segment({bin_element, _, Value, Size, Types}) ->
+    Count = case Types of default -> "default"; _ -> integer_to_list(length(Types)) end,
+    Explicit = case Size of default -> 0; _ -> 1 end,
+    io:format("segment\t~B\t~s~n", [Explicit, Count]), scalar(Value),
+    case Size of default -> ok; _ -> scalar(Size) end,
+    case Types of default -> ok; _ -> lists:foreach(fun modifier/1, Types) end.
+modifier({Name, Value}) -> io:format("modifier\t~s\t~B~n", [hex(atom_to_list(Name)), Value]);
+modifier(Name) -> io:format("modifier\t~s\tnone~n", [hex(atom_to_list(Name))]).

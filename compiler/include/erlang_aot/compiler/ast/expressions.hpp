@@ -51,9 +51,24 @@ struct Group {
     ExprId expression;
 };
 
-struct BinarySigilLiteral {
-    // Decoded Unicode content denotes UTF-8 bytes, without eager runtime allocation.
-    std::u32string value;
+struct BinaryModifier {
+    // Keep unknown/duplicate atom modifiers and optional integer parameters unevaluated.
+    Atom name;
+    std::optional<Integer> parameter;
+    NodeSource source;
+};
+
+struct BinarySegment {
+    // Omitted size/types differ from explicit values or a nonempty ordered modifier list.
+    ExprId value;
+    std::optional<ExprId> size;
+    std::optional<std::vector<BinaryModifier>> modifiers;
+    NodeSource source;
+};
+
+struct Bitstring {
+    // Preserve segment syntax without imposing a runtime byte layout or evaluating values.
+    std::vector<BinarySegment> segments;
 };
 
 struct UnaryExpression {
@@ -159,8 +174,8 @@ struct RecordIndex {
 
 using ExprValue =
     std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple, List, Group,
-                 BinarySigilLiteral, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression,
-                 CallExpression, RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex>;
+                 Bitstring, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression, CallExpression,
+                 RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

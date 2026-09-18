@@ -65,7 +65,7 @@ struct LiteralDump {
 
     std::string operator()(const ast::Group &) const { return "group"; }
 
-    std::string operator()(const ast::BinarySigilLiteral &) const { return "binary_sigil"; }
+    std::string operator()(const ast::Bitstring &) const { return "bitstring"; }
 
     std::string operator()(const ast::Atom &atom) const { return "atom:" + utf8(atom.name); }
 

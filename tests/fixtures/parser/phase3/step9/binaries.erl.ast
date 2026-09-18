@@ -1,0 +1,191 @@
+file	62696e61726965732e65726c	1
+module	62696e6172696573
+function_full	66	2	1
+clause	2	0	1
+bitstring	2
+segment	1	default
+var	48
+integer	8
+segment	0	1
+var	54
+modifier	62696e617279	none
+bitstring	1
+segment	1	2
+call	0
+atom	67
+var	4e
+modifier	637573746f6d	none
+modifier	637573746f6d	none
+tuple	24
+bitstring	0
+bitstring	4
+segment	0	default
+integer	1
+segment	1	default
+integer	2
+integer	3
+segment	1	default
+var	58
+var	4e
+segment	1	1
+var	58
+atom	64656661756c74
+modifier	64656661756c74	none
+bitstring	1
+segment	1	4
+var	58
+var	53697a65
+modifier	696e7465676572	none
+modifier	7369676e6564	none
+modifier	6c6974746c65	none
+modifier	756e6974	8
+bitstring	1
+segment	1	3
+binary	+
+var	41
+var	42
+binary	*
+var	4e
+integer	8
+modifier	756e7369676e6564	none
+modifier	626967	none
+modifier	696e7465676572	none
+bitstring	5
+segment	0	default
+unary	+
+var	58
+segment	0	default
+unary	-
+integer	42
+segment	0	default
+unary	bnot
+var	58
+segment	0	default
+unary	not
+var	58
+segment	0	default
+unary	-
+binary	+
+var	41
+var	42
+bitstring	3
+segment	0	default
+string	68c3a9cebb
+segment	0	1
+string	cebb
+modifier	75746638	none
+segment	1	default
+string	74657874
+integer	8
+bitstring	1
+segment	0	1
+bitstring	2
+segment	0	default
+integer	1
+segment	0	default
+integer	2
+modifier	62696e617279	none
+bitstring	1
+segment	1	1
+call	0
+atom	66
+call	1
+atom	73697a65
+var	58
+modifier	62696e617279	none
+bitstring	5
+segment	0	1
+map	0	1
+map_field	=>
+atom	61
+integer	1
+modifier	62696e617279	none
+segment	0	1
+record	0	0
+record_local	72
+modifier	62696e617279	none
+segment	0	default
+tuple	2
+atom	61
+atom	62
+segment	0	default
+list	2	0
+atom	61
+atom	62
+segment	0	default
+call	1
+remote
+var	4d
+var	46
+var	58
+bitstring	1
+segment	0	4
+var	58
+modifier	666f6f	none
+modifier	626172	0
+modifier	62617a	999999999999999999999999999999999999
+modifier	666f6f	none
+bitstring	1
+segment	0	9
+var	58
+modifier	696e7465676572	none
+modifier	696e7465676572	none
+modifier	7369676e6564	none
+modifier	756e7369676e6564	none
+modifier	626967	none
+modifier	6c6974746c65	none
+modifier	6e6174697665	none
+modifier	756e6974	8
+modifier	756e6974	1
+bitstring	2
+segment	1	1
+var	41
+var	42
+modifier	696e7465676572	none
+segment	1	1
+var	43
+binary	/
+var	44
+var	45
+modifier	756e6974	8
+bitstring	1
+segment	0	1
+var	41
+modifier	62	none
+bitstring	1
+segment	1	default
+var	58
+float	3ff8000000000000
+bitstring	1
+segment	1	default
+var	58
+string	73697a65
+binary_sigil	cebb
+binary_sigil	cebb
+binary_sigil	cebb
+binary_sigil	5c6e
+binary_sigil	cebb
+bitstring	1
+segment	0	1
+binary_sigil	cebb
+modifier	62696e617279	none
+map	1	1
+bitstring	1
+segment	0	default
+integer	1
+map_field	=>
+atom	61
+integer	2
+record_access
+bitstring	1
+segment	0	default
+integer	1
+record_local	72
+atom	61
+binary	=:=
+bitstring	1
+segment	0	default
+var	41
+bitstring	1
+segment	0	default
+var	42
