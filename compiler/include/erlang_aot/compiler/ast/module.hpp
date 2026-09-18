@@ -1,0 +1,46 @@
+#pragma once
+#include <erlang_aot/compiler/ast/forms.hpp>
+#include <span>
+
+namespace erlang_aot::ast {
+namespace detail {
+struct Storage;
+}
+class Builder;
+
+// Move-only syntax owner; all consumer access is const and validates handles.
+class Module {
+  public:
+    // Create an empty AST without any runtime or preprocessor dependency.
+    Module();
+    ~Module();
+    Module(Module &&) noexcept;
+    Module &operator=(Module &&) noexcept;
+    Module(const Module &) = delete;
+    Module &operator=(const Module &) = delete;
+    // Inspect committed roots or category-specific nodes; invalid/stale IDs throw.
+    std::span<const FormId> forms() const;
+    const Form &form(const FormId &id) const;
+    const Expression &expression(const ExprId &id) const;
+    std::size_t expression_count() const;
+    // Resolve owned origins, including explicit EOF anchors for empty extents.
+    const TokenOrigin &anchor(const NodeSource &source) const;
+    std::span<const TokenOrigin> extent(const NodeSource &source) const;
+
+    // Dispatch to exhaustive typed visitors without exposing mutable arena storage.
+    template <typename Visitor> decltype(auto) visit(const FormId &id, Visitor &&visitor) const {
+        return std::visit(std::forward<Visitor>(visitor), form(id).value);
+    }
+
+    template <typename Visitor> decltype(auto) visit(const ExprId &id, Visitor &&visitor) const {
+        return std::visit(std::forward<Visitor>(visitor), expression(id).value);
+    }
+
+  private:
+    friend class Builder;
+    // Stable heap storage preserves handle ownership across module moves.
+    std::unique_ptr<detail::Storage> storage_;
+    // Reject access to a moved-from module instead of dereferencing null storage.
+    const detail::Storage &storage() const;
+};
+} // namespace erlang_aot::ast

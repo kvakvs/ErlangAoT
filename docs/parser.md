@@ -37,3 +37,38 @@ The Boost character rules and token-iterator rejection probe remain intact.
 Step 2 validation (macOS arm64): fresh full C++23 build; all 13 CTests passed,
 including native token checks and live/offline preprocessing comparisons. Full
 Lizard and clang-tidy passed at the unchanged thresholds before commit.
+
+## Typed AST foundation (step 3)
+
+Step 2 commit: `3bf8682`.
+Public headers under `compiler/ast/` expose a move-only `ast::Module`, distinct
+expression/form/pattern/type handle categories, closed payload variants, and const
+visiting/access APIs. Only literal/variable expressions and module/file attributes
+plus an explicitly named `ZeroArgumentFunction` exist at this stage. This is syntax,
+not validated binding/type information; full node families arrive with their steps.
+
+Private `ast::Builder` opens one RAII transaction per form. Only its committed root
+becomes visible in the source-order root list. Rollback destroys appended nodes and
+origins iteratively; generations never rewind, so reused slots reject stale handles.
+IDs retain a small owner identity token, not the AST. Module moves retain identity;
+foreign IDs and moved-from module access throw controlled C++ exceptions. Consumers
+must not mix owners or retain node references across builder mutation. After
+`finish()`, the owner is read-only and references remain valid for its lifetime.
+
+Each node carries a half-open range into a per-form table of owned token origins.
+Physical spelling, logical invocation position, and ordered macro/include traces
+remain separate; ranges never pretend that unrelated source buffers are contiguous.
+An explicit EOF origin supports empty/synthetic extents without indexing tokens.
+The builder validates ranges, anchors, nonempty function bodies, and child ownership.
+Pattern/type ID types reserve category safety without speculative node storage.
+
+Native tests cover 8,192-node arena growth, moves, exhaustive typed visiting,
+rollback/recycled handles, cross-owner references, invalid construction, empty
+origins, and macro values originating in an included header after all preprocessing
+objects have been destroyed. Initial quality findings led to reference-based ID
+access, unambiguous ID construction, and non-throwing rollback; no suppressions or
+threshold changes were introduced.
+
+Step 3 validation (macOS arm64): fresh full C++23 configure/build and all 14 CTests
+passed after fixes. ASan/UBSan passed AST, token, directive-form and preprocessing
+semantic tests. The full Lizard/clang-tidy gate passed without relaxed thresholds.

@@ -1,6 +1,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
 add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
     src/parsing/token_syntax.cpp src/parsing/operator_info.cpp
+    src/ast/module.cpp src/ast/builder.cpp
     src/source/source.cpp src/diagnostics/diagnostic.cpp
     src/lexer/lexer.cpp src/lexer/numbers.cpp src/lexer/literals.cpp
     src/preprocessor/directives.cpp src/preprocessor/preprocessor.cpp

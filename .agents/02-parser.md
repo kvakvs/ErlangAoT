@@ -1,7 +1,7 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phase I in progress, 2026-09-19. Steps 1–2 implemented;
-steps 3–18 remain pending. See [validation](../docs/parser.md) for evidence.
+Status: Phase I in progress, 2026-09-19. Steps 1–3 implemented;
+steps 4–18 remain pending. See [validation](../docs/parser.md) for evidence.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
 and [documented compatibility policies](../docs/preprocessor.md).
 

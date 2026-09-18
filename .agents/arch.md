@@ -28,4 +28,6 @@
   See `docs/preprocessor.md`, `.agents/01-pp-otp-tests.md`, and `00-plan.md`.
 - Parser plan `.agents/02-parser.md`: pinned grammar/action inventories and raw/epp/lint
   oracle tests. Shared bounded token cursor, syntax/diagnostics, and contextual infix
-  metadata now serve directive/condition parsing; typed AST and full parser pending.
+  metadata serve directive/condition parsing. Typed AST uses move-only module arenas,
+  owner/generation-checked category IDs, per-form origin tables, and rollback transactions.
+  Literal/variable and minimal form variants exist; grammar integration remains pending.

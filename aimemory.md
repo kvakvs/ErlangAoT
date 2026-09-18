@@ -47,6 +47,10 @@
 - Step 1 committed bd11eeb after full quality passed. Step 2 extracts cursor,
   syntax/diagnostic construction and contextual infix metadata. Condition adapter
   uses OTP precedence values with the same restricted operators and acceptance.
+- Step 2 committed 3bf8682 (13 CTests plus full quality). Step 3 introduces typed
+  module arenas with retained identity and per-slot generations; rollback cannot
+  resurrect IDs. Only literals/variables, module/file attributes and explicit
+  ZeroArgumentFunction exist until later grammar steps. Origins are owned per form.
 
 ## Shared IDE configuration — 2026-09-18
 

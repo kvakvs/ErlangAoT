@@ -20,6 +20,11 @@
 - `compiler/src/parsing/{token_cursor,token_syntax,operator_info}.*`: bounded lookahead/
   rollback, category-aware syntax, token diagnostics, and contextual infix metadata.
 - `tests/compiler/parser/tokens.cpp`: shared cursor/operator/terminal/provenance tests.
+- `compiler/include/erlang_aot/compiler/ast/`: typed IDs, origin ranges, expression/form
+  variants and immutable module access. `src/ast/{arena,storage,builder}.*`, `module.cpp`:
+  checked flat storage, transactional construction, owned provenance and access.
+- `tests/compiler/parser/ast.cpp`: growth/moves, stale/foreign IDs, rollback, exhaustive
+  visiting and preprocessing-source lifetime checks, also exercised under sanitizers.
 - `compiler/src/preprocessor/preprocessor.cpp`: syntax-only DirectiveReader/recovery.
 - `preprocessor/{cursor.hpp,directives.cpp}`: bounded cursor and transactional envelopes.
 - `preprocessor/{engine.hpp,session.cpp}`: semantic state, initial definitions, streaming

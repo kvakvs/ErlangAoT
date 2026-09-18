@@ -1,0 +1,105 @@
+#include "builder.hpp"
+#include "storage.hpp"
+
+namespace erlang_aot::ast {
+namespace {
+// Copy source metadata without retaining decoded token values in every node.
+TokenOrigin origin(const Token &token) { return {token.spelling, token.location, token.origins}; }
+
+// Empty forms retain their explicitly supplied EOF anchor independently of tokens.
+detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end) {
+    detail::OriginTable table{{}, origin(end)};
+    table.tokens.reserve(tokens.size());
+    for (const auto &token : tokens) {
+        table.tokens.push_back(origin(token));
+    }
+    return table;
+}
+} // namespace
+
+Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end)
+    : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
+      forms_(builder.module_.storage().forms.size()), origins_(builder.module_.storage().origins.size()) {
+    if (builder.active_) {
+        throw std::logic_error("nested AST form transaction");
+    }
+    builder.active_ = builder.module_.storage_->origins.append(origin_table(tokens, end));
+}
+
+Builder::Transaction::~Transaction() {
+    if (!committed_) {
+        auto &storage = *builder_.module_.storage_;
+        storage.forms.truncate(forms_);
+        storage.expressions.truncate(expressions_);
+        storage.origins.truncate(origins_);
+        builder_.active_.reset();
+    }
+}
+
+void Builder::Transaction::commit(FormId root) {
+    if (committed_ || !builder_.active_) {
+        throw std::logic_error("closed AST form transaction");
+    }
+    auto &storage = *builder_.module_.storage_;
+    builder_.validate(storage.forms.get(root).source);
+    if (storage.forms.size() != forms_ + 1) {
+        throw std::logic_error("transaction must publish exactly one form");
+    }
+    storage.roots.push_back(std::move(root));
+    committed_ = true;
+    builder_.active_.reset();
+}
+
+Builder::Transaction Builder::begin(std::span<const Token> tokens, const Token &end) {
+    return Transaction(*this, tokens, end);
+}
+
+NodeSource Builder::source(std::size_t begin, std::size_t end, std::size_t anchor) const {
+    if (!active_) {
+        throw std::logic_error("AST source requires a form transaction");
+    }
+    NodeSource result{*active_, begin, end, anchor};
+    validate(result);
+    return result;
+}
+
+void Builder::validate(const NodeSource &source) const {
+    if (!active_ || source.form != *active_) {
+        throw std::invalid_argument("AST node belongs to another form");
+    }
+    detail::source_table(module_.storage(), source);
+}
+
+void Builder::validate(const FormValue &value) const {
+    const auto *function = std::get_if<ZeroArgumentFunction>(&value);
+    if (!function) {
+        return;
+    }
+    if (function->body.empty()) {
+        throw std::invalid_argument("empty function body");
+    }
+    for (const auto &child : function->body) {
+        validate(module_.expression(child).source);
+    }
+}
+
+ExprId Builder::expression(ExprValue value, NodeSource source) {
+    validate(source);
+    return module_.storage_->expressions.append({std::move(value), std::move(source)});
+}
+
+FormId Builder::form(FormValue value, NodeSource source) {
+    validate(source);
+    validate(value);
+    return module_.storage_->forms.append({std::move(value), std::move(source)});
+}
+
+const Module &Builder::view() const { return module_; }
+
+Module Builder::finish() && {
+    if (active_) {
+        throw std::logic_error("cannot finish an active AST transaction");
+    }
+    return std::move(module_);
+}
+} // namespace erlang_aot::ast
