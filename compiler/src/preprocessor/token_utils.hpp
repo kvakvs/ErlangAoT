@@ -1,10 +1,8 @@
 #pragma once
-#include <erlang_aot/compiler/lexer.hpp>
+#include "parsing/token_syntax.hpp"
 #include <span>
 
 namespace erlang_aot {
-// Match punctuation/keywords without mistaking quoted atoms or strings for syntax.
-bool syntax(const Token &token, std::u32string_view text);
 // Create generated tokens while preserving expansion location and source provenance.
 Token generated(const Token &origin, TokenKind kind, TokenValue value);
 // Render canonical Erlang token text for stringification and diagnostic terms.

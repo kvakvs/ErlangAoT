@@ -19,7 +19,8 @@ bool whitespace(const char32_t value) { return value <= 32 || (value >= 128 && v
 
 std::size_t word_length(const std::u32string_view input) {
     constexpr auto latin = (bp::char_(U'À', U'ÿ') - bp::char_(U"×÷"));
-    constexpr auto part = bp::char_(U'a', U'z') | bp::char_(U'A', U'Z') | bp::char_(U'0', U'9') | bp::char_(U"_@") | latin;
+    constexpr auto part =
+        bp::char_(U'a', U'z') | bp::char_(U'A', U'Z') | bp::char_(U'0', U'9') | bp::char_(U"_@") | latin;
     auto current = input.begin();
     bp::prefix_parse(current, input.end(), bp::omit[*part]);
     return static_cast<std::size_t>(current - input.begin());

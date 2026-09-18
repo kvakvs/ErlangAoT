@@ -1,43 +1,36 @@
 #include "expression.hpp"
-#include "parsing/boost_parser.hpp"
+#include "parsing/operator_info.hpp"
 #include <algorithm>
 
 namespace erlang_aot {
 namespace {
-// Boost parses operator spellings; the token cursor preserves expanded token identity.
+// Preserve the preprocessor's restricted operator set over shared grammar metadata.
 int precedence(const Token &token) {
-    if (token.kind != TokenKind::keyword && token.kind != TokenKind::symbol) {
-        return -1;
-    }
-    static const boost::parser::symbols<int> operators{
-        {"orelse", 10}, {"andalso", 20}, {"==", 30},  {"/=", 30},   {"=<", 30}, {"<", 30},   {">=", 30},
-        {">", 30},      {"=:=", 30},     {"=/=", 30}, {"++", 40},   {"--", 40}, {"+", 50},   {"-", 50},
-        {"bor", 50},    {"bxor", 50},    {"bsl", 50}, {"bsr", 50},  {"or", 50}, {"xor", 50}, {"*", 60},
-        {"/", 60},      {"div", 60},     {"rem", 60}, {"band", 60}, {"and", 60}};
-    const auto result = boost::parser::parse(token.text(), operators);
-    return result ? *result : -1;
+    const auto info = infix_operator(token, OperatorContext::condition);
+    return info ? info->precedence : -1;
 }
 
 bool right_associative(const Token &token) {
-    constexpr std::u32string_view names[]{U"orelse", U"andalso", U"++", U"--"};
-    return std::ranges::find(names, token.text()) != std::end(names);
+    const auto info = infix_operator(token, OperatorContext::condition);
+    return info && info->associativity == Associativity::right;
 }
 } // namespace
 
 ExpressionParser::ExpressionParser(std::span<const Token> tokens, std::size_t maximum_depth)
-    : input_(tokens), anchor_(tokens.empty() ? Token{} : tokens.back()), maximum_depth_(maximum_depth) {}
+    : input_(tokens, tokens.empty() ? Token{} : tokens.back()), anchor_(tokens.empty() ? Token{} : tokens.back()),
+      maximum_depth_(maximum_depth) {}
 
 Token ExpressionParser::consume() {
     if (input_.empty()) {
         pp_fail(DiagnosticCode::invalid_condition, "unexpected end of expression", anchor_);
     }
-    const auto result = input_.front();
-    input_ = input_.subspan(1);
+    const auto result = input_.anchor();
+    input_.consume();
     return result;
 }
 
 bool ExpressionParser::take(std::u32string_view symbol) {
-    if (input_.empty() || !syntax(input_.front(), symbol)) {
+    if (input_.empty() || !syntax(input_.anchor(), symbol)) {
         return false;
     }
     consume();
@@ -47,14 +40,14 @@ bool ExpressionParser::take(std::u32string_view symbol) {
 void ExpressionParser::expect(std::u32string_view symbol) {
     if (!take(symbol)) {
         pp_fail(DiagnosticCode::invalid_condition, "expected '" + utf8(symbol) + "'",
-                input_.empty() ? anchor_ : input_.front());
+                input_.empty() ? anchor_ : input_.anchor());
     }
 }
 
 Expr ExpressionParser::parse() {
     auto result = expression();
     if (!input_.empty()) {
-        pp_fail(DiagnosticCode::invalid_condition, "unexpected expression token", input_.front());
+        pp_fail(DiagnosticCode::invalid_condition, "unexpected expression token", input_.anchor());
     }
     return result;
 }
@@ -66,13 +59,13 @@ Expr ExpressionParser::expression(int minimum) {
     auto left = postfix(primary());
     bool compared = false;
     std::size_t operations = 0;
-    while (!input_.empty() && precedence(input_.front()) >= minimum) {
+    while (!input_.empty() && precedence(input_.anchor()) >= minimum) {
         auto operation = consume();
         const auto priority = precedence(operation);
-        if (priority == 30 && compared) {
+        if (priority == 200 && compared) {
             pp_fail(DiagnosticCode::invalid_condition, "comparisons do not associate", operation);
         }
-        compared = priority == 30;
+        compared = priority == 200;
         if (++operations + depth_ > maximum_depth_) {
             pp_fail(DiagnosticCode::resource_limit, "expression nesting exhausted", operation);
         }
@@ -109,13 +102,13 @@ Expr ExpressionParser::primary() {
 
 // Keep scalar, sigil and function-reference syntax separate from container envelopes.
 Expr ExpressionParser::scalar() {
-    if (!input_.empty() && input_.front().kind == TokenKind::sigil_prefix) {
+    if (!input_.empty() && input_.anchor().kind == TokenKind::sigil_prefix) {
         return sigil();
     }
     const auto token = consume();
     static const std::set<std::u32string_view> unary{U"+", U"-", U"not", U"bnot"};
     if (unary.contains(token.text()) && token.kind != TokenKind::atom) {
-        return {ExprKind::unary, token, {expression(70)}, {}};
+        return {ExprKind::unary, token, {expression(600)}, {}};
     }
     if (syntax(token, U"fun")) {
         return external_fun();
@@ -240,7 +233,7 @@ Expr ExpressionParser::postfix(Expr base) {
         base = take(U"{") ? map(ExprKind::map_update, std::move(base)) : record(std::move(base));
     }
     // Adjacent Erlang strings concatenate before parsing, including macro-produced strings.
-    while (!input_.empty() && base.token.kind == TokenKind::string && input_.front().kind == TokenKind::string) {
+    while (!input_.empty() && base.token.kind == TokenKind::string && input_.anchor().kind == TokenKind::string) {
         std::get<std::u32string>(base.token.value) += consume().text();
     }
     return base;

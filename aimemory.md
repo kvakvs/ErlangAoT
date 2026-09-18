@@ -44,6 +44,9 @@
   it does not yet claim native AST parity. Live parser_oracle covers all records.
 - Initial full debug suite: 12 CTests passed; missing/OTP28 oracle skips verified.
 - User committed the parser plan during this turn (7987ef0); preserve that commit.
+- Step 1 committed bd11eeb after full quality passed. Step 2 extracts cursor,
+  syntax/diagnostic construction and contextual infix metadata. Condition adapter
+  uses OTP precedence values with the same restricted operators and acceptance.
 
 ## Shared IDE configuration — 2026-09-18
 

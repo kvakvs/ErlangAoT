@@ -4,11 +4,6 @@
 #include <charconv>
 
 namespace erlang_aot {
-bool syntax(const Token &token, std::u32string_view text) {
-    return (token.kind == TokenKind::symbol || token.kind == TokenKind::keyword || token.kind == TokenKind::dot) &&
-           token.text() == text;
-}
-
 Token generated(const Token &origin, TokenKind kind, TokenValue value) {
     Token result = origin;
     result.kind = kind;
@@ -17,7 +12,7 @@ Token generated(const Token &origin, TokenKind kind, TokenValue value) {
 }
 
 void pp_fail(DiagnosticCode code, std::string message, const Token &token) {
-    throw Diagnostic{code, std::move(message), token.spelling, token.origins, Severity::error, token.location};
+    throw token_diagnostic(code, std::move(message), token);
 }
 
 std::vector<Token> fragment(std::string text) {

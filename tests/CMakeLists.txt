@@ -77,3 +77,9 @@ add_test(NAME parser_oracle COMMAND "${CMAKE_COMMAND}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.cmake")
 set_tests_properties(parser_oracle PROPERTIES SKIP_REGULAR_EXPRESSION "SKIP:" TIMEOUT 180)
+
+add_executable(parser_tokens compiler/parser/tokens.cpp)
+erlang_aot_project_options(parser_tokens)
+target_include_directories(parser_tokens PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(parser_tokens PRIVATE erlang_frontend)
+add_test(NAME parser_tokens COMMAND parser_tokens)

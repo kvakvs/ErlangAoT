@@ -1,4 +1,5 @@
 #pragma once
+#include "parsing/token_cursor.hpp"
 #include "value.hpp"
 #include <functional>
 
@@ -36,7 +37,7 @@ class ExpressionParser {
 
   private:
     // Bound recursion and preserve an EOF diagnostic anchor.
-    std::span<const Token> input_;
+    TokenCursor input_;
     Token anchor_;
     std::size_t depth_ = 0;
     std::size_t maximum_depth_;

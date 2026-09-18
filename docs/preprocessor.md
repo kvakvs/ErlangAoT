@@ -2,8 +2,8 @@
 
 The language baseline is OTP 29.1, source commit
 `751f87b703fe5948607d08e82599ce644b772e76`. Production preprocessing is native C++;
-OTP is an optional test oracle. Boost.Parser handles character rules and the operator
-precedence table; an explicit cursor parses project tokens because the pinned parser's
+OTP is an optional test oracle. Boost.Parser handles character rules; shared compiler
+metadata supplies operator precedence. An explicit cursor parses project tokens because the pinned parser's
 public input interface requires character code units. Expanded tokens are never
 converted to source text to fit that interface.
 

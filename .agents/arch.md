@@ -26,5 +26,6 @@
   analyzer/bugprone/performance warnings as errors. No threshold relaxation or suppression.
 - `references/otp` is an ignored pinned research checkout, not a build dependency.
   See `docs/preprocessor.md`, `.agents/01-pp-otp-tests.md`, and `00-plan.md`.
-- Parser plan `.agents/02-parser.md`: step 1 has pinned production/action inventories,
-  scanner parity and raw/epp/lint reference tests. Typed AST and parser remain pending.
+- Parser plan `.agents/02-parser.md`: pinned grammar/action inventories and raw/epp/lint
+  oracle tests. Shared bounded token cursor, syntax/diagnostics, and contextual infix
+  metadata now serve directive/condition parsing; typed AST and full parser pending.

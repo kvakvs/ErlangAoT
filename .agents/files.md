@@ -17,6 +17,9 @@
 - `compiler/src/lexer/{lexer,numbers,literals}.cpp`: incremental forms, numeric precision,
   string/sigil decoding, feature-sensitive keywords and logical source mapping.
 - `compiler/src/parsing/{probe.cpp,boost_parser.hpp}`: standalone Boost boundary/probe.
+- `compiler/src/parsing/{token_cursor,token_syntax,operator_info}.*`: bounded lookahead/
+  rollback, category-aware syntax, token diagnostics, and contextual infix metadata.
+- `tests/compiler/parser/tokens.cpp`: shared cursor/operator/terminal/provenance tests.
 - `compiler/src/preprocessor/preprocessor.cpp`: syntax-only DirectiveReader/recovery.
 - `preprocessor/{cursor.hpp,directives.cpp}`: bounded cursor and transactional envelopes.
 - `preprocessor/{engine.hpp,session.cpp}`: semantic state, initial definitions, streaming
