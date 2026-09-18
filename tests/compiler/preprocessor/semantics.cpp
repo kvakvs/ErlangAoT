@@ -129,10 +129,20 @@ void branches() {
     require(run("-ifdef(NO). -else. -else. -endif.").failed, "repeated else");
 }
 
+void contextual() {
+    const auto result = run("-module('quoted module').\n-define(L, ?LINE).\nf(A,B) -> "
+                            "{?MODULE,?MODULE_STRING,?FUNCTION_NAME,?FUNCTION_ARITY,?L,?OTP_RELEASE,?MACHINE}.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"2", "3", "29"}, "function and source context");
+    require(run("?MODULE.").failed, "module context unavailable");
+    require(run("-custom(?FUNCTION_NAME).").failed, "function context unavailable");
+}
+
 int main() {
     objects();
     macros();
     stringify_arguments();
     includes();
     branches();
+    contextual();
 }
