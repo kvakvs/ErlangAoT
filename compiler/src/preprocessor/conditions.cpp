@@ -17,8 +17,9 @@ bool PreprocessorSession::State::test_branch(const Directive &directive) {
         const auto present = macros.contains(name->name.text());
         return directive.kind == DirectiveKind::ifdef ? present : !present;
     }
-    pp_fail(DiagnosticCode::invalid_condition, "expression conditions await step 10",
-            std::get<TokenOperand>(directive.operand).tokens.front());
+    const auto tokens = expand(std::get<TokenOperand>(directive.operand).tokens);
+    return condition(tokens, options.limits.expression_depth,
+                     [this](std::u32string_view name) { return macros.contains(name, true); });
 }
 
 void PreprocessorSession::State::begin_branch(DirectiveKind kind, std::span<const Token> tokens) {

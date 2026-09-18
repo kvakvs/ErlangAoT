@@ -116,6 +116,12 @@ int sequence_compare(const std::vector<Value> &left, const std::vector<Value> &r
     return ordered(left.size(), right.size());
 }
 
+// Atoms and external funs compare their names first; fun signatures then distinguish arity/name.
+int named_compare(const Value &left, const Value &right, bool exact) {
+    const auto name = ordered(left.text, right.text);
+    return name != 0 ? name : sequence_compare(left.elements, right.elements, exact);
+}
+
 // Reconstruct a list suffix only at the unequal-length comparison boundary.
 Value tail(const Value &value, std::size_t skip) {
     if (skip == value.elements.size()) {
@@ -175,8 +181,6 @@ int compare(const Value &left, const Value &right, bool exact) {
         return ordered(rank(left.kind), rank(right.kind));
     }
     switch (left.kind) {
-    case ValueKind::atom:
-        return ordered(left.text, right.text);
     case ValueKind::tuple:
         if (left.elements.size() != right.elements.size()) {
             return ordered(left.elements.size(), right.elements.size());
@@ -189,7 +193,7 @@ int compare(const Value &left, const Value &right, bool exact) {
     case ValueKind::bits:
         return ordered(left.bits, right.bits);
     default:
-        return 0;
+        return named_compare(left, right, exact);
     }
 }
 

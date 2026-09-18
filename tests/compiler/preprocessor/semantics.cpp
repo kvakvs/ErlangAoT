@@ -120,6 +120,29 @@ void includes() {
             "include limit");
 }
 
+void conditions() {
+    auto result = run("-ifdef(NO). -include(\"missing.hrl\"). ?MISSING. -else. -define(X,2). -endif. ?X.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"2"}, "inactive effects suppressed");
+    const char *expressions[]{"(1 bsl 100) + 1 > (1 bsl 100)", "defined(MODULE)",
+                              "not defined(MISSING)",          "1 == 1.0 andalso 1 =/= 1.0",
+                              "length([1,2|[]]) =:= 2",        "map_get(key, #{key => 3}) =:= 3",
+                              "element(2,{a,b}) =:= b",        "is_pid(self())",
+                              "bit_size(<<1:3>>) =:= 3",       "is_integer(5,1,9)",
+                              "true orelse (1 div 0 =:= 0)",   "false =:= (false andalso 1 div 0)",
+                              "node() =:= nonode@nohost"};
+    for (const auto *expression : expressions) {
+        auto checked = run(std::string("-if(") + expression + "). yes. -else. no. -endif.");
+        successful(checked);
+        require(checked.tokens.front().text() == U"yes", expression);
+    }
+    successful(run("-if(42). no. -elif(1 div 0). no. -else. yes. -endif."));
+    require(run("-if(true orelse arbitrary()). no. -endif.").failed, "short circuit still validates guard syntax");
+    require(run("-else.").failed, "unbalanced conditional");
+    require(run("-if(true). -else. -else. -endif.").failed, "duplicate else");
+    require(run("-ifdef(MISSING).").failed, "unterminated skipped group");
+}
+
 void branches() {
     auto result = run("-ifdef(NO). -include(\"missing\"). ?MISSING. -else. -define(X,2). -endif. ?X.");
     successful(result);
@@ -143,6 +166,7 @@ int main() {
     macros();
     stringify_arguments();
     includes();
+    conditions();
     branches();
     contextual();
 }

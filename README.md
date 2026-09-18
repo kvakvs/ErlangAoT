@@ -213,5 +213,5 @@ The CLI option parser has been split into argument traversal, named-option
 handling, and output-operand handling. Its maximum CCN is now **10**, down from
 21, and both quality checks pass without suppressions or relaxed thresholds.
 
-Preprocessor implementation progress: steps 1–9 are implemented.
+Preprocessor implementation progress: steps 1–10 are implemented.
 The internal semantic session is tested; CLI integration follows in step 13.
