@@ -1,3 +1,21 @@
+## 2026-09-19 — Parser and typed AST plan
+
+- `.agents/02-parser.md`: requested planning only, six phases/18 ordered steps;
+  every future step requires its own commit after fresh full check-quality.
+- Reuse expanded OrdinaryForm tokens, existing Lexer/source/provenance and oracle
+  infrastructure. Extract small cursor/syntax/operator helpers; do not promote
+  preprocessor Expr kind/children or evaluator into the general syntax AST.
+- OTP29.1 grammar includes native records, strict/zipped generators, and multiple
+  list/map comprehension templates. Attribute build actions and nominal type
+  declarations are part of parsing. Inspected generated stdlib erl_parse.erl,
+  compiler compile.erl/v3_core.erl, and stdlib erl_expand_records.erl as requested;
+  preserve final module feature metadata and defer transforms/lint/expansion/Core.
+- Pattern/guard grammar intentionally permits some later lint failures; typed
+  syntax must preserve that. compr_assign checks live in erl_lint; add feature
+  context handoff because current public preprocessing events do not expose it.
+- Plan proposes module arenas/category IDs, transactional forms, source tables,
+  typed node variants, parse-check CLI; no code implemented by this task.
+
 ## 2026-09-18 — Semantic preprocessing (steps 4–13)
 
 - User explicitly requires separate buildable commits per step; preserve their pre-existing
