@@ -65,6 +65,12 @@ make test
 make format # or: make fmt
 ```
 
+On macOS, `./run-macos.sh --help` builds first and runs the newest `erlangaot`
+executable under the selected build directory's `bin` directory. All arguments
+pass through unchanged, and relative input paths use your current directory.
+The launcher accepts the same build environment overrides, such as
+`BUILD_DIR=build/release BUILD_TYPE=Release ./run-macos.sh --version`.
+
 `build` configures and builds the compiler, runtime, and test executables in
 `build/debug`. `test` builds first and runs CTest, showing failures. Override
 `BUILD_DIR`, `BUILD_TYPE`, or `CMAKE_ARGS` when needed, for example:

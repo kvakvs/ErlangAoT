@@ -316,3 +316,8 @@ Primary sources consulted:
 - Step9 final verification: all 25 CTests pass C++23/C++26/ASan+UBSan with live
   OTP29.1. Runtime-only builds and absent/OTP28 live skip paths pass. Full fresh
   Lizard/clang-tidy passed before step9 commit. Resume future work at step10.
+
+- Added run-macos.sh: use existing make build/environment overrides, scan selected
+  build/bin recursively for newest executable erlangaot, exec with "$@". Keep caller
+  cwd and compiler stdout; build diagnostics go to stderr. Verified bash syntax,
+  actual --version, and --preprocess-check from another cwd with a spaced filename.

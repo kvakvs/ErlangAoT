@@ -1,5 +1,7 @@
 # File map
 
+- `run-macos.sh`: build through Make, locate the newest compiler executable in the
+  selected build's `bin` tree, and exec with unchanged arguments and caller directory.
 - `CMakeLists.txt`, `CMakePresets.json`, `Makefile`: component switches, C++23/26,
   portable configure/build/test presets, macOS/Linux build/test/format/fmt targets.
 - `cmake/ProjectOptions.cmake`: target-local language and warning policy.
