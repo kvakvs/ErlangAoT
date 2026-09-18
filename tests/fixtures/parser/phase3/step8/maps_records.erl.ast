@@ -1,0 +1,177 @@
+file	6d6170735f7265636f7264732e65726c	1
+module	6d6170735f7265636f726473
+function_full	66	5	1
+clause	5	0	1
+map	0	2
+map_field	=>
+var	4b
+call	0
+atom	66
+map_field	:=
+atom	61
+var	58
+record	0	1
+record_local	5374617465
+record_field
+var	5f
+var	59
+record	0	1
+record_qualified	6d6f64	726563
+record_field
+atom	61
+var	58
+record	0	1
+record_inferred
+record_field
+atom	61
+var	58
+record_index
+atom	72
+atom	61
+tuple	31
+map	0	0
+map	0	2
+map_field	=>
+atom	61
+integer	1
+map_field	:=
+binary	+
+var	4b
+integer	1
+call	0
+atom	66
+map	1	1
+map	1	1
+var	4d
+map_field	=>
+atom	61
+var	56
+map_field	:=
+atom	62
+var	57
+record	0	0
+record_local	72
+record	0	3
+record_local	72
+record_field
+atom	61
+integer	42
+record_field
+var	5f
+atom	64656661756c74
+record_field
+var	58
+call	0
+atom	67
+record	1	1
+var	52
+record_local	72
+record_field
+atom	61
+integer	2
+record_access
+var	52
+record_local	72
+atom	61
+record	0	0
+record_local	5374617465
+record	0	0
+record_qualified	6d6f64	726563
+record	0	0
+record_inferred
+record	1	1
+var	52
+record_qualified	6d6f64	726563
+record_field
+atom	61
+integer	1
+record_access
+var	52
+record_qualified	6d6f64	726563
+atom	61
+record	1	1
+var	52
+record_inferred
+record_field
+atom	61
+integer	1
+record_access
+var	52
+record_inferred
+atom	61
+record	0	0
+record_local	656e64
+record	0	0
+record_qualified	6d6f64	5374617465
+record	0	0
+record_qualified	6d6f64	656e64
+record_access
+var	52
+record_local	5374617465
+atom	61
+record_access
+var	52
+record_local	656e64
+atom	61
+record_access
+record	1	1
+record	0	0
+record_local	72
+record_local	73
+record_field
+atom	61
+integer	1
+record_local	74
+atom	61
+record	1	0
+record	0	0
+record_qualified	6d6f64	72
+record_local	73
+record	1	0
+map	0	0
+record_local	72
+map	1	0
+record	0	0
+record_local	72
+record	1	0
+record	1	0
+var	52
+record_local	72
+record_qualified	6d6f64	73
+map	1	1
+call	0
+atom	66
+map_field	=>
+atom	61
+integer	1
+record	1	0
+call	0
+atom	66
+record_local	72
+record_access
+record_index
+atom	72
+atom	61
+record_local	73
+atom	62
+remote
+var	4d
+record	1	0
+var	46
+record_local	72
+binary	+
+var	41
+map	1	1
+var	42
+map_field	=>
+atom	61
+integer	1
+unary	-
+record_access
+var	52
+record_local	72
+atom	61
+call	1
+record	0	0
+record_local	72
+var	58

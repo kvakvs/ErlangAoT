@@ -35,6 +35,10 @@
   nested containers remain grammar-permissive. PatternCandidate explicitly defers
   pattern validation in future permissive positions. Guard alternatives/conjunctions
   and clause bodies are checked nonempty; semantic binding/guard legality is deferred.
+- Maps preserve association/exact fields and construction/update bases. Records retain
+  local unresolved, qualified native, or inferred identities, ordered assignments,
+  field accesses and indexes. Structural postfix grammar restricts chaining separately
+  from general operators/calls; no record layout lookup or expansion occurs in parsing.
 - `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages
   and recursive nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive
   preprocessing; final module features are recorded at EOF. No parse-check CLI yet.

@@ -1,0 +1,83 @@
+file	6e616d65732e65726c	1
+module	6e616d6573
+function	66
+tuple	35
+record	0	0
+record_local	6166746572
+record	0	0
+record_local	616e64
+record	0	0
+record_local	616e64616c736f
+record	0	0
+record_local	62616e64
+record	0	0
+record_local	626567696e
+record	0	0
+record_local	626e6f74
+record	0	0
+record_local	626f72
+record	0	0
+record_local	62736c
+record	0	0
+record_local	627372
+record	0	0
+record_local	62786f72
+record	0	0
+record_local	63617365
+record	0	0
+record_local	6361746368
+record	0	0
+record_local	636f6e64
+record	0	0
+record_local	646976
+record	0	0
+record_local	656c7365
+record	0	0
+record_local	656e64
+record	0	0
+record_local	66756e
+record	0	0
+record_local	6966
+record	0	0
+record_local	6c6574
+record	0	0
+record_local	6d61796265
+record	0	0
+record_local	6e6f74
+record	0	0
+record_local	6f66
+record	0	0
+record_local	6f72
+record	0	0
+record_local	6f72656c7365
+record	0	0
+record_local	72656365697665
+record	0	0
+record_local	72656d
+record	0	0
+record_local	747279
+record	0	0
+record_local	7768656e
+record	0	0
+record_local	786f72
+record	0	0
+record_local	5374617465
+record	0	0
+record_local	5f
+record	1	0
+record	0	0
+record_local	72
+record_local	5374617465
+record	1	0
+record_access
+var	58
+record_inferred
+atom	61
+record_local	72
+record_access
+record	0	0
+record_local	72
+record_inferred
+atom	61
+map	1	0
+map	0	0

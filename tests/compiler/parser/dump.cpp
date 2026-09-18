@@ -12,6 +12,56 @@ struct ExpressionDump {
 
     void child(const ast::ExprId &id) const { module.visit(id, *this); }
 
+    void identity(const ast::RecordIdentity &value) const {
+        std::visit([&](const auto &name) { record_name(name); }, value.value);
+    }
+
+    void record_name(const ast::UnresolvedRecordName &value) const {
+        std::cout << "record_local\t" << hex(utf8(value.name.name)) << '\n';
+    }
+
+    void record_name(const ast::QualifiedRecordName &value) const {
+        std::cout << "record_qualified\t" << hex(utf8(value.module.name)) << '\t' << hex(utf8(value.name.name)) << '\n';
+    }
+
+    void record_name(const ast::InferredRecordName &) const { std::cout << "record_inferred\n"; }
+
+    void operator()(const ast::MapExpression &value) const {
+        std::cout << "map\t" << bool(value.base) << '\t' << value.fields.size() << '\n';
+        if (value.base)
+            child(*value.base);
+        for (const auto &field : value.fields) {
+            std::cout << "map_field\t" << (field.kind == ast::MapFieldKind::associate ? "=>" : ":=") << '\n';
+            child(field.key);
+            child(field.value);
+        }
+    }
+
+    void operator()(const ast::RecordExpression &value) const {
+        std::cout << "record\t" << bool(value.base) << '\t' << value.fields.size() << '\n';
+        if (value.base)
+            child(*value.base);
+        identity(value.identity);
+        for (const auto &field : value.fields) {
+            std::cout << "record_field\n";
+            std::visit(*this, field.name);
+            child(field.value);
+        }
+    }
+
+    void operator()(const ast::RecordAccess &value) const {
+        std::cout << "record_access\n";
+        child(value.base);
+        identity(value.identity);
+        (*this)(value.field);
+    }
+
+    void operator()(const ast::RecordIndex &value) const {
+        std::cout << "record_index\n";
+        (*this)(value.record);
+        (*this)(value.field);
+    }
+
     void operator()(const ast::UnaryExpression &value) const {
         std::cout << "unary\t" << spelling(value.operation) << '\n';
         child(value.operand);

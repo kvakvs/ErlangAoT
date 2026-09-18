@@ -241,3 +241,40 @@ configure/build passed. Full Lizard and clang-tidy passed at unchanged threshold
 without added suppressions. Phase II is complete; Phase III and subsequent grammar,
 semantic analysis, parse-check CLI and code generation remain future work. These
 host results do not claim Linux/Windows execution coverage.
+
+## Maps and OTP 29 records (step 8)
+
+Step 7 commit: `3cec991`. Map construction/update nodes retain an optional base and
+ordered key/value fields tagged association (`=>`) or exact (`:=`). Both operators
+remain parser-valid in pattern positions; key and association legality belongs to
+later semantic checks. Map keys and values use the general expression grammar.
+
+Record nodes distinguish construction/update, field access, and index syntax.
+Identities explicitly retain unresolved local names, qualified native module/name
+pairs, or inferred `#_` syntax. Uppercase/variable-looking and reserved-word names
+are converted only in `record_name` positions; scanner classification is unchanged.
+A spaced `# _{}` is a local name `_`, distinct from inferred `#_{}`. Unqualified
+names are not classified as tuple/native records until declaration analysis.
+Fields preserve source order, atom/variable names (including `_`), explicit values,
+and origins. Omitted fields remain omitted; no layout/default expansion occurs.
+
+Structural postfix parsing follows the pinned productions rather than applying a
+universal postfix rule. Maps chain on primary/map bases; local records chain on
+primary/record bases. Qualified/inferred record postfixes require primary bases.
+Calls and mixed map/record chains need parentheses where OTP requires them. Pattern
+roots permit creation/index syntax but exclude updates/accesses; nested container
+expressions remain permissive. Index names must be unqualified atoms. Lexical
+record dots remain distinct from form-ending dots.
+
+The existing private projection/harness is reused for `parser_phase3_golden` and
+`parser_phase3_oracle`, preserving both field operators, record identities, ordering,
+and bases. Step 8 fixtures cover every reserved record name, contextual variables,
+macros, mixed operator boundaries, chaining, malformed fields/indexes/modules, and
+parser-accepted/lint-rejected syntax. Native tests additionally check source spans,
+macro ownership, foreign child/source rejection, rollback, iterative 4,096-update
+chains, and nesting limits. New nested field/identity extents are builder-validated.
+
+Step 8 validation (macOS arm64): fresh full C++23 build and all 24 CTests passed,
+including native/offline/live OTP 29.1 AST and rejection comparisons. Seven relevant
+parser suites passed ASan/UBSan. Full Lizard and clang-tidy passed with unchanged
+thresholds and no added suppressions. Binary syntax remains pending step 9.

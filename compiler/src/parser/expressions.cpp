@@ -35,8 +35,7 @@ ast::ExprId FormParser::prefix(OperatorContext context) {
         auto operand = expression(info->precedence, context);
         return make(ast::UnaryExpression{info->operation, std::move(operand)}, begin, begin);
     }
-    auto value = primary(context);
-    return make(std::move(value), begin, begin);
+    return structural(context);
 }
 
 std::optional<OperatorInfo> FormParser::next_operator(OperatorContext context) const {

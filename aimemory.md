@@ -291,3 +291,17 @@ Primary sources consulted:
   OTP29.1, runtime-only build passes, full fresh Lizard+clang-tidy passes. Step7
   complete after its required commit; resume future work at step8. No code-gen/CLI
   parse-check/control-flow/map/record/general-binary implementation is claimed.
+
+## 2026-09-19 — Parser Phase III execution
+
+- Step8: map/record expressions and patterns reuse token/Pratt infrastructure.
+  Structural postfixes run before general Pratt continuation: map on expr_max/map;
+  local record on expr_max/record; qualified/inferred record on expr_max only.
+  Calls or mixed chains need grouping. Pattern roots disallow postfix update/access.
+- Record identities use explicit unresolved local / qualified native / inferred
+  variants; variable-looking/reserved names become atoms only in record_name.
+  # _{} is unresolved local underscore, unlike #_{}. Index name must be an atom.
+- Added phase3 fixtures via parameterized phase2.cmake rather than a copied harness.
+  Node source/child validation extends to nested map/record fields and identities.
+- Step8 verification: fresh full C++23 build, 24 CTests including live OTP29.1,
+  seven sanitizer parser suites, full Lizard/clang-tidy gate passed before commit.

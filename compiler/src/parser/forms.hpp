@@ -42,6 +42,19 @@ class FormParser {
     ast::ExprId make(ast::ExprValue value, std::size_t begin, std::size_t anchor);
     void nonassociative(const OperatorInfo &info, OperatorContext context) const;
     ast::ExprValue primary(OperatorContext context);
+    // Hash productions have restricted postfix bases independent of general calls/operators.
+    ast::ExprId structural(OperatorContext context);
+    ast::ExprId hash_suffix(ast::ExprId base);
+    ast::ExprValue hash(std::optional<ast::ExprId> base = {});
+    ast::MapExpression map(std::optional<ast::ExprId> base);
+    ast::MapField map_field();
+    ast::RecordIdentity record_identity();
+    ast::ExprValue record(std::optional<ast::ExprId> base, ast::RecordIdentity identity);
+    ast::ExprValue record_access(std::optional<ast::ExprId> base, ast::RecordIdentity identity);
+    std::vector<ast::RecordField> record_fields();
+    ast::RecordField record_field();
+    ast::Atom record_name();
+    void check_hash_base(const ast::ExprId &base, bool map, bool local) const;
     ast::ExprValue literal();
     ast::ExprValue sigil();
     ast::Tuple tuple();

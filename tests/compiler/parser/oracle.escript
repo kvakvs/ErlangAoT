@@ -84,6 +84,14 @@ project({function, _, Name, Arity, Clauses}) ->
     lists:foreach(fun clause/1, Clauses);
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
+scalar({map, _, Fields}) -> map(none, Fields);
+scalar({map, _, Base, Fields}) -> map({some, Base}, Fields);
+scalar({record, _, Name, Fields}) -> record(none, Name, Fields);
+scalar({record, _, Base, Name, Fields}) -> record({some, Base}, Name, Fields);
+scalar({record_field, _, Base, Name, Field}) ->
+    io:format("record_access~n"), scalar(Base), record_name(Name), scalar(Field);
+scalar({record_index, _, Name, Field}) ->
+    io:format("record_index~n"), scalar({atom, 0, Name}), scalar(Field);
 scalar({op, _, Op, Arg}) -> io:format("unary\t~s~n", [Op]), scalar(Arg);
 scalar({op, _, Op, Left, Right}) -> io:format("binary\t~s~n", [Op]), scalar(Left), scalar(Right);
 scalar({match, _, Left, Right}) -> io:format("match~n"), scalar(Left), scalar(Right);
@@ -124,3 +132,22 @@ clause({clause, _, Arguments, Guards, Body}) ->
         io:format("guard\t~B~n", [length(Tests)]), lists:foreach(fun scalar/1, Tests)
     end, Guards),
     lists:foreach(fun scalar/1, Body).
+
+map(Base, Fields) ->
+    io:format("map\t~B\t~B~n", [present(Base), length(Fields)]), optional(Base),
+    lists:foreach(fun({Kind, _, Key, Value}) ->
+        Op = case Kind of map_field_assoc -> "=>"; map_field_exact -> ":=" end,
+        io:format("map_field\t~s~n", [Op]), scalar(Key), scalar(Value)
+    end, Fields).
+record(Base, Name, Fields) ->
+    io:format("record\t~B\t~B~n", [present(Base), length(Fields)]), optional(Base), record_name(Name),
+    lists:foreach(fun({record_field, _, Key, Value}) ->
+        io:format("record_field~n"), scalar(Key), scalar(Value)
+    end, Fields).
+present(none) -> 0;
+present({some, _}) -> 1.
+optional(none) -> ok;
+optional({some, Expr}) -> scalar(Expr).
+record_name([]) -> io:format("record_inferred~n");
+record_name({Module, Name}) -> io:format("record_qualified\t~s\t~s~n", [hex(atom_to_list(Module)), hex(atom_to_list(Name))]);
+record_name(Name) when is_atom(Name) -> field("record_local", atom_to_list(Name)).

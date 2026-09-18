@@ -92,9 +92,75 @@ struct RemoteExpression {
     ExprId function;
 };
 
-using ExprValue = std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple,
-                               List, Group, BinarySigilLiteral, UnaryExpression, BinaryExpression, MatchExpression,
-                               CatchExpression, CallExpression, RemoteExpression>;
+enum class MapFieldKind : std::uint8_t { associate, exact };
+
+struct MapField {
+    // Preserve field order and operator spelling without checking map-key semantics.
+    MapFieldKind kind;
+    ExprId key;
+    ExprId value;
+    NodeSource source;
+};
+
+struct MapExpression {
+    // An absent base constructs a map; a present base updates it without evaluation.
+    std::optional<ExprId> base;
+    std::vector<MapField> fields;
+};
+
+struct UnresolvedRecordName {
+    // Local spelling alone cannot distinguish tuple records from native records.
+    Atom name;
+};
+
+struct QualifiedRecordName {
+    // Explicit module qualification identifies native record syntax.
+    Atom module;
+    Atom name;
+};
+
+struct InferredRecordName {};
+
+struct RecordIdentity {
+    // Preserve local, qualified and inferred identities until declaration analysis.
+    std::variant<UnresolvedRecordName, QualifiedRecordName, InferredRecordName> value;
+    NodeSource source;
+};
+
+struct RecordField {
+    // Variable names, including wildcard _, remain syntax rather than resolved fields.
+    std::variant<Atom, Variable> name;
+    ExprId value;
+    NodeSource source;
+};
+
+struct RecordExpression {
+    // Retain construction/update syntax and explicit field assignments in source order.
+    std::optional<ExprId> base;
+    RecordIdentity identity;
+    std::vector<RecordField> fields;
+};
+
+struct RecordAccess {
+    // Keep field access separate from updates and defer record-layout resolution.
+    ExprId base;
+    RecordIdentity identity;
+    Atom field;
+    NodeSource field_source;
+};
+
+struct RecordIndex {
+    // The index production accepts only atom record/field names and has no base value.
+    Atom record;
+    Atom field;
+    NodeSource name_source;
+    NodeSource field_source;
+};
+
+using ExprValue =
+    std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple, List, Group,
+                 BinarySigilLiteral, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression,
+                 CallExpression, RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

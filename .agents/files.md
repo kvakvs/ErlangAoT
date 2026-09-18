@@ -67,6 +67,10 @@
   event routing, budgets and recovery; `forms.{hpp,cpp}`, `literals.cpp`, `aggregates.cpp`:
   form dispatch, decoded literals/sigils and bounded recursive aggregate grammar.
 - `compiler/src/ast/children.cpp`: exhaustive child ownership validation for expression payloads.
+- `compiler/src/parser/{maps,records,structural}.cpp`: map fields, contextual record
+  identities and assignments, access/index grammar and restricted postfix chains.
+  `tests/compiler/parser/structural.cpp`, `fixtures/parser/phase3/`: structural,
+  provenance, resource and OTP parity tests; the parameterized Phase II harness is reused.
 - `compiler/src/ast/clauses.cpp`: pattern storage, checked function clauses and guard groups;
   `compiler/src/parser/clauses.cpp`: restricted/permissive pattern entries, heads, guard/body
   sequences and function consistency. `tests/compiler/parser/clauses.cpp`: pattern arena

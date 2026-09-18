@@ -1,6 +1,6 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–II (steps 1–7) implemented, 2026-09-19; steps 8–18 remain pending.
+Status: steps 1–8 implemented, 2026-09-19; steps 9–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests

@@ -13,6 +13,44 @@ struct Children {
         }
     }
 
+    // Validate nested syntax extents as well as expression child owners.
+    void source(const NodeSource &value) const {
+        if (value.form != form)
+            throw std::invalid_argument("AST field belongs to another form");
+        (void)builder.view().extent(value);
+    }
+
+    void operator()(const MapExpression &value) const {
+        if (value.base)
+            child(*value.base);
+        for (const auto &field : value.fields) {
+            source(field.source);
+            child(field.key);
+            child(field.value);
+        }
+    }
+
+    void operator()(const RecordExpression &value) const {
+        source(value.identity.source);
+        if (value.base)
+            child(*value.base);
+        for (const auto &field : value.fields) {
+            source(field.source);
+            child(field.value);
+        }
+    }
+
+    void operator()(const RecordAccess &value) const {
+        source(value.identity.source);
+        source(value.field_source);
+        child(value.base);
+    }
+
+    void operator()(const RecordIndex &value) const {
+        source(value.name_source);
+        source(value.field_source);
+    }
+
     void operator()(const Atom &) const {}
 
     void operator()(const Variable &) const {}
