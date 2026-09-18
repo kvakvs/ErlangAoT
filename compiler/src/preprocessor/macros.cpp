@@ -66,9 +66,6 @@ void MacroTable::check_cycles(const Definition &definition, const Token &call, s
 }
 
 void MacroTable::define(Definition definition) {
-    if (definition.parameters) {
-        pp_fail(DiagnosticCode::macro_arguments, "parameter macros await step 5", definition.name);
-    }
     const std::u32string name(definition.name.text());
     if (reserved.contains(name)) {
         pp_fail(DiagnosticCode::macro_redefinition, "redefining predefined macro " + utf8(name), definition.name);
@@ -157,13 +154,28 @@ Token replacement(Token token, const Token &call, const Definition &definition) 
 }
 } // namespace
 
-std::vector<Token> MacroExpander::substitute(const Definition &definition, const Arguments &, const Token &call) {
+std::vector<Token> MacroExpander::substitute(const Definition &definition, const Arguments &arguments,
+                                             const Token &call) {
     table_.check_cycles(definition, call, limits_.expansion_depth);
     expansion_path(definition, call, limits_.expansion_depth);
+    std::map<std::u32string_view, const std::vector<Token> *> bindings;
+    if (definition.parameters) {
+        for (std::size_t i = 0; i < arguments.values.size(); ++i) {
+            bindings.emplace((*definition.parameters)[i].text(), &arguments.values[i]);
+        }
+    }
     std::vector<Token> result;
-    result.reserve(definition.body.size());
-    for (const auto &token : definition.body) {
-        result.push_back(replacement(token, call, definition));
+    auto location = call;
+    for (std::size_t i = 0; i < definition.body.size(); ++i) {
+        const auto &token = definition.body[i];
+        const auto found = bindings.find(token.text());
+        if (token.kind != TokenKind::variable || found == bindings.end()) {
+            result.push_back(replacement(token, location, definition));
+            continue;
+        }
+        result.insert(result.end(), found->second->begin(), found->second->end());
+        // collect_arguments rejects empty actual arguments.
+        location.location = found->second->back().location;
     }
     return result;
 }

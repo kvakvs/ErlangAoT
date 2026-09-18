@@ -66,4 +66,24 @@ void objects() {
     require(run("?A.").failed, "module isolation");
 }
 
-int main() { objects(); }
+void macros() {
+    auto result = run("-define(A, ?B). -define(B, 42). -define(F(X), {X,X}). ?F(?A). -undef(B). -define(B,7). ?A.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"42", "42", "7"}, "sequential definitions");
+    result = run("-define(F(X), X). ?F(?F(3)). -define(F(), 2). -define(F, 1). {?F,?F(),?F(4)}.");
+    successful(result);
+    require(integers(result) == std::vector<std::string>{"3", "1", "2", "4"}, "overloads and finite nested invocation");
+    require(run("-define(A,?B). -define(B,?A). ?A.").diagnostics.front().code == DiagnosticCode::macro_cycle,
+            "cycle trace");
+    require(run("-define(A(X,X), X).").failed, "duplicate parameters");
+    require(run("-define(A,1). -define(A,2).").failed, "redefinition");
+    require(run("-undef(MISSING). ok.").failed == false, "undef missing macro");
+    PreprocessorOptions options;
+    options.definitions = {"A", "B={123, atom}"};
+    successful(run("{?A,?B}.", options));
+}
+
+int main() {
+    objects();
+    macros();
+}
