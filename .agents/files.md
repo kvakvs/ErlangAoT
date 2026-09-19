@@ -70,3 +70,5 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `docs/{preprocessor,parser,parser-validation}.md`: contracts and evidence;
   `.agents/02-parser.md`: ordered plan/status; `references/otp`: ignored research checkout.
   `compiler/src/stage_readers/{preprocessed,abstract,ir}/` remains reserved only.
+- `.agents/03-project.md`: planned TOML manifest schema, target selection, source
+  discovery/options, annotated project creation, and small steps with per-commit gates.
