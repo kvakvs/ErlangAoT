@@ -1,5 +1,21 @@
 # Current working memory — 2026-09-19
 
+- Project checkpoint: steps1–11 committed (latest8f48ca3); step12 applied and full
+  gate running session74282. All prior individual full gates passed; step11 all56.
+- Remaining scripts /tmp/project-step13.py through step21.py UNAPPLIED in main.
+  Scripts12–20 verified in isolated /tmp/erlangaot-project-preview (CLI +17 project
+  tests pass); preview21 combined hardening test passes after using SRC/module0.erl
+  for native case alias (uppercase .ERL is correctly rejected). Each main step still
+  requires its separate fresh full gate/commit. Step22 docs still to prepare.
+- Step18 uses NewProjectFilename strong wrapper, C++23 std::ios::noreplace;
+  step19 wraps argument accordingly. Preview focused tidy/Lizard pass all new TUs.
+- User steering: retain C++23 requirement and remove C++26 checks from project
+  validation. Do not run further C++26 checks. Initial ASan/UBSan build compiled
+  in build/project-sanitize; rebuild/test final C++23 code for step21 evidence.
+- User Makefile clean-target edit must remain unstaged/unchanged. Git commits
+  require tool escalation, authorized by plan. Use apply_patch for .agents files.
+- Previous checkpoint details below are historical; current checkpoint above wins.
+
 - Latest checkpoint: steps1–7 committed; step6=a1e4b5b, step7=8a739d3. Step8
   implemented, all53 + focused tidy pass; full quality running session76307 with
   /tmp/project-step8-* logs. Glob internal ComponentPattern wrapper fixes genuine

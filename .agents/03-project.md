@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–11 complete; steps 12–22 pending. Written 2026-09-19.
+Status: steps 1–12 complete; steps 13–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -26,6 +26,8 @@ all 55 tests, formatting, fresh Debug build and full quality pass. All 55 tests
 also pass with native case-alias coverage added.
 Step 11 — selection order, duplicate selectors and unknown-target diagnostics;
 all 56 tests, formatting, fresh Debug build and full quality pass.
+Step 12 — per-target option composition, precedence and semantic validation;
+all 57 tests, formatting, fresh C++23 Debug build and full quality pass.
 
 ## Objective and existing behavior
 
@@ -676,7 +678,8 @@ Commit: `test(project): cover multi-target workflows and path edge cases`.
 ### Step 21 — Validate project portability and limits
 
 Scope: project-specific portability/stress tests and `docs/project-validation.md`.
-Exercise C++23/26 where supported, compiler-only/runtime-only configurations, and
+Keep C++23 as the required baseline; do not run C++26 validation. Exercise
+compiler-only/runtime-only configurations and
 ASan/UBSan where available. Cover manifest and discovery size/depth/work limits,
 native Unicode paths, Windows separators/drive/UNC handling, and filesystem alias
 behavior on Linux x86/ARM, Windows x86-family, and macOS Apple Silicon.

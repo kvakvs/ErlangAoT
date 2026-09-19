@@ -47,3 +47,8 @@ add_executable(project_selection selection.cpp)
 erlang_aot_project_options(project_selection)
 target_link_libraries(project_selection PRIVATE erlang_project)
 add_test(NAME project_selection COMMAND project_selection)
+
+add_executable(project_options options.cpp)
+erlang_aot_project_options(project_options)
+target_link_libraries(project_options PRIVATE erlang_project)
+add_test(NAME project_options COMMAND project_options)
