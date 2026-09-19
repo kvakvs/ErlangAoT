@@ -4,11 +4,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ERLANG_AOT_BUILD_COMPILER "Build the erlangaot compiler tool" ON)
 option(ERLANG_AOT_BUILD_RUNTIME "Build the runtime library" ON)
-set(ERLANG_AOT_CXX_STANDARD "23" CACHE STRING "C++ standard (23 or 26)")
-set_property(CACHE ERLANG_AOT_CXX_STANDARD PROPERTY STRINGS 23 26)
-if(NOT ERLANG_AOT_CXX_STANDARD MATCHES "^(23|26)$")
-    message(FATAL_ERROR "ERLANG_AOT_CXX_STANDARD must be 23 or 26")
-endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(WARNING "Only macOS is currently validated. See .agents/plan-windows.md for Windows work.")

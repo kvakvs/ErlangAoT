@@ -17,7 +17,8 @@
   Execution visits each target/file independently through a shared frontend callback,
   adds diagnostic context and aggregates failures; unsupported compilation writes nothing.
 
-- CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
+- CMake fixes project targets to C++23 with warnings as errors, building the host
+  tool `erlangaot` and a separate placeholder runtime.
   Project validation uses C++23. No LLVM/backend/runtime execution is implemented yet.
   Compiler-private Boost >=1.90 supplies Parser and Multiprecision; runtime-only
   builds do not discover it. Native compiler tests require installed OTP >=29.

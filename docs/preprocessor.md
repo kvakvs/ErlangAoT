@@ -104,6 +104,6 @@ paths are `lib/stdlib/include/assert.hrl` and `lib/kernel/include/file.hrl`. The
 used by `otp_headers.erl`; all other semantic fixtures were authored for this project.
 The full upstream Common Test suites have not been run.
 
-On macOS arm64, run the full debug suite, the selectable C++26 build, ASan/UBSan,
+On macOS arm64, run the full C++23 debug suite, ASan/UBSan,
 and `check-quality`. Linux x86/ARM and Windows x86-family execution remains
 outstanding; no cross-host success is implied by native filesystem usage.

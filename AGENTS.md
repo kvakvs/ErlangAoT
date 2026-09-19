@@ -22,7 +22,7 @@ The source code of existing pure Erlang projects will be buildable via LLVM into
 # Questions to Answer
 
 (Replace text here in place as the answers are derived)
-- Implementation language: C++ for the preprocessor, parser, compiler tool, and a separately built C++ runtime. Use CMake; preliminary baseline is C++23 with C++26 selectable on supported toolchains.
+- Implementation language: C++23 for the preprocessor, parser, compiler tool, and a separately built C++ runtime. Use CMake; all project targets treat compiler warnings as errors.
 - Project structure: compiler executable `erlang_aot` (output name `erlangaot`) and separate runtime library `erlang_runtime`, in one repository. The initial CLI/CMake scaffold is implemented; see `README.md` for current usage and `.agents/00-plan.md` for the wider plan. Stage data exchange and compilation behavior remain undecided.
 - Future directories: `compiler/`, `runtime/`, `abi/`, `cmake/`, `tests/`, `examples/`, and `docs/`; see `.agents/00-plan.md` for component locations. Intermediate stage readers have reserved directory locations only.
 

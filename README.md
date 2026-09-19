@@ -41,6 +41,7 @@ cmake --build --preset debug
 ctest --preset debug
 ```
 
+All project targets use C++23 and treat compiler warnings as errors.
 The executable is `build/debug/bin/erlangaot`. Builds use two parallel jobs;
 override with `cmake --build --preset debug --parallel 8`.
 
@@ -61,7 +62,6 @@ Pass these options when configuring to override defaults:
 | `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
 | `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
 | `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
-| `-DERLANG_AOT_CXX_STANDARD=26`              | Use C++26 if supported                                        |
 
 For multi-configuration generators, add `--config Debug` when building and
 `-C Debug` when testing. CMake-aware IDEs can open the repository using the

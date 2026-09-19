@@ -37,19 +37,19 @@ separate build directories so one configuration cannot replace another's binarie
 while its tests run.
 
 ```sh
-cmake --preset debug -DERLANG_AOT_CXX_STANDARD=23 -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
+cmake --preset debug -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
 cmake --build --preset debug
 ctest --preset debug --no-tests=error --parallel 2
 cmake --build build/debug --target check-quality
 
-cmake -S . -B build/project-compiler-only -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_CXX_STANDARD=23 -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=OFF
+cmake -S . -B build/project-compiler-only -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=OFF
 cmake --build build/project-compiler-only --parallel 2
 ctest --test-dir build/project-compiler-only --output-on-failure --no-tests=error --parallel 2
 
-cmake -S . -B build/project-runtime-only -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_CXX_STANDARD=23 -DERLANG_AOT_BUILD_COMPILER=OFF -DERLANG_AOT_BUILD_RUNTIME=ON -DERLANG_AOT_TOML_ROOT=/nonexistent/project-validation-toml
+cmake -S . -B build/project-runtime-only -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_BUILD_COMPILER=OFF -DERLANG_AOT_BUILD_RUNTIME=ON -DERLANG_AOT_TOML_ROOT=/nonexistent/project-validation-toml
 cmake --build build/project-runtime-only --parallel 2
 
-cmake -S . -B build/project-sanitize -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_CXX_STANDARD=23 -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
+cmake -S . -B build/project-sanitize -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer'
 cmake --build build/project-sanitize --parallel 2
 ctest --test-dir build/project-sanitize --output-on-failure --no-tests=error --parallel 2
 ```

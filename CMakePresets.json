@@ -10,8 +10,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "BUILD_TESTING": "ON",
         "ERLANG_AOT_BUILD_COMPILER": "ON",
-        "ERLANG_AOT_BUILD_RUNTIME": "ON",
-        "ERLANG_AOT_CXX_STANDARD": "23"
+        "ERLANG_AOT_BUILD_RUNTIME": "ON"
       }
     }
   ],

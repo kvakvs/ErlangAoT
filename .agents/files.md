@@ -4,8 +4,8 @@ Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
 Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `CMakeLists.txt`, `CMakePresets.json`, `Makefile`, `run-macos.sh`: component and
-  standard selection, parallel builds, test/format targets, transparent macOS runner.
-- `cmake/ProjectOptions.cmake`: language/warnings; `CompilerDependencies.cmake`:
+  configuration, parallel builds, test/format targets, transparent macOS runner.
+- `cmake/ProjectOptions.cmake`: fixed C++23 and warnings as errors; `CompilerDependencies.cmake`:
   installed/Homebrew or local Boost discovery; `ErlangDependencies.cmake` and
   `ErlangVersion.escript`: host OTP discovery/version checks.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,

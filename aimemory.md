@@ -5,9 +5,13 @@
   gate passed all64 Debug tests, fresh full quality, formatting and whitespace.
   Commands, wrapper, links, TOML and canonical template all verified. Native Linux
   x86/ARM and Windows evidence remains pending as recorded in project-validation.
-- User steering: C++23 remains required; no C++26 project checks. Optional existing
-  CMake standard selector remains. No subagents. DO NOT touch/stage the user-owned
+- User steering: C++23 is fixed for all project targets; removed the CMake standard
+  selector and enabled COMPILE_WARNING_AS_ERROR. No subagents. DO NOT touch/stage the user-owned
   Makefile clean-target edit. Git writes need require_escalated, git prefix.
+- Shell CXXFLAGS=-I/opt/homebrew/include overrides dependency SYSTEM includes and
+  exposes third-party warnings under -Werror; use CXXFLAGS= for fresh configuration.
+- Fixed-C++23/warnings-as-errors validation: fresh full Debug build, all64 CTests,
+  Lizard and clang-tidy passed; all140 translation units use -std=c++23 and -Werror.
 - Production support complete: --project, repeatable --target, --new-project;
   all project policy/model/schema/loading/discovery/options/planning/execution/
   creation/build wiring under compiler/src/project. Shared per-file frontend is
