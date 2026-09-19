@@ -1,10 +1,11 @@
 # TOML projects
 
-Status: planned. The commands and format below are not implemented yet.
+TOML projects select ordered groups of Erlang sources and configure each target
+independently. All four frontend modes support projects. Executable generation
+is not implemented. The build requires C++23.
 
-
-These choices make the implementation actionable; they are proposed project
-policies, not existing behavior or claims of compatibility with another build tool.
+See [working examples](../examples/project/project.toml) and
+[validation evidence](project-validation.md).
 
 ### Manifest
 
@@ -71,11 +72,6 @@ defines = ["TEST"]
 erlangaot [options] <source.erl>...
 erlangaot [options] --project <path> [--target <name>]...
 erlangaot --new-project <filename>
-
-erlangaot --new-project example
-erlangaot --parse-check --project example.toml
-erlangaot --print-ast --project example.toml --target app
-erlangaot --parse-check --project example.toml --target tests --target app
 ```
 
 - Positional sources and `--project` are mutually exclusive. Preserve existing
@@ -105,6 +101,29 @@ erlangaot --parse-check --project example.toml --target tests --target app
   project-creation failures, and the unimplemented backend; exit `0` for successful
   checks/printing, project creation, or informational output. Warnings alone remain
   successful.
+
+### Working commands
+
+From the repository root after building:
+
+```sh
+./build/debug/bin/erlangaot --parse-check --project examples/project/project.toml
+./build/debug/bin/erlangaot --print-pp --project examples/project/project.toml --target app
+./build/debug/bin/erlangaot --print-ast --project examples/project/project.toml --target tests --target app
+```
+
+For creation, use a fresh filename in an existing directory, then populate `src`:
+
+```sh
+mkdir -p build/project-guide
+./build/debug/bin/erlangaot --new-project build/project-guide/guide
+mkdir -p build/project-guide/src
+cp examples/project/src/main.erl build/project-guide/src/main.erl
+./build/debug/bin/erlangaot --parse-check --project build/project-guide/guide.toml
+```
+
+The first manifest example above illustrates schema fields; its source trees and
+application dependency must be supplied to run it.
 
 ### Creating an annotated project
 
@@ -147,7 +166,6 @@ output suffix differs on Windows. Keep these annotations in the generated file:
 # ErlangAoT project. Paths are relative to this TOML file's directory.
 # Check with: erlangaot --parse-check --project <this-file.toml>
 # Also available: --preprocess-check, --print-pp, and --print-ast.
-# Executable generation is not implemented yet.
 schema_version = 1
 
 # Add another [[targets]] block after this target's option tables for more targets.
@@ -288,8 +306,9 @@ Decoded manifests allow at most 1,024 targets and 100,000 total TOML nodes
 (including tables, arrays, and scalar values). Exceeding either limit fails before
 constructing a partial usable manifest.
 
-Wildcard matching allows 1,000,000 state transitions per path match and uses
-iterative matching with linear row storage; exhaustion is an explicit error.
+Wildcard matching is iterative with linear row storage; budget exhaustion is
+an explicit error. The standalone matcher defaults to 1,000,000 transitions;
+discovery uses the shared expansion budget below.
 
 Each source expansion allows 100,000 visited entries, 128 directory levels, and
 16,000,000 total wildcard matching transitions across candidate files. These

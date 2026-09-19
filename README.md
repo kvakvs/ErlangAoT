@@ -13,6 +13,8 @@ Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
   control flow and comprehensions.
 - Syntax checking, expanded Erlang source output and an indented syntax-tree view.
 - Source diagnostics and multiple input files.
+- TOML projects with named targets, source discovery, per-target frontend options,
+  and annotated starter files.
 
 ## Build
 
@@ -20,6 +22,7 @@ Requirements:
 
 - CMake 3.28+ and a C++23-capable compiler.
 - Boost 1.90+ with Boost.Parser and Boost.Multiprecision.
+- toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
 - Erlang/OTP 29+ for tests (enabled by default). Erlang is not needed to run the
   built tool; configure with `-DBUILD_TESTING=OFF` to build without it.
 
@@ -27,7 +30,7 @@ On macOS:
 
 ```sh
 xcode-select --install
-brew install cmake boost erlang
+brew install cmake boost erlang tomlplusplus
 ```
 
 From the repository root:
@@ -53,6 +56,7 @@ Pass these options when configuring to override defaults:
 | Option                                      | Purpose                                                       |
 |---------------------------------------------|---------------------------------------------------------------|
 | `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
+| `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
 | `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select an Erlang installation; versions below 29 are rejected |
 | `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
 | `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
@@ -66,17 +70,20 @@ For multi-configuration generators, add `--config Debug` when building and
 ## Usage
 
 ```sh
-./build/debug/bin/erlangaot --parse-check src/example.erl
-./build/debug/bin/erlangaot --print-pp -I include -DDEBUG src/example.erl
-./build/debug/bin/erlangaot --print-ast src/example.erl
+./build/debug/bin/erlangaot --parse-check examples/project/src/main.erl
+./build/debug/bin/erlangaot --print-pp -I include -DDEBUG examples/project/src/main.erl
+./build/debug/bin/erlangaot --print-ast examples/project/src/main.erl
 ```
 
-On macOS, `./run-macos.sh --parse-check src/example.erl` builds first and runs the
-latest executable, passing all arguments unchanged. It accepts `BUILD_DIR`,
+On macOS, `./run-macos.sh --parse-check examples/project/src/main.erl` builds first
+and runs the latest executable, passing all arguments unchanged. It accepts `BUILD_DIR`,
 `BUILD_TYPE` and `JOBS` environment overrides.
 
 ```text
 erlangaot [options] <source.erl>...
+  --project <path>        Read a TOML project instead of positional sources
+  --target <name>         Select a target; repeat for more (default: all)
+  --new-project <filename>  Create an annotated starter; append .toml when needed
   --preprocess-check       Check preprocessing only
   --parse-check            Preprocess and check syntax
   --print-pp               Print expanded Erlang source
@@ -95,7 +102,7 @@ Quote paths containing spaces and macro values containing shell punctuation:
 
 ```sh
 ./build/debug/bin/erlangaot --parse-check -I include '-DVERSION={1,0}' \
-  --app-dir myapp=/path/to/myapp src/first.erl src/second.erl
+  --app-dir myapp=examples/project examples/project/src/main.erl
 ```
 
 Check modes are silent on success; diagnostics go to stderr. Print modes write
@@ -103,9 +110,9 @@ to stdout and can be combined: `--print-pp --print-ast` prints source before the
 tree for each input. Adding `--preprocess-check` does not disable parsing requested
 by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 
-Exit codes: **0** for success (including warnings), **1** for source/input errors
-or unimplemented compilation, **2** for usage errors. Each input is processed
-independently; any source error makes the overall command fail.
+Exit codes: **0** for success (including warnings), **1** for source/project errors
+or unimplemented compilation, **2** for usage errors or unknown target names.
+Each input is processed independently; any source error makes the overall command fail.
 
 Syntax checks do not validate semantics or execute parse transforms. Check/print
 modes do not create output files and reject `-o`/`--output`. Requests to generate
@@ -113,3 +120,39 @@ an executable currently fail.
 
 See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
 [validation status](docs/parser-validation.md) for further details.
+
+## Projects
+
+Run the included two-target example:
+
+```sh
+./build/debug/bin/erlangaot --parse-check --project examples/project/project.toml
+./build/debug/bin/erlangaot --print-ast --project examples/project/project.toml --target app
+./build/debug/bin/erlangaot --preprocess-check --project examples/project/project.toml --target tests --target app
+```
+
+Create an annotated project in an existing directory:
+
+```sh
+mkdir -p build/project-demo
+./build/debug/bin/erlangaot --new-project build/project-demo/demo
+mkdir -p build/project-demo/src
+cp examples/project/src/main.erl build/project-demo/src/main.erl
+./build/debug/bin/erlangaot --parse-check --project build/project-demo/demo.toml
+```
+
+Creation writes only the requested TOML file and refuses existing destinations.
+The starter contains one `app` target using `src`, with all frontend options at
+their defaults. Add source files before checking it.
+
+Manifest paths are relative to the TOML file; CLI paths are relative to the
+invocation directory. All targets run by default. Repeat `--target` to choose an
+ordered subset; repeat selections run once. `sources` supports literal filenames
+and `*`, `?`, `**` patterns; `source_dirs` recursively discovers `.erl` files.
+Source search paths only locate explicitly listed files. CLI include paths take
+precedence, CLI application roots replace matching names, CLI feature settings
+apply last, and duplicate macro definitions remain errors.
+
+See [project format and workflows](docs/projects.md) and
+[project validation evidence](docs/project-validation.md). Projects support all
+four frontend modes; executable generation remains unimplemented.

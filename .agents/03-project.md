@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–21 complete; step 22 pending. Written 2026-09-19.
+Status: steps 1–22 complete. Written 2026-09-19; completed 2026-09-20.
 Linux x86/ARM and Windows native validation remain pending; see docs/project-validation.md.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
@@ -54,6 +54,10 @@ pass in C++23 Debug, compiler-only and ASan/UBSan builds. Debug/compiler-only
 were rerun after the binary byte-limit fixture correction; sanitizer includes it.
 Runtime-only passes with an absent TOML root. Formatting and fresh full Debug
 Lizard/clang-tidy pass; no production code changed. Unavailable hosts stay pending.
+Step 22 — published usage and runnable example; all documented frontend examples
+(including the macOS wrapper), help/template comparison, relative links and TOML
+blocks pass. All 64 tests, project/driver formatting, fresh full Debug build,
+Lizard, clang-tidy and whitespace checks pass. No C++ changes in this step.
 
 ## Objective and existing behavior
 

@@ -18,7 +18,7 @@
   adds diagnostic context and aggregates failures; unsupported compilation writes nothing.
 
 - CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
-  C++26 is selectable. No LLVM/backend/runtime execution is implemented yet.
+  Project validation uses C++23. No LLVM/backend/runtime execution is implemented yet.
   Compiler-private Boost >=1.90 supplies Parser and Multiprecision; runtime-only
   builds do not discover it. Native compiler tests require installed OTP >=29.
 - SourceManager owns decoded UTF-8/Latin-1 buffers. The incremental Lexer retains
@@ -59,4 +59,6 @@
 - Fresh full-build quality requires Lizard CCN <=10 and clang-tidy cognitive <=10
   plus analyzer/bugprone/performance checks, without suppressions or raised limits.
   Host evidence is macOS arm64; Linux x86/ARM and Windows x86-family remain pending.
-  See docs/parser.md, docs/parser-validation.md and docs/preprocessor.md.
+  Full C++23, compiler-only and ASan/UBSan builds pass all 64 tests; runtime-only
+  remains independent. See docs/{projects,project-validation,parser,parser-validation,
+  preprocessor}.md for contracts and evidence.

@@ -1,34 +1,7 @@
 # File map
 
-- `docs/projects.md`: planned project schema, target selection, creation, and path policies.
-- `src/project/{CMakeLists.txt,cmake/Dependencies.cmake}`: private pinned TOML
-  discovery with explicit-root precedence and Homebrew formula-prefix detection;
-  `tests/compiler/project/dependency.cpp`: valid/invalid TOML smoke test.
-- `src/project/model.hpp`: owned located configuration, per-target options, limits,
-  and error records; `tests/compiler/project/{model.cpp,support.hpp}`: model contracts.
-- `src/project/loader.{hpp,cpp}`: bounded native manifest reading and private TOML
-  ownership; `diagnostics.{hpp,cpp}`: owned project failures and located rendering.
-  `tests/compiler/project/loader.cpp`: syntax, size, I/O, and Unicode-path tests.
-- `src/project/{decode,schema}.{hpp,cpp}`: strict target declarations, located
-  typed values, unknown-key checks, and configuration budgets; `decode.cpp` tests
-  under `tests/compiler/project/` cover schema failures and ownership.
-- `src/project/decode_options.{hpp,cpp}` and matching project tests: typed include,
-  search, define, feature, and application settings with nested-key validation.
-- `src/project/paths.{hpp,cpp}` and matching project tests: UTF-8/native paths,
-  explicit path bases, regular-file validation, and ordered literal source fallback.
-- `src/project/{glob,glob_utf8}.{hpp,cpp}` and matching project tests: bounded
-  iterative wildcard matching and strict Unicode-scalar filename decoding.
-- `tests/compiler/project/CMakeLists.txt`: project test ownership; the parent test
-  build delegates with one subdirectory entry.
-- `src/project/discovery.{hpp,cpp}` and matching project tests: bounded directory/
-  wildcard traversal, deterministic expansions, regular-file filtering and symlink policy.
-- `src/project/{sources,identity}.{hpp,cpp}` and matching project tests: target
-  source ordering and physical-identity deduplication, including hard links and symlinks.
-- `src/project/selection.{hpp,cpp}` and matching project tests: pure ordered target
-  selection, repeated-selector deduplication and available-name diagnostics.
-
-Paths below are repository-relative; `src/` in grouped compiler entries means
-`compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.
+Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
+Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `CMakeLists.txt`, `CMakePresets.json`, `Makefile`, `run-macos.sh`: component and
   standard selection, parallel builds, test/format targets, transparent macOS runner.
@@ -98,24 +71,30 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `docs/{preprocessor,parser,parser-validation}.md`: contracts and evidence;
   `.agents/02-parser.md`: ordered plan/status; `references/otp`: ignored research checkout.
   `compiler/src/stage_readers/{preprocessed,abstract,ir}/` remains reserved only.
-- `.agents/03-project.md`: planned TOML manifest schema, target selection, source
-  discovery/options, annotated project creation, and small steps with per-commit gates.
-- `src/project/options.{hpp,cpp}` and matching project tests: isolated effective
-  preprocessor settings, path bases, precedence and frontend semantic validation.
-- `src/project/plan.{hpp,cpp}` and matching project tests: selected-target preflight,
-  owned invocation plans, output precedence and collision detection without writes.
-- `src/project/execution.{hpp,cpp}` and matching project tests: ordered frontend
-  callbacks, contextual diagnostics, failure aggregation and unsupported backend handling.
-- `src/project/{cli,command}.{hpp,cpp}`: project-owned operands, validation, help
-  and load/plan/execute or standalone creation commands; generic driver tracks explicit
-  frontend-option presence. `tests/compiler/project/cli.cmake`: public CLI contracts.
-- `src/project/template.{hpp,cpp}` and matching project tests: deterministic,
-  annotated default TOML with native executable suffix and no filesystem operations.
-- `src/project/create.{hpp,cpp}` and matching project tests: filename normalization,
-  exclusive native creation, write/close failure handling and identity-checked cleanup.
-- `tests/fixtures/project/workflow/`, `tests/compiler/project/workflow.cmake`:
-  multi-target frontend workflows, include/search isolation, native path arguments,
-  deterministic output and no-write/failure preflight regressions.
-- `tests/compiler/project/hardening.cpp`: combined manifest/discovery limits and
-  native path/alias capability checks; `docs/project-validation.md`: C++23 evidence
-  and pending platform matrix.
+
+- `src/project/{CMakeLists.txt,cmake/Dependencies.cmake}`: private toml++ 3.4.0,
+  explicit-root precedence and Homebrew formula-prefix discovery.
+- `src/project/model.hpp`: owned located configuration, target options, limits and errors;
+  `{loader,diagnostics}.{hpp,cpp}`: bounded native TOML reading and located failures.
+- `src/project/{decode,schema,decode_options}.{hpp,cpp}`: strict versioned schema,
+  typed target/options decoding, unknown-key checks and configuration budgets.
+- `src/project/paths.{hpp,cpp}`: native UTF-8 paths, explicit bases and literal fallback;
+  `{glob,glob_utf8}.{hpp,cpp}`: iterative bounded Unicode wildcard matching.
+- `src/project/discovery.{hpp,cpp}`: sorted bounded traversal and symlink policy;
+  `{sources,identity}.{hpp,cpp}`: ordered source assembly and physical deduplication.
+- `src/project/selection.{hpp,cpp}`: ordered target selection and selector diagnostics;
+  `options.{hpp,cpp}`: independent effective settings and real frontend validation.
+- `src/project/plan.{hpp,cpp}`: selected-target preflight and output collision checks;
+  `execution.{hpp,cpp}`: ordered callbacks, diagnostic context and failure aggregation.
+- `src/project/{cli,command}.{hpp,cpp}`: project operands, conflicts, help and dispatch;
+  `template.{hpp,cpp}`: annotated defaults; `create.{hpp,cpp}`: exclusive native creation,
+  extension completion and identity-checked write/close failure cleanup.
+- `tests/compiler/project/`: matching unit tests, dependency/model/support contracts
+  and local CMake ownership; `cli.cmake`: public invocation and creation contracts;
+  `workflow.cmake` + `tests/fixtures/project/workflow/`: multi-target/include/search,
+  deterministic output, native-path and no-write regressions; `hardening.cpp`: combined
+  resource limits and filesystem capability/alias checks.
+- `docs/projects.md`: delivered format, precedence, discovery and creation workflows;
+  `docs/project-validation.md`: C++23 evidence and pending host matrix;
+  `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
+- `.agents/03-project.md`: implementation plan, per-step validation ledger and status.

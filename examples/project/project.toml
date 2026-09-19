@@ -1,0 +1,13 @@
+# Run all targets, or select one with --target app / --target tests.
+schema_version = 1
+
+[[targets]]
+name = "app"
+source_dirs = ["src"]
+
+[[targets]]
+name = "tests"
+sources = ["src/*.erl"]
+
+[targets.options]
+defines = ["TEST"]
