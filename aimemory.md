@@ -387,3 +387,17 @@ Primary sources consulted:
   now shared through Children::function_clauses. Keyword-state handling stays in PP.
 - Step11: all 31 CTests plus additional alternative fixtures and full fresh quality
   passed; formatting clean. No semantic lowering or feature reinterpretation added.
+- Step11 commit e7e5f16. Step12 adds typed list/map/binary comprehensions and flat
+  simple/zipped qualifier variants. Aggregate prefixes are parsed once; binary
+  templates are expr_max, binary generator roots must start with expanded << tokens
+  (sigils and groups reject). Context flags prevent direct pattern comprehensions.
+- Match qualifiers remain FilterQualifier/MatchExpression with source feature context;
+  no compr_assign legality/binding transformation occurs in the parser.
+- Corrected the lint oracle to request epp extra metadata and forward {features,...}
+  to erl_lint like compile.erl. Enabled assignment now lints successfully, disabled
+  assignment fails; both remain syntax-success cases. Prior fixture projections unchanged.
+- Step12 validation: full Debug build, 32 CTests, all five parser oracle suites replayed
+  after the lint fix, fresh full Lizard/clang-tidy and formatting pass. Separate
+  build/phase4-sanitize ASan+UBSan passed parser_control/parser_exceptions/
+  parser_comprehensions/printing_ast. CLI tree output checked across all new families.
+- PhaseIV complete; future plan work resumes at step13 (attributes/declarations).

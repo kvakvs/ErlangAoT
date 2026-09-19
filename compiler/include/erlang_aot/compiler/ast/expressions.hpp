@@ -267,12 +267,71 @@ struct MaybeExpression {
     std::optional<std::vector<BranchClause>> otherwise;
 };
 
+struct FilterQualifier {
+    // Match expressions remain filters until later compr_assign validation/lowering.
+    ExprId expression;
+};
+
+struct ListGenerator {
+    // Preserve permissive pattern syntax, source collection and strict arrow spelling.
+    PatternSyntaxId pattern;
+    ExprId input;
+    bool strict;
+};
+
+struct BinaryGenerator {
+    // Binary syntax is checked while parsing; segment/pattern legality remains deferred.
+    PatternSyntaxId pattern;
+    ExprId input;
+    bool strict;
+};
+
+struct MapGenerator {
+    // Exact key/value candidate syntax is distinct from list and binary generators.
+    PatternSyntaxId key;
+    PatternSyntaxId value;
+    ExprId input;
+    bool strict;
+};
+
+struct Qualifier {
+    // A simple qualifier owns its full token extent and operator anchor.
+    std::variant<FilterQualifier, ListGenerator, BinaryGenerator, MapGenerator> value;
+    NodeSource source;
+};
+
+struct ZippedQualifier {
+    // Zip groups contain at least two simple qualifiers, including grammar-permitted filters.
+    std::vector<Qualifier> qualifiers;
+    NodeSource source;
+};
+
+using ComprehensionQualifier = std::variant<Qualifier, ZippedQualifier>;
+
+struct ListComprehension {
+    // OTP 29 admits multiple ordered list templates.
+    std::vector<ExprId> templates;
+    std::vector<ComprehensionQualifier> qualifiers;
+};
+
+struct MapComprehension {
+    // Keep template field operators and order, including multiple templates.
+    std::vector<MapField> templates;
+    std::vector<ComprehensionQualifier> qualifiers;
+};
+
+struct BinaryComprehension {
+    // The binary template uses expr_max syntax and is not necessarily a bitstring literal.
+    ExprId expression;
+    std::vector<ComprehensionQualifier> qualifiers;
+};
+
 using ExprValue =
     std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple, List, Group,
                  Bitstring, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression, CallExpression,
                  RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex, BlockExpression,
                  CaseExpression, IfExpression, ReceiveExpression, LocalFunReference, RemoteFunReference, FunExpression,
-                 TryExpression, MaybeExpression>;
+                 TryExpression, MaybeExpression, ListComprehension, MapComprehension, BinaryComprehension>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

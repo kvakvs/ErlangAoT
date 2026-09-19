@@ -34,6 +34,8 @@ OTP suites), clang-format, and the full Lizard/clang-tidy quality gate passed on
 
 ## Phase IV step 11 — Funs, try and maybe
 
+Step 11 commit: `e7e5f16`.
+
 Local and remote fun references preserve typed name/arity components; anonymous
 and recursive named funs reuse function clauses, constructor checks, and parser
 head-name/arity checks. Reference names or arities are not resolved or evaluated.
@@ -58,6 +60,45 @@ constructor invariants, deep nesting, and public printing.
 Step 11 validation: fresh full Debug build, all 31 CTests with live OTP 29.0.5,
 the additional alternative-fixture replay, clang-format, and full Lizard/clang-tidy
 passed on macOS arm64.
+
+## Phase IV step 12 — Comprehensions
+
+List, map and binary comprehensions now retain typed templates and ordered qualifier
+groups. List/map templates remain vectors, including OTP 29 multi-template syntax;
+binary templates retain the grammar's single `expr_max`. Aggregate parsers parse
+the shared prefix once and select the comprehension at `||`, with no speculative
+reparse. Restricted root patterns and map updates reject comprehension tails.
+
+`Qualifier` has closed filter/list-generator/binary-generator/map-generator variants.
+Generator arrows retain strictness, inputs remain expression IDs, and pattern roots
+are explicit candidates. Map generators retain separate key/value candidates. A
+`ZippedQualifier` contains at least two simple qualifiers; sequential and zipped
+groups are never flattened. The grammar permits filters in zip groups, so later
+semantics must reject illegal combinations. Binary generator heads must be the
+binary production, including rejection of sigils that otherwise normalize to the
+same Bitstring payload.
+
+Match qualifiers remain `FilterQualifier` nodes containing `MatchExpression`; the
+parser does not implement `compr_assign` binding, feature validation or lowering.
+Per-form/final feature snapshots survive in both enabled and disabled fixtures.
+The lint oracle now forwards epp's retained feature metadata to erl_lint, matching
+compile.erl: the enabled assignment fixture passes lint and the disabled fixture
+fails, while both parse successfully. Historical syntax/golden records are unchanged.
+
+Step 12 fixtures cover all three output kinds crossed with all six generator arrows,
+multiple templates, exact/association map fields, mixed zipped/sequential groups,
+filter-only groups, arbitrary candidate expressions, nesting, and malformed prefix/
+delimiter/operator cases. Native tests check candidate categories, strictness,
+source origins, feature states, flat qualifier iteration, nested budgets, rollback,
+constructor invariants and public tree printing. LLVM, binding, guard legality,
+record declarations/types and comprehension execution remain separate work.
+
+Step 12 validation: fresh full Debug configure/build and all 32 CTests passed with
+Homebrew OTP 29.0.5. All five parser oracle suites passed again after fixing the
+lint feature handoff. Lizard, clang-tidy and formatting passed. A separate ASan/UBSan
+build passed the control, exception, comprehension and iterative AST-printing tests;
+the CLI printed all three new syntax families successfully. Host evidence remains
+macOS arm64; no other host/toolchain validation is claimed for this phase.
 
 The CLI now exposes the implemented grammar through `--print-ast`. It prints a compact
 indented tree of recovered forms, reports diagnostics to stderr, and fails on syntax

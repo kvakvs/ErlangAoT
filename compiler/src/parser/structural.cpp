@@ -15,7 +15,7 @@ bool is_record(const ast::ExprValue &value) {
 ast::ExprId FormParser::structural(OperatorContext context) {
     const auto begin = cursor_.offset();
     const bool hashed = syntax(cursor_.anchor(), U"#") || syntax(cursor_.anchor(), U"#_");
-    auto value = hashed ? hash() : primary(context);
+    auto value = hashed ? hash({}, context != OperatorContext::pattern) : primary(context);
     auto result = make(std::move(value), begin, begin);
     if (context != OperatorContext::pattern) {
         while (syntax(cursor_.anchor(), U"#") || syntax(cursor_.anchor(), U"#_")) {
@@ -46,13 +46,13 @@ void FormParser::check_hash_base(const ast::ExprId &base, bool map, bool local) 
 }
 
 // Discriminate maps and record identities without allowing arbitrary expr postfix bases.
-ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base) {
+ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base, bool comprehension) {
     const auto *next = cursor_.peek(1);
     if (syntax(cursor_.anchor(), U"#") && next && syntax(*next, U"{")) {
         if (base)
             check_hash_base(*base, true, false);
         cursor_.consume();
-        return map(std::move(base));
+        return map(std::move(base), comprehension);
     }
     const auto *name = cursor_.peek(1);
     const bool index_name = name && name->kind == TokenKind::atom;

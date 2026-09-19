@@ -10,6 +10,12 @@ struct GrammarBudget {
     std::size_t nesting;
 };
 
+struct GeneratorOperator {
+    // Keep source kind and strictness independent of pattern legality.
+    bool binary;
+    bool strict;
+};
+
 // Construct only explicitly supported, complete syntax nodes.
 class FormParser {
   public:
@@ -66,8 +72,8 @@ class FormParser {
     // Hash productions have restricted postfix bases independent of general calls/operators.
     ast::ExprId structural(OperatorContext context);
     ast::ExprId hash_suffix(ast::ExprId base);
-    ast::ExprValue hash(std::optional<ast::ExprId> base = {});
-    ast::MapExpression map(std::optional<ast::ExprId> base);
+    ast::ExprValue hash(std::optional<ast::ExprId> base = {}, bool comprehension = true);
+    ast::ExprValue map(std::optional<ast::ExprId> base, bool comprehension);
     ast::MapField map_field();
     ast::RecordIdentity record_identity();
     ast::ExprValue record(std::optional<ast::ExprId> base, ast::RecordIdentity identity);
@@ -77,7 +83,7 @@ class FormParser {
     ast::Atom record_name();
     void check_hash_base(const ast::ExprId &base, bool map, bool local) const;
     // Distinct bit_expr/bit_size_expr entries keep slash/colon outside general precedence.
-    ast::Bitstring binary();
+    ast::ExprValue binary(bool comprehension = true);
     ast::BinarySegment binary_segment();
     ast::ExprId bit_value();
     ast::ExprId bit_primary();
@@ -87,7 +93,19 @@ class FormParser {
     ast::ExprValue literal();
     ast::ExprValue sigil();
     ast::Tuple tuple();
-    ast::List list();
+    ast::ExprValue list(bool comprehension);
+    // Resolve aggregate/comprehension prefixes once, preserving strict and zipped qualifiers.
+    void require_comprehension(bool allowed) const;
+    ast::ExprValue maximum_hash();
+    std::vector<ast::ComprehensionQualifier> qualifiers();
+    ast::ComprehensionQualifier qualifier_group();
+    ast::Qualifier qualifier();
+    ast::Qualifier map_generator(ast::ExprId key, std::size_t begin);
+    ast::Qualifier generator(ast::ExprId pattern, std::size_t begin);
+    std::optional<GeneratorOperator> generator_operator() const;
+    void require_binary_generator(const ast::ExprId &pattern, std::size_t begin);
+    ast::ExprId binary_template(const std::vector<ast::BinarySegment> &segments) const;
+    ast::PatternSyntaxId candidate(ast::ExprId expression);
     std::vector<ast::ExprId> elements(std::u32string_view close);
     ast::ExprValue literal_value(const Token &token) const;
     // Match delimiters/category values without turning quoted atoms into syntax.

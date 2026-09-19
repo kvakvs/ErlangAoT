@@ -16,14 +16,16 @@ ast::ExprValue FormParser::primary(OperatorContext context) {
         return tuple();
     }
     if (cursor_.take_syntax(U"[")) {
-        return list();
+        return list(context != OperatorContext::pattern);
     }
     if (cursor_.take_syntax(U"<<")) {
-        return binary();
+        return binary(context != OperatorContext::pattern);
     }
     if (cursor_.anchor().kind == TokenKind::sigil_prefix) {
         return sigil();
     }
+    if (syntax(cursor_.anchor(), U"#"))
+        return maximum_hash();
     return literal();
 }
 
@@ -41,7 +43,7 @@ std::vector<ast::ExprId> FormParser::elements(std::u32string_view close) {
 
 ast::Tuple FormParser::tuple() { return {elements(U"}")}; }
 
-ast::List FormParser::list() {
+ast::ExprValue FormParser::list(bool comprehension) {
     ast::List result;
     if (cursor_.take_syntax(U"]")) {
         return result;
@@ -49,6 +51,12 @@ ast::List FormParser::list() {
     do {
         result.elements.push_back(expression());
     } while (cursor_.take_syntax(U","));
+    if (cursor_.take_syntax(U"||")) {
+        require_comprehension(comprehension);
+        auto items = qualifiers();
+        expect(U"]");
+        return ast::ListComprehension{std::move(result.elements), std::move(items)};
+    }
     if (cursor_.take_syntax(U"|")) {
         result.tail = expression();
     }

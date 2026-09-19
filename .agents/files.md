@@ -7,6 +7,10 @@
 - `compiler/src/parser/{funs,exceptions}.cpp`: fun references/clauses, try/catch and maybe grammar.
 - `compiler/src/ast/exceptions.cpp`: shared function/fun clause checks and exception/maybe invariants.
 - `compiler/src/printing/tree_exceptions.cpp`: compact fun/try/maybe tree output.
+- `compiler/src/{parser,ast,printing}/comprehensions.cpp` (printing: `tree_comprehensions.cpp`):
+  aggregate-prefix discrimination, typed qualifier checks and iterative comprehension output.
+- `tests/compiler/parser/comprehensions.cpp`, `fixtures/parser/phase4/step12/`: all generator
+  arrows/output kinds, templates, zip groups, features, syntax boundaries and resource tests.
 - `tests/compiler/parser/exceptions.cpp`, `fixtures/parser/phase4/step11/`: syntax,
   defaults, feature states, provenance, rollback, limits and differential cases.
 - `tests/compiler/parser/control.cpp`, `fixtures/parser/phase4/step10/`: control AST,

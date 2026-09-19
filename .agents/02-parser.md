@@ -1,10 +1,15 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–III and Phase IV steps 10–11 implemented, 2026-09-19; steps 12–18 remain pending.
+Status: Phases I–IV (steps 1–12) implemented, 2026-09-19; steps 13–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
 and [documented compatibility policies](../docs/preprocessor.md).
+
+Later user-directed additions delivered `--print-pp` and `--print-ast` before step 17.
+Native test builds now discover installed OTP >=29 (currently Homebrew 29.0.5);
+the grammar target remains the pinned 29.1 source. Historical exact-version/optional
+oracle requirements below describe the original baseline rather than current discovery.
 
 ## Objective and boundaries
 

@@ -2,16 +2,22 @@
 
 namespace erlang_aot {
 // Consume map fields as general expressions even when the enclosing root is a pattern.
-ast::MapExpression FormParser::map(std::optional<ast::ExprId> base) {
+ast::ExprValue FormParser::map(std::optional<ast::ExprId> base, bool comprehension) {
     expect(U"{");
     std::vector<ast::MapField> fields;
     if (!cursor_.take_syntax(U"}")) {
         do {
             fields.push_back(map_field());
         } while (cursor_.take_syntax(U","));
+        if (cursor_.take_syntax(U"||")) {
+            require_comprehension(comprehension && !base);
+            auto items = qualifiers();
+            expect(U"}");
+            return ast::MapComprehension{std::move(fields), std::move(items)};
+        }
         expect(U"}");
     }
-    return {std::move(base), std::move(fields)};
+    return ast::MapExpression{std::move(base), std::move(fields)};
 }
 
 // Anchor each field at its association/exact operator, preserving the complete field extent.

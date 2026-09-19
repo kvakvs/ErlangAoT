@@ -16,8 +16,10 @@ run("accept", Input) ->
     io:format("~s~n", [case Failed of true -> "rejected"; false -> "accepted" end]);
 run("phase1", Input) -> with_epp(Input, fun phase1/1);
 run("lint", Input) ->
-    {ok, Forms} = epp:parse_file(Input, [], []),
-    Result = case erl_lint:module(Forms, Input) of
+    {ok, Forms, Extra} = epp:parse_file(Input, [extra]),
+    %% Match compile.erl: lint needs the feature state retained by preprocessing.
+    Options = [{features, proplists:get_value(features, Extra, [])}],
+    Result = case erl_lint:module(Forms, Input, Options) of
         {ok, _} -> ok;
         {error, _, _} -> error
     end,
@@ -78,6 +80,16 @@ project({function, _, Name, Arity, Clauses}) ->
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
 scalar({map, _, Fields}) -> map(none, Fields);
+scalar({lc, _, Templates, Qualifiers}) ->
+    Values = templates(Templates),
+    io:format("lc\t~B\t~B~n", [length(Values),length(Qualifiers)]),
+    lists:foreach(fun scalar/1, Values), lists:foreach(fun qualifier/1, Qualifiers);
+scalar({mc, _, Templates, Qualifiers}) ->
+    Values = templates(Templates),
+    io:format("mc\t~B\t~B~n", [length(Values),length(Qualifiers)]),
+    lists:foreach(fun map_template/1, Values), lists:foreach(fun qualifier/1, Qualifiers);
+scalar({bc, _, Template, Qualifiers}) ->
+    io:format("bc\t~B~n", [length(Qualifiers)]), scalar(Template), lists:foreach(fun qualifier/1, Qualifiers);
 scalar({'fun', _, {function, Name, Arity}}) ->
     io:format("local_fun~n"), scalar({atom,0,Name}), scalar({integer,0,Arity});
 scalar({'fun', _, {function, Module, Name, Arity}}) ->
@@ -141,6 +153,24 @@ scalar({string, _, Value}) -> field("string", Value);
 scalar(Other) -> erlang:error({unmapped_phase1_expression, Other}).
 
 field(Kind, Value) -> io:format("~s\t~s~n", [Kind, hex(Value)]).
+
+templates(Value) when is_list(Value) -> Value;
+templates(Value) -> [Value].
+map_template({Kind, _, Key, Value}) ->
+    Op = case Kind of map_field_assoc -> "=>"; map_field_exact -> ":=" end,
+    io:format("map_field\t~s~n", [Op]), scalar(Key), scalar(Value).
+qualifier({zip, _, Qualifiers}) ->
+    io:format("zip\t~B~n", [length(Qualifiers)]), lists:foreach(fun qualifier/1, Qualifiers);
+qualifier({Kind, _, {map_field_exact, _, Key, Value}, Input}) when Kind =:= m_generate; Kind =:= m_generate_strict ->
+    Op = case Kind of m_generate -> "<-"; m_generate_strict -> "<:-" end,
+    io:format("m_generate\t~s~n", [Op]), scalar(Key), scalar(Value), scalar(Input);
+qualifier({Kind, _, Pattern, Input}) when Kind =:= generate; Kind =:= generate_strict ->
+    Op = case Kind of generate -> "<-"; generate_strict -> "<:-" end,
+    io:format("generate\t~s~n", [Op]), scalar(Pattern), scalar(Input);
+qualifier({Kind, _, Pattern, Input}) when Kind =:= b_generate; Kind =:= b_generate_strict ->
+    Op = case Kind of b_generate -> "<="; b_generate_strict -> "<:=" end,
+    io:format("b_generate\t~s~n", [Op]), scalar(Pattern), scalar(Input);
+qualifier(Expression) -> io:format("filter~n"), scalar(Expression).
 hex([]) -> "-";
 hex(Value) -> binary:encode_hex(unicode:characters_to_binary(Value), lowercase).
 

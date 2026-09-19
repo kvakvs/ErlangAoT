@@ -60,13 +60,22 @@ class TreePrinter {
     void operator()(const ast::CatchClause &value);
     void operator()(const ast::MaybeExpression &value);
     void operator()(const ast::MaybeMatch &value);
+    void operator()(const ast::ListComprehension &value);
+    void operator()(const ast::MapComprehension &value);
+    void operator()(const ast::BinaryComprehension &value);
+    void operator()(const ast::Qualifier &value);
+    void operator()(const ast::ZippedQualifier &value);
+    void operator()(const ast::FilterQualifier &value);
+    void operator()(const ast::ListGenerator &value);
+    void operator()(const ast::BinaryGenerator &value);
+    void operator()(const ast::MapGenerator &value);
 
   private:
-    using Reference = std::variant<ast::FormId, ast::ExprId, ast::PatternSyntaxId, const ast::FunctionClause *,
-                                   const ast::GuardSyntax *, const ast::GuardConjunction *, const ast::MapField *,
-                                   const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *,
-                                   const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *,
-                                   const ast::CatchClause *, const ast::MaybeMatch *>;
+    using Reference = std::variant<
+        ast::FormId, ast::ExprId, ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *,
+        const ast::GuardConjunction *, const ast::MapField *, const ast::RecordField *, const ast::BinarySegment *,
+        const ast::BinaryModifier *, const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *,
+        const ast::CatchClause *, const ast::MaybeMatch *, const ast::Qualifier *, const ast::ZippedQualifier *>;
 
     struct Work {
         // Retain child roles and depth independently of the native call stack.
@@ -88,6 +97,10 @@ class TreePrinter {
     // Schedule either a body expression handle or an embedded conditional match.
     void maybe_child(std::string role, const ast::ExprId &value);
     void maybe_child(std::string role, const ast::MaybeMatch &value);
+    // Queue qualifier groups without flattening zipped versus sequential structure.
+    void qualifier_child(std::string role, const ast::Qualifier &value);
+    void qualifier_child(std::string role, const ast::ZippedQualifier &value);
+    void qualifier_children(const std::vector<ast::ComprehensionQualifier> &values);
     // Write one object's role and indentation; its visitor supplies the scalar fields.
     void prefix(const Work &work);
     // Dispatch arena handles through the module's ownership-checked accessors.

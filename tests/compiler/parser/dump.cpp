@@ -12,6 +12,66 @@ struct ExpressionDump {
 
     void child(const ast::ExprId &id) const { module.visit(id, *this); }
 
+    // Comprehension records keep template count and zipped group boundaries explicit.
+    void qualifier(const ast::Qualifier &value) const { std::visit(*this, value.value); }
+
+    void qualifier(const ast::ZippedQualifier &value) const {
+        std::cout << "zip\t" << value.qualifiers.size() << '\n';
+        for (const auto &item : value.qualifiers)
+            qualifier(item);
+    }
+
+    void qualifiers(const std::vector<ast::ComprehensionQualifier> &values) const {
+        for (const auto &item : values)
+            std::visit([&](const auto &value) { qualifier(value); }, item);
+    }
+
+    void operator()(const ast::FilterQualifier &value) const {
+        std::cout << "filter\n";
+        child(value.expression);
+    }
+
+    void operator()(const ast::ListGenerator &value) const {
+        std::cout << "generate\t" << (value.strict ? "<:-" : "<-") << '\n';
+        pattern(value.pattern);
+        child(value.input);
+    }
+
+    void operator()(const ast::BinaryGenerator &value) const {
+        std::cout << "b_generate\t" << (value.strict ? "<:=" : "<=") << '\n';
+        pattern(value.pattern);
+        child(value.input);
+    }
+
+    void operator()(const ast::MapGenerator &value) const {
+        std::cout << "m_generate\t" << (value.strict ? "<:-" : "<-") << '\n';
+        pattern(value.key);
+        pattern(value.value);
+        child(value.input);
+    }
+
+    void operator()(const ast::ListComprehension &value) const {
+        std::cout << "lc\t" << value.templates.size() << '\t' << value.qualifiers.size() << '\n';
+        expressions(value.templates);
+        qualifiers(value.qualifiers);
+    }
+
+    void operator()(const ast::MapComprehension &value) const {
+        std::cout << "mc\t" << value.templates.size() << '\t' << value.qualifiers.size() << '\n';
+        for (const auto &field : value.templates) {
+            std::cout << "map_field\t" << (field.kind == ast::MapFieldKind::associate ? "=>" : ":=") << '\n';
+            child(field.key);
+            child(field.value);
+        }
+        qualifiers(value.qualifiers);
+    }
+
+    void operator()(const ast::BinaryComprehension &value) const {
+        std::cout << "bc\t" << value.qualifiers.size() << '\n';
+        child(value.expression);
+        qualifiers(value.qualifiers);
+    }
+
     // Reference arity integers reuse the same literal projection as expression integers.
     void operator()(const Integer &value) const { (*this)(ast::IntegerLiteral{value}); }
 

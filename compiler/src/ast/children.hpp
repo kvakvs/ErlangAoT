@@ -31,6 +31,17 @@ struct Children {
     void operator()(const FunExpression &value) const;
     void operator()(const TryExpression &value) const;
     void operator()(const MaybeExpression &value) const;
+    // Preserve qualifier structure while enforcing owned candidates and nonempty groups.
+    void qualifier(const Qualifier &value) const;
+    void qualifier(const ZippedQualifier &value) const;
+    void qualifiers(const std::vector<ComprehensionQualifier> &values) const;
+    void qualifier_value(const FilterQualifier &value) const;
+    void qualifier_value(const ListGenerator &value) const;
+    void qualifier_value(const BinaryGenerator &value) const;
+    void qualifier_value(const MapGenerator &value) const;
+    void operator()(const ListComprehension &value) const;
+    void operator()(const MapComprehension &value) const;
+    void operator()(const BinaryComprehension &value) const;
 
     void child(const ExprId &id) const {
         if (builder.view().expression(id).source.form != form) {

@@ -2,15 +2,22 @@
 
 namespace erlang_aot {
 // Parse ordered segments after the opening delimiter, including the empty binary.
-ast::Bitstring FormParser::binary() {
+ast::ExprValue FormParser::binary(bool comprehension) {
     std::vector<ast::BinarySegment> segments;
     if (!cursor_.take_syntax(U">>")) {
         do {
             segments.push_back(binary_segment());
         } while (cursor_.take_syntax(U","));
+        if (cursor_.take_syntax(U"||")) {
+            require_comprehension(comprehension);
+            auto value = binary_template(segments);
+            auto items = qualifiers();
+            expect(U">>");
+            return ast::BinaryComprehension{std::move(value), std::move(items)};
+        }
         expect(U">>");
     }
-    return {std::move(segments)};
+    return ast::Bitstring{std::move(segments)};
 }
 
 // A segment owns explicit defaults and modifier order while deferring all bit-type validation.

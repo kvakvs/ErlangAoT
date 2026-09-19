@@ -51,6 +51,9 @@
   references. Try retains optional of/catch/after parts, restricted catch reasons and
   omitted class/stacktrace syntax. Maybe bodies alone admit conditional matches; their
   candidate patterns and optional else branches defer semantics and retain feature context.
+- List/map/binary comprehensions reuse aggregate prefixes and preserve multiple list/map
+  templates, candidate generators, strictness and zipped-versus-sequential qualifier groups.
+  Match filters retain compr_assign feature context without performing binding or lowering.
 - Bitstrings retain ordered value/size/type segments and modifier integer parameters.
   Restricted bit_expr/expr_max entries protect segment delimiters; grouping admits full
   expressions. Binary sigils use the same string/UTF-8 segment representation. Type/size
