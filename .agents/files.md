@@ -43,6 +43,10 @@
 - `compiler/src/printing/{source.cpp,token_text.hpp,token_text.cpp}`: expanded source
   output and shared canonical token stringification; public `compiler/printing.hpp`.
 - `tests/compiler/printing.cpp`: decoded-token round trips for expanded source printing.
+- `compiler/src/printing/tree{.hpp,.cpp,_forms.cpp,_expressions.cpp,_structural.cpp}`:
+  exhaustive iterative AST tree output, shared literal/operator spelling, compact fields.
+- `tests/compiler/printing_ast.cpp`: exact layout, node distinctions, escaping, owned source
+  lifetime, and long-chain traversal; `tests/cli.cmake` covers modes and error recovery.
 - `preprocessor/{value.hpp,value.cpp,terms.cpp}`: arbitrary integers, Erlang term order,
   normalized definition tokens and diagnostic terms.
 - `preprocessor/{expression.hpp,expression_parse.cpp}`: private AST and bounded token grammar.

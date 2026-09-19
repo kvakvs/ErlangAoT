@@ -27,4 +27,7 @@ std::optional<OperatorInfo> call_operator(const Token &token);
 
 // Look up infix operators only in the requested grammar, excluding quoted atoms.
 std::optional<OperatorInfo> infix_operator(const Token &token, OperatorContext context);
+// Render typed operators from the same spelling tables used by the parser.
+std::u32string_view operator_spelling(ast::BinaryOperator operation);
+std::u32string_view operator_spelling(ast::UnaryOperator operation);
 } // namespace erlang_aot

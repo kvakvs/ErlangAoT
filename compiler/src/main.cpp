@@ -1,3 +1,4 @@
+#include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <erlang_aot/compiler/printing.hpp>
 #include <exception>
@@ -24,6 +25,7 @@ Options:
   -o, --output <path>  Set the future executable output path (default: a.out).
       --preprocess-check  Preprocess each module and report diagnostics only.
       --print-pp         Print preprocessed Erlang source to stdout.
+      --print-ast        Parse and print an indented syntax tree to stdout.
   -I, --include <dir>  Add an include directory (last supplied is searched first).
   -D, --define <name[=term]>  Predefine a macro (default value: true).
       --app-dir <app=dir>  Map an include_lib application to a directory.
@@ -47,6 +49,8 @@ struct Options {
     bool preprocess = false;
     // Emit expanded forms while sharing the diagnostics-only preprocessing path.
     bool print_pp = false;
+    // Parse the expanded token stream and emit its typed syntax tree.
+    bool print_ast = false;
     erlang_aot::PreprocessorOptions preprocessing;
 };
 
@@ -133,6 +137,9 @@ std::optional<std::string> parse_option(std::string_view argument, std::span<cha
     } else if (argument == "--print-pp") {
         options.preprocess = true;
         options.print_pp = true;
+    } else if (argument == "--print-ast") {
+        options.preprocess = true;
+        options.print_ast = true;
     } else {
         return pp_option(argument, remaining, options);
     }
@@ -145,7 +152,7 @@ std::optional<std::string> validate_options(const Options &options, bool output_
         return "no input files";
     }
     if (options.preprocess && output_seen) {
-        return "--output cannot be used with --preprocess-check or --print-pp";
+        return "--output cannot be used with --preprocess-check, --print-pp, or --print-ast";
     }
     return std::nullopt;
 }
@@ -171,17 +178,53 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
     return validate_options(options, output_seen);
 }
 
+// Keep all frontend diagnostics on stderr with consistent severity and source context.
+void print_diagnostic(const erlang_aot::Diagnostic &diagnostic) {
+    std::cerr << (diagnostic.severity == erlang_aot::Severity::warning ? "warning: " : "error: ")
+              << erlang_aot::render(diagnostic) << '\n';
+}
+
+// Emit only expanded source forms from a preprocessing event.
+void print_form(const erlang_aot::PreprocessorEvent &event) {
+    if (const auto *form = std::get_if<erlang_aot::OrdinaryForm>(&event)) {
+        erlang_aot::print_preprocessed(std::cout, *form);
+    }
+}
+
+// Consume one preprocessing pass, optionally printing source before the recovered AST.
+bool parse_and_print(erlang_aot::PreprocessorSession &session, bool print_pp) {
+    erlang_aot::ParserSession parser;
+    while (!parser.stopped()) {
+        const auto event = session.next();
+        if (!event) {
+            break;
+        }
+        if (print_pp) {
+            print_form(*event);
+        }
+        parser.consume(*event);
+    }
+    auto result = std::move(parser).finish(session.features());
+    for (const auto &diagnostic : result.diagnostics) {
+        print_diagnostic(diagnostic);
+    }
+    erlang_aot::print_ast(std::cout, result.module);
+    return result.failed || session.failed();
+}
+
 // Drain one module's events; diagnostics retain logical and physical provenance.
 bool preprocess_module(const std::filesystem::path &path, const Options &options) {
     erlang_aot::SourceManager sources;
     erlang_aot::PreprocessorSession session(sources.read(path), options.preprocessing);
+    if (options.print_ast) {
+        return parse_and_print(session, options.print_pp);
+    }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<erlang_aot::Diagnostic>(&*event)) {
-            std::cerr << (diagnostic->severity == erlang_aot::Severity::warning ? "warning: " : "error: ")
-                      << erlang_aot::render(*diagnostic) << '\n';
+            print_diagnostic(*diagnostic);
         }
-        if (const auto *form = std::get_if<erlang_aot::OrdinaryForm>(&*event); form && options.print_pp) {
-            erlang_aot::print_preprocessed(std::cout, *form);
+        if (options.print_pp) {
+            print_form(*event);
         }
     }
     return session.failed();

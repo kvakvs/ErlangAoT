@@ -2,6 +2,7 @@
 #include "token_syntax.hpp"
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 
 namespace erlang_aot {
 namespace {
@@ -46,6 +47,10 @@ constexpr Entry entries[]{{{U":", 800, none}, false, false},
                           {{U"band", 500, left, bit_and}, true, true},
                           {{U"and", 500, left, logical_and}, true, true}};
 constexpr OperatorInfo type_entries[]{{U"::", 150, right}, {U"|", 170, left}, {U"..", 200, none}};
+constexpr std::pair<std::u32string_view, ast::UnaryOperator> prefixes[]{{U"+", ast::UnaryOperator::positive},
+                                                                        {U"-", ast::UnaryOperator::negative},
+                                                                        {U"bnot", ast::UnaryOperator::bit_not},
+                                                                        {U"not", ast::UnaryOperator::logical_not}};
 
 // Apply the grammar context without changing a shared operator's binding strength.
 bool allowed(const Entry &entry, OperatorContext context) {
@@ -61,14 +66,11 @@ bool allowed(const Entry &entry, OperatorContext context) {
 } // namespace
 
 std::optional<PrefixOperatorInfo> prefix_operator(const Token &token) {
-    if (syntax(token, U"+"))
-        return PrefixOperatorInfo{ast::UnaryOperator::positive};
-    if (syntax(token, U"-"))
-        return PrefixOperatorInfo{ast::UnaryOperator::negative};
-    if (syntax(token, U"bnot"))
-        return PrefixOperatorInfo{ast::UnaryOperator::bit_not};
-    if (syntax(token, U"not"))
-        return PrefixOperatorInfo{ast::UnaryOperator::logical_not};
+    for (const auto &[spelling, operation] : prefixes) {
+        if (syntax(token, spelling)) {
+            return PrefixOperatorInfo{operation};
+        }
+    }
     return std::nullopt;
 }
 
@@ -95,5 +97,23 @@ std::optional<OperatorInfo> infix_operator(const Token &token, OperatorContext c
         return std::nullopt;
     }
     return found->info;
+}
+
+std::u32string_view operator_spelling(ast::BinaryOperator operation) {
+    const auto *found =
+        std::ranges::find_if(entries, [operation](const Entry &entry) { return entry.info.operation == operation; });
+    if (found == std::end(entries)) {
+        throw std::invalid_argument("unknown binary operator");
+    }
+    return found->info.spelling;
+}
+
+std::u32string_view operator_spelling(ast::UnaryOperator operation) {
+    const auto *found =
+        std::ranges::find_if(prefixes, [operation](const auto &entry) { return entry.second == operation; });
+    if (found == std::end(prefixes)) {
+        throw std::invalid_argument("unknown unary operator");
+    }
+    return found->first;
 }
 } // namespace erlang_aot

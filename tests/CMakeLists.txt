@@ -9,6 +9,12 @@ erlang_aot_project_options(printing_tests)
 target_link_libraries(printing_tests PRIVATE erlang_frontend)
 add_test(NAME printing COMMAND printing_tests)
 
+add_executable(printing_ast_tests compiler/printing_ast.cpp)
+erlang_aot_project_options(printing_ast_tests)
+target_link_libraries(printing_ast_tests PRIVATE erlang_frontend)
+add_test(NAME printing_ast COMMAND printing_ast_tests)
+set_tests_properties(printing_ast PROPERTIES TIMEOUT 20)
+
 add_executable(parser_probe compiler/probe.cpp)
 erlang_aot_project_options(parser_probe)
 target_link_libraries(parser_probe PRIVATE erlang_frontend)

@@ -357,3 +357,18 @@ Primary sources consulted:
 - Oracle adapters now accept >=29 instead of requiring exact 29.1; missing runtimes
   and mismatches fail rather than skip. Checked-in 29.1 baseline records are unchanged.
 - Debug build and all 26 CTests passed on Homebrew OTP 29.0.5, with no skips.
+
+## 2026-09-19 — AST tree CLI
+
+- `--print-ast` now exposes the current grammar through one preprocessing/parser
+  pass. Public print_ast is implemented by exhaustive visitors in src/printing/tree*;
+  scalar fields stay on one line and named/indexed children preserve source order.
+  Iterative traversal caps indentation at 64 levels, then emits explicit depth labels.
+- Combined --print-pp prints each input's source before its AST. Recovered forms print
+  even on errors; parser/preprocessor diagnostics appear once on stderr and exit1 is
+  latched. Dedicated diagnostics-only parse-check remains future work.
+- Literal spelling reuses token_text(kind,value); operator spelling reuses parsing
+  metadata. Tests cover exact layout, all currently parsed node families, strings,
+  destroyed source sessions, empty modules, 9000-operator chains and CLI recovery.
+- Validation: Debug build, all 27 CTests (including live Homebrew OTP 29.0.5),
+  clang-format, and full Lizard/clang-tidy quality gate passed.

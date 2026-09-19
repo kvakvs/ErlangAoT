@@ -8,6 +8,11 @@ historical exact-version/skip results below describe earlier validation runs.
 
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
+The CLI now exposes the implemented grammar through `--print-ast`. It prints a compact
+indented tree of recovered forms, reports diagnostics to stderr, and fails on syntax
+errors. `--print-pp --print-ast` shares one preprocessing pass. See README for examples;
+the dedicated diagnostics-only parse-check mode remains planned.
+
 ## Phase I progress
 
 | Step | Behavior | Evidence |

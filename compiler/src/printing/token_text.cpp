@@ -101,27 +101,30 @@ std::u32string atom_text(std::u32string_view text) {
 }
 } // namespace
 
-std::u32string token_text(const Token &token) {
-    if (const auto *integer = std::get_if<Integer>(&token.value)) {
-        if (token.kind == TokenKind::character) {
+std::u32string token_text(TokenKind kind, const TokenValue &value) {
+    if (const auto *integer = std::get_if<Integer>(&value)) {
+        if (kind == TokenKind::character) {
             return character_text(*integer);
         }
         return {integer->decimal.begin(), integer->decimal.end()};
     }
-    if (const auto *number = std::get_if<double>(&token.value)) {
+    if (const auto *number = std::get_if<double>(&value)) {
         return floating_text(*number);
     }
-    if (token.kind == TokenKind::string) {
-        return quoted(token.text(), U'"');
+    const std::u32string_view text = std::get<std::u32string>(value);
+    if (kind == TokenKind::string) {
+        return quoted(text, U'"');
     }
-    if (token.kind == TokenKind::sigil_suffix) {
-        return suffix_text(token.text());
+    if (kind == TokenKind::sigil_suffix) {
+        return suffix_text(text);
     }
-    if (token.kind == TokenKind::atom || token.kind == TokenKind::sigil_prefix) {
-        return atom_text(token.text());
+    if (kind == TokenKind::atom || kind == TokenKind::sigil_prefix) {
+        return atom_text(text);
     }
-    return std::u32string(token.text());
+    return std::u32string(text);
 }
+
+std::u32string token_text(const Token &token) { return token_text(token.kind, token.value); }
 
 std::u32string stringify(std::span<const Token> tokens) {
     std::u32string result;

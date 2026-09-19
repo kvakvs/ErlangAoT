@@ -94,6 +94,24 @@ file(WRITE "${TEST_DIR}/printing.erl" "-include(\"pick.hrl\"). -ifdef(FLAG). f()
 check_cli(print_pp_expansion 0 "f [(] [)] -> [{] 2 , 42 [}] [.]\n$" "^$"
     --print-pp -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
 check_cli(print_pp_end_options 0 "- module [(] example [)]" "^$" --print-pp -- -source.erl)
+check_cli(print_ast_help 0 "--print-ast" "^$" --help)
+check_cli(print_ast_no_input 2 "^$" "no input files" --print-ast)
+check_cli(print_ast_output_conflict 2 "^$" "cannot be used" --print-ast -o "${output}" first.erl)
+check_cli(print_ast 0 "^Module forms=2\n.*ModuleAttribute name=example\n$" "^$"
+    --print-ast "source with spaces.erl")
+check_cli(print_ast_end_options 0 "ModuleAttribute name=example" "^$" --print-ast -- -source.erl)
+check_cli(print_ast_warning 0 "ModuleAttribute name=warning" "warning:.*notice" --print-ast warning.erl)
+check_cli(print_ast_failure_latches 1 "ModuleAttribute name=first\n$" "error:.*stop" --print-ast error.erl first.erl)
+check_cli(print_ast_isolation 0 "ModuleAttribute name=first.*ModuleAttribute name=second" "^$"
+    --print-ast first.erl second.erl)
+check_cli(print_ast_expansion 0 "IntegerLiteral value=2.*IntegerLiteral value=42" "^$"
+    --print-ast -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
+check_cli(print_ast_combined 0 "^- file .*Module forms=2\n.*ModuleAttribute name=example" "^$"
+    --print-ast --print-pp --preprocess-check "source with spaces.erl")
+file(WRITE "${TEST_DIR}/parse-error.erl" "-module(broken). broken() -> . recovered() -> ok.\n")
+check_cli(print_ast_recovery 1 "Function name=recovered" "error:.*parse-error.erl" --print-ast parse-error.erl)
+file(WRITE "${TEST_DIR}/unsupported.erl" "-module(unsupported). -export([f/0]). f() -> ok.\n")
+check_cli(print_ast_unsupported 1 "Function name=f" "error:" --print-ast unsupported.erl)
 file(READ "${TEST_DIR}/a.out" contents)
 if(NOT contents STREQUAL "existing executable\n")
     message(FATAL_ERROR "Preprocessing overwrote executable output")

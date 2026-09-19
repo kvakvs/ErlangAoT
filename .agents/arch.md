@@ -50,4 +50,7 @@
   legality and runtime layout are deferred; nesting and node limits cover all these paths.
 - `ParserSession` consumes expanded forms/diagnostics, bounds tokens/nodes/messages
   and recursive nesting, latches failure and recovers at form boundaries. Immutable feature snapshots survive
-  preprocessing; final module features are recorded at EOF. No parse-check CLI yet.
+  preprocessing; final module features are recorded at EOF. `--print-ast` consumes this
+  pipeline and prints recovered forms with diagnostics on stderr; combined PP/AST printing
+  uses one pass. Exhaustive visitors in `printing/tree*` stream an iterative, role-labelled
+  tree with compact scalar fields and bounded indentation. No diagnostics-only parse-check CLI yet.

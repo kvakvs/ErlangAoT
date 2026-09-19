@@ -143,6 +143,7 @@ erlangaot [options] <source.erl>...
   -o, --output <path>  Future executable output path (default: a.out)
       --preprocess-check  Preprocess and report diagnostics; write no output
       --print-pp         Print preprocessed Erlang source to stdout
+      --print-ast        Parse and print an indented syntax tree to stdout
   -I, --include <dir>  Include directory (last supplied searched first)
   -D, --define <name[=term]>  Initial macro (default value: true)
       --app-dir <app=dir>  Explicit include_lib application directory
@@ -160,7 +161,8 @@ Quote paths and Erlang terms for your shell. Joined `-Ipath` and `-DNAME=TERM`
 spellings are supported. Duplicate macro definitions are errors; application mappings
 use the last value; feature options apply in order. Each input has an isolated session;
 all inputs are processed and any error makes the request fail. Warnings alone succeed.
-`--output` conflicts with `--preprocess-check` and `--print-pp`. No executable is created or overwritten.
+`--output` conflicts with `--preprocess-check`, `--print-pp`, and `--print-ast`.
+No executable is created or overwritten.
 
 Use `./run-macos.sh --print-pp -I include -DDEBUG src/example.erl` to print expanded
 Erlang source. Output uses UTF-8, normalized token spacing, and one form per line
@@ -170,10 +172,29 @@ argument order. Diagnostics stay on stderr; an error returns exit code 1 and may
 partial source on stdout. Combining `--preprocess-check` with `--print-pp` prints source.
 Feature settings still need to be supplied when consuming syntax that requires them.
 
+Use `./run-macos.sh --print-ast source.erl` to inspect the parser's typed syntax tree.
+Each object has one line containing its scalar fields; named and indexed children
+are indented by two spaces. Literals use Erlang escaping, so embedded newlines stay
+on one line. Deep trees retain every node but use `[depth=N]` after 64 indentation
+levels. For example, the body of `f(X) -> {X, 42}.` appears as:
+
+```text
+      body[0]: Tuple elements=2
+        element[0]: Variable name=X
+        element[1]: IntegerLiteral value=42
+```
+
+`--print-ast` accepts the same include, macro, and feature options. With `--print-pp`,
+each input's expanded source prints before its tree, using one preprocessing pass.
+With `--preprocess-check`, parsing and AST printing still run. Diagnostics use stderr;
+syntax errors return exit code 1 and the tree contains only successfully parsed forms.
+The parser currently supports the syntax listed below; unsupported forms such as
+`-export` also produce errors. The tree is a human-readable view, not a stable interchange format.
+
 Other compilation requests validate readable inputs, then report the unimplemented
 backend. Options are validated before help/version; help takes precedence over version.
-Exit codes: `0` for help/version or successful preprocessing, `2` for usage errors,
-and `1` for input/preprocessing errors or unimplemented compilation. Diagnostics use stderr.
+Exit codes: `0` for help/version or successful preprocessing/parsing, `2` for usage errors,
+and `1` for input/frontend errors or unimplemented compilation. Diagnostics use stderr.
 
 See [the project plan](00-plan.md) and [future Windows support](.agents/plan-windows.md).
 
@@ -263,5 +284,6 @@ Phases I–III of the [parser plan](.agents/02-parser.md) are implemented as a n
 C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
 module/file attributes, literals and aggregates, operators/calls, maps, OTP 29
 records, bitstrings, restricted pattern syntax, guards, and multi-clause functions. Other syntax remains explicitly
-unsupported; no parse-check CLI is exposed yet. See [parser behavior and validation](docs/parser.md) for API contracts,
+unsupported. `--print-ast` exposes the current parser; a diagnostics-only parse-check mode
+remains planned. See [parser behavior and validation](docs/parser.md) for API contracts,
 feature/source ownership, limits, compatibility tests, and remaining phases.
