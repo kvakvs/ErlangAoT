@@ -65,9 +65,16 @@ ctest --preset debug
 The checked-in build preset uses two parallel jobs. Override it for one build with,
 for example, `cmake --build --preset debug --parallel 8`.
 
-CTest's optional oracle tests require exact OTP 29.1 via `ERLANG_AOT_ESCRIPT`;
-they explicitly skip if unavailable. Scanner and expanded-token golden tests use
-checked-in records and run without Erlang. `preprocessor_semantics` checks owned
+Native compiler test builds require installed Erlang/OTP 29 or newer. CMake finds
+`escript` on the system (preferring Homebrew's Erlang prefix on macOS), probes its
+runtime version, and stops configuration if it is missing, broken, or below OTP 29.
+Select an installation with `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript`; clear an
+older cached selection with `cmake --preset debug -U ERLANG_AOT_ESCRIPT`.
+The oracle tests use that installation; their checked-in reference records remain
+based on OTP 29.1, so differences in other releases are reported as test failures.
+Runtime-only, cross-compiled, and `-DBUILD_TESTING=OFF` builds do not require Erlang.
+Scanner and expanded-token golden tests use checked-in records.
+`preprocessor_semantics` checks owned
 sources, error recovery, source order, includes, expression semantics, locations,
 and bounded generated inputs. `preprocessor_oracle` compares expanded tokens and
 diagnostic event order with epp, including real OTP headers.
@@ -135,6 +142,7 @@ erlangaot [options] <source.erl>...
       --version        Show version
   -o, --output <path>  Future executable output path (default: a.out)
       --preprocess-check  Preprocess and report diagnostics; write no output
+      --print-pp         Print preprocessed Erlang source to stdout
   -I, --include <dir>  Include directory (last supplied searched first)
   -D, --define <name[=term]>  Initial macro (default value: true)
       --app-dir <app=dir>  Explicit include_lib application directory
@@ -152,7 +160,15 @@ Quote paths and Erlang terms for your shell. Joined `-Ipath` and `-DNAME=TERM`
 spellings are supported. Duplicate macro definitions are errors; application mappings
 use the last value; feature options apply in order. Each input has an isolated session;
 all inputs are processed and any error makes the request fail. Warnings alone succeed.
-`--output` conflicts with `--preprocess-check`. No executable is created or overwritten.
+`--output` conflicts with `--preprocess-check` and `--print-pp`. No executable is created or overwritten.
+
+Use `./run-macos.sh --print-pp -I include -DDEBUG src/example.erl` to print expanded
+Erlang source. Output uses UTF-8, normalized token spacing, and one form per line
+(multiline sigil bodies retain their spelling). It includes generated `-file` attributes;
+comments and consumed preprocessing directives are omitted. Multiple inputs print in
+argument order. Diagnostics stay on stderr; an error returns exit code 1 and may leave
+partial source on stdout. Combining `--preprocess-check` with `--print-pp` prints source.
+Feature settings still need to be supplied when consuming syntax that requires them.
 
 Other compilation requests validate readable inputs, then report the unimplemented
 backend. Options are validated before help/version; help takes precedence over version.

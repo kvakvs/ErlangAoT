@@ -1,14 +1,9 @@
 #!/usr/bin/env escript
 %% Private semantic oracle: preserve token values/order; file events are tested separately.
 main([Input]) ->
-    VersionFile = filename:join([code:root_dir(), "releases", "29", "OTP_VERSION"]),
-    case file:read_file(VersionFile) of
-        {ok, Version} ->
-            case string:trim(binary_to_list(Version)) of
-                "29.1" -> run(Input);
-                _ -> io:format("SKIP: OTP 29.1 is required~n"), halt(77)
-            end;
-        _ -> io:format("SKIP: OTP 29.1 is required~n"), halt(77)
+    case list_to_integer(erlang:system_info(otp_release)) >= 29 of
+        true -> run(Input);
+        false -> io:format(standard_error, "OTP 29 or newer is required~n", []), halt(1)
     end.
 run(Input) ->
     {ok, {Features, Keywords}} = erl_features:init_parse_state([], fun erl_scan:f_reserved_word/1),

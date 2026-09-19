@@ -78,6 +78,22 @@ check_cli(preprocess_bad_application 2 "^$" "expected app=directory" --preproces
 check_cli(preprocess_output_conflict 2 "^$" "cannot be used" --preprocess-check -o "${output}" first.erl)
 file(WRITE "${TEST_DIR}/a.out" "existing executable\n")
 check_cli(preprocess_preserves_output 0 "^$" "^$" --preprocess-check first.erl)
+check_cli(print_pp_help 0 "--print-pp" "^$" --help)
+check_cli(print_pp_no_input 2 "^$" "no input files" --print-pp)
+check_cli(print_pp_missing_input 1 "^$" "cannot access|not a regular file" --print-pp missing.erl)
+check_cli(print_pp_output_conflict 2 "^$" "cannot be used" --print-pp -o "${output}" first.erl)
+check_cli(print_pp 0 "- module [(] example [)] [.]\n$" "^$" --print-pp "source with spaces.erl")
+check_cli(print_pp_combined 0 "- module [(] example [)] [.]\n$" "^$"
+    --preprocess-check --print-pp "source with spaces.erl")
+check_cli(print_pp_warning 0 "- module [(] warning [)] [.]\n$" "warning:.*notice" --print-pp warning.erl)
+check_cli(print_pp_failure_latches 1 "- module [(] first [)] [.]\n$" "error:.*stop"
+    --print-pp error.erl first.erl)
+check_cli(print_pp_isolation 0 "- module [(] first [)].*- module [(] second [)]" "^$"
+    --print-pp first.erl second.erl)
+file(WRITE "${TEST_DIR}/printing.erl" "-include(\"pick.hrl\"). -ifdef(FLAG). f() -> {?PICK, ?VALUE}. -else. -error(branch). -endif.\n")
+check_cli(print_pp_expansion 0 "f [(] [)] -> [{] 2 , 42 [}] [.]\n$" "^$"
+    --print-pp -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
+check_cli(print_pp_end_options 0 "- module [(] example [)]" "^$" --print-pp -- -source.erl)
 file(READ "${TEST_DIR}/a.out" contents)
 if(NOT contents STREQUAL "existing executable\n")
     message(FATAL_ERROR "Preprocessing overwrote executable output")

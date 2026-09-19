@@ -1,15 +1,9 @@
 #!/usr/bin/env escript
 %% Compare the pinned scanner's categories, locations, and decoded values.
 main([Input]) ->
-    case erlang:system_info(otp_release) of
-        "29" -> ok;
-        _ -> io:format("SKIP: OTP 29.1 is required~n"), halt(77)
-    end,
-    VersionFile = filename:join([code:root_dir(), "releases", "29", "OTP_VERSION"]),
-    {ok, Version} = file:read_file(VersionFile),
-    case string:trim(binary_to_list(Version)) of
-        "29.1" -> ok;
-        _ -> io:format("SKIP: OTP 29.1 is required~n"), halt(77)
+    case list_to_integer(erlang:system_info(otp_release)) >= 29 of
+        true -> ok;
+        false -> io:format(standard_error, "OTP 29 or newer is required~n", []), halt(1)
     end,
     {ok, Bytes} = file:read_file(Input),
     Encoding = case epp:read_encoding(Input) of none -> utf8; E -> E end,

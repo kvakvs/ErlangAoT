@@ -1,6 +1,11 @@
 # Parser implementation and validation
 
 Baseline: OTP 29.1 (`751f87b703fe5948607d08e82599ce644b772e76`).
+
+Current native test builds discover installed OTP 29+ at CMake configure time and
+fail for missing/older installations. Live suites run on that selected version;
+historical exact-version/skip results below describe earlier validation runs.
+
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
 ## Phase I progress

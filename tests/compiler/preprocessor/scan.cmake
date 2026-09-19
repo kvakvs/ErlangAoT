@@ -1,16 +1,11 @@
-# Compare scanner records without normalizing values or source coordinates.
+# Compare reference records using the configured OTP 29+ installation.
 if(NOT EXISTS "${ESCRIPT}")
-    message("SKIP: escript is unavailable")
-    return()
+    message(FATAL_ERROR "Configured escript is unavailable: ${ESCRIPT}")
 endif()
 file(GLOB fixtures "${FIXTURES}/lexical/*.erl")
 foreach(fixture IN LISTS fixtures)
     execute_process(COMMAND "${ESCRIPT}" "${HARNESS}" "${fixture}"
         RESULT_VARIABLE expected_result OUTPUT_VARIABLE expected ERROR_VARIABLE oracle_error)
-    if(expected_result STREQUAL "77")
-        message("SKIP: OTP 29.1 is required")
-        return()
-    endif()
     execute_process(COMMAND "${DUMP}" "${fixture}"
         RESULT_VARIABLE actual_result OUTPUT_VARIABLE actual ERROR_VARIABLE actual_error)
     if(NOT expected_result STREQUAL "0" OR NOT actual_result STREQUAL "0")

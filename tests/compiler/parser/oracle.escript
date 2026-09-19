@@ -1,17 +1,10 @@
 #!/usr/bin/env escript
 %% Produce private normalized abstract forms, never a public stage format.
 main([Mode, Input]) ->
-    VersionFile = filename:join([code:root_dir(), "releases", "29", "OTP_VERSION"]),
-    case file:read_file(VersionFile) of
-        {ok, Version} ->
-            case string:trim(binary_to_list(Version)) of
-                "29.1" -> run(Mode, Input);
-                _ -> skip()
-            end;
-        _ -> skip()
+    case list_to_integer(erlang:system_info(otp_release)) >= 29 of
+        true -> run(Mode, Input);
+        false -> io:format(standard_error, "OTP 29 or newer is required~n", []), halt(1)
     end.
-
-skip() -> io:format("SKIP: OTP 29.1 is required~n"), halt(77).
 
 run("raw", Input) ->
     {ok, File} = file:open(Input, [read, {encoding, utf8}]),

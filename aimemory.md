@@ -333,3 +333,27 @@ Primary sources consulted:
   End-to-end run-macos.sh --version also passed with the installed Boost.
 - CMake build preset `debug` runs two jobs in parallel; callers can override it with
   `cmake --build --preset debug --parallel N`. Makefile builds retain `JOBS=N`.
+
+## 2026-09-19 — Preprocessed source CLI
+
+- `--print-pp` streams expanded forms to stdout via public `print_preprocessed` in
+  `src/printing/source.cpp`. Shared token formatting moved into `printing/token_text.*`;
+  epp macro stringification stays unchanged. Original sigil body spans are intentionally
+  retained (raw/triple semantics), while other tokens use decoded canonical values.
+- Diagnostics/exit status share `--preprocess-check`; combining flags prints source;
+  explicit `-o` conflicts. No AST printing added in this smaller task.
+- Validation: full Debug build, 19 native/offline CTests passed (seven optional OTP
+  oracle tests skipped); fresh full Lizard/clang-tidy quality gate passed. CLI,
+  printing round trips, and preprocessor golden tests rerun after the tidy fix.
+
+## 2026-09-19 — Installed Erlang discovery
+
+- Native compiler test builds now require host OTP >=29 via `ErlangDependencies.cmake`
+  and an escript version probe. Prefer Homebrew's prefix on macOS; retain explicit
+  ERLANG_AOT_ESCRIPT overrides. Runtime-only/no-tests/cross builds bypass discovery.
+- This host's PATH/asdf selects 28.1.1, while Homebrew provides 29.0.5. Debug cache
+  was rediscovered with `-U ERLANG_AOT_ESCRIPT` and now selects Homebrew. Confirmed
+  OTP 28 fails a full configure, and nonexistent escript fails the version probe.
+- Oracle adapters now accept >=29 instead of requiring exact 29.1; missing runtimes
+  and mismatches fail rather than skip. Checked-in 29.1 baseline records are unchanged.
+- Debug build and all 26 CTests passed on Homebrew OTP 29.0.5, with no skips.

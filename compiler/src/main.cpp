@@ -1,4 +1,5 @@
 #include <erlang_aot/compiler/preprocessor.hpp>
+#include <erlang_aot/compiler/printing.hpp>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -22,6 +23,7 @@ Options:
       --version        Show the tool version and exit.
   -o, --output <path>  Set the future executable output path (default: a.out).
       --preprocess-check  Preprocess each module and report diagnostics only.
+      --print-pp         Print preprocessed Erlang source to stdout.
   -I, --include <dir>  Add an include directory (last supplied is searched first).
   -D, --define <name[=term]>  Predefine a macro (default value: true).
       --app-dir <app=dir>  Map an include_lib application to a directory.
@@ -43,6 +45,8 @@ struct Options {
     std::vector<std::filesystem::path> inputs;
     // Preprocessing options are recreated independently for every input module.
     bool preprocess = false;
+    // Emit expanded forms while sharing the diagnostics-only preprocessing path.
+    bool print_pp = false;
     erlang_aot::PreprocessorOptions preprocessing;
 };
 
@@ -126,6 +130,9 @@ std::optional<std::string> parse_option(std::string_view argument, std::span<cha
         return parse_output(argument, remaining, options, output_seen);
     } else if (argument == "--preprocess-check") {
         options.preprocess = true;
+    } else if (argument == "--print-pp") {
+        options.preprocess = true;
+        options.print_pp = true;
     } else {
         return pp_option(argument, remaining, options);
     }
@@ -138,7 +145,7 @@ std::optional<std::string> validate_options(const Options &options, bool output_
         return "no input files";
     }
     if (options.preprocess && output_seen) {
-        return "--output cannot be used with --preprocess-check";
+        return "--output cannot be used with --preprocess-check or --print-pp";
     }
     return std::nullopt;
 }
@@ -165,13 +172,16 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
 }
 
 // Drain one module's events; diagnostics retain logical and physical provenance.
-bool preprocess_module(const std::filesystem::path &path, const erlang_aot::PreprocessorOptions &settings) {
+bool preprocess_module(const std::filesystem::path &path, const Options &options) {
     erlang_aot::SourceManager sources;
-    erlang_aot::PreprocessorSession session(sources.read(path), settings);
+    erlang_aot::PreprocessorSession session(sources.read(path), options.preprocessing);
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<erlang_aot::Diagnostic>(&*event)) {
             std::cerr << (diagnostic->severity == erlang_aot::Severity::warning ? "warning: " : "error: ")
                       << erlang_aot::render(*diagnostic) << '\n';
+        }
+        if (const auto *form = std::get_if<erlang_aot::OrdinaryForm>(&*event); form && options.print_pp) {
+            erlang_aot::print_preprocessed(std::cout, *form);
         }
     }
     return session.failed();
@@ -182,7 +192,7 @@ int preprocess(const Options &options) {
     bool failed = false;
     for (const auto &path : options.inputs) {
         try {
-            failed = preprocess_module(path, options.preprocessing) || failed;
+            failed = preprocess_module(path, options) || failed;
         } catch (const erlang_aot::EncodingError &error) {
             std::cerr << path << ": byte " << error.byte << ": " << error.what() << '\n';
             failed = true;

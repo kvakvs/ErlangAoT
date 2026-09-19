@@ -1,7 +1,6 @@
-# Live reference replay is optional; offline coverage is a separate required test.
+# Compare reference records using the configured OTP 29+ installation.
 if(NOT EXISTS "${ESCRIPT}")
-    message("SKIP: escript is unavailable")
-    return()
+    message(FATAL_ERROR "Configured escript is unavailable: ${ESCRIPT}")
 endif()
 file(GLOB sources "${FIXTURES}/*.erl")
 foreach(source IN LISTS sources)
@@ -9,10 +8,6 @@ foreach(source IN LISTS sources)
     foreach(mode IN ITEMS raw epp lint)
         execute_process(COMMAND "${ESCRIPT}" "${HARNESS}" "${mode}" "${source}"
             RESULT_VARIABLE result OUTPUT_VARIABLE actual ERROR_VARIABLE errors TIMEOUT 10)
-        if(result STREQUAL "77")
-            message("SKIP: OTP 29.1 is required")
-            return()
-        endif()
         file(READ "${FIXTURES}/${stem}.${mode}" expected)
         if(NOT result STREQUAL "0" OR NOT actual STREQUAL expected)
             message(FATAL_ERROR "Parser reference mismatch: ${stem}/${mode}: ${errors}\n${actual}")

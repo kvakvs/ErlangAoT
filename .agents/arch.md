@@ -18,10 +18,14 @@
   Literal-term parsing is reused for initial definitions and diagnostic directives.
 - Pinned OTP 29.1 feature metadata controls incremental keywords and query definitions.
   Includes use injectable filesystem/environment and explicit application directories.
-- CLI `--preprocess-check` reports diagnostics without outputs. Compilation remains
+- CLI `--preprocess-check` reports diagnostics without outputs; `--print-pp` streams
+  expanded UTF-8 Erlang source. `printing/` shares canonical token formatting with macro
+  stringification, preserving sigil bodies and record-access dot boundaries. Compilation remains
   explicitly unavailable. Stage interchange, full parsing/backend/runtime remain deferred.
 - CTest combines native semantic/resource/location tests, CLI regressions, offline token
-  records, optional exact-version live OTP comparisons, and copied OTP-header smoke tests.
+  records, installed OTP 29+ live comparisons, and copied OTP-header smoke tests.
+  Native compiler test configuration requires a working host escript >=29, preferring
+  Homebrew on macOS; explicit ERLANG_AOT_ESCRIPT overrides discovery. Other builds skip it.
   macOS arm64 is the validated host; Linux/Windows validation remains outstanding.
 - Required fresh full-build `check-quality`: Lizard CCN <=10 and clang-tidy cognitive <=10,
   analyzer/bugprone/performance warnings as errors. No threshold relaxation or suppression.

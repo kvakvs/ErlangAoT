@@ -1,5 +1,8 @@
 # File map
 
+- `cmake/ErlangDependencies.cmake`, `ErlangVersion.escript`: discover a host escript,
+  validate OTP >=29 at configure time, and select it for all live test oracles.
+
 - `run-macos.sh`: build through Make, locate the newest compiler executable in the
   selected build's `bin` tree, and exec with unchanged arguments and caller directory.
 - `CMakeLists.txt`, `CMakePresets.json`, `Makefile`: component switches, C++23/26,
@@ -13,7 +16,7 @@
 - `.clang-format`, `.clang-tidy`, `tools/requirements-quality.txt`: formatting policy,
   required checks, pinned local tooling. `.vscode/`: portable CMake IntelliSense setup.
 - `compiler/CMakeLists.txt`: frontend static component and `erlangaot` executable.
-- `compiler/src/main.cpp`: CLI validation, preprocessing options/check mode, failure codes.
+- `compiler/src/main.cpp`: CLI validation, preprocessing check/source-print modes, failure codes.
 - `compiler/include/erlang_aot/compiler/`: owned source/token/diagnostic/directive/session
   contracts; source/diagnostic/lexer/directive/preprocessor/probe headers.
 - `compiler/src/source/source.cpp`: UTF-8/Latin-1 decoding and byte/character positions.
@@ -36,7 +39,10 @@
   effects, error latching and include-frame lifecycle.
 - `preprocessor/{macros.hpp,macros.cpp,arguments.cpp}`: definition/overload table, static
   and dynamic cycles, raw arguments, substitution, budgets and object/parameter rescans.
-- `preprocessor/{token_utils.hpp,token_utils.cpp}`: generated tokens, canonical stringification.
+- `preprocessor/{token_utils.hpp,token_utils.cpp}`: generated tokens and fragment lexing.
+- `compiler/src/printing/{source.cpp,token_text.hpp,token_text.cpp}`: expanded source
+  output and shared canonical token stringification; public `compiler/printing.hpp`.
+- `tests/compiler/printing.cpp`: decoded-token round trips for expanded source printing.
 - `preprocessor/{value.hpp,value.cpp,terms.cpp}`: arbitrary integers, Erlang term order,
   normalized definition tokens and diagnostic terms.
 - `preprocessor/{expression.hpp,expression_parse.cpp}`: private AST and bounded token grammar.

@@ -1,7 +1,6 @@
-# Always check native ASTs/rejections; optionally replay the exact OTP reference.
+# Compare reference records using the configured OTP 29+ installation.
 if(LIVE AND NOT EXISTS "${ESCRIPT}")
-    message("SKIP: escript is unavailable")
-    return()
+    message(FATAL_ERROR "Configured escript is unavailable: ${ESCRIPT}")
 endif()
 if(NOT DEFINED PHASE)
     set(PHASE phase2)
@@ -26,10 +25,6 @@ foreach(input IN LISTS inputs)
     if(LIVE)
         execute_process(COMMAND "${ESCRIPT}" "${HARNESS}" "${mode}" "${input}"
             RESULT_VARIABLE status OUTPUT_VARIABLE actual ERROR_VARIABLE errors TIMEOUT 10)
-        if(status STREQUAL "77")
-            message("SKIP: OTP 29.1 is required")
-            return()
-        endif()
         if(NOT status STREQUAL "0" OR NOT actual STREQUAL expected)
             message(FATAL_ERROR "OTP mismatch: ${input}: ${errors}\n${actual}")
         endif()

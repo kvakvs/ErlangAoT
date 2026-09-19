@@ -1,7 +1,6 @@
-# Native AST parity with pinned OTP records runs offline; live replay is an optional addition.
+# Compare reference records using the configured OTP 29+ installation.
 if(LIVE AND NOT EXISTS "${ESCRIPT}")
-    message("SKIP: escript is unavailable")
-    return()
+    message(FATAL_ERROR "Configured escript is unavailable: ${ESCRIPT}")
 endif()
 foreach(stem IN ITEMS minimal expanded phase1)
     file(READ "${FIXTURES}/${stem}.phase1" expected)
@@ -13,10 +12,6 @@ foreach(stem IN ITEMS minimal expanded phase1)
     if(LIVE)
         execute_process(COMMAND "${ESCRIPT}" "${HARNESS}" phase1 "${FIXTURES}/${stem}.erl"
             RESULT_VARIABLE result OUTPUT_VARIABLE actual ERROR_VARIABLE errors TIMEOUT 10)
-        if(result STREQUAL "77")
-            message("SKIP: OTP 29.1 is required")
-            return()
-        endif()
         if(NOT result STREQUAL "0" OR NOT actual STREQUAL expected)
             message(FATAL_ERROR "OTP Phase I AST mismatch: ${stem}: ${errors}\n${actual}")
         endif()
