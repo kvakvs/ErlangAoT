@@ -1,5 +1,7 @@
 # File map
 
+- `docs/projects.md`: planned project schema, target selection, creation, and path policies.
+
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.
 

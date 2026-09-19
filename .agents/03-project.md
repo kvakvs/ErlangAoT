@@ -1,6 +1,9 @@
 # TOML projects and target selection implementation plan
 
-Status: planned; no implementation steps completed. Written 2026-09-19.
+Status: step 1 complete; steps 2–22 pending. Written 2026-09-19.
+
+Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
+tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
 
 ## Objective and existing behavior
 
@@ -249,14 +252,14 @@ disable_features = []
 
 ### Effective options and execution
 
-| Setting | Manifest meaning and CLI combination |
-| --- | --- |
-| `include_dirs` | Listed search order; prepend the existing CLI `-I` search vector, whose last supplied entry is first. Preserve the preprocessor's built-in include lookup around that vector. |
-| `source_search_paths` | Listed fallback order for project source discovery only; no new positional-mode search option in v1. |
-| `defines` | Append CLI definitions after manifest definitions; duplicate names, including across the boundary, retain the existing redefinition error. |
-| `applications` | Manifest application map, then CLI application entries replace matching names. |
-| Feature lists | Apply manifest enable/disable settings, then ordered CLI feature changes; CLI's final setting wins. |
-| `output` | Per-target future destination, overridden by explicit CLI output for one selected target only. |
+| Setting               | Manifest meaning and CLI combination                                                                                                                                          |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `include_dirs`        | Listed search order; prepend the existing CLI `-I` search vector, whose last supplied entry is first. Preserve the preprocessor's built-in include lookup around that vector. |
+| `source_search_paths` | Listed fallback order for project source discovery only; no new positional-mode search option in v1.                                                                          |
+| `defines`             | Append CLI definitions after manifest definitions; duplicate names, including across the boundary, retain the existing redefinition error.                                    |
+| `applications`        | Manifest application map, then CLI application entries replace matching names.                                                                                                |
+| Feature lists         | Apply manifest enable/disable settings, then ordered CLI feature changes; CLI's final setting wins.                                                                           |
+| `output`              | Per-target future destination, overridden by explicit CLI output for one selected target only.                                                                                |
 
 Set each project frontend session's working directory to the manifest base;
 normalize CLI-relative include/application paths against the invocation directory

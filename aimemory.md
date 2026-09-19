@@ -1,5 +1,11 @@
 # Current working memory — 2026-09-19
 
+- Active task: execute all 22 steps of .agents/03-project.md with separate commits
+  and full gates per step; no subagents authorized. Step 1 passes all46 + quality.
+  Gate helper /tmp/erlangaot-project-gate.sh takes step number; logs /tmp/project-stepN-*.
+  Step2 prepared in /tmp/project-step2.py; pinned toml++3.4.0 downloaded/extracted
+  to ignored build/deps (network escalation approved), archive hash in that script.
+
 - User requested Phase VI of .agents/02-parser.md. Steps16/17 committed separately:
   0ff42f4 hardening; 6c58b4d parse-check/driver/API docs. Step18 local closure validated
   and ready for its commit. Full plan remains partial until unavailable hosts execute.
