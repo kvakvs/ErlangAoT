@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–16 complete; steps 17–22 pending. Written 2026-09-19.
+Status: steps 1–17 complete; steps 18–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -39,6 +39,8 @@ Step 15 — target/file execution order, contextual diagnostics and failure latc
 all 59 tests, formatting, fresh Debug build and full quality pass.
 Step 16 — public project/target CLI, frontend modes, selection and usage conflicts;
 all 60 tests, formatting, fresh Debug build and full quality pass.
+Step 17 — deterministic annotated template, both suffix variants and default decoding;
+all 61 tests, formatting, fresh Debug build and full quality pass.
 
 ## Objective and existing behavior
 
