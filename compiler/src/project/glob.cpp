@@ -95,14 +95,18 @@ Glob parse_glob(const Text &pattern) {
     return result;
 }
 
-bool matches(const Glob &glob, std::string_view path, GlobLimits limits) {
+bool matches_with_budget(const Glob &glob, std::string_view path, std::size_t &work) {
     const auto text = components(path, glob.site);
     std::vector<std::uint8_t> row(text.size() + 1, 0);
     row[0] = 1;
     for (const auto &component : glob.components) {
-        charge(limits.work, glob.site);
-        row = path_row(component, text, row, limits.work, glob.site);
+        charge(work, glob.site);
+        row = path_row(component, text, row, work, glob.site);
     }
     return row.back() != 0;
+}
+
+bool matches(const Glob &glob, std::string_view path, GlobLimits limits) {
+    return matches_with_budget(glob, path, limits.work);
 }
 } // namespace erlang_aot::project

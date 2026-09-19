@@ -32,3 +32,8 @@ add_executable(project_glob glob.cpp)
 erlang_aot_project_options(project_glob)
 target_link_libraries(project_glob PRIVATE erlang_project)
 add_test(NAME project_glob COMMAND project_glob)
+
+add_executable(project_discovery discovery.cpp)
+erlang_aot_project_options(project_discovery)
+target_link_libraries(project_discovery PRIVATE erlang_project)
+add_test(NAME project_discovery COMMAND project_discovery "${CMAKE_CURRENT_BINARY_DIR}/project-discovery")

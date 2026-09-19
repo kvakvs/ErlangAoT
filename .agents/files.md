@@ -19,6 +19,8 @@
   iterative wildcard matching and strict Unicode-scalar filename decoding.
 - `tests/compiler/project/CMakeLists.txt`: project test ownership; the parent test
   build delegates with one subdirectory entry.
+- `src/project/discovery.{hpp,cpp}` and matching project tests: bounded directory/
+  wildcard traversal, deterministic expansions, regular-file filtering and symlink policy.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

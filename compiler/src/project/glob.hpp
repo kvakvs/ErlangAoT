@@ -20,4 +20,6 @@ bool is_pattern(std::string_view text);
 Glob parse_glob(const Text &pattern);
 // Match one relative generic UTF-8 path with a bounded iterative state table.
 bool matches(const Glob &glob, std::string_view path, GlobLimits limits = {});
+// Share a matching budget across every file considered by one source expansion.
+bool matches_with_budget(const Glob &glob, std::string_view path, std::size_t &work);
 } // namespace erlang_aot::project

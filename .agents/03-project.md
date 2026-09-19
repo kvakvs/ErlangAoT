@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–8 complete; steps 9–22 pending. Written 2026-09-19.
+Status: steps 1–9 complete; steps 10–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -19,6 +19,8 @@ tests; all 52 tests, formatting, fresh Debug build, Lizard, and clang-tidy pass.
 Step 8 — wildcard/Unicode/work-limit tests, all 53 tests, formatting, fresh Debug
 build, Lizard, and clang-tidy pass. All 53 tests also pass after localizing project
 test CMake ownership; production translation units are unchanged by that move.
+Step 9 — bounded traversal, matching budgets, symlink policy and literal manifest
+directory tests; all 54 tests, formatting, fresh Debug build and full quality pass.
 
 ## Objective and existing behavior
 

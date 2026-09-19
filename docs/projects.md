@@ -285,3 +285,7 @@ constructing a partial usable manifest.
 
 Wildcard matching allows 1,000,000 state transitions per path match and uses
 iterative matching with linear row storage; exhaustion is an explicit error.
+
+Each source expansion allows 100,000 visited entries, 128 directory levels, and
+16,000,000 total wildcard matching transitions across candidate files. These
+are finite work bounds, not wall-clock deadlines for filesystem I/O.
