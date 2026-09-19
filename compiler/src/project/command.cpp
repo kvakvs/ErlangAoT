@@ -1,11 +1,18 @@
 #include "command.hpp"
+#include "create.hpp"
 #include "decode.hpp"
 #include "diagnostics.hpp"
 #include "paths.hpp"
 
 namespace erlang_aot::project {
-int run(const Request &request, const PlanOptions &options, const FileExecutor &executor, std::ostream &diagnostics) {
+int run(const Request &request, const PlanOptions &options, const FileExecutor &executor, std::ostream &output,
+        std::ostream &diagnostics) {
     try {
+        if (request.create) {
+            const auto path = create_project(options.working_directory, {*request.create});
+            output << "Created " << path_text(path) << '\n';
+            return 0;
+        }
         if (!request.file) {
             fail({}, "missing --project request", 2);
         }

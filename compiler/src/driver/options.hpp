@@ -12,6 +12,8 @@ struct Options {
     std::filesystem::path output = "a.out";
     // Distinguish explicit output overrides from the positional-mode default.
     bool output_explicit = false;
+    // Distinguish explicit frontend settings from defaults for standalone commands.
+    bool frontend_options_explicit = false;
     // Delegate project selection data and policy to the project component.
     erlang_aot::project::Request project;
     // Preserve source order for input validation and future compilation.

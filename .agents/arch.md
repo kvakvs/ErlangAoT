@@ -4,6 +4,8 @@
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.
   Runtime-only builds do not discover TOML. Project-owned command handling exposes
   --project and repeatable --target through thin driver dispatch/option hooks.
+  Standalone --new-project writes an annotated default template with C++23 exclusive
+  creation, extension completion and failure cleanup; no source tree is required.
 - The private project library owns located configuration and bounded TOML loading;
   parsing failures retain manifest coordinates and file I/O accepts native paths.
 - Typed project decoding and source discovery retain declaration order, explicit

@@ -52,6 +52,7 @@ std::optional<std::string> pp_option(std::string_view argument, std::span<char *
         value = remaining.front();
         remaining = remaining.subspan(1);
     }
+    options.frontend_options_explicit = true;
     return apply_pp_option(found->second, value, options.preprocessing);
 }
 
@@ -109,7 +110,9 @@ std::optional<std::string> parse_option(std::string_view argument, std::span<cha
 
 // Check command combinations before honoring informational requests or reading inputs.
 std::optional<std::string> validate_options(const Options &options) {
-    if (const auto error = project::validate(options.project, !options.inputs.empty())) {
+    if (const auto error =
+            project::validate(options.project, {!options.inputs.empty(), options.output_explicit, options.preprocess,
+                                                options.frontend_options_explicit})) {
         return error;
     }
     if (!options.show_help && !options.show_version && options.inputs.empty() && !project::active(options.project)) {

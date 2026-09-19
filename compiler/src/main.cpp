@@ -44,7 +44,7 @@ int run_project(const erlang_aot::cli::Options &options) {
         return erlang_aot::cli::process_file(
             path, {options.print_pp, options.print_ast, options.parse_check, preprocessing}, sink);
     };
-    return erlang_aot::project::run(options.project, settings, execute, std::cerr);
+    return erlang_aot::project::run(options.project, settings, execute, std::cout, std::cerr);
 }
 
 // Validate the request and inputs before reporting the unimplemented backend.

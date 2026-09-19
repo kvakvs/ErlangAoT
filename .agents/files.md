@@ -107,7 +107,8 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `src/project/execution.{hpp,cpp}` and matching project tests: ordered frontend
   callbacks, contextual diagnostics, failure aggregation and unsupported backend handling.
 - `src/project/{cli,command}.{hpp,cpp}`: project-owned operands, validation, help
-  and load/plan/execute command; `tests/compiler/project/cli.cmake`: public CLI contracts.
+  and load/plan/execute or standalone creation commands; generic driver tracks explicit
+  frontend-option presence. `tests/compiler/project/cli.cmake`: public CLI contracts.
 - `src/project/template.{hpp,cpp}` and matching project tests: deterministic,
   annotated default TOML with native executable suffix and no filesystem operations.
 - `src/project/create.{hpp,cpp}` and matching project tests: filename normalization,
