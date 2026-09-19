@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–19 complete; steps 20–22 pending. Written 2026-09-19.
+Status: steps 1–20 complete; steps 21–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -45,6 +45,9 @@ Step 18 — native filename completion, exclusive concurrent creation and inject
 write/close cleanup; all 62 tests, formatting, fresh Debug build and full quality pass.
 Step 19 — standalone creation CLI, conflict/information handling and populate/check
 workflow; all 62 tests, formatting, fresh Debug build and full quality pass.
+Step 20 — multi-target include/search isolation, outside-cwd/Unicode/semicolon paths,
+determinism and no-write regressions; all 63 tests, fresh Debug build, whitespace
+checks and full quality pass. No C++ changes in this step.
 
 ## Objective and existing behavior
 

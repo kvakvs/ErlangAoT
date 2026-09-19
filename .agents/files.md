@@ -113,3 +113,6 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
   annotated default TOML with native executable suffix and no filesystem operations.
 - `src/project/create.{hpp,cpp}` and matching project tests: filename normalization,
   exclusive native creation, write/close failure handling and identity-checked cleanup.
+- `tests/fixtures/project/workflow/`, `tests/compiler/project/workflow.cmake`:
+  multi-target frontend workflows, include/search isolation, native path arguments,
+  deterministic output and no-write/failure preflight regressions.

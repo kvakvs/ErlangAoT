@@ -1,0 +1,2 @@
+-module(worker).
+value() -> ?VALUE.

@@ -1,0 +1,2 @@
+-module(hidden).
+value() -> ?VALUE.

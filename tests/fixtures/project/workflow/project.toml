@@ -1,0 +1,23 @@
+schema_version = 1
+[[targets]]
+name = "app"
+sources = ["entry.erl", "nested/*.erl"]
+source_dirs = ["support"]
+output = "build/app"
+[targets.options]
+source_search_paths = ["src"]
+include_dirs = ["include", "fallback-include"]
+defines = ["VALUE=101"]
+[targets.options.applications]
+demo = "vendor/demo"
+[[targets]]
+name = "tests"
+sources = ["entry.erl", "nested/*.erl"]
+source_dirs = ["support"]
+output = "build/tests"
+[targets.options]
+source_search_paths = ["src"]
+include_dirs = ["include", "fallback-include"]
+defines = ["VALUE=202"]
+[targets.options.applications]
+demo = "vendor/demo"

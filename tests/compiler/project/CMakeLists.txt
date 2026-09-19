@@ -77,3 +77,8 @@ add_executable(project_create create.cpp)
 erlang_aot_project_options(project_create)
 target_link_libraries(project_create PRIVATE erlang_project erlang_project_toml Threads::Threads)
 add_test(NAME project_create COMMAND project_create "${CMAKE_CURRENT_BINARY_DIR}/project-create")
+
+add_test(NAME project_workflow COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${PROJECT_SOURCE_DIR}/tests/fixtures/project/workflow"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/project-workflow"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/workflow.cmake")
