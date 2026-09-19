@@ -13,8 +13,21 @@ install a C++23-capable compiler and GNU Make. Both need CMake 3.28 or newer.
 C++23 is the default. No LLVM development libraries or Erlang installation are
 required for this scaffold.
 
-Compiler builds use Boost.Parser and Boost.Multiprecision from Boost 1.90.0.
-Install the standalone parser and the full release's headers:
+Compiler builds require Boost.Parser and Boost.Multiprecision from Boost 1.90 or
+newer. On macOS, an installed Homebrew Boost is discovered automatically:
+
+```sh
+brew install boost
+cmake --preset debug
+```
+
+CMake searches normal installation prefixes (including `CMAKE_PREFIX_PATH`) and
+`brew --prefix boost` on macOS. Set `ERLANG_AOT_BOOST_ROOT` to select a full Boost
+source tree or installation prefix; `ERLANG_AOT_BOOST_PARSER_ROOT` can select a
+separate parser checkout. If switching installations in an existing build, clear
+cached include results with `cmake --preset debug -U 'ERLANG_AOT_BOOST*INCLUDE'`.
+
+For a reproducible local Boost 1.90.0 setup, these checkouts remain a fallback:
 
 ```sh
 git clone --depth 1 --branch boost-1.90.0 https://github.com/boostorg/parser.git build/deps/boost-parser
@@ -25,11 +38,11 @@ tar -xjf build/deps/boost_1_90_0.tar.bz2 -C build/deps boost_1_90_0/boost boost_
 The full archive's SHA-256 is
 `49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305`.
 The parser commit is `647cec66831407742a6ad78582f2a9f3cd7d44d3`.
-Alternatively set `ERLANG_AOT_BOOST_PARSER_ROOT` and `ERLANG_AOT_BOOST_ROOT` to
-local source/install prefixes; both can point to one full Boost 1.90.0 installation.
-CMake verifies the parser header and arithmetic release. No dependency is downloaded
-at configure time, and runtime-only builds do not discover Boost. Both dependencies
-are header-only and private to the compiler. Boost.Parser uses its standalone mode.
+Installed Boost headers are checked against the minimum version. A standalone
+parser checkout without `boost/version.hpp` still requires the pinned 1.90.0 parser
+header checksum. No dependency is downloaded at configure time, and runtime-only
+builds do not discover Boost. Both dependencies are header-only and private to the
+compiler.
 
 For Visual Studio 2022 or VS Code, open the repository root as a CMake project.
 The checked-in `CMakePresets.json` selects C++23 and `build/debug`; configure it
@@ -48,6 +61,9 @@ cmake --preset debug
 cmake --build --preset debug
 ctest --preset debug
 ```
+
+The checked-in build preset uses two parallel jobs. Override it for one build with,
+for example, `cmake --build --preset debug --parallel 8`.
 
 CTest's optional oracle tests require exact OTP 29.1 via `ERLANG_AOT_ESCRIPT`;
 they explicitly skip if unavailable. Scanner and expanded-token golden tests use
@@ -84,8 +100,8 @@ make test BUILD_DIR=build/release BUILD_TYPE=Release CMAKE_ARGS='-DCMAKE_CXX_COM
 Apple's `clang-format` through `xcrun`. Set `CLANG_FORMAT` to another executable
 path if needed.
 
-Builds use two parallel jobs by default; set `JOBS=4` to change this. The equivalent
-direct CMake commands remain available:
+Makefile builds use two parallel jobs by default; set `JOBS=4` to change this. The
+equivalent direct CMake commands remain available:
 
 ```sh
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++

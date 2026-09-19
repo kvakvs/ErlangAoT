@@ -3,7 +3,8 @@
 - CMake/C++23 host compiler `erlangaot`, with selectable C++26. Separate placeholder
   runtime archive and ABI interface; no compiler/runtime linkage or LLVM dependency yet.
 - `erlang_frontend` owns sources, lexing, directive grammar, and semantic preprocessing.
-  Compiler-private Boost 1.90.0 Parser and Multiprecision headers; runtime-only builds
+  Compiler-private Boost >=1.90 Parser and Multiprecision headers (installed/Homebrew
+  or local checkouts; standalone Parser stays pinned to 1.90); runtime-only builds
   skip discovery. Character combinators plus a bounded project-token expression cursor.
 - `DirectiveReader` is the syntax-only reader; `PreprocessorSession` streams expanded
   forms/file attributes and diagnostics. Source ownership and physical spelling survive

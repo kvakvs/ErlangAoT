@@ -19,7 +19,8 @@
     {
       "name": "debug",
       "configurePreset": "debug",
-      "configuration": "Debug"
+      "configuration": "Debug",
+      "jobs": 2
     }
   ],
   "testPresets": [

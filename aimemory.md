@@ -321,3 +321,15 @@ Primary sources consulted:
   build/bin recursively for newest executable erlangaot, exec with "$@". Keep caller
   cwd and compiler stdout; build diagnostics go to stderr. Verified bash syntax,
   actual --version, and --preprocess-check from another cwd with a spaced filename.
+
+- Boost discovery now accepts installed Boost >=1.90, including brew --prefix boost
+  on macOS. Standalone Parser without version.hpp still uses the 1.90 checksum.
+  Explicit roots, CMAKE_PREFIX_PATH, and local build/deps fallbacks remain supported.
+- Current environment has Homebrew Boost 1.92; old local build/deps and pinned OTP
+  installation are absent. Fresh/global build passes 18 native/offline CTests, with
+  seven optional live OTP tests skipped. Runtime-only and old-version/bad-checksum
+  configure rejection checks passed. Full Lizard/clang-tidy passed with Boost 1.92.
+  User committed the launcher as 09c9d31 during this task; preserve that commit.
+  End-to-end run-macos.sh --version also passed with the installed Boost.
+- CMake build preset `debug` runs two jobs in parallel; callers can override it with
+  `cmake --build --preset debug --parallel N`. Makefile builds retain `JOBS=N`.
