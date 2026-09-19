@@ -23,14 +23,14 @@ The source code of existing pure Erlang projects will be buildable via LLVM into
 
 (Replace text here in place as the answers are derived)
 - Implementation language: C++ for the preprocessor, parser, compiler tool, and a separately built C++ runtime. Use CMake; preliminary baseline is C++23 with C++26 selectable on supported toolchains.
-- Project structure: compiler executable `erlang_aot` (output name `erlangaot`) and separate runtime library `erlang_runtime`, in one repository. The initial CLI/CMake scaffold is implemented; see `README.md` for current usage and `00-plan.md` for the wider plan. Stage data exchange and compilation behavior remain undecided.
-- Future directories: `compiler/`, `runtime/`, `abi/`, `cmake/`, `tests/`, `examples/`, and `docs/`; see `00-plan.md` for component locations. Intermediate stage readers have reserved directory locations only.
+- Project structure: compiler executable `erlang_aot` (output name `erlangaot`) and separate runtime library `erlang_runtime`, in one repository. The initial CLI/CMake scaffold is implemented; see `README.md` for current usage and `.agents/00-plan.md` for the wider plan. Stage data exchange and compilation behavior remain undecided.
+- Future directories: `compiler/`, `runtime/`, `abi/`, `cmake/`, `tests/`, `examples/`, and `docs/`; see `.agents/00-plan.md` for component locations. Intermediate stage readers have reserved directory locations only.
 
 Use `aimemory.md` for AI notes and memory, this file will not be read by humans.
 
 ## Artifacts Produced
 
-The initial directory structure and implementation plan with technology choices is at `00-plan.md`
+The initial directory structure and implementation plan with technology choices is at `.agents/00-plan.md`
 - Maintain a compact architecture overview in `.agents/arch.md` update it after major changes. Compact the contents sometimes.
 - Maintain a compact file list and overview of which large group of modules does what, and which exact file implements what in `.agents/files.md`, keep this file updated, and compact its contents sometimes.
 

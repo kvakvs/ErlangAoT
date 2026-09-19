@@ -6,7 +6,7 @@
 namespace erlang_aot {
 namespace {
 // Sigil bodies survive preprocessing unchanged; retain raw/triple delimiters and escapes.
-void print_sigil(std::ostream &output, std::span<const Token> tokens) {
+void print_sigil(std::ostream &output, const std::span<const Token> tokens) {
     if (tokens.size() < 3 || tokens[1].kind != TokenKind::string || tokens[2].kind != TokenKind::sigil_suffix) {
         throw std::invalid_argument("incomplete sigil in preprocessed form");
     }

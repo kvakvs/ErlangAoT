@@ -1,16 +1,16 @@
 #include "tree.hpp"
 
 namespace erlang_aot::printing {
-void TreePrinter::operator()(const ast::ModuleAttribute &value) {
+void TreePrinter::operator()(const ast::ModuleAttribute &value) const {
     output_ << "ModuleAttribute name=" << atom(value.name);
     if (value.parameters) {
         output_ << " parameters=";
-        for (const auto &parameter : *value.parameters)
-            output_ << ' ' << utf8(parameter.name);
+        for (const auto &[name] : *value.parameters)
+            output_ << ' ' << utf8(name);
     }
 }
 
-void TreePrinter::operator()(const ast::FileAttribute &value) {
+void TreePrinter::operator()(const ast::FileAttribute &value) const {
     output_ << "FileAttribute name=" << literal(TokenKind::string, value.name) << " line=" << value.line.decimal;
 }
 

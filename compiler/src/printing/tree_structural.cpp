@@ -46,7 +46,7 @@ void TreePrinter::operator()(const ast::RecordAccess &value) {
     child("base", value.base);
 }
 
-void TreePrinter::operator()(const ast::RecordIndex &value) {
+void TreePrinter::operator()(const ast::RecordIndex &value) const {
     output_ << "RecordIndex record=" << atom(value.record) << " field=" << atom(value.field);
 }
 
@@ -70,7 +70,7 @@ void TreePrinter::operator()(const ast::BinarySegment &value) {
     }
 }
 
-void TreePrinter::operator()(const ast::BinaryModifier &value) {
+void TreePrinter::operator()(const ast::BinaryModifier &value) const {
     output_ << "BinaryModifier name=" << atom(value.name)
             << " parameter=" << (value.parameter ? value.parameter->decimal : "none");
 }

@@ -4,18 +4,18 @@
 #include <erlang_aot/compiler/printing.hpp>
 
 namespace erlang_aot::printing {
-std::string literal(TokenKind kind, const TokenValue &value) { return utf8(token_text(kind, value)); }
+std::string literal(const TokenKind kind, const TokenValue &value) { return utf8(token_text(kind, value)); }
 
 std::string atom(const ast::Atom &value) { return literal(TokenKind::atom, value.name); }
 
-TreePrinter::TreePrinter(std::ostream &output, const ast::Module &module, std::size_t visits)
+TreePrinter::TreePrinter(std::ostream &output, const ast::Module &module, const std::size_t visits)
     : output_(output), module_(module), visits_(visits) {}
 
 void TreePrinter::child(std::string role, Reference reference) {
     if (visits_ == 0)
         throw std::length_error("AST printing visit budget exhausted");
     --visits_;
-    pending_.push_back({std::move(role), depth_ + 1, std::move(reference)});
+    pending_.push_back({.role = std::move(role), .depth = depth_ + 1, .reference = std::move(reference)});
 }
 
 void TreePrinter::optional_child(std::string role, const std::optional<ast::ExprId> &reference) {
@@ -24,7 +24,7 @@ void TreePrinter::optional_child(std::string role, const std::optional<ast::Expr
     }
 }
 
-void TreePrinter::prefix(const Work &work) {
+void TreePrinter::prefix(const Work &work) const {
     constexpr std::size_t indentation_limit = 64;
     output_ << std::string(std::min(work.depth, indentation_limit) * 2, ' ');
     if (work.depth > indentation_limit) {
@@ -57,7 +57,7 @@ void TreePrinter::run() {
 } // namespace erlang_aot::printing
 
 namespace erlang_aot {
-void print_ast(std::ostream &output, const ast::Module &module, std::size_t visits) {
+void print_ast(std::ostream &output, const ast::Module &module, const std::size_t visits) {
     printing::TreePrinter(output, module, visits).run();
 }
 } // namespace erlang_aot

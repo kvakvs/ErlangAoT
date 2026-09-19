@@ -37,11 +37,11 @@ comparison. Failures are reported by stage; no corpus exceptions or skips were
 needed. The manifest records SHA-256 values and the runner verifies a clean
 relevant checkout at the pinned revision.
 
-| Sources | Coverage emphasis | Result |
-| --- | --- | --- |
-| stdlib `lists.erl`, `maps.erl`, `sets.erl` | clauses, comprehensions, specs, maps | Passed |
-| stdlib `erl_scan.erl` | scanner's own Erlang syntax, guards, macros | Passed |
-| compiler `beam_ssa.erl`, `beam_asm.erl` | records, includes, bit syntax, specs | Passed |
+| Sources                                                                       | Coverage emphasis                            | Result |
+|-------------------------------------------------------------------------------|----------------------------------------------|--------|
+| stdlib `lists.erl`, `maps.erl`, `sets.erl`                                    | clauses, comprehensions, specs, maps         | Passed |
+| stdlib `erl_scan.erl`                                                         | scanner's own Erlang syntax, guards, macros  | Passed |
+| compiler `beam_ssa.erl`, `beam_asm.erl`                                       | records, includes, bit syntax, specs         | Passed |
 | compiler `beam_ssa.hrl`, `beam_asm.hrl`, `beam_opcodes.hrl`, `beam_types.hrl` | declarations, type syntax, macro definitions | Passed |
 
 Options: `-I <otp>/lib/compiler/src`, explicit stdlib/kernel `--app-dir` mappings,
@@ -53,19 +53,19 @@ and are not a portable serialization contract.
 
 ## Executed build matrix
 
-Host: macOS 26.6.2 (25G83), arm64. Toolchain: Apple Clang 21.0.0
-(`clang-2100.1.1.101`), CMake 4.4.2, Homebrew Boost 1.92, OTP 29.0.5.
+Host: macOS 26.6.2 (25G83), arm64. Toolchain: Apple Clang 21.0.0 (`clang-2100.1.1.101`), CMake 4.4.2, Homebrew Boost
+1.92, OTP 29.0.5.
 
-| Configuration | Directory | Evidence |
-| --- | --- | --- |
-| Full C++23 Debug | `build/debug` | All 46 CTests and fresh full Lizard/clang-tidy gate passed |
-| Full C++26 Debug (`-std=c++26`) | `build/phase6-cxx26` | Build and all 46 CTests passed across full run and focused rerun |
-| Full C++23 ASan + UBSan | `build/phase5-sanitize` | Build and all 46 CTests passed across full run and focused rerun; no sanitizer findings |
-| Compiler-only C++23 Debug | `build/phase6-compiler-only` | Build and all 46 CTests passed |
-| Runtime-only C++23 | `build/phase6-runtime-only` | Configure/build passed; no compiler/OTP/Boost dependency discovery |
-| Linux x86-family | Unavailable | Pending execution |
-| Linux ARM | Unavailable | Pending execution |
-| Windows x86-family | Unavailable | Pending execution |
+| Configuration                   | Directory                    | Evidence                                                                                |
+|---------------------------------|------------------------------|-----------------------------------------------------------------------------------------|
+| Full C++23 Debug                | `build/debug`                | All 46 CTests and fresh full Lizard/clang-tidy gate passed                              |
+| Full C++26 Debug (`-std=c++26`) | `build/phase6-cxx26`         | Build and all 46 CTests passed across full run and focused rerun                        |
+| Full C++23 ASan + UBSan         | `build/phase5-sanitize`      | Build and all 46 CTests passed across full run and focused rerun; no sanitizer findings |
+| Compiler-only C++23 Debug       | `build/phase6-compiler-only` | Build and all 46 CTests passed                                                          |
+| Runtime-only C++23              | `build/phase6-runtime-only`  | Configure/build passed; no compiler/OTP/Boost dependency discovery                      |
+| Linux x86-family                | Unavailable                  | Pending execution                                                                       |
+| Linux ARM                       | Unavailable                  | Pending execution                                                                       |
+| Windows x86-family              | Unavailable                  | Pending execution                                                                       |
 
 The focused reruns corrected escaping of semicolons/unmatched brackets in the new
 CMake inventory checker, then reran both historical suites and the corpus with

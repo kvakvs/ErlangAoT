@@ -10,18 +10,18 @@ converted to source text to fit that interface.
 
 ## Coverage
 
-| Plan step | Implemented behavior | Evidence |
-| --- | --- | --- |
-| 4 | Source-order object definitions, initial terms, redefinition/undefinition, dependency cycles | macros, recursion, rescan, API/CLI tests |
-| 5 | Object/arity overloads, raw substitution, nested block/fun arguments, expansion budgets | arguments, macros, generated API cases |
-| 6 | Raw argument stringification using canonical OTP token values | macros exact string tokens |
-| 7 | Conditional nesting, skipped effects/errors, ordering and EOF diagnostics | conditions, errors, API tests |
-| 8 | Source directory/cwd/include search, environment substitution, application fallback, guarded recursion | includes, virtual filesystem tests, CLI collisions |
-| 9 | Module/base module, file/line mapping, expanded function headers, compatibility macros | context, rescan, location API tests |
-| 10 | Guard validation, precedence, arbitrary integers, Erlang values/operators/BIFs | guards matrix, conditions, resource tests |
-| 11 | OTP feature defaults, prefix rules, keyword changes, query macros | features, arguments, CLI feature options |
-| 12 | Literal term diagnostics, warning-only success, error latching and provenance | terms, errors, include/location tests |
-| 13 | Preprocessing CLI, offline/live reference comparisons, OTP header smoke tests | CLI, golden/oracle suites |
+| Plan step | Implemented behavior                                                                                   | Evidence                                           |
+|-----------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------|
+| 4         | Source-order object definitions, initial terms, redefinition/undefinition, dependency cycles           | macros, recursion, rescan, API/CLI tests           |
+| 5         | Object/arity overloads, raw substitution, nested block/fun arguments, expansion budgets                | arguments, macros, generated API cases             |
+| 6         | Raw argument stringification using canonical OTP token values                                          | macros exact string tokens                         |
+| 7         | Conditional nesting, skipped effects/errors, ordering and EOF diagnostics                              | conditions, errors, API tests                      |
+| 8         | Source directory/cwd/include search, environment substitution, application fallback, guarded recursion | includes, virtual filesystem tests, CLI collisions |
+| 9         | Module/base module, file/line mapping, expanded function headers, compatibility macros                 | context, rescan, location API tests                |
+| 10        | Guard validation, precedence, arbitrary integers, Erlang values/operators/BIFs                         | guards matrix, conditions, resource tests          |
+| 11        | OTP feature defaults, prefix rules, keyword changes, query macros                                      | features, arguments, CLI feature options           |
+| 12        | Literal term diagnostics, warning-only success, error latching and provenance                          | terms, errors, include/location tests              |
+| 13        | Preprocessing CLI, offline/live reference comparisons, OTP header smoke tests                          | CLI, golden/oracle suites                          |
 
 `PreprocessorSession` returns expanded ordinary forms (including implicit `-file`
 attributes) and structured diagnostics. Its buffers outlive the session through

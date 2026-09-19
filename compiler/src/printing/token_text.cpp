@@ -7,7 +7,7 @@
 namespace erlang_aot {
 namespace {
 // Erlang io_lib uses printable Latin-1 directly and named/control escapes otherwise.
-std::u32string escaped(char32_t value, char32_t quote) {
+std::u32string escaped(const char32_t value, const char32_t quote) {
     if (value == quote || value == U'\\') {
         return std::u32string{U'\\', value};
     }
@@ -35,7 +35,7 @@ std::u32string character_text(const Integer &number) {
 }
 
 // Quote decoded values; original whitespace and literal escapes are not preserved by epp.
-std::u32string quoted(std::u32string_view text, char32_t quote) {
+std::u32string quoted(const std::u32string_view text, const char32_t quote) {
     std::u32string result(1, quote);
     for (const auto item : text) {
         result += escaped(item, quote);
@@ -45,7 +45,7 @@ std::u32string quoted(std::u32string_view text, char32_t quote) {
 }
 
 // Canonical floats use Erlang's scientific presentation used by io_lib:format("~w").
-std::u32string floating_text(double value) {
+std::u32string floating_text(const double value) {
     std::array<char, 1200> data{};
     const auto end = std::to_chars(data.data(), data.data() + data.size(), value, std::chars_format::scientific).ptr;
     std::string text(data.data(), end);
@@ -75,7 +75,7 @@ std::u32string floating_text(double value) {
 }
 
 // epp's generic token writer renders sigil suffix lists as numeric lists, including [].
-std::u32string suffix_text(std::u32string_view text) {
+std::u32string suffix_text(const std::u32string_view text) {
     std::u32string result = U"[";
     for (const auto character : text) {
         if (result.size() != 1) {
@@ -88,7 +88,7 @@ std::u32string suffix_text(std::u32string_view text) {
 }
 
 // Atoms that coincide with reserved words need quotes even when their letters are ordinary.
-std::u32string atom_text(std::u32string_view text) {
+std::u32string atom_text(const std::u32string_view text) {
     if (text.empty() || !atom_start(text.front()) || word_length(text) != text.size()) {
         return quoted(text, U'\'');
     }
@@ -101,7 +101,7 @@ std::u32string atom_text(std::u32string_view text) {
 }
 } // namespace
 
-std::u32string token_text(TokenKind kind, const TokenValue &value) {
+std::u32string token_text(const TokenKind kind, const TokenValue &value) {
     if (const auto *integer = std::get_if<Integer>(&value)) {
         if (kind == TokenKind::character) {
             return character_text(*integer);
@@ -126,7 +126,7 @@ std::u32string token_text(TokenKind kind, const TokenValue &value) {
 
 std::u32string token_text(const Token &token) { return token_text(token.kind, token.value); }
 
-std::u32string stringify(std::span<const Token> tokens) {
+std::u32string stringify(const std::span<const Token> tokens) {
     std::u32string result;
     for (const auto &token : tokens) {
         if (!result.empty()) {

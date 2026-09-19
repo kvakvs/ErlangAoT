@@ -12,11 +12,11 @@ struct Component {
 };
 } // namespace
 
-void TreePrinter::operator()(const ast::LocalFunReference &value) {
+void TreePrinter::operator()(const ast::LocalFunReference &value) const {
     output_ << "LocalFunReference name=" << atom(value.name) << " arity=" << value.arity.decimal;
 }
 
-void TreePrinter::operator()(const ast::RemoteFunReference &value) {
+void TreePrinter::operator()(const ast::RemoteFunReference &value) const {
     output_ << "RemoteFunReference module=" << std::visit(Component{}, value.module)
             << " name=" << std::visit(Component{}, value.name) << " arity=" << std::visit(Component{}, value.arity);
 }

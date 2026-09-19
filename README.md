@@ -1,63 +1,36 @@
 # ErlangAoT
 
-A C++ ahead-of-time compiler project for Erlang/OTP 29, with a separate C++ runtime.
-The compiler implements OTP 29.1 preprocessing: macros, conditional compilation,
-includes, contextual macros, feature configuration, and diagnostic directives.
-`--preprocess-check` checks preprocessing and `--parse-check` checks syntax without
-an Erlang installation at runtime or output files. Neither checks semantic validity.
-The typed syntax parser is implemented and validated on macOS arm64;
-Linux and Windows execution validation remains pending.
-Semantic analysis, code generation, and runtime behavior remain unimplemented.
+An ahead-of-time compiler project for Erlang/OTP 29. Currently supports
+preprocessing and syntax parsing; semantic analysis, executable generation and
+runtime execution are not yet implemented.
 
-## Build on macOS and Linux
+Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 
-On macOS, install Apple's Command Line Tools (`xcode-select --install`). On Linux,
-install a C++23-capable compiler and GNU Make. Both need CMake 3.28 or newer.
-C++23 is the default. No LLVM development libraries or Erlang installation are
-required for this scaffold.
+## Features
 
-Compiler builds require Boost.Parser and Boost.Multiprecision from Boost 1.90 or
-newer. On macOS, an installed Homebrew Boost is discovered automatically:
+- Preprocessing: macros, includes, conditional compilation and language features.
+- OTP 29 syntax: expressions, patterns, records, bitstrings, types/specifications,
+  control flow and comprehensions.
+- Syntax checking, expanded Erlang source output and an indented syntax-tree view.
+- Source diagnostics and multiple input files.
 
-```sh
-brew install boost
-cmake --preset debug
-```
+## Build
 
-CMake searches normal installation prefixes (including `CMAKE_PREFIX_PATH`) and
-`brew --prefix boost` on macOS. Set `ERLANG_AOT_BOOST_ROOT` to select a full Boost
-source tree or installation prefix; `ERLANG_AOT_BOOST_PARSER_ROOT` can select a
-separate parser checkout. If switching installations in an existing build, clear
-cached include results with `cmake --preset debug -U 'ERLANG_AOT_BOOST*INCLUDE'`.
+Requirements:
 
-For a reproducible local Boost 1.90.0 setup, these checkouts remain a fallback:
+- CMake 3.28+ and a C++23-capable compiler.
+- Boost 1.90+ with Boost.Parser and Boost.Multiprecision.
+- Erlang/OTP 29+ for tests (enabled by default). Erlang is not needed to run the
+  built tool; configure with `-DBUILD_TESTING=OFF` to build without it.
+
+On macOS:
 
 ```sh
-git clone --depth 1 --branch boost-1.90.0 https://github.com/boostorg/parser.git build/deps/boost-parser
-curl -L https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.bz2 -o build/deps/boost_1_90_0.tar.bz2
-tar -xjf build/deps/boost_1_90_0.tar.bz2 -C build/deps boost_1_90_0/boost boost_1_90_0/LICENSE_1_0.txt
+xcode-select --install
+brew install cmake boost erlang
 ```
 
-The full archive's SHA-256 is
-`49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305`.
-The parser commit is `647cec66831407742a6ad78582f2a9f3cd7d44d3`.
-Installed Boost headers are checked against the minimum version. A standalone
-parser checkout without `boost/version.hpp` still requires the pinned 1.90.0 parser
-header checksum. No dependency is downloaded at configure time, and runtime-only
-builds do not discover Boost. Both dependencies are header-only and private to the
-compiler.
-
-For Visual Studio 2022 or VS Code, open the repository root as a CMake project.
-The checked-in `CMakePresets.json` selects C++23 and `build/debug`; configure it
-after installing the Boost headers above. In VS Code, install the recommended
-C/C++ and CMake Tools extensions. CMake Tools supplies IntelliSense with the
-actual compiler, C++ standard, and include paths, including Boost. If the editor
-still shows old errors after the first configure, run **CMake: Configure** and
-**C/C++: Reset IntelliSense Database**. A developer using a different Boost
-installation can set both Boost root variables in an ignored
-`CMakeUserPresets.json`; the shared files contain no host-specific paths.
-
-The same configuration works from a terminal:
+From the repository root:
 
 ```sh
 cmake --preset debug
@@ -65,242 +38,78 @@ cmake --build --preset debug
 ctest --preset debug
 ```
 
-The checked-in build preset uses two parallel jobs. Override it for one build with,
-for example, `cmake --build --preset debug --parallel 8`.
+The executable is `build/debug/bin/erlangaot`. Builds use two parallel jobs;
+override with `cmake --build --preset debug --parallel 8`.
 
-Native compiler test builds require installed Erlang/OTP 29 or newer. CMake finds
-`escript` on the system (preferring Homebrew's Erlang prefix on macOS), probes its
-runtime version, and stops configuration if it is missing, broken, or below OTP 29.
-Select an installation with `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript`; clear an
-older cached selection with `cmake --preset debug -U ERLANG_AOT_ESCRIPT`.
-The oracle tests use that installation; their checked-in reference records remain
-based on OTP 29.1, so differences in other releases are reported as test failures.
-Runtime-only, cross-compiled, and `-DBUILD_TESTING=OFF` builds do not require Erlang.
-Scanner and expanded-token golden tests use checked-in records.
-`preprocessor_semantics` checks owned
-sources, error recovery, source order, includes, expression semantics, locations,
-and bounded generated inputs. `preprocessor_oracle` compares expanded tokens and
-diagnostic event order with epp, including real OTP headers.
-See [preprocessor behavior and validation](docs/preprocessor.md).
-
-After installing the Boost headers above, use the root Makefile:
+Alternatively, use `make build` or `make test`. For a different configuration:
 
 ```sh
-make build
-make test
-make format # or: make fmt
+make test BUILD_DIR=build/release BUILD_TYPE=Release JOBS=4
 ```
 
-On macOS, `./run-macos.sh --help` builds first and runs the newest `erlangaot`
-executable under the selected build directory's `bin` directory. All arguments
-pass through unchanged, and relative input paths use your current directory.
-The launcher accepts the same build environment overrides, such as
-`BUILD_DIR=build/release BUILD_TYPE=Release ./run-macos.sh --version`.
+CMake discovers installed Boost and Erlang, including Homebrew installations.
+Pass these options when configuring to override defaults:
 
-`build` configures and builds the compiler, runtime, and test executables in
-`build/debug`. `test` builds first and runs CTest, showing failures. Override
-`BUILD_DIR`, `BUILD_TYPE`, or `CMAKE_ARGS` when needed, for example:
+| Option                                      | Purpose                                                       |
+|---------------------------------------------|---------------------------------------------------------------|
+| `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
+| `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select an Erlang installation; versions below 29 are rejected |
+| `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
+| `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
+| `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
+| `-DERLANG_AOT_CXX_STANDARD=26`              | Use C++26 if supported                                        |
+
+For multi-configuration generators, add `--config Debug` when building and
+`-C Debug` when testing. CMake-aware IDEs can open the repository using the
+`debug` preset.
+
+## Usage
 
 ```sh
-make test BUILD_DIR=build/release BUILD_TYPE=Release CMAKE_ARGS='-DCMAKE_CXX_COMPILER=clang++'
+./build/debug/bin/erlangaot --parse-check src/example.erl
+./build/debug/bin/erlangaot --print-pp -I include -DDEBUG src/example.erl
+./build/debug/bin/erlangaot --print-ast src/example.erl
 ```
 
-`format` and `fmt` apply the repository's `.clang-format` to C++ files under
-`compiler/`, `runtime/`, `abi/`, and `tests/`. On macOS, the Makefile also finds
-Apple's `clang-format` through `xcrun`. Set `CLANG_FORMAT` to another executable
-path if needed.
-
-Makefile builds use two parallel jobs by default; set `JOBS=4` to change this. The
-equivalent direct CMake commands remain available:
-
-```sh
-cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++
-cmake --build build/debug --parallel
-ctest --test-dir build/debug --output-on-failure
-./build/debug/bin/erlangaot --help
-./build/debug/bin/erlangaot --version
-```
-
-The default single-configuration build creates `build/debug/bin/erlangaot` and
-`build/debug/lib/liberlang_runtime.a`. Multi-configuration generators add a
-configuration subdirectory; pass `--config Debug` when building and `-C Debug`
-when testing. The runtime archive is a placeholder with no public API yet.
-
-Build either target separately with `--target erlang_aot` or
-`--target erlang_runtime`. To omit a component at configuration time, set
-`-DERLANG_AOT_BUILD_COMPILER=OFF` or `-DERLANG_AOT_BUILD_RUNTIME=OFF`.
-Disable tests with `-DBUILD_TESTING=OFF`. C++26 can be selected with
-`-DERLANG_AOT_CXX_STANDARD=26` when supported by the chosen toolchain.
-
-CMake uses the host macOS architecture by default. Set `CMAKE_OSX_ARCHITECTURES`
-and `CMAKE_OSX_DEPLOYMENT_TARGET` explicitly when needed; runtime and generated
-programs will need compatible target settings. Only native macOS builds have
-been validated so far.
-
-## CLI
+On macOS, `./run-macos.sh --parse-check src/example.erl` builds first and runs the
+latest executable, passing all arguments unchanged. It accepts `BUILD_DIR`,
+`BUILD_TYPE` and `JOBS` environment overrides.
 
 ```text
 erlangaot [options] <source.erl>...
-  -h, --help           Show help
-      --version        Show version
-  -o, --output <path>  Future executable output path (default: a.out)
-      --preprocess-check  Preprocess and report diagnostics; write no output
-      --parse-check      Preprocess and parse; report syntax diagnostics only
-      --print-pp         Print preprocessed Erlang source to stdout
-      --print-ast        Parse and print an indented syntax tree to stdout
-  -I, --include <dir>  Include directory (last supplied searched first)
-  -D, --define <name[=term]>  Initial macro (default value: true)
-      --app-dir <app=dir>  Explicit include_lib application directory
-      --enable-feature <name>  Enable a baseline feature (or all)
-      --disable-feature <name>  Disable a baseline feature (or all)
-      --               End option parsing
+  --preprocess-check       Check preprocessing only
+  --parse-check            Preprocess and check syntax
+  --print-pp               Print expanded Erlang source
+  --print-ast              Print an indented syntax tree
+  -I, --include <dir>      Add an include directory (last supplied searched first)
+  -D, --define <name[=term]>  Define a macro (default value: true)
+  --app-dir <app=dir>      Set an include_lib application directory
+  --enable-feature <name>  Enable a language feature
+  --disable-feature <name> Disable a language feature
+  -h, --help              Show all options
+  --version               Show version
+  --                      Treat remaining arguments as input paths
 ```
+
+Quote paths containing spaces and macro values containing shell punctuation:
 
 ```sh
-./build/debug/bin/erlangaot --preprocess-check -I include -DDEBUG \
-  '-DVERSION={1,0}' --app-dir myapp=/path/to/myapp src/example.erl
+./build/debug/bin/erlangaot --parse-check -I include '-DVERSION={1,0}' \
+  --app-dir myapp=/path/to/myapp src/first.erl src/second.erl
 ```
 
-Quote paths and Erlang terms for your shell. Joined `-Ipath` and `-DNAME=TERM`
-spellings are supported. Duplicate macro definitions are errors; application mappings
-use the last value; feature options apply in order. Each input has an isolated session;
-all inputs are processed and any error makes the request fail. Warnings alone succeed.
-`--output` conflicts with `--preprocess-check`, `--parse-check`, `--print-pp`, and `--print-ast`.
-No executable is created or overwritten.
+Check modes are silent on success; diagnostics go to stderr. Print modes write
+to stdout and can be combined: `--print-pp --print-ast` prints source before the
+tree for each input. Adding `--preprocess-check` does not disable parsing requested
+by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 
-Use `./run-macos.sh --print-pp -I include -DDEBUG src/example.erl` to print expanded
-Erlang source. Output uses UTF-8, normalized token spacing, and one form per line
-(multiline sigil bodies retain their spelling). It includes generated `-file` attributes;
-comments and consumed preprocessing directives are omitted. Multiple inputs print in
-argument order. Diagnostics stay on stderr; an error returns exit code 1 and may leave
-partial source on stdout. Combining `--preprocess-check` with `--print-pp` prints source.
-Feature settings still need to be supplied when consuming syntax that requires them.
+Exit codes: **0** for success (including warnings), **1** for source/input errors
+or unimplemented compilation, **2** for usage errors. Each input is processed
+independently; any source error makes the overall command fail.
 
-Use `./run-macos.sh --print-ast source.erl` to inspect the parser's typed syntax tree.
-Each object has one line containing its scalar fields; named and indexed children
-are indented by two spaces. Literals use Erlang escaping, so embedded newlines stay
-on one line. Deep trees retain every node but use `[depth=N]` after 64 indentation
-levels. For example, the body of `f(X) -> {X, 42}.` appears as:
+Syntax checks do not validate semantics or execute parse transforms. Check/print
+modes do not create output files and reject `-o`/`--output`. Requests to generate
+an executable currently fail.
 
-```text
-      body[0]: Tuple elements=2
-        element[0]: Variable name=X
-        element[1]: IntegerLiteral value=42
-```
-
-`--print-ast` accepts the same include, macro, and feature options. With `--print-pp`,
-each input's expanded source prints before its tree, using one preprocessing pass.
-With `--preprocess-check`, parsing and AST printing still run. Diagnostics use stderr;
-syntax errors return exit code 1 and the tree contains only successfully parsed forms.
-The parser supports the syntax listed below. The tree is a human-readable view,
-not a stable interchange format.
-
-Other compilation requests validate readable inputs, then report the unimplemented
-backend. Options are validated before help/version; help takes precedence over version.
-Exit codes: `0` for help/version or successful preprocessing/parsing, `2` for usage errors,
-and `1` for input/frontend errors or unimplemented compilation. Diagnostics use stderr.
-
-See [the project plan](00-plan.md) and [future Windows support](.agents/plan-windows.md).
-
-## Required quality checks
-
-[Lizard](https://github.com/terryyin/lizard) is an MIT-licensed cyclomatic
-complexity analyzer. Version 1.24.0, clang-tidy 22.1.8, and dependencies are pinned in
-`tools/requirements-quality.txt`. It analyzes source without compiling or
-requiring Clang/LLVM headers. Its lexical measurements are a review aid;
-template-heavy and newer C++ constructs can require manual interpretation.
-
-Install into the ignored project environment (Python 3.9+):
-
-```sh
-python3 -m venv .venv-quality
-.venv-quality/bin/python -m pip install -r tools/requirements-quality.txt
-```
-
-On Windows, use `py -3 -m venv .venv-quality` and
-`.venv-quality\Scripts\python.exe -m pip install -r tools/requirements-quality.txt`.
-The clang-tidy package supplies a native executable for supported wheel platforms.
-If unavailable for a host, install LLVM's clang-tidy separately and set
-`CLANG_TIDY_EXECUTABLE` when invoking the standalone script below.
-
-**Both tools must pass before a clean commit.** From the project root:
-
-```sh
-cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ \
-  -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
-cmake --build build/debug --target check-quality --parallel
-```
-
-Use a Makefiles or Ninja generator, which produces `compile_commands.json`.
-Reconfigure after changing source lists or build options. The combined target
-requires both compiler and runtime enabled and fails when either tool fails.
-It is the required pre-commit command; Git hooks are not installed automatically.
-
-[Clang-tidy](https://clang.llvm.org/extra/clang-tidy/) uses `.clang-tidy` to enable
-static analyzer, bug-prone code, performance, and cognitive-complexity checks.
-All reported warnings are errors; the per-function cognitive limit is **10**.
-This complements Lizard's cyclomatic metric. It uses the compilation database and
-CMake's detected implicit includes/Apple SDK to analyze configured project
-translation units and their included project headers. Unreferenced headers are
-not standalone translation units. System-header findings are excluded.
-
-Run clang-tidy separately with `cmake --build build/debug --target check-clang-tidy`
-or `cmake -DQUALITY_BUILD_DIR=build/debug -P cmake/CheckClangTidy.cmake`.
-For a separate installation, pass `-DCLANG_TIDY_EXECUTABLE=/path/to/clang-tidy`
-before `-P`. Normal builds remain independent of the quality-tool installation.
-
-Run the check from the project root, without configuring or building C++:
-
-```sh
-cmake -P cmake/CheckComplexity.cmake
-```
-
-After configuring CMake, the same check is available as:
-
-```sh
-cmake --build build/debug --target check-complexity
-```
-
-The initial per-function limit is **CCN 10**; a value above 10 makes the command
-fail for local checks or CI. Lizard's auxiliary defaults also flag function
-length above 1000 lines and more than 100 parameters. Reports include per-file
-averages; there is no separate aggregate file threshold yet. The scan covers C++
-under `compiler/`, `runtime/`, and `abi/`, excluding the OTP reference checkout and
-build/dependency directories. Normal builds do not run this optional target.
-
-For a report that always succeeds despite threshold violations:
-
-```sh
-.venv-quality/bin/python -m lizard -l cpp -C 10 -i -1 compiler runtime abi
-```
-
-The script accepts `-DQUALITY_PYTHON=/absolute/path/to/python` for another
-environment, and `-DCOMPLEXITY_MAX_CCN=N` for threshold experiments; put either
-option before `-P`. Use the default threshold for the project quality gate.
-
-The CLI option parser has been split into argument traversal, named-option
-handling, and output-operand handling. Its maximum CCN is now **10**, down from
-21, and both quality checks pass without suppressions or relaxed thresholds.
-
-## Parser foundation
-
-The parser implementation from the [plan](.agents/02-parser.md) is a native
-C++ API consuming expanded preprocessor tokens; cross-host validation remains open.
-The owned typed syntax AST supports
-module/file and literal attributes, export/import lists, documentation, typed record declarations,
-type/opaque/nominal declarations, type syntax, overloaded specs/callbacks and subtype constraints,
-literals and aggregates, operators/calls, maps, OTP 29
-records, bitstrings, patterns, guards, multi-clause functions, begin/case/if blocks,
-receive expressions with optional timeouts, funs/references, try/catch/after, maybe,
-and list/map/binary comprehensions with strict and zipped generators and multiple list/map templates.
-Semantic validation and compilation remain separate work. Use
-`./run-macos.sh --parse-check -I include -DDEBUG source.erl` for syntax diagnostics.
-It is silent on success, returns 1 for source errors and 2 for usage errors, and
-continues across malformed modules with isolated per-file state. Warning-only
-inputs succeed. With `--preprocess-check`, parsing still runs; adding `--print-pp`
-or `--print-ast` explicitly requests the corresponding output. `--` ends options.
-Check modes preserve existing output files and never generate an executable.
-See [parser behavior and validation](docs/parser.md) for API contracts,
-feature/source ownership and limits. The [validation matrix](docs/parser-validation.md)
-records all 344 ordinary grammar productions, the pinned OTP corpus, local build
-results and the required Linux/Windows jobs that remain pending.
+See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
+[validation status](docs/parser-validation.md) for further details.

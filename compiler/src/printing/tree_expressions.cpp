@@ -2,23 +2,23 @@
 #include "tree.hpp"
 
 namespace erlang_aot::printing {
-void TreePrinter::operator()(const ast::Atom &value) { output_ << "Atom name=" << atom(value); }
+void TreePrinter::operator()(const ast::Atom &value) const { output_ << "Atom name=" << atom(value); }
 
-void TreePrinter::operator()(const ast::Variable &value) { output_ << "Variable name=" << utf8(value.name); }
+void TreePrinter::operator()(const ast::Variable &value) const { output_ << "Variable name=" << utf8(value.name); }
 
-void TreePrinter::operator()(const ast::IntegerLiteral &value) {
+void TreePrinter::operator()(const ast::IntegerLiteral &value) const {
     output_ << "IntegerLiteral value=" << value.value.decimal;
 }
 
-void TreePrinter::operator()(const ast::FloatLiteral &value) {
+void TreePrinter::operator()(const ast::FloatLiteral &value) const {
     output_ << "FloatLiteral value=" << literal(TokenKind::floating, value.value);
 }
 
-void TreePrinter::operator()(const ast::CharacterLiteral &value) {
+void TreePrinter::operator()(const ast::CharacterLiteral &value) const {
     output_ << "CharacterLiteral value=" << literal(TokenKind::character, Integer{std::to_string(value.value)});
 }
 
-void TreePrinter::operator()(const ast::StringLiteral &value) {
+void TreePrinter::operator()(const ast::StringLiteral &value) const {
     output_ << "StringLiteral value=" << literal(TokenKind::string, value.value);
 }
 
@@ -28,7 +28,7 @@ void TreePrinter::operator()(const ast::Tuple &value) {
 }
 
 void TreePrinter::operator()(const ast::List &value) {
-    output_ << "List elements=" << value.elements.size() << " tail=" << (value.tail ? "explicit" : "nil");
+    output_ << "[count=" << value.elements.size() << " tail=" << (value.tail ? "explicit" : "nil");
     handles("element", value.elements);
     optional_child("tail", value.tail);
 }

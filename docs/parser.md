@@ -86,8 +86,8 @@ Delimiter recognition is shared with macro argument splitting.
 Each failed form rolls back all arenas and origins. Subsequent complete forms
 remain available, but failure is sticky. Resource exhaustion stops the session.
 Defaults are 1,000,000 tokens/form, 4,000,000 tokens/module, 1,000,000 nodes across
-all arenas, 1,000 diagnostics plus one exhaustion message, recursive depth 256
-(hard ceiling 512), and 16,000,000 work units. Work accounts for input tokens,
+all arenas, 1,000 diagnostics plus one exhaustion message, recursive depth 256 (hard ceiling 512), and 16,000,000 work
+units. Work accounts for input tokens,
 grammar entries, node creation, normalized literal contents and map insertion/
 metadata sorting. These are accounting limits, not wall-clock guarantees or a
 claim of linear runtime; decoded source sizes and shared binary literal limits

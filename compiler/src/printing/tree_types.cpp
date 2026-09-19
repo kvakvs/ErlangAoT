@@ -4,7 +4,7 @@
 namespace erlang_aot::printing {
 namespace {
 // Keep declaration categories readable without exposing enum ordinals.
-std::string_view declaration_kind(ast::TypeDeclarationKind kind) {
+std::string_view declaration_kind(const ast::TypeDeclarationKind kind) {
     switch (kind) {
     case ast::TypeDeclarationKind::alias:
         return "type";
@@ -111,8 +111,8 @@ void TreePrinter::operator()(const ast::FunType &value) {
 
 void TreePrinter::operator()(const ast::TypeDeclaration &value) {
     output_ << "TypeDeclaration kind=" << declaration_kind(value.kind) << " name=" << atom(value.name);
-    for (const auto &variable : value.parameters)
-        output_ << " parameter=" << utf8(variable.name);
+    for (const auto &[name] : value.parameters)
+        output_ << " parameter=" << utf8(name);
     child("type", value.type);
 }
 } // namespace erlang_aot::printing

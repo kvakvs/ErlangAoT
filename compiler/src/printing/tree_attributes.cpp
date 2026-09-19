@@ -3,22 +3,22 @@
 namespace erlang_aot::printing {
 void TreePrinter::visit(const ast::TermId &id) { module_.visit(id, *this); }
 
-void TreePrinter::arities(const std::vector<ast::NameArity> &values) {
-    for (const auto &value : values)
-        output_ << ' ' << atom(value.name) << '/' << value.arity.decimal;
+void TreePrinter::arities(const std::vector<ast::NameArity> &values) const {
+    for (const auto &[name, arity] : values)
+        output_ << ' ' << atom(name) << '/' << arity.decimal;
 }
 
-void TreePrinter::operator()(const ast::ExportAttribute &value) {
+void TreePrinter::operator()(const ast::ExportAttribute &value) const {
     output_ << "ExportAttribute";
     arities(value.functions);
 }
 
-void TreePrinter::operator()(const ast::ImportAttribute &value) {
+void TreePrinter::operator()(const ast::ImportAttribute &value) const {
     output_ << "ImportAttribute module=" << atom(value.module);
     arities(value.functions);
 }
 
-void TreePrinter::operator()(const ast::ImportRecordAttribute &value) {
+void TreePrinter::operator()(const ast::ImportRecordAttribute &value) const {
     output_ << "ImportRecordAttribute module=" << atom(value.module);
     for (const auto &name : value.names)
         output_ << ' ' << atom(name);
@@ -75,13 +75,13 @@ void TreePrinter::operator()(const ast::TermMap &value) {
     }
 }
 
-void TreePrinter::operator()(const ast::TermBits &value) {
+void TreePrinter::operator()(const ast::TermBits &value) const {
     output_ << "TermBits bits=";
     for (const auto bit : value.bits)
         output_ << (bit ? '1' : '0');
 }
 
-void TreePrinter::operator()(const ast::TermFunction &value) {
+void TreePrinter::operator()(const ast::TermFunction &value) const {
     output_ << "TermFunction target=" << atom(value.module) << ':' << atom(value.name) << '/' << value.arity.decimal;
 }
 } // namespace erlang_aot::printing

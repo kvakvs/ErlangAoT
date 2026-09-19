@@ -14,8 +14,8 @@ class TreePrinter {
     void run();
 
     // Exhaustive visitors keep every supported AST alternative visible in the output.
-    void operator()(const ast::ModuleAttribute &value);
-    void operator()(const ast::FileAttribute &value);
+    void operator()(const ast::ModuleAttribute &value) const;
+    void operator()(const ast::FileAttribute &value) const;
     void operator()(const ast::Function &value);
     void operator()(const ast::Specification &value);
     void operator()(const ast::SpecificationSignature &value);
@@ -36,9 +36,9 @@ class TreePrinter {
     void operator()(const ast::TypeDeclaration &value);
     void operator()(const ast::MapTypeField &value);
     void operator()(const ast::RecordTypeField &value);
-    void operator()(const ast::ExportAttribute &value);
-    void operator()(const ast::ImportAttribute &value);
-    void operator()(const ast::ImportRecordAttribute &value);
+    void operator()(const ast::ExportAttribute &value) const;
+    void operator()(const ast::ImportAttribute &value) const;
+    void operator()(const ast::ImportRecordAttribute &value) const;
     void operator()(const ast::GenericAttribute &value);
     void operator()(const ast::RecordDeclaration &value);
     void operator()(const ast::RecordDeclarationField &value);
@@ -47,19 +47,19 @@ class TreePrinter {
     void operator()(const ast::TermTuple &value);
     void operator()(const ast::TermList &value);
     void operator()(const ast::TermMap &value);
-    void operator()(const ast::TermBits &value);
-    void operator()(const ast::TermFunction &value);
+    void operator()(const ast::TermBits &value) const;
+    void operator()(const ast::TermFunction &value) const;
     void operator()(const ast::FunctionClause &value);
     void operator()(const ast::GuardSyntax &value);
     void operator()(const ast::GuardConjunction &value);
     void operator()(const ast::RestrictedPattern &value);
     void operator()(const ast::PatternCandidate &value);
-    void operator()(const ast::Atom &value);
-    void operator()(const ast::Variable &value);
-    void operator()(const ast::IntegerLiteral &value);
-    void operator()(const ast::FloatLiteral &value);
-    void operator()(const ast::CharacterLiteral &value);
-    void operator()(const ast::StringLiteral &value);
+    void operator()(const ast::Atom &value) const;
+    void operator()(const ast::Variable &value) const;
+    void operator()(const ast::IntegerLiteral &value) const;
+    void operator()(const ast::FloatLiteral &value) const;
+    void operator()(const ast::CharacterLiteral &value) const;
+    void operator()(const ast::StringLiteral &value) const;
     void operator()(const ast::Tuple &value);
     void operator()(const ast::List &value);
     void operator()(const ast::Group &value);
@@ -73,11 +73,11 @@ class TreePrinter {
     void operator()(const ast::MapField &value);
     void operator()(const ast::RecordExpression &value);
     void operator()(const ast::RecordAccess &value);
-    void operator()(const ast::RecordIndex &value);
+    void operator()(const ast::RecordIndex &value) const;
     void operator()(const ast::RecordField &value);
     void operator()(const ast::Bitstring &value);
     void operator()(const ast::BinarySegment &value);
-    void operator()(const ast::BinaryModifier &value);
+    void operator()(const ast::BinaryModifier &value) const;
     void operator()(const ast::BlockExpression &value);
     void operator()(const ast::CaseExpression &value);
     void operator()(const ast::IfExpression &value);
@@ -85,8 +85,8 @@ class TreePrinter {
     void operator()(const ast::BranchClause &value);
     void operator()(const ast::IfClause &value);
     void operator()(const ast::ReceiveTimeout &value);
-    void operator()(const ast::LocalFunReference &value);
-    void operator()(const ast::RemoteFunReference &value);
+    void operator()(const ast::LocalFunReference &value) const;
+    void operator()(const ast::RemoteFunReference &value) const;
     void operator()(const ast::FunExpression &value);
     void operator()(const ast::TryExpression &value);
     void operator()(const ast::CatchClause &value);
@@ -140,27 +140,27 @@ class TreePrinter {
     void qualifier_child(std::string role, const ast::ZippedQualifier &value);
     void qualifier_children(const std::vector<ast::ComprehensionQualifier> &values);
     // Write one object's role and indentation; its visitor supplies the scalar fields.
-    void prefix(const Work &work);
+    void prefix(const Work &work) const;
     // Dispatch arena handles through the module's ownership-checked accessors.
     void visit(const ast::FormId &id);
     void visit(const ast::ExprId &id);
     void visit(const ast::TermId &id);
     void visit(const ast::TypeId &id);
     // Render arities as compact scalar entries while retaining declaration order.
-    void arities(const std::vector<ast::NameArity> &values);
+    void arities(const std::vector<ast::NameArity> &values) const;
     void visit(const ast::PatternSyntaxId &id);
 
     template <typename T> void visit(const T *value) { (*this)(*value); }
 
     // Preserve positional roles for ordered arena handles and embedded objects.
-    template <typename Range> void handles(std::string_view role, const Range &values) {
+    template <typename Range> void handles(const std::string_view role, const Range &values) {
         std::size_t index = 0;
         for (const auto &id : values) {
             child(std::string(role) + '[' + std::to_string(index++) + ']', id);
         }
     }
 
-    template <typename T> void objects(std::string_view role, const std::vector<T> &values) {
+    template <typename T> void objects(const std::string_view role, const std::vector<T> &values) {
         std::size_t index = 0;
         for (const auto &value : values) {
             child(std::string(role) + '[' + std::to_string(index++) + ']', &value);
