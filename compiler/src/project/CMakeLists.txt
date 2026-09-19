@@ -7,3 +7,5 @@ target_link_libraries(erlang_project PRIVATE erlang_project_toml)
 target_sources(erlang_project PRIVATE schema.cpp decode.cpp)
 
 target_sources(erlang_project PRIVATE decode_options.cpp)
+
+target_sources(erlang_project PRIVATE paths.cpp)

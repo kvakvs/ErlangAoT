@@ -13,6 +13,8 @@
   under `tests/compiler/project/` cover schema failures and ownership.
 - `src/project/decode_options.{hpp,cpp}` and matching project tests: typed include,
   search, define, feature, and application settings with nested-key validation.
+- `src/project/paths.{hpp,cpp}` and matching project tests: UTF-8/native paths,
+  explicit path bases, regular-file validation, and ordered literal source fallback.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

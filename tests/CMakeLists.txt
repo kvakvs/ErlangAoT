@@ -297,3 +297,8 @@ add_executable(project_decode_options compiler/project/decode_options.cpp)
 erlang_aot_project_options(project_decode_options)
 target_link_libraries(project_decode_options PRIVATE erlang_project erlang_project_toml)
 add_test(NAME project_decode_options COMMAND project_decode_options)
+
+add_executable(project_paths compiler/project/paths.cpp)
+erlang_aot_project_options(project_paths)
+target_link_libraries(project_paths PRIVATE erlang_project)
+add_test(NAME project_paths COMMAND project_paths "${CMAKE_CURRENT_BINARY_DIR}/project-paths")
