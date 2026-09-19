@@ -428,3 +428,18 @@ Primary sources consulted:
   all 36 CTests pass across the full run and sequential rerun of two timed-out
   legacy OTP suites. New Phase V native/golden/live suites passed on first run.
   Formatting and diff checks pass.
+- Step14 commit e8049bc. Step15 implements Specification/Signature/TypeConstraint,
+  reusing FunType parsing and TypeId children. Legacy is_subtype(V,T) normalizes
+  with a retained syntax-style flag; only parser checks are enforced, so differing
+  overload arities and later arbitrary-argument signatures remain accepted.
+- Grouped untyped record tuples are supported; grouped typed tuples reject per yrl.
+- OTP record/type_spec helper input and first (...) signatures raise function_clause
+  or badmatch. Dedicated .builder-reject raw oracle mode records this separately;
+  native parser reports a syntax diagnostic and recovers. No epp server crash needed.
+- phase5/coverage.tsv supplements immutable historical matrices with 90 concrete
+  production-to-fixture rows. Shared oracle runner validates every linked path.
+- Step15 validation: all 37 CTests pass sequentially, including every live OTP
+  suite; fresh full Debug compiler/runtime Lizard+clang-tidy, formatting and diff
+  checks pass. ASan+UBSan build/phase5-sanitize passes attributes/types/specifications/
+  printing_ast. Historical attributes/types sources also match the native projection.
+- Phase V is complete. Resume future planned work at Phase VI step16.

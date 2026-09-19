@@ -1,0 +1,1 @@
+-spec f(A) -> A when _ :: integer().

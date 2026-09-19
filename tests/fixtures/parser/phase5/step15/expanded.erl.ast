@@ -1,0 +1,33 @@
+file	657870616e6465642e65726c	1
+module	657870616e6465645f7370656373
+file	617474726962757465732e68726c	1
+record_decl	696e636c75646564	0	1
+record_decl_field	76616c7565	1
+map	0	1
+map_field	=>
+atom	63726561746564
+call	0
+atom	666163746f7279
+file	657870616e6465642e65726c	3
+spec	0	-	72756e	1	1
+signature	1
+fun_type	1
+ann_type
+var	41
+type	696e7465676572	0
+record_type	-	696e636c75646564	0
+constraint
+var	41
+type	696e7465676572	0
+spec	1	-	636865636b	1	1
+signature	1
+fun_type	1
+var	41
+type	626f6f6c65616e	0
+constraint
+var	41
+type	696e7465676572	0
+function_full	72756e	1	1
+clause	1	0	1
+var	41
+var	41

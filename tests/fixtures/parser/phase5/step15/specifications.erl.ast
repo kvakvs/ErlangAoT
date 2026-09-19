@@ -1,0 +1,92 @@
+file	73706563696669636174696f6e732e65726c	1
+module	73706563696669636174696f6e73
+spec	0	-	66	2	1
+signature	2
+fun_type	2
+var	41
+var	42
+type	7475706c65	2
+var	41
+var	42
+constraint
+var	41
+type	696e7465676572	0
+constraint
+var	42
+type	61746f6d	0
+spec	0	-	6f766572	1	2
+signature	0
+fun_type	1
+type	696e7465676572	0
+type	61746f6d	0
+signature	0
+fun_type	1
+type	61746f6d	0
+type	696e7465676572	0
+spec	0	6f74686572	72656d6f7465	1	1
+signature	1
+fun_type	1
+var	41
+var	41
+constraint
+var	41
+type	6c697374	1
+type	696e7465676572	0
+spec	1	-	68616e646c65	2	1
+signature	2
+fun_type	2
+var	41
+var	42
+type	7475706c65	2
+atom	6f6b
+var	41
+constraint
+var	41
+type	616e79	0
+constraint
+var	42
+type	6d6170	1
+type_field	=>
+type	61746f6d	0
+type	7465726d	0
+spec	1	6f74686572	7175616c6966696564	0	1
+signature	0
+fun_type	0
+atom	6f6b
+spec	0	-	616e6e6f746174696f6e73	1	1
+signature	0
+fun_type	1
+ann_type
+var	417267
+type	696e7465676572	0
+ann_type
+var	526573756c74
+type	696e7465676572	0
+spec	0	-	756e757375616c	0	3
+signature	0
+fun_type	0
+atom	6f6b
+signature	0
+fun_type	1
+type	696e7465676572	0
+type	61746f6d	0
+signature	0
+fun_type	any
+type	616e79	0
+spec	0	-	6c65676163795f67726f7570	1	1
+signature	1
+fun_type	1
+var	41
+var	41
+constraint
+var	41
+type	7475706c65	2
+atom	746167
+type	696e7465676572	0
+function_full	66	2	1
+clause	2	0	1
+var	41
+var	42
+tuple	2
+var	41
+var	42

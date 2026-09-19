@@ -1,6 +1,6 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–IV and Phase V steps 13–14 implemented, 2026-09-19; steps 15–18 remain pending.
+Status: Phases I–V (steps 1–15) implemented, 2026-09-19; steps 16–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
@@ -517,6 +517,15 @@ passed to type-child APIs by mistake.
 Required commit: `feat(parser): add Erlang type syntax and declarations`.
 
 ### Step 15. Add specifications, callbacks, and constraints
+
+Implemented: local/qualified specs and callbacks, overloaded signatures, typed
+products/results, modern/legacy subtype constraints, and parser-only builder checks.
+The Phase V coverage index closes attribute/type rows; minimized raw fixtures
+record OTP builder exceptions separately from ordinary parser rejections.
+
+Phase V validation: 37 Debug CTests including live OTP 29.0.5 replay, full fresh
+compiler/runtime Lizard and clang-tidy gates, formatting and diff checks, plus
+four ASan/UBSan attribute/type/specification/printing tests all pass.
 
 1. Parse local and qualified specification names and every accepted envelope,
    overloaded signatures, callback forms, result types, and `when` constraints.

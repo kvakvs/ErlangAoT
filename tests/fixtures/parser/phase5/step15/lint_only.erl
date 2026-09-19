@@ -1,0 +1,2 @@
+-module(spec_lint_only).
+-spec missing() -> ok; (integer()) -> atom().

@@ -1,5 +1,11 @@
 # Architecture
 
+- Specifications/callbacks retain local or qualified names, first-signature arity,
+  overloads, function products/results and modern/legacy subtype constraints.
+  Parsing rejects malformed builder shapes while deferring overload agreement and
+  implementation/type consistency to semantic passes. Contextual helper names are
+  interpreted only at attribute dispatch; ordinary atoms retain their meanings.
+
 - Type syntax has a separate checked `TypeId` arena, type-only precedence entry
   points and exhaustive visitors. Type operators are retained, never evaluated.
   Applications preserve parser builtin/local/remote classification; declarations

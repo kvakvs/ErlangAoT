@@ -1,0 +1,91 @@
+reference_line	step	family	fixtures	production
+131	13	Attribute	step13/attributes.erl,step13/envelopes.erl	form -> attribute dot
+132	13	Attribute	step13/attributes.erl,step13/envelopes.erl	form -> function dot
+134	13	Attribute	step13/attributes.erl,step13/envelopes.erl	attribute -> '-' atom attr_val
+135	14	Attribute	step14/types.erl	attribute -> '-' atom typed_attr_val
+136	14	Attribute	step14/types.erl	attribute -> '-' atom '(' typed_attr_val ')'
+138	13	Attribute	step13/attributes.erl,step13/envelopes.erl	attribute -> '-' 'record' record_spec
+139	14	Attribute	step14/types.erl	attribute -> '-' 'record' typed_record_spec
+140	14	Attribute	step14/types.erl	attribute -> '-' 'record' '(' typed_record_spec ')'
+142	15	Attribute	step15/specifications.erl,step15/contextual.erl	attribute -> '-' 'spec' type_spec
+143	15	Attribute	step15/specifications.erl,step15/contextual.erl	attribute -> '-' 'callback' type_spec
+144	15	Attribute	step15/record_helper.builder-reject	attribute -> '-' 'record' type_spec
+146	15	Specification	step15/specifications.erl	type_spec -> spec_fun type_sigs
+147	15	Specification	step15/specifications.erl	type_spec -> '(' spec_fun type_sigs ')'
+149	15	Specification	step15/specifications.erl	spec_fun -> atom
+150	15	Specification	step15/specifications.erl	spec_fun -> atom ':' atom
+152	14	Type	step14/types.erl,step14/operators.erl	typed_attr_val -> expr ',' typed_record_fields
+153	14	Type	step14/types.erl,step14/operators.erl	typed_attr_val -> expr '::' top_type
+157	13	Attribute	step15/bad_record_bare.reject	record_spec -> atom
+158	13	Attribute	step13/attributes.erl,step13/envelopes.erl	record_spec -> atom ',' exprs
+159	13	Attribute	step13/attributes.erl,step13/envelopes.erl	record_spec -> '(' atom ',' exprs ')'
+162	13	Attribute	step15/bad_native_bare.reject	record_spec -> '#' record_name
+163	13	Attribute	step13/attributes.erl,step13/envelopes.erl	record_spec -> '#' record_name exprs
+164	13	Attribute	step13/attributes.erl,step13/envelopes.erl	record_spec -> '(' '#' record_name exprs ')'
+166	14	Type	step14/types.erl,step14/operators.erl	typed_record_spec -> atom ',' typed_record_fields
+167	14	Type	step14/types.erl,step14/operators.erl	typed_record_spec -> '#' record_name typed_record_fields
+169	14	Type	step14/types.erl,step14/operators.erl	typed_record_fields -> '{' typed_exprs '}'
+171	14	Type	step14/types.erl,step14/operators.erl	typed_exprs -> typed_expr
+172	14	Type	step14/types.erl,step14/operators.erl	typed_exprs -> typed_expr ',' typed_exprs
+173	14	Type	step14/types.erl,step14/operators.erl	typed_exprs -> expr ',' typed_exprs
+174	14	Type	step14/types.erl,step14/operators.erl	typed_exprs -> typed_expr ',' exprs
+176	14	Type	step14/types.erl,step14/operators.erl	typed_expr -> expr '::' top_type
+178	15	Specification	step15/specifications.erl	type_sigs -> type_sig
+179	15	Specification	step15/specifications.erl	type_sigs -> type_sig ',' type_sigs
+181	15	Specification	step15/specifications.erl	type_sig -> fun_type
+182	15	Specification	step15/specifications.erl	type_sig -> fun_type 'when' type_guards
+185	15	Specification	step15/specifications.erl	type_guards -> type_guard
+186	15	Specification	step15/specifications.erl	type_guards -> type_guard ',' type_guards
+188	15	Specification	step15/specifications.erl,step15/bad_constraint_arity.reject,step15/bad_constraint_variable.reject,step15/bad_constraint_name.reject	type_guard -> atom '(' top_types ')'
+189	15	Specification	step15/specifications.erl,step15/bad_constraint_wildcard.reject	type_guard -> var '::' top_type
+191	14	Type	step14/types.erl,step14/operators.erl	top_types -> top_type
+192	14	Type	step14/types.erl,step14/operators.erl	top_types -> top_type ',' top_types
+194	14	Type	step14/types.erl,step14/operators.erl	top_type -> var '::' top_type
+195	14	Type	step14/types.erl,step14/operators.erl	top_type -> type '|' top_type
+196	14	Type	step14/types.erl,step14/operators.erl	top_type -> type
+198	14	Type	step14/types.erl,step14/operators.erl	type -> type '..' type
+199	14	Type	step14/types.erl,step14/operators.erl	type -> type add_op type
+200	14	Type	step14/types.erl,step14/operators.erl	type -> type mult_op type
+201	14	Type	step14/types.erl,step14/operators.erl	type -> prefix_op type
+202	14	Type	step14/types.erl,step14/operators.erl	type -> '(' top_type ')'
+203	14	Type	step14/types.erl,step14/operators.erl	type -> var
+204	14	Type	step14/types.erl,step14/operators.erl	type -> atom
+205	14	Type	step14/types.erl,step14/operators.erl	type -> atom '(' ')'
+206	14	Type	step14/types.erl,step14/operators.erl	type -> atom '(' top_types ')'
+207	14	Type	step14/types.erl,step14/operators.erl	type -> atom ':' atom '(' ')'
+209	14	Type	step14/types.erl,step14/operators.erl	type -> atom ':' atom '(' top_types ')'
+211	14	Type	step14/types.erl,step14/operators.erl	type -> '[' ']'
+212	14	Type	step14/types.erl,step14/operators.erl	type -> '[' top_type ']'
+213	14	Type	step14/types.erl,step14/operators.erl	type -> '[' top_type ',' '...' ']'
+215	14	Type	step14/types.erl,step14/operators.erl	type -> '#' '{' '}'
+216	14	Type	step14/types.erl,step14/operators.erl	type -> '#' '{' map_pair_types '}'
+217	14	Type	step14/types.erl,step14/operators.erl	type -> '{' '}'
+218	14	Type	step14/types.erl,step14/operators.erl	type -> '{' top_types '}'
+219	14	Type	step14/types.erl,step14/operators.erl	type -> '#' atom '{' '}'
+220	14	Type	step14/types.erl,step14/operators.erl	type -> '#' atom '{' field_types '}'
+222	14	Type	step14/types.erl,step14/operators.erl	type -> '#' atom ':' record_name '{' '}'
+225	14	Type	step14/types.erl,step14/operators.erl	type -> '#' atom ':' record_name '{' field_types '}'
+228	14	Type	step14/types.erl,step14/operators.erl	type -> binary_type
+229	14	Type	step14/types.erl,step14/operators.erl	type -> integer
+230	14	Type	step14/types.erl,step14/operators.erl	type -> char
+231	14	Type	step14/types.erl,step14/operators.erl	type -> 'fun' '(' ')'
+232	14	Type	step14/types.erl,step14/operators.erl	type -> 'fun' '(' fun_type ')'
+234	14	Type	step14/types.erl,step14/operators.erl	fun_type -> '(' '...' ')' '->' top_type
+236	14	Type	step14/types.erl,step14/operators.erl	fun_type -> '(' ')' '->' top_type
+238	14	Type	step14/types.erl,step14/operators.erl	fun_type -> '(' top_types ')' '->' top_type
+242	14	Type	step14/types.erl,step14/operators.erl	map_pair_types -> map_pair_type
+243	14	Type	step14/types.erl,step14/operators.erl	map_pair_types -> map_pair_type ',' map_pair_types
+245	14	Type	step14/types.erl,step14/operators.erl	map_pair_type -> top_type '=>' top_type
+247	14	Type	step14/types.erl,step14/operators.erl	map_pair_type -> top_type ':=' top_type
+250	14	Type	step14/types.erl,step14/operators.erl	field_types -> field_type
+251	14	Type	step14/types.erl,step14/operators.erl	field_types -> field_type ',' field_types
+253	14	Type	step14/types.erl,step14/operators.erl	field_type -> atom '::' top_type
+256	14	Type	step14/types.erl,step14/operators.erl	binary_type -> '<<' '>>'
+259	14	Type	step14/types.erl,step14/operators.erl	binary_type -> '<<' bin_base_type '>>'
+261	14	Type	step14/types.erl,step14/operators.erl	binary_type -> '<<' bin_unit_type '>>'
+263	14	Type	step14/types.erl,step14/operators.erl	binary_type -> '<<' bin_base_type ',' bin_unit_type '>>'
+266	14	Type	step14/types.erl,step14/operators.erl	bin_base_type -> var ':' type
+268	14	Type	step14/types.erl,step14/operators.erl	bin_unit_type -> var ':' var '*' type
+270	13	Attribute	step13/attributes.erl,step13/envelopes.erl	attr_val -> expr
+271	13	Attribute	step13/attributes.erl,step13/envelopes.erl	attr_val -> expr ',' exprs
+272	13	Attribute	step13/attributes.erl,step13/envelopes.erl	attr_val -> '(' expr ',' exprs ')'

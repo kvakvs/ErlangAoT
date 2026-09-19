@@ -1,0 +1,1 @@
+-spec f(A) -> A when is_subtype(_, integer()).

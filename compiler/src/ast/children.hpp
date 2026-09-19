@@ -6,6 +6,8 @@ namespace erlang_aot::ast {
 struct Children {
     const Builder &builder;
     const OriginId &form;
+    void operator()(const Specification &value) const;
+    void signature(const SpecificationSignature &value) const;
 
     void child(const TypeId &id) const { source(builder.view().type(id).source); }
 

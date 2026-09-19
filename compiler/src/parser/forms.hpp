@@ -34,6 +34,11 @@ class FormParser {
     std::size_t depth_ = 0;
     // Recognize module/file attributes and the currently supported function syntax.
     ast::FormValue attribute();
+    // Specifications reuse function type products; constraints remain parser syntax.
+    ast::Specification specification(bool callback);
+    ast::SpecificationSignature signature();
+    ast::TypeConstraint constraint();
+    ast::TypeConstraint legacy_constraint(std::size_t begin);
     // Type grammar has separate precedence, payloads and category-safe child handles.
     ast::TypeId top_type();
     ast::TypeId type_expression(int minimum = 200);
@@ -57,6 +62,7 @@ class FormParser {
     ast::FormValue checked_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments);
     ast::RecordDeclaration record_declaration();
     ast::RecordDeclarationField declaration_field();
+    std::vector<ast::RecordDeclarationField> declaration_fields();
     ast::DocumentationAttribute documentation(bool module, const ast::ExprId &value);
     ast::TermId term(const ast::ExprId &expression, bool farity = true);
     ast::TermId term_value(const Value &value, const ast::NodeSource &source);

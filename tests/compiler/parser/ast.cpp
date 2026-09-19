@@ -111,6 +111,8 @@ struct FormDump {
 
     std::string operator()(const ast::TypeDeclaration &) const { return "type"; }
 
+    std::string operator()(const ast::Specification &) const { return "specification"; }
+
     std::string operator()(const ast::ModuleAttribute &value) const { return "module:" + utf8(value.name.name); }
 
     std::string operator()(const ast::FileAttribute &value) const { return "file:" + utf8(value.name); }

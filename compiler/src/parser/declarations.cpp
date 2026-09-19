@@ -1,5 +1,6 @@
 #include "attribute_values.hpp"
 #include "forms.hpp"
+#include <algorithm>
 
 namespace erlang_aot {
 ast::RecordDeclaration FormParser::record_declaration() {
@@ -8,16 +9,34 @@ ast::RecordDeclaration FormParser::record_declaration() {
     auto name = native ? record_name() : ast::Atom{value<std::u32string>(category(TokenKind::atom, "record name"))};
     if (!native)
         expect(U",");
+    ast::RecordDeclaration result{std::move(name), native, declaration_fields()};
+    if (enclosed)
+        expect(U")");
+    return result;
+}
+
+std::vector<ast::RecordDeclarationField> FormParser::declaration_fields() {
+    std::size_t groups = 0;
+    while (cursor_.take_syntax(U"(")) {
+        enter();
+        ++groups;
+    }
     expect(U"{");
-    ast::RecordDeclaration result{std::move(name), native, {}};
+    std::vector<ast::RecordDeclarationField> result;
     if (!cursor_.take_syntax(U"}")) {
         do {
-            result.fields.push_back(declaration_field());
+            result.push_back(declaration_field());
         } while (cursor_.take_syntax(U","));
         expect(U"}");
     }
-    if (enclosed)
+    const auto typed = std::ranges::any_of(result, [](const auto &field) { return field.type.has_value(); });
+    if (groups != 0 && typed)
+        fail(DiagnosticCode::parser_syntax, "typed record fields require an ungrouped tuple");
+    while (groups != 0) {
         expect(U")");
+        --groups;
+        --depth_;
+    }
     return result;
 }
 

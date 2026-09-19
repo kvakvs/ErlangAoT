@@ -188,8 +188,8 @@ levels. For example, the body of `f(X) -> {X, 42}.` appears as:
 each input's expanded source prints before its tree, using one preprocessing pass.
 With `--preprocess-check`, parsing and AST printing still run. Diagnostics use stderr;
 syntax errors return exit code 1 and the tree contains only successfully parsed forms.
-The parser currently supports the syntax listed below; unsupported specifications
-produce errors. The tree is a human-readable view, not a stable interchange format.
+The parser supports the syntax listed below. The tree is a human-readable view,
+not a stable interchange format.
 
 Other compilation requests validate readable inputs, then report the unimplemented
 backend. Options are validated before help/version; help takes precedence over version.
@@ -280,15 +280,14 @@ handling, and output-operand handling. Its maximum CCN is now **10**, down from
 
 ## Parser foundation
 
-Phases I–IV and the attribute/type steps of Phase V in the [parser plan](.agents/02-parser.md) are implemented as a native
+Phases I–V of the [parser plan](.agents/02-parser.md) are implemented as a native
 C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
 module/file and literal attributes, export/import lists, documentation, typed record declarations,
-type/opaque/nominal declarations and type syntax,
+type/opaque/nominal declarations, type syntax, overloaded specs/callbacks and subtype constraints,
 literals and aggregates, operators/calls, maps, OTP 29
 records, bitstrings, patterns, guards, multi-clause functions, begin/case/if blocks,
 receive expressions with optional timeouts, funs/references, try/catch/after, maybe,
 and list/map/binary comprehensions with strict and zipped generators and multiple list/map templates.
-Other syntax remains explicitly
-unsupported. `--print-ast` exposes the current parser; a diagnostics-only parse-check mode
+Semantic validation and compilation remain separate work. `--print-ast` exposes the parser; a diagnostics-only parse-check mode
 remains planned. See [parser behavior and validation](docs/parser.md) for API contracts,
 feature/source ownership, limits, compatibility tests, and remaining phases.

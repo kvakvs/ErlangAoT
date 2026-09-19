@@ -397,6 +397,20 @@ struct FormDump {
     // Borrow the immutable owner for safe traversal of body handles.
     const ast::Module &module;
 
+    void operator()(const ast::Specification &value) const {
+        std::cout << "spec\t" << value.callback << '\t' << (value.module ? hex(utf8(value.module->name)) : "-") << '\t'
+                  << hex(utf8(value.name.name)) << '\t' << value.arity << '\t' << value.signatures.size() << '\n';
+        for (const auto &signature : value.signatures) {
+            std::cout << "signature\t" << signature.constraints.size() << '\n';
+            TypeDump{module}(signature.function);
+            for (const auto &constraint : signature.constraints) {
+                std::cout << "constraint\n";
+                TypeDump{module}(constraint.variable);
+                module.visit(constraint.bound, TypeDump{module});
+            }
+        }
+    }
+
     void operator()(const ast::TypeDeclaration &value) const {
         std::cout << "type_decl\t" << static_cast<unsigned>(value.kind) << '\t' << hex(utf8(value.name.name)) << '\t'
                   << value.parameters.size() << '\n';

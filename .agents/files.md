@@ -1,5 +1,12 @@
 # File map
 
+- `src/{parser,ast}/specifications.cpp`, `src/printing/tree_specifications.cpp`:
+  spec/callback grammar, builder invariants and compact typed signature/constraint trees.
+- `tests/compiler/parser/specifications.cpp`, `fixtures/parser/phase5/step15/`:
+  overloads, constraints, contextual names, recovery/limits and OTP helper exceptions.
+- `fixtures/parser/phase5/coverage.tsv`: implemented Phase V production-to-fixture
+  index; checked by the shared golden/oracle runner, separate from historical records.
+
 - `ast/types.hpp`, `src/ast/types.cpp`: closed type family, checked child ownership,
   and structural invariants; the module/builder own transactional type arenas.
 - `src/parser/{types,type_primary,type_names,type_structural}.cpp`: type precedence,

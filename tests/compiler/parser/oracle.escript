@@ -9,6 +9,15 @@ main([Mode, Input]) ->
 run("raw", Input) ->
     {ok, File} = file:open(Input, [read, {encoding, utf8}]),
     try raw(File, {1,1}) after file:close(File) end;
+run("builder_exception", Input) ->
+    {ok,File}=file:open(Input,[read,{encoding,utf8}]),
+    {ok,Tokens,_}=io:scan_erl_form(File,'',{1,1}), file:close(File),
+    Result = try erl_parse:parse_form(Tokens) of
+        Value -> {unexpected_builder_result,Value}
+    catch error:function_clause -> builder_exception;
+          error:{badmatch,_} -> builder_exception
+    end,
+    case Result of builder_exception -> io:format("builder_exception~n"); _ -> erlang:error(Result) end;
 run("epp", Input) -> with_epp(Input, fun expanded/1);
 run("accept", Input) ->
     {ok, Forms} = epp:parse_file(Input, [], []),
@@ -85,6 +94,10 @@ project({attribute, _, Kind, {Name, Fields}}) when Kind =:= record; Kind =:= nat
     lists:foreach(fun declaration_field/1, Fields);
 project({attribute, _, Kind, Value}) when Kind =:= doc; Kind =:= moduledoc ->
     io:format("doc\t~B~n", [bool(Kind =:= moduledoc)]), documentation(Value);
+project({attribute,_,Kind,{Name,Signatures}}) when Kind =:= spec; Kind =:= callback ->
+    {Module,Function,Arity} = case Name of {F,A} -> {"-",F,A}; {M,F,A} -> {hex(atom_to_list(M)),F,A} end,
+    io:format("spec\t~B\t~s\t~s\t~B\t~B~n",[bool(Kind =:= callback),Module,hex(atom_to_list(Function)),Arity,length(Signatures)]),
+    lists:foreach(fun specification_signature/1,Signatures);
 project({attribute,_,Kind,{Name,Type,Parameters}}) when Kind =:= type; Kind =:= opaque; Kind =:= nominal ->
     Tag = case Kind of type -> 0; opaque -> 1; nominal -> 2 end,
     io:format("type_decl\t~B\t~s\t~B~n",[Tag,hex(atom_to_list(Name)),length(Parameters)]),
@@ -153,6 +166,11 @@ type_value({op,_,Op,A,B}) -> io:format("binary\t~s~n",[Op]), type_value(A), type
 type_value(Value) -> scalar(Value).
 type_union([T]) -> type_value(T);
 type_union([T|Rest]) -> io:format("union~n"), type_value(T), type_union(Rest).
+
+specification_signature({type,_,bounded_fun,[Function,Constraints]}) ->
+    io:format("signature\t~B~n",[length(Constraints)]), type_value(Function), lists:foreach(fun constraint/1,Constraints);
+specification_signature(Function) -> io:format("signature\t0~n"), type_value(Function).
+constraint({type,_,constraint,[{atom,_,is_subtype},[V,T]]}) -> io:format("constraint~n"), scalar(V), type_value(T).
 
 scalar({map, _, Fields}) -> map(none, Fields);
 scalar({lc, _, Templates, Qualifiers}) ->

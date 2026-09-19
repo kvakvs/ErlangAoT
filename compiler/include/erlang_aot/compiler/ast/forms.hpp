@@ -90,9 +90,33 @@ struct TypeDeclaration {
     TypeId type;
 };
 
+struct TypeConstraint {
+    // Modern and legacy subtype constraints normalize to a variable and bound.
+    Variable variable;
+    TypeId bound;
+    bool legacy;
+    NodeSource source;
+};
+
+struct SpecificationSignature {
+    // Each overload owns its function product/result and ordered when constraints.
+    FunType function;
+    std::vector<TypeConstraint> constraints;
+    NodeSource source;
+};
+
+struct Specification {
+    // First-signature arity is retained; overload agreement belongs to later lint.
+    bool callback;
+    std::optional<Atom> module;
+    Atom name;
+    std::size_t arity;
+    std::vector<SpecificationSignature> signatures;
+};
+
 using FormValue =
-    std::variant<TypeDeclaration, ModuleAttribute, FileAttribute, Function, ExportAttribute, ImportAttribute,
-                 ImportRecordAttribute, GenericAttribute, RecordDeclaration, DocumentationAttribute>;
+    std::variant<Specification, TypeDeclaration, ModuleAttribute, FileAttribute, Function, ExportAttribute,
+                 ImportAttribute, ImportRecordAttribute, GenericAttribute, RecordDeclaration, DocumentationAttribute>;
 
 struct Form {
     // Keep form identity, ordered syntax, and provenance together.

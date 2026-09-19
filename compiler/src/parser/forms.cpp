@@ -55,7 +55,7 @@ ast::FormValue FormParser::attribute() {
     if (name.name == U"record")
         return record_declaration();
     if (name.name == U"spec" || name.name == U"callback")
-        fail(DiagnosticCode::unsupported_syntax, "specification syntax is not implemented yet");
+        return specification(name.name == U"callback");
     const auto enclosed = cursor_.take_syntax(U"(");
     const auto checkpoint = builder_.view().expression_count();
     auto arguments = sequence();

@@ -1,0 +1,36 @@
+file	636f6e7465787475616c2e65726c	1
+module	636f6e7465787475616c
+spec	0	-	73706563	0	1
+signature	0
+fun_type	0
+atom	73706563
+spec	0	-	63616c6c6261636b	0	1
+signature	0
+fun_type	0
+atom	63616c6c6261636b
+spec	0	-	7265636f7264	0	1
+signature	0
+fun_type	0
+atom	7265636f7264
+spec	1	-	73706563	1	1
+signature	1
+fun_type	1
+var	41
+var	41
+constraint
+var	41
+type	7465726d	0
+function	73706563
+atom	73706563
+function	63616c6c6261636b
+atom	63616c6c6261636b
+function	7265636f7264
+atom	7265636f7264
+record_decl	706c61696e	0	2
+record_decl_field	61	0
+record_decl_field	62	1
+fun	-	1
+clause	0	0	1
+atom	6f6b
+record_decl	4f74686572	1	1
+record_decl_field	6669656c64	0

@@ -8,7 +8,7 @@ historical exact-version/skip results below describe earlier validation runs.
 
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
-## Phase V steps 13–14 — Attributes and types
+## Phase V — Attributes, types and specifications
 
 The parser now retains ordinary literal attributes, export/import lists, legacy
 module parameters, tuple/native record declarations and documentation metadata.
@@ -25,7 +25,11 @@ alias resolution, type checking and semantic validity remain later-stage work.
 Both new arenas participate in form transactions, node budgets, source ownership,
 generation checks and exhaustive public printing. Phase V fixtures and native
 attribute/type tests cover normalization, rejection, macros/includes, ownership,
-rollback and limits. Specifications/callbacks are the next planned step.
+rollback and limits. Specifications and callbacks preserve qualification, first
+signature arity, overloads, products/results and modern or legacy subtype constraints.
+Different overload arities are accepted at parse time, as in OTP; lint correspondence
+and type consistency are deferred. Exceptional OTP helper-builder inputs are tested
+separately and produce normal recoverable parser diagnostics in ErlangAoT.
 
 ## Phase IV step 10 — Branching and receive
 

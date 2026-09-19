@@ -17,6 +17,9 @@ class TreePrinter {
     void operator()(const ast::ModuleAttribute &value);
     void operator()(const ast::FileAttribute &value);
     void operator()(const ast::Function &value);
+    void operator()(const ast::Specification &value);
+    void operator()(const ast::SpecificationSignature &value);
+    void operator()(const ast::TypeConstraint &value);
     void operator()(const ast::TypeGroup &value);
     void operator()(const ast::AnnotatedType &value);
     void operator()(const ast::UnionType &value);
@@ -101,7 +104,8 @@ class TreePrinter {
 
   private:
     using Reference =
-        std::variant<ast::TypeId, const ast::MapTypeField *, const ast::RecordTypeField *, ast::FormId, ast::ExprId,
+        std::variant<const ast::SpecificationSignature *, const ast::TypeConstraint *, const ast::FunType *,
+                     ast::TypeId, const ast::MapTypeField *, const ast::RecordTypeField *, ast::FormId, ast::ExprId,
                      ast::TermId, const ast::RecordDeclarationField *, const ast::DocumentationEntry *,
                      ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *,
                      const ast::GuardConjunction *, const ast::MapField *, const ast::RecordField *,
