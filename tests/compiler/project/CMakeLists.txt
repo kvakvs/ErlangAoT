@@ -62,3 +62,7 @@ add_executable(project_execution execution.cpp)
 erlang_aot_project_options(project_execution)
 target_link_libraries(project_execution PRIVATE erlang_project)
 add_test(NAME project_execution COMMAND project_execution)
+
+add_test(NAME project_cli COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/project-cli"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/cli.cmake")

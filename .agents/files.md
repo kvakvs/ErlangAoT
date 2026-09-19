@@ -106,3 +106,5 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
   owned invocation plans, output precedence and collision detection without writes.
 - `src/project/execution.{hpp,cpp}` and matching project tests: ordered frontend
   callbacks, contextual diagnostics, failure aggregation and unsupported backend handling.
+- `src/project/{cli,command}.{hpp,cpp}`: project-owned operands, validation, help
+  and load/plan/execute command; `tests/compiler/project/cli.cmake`: public CLI contracts.

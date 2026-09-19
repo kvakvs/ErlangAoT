@@ -34,6 +34,8 @@ set_target_properties(erlang_aot PROPERTIES
 )
 erlang_aot_project_options(erlang_aot)
 target_compile_definitions(erlang_aot PRIVATE ERLANG_AOT_VERSION="${PROJECT_VERSION}")
-target_link_libraries(erlang_aot PRIVATE erlang_aot_abi erlang_frontend)
+target_link_libraries(erlang_aot PRIVATE erlang_aot_abi)
 
 add_subdirectory(src/project)
+
+target_link_libraries(erlang_aot PRIVATE erlang_project)

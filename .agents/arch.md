@@ -1,8 +1,9 @@
 # Architecture
 
-- Project support is being implemented in `compiler/src/project/`; its private
+- Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.
-  Runtime-only builds do not discover TOML. Project commands are not exposed yet.
+  Runtime-only builds do not discover TOML. Project-owned command handling exposes
+  --project and repeatable --target through thin driver dispatch/option hooks.
 - The private project library owns located configuration and bounded TOML loading;
   parsing failures retain manifest coordinates and file I/O accepts native paths.
 - Typed project decoding and source discovery retain declaration order, explicit

@@ -1,4 +1,5 @@
 #pragma once
+#include "project/cli.hpp"
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <span>
 
@@ -9,6 +10,10 @@ struct Options {
     bool show_version = false;
     // Retain the requested destination for the future code-generation stage.
     std::filesystem::path output = "a.out";
+    // Distinguish explicit output overrides from the positional-mode default.
+    bool output_explicit = false;
+    // Delegate project selection data and policy to the project component.
+    erlang_aot::project::Request project;
     // Preserve source order for input validation and future compilation.
     std::vector<std::filesystem::path> inputs;
     // Preprocessing options are recreated independently for every input module.

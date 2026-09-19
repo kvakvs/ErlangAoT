@@ -1,0 +1,56 @@
+file(REMOVE_RECURSE "${TEST_DIR}")
+file(MAKE_DIRECTORY "${TEST_DIR}")
+file(WRITE "${TEST_DIR}/shared.erl" "-module(shared). value() -> ?VALUE.\n")
+file(WRITE "${TEST_DIR}/project.toml" [=[schema_version=1
+[[targets]]
+name="app"
+sources=["shared.erl"]
+[targets.options]
+defines=["VALUE=1"]
+[[targets]]
+name="tests"
+sources=["shared.erl"]
+[targets.options]
+defines=["VALUE=2"]
+]=])
+
+# Check the project CLI contract through its public executable.
+function(check name code stdout stderr)
+    execute_process(COMMAND "${TOOL}" ${ARGN} WORKING_DIRECTORY "${TEST_DIR}"
+        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
+    if(NOT "${result}" STREQUAL "${code}" OR NOT out MATCHES "${stdout}" OR NOT err MATCHES "${stderr}")
+        message(FATAL_ERROR "${name}: exit=${result} stdout=[${out}] stderr=[${err}]")
+    endif()
+endfunction()
+check(help 0 "--project.*--target" "^$" --help)
+check(missing_project_operand 2 "^$" "expected a value" --project)
+check(missing_target_operand 2 "^$" "expected a value" --project project.toml --target)
+check(repeated_project 2 "^$" "more than once" --project project.toml --project project.toml)
+check(target_without_project 2 "^$" "requires --project" --target app)
+check(mixed 2 "^$" "positional" --project project.toml shared.erl)
+check(help_no_io 0 "Usage:" "^$" --help --project missing.toml --target missing)
+check(version_no_io 0 "^erlangaot" "^$" --version --project missing.toml)
+check(absent_project 1 "^$" "manifest" --project missing.toml)
+check(unknown_target 2 "^$" "available targets: app, tests" --project project.toml --target APP)
+check(parse_all 0 "^$" "^$" --parse-check --project project.toml)
+check(preprocess_all 0 "^$" "^$" --preprocess-check --project project.toml)
+check(target_before_project 0 "^$" "^$" --target tests --project project.toml --parse-check)
+check(print_all 0 "IntegerLiteral value=1.*IntegerLiteral value=2" "^$" --project project.toml --print-ast)
+check(print_reversed 0 "IntegerLiteral value=2.*IntegerLiteral value=1" "^$" --project project.toml --print-ast --target tests --target app)
+check(print_pp 0 "value.*1" "^$" --project project.toml --print-pp --target app)
+check(output_check_conflict 2 "^$" "cannot be used" --project project.toml --parse-check -o sentinel)
+check(output_multiple_conflict 2 "^$" "exactly one" --project project.toml -o sentinel)
+check(no_backend 1 "^$" "compilation is not implemented" --project project.toml)
+check(no_backend_output 1 "^$" "compilation is not implemented" --project project.toml --target app -o sentinel)
+check(duplicate_macro 1 "^$" "redefining macro" --project project.toml --parse-check -DVALUE=3)
+check(terminator 2 "^$" "positional" --project project.toml -- --target)
+execute_process(COMMAND "${TOOL}" --project project.toml --print-ast --target tests --target tests
+    WORKING_DIRECTORY "${TEST_DIR}" RESULT_VARIABLE code OUTPUT_VARIABLE text ERROR_VARIABLE errors)
+string(REGEX MATCHALL "IntegerLiteral value=2" matches "${text}")
+list(LENGTH matches count)
+if(NOT code EQUAL 0 OR NOT count EQUAL 1 OR NOT errors STREQUAL "")
+    message(FATAL_ERROR "Repeated target was not deduplicated")
+endif()
+if(EXISTS "${TEST_DIR}/sentinel" OR EXISTS "${TEST_DIR}/build")
+    message(FATAL_ERROR "Project check or unimplemented compilation created output")
+endif()

@@ -1,4 +1,6 @@
+#include "driver/frontend.hpp"
 #include "driver/options.hpp"
+#include "project/command.hpp"
 #include <exception>
 #include <iostream>
 
@@ -28,6 +30,23 @@ Compilation is not implemented yet. Compilation requests fail without writing
 an output file. Input paths may contain spaces when quoted by the shell.
 )";
 
+// Map generic invocation settings onto the project command's existing frontend callback.
+int run_project(const erlang_aot::cli::Options &options) {
+    erlang_aot::project::PlanOptions settings;
+    settings.working_directory = std::filesystem::current_path();
+    settings.preprocessing = options.preprocessing;
+    settings.frontend = options.preprocess;
+    if (options.output_explicit) {
+        settings.output = options.output;
+    }
+    const erlang_aot::project::FileExecutor execute = [&](const auto &path, const auto &preprocessing,
+                                                          const auto &sink) {
+        return erlang_aot::cli::process_file(
+            path, {options.print_pp, options.print_ast, options.parse_check, preprocessing}, sink);
+    };
+    return erlang_aot::project::run(options.project, settings, execute, std::cerr);
+}
+
 // Validate the request and inputs before reporting the unimplemented backend.
 int run(std::span<char *> arguments) {
     erlang_aot::cli::Options options;
@@ -36,12 +55,16 @@ int run(std::span<char *> arguments) {
         return 2;
     }
     if (options.show_help) {
-        std::cout << help;
+        std::cout << help << erlang_aot::project::help();
         return 0;
     }
     if (options.show_version) {
         std::cout << "erlangaot " << ERLANG_AOT_VERSION << '\n';
         return 0;
+    }
+
+    if (erlang_aot::project::active(options.project)) {
+        return run_project(options);
     }
 
     if (!erlang_aot::cli::validate_inputs(options.inputs)) {
