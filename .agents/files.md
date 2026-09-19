@@ -3,6 +3,8 @@
 - `docs/projects.md`: planned project schema, target selection, creation, and path policies.
 - `src/project/{CMakeLists.txt,cmake/Dependencies.cmake}`: private pinned TOML
   discovery; `tests/compiler/project/dependency.cpp`: valid/invalid TOML smoke test.
+- `src/project/model.hpp`: owned located configuration, per-target options, limits,
+  and error records; `tests/compiler/project/{model.cpp,support.hpp}`: model contracts.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

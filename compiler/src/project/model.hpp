@@ -1,0 +1,68 @@
+#pragma once
+#include <cstddef>
+#include <filesystem>
+#include <map>
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace erlang_aot::project {
+struct Site {
+    // Own the manifest filename and key context for diagnostics after TOML destruction.
+    std::filesystem::path file;
+    std::string key;
+    std::string target;
+    // Preserve one-based source coordinates; zero means unavailable.
+    std::size_t line = 0;
+    std::size_t column = 0;
+};
+
+struct Text {
+    // Keep user spelling distinct from eventual filesystem normalization.
+    std::string value;
+    Site site;
+};
+
+struct TargetOptions {
+    // Retain ordered source fallback roots and header search paths.
+    std::vector<Text> source_search_paths;
+    std::vector<Text> include_dirs;
+    // Preserve Erlang term spellings and feature overrides for frontend validation.
+    std::vector<Text> defines;
+    std::vector<Text> enable_features;
+    std::vector<Text> disable_features;
+    // Map include_lib application names to explicitly located roots.
+    std::map<std::string, Text> applications;
+};
+
+struct Target {
+    // Identify this independently configured compilation unit collection.
+    Text name;
+    // Preserve source selection order before expansion and deduplication.
+    std::vector<Text> sources;
+    std::vector<Text> source_dirs;
+    // Distinguish omitted output from an explicitly requested future destination.
+    std::optional<Text> output;
+    TargetOptions options;
+};
+
+struct Manifest {
+    // Keep the supplied manifest identity and declaration order without TOML ownership.
+    std::filesystem::path file;
+    std::vector<Target> targets;
+};
+
+struct Limits {
+    // Bound manifest parsing and total decoded configuration size.
+    std::size_t manifest_bytes = 1024 * 1024;
+    std::size_t targets = 1024;
+    std::size_t entries = 100000;
+};
+
+struct Error {
+    // Carry structured context and a stable CLI failure category.
+    Site site;
+    std::string message;
+    int exit_code = 1;
+};
+} // namespace erlang_aot::project

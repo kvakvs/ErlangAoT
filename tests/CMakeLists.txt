@@ -277,3 +277,8 @@ add_executable(project_dependency compiler/project/dependency.cpp)
 erlang_aot_project_options(project_dependency)
 target_link_libraries(project_dependency PRIVATE erlang_project_toml)
 add_test(NAME project_dependency COMMAND project_dependency)
+
+add_executable(project_model compiler/project/model.cpp)
+erlang_aot_project_options(project_model)
+target_link_libraries(project_model PRIVATE erlang_project)
+add_test(NAME project_model COMMAND project_model)

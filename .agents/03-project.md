@@ -1,11 +1,13 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–2 complete; steps 3–22 pending. Written 2026-09-19.
+Status: steps 1–3 complete; steps 4–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
 Step 2 — all 47 tests and full quality pass; runtime-only build and absent/changed
 TOML-root configuration checks pass. Pinned toml++ 3.4.0 is local under build/deps.
+Step 3 — owned model defaults/move/isolation tests, all 48 tests, formatting,
+fresh Debug build, Lizard, and clang-tidy pass.
 
 ## Objective and existing behavior
 
