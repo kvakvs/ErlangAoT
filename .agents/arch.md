@@ -8,6 +8,9 @@
 - Typed project decoding and source discovery retain declaration order, explicit
   path bases, bounded Unicode-aware wildcard matching, and directory symlink policy.
   Per-target source assembly deduplicates native filesystem identities without case folding.
+- Pure target selection precedes filesystem resolution. Invocation planning owns
+  resolved sources and independent effective frontend options for every selected
+  target, validating all work before execution and reserving outputs without writes.
 
 - CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
   C++26 is selectable. No LLVM/backend/runtime execution is implemented yet.

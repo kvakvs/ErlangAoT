@@ -100,3 +100,5 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
   discovery/options, annotated project creation, and small steps with per-commit gates.
 - `src/project/options.{hpp,cpp}` and matching project tests: isolated effective
   preprocessor settings, path bases, precedence and frontend semantic validation.
+- `src/project/plan.{hpp,cpp}` and matching project tests: selected-target preflight,
+  owned invocation plans, output precedence and collision detection without writes.

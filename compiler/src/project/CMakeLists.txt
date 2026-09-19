@@ -20,3 +20,5 @@ target_sources(erlang_project PRIVATE selection.cpp)
 
 target_sources(erlang_project PRIVATE options.cpp)
 target_link_libraries(erlang_project PUBLIC erlang_frontend)
+
+target_sources(erlang_project PRIVATE plan.cpp)

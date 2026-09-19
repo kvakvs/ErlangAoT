@@ -1,65 +1,40 @@
 # Current working memory — 2026-09-19
 
-- Project checkpoint: steps1–11 committed (latest8f48ca3); step12 applied and full
-  gate running session74282. All prior individual full gates passed; step11 all56.
-- Remaining scripts /tmp/project-step13.py through step21.py UNAPPLIED in main.
-  Scripts12–20 verified in isolated /tmp/erlangaot-project-preview (CLI +17 project
-  tests pass); preview21 combined hardening test passes after using SRC/module0.erl
-  for native case alias (uppercase .ERL is correctly rejected). Each main step still
-  requires its separate fresh full gate/commit. Step22 docs still to prepare.
-- Step18 uses NewProjectFilename strong wrapper, C++23 std::ios::noreplace;
-  step19 wraps argument accordingly. Preview focused tidy/Lizard pass all new TUs.
-- User steering: retain C++23 requirement and remove C++26 checks from project
-  validation. Do not run further C++26 checks. Initial ASan/UBSan build compiled
-  in build/project-sanitize; rebuild/test final C++23 code for step21 evidence.
-- User Makefile clean-target edit must remain unstaged/unchanged. Git commits
-  require tool escalation, authorized by plan. Use apply_patch for .agents files.
-- Previous checkpoint details below are historical; current checkpoint above wins.
+- Active task: implement all22 steps in .agents/03-project.md, separate commits
+  after each full gate. Steps1–12 committed (latest4c74e13); step13 applied and
+  all58 tests pass, full quality running session2074 /tmp/project-step13-* logs.
+- User steering: C++23 requirement; no C++26 checks for project work. Existing
+  optional standard selector is unchanged. No subagents authorized.
+- Scripts /tmp/project-step14.py through step22.py remain UNAPPLIED in main.
+  Scripts through22 were tested in /tmp/erlangaot-project-preview; project/CLI tests
+  and documentation shell examples pass. Preview21 adds project_hardening, 64th test.
+  Must still apply/review/format/full gate/commit each main step in order.
+- Step18 uses NewProjectFilename strong wrapper, std::ios::noreplace exclusive
+  creation; step19 wraps arguments. All future production TUs passed preview tidy
+  and Lizard. Step16 removes redundant direct executable frontend link.
+- Step21 prepared docs at /tmp/project-validation.md with RESULTS_PENDING marker.
+  Main build/project-sanitize and build/project-compiler-only have prewarmed C++23
+  builds, but final code must be reconfigured/rebuilt/fully tested. Runtime-only
+  final check must use absent TOML root. Linux/Windows host evidence stays pending.
+- Step22 script writes README/docs/projects/example. /tmp/project-doc-examples.py
+  executes all relevant documented shell blocks; use once against fresh demo dirs.
+- Gate helper: sh /tmp/erlangaot-project-gate.sh N freshly configures full Debug,
+  builds, runs all CTest parallel2, then full check-quality and git diff --check.
+  Never modify this helper while it runs. Full quality takes several minutes.
+- Formatter /Library/Developer/CommandLineTools/usr/bin/clang-format. Focused tidy
+  helper /tmp/project-focused-tidy.py supplies configured system includes/sysroot.
+- Git commits require require_escalated with git prefix; authorized by plan.
+  .agents edits require apply_patch. DO NOT stage/change/revert user Makefile clean
+  target edit. Stage explicit own paths, track plan ledger/files/architecture.
+- TOML private3.4.0 at /opt/homebrew/include; verified local extracted copy also
+  build/deps/tomlplusplus-3.4.0. No auto downloads; runtime never discovers TOML.
+- Important existing fixes: glob ComponentPattern wrapper, discovery splits
+  supplied pattern BEFORE joining manifest base (base may contain [!]); native
+  alias test keeps .erl lowercase. Decode invokes decode_options; preserve it.
+- Plan selected targets before filesystem resolution; definitions/features are
+  validated with real PP. No executable/backend generation or stage-reader work.
 
-- Latest checkpoint: steps1–7 committed; step6=a1e4b5b, step7=8a739d3. Step8
-  implemented, all53 + focused tidy pass; full quality running session76307 with
-  /tmp/project-step8-* logs. Glob internal ComponentPattern wrapper fixes genuine
-  swappable-parameters finding; preserve it when applying step9 matcher extension.
-  Step7 direct/alternative locals changed from const for automatic move per tidy.
-- UNAPPLIED scripts now /tmp/project-step9.py through step20.py inclusive; all
-  parse. Step16/19 CLI scripts prepared; test actual replacements after formatting.
-  Step17 explicitly includes string_view now. Step18 whole-filename suffix fix and
-  pure valid_creation_filename helper added; previous pending-review bullets below
-  are superseded. Steps21/22 still need actual portability validation/docs.
-- User-owned change appeared in Makefile: adds clean target deleting build trees.
-  Do not stage, modify, or revert it. User was told active gates use build/debug.
-
-- Active task: execute all22 steps of .agents/03-project.md, separate commits and
-  full gates per step; no subagents. Steps1–5 committed 202af94/c1e74c8/c539882/
-  d03dd39/2dd5044. Step6 passes all51 + full quality and is ready for its commit.
-- Helpers: sh /tmp/erlangaot-project-gate.sh N configures fresh full Debug, builds,
-  runs full CTest parallel2 (~72s), then required check-quality (~5min); logs
-  /tmp/project-stepN-*. NEVER edit the helper while running. Step3 helper was
-  edited while executing; standalone full quality subsequently passed.
-- /tmp/project-focused-tidy.py runs specified new TUs with full sysroot/includes.
-  Formatter /Library/Developer/CommandLineTools/usr/bin/clang-format.
-  Git commits require exec require_escalated (authorized plan). Use apply_patch
-  for protected .agents files; shell/Python cannot write them.
-- Prepared UNAPPLIED scripts /tmp/project-step7.py through step15.py, plus step17.py
-  and step18.py, contain proposed code/tests for subsequent steps. Execute each
-  only after preceding step commit; inspect actual changes, format, focused build/
-  tests/tidy, fix findings, then full gate. Steps16/19–22 not scripted yet.
-  Scripts are preparation, not verified code. Step6's textual insertion missed
-  clang-format's blank line; actual decode_options call was fixed with apply_patch.
-  Do not rerun applied scripts (would append duplicate CMake/docs content).
-- Model is owned Manifest/Target/TargetOptions/Text/Site/Limits/Error; errors throw
-  Failure with detail + rendered what(). Loader uses private toml::table and bounded
-  native reader. Decode helpers in schema.hpp/cpp. Constant size uses 1'048'576
-  after tidy rejected int multiplication. Definitions semantic validation is
-  planned via existing PP on empty input in step12, not a second Erlang parser.
-- TOML3.4 currently found at /opt/homebrew/include; verified ignored source copy
-  build/deps/tomlplusplus-3.4.0 also available. Missing/changed root and runtime-only
-  configuration checks pass. Library macros header-only/exceptions/TOML1.0.
-- Pending script review: step17 should explicitly include <string_view> in template.cpp.
-  Step18 suffix check should use folded whole filename ends_with(".toml"), not
-  extension(), to retain a filename exactly ".toml". std::ios::noreplace is supported
-  by local C++23 (probe /tmp/project-noreplace-probe.cpp); writer uses injected
-  write/close hooks and identity-checked best-effort cleanup, no overwrite.
+# Previous parser implementation evidence
 
 - User requested Phase VI of .agents/02-parser.md. Steps16/17 committed separately:
   0ff42f4 hardening; 6c58b4d parse-check/driver/API docs. Step18 local closure validated
