@@ -272,3 +272,9 @@ Alternatively pass `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` when
 configuring. No automatic downloads occur; runtime-only builds do not discover it.
 The private build enables header-only parsing with exceptions and disables
 unreleased TOML syntax. TOML headers never appear in public frontend interfaces.
+
+## Configuration limits
+
+The manifest byte limit is 1 MiB; the native reader enforces it while reading.
+TOML nesting also retains the pinned parser's own checks. Internal tests can
+supply smaller limits without changing production defaults.

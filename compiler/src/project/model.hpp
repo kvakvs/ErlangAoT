@@ -54,7 +54,7 @@ struct Manifest {
 
 struct Limits {
     // Bound manifest parsing and total decoded configuration size.
-    std::size_t manifest_bytes = 1024 * 1024;
+    std::size_t manifest_bytes = 1'048'576;
     std::size_t targets = 1024;
     std::size_t entries = 100000;
 };

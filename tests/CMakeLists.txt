@@ -282,3 +282,8 @@ add_executable(project_model compiler/project/model.cpp)
 erlang_aot_project_options(project_model)
 target_link_libraries(project_model PRIVATE erlang_project)
 add_test(NAME project_model COMMAND project_model)
+
+add_executable(project_loader compiler/project/loader.cpp)
+erlang_aot_project_options(project_loader)
+target_link_libraries(project_loader PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_loader COMMAND project_loader "${CMAKE_CURRENT_BINARY_DIR}/project-loader")

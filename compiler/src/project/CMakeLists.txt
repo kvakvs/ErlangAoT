@@ -1,4 +1,5 @@
 include(cmake/Dependencies.cmake)
-
-add_library(erlang_project INTERFACE)
-target_include_directories(erlang_project INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+add_library(erlang_project STATIC diagnostics.cpp loader.cpp)
+erlang_aot_project_options(erlang_project)
+target_include_directories(erlang_project PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(erlang_project PRIVATE erlang_project_toml)

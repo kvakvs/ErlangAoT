@@ -5,6 +5,9 @@
   discovery; `tests/compiler/project/dependency.cpp`: valid/invalid TOML smoke test.
 - `src/project/model.hpp`: owned located configuration, per-target options, limits,
   and error records; `tests/compiler/project/{model.cpp,support.hpp}`: model contracts.
+- `src/project/loader.{hpp,cpp}`: bounded native manifest reading and private TOML
+  ownership; `diagnostics.{hpp,cpp}`: owned project failures and located rendering.
+  `tests/compiler/project/loader.cpp`: syntax, size, I/O, and Unicode-path tests.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

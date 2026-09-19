@@ -5,6 +5,20 @@
   Gate helper /tmp/erlangaot-project-gate.sh takes step number; logs /tmp/project-stepN-*.
   Step2 prepared in /tmp/project-step2.py; pinned toml++3.4.0 downloaded/extracted
   to ignored build/deps (network escalation approved), archive hash in that script.
+- Progress update: steps1–3 committed 202af94/c1e74c8/c539882. Step4 implemented,
+  all49 tests pass (CTest parallel2 now ~72s), focused tidy passes after replacing
+  model size expression with literal 1'048'576. Full gate4 quality is running in
+  exec session59067; logs /tmp/project-step4-*. Gate helper stable; NEVER edit it
+  while executing (step3 had shell reread error; separate full quality passed).
+  Prepared, UNAPPLIED Python scripts /tmp/project-step5.py through step9.py contain
+  the next steps' code; inspect/run each only after preceding commit and checks.
+  Steps4/5/6/7/8 scripts parsed; step5 handles literal-NUL escaping. Step7 resets
+  its test tree for repeatability. /tmp/project-focused-tidy.py runs new TUs with
+  quality sysroot/includes. Format with /Library/Developer/CommandLineTools/usr/bin/clang-format.
+  Git commits need exec require_escalated (authorized by plan); apply_patch can
+  update protected .agents files, ordinary shell/Python writes cannot.
+  TOML discovery currently selects installed /opt/homebrew/include v3.4.0; also
+  have verified ignored build/deps copy. Missing-root + changed-cache tests pass.
 
 - User requested Phase VI of .agents/02-parser.md. Steps16/17 committed separately:
   0ff42f4 hardening; 6c58b4d parse-check/driver/API docs. Step18 local closure validated
