@@ -29,3 +29,5 @@ target_sources(erlang_project PRIVATE execution.cpp)
 target_sources(erlang_project PRIVATE cli.cpp command.cpp)
 
 target_sources(erlang_project PRIVATE template.cpp)
+
+target_sources(erlang_project PRIVATE create.cpp)

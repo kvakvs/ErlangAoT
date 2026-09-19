@@ -1,11 +1,11 @@
 # Current working memory — 2026-09-20
 
 - Active task: implement all22 steps in .agents/03-project.md, separate commits
-  after each full gate. Steps1–14 committed plus2539c2a Homebrew follow-up; step15 applied,
-  all59 tests pass, full quality running session36586 /tmp/project-step15-* logs.
+  after each full gate. Steps1–17 committed (latest065edc4) plus2539c2a Homebrew follow-up;
+  step18 applied, gate running session28420 /tmp/project-step18-* logs.
 - User steering: C++23 requirement; no C++26 checks for project work. Existing
   optional standard selector is unchanged. No subagents authorized.
-- Scripts /tmp/project-step16.py through step22.py remain UNAPPLIED in main.
+- Scripts /tmp/project-step19.py through step22.py remain UNAPPLIED in main.
   Scripts through22 were tested in /tmp/erlangaot-project-preview; project/CLI tests
   and documentation shell examples pass. Preview21 adds project_hardening, 64th test.
   Must still apply/review/format/full gate/commit each main step in order.
@@ -16,7 +16,9 @@
   Main build/project-sanitize and build/project-compiler-only have prewarmed C++23
   builds, but final code must be reconfigured/rebuilt/fully tested. Runtime-only
   final check must use absent TOML root. Linux/Windows host evidence stays pending.
-- Step22 script writes README/docs/projects/example. /tmp/project-doc-examples.py
+- Step22 script writes README/docs/projects/example and clarifies matcher budgets.
+  /tmp/project-doc-checks.py uses pip._vendor.tomli with .venv-quality/bin/python
+  for TOML blocks and relative links. /tmp/project-validation.md date now2026-09-20. /tmp/project-doc-examples.py
   executes all relevant documented shell blocks; use once against fresh demo dirs.
 - Gate helper: sh /tmp/erlangaot-project-gate.sh N freshly configures full Debug,
   builds, runs all CTest parallel2, then full check-quality and git diff --check.
