@@ -15,6 +15,7 @@ struct Storage {
     // Keep category arenas and committed source-order roots under one identity.
     std::shared_ptr<const Owner> owner = std::make_shared<const Owner>();
     Arena<Expression, ExprTag> expressions{owner};
+    Arena<LiteralTerm, TermTag> terms{owner};
     Arena<Form, FormTag> forms{owner};
     Arena<PatternSyntax, PatternSyntaxTag> patterns{owner};
     Arena<OriginTable, OriginTag> origins{owner};

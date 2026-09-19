@@ -26,6 +26,8 @@ class Module {
     std::size_t expression_count() const;
     const PatternSyntax &pattern(const PatternSyntaxId &id) const;
     std::size_t pattern_count() const;
+    const LiteralTerm &term(const TermId &id) const;
+    std::size_t term_count() const;
     // Inspect immutable per-form snapshots and the final module feature context.
     FeatureSnapshot features(const FormId &id) const;
     FeatureSnapshot features() const;
@@ -40,6 +42,10 @@ class Module {
 
     template <typename Visitor> decltype(auto) visit(const ExprId &id, Visitor &&visitor) const {
         return std::visit(std::forward<Visitor>(visitor), expression(id).value);
+    }
+
+    template <typename Visitor> decltype(auto) visit(const TermId &id, Visitor &&visitor) const {
+        return std::visit(std::forward<Visitor>(visitor), term(id).value);
     }
 
     template <typename Visitor> decltype(auto) visit(const PatternSyntaxId &id, Visitor &&visitor) const {

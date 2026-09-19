@@ -2,9 +2,9 @@
 #include <algorithm>
 
 namespace erlang_aot {
-namespace {
+
 // Literal token conversion shares scanner precision and decoded Unicode semantics.
-Value literal(const Token &token) {
+Value literal_value(const Token &token) {
     if (const auto *number = std::get_if<Integer>(&token.value)) {
         return integer(BigInt(number->decimal));
     }
@@ -24,6 +24,7 @@ Value literal(const Token &token) {
     pp_fail(DiagnosticCode::invalid_condition, "expected literal expression", token);
 }
 
+namespace {
 // The pseudo-function takes a macro name, never an evaluated expression.
 void validate_defined(const Expr &expression) {
     if (expression.children.size() != 1) {
@@ -118,7 +119,7 @@ void validate_guard(const Expr &expression) {
         validate_call(expression);
     }
     if (expression.kind == ExprKind::literal) {
-        literal(expression.token);
+        literal_value(expression.token);
     }
     if (expression.kind == ExprKind::record && !expression.modifiers.empty()) {
         pp_fail(DiagnosticCode::invalid_condition, "record construction requires record expansion", expression.token);
@@ -189,7 +190,7 @@ Value evaluate_collection(const Expr &expression, const std::function<bool(std::
 
 Value evaluate(const Expr &expression, const std::function<bool(std::u32string_view)> &defined) {
     if (expression.kind == ExprKind::literal) {
-        return literal(expression.token);
+        return literal_value(expression.token);
     }
     if (expression.kind == ExprKind::variable || expression.kind == ExprKind::record) {
         throw EvaluationFailure();

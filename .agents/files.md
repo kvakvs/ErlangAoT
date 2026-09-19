@@ -1,5 +1,13 @@
 # File map
 
+- `ast/terms.hpp`, `src/ast/attributes.cpp`: closed literal-term nodes and checked children.
+- `src/parser/{attributes,attribute_terms,term_value,term_bits}.cpp`: OTP attribute
+  shape checks and literal normalization; `attribute_values.hpp` shares group/list helpers.
+- `src/parser/{declarations,documentation}.cpp`: tuple/native record fields and doc metadata.
+- `src/printing/tree_attributes.cpp`: literal, attribute and declaration tree visitors.
+- `tests/compiler/parser/{attributes.cpp,terms_dump.hpp}`, `fixtures/parser/phase5/`:
+  ownership/rollback/budgets, private typed projections and OTP compatibility cases.
+
 - `ast/clauses.hpp`: shared guard and function-clause syntax independent of expression payloads.
 - `compiler/src/{parser,ast}/control.cpp`: block/case/if/receive grammar and construction checks.
 - `compiler/src/ast/children.hpp`: exhaustive child validation shared by node families.

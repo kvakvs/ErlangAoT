@@ -1,0 +1,120 @@
+file	617474726962757465732e65726c	1
+legacy_module	61747472696275746573	2
+var	41
+var	42
+export	3
+66	0
+66	0
+626967	999999999999999999999
+import	6c69737473	1
+72657665727365	1
+import_record	6f74686572	2
+atom	706f696e74
+atom	506f696e74
+attribute	6578706f72745f7265636f7264
+cons
+atom	706f696e74
+nil
+attribute	6578706f72745f74797065
+cons
+term_tuple	2
+atom	7468696e67
+integer	0
+nil
+attribute	6265686176696f7572
+atom	67656e5f736572766572
+attribute	6265686176696f72
+atom	637573746f6d
+attribute	636f6d70696c65
+cons
+term_tuple	2
+atom	70617273655f7472616e73666f726d
+atom	6e657665725f65786563757465
+cons
+term_tuple	2
+atom	696e6c696e65
+cons
+term_tuple	2
+atom	66
+integer	0
+nil
+nil
+attribute	6f6e5f6c6f6164
+term_tuple	2
+atom	66
+integer	0
+attribute	6f7074696f6e616c5f63616c6c6261636b73
+cons
+term_tuple	2
+atom	66
+integer	0
+nil
+attribute	637573746f6d
+term_tuple	7
+atom	6e6573746564
+cons
+term_tuple	2
+atom	66
+integer	0
+atom	7461696c
+term_map	1
+atom	6b6579
+cons
+term_tuple	2
+atom	67
+integer	2
+nil
+integer	-97
+float	3ff8000000000000
+term_bits	00100010
+term_fun
+atom	6f74686572
+atom	63616c6c
+integer	2
+record_decl	72	0	2
+record_decl_field	6669656c64	0
+record_decl_field	76616c7565	1
+block	2
+integer	1
+call	0
+atom	72756e
+record_decl	506f696e74	1	1
+record_decl_field	6669656c64	1
+map	0	1
+map_field	=>
+atom	6b6579
+atom	76616c7565
+doc	0
+cons
+integer	104
+cons
+integer	101
+cons
+integer	108
+cons
+integer	108
+cons
+integer	111
+nil
+doc	0
+atom	66616c7365
+doc	1
+atom	68696464656e
+doc	0
+metadata	2
+atom	6571756976
+equiv
+call	1
+remote
+atom	6f74686572
+atom	63616c6c
+var	58
+atom	73696e6365
+cons
+integer	50
+cons
+integer	57
+nil
+function	66
+record	0	0
+record_local	72

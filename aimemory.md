@@ -401,3 +401,19 @@ Primary sources consulted:
   build/phase4-sanitize ASan+UBSan passed parser_control/parser_exceptions/
   parser_comprehensions/printing_ast. CLI tree output checked across all new families.
 - PhaseIV complete; future plan work resumes at step13 (attributes/declarations).
+
+## 2026-09-19 — Phase V execution
+
+- Step13 adds TermId arena/rollback/visitor access and typed attrs/records/docs.
+  Most names (including export_type/compile/behaviour/on_load) intentionally use
+  GenericAttribute because erl_parse applies literal normalization only to them.
+- Private TermNormalizer traverses the expression AST with a strict whitelist;
+  Name/Arity normalizes inside lists/tuples/map values, never map keys or binaries.
+  Reuses Value comparison/numeric operations and extracted append_literal_bits;
+  no parser expression/guard evaluator or ordinary calls are executed.
+- Temporary ordinary-attribute expressions are reclaimed after conversion; doc
+  metadata can retain equiv calls, record defaults remain expression IDs.
+- Raw doc file path API test avoids epp's separate documentation-file expansion.
+- Baseline pinned29.1; new step13 fixture records generated on installed29.0.5.
+- Step13 validation: all 35 CTests pass, including live OTP suites; fresh full
+  Debug compiler/runtime Lizard and clang-tidy pass; formatting and diff checks pass.

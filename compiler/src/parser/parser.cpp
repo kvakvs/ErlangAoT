@@ -50,8 +50,8 @@ void ParserSession::State::parse(std::span<const Token> input, const Token &end,
     try {
         budget(input.size(), input.empty() ? end : input.front());
         auto transaction = builder.begin(input, end, std::move(features));
-        const auto used =
-            builder.view().forms().size() + builder.view().expression_count() + builder.view().pattern_count();
+        const auto used = builder.view().forms().size() + builder.view().expression_count() +
+                          builder.view().pattern_count() + builder.view().term_count();
         FormParser parser(input, end, builder, {limits.nodes - used, limits.nesting});
         transaction.commit(parser.parse());
     } catch (const Diagnostic &diagnostic) {

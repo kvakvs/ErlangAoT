@@ -1,15 +1,16 @@
 #include <algorithm>
 #include <bit>
 #include <erlang_aot/compiler/parser.hpp>
+#include <source_location>
 #include <stdexcept>
 
 using namespace erlang_aot;
 namespace ast = erlang_aot::ast;
 
 // Keep API regressions active in every build configuration.
-void require(bool condition) {
+void require(bool condition, std::source_location location = std::source_location::current()) {
     if (!condition) {
-        throw std::runtime_error("expanded form parser check failed");
+        throw std::runtime_error("expanded form parser check failed at line " + std::to_string(location.line()));
     }
 }
 
@@ -52,11 +53,11 @@ void scalars() {
 
 // Distinguish syntax errors, pending grammar, warnings, and preprocessor failures.
 void recovery() {
-    const auto result = parse("-module(m).\nbad() -> .\n-pending(ok).\ngood() -> 42.\n");
+    const auto result = parse("-module(m).\nbad() -> .\n-pending(run()).\ngood() -> 42.\n");
     require(result.failed && result.diagnostics.size() == 2);
     require(result.diagnostics[0].code == DiagnosticCode::parser_syntax);
-    require(result.diagnostics[1].code == DiagnosticCode::unsupported_syntax);
-    require(result.module.expression_count() == 1);
+    require(result.diagnostics[1].code == DiagnosticCode::parser_syntax);
+    require(result.module.term_count() == 0);
     require(std::get<ast::IntegerLiteral>(body(result.module, U"good").value).value.decimal == "42");
     const auto warning = parse("-warning(hello).\ngood() -> ok.\n");
     require(warning.succeeded() && warning.diagnostics.size() == 1);
@@ -189,8 +190,8 @@ void limits() {
     const auto tokens = parse("f() -> 1.", {}, limits);
     require(tokens.failed && tokens.diagnostics.front().code == DiagnosticCode::resource_limit);
     limits = {};
-    limits.nodes = 2;
-    const auto nodes = parse("f() -> 1.", {}, limits);
+    limits.nodes = 3;
+    const auto nodes = parse("f() -> {1}.", {}, limits);
     require(nodes.failed && nodes.module.expression_count() == 0);
     require(nodes.module.forms().size() == 1); // The initial implicit file attribute survives.
     limits = {};

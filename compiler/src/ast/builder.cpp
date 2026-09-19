@@ -20,8 +20,8 @@ detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end
 Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
                                   FeatureSnapshot features)
     : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
-      forms_(builder.module_.storage().forms.size()), patterns_(builder.module_.storage().patterns.size()),
-      origins_(builder.module_.storage().origins.size()) {
+      terms_(builder.module_.storage().terms.size()), forms_(builder.module_.storage().forms.size()),
+      patterns_(builder.module_.storage().patterns.size()), origins_(builder.module_.storage().origins.size()) {
     if (builder.active_) {
         throw std::logic_error("nested AST form transaction");
     }
@@ -34,6 +34,7 @@ Builder::Transaction::~Transaction() {
         storage.forms.truncate(forms_);
         storage.patterns.truncate(patterns_);
         storage.expressions.truncate(expressions_);
+        storage.terms.truncate(terms_);
         storage.origins.truncate(origins_);
         builder_.active_.reset();
     }
@@ -86,6 +87,12 @@ FormId Builder::form(FormValue value, NodeSource source) {
 }
 
 const Module &Builder::view() const { return module_; }
+
+void Builder::discard_expressions(std::size_t begin) {
+    if (!active_ || begin > module_.expression_count())
+        throw std::logic_error("invalid temporary expression checkpoint");
+    module_.storage_->expressions.truncate(begin);
+}
 
 Module Builder::finish(FeatureSnapshot features) && {
     if (active_) {

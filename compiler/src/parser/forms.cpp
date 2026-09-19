@@ -51,30 +51,20 @@ ast::FormId FormParser::parse() {
 }
 
 ast::FormValue FormParser::attribute() {
-    const auto &name = category(TokenKind::atom, "attribute name");
-    if (name.text() == U"module") {
-        return module_attribute();
-    }
-    if (name.text() == U"file") {
-        return file_attribute();
-    }
-    throw token_diagnostic(DiagnosticCode::unsupported_syntax, "attribute syntax is not implemented in Phase I", name);
-}
-
-ast::ModuleAttribute FormParser::module_attribute() {
-    expect(U"(");
-    ast::ModuleAttribute result{{value<std::u32string>(category(TokenKind::atom, "module atom"))}};
-    expect(U")");
+    auto name = ast::Atom{value<std::u32string>(category(TokenKind::atom, "attribute name"))};
+    if (name.name == U"record")
+        return record_declaration();
+    if (name.name == U"spec" || name.name == U"callback")
+        fail(DiagnosticCode::unsupported_syntax, "specification syntax is not implemented yet");
+    const auto enclosed = cursor_.take_syntax(U"(");
+    const auto checkpoint = builder_.view().expression_count();
+    auto arguments = sequence();
+    if (enclosed)
+        expect(U")");
+    auto result = ordinary_attribute(std::move(name), arguments);
+    if (!std::holds_alternative<ast::DocumentationAttribute>(result))
+        builder_.discard_expressions(checkpoint);
     return result;
-}
-
-ast::FileAttribute FormParser::file_attribute() {
-    expect(U"(");
-    auto name = value<std::u32string>(category(TokenKind::string, "filename string"));
-    expect(U",");
-    auto line = value<Integer>(category(TokenKind::integer, "file line integer"));
-    expect(U")");
-    return {std::move(name), std::move(line)};
 }
 
 } // namespace erlang_aot

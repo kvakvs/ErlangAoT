@@ -7,6 +7,32 @@ struct Children {
     const Builder &builder;
     const OriginId &form;
 
+    void child(const TermId &id) const { source(builder.view().term(id).source); }
+
+    void operator()(const ModuleAttribute &) const {}
+
+    void operator()(const FileAttribute &) const {}
+
+    void operator()(const Function &value) const { function_clauses(value.clauses); }
+
+    void operator()(const ExportAttribute &) const {}
+
+    void operator()(const ImportAttribute &) const {}
+
+    void operator()(const ImportRecordAttribute &) const {}
+
+    void operator()(const GenericAttribute &value) const { child(value.value); }
+
+    void operator()(const RecordDeclaration &value) const;
+    void operator()(const DocumentationAttribute &value) const;
+    void operator()(const TermTuple &value) const;
+    void operator()(const TermList &value) const;
+    void operator()(const TermMap &value) const;
+
+    void operator()(const TermBits &) const {}
+
+    void operator()(const TermFunction &) const {}
+
     // Validate complete control-flow payloads and their embedded source ranges.
     void body(const std::vector<ExprId> &values) const;
     void guard(const GuardSyntax &value) const;

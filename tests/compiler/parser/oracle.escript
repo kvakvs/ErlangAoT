@@ -69,15 +69,59 @@ phase1(Epp) ->
         Other -> erlang:error({unexpected_phase1_event, Other})
     end.
 
+project({attribute, _, module, {Name, Parameters}}) ->
+    io:format("legacy_module\t~s\t~B~n", [hex(atom_to_list(Name)),length(Parameters)]),
+    lists:foreach(fun(V) -> scalar({var,0,V}) end, Parameters);
 project({attribute, _, module, Name}) -> field("module", atom_to_list(Name));
 project({attribute, _, file, {Name, Line}}) ->
     io:format("file\t~s\t~B~n", [hex(filename:basename(Name)), Line]);
+project({attribute, _, export, Values}) -> io:format("export\t"), arities(Values);
+project({attribute, _, import, {Module, Values}}) -> io:format("import\t~s\t", [hex(atom_to_list(Module))]), arities(Values);
+project({attribute, _, import_record, {Module, Values}}) ->
+    io:format("import_record\t~s\t~B~n", [hex(atom_to_list(Module)),length(Values)]),
+    lists:foreach(fun term_value/1, Values);
+project({attribute, _, Kind, {Name, Fields}}) when Kind =:= record; Kind =:= native_record ->
+    io:format("record_decl\t~s\t~B\t~B~n", [hex(atom_to_list(Name)), bool(Kind =:= native_record),length(Fields)]),
+    lists:foreach(fun declaration_field/1, Fields);
+project({attribute, _, Kind, Value}) when Kind =:= doc; Kind =:= moduledoc ->
+    io:format("doc\t~B~n", [bool(Kind =:= moduledoc)]), documentation(Value);
+project({attribute, _, Name, Value}) -> field("attribute", atom_to_list(Name)), term_value(Value);
 project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
     field("function", atom_to_list(Name)), scalar(Expr);
 project({function, _, Name, Arity, Clauses}) ->
     io:format("function_full\t~s\t~B\t~B~n", [hex(atom_to_list(Name)), Arity, length(Clauses)]),
     lists:foreach(fun clause/1, Clauses);
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
+
+bool(true) -> 1;
+bool(false) -> 0.
+arities(Values) ->
+    io:format("~B~n", [length(Values)]),
+    lists:foreach(fun({Name, Arity}) -> io:format("~s\t~B~n", [hex(atom_to_list(Name)),Arity]) end, Values).
+declaration_field({record_field,_,{atom,_,Name}}) -> io:format("record_decl_field\t~s\t0~n", [hex(atom_to_list(Name))]);
+declaration_field({record_field,_,{atom,_,Name},Value}) ->
+    io:format("record_decl_field\t~s\t1~n", [hex(atom_to_list(Name))]), scalar(Value).
+documentation(Value) when is_map(Value) ->
+    io:format("metadata\t~B~n", [map_size(Value)]),
+    lists:foreach(fun({K,V}) -> term_value(K), doc_value(K,V) end, lists:sort(maps:to_list(Value)));
+documentation(Value) -> term_value(Value).
+doc_value(equiv, {call,_,_,_}=Value) -> io:format("equiv~n"), scalar(Value);
+doc_value(_, Value) -> term_value(Value).
+term_value(Value) when is_atom(Value) -> scalar({atom,0,Value});
+term_value(Value) when is_integer(Value) -> scalar({integer,0,Value});
+term_value(Value) when is_float(Value) -> scalar({float,0,Value});
+term_value(Value) when is_tuple(Value) ->
+    io:format("term_tuple\t~B~n", [tuple_size(Value)]), lists:foreach(fun term_value/1, tuple_to_list(Value));
+term_value([]) -> io:format("nil~n");
+term_value([H|T]) -> io:format("cons~n"), term_value(H), term_value(T);
+term_value(Value) when is_map(Value) ->
+    io:format("term_map\t~B~n", [map_size(Value)]),
+    lists:foreach(fun({K,V}) -> term_value(K), term_value(V) end, lists:sort(maps:to_list(Value)));
+term_value(Value) when is_bitstring(Value) ->
+    io:format("term_bits\t~s~n", [[ $0+B || <<B:1>> <= Value ]]);
+term_value(Value) when is_function(Value) ->
+    {module,M}=erlang:fun_info(Value,module), {name,N}=erlang:fun_info(Value,name), {arity,A}=erlang:fun_info(Value,arity),
+    io:format("term_fun~n"), term_value(M), term_value(N), term_value(A).
 
 scalar({map, _, Fields}) -> map(none, Fields);
 scalar({lc, _, Templates, Qualifiers}) ->

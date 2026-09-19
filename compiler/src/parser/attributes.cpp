@@ -1,0 +1,92 @@
+#include "attribute_values.hpp"
+#include "forms.hpp"
+#include "term_value.hpp"
+#include <algorithm>
+
+namespace erlang_aot {
+std::vector<ast::ExprId> attribute_list(const ast::Module &module, const ast::ExprId &id) {
+    std::vector<ast::ExprId> result;
+    auto current = id;
+    for (;;) {
+        const auto &list = attribute_as<ast::List>(module, current);
+        result.insert(result.end(), list.elements.begin(), list.elements.end());
+        if (!list.tail)
+            return result;
+        current = *list.tail;
+    }
+}
+
+std::vector<ast::NameArity> attribute_arities(const ast::Module &module, const ast::ExprId &id) {
+    std::vector<ast::NameArity> result;
+    for (const auto &item : attribute_list(module, id)) {
+        const auto &division = attribute_as<ast::BinaryExpression>(module, item);
+        if (operator_spelling(division.operation) != U"/")
+            throw EvaluationFailure();
+        result.push_back({attribute_as<ast::Atom>(module, division.left),
+                          attribute_as<ast::IntegerLiteral>(module, division.right).value});
+    }
+    return result;
+}
+
+ast::FormValue FormParser::ordinary_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments) {
+    try {
+        return checked_attribute(std::move(name), arguments);
+    } catch (const EvaluationFailure &) {
+        fail(DiagnosticCode::parser_syntax, "bad attribute value");
+    } catch (const EvaluationLimit &) {
+        fail(DiagnosticCode::resource_limit, "attribute literal budget exhausted");
+    }
+}
+
+namespace {
+// Preserve the legacy module builder's variable-list checks.
+ast::ModuleAttribute module_attribute(const ast::Module &module, const std::vector<ast::ExprId> &arguments) {
+    if (arguments.size() > 2)
+        throw EvaluationFailure();
+    ast::ModuleAttribute result{attribute_as<ast::Atom>(module, arguments.front()), {}};
+    if (arguments.size() == 2) {
+        result.parameters.emplace();
+        for (const auto &id : attribute_list(module, arguments[1]))
+            result.parameters->push_back(attribute_as<ast::Variable>(module, id));
+    }
+    return result;
+}
+
+// Two-argument attributes have distinct shapes and never fall through to literals.
+ast::FormValue paired_attribute(const ast::Module &module, const ast::Atom &name,
+                                const std::vector<ast::ExprId> &arguments) {
+    if (name.name == U"file")
+        return ast::FileAttribute{attribute_as<ast::StringLiteral>(module, arguments[0]).value,
+                                  attribute_as<ast::IntegerLiteral>(module, arguments[1]).value};
+    auto module_name = attribute_as<ast::Atom>(module, arguments[0]);
+    if (name.name == U"import")
+        return ast::ImportAttribute{std::move(module_name), attribute_arities(module, arguments[1])};
+    if (name.name == U"import_record") {
+        ast::ImportRecordAttribute result{std::move(module_name), {}};
+        for (const auto &id : attribute_list(module, arguments[1]))
+            result.names.push_back(attribute_as<ast::Atom>(module, id));
+        return result;
+    }
+
+    throw EvaluationFailure();
+}
+} // namespace
+
+ast::FormValue FormParser::checked_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments) {
+    const auto &module = builder_.view();
+    if (name.name == U"module")
+        return module_attribute(module, arguments);
+    if (arguments.size() == 2)
+        return paired_attribute(module, name, arguments);
+    if (arguments.size() != 1)
+        throw EvaluationFailure();
+    if (name.name == U"export")
+        return ast::ExportAttribute{attribute_arities(module, arguments.front())};
+    if (name.name == U"doc" || name.name == U"moduledoc")
+        return documentation(name.name == U"moduledoc", arguments.front());
+    constexpr std::u32string_view paired[]{U"file", U"import", U"import_record", U"native_record"};
+    if (std::ranges::find(paired, name.name) != std::end(paired))
+        throw EvaluationFailure();
+    return ast::GenericAttribute{std::move(name), term(arguments.front())};
+}
+} // namespace erlang_aot

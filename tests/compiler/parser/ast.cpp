@@ -113,6 +113,18 @@ struct FormDump {
 
     std::string operator()(const ast::FileAttribute &value) const { return "file:" + utf8(value.name); }
 
+    std::string operator()(const ast::ExportAttribute &) const { return "export"; }
+
+    std::string operator()(const ast::ImportAttribute &) const { return "import"; }
+
+    std::string operator()(const ast::ImportRecordAttribute &) const { return "import_record"; }
+
+    std::string operator()(const ast::GenericAttribute &) const { return "attribute"; }
+
+    std::string operator()(const ast::RecordDeclaration &) const { return "record"; }
+
+    std::string operator()(const ast::DocumentationAttribute &) const { return "documentation"; }
+
     std::string operator()(const ast::Function &value) const {
         std::string result = utf8(value.name.name);
         for (const auto &id : value.clauses.front().body) {

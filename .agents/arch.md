@@ -1,5 +1,12 @@
 # Architecture
 
+- Attribute parsing separates literal `TermId` data from default/equiv `ExprId`
+  syntax. Literal arenas participate in transactions, budgets and ownership checks;
+  temporary expression syntax is reclaimed after normalization. OTP-shaped generic
+  attributes remain data, with explicit export/import/record/documentation payloads.
+  The normalizer reuses private exact value comparison, numeric operations and the
+  shared literal binary encoder; it never invokes ordinary calls or guard evaluation.
+
 - CMake/C++23 host compiler `erlangaot`, with selectable C++26. Separate placeholder
   runtime archive and ABI interface; no compiler/runtime linkage or LLVM dependency yet.
 - `erlang_frontend` owns sources, lexing, directive grammar, and semantic preprocessing.

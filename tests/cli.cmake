@@ -110,7 +110,7 @@ check_cli(print_ast_combined 0 "^- file .*Module forms=2\n.*ModuleAttribute name
     --print-ast --print-pp --preprocess-check "source with spaces.erl")
 file(WRITE "${TEST_DIR}/parse-error.erl" "-module(broken). broken() -> . recovered() -> ok.\n")
 check_cli(print_ast_recovery 1 "Function name=recovered" "error:.*parse-error.erl" --print-ast parse-error.erl)
-file(WRITE "${TEST_DIR}/unsupported.erl" "-module(unsupported). -export([f/0]). f() -> ok.\n")
+file(WRITE "${TEST_DIR}/unsupported.erl" "-module(unsupported). -export([f/no]). f() -> ok.\n")
 check_cli(print_ast_unsupported 1 "Function name=f" "error:" --print-ast unsupported.erl)
 file(READ "${TEST_DIR}/a.out" contents)
 if(NOT contents STREQUAL "existing executable\n")

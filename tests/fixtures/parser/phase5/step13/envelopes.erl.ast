@@ -1,0 +1,60 @@
+file	656e76656c6f7065732e65726c	1
+module	656e76656c6f706573
+export	1
+66	0
+attribute	637573746f6d
+term_map	2
+atom	61
+integer	2
+atom	62
+term_tuple	1
+term_tuple	2
+atom	66
+integer	3
+attribute	637573746f6d
+term_bits	0110100001100101011011000110110001101111
+attribute	637573746f6d
+cons
+integer	1
+cons
+integer	2
+nil
+attribute	637573746f6d
+term_tuple	3
+term_tuple	2
+atom	66
+integer	2
+integer	-1
+term_bits	0110001001111001011101000110010101110011
+record_decl	67726f75706564	0	2
+record_decl_field	61	0
+record_decl_field	62	1
+integer	1
+record_decl	72	0	0
+record_decl	4f74686572	1	0
+doc	1
+metadata	2
+atom	73696e6365
+cons
+integer	50
+cons
+integer	57
+nil
+atom	7469746c65
+cons
+integer	69
+cons
+integer	120
+cons
+integer	97
+cons
+integer	109
+cons
+integer	112
+cons
+integer	108
+cons
+integer	101
+nil
+function	66
+atom	7265636f7264

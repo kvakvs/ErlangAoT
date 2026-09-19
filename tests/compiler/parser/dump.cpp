@@ -1,5 +1,6 @@
 #include "../encoding.hpp"
 #include "operators.hpp"
+#include "terms_dump.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <iostream>
 
@@ -396,12 +397,75 @@ struct FormDump {
     const ast::Module &module;
 
     void operator()(const ast::ModuleAttribute &value) const {
+        if (value.parameters) {
+            std::cout << "legacy_module\t" << hex(utf8(value.name.name)) << '\t' << value.parameters->size() << '\n';
+            for (const auto &parameter : *value.parameters)
+                std::cout << "var\t" << hex(utf8(parameter.name)) << '\n';
+            return;
+        }
         std::cout << "module\t" << hex(utf8(value.name.name)) << '\n';
     }
 
     void operator()(const ast::FileAttribute &value) const {
         const auto name = std::filesystem::path(utf8(value.name)).filename().string();
         std::cout << "file\t" << hex(name) << '\t' << value.line.decimal << '\n';
+    }
+
+    void arities(const std::vector<ast::NameArity> &values) const {
+        std::cout << values.size() << '\n';
+        for (const auto &value : values)
+            std::cout << hex(utf8(value.name.name)) << '\t' << value.arity.decimal << '\n';
+    }
+
+    void operator()(const ast::ExportAttribute &value) const {
+        std::cout << "export\t";
+        arities(value.functions);
+    }
+
+    void operator()(const ast::ImportAttribute &value) const {
+        std::cout << "import\t" << hex(utf8(value.module.name)) << '\t';
+        arities(value.functions);
+    }
+
+    void operator()(const ast::ImportRecordAttribute &value) const {
+        std::cout << "import_record\t" << hex(utf8(value.module.name)) << '\t' << value.names.size() << '\n';
+        for (const auto &name : value.names)
+            ExpressionDump{module}(name);
+    }
+
+    void operator()(const ast::GenericAttribute &value) const {
+        std::cout << "attribute\t" << hex(utf8(value.name.name)) << '\n';
+        module.visit(value.value, TermDump{module});
+    }
+
+    void operator()(const ast::RecordDeclaration &value) const {
+        std::cout << "record_decl\t" << hex(utf8(value.name.name)) << '\t' << value.native << '\t'
+                  << value.fields.size() << '\n';
+        for (const auto &field : value.fields) {
+            std::cout << "record_decl_field\t" << hex(utf8(field.name.name)) << '\t' << field.default_value.has_value()
+                      << '\n';
+            if (field.default_value)
+                module.visit(*field.default_value, ExpressionDump{module});
+        }
+    }
+
+    void operator()(const ast::DocumentationAttribute &value) const {
+        std::cout << "doc\t" << value.module << '\n';
+        if (const auto *literal = std::get_if<ast::TermId>(&value.value)) {
+            module.visit(*literal, TermDump{module});
+            return;
+        }
+        const auto &entries = std::get<std::vector<ast::DocumentationEntry>>(value.value);
+        std::cout << "metadata\t" << entries.size() << '\n';
+        for (const auto &entry : entries) {
+            module.visit(entry.key, TermDump{module});
+            if (const auto *literal = std::get_if<ast::TermId>(&entry.value))
+                module.visit(*literal, TermDump{module});
+            else {
+                std::cout << "equiv\n";
+                module.visit(std::get<ast::ExprId>(entry.value), ExpressionDump{module});
+            }
+        }
     }
 
     void clause(const ast::FunctionClause &value) const {

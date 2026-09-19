@@ -1,0 +1,11 @@
+-module envelopes.
+-export [f/0].
+-custom #{a => 1, a => 2, b => {f/3}}.
+-custom <<"hello"/utf8>>.
+-custom [1|[2|[]]].
+-custom {((f)/(2)), -(1), ~b"bytes"}.
+-record(grouped, {(a), (b = 1)}).
+-record(r, {}).
+-record(#Other{}).
+-moduledoc(#{since => "29", title => "Example"}).
+f() -> record.

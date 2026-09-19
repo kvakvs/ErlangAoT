@@ -4,6 +4,8 @@
 #include "parsing/token_cursor.hpp"
 
 namespace erlang_aot {
+struct Value;
+
 struct GrammarBudget {
     // Keep allocation and recursive grammar limits distinct at the call boundary.
     std::size_t nodes;
@@ -32,8 +34,16 @@ class FormParser {
     std::size_t depth_ = 0;
     // Recognize module/file attributes and the currently supported function syntax.
     ast::FormValue attribute();
-    ast::ModuleAttribute module_attribute();
-    ast::FileAttribute file_attribute();
+    ast::FormValue ordinary_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments);
+    ast::FormValue checked_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments);
+    ast::RecordDeclaration record_declaration();
+    ast::RecordDeclarationField declaration_field();
+    ast::DocumentationAttribute documentation(bool module, const ast::ExprId &value);
+    ast::TermId term(const ast::ExprId &expression, bool farity = true);
+    ast::TermId term_value(const Value &value, const ast::NodeSource &source);
+    ast::TermValue term_container(const Value &value, const ast::NodeSource &source);
+    ast::TermValue term_sequence(const Value &value, const ast::NodeSource &source);
+    std::vector<ast::DocumentationEntry> documentation_entries(const ast::MapExpression &value, bool module);
     ast::Function function();
     ast::FunctionClause clause(std::size_t begin);
     std::vector<ast::PatternSyntaxId> arguments();

@@ -1,6 +1,6 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–IV (steps 1–12) implemented, 2026-09-19; steps 13–18 remain pending.
+Status: Phases I–IV and Phase V step 13 implemented, 2026-09-19; steps 14–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
@@ -463,6 +463,10 @@ Required commit: `feat(parser): add OTP 29 comprehensions and qualifiers`.
 ## Phase V — Attributes and type syntax
 
 ### Step 13. Parse ordinary attributes and record declarations
+
+Implemented: typed attribute/record/doc payloads and owner-checked literal-term
+arena, shared literal binary encoding, exhaustive tree/oracle projections, and
+Phase V step 13 fixtures. Raw documentation paths are preserved without I/O.
 
 1. Replace the minimal module parser with full attribute dispatch, including
    contextual `record`, `spec`, and `callback` recognition at form start only.

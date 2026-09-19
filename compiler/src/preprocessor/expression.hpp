@@ -63,9 +63,14 @@ class ExpressionParser {
 void validate_guard(const Expr &expression);
 bool literal_term(const Expr &expression);
 Value evaluate(const Expr &expression, const std::function<bool(std::u32string_view)> &defined);
+// Convert decoded scalar tokens without parsing or evaluating executable syntax.
+Value literal_value(const Token &token);
 Value evaluate_operator(std::u32string_view name, const std::vector<Value> &arguments);
 Value guard_call(std::u32string_view name, const std::vector<Value> &arguments);
 Value evaluate_bits(const Expr &expression, const std::function<bool(std::u32string_view)> &defined);
+// Encode an already validated literal segment without invoking expression evaluation.
+void append_literal_bits(Value &output, const Value &value, const std::optional<Value> &size,
+                         std::span<const Token> modifiers, bool string);
 bool operator_signature(std::u32string_view name, std::size_t arity);
 bool guard_signature(std::u32string_view name, std::size_t arity);
 // A condition is true only for atom true; ordinary evaluation errors mean false.

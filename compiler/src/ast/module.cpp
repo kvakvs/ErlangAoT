@@ -38,6 +38,10 @@ const Expression &Module::expression(const ExprId &id) const { return storage().
 
 std::size_t Module::expression_count() const { return storage().expressions.size(); }
 
+const LiteralTerm &Module::term(const TermId &id) const { return storage().terms.get(id); }
+
+std::size_t Module::term_count() const { return storage().terms.size(); }
+
 const PatternSyntax &Module::pattern(const PatternSyntaxId &id) const { return storage().patterns.get(id); }
 
 std::size_t Module::pattern_count() const { return storage().patterns.size(); }

@@ -1,0 +1,2 @@
+-define(DEFAULT, #{created => factory()}).
+-record(included, {value = ?DEFAULT}).

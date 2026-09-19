@@ -24,7 +24,7 @@ void set_unit(Segment &result, std::span<const Token> tokens, std::size_t &posit
     if (!value) {
         throw EvaluationFailure();
     }
-    const auto unit = index(integer(BigInt(value->decimal)), 256);
+    const auto unit = index(literal_value(tokens[position]), 256);
     if (unit == 0 || (result.explicit_unit && result.unit != unit)) {
         throw EvaluationFailure();
     }
@@ -171,26 +171,12 @@ void append_value(Value &output, const Value &value, const Segment &segment, std
 }
 
 void append_segment(Value &result, const Expr &expression, const std::function<bool(std::u32string_view)> &defined) {
-    const auto settings = modifiers(expression);
     const auto value = evaluate(expression.children.front(), defined);
-    std::size_t count = settings.type == U"float" ? 64 : 8;
-    if (value.kind == ValueKind::bits) {
-        count = value.bits.size();
-    }
-    if (expression.children.size() == 2) {
-        const auto size = evaluate(expression.children[1], defined);
-        if (integral(size) > 1000000 / settings.unit) {
-            throw EvaluationLimit();
-        }
-        count = index(size) * settings.unit;
-    }
-    if (expression.children.front().token.kind == TokenKind::string) {
-        for (const auto &character : value.elements) {
-            append_value(result, character, settings, count);
-        }
-    } else {
-        append_value(result, value, settings, count);
-    }
+    std::optional<Value> size;
+    if (expression.children.size() == 2)
+        size = evaluate(expression.children[1], defined);
+    append_literal_bits(result, value, size, expression.modifiers,
+                        expression.children.front().token.kind == TokenKind::string);
 }
 } // namespace
 
@@ -201,5 +187,26 @@ Value evaluate_bits(const Expr &expression, const std::function<bool(std::u32str
         append_segment(result, segment, defined);
     }
     return result;
+}
+
+void append_literal_bits(Value &output, const Value &value, const std::optional<Value> &size,
+                         std::span<const Token> tokens, bool string) {
+    Expr descriptor{ExprKind::segment, {}, {}, {tokens.begin(), tokens.end()}};
+    descriptor.children.resize(size ? 2 : 1);
+    const auto settings = modifiers(descriptor);
+    auto count = settings.type == U"float" ? std::size_t{64} : std::size_t{8};
+    if (value.kind == ValueKind::bits)
+        count = value.bits.size();
+    if (size) {
+        if (integral(*size) > 1000000 / settings.unit)
+            throw EvaluationLimit();
+        count = index(*size) * settings.unit;
+    }
+    if (string) {
+        for (const auto &character : value.elements)
+            append_value(output, character, settings, count);
+    } else {
+        append_value(output, value, settings, count);
+    }
 }
 } // namespace erlang_aot

@@ -17,6 +17,19 @@ class TreePrinter {
     void operator()(const ast::ModuleAttribute &value);
     void operator()(const ast::FileAttribute &value);
     void operator()(const ast::Function &value);
+    void operator()(const ast::ExportAttribute &value);
+    void operator()(const ast::ImportAttribute &value);
+    void operator()(const ast::ImportRecordAttribute &value);
+    void operator()(const ast::GenericAttribute &value);
+    void operator()(const ast::RecordDeclaration &value);
+    void operator()(const ast::RecordDeclarationField &value);
+    void operator()(const ast::DocumentationAttribute &value);
+    void operator()(const ast::DocumentationEntry &value);
+    void operator()(const ast::TermTuple &value);
+    void operator()(const ast::TermList &value);
+    void operator()(const ast::TermMap &value);
+    void operator()(const ast::TermBits &value);
+    void operator()(const ast::TermFunction &value);
     void operator()(const ast::FunctionClause &value);
     void operator()(const ast::GuardSyntax &value);
     void operator()(const ast::GuardConjunction &value);
@@ -72,10 +85,11 @@ class TreePrinter {
 
   private:
     using Reference = std::variant<
-        ast::FormId, ast::ExprId, ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *,
-        const ast::GuardConjunction *, const ast::MapField *, const ast::RecordField *, const ast::BinarySegment *,
-        const ast::BinaryModifier *, const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *,
-        const ast::CatchClause *, const ast::MaybeMatch *, const ast::Qualifier *, const ast::ZippedQualifier *>;
+        ast::FormId, ast::ExprId, ast::TermId, const ast::RecordDeclarationField *, const ast::DocumentationEntry *,
+        ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *, const ast::GuardConjunction *,
+        const ast::MapField *, const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *,
+        const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *, const ast::CatchClause *,
+        const ast::MaybeMatch *, const ast::Qualifier *, const ast::ZippedQualifier *>;
 
     struct Work {
         // Retain child roles and depth independently of the native call stack.
@@ -106,6 +120,9 @@ class TreePrinter {
     // Dispatch arena handles through the module's ownership-checked accessors.
     void visit(const ast::FormId &id);
     void visit(const ast::ExprId &id);
+    void visit(const ast::TermId &id);
+    // Render arities as compact scalar entries while retaining declaration order.
+    void arities(const std::vector<ast::NameArity> &values);
     void visit(const ast::PatternSyntaxId &id);
 
     template <typename T> void visit(const T *value) { (*this)(*value); }

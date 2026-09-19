@@ -26,6 +26,11 @@ target_include_directories(parser_exceptions PRIVATE "${PROJECT_SOURCE_DIR}/comp
 target_link_libraries(parser_exceptions PRIVATE erlang_frontend)
 add_test(NAME parser_exceptions COMMAND parser_exceptions)
 add_executable(parser_comprehensions compiler/parser/comprehensions.cpp)
+add_executable(parser_attributes compiler/parser/attributes.cpp)
+erlang_aot_project_options(parser_attributes)
+target_include_directories(parser_attributes PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(parser_attributes PRIVATE erlang_frontend)
+add_test(NAME parser_attributes COMMAND parser_attributes)
 erlang_aot_project_options(parser_comprehensions)
 target_include_directories(parser_comprehensions PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
 target_link_libraries(parser_comprehensions PRIVATE erlang_frontend)
@@ -41,6 +46,11 @@ foreach(mode IN ITEMS golden oracle)
     endif()
     add_test(NAME parser_phase4_${mode} COMMAND "${CMAKE_COMMAND}"
         "-DPHASE=phase4" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+        "-DDUMP=$<TARGET_FILE:parser_dump>" "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
+        "-DLIVE=${live}" -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
+    add_test(NAME parser_phase5_${mode} COMMAND "${CMAKE_COMMAND}"
+        "-DPHASE=phase5" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
         "-DDUMP=$<TARGET_FILE:parser_dump>" "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
         "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
         "-DLIVE=${live}" -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")

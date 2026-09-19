@@ -1,0 +1,19 @@
+-module(attributes, [A, B]).
+-export([f/0, f/0, big/999999999999999999999]).
+-import lists, [reverse/1].
+-import_record(other, [point, 'Point']).
+-export_record([point]).
+-export_type([thing/0]).
+-behaviour(gen_server).
+-behavior(custom).
+-compile([{parse_transform, never_execute}, {inline, [f/0]}]).
+-on_load(f/0).
+-optional_callbacks([f/0]).
+-custom({nested, [f/0 | tail], #{key => [g/2]}, -$a, 1.5, <<1:3, 2:5>>, fun other:call/2}).
+-record(r, {field, value = begin 1, run() end}).
+-record #Point{field = #{key => value}}.
+-doc "hello".
+-doc false.
+-moduledoc hidden.
+-doc(#{equiv => other:call(X), since => "29"}).
+f() -> #r{}.

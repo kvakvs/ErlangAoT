@@ -3,6 +3,11 @@
 namespace erlang_aot::printing {
 void TreePrinter::operator()(const ast::ModuleAttribute &value) {
     output_ << "ModuleAttribute name=" << atom(value.name);
+    if (value.parameters) {
+        output_ << " parameters=";
+        for (const auto &parameter : *value.parameters)
+            output_ << ' ' << utf8(parameter.name);
+    }
 }
 
 void TreePrinter::operator()(const ast::FileAttribute &value) {

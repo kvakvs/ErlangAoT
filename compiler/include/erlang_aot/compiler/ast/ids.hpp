@@ -36,11 +36,13 @@ template <typename Tag> class Id {
 struct ExprTag;
 struct PatternSyntaxTag;
 struct TypeTag;
+struct TermTag;
 struct FormTag;
 struct OriginTag;
 using ExprId = Id<ExprTag>;
 using PatternSyntaxId = Id<PatternSyntaxTag>;
 using TypeId = Id<TypeTag>;
+using TermId = Id<TermTag>;
 using FormId = Id<FormTag>;
 using OriginId = Id<OriginTag>;
 } // namespace erlang_aot::ast
