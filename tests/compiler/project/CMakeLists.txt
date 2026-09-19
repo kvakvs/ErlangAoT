@@ -82,3 +82,8 @@ add_test(NAME project_workflow COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${PROJECT_SOURCE_DIR}/tests/fixtures/project/workflow"
     "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/project-workflow"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/workflow.cmake")
+
+add_executable(project_hardening hardening.cpp)
+erlang_aot_project_options(project_hardening)
+target_link_libraries(project_hardening PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_hardening COMMAND project_hardening "${CMAKE_CURRENT_BINARY_DIR}/project-hardening")

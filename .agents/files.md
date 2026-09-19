@@ -116,3 +116,6 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `tests/fixtures/project/workflow/`, `tests/compiler/project/workflow.cmake`:
   multi-target frontend workflows, include/search isolation, native path arguments,
   deterministic output and no-write/failure preflight regressions.
+- `tests/compiler/project/hardening.cpp`: combined manifest/discovery limits and
+  native path/alias capability checks; `docs/project-validation.md`: C++23 evidence
+  and pending platform matrix.
