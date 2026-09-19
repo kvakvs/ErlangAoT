@@ -6,7 +6,21 @@ if(ERLANG_AOT_TOML_ROOT)
     find_path(ERLANG_AOT_TOML_INCLUDE toml++/toml.hpp
         PATHS "${ERLANG_AOT_TOML_ROOT}/include" "${ERLANG_AOT_TOML_ROOT}" NO_DEFAULT_PATH)
 else()
+    # Ask Homebrew for the formula prefix so unlinked/custom installations also work.
+    set(toml_hints)
+    if(APPLE AND NOT CMAKE_CROSSCOMPILING)
+        find_program(ERLANG_AOT_BREW_EXECUTABLE brew HINTS /opt/homebrew/bin /usr/local/bin)
+        if(ERLANG_AOT_BREW_EXECUTABLE)
+            execute_process(COMMAND "${ERLANG_AOT_BREW_EXECUTABLE}" --prefix tomlplusplus
+                RESULT_VARIABLE toml_brew_result OUTPUT_VARIABLE toml_brew_prefix
+                OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET TIMEOUT 10)
+            if(toml_brew_result STREQUAL "0" AND IS_DIRECTORY "${toml_brew_prefix}")
+                list(APPEND toml_hints "${toml_brew_prefix}/include")
+            endif()
+        endif()
+    endif()
     find_path(ERLANG_AOT_TOML_INCLUDE toml++/toml.hpp
+        HINTS ${toml_hints}
         PATHS "${PROJECT_SOURCE_DIR}/build/deps/tomlplusplus-3.4.0/include")
 endif()
 if(NOT ERLANG_AOT_TOML_INCLUDE)
@@ -20,6 +34,7 @@ endforeach()
 if(NOT "${toml_MAJOR}.${toml_MINOR}.${toml_PATCH}" STREQUAL "3.4.0")
     message(FATAL_ERROR "Expected tested toml++ 3.4.0 under ${ERLANG_AOT_TOML_INCLUDE}")
 endif()
+message(STATUS "toml++ 3.4.0 headers: ${ERLANG_AOT_TOML_INCLUDE}")
 add_library(erlang_project_toml INTERFACE)
 target_include_directories(erlang_project_toml SYSTEM INTERFACE "${ERLANG_AOT_TOML_INCLUDE}")
 target_compile_definitions(erlang_project_toml INTERFACE

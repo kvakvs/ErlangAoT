@@ -267,6 +267,11 @@ Its source archive SHA-256 is
 `8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155`.
 Retain the upstream LICENSE file when distributing dependency sources.
 
+On macOS, `brew install tomlplusplus` supplies the dependency when the formula
+version is 3.4.0. CMake queries the installed formula prefix and reports the chosen
+header directory, including for unlinked installations. An explicit TOML root
+takes precedence; every selected installation is checked for the pinned version.
+
 Install that version or extract its source into `build/deps/tomlplusplus-3.4.0`.
 Alternatively pass `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` when
 configuring. No automatic downloads occur; runtime-only builds do not discover it.

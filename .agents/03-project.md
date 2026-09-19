@@ -32,6 +32,9 @@ Step 13 — selection-before-discovery, all-target preflight, output precedence
 and alias collisions; all 58 tests, formatting, fresh Debug build and full quality pass.
 Step 14 — shared per-file frontend operation; existing positional CLI regression
 coverage, all 58 tests, formatting, fresh Debug build and full quality pass.
+Homebrew follow-up — explicit formula-prefix discovery selects installed toml++
+3.4.0. Automatic/explicit/absent-root reconfiguration and runtime-only checks,
+all 58 tests, fresh C++23 Debug build, whitespace and full quality checks pass.
 
 ## Objective and existing behavior
 

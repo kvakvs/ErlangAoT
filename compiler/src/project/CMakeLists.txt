@@ -1,4 +1,5 @@
-include(cmake/Dependencies.cmake)
+# Discover and validate installed project dependencies, including Homebrew prefixes.
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/Dependencies.cmake")
 add_library(erlang_project STATIC diagnostics.cpp loader.cpp)
 erlang_aot_project_options(erlang_project)
 target_include_directories(erlang_project PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
