@@ -63,10 +63,12 @@ ast::FormId FormParser::complete_form() {
 
 ast::FormValue FormParser::attribute() {
     auto name = ast::Atom{value<std::u32string>(category(TokenKind::atom, "attribute name"))};
-    if (name.name == U"record")
+    if (name.name == U"record") {
         return record_declaration();
-    if (name.name == U"spec" || name.name == U"callback")
+    }
+    if (name.name == U"spec" || name.name == U"callback") {
         return specification(name.name == U"callback");
+    }
     const auto enclosed = cursor_.take_syntax(U"(");
     const auto checkpoint = builder_.view().expression_count();
     auto arguments = sequence();
@@ -76,18 +78,22 @@ ast::FormValue FormParser::attribute() {
         arguments.insert(arguments.end(), rest.begin(), rest.end());
     }
     auto result = attribute_body(std::move(name), arguments);
-    if (enclosed && !closed)
+    if (enclosed && !closed) {
         expect(U")");
-    if (!std::holds_alternative<ast::DocumentationAttribute>(result))
+    }
+    if (!std::holds_alternative<ast::DocumentationAttribute>(result)) {
         builder_.discard_expressions(checkpoint);
+    }
     return result;
 }
 
 ast::FormValue FormParser::attribute_body(ast::Atom name, const std::vector<ast::ExprId> &arguments) {
-    if (!cursor_.take_syntax(U"::"))
+    if (!cursor_.take_syntax(U"::")) {
         return ordinary_attribute(std::move(name), arguments);
-    if (arguments.size() != 1)
+    }
+    if (arguments.size() != 1) {
         fail(DiagnosticCode::parser_syntax, "bad type declaration head");
+    }
     return type_declaration(name, arguments.front());
 }
 

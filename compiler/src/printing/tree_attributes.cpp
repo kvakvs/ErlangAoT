@@ -1,11 +1,18 @@
+#include "printable.hpp"
 #include "tree.hpp"
 
 namespace erlang_aot::printing {
+std::optional<char32_t> TreePrinter::string_character(const ast::TermId &id) const {
+    const auto *integer = std::get_if<ast::IntegerLiteral>(&module_.term(id).value);
+    return integer ? printable_character(integer->value) : std::nullopt;
+}
+
 void TreePrinter::visit(const ast::TermId &id) { module_.visit(id, *this); }
 
 void TreePrinter::arities(const std::vector<ast::NameArity> &values) const {
-    for (const auto &[name, arity] : values)
+    for (const auto &[name, arity] : values) {
         output_ << ' ' << atom(name) << '/' << arity.decimal;
+    }
 }
 
 void TreePrinter::operator()(const ast::ExportAttribute &value) const {
@@ -20,8 +27,9 @@ void TreePrinter::operator()(const ast::ImportAttribute &value) const {
 
 void TreePrinter::operator()(const ast::ImportRecordAttribute &value) const {
     output_ << "ImportRecordAttribute module=" << atom(value.module);
-    for (const auto &name : value.names)
+    for (const auto &name : value.names) {
         output_ << ' ' << atom(name);
+    }
 }
 
 void TreePrinter::operator()(const ast::GenericAttribute &value) {
@@ -37,16 +45,18 @@ void TreePrinter::operator()(const ast::RecordDeclaration &value) {
 void TreePrinter::operator()(const ast::RecordDeclarationField &value) {
     output_ << "RecordDeclarationField name=" << atom(value.name);
     optional_child("default", value.default_value);
-    if (value.type)
+    if (value.type) {
         child("type", *value.type);
+    }
 }
 
 void TreePrinter::operator()(const ast::DocumentationAttribute &value) {
     output_ << "DocumentationAttribute module=" << value.module;
-    if (const auto *literal = std::get_if<ast::TermId>(&value.value))
+    if (const auto *literal = std::get_if<ast::TermId>(&value.value)) {
         child("value", *literal);
-    else
+    } else {
         objects("metadata", std::get<std::vector<ast::DocumentationEntry>>(value.value));
+    }
 }
 
 void TreePrinter::operator()(const ast::DocumentationEntry &value) {
@@ -61,10 +71,14 @@ void TreePrinter::operator()(const ast::TermTuple &value) {
 }
 
 void TreePrinter::operator()(const ast::TermList &value) {
+    if (!value.tail && string_list(value.elements)) {
+        return;
+    }
     output_ << "TermList elements=" << value.elements.size();
     handles("element", value.elements);
-    if (value.tail)
+    if (value.tail) {
         child("tail", *value.tail);
+    }
 }
 
 void TreePrinter::operator()(const ast::TermMap &value) {
@@ -77,8 +91,9 @@ void TreePrinter::operator()(const ast::TermMap &value) {
 
 void TreePrinter::operator()(const ast::TermBits &value) const {
     output_ << "TermBits bits=";
-    for (const auto bit : value.bits)
+    for (const auto bit : value.bits) {
         output_ << (bit ? '1' : '0');
+    }
 }
 
 void TreePrinter::operator()(const ast::TermFunction &value) const {

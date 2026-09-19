@@ -14,7 +14,7 @@ add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_curso
     src/ast/comprehensions.cpp src/parser/comprehensions.cpp src/printing/tree_comprehensions.cpp
     src/parser/parser.cpp src/parser/forms.cpp src/parser/literals.cpp src/parser/aggregates.cpp src/parser/expressions.cpp src/parser/clauses.cpp src/parser/maps.cpp src/parser/records.cpp src/parser/structural.cpp src/parser/binaries.cpp
     src/source/source.cpp src/diagnostics/diagnostic.cpp
-    src/printing/source.cpp src/printing/token_text.cpp
+    src/printing/source.cpp src/printing/token_text.cpp src/printing/printable.cpp
     src/printing/tree.cpp src/printing/tree_forms.cpp src/printing/tree_expressions.cpp src/printing/tree_structural.cpp
     src/lexer/lexer.cpp src/lexer/numbers.cpp src/lexer/literals.cpp
     src/preprocessor/directives.cpp src/preprocessor/preprocessor.cpp

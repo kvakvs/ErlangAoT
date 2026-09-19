@@ -2,27 +2,31 @@
 
 namespace erlang_aot {
 std::variant<ast::Atom, ast::Variable> FormParser::atom_or_variable() {
-    if (cursor_.anchor().kind == TokenKind::variable)
+    if (cursor_.anchor().kind == TokenKind::variable) {
         return ast::Variable{value<std::u32string>(*cursor_.consume())};
+    }
     return ast::Atom{value<std::u32string>(category(TokenKind::atom, "atom or variable"))};
 }
 
 std::variant<Integer, ast::Variable> FormParser::fun_arity() {
-    if (cursor_.anchor().kind == TokenKind::variable)
+    if (cursor_.anchor().kind == TokenKind::variable) {
         return ast::Variable{value<std::u32string>(*cursor_.consume())};
+    }
     return value<Integer>(category(TokenKind::integer, "fun reference arity"));
 }
 
 std::optional<ast::Variable> FormParser::fun_name() {
-    if (cursor_.anchor().kind == TokenKind::variable)
+    if (cursor_.anchor().kind == TokenKind::variable) {
         return ast::Variable{value<std::u32string>(*cursor_.consume())};
+    }
     return std::nullopt;
 }
 
 ast::ExprValue FormParser::fun_expression() {
     const auto *next = cursor_.peek(1);
-    if (!next || (!syntax(*next, U"/") && !syntax(*next, U":")))
+    if (!next || (!syntax(*next, U"/") && !syntax(*next, U":"))) {
         return fun_clauses();
+    }
     auto first = atom_or_variable();
     if (cursor_.take_syntax(U":")) {
         auto name = atom_or_variable();
@@ -30,8 +34,9 @@ ast::ExprValue FormParser::fun_expression() {
         return ast::RemoteFunReference{std::move(first), std::move(name), fun_arity()};
     }
     const auto *name = std::get_if<ast::Atom>(&first);
-    if (!name)
+    if (!name) {
         fail(DiagnosticCode::parser_syntax, "local fun reference requires an atom name");
+    }
     expect(U"/");
     return ast::LocalFunReference{*name, value<Integer>(category(TokenKind::integer, "local fun arity"))};
 }

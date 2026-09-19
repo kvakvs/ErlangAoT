@@ -91,8 +91,9 @@ FormId Builder::form(FormValue value, NodeSource source) {
 const Module &Builder::view() const { return module_; }
 
 void Builder::discard_expressions(std::size_t begin) {
-    if (!active_ || begin > module_.expression_count())
+    if (!active_ || begin > module_.expression_count()) {
         throw std::logic_error("invalid temporary expression checkpoint");
+    }
     module_.storage_->expressions.truncate(begin);
 }
 

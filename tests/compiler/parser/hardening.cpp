@@ -10,8 +10,9 @@ using namespace erlang_aot;
 
 // Assertions remain active in optimized, sanitizer and fuzz regression configurations.
 void require(bool value, std::source_location where = std::source_location::current()) {
-    if (!value)
+    if (!value) {
         throw std::runtime_error("parser hardening line " + std::to_string(where.line()));
+    }
 }
 
 // Return owned results after all source/preprocessing objects have been destroyed.
@@ -29,8 +30,9 @@ void expanded_eof() {
     PreprocessorSession pp(sources.add("expanded.erl", "-include(\"values.hrl\"). f() -> ?VALUE."), options);
     std::vector<Token> tokens;
     while (const auto event = pp.next()) {
-        if (const auto *form = std::get_if<OrdinaryForm>(&*event))
+        if (const auto *form = std::get_if<OrdinaryForm>(&*event)) {
             tokens = form->tokens;
+        }
     }
     require(!pp.failed() && tokens.size() > 2);
     tokens.pop_back();
@@ -58,8 +60,9 @@ void diagnostics() {
     SourceManager sources;
     Lexer lexer(sources.add("eof.erl", "f() -> (ok"));
     std::vector<Token> tokens;
-    while (auto token = lexer.next())
+    while (auto token = lexer.next()) {
         tokens.push_back(std::move(*token));
+    }
     auto end = tokens.back();
     end.spelling.begin = end.spelling.end;
     end.location.column = 11;
@@ -73,8 +76,9 @@ void diagnostics() {
 void stress() {
     const auto start = std::chrono::steady_clock::now();
     std::string chain = "f() -> 0";
-    for (int i = 0; i < 12000; ++i)
+    for (int i = 0; i < 12000; ++i) {
         chain += "+1";
+    }
     const auto flat = parse(chain + ".");
     require(flat.succeeded());
     std::ostringstream tree;
@@ -88,13 +92,15 @@ void stress() {
     }
     require(bounded);
     std::string invalid = "-custom(f";
-    for (int i = 0; i < 12000; ++i)
+    for (int i = 0; i < 12000; ++i) {
         invalid += "/1";
+    }
     const auto normalized = parse(invalid + "). good() -> ok.");
     require(normalized.failed && normalized.diagnostics.front().code == DiagnosticCode::parser_syntax);
     std::string matches = "f() -> ";
-    for (int i = 0; i < 2000; ++i)
+    for (int i = 0; i < 2000; ++i) {
         matches += "X = ";
+    }
     const auto right = parse(matches + "1.");
     require(right.failed && right.diagnostics.front().code == DiagnosticCode::resource_limit);
     ParserLimits limits;
@@ -115,27 +121,31 @@ void budgets() {
     limits = {};
     limits.diagnostics = 3;
     std::string bad;
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         bad += "f() -> . ";
+    }
     const auto repeated = parse(bad + "good() -> ok.", limits);
     require(repeated.failed && repeated.diagnostics.size() == 4);
     limits = {};
     limits.nesting = 16;
     std::string block = "ok";
-    for (int i = 0; i < 40; ++i)
+    for (int i = 0; i < 40; ++i) {
         block = "begin " + block + " end";
+    }
     for (const auto &text :
          {"f(" + std::string(40, '[') + "A" + std::string(40, ']') + ") -> A.",
           "-type t() :: " + std::string(40, '[') + "atom()" + std::string(40, ']') + ".", "f() -> " + block + "."}) {
         require(parse(text, limits).failed);
     }
     std::string wide = "f() -> [";
-    for (int i = 0; i < 5000; ++i)
+    for (int i = 0; i < 5000; ++i) {
         wide += "1,";
+    }
     require(parse(wide + "0].").succeeded());
     std::string qualifiers = "f() -> [X || X <- L";
-    for (int i = 0; i < 3000; ++i)
+    for (int i = 0; i < 3000; ++i) {
         qualifiers += ", true";
+    }
     require(parse(qualifiers + "].").succeeded());
 }
 

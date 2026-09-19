@@ -54,8 +54,9 @@ void TreePrinter::operator()(const ast::BinaryTypeOperator &value) {
 
 void TreePrinter::operator()(const ast::TypeApplication &value) {
     output_ << "TypeApplication name=" << atom(value.name) << " predefined=" << value.predefined;
-    if (value.module)
+    if (value.module) {
         output_ << " module=" << atom(*value.module);
+    }
     handles("argument", value.arguments);
 }
 
@@ -66,8 +67,9 @@ void TreePrinter::operator()(const ast::TupleType &value) {
 
 void TreePrinter::operator()(const ast::ListType &value) {
     output_ << "ListType nonempty=" << value.nonempty;
-    if (value.element)
+    if (value.element) {
         child("element", *value.element);
+    }
 }
 
 void TreePrinter::operator()(const ast::MapType &value) {
@@ -83,8 +85,9 @@ void TreePrinter::operator()(const ast::MapTypeField &value) {
 
 void TreePrinter::operator()(const ast::RecordType &value) {
     output_ << "RecordType name=" << atom(value.name);
-    if (value.module)
+    if (value.module) {
         output_ << " module=" << atom(*value.module);
+    }
     objects("field", value.fields);
 }
 
@@ -95,24 +98,29 @@ void TreePrinter::operator()(const ast::RecordTypeField &value) {
 
 void TreePrinter::operator()(const ast::BitstringType &value) {
     output_ << "BitstringType";
-    if (value.base)
+    if (value.base) {
         child("base", *value.base);
-    if (value.unit)
+    }
+    if (value.unit) {
         child("unit", *value.unit);
+    }
 }
 
 void TreePrinter::operator()(const ast::FunType &value) {
     output_ << "FunType arguments=" << (value.arguments ? std::to_string(value.arguments->size()) : "any");
-    if (value.arguments)
+    if (value.arguments) {
         handles("argument", *value.arguments);
-    if (value.result)
+    }
+    if (value.result) {
         child("result", *value.result);
+    }
 }
 
 void TreePrinter::operator()(const ast::TypeDeclaration &value) {
     output_ << "TypeDeclaration kind=" << declaration_kind(value.kind) << " name=" << atom(value.name);
-    for (const auto &[name] : value.parameters)
+    for (const auto &[name] : value.parameters) {
         output_ << " parameter=" << utf8(name);
+    }
     child("type", value.type);
 }
 } // namespace erlang_aot::printing

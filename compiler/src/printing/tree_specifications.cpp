@@ -4,8 +4,9 @@ namespace erlang_aot::printing {
 void TreePrinter::operator()(const ast::Specification &value) {
     output_ << (value.callback ? "Callback" : "Specification") << " name=" << atom(value.name)
             << " arity=" << value.arity;
-    if (value.module)
+    if (value.module) {
         output_ << " module=" << atom(*value.module);
+    }
     objects("signature", value.signatures);
 }
 

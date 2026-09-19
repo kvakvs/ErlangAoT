@@ -37,11 +37,13 @@ ast::ExprId FormParser::hash_suffix(ast::ExprId base) {
 void FormParser::check_hash_base(const ast::ExprId &base, bool map, bool local) const {
     const auto &value = builder_.view().expression(base).value;
     if (is_map(value)) {
-        if (!map)
+        if (!map) {
             fail(DiagnosticCode::parser_syntax, "record postfix requires a primary or record base");
+        }
     } else if (is_record(value)) {
-        if (map || !local)
+        if (map || !local) {
             fail(DiagnosticCode::parser_syntax, "postfix requires a primary expression base");
+        }
     }
 }
 
@@ -49,16 +51,18 @@ void FormParser::check_hash_base(const ast::ExprId &base, bool map, bool local) 
 ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base, bool comprehension) {
     const auto *next = cursor_.peek(1);
     if (syntax(cursor_.anchor(), U"#") && next && syntax(*next, U"{")) {
-        if (base)
+        if (base) {
             check_hash_base(*base, true, false);
+        }
         cursor_.consume();
         return map(std::move(base), comprehension);
     }
     const auto *name = cursor_.peek(1);
     const bool index_name = name && name->kind == TokenKind::atom;
     auto identity = record_identity();
-    if (base)
+    if (base) {
         check_hash_base(*base, false, std::holds_alternative<ast::UnresolvedRecordName>(identity.value));
+    }
     if (!base && syntax(cursor_.anchor(), U".") && !index_name) {
         fail(DiagnosticCode::parser_syntax, "record index requires an atom name");
     }

@@ -96,14 +96,16 @@ struct Children {
 
     // Validate nested syntax extents as well as expression child owners.
     void source(const NodeSource &value) const {
-        if (value.form != form)
+        if (value.form != form) {
             throw std::invalid_argument("AST field belongs to another form");
+        }
         (void)builder.view().extent(value);
     }
 
     void operator()(const MapExpression &value) const {
-        if (value.base)
+        if (value.base) {
             child(*value.base);
+        }
         for (const auto &field : value.fields) {
             source(field.source);
             child(field.key);
@@ -113,8 +115,9 @@ struct Children {
 
     void operator()(const RecordExpression &value) const {
         source(value.identity.source);
-        if (value.base)
+        if (value.base) {
             child(*value.base);
+        }
         for (const auto &field : value.fields) {
             source(field.source);
             child(field.value);
@@ -148,19 +151,23 @@ struct Children {
     void segment(const BinarySegment &value) const {
         source(value.source);
         child(value.value);
-        if (value.size)
+        if (value.size) {
             child(*value.size);
+        }
         if (value.modifiers) {
-            if (value.modifiers->empty())
+            if (value.modifiers->empty()) {
                 throw std::invalid_argument("empty binary modifier list");
-            for (const auto &modifier : *value.modifiers)
+            }
+            for (const auto &modifier : *value.modifiers) {
                 source(modifier.source);
+            }
         }
     }
 
     void operator()(const Bitstring &value) const {
-        for (const auto &item : value.segments)
+        for (const auto &item : value.segments) {
             segment(item);
+        }
     }
 
     void operator()(const UnaryExpression &value) const { child(value.operand); }
@@ -184,8 +191,9 @@ struct Children {
 
     void operator()(const CallExpression &value) const {
         child(value.target);
-        for (const auto &id : value.arguments)
+        for (const auto &id : value.arguments) {
             child(id);
+        }
     }
 
     void operator()(const Group &value) const { child(value.expression); }

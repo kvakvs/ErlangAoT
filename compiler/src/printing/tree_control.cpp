@@ -20,15 +20,17 @@ void TreePrinter::operator()(const ast::IfExpression &value) {
 void TreePrinter::operator()(const ast::ReceiveExpression &value) {
     output_ << "ReceiveExpression clauses=" << value.clauses.size() << " after=" << (value.after ? "present" : "none");
     objects("clause", value.clauses);
-    if (value.after)
+    if (value.after) {
         child("after", &*value.after);
+    }
 }
 
 void TreePrinter::operator()(const ast::BranchClause &value) {
     output_ << "BranchClause guard=" << (value.guard ? "present" : "none") << " body=" << value.body.size();
     child("pattern", value.pattern);
-    if (value.guard)
+    if (value.guard) {
         child("guard", &*value.guard);
+    }
     handles("body", value.body);
 }
 

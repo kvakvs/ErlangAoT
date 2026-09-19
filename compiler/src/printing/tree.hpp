@@ -152,6 +152,29 @@ class TreePrinter {
 
     template <typename T> void visit(const T *value) { (*this)(*value); }
 
+    // Decode printable integer characters from either arena.
+    std::optional<char32_t> string_character(const ast::ExprId &id) const;
+    std::optional<char32_t> string_character(const ast::TermId &id) const;
+
+    // Compact nonempty integer lists while retaining the traversal's element budget.
+    template <typename Id> bool string_list(const std::vector<Id> &elements) {
+        if (elements.empty() || elements.size() > visits_) {
+            return false;
+        }
+        std::u32string text;
+        text.reserve(elements.size());
+        for (const auto &id : elements) {
+            const auto character = string_character(id);
+            if (!character) {
+                return false;
+            }
+            text += *character;
+        }
+        visits_ -= elements.size();
+        (*this)(ast::StringLiteral{std::move(text)});
+        return true;
+    }
+
     // Preserve positional roles for ordered arena handles and embedded objects.
     template <typename Range> void handles(const std::string_view role, const Range &values) {
         std::size_t index = 0;

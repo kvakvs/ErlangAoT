@@ -11,8 +11,9 @@ static_assert(!std::is_convertible_v<ast::TermId, ast::TypeId>);
 
 // Keep type tests active with source-line diagnostics in all configurations.
 void require(bool value, std::source_location location = std::source_location::current()) {
-    if (!value)
+    if (!value) {
         throw std::runtime_error("type check line " + std::to_string(location.line()));
+    }
 }
 
 // Destroy source sessions before inspecting owned type nodes.

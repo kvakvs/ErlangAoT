@@ -23,8 +23,9 @@ ast::RecordIdentity FormParser::record_identity() {
     const auto kind = cursor_.anchor().kind;
     auto first = record_name();
     if (cursor_.take_syntax(U":")) {
-        if (kind != TokenKind::atom)
+        if (kind != TokenKind::atom) {
             fail(DiagnosticCode::parser_syntax, "record module must be an atom");
+        }
         auto name = record_name();
         return {ast::QualifiedRecordName{std::move(first), std::move(name)},
                 builder_.source(start, cursor_.offset(), start)};
@@ -41,8 +42,9 @@ ast::ExprValue FormParser::record_access(std::optional<ast::ExprId> base, ast::R
         return ast::RecordAccess{std::move(*base), std::move(identity), std::move(field), std::move(field_source)};
     }
     const auto *local = std::get_if<ast::UnresolvedRecordName>(&identity.value);
-    if (!local)
+    if (!local) {
         fail(DiagnosticCode::parser_syntax, "record index requires an unqualified atom name");
+    }
     return ast::RecordIndex{local->name, std::move(field), std::move(identity.source), std::move(field_source)};
 }
 

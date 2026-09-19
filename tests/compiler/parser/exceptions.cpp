@@ -8,8 +8,9 @@ using namespace erlang_aot;
 
 // Keep checks active independently of assert/NDEBUG.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("fun/exception/maybe check failed");
+    }
 }
 
 // Return owned syntax after preprocessing and source owners are destroyed.

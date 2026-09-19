@@ -8,8 +8,9 @@ static_assert(!std::is_convertible_v<ast::ExprId, ast::PatternSyntaxId>);
 
 // Keep syntax, ownership and provenance checks active outside assertion builds.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("function clause check failed");
+    }
 }
 
 // Check construction contracts independently of user syntax diagnostics.

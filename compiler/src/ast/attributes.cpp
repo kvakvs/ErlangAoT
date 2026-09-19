@@ -3,23 +3,27 @@
 
 namespace erlang_aot::ast {
 TermId Builder::term(TermValue value, NodeSource source) {
-    if (!active_)
+    if (!active_) {
         throw std::logic_error("literal term requires active transaction");
+    }
     validate(source);
     std::visit(Children{*this, *active_}, value);
     return module_.storage_->terms.append({std::move(value), std::move(source)});
 }
 
 void Children::operator()(const TermTuple &value) const {
-    for (const auto &id : value.elements)
+    for (const auto &id : value.elements) {
         child(id);
+    }
 }
 
 void Children::operator()(const TermList &value) const {
-    for (const auto &id : value.elements)
+    for (const auto &id : value.elements) {
         child(id);
-    if (value.tail)
+    }
+    if (value.tail) {
         child(*value.tail);
+    }
 }
 
 void Children::operator()(const TermMap &value) const {
@@ -32,10 +36,12 @@ void Children::operator()(const TermMap &value) const {
 void Children::operator()(const RecordDeclaration &value) const {
     for (const auto &field : value.fields) {
         source(field.source);
-        if (field.default_value)
+        if (field.default_value) {
             child(*field.default_value);
-        if (field.type)
+        }
+        if (field.type) {
             child(*field.type);
+        }
     }
 }
 

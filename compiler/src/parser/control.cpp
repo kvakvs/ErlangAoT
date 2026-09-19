@@ -2,22 +2,30 @@
 
 namespace erlang_aot {
 std::optional<ast::ExprValue> FormParser::control(OperatorContext context) {
-    if (context == OperatorContext::pattern)
+    if (context == OperatorContext::pattern) {
         return std::nullopt;
-    if (cursor_.take_syntax(U"begin"))
+    }
+    if (cursor_.take_syntax(U"begin")) {
         return block();
-    if (cursor_.take_syntax(U"case"))
+    }
+    if (cursor_.take_syntax(U"case")) {
         return case_expression();
-    if (cursor_.take_syntax(U"if"))
+    }
+    if (cursor_.take_syntax(U"if")) {
         return if_expression();
-    if (cursor_.take_syntax(U"receive"))
+    }
+    if (cursor_.take_syntax(U"receive")) {
         return receive_expression();
-    if (cursor_.take_syntax(U"fun"))
+    }
+    if (cursor_.take_syntax(U"fun")) {
         return fun_expression();
-    if (cursor_.take_syntax(U"try"))
+    }
+    if (cursor_.take_syntax(U"try")) {
         return try_expression();
-    if (cursor_.take_syntax(U"maybe"))
+    }
+    if (cursor_.take_syntax(U"maybe")) {
         return maybe_expression();
+    }
     return std::nullopt;
 }
 
@@ -67,8 +75,9 @@ ast::IfExpression FormParser::if_expression() {
 
 ast::ReceiveExpression FormParser::receive_expression() {
     ast::ReceiveExpression result;
-    if (!syntax(cursor_.anchor(), U"after"))
+    if (!syntax(cursor_.anchor(), U"after")) {
         result.clauses = branches();
+    }
     const auto begin = cursor_.offset();
     if (cursor_.take_syntax(U"after")) {
         auto timeout = expression();

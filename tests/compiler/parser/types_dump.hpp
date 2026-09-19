@@ -56,11 +56,13 @@ struct TypeDump {
     }
 
     void operator()(const erlang_aot::ast::TypeApplication &v) const {
-        if (v.module)
+        if (v.module) {
             std::cout << "remote\t" << test_records::hex(erlang_aot::utf8(v.module->name)) << '\n';
+        }
         header(v.name.name, v.arguments.size(), v.predefined ? "type" : "user_type");
-        for (const auto &id : v.arguments)
+        for (const auto &id : v.arguments) {
             child(id);
+        }
     }
 
     void operator()(const erlang_aot::ast::TupleType &v) const {
@@ -69,14 +71,16 @@ struct TypeDump {
             return;
         }
         header(U"tuple", v.elements.size());
-        for (const auto &id : v.elements)
+        for (const auto &id : v.elements) {
             child(id);
+        }
     }
 
     void operator()(const erlang_aot::ast::ListType &v) const {
         header(v.element ? (v.nonempty ? U"nonempty_list" : U"list") : U"nil", v.element ? 1 : 0);
-        if (v.element)
+        if (v.element) {
             child(*v.element);
+        }
     }
 
     void operator()(const erlang_aot::ast::MapType &v) const {
@@ -103,24 +107,28 @@ struct TypeDump {
 
     void operator()(const erlang_aot::ast::BitstringType &v) const {
         std::cout << "binary_type\n";
-        if (v.base)
+        if (v.base) {
             child(*v.base);
-        else
+        } else {
             std::cout << "integer\t0\n";
-        if (v.unit)
+        }
+        if (v.unit) {
             child(*v.unit);
-        else
+        } else {
             std::cout << "integer\t0\n";
+        }
     }
 
     void operator()(const erlang_aot::ast::FunType &v) const {
         std::cout << "fun_type\t" << (v.result ? (v.arguments ? std::to_string(v.arguments->size()) : "any") : "unset")
                   << '\n';
         if (v.arguments) {
-            for (const auto &id : *v.arguments)
+            for (const auto &id : *v.arguments) {
                 child(id);
+            }
         }
-        if (v.result)
+        if (v.result) {
             child(*v.result);
+        }
     }
 };

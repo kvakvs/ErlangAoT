@@ -75,8 +75,9 @@ std::optional<PrefixOperatorInfo> prefix_operator(const Token &token) {
 }
 
 std::optional<OperatorInfo> call_operator(const Token &token) {
-    if (syntax(token, U"("))
+    if (syntax(token, U"(")) {
         return OperatorInfo{U"(", 750, Associativity::left};
+    }
     return std::nullopt;
 }
 

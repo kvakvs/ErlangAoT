@@ -2,8 +2,9 @@
 
 namespace erlang_aot {
 ast::ExprValue FormParser::primary(OperatorContext context) {
-    if (auto value = control(context))
+    if (auto value = control(context)) {
         return std::move(*value);
+    }
     if (cursor_.empty() || cursor_.anchor().kind == TokenKind::dot) {
         fail(DiagnosticCode::parser_syntax, "expected expression");
     }
@@ -24,8 +25,9 @@ ast::ExprValue FormParser::primary(OperatorContext context) {
     if (cursor_.anchor().kind == TokenKind::sigil_prefix) {
         return sigil();
     }
-    if (syntax(cursor_.anchor(), U"#"))
+    if (syntax(cursor_.anchor(), U"#")) {
         return maximum_hash();
+    }
     return literal();
 }
 

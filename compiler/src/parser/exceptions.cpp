@@ -11,8 +11,9 @@ ast::CatchClause FormParser::catch_clause() {
     }
     auto reason = pattern();
     std::optional<ast::Variable> stacktrace;
-    if (exception_class && cursor_.take_syntax(U":"))
+    if (exception_class && cursor_.take_syntax(U":")) {
         stacktrace = ast::Variable{value<std::u32string>(category(TokenKind::variable, "stacktrace variable"))};
+    }
     auto guards = optional_guard();
     expect(U"->");
     auto body = sequence();
@@ -22,18 +23,21 @@ ast::CatchClause FormParser::catch_clause() {
 
 ast::TryExpression FormParser::try_expression() {
     ast::TryExpression result{sequence(), {}, {}, {}};
-    if (cursor_.take_syntax(U"of"))
+    if (cursor_.take_syntax(U"of")) {
         result.of = branches();
+    }
     if (cursor_.take_syntax(U"catch")) {
         result.handlers.emplace();
         do {
             result.handlers->push_back(catch_clause());
         } while (cursor_.take_syntax(U";"));
     }
-    if (cursor_.take_syntax(U"after"))
+    if (cursor_.take_syntax(U"after")) {
         result.after = sequence();
-    if (!result.handlers && !result.after)
+    }
+    if (!result.handlers && !result.after) {
         fail(DiagnosticCode::parser_syntax, "try requires catch or after");
+    }
     expect(U"end");
     return result;
 }
@@ -42,8 +46,9 @@ std::variant<ast::ExprId, ast::MaybeMatch> FormParser::maybe_item() {
     const auto begin = cursor_.offset();
     auto left = expression();
     const auto end = cursor_.offset();
-    if (!cursor_.take_syntax(U"?="))
+    if (!cursor_.take_syntax(U"?=")) {
         return left;
+    }
     node();
     auto candidate = builder_.pattern(ast::PatternCandidate{std::move(left)}, builder_.source(begin, end, begin));
     auto right = expression();
@@ -55,8 +60,9 @@ ast::MaybeExpression FormParser::maybe_expression() {
     do {
         result.body.push_back(maybe_item());
     } while (cursor_.take_syntax(U","));
-    if (cursor_.take_syntax(U"else"))
+    if (cursor_.take_syntax(U"else")) {
         result.otherwise = branches();
+    }
     expect(U"end");
     return result;
 }

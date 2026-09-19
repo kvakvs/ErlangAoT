@@ -35,8 +35,9 @@ bool parse_and_print(erlang_aot::PreprocessorSession &session, const Options &op
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic);
     }
-    if (options.print_ast)
+    if (options.print_ast) {
         erlang_aot::print_ast(std::cout, result.module);
+    }
     return result.failed || session.failed();
 }
 

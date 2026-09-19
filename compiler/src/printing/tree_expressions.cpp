@@ -1,7 +1,13 @@
 #include "parsing/operator_info.hpp"
+#include "printable.hpp"
 #include "tree.hpp"
 
 namespace erlang_aot::printing {
+std::optional<char32_t> TreePrinter::string_character(const ast::ExprId &id) const {
+    const auto *integer = std::get_if<ast::IntegerLiteral>(&module_.expression(id).value);
+    return integer ? printable_character(integer->value) : std::nullopt;
+}
+
 void TreePrinter::operator()(const ast::Atom &value) const { output_ << "Atom name=" << atom(value); }
 
 void TreePrinter::operator()(const ast::Variable &value) const { output_ << "Variable name=" << utf8(value.name); }
@@ -28,6 +34,9 @@ void TreePrinter::operator()(const ast::Tuple &value) {
 }
 
 void TreePrinter::operator()(const ast::List &value) {
+    if (!value.tail && string_list(value.elements)) {
+        return;
+    }
     output_ << "[count=" << value.elements.size() << " tail=" << (value.tail ? "explicit" : "nil");
     handles("element", value.elements);
     optional_child("tail", value.tail);

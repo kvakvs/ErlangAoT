@@ -18,8 +18,9 @@ ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
     enter();
     auto left = prefix(context);
     while (const auto info = next_operator(context)) {
-        if (info->precedence < minimum)
+        if (info->precedence < minimum) {
             break;
+        }
         left = continuation(std::move(left), *info, context);
         nonassociative(*info, context);
     }
@@ -28,8 +29,9 @@ ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
 }
 
 ast::ExprId FormParser::prefix(OperatorContext context) {
-    if (cursor_.empty())
+    if (cursor_.empty()) {
         fail(DiagnosticCode::parser_syntax, "expected expression");
+    }
     const auto begin = cursor_.offset();
     if (context != OperatorContext::pattern && cursor_.take_syntax(U"catch")) {
         auto operand = expression();
@@ -44,11 +46,13 @@ ast::ExprId FormParser::prefix(OperatorContext context) {
 }
 
 std::optional<OperatorInfo> FormParser::next_operator(OperatorContext context) const {
-    if (cursor_.empty())
+    if (cursor_.empty()) {
         return std::nullopt;
+    }
     if (context != OperatorContext::pattern) {
-        if (const auto call = call_operator(cursor_.anchor()))
+        if (const auto call = call_operator(cursor_.anchor())) {
             return call;
+        }
     }
     return infix_operator(cursor_.anchor(), context);
 }
@@ -76,8 +80,9 @@ ast::ExprId FormParser::continuation(ast::ExprId left, const OperatorInfo &info,
 }
 
 void FormParser::nonassociative(const OperatorInfo &info, OperatorContext context) const {
-    if (info.associativity != Associativity::none)
+    if (info.associativity != Associativity::none) {
         return;
+    }
     const auto next = next_operator(context);
     if (next && next->precedence == info.precedence) {
         fail(DiagnosticCode::parser_syntax, "nonassociative operators require parentheses");

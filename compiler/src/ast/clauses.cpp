@@ -12,8 +12,9 @@ PatternSyntaxId Builder::pattern(PatternValue value, NodeSource source) {
 
 // Functions and fun expressions use the same owner, pattern and arity checks.
 void Builder::validate(const FormValue &value) const {
-    if (!active_)
+    if (!active_) {
         throw std::logic_error("function requires an active transaction");
+    }
     std::visit(Children{*this, *active_}, value);
 }
 } // namespace erlang_aot::ast

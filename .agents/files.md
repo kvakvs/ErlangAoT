@@ -48,8 +48,10 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `src/parser/{types,type_primary,type_structural,type_names}.cpp`: type precedence,
   aggregates/funs and builtin classification; `specifications.cpp`: overloads/constraints.
 - `src/printing/{source,token_text}.cpp`: source output and shared canonical tokens;
+  `printable.{hpp,cpp}`: shared Erlang Unicode/control character decoding for AST and term printers;
   `tree.{hpp,cpp}`, `tree_{forms,expressions,structural,control,exceptions,comprehensions,
-  attributes,types,specifications}.cpp`: iterative typed AST output.
+  attributes,types,specifications}.cpp`: iterative typed AST output with escaped strings
+  for nonempty proper lists of printable character integers.
 - `tests/cli.cmake`: CLI contracts; `tests/compiler/{lexer,printing,printing_ast}.cpp`:
   scanner/printing; `tests/compiler/preprocessor/`: PP native and OTP oracle tests.
 - `tests/compiler/parser/{tokens,ast,forms,expressions,clauses,structural,binaries,

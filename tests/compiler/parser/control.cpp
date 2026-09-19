@@ -8,8 +8,9 @@ using namespace erlang_aot;
 
 // Keep contract checks active across optimized and sanitizer builds.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("control syntax check failed");
+    }
 }
 
 // Destroy preprocessing owners before inspecting the returned syntax and provenance.
@@ -49,11 +50,13 @@ void recovery_and_limits() {
     ParserLimits limits;
     limits.nesting = 8;
     std::string text = "f() -> ";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         text += "begin ";
+    }
     text += "ok ";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         text += "end ";
+    }
     auto exhausted = parse(text + '.', limits);
     require(exhausted.failed && exhausted.module.expression_count() == 0);
     require(exhausted.diagnostics.front().code == DiagnosticCode::resource_limit);

@@ -17,11 +17,13 @@ void TermNormalizer::segment(Value &output, const ast::BinarySegment &value) con
         }
     }
     std::optional<Value> size;
-    if (value.size)
+    if (value.size) {
         size = read(*value.size, false);
+    }
     auto id = value.value;
-    while (const auto *group = std::get_if<ast::Group>(&module_.expression(id).value))
+    while (const auto *group = std::get_if<ast::Group>(&module_.expression(id).value)) {
         id = group->expression;
+    }
     const auto string = std::holds_alternative<ast::StringLiteral>(module_.expression(id).value);
     const auto before = output.bits.size();
     append_literal_bits(output, read(id, false), size, modifiers, string);
@@ -31,8 +33,9 @@ void TermNormalizer::segment(Value &output, const ast::BinarySegment &value) con
 Value TermNormalizer::operator()(const ast::Bitstring &value) const {
     Value result;
     result.kind = ValueKind::bits;
-    for (const auto &item : value.segments)
+    for (const auto &item : value.segments) {
         segment(result, item);
+    }
     return result;
 }
 } // namespace erlang_aot

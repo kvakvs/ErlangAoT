@@ -4,8 +4,9 @@ namespace erlang_aot {
 ast::TypeValue FormParser::hash_type() {
     if (cursor_.take_syntax(U"{")) {
         ast::MapType result{false, {}};
-        if (cursor_.take_syntax(U"}"))
+        if (cursor_.take_syntax(U"}")) {
             return result;
+        }
         do {
             result.fields.push_back(map_type_field());
         } while (cursor_.take_syntax(U","));
@@ -20,8 +21,9 @@ ast::TypeValue FormParser::hash_type() {
     }
     expect(U"{");
     ast::RecordType result{std::move(module), std::move(name), {}};
-    if (cursor_.take_syntax(U"}"))
+    if (cursor_.take_syntax(U"}")) {
         return result;
+    }
     do {
         result.fields.push_back(record_type_field());
     } while (cursor_.take_syntax(U","));
@@ -52,14 +54,16 @@ ast::RecordTypeField FormParser::record_type_field() {
 
 std::pair<bool, ast::TypeId> FormParser::binary_type_part() {
     const auto &variable = category(TokenKind::variable, "binary type placeholder");
-    if (variable.text() != U"_")
+    if (variable.text() != U"_") {
         fail(DiagnosticCode::parser_syntax, "bad binary type variable");
+    }
     expect(U":");
     const auto *next = cursor_.peek(1);
     const bool unit = cursor_.anchor().kind == TokenKind::variable && next && syntax(*next, U"*");
     if (unit) {
-        if (cursor_.consume()->text() != U"_")
+        if (cursor_.consume()->text() != U"_") {
             fail(DiagnosticCode::parser_syntax, "bad binary unit variable");
+        }
         expect(U"*");
     }
     return {unit, type_expression()};
@@ -67,19 +71,23 @@ std::pair<bool, ast::TypeId> FormParser::binary_type_part() {
 
 ast::BitstringType FormParser::bitstring_type() {
     ast::BitstringType result;
-    if (cursor_.take_syntax(U">>"))
+    if (cursor_.take_syntax(U">>")) {
         return result;
+    }
     auto [unit, type] = binary_type_part();
-    if (unit)
+    if (unit) {
         result.unit = std::move(type);
-    else
+    } else {
         result.base = std::move(type);
+    }
     if (cursor_.take_syntax(U",")) {
-        if (unit)
+        if (unit) {
             fail(DiagnosticCode::parser_syntax, "binary base must precede unit");
+        }
         auto [second_unit, second] = binary_type_part();
-        if (!second_unit)
+        if (!second_unit) {
             fail(DiagnosticCode::parser_syntax, "expected binary unit type");
+        }
         result.unit = std::move(second);
     }
     expect(U">>");

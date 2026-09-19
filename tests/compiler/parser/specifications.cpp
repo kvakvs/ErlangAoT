@@ -8,8 +8,9 @@ using namespace erlang_aot;
 
 // Retain precise assertion locations in optimized as well as debug test builds.
 void require(bool value, std::source_location location = std::source_location::current()) {
-    if (!value)
+    if (!value) {
         throw std::runtime_error("specification check line " + std::to_string(location.line()));
+    }
 }
 
 // Parse expanded forms with short-lived sessions to exercise owned provenance.

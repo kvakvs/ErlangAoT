@@ -43,8 +43,9 @@ void ParserSession::State::budget(std::size_t count, const Token &anchor) {
         throw token_diagnostic(DiagnosticCode::resource_limit, "parser token budget exhausted", anchor);
     }
     tokens += count;
-    if (count > work)
+    if (count > work) {
         throw token_diagnostic(DiagnosticCode::resource_limit, "parser work budget exhausted", anchor);
+    }
     work -= count;
 }
 

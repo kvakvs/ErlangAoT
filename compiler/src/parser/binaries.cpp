@@ -25,8 +25,9 @@ ast::BinarySegment FormParser::binary_segment() {
     const auto begin = cursor_.offset();
     auto value = bit_value();
     std::optional<ast::ExprId> size;
-    if (cursor_.take_syntax(U":"))
+    if (cursor_.take_syntax(U":")) {
         size = bit_primary();
+    }
     auto modifiers = binary_modifiers();
     return {std::move(value), std::move(size), std::move(modifiers), builder_.source(begin, cursor_.offset(), begin)};
 }
@@ -56,8 +57,9 @@ ast::ExprId FormParser::bit_primary() {
 
 // An omitted slash denotes default types; an explicit slash requires at least one modifier.
 std::optional<std::vector<ast::BinaryModifier>> FormParser::binary_modifiers() {
-    if (!cursor_.take_syntax(U"/"))
+    if (!cursor_.take_syntax(U"/")) {
         return std::nullopt;
+    }
     std::vector<ast::BinaryModifier> modifiers;
     do {
         modifiers.push_back(binary_modifier());
@@ -70,8 +72,9 @@ ast::BinaryModifier FormParser::binary_modifier() {
     const auto begin = cursor_.offset();
     ast::Atom name{value<std::u32string>(category(TokenKind::atom, "binary type atom"))};
     std::optional<Integer> parameter;
-    if (cursor_.take_syntax(U":"))
+    if (cursor_.take_syntax(U":")) {
         parameter = value<Integer>(category(TokenKind::integer, "type parameter integer"));
+    }
     return {std::move(name), std::move(parameter), builder_.source(begin, cursor_.offset(), begin)};
 }
 

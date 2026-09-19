@@ -5,8 +5,9 @@
 namespace erlang_aot {
 // Literal normalization shares the module work allowance, including rejected forms.
 inline void literal_work(std::size_t &remaining, std::size_t amount) {
-    if (amount > remaining)
+    if (amount > remaining) {
         throw EvaluationLimit();
+    }
     remaining -= amount;
 }
 

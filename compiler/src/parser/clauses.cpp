@@ -6,8 +6,9 @@ ast::PatternSyntaxId FormParser::pattern(bool permissive) {
     const auto begin = cursor_.offset();
     auto child = expression(0, permissive ? OperatorContext::expression : OperatorContext::pattern);
     ast::PatternValue value = ast::RestrictedPattern{child};
-    if (permissive)
+    if (permissive) {
         value = ast::PatternCandidate{std::move(child)};
+    }
     node();
     return builder_.pattern(std::move(value), builder_.source(begin, cursor_.offset(), begin));
 }
@@ -16,8 +17,9 @@ ast::PatternSyntaxId FormParser::pattern(bool permissive) {
 std::vector<ast::PatternSyntaxId> FormParser::arguments() {
     expect(U"(");
     std::vector<ast::PatternSyntaxId> result;
-    if (cursor_.take_syntax(U")"))
+    if (cursor_.take_syntax(U")")) {
         return result;
+    }
     do {
         result.push_back(pattern());
     } while (cursor_.take_syntax(U","));
@@ -57,8 +59,9 @@ ast::FunctionClause FormParser::clause(std::size_t begin) {
 // Reuse the optional guard envelope in all pattern-headed clause families.
 std::optional<ast::GuardSyntax> FormParser::optional_guard() {
     const auto begin = cursor_.offset();
-    if (cursor_.take_syntax(U"when"))
+    if (cursor_.take_syntax(U"when")) {
         return guard(begin);
+    }
     return std::nullopt;
 }
 
@@ -81,7 +84,8 @@ ast::Function FormParser::function() {
 
 void FormParser::check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
                               const ast::FunctionClause &clause, const Token &site) const {
-    if (actual != expected || clause.arguments.size() != arity)
+    if (actual != expected || clause.arguments.size() != arity) {
         throw token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", site);
+    }
 }
 } // namespace erlang_aot

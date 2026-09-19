@@ -5,8 +5,9 @@ using namespace erlang_aot;
 
 // Keep structural and provenance checks active in every build configuration.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("expression parser check failed");
+    }
 }
 
 // Destroy source/session owners before inspecting the returned syntax tree.
@@ -56,8 +57,9 @@ void bounds() {
     require(default_depth.failed && default_depth.module.expression_count() == 0);
     require(default_depth.diagnostics.front().code == DiagnosticCode::resource_limit);
     std::string flat = "f() -> [ok";
-    for (int i = 0; i < 8192; ++i)
+    for (int i = 0; i < 8192; ++i) {
         flat += ",ok";
+    }
     flat += "].";
     const auto large = parse(std::move(flat), limits);
     require(large.succeeded());
@@ -93,8 +95,9 @@ void operator_bounds() {
     ParserLimits limits;
     limits.nesting = 8;
     std::string flat = "f() -> A";
-    for (int i = 0; i < 8192; ++i)
+    for (int i = 0; i < 8192; ++i) {
         flat += " + A";
+    }
     const auto left = parse(flat + ".", limits);
     require(left.succeeded());
     require(left.module.expression_count() == 16385);

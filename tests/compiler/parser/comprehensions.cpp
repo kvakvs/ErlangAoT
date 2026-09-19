@@ -9,8 +9,9 @@ using namespace erlang_aot;
 
 // Keep native contracts checked in Debug, optimized, and sanitizer builds.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("comprehension check failed");
+    }
 }
 
 // Preserve AST/source ownership beyond the real preprocessing pipeline's lifetime.
@@ -76,12 +77,14 @@ void limits_and_recovery() {
     ParserLimits limits;
     limits.nesting = 8;
     std::string flat = "f() -> [x || true";
-    for (int i = 0; i < 4096; ++i)
+    for (int i = 0; i < 4096; ++i) {
         flat += ",true";
+    }
     require(parse(flat + "].", limits).succeeded());
     std::string nested = "f() -> ";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         nested += "[X || X <- ";
+    }
     auto exhausted = parse(nested + "[]" + std::string(100, ']') + '.', limits);
     require(exhausted.failed && exhausted.module.expression_count() == 0);
     require(exhausted.diagnostics.front().code == DiagnosticCode::resource_limit);

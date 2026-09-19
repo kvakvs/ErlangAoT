@@ -6,8 +6,9 @@ using namespace erlang_aot;
 
 // Check syntax structure and metadata independently of runtime bitstring evaluation.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("binary syntax check failed");
+    }
 }
 
 // Returned ASTs must retain values and origins after preprocessing owners leave scope.
@@ -81,24 +82,28 @@ void limits() {
     ParserLimits limits;
     limits.nesting = 8;
     std::string nested = "f() -> ";
-    for (int i = 0; i < 1000; ++i)
+    for (int i = 0; i < 1000; ++i) {
         nested += "<<";
+    }
     nested += "1";
-    for (int i = 0; i < 1000; ++i)
+    for (int i = 0; i < 1000; ++i) {
         nested += ">>";
+    }
     const auto error = parse(nested + ".", limits);
     require(error.failed && error.module.expression_count() == 0);
     require(error.diagnostics.front().code == DiagnosticCode::resource_limit);
     const auto default_limit = parse(nested + ".");
     require(default_limit.failed && default_limit.diagnostics.front().code == DiagnosticCode::resource_limit);
     std::string flat = "f() -> <<1";
-    for (int i = 0; i < 4096; ++i)
+    for (int i = 0; i < 4096; ++i) {
         flat += ",1";
+    }
     const auto many = parse(flat + ">>.", limits);
     require(many.succeeded() && std::get<ast::Bitstring>(body(many).value).segments.size() == 4097);
     std::string types = "f() -> <<1/integer";
-    for (int i = 0; i < 4096; ++i)
+    for (int i = 0; i < 4096; ++i) {
         types += "-unknown";
+    }
     require(parse(types + ">>.", limits).succeeded());
     limits.nodes = 2;
     const auto sigil = parse("f() -> ~b\"x\".", limits);

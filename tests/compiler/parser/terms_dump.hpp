@@ -24,8 +24,9 @@ struct TermDump {
 
     void operator()(const erlang_aot::ast::TermTuple &value) const {
         std::cout << "term_tuple\t" << value.elements.size() << '\n';
-        for (const auto &id : value.elements)
+        for (const auto &id : value.elements) {
             child(id);
+        }
     }
 
     void operator()(const erlang_aot::ast::TermList &value) const {
@@ -33,10 +34,11 @@ struct TermDump {
             std::cout << "cons\n";
             child(id);
         }
-        if (value.tail)
+        if (value.tail) {
             child(*value.tail);
-        else
+        } else {
             std::cout << "nil\n";
+        }
     }
 
     void operator()(const erlang_aot::ast::TermMap &value) const {
@@ -49,8 +51,9 @@ struct TermDump {
 
     void operator()(const erlang_aot::ast::TermBits &value) const {
         std::cout << "term_bits\t";
-        for (bool bit : value.bits)
+        for (bool bit : value.bits) {
             std::cout << (bit ? '1' : '0');
+        }
         std::cout << '\n';
     }
 

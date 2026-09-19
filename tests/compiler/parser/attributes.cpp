@@ -11,8 +11,9 @@ static_assert(!std::is_convertible_v<ast::ExprId, ast::TermId>);
 
 // Keep assertions active and identify the failed contract without debugger setup.
 void require(bool condition, std::source_location location = std::source_location::current()) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("attribute check at line " + std::to_string(location.line()));
+    }
 }
 
 // Exercise parse_form directly so file documentation remains the parser's responsibility.

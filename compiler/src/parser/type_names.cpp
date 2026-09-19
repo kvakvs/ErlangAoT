@@ -86,10 +86,12 @@ ast::TypeValue FormParser::named_type() {
 ast::TypeValue FormParser::type_application(std::optional<ast::Atom> module, ast::Atom name,
                                             std::vector<ast::TypeId> arguments) {
     if (!module && arguments.empty()) {
-        if (name.name == U"tuple")
+        if (name.name == U"tuple") {
             return ast::TupleType{true, {}};
-        if (name.name == U"map")
+        }
+        if (name.name == U"map") {
             return ast::MapType{true, {}};
+        }
     }
     const bool builtin = !module && predefined(name.name, arguments.size());
     return ast::TypeApplication{std::move(module), std::move(name), builtin, std::move(arguments)};

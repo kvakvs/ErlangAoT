@@ -19,13 +19,15 @@ struct ExpressionDump {
 
     void qualifier(const ast::ZippedQualifier &value) const {
         std::cout << "zip\t" << value.qualifiers.size() << '\n';
-        for (const auto &item : value.qualifiers)
+        for (const auto &item : value.qualifiers) {
             qualifier(item);
+        }
     }
 
     void qualifiers(const std::vector<ast::ComprehensionQualifier> &values) const {
-        for (const auto &item : values)
+        for (const auto &item : values) {
             std::visit([&](const auto &value) { qualifier(value); }, item);
+        }
     }
 
     void operator()(const ast::FilterQualifier &value) const {
@@ -93,8 +95,9 @@ struct ExpressionDump {
     void function_clause(const ast::FunctionClause &value) const {
         std::cout << "clause\t" << value.arguments.size() << '\t'
                   << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size() << '\n';
-        for (const auto &id : value.arguments)
+        for (const auto &id : value.arguments) {
             pattern(id);
+        }
         guards(value.guard);
         expressions(value.body);
     }
@@ -102,18 +105,20 @@ struct ExpressionDump {
     void operator()(const ast::FunExpression &value) const {
         std::cout << "fun\t" << (value.name ? hex(utf8(value.name->name)) : "-") << '\t' << value.clauses.size()
                   << '\n';
-        for (const auto &clause : value.clauses)
+        for (const auto &clause : value.clauses) {
             function_clause(clause);
+        }
     }
 
     void handler(const ast::CatchClause &value) const {
         std::cout << "clause\t1\t" << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size()
                   << '\n';
         std::cout << "tuple\t3\n";
-        if (value.exception_class)
+        if (value.exception_class) {
             std::visit(*this, *value.exception_class);
-        else
+        } else {
             (*this)(ast::Atom{U"throw"});
+        }
         pattern(value.reason);
         (*this)(value.stacktrace.value_or(ast::Variable{U"_"}));
         guards(value.guard);
@@ -125,14 +130,19 @@ struct ExpressionDump {
                   << (value.handlers ? value.handlers->size() : 0) << '\t' << (value.after ? value.after->size() : 0)
                   << '\n';
         expressions(value.body);
-        if (value.of)
-            for (const auto &item : *value.of)
+        if (value.of) {
+            for (const auto &item : *value.of) {
                 branch(item);
-        if (value.handlers)
-            for (const auto &item : *value.handlers)
+            }
+        }
+        if (value.handlers) {
+            for (const auto &item : *value.handlers) {
                 handler(item);
-        if (value.after)
+            }
+        }
+        if (value.after) {
             expressions(*value.after);
+        }
     }
 
     void maybe_item(const ast::ExprId &value) const { child(value); }
@@ -145,17 +155,21 @@ struct ExpressionDump {
 
     void operator()(const ast::MaybeExpression &value) const {
         std::cout << "maybe\t" << value.body.size() << '\t' << (value.otherwise ? value.otherwise->size() : 0) << '\n';
-        for (const auto &item : value.body)
+        for (const auto &item : value.body) {
             std::visit([&](const auto &part) { maybe_item(part); }, item);
-        if (value.otherwise)
-            for (const auto &item : *value.otherwise)
+        }
+        if (value.otherwise) {
+            for (const auto &item : *value.otherwise) {
                 branch(item);
+            }
+        }
     }
 
     // Share sequence and guard projection across control and function-like clauses.
     void expressions(const std::vector<ast::ExprId> &ids) const {
-        for (const auto &id : ids)
+        for (const auto &id : ids) {
             child(id);
+        }
     }
 
     void pattern(const ast::PatternSyntaxId &id) const {
@@ -163,8 +177,9 @@ struct ExpressionDump {
     }
 
     void guards(const std::optional<ast::GuardSyntax> &value) const {
-        if (!value)
+        if (!value) {
             return;
+        }
         for (const auto &alternative : value->alternatives) {
             std::cout << "guard\t" << alternative.tests.size() << '\n';
             expressions(alternative.tests);
@@ -187,8 +202,9 @@ struct ExpressionDump {
     void operator()(const ast::CaseExpression &value) const {
         std::cout << "case\t" << value.clauses.size() << '\n';
         child(value.value);
-        for (const auto &clause : value.clauses)
+        for (const auto &clause : value.clauses) {
             branch(clause);
+        }
     }
 
     void operator()(const ast::IfExpression &value) const {
@@ -202,8 +218,9 @@ struct ExpressionDump {
 
     void operator()(const ast::ReceiveExpression &value) const {
         std::cout << "receive\t" << value.clauses.size() << '\t' << bool(value.after) << '\n';
-        for (const auto &clause : value.clauses)
+        for (const auto &clause : value.clauses) {
             branch(clause);
+        }
         if (value.after) {
             child(value.after->timeout);
             std::cout << "after\t" << value.after->body.size() << '\n';
@@ -227,8 +244,9 @@ struct ExpressionDump {
 
     void operator()(const ast::MapExpression &value) const {
         std::cout << "map\t" << bool(value.base) << '\t' << value.fields.size() << '\n';
-        if (value.base)
+        if (value.base) {
             child(*value.base);
+        }
         for (const auto &field : value.fields) {
             std::cout << "map_field\t" << (field.kind == ast::MapFieldKind::associate ? "=>" : ":=") << '\n';
             child(field.key);
@@ -238,8 +256,9 @@ struct ExpressionDump {
 
     void operator()(const ast::RecordExpression &value) const {
         std::cout << "record\t" << bool(value.base) << '\t' << value.fields.size() << '\n';
-        if (value.base)
+        if (value.base) {
             child(*value.base);
+        }
         identity(value.identity);
         for (const auto &field : value.fields) {
             std::cout << "record_field\n";
@@ -292,14 +311,16 @@ struct ExpressionDump {
     void operator()(const ast::CallExpression &value) const {
         std::cout << "call\t" << value.arguments.size() << '\n';
         child(value.target);
-        for (const auto &id : value.arguments)
+        for (const auto &id : value.arguments) {
             child(id);
+        }
     }
 
     void operator()(const ast::Tuple &value) const {
         std::cout << "tuple\t" << value.elements.size() << '\n';
-        for (const auto &id : value.elements)
+        for (const auto &id : value.elements) {
             child(id);
+        }
     }
 
     void operator()(const ast::List &value) const {
@@ -312,53 +333,63 @@ struct ExpressionDump {
                 continue;
             }
             const auto *rest = std::get_if<ast::List>(&payload);
-            if (!rest)
+            if (!rest) {
                 break;
+            }
             elements.insert(elements.end(), rest->elements.begin(), rest->elements.end());
             tail = rest->tail;
         }
         std::cout << "list\t" << elements.size() << '\t' << bool(tail) << '\n';
-        for (const auto &id : elements)
+        for (const auto &id : elements) {
             child(id);
-        if (tail)
+        }
+        if (tail) {
             child(*tail);
+        }
     }
 
     void operator()(const ast::Group &value) const { child(value.expression); }
 
     // Retain the earlier projection for the exact abstract shape used by binary sigils.
     const ast::StringLiteral *utf8_string(const ast::Bitstring &value) const {
-        if (value.segments.size() != 1)
+        if (value.segments.size() != 1) {
             return nullptr;
+        }
         const auto &segment = value.segments.front();
-        if (segment.size || !segment.modifiers || segment.modifiers->size() != 1)
+        if (segment.size || !segment.modifiers || segment.modifiers->size() != 1) {
             return nullptr;
+        }
         const auto &modifier = segment.modifiers->front();
-        if (modifier.name.name != U"utf8" || modifier.parameter)
+        if (modifier.name.name != U"utf8" || modifier.parameter) {
             return nullptr;
+        }
         auto id = segment.value;
-        while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value))
+        while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value)) {
             id = group->expression;
+        }
         return std::get_if<ast::StringLiteral>(&module.expression(id).value);
     }
 
     void segment(const ast::BinarySegment &value) const {
         std::cout << "segment\t" << bool(value.size) << '\t';
-        if (value.modifiers)
+        if (value.modifiers) {
             std::cout << value.modifiers->size();
-        else
+        } else {
             std::cout << "default";
+        }
         std::cout << '\n';
         child(value.value);
-        if (value.size)
+        if (value.size) {
             child(*value.size);
+        }
         if (value.modifiers) {
             for (const auto &modifier : *value.modifiers) {
                 std::cout << "modifier\t" << hex(utf8(modifier.name.name)) << '\t';
-                if (modifier.parameter)
+                if (modifier.parameter) {
                     std::cout << modifier.parameter->decimal;
-                else
+                } else {
                     std::cout << "none";
+                }
                 std::cout << '\n';
             }
         }
@@ -370,8 +401,9 @@ struct ExpressionDump {
             return;
         }
         std::cout << "bitstring\t" << value.segments.size() << '\n';
-        for (const auto &item : value.segments)
+        for (const auto &item : value.segments) {
             segment(item);
+        }
     }
 
     void operator()(const ast::Atom &value) const { std::cout << "atom\t" << hex(utf8(value.name)) << '\n'; }
@@ -414,16 +446,18 @@ struct FormDump {
     void operator()(const ast::TypeDeclaration &value) const {
         std::cout << "type_decl\t" << static_cast<unsigned>(value.kind) << '\t' << hex(utf8(value.name.name)) << '\t'
                   << value.parameters.size() << '\n';
-        for (const auto &parameter : value.parameters)
+        for (const auto &parameter : value.parameters) {
             TypeDump{module}(parameter);
+        }
         module.visit(value.type, TypeDump{module});
     }
 
     void operator()(const ast::ModuleAttribute &value) const {
         if (value.parameters) {
             std::cout << "legacy_module\t" << hex(utf8(value.name.name)) << '\t' << value.parameters->size() << '\n';
-            for (const auto &parameter : *value.parameters)
+            for (const auto &parameter : *value.parameters) {
                 std::cout << "var\t" << hex(utf8(parameter.name)) << '\n';
+            }
             return;
         }
         std::cout << "module\t" << hex(utf8(value.name.name)) << '\n';
@@ -436,8 +470,9 @@ struct FormDump {
 
     void arities(const std::vector<ast::NameArity> &values) const {
         std::cout << values.size() << '\n';
-        for (const auto &value : values)
+        for (const auto &value : values) {
             std::cout << hex(utf8(value.name.name)) << '\t' << value.arity.decimal << '\n';
+        }
     }
 
     void operator()(const ast::ExportAttribute &value) const {
@@ -452,8 +487,9 @@ struct FormDump {
 
     void operator()(const ast::ImportRecordAttribute &value) const {
         std::cout << "import_record\t" << hex(utf8(value.module.name)) << '\t' << value.names.size() << '\n';
-        for (const auto &name : value.names)
+        for (const auto &name : value.names) {
             ExpressionDump{module}(name);
+        }
     }
 
     void operator()(const ast::GenericAttribute &value) const {
@@ -471,8 +507,9 @@ struct FormDump {
             }
             std::cout << "record_decl_field\t" << hex(utf8(field.name.name)) << '\t' << field.default_value.has_value()
                       << '\n';
-            if (field.default_value)
+            if (field.default_value) {
                 module.visit(*field.default_value, ExpressionDump{module});
+            }
         }
     }
 
@@ -486,9 +523,9 @@ struct FormDump {
         std::cout << "metadata\t" << entries.size() << '\n';
         for (const auto &entry : entries) {
             module.visit(entry.key, TermDump{module});
-            if (const auto *literal = std::get_if<ast::TermId>(&entry.value))
+            if (const auto *literal = std::get_if<ast::TermId>(&entry.value)) {
                 module.visit(*literal, TermDump{module});
-            else {
+            } else {
                 std::cout << "equiv\n";
                 module.visit(std::get<ast::ExprId>(entry.value), ExpressionDump{module});
             }
@@ -505,12 +542,14 @@ struct FormDump {
         if (value.guard) {
             for (const auto &alternative : value.guard->alternatives) {
                 std::cout << "guard\t" << alternative.tests.size() << '\n';
-                for (const auto &id : alternative.tests)
+                for (const auto &id : alternative.tests) {
                     module.visit(id, ExpressionDump{module});
+                }
             }
         }
-        for (const auto &id : value.body)
+        for (const auto &id : value.body) {
             module.visit(id, ExpressionDump{module});
+        }
     }
 
     void operator()(const ast::Function &value) const {
@@ -522,8 +561,9 @@ struct FormDump {
         }
         std::cout << "function_full\t" << hex(utf8(value.name.name)) << '\t' << first.arguments.size() << '\t'
                   << value.clauses.size() << '\n';
-        for (const auto &item : value.clauses)
+        for (const auto &item : value.clauses) {
             clause(item);
+        }
     }
 };
 

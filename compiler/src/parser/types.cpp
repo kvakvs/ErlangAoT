@@ -4,8 +4,9 @@ namespace erlang_aot {
 namespace {
 // Type-only punctuation is handled before requiring a shared arithmetic identity.
 ast::BinaryOperator type_operation(const OperatorInfo &info) {
-    if (!info.operation)
+    if (!info.operation) {
         throw std::logic_error("missing type operator identity");
+    }
     return *info.operation;
 }
 } // namespace
@@ -40,19 +41,22 @@ ast::TypeId FormParser::type_expression(int minimum) {
     const auto begin = cursor_.offset();
     auto left = type_prefix();
     while (const auto info = infix_operator(cursor_.anchor(), OperatorContext::type)) {
-        if (info->precedence < minimum)
+        if (info->precedence < minimum) {
             break;
+        }
         const auto anchor = cursor_.offset();
         cursor_.consume();
         auto right = type_expression(info->precedence + 1);
-        if (info->spelling == U"..")
+        if (info->spelling == U"..") {
             left = make_type(ast::RangeType{std::move(left), std::move(right)}, begin, anchor);
-        else
+        } else {
             left = make_type(ast::BinaryTypeOperator{type_operation(*info), std::move(left), std::move(right)}, begin,
                              anchor);
+        }
         const auto next = infix_operator(cursor_.anchor(), OperatorContext::type);
-        if (info->associativity == Associativity::none && next && next->precedence == info->precedence)
+        if (info->associativity == Associativity::none && next && next->precedence == info->precedence) {
             fail(DiagnosticCode::parser_syntax, "nonassociative type operator requires parentheses");
+        }
     }
     --depth_;
     return left;
@@ -70,8 +74,9 @@ ast::TypeId FormParser::type_prefix() {
 
 std::vector<ast::TypeId> FormParser::type_elements(std::u32string_view close) {
     std::vector<ast::TypeId> result;
-    if (cursor_.take_syntax(close))
+    if (cursor_.take_syntax(close)) {
         return result;
+    }
     do {
         result.push_back(top_type());
     } while (cursor_.take_syntax(U","));

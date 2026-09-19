@@ -12,8 +12,9 @@ TreePrinter::TreePrinter(std::ostream &output, const ast::Module &module, const 
     : output_(output), module_(module), visits_(visits) {}
 
 void TreePrinter::child(std::string role, Reference reference) {
-    if (visits_ == 0)
+    if (visits_ == 0) {
         throw std::length_error("AST printing visit budget exhausted");
+    }
     --visits_;
     pending_.push_back({.role = std::move(role), .depth = depth_ + 1, .reference = std::move(reference)});
 }

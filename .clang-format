@@ -1,5 +1,6 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 BreakBeforeBraces: Attach
+InsertBraces: true
 ColumnLimit: 120
 SeparateDefinitionBlocks: Always

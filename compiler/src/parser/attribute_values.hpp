@@ -5,15 +5,17 @@
 namespace erlang_aot {
 // Parentheses do not change OTP's attribute builder shapes.
 inline const ast::Expression &ungroup(const ast::Module &module, ast::ExprId id) {
-    while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value))
+    while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value)) {
         id = group->expression;
+    }
     return module.expression(id);
 }
 
 template <typename T> const T &attribute_as(const ast::Module &module, const ast::ExprId &id) {
     const auto *value = std::get_if<T>(&ungroup(module, id).value);
-    if (!value)
+    if (!value) {
         throw EvaluationFailure();
+    }
     return *value;
 }
 

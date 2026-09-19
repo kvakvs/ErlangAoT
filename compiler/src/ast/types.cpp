@@ -3,8 +3,9 @@
 
 namespace erlang_aot::ast {
 TypeId Builder::type(TypeValue value, NodeSource source) {
-    if (!active_)
+    if (!active_) {
         throw std::logic_error("type requires active transaction");
+    }
     validate(source);
     std::visit(Children{*this, *active_}, value);
     return module_.storage_->types.append({std::move(value), std::move(source)});
@@ -32,27 +33,33 @@ void Children::operator()(const BinaryTypeOperator &value) const {
 }
 
 void Children::operator()(const TypeApplication &value) const {
-    for (const auto &id : value.arguments)
+    for (const auto &id : value.arguments) {
         child(id);
+    }
 }
 
 void Children::operator()(const TupleType &value) const {
-    if (value.any && !value.elements.empty())
+    if (value.any && !value.elements.empty()) {
         throw std::invalid_argument("unrestricted tuple type has elements");
-    for (const auto &id : value.elements)
+    }
+    for (const auto &id : value.elements) {
         child(id);
+    }
 }
 
 void Children::operator()(const ListType &value) const {
-    if (value.nonempty && !value.element)
+    if (value.nonempty && !value.element) {
         throw std::invalid_argument("nonempty list type requires element");
-    if (value.element)
+    }
+    if (value.element) {
         child(*value.element);
+    }
 }
 
 void Children::operator()(const MapType &value) const {
-    if (value.any && !value.fields.empty())
+    if (value.any && !value.fields.empty()) {
         throw std::invalid_argument("unrestricted map type has fields");
+    }
     for (const auto &field : value.fields) {
         source(field.source);
         child(field.key);
@@ -68,21 +75,26 @@ void Children::operator()(const RecordType &value) const {
 }
 
 void Children::operator()(const BitstringType &value) const {
-    if (value.base)
+    if (value.base) {
         child(*value.base);
-    if (value.unit)
+    }
+    if (value.unit) {
         child(*value.unit);
+    }
 }
 
 void Children::operator()(const FunType &value) const {
-    if (value.arguments && !value.result)
+    if (value.arguments && !value.result) {
         throw std::invalid_argument("function type product requires result");
-    if (value.arguments) {
-        for (const auto &id : *value.arguments)
-            child(id);
     }
-    if (value.result)
+    if (value.arguments) {
+        for (const auto &id : *value.arguments) {
+            child(id);
+        }
+    }
+    if (value.result) {
         child(*value.result);
+    }
 }
 
 void Children::operator()(const TypeDeclaration &value) const { child(value.type); }

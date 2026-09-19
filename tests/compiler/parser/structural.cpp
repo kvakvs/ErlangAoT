@@ -6,8 +6,9 @@ using namespace erlang_aot;
 
 // Preserve checks in every build mode, including provenance and syntax categories.
 void require(bool condition) {
-    if (!condition)
+    if (!condition) {
         throw std::runtime_error("structural expression check failed");
+    }
 }
 
 // Run the real frontend and inspect its AST after source/session destruction.
@@ -65,12 +66,14 @@ void limits_and_recovery() {
     ParserLimits limits;
     limits.nesting = 8;
     std::string flat = "f() -> M";
-    for (int i = 0; i < 4096; ++i)
+    for (int i = 0; i < 4096; ++i) {
         flat += "#{a => 1}";
+    }
     require(parse(flat + ".", limits).succeeded());
     std::string nested = "f() -> ";
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 100; ++i) {
         nested += "#{a => ";
+    }
     nested += "ok" + std::string(100, '}') + ".";
     const auto exhausted = parse(nested, limits);
     require(exhausted.failed && exhausted.module.expression_count() == 0);

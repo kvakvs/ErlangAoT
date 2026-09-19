@@ -31,12 +31,15 @@ void TreePrinter::operator()(const ast::TryExpression &value) {
     output_ << "TryExpression body=" << value.body.size() << " of=" << (value.of ? "present" : "none")
             << " catch=" << (value.handlers ? "present" : "none") << " after=" << (value.after ? "present" : "none");
     handles("body", value.body);
-    if (value.of)
+    if (value.of) {
         objects("of", *value.of);
-    if (value.handlers)
+    }
+    if (value.handlers) {
         objects("catch", *value.handlers);
-    if (value.after)
+    }
+    if (value.after) {
         handles("after", *value.after);
+    }
 }
 
 void TreePrinter::operator()(const ast::CatchClause &value) {
@@ -44,8 +47,9 @@ void TreePrinter::operator()(const ast::CatchClause &value) {
             << (value.exception_class ? std::visit(Component{}, *value.exception_class) : "<omitted>")
             << " stacktrace=" << (value.stacktrace ? utf8(value.stacktrace->name) : "<omitted>");
     child("reason", value.reason);
-    if (value.guard)
+    if (value.guard) {
         child("guard", &*value.guard);
+    }
     handles("body", value.body);
 }
 
@@ -60,8 +64,9 @@ void TreePrinter::operator()(const ast::MaybeExpression &value) {
         const auto role = "body[" + std::to_string(index++) + ']';
         std::visit([&](const auto &part) { maybe_child(role, part); }, item);
     }
-    if (value.otherwise)
+    if (value.otherwise) {
         objects("else", *value.otherwise);
+    }
 }
 
 void TreePrinter::operator()(const ast::MaybeMatch &value) {

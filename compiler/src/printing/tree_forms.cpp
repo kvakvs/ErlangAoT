@@ -5,8 +5,9 @@ void TreePrinter::operator()(const ast::ModuleAttribute &value) const {
     output_ << "ModuleAttribute name=" << atom(value.name);
     if (value.parameters) {
         output_ << " parameters=";
-        for (const auto &[name] : *value.parameters)
+        for (const auto &[name] : *value.parameters) {
             output_ << ' ' << utf8(name);
+        }
     }
 }
 

@@ -29,9 +29,10 @@ ast::TermValue FormParser::term_container(const Value &value, const ast::NodeSou
         return ast::TermFunction{{value.elements[0].text}, {value.elements[1].text}, {value.elements[2].integer.str()}};
     case ValueKind::map: {
         ast::TermMap result;
-        for (std::size_t i = 0; i < value.elements.size(); i += 2)
+        for (std::size_t i = 0; i < value.elements.size(); i += 2) {
             result.entries.emplace_back(term_value(value.elements[i], source),
                                         term_value(value.elements[i + 1], source));
+        }
         return result;
     }
     default:
@@ -43,13 +44,16 @@ ast::TermValue FormParser::term_container(const Value &value, const ast::NodeSou
 ast::TermValue FormParser::term_sequence(const Value &value, const ast::NodeSource &source) {
     std::vector<ast::TermId> elements;
     elements.reserve(value.elements.size());
-    for (const auto &item : value.elements)
+    for (const auto &item : value.elements) {
         elements.push_back(term_value(item, source));
-    if (value.kind == ValueKind::tuple)
+    }
+    if (value.kind == ValueKind::tuple) {
         return ast::TermTuple{std::move(elements)};
+    }
     std::optional<ast::TermId> tail;
-    if (value.tail)
+    if (value.tail) {
         tail = term_value(*value.tail, source);
+    }
     return ast::TermList{std::move(elements), std::move(tail)};
 }
 } // namespace erlang_aot
