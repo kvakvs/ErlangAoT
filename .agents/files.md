@@ -39,7 +39,8 @@ Paths below are repository-relative; `src/` in grouped compiler entries means
 - `compiler/CMakeLists.txt`: frontend library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
-  validation; `src/driver/frontend.cpp`: isolated loading, PP/parser, diagnostics/printing.
+  validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
+  diagnostic callback and printing, with a positional-mode adapter.
 - Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
   source/token/events, immutable features, parser ownership/limits/results and output APIs.
 - `src/source/source.cpp`: decoding/positions; `src/diagnostics/diagnostic.cpp`: logical

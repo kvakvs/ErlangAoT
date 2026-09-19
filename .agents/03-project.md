@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–13 complete; steps 14–22 pending. Written 2026-09-19.
+Status: steps 1–14 complete; steps 15–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -30,6 +30,8 @@ Step 12 — per-target option composition, precedence and semantic validation;
 all 57 tests, formatting, fresh C++23 Debug build and full quality pass.
 Step 13 — selection-before-discovery, all-target preflight, output precedence
 and alias collisions; all 58 tests, formatting, fresh Debug build and full quality pass.
+Step 14 — shared per-file frontend operation; existing positional CLI regression
+coverage, all 58 tests, formatting, fresh Debug build and full quality pass.
 
 ## Objective and existing behavior
 
