@@ -8,6 +8,9 @@
 - `src/project/loader.{hpp,cpp}`: bounded native manifest reading and private TOML
   ownership; `diagnostics.{hpp,cpp}`: owned project failures and located rendering.
   `tests/compiler/project/loader.cpp`: syntax, size, I/O, and Unicode-path tests.
+- `src/project/{decode,schema}.{hpp,cpp}`: strict target declarations, located
+  typed values, unknown-key checks, and configuration budgets; `decode.cpp` tests
+  under `tests/compiler/project/` cover schema failures and ownership.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

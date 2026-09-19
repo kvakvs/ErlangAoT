@@ -278,3 +278,7 @@ unreleased TOML syntax. TOML headers never appear in public frontend interfaces.
 The manifest byte limit is 1 MiB; the native reader enforces it while reading.
 TOML nesting also retains the pinned parser's own checks. Internal tests can
 supply smaller limits without changing production defaults.
+
+Decoded manifests allow at most 1,024 targets and 100,000 total TOML nodes
+(including tables, arrays, and scalar values). Exceeding either limit fails before
+constructing a partial usable manifest.
