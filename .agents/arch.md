@@ -11,6 +11,8 @@
 - Pure target selection precedes filesystem resolution. Invocation planning owns
   resolved sources and independent effective frontend options for every selected
   target, validating all work before execution and reserving outputs without writes.
+  Execution visits each target/file independently through a shared frontend callback,
+  adds diagnostic context and aggregates failures; unsupported compilation writes nothing.
 
 - CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
   C++26 is selectable. No LLVM/backend/runtime execution is implemented yet.

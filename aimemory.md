@@ -1,11 +1,11 @@
-# Current working memory — 2026-09-19
+# Current working memory — 2026-09-20
 
 - Active task: implement all22 steps in .agents/03-project.md, separate commits
-  after each full gate. Steps1–12 committed (latest4c74e13); step13 applied and
-  all58 tests pass, full quality running session2074 /tmp/project-step13-* logs.
+  after each full gate. Steps1–14 committed plus2539c2a Homebrew follow-up; step15 applied,
+  all59 tests pass, full quality running session36586 /tmp/project-step15-* logs.
 - User steering: C++23 requirement; no C++26 checks for project work. Existing
   optional standard selector is unchanged. No subagents authorized.
-- Scripts /tmp/project-step14.py through step22.py remain UNAPPLIED in main.
+- Scripts /tmp/project-step16.py through step22.py remain UNAPPLIED in main.
   Scripts through22 were tested in /tmp/erlangaot-project-preview; project/CLI tests
   and documentation shell examples pass. Preview21 adds project_hardening, 64th test.
   Must still apply/review/format/full gate/commit each main step in order.
@@ -26,7 +26,8 @@
 - Git commits require require_escalated with git prefix; authorized by plan.
   .agents edits require apply_patch. DO NOT stage/change/revert user Makefile clean
   target edit. Stage explicit own paths, track plan ledger/files/architecture.
-- TOML private3.4.0 at /opt/homebrew/include; verified local extracted copy also
+- TOML private3.4.0 now explicitly found through brew prefix
+  /opt/homebrew/opt/tomlplusplus/include; verified local extracted copy also
   build/deps/tomlplusplus-3.4.0. No auto downloads; runtime never discovers TOML.
 - Important existing fixes: glob ComponentPattern wrapper, discovery splits
   supplied pattern BEFORE joining manifest base (base may contain [!]); native

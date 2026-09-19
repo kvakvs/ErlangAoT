@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–14 complete; steps 15–22 pending. Written 2026-09-19.
+Status: steps 1–15 complete; steps 16–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -35,6 +35,8 @@ coverage, all 58 tests, formatting, fresh Debug build and full quality pass.
 Homebrew follow-up — explicit formula-prefix discovery selects installed toml++
 3.4.0. Automatic/explicit/absent-root reconfiguration and runtime-only checks,
 all 58 tests, fresh C++23 Debug build, whitespace and full quality checks pass.
+Step 15 — target/file execution order, contextual diagnostics and failure latching;
+all 59 tests, formatting, fresh Debug build and full quality pass.
 
 ## Objective and existing behavior
 

@@ -57,3 +57,8 @@ add_executable(project_plan plan.cpp)
 erlang_aot_project_options(project_plan)
 target_link_libraries(project_plan PRIVATE erlang_project)
 add_test(NAME project_plan COMMAND project_plan "${CMAKE_CURRENT_BINARY_DIR}/project-plan")
+
+add_executable(project_execution execution.cpp)
+erlang_aot_project_options(project_execution)
+target_link_libraries(project_execution PRIVATE erlang_project)
+add_test(NAME project_execution COMMAND project_execution)
