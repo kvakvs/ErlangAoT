@@ -5,6 +5,9 @@
   Runtime-only builds do not discover TOML. Project commands are not exposed yet.
 - The private project library owns located configuration and bounded TOML loading;
   parsing failures retain manifest coordinates and file I/O accepts native paths.
+- Typed project decoding and source discovery retain declaration order, explicit
+  path bases, bounded Unicode-aware wildcard matching, and directory symlink policy.
+  Per-target source assembly deduplicates native filesystem identities without case folding.
 
 - CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
   C++26 is selectable. No LLVM/backend/runtime execution is implemented yet.

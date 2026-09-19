@@ -21,6 +21,8 @@
   build delegates with one subdirectory entry.
 - `src/project/discovery.{hpp,cpp}` and matching project tests: bounded directory/
   wildcard traversal, deterministic expansions, regular-file filtering and symlink policy.
+- `src/project/{sources,identity}.{hpp,cpp}` and matching project tests: target
+  source ordering and physical-identity deduplication, including hard links and symlinks.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

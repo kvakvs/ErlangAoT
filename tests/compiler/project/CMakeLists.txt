@@ -37,3 +37,8 @@ add_executable(project_discovery discovery.cpp)
 erlang_aot_project_options(project_discovery)
 target_link_libraries(project_discovery PRIVATE erlang_project)
 add_test(NAME project_discovery COMMAND project_discovery "${CMAKE_CURRENT_BINARY_DIR}/project-discovery")
+
+add_executable(project_sources sources.cpp)
+erlang_aot_project_options(project_sources)
+target_link_libraries(project_sources PRIVATE erlang_project)
+add_test(NAME project_sources COMMAND project_sources "${CMAKE_CURRENT_BINARY_DIR}/project-sources")
