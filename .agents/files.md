@@ -4,6 +4,11 @@
 - `compiler/src/{parser,ast}/control.cpp`: block/case/if/receive grammar and construction checks.
 - `compiler/src/ast/children.hpp`: exhaustive child validation shared by node families.
 - `compiler/src/printing/tree_control.cpp`: control-flow tree visitors.
+- `compiler/src/parser/{funs,exceptions}.cpp`: fun references/clauses, try/catch and maybe grammar.
+- `compiler/src/ast/exceptions.cpp`: shared function/fun clause checks and exception/maybe invariants.
+- `compiler/src/printing/tree_exceptions.cpp`: compact fun/try/maybe tree output.
+- `tests/compiler/parser/exceptions.cpp`, `fixtures/parser/phase4/step11/`: syntax,
+  defaults, feature states, provenance, rollback, limits and differential cases.
 - `tests/compiler/parser/control.cpp`, `fixtures/parser/phase4/step10/`: control AST,
   source ownership, rollback, bounds, invariant and oracle fixtures.
 

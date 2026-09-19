@@ -43,6 +43,18 @@ class FormParser {
     ast::ReceiveExpression receive_expression();
     std::vector<ast::BranchClause> branches();
     ast::BranchClause branch();
+    // Fun heads reuse clauses; catches and maybe matches keep their grammar contexts.
+    ast::ExprValue fun_expression();
+    ast::FunExpression fun_clauses();
+    std::optional<ast::Variable> fun_name();
+    std::variant<ast::Atom, ast::Variable> atom_or_variable();
+    std::variant<Integer, ast::Variable> fun_arity();
+    void check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
+                      const ast::FunctionClause &clause, const Token &site) const;
+    ast::TryExpression try_expression();
+    ast::CatchClause catch_clause();
+    ast::MaybeExpression maybe_expression();
+    std::variant<ast::ExprId, ast::MaybeMatch> maybe_item();
     // Parse bounded recursive values without rescanning expanded tokens.
     ast::ExprId expression(int minimum = 0, OperatorContext context = OperatorContext::expression);
     ast::ExprId prefix(OperatorContext context);

@@ -1,0 +1,1 @@
+f() -> try a catch f() -> no end.

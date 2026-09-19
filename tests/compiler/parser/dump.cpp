@@ -12,6 +12,84 @@ struct ExpressionDump {
 
     void child(const ast::ExprId &id) const { module.visit(id, *this); }
 
+    // Reference arity integers reuse the same literal projection as expression integers.
+    void operator()(const Integer &value) const { (*this)(ast::IntegerLiteral{value}); }
+
+    void operator()(const ast::LocalFunReference &value) const {
+        std::cout << "local_fun\n";
+        (*this)(value.name);
+        (*this)(value.arity);
+    }
+
+    void operator()(const ast::RemoteFunReference &value) const {
+        std::cout << "remote_fun\n";
+        std::visit(*this, value.module);
+        std::visit(*this, value.name);
+        std::visit(*this, value.arity);
+    }
+
+    void function_clause(const ast::FunctionClause &value) const {
+        std::cout << "clause\t" << value.arguments.size() << '\t'
+                  << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size() << '\n';
+        for (const auto &id : value.arguments)
+            pattern(id);
+        guards(value.guard);
+        expressions(value.body);
+    }
+
+    void operator()(const ast::FunExpression &value) const {
+        std::cout << "fun\t" << (value.name ? hex(utf8(value.name->name)) : "-") << '\t' << value.clauses.size()
+                  << '\n';
+        for (const auto &clause : value.clauses)
+            function_clause(clause);
+    }
+
+    void handler(const ast::CatchClause &value) const {
+        std::cout << "clause\t1\t" << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size()
+                  << '\n';
+        std::cout << "tuple\t3\n";
+        if (value.exception_class)
+            std::visit(*this, *value.exception_class);
+        else
+            (*this)(ast::Atom{U"throw"});
+        pattern(value.reason);
+        (*this)(value.stacktrace.value_or(ast::Variable{U"_"}));
+        guards(value.guard);
+        expressions(value.body);
+    }
+
+    void operator()(const ast::TryExpression &value) const {
+        std::cout << "try\t" << value.body.size() << '\t' << (value.of ? value.of->size() : 0) << '\t'
+                  << (value.handlers ? value.handlers->size() : 0) << '\t' << (value.after ? value.after->size() : 0)
+                  << '\n';
+        expressions(value.body);
+        if (value.of)
+            for (const auto &item : *value.of)
+                branch(item);
+        if (value.handlers)
+            for (const auto &item : *value.handlers)
+                handler(item);
+        if (value.after)
+            expressions(*value.after);
+    }
+
+    void maybe_item(const ast::ExprId &value) const { child(value); }
+
+    void maybe_item(const ast::MaybeMatch &value) const {
+        std::cout << "maybe_match\n";
+        pattern(value.pattern);
+        child(value.value);
+    }
+
+    void operator()(const ast::MaybeExpression &value) const {
+        std::cout << "maybe\t" << value.body.size() << '\t' << (value.otherwise ? value.otherwise->size() : 0) << '\n';
+        for (const auto &item : value.body)
+            std::visit([&](const auto &part) { maybe_item(part); }, item);
+        if (value.otherwise)
+            for (const auto &item : *value.otherwise)
+                branch(item);
+    }
+
     // Share sequence and guard projection across control and function-like clauses.
     void expressions(const std::vector<ast::ExprId> &ids) const {
         for (const auto &id : ids)

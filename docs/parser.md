@@ -10,6 +10,8 @@ Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
 ## Phase IV step 10 — Branching and receive
 
+Step 10 commit: `d22c6d9`.
+
 `BlockExpression`, `CaseExpression`, `IfExpression`, and `ReceiveExpression` retain
 ordered syntax, including explicit timeout expressions/bodies and after-only receives.
 `BranchClause` owns a `PatternCandidate`; `IfClause` owns a mandatory guard. Guard
@@ -29,6 +31,33 @@ against the pinned 29.1 grammar; no claim of a new exact-29.1 runtime run is mad
 
 Step 10 validation: fresh Debug configure/build, all 30 CTests (including all live
 OTP suites), clang-format, and the full Lizard/clang-tidy quality gate passed on macOS arm64.
+
+## Phase IV step 11 — Funs, try and maybe
+
+Local and remote fun references preserve typed name/arity components; anonymous
+and recursive named funs reuse function clauses, constructor checks, and parser
+head-name/arity checks. Reference names or arities are not resolved or evaluated.
+
+Try nodes preserve optional `of`, catch and after parts. Catch reason roots use
+`RestrictedPattern`, matching `try_clause -> pat_expr` in the pinned grammar (the
+plan's informal "reason candidate" wording does not relax that restriction).
+Class and stacktrace omissions remain explicit; only the test oracle projection
+normalizes these to `throw` and `_`. Empty catch/after parts and try without either
+are rejected. Try `of` clauses remain permissive branch candidates.
+
+Maybe bodies retain ordered expression IDs or typed `MaybeMatch` objects containing
+candidate patterns. `?=` is recognized only in that body grammar. Optional else
+branches reuse candidate clauses, and existing feature-sensitive tokens/snapshots
+remain authoritative. Included and macro-generated fun/maybe syntax is covered.
+
+Step 11 fixtures cover all fun-reference/try/maybe alternatives and negative head,
+stacktrace, body and conditional-match boundaries. Native tests exercise omission,
+typed references, source lifetime/provenance, feature-disabled atoms, rollback,
+constructor invariants, deep nesting, and public printing.
+
+Step 11 validation: fresh full Debug build, all 31 CTests with live OTP 29.0.5,
+the additional alternative-fixture replay, clang-format, and full Lizard/clang-tidy
+passed on macOS arm64.
 
 The CLI now exposes the implemented grammar through `--print-ast`. It prints a compact
 indented tree of recovered forms, reports diagnostics to stderr, and fails on syntax

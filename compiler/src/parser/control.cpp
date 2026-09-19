@@ -12,6 +12,12 @@ std::optional<ast::ExprValue> FormParser::control(OperatorContext context) {
         return if_expression();
     if (cursor_.take_syntax(U"receive"))
         return receive_expression();
+    if (cursor_.take_syntax(U"fun"))
+        return fun_expression();
+    if (cursor_.take_syntax(U"try"))
+        return try_expression();
+    if (cursor_.take_syntax(U"maybe"))
+        return maybe_expression();
     return std::nullopt;
 }
 

@@ -39,6 +39,16 @@ std::vector<Token> tokens() {
 
 // Exhaustive private dump proves typed visiting without an unchecked fallback.
 struct LiteralDump {
+    std::string operator()(const ast::LocalFunReference &) const { return "local_fun"; }
+
+    std::string operator()(const ast::RemoteFunReference &) const { return "remote_fun"; }
+
+    std::string operator()(const ast::FunExpression &) const { return "fun"; }
+
+    std::string operator()(const ast::TryExpression &) const { return "try"; }
+
+    std::string operator()(const ast::MaybeExpression &) const { return "maybe"; }
+
     std::string operator()(const ast::BlockExpression &) const { return "block"; }
 
     std::string operator()(const ast::CaseExpression &) const { return "case"; }

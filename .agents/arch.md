@@ -47,6 +47,10 @@
 - Blocks/case/if/receive retain nonempty bodies, distinct guard-only and candidate-pattern
   branch clauses, and explicit receive timeouts. Shared clause payloads live below expression
   nodes; bounded parsing reuses function sequences/guards and recovers transactionally.
+- Funs reuse checked restricted clauses and retain recursive names or typed local/remote
+  references. Try retains optional of/catch/after parts, restricted catch reasons and
+  omitted class/stacktrace syntax. Maybe bodies alone admit conditional matches; their
+  candidate patterns and optional else branches defer semantics and retain feature context.
 - Bitstrings retain ordered value/size/type segments and modifier integer parameters.
   Restricted bit_expr/expr_max entries protect segment delimiters; grouping admits full
   expressions. Binary sigils use the same string/UTF-8 segment representation. Type/size

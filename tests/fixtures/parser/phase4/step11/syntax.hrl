@@ -1,0 +1,2 @@
+-define(INCLUDED_FUN, fun (X) -> X end).
+-define(INCLUDED_MAYBE, maybe {ok,X} ?= g(), X end).

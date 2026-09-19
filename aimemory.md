@@ -381,3 +381,9 @@ Primary sources consulted:
 - Each PhaseIV step requires a separate commit after fresh full quality checks.
 - Step10 validation: all 30 CTests and fresh full quality/format checks pass on macOS
   arm64 with installed OTP29.0.5. No preprocessor behavior change was required.
+- Step10 commit d22c6d9. Step11 implements fun/try/maybe; catch reasons are restricted
+  per pinned grammar, not general expression candidates. Catch defaults stay omitted
+  in the AST and normalize only in oracle output. Function/fun constructor checks are
+  now shared through Children::function_clauses. Keyword-state handling stays in PP.
+- Step11: all 31 CTests plus additional alternative fixtures and full fresh quality
+  passed; formatting clean. No semantic lowering or feature reinterpretation added.

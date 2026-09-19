@@ -1,0 +1,179 @@
+file	66756e735f7472795f6d617962652e65726c	1
+module	66756e735f7472795f6d61796265
+file	73796e7461782e68726c	1
+file	66756e735f7472795f6d617962652e65726c	4
+function_full	66	3	1
+clause	3	0	1
+var	4d
+var	46
+var	41
+tuple	19
+local_fun
+atom	6c6f63616c
+integer	0
+remote_fun
+atom	6d
+atom	66
+integer	2
+remote_fun
+var	4d
+var	46
+var	41
+remote_fun
+var	4d
+atom	66
+integer	0
+remote_fun
+atom	6d
+var	46
+integer	1
+fun	-	2
+clause	1	2	1
+var	58
+guard	1
+call	1
+atom	69735f61746f6d
+var	58
+guard	1
+binary	=:=
+var	58
+integer	1
+var	58
+clause	1	0	1
+var	5f
+atom	6e6f
+fun	4c6f6f70	2
+clause	1	0	1
+integer	0
+atom	646f6e65
+clause	1	0	1
+var	4e
+call	1
+var	4c6f6f70
+binary	-
+var	4e
+integer	1
+try	2	0	0	2
+atom	61
+atom	62
+call	0
+atom	636c65616e7570
+atom	646f6e65
+try	1	2	0	1
+atom	61
+clause	1	0	1
+call	0
+atom	66
+atom	796573
+clause	1	0	1
+var	5f
+atom	6e6f
+call	0
+atom	636c65616e7570
+try	1	0	3	0
+catch
+call	0
+atom	66
+clause	1	0	1
+tuple	3
+atom	7468726f77
+var	52
+var	5f
+var	52
+clause	1	1	1
+tuple	3
+atom	6572726f72
+tuple	2
+atom	61
+var	52
+var	53
+guard	1
+call	1
+atom	69735f6c697374
+var	53
+tuple	2
+var	52
+var	53
+clause	1	0	1
+tuple	3
+var	43
+var	45
+var	5f
+tuple	2
+var	43
+var	45
+try	1	1	1	1
+atom	61
+clause	1	0	1
+var	58
+var	58
+clause	1	0	1
+tuple	3
+atom	7468726f77
+var	52
+var	5f
+var	52
+block	2
+atom	61
+atom	62
+try	1	0	1	1
+atom	61
+clause	1	0	1
+tuple	3
+atom	7468726f77
+var	52
+var	5f
+try	1	0	0	1
+atom	62
+atom	63
+atom	646f6e65
+maybe	2	0
+atom	61
+atom	62
+maybe	4	2
+maybe_match
+tuple	2
+atom	6f6b
+var	58
+call	0
+atom	67
+match
+var	58
+integer	1
+maybe_match
+var	58
+integer	1
+var	58
+clause	1	0	1
+atom	6572726f72
+atom	6e6f
+clause	1	2	1
+call	0
+atom	66
+guard	1
+atom	74727565
+guard	1
+atom	66616c7365
+atom	696d706f737369626c65
+maybe	1	0
+maybe_match
+case	1
+atom	61
+clause	1	0	1
+atom	61
+atom	796573
+atom	6f6b
+fun	-	1
+clause	1	0	1
+var	58
+var	58
+maybe	2	0
+maybe_match
+tuple	2
+atom	6f6b
+var	58
+call	0
+atom	67
+var	58
+atom	6d61796265
+atom	656c7365

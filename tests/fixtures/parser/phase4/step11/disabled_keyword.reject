@@ -1,0 +1,2 @@
+-feature(maybe_expr, disable).
+f() -> maybe ok end.

@@ -8,3 +8,8 @@ comparisons use CMake's selected OTP >=29. The grammar target remains OTP 29.1.
 Step 10 covers begin, case, guard-only if, all three receive alternatives, nested
 delimiters, macro arguments, permissive branch candidates, and rejected empty or
 incomplete blocks. `control.erl.lint` records parse success with deferred lint errors.
+
+Step 11 covers local/dynamic remote references, anonymous/recursive funs, every try
+tail combination, catch defaults and stacktrace rules, maybe/conditional matches,
+else clauses, and disabled maybe keywords. Included macro bodies cover pipeline
+interactions. New syntax projections normalize catch omissions only for OTP parity.

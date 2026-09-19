@@ -53,12 +53,20 @@ class TreePrinter {
     void operator()(const ast::BranchClause &value);
     void operator()(const ast::IfClause &value);
     void operator()(const ast::ReceiveTimeout &value);
+    void operator()(const ast::LocalFunReference &value);
+    void operator()(const ast::RemoteFunReference &value);
+    void operator()(const ast::FunExpression &value);
+    void operator()(const ast::TryExpression &value);
+    void operator()(const ast::CatchClause &value);
+    void operator()(const ast::MaybeExpression &value);
+    void operator()(const ast::MaybeMatch &value);
 
   private:
     using Reference = std::variant<ast::FormId, ast::ExprId, ast::PatternSyntaxId, const ast::FunctionClause *,
                                    const ast::GuardSyntax *, const ast::GuardConjunction *, const ast::MapField *,
                                    const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *,
-                                   const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *>;
+                                   const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *,
+                                   const ast::CatchClause *, const ast::MaybeMatch *>;
 
     struct Work {
         // Retain child roles and depth independently of the native call stack.
@@ -77,6 +85,9 @@ class TreePrinter {
     // Enqueue a direct child without recursively visiting it.
     void child(std::string role, Reference reference);
     void optional_child(std::string role, const std::optional<ast::ExprId> &reference);
+    // Schedule either a body expression handle or an embedded conditional match.
+    void maybe_child(std::string role, const ast::ExprId &value);
+    void maybe_child(std::string role, const ast::MaybeMatch &value);
     // Write one object's role and indentation; its visitor supplies the scalar fields.
     void prefix(const Work &work);
     // Dispatch arena handles through the module's ownership-checked accessors.

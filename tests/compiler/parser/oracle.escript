@@ -78,6 +78,24 @@ project({function, _, Name, Arity, Clauses}) ->
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
 scalar({map, _, Fields}) -> map(none, Fields);
+scalar({'fun', _, {function, Name, Arity}}) ->
+    io:format("local_fun~n"), scalar({atom,0,Name}), scalar({integer,0,Arity});
+scalar({'fun', _, {function, Module, Name, Arity}}) ->
+    io:format("remote_fun~n"), scalar(Module), scalar(Name), scalar(Arity);
+scalar({'fun', _, {clauses, Clauses}}) ->
+    io:format("fun\t-\t~B~n", [length(Clauses)]), lists:foreach(fun clause/1, Clauses);
+scalar({named_fun, _, Name, Clauses}) ->
+    io:format("fun\t~s\t~B~n", [hex(atom_to_list(Name)),length(Clauses)]), lists:foreach(fun clause/1, Clauses);
+scalar({'try', _, Body, Of, Catch, After}) ->
+    io:format("try\t~B\t~B\t~B\t~B~n", [length(Body),length(Of),length(Catch),length(After)]),
+    lists:foreach(fun scalar/1, Body), lists:foreach(fun clause/1, Of),
+    lists:foreach(fun clause/1, Catch), lists:foreach(fun scalar/1, After);
+scalar({'maybe', _, Body}) ->
+    io:format("maybe\t~B\t0~n", [length(Body)]), lists:foreach(fun scalar/1, Body);
+scalar({'maybe', _, Body, {'else', _, Clauses}}) ->
+    io:format("maybe\t~B\t~B~n", [length(Body),length(Clauses)]),
+    lists:foreach(fun scalar/1, Body), lists:foreach(fun clause/1, Clauses);
+scalar({maybe_match, _, Left, Right}) -> io:format("maybe_match~n"), scalar(Left), scalar(Right);
 scalar({block, _, Body}) ->
     io:format("block\t~B~n", [length(Body)]), lists:foreach(fun scalar/1, Body);
 scalar({'case', _, Value, Clauses}) ->

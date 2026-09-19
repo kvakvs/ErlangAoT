@@ -52,7 +52,5 @@ class Builder {
     void validate(const NodeSource &source) const;
     void validate(const FormValue &value) const;
     void validate(const ExprValue &value) const;
-    void validate(const FunctionClause &clause) const;
-    void validate(const GuardSyntax &guard) const;
 };
 } // namespace erlang_aot::ast

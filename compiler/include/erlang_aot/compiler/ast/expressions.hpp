@@ -217,11 +217,62 @@ struct ReceiveExpression {
     std::optional<ReceiveTimeout> after;
 };
 
+struct LocalFunReference {
+    // Local references require an atom name and literal arity.
+    Atom name;
+    Integer arity;
+};
+
+struct RemoteFunReference {
+    // Remote names and arity can be dynamic without admitting arbitrary expressions.
+    std::variant<Atom, Variable> module;
+    std::variant<Atom, Variable> name;
+    std::variant<Integer, Variable> arity;
+};
+
+struct FunExpression {
+    // Absence of a recursive name distinguishes anonymous fun clauses.
+    std::optional<Variable> name;
+    std::vector<FunctionClause> clauses;
+};
+
+struct CatchClause {
+    // Omitted class/stacktrace project to throw/_; reason syntax is restricted pat_expr.
+    std::optional<std::variant<Atom, Variable>> exception_class;
+    PatternSyntaxId reason;
+    std::optional<Variable> stacktrace;
+    std::optional<GuardSyntax> guard;
+    std::vector<ExprId> body;
+    NodeSource source;
+};
+
+struct TryExpression {
+    // Preserve optional of/catch/after parts; at least catch or after is required.
+    std::vector<ExprId> body;
+    std::optional<std::vector<BranchClause>> of;
+    std::optional<std::vector<CatchClause>> handlers;
+    std::optional<std::vector<ExprId>> after;
+};
+
+struct MaybeMatch {
+    // Conditional matches are confined to maybe bodies and defer pattern legality.
+    PatternSyntaxId pattern;
+    ExprId value;
+    NodeSource source;
+};
+
+struct MaybeExpression {
+    // Keep expression and conditional-match order and optional nonempty else clauses.
+    std::vector<std::variant<ExprId, MaybeMatch>> body;
+    std::optional<std::vector<BranchClause>> otherwise;
+};
+
 using ExprValue =
     std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple, List, Group,
                  Bitstring, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression, CallExpression,
                  RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex, BlockExpression,
-                 CaseExpression, IfExpression, ReceiveExpression>;
+                 CaseExpression, IfExpression, ReceiveExpression, LocalFunReference, RemoteFunReference, FunExpression,
+                 TryExpression, MaybeExpression>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

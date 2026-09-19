@@ -17,6 +17,20 @@ struct Children {
     void operator()(const CaseExpression &value) const;
     void operator()(const IfExpression &value) const;
     void operator()(const ReceiveExpression &value) const;
+    // Share complete clause checks across functions, funs, catches and maybe bodies.
+    void function_clause(const FunctionClause &value) const;
+    void function_clauses(const std::vector<FunctionClause> &values) const;
+    void handler(const CatchClause &value) const;
+    void maybe_item(const ExprId &value) const;
+    void maybe_item(const MaybeMatch &value) const;
+
+    void operator()(const LocalFunReference &) const {}
+
+    void operator()(const RemoteFunReference &) const {}
+
+    void operator()(const FunExpression &value) const;
+    void operator()(const TryExpression &value) const;
+    void operator()(const MaybeExpression &value) const;
 
     void child(const ExprId &id) const {
         if (builder.view().expression(id).source.form != form) {

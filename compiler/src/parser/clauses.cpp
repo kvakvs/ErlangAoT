@@ -73,11 +73,15 @@ ast::Function FormParser::function() {
         const auto start = cursor_.offset();
         const auto &next = category(TokenKind::atom, "function clause name");
         auto current = clause(start);
-        if (value<std::u32string>(next) != name.name || current.arguments.size() != arity) {
-            throw token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", next);
-        }
+        check_clause(value<std::u32string>(next), name.name, arity, current, next);
         clauses.push_back(std::move(current));
     }
     return {std::move(name), std::move(clauses)};
+}
+
+void FormParser::check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
+                              const ast::FunctionClause &clause, const Token &site) const {
+    if (actual != expected || clause.arguments.size() != arity)
+        throw token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", site);
 }
 } // namespace erlang_aot

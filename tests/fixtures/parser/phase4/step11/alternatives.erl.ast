@@ -1,0 +1,51 @@
+file	616c7465726e6174697665732e65726c	1
+module	616c7465726e617469766573
+function_full	66	3	1
+clause	3	0	1
+var	4d
+var	46
+var	41
+tuple	9
+remote_fun
+var	4d
+var	46
+var	41
+remote_fun
+atom	6d
+atom	66
+var	41
+remote_fun
+var	4d
+atom	66
+var	41
+remote_fun
+atom	6d
+var	46
+var	41
+remote_fun
+var	4d
+var	46
+integer	1
+fun	-	1
+clause	0	0	1
+atom	6f6b
+try	1	1	1	0
+atom	61
+clause	1	0	1
+var	58
+var	58
+clause	1	0	1
+tuple	3
+atom	7468726f77
+var	52
+var	5f
+var	52
+maybe	1	1
+atom	61
+clause	1	0	1
+var	5f
+atom	6e6f
+maybe	1	0
+maybe_match
+atom	61
+atom	62
