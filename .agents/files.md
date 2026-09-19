@@ -1,5 +1,9 @@
 # File map
 
+- `compiler/src/driver/{options.hpp,options.cpp,frontend.cpp}`: CLI configuration,
+  validation, isolated source orchestration and shared diagnostics/printing.
+- `tests/compiler/parser/consumer.cpp`: public AST use after session destruction.
+
 - `compiler/src/parsing/delimiters.{hpp,cpp}`: shared macro/diagnostic delimiters.
 - `compiler/src/parser/diagnostics.cpp`: parser work accounting, expected tokens,
   and unmatched opener provenance.

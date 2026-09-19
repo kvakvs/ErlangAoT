@@ -3,8 +3,10 @@
 A C++ ahead-of-time compiler project for Erlang/OTP 29, with a separate C++ runtime.
 The compiler implements OTP 29.1 preprocessing: macros, conditional compilation,
 includes, contextual macros, feature configuration, and diagnostic directives.
-`--preprocess-check` validates modules without an Erlang installation or output files.
-Full Erlang parsing, code generation, and runtime behavior remain unimplemented.
+`--preprocess-check` checks preprocessing and `--parse-check` checks syntax without
+an Erlang installation at runtime or output files. Neither checks semantic validity.
+The typed syntax parser is implemented; compatibility validation is still in progress.
+Semantic analysis, code generation, and runtime behavior remain unimplemented.
 
 ## Build on macOS and Linux
 
@@ -142,6 +144,7 @@ erlangaot [options] <source.erl>...
       --version        Show version
   -o, --output <path>  Future executable output path (default: a.out)
       --preprocess-check  Preprocess and report diagnostics; write no output
+      --parse-check      Preprocess and parse; report syntax diagnostics only
       --print-pp         Print preprocessed Erlang source to stdout
       --print-ast        Parse and print an indented syntax tree to stdout
   -I, --include <dir>  Include directory (last supplied searched first)
@@ -161,7 +164,7 @@ Quote paths and Erlang terms for your shell. Joined `-Ipath` and `-DNAME=TERM`
 spellings are supported. Duplicate macro definitions are errors; application mappings
 use the last value; feature options apply in order. Each input has an isolated session;
 all inputs are processed and any error makes the request fail. Warnings alone succeed.
-`--output` conflicts with `--preprocess-check`, `--print-pp`, and `--print-ast`.
+`--output` conflicts with `--preprocess-check`, `--parse-check`, `--print-pp`, and `--print-ast`.
 No executable is created or overwritten.
 
 Use `./run-macos.sh --print-pp -I include -DDEBUG src/example.erl` to print expanded
@@ -280,7 +283,7 @@ handling, and output-operand handling. Its maximum CCN is now **10**, down from
 
 ## Parser foundation
 
-Phases I–V of the [parser plan](.agents/02-parser.md) are implemented as a native
+Steps 1–17 of the [parser plan](.agents/02-parser.md) are implemented as a native
 C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
 module/file and literal attributes, export/import lists, documentation, typed record declarations,
 type/opaque/nominal declarations, type syntax, overloaded specs/callbacks and subtype constraints,
@@ -288,6 +291,12 @@ literals and aggregates, operators/calls, maps, OTP 29
 records, bitstrings, patterns, guards, multi-clause functions, begin/case/if blocks,
 receive expressions with optional timeouts, funs/references, try/catch/after, maybe,
 and list/map/binary comprehensions with strict and zipped generators and multiple list/map templates.
-Semantic validation and compilation remain separate work. `--print-ast` exposes the parser; a diagnostics-only parse-check mode
-remains planned. See [parser behavior and validation](docs/parser.md) for API contracts,
+Semantic validation and compilation remain separate work. Use
+`./run-macos.sh --parse-check -I include -DDEBUG source.erl` for syntax diagnostics.
+It is silent on success, returns 1 for source errors and 2 for usage errors, and
+continues across malformed modules with isolated per-file state. Warning-only
+inputs succeed. With `--preprocess-check`, parsing still runs; adding `--print-pp`
+or `--print-ast` explicitly requests the corresponding output. `--` ends options.
+Check modes preserve existing output files and never generate an executable.
+See [parser behavior and validation](docs/parser.md) for API contracts,
 feature/source ownership, limits, compatibility tests, and remaining phases.

@@ -1,8 +1,8 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Steps 1–16 implemented, 2026-09-19; steps 17–18 remain pending.
+Status: Steps 1–17 implemented, 2026-09-19; step 18 remains pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
-and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
+coverage closure is pending. The parse-check CLI is implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
 and [documented compatibility policies](../docs/preprocessor.md).
 
@@ -574,6 +574,10 @@ runs are clean, and multiple recovered forms cannot clear the module failure fla
 Required commit: `fix(parser): harden recovery provenance and resource limits`.
 
 ### Step 17. Integrate a parse-check CLI and document the AST API
+
+Implemented: `--parse-check`, shared focused CLI drivers, option/recovery/output
+tests and a post-session AST consumer. The earlier user-requested `--print-ast`
+remains public; the original "private initially" instruction below is superseded.
 
 1. Add `erlangaot --parse-check` using existing preprocessing options and the
    module parser. Specify interaction with `--preprocess-check`, `-o`, multiple

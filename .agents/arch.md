@@ -1,5 +1,9 @@
 # Architecture
 
+- CLI `driver/options.cpp` validates options; `driver/frontend.cpp` shares source
+  loading, preprocessing/parsing, diagnostics and optional printing across modes.
+  `--parse-check` reports syntax only; all input ownership is isolated per file.
+
 - Parser hardening shares delimiter tracking with macro argument splitting;
   syntax diagnostics retain expected terminals and nearest opener provenance.
   Per-module work accounting and a depth ceiling bound parsing/normalization;
@@ -87,4 +91,4 @@
   preprocessing; final module features are recorded at EOF. `--print-ast` consumes this
   pipeline and prints recovered forms with diagnostics on stderr; combined PP/AST printing
   uses one pass. Exhaustive visitors in `printing/tree*` stream an iterative, role-labelled
-  tree with compact scalar fields and bounded indentation. No diagnostics-only parse-check CLI yet.
+  tree with compact scalar fields and bounded indentation. `--parse-check` omits printing.

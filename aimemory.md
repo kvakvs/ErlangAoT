@@ -450,3 +450,10 @@ Primary sources consulted:
   Debug regression run plus corrected hardening rerun pass; ASan/UBSan hardening,
   mutations and printing_ast pass. Native stress ~0.7s on this macOS arm64 host.
   Fresh full Debug Lizard/clang-tidy and formatting pass; step16 ready to commit.
+- Step16 committed 0ff42f4. Step17 adds --parse-check and driver/{options,frontend};
+  preserves user-requested public --print-ast, superseding old private-dump note.
+  CLI and post-session consumer tests pass; docs describe ownership/provenance,
+  features, syntax-only meaning, combinations, exit codes and output preservation.
+  All40 Debug tests pass; ASan/UBSan CLI+consumer pass; 14 historical successful
+  fixtures match live AST projection. Five real OTP modules pass parse-check.
+  Fresh full Debug Lizard/clang-tidy and formatting pass before step17 commit.

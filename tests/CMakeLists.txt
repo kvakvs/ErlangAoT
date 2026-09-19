@@ -1,5 +1,5 @@
 include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
-foreach(name IN ITEMS hardening mutations)
+foreach(name IN ITEMS hardening mutations consumer)
     add_executable(parser_${name} compiler/parser/${name}.cpp)
     erlang_aot_project_options(parser_${name})
     target_link_libraries(parser_${name} PRIVATE erlang_frontend)

@@ -27,7 +27,7 @@ erlang_aot_project_options(erlang_frontend)
 target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
 
-add_executable(erlang_aot src/main.cpp)
+add_executable(erlang_aot src/main.cpp src/driver/options.cpp src/driver/frontend.cpp)
 set_target_properties(erlang_aot PROPERTIES
     OUTPUT_NAME erlangaot
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
