@@ -273,32 +273,4 @@ target_link_libraries(parser_binaries PRIVATE erlang_frontend)
 add_test(NAME parser_binaries COMMAND parser_binaries)
 set_tests_properties(parser_binaries PROPERTIES TIMEOUT 20)
 
-add_executable(project_dependency compiler/project/dependency.cpp)
-erlang_aot_project_options(project_dependency)
-target_link_libraries(project_dependency PRIVATE erlang_project_toml)
-add_test(NAME project_dependency COMMAND project_dependency)
-
-add_executable(project_model compiler/project/model.cpp)
-erlang_aot_project_options(project_model)
-target_link_libraries(project_model PRIVATE erlang_project)
-add_test(NAME project_model COMMAND project_model)
-
-add_executable(project_loader compiler/project/loader.cpp)
-erlang_aot_project_options(project_loader)
-target_link_libraries(project_loader PRIVATE erlang_project erlang_project_toml)
-add_test(NAME project_loader COMMAND project_loader "${CMAKE_CURRENT_BINARY_DIR}/project-loader")
-
-add_executable(project_decode compiler/project/decode.cpp)
-erlang_aot_project_options(project_decode)
-target_link_libraries(project_decode PRIVATE erlang_project erlang_project_toml)
-add_test(NAME project_decode COMMAND project_decode)
-
-add_executable(project_decode_options compiler/project/decode_options.cpp)
-erlang_aot_project_options(project_decode_options)
-target_link_libraries(project_decode_options PRIVATE erlang_project erlang_project_toml)
-add_test(NAME project_decode_options COMMAND project_decode_options)
-
-add_executable(project_paths compiler/project/paths.cpp)
-erlang_aot_project_options(project_paths)
-target_link_libraries(project_paths PRIVATE erlang_project)
-add_test(NAME project_paths COMMAND project_paths "${CMAKE_CURRENT_BINARY_DIR}/project-paths")
+add_subdirectory(compiler/project)

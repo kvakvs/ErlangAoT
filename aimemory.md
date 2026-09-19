@@ -1,5 +1,18 @@
 # Current working memory — 2026-09-19
 
+- Latest checkpoint: steps1–7 committed; step6=a1e4b5b, step7=8a739d3. Step8
+  implemented, all53 + focused tidy pass; full quality running session76307 with
+  /tmp/project-step8-* logs. Glob internal ComponentPattern wrapper fixes genuine
+  swappable-parameters finding; preserve it when applying step9 matcher extension.
+  Step7 direct/alternative locals changed from const for automatic move per tidy.
+- UNAPPLIED scripts now /tmp/project-step9.py through step20.py inclusive; all
+  parse. Step16/19 CLI scripts prepared; test actual replacements after formatting.
+  Step17 explicitly includes string_view now. Step18 whole-filename suffix fix and
+  pure valid_creation_filename helper added; previous pending-review bullets below
+  are superseded. Steps21/22 still need actual portability validation/docs.
+- User-owned change appeared in Makefile: adds clean target deleting build trees.
+  Do not stage, modify, or revert it. User was told active gates use build/debug.
+
 - Active task: execute all22 steps of .agents/03-project.md, separate commits and
   full gates per step; no subagents. Steps1–5 committed 202af94/c1e74c8/c539882/
   d03dd39/2dd5044. Step6 passes all51 + full quality and is ready for its commit.

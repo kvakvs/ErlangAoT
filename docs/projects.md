@@ -282,3 +282,6 @@ supply smaller limits without changing production defaults.
 Decoded manifests allow at most 1,024 targets and 100,000 total TOML nodes
 (including tables, arrays, and scalar values). Exceeding either limit fails before
 constructing a partial usable manifest.
+
+Wildcard matching allows 1,000,000 state transitions per path match and uses
+iterative matching with linear row storage; exhaustion is an explicit error.

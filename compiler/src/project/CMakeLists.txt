@@ -9,3 +9,5 @@ target_sources(erlang_project PRIVATE schema.cpp decode.cpp)
 target_sources(erlang_project PRIVATE decode_options.cpp)
 
 target_sources(erlang_project PRIVATE paths.cpp)
+
+target_sources(erlang_project PRIVATE glob.cpp glob_utf8.cpp)

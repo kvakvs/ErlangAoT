@@ -15,6 +15,10 @@
   search, define, feature, and application settings with nested-key validation.
 - `src/project/paths.{hpp,cpp}` and matching project tests: UTF-8/native paths,
   explicit path bases, regular-file validation, and ordered literal source fallback.
+- `src/project/{glob,glob_utf8}.{hpp,cpp}` and matching project tests: bounded
+  iterative wildcard matching and strict Unicode-scalar filename decoding.
+- `tests/compiler/project/CMakeLists.txt`: project test ownership; the parent test
+  build delegates with one subdirectory entry.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

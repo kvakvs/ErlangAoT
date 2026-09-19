@@ -1,0 +1,34 @@
+add_executable(project_dependency dependency.cpp)
+erlang_aot_project_options(project_dependency)
+target_link_libraries(project_dependency PRIVATE erlang_project_toml)
+add_test(NAME project_dependency COMMAND project_dependency)
+
+add_executable(project_model model.cpp)
+erlang_aot_project_options(project_model)
+target_link_libraries(project_model PRIVATE erlang_project)
+add_test(NAME project_model COMMAND project_model)
+
+add_executable(project_loader loader.cpp)
+erlang_aot_project_options(project_loader)
+target_link_libraries(project_loader PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_loader COMMAND project_loader "${CMAKE_CURRENT_BINARY_DIR}/project-loader")
+
+add_executable(project_decode decode.cpp)
+erlang_aot_project_options(project_decode)
+target_link_libraries(project_decode PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_decode COMMAND project_decode)
+
+add_executable(project_decode_options decode_options.cpp)
+erlang_aot_project_options(project_decode_options)
+target_link_libraries(project_decode_options PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_decode_options COMMAND project_decode_options)
+
+add_executable(project_paths paths.cpp)
+erlang_aot_project_options(project_paths)
+target_link_libraries(project_paths PRIVATE erlang_project)
+add_test(NAME project_paths COMMAND project_paths "${CMAKE_CURRENT_BINARY_DIR}/project-paths")
+
+add_executable(project_glob glob.cpp)
+erlang_aot_project_options(project_glob)
+target_link_libraries(project_glob PRIVATE erlang_project)
+add_test(NAME project_glob COMMAND project_glob)
