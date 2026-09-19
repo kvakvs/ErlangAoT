@@ -7,6 +7,7 @@ ast::ExprId FormParser::make(ast::ExprValue value, std::size_t begin, std::size_
 }
 
 void FormParser::enter() {
+    work();
     if (depth_ >= nesting_) {
         fail(DiagnosticCode::resource_limit, "parser nesting budget exhausted");
     }

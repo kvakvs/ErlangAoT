@@ -10,6 +10,7 @@ struct GrammarBudget {
     // Keep allocation and recursive grammar limits distinct at the call boundary.
     std::size_t nodes;
     std::size_t nesting;
+    std::size_t &work;
 };
 
 struct GeneratorOperator {
@@ -32,6 +33,15 @@ class FormParser {
     std::size_t nodes_;
     std::size_t nesting_;
     std::size_t depth_ = 0;
+    // Share work across successful and rejected forms; borrow tokens for diagnostic enrichment.
+    std::size_t &work_;
+    std::span<const Token> tokens_;
+    // Charge grammar operations and attach actionable syntax context before rollback.
+    void work(std::size_t amount = 1);
+    void enrich(Diagnostic &diagnostic) const;
+    [[noreturn]] void expected(std::string description) const;
+    // Parse and terminate one form within the caller's AST transaction.
+    ast::FormId complete_form();
     // Recognize module/file attributes and the currently supported function syntax.
     ast::FormValue attribute();
     // Specifications reuse function type products; constraints remain parser syntax.

@@ -8,9 +8,13 @@ std::string literal(TokenKind kind, const TokenValue &value) { return utf8(token
 
 std::string atom(const ast::Atom &value) { return literal(TokenKind::atom, value.name); }
 
-TreePrinter::TreePrinter(std::ostream &output, const ast::Module &module) : output_(output), module_(module) {}
+TreePrinter::TreePrinter(std::ostream &output, const ast::Module &module, std::size_t visits)
+    : output_(output), module_(module), visits_(visits) {}
 
 void TreePrinter::child(std::string role, Reference reference) {
+    if (visits_ == 0)
+        throw std::length_error("AST printing visit budget exhausted");
+    --visits_;
     pending_.push_back({std::move(role), depth_ + 1, std::move(reference)});
 }
 
@@ -53,5 +57,7 @@ void TreePrinter::run() {
 } // namespace erlang_aot::printing
 
 namespace erlang_aot {
-void print_ast(std::ostream &output, const ast::Module &module) { printing::TreePrinter(output, module).run(); }
+void print_ast(std::ostream &output, const ast::Module &module, std::size_t visits) {
+    printing::TreePrinter(output, module, visits).run();
+}
 } // namespace erlang_aot

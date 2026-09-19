@@ -1,5 +1,11 @@
 # File map
 
+- `compiler/src/parsing/delimiters.{hpp,cpp}`: shared macro/diagnostic delimiters.
+- `compiler/src/parser/diagnostics.cpp`: parser work accounting, expected tokens,
+  and unmatched opener provenance.
+- `tests/compiler/parser/{hardening,mutations}.cpp`: bounded stress, expanded EOF,
+  fixed-seed recovery/determinism and iterative traversal regressions.
+
 - `src/{parser,ast}/specifications.cpp`, `src/printing/tree_specifications.cpp`:
   spec/callback grammar, builder invariants and compact typed signature/constraint trees.
 - `tests/compiler/parser/specifications.cpp`, `fixtures/parser/phase5/step15/`:

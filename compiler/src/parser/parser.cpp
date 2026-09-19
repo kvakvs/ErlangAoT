@@ -1,4 +1,5 @@
 #include "forms.hpp"
+#include <algorithm>
 #include <erlang_aot/compiler/parser.hpp>
 
 namespace erlang_aot {
@@ -8,6 +9,7 @@ struct ParserSession::State {
     ast::Builder builder;
     std::vector<Diagnostic> diagnostics;
     std::size_t tokens = 0;
+    std::size_t work = 0;
     bool failed = false;
     bool stopped = false;
     // Consume one message, reserving one extra slot for diagnostic-budget exhaustion.
@@ -41,6 +43,9 @@ void ParserSession::State::budget(std::size_t count, const Token &anchor) {
         throw token_diagnostic(DiagnosticCode::resource_limit, "parser token budget exhausted", anchor);
     }
     tokens += count;
+    if (count > work)
+        throw token_diagnostic(DiagnosticCode::resource_limit, "parser work budget exhausted", anchor);
+    work -= count;
 }
 
 void ParserSession::State::parse(std::span<const Token> input, const Token &end, FeatureSnapshot features) {
@@ -52,7 +57,7 @@ void ParserSession::State::parse(std::span<const Token> input, const Token &end,
         auto transaction = builder.begin(input, end, std::move(features));
         const auto used = builder.view().forms().size() + builder.view().expression_count() +
                           builder.view().pattern_count() + builder.view().term_count() + builder.view().type_count();
-        FormParser parser(input, end, builder, {limits.nodes - used, limits.nesting});
+        FormParser parser(input, end, builder, {limits.nodes - used, std::min<std::size_t>(limits.nesting, 512), work});
         transaction.commit(parser.parse());
     } catch (const Diagnostic &diagnostic) {
         record(diagnostic);
@@ -80,7 +85,10 @@ void ParserSession::State::consume(const Directive &directive) {
     record(std::move(diagnostic));
 }
 
-ParserSession::ParserSession(ParserLimits limits) : state_(std::make_unique<State>()) { state_->limits = limits; }
+ParserSession::ParserSession(ParserLimits limits) : state_(std::make_unique<State>()) {
+    state_->limits = limits;
+    state_->work = limits.work;
+}
 
 ParserSession::~ParserSession() = default;
 

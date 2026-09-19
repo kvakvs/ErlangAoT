@@ -3,10 +3,17 @@
 #include <erlang_aot/compiler/ast/module.hpp>
 
 namespace erlang_aot {
+// Literal normalization shares the module work allowance, including rejected forms.
+inline void literal_work(std::size_t &remaining, std::size_t amount) {
+    if (amount > remaining)
+        throw EvaluationLimit();
+    remaining -= amount;
+}
+
 // Normalize only erl_parse literal syntax; ordinary operators and calls are rejected.
 class TermNormalizer {
   public:
-    explicit TermNormalizer(const ast::Module &module) : module_(module) {}
+    TermNormalizer(const ast::Module &module, std::size_t &work) : module_(module), work_(work) {}
 
     Value read(const ast::ExprId &id, bool farity = true) const;
     Value operator()(const ast::Atom &value) const;
@@ -29,6 +36,7 @@ class TermNormalizer {
   private:
     // Each recursive visitor retains its own farity context; map keys disable normalization.
     const ast::Module &module_;
+    std::size_t &work_;
     bool farity_ = true;
     Value child(const ast::ExprId &id) const;
     void segment(Value &output, const ast::BinarySegment &value) const;

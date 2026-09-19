@@ -1,5 +1,10 @@
 # Architecture
 
+- Parser hardening shares delimiter tracking with macro argument splitting;
+  syntax diagnostics retain expected terminals and nearest opener provenance.
+  Per-module work accounting and a depth ceiling bound parsing/normalization;
+  iterative tree printing has a separate visit budget. Failed forms roll back.
+
 - Specifications/callbacks retain local or qualified names, first-signature arity,
   overloads, function products/results and modern/legacy subtype constraints.
   Parsing rejects malformed builder shapes while deferring overload agreement and

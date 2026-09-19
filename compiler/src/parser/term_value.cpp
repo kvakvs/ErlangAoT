@@ -6,7 +6,8 @@
 namespace erlang_aot {
 namespace {
 // Apply exact map replacement independently of literal traversal.
-void map_entry(Value &result, const Value &key, Value mapped) {
+void map_entry(Value &result, const Value &key, Value mapped, std::size_t &work) {
+    literal_work(work, result.elements.size() + 1);
     std::size_t position = 0;
     while (position < result.elements.size() && compare(result.elements[position], key, true) < 0)
         position += 2;
@@ -18,6 +19,7 @@ void map_entry(Value &result, const Value &key, Value mapped) {
 } // namespace
 
 Value TermNormalizer::read(const ast::ExprId &id, bool farity) const {
+    literal_work(work_, 1);
     auto visitor = *this;
     visitor.farity_ = farity;
     return module_.visit(id, visitor);
@@ -28,6 +30,7 @@ Value TermNormalizer::child(const ast::ExprId &id) const { return read(id, farit
 Value TermNormalizer::operator()(const ast::Atom &value) const { return atom(value.name); }
 
 Value TermNormalizer::operator()(const ast::IntegerLiteral &value) const {
+    literal_work(work_, value.value.decimal.size());
     Token token;
     token.kind = TokenKind::integer;
     token.value = value.value;
@@ -39,6 +42,7 @@ Value TermNormalizer::operator()(const ast::FloatLiteral &value) const { return 
 Value TermNormalizer::operator()(const ast::CharacterLiteral &value) const { return integer(value.value); }
 
 Value TermNormalizer::operator()(const ast::StringLiteral &value) const {
+    literal_work(work_, value.value.size());
     std::vector<Value> characters;
     for (const auto c : value.value)
         characters.push_back(integer(c));
@@ -63,11 +67,11 @@ Value TermNormalizer::operator()(const ast::UnaryExpression &value) const {
 Value TermNormalizer::operator()(const ast::BinaryExpression &value) const {
     if (!farity_ || operator_spelling(value.operation) != U"/")
         throw EvaluationFailure();
-    const auto name = read(value.left, false);
-    const auto arity = read(value.right, false);
     if (!std::holds_alternative<ast::Atom>(ungroup(module_, value.left).value) ||
         !std::holds_alternative<ast::IntegerLiteral>(ungroup(module_, value.right).value))
         throw EvaluationFailure();
+    const auto name = read(value.left, false);
+    const auto arity = read(value.right, false);
     Value result;
     result.kind = ValueKind::tuple;
     result.elements = {name, arity};
@@ -103,7 +107,7 @@ Value TermNormalizer::operator()(const ast::MapExpression &value) const {
             throw EvaluationFailure();
         auto key = read(field.key, false);
         auto mapped = child(field.value);
-        map_entry(result, key, std::move(mapped));
+        map_entry(result, key, std::move(mapped), work_);
     }
     return result;
 }

@@ -22,17 +22,20 @@ bool documentation_literal(const ast::Module &module, const ast::ExprId &id, con
 }
 
 // Sort exact metadata keys stably so the builder can retain their final values.
-std::vector<std::pair<Value, ast::MapField>> metadata(const ast::Module &module, const ast::MapExpression &map) {
+std::vector<std::pair<Value, ast::MapField>> metadata(const ast::Module &module, const ast::MapExpression &map,
+                                                      std::size_t &work) {
     if (map.base)
         throw EvaluationFailure();
     std::vector<std::pair<Value, ast::MapField>> result;
     for (const auto &field : map.fields) {
         if (field.kind != ast::MapFieldKind::associate)
             throw EvaluationFailure();
-        result.emplace_back(TermNormalizer(module).read(field.key, false), field);
+        result.emplace_back(TermNormalizer(module, work).read(field.key, false), field);
     }
-    std::stable_sort(result.begin(), result.end(),
-                     [](const auto &a, const auto &b) { return compare(a.first, b.first, true) < 0; });
+    std::stable_sort(result.begin(), result.end(), [&work](const auto &a, const auto &b) {
+        literal_work(work, 1);
+        return compare(a.first, b.first, true) < 0;
+    });
     return result;
 }
 } // namespace
@@ -40,7 +43,7 @@ std::vector<std::pair<Value, ast::MapField>> metadata(const ast::Module &module,
 std::vector<ast::DocumentationEntry> FormParser::documentation_entries(const ast::MapExpression &map, bool module) {
     std::vector<ast::DocumentationEntry> entries;
     std::optional<Value> previous;
-    for (const auto &[key, field] : metadata(builder_.view(), map)) {
+    for (const auto &[key, field] : metadata(builder_.view(), map, work_)) {
         const bool equiv = !module && key.kind == ValueKind::atom && key.text == U"equiv" &&
                            std::holds_alternative<ast::CallExpression>(ungroup(builder_.view(), field.value).value);
         auto value = equiv ? std::variant<ast::TermId, ast::ExprId>{field.value}
@@ -57,7 +60,7 @@ ast::DocumentationAttribute FormParser::documentation(bool module, const ast::Ex
     const auto &expression = ungroup(builder_.view(), id).value;
     if (const auto *map = std::get_if<ast::MapExpression>(&expression))
         return {module, documentation_entries(*map, module)};
-    const auto value = TermNormalizer(builder_.view()).read(id, false);
+    const auto value = TermNormalizer(builder_.view(), work_).read(id, false);
     if (!documentation_literal(builder_.view(), id, value))
         throw EvaluationFailure();
     return {module, term_value(value, builder_.view().expression(id).source)};

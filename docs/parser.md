@@ -8,6 +8,44 @@ historical exact-version/skip results below describe earlier validation runs.
 
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
+## Phase VI step 16 — Recovery and resource contracts
+
+Syntax diagnostics retain a stable category, logical invocation coordinates,
+physical macro/include traces and, where available, the nearest unmatched opener.
+Expected terminals/categories are also available in `Diagnostic::expected`.
+Raw expanded-token callers supply an explicit EOF token, including its provenance.
+Delimiter recognition is shared with macro argument splitting.
+
+Each failed form rolls back all arenas and origins. Subsequent complete forms
+remain available, but failure is sticky. Resource exhaustion stops the session.
+Defaults are 1,000,000 tokens/form, 4,000,000 tokens/module, 1,000,000 nodes across
+all arenas, 1,000 diagnostics plus one exhaustion message, recursive depth 256
+(hard ceiling 512), and 16,000,000 work units. Work accounts for input tokens,
+grammar entries, node creation, normalized literal contents and map insertion/
+metadata sorting. These are accounting limits, not wall-clock guarantees or a
+claim of linear runtime; decoded source sizes and shared binary literal limits
+also affect cost. Preprocessing has its own independently configurable limits.
+
+The public tree printer uses an iterative work queue, caps displayed indentation,
+and defaults to 4,000,000 visited objects. Its optional third argument changes
+that budget; exhaustion throws `std::length_error`. Flat arena destruction
+does not recurse through child IDs. Consumers should also traverse iteratively
+when following long flat operator chains.
+
+`parser_hardening` covers a 12,000-operator parse/print/normalization regression,
+wide lists and qualifier groups, recursive expressions/patterns/types/blocks,
+repeated errors, explicit expanded EOF and macro/include origins. It reports an
+observed duration without asserting an asymptotic bound. `parser_mutations`
+replays 900 fixed-seed token mutations twice, verifies deterministic diagnostics
+and checked traversal, and requires the next valid form to survive. Both tests
+have 60-second termination bounds and run under ASan/UBSan as well.
+
+Step 16 validation: all 39 Debug tests passed across the full run and corrected
+hardening rerun; the three ASan/UBSan hardening/mutation/printing tests passed.
+Fresh full Debug configuration, formatting, Lizard and clang-tidy passed on
+macOS arm64 with installed OTP 29.0.5. The 12,000-operator regression took about
+0.7 seconds in Debug; this is one host observation, not a scaling guarantee.
+
 ## Phase V — Attributes, types and specifications
 
 The parser now retains ordinary literal attributes, export/import lists, legacy

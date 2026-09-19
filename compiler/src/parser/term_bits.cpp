@@ -23,7 +23,9 @@ void TermNormalizer::segment(Value &output, const ast::BinarySegment &value) con
     while (const auto *group = std::get_if<ast::Group>(&module_.expression(id).value))
         id = group->expression;
     const auto string = std::holds_alternative<ast::StringLiteral>(module_.expression(id).value);
+    const auto before = output.bits.size();
     append_literal_bits(output, read(id, false), size, modifiers, string);
+    literal_work(work_, output.bits.size() - before);
 }
 
 Value TermNormalizer::operator()(const ast::Bitstring &value) const {

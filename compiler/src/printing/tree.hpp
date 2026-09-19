@@ -10,7 +10,7 @@ std::string atom(const ast::Atom &value);
 class TreePrinter {
   public:
     // Borrow the immutable module while streaming its tree to the caller's destination.
-    TreePrinter(std::ostream &output, const ast::Module &module);
+    TreePrinter(std::ostream &output, const ast::Module &module, std::size_t visits);
     void run();
 
     // Exhaustive visitors keep every supported AST alternative visible in the output.
@@ -126,6 +126,8 @@ class TreePrinter {
     // Children are scheduled in source order, then reversed for depth-first traversal.
     std::vector<Work> pending_;
     std::size_t depth_ = 0;
+    // Charge scheduled objects before growing the explicit traversal stack.
+    std::size_t visits_;
 
     // Enqueue a direct child without recursively visiting it.
     void child(std::string role, Reference reference);

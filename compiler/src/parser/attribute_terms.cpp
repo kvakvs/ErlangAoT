@@ -4,7 +4,7 @@
 namespace erlang_aot {
 ast::TermId FormParser::term(const ast::ExprId &expression, bool farity) {
     const auto source = builder_.view().expression(expression).source;
-    return term_value(TermNormalizer(builder_.view()).read(expression, farity), source);
+    return term_value(TermNormalizer(builder_.view(), work_).read(expression, farity), source);
 }
 
 ast::TermId FormParser::term_value(const Value &value, const ast::NodeSource &source) {

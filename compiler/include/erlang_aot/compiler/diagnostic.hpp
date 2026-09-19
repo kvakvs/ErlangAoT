@@ -59,6 +59,9 @@ struct Diagnostic {
     Severity severity = Severity::error;
     // Render logical coordinates while retaining physical spelling and provenance.
     std::optional<LogicalLocation> location{};
+    // Parser expectations and the nearest unmatched opener are structured, optional context.
+    std::string expected{};
+    std::optional<LogicalLocation> opener{};
 };
 
 class LexicalError : public std::runtime_error {

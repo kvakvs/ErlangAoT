@@ -2,7 +2,8 @@
 
 namespace erlang_aot {
 FormParser::FormParser(std::span<const Token> tokens, const Token &end, ast::Builder &builder, GrammarBudget budget)
-    : cursor_(tokens, end), builder_(builder), nodes_(budget.nodes), nesting_(budget.nesting) {}
+    : cursor_(tokens, end), builder_(builder), nodes_(budget.nodes), nesting_(budget.nesting), work_(budget.work),
+      tokens_(tokens) {}
 
 void FormParser::fail(DiagnosticCode code, std::string message) const {
     throw token_diagnostic(code, std::move(message), cursor_.anchor());
@@ -10,18 +11,19 @@ void FormParser::fail(DiagnosticCode code, std::string message) const {
 
 void FormParser::expect(std::u32string_view text) {
     if (cursor_.anchor().kind == TokenKind::dot || !cursor_.take_syntax(text)) {
-        fail(DiagnosticCode::parser_syntax, "expected '" + utf8(text) + "'");
+        expected("'" + utf8(text) + "'");
     }
 }
 
 const Token &FormParser::category(TokenKind kind, std::string_view description) {
     if (cursor_.empty() || cursor_.anchor().kind != kind) {
-        fail(DiagnosticCode::parser_syntax, "expected " + std::string(description));
+        expected(std::string(description));
     }
     return *cursor_.consume();
 }
 
 void FormParser::node() {
+    work();
     if (nodes_ == 0) {
         fail(DiagnosticCode::resource_limit, "parser AST node budget exhausted");
     }
@@ -41,6 +43,15 @@ void FormParser::terminator() {
 }
 
 ast::FormId FormParser::parse() {
+    try {
+        return complete_form();
+    } catch (Diagnostic &diagnostic) {
+        enrich(diagnostic);
+        throw;
+    }
+}
+
+ast::FormId FormParser::complete_form() {
     if (cursor_.empty()) {
         fail(DiagnosticCode::parser_syntax, "expected an Erlang form");
     }

@@ -1,6 +1,6 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–V (steps 1–15) implemented, 2026-09-19; steps 16–18 remain pending.
+Status: Steps 1–16 implemented, 2026-09-19; steps 17–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
@@ -547,6 +547,11 @@ Required commit: `feat(parser): add specifications callbacks and constraints`.
 ## Phase VI — Diagnostics, integration, and compatibility completion
 
 ### Step 16. Harden diagnostics, recovery, and resource limits
+
+Implemented: shared delimiter/opener diagnostics, normalization work accounting,
+hard recursive ceiling and printer visit budget; deterministic mutation and stress
+tests cover recovery and expanded EOF. Debug regressions and ASan/UBSan pass on
+macOS arm64. See `docs/parser.md` for limits and validation details.
 
 1. Complete stable parser diagnostic categories, expected-token messages, and
    construct/opener locations. Use logical invocation locations and related

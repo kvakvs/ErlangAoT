@@ -1,4 +1,11 @@
 include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
+foreach(name IN ITEMS hardening mutations)
+    add_executable(parser_${name} compiler/parser/${name}.cpp)
+    erlang_aot_project_options(parser_${name})
+    target_link_libraries(parser_${name} PRIVATE erlang_frontend)
+    add_test(NAME parser_${name} COMMAND parser_${name})
+    set_tests_properties(parser_${name} PROPERTIES TIMEOUT 60)
+endforeach()
 
 add_test(NAME cli COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>"

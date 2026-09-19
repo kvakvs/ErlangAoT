@@ -30,7 +30,7 @@ ast::ExprValue FormParser::literal_value(const Token &token) const {
     case TokenKind::character:
         return character(value<Integer>(token), token);
     default:
-        throw token_diagnostic(DiagnosticCode::unsupported_syntax, "expected a supported expression", token);
+        throw token_diagnostic(DiagnosticCode::parser_syntax, "expected expression", token);
     }
 }
 

@@ -442,4 +442,11 @@ Primary sources consulted:
   suite; fresh full Debug compiler/runtime Lizard+clang-tidy, formatting and diff
   checks pass. ASan+UBSan build/phase5-sanitize passes attributes/types/specifications/
   printing_ast. Historical attributes/types sources also match the native projection.
-- Phase V is complete. Resume future planned work at Phase VI step16.
+- Phase V is complete.
+- Step16: shared Delimiters replaces macro-private Balance; expected/opener fields
+  enrich syntax diagnostics. Work defaults16m, depth clamp512, printer visits4m.
+  Reject invalid chained literal divisions before recursive normalization (stack fix).
+  900 fixed-seed mutations replay twice; stress flat12000, wide5000/qualifiers3000.
+  Debug regression run plus corrected hardening rerun pass; ASan/UBSan hardening,
+  mutations and printing_ast pass. Native stress ~0.7s on this macOS arm64 host.
+  Fresh full Debug Lizard/clang-tidy and formatting pass; step16 ready to commit.

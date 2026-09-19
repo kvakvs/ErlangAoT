@@ -14,6 +14,11 @@ std::string render(const Diagnostic &diagnostic) {
         diagnostic.location.value_or(LogicalLocation{span.source->name, position.line, position.column});
     auto result = location.file + ':' + std::to_string(location.line) + ':' + std::to_string(location.column) + ": " +
                   diagnostic.message;
+    if (diagnostic.opener) {
+        const auto &open = *diagnostic.opener;
+        result += "\n  construct opened at " + open.file + ':' + std::to_string(open.line) + ':' +
+                  std::to_string(open.column);
+    }
     for (const auto &origin : diagnostic.related) {
         if (!origin.source) {
             continue;
