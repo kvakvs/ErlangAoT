@@ -37,6 +37,8 @@ void TreePrinter::operator()(const ast::RecordDeclaration &value) {
 void TreePrinter::operator()(const ast::RecordDeclarationField &value) {
     output_ << "RecordDeclarationField name=" << atom(value.name);
     optional_child("default", value.default_value);
+    if (value.type)
+        child("type", *value.type);
 }
 
 void TreePrinter::operator()(const ast::DocumentationAttribute &value) {

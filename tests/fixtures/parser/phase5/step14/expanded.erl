@@ -1,0 +1,6 @@
+-module(expanded_types).
+-include("../step13/attributes.hrl").
+-define(ELEMENT, {tag, integer()}).
+-type expanded(A) :: #{A := [?ELEMENT,...]}.
+-opaque (hidden(A)) :: fun((A) -> <<_:8,_:_*8>>).
+-record(typed, {field = ?DEFAULT :: map()}).

@@ -20,8 +20,9 @@ detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end
 Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
                                   FeatureSnapshot features)
     : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
-      terms_(builder.module_.storage().terms.size()), forms_(builder.module_.storage().forms.size()),
-      patterns_(builder.module_.storage().patterns.size()), origins_(builder.module_.storage().origins.size()) {
+      terms_(builder.module_.storage().terms.size()), types_(builder.module_.storage().types.size()),
+      forms_(builder.module_.storage().forms.size()), patterns_(builder.module_.storage().patterns.size()),
+      origins_(builder.module_.storage().origins.size()) {
     if (builder.active_) {
         throw std::logic_error("nested AST form transaction");
     }
@@ -35,6 +36,7 @@ Builder::Transaction::~Transaction() {
         storage.patterns.truncate(patterns_);
         storage.expressions.truncate(expressions_);
         storage.terms.truncate(terms_);
+        storage.types.truncate(types_);
         storage.origins.truncate(origins_);
         builder_.active_.reset();
     }

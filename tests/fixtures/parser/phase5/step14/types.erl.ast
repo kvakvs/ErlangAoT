@@ -1,0 +1,113 @@
+file	74797065732e65726c	1
+module	7479706573
+type_decl	0	7363616c6172	1
+var	41
+ann_type
+var	58
+union
+var	41
+union
+atom	6f6b
+union
+range
+integer	1
+binary	+
+integer	3
+binary	*
+integer	4
+integer	5
+union
+char	122
+unary	-
+integer	7
+type_decl	0	636f6c6c656374696f6e73	0
+type	7475706c65	5
+type	6e696c	0
+type	6c697374	1
+type	696e7465676572	0
+type	6e6f6e656d7074795f6c697374	1
+type	61746f6d	0
+type	6d6170	2
+type_field	=>
+type	61746f6d	0
+type	6c697374	1
+type	696e7465676572	0
+type_field	:=
+atom	6669786564
+type	62696e617279	0
+record_type	-	726563	1
+type_field	6669656c64
+var	41
+type_decl	0	6170706c69636174696f6e73	0
+type	7475706c65	10
+tuple_any
+map_any
+type	6c697374	0
+type	6c697374	1
+type	61746f6d	0
+user_type	637573746f6d	1
+var	41
+remote	6f74686572
+user_type	74	1
+type	696e7465676572	0
+binary_type
+integer	0
+integer	0
+binary_type
+integer	8
+integer	0
+binary_type
+integer	0
+integer	8
+binary_type
+integer	4
+integer	8
+type_decl	1	63616c6c61626c65	1
+var	41
+type	7475706c65	4
+fun_type	unset
+fun_type	2
+var	41
+type	61746f6d	0
+type	6c697374	1
+var	41
+fun_type	any
+type	616e79	0
+fun_type	0
+atom	6f6b
+type_decl	2	746167	1
+var	41
+type	7475706c65	2
+atom	746167
+var	41
+record_decl	72	0	4
+record_decl_field	706c61696e	0
+typed_field
+type	696e7465676572	0
+record_decl_field	7479706564	0
+typed_field
+type	6d6170	1
+type_field	=>
+type	61746f6d	0
+type	696e7465676572	0
+record_decl_field	76616c7565	1
+call	0
+atom	696e6974
+record_decl_field	6c617374	0
+record_decl	506f696e74	1	2
+typed_field
+type	696e7465676572	0
+record_decl_field	76616c7565	1
+integer	0
+typed_field
+type	62696e617279	0
+record_decl_field	6c6162656c	0
+type_decl	0	6e6174697665	0
+record_type	6f74686572	506f696e74	1
+type_field	76616c7565
+range
+integer	1
+integer	9
+function	66
+record	0	0
+record_local	72

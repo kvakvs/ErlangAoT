@@ -17,6 +17,22 @@ class TreePrinter {
     void operator()(const ast::ModuleAttribute &value);
     void operator()(const ast::FileAttribute &value);
     void operator()(const ast::Function &value);
+    void operator()(const ast::TypeGroup &value);
+    void operator()(const ast::AnnotatedType &value);
+    void operator()(const ast::UnionType &value);
+    void operator()(const ast::RangeType &value);
+    void operator()(const ast::UnaryType &value);
+    void operator()(const ast::BinaryTypeOperator &value);
+    void operator()(const ast::TypeApplication &value);
+    void operator()(const ast::TupleType &value);
+    void operator()(const ast::ListType &value);
+    void operator()(const ast::MapType &value);
+    void operator()(const ast::RecordType &value);
+    void operator()(const ast::BitstringType &value);
+    void operator()(const ast::FunType &value);
+    void operator()(const ast::TypeDeclaration &value);
+    void operator()(const ast::MapTypeField &value);
+    void operator()(const ast::RecordTypeField &value);
     void operator()(const ast::ExportAttribute &value);
     void operator()(const ast::ImportAttribute &value);
     void operator()(const ast::ImportRecordAttribute &value);
@@ -84,12 +100,14 @@ class TreePrinter {
     void operator()(const ast::MapGenerator &value);
 
   private:
-    using Reference = std::variant<
-        ast::FormId, ast::ExprId, ast::TermId, const ast::RecordDeclarationField *, const ast::DocumentationEntry *,
-        ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *, const ast::GuardConjunction *,
-        const ast::MapField *, const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *,
-        const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *, const ast::CatchClause *,
-        const ast::MaybeMatch *, const ast::Qualifier *, const ast::ZippedQualifier *>;
+    using Reference =
+        std::variant<ast::TypeId, const ast::MapTypeField *, const ast::RecordTypeField *, ast::FormId, ast::ExprId,
+                     ast::TermId, const ast::RecordDeclarationField *, const ast::DocumentationEntry *,
+                     ast::PatternSyntaxId, const ast::FunctionClause *, const ast::GuardSyntax *,
+                     const ast::GuardConjunction *, const ast::MapField *, const ast::RecordField *,
+                     const ast::BinarySegment *, const ast::BinaryModifier *, const ast::BranchClause *,
+                     const ast::IfClause *, const ast::ReceiveTimeout *, const ast::CatchClause *,
+                     const ast::MaybeMatch *, const ast::Qualifier *, const ast::ZippedQualifier *>;
 
     struct Work {
         // Retain child roles and depth independently of the native call stack.
@@ -121,6 +139,7 @@ class TreePrinter {
     void visit(const ast::FormId &id);
     void visit(const ast::ExprId &id);
     void visit(const ast::TermId &id);
+    void visit(const ast::TypeId &id);
     // Render arities as compact scalar entries while retaining declaration order.
     void arities(const std::vector<ast::NameArity> &values);
     void visit(const ast::PatternSyntaxId &id);

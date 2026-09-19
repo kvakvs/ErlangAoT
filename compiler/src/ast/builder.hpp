@@ -23,6 +23,7 @@ class Builder {
         Builder &builder_;
         std::size_t expressions_;
         std::size_t terms_;
+        std::size_t types_;
         std::size_t forms_;
         std::size_t patterns_;
         std::size_t origins_;
@@ -40,6 +41,7 @@ class Builder {
     NodeSource source(std::size_t begin, std::size_t end, std::size_t anchor) const;
     ExprId expression(ExprValue value, NodeSource source);
     TermId term(TermValue value, NodeSource source);
+    TypeId type(TypeValue value, NodeSource source);
     // Reclaim temporary attribute expressions after conversion to independently owned literal terms.
     void discard_expressions(std::size_t begin);
     FormId form(FormValue value, NodeSource source);

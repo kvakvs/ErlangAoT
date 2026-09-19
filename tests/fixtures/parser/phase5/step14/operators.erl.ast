@@ -1,0 +1,71 @@
+file	6f70657261746f72732e65726c	1
+module	747970655f6f70657261746f7273
+type_decl	0	6f7073	0
+type	7475706c65	8
+unary	+
+integer	1
+unary	-
+integer	2
+unary	bnot
+integer	3
+unary	not
+atom	61746f6d
+binary	-
+binary	+
+integer	1
+integer	2
+integer	3
+binary	bsr
+binary	bsl
+binary	bxor
+binary	bor
+integer	1
+integer	2
+integer	3
+integer	4
+integer	5
+binary	xor
+binary	or
+integer	1
+integer	2
+integer	3
+binary	and
+binary	band
+binary	rem
+binary	div
+binary	/
+binary	*
+integer	1
+integer	2
+integer	3
+integer	4
+integer	5
+integer	6
+integer	7
+type_decl	0	6e6573746564	0
+union
+union
+atom	61
+atom	62
+union
+atom	63
+atom	64
+type_decl	0	706172616d6574657273	2
+var	41
+var	41
+type	7475706c65	2
+var	41
+var	5f
+type_decl	0	6275696c74696e	0
+type	7475706c65	5
+type	64796e616d6963	0
+type	7265636f7264	0
+type	6e6f6e656d7074795f696d70726f7065725f6c697374	2
+type	61746f6d	0
+type	61746f6d	0
+user_type	7475706c65	1
+type	696e7465676572	0
+user_type	6d6170	1
+type	61746f6d	0
+attribute	74797065
+atom	706c61696e5f6c69746572616c

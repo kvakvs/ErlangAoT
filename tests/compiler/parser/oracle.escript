@@ -85,6 +85,10 @@ project({attribute, _, Kind, {Name, Fields}}) when Kind =:= record; Kind =:= nat
     lists:foreach(fun declaration_field/1, Fields);
 project({attribute, _, Kind, Value}) when Kind =:= doc; Kind =:= moduledoc ->
     io:format("doc\t~B~n", [bool(Kind =:= moduledoc)]), documentation(Value);
+project({attribute,_,Kind,{Name,Type,Parameters}}) when Kind =:= type; Kind =:= opaque; Kind =:= nominal ->
+    Tag = case Kind of type -> 0; opaque -> 1; nominal -> 2 end,
+    io:format("type_decl\t~B\t~s\t~B~n",[Tag,hex(atom_to_list(Name)),length(Parameters)]),
+    lists:foreach(fun scalar/1,Parameters), type_value(Type);
 project({attribute, _, Name, Value}) -> field("attribute", atom_to_list(Name)), term_value(Value);
 project({function, _, Name, 0, [{clause, _, [], [], [Expr]}]}) ->
     field("function", atom_to_list(Name)), scalar(Expr);
@@ -98,6 +102,7 @@ bool(false) -> 0.
 arities(Values) ->
     io:format("~B~n", [length(Values)]),
     lists:foreach(fun({Name, Arity}) -> io:format("~s\t~B~n", [hex(atom_to_list(Name)),Arity]) end, Values).
+declaration_field({typed_record_field,Field,Type}) -> io:format("typed_field~n"), type_value(Type), declaration_field(Field);
 declaration_field({record_field,_,{atom,_,Name}}) -> io:format("record_decl_field\t~s\t0~n", [hex(atom_to_list(Name))]);
 declaration_field({record_field,_,{atom,_,Name},Value}) ->
     io:format("record_decl_field\t~s\t1~n", [hex(atom_to_list(Name))]), scalar(Value).
@@ -122,6 +127,32 @@ term_value(Value) when is_bitstring(Value) ->
 term_value(Value) when is_function(Value) ->
     {module,M}=erlang:fun_info(Value,module), {name,N}=erlang:fun_info(Value,name), {arity,A}=erlang:fun_info(Value,arity),
     io:format("term_fun~n"), term_value(M), term_value(N), term_value(A).
+
+type_value({ann_type,_,[V,T]}) -> io:format("ann_type~n"), scalar(V), type_value(T);
+type_value({type,_,union,Types}) -> type_union(Types);
+type_value({type,_,range,[A,B]}) -> io:format("range~n"), type_value(A), type_value(B);
+type_value({type,_,tuple,any}) -> io:format("tuple_any~n");
+type_value({type,_,map,any}) -> io:format("map_any~n");
+type_value({type,_,binary,[A,B]}) -> io:format("binary_type~n"), type_value(A), type_value(B);
+type_value({type,_,'fun',[]}) -> io:format("fun_type\tunset~n");
+type_value({type,_,'fun',[{type,_,any},R]}) -> io:format("fun_type\tany~n"), type_value(R);
+type_value({type,_,'fun',[{type,_,product,Args},R]}) ->
+    io:format("fun_type\t~B~n",[length(Args)]), lists:foreach(fun type_value/1,Args), type_value(R);
+type_value({type,_,record,[Name|Fields]}) ->
+    {M,N} = case Name of {atom,_,A} -> {"-",A}; {tuple,_,[{atom,_,Mod},{atom,_,A}]} -> {hex(atom_to_list(Mod)),A} end,
+    io:format("record_type\t~s\t~s\t~B~n",[M,hex(atom_to_list(N)),length(Fields)]), lists:foreach(fun type_value/1,Fields);
+type_value({type,_,field_type,[{atom,_,Name},Type]}) -> field("type_field",atom_to_list(Name)), type_value(Type);
+type_value({type,_,Kind,[K,V]}) when Kind =:= map_field_assoc; Kind =:= map_field_exact ->
+    io:format("type_field\t~s~n",[case Kind of map_field_assoc -> "=>"; map_field_exact -> ":=" end]), type_value(K), type_value(V);
+type_value({remote_type,_,[{atom,_,M},{atom,_,N},Args]}) ->
+    field("remote",atom_to_list(M)), type_value({user_type,0,N,Args});
+type_value({Kind,_,Name,Args}) when Kind =:= type; Kind =:= user_type ->
+    io:format("~s\t~s\t~B~n",[Kind,hex(atom_to_list(Name)),length(Args)]), lists:foreach(fun type_value/1,Args);
+type_value({op,_,Op,A}) -> io:format("unary\t~s~n",[Op]), type_value(A);
+type_value({op,_,Op,A,B}) -> io:format("binary\t~s~n",[Op]), type_value(A), type_value(B);
+type_value(Value) -> scalar(Value).
+type_union([T]) -> type_value(T);
+type_union([T|Rest]) -> io:format("union~n"), type_value(T), type_union(Rest).
 
 scalar({map, _, Fields}) -> map(none, Fields);
 scalar({lc, _, Templates, Qualifiers}) ->

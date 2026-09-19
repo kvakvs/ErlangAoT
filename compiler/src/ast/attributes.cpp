@@ -34,6 +34,8 @@ void Children::operator()(const RecordDeclaration &value) const {
         source(field.source);
         if (field.default_value)
             child(*field.default_value);
+        if (field.type)
+            child(*field.type);
     }
 }
 

@@ -5,6 +5,8 @@ add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_curso
     src/ast/attributes.cpp src/parser/attributes.cpp src/parser/attribute_terms.cpp
     src/parser/term_value.cpp src/parser/term_bits.cpp src/parser/declarations.cpp src/parser/documentation.cpp
     src/printing/tree_attributes.cpp
+    src/ast/types.cpp src/parser/types.cpp src/parser/type_primary.cpp src/parser/type_names.cpp src/parser/type_structural.cpp
+    src/printing/tree_types.cpp
     src/ast/control.cpp src/parser/control.cpp src/printing/tree_control.cpp
     src/ast/exceptions.cpp src/parser/funs.cpp src/parser/exceptions.cpp src/printing/tree_exceptions.cpp
     src/ast/comprehensions.cpp src/parser/comprehensions.cpp src/printing/tree_comprehensions.cpp

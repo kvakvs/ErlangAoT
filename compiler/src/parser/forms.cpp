@@ -59,12 +59,25 @@ ast::FormValue FormParser::attribute() {
     const auto enclosed = cursor_.take_syntax(U"(");
     const auto checkpoint = builder_.view().expression_count();
     auto arguments = sequence();
-    if (enclosed)
+    const bool closed = enclosed && cursor_.take_syntax(U")");
+    if (closed && cursor_.take_syntax(U",")) {
+        auto rest = sequence();
+        arguments.insert(arguments.end(), rest.begin(), rest.end());
+    }
+    auto result = attribute_body(std::move(name), arguments);
+    if (enclosed && !closed)
         expect(U")");
-    auto result = ordinary_attribute(std::move(name), arguments);
     if (!std::holds_alternative<ast::DocumentationAttribute>(result))
         builder_.discard_expressions(checkpoint);
     return result;
+}
+
+ast::FormValue FormParser::attribute_body(ast::Atom name, const std::vector<ast::ExprId> &arguments) {
+    if (!cursor_.take_syntax(U"::"))
+        return ordinary_attribute(std::move(name), arguments);
+    if (arguments.size() != 1)
+        fail(DiagnosticCode::parser_syntax, "bad type declaration head");
+    return type_declaration(name, arguments.front());
 }
 
 } // namespace erlang_aot

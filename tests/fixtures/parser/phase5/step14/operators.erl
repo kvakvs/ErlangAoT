@@ -1,0 +1,6 @@
+-module(type_operators).
+-type ops() :: {+1, -2, bnot 3, not atom, 1+2-3, 1 bor 2 bxor 3 bsl 4 bsr 5, 1 or 2 xor 3, 1*2/3 div 4 rem 5 band 6 and 7}.
+-type nested() :: (a | b) | (c | d).
+-type parameters(A,A) :: {A, _}.
+-type builtin() :: {dynamic(), record(), nonempty_improper_list(atom(), atom()), tuple(integer()), map(atom())}.
+-type plain_literal.

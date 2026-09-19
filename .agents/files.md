@@ -1,5 +1,12 @@
 # File map
 
+- `ast/types.hpp`, `src/ast/types.cpp`: closed type family, checked child ownership,
+  and structural invariants; the module/builder own transactional type arenas.
+- `src/parser/{types,type_primary,type_names,type_structural}.cpp`: type precedence,
+  aggregate/fun grammar, pinned builtin classification, map/record/binary types.
+- `src/printing/tree_types.cpp`, `tests/compiler/parser/{types.cpp,types_dump.hpp}`:
+  iterative public type output and native/private oracle validation.
+
 - `ast/terms.hpp`, `src/ast/attributes.cpp`: closed literal-term nodes and checked children.
 - `src/parser/{attributes,attribute_terms,term_value,term_bits}.cpp`: OTP attribute
   shape checks and literal normalization; `attribute_values.hpp` shares group/list helpers.

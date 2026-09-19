@@ -42,6 +42,10 @@ const LiteralTerm &Module::term(const TermId &id) const { return storage().terms
 
 std::size_t Module::term_count() const { return storage().terms.size(); }
 
+const TypeSyntax &Module::type(const TypeId &id) const { return storage().types.get(id); }
+
+std::size_t Module::type_count() const { return storage().types.size(); }
+
 const PatternSyntax &Module::pattern(const PatternSyntaxId &id) const { return storage().patterns.get(id); }
 
 std::size_t Module::pattern_count() const { return storage().patterns.size(); }

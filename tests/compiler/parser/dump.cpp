@@ -1,6 +1,7 @@
 #include "../encoding.hpp"
 #include "operators.hpp"
 #include "terms_dump.hpp"
+#include "types_dump.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <iostream>
 
@@ -396,6 +397,14 @@ struct FormDump {
     // Borrow the immutable owner for safe traversal of body handles.
     const ast::Module &module;
 
+    void operator()(const ast::TypeDeclaration &value) const {
+        std::cout << "type_decl\t" << static_cast<unsigned>(value.kind) << '\t' << hex(utf8(value.name.name)) << '\t'
+                  << value.parameters.size() << '\n';
+        for (const auto &parameter : value.parameters)
+            TypeDump{module}(parameter);
+        module.visit(value.type, TypeDump{module});
+    }
+
     void operator()(const ast::ModuleAttribute &value) const {
         if (value.parameters) {
             std::cout << "legacy_module\t" << hex(utf8(value.name.name)) << '\t' << value.parameters->size() << '\n';
@@ -442,6 +451,10 @@ struct FormDump {
         std::cout << "record_decl\t" << hex(utf8(value.name.name)) << '\t' << value.native << '\t'
                   << value.fields.size() << '\n';
         for (const auto &field : value.fields) {
+            if (field.type) {
+                std::cout << "typed_field\n";
+                module.visit(*field.type, TypeDump{module});
+            }
             std::cout << "record_decl_field\t" << hex(utf8(field.name.name)) << '\t' << field.default_value.has_value()
                       << '\n';
             if (field.default_value)

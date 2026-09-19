@@ -1,6 +1,7 @@
 #pragma once
 #include <erlang_aot/compiler/ast/patterns.hpp>
 #include <erlang_aot/compiler/ast/terms.hpp>
+#include <erlang_aot/compiler/ast/types.hpp>
 
 namespace erlang_aot::ast {
 struct ModuleAttribute {
@@ -56,6 +57,8 @@ struct RecordDeclarationField {
     Atom name;
     std::optional<ExprId> default_value;
     NodeSource source;
+    // Mixed declarations preserve omitted type annotations.
+    std::optional<TypeId> type = {};
 };
 
 struct RecordDeclaration {
@@ -77,8 +80,19 @@ struct DocumentationAttribute {
     std::variant<TermId, std::vector<DocumentationEntry>> value;
 };
 
-using FormValue = std::variant<ModuleAttribute, FileAttribute, Function, ExportAttribute, ImportAttribute,
-                               ImportRecordAttribute, GenericAttribute, RecordDeclaration, DocumentationAttribute>;
+enum class TypeDeclarationKind : std::uint8_t { alias, opaque, nominal };
+
+struct TypeDeclaration {
+    // Preserve category, parameter names and body without alias resolution.
+    TypeDeclarationKind kind;
+    Atom name;
+    std::vector<Variable> parameters;
+    TypeId type;
+};
+
+using FormValue =
+    std::variant<TypeDeclaration, ModuleAttribute, FileAttribute, Function, ExportAttribute, ImportAttribute,
+                 ImportRecordAttribute, GenericAttribute, RecordDeclaration, DocumentationAttribute>;
 
 struct Form {
     // Keep form identity, ordered syntax, and provenance together.

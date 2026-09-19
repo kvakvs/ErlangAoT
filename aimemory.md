@@ -417,3 +417,14 @@ Primary sources consulted:
 - Baseline pinned29.1; new step13 fixture records generated on installed29.0.5.
 - Step13 validation: all 35 CTests pass, including live OTP suites; fresh full
   Debug compiler/runtime Lizard and clang-tidy pass; formatting and diff checks pass.
+- Step13 commit 19b4bbc. Step14 adds TypeId arena, transaction counts, ownership
+  checks and explicit type grammar (top_type versus type, separate from expression).
+  Shared type operator metadata is used only within its type context. Applications
+  classify builtin arities from pinned erl_internal; unknown local types remain local.
+- Mixed typed/untyped record fields reuse defaults; alias/opaque/nominal declarations
+  check variable parameters (excluding _) but defer type legality/bindings. Attribute
+  envelope handling now also accepts parenthesized heads before outer ::/comma.
+- Step14 validation: fresh full Debug compiler/runtime Lizard+clang-tidy pass;
+  all 36 CTests pass across the full run and sequential rerun of two timed-out
+  legacy OTP suites. New Phase V native/golden/live suites passed on first run.
+  Formatting and diff checks pass.

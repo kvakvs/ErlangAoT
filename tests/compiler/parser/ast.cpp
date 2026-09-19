@@ -109,6 +109,8 @@ struct FormDump {
     // Borrow the immutable AST while visiting its expression handles.
     const ast::Module &module;
 
+    std::string operator()(const ast::TypeDeclaration &) const { return "type"; }
+
     std::string operator()(const ast::ModuleAttribute &value) const { return "module:" + utf8(value.name.name); }
 
     std::string operator()(const ast::FileAttribute &value) const { return "file:" + utf8(value.name); }

@@ -34,6 +34,25 @@ class FormParser {
     std::size_t depth_ = 0;
     // Recognize module/file attributes and the currently supported function syntax.
     ast::FormValue attribute();
+    // Type grammar has separate precedence, payloads and category-safe child handles.
+    ast::TypeId top_type();
+    ast::TypeId type_expression(int minimum = 200);
+    ast::TypeId type_prefix();
+    ast::TypeValue type_primary();
+    ast::TypeValue named_type();
+    ast::TypeValue type_application(std::optional<ast::Atom> module, ast::Atom name,
+                                    std::vector<ast::TypeId> arguments);
+    ast::TypeValue hash_type();
+    ast::ListType list_type();
+    ast::BitstringType bitstring_type();
+    std::pair<bool, ast::TypeId> binary_type_part();
+    ast::FunType fun_type();
+    ast::MapTypeField map_type_field();
+    ast::RecordTypeField record_type_field();
+    std::vector<ast::TypeId> type_elements(std::u32string_view close);
+    ast::TypeId make_type(ast::TypeValue value, std::size_t begin, std::size_t anchor);
+    ast::TypeDeclaration type_declaration(const ast::Atom &name, const ast::ExprId &head);
+    ast::FormValue attribute_body(ast::Atom name, const std::vector<ast::ExprId> &arguments);
     ast::FormValue ordinary_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments);
     ast::FormValue checked_attribute(ast::Atom name, const std::vector<ast::ExprId> &arguments);
     ast::RecordDeclaration record_declaration();

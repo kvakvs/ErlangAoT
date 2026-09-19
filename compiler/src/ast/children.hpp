@@ -7,6 +7,23 @@ struct Children {
     const Builder &builder;
     const OriginId &form;
 
+    void child(const TypeId &id) const { source(builder.view().type(id).source); }
+
+    void operator()(const TypeGroup &value) const;
+    void operator()(const AnnotatedType &value) const;
+    void operator()(const UnionType &value) const;
+    void operator()(const RangeType &value) const;
+    void operator()(const UnaryType &value) const;
+    void operator()(const BinaryTypeOperator &value) const;
+    void operator()(const TypeApplication &value) const;
+    void operator()(const TupleType &value) const;
+    void operator()(const ListType &value) const;
+    void operator()(const MapType &value) const;
+    void operator()(const RecordType &value) const;
+    void operator()(const BitstringType &value) const;
+    void operator()(const FunType &value) const;
+    void operator()(const TypeDeclaration &value) const;
+
     void child(const TermId &id) const { source(builder.view().term(id).source); }
 
     void operator()(const ModuleAttribute &) const {}

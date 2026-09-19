@@ -8,6 +8,25 @@ historical exact-version/skip results below describe earlier validation runs.
 
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
+## Phase V steps 13–14 — Attributes and types
+
+The parser now retains ordinary literal attributes, export/import lists, legacy
+module parameters, tuple/native record declarations and documentation metadata.
+Normalized literal terms have distinct `TermId` handles; defaults and documentation
+`equiv` calls retain expression syntax. File references are data at the parser API.
+No ordinary Erlang calls, parse transforms or documentation file reads run here.
+
+Type syntax uses a separate `TypeId` arena and grammar entry points. Unions,
+annotations, ranges and type operators remain syntax. Aggregate, remote/local,
+binary and fun types preserve the distinctions made by the pinned parser.
+Alias/opaque/nominal declarations and mixed typed record fields are supported;
+alias resolution, type checking and semantic validity remain later-stage work.
+
+Both new arenas participate in form transactions, node budgets, source ownership,
+generation checks and exhaustive public printing. Phase V fixtures and native
+attribute/type tests cover normalization, rejection, macros/includes, ownership,
+rollback and limits. Specifications/callbacks are the next planned step.
+
 ## Phase IV step 10 — Branching and receive
 
 Step 10 commit: `d22c6d9`.

@@ -1,6 +1,6 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Phases I–IV and Phase V step 13 implemented, 2026-09-19; steps 14–18 remain pending.
+Status: Phases I–IV and Phase V steps 13–14 implemented, 2026-09-19; steps 15–18 remain pending.
 See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
 and the parse-check CLI are not yet implemented. Host evidence is macOS arm64.
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
@@ -492,6 +492,10 @@ No attribute parsing executes ordinary Erlang calls or introduces runtime coupli
 Required commit: `feat(parser): add attributes and record declarations`.
 
 ### Step 14. Add type syntax and typed declarations
+
+Implemented: distinct TypeId arena and exhaustive type visitors, type-only
+precedence/grammar, alias/opaque/nominal declarations, and mixed typed record
+fields. Baseline builtin classification is pinned to erl_internal:is_type/2.
 
 1. Implement separate type precedence and nodes for variables, singleton literals,
    annotations, unions, ranges, parentheses, and permitted operator expressions.

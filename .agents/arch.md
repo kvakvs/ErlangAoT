@@ -1,5 +1,11 @@
 # Architecture
 
+- Type syntax has a separate checked `TypeId` arena, type-only precedence entry
+  points and exhaustive visitors. Type operators are retained, never evaluated.
+  Applications preserve parser builtin/local/remote classification; declarations
+  preserve alias/opaque/nominal categories and variable parameters. Record field
+  types reuse declaration/default parsing while keeping expression/type IDs distinct.
+
 - Attribute parsing separates literal `TermId` data from default/equiv `ExprId`
   syntax. Literal arenas participate in transactions, budgets and ownership checks;
   temporary expression syntax is reclaimed after normalization. OTP-shaped generic
