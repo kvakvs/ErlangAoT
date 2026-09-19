@@ -33,7 +33,16 @@ class FormParser {
     std::vector<ast::PatternSyntaxId> arguments();
     ast::PatternSyntaxId pattern(bool permissive = false);
     ast::GuardSyntax guard(std::size_t begin);
+    std::optional<ast::GuardSyntax> optional_guard();
     std::vector<ast::ExprId> sequence();
+    // Reuse sequence/guard parsing while each construct owns its closing delimiters.
+    std::optional<ast::ExprValue> control(OperatorContext context);
+    ast::BlockExpression block();
+    ast::CaseExpression case_expression();
+    ast::IfExpression if_expression();
+    ast::ReceiveExpression receive_expression();
+    std::vector<ast::BranchClause> branches();
+    ast::BranchClause branch();
     // Parse bounded recursive values without rescanning expanded tokens.
     ast::ExprId expression(int minimum = 0, OperatorContext context = OperatorContext::expression);
     ast::ExprId prefix(OperatorContext context);

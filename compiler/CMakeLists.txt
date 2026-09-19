@@ -2,6 +2,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
 add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
     src/parsing/token_syntax.cpp src/parsing/operator_info.cpp
     src/ast/module.cpp src/ast/builder.cpp src/ast/children.cpp src/ast/clauses.cpp
+    src/ast/control.cpp src/parser/control.cpp src/printing/tree_control.cpp
     src/parser/parser.cpp src/parser/forms.cpp src/parser/literals.cpp src/parser/aggregates.cpp src/parser/expressions.cpp src/parser/clauses.cpp src/parser/maps.cpp src/parser/records.cpp src/parser/structural.cpp src/parser/binaries.cpp
     src/source/source.cpp src/diagnostics/diagnostic.cpp
     src/printing/source.cpp src/printing/token_text.cpp

@@ -46,11 +46,19 @@ class TreePrinter {
     void operator()(const ast::Bitstring &value);
     void operator()(const ast::BinarySegment &value);
     void operator()(const ast::BinaryModifier &value);
+    void operator()(const ast::BlockExpression &value);
+    void operator()(const ast::CaseExpression &value);
+    void operator()(const ast::IfExpression &value);
+    void operator()(const ast::ReceiveExpression &value);
+    void operator()(const ast::BranchClause &value);
+    void operator()(const ast::IfClause &value);
+    void operator()(const ast::ReceiveTimeout &value);
 
   private:
     using Reference = std::variant<ast::FormId, ast::ExprId, ast::PatternSyntaxId, const ast::FunctionClause *,
                                    const ast::GuardSyntax *, const ast::GuardConjunction *, const ast::MapField *,
-                                   const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *>;
+                                   const ast::RecordField *, const ast::BinarySegment *, const ast::BinaryModifier *,
+                                   const ast::BranchClause *, const ast::IfClause *, const ast::ReceiveTimeout *>;
 
     struct Work {
         // Retain child roles and depth independently of the native call stack.

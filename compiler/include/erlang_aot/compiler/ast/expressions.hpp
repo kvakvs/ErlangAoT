@@ -1,4 +1,5 @@
 #pragma once
+#include <erlang_aot/compiler/ast/clauses.hpp>
 #include <erlang_aot/compiler/ast/operators.hpp>
 #include <erlang_aot/compiler/ast/source.hpp>
 #include <erlang_aot/compiler/lexer.hpp>
@@ -172,10 +173,55 @@ struct RecordIndex {
     NodeSource field_source;
 };
 
+struct BranchClause {
+    // OTP accepts an expression candidate here; semantic pattern checks remain deferred.
+    PatternSyntaxId pattern;
+    std::optional<GuardSyntax> guard;
+    std::vector<ExprId> body;
+    NodeSource source;
+};
+
+struct IfClause {
+    // Guard-only branches keep their nonempty alternatives and body separate.
+    GuardSyntax guard;
+    std::vector<ExprId> body;
+    NodeSource source;
+};
+
+struct BlockExpression {
+    // Retain the begin/end boundary around a nonempty expression sequence.
+    std::vector<ExprId> body;
+};
+
+struct CaseExpression {
+    // Keep the scrutinee and ordered candidate branches without lowering matches.
+    ExprId value;
+    std::vector<BranchClause> clauses;
+};
+
+struct IfExpression {
+    // Each branch begins with a guard rather than a pattern.
+    std::vector<IfClause> clauses;
+};
+
+struct ReceiveTimeout {
+    // An explicit after part owns its timeout expression and nonempty body.
+    ExprId timeout;
+    std::vector<ExprId> body;
+    NodeSource source;
+};
+
+struct ReceiveExpression {
+    // An after-only receive has no clauses; at least one branch or timeout is required.
+    std::vector<BranchClause> clauses;
+    std::optional<ReceiveTimeout> after;
+};
+
 using ExprValue =
     std::variant<Atom, Variable, IntegerLiteral, FloatLiteral, CharacterLiteral, StringLiteral, Tuple, List, Group,
                  Bitstring, UnaryExpression, BinaryExpression, MatchExpression, CatchExpression, CallExpression,
-                 RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex>;
+                 RemoteExpression, MapExpression, RecordExpression, RecordAccess, RecordIndex, BlockExpression,
+                 CaseExpression, IfExpression, ReceiveExpression>;
 
 struct Expression {
     // Associate a closed, typed payload with its expanded-token extent.

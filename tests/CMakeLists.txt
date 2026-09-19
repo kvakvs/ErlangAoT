@@ -1,3 +1,5 @@
+include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
+
 add_test(NAME cli COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>"
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/cli"
@@ -13,13 +15,31 @@ add_executable(printing_ast_tests compiler/printing_ast.cpp)
 erlang_aot_project_options(printing_ast_tests)
 target_link_libraries(printing_ast_tests PRIVATE erlang_frontend)
 add_test(NAME printing_ast COMMAND printing_ast_tests)
+add_executable(parser_control compiler/parser/control.cpp)
+erlang_aot_project_options(parser_control)
+target_include_directories(parser_control PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(parser_control PRIVATE erlang_frontend)
+add_test(NAME parser_control COMMAND parser_control)
+set_tests_properties(parser_control PROPERTIES TIMEOUT 20)
+foreach(mode IN ITEMS golden oracle)
+    if(mode STREQUAL "oracle")
+        set(live TRUE)
+    else()
+        set(live FALSE)
+    endif()
+    add_test(NAME parser_phase4_${mode} COMMAND "${CMAKE_COMMAND}"
+        "-DPHASE=phase4" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+        "-DDUMP=$<TARGET_FILE:parser_dump>" "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
+        "-DLIVE=${live}" -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
+endforeach()
+set_tests_properties(parser_phase4_oracle PROPERTIES TIMEOUT 180)
 set_tests_properties(printing_ast PROPERTIES TIMEOUT 20)
 
 add_executable(parser_probe compiler/probe.cpp)
 erlang_aot_project_options(parser_probe)
 target_link_libraries(parser_probe PRIVATE erlang_frontend)
 add_test(NAME parser_probe COMMAND parser_probe)
-include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
 add_test(NAME otp_oracle COMMAND "${CMAKE_COMMAND}"
     "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.escript"

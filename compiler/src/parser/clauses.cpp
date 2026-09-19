@@ -48,13 +48,18 @@ ast::GuardSyntax FormParser::guard(std::size_t begin) {
 // Complete one head, optional guard and nonempty body before publishing a clause.
 ast::FunctionClause FormParser::clause(std::size_t begin) {
     auto args = arguments();
-    std::optional<ast::GuardSyntax> guards;
-    const auto when = cursor_.offset();
-    if (cursor_.take_syntax(U"when"))
-        guards = guard(when);
+    auto guards = optional_guard();
     expect(U"->");
     auto body = sequence();
     return {std::move(args), std::move(guards), std::move(body), builder_.source(begin, cursor_.offset(), begin)};
+}
+
+// Reuse the optional guard envelope in all pattern-headed clause families.
+std::optional<ast::GuardSyntax> FormParser::optional_guard() {
+    const auto begin = cursor_.offset();
+    if (cursor_.take_syntax(U"when"))
+        return guard(begin);
+    return std::nullopt;
 }
 
 // Check name/arity consistency within this form; separate definitions remain independent.

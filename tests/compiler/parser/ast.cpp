@@ -39,6 +39,14 @@ std::vector<Token> tokens() {
 
 // Exhaustive private dump proves typed visiting without an unchecked fallback.
 struct LiteralDump {
+    std::string operator()(const ast::BlockExpression &) const { return "block"; }
+
+    std::string operator()(const ast::CaseExpression &) const { return "case"; }
+
+    std::string operator()(const ast::IfExpression &) const { return "if"; }
+
+    std::string operator()(const ast::ReceiveExpression &) const { return "receive"; }
+
     std::string operator()(const ast::MapExpression &) const { return "map"; }
 
     std::string operator()(const ast::RecordExpression &) const { return "record"; }

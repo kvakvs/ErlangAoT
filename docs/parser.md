@@ -8,6 +8,28 @@ historical exact-version/skip results below describe earlier validation runs.
 
 Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
 
+## Phase IV step 10 — Branching and receive
+
+`BlockExpression`, `CaseExpression`, `IfExpression`, and `ReceiveExpression` retain
+ordered syntax, including explicit timeout expressions/bodies and after-only receives.
+`BranchClause` owns a `PatternCandidate`; `IfClause` owns a mandatory guard. Guard
+and function clause payloads now live in `ast/clauses.hpp` to avoid recursive header
+dependencies. No matching, mailbox, or guard semantics are implemented.
+
+The parser shares sequence and optional-guard mechanics, bounds nested expressions,
+and leaves each delimiter to its owning construct. `expect` now accepts keyword
+delimiters while continuing to reject lexical form dots. Constructors validate child
+ownership, grammar categories, extents, and mandatory nonempty sequences. Both the
+private oracle projection and public iterative tree printer cover the new variants.
+
+Authored positive/negative fixtures are in `phase4/step10`; native tests cover macro
+provenance after source destruction, candidate patterns, rollback, nesting limits,
+and empty-node rejection. New oracle records use installed OTP 29.0.5, checked
+against the pinned 29.1 grammar; no claim of a new exact-29.1 runtime run is made.
+
+Step 10 validation: fresh Debug configure/build, all 30 CTests (including all live
+OTP suites), clang-format, and the full Lizard/clang-tidy quality gate passed on macOS arm64.
+
 The CLI now exposes the implemented grammar through `--print-ast`. It prints a compact
 indented tree of recovered forms, reports diagnostics to stderr, and fails on syntax
 errors. `--print-pp --print-ast` shares one preprocessing pass. See README for examples;

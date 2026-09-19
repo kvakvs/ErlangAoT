@@ -280,10 +280,11 @@ handling, and output-operand handling. Its maximum CCN is now **10**, down from
 
 ## Parser foundation
 
-Phases I–III of the [parser plan](.agents/02-parser.md) are implemented as a native
+Phases I–III and step 10 of the [parser plan](.agents/02-parser.md) are implemented as a native
 C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
 module/file attributes, literals and aggregates, operators/calls, maps, OTP 29
-records, bitstrings, restricted pattern syntax, guards, and multi-clause functions. Other syntax remains explicitly
+records, bitstrings, patterns, guards, multi-clause functions, begin/case/if blocks,
+and receive expressions with optional timeouts. Other syntax remains explicitly
 unsupported. `--print-ast` exposes the current parser; a diagnostics-only parse-check mode
 remains planned. See [parser behavior and validation](docs/parser.md) for API contracts,
 feature/source ownership, limits, compatibility tests, and remaining phases.

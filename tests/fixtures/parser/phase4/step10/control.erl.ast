@@ -1,0 +1,99 @@
+file	636f6e74726f6c2e65726c	1
+module	636f6e74726f6c
+function_full	66	1	1
+clause	1	0	1
+var	58
+block	7
+block	2
+atom	61
+atom	62
+case	2
+var	58
+clause	1	2	2
+tuple	2
+atom	61
+var	59
+guard	2
+binary	>
+var	59
+integer	0
+call	1
+atom	69735f696e7465676572
+var	59
+guard	1
+binary	=:=
+var	59
+integer	0
+var	59
+atom	646f6e65
+clause	1	0	1
+var	5f
+atom	6f74686572
+if	2
+clause	0	1	1
+guard	1
+var	58
+block	2
+atom	796573
+atom	6f6b
+clause	0	2	1
+guard	1
+atom	74727565
+guard	1
+atom	66616c7365
+atom	6e6f
+receive	2	0
+clause	1	1	1
+tuple	2
+atom	61
+var	59
+guard	1
+call	1
+atom	69735f696e7465676572
+var	59
+var	59
+clause	1	0	1
+atom	73746f70
+atom	646f6e65
+receive	1	1
+clause	1	0	1
+var	58
+var	58
+binary	+
+integer	10
+integer	1
+after	2
+atom	74696d656f7574
+atom	646f6e65
+receive	0	1
+block	2
+atom	61
+integer	0
+after	1
+atom	74696d656f7574
+case	1
+var	58
+clause	1	0	1
+call	0
+atom	66
+atom	61636365707465645f6275745f6e6f745f615f7061747465726e
+function	67
+tuple	3
+block	1
+atom	6f6b
+call	1
+case	1
+atom	78
+clause	1	0	1
+atom	78
+atom	796573
+atom	78
+map	1	1
+if	1
+clause	0	1	1
+guard	1
+atom	74727565
+map	0	0
+map_field	=>
+atom	61
+integer	1

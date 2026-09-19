@@ -78,6 +78,17 @@ project({function, _, Name, Arity, Clauses}) ->
 project(Other) -> erlang:error({unmapped_phase1_form, Other}).
 
 scalar({map, _, Fields}) -> map(none, Fields);
+scalar({block, _, Body}) ->
+    io:format("block\t~B~n", [length(Body)]), lists:foreach(fun scalar/1, Body);
+scalar({'case', _, Value, Clauses}) ->
+    io:format("case\t~B~n", [length(Clauses)]), scalar(Value), lists:foreach(fun clause/1, Clauses);
+scalar({'if', _, Clauses}) ->
+    io:format("if\t~B~n", [length(Clauses)]), lists:foreach(fun clause/1, Clauses);
+scalar({'receive', _, Clauses}) ->
+    io:format("receive\t~B\t0~n", [length(Clauses)]), lists:foreach(fun clause/1, Clauses);
+scalar({'receive', _, Clauses, Timeout, Body}) ->
+    io:format("receive\t~B\t1~n", [length(Clauses)]), lists:foreach(fun clause/1, Clauses),
+    scalar(Timeout), io:format("after\t~B~n", [length(Body)]), lists:foreach(fun scalar/1, Body);
 scalar({map, _, Base, Fields}) -> map({some, Base}, Fields);
 scalar({record, _, Name, Fields}) -> record(none, Name, Fields);
 scalar({record, _, Base, Name, Fields}) -> record({some, Base}, Name, Fields);

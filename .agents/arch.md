@@ -44,6 +44,9 @@
   local unresolved, qualified native, or inferred identities, ordered assignments,
   field accesses and indexes. Structural postfix grammar restricts chaining separately
   from general operators/calls; no record layout lookup or expansion occurs in parsing.
+- Blocks/case/if/receive retain nonempty bodies, distinct guard-only and candidate-pattern
+  branch clauses, and explicit receive timeouts. Shared clause payloads live below expression
+  nodes; bounded parsing reuses function sequences/guards and recovers transactionally.
 - Bitstrings retain ordered value/size/type segments and modifier integer parameters.
   Restricted bit_expr/expr_max entries protect segment delimiters; grouping admits full
   expressions. Binary sigils use the same string/UTF-8 segment representation. Type/size

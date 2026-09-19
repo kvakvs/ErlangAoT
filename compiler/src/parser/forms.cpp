@@ -9,7 +9,7 @@ void FormParser::fail(DiagnosticCode code, std::string message) const {
 }
 
 void FormParser::expect(std::u32string_view text) {
-    if (!cursor_.take(TokenKind::symbol, text)) {
+    if (cursor_.anchor().kind == TokenKind::dot || !cursor_.take_syntax(text)) {
         fail(DiagnosticCode::parser_syntax, "expected '" + utf8(text) + "'");
     }
 }

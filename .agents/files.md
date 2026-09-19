@@ -1,5 +1,12 @@
 # File map
 
+- `ast/clauses.hpp`: shared guard and function-clause syntax independent of expression payloads.
+- `compiler/src/{parser,ast}/control.cpp`: block/case/if/receive grammar and construction checks.
+- `compiler/src/ast/children.hpp`: exhaustive child validation shared by node families.
+- `compiler/src/printing/tree_control.cpp`: control-flow tree visitors.
+- `tests/compiler/parser/control.cpp`, `fixtures/parser/phase4/step10/`: control AST,
+  source ownership, rollback, bounds, invariant and oracle fixtures.
+
 - `cmake/ErlangDependencies.cmake`, `ErlangVersion.escript`: discover a host escript,
   validate OTP >=29 at configure time, and select it for all live test oracles.
 

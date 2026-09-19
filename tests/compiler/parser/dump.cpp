@@ -12,6 +12,65 @@ struct ExpressionDump {
 
     void child(const ast::ExprId &id) const { module.visit(id, *this); }
 
+    // Share sequence and guard projection across control and function-like clauses.
+    void expressions(const std::vector<ast::ExprId> &ids) const {
+        for (const auto &id : ids)
+            child(id);
+    }
+
+    void pattern(const ast::PatternSyntaxId &id) const {
+        std::visit([&](const auto &value) { child(value.expression); }, module.pattern(id).value);
+    }
+
+    void guards(const std::optional<ast::GuardSyntax> &value) const {
+        if (!value)
+            return;
+        for (const auto &alternative : value->alternatives) {
+            std::cout << "guard\t" << alternative.tests.size() << '\n';
+            expressions(alternative.tests);
+        }
+    }
+
+    void branch(const ast::BranchClause &value) const {
+        std::cout << "clause\t1\t" << (value.guard ? value.guard->alternatives.size() : 0) << '\t' << value.body.size()
+                  << '\n';
+        pattern(value.pattern);
+        guards(value.guard);
+        expressions(value.body);
+    }
+
+    void operator()(const ast::BlockExpression &value) const {
+        std::cout << "block\t" << value.body.size() << '\n';
+        expressions(value.body);
+    }
+
+    void operator()(const ast::CaseExpression &value) const {
+        std::cout << "case\t" << value.clauses.size() << '\n';
+        child(value.value);
+        for (const auto &clause : value.clauses)
+            branch(clause);
+    }
+
+    void operator()(const ast::IfExpression &value) const {
+        std::cout << "if\t" << value.clauses.size() << '\n';
+        for (const auto &clause : value.clauses) {
+            std::cout << "clause\t0\t" << clause.guard.alternatives.size() << '\t' << clause.body.size() << '\n';
+            guards(clause.guard);
+            expressions(clause.body);
+        }
+    }
+
+    void operator()(const ast::ReceiveExpression &value) const {
+        std::cout << "receive\t" << value.clauses.size() << '\t' << bool(value.after) << '\n';
+        for (const auto &clause : value.clauses)
+            branch(clause);
+        if (value.after) {
+            child(value.after->timeout);
+            std::cout << "after\t" << value.after->body.size() << '\n';
+            expressions(value.after->body);
+        }
+    }
+
     void identity(const ast::RecordIdentity &value) const {
         std::visit([&](const auto &name) { record_name(name); }, value.value);
     }

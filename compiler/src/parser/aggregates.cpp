@@ -2,6 +2,8 @@
 
 namespace erlang_aot {
 ast::ExprValue FormParser::primary(OperatorContext context) {
+    if (auto value = control(context))
+        return std::move(*value);
     if (cursor_.empty() || cursor_.anchor().kind == TokenKind::dot) {
         fail(DiagnosticCode::parser_syntax, "expected expression");
     }

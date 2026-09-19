@@ -372,3 +372,12 @@ Primary sources consulted:
   destroyed source sessions, empty modules, 9000-operator chains and CLI recovery.
 - Validation: Debug build, all 27 CTests (including live Homebrew OTP 29.0.5),
   clang-format, and full Lizard/clang-tidy quality gate passed.
+## 2026-09-19 — Phase IV execution
+
+- Step10 adds shared ast/clauses.hpp, typed begin/case/if/receive, candidate branches,
+  constructor/source checks and exhaustive public/private printing. Function sequences
+  and optional guards are reused. expect now consumes keyword delimiters but rejects
+  form dots. Phase4 oracle fixtures use installed OTP29.0.5; pinned29.1 grammar inspected.
+- Each PhaseIV step requires a separate commit after fresh full quality checks.
+- Step10 validation: all 30 CTests and fresh full quality/format checks pass on macOS
+  arm64 with installed OTP29.0.5. No preprocessor behavior change was required.
