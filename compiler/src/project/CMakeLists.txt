@@ -15,3 +15,5 @@ target_sources(erlang_project PRIVATE glob.cpp glob_utf8.cpp)
 target_sources(erlang_project PRIVATE discovery.cpp)
 
 target_sources(erlang_project PRIVATE identity.cpp sources.cpp)
+
+target_sources(erlang_project PRIVATE selection.cpp)

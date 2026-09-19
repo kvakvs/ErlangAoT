@@ -23,6 +23,8 @@
   wildcard traversal, deterministic expansions, regular-file filtering and symlink policy.
 - `src/project/{sources,identity}.{hpp,cpp}` and matching project tests: target
   source ordering and physical-identity deduplication, including hard links and symlinks.
+- `src/project/selection.{hpp,cpp}` and matching project tests: pure ordered target
+  selection, repeated-selector deduplication and available-name diagnostics.
 
 Paths below are repository-relative; `src/` in grouped compiler entries means
 `compiler/src/`. Public compiler headers live in `compiler/include/erlang_aot/compiler/`.

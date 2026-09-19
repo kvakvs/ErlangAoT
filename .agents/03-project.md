@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–10 complete; steps 11–22 pending. Written 2026-09-19.
+Status: steps 1–11 complete; steps 12–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -24,6 +24,8 @@ directory tests; all 54 tests, formatting, fresh Debug build and full quality pa
 Step 10 — ordered source assembly, overlapping selections and physical aliases;
 all 55 tests, formatting, fresh Debug build and full quality pass. All 55 tests
 also pass with native case-alias coverage added.
+Step 11 — selection order, duplicate selectors and unknown-target diagnostics;
+all 56 tests, formatting, fresh Debug build and full quality pass.
 
 ## Objective and existing behavior
 

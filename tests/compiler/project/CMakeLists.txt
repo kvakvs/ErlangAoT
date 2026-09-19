@@ -42,3 +42,8 @@ add_executable(project_sources sources.cpp)
 erlang_aot_project_options(project_sources)
 target_link_libraries(project_sources PRIVATE erlang_project)
 add_test(NAME project_sources COMMAND project_sources "${CMAKE_CURRENT_BINARY_DIR}/project-sources")
+
+add_executable(project_selection selection.cpp)
+erlang_aot_project_options(project_selection)
+target_link_libraries(project_selection PRIVATE erlang_project)
+add_test(NAME project_selection COMMAND project_selection)
