@@ -5,3 +5,5 @@ target_include_directories(erlang_project PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..
 target_link_libraries(erlang_project PRIVATE erlang_project_toml)
 
 target_sources(erlang_project PRIVATE schema.cpp decode.cpp)
+
+target_sources(erlang_project PRIVATE decode_options.cpp)

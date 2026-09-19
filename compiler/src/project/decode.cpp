@@ -1,4 +1,5 @@
 #include "decode.hpp"
+#include "decode_options.hpp"
 #include "schema.hpp"
 #include <algorithm>
 #include <set>
@@ -36,6 +37,9 @@ Target target(const toml::node &node, schema::Context context) {
     }
     if (const auto *output = values.get("output")) {
         result.output = schema::text(*output, context, "output");
+    }
+    if (const auto *options = values.get("options")) {
+        result.options = decode_options(*options, context);
     }
     return result;
 }

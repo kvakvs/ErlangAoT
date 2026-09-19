@@ -292,3 +292,8 @@ add_executable(project_decode compiler/project/decode.cpp)
 erlang_aot_project_options(project_decode)
 target_link_libraries(project_decode PRIVATE erlang_project erlang_project_toml)
 add_test(NAME project_decode COMMAND project_decode)
+
+add_executable(project_decode_options compiler/project/decode_options.cpp)
+erlang_aot_project_options(project_decode_options)
+target_link_libraries(project_decode_options PRIVATE erlang_project erlang_project_toml)
+add_test(NAME project_decode_options COMMAND project_decode_options)

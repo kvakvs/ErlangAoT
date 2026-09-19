@@ -1,6 +1,6 @@
 # TOML projects and target selection implementation plan
 
-Status: steps 1–5 complete; steps 6–22 pending. Written 2026-09-19.
+Status: steps 1–6 complete; steps 7–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
@@ -12,6 +12,8 @@ Step 4 — loader native-path/syntax/size/injected-I/O tests, all 49 tests,
 formatting, fresh Debug build, Lizard, and clang-tidy pass.
 Step 5 — strict source-declaration schema, ownership, and count-limit tests,
 all 50 tests, formatting, fresh Debug build, Lizard, and clang-tidy pass.
+Step 6 — nested typed-option/feature-conflict tests, all 51 tests, formatting,
+fresh Debug build, Lizard, and clang-tidy pass.
 
 ## Objective and existing behavior
 
