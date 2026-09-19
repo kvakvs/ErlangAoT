@@ -7,7 +7,7 @@ JOBS ?= 2
 CMAKE_ARGS ?=
 CLANG_FORMAT ?= $(shell command -v clang-format 2>/dev/null || xcrun --find clang-format 2>/dev/null)
 
-.PHONY: build test format fmt
+.PHONY: build test format fmt clean
 
 # Reconfigure each time; let CMake control jobs independently of outer make flags.
 build:
@@ -24,3 +24,6 @@ test: build
 format fmt:
 	@test -n "$(CLANG_FORMAT)" || { echo "clang-format is required" >&2; exit 1; }
 	@find compiler runtime abi tests -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o -name '*.hpp' -o -name '*.h' -o -name '*.hh' -o -name '*.hxx' \) -print0 | xargs -0 "$(CLANG_FORMAT)" -i --style=file
+
+clean:
+	rm -rf build/ cmake-build*/
