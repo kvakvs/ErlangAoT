@@ -1,5 +1,9 @@
 # Architecture
 
+- Project support is being implemented in `compiler/src/project/`; its private
+  toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.
+  Runtime-only builds do not discover TOML. Project commands are not exposed yet.
+
 - CMake builds the C++23 host tool `erlangaot` and a separate placeholder runtime.
   C++26 is selectable. No LLVM/backend/runtime execution is implemented yet.
   Compiler-private Boost >=1.90 supplies Parser and Multiprecision; runtime-only

@@ -1,9 +1,11 @@
 # TOML projects and target selection implementation plan
 
-Status: step 1 complete; steps 2–22 pending. Written 2026-09-19.
+Status: steps 1–2 complete; steps 3–22 pending. Written 2026-09-19.
 
 Validation ledger: step 1 — fresh Debug compiler/runtime build, all 46 CTest
 tests, Lizard, clang-tidy, TOML documentation examples, and whitespace checks pass.
+Step 2 — all 47 tests and full quality pass; runtime-only build and absent/changed
+TOML-root configuration checks pass. Pinned toml++ 3.4.0 is local under build/deps.
 
 ## Objective and existing behavior
 
@@ -170,7 +172,6 @@ output suffix differs on Windows. Keep these annotations in the generated file:
 # ErlangAoT project. Paths are relative to this TOML file's directory.
 # Check with: erlangaot --parse-check --project <this-file.toml>
 # Also available: --preprocess-check, --print-pp, and --print-ast.
-# Executable generation is not implemented yet.
 schema_version = 1
 
 # Add another [[targets]] block after this target's option tables for more targets.

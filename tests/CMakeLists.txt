@@ -272,3 +272,8 @@ target_include_directories(parser_binaries PRIVATE "${PROJECT_SOURCE_DIR}/compil
 target_link_libraries(parser_binaries PRIVATE erlang_frontend)
 add_test(NAME parser_binaries COMMAND parser_binaries)
 set_tests_properties(parser_binaries PROPERTIES TIMEOUT 20)
+
+add_executable(project_dependency compiler/project/dependency.cpp)
+erlang_aot_project_options(project_dependency)
+target_link_libraries(project_dependency PRIVATE erlang_project_toml)
+add_test(NAME project_dependency COMMAND project_dependency)

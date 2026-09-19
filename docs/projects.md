@@ -258,3 +258,17 @@ Print source/AST payloads to stdout in target/file order using existing printers
 do not insert target banners into those formats. Repeated source output across
 targets is intentional. Keep context on stderr when diagnostics occur.
 
+
+## Build dependency
+
+Project support uses compiler-private toml++ 3.4.0 (MIT license, Mark Gillard).
+The tested release is [upstream v3.4.0](https://github.com/marzer/tomlplusplus/releases/tag/v3.4.0).
+Its source archive SHA-256 is
+`8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155`.
+Retain the upstream LICENSE file when distributing dependency sources.
+
+Install that version or extract its source into `build/deps/tomlplusplus-3.4.0`.
+Alternatively pass `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` when
+configuring. No automatic downloads occur; runtime-only builds do not discover it.
+The private build enables header-only parsing with exceptions and disables
+unreleased TOML syntax. TOML headers never appear in public frontend interfaces.
