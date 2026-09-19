@@ -1,0 +1,53 @@
+file	66756e735f7472795f6d617962652e65726c	1
+module	66756e735f7472795f6d61796265
+function_full	66	1	1
+clause	1	0	5
+var	58
+local_fun
+atom	66
+integer	1
+remote_fun
+var	4d
+var	46
+var	41
+fun	4c6f6f70	2
+clause	1	0	1
+integer	0
+atom	6f6b
+clause	1	0	1
+var	4e
+call	1
+var	4c6f6f70
+binary	-
+var	4e
+integer	1
+try	1	1	2	1
+var	58
+clause	1	0	1
+var	59
+var	59
+clause	1	0	1
+tuple	3
+atom	6572726f72
+var	52
+var	53
+tuple	2
+var	52
+var	53
+clause	1	0	1
+tuple	3
+atom	7468726f77
+var	54
+var	5f
+var	54
+atom	6f6b
+maybe	2	1
+maybe_match
+tuple	2
+atom	6f6b
+var	56
+var	58
+var	56
+clause	1	0	1
+var	5f
+atom	6e6f

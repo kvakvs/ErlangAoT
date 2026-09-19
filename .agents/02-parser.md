@@ -1,8 +1,9 @@
 # Erlang syntax parser and typed AST implementation plan
 
-Status: Steps 1–17 implemented, 2026-09-19; step 18 remains pending.
-See [validation and current grammar limits](../docs/parser.md). Full Erlang parsing
-coverage closure is pending. The parse-check CLI is implemented. Host evidence is macOS arm64.
+Status: Steps 1–17 complete; step 18 implementation and macOS validation complete,
+2026-09-19. **Overall plan partially complete:** required Linux x86/ARM and Windows
+x86-family execution remains pending. See [API and limits](../docs/parser.md) and
+[measured coverage/build matrix](../docs/parser-validation.md).
 Prerequisite: [01-pp.md](01-pp.md), steps 1–13, is implemented; retain its tests
 and [documented compatibility policies](../docs/preprocessor.md).
 
@@ -599,6 +600,12 @@ parsed module after the preprocessing session has been destroyed.
 Required commit: `feat(cli): expose syntax checking through the typed parser`.
 
 ### Step 18. Close compatibility coverage and validate supported builds
+
+Local work implemented: measured witnesses for all 344 ordinary productions,
+79 explicit SSA exclusions, complete authored structural/rejection suites and
+ten pinned real OTP sources. C++23/C++26, sanitizer, compiler-only/runtime-only/full
+configurations validated on macOS arm64. Required other hosts remain open work;
+this is not a declaration that the full plan is complete.
 
 1. Run the complete grammar/AST differential suite and audit every coverage row.
    Structural comparison must fail on unknown/unmapped node kinds rather than

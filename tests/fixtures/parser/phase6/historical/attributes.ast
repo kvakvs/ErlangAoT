@@ -1,0 +1,46 @@
+file	617474726962757465732e65726c	1
+module	61747472696275746573
+export	1
+66	0
+import	6c69737473	1
+72657665727365	1
+attribute	6578706f72745f74797065
+cons
+term_tuple	2
+atom	74
+integer	0
+nil
+attribute	6265686176696f7572
+atom	67656e5f736572766572
+attribute	636f6d70696c65
+term_tuple	2
+atom	70617273655f7472616e73666f726d
+atom	6578616d706c65
+import_record	6d	1
+atom	72
+attribute	6578706f72745f7265636f7264
+cons
+atom	72
+nil
+attribute	637573746f6d
+term_tuple	2
+term_tuple	2
+atom	66
+integer	1
+term_map	1
+atom	6b6579
+term_tuple	2
+atom	66
+integer	2
+doc	0
+metadata	2
+atom	6571756976
+equiv
+call	0
+atom	66
+atom	73696e6365
+cons
+integer	49
+nil
+function	66
+atom	6f6b

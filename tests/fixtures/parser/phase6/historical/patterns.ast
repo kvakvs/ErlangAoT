@@ -1,0 +1,24 @@
+file	7061747465726e732e65726c	1
+module	7061747465726e73
+function_full	66	1	2
+clause	1	2	1
+match
+tuple	2
+var	58
+var	59
+var	41
+guard	2
+binary	>
+var	58
+integer	0
+binary	<
+var	59
+integer	2
+guard	1
+binary	=:=
+var	58
+integer	0
+var	41
+clause	1	0	1
+var	5f
+atom	6f6b

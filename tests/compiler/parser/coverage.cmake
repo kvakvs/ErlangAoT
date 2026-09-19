@@ -1,0 +1,17 @@
+if(NOT EXISTS "${OTP_ROOT}/lib/stdlib/src/erl_parse.yrl")
+    message(STATUS "SKIP: pinned OTP source checkout unavailable; reduction audit remains pending")
+    return()
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/pinned.cmake")
+execute_process(COMMAND "${ESCRIPT}" "${CMAKE_CURRENT_LIST_DIR}/coverage.escript"
+    "${OTP_ROOT}" "${FIXTURES}" "${WORK}" "${WORK}/coverage.tsv"
+    RESULT_VARIABLE status OUTPUT_VARIABLE summary ERROR_VARIABLE errors TIMEOUT 90)
+if(NOT status STREQUAL "0")
+    message(FATAL_ERROR "Grammar reduction audit failed: ${summary} ${errors}")
+endif()
+file(READ "${WORK}/coverage.tsv" actual)
+file(READ "${FIXTURES}/phase6/coverage.tsv" expected)
+if(NOT actual STREQUAL expected)
+    message(FATAL_ERROR "Reduction witnesses changed; review ${WORK}/coverage.tsv")
+endif()
+message(STATUS "${summary}")

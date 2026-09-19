@@ -1,0 +1,3 @@
+-module(coverage).
+-type empty() :: {#{}, {}, #other:Point{}}.
+-type fields() :: #r{first :: integer(), second :: atom()}.

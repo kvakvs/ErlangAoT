@@ -1,0 +1,50 @@
+file	636f6d70726568656e73696f6e732e65726c	1
+module	636f6d70726568656e73696f6e73
+function_full	66	3	1
+clause	3	0	5
+var	4c
+var	4d
+var	42
+lc	1	1
+var	58
+generate	<:-
+var	58
+var	4c
+lc	2	1
+var	58
+var	59
+zip	2
+generate	<-
+var	58
+var	4c
+generate	<-
+var	59
+var	4c
+mc	1	1
+map_field	=>
+var	4b
+var	56
+m_generate	<:-
+var	4b
+var	56
+var	4d
+bc	1
+bitstring	1
+segment	0	default
+var	58
+b_generate	<:=
+bitstring	1
+segment	0	default
+var	58
+var	42
+lc	1	2
+var	59
+generate	<-
+var	58
+var	4c
+filter
+match
+var	59
+binary	+
+var	58
+integer	1

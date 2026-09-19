@@ -1,0 +1,56 @@
+file	74797065732e65726c	1
+module	7479706573
+type_decl	0	74	1
+var	41
+union
+var	41
+union
+type	7475706c65	2
+atom	6f6b
+var	41
+union
+type	6e6f6e656d7074795f6c697374	1
+var	41
+union
+type	6d6170	1
+type_field	=>
+type	61746f6d	0
+type	696e7465676572	0
+binary_type
+integer	8
+integer	16
+type_decl	1	6f	0
+range
+integer	1
+integer	10
+type_decl	2	6e	0
+type	61746f6d	0
+record_decl	72	0	2
+typed_field
+type	696e7465676572	0
+record_decl_field	78	1
+integer	0
+typed_field
+remote	6d
+user_type	74	0
+record_decl_field	79	0
+type_decl	0	666e	0
+fun_type	any
+type	61746f6d	0
+spec	0	-	66	1	2
+signature	1
+fun_type	1
+var	41
+var	41
+constraint
+var	41
+type	7465726d	0
+signature	0
+fun_type	1
+type	696e7465676572	0
+type	61746f6d	0
+spec	1	-	6362	1	1
+signature	0
+fun_type	1
+type	7465726d	0
+atom	6f6b

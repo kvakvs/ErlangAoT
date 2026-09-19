@@ -5,7 +5,8 @@ The compiler implements OTP 29.1 preprocessing: macros, conditional compilation,
 includes, contextual macros, feature configuration, and diagnostic directives.
 `--preprocess-check` checks preprocessing and `--parse-check` checks syntax without
 an Erlang installation at runtime or output files. Neither checks semantic validity.
-The typed syntax parser is implemented; compatibility validation is still in progress.
+The typed syntax parser is implemented and validated on macOS arm64;
+Linux and Windows execution validation remains pending.
 Semantic analysis, code generation, and runtime behavior remain unimplemented.
 
 ## Build on macOS and Linux
@@ -283,8 +284,9 @@ handling, and output-operand handling. Its maximum CCN is now **10**, down from
 
 ## Parser foundation
 
-Steps 1–17 of the [parser plan](.agents/02-parser.md) are implemented as a native
-C++ API consuming expanded preprocessor tokens. The owned typed syntax AST supports
+The parser implementation from the [plan](.agents/02-parser.md) is a native
+C++ API consuming expanded preprocessor tokens; cross-host validation remains open.
+The owned typed syntax AST supports
 module/file and literal attributes, export/import lists, documentation, typed record declarations,
 type/opaque/nominal declarations, type syntax, overloaded specs/callbacks and subtype constraints,
 literals and aggregates, operators/calls, maps, OTP 29
@@ -299,4 +301,6 @@ inputs succeed. With `--preprocess-check`, parsing still runs; adding `--print-p
 or `--print-ast` explicitly requests the corresponding output. `--` ends options.
 Check modes preserve existing output files and never generate an executable.
 See [parser behavior and validation](docs/parser.md) for API contracts,
-feature/source ownership, limits, compatibility tests, and remaining phases.
+feature/source ownership and limits. The [validation matrix](docs/parser-validation.md)
+records all 344 ordinary grammar productions, the pinned OTP corpus, local build
+results and the required Linux/Windows jobs that remain pending.

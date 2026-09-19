@@ -1,0 +1,26 @@
+file	62696e61726965732e65726c	1
+module	62696e6172696573
+function_full	66	1	1
+clause	1	0	1
+bitstring	2
+segment	1	default
+var	58
+integer	8
+segment	0	1
+var	52657374
+modifier	62696e617279	none
+bitstring	3
+segment	1	3
+var	58
+integer	8
+modifier	696e7465676572	none
+modifier	756e7369676e6564	none
+modifier	626967	none
+segment	1	default
+binary	+
+var	58
+integer	1
+integer	8
+segment	0	1
+var	52657374
+modifier	62696e617279	none

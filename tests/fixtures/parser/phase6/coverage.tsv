@@ -1,0 +1,424 @@
+reference_line	status	fixtures	production
+131	observed	attributes.erl	form -> attribute dot
+132	observed	attributes.erl	form -> function dot
+134	observed	attributes.erl	attribute -> '-' atom attr_val
+135	observed	phase5/step14/expanded.erl	attribute -> '-' atom typed_attr_val
+136	observed	phase5/step14/types.erl	attribute -> '-' atom '(' typed_attr_val ')'
+138	observed	maps_records.erl	attribute -> '-' 'record' record_spec
+139	observed	phase5/step14/types.erl	attribute -> '-' 'record' typed_record_spec
+140	observed	phase5/step14/expanded.erl	attribute -> '-' 'record' '(' typed_record_spec ')'
+142	observed	phase5/step15/contextual.erl	attribute -> '-' 'spec' type_spec
+143	observed	phase5/step15/contextual.erl	attribute -> '-' 'callback' type_spec
+144	observed	phase5/step15/record_helper.builder-reject	attribute -> '-' 'record' type_spec
+146	observed	phase5/step15/contextual.erl	type_spec -> spec_fun type_sigs
+147	observed	phase5/step15/expanded.erl	type_spec -> '(' spec_fun type_sigs ')'
+149	observed	phase5/step15/contextual.erl	spec_fun -> atom
+150	observed	phase5/step15/specifications.erl	spec_fun -> atom ':' atom
+152	observed	phase6/typed_attribute.reject	typed_attr_val -> expr ',' typed_record_fields
+153	observed	phase5/step14/expanded.erl	typed_attr_val -> expr '::' top_type
+157	observed	phase5/step15/bad_record_bare.reject	record_spec -> atom
+158	observed	phase5/step15/contextual.erl	record_spec -> atom ',' exprs
+159	observed	maps_records.erl	record_spec -> '(' atom ',' exprs ')'
+162	observed	phase5/step15/bad_native_bare.reject	record_spec -> '#' record_name
+163	observed	maps_records.erl	record_spec -> '#' record_name exprs
+164	observed	phase5/step13/envelopes.erl	record_spec -> '(' '#' record_name exprs ')'
+166	observed	phase5/step14/expanded.erl	typed_record_spec -> atom ',' typed_record_fields
+167	observed	phase5/step14/types.erl	typed_record_spec -> '#' record_name typed_record_fields
+169	observed	phase5/step14/expanded.erl	typed_record_fields -> '{' typed_exprs '}'
+171	observed	phase5/step14/expanded.erl	typed_exprs -> typed_expr
+172	observed	phase5/step14/types.erl	typed_exprs -> typed_expr ',' typed_exprs
+173	observed	phase5/step14/types.erl	typed_exprs -> expr ',' typed_exprs
+174	observed	phase5/step14/types.erl	typed_exprs -> typed_expr ',' exprs
+176	observed	phase5/step14/expanded.erl	typed_expr -> expr '::' top_type
+178	observed	phase5/step15/contextual.erl	type_sigs -> type_sig
+179	observed	phase5/step15/lint_only.erl	type_sigs -> type_sig ';' type_sigs
+181	observed	phase5/step15/contextual.erl	type_sig -> fun_type
+182	observed	phase5/step15/contextual.erl	type_sig -> fun_type 'when' type_guards
+185	observed	phase5/step15/contextual.erl	type_guards -> type_guard
+186	observed	phase5/step15/specifications.erl	type_guards -> type_guard ',' type_guards
+188	observed	phase5/step15/expanded.erl	type_guard -> atom '(' top_types ')'
+189	observed	phase5/step15/contextual.erl	type_guard -> var '::' top_type
+191	observed	phase5/step14/expanded.erl	top_types -> top_type
+192	observed	phase5/step14/expanded.erl	top_types -> top_type ',' top_types
+194	observed	phase5/step14/types.erl	top_type -> var '::' top_type
+195	observed	phase5/step14/operators.erl	top_type -> type '|' top_type
+196	observed	phase5/step14/expanded.erl	top_type -> type
+198	observed	phase5/step14/types.erl	type -> type '..' type
+199	observed	phase5/step14/operators.erl	type -> type add_op type
+200	observed	phase5/step14/operators.erl	type -> type mult_op type
+201	observed	phase5/step14/operators.erl	type -> prefix_op type
+202	observed	phase5/step14/operators.erl	type -> '(' top_type ')'
+203	observed	phase5/step14/expanded.erl	type -> var
+204	observed	phase5/step14/expanded.erl	type -> atom
+205	observed	phase5/step14/expanded.erl	type -> atom '(' ')'
+206	observed	phase5/step14/operators.erl	type -> atom '(' top_types ')'
+207	observed	types.erl	type -> atom ':' atom '(' ')'
+209	observed	phase5/step14/types.erl	type -> atom ':' atom '(' top_types ')'
+211	observed	phase5/step14/types.erl	type -> '[' ']'
+212	observed	phase5/step14/types.erl	type -> '[' top_type ']'
+213	observed	phase5/step14/expanded.erl	type -> '[' top_type ',' '...' ']'
+215	observed	phase6/coverage.erl	type -> '#' '{' '}'
+216	observed	phase5/step14/expanded.erl	type -> '#' '{' map_pair_types '}'
+217	observed	phase6/coverage.erl	type -> '{' '}'
+218	observed	phase5/step14/expanded.erl	type -> '{' top_types '}'
+219	observed	phase5/step15/expanded.erl	type -> '#' atom '{' '}'
+220	observed	phase5/step14/types.erl	type -> '#' atom '{' field_types '}'
+222	observed	phase6/coverage.erl	type -> '#' atom ':' record_name '{' '}'
+225	observed	phase5/step14/types.erl	type -> '#' atom ':' record_name '{' field_types '}'
+228	observed	phase5/step14/expanded.erl	type -> binary_type
+229	observed	phase5/step14/expanded.erl	type -> integer
+230	observed	phase5/step14/types.erl	type -> char
+231	observed	phase5/step14/types.erl	type -> 'fun' '(' ')'
+232	observed	phase5/step14/expanded.erl	type -> 'fun' '(' fun_type ')'
+234	observed	phase5/step14/types.erl	fun_type -> '(' '...' ')' '->' top_type
+236	observed	phase5/step14/types.erl	fun_type -> '(' ')' '->' top_type
+238	observed	phase5/step14/expanded.erl	fun_type -> '(' top_types ')' '->' top_type
+242	observed	phase5/step14/expanded.erl	map_pair_types -> map_pair_type
+243	observed	phase5/step14/types.erl	map_pair_types -> map_pair_type ',' map_pair_types
+245	observed	phase5/step14/types.erl	map_pair_type -> top_type '=>' top_type
+247	observed	phase5/step14/expanded.erl	map_pair_type -> top_type ':=' top_type
+250	observed	phase5/step14/types.erl	field_types -> field_type
+251	observed	phase6/coverage.erl	field_types -> field_type ',' field_types
+253	observed	phase5/step14/types.erl	field_type -> atom '::' top_type
+256	observed	phase5/step14/types.erl	binary_type -> '<<' '>>'
+259	observed	phase5/step14/types.erl	binary_type -> '<<' bin_base_type '>>'
+261	observed	phase5/step14/types.erl	binary_type -> '<<' bin_unit_type '>>'
+263	observed	phase5/step14/expanded.erl	binary_type -> '<<' bin_base_type ',' bin_unit_type '>>'
+266	observed	phase5/step14/expanded.erl	bin_base_type -> var ':' type
+268	observed	phase5/step14/expanded.erl	bin_unit_type -> var ':' var '*' type
+270	observed	attributes.erl	attr_val -> expr
+271	observed	phase5/step13/attributes.erl	attr_val -> expr ',' exprs
+272	observed	attributes.erl	attr_val -> '(' expr ',' exprs ')'
+274	observed	attributes.erl	function -> function_clauses
+276	observed	attributes.erl	function_clauses -> function_clause
+277	observed	patterns.erl	function_clauses -> function_clause ';' function_clauses
+279	observed	attributes.erl	function_clause -> atom clause_args clause_guard clause_body
+283	observed	attributes.erl	clause_args -> pat_argument_list
+285	observed	patterns.erl	clause_guard -> 'when' guard
+286	observed	attributes.erl	clause_guard -> '$empty'
+288	observed	attributes.erl	clause_body -> '->' clause_body_exprs
+290	observed	operators.erl	expr -> 'catch' expr
+291	observed	comprehensions.erl	expr -> expr '=' expr
+292	observed	operators.erl	expr -> expr '!' expr
+293	observed	operators.erl	expr -> expr 'orelse' expr
+294	observed	operators.erl	expr -> expr 'andalso' expr
+295	observed	control.erl	expr -> expr comp_op expr
+296	observed	operators.erl	expr -> expr list_op expr
+297	observed	binaries.erl	expr -> expr add_op expr
+298	observed	attributes.erl	expr -> expr mult_op expr
+299	observed	operators.erl	expr -> prefix_op expr
+300	observed	attributes.erl	expr -> map_expr
+301	observed	attributes.erl	expr -> function_call
+302	observed	maps_records.erl	expr -> record_expr
+303	observed	operators.erl	expr -> expr_remote
+304	observed	attributes.erl	expr -> expr_max
+306	observed	operators.erl	expr_remote -> expr ':' expr
+308	observed	binaries.erl	expr_max -> var
+309	observed	attributes.erl	expr_max -> atomic
+310	observed	attributes.erl	expr_max -> list
+311	observed	binaries.erl	expr_max -> binary
+312	observed	literals.erl	expr_max -> sigil
+313	observed	comprehensions.erl	expr_max -> list_comprehension
+314	observed	comprehensions.erl	expr_max -> map_comprehension
+315	observed	comprehensions.erl	expr_max -> binary_comprehension
+316	observed	attributes.erl	expr_max -> tuple
+317	observed	attributes.erl	expr_max -> '(' expr ')'
+318	observed	control.erl	expr_max -> 'begin' exprs 'end'
+319	observed	control.erl	expr_max -> if_expr
+320	observed	control.erl	expr_max -> case_expr
+321	observed	control.erl	expr_max -> receive_expr
+322	observed	funs_try_maybe.erl	expr_max -> fun_expr
+323	observed	funs_try_maybe.erl	expr_max -> try_expr
+324	observed	funs_try_maybe.erl	expr_max -> maybe_expr
+326	observed	patterns.erl	pat_expr -> pat_expr '=' pat_expr
+327	observed	phase2/step7/functions.erl	pat_expr -> pat_expr comp_op pat_expr
+328	observed	phase2/step7/patterns.erl	pat_expr -> pat_expr list_op pat_expr
+329	observed	phase2/step7/patterns.erl	pat_expr -> pat_expr add_op pat_expr
+330	observed	phase2/step7/patterns.erl	pat_expr -> pat_expr mult_op pat_expr
+331	observed	phase2/step7/functions.erl	pat_expr -> prefix_op pat_expr
+332	observed	phase3/step8/lint_only.erl	pat_expr -> map_pat_expr
+333	observed	phase3/step8/lint_only.erl	pat_expr -> record_pat_expr
+334	observed	binaries.erl	pat_expr -> pat_expr_max
+336	observed	comprehensions.erl	pat_expr_max -> var
+337	observed	funs_try_maybe.erl	pat_expr_max -> atomic
+338	observed	phase2/step7/functions.erl	pat_expr_max -> list
+339	observed	binaries.erl	pat_expr_max -> binary
+340	observed	phase2/step7/functions.erl	pat_expr_max -> sigil
+341	observed	patterns.erl	pat_expr_max -> tuple
+342	observed	phase2/step7/functions.erl	pat_expr_max -> '(' pat_expr ')'
+344	observed	phase3/step8/lint_only.erl	map_pat_expr -> '#' map_tuple
+347	observed	phase3/step8/maps_records.erl	record_pat_expr -> '#' atom '.' atom
+349	observed	phase3/step8/lint_only.erl	record_pat_expr -> '#' record_name record_tuple
+351	observed	phase3/step8/maps_records.erl	record_pat_expr -> '#' atom ':' record_name record_tuple
+354	observed	phase3/step8/maps_records.erl	record_pat_expr -> '#_' record_tuple
+358	observed	phase2/step5/values.erl	list -> '[' ']'
+359	observed	attributes.erl	list -> '[' expr tail
+361	observed	attributes.erl	tail -> ']'
+362	observed	literals.erl	tail -> '|' expr ']'
+363	observed	literals.erl	tail -> ',' expr tail
+366	observed	phase3/step9/binaries.erl	binary -> '<<' '>>'
+367	observed	binaries.erl	binary -> '<<' bin_elements '>>'
+369	observed	binaries.erl	bin_elements -> bin_element
+370	observed	binaries.erl	bin_elements -> bin_element ',' bin_elements
+372	observed	binaries.erl	bin_element -> bit_expr opt_bit_size_expr opt_bit_type_list
+375	observed	phase3/step9/binaries.erl	bit_expr -> prefix_op expr_max
+376	observed	binaries.erl	bit_expr -> expr_max
+378	observed	binaries.erl	opt_bit_size_expr -> ':' bit_size_expr
+379	observed	binaries.erl	opt_bit_size_expr -> '$empty'
+381	observed	binaries.erl	opt_bit_type_list -> '/' bit_type_list
+382	observed	binaries.erl	opt_bit_type_list -> '$empty'
+384	observed	binaries.erl	bit_type_list -> bit_type '-' bit_type_list
+385	observed	binaries.erl	bit_type_list -> bit_type
+387	observed	binaries.erl	bit_type -> atom
+388	observed	phase3/step9/binaries.erl	bit_type -> atom ':' integer
+390	observed	binaries.erl	bit_size_expr -> expr_max
+393	observed	literals.erl	sigil -> sigil_prefix string sigil_suffix
+396	observed	comprehensions.erl	list_comprehension -> '[' expr '||' lc_exprs ']'
+398	observed	comprehensions.erl	list_comprehension -> '[' expr ',' exprs '||' lc_exprs ']'
+400	observed	comprehensions.erl	map_comprehension -> '#' '{' map_field '||' lc_exprs '}'
+402	observed	phase4/step12/structure.erl	map_comprehension -> '#' '{' map_field ',' map_fields '||' lc_exprs '}'
+404	observed	comprehensions.erl	binary_comprehension -> '<<' expr_max '||' lc_exprs '>>'
+407	observed	comprehensions.erl	lc_exprs -> lc_expr
+408	observed	comprehensions.erl	lc_exprs -> lc_expr ',' lc_exprs
+409	observed	comprehensions.erl	lc_exprs -> zc_exprs
+410	observed	phase4/step12/structure.erl	lc_exprs -> zc_exprs ',' lc_exprs
+412	observed	comprehensions.erl	zc_exprs -> lc_expr '&&' lc_expr
+413	observed	phase4/step12/structure.erl	zc_exprs -> lc_expr '&&' zc_exprs
+415	observed	comprehensions.erl	lc_expr -> expr
+416	observed	phase4/step12/generators.erl	lc_expr -> map_field_exact '<-' expr
+417	observed	comprehensions.erl	lc_expr -> map_field_exact '<:-' expr
+418	observed	comprehensions.erl	lc_expr -> expr '<-' expr
+419	observed	comprehensions.erl	lc_expr -> expr '<:-' expr
+420	observed	phase4/step12/generators.erl	lc_expr -> binary '<=' expr
+421	observed	comprehensions.erl	lc_expr -> binary '<:=' expr
+423	observed	phase2/step5/values.erl	tuple -> '{' '}'
+424	observed	attributes.erl	tuple -> '{' exprs '}'
+426	observed	attributes.erl	map_expr -> '#' map_tuple
+428	observed	maps_records.erl	map_expr -> expr_max '#' map_tuple
+430	observed	phase3/step8/maps_records.erl	map_expr -> map_expr '#' map_tuple
+433	observed	phase3/step8/maps_records.erl	map_tuple -> '{' '}'
+434	observed	attributes.erl	map_tuple -> '{' map_fields '}'
+436	observed	attributes.erl	map_fields -> map_field
+437	observed	attributes.erl	map_fields -> map_field ',' map_fields
+439	observed	attributes.erl	map_field -> map_field_assoc
+440	observed	maps_records.erl	map_field -> map_field_exact
+442	observed	attributes.erl	map_field_assoc -> map_key '=>' expr
+445	observed	comprehensions.erl	map_field_exact -> map_key ':=' expr
+448	observed	attributes.erl	map_key -> expr
+451	observed	maps_records.erl	record_expr -> '#' atom '.' atom
+453	observed	maps_records.erl	record_expr -> '#' record_name record_tuple
+455	observed	maps_records.erl	record_expr -> expr_max '#' record_name '.' atom
+457	observed	phase3/step8/maps_records.erl	record_expr -> expr_max '#' record_name record_tuple
+459	observed	phase3/step8/maps_records.erl	record_expr -> record_expr '#' record_name '.' atom
+461	observed	phase3/step8/maps_records.erl	record_expr -> record_expr '#' record_name record_tuple
+465	observed	maps_records.erl	record_expr -> '#' atom ':' record_name record_tuple
+468	observed	maps_records.erl	record_expr -> '#_' record_tuple
+471	observed	phase3/step8/maps_records.erl	record_expr -> expr_max '#' atom ':' record_name '.' atom
+474	observed	maps_records.erl	record_expr -> expr_max '#_' '.' atom
+477	observed	phase3/step8/maps_records.erl	record_expr -> expr_max '#' atom ':' record_name record_tuple
+480	observed	phase3/step8/maps_records.erl	record_expr -> expr_max '#_' record_tuple
+484	observed	maps_records.erl	record_tuple -> '{' '}'
+485	observed	maps_records.erl	record_tuple -> '{' record_fields '}'
+487	observed	maps_records.erl	record_fields -> record_field
+488	observed	phase3/step8/maps_records.erl	record_fields -> record_field ',' record_fields
+490	observed	phase3/step8/lint_only.erl	record_field -> var '=' expr
+491	observed	maps_records.erl	record_field -> atom '=' expr
+494	observed	attributes.erl	function_call -> expr argument_list
+497	observed	control.erl	if_expr -> 'if' if_clauses 'end'
+499	observed	control.erl	if_clauses -> if_clause
+500	observed	control.erl	if_clauses -> if_clause ';' if_clauses
+502	observed	control.erl	if_clause -> guard clause_body
+505	observed	control.erl	case_expr -> 'case' expr 'of' cr_clauses 'end'
+508	observed	control.erl	cr_clauses -> cr_clause
+509	observed	control.erl	cr_clauses -> cr_clause ';' cr_clauses
+515	observed	control.erl	cr_clause -> expr clause_guard clause_body
+518	observed	phase4/step10/control.erl	receive_expr -> 'receive' cr_clauses 'end'
+520	observed	control.erl	receive_expr -> 'receive' 'after' expr clause_body 'end'
+522	observed	control.erl	receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end'
+526	observed	funs_try_maybe.erl	fun_expr -> 'fun' atom '/' integer
+528	observed	funs_try_maybe.erl	fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var
+530	observed	funs_try_maybe.erl	fun_expr -> 'fun' fun_clauses 'end'
+533	observed	phase4/step11/alternatives.erl	atom_or_var -> atom
+534	observed	funs_try_maybe.erl	atom_or_var -> var
+536	observed	phase4/step11/alternatives.erl	integer_or_var -> integer
+537	observed	funs_try_maybe.erl	integer_or_var -> var
+539	observed	funs_try_maybe.erl	fun_clauses -> fun_clause
+540	observed	funs_try_maybe.erl	fun_clauses -> fun_clause ';' fun_clauses
+542	observed	phase4/step11/alternatives.erl	fun_clause -> pat_argument_list clause_guard clause_body
+546	observed	funs_try_maybe.erl	fun_clause -> var pat_argument_list clause_guard clause_body
+549	observed	funs_try_maybe.erl	try_expr -> 'try' exprs 'of' cr_clauses try_catch
+551	observed	phase4/step11/funs_try_maybe.erl	try_expr -> 'try' exprs try_catch
+554	observed	phase4/step11/alternatives.erl	try_catch -> 'catch' try_clauses 'end'
+556	observed	funs_try_maybe.erl	try_catch -> 'catch' try_clauses 'after' exprs 'end'
+558	observed	phase4/step11/funs_try_maybe.erl	try_catch -> 'after' exprs 'end'
+561	observed	funs_try_maybe.erl	try_clauses -> try_clause
+562	observed	funs_try_maybe.erl	try_clauses -> try_clause ';' try_clauses
+564	observed	funs_try_maybe.erl	try_clause -> pat_expr clause_guard clause_body
+568	observed	funs_try_maybe.erl	try_clause -> atom ':' pat_expr try_opt_stacktrace clause_guard clause_body
+572	observed	phase4/step11/funs_try_maybe.erl	try_clause -> var ':' pat_expr try_opt_stacktrace clause_guard clause_body
+577	observed	funs_try_maybe.erl	try_opt_stacktrace -> ':' var
+578	observed	phase4/step11/funs_try_maybe.erl	try_opt_stacktrace -> '$empty'
+581	observed	phase4/step11/alternatives.erl	maybe_expr -> 'maybe' maybe_match_exprs 'end'
+583	observed	funs_try_maybe.erl	maybe_expr -> 'maybe' maybe_match_exprs 'else' cr_clauses 'end'
+588	observed	phase4/step11/alternatives.erl	maybe_match_exprs -> maybe_match
+589	observed	funs_try_maybe.erl	maybe_match_exprs -> maybe_match ',' maybe_match_exprs
+590	observed	funs_try_maybe.erl	maybe_match_exprs -> expr
+591	observed	phase4/step11/funs_try_maybe.erl	maybe_match_exprs -> expr ',' maybe_match_exprs
+593	observed	funs_try_maybe.erl	maybe_match -> expr '?=' expr
+595	observed	attributes.erl	argument_list -> '(' ')'
+596	observed	funs_try_maybe.erl	argument_list -> '(' exprs ')'
+598	observed	attributes.erl	pat_argument_list -> '(' ')'
+599	observed	binaries.erl	pat_argument_list -> '(' pat_exprs ')'
+601	observed	attributes.erl	exprs -> expr
+602	observed	attributes.erl	exprs -> expr ',' exprs
+604	excluded-ssa	-	clause_body_exprs -> ssa_check_when_clauses exprs
+605	observed	attributes.erl	clause_body_exprs -> exprs
+607	observed	binaries.erl	pat_exprs -> pat_expr
+608	observed	comprehensions.erl	pat_exprs -> pat_expr ',' pat_exprs
+610	observed	control.erl	guard -> exprs
+611	observed	patterns.erl	guard -> exprs ';' guard
+613	observed	literals.erl	atomic -> char
+614	observed	attributes.erl	atomic -> integer
+615	observed	literals.erl	atomic -> float
+616	observed	attributes.erl	atomic -> atom
+617	observed	attributes.erl	atomic -> strings
+619	observed	attributes.erl	strings -> string
+620	observed	literals.erl	strings -> string strings
+623	observed	phase2/step6/operators.erl	prefix_op -> '+'
+624	observed	phase2/step6/operators.erl	prefix_op -> '-'
+625	observed	phase2/step6/operators.erl	prefix_op -> 'bnot'
+626	observed	operators.erl	prefix_op -> 'not'
+628	observed	attributes.erl	mult_op -> '/'
+629	observed	operators.erl	mult_op -> '*'
+630	observed	phase2/step6/operators.erl	mult_op -> 'div'
+631	observed	phase2/step6/operators.erl	mult_op -> 'rem'
+632	observed	phase2/step6/operators.erl	mult_op -> 'band'
+633	observed	phase2/step6/operators.erl	mult_op -> 'and'
+635	observed	binaries.erl	add_op -> '+'
+636	observed	funs_try_maybe.erl	add_op -> '-'
+637	observed	phase2/step6/operators.erl	add_op -> 'bor'
+638	observed	phase2/step6/operators.erl	add_op -> 'bxor'
+639	observed	phase2/step6/operators.erl	add_op -> 'bsl'
+640	observed	phase2/step6/operators.erl	add_op -> 'bsr'
+641	observed	phase2/step6/operators.erl	add_op -> 'or'
+642	observed	phase2/step6/operators.erl	add_op -> 'xor'
+644	observed	operators.erl	list_op -> '++'
+645	observed	operators.erl	list_op -> '--'
+647	observed	phase2/step6/operators.erl	comp_op -> '=='
+648	observed	phase2/step6/operators.erl	comp_op -> '/='
+649	observed	phase2/step6/operators.erl	comp_op -> '=<'
+650	observed	patterns.erl	comp_op -> '<'
+651	observed	phase2/step6/operators.erl	comp_op -> '>='
+652	observed	control.erl	comp_op -> '>'
+653	observed	patterns.erl	comp_op -> '=:='
+654	observed	phase2/step6/operators.erl	comp_op -> '=/='
+656	observed	maps_records.erl	record_name -> atom
+657	observed	maps_records.erl	record_name -> var
+658	observed	phase3/step8/maps_records.erl	record_name -> reserved_word
+660	observed	phase3/step8/names.erl	reserved_word -> 'after'
+661	observed	phase3/step8/names.erl	reserved_word -> 'and'
+662	observed	phase3/step8/names.erl	reserved_word -> 'andalso'
+663	observed	phase3/step8/names.erl	reserved_word -> 'band'
+664	observed	phase3/step8/names.erl	reserved_word -> 'begin'
+665	observed	phase3/step8/names.erl	reserved_word -> 'bnot'
+666	observed	phase3/step8/names.erl	reserved_word -> 'bor'
+667	observed	phase3/step8/names.erl	reserved_word -> 'bsl'
+668	observed	phase3/step8/names.erl	reserved_word -> 'bsr'
+669	observed	phase3/step8/names.erl	reserved_word -> 'bxor'
+670	observed	phase3/step8/names.erl	reserved_word -> 'case'
+671	observed	phase3/step8/names.erl	reserved_word -> 'catch'
+672	observed	phase3/step8/names.erl	reserved_word -> 'cond'
+673	observed	phase3/step8/names.erl	reserved_word -> 'div'
+674	observed	phase3/step8/names.erl	reserved_word -> 'else'
+675	observed	phase3/step8/maps_records.erl	reserved_word -> 'end'
+676	observed	phase3/step8/names.erl	reserved_word -> 'fun'
+677	observed	phase3/step8/names.erl	reserved_word -> 'if'
+678	observed	phase3/step8/names.erl	reserved_word -> 'let'
+679	observed	phase3/step8/names.erl	reserved_word -> 'maybe'
+680	observed	phase3/step8/names.erl	reserved_word -> 'not'
+681	observed	phase3/step8/names.erl	reserved_word -> 'of'
+682	observed	phase3/step8/names.erl	reserved_word -> 'or'
+683	observed	phase3/step8/names.erl	reserved_word -> 'orelse'
+684	observed	phase3/step8/names.erl	reserved_word -> 'receive'
+685	observed	phase3/step8/names.erl	reserved_word -> 'rem'
+686	observed	phase3/step8/names.erl	reserved_word -> 'try'
+687	observed	phase3/step8/names.erl	reserved_word -> 'when'
+688	observed	phase3/step8/names.erl	reserved_word -> 'xor'
+690	excluded-ssa	-	ssa_check_when_clauses -> ssa_check_when_clause
+691	excluded-ssa	-	ssa_check_when_clauses -> ssa_check_when_clause ssa_check_when_clauses
+694	excluded-ssa	-	ssa_check_when_clause -> '%ssa%' atom ssa_check_clause_args_ls 'when' atom '->' ssa_check_exprs '.'
+697	excluded-ssa	-	ssa_check_when_clause -> '%ssa%' atom ssa_check_clause_args_ls ssa_check_anno 'when' atom '->' ssa_check_exprs '.'
+701	excluded-ssa	-	ssa_check_when_clause -> '%ssa%' ssa_check_clause_args_ls 'when' atom '->' ssa_check_exprs '.'
+704	excluded-ssa	-	ssa_check_when_clause -> '%ssa%' ssa_check_clause_args_ls ssa_check_anno 'when' atom '->' ssa_check_exprs '.'
+708	excluded-ssa	-	ssa_check_exprs -> ssa_check_expr
+709	excluded-ssa	-	ssa_check_exprs -> ssa_check_expr ssa_check_anno
+710	excluded-ssa	-	ssa_check_exprs -> ssa_check_expr ',' ssa_check_exprs
+712	excluded-ssa	-	ssa_check_exprs -> ssa_check_expr ssa_check_anno ',' ssa_check_exprs
+715	excluded-ssa	-	ssa_check_anno -> '{' ssa_check_anno_clauses '}'
+717	excluded-ssa	-	ssa_check_anno_clauses -> ssa_check_anno_clause
+718	excluded-ssa	-	ssa_check_anno_clauses -> ssa_check_anno_clause ',' ssa_check_anno_clauses
+721	excluded-ssa	-	ssa_check_anno_clause -> atom '=>' ssa_check_pat
+723	excluded-ssa	-	ssa_check_expr -> var '=' atom ssa_check_args
+725	excluded-ssa	-	ssa_check_expr -> atom ssa_check_args
+727	excluded-ssa	-	ssa_check_expr -> var '=' atom ':' atom ssa_check_args
+729	excluded-ssa	-	ssa_check_expr -> atom integer
+731	excluded-ssa	-	ssa_check_expr -> atom var
+734	excluded-ssa	-	ssa_check_clause_args_ls -> '(' ')'
+735	excluded-ssa	-	ssa_check_clause_args_ls -> '(' ssa_check_clause_args ')'
+736	excluded-ssa	-	ssa_check_clause_args_ls -> '(' '...' ')'
+738	excluded-ssa	-	ssa_check_clause_args -> var
+739	excluded-ssa	-	ssa_check_clause_args -> var ',' ssa_check_clause_args
+740	excluded-ssa	-	ssa_check_clause_args -> var ',' '...'
+742	excluded-ssa	-	ssa_check_args -> '(' ')'
+743	excluded-ssa	-	ssa_check_args -> '(' ssa_check_pats ')'
+744	excluded-ssa	-	ssa_check_args -> '(' '...' ')'
+746	excluded-ssa	-	ssa_check_pats -> ssa_check_pat
+747	excluded-ssa	-	ssa_check_pats -> ssa_check_pat ',' ssa_check_pats
+748	excluded-ssa	-	ssa_check_pats -> ssa_check_pat ',' '...'
+750	excluded-ssa	-	ssa_check_pat -> var
+751	excluded-ssa	-	ssa_check_pat -> atom
+752	excluded-ssa	-	ssa_check_pat -> integer
+753	excluded-ssa	-	ssa_check_pat -> float
+754	excluded-ssa	-	ssa_check_pat -> float '(' float ')'
+755	excluded-ssa	-	ssa_check_pat -> ssa_check_fun_ref
+756	excluded-ssa	-	ssa_check_pat -> '{' '}'
+757	excluded-ssa	-	ssa_check_pat -> '{' ssa_check_pats '}'
+758	excluded-ssa	-	ssa_check_pat -> '{' '...' '}'
+759	excluded-ssa	-	ssa_check_pat -> ssa_check_binary_lit
+760	excluded-ssa	-	ssa_check_pat -> ssa_check_list_lit
+761	excluded-ssa	-	ssa_check_pat -> '#' '{' '}'
+762	excluded-ssa	-	ssa_check_pat -> '#' '{' ssa_check_map_key_elements '}'
+764	excluded-ssa	-	ssa_check_fun_ref -> 'fun' atom '/' integer
+765	excluded-ssa	-	ssa_check_fun_ref -> 'fun' atom ':' atom '/' integer
+767	excluded-ssa	-	ssa_check_binary_lit -> '<<' '>>'
+768	excluded-ssa	-	ssa_check_binary_lit -> '<<' ssa_check_binary_lit_bytes_ls '>>'
+770	excluded-ssa	-	ssa_check_binary_lit -> '<<' ssa_check_binary_lit_rest '>>'
+773	excluded-ssa	-	ssa_check_binary_lit_bytes_ls -> integer
+774	excluded-ssa	-	ssa_check_binary_lit_bytes_ls -> integer ',' ssa_check_binary_lit_bytes_ls
+776	excluded-ssa	-	ssa_check_binary_lit_bytes_ls -> integer ',' ssa_check_binary_lit_rest
+779	excluded-ssa	-	ssa_check_binary_lit_rest -> integer ':' integer
+781	excluded-ssa	-	ssa_check_list_lit -> '[' ']'
+782	excluded-ssa	-	ssa_check_list_lit -> '[' ssa_check_list_lit_ls ']'
+785	excluded-ssa	-	ssa_check_list_lit_ls -> ssa_check_pat
+786	excluded-ssa	-	ssa_check_list_lit_ls -> ssa_check_pat ',' ssa_check_list_lit_ls
+787	excluded-ssa	-	ssa_check_list_lit_ls -> ssa_check_pat ',' '...'
+788	excluded-ssa	-	ssa_check_list_lit_ls -> ssa_check_pat '|' ssa_check_pat
+790	excluded-ssa	-	ssa_check_map_key -> atom
+791	excluded-ssa	-	ssa_check_map_key -> integer
+792	excluded-ssa	-	ssa_check_map_key -> float
+793	excluded-ssa	-	ssa_check_map_key -> var
+794	excluded-ssa	-	ssa_check_map_key -> '{' ssa_check_map_key_tuple_elements '}'
+796	excluded-ssa	-	ssa_check_map_key -> '{' '}'
+797	excluded-ssa	-	ssa_check_map_key -> ssa_check_binary_lit
+798	excluded-ssa	-	ssa_check_map_key -> '[' ssa_check_map_key_list ']'
+800	excluded-ssa	-	ssa_check_map_key -> '[' ']'
+801	excluded-ssa	-	ssa_check_map_key -> '#' '{' '}'
+802	excluded-ssa	-	ssa_check_map_key -> '#' '{' ssa_check_map_key_elements '}'
+804	excluded-ssa	-	ssa_check_map_key_list -> ssa_check_map_key
+805	excluded-ssa	-	ssa_check_map_key_list -> ssa_check_map_key ',' ssa_check_map_key_list
+807	excluded-ssa	-	ssa_check_map_key_list -> ssa_check_map_key '|' ssa_check_map_key
+810	excluded-ssa	-	ssa_check_map_key_elements -> ssa_check_map_key_element
+811	excluded-ssa	-	ssa_check_map_key_elements -> ssa_check_map_key_element ',' ssa_check_map_key_elements
+814	excluded-ssa	-	ssa_check_map_key_element -> ssa_check_map_key '=>' ssa_check_map_key
+819	excluded-ssa	-	ssa_check_map_key_tuple_elements -> ssa_check_map_key
+820	excluded-ssa	-	ssa_check_map_key_tuple_elements -> ssa_check_map_key ',' ssa_check_map_key_tuple_elements

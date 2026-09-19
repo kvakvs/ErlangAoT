@@ -1,4 +1,34 @@
 include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
+set(ERLANG_AOT_OTP_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/references/otp" CACHE PATH
+    "Optional pinned OTP 29.1 source checkout for parser reduction and real-source tests")
+foreach(name IN ITEMS coverage corpus)
+    add_test(NAME parser_${name} COMMAND "${CMAKE_COMMAND}"
+        "-DOTP_ROOT=${ERLANG_AOT_OTP_SOURCE_ROOT}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
+        "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser" "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+        "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/${name}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/${name}.cmake")
+    set_tests_properties(parser_${name} PROPERTIES TIMEOUT 120
+        SKIP_REGULAR_EXPRESSION "SKIP: pinned OTP source checkout unavailable")
+endforeach()
+foreach(mode IN ITEMS golden oracle)
+    if(mode STREQUAL "oracle")
+        set(live TRUE)
+    else()
+        set(live FALSE)
+    endif()
+    foreach(suite IN ITEMS historical phase6)
+        set(script historical.cmake)
+        if(suite STREQUAL "phase6")
+            set(script phase2.cmake)
+        endif()
+        add_test(NAME parser_${suite}_${mode} COMMAND "${CMAKE_COMMAND}"
+            "-DPHASE=phase6" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+            "-DDUMP=$<TARGET_FILE:parser_dump>" "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
+            "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript" "-DLIVE=${live}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/${script}")
+        set_tests_properties(parser_${suite}_${mode} PROPERTIES TIMEOUT 90)
+    endforeach()
+endforeach()
 foreach(name IN ITEMS hardening mutations consumer)
     add_executable(parser_${name} compiler/parser/${name}.cpp)
     erlang_aot_project_options(parser_${name})

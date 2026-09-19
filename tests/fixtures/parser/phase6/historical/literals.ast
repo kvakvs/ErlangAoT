@@ -1,0 +1,15 @@
+file	6c69746572616c732e65726c	1
+module	6c69746572616c73
+function	66
+tuple	8
+atom	6f6b
+integer	123456789012345678901234567890
+float	3ff4000000000000
+char	97
+string	6162
+string	74657874
+binary_sigil	6279746573
+list	2	1
+integer	1
+integer	2
+atom	7461696c

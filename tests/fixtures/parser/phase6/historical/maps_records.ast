@@ -1,0 +1,43 @@
+file	6d6170735f7265636f7264732e65726c	1
+module	6d6170735f7265636f726473
+record_decl	72	0	1
+record_decl_field	6669656c64	1
+integer	0
+record_decl	5374617465	1	1
+record_decl_field	6669656c64	1
+integer	1
+function_full	66	1	1
+clause	1	0	8
+var	58
+map	0	1
+map_field	=>
+atom	61
+integer	1
+map	1	1
+var	58
+map_field	:=
+atom	61
+integer	2
+record	0	1
+record_local	72
+record_field
+atom	6669656c64
+integer	2
+record_access
+var	58
+record_local	72
+atom	6669656c64
+record_index
+atom	72
+atom	6669656c64
+record	0	0
+record_qualified	6d6f64	726563
+record	0	1
+record_inferred
+record_field
+atom	6669656c64
+integer	1
+record_access
+var	58
+record_inferred
+atom	6669656c64

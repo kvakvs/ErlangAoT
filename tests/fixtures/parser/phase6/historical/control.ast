@@ -1,0 +1,36 @@
+file	636f6e74726f6c2e65726c	1
+module	636f6e74726f6c
+function_full	66	1	1
+clause	1	0	4
+var	58
+block	1
+case	2
+var	58
+clause	1	0	1
+atom	61
+atom	6f6b
+clause	1	0	1
+var	5f
+atom	6e6f
+if	2
+clause	0	1	1
+guard	1
+binary	>
+var	58
+integer	0
+atom	796573
+clause	0	1	1
+guard	1
+atom	74727565
+atom	6e6f
+receive	1	1
+clause	1	0	1
+var	4d
+var	4d
+integer	0
+after	1
+atom	74696d656f7574
+receive	0	1
+integer	1
+after	1
+atom	6f6b
