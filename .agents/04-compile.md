@@ -1,6 +1,11 @@
 # LLVM compilation integration plan
 
 Status: proposed, 2026-09-20. No implementation steps have started.
+An unimplemented runtime-term review sketch now exists in
+[`runtime/design/terms.md`](../runtime/design/terms.md), with an opaque C++ API
+in `terms.hpp` and explicit private heap structs/layout assertions in
+`term_layout.hpp`. These drafts are outside the build and await manual review;
+their existence does not complete a numbered implementation step.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
 
@@ -288,6 +293,13 @@ must exercise this dependency, not supply test-only replacement runtime symbols.
 | `src/memory/` | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists |
 | `src/scheduler/` | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, yielding and message wakeups |
 | `src/modules/` | ABI-checked registration of generated module/export descriptors and explicit initialization ordering |
+
+The existing [term sketch](../runtime/design/terms.md) proposes a common opaque
+`Term` value API, per-type creation/predicates/extraction and immutable updates.
+Private word-aligned heap structs and one-word term slots keep memory layout
+controlled and permit later immediate/tagged values without exposing encoding
+to callers. Review ownership, roots, layout and the C ABI bridge before adopting
+it; the full API inventory does not expand this milestone's executable subset.
 
 Implement useful skeleton behavior: create/destroy runtime and process contexts,
 inspect immediate terms, report unavailable BIFs, initialize/tear down memory and
@@ -636,6 +648,8 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 10. Add the runtime term-service boundary
 
+- Review `runtime/design/{terms.md,terms.hpp,term_layout.hpp}` before selecting
+  the implementation contract; these are declarations/layout drafts, not services.
 - Add `runtime/src/terms/` services for immediate-term classification and checked
   integer encoding/decoding using the shared ABI. Reserve heap-term operations
   without inventing successful implementations for unsupported term kinds.

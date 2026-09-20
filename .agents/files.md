@@ -12,6 +12,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
 - `compiler/CMakeLists.txt`: frontend library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
+- `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
+  `terms.hpp`: opaque C++ API declarations; `term_layout.hpp`: private heap struct
+  sketch and size/offset assertions. No runtime logic or CMake integration.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile

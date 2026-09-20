@@ -1,5 +1,13 @@
 # Current working memory — 2026-09-20
 
+- Runtime term API/layout sketch added under runtime/design for manual review only;
+  no executable implementation/build integration. User specifically wants private
+  structs with controlled heap memory layout as well as opaque convenient term API.
+  terms.hpp declares Term/TermFactory; term_layout.hpp sketches word-sized slots,
+  heap prefixes and assertions; terms.md covers immutable updates, ownership/errors,
+  GC scanning and future tagging. 04-compile links it; no plan step is completed.
+  Native C++23 syntax/layout, focused clang-tidy, Lizard, format/whitespace pass;
+  no 32-bit validation, full-build gate or commit for this review-only draft.
 - `--verbose` traces [pp] source/resolved include paths and [parse] original module
   paths on stderr for positional and project modes. Parser consumes a stream, so
   its start trace precedes include traces. PreprocessorOptions::include_loaded

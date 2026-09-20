@@ -1,5 +1,10 @@
 # Architecture
 
+- Runtime terms have a manual-review sketch in `runtime/design/`: an opaque C++
+  `Term`/factory API over private word-aligned heap structs and traceable one-word
+  slots, with immutable updates and a future tagged-value boundary. Declarations
+  and layout assertions only, outside CMake; the runtime remains a placeholder.
+
 - Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.
   Runtime-only builds do not discover TOML. Project-owned command handling exposes
