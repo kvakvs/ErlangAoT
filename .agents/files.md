@@ -21,6 +21,11 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `mailbox.hpp`: selective-receive cursor, async next/forced wait and matched-message removal;
   `scheduler.hpp`: per-CPU worker/pool lifecycle and asynchronous process-control API.
   Review-only declarations, excluded from CMake alongside the term sketches.
+- `runtime/design/code_server.{hpp,md}`: loaded module registry, exports/MFA resolution,
+  retained code images and callable/conversion contract; `callable.hpp`: erased
+  invocation frames/signatures/errors/budgets; `native_types.hpp`: owned NativeArguments
+  and explicit scalar/container codec constraints;
+  `native_callable.hpp`: fixed-arity typed C++ function adapter declarations.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile

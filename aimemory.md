@@ -1,5 +1,27 @@
 # Current working memory — 2026-09-20
 
+- User correction: never automatically convert arguments on call. Each MFA now holds
+  exact native type signatures and optional all-Term fallback. Boxed prepare only selects
+  all-Term; prepare_native matches NativeArguments exact C++ types, else requires a generic
+  registration AND explicit caller-supplied Term arguments. No probing decoder, implicit
+  boxing/unboxing, widening, container adaptation, partial wildcard or result-type dispatch.
+  NativeCodec decode remains explicit utility; return encoding unchanged. Preserve user
+  LoadedModule::name_atom() addition and ExportName arity comment.
+  Updated headers/template and dispatch-usage consumers, exact documentation example,
+  clang-tidy, Lizard, format/whitespace and local links pass; still no runtime behavior.
+- CodeServer review sketch in runtime/design/code_server.{hpp,md}, callable.hpp,
+  native_callable.hpp and native_types.hpp. Immutable module publication; exact MFA;
+  unload removes map entry but resolutions/frames pin CodeImage. NativeCallable<R(Args...)>
+  has fixed arity, optional injected ProcessContext, shared std::function binding;
+  checked scalar/Term codecs, UTF-8 binary strings, u32 character lists, recursive
+  owning iterable output and ordered append/array input. CallFrames bridge scheduler
+  suspension; native bodies stay bounded/synchronous. ProcessContext exposes code_server().
+  04-compile links review only; no CMake integration, executable services or plan completion.
+  User changed CodeServer module/export name fields from strings to Term during work;
+  preserved as checked atom inputs. Registry extracts process-independent keys; export
+  listings take ProcessContext to root output atoms; resolve has string and Term overloads.
+  Native standalone/combined syntax, positive/negative template constraints, registration
+  consumer, clang-tidy, Lizard, formatting/whitespace/local links pass. No runtime tests/commit.
 - Follow-up sketch: ProcessContext explicitly owns ProcessHeap and Mailbox;
   heap.add / Term.copy_to copy rooted graphs; collect declares safe-point GC and
   initial not_implemented result. mailbox.hpp adds begin_receive, cursor.next

@@ -20,6 +20,14 @@ that suspend at the mailbox tail and preserve unmatched messages. These are also
 review-only declarations. Use their ownership, root and suspension contracts when
 implementing the service boundaries below; this milestone still defers worker
 execution, messaging, heap allocation and GC rather than claiming them implemented.
+The [code-server sketch](../runtime/design/code_server.md) adds loaded module/MFA
+resolution and typed C++ registrations: [`code_server.hpp`](../runtime/design/code_server.hpp),
+[`callable.hpp`](../runtime/design/callable.hpp),
+[`native_callable.hpp`](../runtime/design/native_callable.hpp) and
+[`native_types.hpp`](../runtime/design/native_types.hpp). Use it for code ownership
+and future callable/conversion boundaries; it remains outside the executable subset.
+Its callable dispatch selects exact registered native argument types or an all-Term
+fallback; argument conversions are explicit caller work, never automatic dispatch.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
 

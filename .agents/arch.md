@@ -15,6 +15,14 @@
   unmatched messages, remove only a selected candidate and asynchronously park at
   the tail with arrival-version wakeup; process send accepts without waiting for delivery.
   `04-compile.md` references these contracts without expanding its implemented subset.
+- Code-server review sketch adds immutable named modules and function/arity lookup,
+  code-image pins through resolved handles/call frames, and NativeCallable<R(Args...)>.
+  Each MFA holds exact native argument signatures plus an optional all-Term fallback;
+  dispatch never converts arguments. Boxed calls select all-Term; native misses require
+  explicitly supplied fallback Terms. Codecs remain explicit utilities/result encoders.
+  Directional codecs support Terms, checked scalars, UTF-8 binaries/Unicode lists and
+  recursive owning containers. Scheduler-driven frames distinguish suspended calls
+  from returned terms; native targets are bounded synchronous calls. No implementation.
 
 - Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.

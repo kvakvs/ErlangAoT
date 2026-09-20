@@ -13,6 +13,7 @@
 namespace erlang_aot::runtime {
 class Scheduler;
 class SchedulerPool;
+class CodeServer;
 
 // Preserve exactly the requested five scheduler classes; these are not OS priorities.
 enum class ProcessPriority : std::uint8_t { idle, low, normal, high, realtime };
@@ -124,6 +125,8 @@ class ProcessContext final {
     ProcessHeap &heap() noexcept;
     // Start selective receive through mailbox().begin_receive() on this process's owner thread.
     Mailbox &mailbox() noexcept;
+    // Resolve loaded code through the runtime-wide server shared by scheduler workers.
+    CodeServer &code_server() noexcept;
     // Copy and enqueue a message without awaiting delivery; sending to a dead local pid is a no-op.
     ProcessResult<void> send(ProcessIdentity recipient, const Term &value);
 
