@@ -45,7 +45,8 @@ All project targets use C++23 and treat compiler warnings as errors.
 The executable is `build/debug/bin/erlangaot`. Builds use two parallel jobs;
 override with `cmake --build --preset debug --parallel 8`.
 
-Alternatively, use `make build` or `make test`. For a different configuration:
+Alternatively, use `make build` to build only `erlangaot` and its dependencies,
+or `make test` to build and run the full test suite. For a different configuration:
 
 ```sh
 make test BUILD_DIR=build/release BUILD_TYPE=Release JOBS=4

@@ -86,7 +86,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `options.{hpp,cpp}`: independent effective settings and real frontend validation.
 - `src/project/plan.{hpp,cpp}`: selected-target preflight and output collision checks;
   `execution.{hpp,cpp}`: ordered callbacks, diagnostic context and failure aggregation.
-- `src/project/{cli,command}.{hpp,cpp}`: project operands, conflicts, help and dispatch;
+- `src/project/{cli,command}.{hpp,cpp}`: project operands, conflicts, help, dispatch
+  and `.toml` completion for missing manifest paths;
   `template.{hpp,cpp}`: annotated defaults; `create.{hpp,cpp}`: exclusive native creation,
   extension completion and identity-checked write/close failure cleanup.
 - `tests/compiler/project/`: matching unit tests, dependency/model/support contracts

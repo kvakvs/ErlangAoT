@@ -206,7 +206,10 @@ disable_features = []
 ### Paths and source discovery
 
 - Resolve the supplied project path relative to the invocation directory and
-  normalize it to an absolute path. Its lexical parent is the manifest base,
+  normalize it to an absolute path. If it does not exist and does not end in
+  `.toml`, try appending `.toml` (for example, `--project test1` loads `test1.toml`).
+  Existing paths take precedence, including invalid manifests and directories.
+  The resolved file's lexical parent is the manifest base,
   including when the project filename is a symlink. Do not change process cwd.
 - All manifest paths, including include/application/search/output paths, use
   that base; absolute paths remain absolute. Permit `..` and external source

@@ -1,5 +1,9 @@
 # Current working memory — 2026-09-20
 
+- `--project` now appends `.toml` when the supplied path is missing and lacks
+  that suffix; existing paths and filesystem errors retain precedence. Resolver
+  lives in project/command.cpp; all18 project CTests pass with new CLI regressions.
+  Debug build, full check-quality (Lizard/clang-tidy), format and whitespace pass.
 - Completed all22 steps of .agents/03-project.md, each with its own passing-checks
   commit, plus2539c2a for explicit Homebrew discovery. Final documentation/examples
   gate passed all64 Debug tests, fresh full quality, formatting and whitespace.

@@ -64,6 +64,7 @@ Project commands:
   erlangaot [options] --project <path> [--target <name>]...
   erlangaot --new-project <filename>
       --project <path>  Read a TOML project instead of positional source inputs.
+                        Try appending .toml if the path is missing that suffix and absent.
       --target <name>   Select a target; repeat to select more (default: all).
       --new-project <filename>  Create one annotated default target; append .toml
                                 when needed and refuse to overwrite existing files.

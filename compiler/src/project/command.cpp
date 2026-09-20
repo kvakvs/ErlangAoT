@@ -5,6 +5,17 @@
 #include "paths.hpp"
 
 namespace erlang_aot::project {
+namespace {
+// Complete a missing manifest filename without masking errors on an existing path.
+std::filesystem::path resolve_project_file(std::filesystem::path file) {
+    std::error_code error;
+    if (file.extension() != ".toml" && !std::filesystem::exists(file, error) && !error) {
+        file += ".toml";
+    }
+    return file;
+}
+} // namespace
+
 int run(const Request &request, const PlanOptions &options, const FileExecutor &executor, std::ostream &output,
         std::ostream &diagnostics) {
     try {
@@ -16,7 +27,7 @@ int run(const Request &request, const PlanOptions &options, const FileExecutor &
         if (!request.file) {
             fail({}, "missing --project request", 2);
         }
-        const auto file = absolute_path(options.working_directory, *request.file);
+        const auto file = resolve_project_file(absolute_path(options.working_directory, *request.file));
         const auto manifest = decode(load(file));
         auto settings = options;
         settings.selectors = request.targets;
