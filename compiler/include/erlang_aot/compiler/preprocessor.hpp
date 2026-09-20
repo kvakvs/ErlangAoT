@@ -70,6 +70,8 @@ struct PreprocessorOptions {
     // Tests/embedders can replace filesystem and environment access.
     std::function<std::optional<std::string>(const std::filesystem::path &)> read_file;
     std::function<std::optional<std::string>(std::string_view)> environment;
+    // Observe each successfully decoded include synchronously, before its forms are processed.
+    std::function<void(const std::filesystem::path &)> include_loaded;
 };
 
 class PreprocessorSession {

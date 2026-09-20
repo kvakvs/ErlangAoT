@@ -15,7 +15,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile
-  placeholder for successfully parsed modules in the default pipeline.
+  placeholder for successfully parsed modules in the default pipeline; verbose
+  stage/file tracing stays on stderr, outside project diagnostic wrappers.
 - Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
   source/token/events, immutable features, parser ownership/limits/results and output APIs.
 - `src/source/source.cpp`: decoding/positions; `src/diagnostics/diagnostic.cpp`: logical
@@ -27,7 +28,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `src/preprocessor/preprocessor.cpp`: DirectiveReader and form recovery;
   `directives.cpp`, `cursor.hpp`: directive envelopes; `engine.hpp`, `session.cpp`:
   semantic session; `conditions.cpp`, `includes.cpp`, `features.cpp`, `builtins.cpp`:
-  conditionals, include frames, features and contextual definitions.
+  conditionals, include frames/loaded-file observation, features and contextual definitions.
 - `src/preprocessor/{macros,arguments,token_utils}.cpp`: macro expansion/arguments;
   `{expression_parse,expression,operators,guards}.cpp`: closed condition grammar/evaluation;
   `{terms,value,bits}.cpp`: shared literal terms, exact operations and binary encoding.

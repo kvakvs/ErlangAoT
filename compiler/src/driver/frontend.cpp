@@ -7,6 +7,33 @@
 
 namespace erlang_aot::cli {
 namespace {
+// Retain native filename text in encoding, I/O, and ingestion messages.
+std::string filename(const std::filesystem::path &path) {
+    const auto bytes = path.generic_u8string();
+    return {bytes.begin(), bytes.end()};
+}
+
+// Keep ingestion messages out of source/AST output and project diagnostic wrappers.
+void trace_ingestion(bool verbose, std::string_view stage, const std::filesystem::path &path) {
+    if (verbose) {
+        std::cerr << '[' << stage << "] " << filename(path) << '\n';
+    }
+}
+
+// Trace resolved includes while preserving any caller-provided observation callback.
+PreprocessorOptions preprocessing_options(const FrontendRequest &request) {
+    auto options = request.preprocessing;
+    if (request.verbose) {
+        options.include_loaded = [previous = std::move(options.include_loaded)](const auto &path) {
+            trace_ingestion(true, "pp", path);
+            if (previous) {
+                previous(path);
+            }
+        };
+    }
+    return options;
+}
+
 // Preserve severity and existing logical/physical source rendering in every caller.
 void print_diagnostic(const Diagnostic &diagnostic, const DiagnosticSink &sink) {
     const auto prefix = diagnostic.severity == Severity::warning ? "warning: " : "error: ";
@@ -57,8 +84,11 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
 // Keep source ownership and all mutable frontend state local to one file.
 bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink) {
     SourceManager sources;
-    PreprocessorSession session(sources.read(path), request.preprocessing);
+    const auto source = sources.read(path);
+    trace_ingestion(request.verbose, "pp", path);
+    PreprocessorSession session(source, preprocessing_options(request));
     if (request.parse_check || request.print_ast || request.compile) {
+        trace_ingestion(request.verbose, "parse", path);
         return parse_and_print(session, request, sink);
     }
     while (const auto event = session.next()) {
@@ -72,11 +102,6 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     return session.failed();
 }
 
-// Retain native filename text in encoding and I/O diagnostics.
-std::string filename(const std::filesystem::path &path) {
-    const auto bytes = path.generic_u8string();
-    return {bytes.begin(), bytes.end()};
-}
 } // namespace
 
 bool process_file(const std::filesystem::path &path, const FrontendRequest &request,
@@ -93,8 +118,8 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
 
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
-    const FrontendRequest request{options.print_pp, options.print_ast, options.parse_check, !options.preprocess,
-                                  options.preprocessing};
+    const FrontendRequest request{options.print_pp,    options.print_ast, options.parse_check,
+                                  !options.preprocess, options.verbose,   options.preprocessing};
     const DiagnosticSink sink = [](std::string_view message) { std::cerr << message << '\n'; };
     bool failed = false;
     for (const auto &path : options.inputs) {

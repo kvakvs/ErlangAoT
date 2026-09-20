@@ -15,6 +15,8 @@ function(check name code stdout stderr manifest)
     endif()
 endfunction()
 check(all 0 "^$" "^$" "${project}/project.toml" --parse-check)
+check(verbose_includes 0 "^$" "^\\[pp\\].*\\[parse\\].*\\[pp\\].*\\.hrl\n"
+    "${project}/project.toml" --verbose --target app)
 check(subset 0 "^$" "^$" "${project}/project.toml" --preprocess-check --target tests)
 check(values 0 "IntegerLiteral value=101.*IntegerLiteral value=11.*IntegerLiteral value=202" "^$"
     "${project}/project.toml" --print-ast)

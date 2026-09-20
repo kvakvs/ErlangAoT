@@ -56,6 +56,10 @@ check(output_check_conflict 2 "^$" "cannot be used" --project project.toml --par
 check(output_multiple_conflict 2 "^$" "exactly one" --project project.toml -o sentinel)
 check(default_pipeline 0 "^$" "^$" --project project.toml)
 check(default_output 0 "^$" "^$" --project project.toml --target app -o sentinel)
+check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n$"
+    --verbose --project project --target tests)
+check(verbose_project_pp 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n$"
+    --verbose --project project.toml --target app --preprocess-check)
 check(duplicate_macro 1 "^$" "redefining macro" --project project.toml --parse-check -DVALUE=3)
 check(terminator 2 "^$" "positional" --project project.toml -- --target)
 execute_process(COMMAND "${TOOL}" --project project.toml --print-ast --target tests --target tests

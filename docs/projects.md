@@ -89,6 +89,9 @@ erlangaot --new-project <filename>
 - Without a check/print action, preprocess and parse every selected source, then
   pass successfully parsed modules to the compilation placeholder. Return success
   if all sources pass; executable generation remains unimplemented and writes nothing.
+- `--verbose` traces ingested source files and resolved includes to stderr using
+  `[pp]`, and each source entering the parser using `[parse]`. It applies to every
+  selected target without changing the requested action or source/AST output.
 - Validate CLI syntax before honoring help/version, as today, but help/version
   do not open/create the project or resolve target names. Keep help precedence
   over version.

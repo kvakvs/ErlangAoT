@@ -10,6 +10,8 @@ struct FrontendRequest {
     bool parse_check = false;
     // Continue successful parsing into the compilation placeholder for default requests.
     bool compile = false;
+    // Report physical input filenames to stderr as each frontend stage ingests them.
+    bool verbose = false;
     // Supply a fresh preprocessing configuration to each module session.
     PreprocessorOptions preprocessing;
 };

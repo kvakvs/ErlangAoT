@@ -1,5 +1,11 @@
 # Current working memory — 2026-09-20
 
+- `--verbose` traces [pp] source/resolved include paths and [parse] original module
+  paths on stderr for positional and project modes. Parser consumes a stream, so
+  its start trace precedes include traces. PreprocessorOptions::include_loaded
+  observes successful include decoding; no inactive/candidate/logical-file traces.
+  Build, all26 selected CLI/project/PP/parser tests (CLI assertion corrected then
+  rerun), Lizard, affected-production clang-tidy, formatting and whitespace pass.
 - Default positional/project invocations now preprocess and parse all selected
   sources; successful ASTs reach driver/frontend.cpp's compile_module TODO stub.
   Success exits0 without executable output; explicit checks/printing keep their modes.

@@ -157,3 +157,24 @@ check_cli(default_expansion 0 "^$" "^$"
     -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
 check_cli(default_options 0 "^$" "^$" --app-dir demo=app
     --enable-feature compr_assign --disable-feature maybe_expr parse-options.erl)
+
+# Verbose traces describe only ingested files and never become printed source or AST.
+file(WRITE "${TEST_DIR}/trace.erl" "-module(trace). -include(\"outer.hrl\"). -include_lib(\"demo/include/lib.hrl\").\n-if(false). -include(\"skipped.hrl\"). -endif. f() -> ?LIB.\n")
+file(WRITE "${TEST_DIR}/outer.hrl" "-include(\"inner.hrl\").\n")
+file(WRITE "${TEST_DIR}/inner.hrl" "-file(\"logical.hrl\", 1).\n")
+set(pp_trace "\\[pp\\] trace.erl\n")
+set(parse_trace "\\[parse\\] trace.erl\n")
+set(include_trace "\\[pp\\] [^\n]*outer.hrl\n\\[pp\\] [^\n]*inner.hrl\n\\[pp\\] [^\n]*app/include/lib.hrl\n")
+check_cli(verbose_help 0 "--verbose" "^$" --verbose --help)
+check_cli(verbose_version 0 "^erlangaot" "^$" --verbose --version)
+check_cli(verbose_no_inputs 2 "^$" "no input files" --verbose)
+check_cli(verbose_default 0 "^$" "^${pp_trace}${parse_trace}${include_trace}$" --verbose --app-dir demo=app trace.erl)
+check_cli(verbose_pp_only 0 "^$" "^${pp_trace}${include_trace}$" --verbose --preprocess-check --app-dir demo=app trace.erl)
+check_cli(verbose_parse 0 "^$" "^${pp_trace}${parse_trace}${include_trace}$" --verbose --parse-check --app-dir demo=app trace.erl)
+check_cli(verbose_print_pp 0 "^- file .*f [(] [)] -> true [.]\n$" "^${pp_trace}${include_trace}$"
+    --verbose --print-pp --app-dir demo=app trace.erl)
+check_cli(verbose_print_ast 0 "^Module .*Atom name=true\n$" "^${pp_trace}${parse_trace}${include_trace}$"
+    --verbose --print-ast --app-dir demo=app trace.erl)
+check_cli(verbose_multiple 0 "^$" "^\\[pp\\] first.erl\n\\[parse\\] first.erl\n\\[pp\\] second.erl\n\\[parse\\] second.erl\n$"
+    --verbose first.erl second.erl)
+check_cli(verbose_opt_in 0 "^$" "^$" --app-dir demo=app trace.erl)

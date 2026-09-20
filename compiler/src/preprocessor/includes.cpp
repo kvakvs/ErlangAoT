@@ -59,6 +59,9 @@ std::vector<std::filesystem::path> PreprocessorSession::State::candidates(const 
 
 void PreprocessorSession::State::push_file(const SourcePtr &source, std::filesystem::path path, const Token &site) {
     files.push_back({source, Lexer(source), std::move(path), source->name, {}, site, 1});
+    if (options.include_loaded) {
+        options.include_loaded(files.back().path);
+    }
     emit_file(site, source->name, 1);
 }
 

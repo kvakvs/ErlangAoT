@@ -89,6 +89,7 @@ erlangaot [options] <source.erl>...
   --parse-check            Preprocess and check syntax
   --print-pp               Print expanded Erlang source
   --print-ast              Print an indented syntax tree
+  --verbose                Trace ingested filenames to stderr with [pp]/[parse]
   -I, --include <dir>      Add an include directory (last supplied searched first)
   -D, --define <name[=term]>  Define a macro (default value: true)
   --app-dir <app=dir>      Set an include_lib application directory
@@ -114,6 +115,12 @@ by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 With no check/print action, source inputs and `--project` run preprocessing and
 parsing, then reach a compilation placeholder. Successful processing returns `0`;
 code generation is not implemented, so no executable is written.
+
+`--verbose` prints `[pp] <filename>` for source files and resolved preprocessor
+includes, and `[parse] <filename>` when each source enters the parser. Nested and
+library includes are traced as they are loaded; inactive includes are skipped.
+The parser consumes expanded tokens incrementally, so its trace can precede include
+traces. Tracing goes to stderr in every mode, including projects.
 
 Exit codes: **0** for success (including warnings), **1** for source/project errors,
 **2** for usage errors or unknown target names.

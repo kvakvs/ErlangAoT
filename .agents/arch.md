@@ -52,6 +52,8 @@
   --preprocess-check, --parse-check, --print-pp and --print-ast. Check modes never
   write executable outputs. Printing uses canonical tokens or an exhaustive
   iterative AST visitor with bounded indentation and an explicit visit budget.
+  --verbose traces physical source/include ingestion as [pp] and parser inputs as
+  [parse] on stderr; resolved include notifications come from the preprocessor.
 - Binding, guard legality, record/type resolution, lint, transforms, lowering and
   execution remain later stages. Stage-reader directories are reserved only.
 - Tests combine native invariants/provenance/recovery/stress/mutations, CLI/API

@@ -8,6 +8,8 @@ struct Options {
     // Select informational output after validating all command-line arguments.
     bool show_help = false;
     bool show_version = false;
+    // Trace input ingestion without selecting a different compiler action.
+    bool verbose = false;
     // Retain the requested destination for the future code-generation stage.
     std::filesystem::path output = "a.out";
     // Distinguish explicit output overrides from the positional-mode default.

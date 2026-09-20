@@ -130,6 +130,8 @@ void contextual() {
 
 void includes() {
     PreprocessorOptions options;
+    std::vector<std::filesystem::path> loaded;
+    options.include_loaded = [&](const auto &path) { loaded.push_back(path); };
     options.working_directory = "/virtual";
     options.read_file = [](const std::filesystem::path &path) -> std::optional<std::string> {
         if (path == "/virtual/a.hrl") {
@@ -144,6 +146,8 @@ void includes() {
     const auto result = run("-include(\"a.hrl\"). -include_lib(\"test/include/x.hrl\"). {?X,?APP}.", options);
     successful(result);
     require(integers(result) == std::vector<std::string>{"7", "9"}, "include definitions and guards");
+    require(loaded == std::vector<std::filesystem::path>{"/virtual/a.hrl", "/virtual/a.hrl", "/app/include/x.hrl"},
+            "observe each loaded include, including repeated and library includes");
     options.limits.include_depth = 1;
     require(run("-include(\"a.hrl\").", options).diagnostics.front().code == DiagnosticCode::resource_limit,
             "include limit");
