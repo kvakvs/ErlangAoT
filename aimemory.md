@@ -1,5 +1,8 @@
 # Current working memory — 2026-09-20
 
+- User directs that 04-compile must use/build upon the term library sketch.
+  Plan now makes it the foundation, with explicit links and ABI/lifecycle/term/
+  memory step requirements; open design details remain refinable during implementation.
 - Runtime term API/layout sketch added under runtime/design for manual review only;
   no executable implementation/build integration. User specifically wants private
   structs with controlled heap memory layout as well as opaque convenient term API.

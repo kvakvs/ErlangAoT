@@ -1,11 +1,14 @@
 # LLVM compilation integration plan
 
 Status: proposed, 2026-09-20. No implementation steps have started.
-An unimplemented runtime-term review sketch now exists in
-[`runtime/design/terms.md`](../runtime/design/terms.md), with an opaque C++ API
-in `terms.hpp` and explicit private heap structs/layout assertions in
-`term_layout.hpp`. These drafts are outside the build and await manual review;
-their existence does not complete a numbered implementation step.
+Use and build upon the existing runtime-term library sketch:
+[`terms.md`](../runtime/design/terms.md) defines the design contract,
+[`terms.hpp`](../runtime/design/terms.hpp) sketches the opaque C++ API, and
+[`term_layout.hpp`](../runtime/design/term_layout.hpp) sketches private heap
+structs and layout assertions. This is the foundation for term implementation;
+refine its open decisions as the steps below are implemented. The sketch remains
+outside the build with no runtime implementation, and its existence does not
+complete a numbered implementation step.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
 
@@ -38,17 +41,17 @@ ErlangAoT is a **language frontend to LLVM**, not a new LLVM machine target.
 Use the existing X86, ARM and AArch64 backends. Do not implement an LLVM target,
 instruction descriptions, assembler, object format writer, or register allocator.
 
-| Responsibility | Owner |
-| --- | --- |
-| Erlang source, preprocessing, syntax and source diagnostics | Existing ErlangAoT frontend |
-| Binding, module/function resolution, patterns, guards and evaluation semantics | ErlangAoT semantic analysis and lowering |
-| Erlang type declarations, inference and bounded type-specialization policy | ErlangAoT; LLVM optimizes the resulting typed IR |
-| Runtime term representation and generated-function interface | Shared project ABI |
-| Mapping accepted Erlang operations to LLVM IR | Thin ErlangAoT lowering layer |
-| Generic IR analysis, simplification, inlining and machine-independent optimization | LLVM standard passes |
-| Instruction selection, legalization, scheduling, register allocation, machine-code and object emission | Existing LLVM target backends |
-| Linking native objects and platform libraries | Existing Clang driver and platform linker/LLD |
-| Process heaps, GC policy, scheduling, reductions, mailboxes, exceptions and Erlang BIF behavior | Erlang runtime, with compiler cooperation |
+| Responsibility                                                                                         | Owner                                            |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| Erlang source, preprocessing, syntax and source diagnostics                                            | Existing ErlangAoT frontend                      |
+| Binding, module/function resolution, patterns, guards and evaluation semantics                         | ErlangAoT semantic analysis and lowering         |
+| Erlang type declarations, inference and bounded type-specialization policy                             | ErlangAoT; LLVM optimizes the resulting typed IR |
+| Runtime term representation and generated-function interface                                           | Shared project ABI                               |
+| Mapping accepted Erlang operations to LLVM IR                                                          | Thin ErlangAoT lowering layer                    |
+| Generic IR analysis, simplification, inlining and machine-independent optimization                     | LLVM standard passes                             |
+| Instruction selection, legalization, scheduling, register allocation, machine-code and object emission | Existing LLVM target backends                    |
+| Linking native objects and platform libraries                                                          | Existing Clang driver and platform linker/LLD    |
+| Process heaps, GC policy, scheduling, reductions, mailboxes, exceptions and Erlang BIF behavior        | Erlang runtime, with compiler cooperation        |
 
 LLVM already exposes target selection, data layout and object emission through
 its SDK; use those APIs rather than building a parallel backend. See the
@@ -284,22 +287,23 @@ declarations. Do not embed a runtime copy into each module or misuse LLVM IR
 linking to combine a native archive with an object file. The harness link step
 must exercise this dependency, not supply test-only replacement runtime symbols.
 
-| Location under `runtime/` | Responsibility and initial boundary |
-| --- | --- |
-| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state |
-| `src/process/` | Opaque process contexts, ownership and lifecycle; reserve reductions, mailbox and exception state |
-| `src/terms/` | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers |
-| `src/builtins/` | Module/name/arity dispatch for Erlang BIF implementations; missing entries return an explicit unsupported/unavailable result |
-| `src/memory/` | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists |
-| `src/scheduler/` | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, yielding and message wakeups |
-| `src/modules/` | ABI-checked registration of generated module/export descriptors and explicit initialization ordering |
+| Location under `runtime/`                        | Responsibility and initial boundary                                                                                                 |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state                                                             |
+| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, mailbox and exception state                                   |
+| `src/terms/`                                     | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers |
+| `src/builtins/`                                  | Module/name/arity dispatch for Erlang BIF implementations; missing entries return an explicit unsupported/unavailable result        |
+| `src/memory/`                                    | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists        |
+| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, yielding and message wakeups               |
+| `src/modules/`                                   | ABI-checked registration of generated module/export descriptors and explicit initialization ordering                                |
 
-The existing [term sketch](../runtime/design/terms.md) proposes a common opaque
+Build the runtime term library upon the existing [term sketch](../runtime/design/terms.md): a common opaque
 `Term` value API, per-type creation/predicates/extraction and immutable updates.
 Private word-aligned heap structs and one-word term slots keep memory layout
 controlled and permit later immediate/tagged values without exposing encoding
-to callers. Review ownership, roots, layout and the C ABI bridge before adopting
-it; the full API inventory does not expand this milestone's executable subset.
+to callers. Resolve ownership, roots, layout and the C ABI bridge by extending
+this sketch, keeping its API and layout notes synchronized with implementation.
+Its full API inventory does not expand this milestone's executable subset.
 
 Implement useful skeleton behavior: create/destroy runtime and process contexts,
 inspect immediate terms, report unavailable BIFs, initialize/tear down memory and
@@ -340,14 +344,14 @@ independent of `--verbose`, not `[comp]` progress messages. Never put them in
 printed source/type/IR output or generated artifact bytes.
 Leave references to unimplemented plan filename and step or a generous TODO comment explaining what should be implemented here.
 
-| Extension point | Deferred features to identify explicitly |
-| --- | --- |
-| Semantic analysis and lowering | Patterns/guards, records, general arithmetic/bignums, heap-term construction, closures, dynamic calls, exceptions, receive, proper tail calls and parse transforms |
-| Runtime term/BIF services | Unsupported term operations and known unimplemented Erlang BIFs, identified by module/name/arity |
-| Runtime process/scheduler services | Spawn, message delivery, mailbox receive, yielding, reductions and scheduling |
-| Runtime memory services | Process-heap allocation operations, roots/safepoints and garbage collection not provided by the skeleton |
-| Runtime module services | Dynamic code loading/upgrades and unsupported initialization hooks |
-| Driver/toolchain integration | Future executable startup/linking when explicitly requested through an implemented command boundary |
+| Extension point                    | Deferred features to identify explicitly                                                                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Semantic analysis and lowering     | Patterns/guards, records, general arithmetic/bignums, heap-term construction, closures, dynamic calls, exceptions, receive, proper tail calls and parse transforms |
+| Runtime term/BIF services          | Unsupported term operations and known unimplemented Erlang BIFs, identified by module/name/arity                                                                   |
+| Runtime process/scheduler services | Spawn, message delivery, mailbox receive, yielding, reductions and scheduling                                                                                      |
+| Runtime memory services            | Process-heap allocation operations, roots/safepoints and garbage collection not provided by the skeleton                                                           |
+| Runtime module services            | Dynamic code loading/upgrades and unsupported initialization hooks                                                                                                 |
+| Driver/toolchain integration       | Future executable startup/linking when explicitly requested through an implemented command boundary                                                                |
 
 Use the following behavior contract:
 
@@ -623,6 +627,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 7. Define the immediate-term ABI
 
+- Derive the term-word contract from the sketch's private `TermSlot` boundary,
+  refining tag encoding while preserving opaque public `Term` access and future
+  heap references. Record the chosen encoding in the sketch and versioned ABI.
 - Add versioned ABI headers in `abi/include/erlang_aot/abi/` for term encoding,
   the opaque context and generated-function signatures. Implement only the
   immediate integer encoding needed by this milestone.
@@ -640,6 +647,8 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 9. Establish runtime and process lifecycle
 
+- Build upon the sketch's `ProcessContext`/`TermFactory` ownership and host-root
+  lifetime contract when defining context creation and shutdown.
 - Replace the empty runtime translation unit with explicit initialization,
   shutdown and opaque process-context creation/destruction. Define C ABI status
   reporting and the mandatory generated-program CMake link target.
@@ -648,8 +657,10 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 10. Add the runtime term-service boundary
 
-- Review `runtime/design/{terms.md,terms.hpp,term_layout.hpp}` before selecting
-  the implementation contract; these are declarations/layout drafts, not services.
+- Use `runtime/design/{terms.md,terms.hpp,term_layout.hpp}` as the starting
+  contract and extend it into the runtime term library. Move implemented API
+  declarations into `runtime/include/erlang_aot/runtime/` and keep heap layout
+  structs private under `runtime/src/terms/`; update the sketch as choices settle.
 - Add `runtime/src/terms/` services for immediate-term classification and checked
   integer encoding/decoding using the shared ABI. Reserve heap-term operations
   without inventing successful implementations for unsupported term kinds.
@@ -666,6 +677,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 12. Establish process memory ownership
 
+- Extend the sketch's heap-prefix, alignment, tracing and rooted-handle contracts
+  when defining process memory ownership; retain explicit layout assertions and
+  derive widths from the runtime target.
 - Add `runtime/src/memory/` lifecycle and ownership boundaries for process-local
   resources. Define where allocation failures and future root/safepoint support
   enter; do not implement a custom allocator or collector in this skeleton.
