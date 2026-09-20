@@ -13,8 +13,14 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/CMakeLists.txt`: frontend library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
-  `terms.hpp`: opaque C++ API declarations; `term_layout.hpp`: private heap struct
+  `terms.hpp`: opaque C++ API and explicit cross-heap copy declarations; `term_layout.hpp`: private heap struct
   sketch and size/offset assertions. No runtime logic or CMake integration.
+- `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
+  `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
+  `process.hpp`: identities, continuation/ticks, owned signals, context and process state;
+  `mailbox.hpp`: selective-receive cursor, async next/forced wait and matched-message removal;
+  `scheduler.hpp`: per-CPU worker/pool lifecycle and asynchronous process-control API.
+  Review-only declarations, excluded from CMake alongside the term sketches.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile

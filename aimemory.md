@@ -1,5 +1,24 @@
 # Current working memory — 2026-09-20
 
+- Follow-up sketch: ProcessContext explicitly owns ProcessHeap and Mailbox;
+  heap.add / Term.copy_to copy rooted graphs; collect declares safe-point GC and
+  initial not_implemented result. mailbox.hpp adds begin_receive, cursor.next
+  awaitable (forced tail wait), receive removal, saved scan and cancellation contract.
+  ProcessContext.send accepts without waiting; SchedulerPool.send returns delivery reply.
+  04-compile now links the sketches and references ownership/roots/wait boundaries.
+  User-added TickBudget comment (one unit roughly a function call) preserved.
+  Combined/standalone syntax and temporary async API consumer, focused clang-tidy,
+  Lizard, formatting, whitespace and local documentation links verified. Still review-only.
+- Process/scheduler review-only skeleton added in runtime/design/{process_heap,
+  process,scheduler}.hpp and processes.md. Matches term sketch scope, no CMake
+  integration or execution yet. Per logical CPU, cooperative resume/budget boundary,
+  owner-worker command futures, per-process weighted 1:8:9 dispatch frequency.
+  Literal idle counts all live assigned processes; realtime reservation persists
+  through wait/suspend/priority changes until exit. Those interpretations need review.
+  Chunked stable-address growth with GC placeholder; owned cross-process signals;
+  OS-thread process backend only reserved. No compile-plan steps completed.
+  Combined/standalone native C++23 syntax, focused clang-tidy, Lizard, formatting
+  and whitespace checks pass. No behavior tests, full-build gate or commit.
 - User directs that 04-compile must use/build upon the term library sketch.
   Plan now makes it the foundation, with explicit links and ABI/lifecycle/term/
   memory step requirements; open design details remain refinable during implementation.

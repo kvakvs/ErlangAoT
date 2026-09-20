@@ -4,6 +4,17 @@
   `Term`/factory API over private word-aligned heap structs and traceable one-word
   slots, with immutable updates and a future tagged-value boundary. Declarations
   and layout assertions only, outside CMake; the runtime remains a placeholder.
+- Runtime process/scheduler review declarations in `runtime/design/{process_heap,
+  process,scheduler,mailbox}.hpp` and `processes.md` extend that sketch: one worker per
+  logical CPU, owner-thread commands, cooperative tick grants, per-process 1:8:9
+  weighted service, sole-live-process idle eligibility and realtime tenure until
+  exit (even while blocked). Chunked heap/GC hooks and OS-thread process backend
+  are proposals only; no worker, allocator or scheduling behavior is implemented.
+  ProcessContext explicitly owns heap/mailbox; heap add and Term::copy_to describe
+  rooted graph copies, collect reserves safe-point tracing. Receive cursors preserve
+  unmatched messages, remove only a selected candidate and asynchronously park at
+  the tail with arrival-version wakeup; process send accepts without waiting for delivery.
+  `04-compile.md` references these contracts without expanding its implemented subset.
 
 - Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.

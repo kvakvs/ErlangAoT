@@ -3,7 +3,9 @@
 Status: proposed, 2026-09-20. **No runtime implementation.**
 [terms.hpp](terms.hpp) contains API declarations only;
 [term_layout.hpp](term_layout.hpp) sketches private heap structs and layout assertions.
-Both are deliberately outside the exported include tree and all CMake targets.
+[process_heap.hpp](process_heap.hpp) owns process term storage and declares addition,
+cross-heap copying and collection. All sketches are deliberately outside the
+exported include tree and all CMake targets.
 Nothing here can be linked yet;
 this is not completion of a step in the [compilation plan](../../.agents/04-compile.md).
 
@@ -124,11 +126,11 @@ a separate storage kind. Binaries are bitstrings with a bit count divisible by e
 | Function | `external_function`, `closure`, `function` | `is_function`, arity predicate, `function_arity`, opaque identity | Construct a replacement closure |
 | Native record | `native_record` | Category/descriptor predicates, descriptor and named fields | `with_record_field` |
 
-`ProcessContext`, identity classes, closure and record descriptors are deliberately
-only forward-declared. Their owning subsystems will define opaque value handles,
-copy/lifetime contracts and registration APIs in later work. Those complete types
-are required before calling the corresponding `expected<T, ...>` accessors. Do
-not interpret these names as implemented process, port, module or scheduler APIs.
+`ProcessContext` and `ProcessIdentity` are forward-declared here and sketched in
+[process.hpp](process.hpp). Other identity classes, closure and record descriptors
+remain forward declarations for their owning subsystems. Their complete types are
+required before calling corresponding `expected<T, ...>` accessors. None of these
+declarations represents an implemented process, port, module or scheduler API.
 
 Runtime services issue process/port/reference identities; wrapping them does not
 spawn a process, open a port or forge an identity. The module service issues closure
@@ -149,11 +151,13 @@ Distribution and serialization, including imports of remote identities, are defe
   No borrowed view survives heap movement or collection.
 - Composite construction and updates accept terms from the same process context.
   Cross-context inputs return `wrong_owner`, even for immediates, to keep one
-  predictable contract. Explicit message-copy/transfer belongs to later process APIs.
+  predictable contract. `copy_to`/`ProcessHeap::add` are explicit cross-heap operations;
+  ordinary C++ handle copies never transfer process ownership.
   Runtime-issued identities/descriptors must belong to the same runtime instance.
-- Context shutdown must fail while factories or term/identity roots remain live;
-  the future lifecycle API must enforce this. No raw context pointer may dangle.
-  `expired_context` is reserved for detecting an already-invalid context binding.
+- Scheduler-mediated process exit invalidates term/factory lifetime tokens before
+  freeing heap storage; surviving handles report `expired_context` for checked
+  operations. Unchecked predicates require a live context. Identity values retain
+  runtime identity independently of process liveness; no raw context pointer may dangle.
   Handles are confined to their owning process execution thread until a scheduler
   handoff contract exists; smart-pointer ownership does not imply thread safety.
 - Semantic failures use `TermResult<T>`. Wrong accessors return `wrong_type`;
@@ -168,6 +172,45 @@ Distribution and serialization, including imports of remote identities, are defe
 - `exactly_equal` compares Erlang values, including arbitrary integers and identity
   terms. Map keys use exact equality (integer `1` and float `1.0` are distinct).
   There is no pointer-based equality operator or exposed hashing policy.
+
+## Heap ownership, copying and collection
+
+`ProcessContext` owns one `ProcessHeap` as an explicit member, and `TermFactory`
+allocates and registers roots there. The heap's `add(value)` and
+`value.copy_to(destination)` describe the same operation: copy the reachable term
+graph into the destination and return a destination-owned rooted handle. This
+includes container children and closure captures, integer limbs and binary data.
+Preserve sharing within the copied graph using a visited map; never retain source
+heap pointers. Heap-resident cells are copied even for a same-heap request; immediate
+values and immutable runtime-wide atom/identity/descriptor entries need no duplicate
+registry allocation. Copying a pid/reference/fun preserves identity, not liveness.
+
+Both heaps must belong to the same runtime, be live, and be exclusively accessible
+to the caller on their owner thread. Different heaps assigned to the same scheduler
+can be copied directly while the source is rooted and quiescent. Calling from one
+worker into another worker's heap is forbidden (`wrong_owner`); messaging uses
+independently owned transit storage, then receiver-side import instead. Cross-runtime
+and remote serialization remain outside this copy API. An expired source or
+destination reports `expired_context`; allocation/budget exhaustion reports
+`resource_limit` (host bookkeeping allocation may still throw `std::bad_alloc`).
+
+Copying registers temporary source/destination roots before any allocating safe
+point and publishes the result only after success. Failure must release those
+temporary roots without exposing a partial value or changing the source. Unreachable
+partial allocations can remain charged to the destination until GC/exit; successful
+copying does not promise rollback of backing capacity. Work/size limits must bound
+graph traversal. Tests must verify all term categories and that a copied value stays
+usable after the source process exits.
+
+`ProcessHeap::collect()` is the explicit GC boundary. Only the owner at a registered
+safe point may collect; otherwise return `HeapError::unsafe_point`. The first
+non-collecting implementation reports `not_implemented`, never fabricated reclamation
+statistics. The future collector enumerates host roots, saved continuation roots,
+mailbox terms and active receive candidates, traces the private layout, releases
+unreachable cells/resources and rewrites moved slots. Heap growth alone keeps addresses
+stable. Raw `allocate()` spans are runtime-internal construction borrows: publish/root
+the completed cell before any collection safe point; partially initialized cells
+must not be scanned. Compiler locals must have root maps before collection is enabled.
 
 ## Operation details to review
 
@@ -234,6 +277,8 @@ Keep unsupported capabilities explicit; a declaration does not expand the compil
 subset. Future tests must cover all predicates, bignum/narrowing boundaries,
 improper tails, empty containers, alias preservation, map exact-key semantics,
 bit edges, descriptor validation, wrong owners, roots across GC and failure cleanup.
+Add cross-heap graph-copy coverage, source-exit independence, partial-copy failures,
+mailbox/cursor roots and collection-safe-point rejection.
 Validate prefix/array alignment, allocation overflow, scanner coverage and layout
 assertions on 32-bit and 64-bit target builds before enabling heap code generation.
 No behavior tests or implementation are added by this review-only change.

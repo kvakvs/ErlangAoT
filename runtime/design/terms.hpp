@@ -15,6 +15,7 @@
 
 namespace erlang_aot::runtime {
 class ProcessContext;
+class ProcessHeap;
 class ProcessIdentity;
 class PortIdentity;
 class ReferenceIdentity;
@@ -69,6 +70,9 @@ class Term final {
     Term &operator=(Term &&other) noexcept;
     // Release this handle's ownership/root registration.
     ~Term();
+
+    // Copy the reachable value graph into destination storage and return a destination-owned root.
+    TermResult<Term> copy_to(ProcessHeap &destination) const;
 
     // Identify the semantic category; binaries are byte-sized bitstrings.
     TermKind kind() const;

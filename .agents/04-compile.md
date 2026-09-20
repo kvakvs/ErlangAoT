@@ -9,6 +9,17 @@ structs and layout assertions. This is the foundation for term implementation;
 refine its open decisions as the steps below are implemented. The sketch remains
 outside the build with no runtime implementation, and its existence does not
 complete a numbered implementation step.
+Use the companion process/scheduler sketch as the runtime ownership and execution
+reference: [`processes.md`](../runtime/design/processes.md) describes the contracts,
+[`process.hpp`](../runtime/design/process.hpp) defines the process/context and tick
+interfaces, and [`scheduler.hpp`](../runtime/design/scheduler.hpp) defines per-CPU
+scheduling and process control. [`process_heap.hpp`](../runtime/design/process_heap.hpp)
+adds process-owned term storage, cross-heap copying and a collection boundary;
+[`mailbox.hpp`](../runtime/design/mailbox.hpp) defines selective-receive cursors
+that suspend at the mailbox tail and preserve unmatched messages. These are also
+review-only declarations. Use their ownership, root and suspension contracts when
+implementing the service boundaries below; this milestone still defers worker
+execution, messaging, heap allocation and GC rather than claiming them implemented.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
 
@@ -648,7 +659,8 @@ planning-only creation of this document does not run or claim these code gates.
 ### 9. Establish runtime and process lifecycle
 
 - Build upon the sketch's `ProcessContext`/`TermFactory` ownership and host-root
-  lifetime contract when defining context creation and shutdown.
+  lifetime contract when defining context creation and shutdown. Consult
+  `runtime/design/process.hpp` for owned heap/mailbox state and exit invalidation.
 - Replace the empty runtime translation unit with explicit initialization,
   shutdown and opaque process-context creation/destruction. Define C ABI status
   reporting and the mandatory generated-program CMake link target.
@@ -679,7 +691,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 - Extend the sketch's heap-prefix, alignment, tracing and rooted-handle contracts
   when defining process memory ownership; retain explicit layout assertions and
-  derive widths from the runtime target.
+  derive widths from the runtime target. Use `runtime/design/process_heap.hpp`
+  and `Term::copy_to` as the proposed ownership/copy/collection boundaries;
+  include mailbox/cursor roots in the future collector contract.
 - Add `runtime/src/memory/` lifecycle and ownership boundaries for process-local
   resources. Define where allocation failures and future root/safepoint support
   enter; do not implement a custom allocator or collector in this skeleton.
@@ -689,6 +703,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 13. Establish the scheduler service boundary
 
+- Use `runtime/design/{process,scheduler,mailbox}.hpp` and `processes.md` for the
+  proposed owner-worker, cooperative ticks, send and receive-wait contracts.
+  Reserve the cursor/arrival handshake without implementing receive in this step.
 - Add `runtime/src/scheduler/` state owned by the runtime and explicit process
   registration/removal. Define lifecycle transitions and the future reduction,
   yield and wakeup entry boundaries without starting worker threads or claiming
