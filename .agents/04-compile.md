@@ -309,6 +309,63 @@ cross compilation, select a separately built runtime for the emitted target;
 never link the host runtime into a foreign-target program. Compiler-only builds
 can still emit objects, but cannot run/link them without a supplied target runtime.
 
+### Future-feature placeholders and diagnostics
+
+Place explicit placeholders at real compiler/runtime extension points wherever
+the surrounding interface is known. Use one shared feature identifier/catalog
+and small reporting helpers, rather than scattered strings or empty functions.
+A reached placeholder reports a stable message on stderr, for example:
+
+```text
+[pattern matching] notimpl: src/example.erl:12:5
+[garbage collection] notimpl: process memory service
+[builtin erlang:spawn/1] notimpl
+```
+
+The `[feature name] notimpl` marker is required; append available source, module,
+project target or runtime operation context. These are actionable diagnostics,
+independent of `--verbose`, not `[comp]` progress messages. Never put them in
+printed source/type/IR output or generated artifact bytes.
+Leave references to unimplemented plan filename and step or a generous TODO comment explaining what should be implemented here.
+
+| Extension point | Deferred features to identify explicitly |
+| --- | --- |
+| Semantic analysis and lowering | Patterns/guards, records, general arithmetic/bignums, heap-term construction, closures, dynamic calls, exceptions, receive, proper tail calls and parse transforms |
+| Runtime term/BIF services | Unsupported term operations and known unimplemented Erlang BIFs, identified by module/name/arity |
+| Runtime process/scheduler services | Spawn, message delivery, mailbox receive, yielding, reductions and scheduling |
+| Runtime memory services | Process-heap allocation operations, roots/safepoints and garbage collection not provided by the skeleton |
+| Runtime module services | Dynamic code loading/upgrades and unsupported initialization hooks |
+| Driver/toolchain integration | Future executable startup/linking when explicitly requested through an implemented command boundary |
+
+Use the following behavior contract:
+
+- Known unsupported source constructs fail at capability analysis, before lowering
+  or artifact publication. A defensive lowering placeholder also fails if such a
+  construct reaches it unexpectedly. Do not generate a successful-looking native
+  module whose unsupported operations merely print a message at execution time.
+- Runtime service placeholders report through the runtime's diagnostic sink and
+  return an explicit not-implemented status through the C ABI. Callers must stop
+  the affected operation and propagate failure; never synthesize `ok`, zero or a
+  valid-looking term. The host harness prints to stderr by default and exits
+  nonzero on an unhandled placeholder failure, performing normal teardown.
+- Report each failure once at its owning boundary; propagation must not print it
+  again. Do not swallow failures, abort the host unnecessarily or let C++ exceptions
+  cross the generated-code ABI. A runtime with several contexts retains enough
+  operation/context information to attribute the failure.
+- Unused placeholders remain silent. Do not call them from ordinary initialization,
+  supported compilation, successful skeleton lifecycle or help/version handling.
+  Skipping optional optimization or using a correct generic fallback is supported
+  behavior and must not produce `notimpl` diagnostics.
+- Distinguish known deferred capabilities from invalid inputs, unknown function
+  names, missing LLVM SDKs, I/O errors and internal bugs; keep those existing error
+  categories. Type-inference uncertainty with a sound generic fallback is not an
+  unimplemented-feature failure.
+- Keep an inventory mapping feature IDs to the owning file/boundary, supported
+  status and a focused failure test. Define only interfaces needed at actual
+  extension points; do not prebuild unused subsystems or intermediate-stage readers.
+  Replacing a placeholder requires implementation and semantic tests, then updates
+  to the catalog and capability checks so stale `notimpl` paths are removed.
+
 ### Artifact and command contract
 
 Keep first artifact emission explicit to avoid reinterpreting existing future
@@ -560,7 +617,16 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: boundary/negative integer round trips, rejected overflow, target
   widths and native C++/LLVM layout agreement. Shared gate, then commit.
 
-### 8. Establish runtime and process lifecycle
+### 8. Define the future-feature catalog and reporting contract
+
+- Add shared feature IDs/names in `abi/` and separate small compiler/runtime
+  reporting interfaces without introducing an LLVM dependency into the runtime.
+  Record actual extension points and standardize `[feature name] notimpl`, context
+  and explicit failure status; format messages at the owning boundary only.
+- Validate: stable feature names, context formatting, one report per failure,
+  stderr routing and silence when no placeholder is invoked. Shared gate, then commit.
+
+### 9. Establish runtime and process lifecycle
 
 - Replace the empty runtime translation unit with explicit initialization,
   shutdown and opaque process-context creation/destruction. Define C ABI status
@@ -568,7 +634,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: repeated lifecycle, independent contexts, cleanup after initialization
   failure and runtime-only builds without LLVM. Shared gate, then commit.
 
-### 9. Add the runtime term-service boundary
+### 10. Add the runtime term-service boundary
 
 - Add `runtime/src/terms/` services for immediate-term classification and checked
   integer encoding/decoding using the shared ABI. Reserve heap-term operations
@@ -576,7 +642,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: boundary values, malformed tags and agreement with generated integer
   constants; no dependency on compiler or LLVM libraries. Shared gate, then commit.
 
-### 10. Add the builtin dispatch skeleton
+### 11. Add the builtin dispatch skeleton
 
 - Add `runtime/src/builtins/` with explicit registration/lookup by module, name
   and arity and a uniform service-result contract. Unimplemented BIFs report
@@ -584,7 +650,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: known test registrations, duplicate entries, unknown names/arities
   and failure propagation across the C ABI. Shared gate, then commit.
 
-### 11. Establish process memory ownership
+### 12. Establish process memory ownership
 
 - Add `runtime/src/memory/` lifecycle and ownership boundaries for process-local
   resources. Define where allocation failures and future root/safepoint support
@@ -593,7 +659,7 @@ planning-only creation of this document does not run or claim these code gates.
   document that generated heap allocation remains unsupported. Shared gate,
   then commit.
 
-### 12. Establish the scheduler service boundary
+### 13. Establish the scheduler service boundary
 
 - Add `runtime/src/scheduler/` state owned by the runtime and explicit process
   registration/removal. Define lifecycle transitions and the future reduction,
@@ -602,7 +668,18 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: registration/removal, invalid transitions, isolation between runtime
   instances and ordered shutdown. Shared gate, then commit.
 
-### 13. Index module and function declarations
+### 14. Place runtime service placeholders
+
+- Add explicit not-implemented entry points at the existing term, BIF, memory,
+  process and scheduler boundaries, with module-loading hooks where their ABI is
+  defined. Keep them under `runtime/` and use the shared catalog/status contract.
+  Do not invoke deferred services during supported lifecycle operations.
+- Validate: direct tests of each reachable placeholder, known BIF identification,
+  failure propagation, one stderr report, no fabricated results and resource
+  cleanup. Unknown BIFs remain distinct from known deferred ones. Shared gate,
+  then commit.
+
+### 15. Index module and function declarations
 
 - Add semantic module/function tables under `compiler/src/semantic/`; validate
   module identity, duplicate definitions, arity and exports. Define a reversible
@@ -610,7 +687,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: missing/duplicate declarations, malformed exports, quoted/Unicode
   names and symbol collisions. Shared gate, then commit.
 
-### 14. Enforce the supported language subset
+### 16. Enforce the supported language subset
 
 - Add exhaustive AST capability checks and the metadata allowlist. Preserve
   original source/include locations in unsupported-feature diagnostics.
@@ -618,7 +695,17 @@ planning-only creation of this document does not run or claim these code gates.
   family, including unused functions and behavior-changing attributes. Shared
   gate, then commit.
 
-### 15. Resolve parameter bindings
+### 17. Place compiler capability and lowering placeholders
+
+- Map deferred syntax/operations to the shared feature catalog in capability
+  analysis. Add defensive unsupported-operation handlers at concrete lowering
+  extension points and document future driver hooks without implementing linking.
+- Validate: located `[feature name] notimpl` diagnostics for representative deferred
+  families, errors even in unexported functions, nonzero exits and no published
+  artifact for a failed batch. Supported cases remain silent. Shared gate,
+  then commit.
+
+### 18. Resolve parameter bindings
 
 - Bind distinct named parameters, handle each wildcard independently, and resolve
   body variable references. Keep these semantic results outside the immutable AST.
@@ -626,7 +713,7 @@ planning-only creation of this document does not run or claim these code gates.
   repeated-parameter patterns that this subset does not yet support. Shared gate,
   then commit.
 
-### 16. Resolve the compilation-batch call graph
+### 19. Resolve the compilation-batch call graph
 
 - Separate local/remote name, arity and export resolution from LLVM emission.
   Establish the acyclic dependency order needed for inference within each batch;
@@ -634,7 +721,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: forward calls, missing/private callees, arity mismatches, cycles and
   isolation between project targets. Shared gate, then commit.
 
-### 17. Model semantic Erlang types
+### 20. Model semantic Erlang types
 
 - Add `compiler/src/semantic/types/` with exhaustive handling of the existing type
   AST, semantic type identities and a bounded abstract inference domain. Define
@@ -642,7 +729,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: every AST type category, singletons/ranges, structural descriptions,
   top/bottom, stable identities and sound widening. Shared gate, then commit.
 
-### 18. Resolve declared types and specifications
+### 21. Resolve declared types and specifications
 
 - Resolve aliases/parameters, exported remote types, opaque/nominal boundaries,
   specs/callbacks, overloads and constraints. Keep recursive type graphs bounded
@@ -651,7 +738,7 @@ planning-only creation of this document does not run or claim these code gates.
   aliases, unavailable external metadata and opaque boundaries. Shared gate,
   then commit.
 
-### 19. Infer local expression and function types
+### 22. Infer local expression and function types
 
 - Infer literals and parameter references; preserve argument/result relations for
   unannotated identity/projection functions. Keep unknown exported inputs as top
@@ -659,7 +746,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: constants, missing/partial annotations, identity/projection summaries
   and analysis limits with conservative widening. Shared gate, then commit.
 
-### 20. Propagate call types and check declared contracts
+### 23. Propagate call types and check declared contracts
 
 - Propagate freshly instantiated summaries through the resolved dependency order,
   including nested and cross-module calls. Warn on provable spec discrepancies
@@ -667,7 +754,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: cross-module singletons, polymorphic identity uses, incorrect specs,
   overload uncertainty and target isolation. Shared gate, then commit.
 
-### 21. Lower function declarations and integer literals
+### 24. Lower function declarations and integer literals
 
 - Create ABI-compatible declarations before bodies, then lower constant-return
   functions. Use compiler-side exact integer values to check representability
@@ -678,14 +765,14 @@ planning-only creation of this document does not run or claim these code gates.
   rejected out-of-range literals; verify every resulting module. Shared gate,
   then commit.
 
-### 22. Lower parameter references
+### 25. Lower parameter references
 
 - Lower parameter-array access and return the selected term unchanged. Keep
   argument order and pointer alignment explicit in the generated interface.
 - Validate: identity and multi-argument projection functions, including identical
   argument values and unused wildcard parameters. Shared gate, then commit.
 
-### 23. Lower resolved direct local calls
+### 26. Lower resolved direct local calls
 
 - Consume resolved local calls and inferred summaries, evaluate nested arguments
   in source order and generate calls using the shared ABI. Reuse the previous
@@ -693,7 +780,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: forward calls, nested calls, wrong arity, missing functions and
   direct/indirect recursion diagnostics. Shared gate, then commit.
 
-### 24. Lower resolved calls across modules
+### 27. Lower resolved calls across modules
 
 - Consume batch-resolved remote calls, export identities and inferred summaries.
   Emit consistent external declarations in separate LLVM modules; reuse the
@@ -701,7 +788,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: the `answer`/`client` example, private/missing callees, duplicate
   module identities and cross-module recursion. Shared gate, then commit.
 
-### 25. Bind generated modules to the runtime
+### 28. Bind generated modules to the runtime
 
 - Define versioned module/export descriptors and emit a registration entry that
   calls the runtime's module-registration ABI. Implement `runtime/src/modules/`
@@ -711,7 +798,7 @@ planning-only creation of this document does not run or claim these code gates.
   ABI versions/term widths and missing runtime symbols at link time. Confirm
   generated calls pass the runtime-owned process context. Shared gate, then commit.
 
-### 26. Plan bounded type-specialization candidates
+### 29. Plan bounded type-specialization candidates
 
 - Add the speed-mode eligibility/benefit test, canonical profiles, deduplication
   and deterministic function/module/target budgets. O0 chooses no variants;
@@ -721,7 +808,7 @@ planning-only creation of this document does not run or claim these code gates.
   functions and correct generic fallback when budgets are exhausted. Shared gate,
   then commit.
 
-### 27. Lower guarded type-specialized variants
+### 30. Lower guarded type-specialized variants
 
 - Reuse lowering/LLVM utilities for eligible variants and bounded runtime dispatch.
   Select variants directly only with sufficient call-site proofs; otherwise use
@@ -731,7 +818,7 @@ planning-only creation of this document does not run or claim these code gates.
   growth limits. Reject over-budget variants without rejecting the program.
   Shared gate, then commit.
 
-### 28. Add standard LLVM optimization pipelines
+### 31. Add standard LLVM optimization pipelines
 
 - Use `PassBuilder` and the standard O0/O2 pipelines; register required analyses
   and verify IR before and after optimization. Do not write generic optimization
@@ -740,7 +827,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: equivalent results at O0/O2 and preservation of public symbols and
   ABI declarations. Shared gate, then commit.
 
-### 29. Serialize LLVM IR and bitcode
+### 32. Serialize LLVM IR and bitcode
 
 - Use LLVM's own text and bitcode writers on the verified module. Keep serialized
   formats as outputs; implementing their input readers is outside this plan.
@@ -749,7 +836,7 @@ planning-only creation of this document does not run or claim these code gates.
   checks using [FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html),
   avoiding brittle full-file snapshots. Shared gate, then commit.
 
-### 30. Plan and publish module artifacts
+### 33. Plan and publish module artifacts
 
 - Implement artifact naming, native-path handling, input/output alias detection,
   staging, checked writes and publication under the artifact contract above.
@@ -758,7 +845,7 @@ planning-only creation of this document does not run or claim these code gates.
   destinations, write failures and preservation of existing files on compile
   failure. Shared gate, then commit.
 
-### 31. Add compilation command options
+### 34. Add compilation command options
 
 - Parse and validate `--emit`, `--artifact-dir`, `--target-triple`, `-O0` and
   `-O2`, plus `--no-type-specialization`, in the driver. O2 selects the compiler's
@@ -769,7 +856,7 @@ planning-only creation of this document does not run or claim these code gates.
   for rejected options, O0/O2/override behavior in both input modes, and unchanged
   existing frontend modes. Shared gate, then commit.
 
-### 32. Integrate positional compilation
+### 35. Integrate positional compilation
 
 - Replace the placeholder with an owned compilation batch: retain successfully
   parsed ASTs, resolve semantics and types across the batch, lower, specialize
@@ -779,7 +866,7 @@ planning-only creation of this document does not run or claim these code gates.
   all three explicit artifact kinds, source errors and no publication when any
   module fails. Shared gate, then commit.
 
-### 33. Integrate project compilation
+### 36. Integrate project compilation
 
 - Adapt project execution to collect a separate compilation batch per selected
   target. Preserve target order, source discovery, options and source diagnostic
@@ -788,7 +875,7 @@ planning-only creation of this document does not run or claim these code gates.
   settings per target, cross-module calls within a target, isolated artifact
   directories and failure before publication. Shared gate, then commit.
 
-### 34. Add compilation progress to verbose tracing
+### 37. Add compilation progress to verbose tracing
 
 - Extend the shared backend request with a progress callback and implement the
   `[comp]` contract above for both positional and project compilation. Preserve
@@ -800,7 +887,7 @@ planning-only creation of this document does not run or claim these code gates.
   no backend traces in frontend-only modes, and unchanged emitted artifacts.
   Shared gate, then commit.
 
-### 35. Add intermediate-representation inspection actions
+### 38. Add intermediate-representation inspection actions
 
 - Implement and document `--print-ir` and `--print-optimized-ir`, including their
   validation, backend stopping points, before/after snapshots and module headers.
@@ -812,7 +899,7 @@ planning-only creation of this document does not run or claim these code gates.
   Compare O2 snapshots with and without type specialization and verify public ABI stability.
   Shared gate, then commit.
 
-### 36. Add declared/inferred type inspection
+### 39. Add declared/inferred type inspection
 
 - Implement `--print-types` using the shared semantic/type pipeline, deterministic
   summaries and declaration/inference provenance. Stop before LLVM lowering and
@@ -821,7 +908,7 @@ planning-only creation of this document does not run or claim these code gates.
   type declarations, diagnostics, option conflicts, positional/project ordering
   and absence of output files or LLVM emission. Shared gate, then commit.
 
-### 37. Execute generated objects through a native harness
+### 40. Execute generated objects through a native harness
 
 - Add a small C++ harness using the shared ABI and link emitted modules with
   `erlang_runtime` through the mandatory link target and configured Clang driver
@@ -833,7 +920,7 @@ planning-only creation of this document does not run or claim these code gates.
   linkage must fail, and incompatible module ABI registration must fail before
   execution. Shared gate, then commit.
 
-### 38. Compare accepted programs against OTP
+### 41. Compare accepted programs against OTP
 
 - Extend the existing native/OTP test approach with bounded, terminating programs
   from the accepted subset. Compare decoded values, argument order and accepted
@@ -843,7 +930,7 @@ planning-only creation of this document does not run or claim these code gates.
   specialization modes to catch unsafe type-driven code generation. Shared gate,
   then commit.
 
-### 39. Validate specialization cost and limits
+### 42. Validate specialization cost and limits
 
 - Compare O0, LLVM O2 with specialization disabled, and speed mode with eligible
   variants. Record compiler time, variant count, IR/object size and execution
@@ -853,7 +940,7 @@ planning-only creation of this document does not run or claim these code gates.
   measurements to keep or reject benefit heuristics, not to assert every narrowed
   function must be faster. Shared gate, then commit.
 
-### 40. Inspect cross-target objects
+### 43. Inspect cross-target objects
 
 - Cover ELF, Mach-O and COFF outputs for supported SDK backends. Use
   [llvm-readobj](https://llvm.org/docs/CommandGuide/llvm-readobj.html) and
@@ -864,7 +951,16 @@ planning-only creation of this document does not run or claim these code gates.
   with their toolchains; record other native coverage as pending. Shared gate,
   then commit.
 
-### 41. Harden backend failure and resource handling
+### 44. Audit future-feature placeholder coverage
+
+- Cross-check the catalog against unsupported AST families and reserved runtime
+  service boundaries. Cover the actual reporting/propagation path through both
+  CLI input modes and the native runtime harness, rather than only helper strings.
+- Validate: exact marker/context, behavior with and without `--verbose`, no stdout
+  contamination or false success, no messages from unused placeholders or generic
+  fallback, and clean failure/teardown at O0/O2. Shared gate, then commit.
+
+### 45. Harden backend failure and resource handling
 
 - Bound batch/module work and artifact sizes using the project's existing limit
   conventions. Exercise rejected input, LLVM errors and interrupted/failed
@@ -872,7 +968,7 @@ planning-only creation of this document does not run or claim these code gates.
 - Validate: relevant sanitizers, compiler-only/runtime-only configurations,
   cleanup and deterministic semantic outcomes. Shared gate, then commit.
 
-### 42. Publish compiled-module examples and validation evidence
+### 46. Publish compiled-module examples and validation evidence
 
 - Add `examples/compile/`, document exact SDK setup, commands, output locations,
   accepted subset, ABI version, runtime skeleton and mandatory runtime link recipe
@@ -880,6 +976,8 @@ planning-only creation of this document does not run or claim these code gates.
   intermediate-representation inspection actions, including combined inspection.
   Explain inference coverage and `--print-types`, the O0/O2 speed-policy distinction,
   specialization budgets, generic fallback and the disable override.
+  Publish the deferred-feature inventory, placeholder message convention and the
+  distinction between supported fallback and unimplemented semantics.
   Update the architecture/file maps to describe the implementation actually built.
 - Validate: execute every documented native example, inspect all artifact kinds,
   and record platform/SDK/O0/O2 results without claiming unsupported runtime
@@ -894,7 +992,9 @@ boundaries and generated-module registration are implemented and tested;
 semantic failures are located and prevent publication; `--verbose` reports
 `[comp]` progress and inspection actions show declared/inferred types and verified
 IR; inference fills missing annotations conservatively and speed-mode specialization
-obeys its budgets while preserving generic behavior and runtime ABI;
+obeys its budgets while preserving generic behavior and runtime ABI; reached
+future-feature placeholders report `[feature name] notimpl` with explicit failure
+and no incorrect results or artifacts;
 and every implementation step has its passing gate and separate commit.
 
 Later plans fill out the runtime skeleton with term allocation and bignums, BIF
