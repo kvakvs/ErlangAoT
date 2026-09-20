@@ -8,6 +8,8 @@ struct FrontendRequest {
     bool print_pp = false;
     bool print_ast = false;
     bool parse_check = false;
+    // Continue successful parsing into the compilation placeholder for default requests.
+    bool compile = false;
     // Supply a fresh preprocessing configuration to each module session.
     PreprocessorOptions preprocessing;
 };

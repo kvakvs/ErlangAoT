@@ -20,10 +20,6 @@ bool process(const Invocation &invocation, const PlannedTarget &target, const st
 } // namespace
 
 int execute(const Invocation &invocation, const FileExecutor &executor, const MessageSink &diagnostics) {
-    if (!invocation.frontend) {
-        diagnostics("error: compilation is not implemented yet; no output was written.");
-        return 1;
-    }
     bool failed = false;
     for (const auto &target : invocation.targets) {
         for (const auto &path : target.sources) {

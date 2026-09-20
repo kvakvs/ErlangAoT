@@ -1,5 +1,12 @@
 # Current working memory — 2026-09-20
 
+- Default positional/project invocations now preprocess and parse all selected
+  sources; successful ASTs reach driver/frontend.cpp's compile_module TODO stub.
+  Success exits0 without executable output; explicit checks/printing keep their modes.
+  Fresh Debug build, all19 CLI/project CTests, Lizard, affected-production clang-tidy,
+  formatting and whitespace pass. Full check-quality not rerun for this uncommitted change.
+  Extra tidy on project execution test finds its pre-existing exception-escape in
+  main's filesystem path assignment; repository quality gate excludes test sources.
 - `--project` now appends `.toml` when the supplied path is missing and lacks
   that suffix; existing paths and filesystem errors retain precedence. Resolver
   lives in project/command.cpp; all18 project CTests pass with new CLI regressions.

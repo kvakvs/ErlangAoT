@@ -26,8 +26,9 @@ Options:
       --               Treat all remaining arguments as input paths.
 
 Checks do not validate semantics or run parse transforms.
-Compilation is not implemented yet. Compilation requests fail without writing
-an output file. Input paths may contain spaces when quoted by the shell.
+With no check/print action, preprocess and parse before the compilation placeholder.
+Code generation is not implemented yet; successful processing writes no output file.
+Input paths may contain spaces when quoted by the shell.
 )";
 
 // Map generic invocation settings onto the project command's existing frontend callback.
@@ -42,12 +43,12 @@ int run_project(const erlang_aot::cli::Options &options) {
     const erlang_aot::project::FileExecutor execute = [&](const auto &path, const auto &preprocessing,
                                                           const auto &sink) {
         return erlang_aot::cli::process_file(
-            path, {options.print_pp, options.print_ast, options.parse_check, preprocessing}, sink);
+            path, {options.print_pp, options.print_ast, options.parse_check, !options.preprocess, preprocessing}, sink);
     };
     return erlang_aot::project::run(options.project, settings, execute, std::cout, std::cerr);
 }
 
-// Validate the request and inputs before reporting the unimplemented backend.
+// Validate the request and dispatch explicit actions or the default compiler pipeline.
 int run(std::span<char *> arguments) {
     erlang_aot::cli::Options options;
     if (const auto error = erlang_aot::cli::parse_options(arguments, options)) {
@@ -71,12 +72,7 @@ int run(std::span<char *> arguments) {
         return 1;
     }
 
-    if (options.preprocess) {
-        return erlang_aot::cli::preprocess(options);
-    }
-    std::cerr << "erlangaot: error: compilation is not implemented yet; no "
-                 "output was written.\n";
-    return 1;
+    return erlang_aot::cli::process_inputs(options);
 }
 
 } // namespace

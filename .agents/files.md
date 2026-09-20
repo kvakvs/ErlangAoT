@@ -14,7 +14,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
-  diagnostic callback and printing, with a positional-mode adapter.
+  diagnostic callback and printing, with a positional-mode adapter and a compile
+  placeholder for successfully parsed modules in the default pipeline.
 - Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
   source/token/events, immutable features, parser ownership/limits/results and output APIs.
 - `src/source/source.cpp`: decoding/positions; `src/diagnostics/diagnostic.cpp`: logical

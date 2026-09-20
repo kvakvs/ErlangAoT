@@ -86,6 +86,9 @@ erlangaot --new-project <filename>
   preserve selector order, keeping only the first occurrence of each name.
   Unknown names fail before frontend processing and list available names in
   manifest order. No default-target field or implicit dependency expansion.
+- Without a check/print action, preprocess and parse every selected source, then
+  pass successfully parsed modules to the compilation placeholder. Return success
+  if all sources pass; executable generation remains unimplemented and writes nothing.
 - Validate CLI syntax before honoring help/version, as today, but help/version
   do not open/create the project or resolve target names. Keep help precedence
   over version.
@@ -98,7 +101,7 @@ erlangaot --new-project <filename>
   than guessing from the existing `a.out` default. Keep positional-mode defaults.
 - Exit `2` for CLI usage errors and unknown target selectors; exit `1` for
   manifest I/O/TOML/schema errors, source discovery errors, frontend failures,
-  project-creation failures, and the unimplemented backend; exit `0` for successful
+  and project-creation failures; exit `0` for successful default-pipeline processing,
   checks/printing, project creation, or informational output. Warnings alone remain
   successful.
 

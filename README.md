@@ -111,8 +111,12 @@ to stdout and can be combined: `--print-pp --print-ast` prints source before the
 tree for each input. Adding `--preprocess-check` does not disable parsing requested
 by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 
-Exit codes: **0** for success (including warnings), **1** for source/project errors
-or unimplemented compilation, **2** for usage errors or unknown target names.
+With no check/print action, source inputs and `--project` run preprocessing and
+parsing, then reach a compilation placeholder. Successful processing returns `0`;
+code generation is not implemented, so no executable is written.
+
+Exit codes: **0** for success (including warnings), **1** for source/project errors,
+**2** for usage errors or unknown target names.
 Each input is processed independently; any source error makes the overall command fail.
 
 Syntax checks do not validate semantics or execute parse transforms. Check/print

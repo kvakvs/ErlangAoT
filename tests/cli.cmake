@@ -30,24 +30,24 @@ check_cli(output_consumes_terminator 0 "Usage: erlangaot" "^$" --output -- --hel
 check_cli(option_after_terminator_is_input 1 "^$" "cannot access|not a regular file" -- --help)
 check_cli(missing_input 1 "^$" "cannot access|not a regular file" missing.erl)
 check_cli(directory_input 1 "^$" "not a regular file" .)
-check_cli(unimplemented 1 "^$" "compilation is not implemented" "source with spaces.erl")
-check_cli(end_of_options 1 "^$" "compilation is not implemented" -- -source.erl)
-check_cli(multiple_inputs 1 "^$" "compilation is not implemented"
+check_cli(default_pipeline 0 "^$" "^$" "source with spaces.erl")
+check_cli(end_of_options 0 "^$" "^$" -- -source.erl)
+check_cli(multiple_inputs 0 "^$" "^$"
     "source with spaces.erl" ./-source.erl)
 
 set(output "${TEST_DIR}/output file")
 file(REMOVE "${output}")
-check_cli(no_output_created 1 "^$" "compilation is not implemented"
+check_cli(no_output_created 0 "^$" "^$"
     --output "${output}" "source with spaces.erl")
 if(EXISTS "${output}")
-    message(FATAL_ERROR "Unimplemented compilation created an output file")
+    message(FATAL_ERROR "Default pipeline created an output file")
 endif()
 file(WRITE "${output}" "preserve existing output\n")
-check_cli(no_output_overwritten 1 "^$" "compilation is not implemented"
+check_cli(no_output_overwritten 0 "^$" "^$"
     -o "${output}" "source with spaces.erl")
 file(READ "${output}" contents)
 if(NOT contents STREQUAL "preserve existing output\n")
-    message(FATAL_ERROR "Unimplemented compilation modified an existing output file")
+    message(FATAL_ERROR "Default pipeline modified an existing output file")
 endif()
 
 # Preprocessing checks consume source and options but never create executable output.
@@ -146,3 +146,14 @@ file(READ "${TEST_DIR}/a.out" contents)
 if(NOT contents STREQUAL "existing executable\n")
     message(FATAL_ERROR "Preprocessing overwrote executable output")
 endif()
+
+# The default pipeline uses the real preprocessor/parser and aggregates source failures.
+check_cli(default_warning 0 "^$" "warning:.*notice" warning.erl)
+check_cli(default_pp_error 1 "^$" "error:.*stop" error.erl)
+check_cli(default_parse_error 1 "^$" "error:.*parse-error.erl" parse-error.erl)
+check_cli(default_failure_latches 1 "^$" "parse-error.erl.*warning:.*notice" parse-error.erl warning.erl)
+check_cli(default_isolation 0 "^$" "^$" first.erl second.erl)
+check_cli(default_expansion 0 "^$" "^$"
+    -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
+check_cli(default_options 0 "^$" "^$" --app-dir demo=app
+    --enable-feature compr_assign --disable-feature maybe_expr parse-options.erl)

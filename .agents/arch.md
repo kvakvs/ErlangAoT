@@ -15,7 +15,8 @@
   resolved sources and independent effective frontend options for every selected
   target, validating all work before execution and reserving outputs without writes.
   Execution visits each target/file independently through a shared frontend callback,
-  adds diagnostic context and aggregates failures; unsupported compilation writes nothing.
+  adds diagnostic context and aggregates failures. Default requests preprocess and
+  parse, then reach a compile placeholder; successful processing returns 0 without output files.
 
 - CMake fixes project targets to C++23 with warnings as errors, building the host
   tool `erlangaot` and a separate placeholder runtime.

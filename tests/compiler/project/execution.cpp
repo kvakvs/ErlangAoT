@@ -33,8 +33,10 @@ int main() {
     calls.clear();
     messages.clear();
     invocation.frontend = false;
-    require(execute(invocation, executor, sink) == 1 && calls.empty());
-    require(messages.front().find("compilation is not implemented") != std::string::npos);
+    require(execute(invocation, executor, sink) == 1);
+    require(calls == std::vector<std::string>{"shared.erlVALUE=1", "later.erlVALUE=1", "shared.erlVALUE=2"});
+    require(messages.size() == 3);
+    require(execute(invocation, [](const auto &, const auto &, const auto &) { return false; }, sink) == 0);
     invocation.frontend = true;
     require(execute(invocation, [](const auto &, const auto &, const auto &) { return false; }, sink) == 0);
 }

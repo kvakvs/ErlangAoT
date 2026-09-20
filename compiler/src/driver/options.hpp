@@ -18,7 +18,7 @@ struct Options {
     erlang_aot::project::Request project;
     // Preserve source order for input validation and future compilation.
     std::vector<std::filesystem::path> inputs;
-    // Preprocessing options are recreated independently for every input module.
+    // Select an explicit check/print action instead of the default compiler pipeline.
     bool preprocess = false;
     // Emit expanded forms while sharing the diagnostics-only preprocessing path.
     bool print_pp = false;
@@ -26,13 +26,14 @@ struct Options {
     bool print_ast = false;
     // Request syntax diagnostics without requiring tree output.
     bool parse_check = false;
+    // Recreate preprocessing options independently for every input module.
     erlang_aot::PreprocessorOptions preprocessing;
 };
 
 // Parse and validate usage independently of reading source files.
 std::optional<std::string> parse_options(std::span<char *> remaining, Options &options);
 // Process every input using an independent frontend ownership context.
-int preprocess(const Options &options);
+int process_inputs(const Options &options);
 // Check physical input paths before running the selected frontend mode.
 bool validate_inputs(const std::vector<std::filesystem::path> &inputs);
 } // namespace erlang_aot::cli

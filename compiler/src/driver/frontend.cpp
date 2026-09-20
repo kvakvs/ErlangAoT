@@ -20,7 +20,12 @@ void print_form(const PreprocessorEvent &event) {
     }
 }
 
-// Consume a parsing pass while preserving recoverable AST output and failure latching.
+// Reserve the handoff from a successfully parsed module to future code generation.
+void compile_module(const ast::Module &) {
+    // TODO: Invoke the compiler here once lowering and code generation are implemented.
+}
+
+// Consume a parsing pass and dispatch successful modules to the requested final stage.
 bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink) {
     ParserSession parser;
     while (!parser.stopped()) {
@@ -40,14 +45,20 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     if (request.print_ast) {
         print_ast(std::cout, result.module);
     }
-    return result.failed || session.failed();
+    if (result.failed || session.failed()) {
+        return true;
+    }
+    if (request.compile) {
+        compile_module(result.module);
+    }
+    return false;
 }
 
 // Keep source ownership and all mutable frontend state local to one file.
 bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink) {
     SourceManager sources;
     PreprocessorSession session(sources.read(path), request.preprocessing);
-    if (request.parse_check || request.print_ast) {
+    if (request.parse_check || request.print_ast || request.compile) {
         return parse_and_print(session, request, sink);
     }
     while (const auto event = session.next()) {
@@ -81,8 +92,9 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
 }
 
 // Preserve positional order and warning-only success using the same per-file operation.
-int preprocess(const Options &options) {
-    const FrontendRequest request{options.print_pp, options.print_ast, options.parse_check, options.preprocessing};
+int process_inputs(const Options &options) {
+    const FrontendRequest request{options.print_pp, options.print_ast, options.parse_check, !options.preprocess,
+                                  options.preprocessing};
     const DiagnosticSink sink = [](std::string_view message) { std::cerr << message << '\n'; };
     bool failed = false;
     for (const auto &path : options.inputs) {
