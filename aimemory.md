@@ -1,5 +1,20 @@
 # Current working memory — 2026-09-20
 
+- User clarification: compiled atoms are read-only constants initialized by runtime
+  AtomStorage calls. Compiler emits spellings/slots, never numeric IDs. Explicit
+  per-runtime module initialization creates bindings and transfers roots from any
+  temporary context into pinned module metadata before publication. Body reads only;
+  no per-use interning. Documented in atom_storage/terms/code_server and 04-compile.
+- AtomStorage API-only review in runtime/design/atom_storage.{hpp,md}. One per runtime;
+  create(context,text) returns atom Term, repeat spelling reuses ID. Sequential IDs
+  start0; dense ID indexing and name hash index; no implementations/alternative lookup.
+  Startup max_atoms default2^20, hard2^26, inclusive1..hard; cap applies retained entries.
+  AtomId=uintptr_t matches private Word; future GC can leave ID gaps and reclaim entries
+  without ever changing surviving IDs/spellings or reusing IDs. Numeric exhaustion is
+  separate from live cap. Term.atom_id and ProcessContext.atom_storage accessors added.
+  collect is declared placeholder; global roots must include metadata/mailbox/transit.
+  Native standalone/combined syntax and cap/API assertions, clang-tidy, Lizard,
+  formatting/whitespace and local links pass. No runtime implementation or commit.
 - User correction: never automatically convert arguments on call. Each MFA now holds
   exact native type signatures and optional all-Term fallback. Boxed prepare only selects
   all-Term; prepare_native matches NativeArguments exact C++ types, else requires a generic

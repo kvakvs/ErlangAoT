@@ -28,6 +28,15 @@ resolution and typed C++ registrations: [`code_server.hpp`](../runtime/design/co
 and future callable/conversion boundaries; it remains outside the executable subset.
 Its callable dispatch selects exact registered native argument types or an all-Term
 fallback; argument conversions are explicit caller work, never automatic dispatch.
+The [AtomStorage API sketch](../runtime/design/atom_storage.md) reserves one atom
+registry per runtime: stable monotonically allocated IDs, dense ID/name indexes,
+startup-configurable 2^20 default / 2^26 hard entry cap, and an atom-GC placeholder.
+It adds no implemented atom service, collector or alternative numeric lookup.
+Compiled atoms are read-only constants initialized by runtime calls to AtomStorage.
+Emit their spellings and constant bindings, never compiler-assigned numeric atom IDs;
+initialize and root the bindings per runtime/module before publishing callable code.
+Function bodies read those initialized constants. This is the later atom-lowering
+contract; the current milestone's unsupported-atom diagnostics remain in place.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
 

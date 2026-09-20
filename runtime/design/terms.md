@@ -6,6 +6,10 @@ Status: proposed, 2026-09-20. **No runtime implementation.**
 [process_heap.hpp](process_heap.hpp) owns process term storage and declares addition,
 cross-heap copying and collection. All sketches are deliberately outside the
 exported include tree and all CMake targets.
+[atom_storage.hpp](atom_storage.hpp) and [atom_storage.md](atom_storage.md) define
+runtime-wide interning, stable numeric atom IDs, startup caps and the atom-GC placeholder.
+Compiled atom literals are read-only constants initialized through AtomStorage at
+runtime; the compiler records spellings/constant slots and never assigns numeric IDs.
 Nothing here can be linked yet;
 this is not completion of a step in the [compilation plan](../../.agents/04-compile.md).
 
@@ -88,8 +92,10 @@ to moved cells; it must not reinterpret integer limbs, float bits, packed bytes
 or registry IDs as references. Internal C++ cell pointers cannot survive a
 safepoint without re-resolution through a root. Atom/identity/descriptor IDs are
 stable for the runtime instance and cannot be recycled while values could refer
-to them. This draft proposes retention until runtime shutdown; bounded tables
-fail at their resource limit. Closure descriptors retain their code metadata.
+to them. Initially tables retain entries until runtime shutdown and fail at their
+resource limit. The atom-storage sketch reserves future reclamation/compaction of
+unreachable atoms without renumbering survivors or reusing IDs; other registry
+reclamation remains deferred. Closure descriptors retain their code metadata.
 Process termination does not erase the identity of an existing pid term. Future
 table reclamation needs its own reachability and generation contract.
 
@@ -117,7 +123,7 @@ a separate storage kind. Binaries are bitstrings with a bit count divisible by e
 | --- | --- | --- | --- |
 | Integer, including bignum | `integer`, `integer_decimal` | `is_integer`, checked `integer_value`, lossless `integer_decimal` | Construct a replacement |
 | Float | `floating` | `is_float`, `float_value` | Construct a replacement |
-| Atom / boolean | `atom`, `boolean` | `is_atom`, `is_boolean`, `atom_utf8`, `boolean_value` | Construct a replacement |
+| Atom / boolean | `atom`, `boolean` | `is_atom`, `is_boolean`, `atom_utf8`, `atom_id`, `boolean_value` | Construct a replacement |
 | Nil / cons / proper or improper list | `nil`, `cons`, `list` | `is_nil`, `is_cons`, `is_list`, `is_proper_list`, `head`, `tail`, `list_length`, `list_elements` | `prepend`, `append`, `with_list_element` |
 | Tuple | `tuple` | `is_tuple`, `tuple_size`, `tuple_element`, `tuple_elements` | `with_tuple_element` |
 | Map | `map` | `is_map`, `map_size`, `map_contains`, `map_find`, `map_entries` | `with_map_entry`, `with_existing_map_entry`, `without_map_entry` |
@@ -237,7 +243,9 @@ must not be scanned. Compiler locals must have root maps before collection is en
   canonical decimal (no leading plus/zeros, zero is `0`). Floats require finite
   values; integer access never silently coerces a float. Atoms validate UTF-8,
   preserve spelling without Unicode normalization, and enforce OTP-compatible
-  length limits plus runtime atom-table budgets.
+  length limits plus runtime AtomStorage budgets. New names receive sequential
+  runtime-local IDs wrapped as atom Terms; existing names retain their IDs.
+  The startup cap defaults to 2^20 entries and cannot exceed the hard limit of 2^26.
 - Bitstrings use exactly `ceil(bit_count / 8)` bytes with MSB-first significant
   bits; unused low bits in the last byte must be zero on input and output. Empty
   bitstrings/binaries are valid. Slices use bit offsets/counts and checked bounds.

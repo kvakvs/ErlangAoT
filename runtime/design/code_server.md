@@ -66,6 +66,14 @@ file discovery remain later work. Duplicate load is deliberately not silent repl
 
 ## What loaded code owns
 
+Compiled atom literals are read-only constants initialized by runtime AtomStorage
+calls before module publication. Each loaded module instance retains its initialized
+atom bindings and metadata roots, including while resolved handles/call frames pin
+unloaded code. A shared CodeImage does not contain runtime-independent numeric atom
+IDs; distinct runtimes have separate bindings. See the
+[compiled atom constant contract](atom_storage.md#compiled-atom-constants) for ordering,
+failure cleanup and initialization-context lifetime.
+
 `CodeImage` is the lifetime anchor for executable memory, module constants, relocation
 data and platform loader handles. `CodeImage::linked()` represents statically linked
 code that remains mapped for the executable's lifetime. A future native object/shared

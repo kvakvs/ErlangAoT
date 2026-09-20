@@ -14,6 +14,7 @@ namespace erlang_aot::runtime {
 class Scheduler;
 class SchedulerPool;
 class CodeServer;
+class AtomStorage;
 
 // Preserve exactly the requested five scheduler classes; these are not OS priorities.
 enum class ProcessPriority : std::uint8_t { idle, low, normal, high, realtime };
@@ -127,6 +128,8 @@ class ProcessContext final {
     Mailbox &mailbox() noexcept;
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
+    // Share one runtime-owned atom identity/name table across every scheduler and process.
+    AtomStorage &atom_storage() noexcept;
     // Copy and enqueue a message without awaiting delivery; sending to a dead local pid is a no-op.
     ProcessResult<void> send(ProcessIdentity recipient, const Term &value);
 

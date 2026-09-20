@@ -85,7 +85,7 @@ struct alignas(Word) FloatCell final {
 struct alignas(Word) AtomCell final {
     // Identify an atom allocation with no process-heap references.
     Header header;
-    // Stable entry in this runtime's atom table; not a public Erlang atom encoding.
+    // Immutable AtomStorage ID; initially dense, independent of future table compaction.
     Word atom_id;
 };
 

@@ -16,6 +16,7 @@
 namespace erlang_aot::runtime {
 class ProcessContext;
 class ProcessHeap;
+class AtomStorage;
 class ProcessIdentity;
 class PortIdentity;
 class ReferenceIdentity;
@@ -24,10 +25,25 @@ class ClosureDescriptor;
 class NativeRecordDescriptor;
 class TermFactory;
 
+// Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.
+using AtomId = std::uintptr_t;
+
 // Semantic categories, independent of allocation strategy and machine tags.
 enum class TermKind : std::uint8_t {
-    integer,
+    // An Integer in Erlang can be either a smallint, fitting into a machine word, minus the tag bits,
+    // or a BigInt which is a boxed integer with a header word and followed by the binary bignum digits.
+    smallint,
+    bigint,
+    // A floating point number in Erlang is equivalent to a 64-bit double in C-C++
+    // Float in Erlang is stored as a box with header tagging a float, and followed by 64 bits of
+    // the IEEE fp representation.
     floating,
+    // An Atom is a Erlang data type represented by a hidden constant integer value assigned at
+    // atom creation, and a constant string, atom's name, also assigned at creation. Since creation
+    // atoms can be used in the program and internally their numerical value is passed, tagged
+    // as Atom data type. An Atom hidden integer value can never leave an Erlang node, they
+    // always are converted to a string first to find the new numerical value on the remote
+    // host or the future host which will read and instantiate this atom value.
     atom,
     reference,
     function,
@@ -111,6 +127,8 @@ class Term final {
     TermResult<double> float_value() const;
     // Copy the atom's Unicode spelling as UTF-8, or extract true/false.
     TermResult<std::string> atom_utf8() const;
+    // Extract the atom's stable runtime-local number, not an integer Term or a storage address.
+    TermResult<AtomId> atom_id() const;
     TermResult<bool> boolean_value() const;
 
     // Extract opaque identities, never process pointers, numeric IDs or native callbacks.
@@ -171,6 +189,7 @@ class Term final {
 
   private:
     friend class TermFactory;
+    friend class AtomStorage;
     // External host root hides the heap slot and ownership; no smart pointer lives in a heap cell.
     class Impl;
     std::shared_ptr<const Impl> impl_;
@@ -197,7 +216,7 @@ class TermFactory final {
     TermResult<Term> integer_decimal(std::string_view value);
     // Construct a finite Erlang float; reject NaN and infinity.
     TermResult<Term> floating(double value);
-    // Intern a validated Unicode atom spelling; boolean constructs true or false.
+    // Delegate interning to the context's runtime AtomStorage; boolean uses its true/false entries.
     TermResult<Term> atom(std::string_view utf8);
     TermResult<Term> boolean(bool value);
 

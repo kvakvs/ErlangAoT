@@ -15,6 +15,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
   `terms.hpp`: opaque C++ API and explicit cross-heap copy declarations; `term_layout.hpp`: private heap struct
   sketch and size/offset assertions. No runtime logic or CMake integration.
+- `runtime/design/atom_storage.{hpp,md}`: runtime-local atom interning/lookup API,
+  startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
   `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
   `process.hpp`: identities, continuation/ticks, owned signals, context and process state;

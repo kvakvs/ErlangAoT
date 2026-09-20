@@ -4,6 +4,13 @@
   `Term`/factory API over private word-aligned heap structs and traceable one-word
   slots, with immutable updates and a future tagged-value boundary. Declarations
   and layout assertions only, outside CMake; the runtime remains a placeholder.
+- AtomStorage review API owns runtime-local interning: sequential word-sized atom
+  IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
+  default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
+  preserving surviving strings/IDs and never recycling IDs; no alternate lookup type.
+  Compiler atom constants retain spellings/slots, receive IDs from AtomStorage during
+  module initialization, then remain read-only. Bindings/metadata roots are per-runtime
+  module instances and retained through pinned code lifetime; no IDs assigned at compile time.
 - Runtime process/scheduler review declarations in `runtime/design/{process_heap,
   process,scheduler,mailbox}.hpp` and `processes.md` extend that sketch: one worker per
   logical CPU, owner-thread commands, cooperative tick grants, per-process 1:8:9
