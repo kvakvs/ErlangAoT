@@ -2,19 +2,14 @@
 
 // REVIEW SKETCH ONLY: private target-runtime layouts, not a public API or wire format.
 // No allocator, accessor, tag encoder or collector is implemented here. See terms.md.
+#include "../include/base_types.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
 namespace erlang_aot::runtime::detail::layout {
-// Use the runtime target's pointer width, never the compiler host's width for cross emission.
-using Word = std::uintptr_t;
-static_assert(sizeof(Word) == 4 || sizeof(Word) == 8);
-static_assert(alignof(Word) == sizeof(Word));
-
 // One traceable term reference; initially a boxed address, later a private tagged word.
-//
 // With tagged term implementation: Non-boxed terms can coexist in memory with
 // headers (header terms are marking a start of a boxed term in memory)
 struct alignas(Word) TermSlot final {
@@ -23,21 +18,42 @@ struct alignas(Word) TermSlot final {
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.
+// This is currently represented by 4 bits in the HeaderTag, raise alarm if more than 16
+// enum elements are added.
 enum class ObjectKind : std::uint8_t {
-    integer,
-    floating,
-    atom,
-    reference,
-    external_function,
-    closure,
-    port,
-    pid,
-    tuple,
-    map,
-    nil,
-    cons,
-    bitstring,
-    native_record
+    tuple = 0, // corresponds to BEAM VM constant ARITYVAL=0
+    native_record = 1,
+    bignum = 2,
+    // 3
+    reference = 4,
+    fun_closure = 5, // function or a closure with attached frozen values
+    floating = 6,
+    external_function = 7,
+    refc_binary = 8, // a reference-counted pointer to a global binary heap object
+    heap_binary = 9, // a locally heap-contained data blob
+    sub_binary = 10,
+    match_context = 11, // something created by binary matching?
+    ext_pid = 12,
+    ext_port = 13,
+    ext_ref = 14,
+    map = 15,
+};
+
+// Defines the type of contents of a boxed value
+// This tag is appended via union to the arity value in higher bits.
+using HeaderTag = union {
+    // TODO: Logic extracting the boxed object kind and arity should go here?
+    union {
+        ObjectKind kind_ : 4;
+
+        union {
+            Word padding_primary_ : 6;    // never used
+            Word tag_primary_header_ : 2; // this is always 0, otherwise not used
+            // TODO: Assert that tag_primary_header_ is invariant and is always 0
+        };
+    };
+
+    ObjectKind kind() const { return kind_; }
 };
 
 // Every allocation begins here; GC state belongs in side metadata in this proposal.
@@ -47,10 +63,13 @@ enum class ObjectKind : std::uint8_t {
 // Tagged term implementation keeps this in 1 word: Fits kind in 2 4 or 6 bits
 // (cascading based on previous 2 bits value) and word size in the remaining bits.
 struct alignas(Word) Header final {
-    // Word-encoded ObjectKind avoids implicit padding, C++ bitfields and hidden tag packing.
-    Word kind;
     // Total allocated words, including this header, trailing data and end padding.
-    Word size_words;
+    union {
+        // How many words the content spans AFTER the header word
+        Word size_words_ : (ERL_WORD_BITS - 6);
+        // The type of content
+        HeaderTag tag_;
+    };
 };
 
 // Nil is a distinct value, not a null reference; it has no traced fields.

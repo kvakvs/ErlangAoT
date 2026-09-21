@@ -14,7 +14,7 @@
 #include <variant>
 
 namespace erlang_aot::runtime {
-class TickBudget;
+class ReductionBudget;
 class NativeArguments;
 
 // Separate invocation failures from module lookup and from successful Erlang values.
@@ -64,7 +64,7 @@ class CallFrame {
     // Release arguments/temporaries and cancel waiters before the owning process heap dies.
     virtual ~CallFrame() = default;
     // Run under a scheduler tick grant; completed/failed frames cannot be resumed again.
-    virtual CallResult<CallProgress> resume(ProcessContext &context, TickBudget &budget) = 0;
+    virtual CallResult<CallProgress> resume(ProcessContext &context, ReductionBudget &budget) = 0;
 };
 
 // Erase one registered argument signature; several signatures may share an Erlang name/arity.

@@ -2,6 +2,7 @@
 
 // REVIEW SKETCH ONLY: declarations without definitions, excluded from the build.
 // See terms.md for ownership, errors, immutable updates and the private ABI boundary.
+#include "../include/base_types.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -45,15 +46,37 @@ enum class TermKind : std::uint8_t {
     // always are converted to a string first to find the new numerical value on the remote
     // host or the future host which will read and instantiate this atom value.
     atom,
+    // A reference is a bit combination of current node id (in the cluster), node generation (starting from 0),
+    // and current time and some monotonously increasing counter within that time. Reference inside one
+    // Erlang node is guaranteed to be unique, and tries to also remain unique in a Erlang cluster.
     reference,
+    // A callable Erlang object points to a function of certain arity (encoded in the value) can have
+    // arguments applied to it, and if argument count doesn't match a badfun exception might occur.
     function,
+    // Represented as Port<X.Y> where X and Y are internal index in the internal port table, implementation
+    // is free to define how these work.
+    // A port is a unique handle to a resource open by a runtime driver (such as network socket or a file)
+    // A port can be read from, written to via sending messages, and all that communication is handled by the
+    // port driver to perform IO operations.
     port,
+    // A process identifier <A.B.C> is a node-unique combination of sequentially increasing number (values
+    // B, C split into 15 bits and remaining bits), and node number A (0 is local).
     pid,
+    // A tuple is an array of Terms of fixed size, represented on heap as a header with arity, followed by
+    // array of values. Tuples are immutable in language, but compiler is free to allow mutations.
     tuple,
+    // A map is a key/value structure of {term => term}
     map,
+    // A special value representing an empty list, fits in one Term
     nil,
+    // A couple of values representing a list cell, in memory stored as two terms: head and tail.
     cons,
+    // An array of bits not necessarily being a multiple of 8. Contains both arity in the header word,
+    // for word size of the data object, and the bit count, followed by the bits.
     bitstring,
+    // A tuple with tag (first element is tag atom), where each field has a name and possibly a typespec.
+    // Runtime does not tie record and its definition together, but for an unknowing user a record looks
+    // like a tuple with an atom in first position.
     record
 };
 
@@ -72,10 +95,49 @@ enum class TermError : std::uint8_t {
     not_implemented
 };
 
+enum class TermTagPrimary : std::uint8_t {
+    header = 0,
+    list = 1,  // the rest of the bits point to a cons cell
+    boxed = 2, // the rest of the bits point to a Header object, a boxed in memory
+    immed = 3, // if tag1 == immed, allows reading tag2
+};
+
+enum class TermTag2 : std::uint8_t {
+    pid = 0,      // if tag1 == immed
+    port = 1,     // if tag1 == immed
+    immed2 = 2,   // if tag1 == immed, and tag2 == immed2, allows reading into tag3
+    smallint = 3, // if tag1 == immed
+};
+
+enum class TermTag3 : std::uint8_t {
+    atom = 0,
+    catch_object = 1,
+    nil = 3,
+};
+
+// This union must have size 6 bits and must always be padded to the least significant bits of a word
+// TODO: Logic extracting term kind should probably go here in the tag object
+using TermTag = union {
+    TermTag3 tag3_ : 6;
+
+    union {
+        Word padding2_ : 2; // never used
+        TermTag2 tag2_ : 4;
+
+        union {
+            Word padding_primary_ : 2; // never used
+            TermTagPrimary tag_primary_ : 2;
+        };
+    };
+};
+
 // Carry a checked value or failure without fabricating an Erlang result.
 template <typename Value> using TermResult = std::expected<Value, TermError>;
 
 // Common value class for every Erlang term; payload classes and representation stay private.
+// Tagged Term Implementation: Stores term kind in the value_ word lowest 2, 4 or 6 bits.
+// Important property: Term is a pointer-sized (Word-sized) object passable by value, but boxed
+// terms contain bits of a memory pointer, which can be resolved into a boxed term of some kind.
 class Term final {
   public:
     // Copy retains the same immutable value; move transfers this host handle.
@@ -92,6 +154,7 @@ class Term final {
 
     // Identify the semantic category; binaries are byte-sized bitstrings.
     TermKind kind() const;
+
     // Test numeric categories without exposing small-integer/bignum storage.
     bool is_integer() const;
     bool is_float() const;
@@ -190,11 +253,19 @@ class Term final {
   private:
     friend class TermFactory;
     friend class AtomStorage;
-    // External host root hides the heap slot and ownership; no smart pointer lives in a heap cell.
-    class Impl;
-    std::shared_ptr<const Impl> impl_;
-    // Adopt validated runtime storage; consumers cannot construct an invalid term.
-    explicit Term(std::shared_ptr<const Impl> impl);
+
+    union {
+        Word value_;
+
+        union {
+            Word padding_tag_ : (ERL_WORD_BITS - 6);
+            TermTag tag_;
+        };
+    };
+
+    // // Hide process binding, resource budgets and allocation policy from consumers.
+    // class Impl;
+    // std::unique_ptr<Impl> impl_;
 };
 
 // Create terms owned by one live process; inputs are copied/retained before return.
@@ -247,9 +318,9 @@ class TermFactory final {
     // Construct a registered native record with all fields in descriptor order.
     TermResult<Term> native_record(const NativeRecordDescriptor &descriptor, std::span<const Term> fields);
 
-  private:
-    // Hide process binding, resource budgets and allocation policy from consumers.
-    class Impl;
-    std::unique_ptr<Impl> impl_;
+    // private:
+    //   // Hide process binding, resource budgets and allocation policy from consumers.
+    //   class Impl;
+    //   std::unique_ptr<Impl> impl_;
 };
 } // namespace erlang_aot::runtime

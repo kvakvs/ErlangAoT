@@ -60,12 +60,12 @@ struct StepResult final {
     ExitReason reason = ExitReason::normal;
 };
 
-// Count compiler-defined work units, never wall time; zero means a return is required.
-// One unit of TickBudget should be roughly equal to one function call.
-class TickBudget final {
+// Count compiler-defined work units (reductions), never wall time; zero means a return is required.
+// One unit of ReductionBudget should be roughly equal to one Erlang function call.
+class ReductionBudget final {
   public:
     // Start a positive, finite grant; realtime receives fresh grants without switching owners.
-    explicit TickBudget(std::uint64_t ticks);
+    explicit ReductionBudget(std::uint64_t ticks);
     // Saturating subtraction reports whether execution may continue within this grant.
     bool consume(std::uint64_t ticks) noexcept;
     // Expose remaining work for bounded runtime helpers and compiler safe points.
@@ -82,10 +82,20 @@ class ProcessCode {
     // Destroy suspended continuation state before releasing its process heap.
     virtual ~ProcessCode() = default;
     // Run bounded cooperative work; external callbacks must post signals, never resume directly.
-    virtual StepResult resume(ProcessContext &context, TickBudget &budget) = 0;
+    virtual StepResult resume(ProcessContext &context, ReductionBudget &budget) = 0;
 };
 
 // Transfer an owned signal; implementations must not retain sender-heap pointers.
+//
+// Communication in Erlang is conceptually performed using asynchronous signaling.
+// All different executing entities, such as processes and ports, communicate through
+// asynchronous signals. The most commonly used signal is a message. Other common
+// signals are exit, link, unlink, monitor, and demonitor signals.
+//
+// The only signal ordering guarantee given is the following: if an entity sends
+// multiple signals to the same destination entity, the order is preserved; that
+// is, if A sends a signal S1 to B, and later sends signal S2 to B, S1 is guaranteed
+// not to arrive after S2.
 class ProcessSignal final {
   public:
     // Wake a non-receive waiter; a pending mailbox read still requires a message.
