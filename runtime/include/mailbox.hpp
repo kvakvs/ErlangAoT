@@ -11,8 +11,8 @@
 
 namespace erlang_aot::runtime {
 class Mailbox;
+class Process;
 class ReceiveCursor;
-class Scheduler;
 
 // Keep cursor misuse distinct from an exhausted mailbox, which suspends rather than errors.
 enum class MailboxError : std::uint8_t { receive_active, invalid_cursor, no_current_message, expired_context };
@@ -32,7 +32,7 @@ class MailboxRead final {
 
     // Obtain an unread candidate immediately, or report misuse without parking the process.
     bool await_ready();
-    // Register the continuation and force receive-wait; recheck arrivals before actually parking.
+    // Register receive-wait; the scheduler handles pending signals and rechecks before parking.
     bool await_suspend(std::coroutine_handle<> continuation);
     // Return the next rooted candidate after scheduler resumption; end-of-mailbox is never a value.
     MailboxResult<Term> await_resume();
@@ -73,7 +73,7 @@ class ReceiveCursor final {
     explicit ReceiveCursor(std::shared_ptr<Impl> impl);
 };
 
-// Keep delivered terms rooted in the owning process heap until explicitly received.
+// Keep handled message signals as rooted terms until received; unhandled signals stay in Process.
 class Mailbox final {
   public:
     // Release messages and invalidate all cursor generations before the heap is destroyed.
@@ -87,7 +87,7 @@ class Mailbox final {
 
   private:
     friend class ProcessContext;
-    friend class Scheduler;
+    friend class Process;
     friend class ReceiveCursor;
     friend class MailboxRead;
     // Bind mailbox roots and waiter registration to one process and its scheduler.
@@ -96,7 +96,8 @@ class Mailbox final {
     class Impl;
     std::unique_ptr<Impl> impl_;
 
-    // Append an already copied receiver-owned term and wake a tail waiter without clearing suspension.
-    TermResult<void> deliver(Term value);
+    // Called only by Process signal handling with a receiver-owned term; preserve explicit suspension.
+    // Append atomically and wake a pending tail read only once a candidate is available.
+    TermResult<void> append_handled_message(Term value);
 };
 } // namespace erlang_aot::runtime

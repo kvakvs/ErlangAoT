@@ -59,8 +59,11 @@ class Scheduler final {
     void start();
     // Drain commands, select eligible work, grant ticks and finish each cooperative return.
     void run(std::stop_token stop);
-    // Apply a bounded inbox batch on this worker, completing replies after state changes.
+    // Route a bounded command batch into process inboxes; retain signal replies until handling.
+    // Apply other controls on this worker and complete their replies after state changes.
     void apply_commands();
+    // Service bounded process signal batches at safe points, independently of code eligibility.
+    void handle_signals();
     // Select realtime owner first, otherwise an eligible queued process using 1:8:9 weights.
     Process *select_next();
     // Mark running and invoke one continuation; catch host exceptions as code_failure.
@@ -92,9 +95,9 @@ class SchedulerPool final {
     ProcessReply<void> suspend(ProcessIdentity process);
     // Clear suspension; enqueue only if runnable, never spuriously wake an unsignalled waiter.
     ProcessReply<void> resume(ProcessIdentity process);
-    // Deliver on the owning worker; wake/messages preserve the explicit suspension gate.
+    // Enqueue in the process signal inbox; acknowledge handling, preserving explicit suspension.
     ProcessReply<void> send_signal(ProcessIdentity process, ProcessSignal signal);
-    // Copy on sender's owner thread, route asynchronously and acknowledge receiver mailbox delivery.
+    // Post a message signal from the sender's owner thread; acknowledge mailbox append after handling.
     ProcessReply<void> send(ProcessContext &sender, ProcessIdentity recipient, const Term &value);
     // Exit through the owner, including removal from ready queues and realtime reservation.
     ProcessReply<void> exit(ProcessIdentity process, ExitReason reason = ExitReason::requested);

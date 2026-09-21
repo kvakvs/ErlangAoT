@@ -17,6 +17,9 @@
   weighted service, sole-live-process idle eligibility and realtime tenure until
   exit (even while blocked). Chunked heap/GC hooks and OS-thread process backend
   are proposals only; no worker, allocator or scheduling behavior is implemented.
+  Process owns a FIFO signal inbox; all messages enter it before bounded safe-point
+  handling copies payloads into the heap and appends to the receive-only mailbox.
+  Signal handling also services waiting/suspended processes without running their code.
   ProcessContext explicitly owns heap/mailbox; heap add and Term::copy_to describe
   rooted graph copies, collect reserves safe-point tracing. Receive cursors preserve
   unmatched messages, remove only a selected candidate and asynchronously park at

@@ -19,9 +19,10 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
   `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
-  `process.hpp`: identities, continuation/ticks, owned signals, context and process state;
-  `mailbox.hpp`: selective-receive cursor, async next/forced wait and matched-message removal;
-  `scheduler.hpp`: per-CPU worker/pool lifecycle and asynchronous process-control API.
+  `runtime/include/process.hpp`: identities, continuation/reductions, owned signal inbox,
+  deferred signal handling, context and process state;
+  `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
+  `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
   Review-only declarations, excluded from CMake alongside the term sketches.
 - `runtime/design/code_server.{hpp,md}`: loaded module registry, exports/MFA resolution,
   retained code images and callable/conversion contract; `callable.hpp`: erased

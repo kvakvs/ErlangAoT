@@ -1,4 +1,14 @@
-# Current working memory — 2026-09-20
+# Current working memory — 2026-09-21
+
+- Message delivery review update: runtime/include/process.hpp owns a FIFO signal_inbox_
+  plus enqueue/handle boundaries; every message (including self-send) goes through it.
+  Scheduler routes then services bounded signal batches even for waiting/suspended code.
+  Only Process handling appends receiver-owned terms via Mailbox::append_handled_message.
+  Diagnostic send replies still await handling, process-facing send only accepts locally.
+  Design/architecture/file notes updated. Declarations only, no runtime implementation.
+  Focused clang-tidy, Lizard, formatting and whitespace pass. Strict C++23 syntax is
+  blocked by existing terms.hpp anonymous nested unions at lines 127 and 260 under
+  -Wpedantic -Werror; no suppressions or unrelated layout changes made. No commit.
 
 - User clarification: compiled atoms are read-only constants initialized by runtime
   AtomStorage calls. Compiler emits spellings/slots, never numeric IDs. Explicit

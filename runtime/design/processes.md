@@ -5,11 +5,11 @@ the [term sketch](terms.md). No workers, allocator, continuation or signal deliv
 are implemented. This is the implementation boundary for review, not a runnable
 runtime or a claim of OTP scheduling compatibility.
 
-Read [scheduler.hpp](scheduler.hpp) for creation/control and worker lifecycle,
-[process.hpp](process.hpp) for process state, signals and cooperative execution,
-[process_heap.hpp](process_heap.hpp) for term storage/copying and the GC boundary,
-and [mailbox.hpp](mailbox.hpp) for selective-receive cursors and asynchronous reads.
-All new runtime artifacts are in this directory.
+Read [scheduler.hpp](../include/scheduler.hpp) for creation/control and worker lifecycle,
+[process.hpp](../include/process.hpp) for process state, signals and cooperative execution,
+[process_heap.hpp](../include/process_heap.hpp) for term storage/copying and the GC boundary,
+and [mailbox.hpp](../include/mailbox.hpp) for selective-receive cursors and asynchronous reads.
+Review headers live in `runtime/include/`; design notes live in this directory.
 
 ## Ownership and startup
 
@@ -117,7 +117,7 @@ will need a completion bridge to signals. FIFO is defined by insertion under the
 inbox mutex; racing producers have no ordering before that serialization point.
 
 Suspension is an idempotent boolean, separate from runnable/running/waiting/exited.
-Resume clears it; it does not awaken a waiter. Messages make a waiter runnable;
+Resume clears it; it does not awaken a waiter. Handled message signals make a waiter runnable;
 generic wake does so only for non-receive waits. Both leave suspension set.
 Signals arriving during a dispatch are applied
 after its return is recorded, before its next selection, so a wake cannot be lost
@@ -134,7 +134,8 @@ nonemptiness alone is insufficient because every queued message may have been sk
 | Wait | Set waiting, drain pending controls; enqueue only if awakened and unsuspended. |
 | Suspend | Set suspension, remove any ready entry; acknowledge after running code returns. |
 | Resume | Clear suspension, enqueue once if runnable. |
-| Wake/message | Deliver signal, wake an eligible waiter (tail reads require a message), enqueue if unsuspended. |
+| Signal arrival | Append to the process signal inbox; mailbox and continuation remain untouched. |
+| Handle wake/message | Consume the next signal; append a message to the mailbox, wake an eligible waiter, enqueue if unsuspended. |
 | Exit/terminate | Mark terminal, erase ready/reservation references, destroy code then context/heap. |
 
 Running, waiting, suspended and exited processes never appear in the ready queue.
@@ -144,8 +145,9 @@ while other processes exist. Every live-count or admission change rechecks idle
 eligibility and wakes the worker if necessary. Never spin on an ineligible queue.
 Predicate checking and sleeping use the same inbox mutex to prevent lost wakeups.
 
-The loop drains a bounded command batch, chooses work, grants ticks, records its
-return, applies pending controls and then requeues/parks/reaps. Command floods must
+The loop drains a bounded command batch, handles bounded process signal batches,
+chooses work, grants ticks, records its return, applies pending controls and signals,
+and then requeues/parks/reaps. Command and signal floods must
 not prevent runnable work from receiving ticks. Natural completion wins over queued
 controls after the dispatch: reap once and reject remaining commands as
 unknown_process. For multiple exit commands, the first applied exit wins. Inspection
@@ -191,12 +193,27 @@ an explicit pin/root protocol. Allocated term cells require no C++ destructors;
 off-heap resources require separately registered cleanup.
 
 `ProcessSignal::message(sender, term)` copies into an independently owned transit
-buffer on the sender's scheduler thread; delivery copies/decodes into the receiver
-heap. Copying a `Term` handle alone is **not** message isolation. Root/lifetime
+buffer on the sender's scheduler thread. All signals, including messages and
+self-sends, route through `Process::enqueue_signal()` into `signal_inbox_`.
+Enqueueing neither touches the mailbox nor resumes process code. At convenient
+owner-worker safe points, `Scheduler::handle_signals()` services process inboxes
+using bounded `Process::handle_signals(budget)` batches. Each batch removes signals
+in FIFO order and applies them through `Process::handle_signal()`; only handling a
+message copies/decodes its payload into the receiver heap and calls the private
+`Mailbox::append_handled_message()`. Wake and terminate signals never enter the mailbox.
+
+Signal handling remains eligible while process code is waiting, explicitly suspended
+or excluded by scheduling priority, so a waiting receiver can make progress. It does
+not invoke the continuation or clear explicit suspension. If a batch exhausts its
+budget, pending signals remain scheduled for service; the worker must not sleep with
+unserviced inboxes. Termination discards remaining signals and completes their pending
+diagnostic replies as unknown_process. Copying a `Term` handle alone is **not** message isolation. Root/lifetime
 validation follows the term sketch. Message replies acknowledge successful mailbox
 delivery, not merely acceptance into an inbox; allocation failure is reported and
 must not partially append a message. Delivery to a dead process destroys its transit
-buffer. Signals preserve inbox ordering; termination is an unconditional runtime
+buffer. Routing and handling preserve order across all signal kinds from one sender
+to one recipient; concurrent senders have no ordering before inbox serialization.
+Termination is an unconditional runtime
 control, not a claim to implement Erlang trap_exit/link semantics.
 
 This proposal supplies wake, message and terminate signals plus selective receive;
@@ -210,7 +227,7 @@ storage. The implementation of that invalidation remains part of the term work.
 ## Sending and selective receive
 
 `ProcessContext::send(recipient, value)` is the process-facing send entry. It validates
-the sender-owned term, copies it into transit storage and queues delivery without
+the sender-owned term, copies it into transit storage and posts a message signal without
 waiting for the recipient. Success means accepted locally; sending to a dead local
 pid succeeds as a no-op. Foreign-runtime identities and invalid term/owner inputs
 report invalid_argument; source-copy or queue limits report resource_limit. A
@@ -249,7 +266,7 @@ remains in force while its receive waits, as specified above.
 Mailbox edits and waiter registration occur only on the owner worker. Each message
 has a stable ID and each arrival advances a checked version. On tail observation,
 the cursor retains the last scanned ID/version, registers its waiter, then the
-scheduler applies incoming delivery commands and rechecks the version before
+scheduler routes incoming signals, handles a bounded signal batch and rechecks the version before
 parking. An arrival either supplies the pending read immediately or makes the parked
 process runnable, never falls between checking and sleep. Version/ID exhaustion
 must fail delivery instead of wrapping. A resumed cursor starts with newly arrived

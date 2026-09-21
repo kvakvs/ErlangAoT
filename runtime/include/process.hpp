@@ -7,6 +7,7 @@
 #include "terms.hpp"
 
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <optional>
 
@@ -102,9 +103,9 @@ class ProcessSignal final {
     static ProcessSignal wake();
     // Request unconditional scheduler-mediated exit at the next safe point.
     static ProcessSignal terminate(ExitReason reason);
-    // Copy a message into transit-owned storage on the sender's scheduler thread.
+    // Copy into transit-owned storage for the recipient's signal inbox, never its mailbox directly.
     static TermResult<ProcessSignal> message(ProcessContext &sender, const Term &value);
-    // Transfer the signal's private buffer across scheduler command queues.
+    // Transfer the owned envelope through scheduler routing into a process signal inbox.
     ProcessSignal(ProcessSignal &&other) noexcept;
     ProcessSignal &operator=(ProcessSignal &&other) noexcept;
     // Release undelivered transit storage, including messages for dead recipients.
@@ -114,7 +115,7 @@ class ProcessSignal final {
     ProcessSignal &operator=(const ProcessSignal &) = delete;
 
   private:
-    friend class Scheduler;
+    friend class Process;
     // Hide wake/exit variants and independently owned message graph encoding.
     class Impl;
     std::unique_ptr<Impl> impl_;
@@ -140,7 +141,7 @@ class ProcessContext final {
     CodeServer &code_server() noexcept;
     // Share one runtime-owned atom identity/name table across every scheduler and process.
     AtomStorage &atom_storage() noexcept;
-    // Copy and enqueue a message without awaiting delivery; sending to a dead local pid is a no-op.
+    // Post a message signal without awaiting handling; sending to a dead local pid is a no-op.
     ProcessResult<void> send(ProcessIdentity recipient, const Term &value);
 
   private:
@@ -173,8 +174,16 @@ class Process final {
     friend class Scheduler;
     // Adopt an initially runnable continuation on its assigned scheduler.
     Process(ProcessIdentity identity, ProcessPriority priority, HeapOptions heap, std::unique_ptr<ProcessCode> code);
+    // Queue every signal on the owner worker without applying it or modifying the mailbox.
+    ProcessResult<void> enqueue_signal(ProcessSignal signal);
+    // Handle a bounded FIFO batch at a safe point, including while waiting or explicitly suspended.
+    void handle_signals(ReductionBudget &budget);
+    // Apply one dequeued signal; only a message copies into the heap and appends to the mailbox.
+    TermResult<void> handle_signal(ProcessSignal signal);
     // Keep process context alive through continuation destruction (reverse member order).
     ProcessContext context_;
+    // Own unhandled signals in arrival order; discard remaining transit storage on exit.
+    std::deque<ProcessSignal> signal_inbox_;
     // Preserve compiler continuation state between cooperative dispatches.
     std::unique_ptr<ProcessCode> code_;
     // Choose eligibility and weighted dispatch frequency without OS priority changes.
