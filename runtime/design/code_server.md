@@ -1,6 +1,7 @@
 # Code server and module function registry — manual review sketch
 
-Status: proposed, 2026-09-22. API declarations only, outside CMake. Registration,
+Status: proposed, 2026-09-22. API declarations listed as CMake headers for IDE
+navigation, without compilation. Registration,
 lookup, invocation and module loading are not implemented.
 
 - [callable.hpp](../include/callable.hpp): plain function targets, signature keys and

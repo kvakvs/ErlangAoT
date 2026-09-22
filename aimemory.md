@@ -1,5 +1,45 @@
 # Current working memory — 2026-09-22
 
+- Bash wrapper failure reproduced with cached CXXFLAGS=-I/opt/homebrew/include:
+  Boost.Parser unused parameters failed under -Werror. BoostDependencies now adds
+  Homebrew's linked include alias as SYSTEM only if its boost directory resolves
+  to the selected Boost tree, and removes that alias from inferred implicit includes
+  so CMake actually emits -isystem. Root/Multiprecision interface share these paths.
+  This supersedes the cache-clearing workaround below for matching Homebrew installs.
+
+- CLion resolved uncompiled term_layout.hpp using erlang_aot (no Boost), although
+  erlang_runtime had the correct system path. Root CMake now discovers shared Boost
+  when either component is enabled and provides its SYSTEM include to all child
+  targets, covering IDE fallback contexts. Target dependency exports remain intact.
+  User requests CMake edits, no MCP/computer control for this fix.
+
+- C++23, required standard and disabled extensions now default in root CMakeLists.txt
+  for all subdirectories/targets; ProjectOptions.cmake only owns warning policy.
+
+- CLion Boost warnings reproduced despite SYSTEM dependency includes: ~/.zprofile
+  exports CXXFLAGS=-I/opt/homebrew/include, shadowing the formula SYSTEM include.
+  Cleared cmake-build-debug CMAKE_CXX_FLAGS via reconfigure; no warning-policy change.
+  Full CLion build passes. README documents cache cleanup and dependency roots. A focused compile confirms
+  Boost is quiet while project unused parameters remain errors. Shell profile is
+  unchanged; clearing the CMake cache can reimport CXXFLAGS unless overridden.
+
+- runtime/CMakeLists.txt explicitly lists all11 prototype headers as PRIVATE target
+  sources for IDE navigation. They are not separate translation units; runtime.cpp
+  remains the only compiled source. Plan/architecture/file map/design notes aligned.
+  Preserve user term_layout.hpp edits; header internals remain review sketches.
+
+- Boost build fix: runtime compile flags previously lacked the global Boost include,
+  reproduced by cpp_int.hpp probe. cmake/BoostDependencies.cmake now shares discovery,
+  version >=1.90 and header-only Multiprecision interface target; CompilerDependencies
+  retains Parser-only discovery and links that target. erlang_runtime PUBLICly exports
+  runtime/include plus Multiprecision SYSTEM headers. Runtime-only now needs Boost,
+  but no Parser/TOML/OTP discovery; older no-Boost runtime validation notes are historical.
+  Reconfigured debug; full build, fresh runtime-only build, downstream CMake consumer
+  using cpp_int arithmetic, both actual-runtime-flags header probes and4 focused CTests
+  pass. Full Lizard plus focused clang-tidy (runtime/probe/lexer numbers) pass. README,
+  plan, architecture/files and historical validation note updated. No C++ sketch edits
+  or commit; term_layout.hpp is still unfinished and excluded from compilation.
+
 - Keep .agents/04-compile.md synchronized with every runtime/include sketch change.
   Its inventory now links all11 current headers and maps them to numbered steps;
   stale runtime/design header paths are fixed. Steps7/9–13/28 now reflect target

@@ -3,7 +3,8 @@
 - Runtime terms have a manual-review sketch in `runtime/design/`: an opaque C++
   `Term`/factory API over private word-aligned heap structs and traceable one-word
   slots, with immutable updates and a future tagged-value boundary. Declarations
-  and layout assertions only, outside CMake; the runtime remains a placeholder.
+  and layout assertions only, listed as CMake headers for IDE navigation; the runtime
+  remains a placeholder and does not compile the sketches.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
@@ -34,7 +35,7 @@
   checked generic calls; direct pointers/copied typed targets require a retained
   module handle. NativeCallable is only an alias; conversion utilities are deferred.
   Virtual callable/frame preparation is removed; cooperative call ABI remains
-  deferred. API sketches only, outside CMake.
+  deferred. API sketches only, listed on the runtime target without compilation.
 
 - Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.
@@ -57,8 +58,12 @@
 - CMake fixes project targets to C++23 with warnings as errors, building the host
   tool `erlangaot` and a separate placeholder runtime.
   Project validation uses C++23. No LLVM/backend/runtime execution is implemented yet.
-  Compiler-private Boost >=1.90 supplies Parser and Multiprecision; runtime-only
-  builds do not discover it. Native compiler tests require installed OTP >=29.
+  Shared Boost >=1.90 discovery supplies header-only Multiprecision to compiler and
+  runtime; runtime consumers inherit its system includes. Root CMake also supplies
+  Boost system includes to every project target for orphan-header IDE contexts.
+  Matching Homebrew linked headers also get an explicit system path, even with inherited
+  global -I flags that CMake inferred as implicit. Parser remains compiler-only;
+  runtime-only builds do not require Parser, TOML or OTP. Native compiler tests require OTP >=29.
 - SourceManager owns decoded UTF-8/Latin-1 buffers. The incremental Lexer retains
   decoded values, physical spans, logical coordinates and feature-sensitive tokens.
   DirectiveReader handles syntax; PreprocessorSession streams expanded forms,

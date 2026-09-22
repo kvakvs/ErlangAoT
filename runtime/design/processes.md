@@ -1,7 +1,7 @@
 # Processes and scheduler — manual review skeleton
 
-Status: proposed, 2026-09-20. C++23 declarations only, excluded from CMake like
-the [term sketch](terms.md). No workers, allocator, continuation or signal delivery
+Status: proposed, 2026-09-20. C++23 declarations only, listed as CMake headers
+for IDE navigation alongside the [term sketch](terms.md), without compilation. No workers, allocator, continuation or signal delivery
 are implemented. This is the implementation boundary for review, not a runnable
 runtime or a claim of OTP scheduling compatibility.
 

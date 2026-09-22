@@ -62,10 +62,13 @@ Host: macOS 26.6.2 (25G83), arm64. Toolchain: Apple Clang 21.0.0 (`clang-2100.1.
 | Full C++26 Debug (`-std=c++26`) | `build/phase6-cxx26`         | Build and all 46 CTests passed across full run and focused rerun                        |
 | Full C++23 ASan + UBSan         | `build/phase5-sanitize`      | Build and all 46 CTests passed across full run and focused rerun; no sanitizer findings |
 | Compiler-only C++23 Debug       | `build/phase6-compiler-only` | Build and all 46 CTests passed                                                          |
-| Runtime-only C++23              | `build/phase6-runtime-only`  | Configure/build passed; no compiler/OTP/Boost dependency discovery                      |
+| Runtime-only C++23              | `build/phase6-runtime-only`  | Configure/build passed; no compiler/OTP/Boost discovery at the time of this validation                      |
 | Linux x86-family                | Unavailable                  | Pending execution                                                                       |
 | Linux ARM                       | Unavailable                  | Pending execution                                                                       |
 | Windows x86-family              | Unavailable                  | Pending execution                                                                       |
+
+Current runtime-only builds require Boost.Multiprecision headers; the historical
+runtime result above predates that dependency. Boost.Parser remains compiler-only.
 
 The focused reruns corrected escaping of semicolons/unmatched brackets in the new
 CMake inventory checker, then reran both historical suites and the corpus with

@@ -21,7 +21,8 @@ Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 Requirements:
 
 - CMake 3.28+ and a C++23-capable compiler.
-- Boost 1.90+ with Boost.Parser and Boost.Multiprecision.
+- Boost 1.90+ with Boost.Multiprecision for compiler and runtime; the compiler also
+  requires Boost.Parser. Multiprecision is header-only and needs no Boost binary library.
 - toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
 - Erlang/OTP 29+ for tests (enabled by default). Erlang is not needed to run the
   built tool; configure with `-DBUILD_TESTING=OFF` to build without it.
@@ -67,6 +68,23 @@ Pass these options when configuring to override defaults:
 For multi-configuration generators, add `--config Debug` when building and
 `-C Debug` when testing. CMake-aware IDEs can open the repository using the
 `debug` preset.
+
+Boost and toml++ headers use CMake `SYSTEM` includes, keeping warnings as errors
+for project code. On native macOS builds, CMake also marks Homebrew's linked include
+directory as `SYSTEM` when its Boost headers resolve to the selected installation.
+This keeps inherited flags such as `CXXFLAGS=-I/opt/homebrew/include` from exposing
+Boost warnings, including when that flag is already cached by CMake.
+For other installations, avoid adding dependency paths through global `-I` flags (including
+`CXXFLAGS`): an ordinary include path can take precedence over a dependency's
+system path. If CLion reports Boost warnings as errors, remove those global flags
+and clear the cached value, for example:
+
+```sh
+cmake -S . -B cmake-build-debug -DCMAKE_CXX_FLAGS:STRING=
+```
+
+Then reload CMake in CLion. Use the dependency root options above to select
+installations instead of adding global include flags.
 
 ## Usage
 

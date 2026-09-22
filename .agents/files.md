@@ -4,9 +4,13 @@ Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
 Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `CMakeLists.txt`, `CMakePresets.json`, `Makefile`, `run-macos.sh`: component and
-  configuration, parallel builds, test/format targets, transparent macOS runner.
-- `cmake/ProjectOptions.cmake`: fixed C++23 and warnings as errors; `CompilerDependencies.cmake`:
-  installed/Homebrew or local Boost discovery; `ErlangDependencies.cmake` and
+  configuration (root CMake requires C++23 without extensions in all subdirectories
+  and supplies shared Boost system includes for IDE header analysis),
+  parallel builds, test/format targets, transparent macOS runner.
+- `cmake/ProjectOptions.cmake`: target warnings as errors; `BoostDependencies.cmake`:
+  shared installed/Homebrew/local Boost discovery and Multiprecision interface target,
+  including SYSTEM classification of Homebrew's matching linked include alias;
+  `CompilerDependencies.cmake`: compiler-only Parser discovery; `ErlangDependencies.cmake` and
   `ErlangVersion.escript`: host OTP discovery/version checks.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
@@ -14,7 +18,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
   `terms.hpp`: opaque C++ API and explicit cross-heap copy declarations; `term_layout.hpp`: private heap struct
-  sketch and size/offset assertions. No runtime logic or CMake integration.
+  sketch and size/offset assertions. Listed on the runtime CMake target for IDE
+  navigation, without runtime logic or header compilation.
 - `runtime/design/atom_storage.{hpp,md}`: runtime-local atom interning/lookup API,
   startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
@@ -23,7 +28,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   deferred signal handling, context and process state;
   `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
   `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
-  Review-only declarations, excluded from CMake alongside the term sketches.
+  Review-only declarations listed on the runtime CMake target alongside the term sketches.
 - `runtime/design/code_server.md`: registry, exact-signature and code-lifetime contract;
   `runtime/include/code_server.hpp`: module publication, unique registry ownership and
   checked generic resolution; `callable.hpp`: std::function aliases, signature keys and

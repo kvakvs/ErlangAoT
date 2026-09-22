@@ -1,8 +1,5 @@
 function(erlang_aot_project_options target)
     set_target_properties(${target} PROPERTIES
-        CXX_STANDARD 23
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
         COMPILE_WARNING_AS_ERROR ON
     )
     if(MSVC)

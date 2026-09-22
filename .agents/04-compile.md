@@ -7,25 +7,26 @@ each step ends with passing validation and its own commit.
 ## Runtime API sketches to build upon
 
 The current review headers live in `runtime/include/`; design notes remain in
-`runtime/design/`. They define proposed service and ownership boundaries, are
-outside CMake, and do not complete any numbered implementation step. Refine these
-sketches as implementation proceeds rather than introducing competing APIs.
+`runtime/design/`. CMake lists all prototype headers on `erlang_runtime` for IDE
+navigation; only `src/runtime.cpp` is compiled. These proposed service and ownership
+boundaries do not complete any numbered implementation step. Refine these sketches
+as implementation proceeds rather than introducing competing APIs.
 When a runtime sketch is added, renamed, removed or redesigned, update this
 inventory and the affected implementation steps together.
 
-| Current header | API or representation sketch | Relevant steps |
-| --- | --- | --- |
-| [`base_types.hpp`](../runtime/include/base_types.hpp) | Target-runtime `Word` and `ERL_WORD_BITS`; word width and alignment assumptions. | 7, 10, 12 |
-| [`terms.hpp`](../runtime/include/terms.hpp) | `Term`, tag sketches, `TermResult`, `AtomId` and process-bound `TermFactory`; inspection, immutable updates, construction and explicit cross-heap copying. | 7, 9, 10, 12 |
-| [`term_layout.hpp`](../runtime/include/term_layout.hpp) | Private `TermSlot`, object/header tags, heap cells/prefixes and layout assertions; not a public or wire ABI. | 7, 10, 12 |
-| [`atom_storage.hpp`](../runtime/include/atom_storage.hpp) | Runtime-wide `AtomStorage`; nested options/statistics, create/find/lookup/name APIs and a collection placeholder. | 9, 10, 14, 28 |
-| [`process_heap.hpp`](../runtime/include/process_heap.hpp) | `HeapOptions`, owned `ProcessHeap`, word allocation/accounting, graph addition and safe-point collection boundary. | 9, 12 |
-| [`process.hpp`](../runtime/include/process.hpp) | Process identities/state/priority, `ReductionBudget`, cooperative `ProcessCode`, `ProcessContext`, owned signals and a per-process signal inbox. | 9, 12, 13 |
-| [`mailbox.hpp`](../runtime/include/mailbox.hpp) | `Mailbox`, selective `ReceiveCursor`, asynchronous `MailboxRead` and private append after message-signal handling. | 12, 13 |
-| [`scheduler.hpp`](../runtime/include/scheduler.hpp) | `Scheduler`/`SchedulerPool`, creation options, snapshots, command replies and bounded signal handling on owner workers. | 9, 13, 14 |
-| [`callable.hpp`](../runtime/include/callable.hpp) | `Callable`/`TypedCallable`, call results, `FunctionKey` and one noncopyable `ModuleRegistry` per loaded module. | 11, 28 |
-| [`native_callable.hpp`](../runtime/include/native_callable.hpp) | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`; no adapter hierarchy or conversion layer. | 11, 28 |
-| [`code_server.hpp`](../runtime/include/code_server.hpp) | `CodeImage`, module definitions, immutable loaded modules, checked generic `ResolvedFunction` calls and runtime-wide `CodeServer`. | 9, 11, 28 |
+| Current header                                                  | API or representation sketch                                                                                                                               | Relevant steps |
+|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
+| [`base_types.hpp`](../runtime/include/base_types.hpp)           | Target-runtime `Word` and `ERL_WORD_BITS`; word width and alignment assumptions.                                                                           | 7, 10, 12      |
+| [`terms.hpp`](../runtime/include/terms.hpp)                     | `Term`, tag sketches, `TermResult`, `AtomId` and process-bound `TermFactory`; inspection, immutable updates, construction and explicit cross-heap copying. | 7, 9, 10, 12   |
+| [`term_layout.hpp`](../runtime/include/term_layout.hpp)         | Private `TermSlot`, object/header tags, heap cells/prefixes, Multiprecision `Bignum` alias and layout assertions; not a public or wire ABI.                | 7, 10, 12      |
+| [`atom_storage.hpp`](../runtime/include/atom_storage.hpp)       | Runtime-wide `AtomStorage`; nested options/statistics, create/find/lookup/name APIs and a collection placeholder.                                          | 9, 10, 14, 28  |
+| [`process_heap.hpp`](../runtime/include/process_heap.hpp)       | `HeapOptions`, owned `ProcessHeap`, word allocation/accounting, graph addition and safe-point collection boundary.                                         | 9, 12          |
+| [`process.hpp`](../runtime/include/process.hpp)                 | Process identities/state/priority, `ReductionBudget`, cooperative `ProcessCode`, `ProcessContext`, owned signals and a per-process signal inbox.           | 9, 12, 13      |
+| [`mailbox.hpp`](../runtime/include/mailbox.hpp)                 | `Mailbox`, selective `ReceiveCursor`, asynchronous `MailboxRead` and private append after message-signal handling.                                         | 12, 13         |
+| [`scheduler.hpp`](../runtime/include/scheduler.hpp)             | `Scheduler`/`SchedulerPool`, creation options, snapshots, command replies and bounded signal handling on owner workers.                                    | 9, 13, 14      |
+| [`callable.hpp`](../runtime/include/callable.hpp)               | `Callable`/`TypedCallable`, call results, `FunctionKey` and one noncopyable `ModuleRegistry` per loaded module.                                            | 11, 28         |
+| [`native_callable.hpp`](../runtime/include/native_callable.hpp) | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`; no adapter hierarchy or conversion layer.                                                    | 11, 28         |
+| [`code_server.hpp`](../runtime/include/code_server.hpp)         | `CodeImage`, module definitions, immutable loaded modules, checked generic `ResolvedFunction` calls and runtime-wide `CodeServer`.                         | 9, 11, 28      |
 
 Use the [term design](../runtime/design/terms.md),
 [process/scheduler design](../runtime/design/processes.md),
@@ -105,7 +106,7 @@ Use the existing X86, ARM and AArch64 backends. Do not implement an LLVM target,
 instruction descriptions, assembler, object format writer, or register allocator.
 
 | Responsibility                                                                                         | Owner                                            |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+|--------------------------------------------------------------------------------------------------------|--------------------------------------------------|
 | Erlang source, preprocessing, syntax and source diagnostics                                            | Existing ErlangAoT frontend                      |
 | Binding, module/function resolution, patterns, guards and evaluation semantics                         | ErlangAoT semantic analysis and lowering         |
 | Erlang type declarations, inference and bounded type-specialization policy                             | ErlangAoT; LLVM optimizes the resulting typed IR |
@@ -224,7 +225,11 @@ Define a private, versioned ABI in `abi/` before exposing native symbols:
 - Permit an explicit ABI revision when GC, exceptions or suspension arrive.
   Do not promise this initial stack-based call convention supports tail recursion.
 
-Keep the runtime separately buildable and free of LLVM SDK dependencies. Runtime
+Keep the runtime separately buildable and free of LLVM SDK dependencies. Shared
+`cmake/BoostDependencies.cmake` supplies Boost.Multiprecision headers to compiler
+and runtime; `erlang_runtime` propagates them to its consumers. Runtime-only builds
+require Boost >=1.90, but do not discover Boost.Parser, TOML or OTP. This dependency
+wiring does not implement runtime bignum allocation or arithmetic. Runtime
 service declarations use C linkage and opaque handles; C++ exceptions and STL
 types must not cross the generated-code boundary. Define explicit status/error
 transport for service calls before exposing them to generated functions.
@@ -350,15 +355,15 @@ declarations. Do not embed a runtime copy into each module or misuse LLVM IR
 linking to combine a native archive with an object file. The harness link step
 must exercise this dependency, not supply test-only replacement runtime symbols.
 
-| Location under `runtime/`                        | Responsibility and initial boundary                                                                                                 |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state                                                             |
-| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, signal inboxes, mailbox and exception state                                   |
-| `src/terms/`                                     | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers |
-| `src/builtins/`                                  | Module-owned function registries for Erlang BIFs, with default all-Term signatures; missing entries report unavailable        |
-| `src/memory/`                                    | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists        |
-| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, bounded signal handling and receive wakeups               |
-| `src/modules/`                                   | ABI-checked module descriptors, one frozen function registry per module, code lifetime and explicit initialization ordering                                |
+| Location under `runtime/`                        | Responsibility and initial boundary                                                                                                  |
+|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state                                                              |
+| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, signal inboxes, mailbox and exception state                    |
+| `src/terms/`                                     | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers  |
+| `src/builtins/`                                  | Module-owned function registries for Erlang BIFs, with default all-Term signatures; missing entries report unavailable               |
+| `src/memory/`                                    | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists         |
+| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, bounded signal handling and receive wakeups |
+| `src/modules/`                                   | ABI-checked module descriptors, one frozen function registry per module, code lifetime and explicit initialization ordering          |
 
 Build the runtime term library upon the existing [term sketch](../runtime/design/terms.md): a common opaque
 `Term` value API, per-type creation/predicates/extraction and immutable updates.
@@ -405,10 +410,11 @@ The `[feature name] notimpl` marker is required; append available source, module
 project target or runtime operation context. These are actionable diagnostics,
 independent of `--verbose`, not `[comp]` progress messages. Never put them in
 printed source/type/IR output or generated artifact bytes.
-Leave references to unimplemented plan filename and step or a generous TODO comment explaining what should be implemented here.
+Leave references to unimplemented plan filename and step or a generous TODO comment explaining what should be
+implemented here.
 
 | Extension point                    | Deferred features to identify explicitly                                                                                                                           |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Semantic analysis and lowering     | Patterns/guards, records, general arithmetic/bignums, heap-term construction, closures, dynamic calls, exceptions, receive, proper tail calls and parse transforms |
 | Runtime term/BIF services          | Unsupported term operations and known unimplemented Erlang BIFs, identified by module/name/arity                                                                   |
 | Runtime process/scheduler services | Spawn, message delivery, mailbox receive, yielding, reductions and scheduling                                                                                      |

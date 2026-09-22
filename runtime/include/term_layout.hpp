@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <type_traits>
 
-using Bignum = boost::multiprecision::cpp_int;
+using cpp_int = boost::multiprecision::cpp_int;
 
 namespace erlang_aot::runtime::detail::layout {
 // One traceable term reference; initially a boxed address, later a private tagged word.
@@ -44,17 +44,10 @@ enum class ObjectKind : std::uint8_t {
 
 // Defines the type of contents of a boxed value
 // This tag is appended via union to the arity value in higher bits.
-using HeaderTag = union {
+using HeaderTag = struct header_tag_t {
     // TODO: Logic extracting the boxed object kind and arity should go here?
-    union {
-        ObjectKind kind_ : 4;
-
-        union {
-            Word padding_primary_ : 6;              // never used
-            TermTagPrimary tag_primary_header_ : 2; // this is always 'header', otherwise not used
-            // TODO: Assert that tag_primary_header_ is invariant and is always 'header'
-        };
-    };
+    ObjectKind kind_ : 4;
+    TermTagPrimary tag_primary_header_ : 2; // this is always 'header', otherwise not used
 
     ObjectKind kind() const { return kind_; }
 };
@@ -64,16 +57,13 @@ using HeaderTag = union {
 // Tagged term implementation keeps this in 1 word: Fits kind in the HeaderTag field
 struct alignas(Word) Header final {
     // Total allocated words, including this header, trailing data and end padding.
-    union {
-        // How many words the content spans AFTER the header word
-        Word size_words_ : (ERL_WORD_BITS - 6);
-        // The type of content
-        HeaderTag tag_;
-    };
+    // How many words the content spans AFTER the header word
+    Word size_words_ : (ERL_WORD_BITS - 6);
+    // The type of content
+    HeaderTag tag_;
 
-    static constexpr Header new_header(ObjectKind kind, std::size_t arity) {
-        return {.size_words_ = arity,
-                .tag_ = {.kind_ = ObjectKind::bignum_positive, .tag_primary_header_ = TermTagPrimary::header}};
+    static constexpr Header new_header(const ObjectKind kind, const std::size_t arity) {
+        return {.size_words_ = arity, .tag_ = {.kind_ = kind, .tag_primary_header_ = TermTagPrimary::header}};
     }
 };
 
@@ -84,14 +74,15 @@ struct alignas(Word) Header final {
 struct alignas(Word) IntegerCell final {
     // Header also contains the limb count and the sign
     Header header;
-    // Unknown amount of following limbs
-    Word limbs[0];
 
-    static constexpr Header new_bignum(const BignumImpl &input) {
-        // if (input >= 0)
-        // return Header::new_header(ObjectKind::bignum_positive, limb_count);
-        // else
-        // return Header::new_header(ObjectKind::bignum_negative, limb_count);
+    // Unknown amount of following bignum limbs accessible via a const pointer
+    const Word *limb_ptr(const std::size_t i) const { return reinterpret_cast<const Word *>(&header + i + 1); }
+
+    // Unknown amount of following bignum limbs accessible via a pointer
+    Word *limb_ptr(const std::size_t i) { return reinterpret_cast<Word *>(&header + i + 1); }
+
+    static constexpr Header new_bignum(const cpp_int &input, Word *placement) {
+        return Header::new_header((input >= 0) ? ObjectKind::bignum_positive : ObjectKind::bignum_negative, input);
     }
 };
 
