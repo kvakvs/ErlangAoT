@@ -1,0 +1,4 @@
+add_executable(runtime_term_tag_tests term_tag.cpp)
+erlang_aot_project_options(runtime_term_tag_tests)
+target_link_libraries(runtime_term_tag_tests PRIVATE erlang_runtime)
+add_test(NAME runtime_term_tag COMMAND runtime_term_tag_tests)

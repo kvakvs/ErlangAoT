@@ -1,11 +1,27 @@
 # Current working memory — 2026-09-22
 
+- Permanent `tests/runtime/term_tag.cpp` truth-table test covers all64 combinations,
+  reports mismatching tags and expected/actual enum values, and remains active under NDEBUG.
+  Root registers tests/runtime when native runtime+BUILD_TESTING enabled, independently
+  of compiler/OTP. Debug target/CTest and focused Lizard/clang-tidy/format pass.
+
+- TermTag::get_kind() in terms.hpp resolves primary/secondary/tertiary delegation
+  using arithmetic lookup into TermKind (base_types.hpp); TermTagKind is retired.
+  PID/port resolve to local_pid/local_port; tag3=2/3 to empty_tuple/empty_list.
+  TermKind includes header/list/boxed/catch_object/invalid. All64 combinations pass constexpr
+  checks. Focused Lizard/tidy,
+  strict C++23, formatting and whitespace pass. Existing bitfield layout preserved.
+
 - Bash wrapper failure reproduced with cached CXXFLAGS=-I/opt/homebrew/include:
   Boost.Parser unused parameters failed under -Werror. BoostDependencies now adds
   Homebrew's linked include alias as SYSTEM only if its boost directory resolves
   to the selected Boost tree, and removes that alias from inferred implicit includes
   so CMake actually emits -isystem. Root/Multiprecision interface share these paths.
   This supersedes the cache-clearing workaround below for matching Homebrew installs.
+  Validation: original bash wrapper parse-check passes with cached global -I;
+  fresh full Debug and runtime-only builds pass, all140 full-build commands retain
+  -Werror, all3 CLI/workflow tests and full check-quality pass. Actual-flags probes
+  accept Boost headers and reject a project unused parameter. No commit.
 
 - CLion resolved uncompiled term_layout.hpp using erlang_aot (no Boost), although
   erlang_runtime had the correct system path. Root CMake now discovers shared Boost

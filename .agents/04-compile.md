@@ -35,7 +35,11 @@ Use the [term design](../runtime/design/terms.md),
 contracts. Current headers are evolving sketches: reconcile tag/header definitions
 with their layout assertions and heap word/byte units with their options/comments
 before promoting them into implemented APIs. Their presence is not layout or
-behavioral validation.
+behavioral validation. `TermTag::get_kind()` resolves the three tag levels into
+`TermKind` with a constexpr lookup; boxed kinds still require header inspection.
+Immediate identities resolve to `local_pid`/`local_port`; empty containers to `empty_tuple`/`empty_list`.
+`tests/runtime/term_tag.cpp` checks all 64 tag combinations against an explicit truth
+table through CTest `runtime_term_tag`; this validates decoding only, not heap layouts.
 
 Carry these contracts into the relevant implementation boundaries:
 

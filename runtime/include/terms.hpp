@@ -1,8 +1,9 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: declarations without definitions, excluded from the build.
+// REVIEW SKETCH ONLY: API declarations and a tag decoder, excluded from compilation by the build.
 // See terms.md for ownership, errors, immutable updates and the private ABI boundary.
 #include "../include/base_types.hpp"
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -29,57 +30,6 @@ class TermFactory;
 // Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.
 using AtomId = std::uintptr_t;
 
-// Semantic categories, independent of allocation strategy and machine tags.
-enum class TermKind : std::uint8_t {
-    // An Integer in Erlang can be either a smallint, fitting into a machine word, minus the tag bits,
-    // or a BigInt which is a boxed integer with a header word and followed by the binary bignum digits.
-    smallint,
-    bigint,
-    // A floating point number in Erlang is equivalent to a 64-bit double in C-C++
-    // Float in Erlang is stored as a box with header tagging a float, and followed by 64 bits of
-    // the IEEE fp representation.
-    floating,
-    // An Atom is a Erlang data type represented by a hidden constant integer value assigned at
-    // atom creation, and a constant string, atom's name, also assigned at creation. Since creation
-    // atoms can be used in the program and internally their numerical value is passed, tagged
-    // as Atom data type. An Atom hidden integer value can never leave an Erlang node, they
-    // always are converted to a string first to find the new numerical value on the remote
-    // host or the future host which will read and instantiate this atom value.
-    atom,
-    // A reference is a bit combination of current node id (in the cluster), node generation (starting from 0),
-    // and current time and some monotonously increasing counter within that time. Reference inside one
-    // Erlang node is guaranteed to be unique, and tries to also remain unique in a Erlang cluster.
-    reference,
-    // A callable Erlang object points to a function of certain arity (encoded in the value) can have
-    // arguments applied to it, and if argument count doesn't match a badfun exception might occur.
-    function,
-    // Represented as Port<X.Y> where X and Y are internal index in the internal port table, implementation
-    // is free to define how these work.
-    // A port is a unique handle to a resource open by a runtime driver (such as network socket or a file)
-    // A port can be read from, written to via sending messages, and all that communication is handled by the
-    // port driver to perform IO operations.
-    port,
-    // A process identifier <A.B.C> is a node-unique combination of sequentially increasing number (values
-    // B, C split into 15 bits and remaining bits), and node number A (0 is local).
-    pid,
-    // A tuple is an array of Terms of fixed size, represented on heap as a header with arity, followed by
-    // array of values. Tuples are immutable in language, but compiler is free to allow mutations.
-    tuple,
-    // A map is a key/value structure of {term => term}
-    map,
-    // A special value representing an empty list, fits in one Term
-    nil,
-    // A couple of values representing a list cell, in memory stored as two terms: head and tail.
-    cons,
-    // An array of bits not necessarily being a multiple of 8. Contains both arity in the header word,
-    // for word size of the data object, and the bit count, followed by the bits.
-    bitstring,
-    // A tuple with tag (first element is tag atom), where each field has a name and possibly a typespec.
-    // Runtime does not tie record and its definition together, but for an unknowing user a record looks
-    // like a tuple with an atom in first position.
-    record
-};
-
 // Host API failures; these are not Erlang exception terms or generated-code ABI values.
 enum class TermError : std::uint8_t {
     wrong_type,
@@ -95,20 +45,33 @@ enum class TermError : std::uint8_t {
     not_implemented
 };
 
-// This union must have size 6 bits and must always be padded to the least significant bits of a word
-// TODO: Logic extracting term kind should probably go here in the tag object
-using TermTag = union {
-    TermTag3 tag3_ : 6;
+struct TermTag {
+    // Reserve the payload bits outside the three tag fields.
+    Word _padding : (ERL_WORD_BITS - 6);
 
-    union {
-        Word padding2_ : 2; // never used
-        TermTag2 tag2_ : 4;
+    // Third-level leaf, meaningful only when both preceding levels delegate.
+    TermKind3 tag3_ : 2;
+    // Second-level leaf or delegation to tag3_, selected by tag_primary_.
+    TermKind2 tag2_ : 2;
+    // First-level category or delegation to tag2_.
+    TermKindPrimary tag_primary_ : 2;
 
-        union {
-            Word padding_primary_ : 2; // never used
-            TermTagPrimary tag_primary_ : 2;
+    // Resolve the first non-delegating tag, including immediate empty tuples and lists.
+    [[nodiscard]] constexpr TermKind get_kind() const noexcept {
+        static constexpr std::array kinds{
+            TermKind::header,    TermKind::list,         TermKind::boxed,       TermKind::invalid,
+            TermKind::local_pid, TermKind::local_port,   TermKind::invalid,     TermKind::smallint,
+            TermKind::atom,      TermKind::catch_object, TermKind::empty_tuple, TermKind::empty_list,
         };
-    };
+        const auto primary = static_cast<unsigned>(tag_primary_);
+        const auto secondary = static_cast<unsigned>(tag2_);
+        const auto tertiary = static_cast<unsigned>(tag3_);
+        const auto use_secondary = static_cast<unsigned>(tag_primary_ == TermKindPrimary::see_termkind2);
+        const auto use_tertiary = use_secondary & static_cast<unsigned>(tag2_ == TermKind2::see_termkind3);
+        // Delegation advances index 3 to row 4, then index 6 to row 8; ignored fields contribute zero.
+        const auto index = primary + use_secondary * (1U + secondary) + use_tertiary * (4U + tertiary - secondary);
+        return kinds[index];
+    }
 };
 
 // Carry a checked value or failure without fabricating an Erlang result.
@@ -120,6 +83,8 @@ template <typename Value> using TermResult = std::expected<Value, TermError>;
 // terms contain bits of a memory pointer, which can be resolved into a boxed term of some kind.
 class Term final {
   public:
+    Term() : value_(0) {}
+
     // Copy retains the same immutable value; move transfers this host handle.
     Term(const Term &other);
     Term(Term &&other) noexcept;
@@ -236,11 +201,7 @@ class Term final {
 
     union {
         Word value_;
-
-        union {
-            Word padding_tag_ : (ERL_WORD_BITS - 6);
-            TermTag tag_;
-        };
+        TermTag tag_;
     };
 
     // // Hide process binding, resource budgets and allocation policy from consumers.

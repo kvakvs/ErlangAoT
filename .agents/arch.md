@@ -5,6 +5,8 @@
   slots, with immutable updates and a future tagged-value boundary. Declarations
   and layout assertions only, listed as CMake headers for IDE navigation; the runtime
   remains a placeholder and does not compile the sketches.
+- Native runtime tests compile `terms.hpp` to check `TermTag::get_kind()` against all
+  64 expected tag combinations; CTest registration is independent of compiler tests.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
