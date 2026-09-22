@@ -95,26 +95,6 @@ enum class TermError : std::uint8_t {
     not_implemented
 };
 
-enum class TermTagPrimary : std::uint8_t {
-    header = 0,
-    list = 1,  // the rest of the bits point to a cons cell
-    boxed = 2, // the rest of the bits point to a Header object, a boxed in memory
-    immed = 3, // if tag1 == immed, allows reading tag2
-};
-
-enum class TermTag2 : std::uint8_t {
-    pid = 0,      // if tag1 == immed
-    port = 1,     // if tag1 == immed
-    immed2 = 2,   // if tag1 == immed, and tag2 == immed2, allows reading into tag3
-    smallint = 3, // if tag1 == immed
-};
-
-enum class TermTag3 : std::uint8_t {
-    atom = 0,
-    catch_object = 1,
-    nil = 3,
-};
-
 // This union must have size 6 bits and must always be padded to the least significant bits of a word
 // TODO: Logic extracting term kind should probably go here in the tag object
 using TermTag = union {

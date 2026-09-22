@@ -1,6 +1,6 @@
 #pragma once
 
-// Optional spelling for a typed std::function registration; there is no adapter or codec dependency.
+// Optional spelling for a typed std::function registration.
 #include "callable.hpp"
 
 namespace erlang_aot::runtime {

@@ -9,8 +9,6 @@ lookup, invocation and module loading are not implemented.
   and default all-Term resolution.
 - [native_callable.hpp](../include/native_callable.hpp): optional `NativeCallable<Args...>`
   alias for `TypedCallable<Args...>`, without an adapter class.
-- [native_types.hpp](../include/native_types.hpp): optional explicit codec utilities;
-  neither registration nor invocation depends on these codecs.
 
 ## Function registration
 
@@ -46,8 +44,8 @@ registry.add(function_atom, TypedCallable<std::int64_t, Term>{target});
 ```
 
 This infers arity two and the exact `(int64_t, Term)` type sequence. Any unqualified,
-move-constructible value type is allowed, including a user-defined type with no
-`NativeCodec`. Reference/cv-qualified signature types are excluded because RTTI
+move-constructible value type is allowed, including user-defined types.
+Reference/cv-qualified signature types are excluded because RTTI
 would erase those distinctions. The callable body may borrow its value arguments
 through const references for the duration of the call, but must not retain them.
 
@@ -77,15 +75,14 @@ and arity. Ordering of native RTTI types is only meaningful within one runtime.
 
 A boxed integer is still a Term for selection. `int64_t` does not match `double`,
 `vector<int64_t>` does not match `list<int64_t>`, and a mixed `(int64_t, Term)`
-signature is not a wildcard. Lookup never examines values or runs codec callbacks.
+signature is not a wildcard. Lookup compares only the declared argument types.
 If a typed lookup misses and the caller wants the generic entry, it explicitly
 calls `find(name, arity)` and supplies already-prepared Term arguments. There is
 no automatic fallback that could pass native values to a Term signature.
 
 All targets return `CallResult<Term>`. Native code explicitly constructs its result
-in the caller's heap, or explicitly calls a utility codec. There is no automatic
-result encoding, including no implicit `void`-to-`ok` conversion. `ConversionLimits`
-and `ConversionBudget` live with the optional codecs, outside the registry API.
+in the caller's heap. There is no automatic result encoding, including no implicit
+`void`-to-`ok` conversion. Conversion utilities are deferred for later consideration.
 
 A direct target call is ordinary C++: its caller must check span arity, Term
 ownership/liveness and the result, and catch host exceptions at the runtime boundary.

@@ -27,8 +27,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `runtime/design/code_server.md`: registry, exact-signature and code-lifetime contract;
   `runtime/include/code_server.hpp`: module publication, unique registry ownership and
   checked generic resolution; `callable.hpp`: std::function aliases, signature keys and
-  per-module ModuleRegistry declarations; `native_callable.hpp`: typed callable alias;
-  `native_types.hpp`: optional explicit codecs/budgets, independent of registration.
+  per-module ModuleRegistry declarations; `native_callable.hpp`: typed callable alias.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile

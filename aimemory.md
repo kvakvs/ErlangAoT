@@ -1,6 +1,15 @@
 # Current working memory — 2026-09-22
 
-- Callable simplification supersedes the older native-dispatch/frame notes below.
+- Keep .agents/04-compile.md synchronized with every runtime/include sketch change.
+  Its inventory now links all11 current headers and maps them to numbered steps;
+  stale runtime/design header paths are fixed. Steps7/9–13/28 now reflect target
+  words/layout review, atom service ownership, signal inbox handling, exact callable
+  registries, module freezing/lifetimes and C ABI separation. All46 steps remain
+  proposed; conversion utilities and cooperative generated calls remain deferred.
+  Documentation-only validation: full header inventory, local links, numbering and
+  whitespace checked; no C++ gates needed for this plan update.
+
+- Callable simplification: conversion utilities are removed and deferred at user request.
   User explicitly chose API sketch only. callable.hpp now has Callable (Term span),
   TypedCallable<Args...> (exact values), FunctionKey and a noncopyable ModuleRegistry.
   ModuleDefinition transfers one unique_ptr registry; LoadedModule freezes/owns it.
@@ -9,8 +18,8 @@
   argument decoding or result encoding. Targets return CallResult<Term> explicitly.
   ResolvedFunction pins the module for checked generic calls; direct lookup needs
   callers to retain the module through target destruction. NativeCallable is an
-  alias, NativeArguments/virtual Callable/CallFrame preparation removed; optional
-  codec declarations and ConversionLimits stay in native_types.hpp. Cooperative
+  alias; virtual callable/frame preparation and conversion scaffolding are removed.
+  Cooperative
   generated-call ABI remains deferred. Docs/architecture/files/compiler plan aligned.
   Standalone/combined API syntax, custom codec-free types/constraints, clang-tidy,
   Lizard, formatting and whitespace pass. Strict -Wpedantic -Werror still fails only
@@ -43,28 +52,9 @@
   collect is declared placeholder; global roots must include metadata/mailbox/transit.
   Native standalone/combined syntax and cap/API assertions, clang-tidy, Lizard,
   formatting/whitespace and local links pass. No runtime implementation or commit.
-- User correction: never automatically convert arguments on call. Each MFA now holds
-  exact native type signatures and optional all-Term fallback. Boxed prepare only selects
-  all-Term; prepare_native matches NativeArguments exact C++ types, else requires a generic
-  registration AND explicit caller-supplied Term arguments. No probing decoder, implicit
-  boxing/unboxing, widening, container adaptation, partial wildcard or result-type dispatch.
-  NativeCodec decode remains explicit utility; return encoding unchanged. Preserve user
-  LoadedModule::name_atom() addition and ExportName arity comment.
-  Updated headers/template and dispatch-usage consumers, exact documentation example,
-  clang-tidy, Lizard, format/whitespace and local links pass; still no runtime behavior.
-- CodeServer review sketch in runtime/design/code_server.{hpp,md}, callable.hpp,
-  native_callable.hpp and native_types.hpp. Immutable module publication; exact MFA;
-  unload removes map entry but resolutions/frames pin CodeImage. NativeCallable<R(Args...)>
-  has fixed arity, optional injected ProcessContext, shared std::function binding;
-  checked scalar/Term codecs, UTF-8 binary strings, u32 character lists, recursive
-  owning iterable output and ordered append/array input. CallFrames bridge scheduler
-  suspension; native bodies stay bounded/synchronous. ProcessContext exposes code_server().
-  04-compile links review only; no CMake integration, executable services or plan completion.
-  User changed CodeServer module/export name fields from strings to Term during work;
-  preserved as checked atom inputs. Registry extracts process-independent keys; export
-  listings take ProcessContext to root output atoms; resolve has string and Term overloads.
-  Native standalone/combined syntax, positive/negative template constraints, registration
-  consumer, clang-tidy, Lizard, formatting/whitespace/local links pass. No runtime tests/commit.
+- Preserve LoadedModule::name_atom() and ExportName arity comments. Module/export
+  names are checked atom inputs; published keys own process-independent metadata.
+  Export listings root names in the supplied context; resolve accepts strings or Terms.
 - Follow-up sketch: ProcessContext explicitly owns ProcessHeap and Mailbox;
   heap.add / Term.copy_to copy rooted graphs; collect declares safe-point GC and
   initial not_implemented result. mailbox.hpp adds begin_receive, cursor.next

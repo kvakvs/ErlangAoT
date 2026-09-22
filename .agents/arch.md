@@ -32,7 +32,7 @@
   Generic fallback requires explicit Term arguments; no automatic argument/result
   conversions or conversion registration. ResolvedFunction pins the module for
   checked generic calls; direct pointers/copied typed targets require a retained
-  module handle. NativeCallable is only an alias; optional codecs stay independent.
+  module handle. NativeCallable is only an alias; conversion utilities are deferred.
   Virtual callable/frame preparation is removed; cooperative call ABI remains
   deferred. API sketches only, outside CMake.
 

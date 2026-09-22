@@ -1,7 +1,7 @@
 #pragma once
 
 // REVIEW SKETCH ONLY: one function registry per module; registration and lookup have no definitions.
-// Targets receive exactly their declared arguments; no codecs or implicit conversions participate.
+// Targets receive exactly their declared arguments without implicit conversions.
 #include "terms.hpp"
 
 #include <concepts>
@@ -19,11 +19,10 @@
 #include <vector>
 
 namespace erlang_aot::runtime {
-// Report invocation or explicit codec failures separately from registry lookup failures.
+// Report invocation failures separately from registry lookup failures.
 enum class CallError : std::uint8_t {
     bad_arity,
     argument_type_mismatch,
-    conversion_failed,
     wrong_owner,
     expired_context,
     resource_limit,
@@ -37,7 +36,7 @@ struct CallFailure final {
     CallError code;
     // Locate a failed argument when available; result failures have no argument index.
     std::optional<std::size_t> argument;
-    // Retain the cause of explicit term operations without registering conversion callbacks.
+    // Retain the cause of explicit term operations.
     std::optional<TermError> term_error;
 };
 
@@ -89,7 +88,7 @@ class ModuleRegistry final {
 
     // Register the default all-Term signature; reject an empty target or duplicate key.
     RegistryResult<void> add(const Term &function, std::size_t arity, Callable target);
-    // Infer arity and exact types from a std::function; no NativeCodec specialization is required.
+    // Infer arity and exact argument types directly from a std::function.
     template <CallableArgument... Arguments>
     RegistryResult<void> add(const Term &function, TypedCallable<Arguments...> target);
     // Find the all-Term variant by default; returned targets borrow this registry's lifetime.

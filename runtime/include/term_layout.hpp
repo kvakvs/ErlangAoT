@@ -4,9 +4,12 @@
 // No allocator, accessor, tag encoder or collector is implemented here. See terms.md.
 #include "../include/base_types.hpp"
 #include <array>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+
+using Bignum = boost::multiprecision::cpp_int;
 
 namespace erlang_aot::runtime::detail::layout {
 // One traceable term reference; initially a boxed address, later a private tagged word.
@@ -23,8 +26,8 @@ struct alignas(Word) TermSlot final {
 enum class ObjectKind : std::uint8_t {
     tuple = 0, // corresponds to BEAM VM constant ARITYVAL=0
     native_record = 1,
-    bignum = 2,
-    // 3
+    bignum_positive = 2,
+    bignum_negative = 3,
     reference = 4,
     fun_closure = 5, // function or a closure with attached frozen values
     floating = 6,
@@ -47,21 +50,18 @@ using HeaderTag = union {
         ObjectKind kind_ : 4;
 
         union {
-            Word padding_primary_ : 6;    // never used
-            Word tag_primary_header_ : 2; // this is always 0, otherwise not used
-            // TODO: Assert that tag_primary_header_ is invariant and is always 0
+            Word padding_primary_ : 6;              // never used
+            TermTagPrimary tag_primary_header_ : 2; // this is always 'header', otherwise not used
+            // TODO: Assert that tag_primary_header_ is invariant and is always 'header'
         };
     };
 
     ObjectKind kind() const { return kind_; }
 };
 
-// Every allocation begins here; GC state belongs in side metadata in this proposal.
-// The header is a starting word of every memory structure or term, so size of this
-// struct is critical for memory consumption.
-//
-// Tagged term implementation keeps this in 1 word: Fits kind in 2 4 or 6 bits
-// (cascading based on previous 2 bits value) and word size in the remaining bits.
+// Every allocation on heap is prefixed with a Header or is a Word-sized Term;
+// GC state belongs in side metadata in this proposal.
+// Tagged term implementation keeps this in 1 word: Fits kind in the HeaderTag field
 struct alignas(Word) Header final {
     // Total allocated words, including this header, trailing data and end padding.
     union {
@@ -70,31 +70,39 @@ struct alignas(Word) Header final {
         // The type of content
         HeaderTag tag_;
     };
+
+    static constexpr Header new_header(ObjectKind kind, std::size_t arity) {
+        return {.size_words_ = arity,
+                .tag_ = {.kind_ = ObjectKind::bignum_positive, .tag_primary_header_ = TermTagPrimary::header}};
+    }
 };
 
-// Nil is a distinct value, not a null reference; it has no traced fields.
-struct alignas(Word) NilCell final {
-    // Identify this empty-list allocation and its complete extent.
-    Header header;
-};
+// Nil is a distinct Word-sized Term value, it is not stored as a Boxed with a Header
 
-// Arbitrary integers use a trailing array of Word magnitude limbs, least-significant first.
-struct alignas(Word) IntegerPrefix final {
-    // Select integer scanning (no term references) and bound the allocation.
+// While small integers fit into a Word with tag bits, big integers are boxed with IntegerCell
+// Big integers use a trailing array of Word magnitude limbs, least-significant first.
+struct alignas(Word) IntegerCell final {
+    // Header also contains the limb count and the sign
     Header header;
-    // Zero means nonnegative, one means negative; zero itself is always nonnegative.
-    Word negative;
-    // Number of trailing base-2^word_bits limbs; zero has no limbs.
-    Word limb_count;
+    // Unknown amount of following limbs
+    Word limbs[0];
+
+    static constexpr Header new_bignum(const BignumImpl &input) {
+        // if (input >= 0)
+        // return Header::new_header(ObjectKind::bignum_positive, limb_count);
+        // else
+        // return Header::new_header(ObjectKind::bignum_negative, limb_count);
+    }
 };
 
 // Raw float bytes avoid platform-specific double field alignment in the heap layout.
 // Erlang float corresponds to a 64-bit C/C++ double.
 struct alignas(Word) FloatCell final {
     // Identify a float allocation with no traced fields.
+    // Assert header always equals FloatHeader
     Header header;
     // IEEE 754 binary64 bytes in target-native order; access through copying/bit conversion.
-    std::array<std::byte, 8> ieee754;
+    double value;
 };
 
 // Atom spelling and interning are runtime-wide; heap values contain only an opaque table key.
@@ -198,9 +206,9 @@ static_assert(offsetof(TermSlot, encoded) == 0);
 static_assert(sizeof(Header) == 2 * sizeof(Word));
 static_assert(offsetof(Header, kind) == 0 && offsetof(Header, size_words) == sizeof(Word));
 static_assert(sizeof(NilCell) == 2 * sizeof(Word));
-static_assert(sizeof(IntegerPrefix) == 4 * sizeof(Word));
-static_assert(offsetof(IntegerPrefix, negative) == 2 * sizeof(Word));
-static_assert(offsetof(IntegerPrefix, limb_count) == 3 * sizeof(Word));
+static_assert(sizeof(IntegerHeader) == 4 * sizeof(Word));
+static_assert(offsetof(IntegerHeader, negative) == 2 * sizeof(Word));
+static_assert(offsetof(IntegerHeader, limb_count) == 3 * sizeof(Word));
 static_assert(sizeof(FloatCell) == 2 * sizeof(Word) + 8);
 static_assert(offsetof(FloatCell, ieee754) == 2 * sizeof(Word));
 static_assert(sizeof(AtomCell) == 3 * sizeof(Word));

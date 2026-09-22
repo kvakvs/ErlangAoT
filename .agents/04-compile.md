@@ -1,44 +1,79 @@
 # LLVM compilation integration plan
 
-Status: proposed, 2026-09-20. No implementation steps have started.
-Use and build upon the existing runtime-term library sketch:
-[`terms.md`](../runtime/design/terms.md) defines the design contract,
-[`terms.hpp`](../runtime/design/terms.hpp) sketches the opaque C++ API, and
-[`term_layout.hpp`](../runtime/design/term_layout.hpp) sketches private heap
-structs and layout assertions. This is the foundation for term implementation;
-refine its open decisions as the steps below are implemented. The sketch remains
-outside the build with no runtime implementation, and its existence does not
-complete a numbered implementation step.
-Use the companion process/scheduler sketch as the runtime ownership and execution
-reference: [`processes.md`](../runtime/design/processes.md) describes the contracts,
-[`process.hpp`](../runtime/design/process.hpp) defines the process/context and tick
-interfaces, and [`scheduler.hpp`](../runtime/design/scheduler.hpp) defines per-CPU
-scheduling and process control. [`process_heap.hpp`](../runtime/design/process_heap.hpp)
-adds process-owned term storage, cross-heap copying and a collection boundary;
-[`mailbox.hpp`](../runtime/design/mailbox.hpp) defines selective-receive cursors
-that suspend at the mailbox tail and preserve unmatched messages. These are also
-review-only declarations. Use their ownership, root and suspension contracts when
-implementing the service boundaries below; this milestone still defers worker
-execution, messaging, heap allocation and GC rather than claiming them implemented.
-The [code-server sketch](../runtime/design/code_server.md) adds one function registry
-per loaded module: [`code_server.hpp`](../runtime/include/code_server.hpp) and
-[`callable.hpp`](../runtime/include/callable.hpp). Keys contain function/arity/exact
-argument types; std::function targets default to all-Term arguments. Typed lookup
-needs no registered codecs; generic fallback uses explicitly supplied Terms and
-results are constructed explicitly. Optional codecs live in
-[`native_types.hpp`](../runtime/include/native_types.hpp). These remain API sketches;
-cooperative generated-call integration is deferred outside this executable subset.
-The [AtomStorage API sketch](../runtime/design/atom_storage.md) reserves one atom
-registry per runtime: stable monotonically allocated IDs, dense ID/name indexes,
-startup-configurable 2^20 default / 2^26 hard entry cap, and an atom-GC placeholder.
-It adds no implemented atom service, collector or alternative numeric lookup.
-Compiled atoms are read-only constants initialized by runtime calls to AtomStorage.
-Emit their spellings and constant bindings, never compiler-assigned numeric atom IDs;
-initialize and root the bindings per runtime/module before publishing callable code.
-Function bodies read those initialized constants. This is the later atom-lowering
-contract; the current milestone's unsupported-atom diagnostics remain in place.
+Status: proposed, 2026-09-22. No implementation steps have started.
 This document plans the work only. Execute the numbered steps individually;
 each step ends with passing validation and its own commit.
+
+## Runtime API sketches to build upon
+
+The current review headers live in `runtime/include/`; design notes remain in
+`runtime/design/`. They define proposed service and ownership boundaries, are
+outside CMake, and do not complete any numbered implementation step. Refine these
+sketches as implementation proceeds rather than introducing competing APIs.
+When a runtime sketch is added, renamed, removed or redesigned, update this
+inventory and the affected implementation steps together.
+
+| Current header | API or representation sketch | Relevant steps |
+| --- | --- | --- |
+| [`base_types.hpp`](../runtime/include/base_types.hpp) | Target-runtime `Word` and `ERL_WORD_BITS`; word width and alignment assumptions. | 7, 10, 12 |
+| [`terms.hpp`](../runtime/include/terms.hpp) | `Term`, tag sketches, `TermResult`, `AtomId` and process-bound `TermFactory`; inspection, immutable updates, construction and explicit cross-heap copying. | 7, 9, 10, 12 |
+| [`term_layout.hpp`](../runtime/include/term_layout.hpp) | Private `TermSlot`, object/header tags, heap cells/prefixes and layout assertions; not a public or wire ABI. | 7, 10, 12 |
+| [`atom_storage.hpp`](../runtime/include/atom_storage.hpp) | Runtime-wide `AtomStorage`; nested options/statistics, create/find/lookup/name APIs and a collection placeholder. | 9, 10, 14, 28 |
+| [`process_heap.hpp`](../runtime/include/process_heap.hpp) | `HeapOptions`, owned `ProcessHeap`, word allocation/accounting, graph addition and safe-point collection boundary. | 9, 12 |
+| [`process.hpp`](../runtime/include/process.hpp) | Process identities/state/priority, `ReductionBudget`, cooperative `ProcessCode`, `ProcessContext`, owned signals and a per-process signal inbox. | 9, 12, 13 |
+| [`mailbox.hpp`](../runtime/include/mailbox.hpp) | `Mailbox`, selective `ReceiveCursor`, asynchronous `MailboxRead` and private append after message-signal handling. | 12, 13 |
+| [`scheduler.hpp`](../runtime/include/scheduler.hpp) | `Scheduler`/`SchedulerPool`, creation options, snapshots, command replies and bounded signal handling on owner workers. | 9, 13, 14 |
+| [`callable.hpp`](../runtime/include/callable.hpp) | `Callable`/`TypedCallable`, call results, `FunctionKey` and one noncopyable `ModuleRegistry` per loaded module. | 11, 28 |
+| [`native_callable.hpp`](../runtime/include/native_callable.hpp) | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`; no adapter hierarchy or conversion layer. | 11, 28 |
+| [`code_server.hpp`](../runtime/include/code_server.hpp) | `CodeImage`, module definitions, immutable loaded modules, checked generic `ResolvedFunction` calls and runtime-wide `CodeServer`. | 9, 11, 28 |
+
+Use the [term design](../runtime/design/terms.md),
+[process/scheduler design](../runtime/design/processes.md),
+[atom-storage design](../runtime/design/atom_storage.md) and
+[module-registry design](../runtime/design/code_server.md) for the supporting
+contracts. Current headers are evolving sketches: reconcile tag/header definitions
+with their layout assertions and heap word/byte units with their options/comments
+before promoting them into implemented APIs. Their presence is not layout or
+behavioral validation.
+
+Carry these contracts into the relevant implementation boundaries:
+
+- **Terms and memory:** `ProcessContext` owns its heap and mailbox. `Term::copy_to`
+  and `ProcessHeap::add` explicitly copy owned graphs; future collection traces
+  host, continuation, mailbox and receive-candidate roots. Target widths come from
+  LLVM's selected data layout when emitting code, not the compiler host's `Word`.
+- **Atoms:** one `AtomStorage` per runtime supplies stable, non-recycled IDs,
+  initially dense ID indexing and name lookup. Its nested options reserve a 2^20
+  default and 2^26 hard entry cap; collection remains a placeholder. Compiled atoms
+  are read-only bindings initialized through runtime calls before module publication.
+  Emit spellings/slots, never numeric atom IDs assigned by the compiler. Retain
+  metadata roots through loaded-code lifetime; function bodies read initialized
+  bindings. Atom-valued expressions remain unsupported in the initial subset.
+- **Processes and messages:** continuations cooperate through `ReductionBudget`
+  and `StepResult`. Every message, including self-send, is a `ProcessSignal` queued
+  in the recipient's `signal_inbox_`. Bounded safe-point handling on its owner worker
+  copies the payload into its heap and calls `Mailbox::append_handled_message`;
+  enqueueing a signal never directly inserts into the mailbox or resumes code.
+  Signal handling services waiting/suspended processes without clearing explicit
+  suspension. Receive cursors retain unmatched messages and scan position, remove
+  only the selected match and use an arrival/waiter handshake at the tail.
+  Process-facing send acknowledges local acceptance; scheduler diagnostic replies
+  acknowledge handling. Per-sender signal order is preserved across signal kinds.
+- **Modules and functions:** one runtime-wide `CodeServer` publishes each module
+  with exactly one uniquely owned, frozen `ModuleRegistry`. Keys are function name,
+  arity and exact argument types. Default `Callable` targets use all-Term spans;
+  typed targets accept declared values, with no argument/result conversion registry.
+  Generic fallback requires explicit Term arguments and results are explicitly
+  constructed as `CallResult<Term>`. `ResolvedFunction` pins the module for generic
+  calls; direct target pointers and typed views require a retained module handle
+  through invocation and target destruction. Unload removes future lookup access;
+  retained handles keep the old registry, atom bindings and code image alive.
+- **Integration scope:** std::function, RTTI and STL signatures are host-side C++
+  interfaces, not the generated LLVM/C ABI. Native targets are bounded synchronous
+  calls; the old virtual call-frame preparation protocol is no longer part of the
+  proposal. Conversion utilities and cooperative generated-call integration are
+  deferred. Worker execution, messaging, heap allocation and GC also remain later
+  work beyond this milestone's supported skeleton.
 
 ## Objective and current boundary
 
@@ -318,12 +353,12 @@ must exercise this dependency, not supply test-only replacement runtime symbols.
 | Location under `runtime/`                        | Responsibility and initial boundary                                                                                                 |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state                                                             |
-| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, mailbox and exception state                                   |
+| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, signal inboxes, mailbox and exception state                                   |
 | `src/terms/`                                     | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers |
-| `src/builtins/`                                  | Module/name/arity dispatch for Erlang BIF implementations; missing entries return an explicit unsupported/unavailable result        |
+| `src/builtins/`                                  | Module-owned function registries for Erlang BIFs, with default all-Term signatures; missing entries report unavailable        |
 | `src/memory/`                                    | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists        |
-| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, yielding and message wakeups               |
-| `src/modules/`                                   | ABI-checked registration of generated module/export descriptors and explicit initialization ordering                                |
+| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, bounded signal handling and receive wakeups               |
+| `src/modules/`                                   | ABI-checked module descriptors, one frozen function registry per module, code lifetime and explicit initialization ordering                                |
 
 Build the runtime term library upon the existing [term sketch](../runtime/design/terms.md): a common opaque
 `Term` value API, per-type creation/predicates/extraction and immutable updates.
@@ -655,9 +690,10 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 7. Define the immediate-term ABI
 
-- Derive the term-word contract from the sketch's private `TermSlot` boundary,
-  refining tag encoding while preserving opaque public `Term` access and future
-  heap references. Record the chosen encoding in the sketch and versioned ABI.
+- Derive the term-word contract from `runtime/include/base_types.hpp`, the tag
+  sketch in `terms.hpp` and the private `TermSlot`/header layout in `term_layout.hpp`.
+  Reconcile definitions and assertions while preserving public `Term` access and
+  future heap references. Record the chosen encoding in the sketch and versioned ABI.
 - Add versioned ABI headers in `abi/include/erlang_aot/abi/` for term encoding,
   the opaque context and generated-function signatures. Implement only the
   immediate integer encoding needed by this milestone.
@@ -677,7 +713,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 - Build upon the sketch's `ProcessContext`/`TermFactory` ownership and host-root
   lifetime contract when defining context creation and shutdown. Consult
-  `runtime/design/process.hpp` for owned heap/mailbox state and exit invalidation.
+  `runtime/include/process.hpp` for owned heap/mailbox state, pending-signal
+  lifetime and exit invalidation. Reserve runtime-owned `CodeServer` and `AtomStorage`
+  service bindings without implementing deferred services merely to fill accessors.
 - Replace the empty runtime translation unit with explicit initialization,
   shutdown and opaque process-context creation/destruction. Define C ABI status
   reporting and the mandatory generated-program CMake link target.
@@ -686,31 +724,39 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 10. Add the runtime term-service boundary
 
-- Use `runtime/design/{terms.md,terms.hpp,term_layout.hpp}` as the starting
-  contract and extend it into the runtime term library. Move implemented API
+- Use `runtime/design/terms.md` and `runtime/include/{base_types,terms,term_layout}.hpp`
+  as the starting contract and extend it into the runtime term library. Move implemented API
   declarations into `runtime/include/erlang_aot/runtime/` and keep heap layout
   structs private under `runtime/src/terms/`; update the sketch as choices settle.
 - Add `runtime/src/terms/` services for immediate-term classification and checked
   integer encoding/decoding using the shared ABI. Reserve heap-term operations
   without inventing successful implementations for unsupported term kinds.
+  Keep future atom construction routed through `atom_storage.hpp` and its
+  runtime/module initialization contract; do not add a separate atom table.
 - Validate: boundary values, malformed tags and agreement with generated integer
   constants; no dependency on compiler or LLVM libraries. Shared gate, then commit.
 
 ### 11. Add the builtin dispatch skeleton
 
-- Add `runtime/src/builtins/` with explicit registration/lookup by module, name
-  and arity and a uniform service-result contract. Unimplemented BIFs report
-  unavailable; the compiler's accepted source subset does not expand yet.
-- Validate: known test registrations, duplicate entries, unknown names/arities
-  and failure propagation across the C ABI. Shared gate, then commit.
+- Add `runtime/src/builtins/` using `runtime/include/{callable,native_callable,code_server}.hpp`
+  for module ownership and function/arity/argument-type registration. Implement the
+  default all-Term signature needed here and the C ABI service-result bridge;
+  keep typed extensions exact and conversion-free when introduced. Reuse one
+  registry per module, not a second BIF-specific overload table. Unimplemented BIFs
+  report unavailable; the compiler's accepted source subset does not expand yet.
+- Validate: known test registrations, duplicate signature keys, distinct arities,
+  missing generic entries, frozen publication and failure propagation across the
+  C ABI. No conversion support is required. Shared gate, then commit.
 
 ### 12. Establish process memory ownership
 
 - Extend the sketch's heap-prefix, alignment, tracing and rooted-handle contracts
   when defining process memory ownership; retain explicit layout assertions and
-  derive widths from the runtime target. Use `runtime/design/process_heap.hpp`
-  and `Term::copy_to` as the proposed ownership/copy/collection boundaries;
-  include mailbox/cursor roots in the future collector contract.
+  derive widths from the runtime target. Use `runtime/include/process_heap.hpp`
+  and `Term::copy_to` as the proposed ownership/copy/collection boundaries; reconcile
+  word-based allocation/accounting with byte-based options before implementation.
+  Include mailbox/cursor roots and independently owned pending signal payloads in
+  the future ownership/collector contract; transit data must not borrow sender heaps.
 - Add `runtime/src/memory/` lifecycle and ownership boundaries for process-local
   resources. Define where allocation failures and future root/safepoint support
   enter; do not implement a custom allocator or collector in this skeleton.
@@ -720,9 +766,12 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 13. Establish the scheduler service boundary
 
-- Use `runtime/design/{process,scheduler,mailbox}.hpp` and `processes.md` for the
-  proposed owner-worker, cooperative ticks, send and receive-wait contracts.
-  Reserve the cursor/arrival handshake without implementing receive in this step.
+- Use `runtime/include/{process,scheduler,mailbox}.hpp` and
+  `runtime/design/processes.md` for owner-worker, cooperative reduction, signal-inbox
+  and receive-wait contracts. Reserve separate enqueue/handling boundaries: every
+  message first becomes a signal, and only handling appends to the mailbox.
+  Preserve signal order, bounded handling for waiting/suspended processes, explicit
+  suspension and the cursor/arrival handshake. Do not implement receive in this step.
 - Add `runtime/src/scheduler/` state owned by the runtime and explicit process
   registration/removal. Define lifecycle transitions and the future reduction,
   yield and wakeup entry boundaries without starting worker threads or claiming
@@ -856,8 +905,17 @@ planning-only creation of this document does not run or claim these code gates.
   calls the runtime's module-registration ABI. Implement `runtime/src/modules/`
   validation and storage; require explicit registration before harness execution.
   Keep descriptor/registration symbols alive through standard LLVM/linker mechanisms.
-- Validate: multiple generated modules, duplicate registration policy, invalid
-  ABI versions/term widths and missing runtime symbols at link time. Confirm
+- Build on `runtime/include/{callable,native_callable,code_server}.hpp`: transfer one
+  unique registry into each loaded module and freeze it before publication. Register
+  the generic signatures required by this subset; any later typed registrations
+  use exact argument types and explicit Term fallback, with no conversion layer.
+  Bridge C ABI descriptors to host-side callable storage without exposing std::function
+  or RTTI across the ABI. Preserve code-image/module-root lifetime through handles.
+  Reserve runtime AtomStorage initialization for future atom bindings; supporting
+  module-name metadata must not silently enable atom-valued source expressions.
+- Validate: multiple generated modules, duplicate module/signature rejection,
+  frozen registry ownership, failed publication cleanup, retained-handle lifetime,
+  invalid ABI versions/term widths and missing runtime symbols at link time. Confirm
   generated calls pass the runtime-owned process context. Shared gate, then commit.
 
 ### 29. Plan bounded type-specialization candidates
