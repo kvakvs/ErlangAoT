@@ -1,7 +1,7 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: explicit codecs and owned native arguments; dispatch never invokes argument decoders.
-// Container/list mappings apply only when the caller explicitly requests decoding or a result is encoded.
+// REVIEW SKETCH ONLY: optional explicit codec utilities, independent of module registration and lookup.
+// Container/list mappings apply only when native code explicitly requests encoding or decoding.
 #include "callable.hpp"
 
 #include <array>
@@ -12,7 +12,17 @@
 #include <type_traits>
 
 namespace erlang_aot::runtime {
-// Share accounting across explicit recursive codec operations or one call's result encoding.
+// Bound explicit codec operations; function registration and invocation do not use these limits.
+struct ConversionLimits final {
+    // Count sequence elements across one explicit conversion.
+    std::size_t max_elements = 4096;
+    // Bound nesting before entering another list/container conversion.
+    std::size_t max_depth = 32;
+    // Limit total copied payload bytes with checked arithmetic.
+    std::size_t max_bytes = std::size_t{1} * 1024 * 1024;
+};
+
+// Share accounting across one explicitly requested recursive codec operation.
 class ConversionBudget final {
   public:
     // Begin a fresh bounded conversion with validated nonzero limits.
@@ -49,29 +59,6 @@ concept NativeReturn = std::same_as<Value, std::remove_cvref_t<Value>> && std::m
                        requires(ProcessContext &context, const Value &value, ConversionBudget &budget) {
                            { NativeCodec<Value>::encode(context, value, budget) } -> std::same_as<CallResult<Term>>;
                        };
-
-// Preserve caller-supplied C++ values and their exact types for registered-signature selection.
-class NativeArguments final {
-  public:
-    // Own the supplied values without converting them to or from Terms; an empty pack represents arity zero.
-    template <NativeArgument... Values> explicit NativeArguments(Values... values);
-    // Transfer the payload once into the selected invocation frame.
-    NativeArguments(NativeArguments &&other) noexcept;
-    NativeArguments &operator=(NativeArguments &&other) noexcept;
-    // Release retained values and Term roots on the calling process's owner thread.
-    ~NativeArguments();
-    // Avoid duplicating potentially large native payloads during overload selection.
-    NativeArguments(const NativeArguments &) = delete;
-    NativeArguments &operator=(const NativeArguments &) = delete;
-    // Inspect exact native types without decoding, traversing containers or touching their elements.
-    std::span<const std::type_index> types() const noexcept;
-
-  private:
-    template <typename Signature> friend class NativeCallable;
-    // Own an erased typed tuple and stable type keys, validated again by the selected adapter.
-    class Impl;
-    std::unique_ptr<Impl> impl_;
-};
 
 // Support bounded integers explicitly, keeping booleans and character encodings separate.
 template <typename Value>

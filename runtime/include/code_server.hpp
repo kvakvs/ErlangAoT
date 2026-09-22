@@ -1,7 +1,7 @@
 #pragma once
 
 // REVIEW SKETCH ONLY: loaded-module registry and MFA resolution, without a file loader or hot upgrades.
-// Both native adapters and future generated-code adapters implement Callable.
+// Each loaded module owns one immutable ModuleRegistry of std::function targets.
 #include "callable.hpp"
 
 #include <string>
@@ -27,26 +27,18 @@ class CodeImage {
   public:
     // Create a lifetime anchor for code statically linked into the runtime executable.
     static std::shared_ptr<const CodeImage> linked();
-    // Release resources only after module registrations and active call frames have gone away.
+    // Release resources only after module registrations and active calls have gone away.
     virtual ~CodeImage() = default;
-};
-
-// Register one argument-signature variant; name/arity may repeat for distinct native signatures.
-struct FunctionRegistration final {
-    // Supply a live atom term; registration extracts its spelling without retaining a process root.
-    Term name;
-    // Retain a native or generated adapter; null registration is invalid.
-    std::shared_ptr<const Callable> callable;
 };
 
 // Assemble a complete module privately before publishing any of its exports.
 struct ModuleDefinition final {
     // Supply the module atom on its owner thread; the published registry owns independent name metadata.
     Term name;
-    // Declare before exports so adapters/captures die before their code image is released.
+    // Declare before functions so targets/captures die before their code image is released.
     std::shared_ptr<const CodeImage> image;
-    // Supply unique function/arity/argument-type variants, including an optional all-Term fallback.
-    std::vector<FunctionRegistration> exports;
+    // Transfer the sole function registry into the loaded module; null is invalid.
+    std::unique_ptr<ModuleRegistry> functions;
 };
 
 // Describe an export without exposing executable addresses or mutable registration state.
@@ -59,50 +51,48 @@ struct ExportName final {
 // Hold an immutable published module and its code-image ownership.
 class LoadedModule final {
   public:
-    // Destroy adapters before executable memory and module-local metadata.
+    // Destroy the function registry before executable memory and module-local metadata.
     ~LoadedModule();
     // Prevent copying mutable ownership internals; use shared immutable module handles.
     LoadedModule(const LoadedModule &) = delete;
     LoadedModule &operator=(const LoadedModule &) = delete;
     // Inspect stable module spelling for the duration of this module handle.
     std::string_view name() const noexcept;
+    // Retain the runtime-bound module atom while this loaded module is alive.
     Term name_atom() const noexcept;
+    // Expose the sole frozen registry; borrowed targets require this module handle to stay alive.
+    const ModuleRegistry &functions() const noexcept;
     // Materialize a deterministic export listing with atom names rooted in the supplied caller context.
     TermResult<std::vector<ExportName>> exports(ProcessContext &context) const;
 
   private:
     friend class CodeServer;
     friend class ResolvedFunction;
-    // Freeze a validated definition into a name/arity lookup table and retained CodeImage.
+    // Take the unique registry, freeze it and retain the validated module metadata/code image.
     explicit LoadedModule(ModuleDefinition definition);
-    // Own code storage, adapters and immutable export index, with no process-heap terms.
+    // Own code storage, module atom bindings and exactly one unique_ptr<ModuleRegistry>.
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
 
-// Retain one exported name/arity and its registered variants; each call selects by its supplied argument types.
+// Pin a module while invoking its default all-Term registration.
 class ResolvedFunction final {
   public:
-    // Report the resolved export family's fixed Erlang arity.
+    // Report the fixed Erlang arity selected during lookup.
     std::size_t arity() const noexcept;
-    // Select the all-Term registration for boxed arguments; never inspect values to choose a typed variant.
-    CallResult<std::unique_ptr<CallFrame>> prepare(ProcessContext &context, std::span<const Term> arguments,
-                                                   ConversionLimits limits = {}) const;
-    // Select an exact native signature, else require an all-Term registration and explicit fallback arguments.
-    CallResult<std::unique_ptr<CallFrame>>
-    prepare_native(ProcessContext &context, NativeArguments arguments,
-                   std::optional<std::span<const Term>> generic_arguments = std::nullopt,
-                   ConversionLimits limits = {}) const;
+    // Validate arity/ownership, call once and translate host exceptions without any conversions.
+    CallResult<Term> call(ProcessContext &context, std::span<const Term> arguments) const;
 
   private:
     friend class CodeServer;
-    // Pin immutable module storage before retaining its selected export adapter.
+    // Keep the registry, module atom bindings and executable storage alive throughout invocation.
     std::shared_ptr<const LoadedModule> module_;
-    // Retain an immutable exact-signature index and the optional all-Term fallback for this name/arity.
-    class Overloads;
-    std::shared_ptr<const Overloads> overloads_;
-    // Construct only after successful export-family lookup in a retained module snapshot.
-    ResolvedFunction(std::shared_ptr<const LoadedModule> module, std::shared_ptr<const Overloads> overloads);
+    // Borrow the generic target from the immutable registry pinned by module_.
+    const Callable *target_;
+    // Check the dynamic argument span before entering the target.
+    std::size_t arity_;
+    // Construct only after successful lookup of an all-Term registration in the retained module.
+    ResolvedFunction(std::shared_ptr<const LoadedModule> module, const Callable *target, std::size_t arity);
 };
 
 // Store the runtime's currently published modules, keyed by exact decoded module names.
@@ -118,7 +108,7 @@ class CodeServer final {
 
     // Atomically publish a validated module; duplicate names fail instead of replacing live code.
     CodeResult<std::shared_ptr<const LoadedModule>> load(ModuleDefinition definition);
-    // Resolve module:function/arity to its registered signature family; argument selection happens on prepare.
+    // Resolve the default all-Term target; typed lookup uses find_module()->functions().find_typed<...>().
     CodeResult<ResolvedFunction> resolve(std::string_view module, std::string_view function, std::size_t arity) const;
     // Resolve live atom terms on their owner thread, extracting the same exact name keys as string lookup.
     CodeResult<ResolvedFunction> resolve(const Term &module, const Term &function, std::size_t arity) const;
@@ -126,7 +116,7 @@ class CodeServer final {
     CodeResult<std::shared_ptr<const LoadedModule>> find_module(std::string_view name) const;
     // Copy a name-sorted snapshot of currently published modules without exposing the registry map.
     std::vector<std::shared_ptr<const LoadedModule>> loaded_modules() const;
-    // Remove a module from future lookups; existing resolutions/frames still pin its code.
+    // Remove a module from future lookups; existing module/resolution handles still pin its code.
     CodeResult<void> unload(std::string_view module);
 
   private:

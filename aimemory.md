@@ -1,4 +1,22 @@
-# Current working memory — 2026-09-21
+# Current working memory — 2026-09-22
+
+- Callable simplification supersedes the older native-dispatch/frame notes below.
+  User explicitly chose API sketch only. callable.hpp now has Callable (Term span),
+  TypedCallable<Args...> (exact values), FunctionKey and a noncopyable ModuleRegistry.
+  ModuleDefinition transfers one unique_ptr registry; LoadedModule freezes/owns it.
+  Default keys are all-Term, typed signatures infer arity/types without any codec
+  requirements. find_typed returns a view of the stored target; no implicit fallback,
+  argument decoding or result encoding. Targets return CallResult<Term> explicitly.
+  ResolvedFunction pins the module for checked generic calls; direct lookup needs
+  callers to retain the module through target destruction. NativeCallable is an
+  alias, NativeArguments/virtual Callable/CallFrame preparation removed; optional
+  codec declarations and ConversionLimits stay in native_types.hpp. Cooperative
+  generated-call ABI remains deferred. Docs/architecture/files/compiler plan aligned.
+  Standalone/combined API syntax, custom codec-free types/constraints, clang-tidy,
+  Lizard, formatting and whitespace pass. Strict -Wpedantic -Werror still fails only
+  on existing terms.hpp nested anonymous unions at127/260. No implementations,
+  CMake integration or commit; preserve user's atom_storage.hpp edits.
+
 
 - Message delivery review update: runtime/include/process.hpp owns a FIFO signal_inbox_
   plus enqueue/handle boundaries; every message (including self-send) goes through it.

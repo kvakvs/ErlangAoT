@@ -20,14 +20,14 @@ that suspend at the mailbox tail and preserve unmatched messages. These are also
 review-only declarations. Use their ownership, root and suspension contracts when
 implementing the service boundaries below; this milestone still defers worker
 execution, messaging, heap allocation and GC rather than claiming them implemented.
-The [code-server sketch](../runtime/design/code_server.md) adds loaded module/MFA
-resolution and typed C++ registrations: [`code_server.hpp`](../runtime/design/code_server.hpp),
-[`callable.hpp`](../runtime/design/callable.hpp),
-[`native_callable.hpp`](../runtime/design/native_callable.hpp) and
-[`native_types.hpp`](../runtime/design/native_types.hpp). Use it for code ownership
-and future callable/conversion boundaries; it remains outside the executable subset.
-Its callable dispatch selects exact registered native argument types or an all-Term
-fallback; argument conversions are explicit caller work, never automatic dispatch.
+The [code-server sketch](../runtime/design/code_server.md) adds one function registry
+per loaded module: [`code_server.hpp`](../runtime/include/code_server.hpp) and
+[`callable.hpp`](../runtime/include/callable.hpp). Keys contain function/arity/exact
+argument types; std::function targets default to all-Term arguments. Typed lookup
+needs no registered codecs; generic fallback uses explicitly supplied Terms and
+results are constructed explicitly. Optional codecs live in
+[`native_types.hpp`](../runtime/include/native_types.hpp). These remain API sketches;
+cooperative generated-call integration is deferred outside this executable subset.
 The [AtomStorage API sketch](../runtime/design/atom_storage.md) reserves one atom
 registry per runtime: stable monotonically allocated IDs, dense ID/name indexes,
 startup-configurable 2^20 default / 2^26 hard entry cap, and an atom-GC placeholder.
