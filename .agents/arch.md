@@ -1,5 +1,11 @@
 # Architecture
 
+- `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
+  Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);
+  smaller values stay on process heaps and empty refcounted objects are forbidden.
+  Immutable word arrays carry optional valid-tail-bit counts; final shared-owner
+  destruction releases the vector directly. No binary heap, pool or evacuation service.
+  Checked object creation remains an API sketch without an implementation.
 - Runtime terms have a manual-review sketch in `runtime/design/`: an opaque C++
   `Term`/factory API over private word-aligned heap structs and traceable one-word
   slots, with immutable updates and a future tagged-value boundary. Declarations

@@ -10,6 +10,9 @@ static_assert(alignof(Word) == sizeof(Word));
 
 static constexpr Word ERL_WORD_BITS = 8 * sizeof(Word);
 
+// Keep binaries up to 64 bytes on the process heap; refcounted objects must exceed this word count.
+static constexpr Word HEAP_BINARY_THRESHOLD_WORDS = 64 / sizeof(Word);
+
 // Resolved term categories; boxed values need their object header to determine a BoxedKind.
 enum class TermKind : std::uint8_t {
     // An Integer in Erlang can be either a smallint, fitting into a machine word, minus the tag bits,
@@ -67,7 +70,7 @@ enum class BoxedKind : std::uint8_t {
     fun_closure = 5, // function or a closure with attached frozen values
     floating = 6,
     external_function = 7,
-    refc_binary = 8, // a reference-counted pointer to a global binary heap object
+    refc_binary = 8, // a shared binary object owning its word vector
     heap_binary = 9, // a locally heap-contained data blob
     sub_binary = 10,
     match_context = 11, // something created by binary matching?

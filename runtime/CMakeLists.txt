@@ -5,6 +5,7 @@ add_library(erlang_runtime STATIC src/runtime.cpp)
 target_sources(erlang_runtime PRIVATE
     include/atom_storage.hpp
     include/base_types.hpp
+    include/binary_heap_object.hpp
     include/callable.hpp
     include/code_server.hpp
     include/mailbox.hpp

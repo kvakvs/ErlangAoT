@@ -1,5 +1,17 @@
 # Current working memory — 2026-09-22
 
+- Binary object API sketch simplified 2026-09-23 at user request: remove BinaryHeap
+  and pool design; only binary_heap_object.hpp remains. BinaryHeapObject owns vector<Word>,
+  static create(span,tail) returns expected<shared_ptr<BinaryHeapObject>,BinaryHeapObjectError>.
+  No owner reference/callback; default destructor frees vector. No pool file ever existed.
+  User correction: refcounted word counts must exceed HEAP_BINARY_THRESHOLD_WORDS,
+  defined as 64/sizeof(Word) in base_types.hpp; invalid_size rejects smaller/equal/empty.
+  Partial valid count 1..wordbits-1; zero low padding;
+  checked bit/byte sizes and rollback contract. Creation/accessors remain declarations only.
+  term_layout.hpp includes object header and describes vector ownership; other user edits preserved.
+  CMake IDE list and architecture/file/compiler-plan notes updated. Strict C++23 consumer
+  syntax, focused tidy/Lizard, format and whitespace pass; no commit or full quality gate.
+
 - Permanent `tests/runtime/term_tag.cpp` truth-table test covers all64 combinations,
   reports mismatching tags and expected/actual enum values, and remains active under NDEBUG.
   Root registers tests/runtime when native runtime+BUILD_TESTING enabled, independently

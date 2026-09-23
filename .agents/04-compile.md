@@ -21,6 +21,7 @@ inventory and the affected implementation steps together.
 | [`term_layout.hpp`](../runtime/include/term_layout.hpp)         | Private `TermSlot`, object/header tags, heap cells/prefixes, Multiprecision `Bignum` alias and layout assertions; not a public or wire ABI.                | 7, 10, 12      |
 | [`atom_storage.hpp`](../runtime/include/atom_storage.hpp)       | Runtime-wide `AtomStorage`; nested options/statistics, create/find/lookup/name APIs and a collection placeholder.                                          | 9, 10, 14, 28  |
 | [`process_heap.hpp`](../runtime/include/process_heap.hpp)       | `HeapOptions`, owned `ProcessHeap`, word allocation/accounting, graph addition and safe-point collection boundary.                                         | 9, 12          |
+| [`binary_heap_object.hpp`](../runtime/include/binary_heap_object.hpp) | Shared `BinaryHeapObject` with owned immutable word vector, checked creation and optional valid tail bits. | 12 |
 | [`process.hpp`](../runtime/include/process.hpp)                 | Process identities/state/priority, `ReductionBudget`, cooperative `ProcessCode`, `ProcessContext`, owned signals and a per-process signal inbox.           | 9, 12, 13      |
 | [`mailbox.hpp`](../runtime/include/mailbox.hpp)                 | `Mailbox`, selective `ReceiveCursor`, asynchronous `MailboxRead` and private append after message-signal handling.                                         | 12, 13         |
 | [`scheduler.hpp`](../runtime/include/scheduler.hpp)             | `Scheduler`/`SchedulerPool`, creation options, snapshots, command replies and bounded signal handling on owner workers.                                    | 9, 13, 14      |
@@ -47,6 +48,13 @@ Carry these contracts into the relevant implementation boundaries:
   and `ProcessHeap::add` explicitly copy owned graphs; future collection traces
   host, continuation, mailbox and receive-candidate roots. Target widths come from
   LLVM's selected data layout when emitting code, not the compiler host's `Word`.
+- **Binary storage:** `BinaryHeapObject::create` publishes objects owning immutable
+  `std::vector<Word>` storage as `std::shared_ptr<BinaryHeapObject>`. Word counts must exceed
+  `HEAP_BINARY_THRESHOLD_WORDS` (64 / sizeof(Word)); empty and smaller/equal-sized
+  inputs are rejected with `BinaryHeapObjectError::invalid_size`. Optional tail counts describe valid high
+  bits in a partial last word, including byte-aligned tails; absent means full words.
+  Final shared-owner destruction releases the vector directly. There is no binary
+  heap or pool, owner callback, migration or separate service lifetime to manage.
 - **Atoms:** one `AtomStorage` per runtime supplies stable, non-recycled IDs,
   initially dense ID indexing and name lookup. Its nested options reserve a 2^20
   default and 2^26 hard entry cap; collection remains a placeholder. Compiled atoms
@@ -767,6 +775,12 @@ planning-only creation of this document does not run or claim these code gates.
   word-based allocation/accounting with byte-based options before implementation.
   Include mailbox/cursor roots and independently owned pending signal payloads in
   the future ownership/collector contract; transit data must not borrow sender heaps.
+- Carry `runtime/include/binary_heap_object.hpp` into the future shared binary
+  boundary: checked immutable copies, exact tail lengths, stable word addresses,
+  word counts strictly above the 64-byte process-heap threshold,
+  and vector reclamation on final shared-owner destruction without a separate heap or pool.
+  Process GC must destroy shared handles rather than byte-copying their representation;
+  actual binary allocation and term-layout integration remain deferred.
 - Add `runtime/src/memory/` lifecycle and ownership boundaries for process-local
   resources. Define where allocation failures and future root/safepoint support
   enter; do not implement a custom allocator or collector in this skeleton.

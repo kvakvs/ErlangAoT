@@ -17,13 +17,16 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/CMakeLists.txt`: frontend library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
-  `base_types.hpp`: word types and raw/resolved tag enums; `terms.hpp`: opaque C++ API,
+  `base_types.hpp`: word types, 64-byte heap-binary word threshold and raw/resolved tag enums; `terms.hpp`: opaque C++ API,
   explicit cross-heap copy declarations and constexpr `TermTag::get_kind()` decoding into `TermKind`, including empty tuples/lists;
   `term_layout.hpp`: private heap struct
   sketch and size/offset assertions. Listed on the runtime CMake target for IDE
   navigation, without runtime service implementations or header compilation.
 - `tests/runtime/{CMakeLists.txt,term_tag.cpp}`: native CTest `runtime_term_tag`, available
   with the runtime independently of the compiler; explicit expected values cover all 64 tag combinations.
+- `runtime/include/binary_heap_object.hpp`: shared binary objects owning immutable
+  `std::vector<Word>` storage, checked creation/errors, word views and exact bit-length/tail
+  metadata. API sketch listed for IDE navigation; no binary heap or pool service.
 - `runtime/design/atom_storage.{hpp,md}`: runtime-local atom interning/lookup API,
   startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;

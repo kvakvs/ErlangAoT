@@ -3,6 +3,7 @@
 // REVIEW SKETCH ONLY: private target-runtime layouts, not a public API or wire format.
 // No allocator, accessor, tag encoder or collector is implemented here. See terms.md.
 #include "../include/base_types.hpp"
+#include "../include/binary_heap_object.hpp"
 #include "../include/terms.hpp"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -25,7 +26,8 @@ struct alignas(Word) BoxHeader final {
         BoxedKind boxed_kind_ : 5;
         TermKindPrimary tag_primary_header_ : 2; // this is always 'header', otherwise not used
 
-        explicit constexpr BoxTag(const BoxedKind kind) : boxed_kind_(kind), tag_primary_header_(TermKindPrimary::header) {}
+        explicit constexpr BoxTag(const BoxedKind kind)
+            : boxed_kind_(kind), tag_primary_header_(TermKindPrimary::header) {}
 
         BoxedKind boxed_kind() const { return boxed_kind_; }
     };
@@ -49,7 +51,7 @@ struct BignumCell final {
     BoxHeader header_;
     Bignum value_;
 
-    explicit constexpr BignumCell(const Bignum &input) : header_(TermKind::bignum, 0), value_(input) {}
+    explicit constexpr BignumCell(const Bignum &input) : header_(BoxedKind::bignum, 0), value_(input) {}
 };
 
 // Raw float bytes avoid platform-specific double field alignment in the heap layout.
@@ -61,7 +63,7 @@ struct alignas(Word) FloatCell final {
     // IEEE 754 binary64 bytes in target-native order; access through copying/bit conversion.
     double value_;
 
-    explicit constexpr FloatCell(const double value) : header_(TermKind::floating, 0), value_(value) {}
+    explicit constexpr FloatCell(const double value) : header_(BoxedKind::floating, 0), value_(value) {}
 };
 
 // Pid, port and reference use separate kinds with the same private registry-key layout.
@@ -74,7 +76,7 @@ struct alignas(Word) RemoteIdentityCell final {
     Term remote_host_;
 
     explicit constexpr RemoteIdentityCell(const Word remote_id, const Term remote_host)
-        : header_(TermKind::ext_pid, 0), identity_id_(remote_id), remote_host_(remote_host) {}
+        : header_(BoxedKind::ext_pid, 0), identity_id_(remote_id), remote_host_(remote_host) {}
 };
 
 // A cons preserves a list head and an arbitrary tail, including an improper-list tail.
@@ -95,9 +97,9 @@ struct alignas(Word) TupleCell final {
     // Unsized array of tuple elements, Erlang index starting at 1
     Term elements_[];
 
-    explicit constexpr TupleCell(const std::size_t arity) : header_(TermKind::tuple, arity) {}
+    explicit constexpr TupleCell(const std::size_t arity) : header_(BoxedKind::tuple, arity) {}
 
-    explicit constexpr TupleCell(const std::span<Term> elements) : header_(TermKind::tuple, elements.size()) {
+    explicit constexpr TupleCell(const std::span<Term> elements) : header_(BoxedKind::tuple, elements.size()) {
         std::copy(elements.begin(), elements.end(), elements_);
     }
 };
@@ -111,12 +113,25 @@ struct alignas(Word) MapCell final {
     Term entries_[];
 };
 
+// Heap binary stores data right on heap in the cell.
+// A newly made binary smaller or equal in size to HEAP_BINARY_THRESHOLD_WORDS will be onheap.
 // Packed bytes follow this prefix, with word padding after the last meaningful byte.
-struct alignas(Word) BinaryCell final {
+struct alignas(Word) HeapBinaryCell final {
     // Identify untraced bit storage, including byte-sized binaries.
-    BoxHeader header;
-    // Logical length in bits; unused low bits in the final byte and padding are zero.
-    Word bit_count;
+    // For heap binary the reasonable limit is 64 bytes, before the binary is converted to refc.
+    BoxHeader header_;
+    // Logical length of the last Word in bits.
+    Word trailing_word_bits_;
+    // Followed by 1 or more content Words.
+    Word values_[];
+};
+
+// Refc binary holds a shared object that owns its data in a vector of Words.
+// A newly made binary bigger than HEAP_BINARY_THRESHOLD_WORDS will become this.
+struct alignas(Word) RefcBinaryCell final {
+    // Identify untraced bit storage, including byte-sized binaries.
+    BoxHeader header_;
+    std::shared_ptr<BinaryHeapObject> binary_;
 };
 
 // External functions retain names for later module resolution, not executable pointers.
@@ -153,7 +168,7 @@ struct alignas(Word) NativeRecordPrefix final {
 };
 
 // Reject padding or layout drift at build time on every actual runtime target.
-static_assert(std::is_standard_layout_v<TermSlot> && std::is_trivially_copyable_v<TermSlot>);
+static_assert(std::is_standard_layout_v<Term> && std::is_trivially_copyable_v<Term>);
 static_assert(sizeof(TermSlot) == sizeof(Word) && alignof(TermSlot) == alignof(Word));
 static_assert(offsetof(TermSlot, encoded) == 0);
 static_assert(sizeof(BoxHeader) == 2 * sizeof(Word));
