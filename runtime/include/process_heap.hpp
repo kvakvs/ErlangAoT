@@ -2,6 +2,7 @@
 
 // Lazy ownership, checked allocation rejection and immediate copying are implemented; no allocator or GC.
 // See docs/runtime-memory.md and runtime/design/processes.md for future roots and collection.
+#include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 
 #include <cstddef>
@@ -11,7 +12,14 @@
 
 namespace erlang_aot::runtime {
 // Distinguish invalid requests, configured limits and backing allocation failures.
-enum class HeapError : std::uint8_t { invalid_size, limit_exceeded, out_of_memory, unsafe_point, not_implemented };
+enum class HeapError : std::uint8_t {
+    invalid_size,
+    limit_exceeded,
+    out_of_memory,
+    unsafe_point,
+    not_implemented,
+    diagnostic_failure
+};
 
 // Report actual collector work; the initial collector stub returns not_implemented instead.
 struct CollectionStats final {
@@ -42,11 +50,11 @@ class ProcessHeap final {
     ProcessHeap &operator=(ProcessHeap &&) = delete;
 
     // Validate nonzero word count, byte overflow and budget; valid requests return not_implemented.
-    std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words) noexcept;
+    std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words, DiagnosticSink sink = {}) noexcept;
     // Copy checked owner-independent immediates; rooted graph addition remains deferred.
     TermResult<Term> add(const Term &value) noexcept;
     // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
-    std::expected<CollectionStats, HeapError> collect() noexcept;
+    std::expected<CollectionStats, HeapError> collect(DiagnosticSink sink = {}) noexcept;
     // Report allocated and retained capacity in words; both stay zero until allocation is implemented.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;

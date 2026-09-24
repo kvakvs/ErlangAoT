@@ -14,6 +14,7 @@ enum class Status : std::uint8_t {
     resource_limit = 7,
     stopped = 8,
     abi_mismatch = 9,
-    internal_error = 10
+    internal_error = 10,
+    unknown_builtin = 11
 };
 } // namespace erlang_aot::abi::v1

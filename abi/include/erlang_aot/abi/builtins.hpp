@@ -5,6 +5,7 @@
 
 namespace erlang_aot::abi::v1 {
 // Dispatch synchronously through a live context; names/words borrow valid arrays (null args only at arity zero).
+// Unknown signatures return unknown_builtin; recognized deferred BIFs report once and return not_implemented.
 // Return explicit status and write result only on OK; errors never become words or escape as C++ exceptions.
 Status dispatch_builtin(Context *context, const char *module, std::size_t module_size, const char *function,
                         std::size_t function_size, const TermWord *arguments, std::size_t arity,

@@ -207,3 +207,12 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `docs/project-validation.md`: C++23 evidence and pending host matrix;
   `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
 - `.agents/03-project.md`: implementation plan, per-step validation ledger and status.
+
+- `runtime/src/terms/factory.cpp`: lifetime-checked TermFactory reporting placeholders.
+  `runtime/src/{process,scheduler,modules}/services.cpp`: deferred send, run/execute
+  and unload entry points. `runtime/include/erlang_aot/runtime/features.hpp` maps
+  shared diagnostic status into typed host failures; memory/heap.cpp now reports.
+  `runtime/include/erlang_aot/runtime/builtins.hpp`: bounded exact known-BIF catalog;
+  builtins/bridge.cpp distinguishes unknown_builtin from known deferred signatures.
+  `tests/runtime/services.cpp`, `service_output.cmake`: real boundary/sink/state/
+  cleanup and once-only stderr tests. `docs/runtime-services.md`: scope and contracts.

@@ -1,12 +1,12 @@
 include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
 add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
-    src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
+    src/process/services.cpp src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
     src/memory/heap.cpp src/memory/copy.cpp
-    src/scheduler/registry.cpp src/scheduler/transitions.cpp
-    src/terms/immediate.cpp src/terms/term.cpp
+    src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp
+    src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp
-    src/modules/code_server.cpp)
+    src/modules/services.cpp src/modules/code_server.cpp)
 # List review headers for IDE navigation; they are not separate compilation units.
 target_sources(erlang_runtime PRIVATE
     include/atom_storage.hpp

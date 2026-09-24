@@ -47,3 +47,11 @@ endforeach()
 add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_builtin_bridge>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/builtin_output.cmake")
+
+add_executable(runtime_services services.cpp)
+erlang_aot_project_options(runtime_services)
+target_link_libraries(runtime_services PRIVATE ErlangAoT::generated_program)
+add_test(NAME runtime_services COMMAND runtime_services)
+add_test(NAME runtime_service_output COMMAND "${CMAKE_COMMAND}"
+    "-DPROGRAM=$<TARGET_FILE:runtime_services>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/service_output.cmake")

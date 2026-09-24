@@ -1,10 +1,11 @@
 #pragma once
 
-// TermFactory remains a sketch; word services and immediate-only Term live in the namespaced header.
+// TermFactory exposes reporting placeholders; immediate-only Term lives in the namespaced header.
 // See runtime/design/terms.md for proposed ownership, immutable updates and the private ABI boundary.
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 #include <expected>
 #include <memory>
@@ -16,16 +17,19 @@
 #include <vector>
 
 namespace erlang_aot::runtime {
-// Create terms owned by one live process; inputs are copied/retained before return.
+class ContextLifetime;
+
+// Reserve process-owned constructors; every operation currently reports term_services and returns failure.
+// Raw small integers and empty containers remain available through Term::from_word.
 class TermFactory final {
   public:
-    // Bind allocation and root registration to an existing process context.
-    explicit TermFactory(ProcessContext &context);
-    // Release the factory's context binding; returned terms retain their own roots.
-    ~TermFactory();
+    // Bind a live-context token and borrowed sink without allocating or registering roots.
+    explicit TermFactory(ProcessContext &context, DiagnosticSink sink = {}) noexcept;
+    // Release the weak context binding; no process storage or roots are retained.
+    ~TermFactory() = default;
     // Keep one factory binding; moving transfers it without moving the process.
-    TermFactory(TermFactory &&other) noexcept;
-    TermFactory &operator=(TermFactory &&other) noexcept;
+    TermFactory(TermFactory &&other) noexcept = default;
+    TermFactory &operator=(TermFactory &&other) noexcept = default;
     // Forbid accidental copying of the process-bound factory.
     TermFactory(const TermFactory &) = delete;
     TermFactory &operator=(const TermFactory &) = delete;
@@ -67,8 +71,11 @@ class TermFactory final {
     TermResult<Term> native_record(const NativeRecordDescriptor &descriptor, std::span<const Term> fields);
 
   private:
-    // Hide process binding, resource budgets and allocation policy from consumers.
-    class Impl;
-    std::unique_ptr<Impl> impl_;
+    // Reject expired or moved-from bindings before reporting an unavailable constructor.
+    TermResult<Term> unavailable(std::string_view operation) const noexcept;
+    // Inspect context liveness without retaining or dereferencing process storage.
+    std::weak_ptr<const ContextLifetime> lifetime_;
+    // Borrow diagnostic delivery state for this factory's lifetime; null selects stderr.
+    DiagnosticSink sink_;
 };
 } // namespace erlang_aot::runtime

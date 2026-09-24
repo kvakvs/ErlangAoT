@@ -132,8 +132,9 @@ int main(int argc, char **argv) {
         if (argc == 2) {
             const std::string_view function(argv[1]);
             Word output = 123;
+            const auto expected = function == "missing" ? Status::unknown_builtin : Status::not_implemented;
             require(dispatch_builtin(context, "test", 4, function.data(), function.size(), nullptr, 0, &output) ==
-                        Status::not_implemented,
+                        expected,
                     "unavailable status lost");
             require(output == 123, "unavailable BIF returned a fabricated word");
             return 0;

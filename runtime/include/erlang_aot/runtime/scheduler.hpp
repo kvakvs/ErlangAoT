@@ -12,7 +12,9 @@ enum class SchedulerError : std::uint8_t {
     invalid_argument,
     invalid_transition,
     stopped,
-    resource_limit
+    resource_limit,
+    not_implemented,
+    diagnostic_failure
 };
 template <typename Value> using SchedulerResult = std::expected<Value, SchedulerError>;
 
@@ -49,6 +51,11 @@ class SchedulerService final {
     SchedulerResult<void> finish_dispatch(ProcessIdentity process, StepResult result) noexcept;
     // Set an idempotent control gate only outside dispatch; resume never changes a waiting state.
     SchedulerResult<void> set_suspended(ProcessIdentity process, bool suspended) noexcept;
+
+    // Reserve worker execution without starting threads or changing registrations.
+    SchedulerResult<void> run(DiagnosticSink sink = {}) noexcept;
+    // Reserve execution of a registered runnable process without granting reductions or invoking code.
+    SchedulerResult<StepResult> execute(ProcessIdentity process, DiagnosticSink sink = {}) noexcept;
 
     // Close registration and new dispatch/control admission; inspection, returns and removal remain available.
     void request_shutdown() noexcept;

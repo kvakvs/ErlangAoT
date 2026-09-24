@@ -119,3 +119,9 @@ state, admission closure, automatic removal and registry/context/code teardown o
 checking cleanup and retry without consuming an identity. Native macOS arm64 tests
 and sanitizer runs validate the implemented bookkeeping only; native Linux/Windows
 and actual Erlang scheduling remain pending.
+
+Step 14 adds `SchedulerService::run` and `execute(identity)` reporting placeholders.
+They return `not_implemented` (or `diagnostic_failure`) without running workers,
+changing dispatch state or granting reductions. Execution checks registration and
+runnable/non-suspended state; shutdown rejects both hooks silently. `ProcessContext::send`
+now reports unavailable without enqueueing any signal. See [runtime services](runtime-services.md).

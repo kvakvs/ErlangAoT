@@ -36,6 +36,14 @@ void require(bool condition, const char *message) {
     }
 }
 
+// Step 14 installs direct service tests while atom collection remains a reporter-only reservation.
+std::string_view failure_test(const FeatureInfo &feature) {
+    if (feature.owner != FeatureOwner::runtime) {
+        return "codegen_features";
+    }
+    return feature.id == FeatureId::atom_collection ? "runtime_features" : "runtime_services";
+}
+
 // Every stable ID must retain its spelling, ownership metadata and focused reporter coverage.
 void check_catalog() {
     require(feature_catalog.size() == names.size(), "update the catalog compatibility snapshot");
@@ -46,8 +54,7 @@ void check_catalog() {
         require(feature->status == FeatureStatus::deferred, "unexpected feature status");
         require(!feature->boundary.empty() && feature->plan_step > 0 && feature->plan_step <= 46,
                 "missing owning boundary/plan step");
-        const auto test = feature->owner == FeatureOwner::runtime ? "runtime_features" : "codegen_features";
-        require(feature->failure_test == test, "missing focused failure test");
+        require(feature->failure_test == failure_test(*feature), "missing focused failure test");
     }
     require(find_feature(FeatureId::invalid) == nullptr, "zero became a valid feature");
 }

@@ -14,7 +14,9 @@ enum class ProcessError : std::uint8_t {
     unknown_process,
     stopped,
     unsupported_backend,
-    resource_limit
+    resource_limit,
+    not_implemented,
+    diagnostic_failure
 };
 template <typename Value> using ProcessResult = std::expected<Value, ProcessError>;
 
@@ -80,11 +82,11 @@ class ProcessContext final {
     Mailbox &mailbox() noexcept;
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
-    // Reserved for steps 13–14: atom storage and send are not implemented.
+    // Atom storage remains reserved; send is an explicit reporting placeholder.
     // Share one runtime-owned atom identity/name table across every scheduler and process.
     AtomStorage &atom_storage() noexcept;
-    // Post a message signal without awaiting handling; sending to a dead local pid is a no-op.
-    ProcessResult<void> send(ProcessIdentity recipient, const Term &value);
+    // Reserve signal sending; currently report message_passing without claiming acceptance or delivery.
+    ProcessResult<void> send(ProcessIdentity recipient, const Term &value, DiagnosticSink sink = {}) noexcept;
 
   private:
     friend class Scheduler;

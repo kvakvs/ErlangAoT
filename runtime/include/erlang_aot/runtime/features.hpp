@@ -1,6 +1,7 @@
 #pragma once
 #include <erlang_aot/abi/feature_diagnostic.hpp>
 #include <erlang_aot/abi/status.hpp>
+#include <expected>
 
 namespace erlang_aot::runtime {
 struct DiagnosticSink {
@@ -32,4 +33,14 @@ class FeatureFailure final {
     // Prevent retries, reformatting and duplicate output while failure propagates through callers.
     abi::v1::Status status_ = abi::v1::Status::ok;
 };
+
+// Translate the catalog status once at a host boundary; callers propagate the typed error unchanged.
+template <typename Error>
+std::unexpected<Error> deferred_service(abi::v1::FeatureId feature, std::string_view operation,
+                                        DiagnosticSink sink = {}) noexcept {
+    FeatureFailure failure(sink);
+    const auto status = failure.report(feature, {.operation = operation});
+    return std::unexpected(status == abi::v1::Status::not_implemented ? Error::not_implemented
+                                                                      : Error::diagnostic_failure);
+}
 } // namespace erlang_aot::runtime

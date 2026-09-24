@@ -7,7 +7,9 @@ The rooted/heap contracts below remain proposals.
 [Runtime term boundary](../../docs/runtime-terms.md) documents checked classification
 and integer encoding/decoding. Step 12 implements process ownership and
 immediate-only copying; see [process memory](../../docs/runtime-memory.md). Backing allocation, graph copying,
-rooting and collection remain unimplemented.
+rooting and collection remain unimplemented. Step 14 adds a weak-lifetime-token
+TermFactory binding and reporting placeholders for its constructors, without terms
+or roots; see [runtime service placeholders](../../docs/runtime-services.md).
 [terms.hpp](../include/erlang_aot/runtime/terms.hpp) preserves the one-word public value API;
 [term_layout.hpp](../src/terms/term_layout.hpp) contains compile-checked private prefixes.
 Implemented word/tag/error declarations live in

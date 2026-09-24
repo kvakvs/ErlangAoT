@@ -1,3 +1,26 @@
+# Step 14 completion — 2026-09-25
+
+- Shared deferred_service<Error> owns a FeatureFailure report and maps delivery/OOM
+  failure to typed diagnostic_failure. Heap allocate/collect now report; OOM test
+  expects diagnostic_failure, while raw Term validation/copy remain silent.
+- TermFactory now weakly binds ContextLifetime + borrowed sink, no pimpl/root allocation.
+  Every constructor shape explicitly defers; supported immediate APIs unchanged.
+  Factory uses forward declaration for ContextLifetime to avoid mailbox include cycle.
+- ProcessContext::send, SchedulerService::run/execute and CodeServer::unload reject
+  explicitly without changing state. AtomStorage/collection and file-loader/descriptors
+  stay reserved because actual ownership/ABI is absent; no atom subsystem prebuilt.
+- BIF bridge resolves actual registrations first; ten exact known signature reservations
+  report builtins, other missing signatures return Status::unknown_builtin=11 silently.
+  Catalog is intentionally bounded, not OTP-complete. Shared FeatureId metadata updated.
+- Tests cover factory expiry, sink rejection/throw, state, image cleanup, report count,
+  output sentinel and nested heap failure through registered callable/ABI bridge.
+  Wrapper sets CallFailure.reported=true. No source-language acceptance changes.
+- Fresh Debug all93 tests/full Lizard+tidy passed; Release runtime-only all18;
+  ASan/UBSan6 focused tests. Focused test tidy/Lizard, format299 files, links and
+  whitespace passed. Initial ABI snapshot assumed runtime_features for every runtime
+  entry; updated expected mapping for real service tests and full rerun passed.
+  Atom collector still reporter-only reservation. Stop before step15.
+
 # Step 13 completion — 2026-09-25
 
 - One runtime-owned SchedulerService (canonical scheduler.hpp) implements serialized

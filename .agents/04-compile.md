@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–13 complete, 2026-09-25. Steps 14–46 remain pending.
+Status: steps 1–14 complete, 2026-09-25. Steps 15–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -17,7 +17,7 @@ project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
 Immediate-only host Terms, builtin dispatch and memory service boundaries are implemented;
-TermFactory, backing heap allocation and collection remain pending.
+TermFactory reporting placeholders are installed; term creation, backing allocation and collection remain pending.
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
@@ -36,7 +36,7 @@ update this inventory and affected steps together when sketches change.
 | Header under `runtime/include/` | Sketch                                                                                           | Steps         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
 | `base_types.hpp`                | Forwards implemented target word/tag definitions to namespaced runtime API                                                        | 7, 10, 12     |
-| `terms.hpp`                     | Host `Term`/`TermFactory` sketch; word/tag/error API moved to namespaced header         | 7, 9, 10, 12  |
+| `terms.hpp`                     | Immediate Term API forwarded; TermFactory lifetime binding and reporting placeholders         | 7, 9, 10, 12, 14  |
 | `../src/terms/term_layout.hpp`   | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
 | `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
 | `process_heap.hpp`              | Lazy owner/accounting, checked allocation/collection rejection and immediate addition implemented; graph storage reserved | 9, 12 |
@@ -73,7 +73,7 @@ documents status reporting, host serialization and the mandatory
 Step 10 adds [immediate word services](../docs/runtime-terms.md) in
 `erlang_aot/runtime/terms.hpp`: checked structural classification and native integer
 encoding/decoding using ABI v1. Shared word/tag/error declarations moved into the
-namespaced public headers; step 11 implements immediate-only Term values, while TermFactory remains reserved.
+namespaced public headers; step 11 implements immediate-only Term values, while step 14 adds TermFactory reporting placeholders.
 Heap structs moved to `runtime/src/terms/term_layout.hpp`, visible only to runtime
 internals and the focused layout test. Atom/pid/port tag recognition is structural,
 not identity validation. Header/catch and malformed empty encodings fail; heap tags
@@ -106,6 +106,13 @@ boundaries, suspension, returns and removal change metadata only. Runtime teardo
 clears records before contexts and code; destroying a running registration's context
 returns busy. Worker execution, reduction grants, wake/signal handling and receive
 remain reserved in the original process/pool/mailbox sketches.
+
+Step 14 adds [runtime service placeholders](../docs/runtime-services.md): context-bound
+TermFactory failures, catalog reports at allocation/collection, send, worker/execution
+and unload boundaries, and exact known-deferred BIF identification. Unknown BIFs
+return a distinct status. Diagnostic failures propagate, successful lifecycle stays
+silent, and no runtime semantics are fabricated. Atom collection, dynamic file loading
+and generated descriptors remain reservations until their owners/ABIs exist.
 
 Carry these ownership and service contracts into implementation:
 
@@ -1175,3 +1182,26 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   cleanup and registration rollback/retry; macOS LeakSanitizer remains unavailable.
   Native Linux/Windows/32-bit runs and actual scheduling behavior remain pending.
   Stopped before step 14.
+
+
+- Step 14 complete (2026-09-25): installed shared catalog reporting at TermFactory,
+  heap allocation/collection, ProcessContext::send, SchedulerService::run/execute
+  and CodeServer::unload. Factory lifetime bindings allocate no roots and reject
+  expired contexts; all constructors remain explicit placeholders. Service failures
+  leave heap accounting, process state, module publication and output words intact.
+  A bounded exact BIF signature catalog identifies known deferred calls after native
+  lookup; other missing signatures return Status::unknown_builtin (11), silently.
+  Reporting failures become typed diagnostic_failure. A GC failure propagated through
+  a native wrapper and generated bridge reports once; supported lifecycle is silent.
+  Atom storage/collection, file loading and generated descriptors remain reservations
+  until their actual owners/ABIs exist. No executable language support was added.
+  Fresh automatic-SDK Debug compiler+runtime configuration/build and all 93 CTests
+  passed. Full Lizard/clang-tidy passed without suppressions or threshold changes;
+  focused production/test tidy, test Lizard, make format/299-file dry verification,
+  local documentation links and git diff --check passed. The initial full run exposed
+  the old ABI catalog test's generic-reporter assumption; its expected owner-test
+  mapping was updated, and the full suite passed on rerun.
+  Release runtime-only all 18 CTests and ASan/UBSan six service/memory/dispatch/failure
+  tests passed. Allocation injection verifies reporting failure under host OOM and
+  balanced cleanup; macOS LeakSanitizer remains unavailable. Native evidence is macOS
+  arm64; Linux/Windows/32-bit execution remains pending. Stopped before step 15.

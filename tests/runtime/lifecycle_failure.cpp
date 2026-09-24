@@ -81,8 +81,8 @@ void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
     const auto copied = Term::from_word(*encode_integer(7))->copy_to(heap);
     const auto invalid = heap.add(Term{});
     remaining = std::numeric_limits<std::size_t>::max();
-    require(allocation == std::unexpected(HeapError::not_implemented), "allocation stub changed under OOM");
-    require(collection == std::unexpected(HeapError::not_implemented), "collection stub changed under OOM");
+    require(allocation == std::unexpected(HeapError::diagnostic_failure), "allocation diagnostic OOM lost");
+    require(collection == std::unexpected(HeapError::diagnostic_failure), "collection diagnostic OOM lost");
     require(copied && copied->integer_value() == 7, "immediate copy allocated bookkeeping");
     require(invalid == std::unexpected(TermError::invalid_encoding), "invalid copy changed under OOM");
     require(live_allocations == baseline, "memory boundary retained allocations");

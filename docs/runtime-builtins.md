@@ -20,7 +20,8 @@ at 255. Names are owned, exact strings with no normalization; nonempty names,
 nonempty targets and unique keys are required. Registration consumes an rvalue
 `Callable`; copy a reusable callable explicitly before passing it. Native typed extensions remain in
 `runtime/include/unverified/`; any future implementation must use exact types and
-explicit fallback without conversions. No second BIF table exists.
+explicit fallback without conversions. Step 14 adds a bounded identification catalog,
+with no targets or overloads; callable lookup still uses only the module registry.
 
 `CodeServer::load` takes a `ModuleDefinition` with its module spelling, nonnull
 `CodeImage` and unique registry. Successful publication freezes that same registry,
@@ -54,7 +55,8 @@ auto resolved = context.code_server().resolve({.module = "native_demo", .functio
 The minimal `Term` value supports only small integers and canonical empty tuple/list
 words through `Term::from_word`. Copies are word copies with no heap roots.
 `word()`, `kind()` and `integer_value()` are implemented; other semantic/heap
-accessors and `TermFactory` remain reserved. The invalid default word is rejected
+accessors remain reserved. `TermFactory` now exposes explicit reporting placeholders
+without creating terms; see [runtime services](runtime-services.md). The invalid default word is rejected
 at invocation. Atom/pid/port construction reports `not_implemented`; heap tags and
 malformed words fail without dereferencing. No ownership validation is fabricated:
 only context-independent immediate values can cross this boundary today.
@@ -82,7 +84,8 @@ This does not alter the separate `GeneratedFunction` entry signature.
 | --- | --- |
 | Valid call/result | `ok` |
 | Invalid pointers, names, arity, arguments or result | `invalid_argument` |
-| Missing module/generic entry or unavailable body | `not_implemented`, one diagnostic |
+| Known deferred BIF or registered unavailable body | `not_implemented`, one diagnostic |
+| Missing signature outside the explicit deferred catalog | `unknown_builtin`, no feature report |
 | Registry/body resource exhaustion | `resource_limit` |
 | Bridge allocation failure | `out_of_memory` |
 | Other native exception | `internal_error` |

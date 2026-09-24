@@ -24,7 +24,8 @@ enum class TermError : std::uint8_t {
     wrong_owner,
     expired_context,
     resource_limit,
-    not_implemented
+    not_implemented,
+    diagnostic_failure
 };
 
 struct TermTag {

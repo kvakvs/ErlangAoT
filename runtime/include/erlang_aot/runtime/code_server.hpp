@@ -9,7 +9,9 @@ enum class CodeError : std::uint8_t {
     duplicate_module,
     module_not_found,
     function_not_exported,
-    resource_limit
+    resource_limit,
+    not_implemented,
+    diagnostic_failure
 };
 template <typename Value> using CodeResult = std::expected<Value, CodeError>;
 
@@ -89,6 +91,8 @@ class CodeServer final {
     ~CodeServer() = default;
     // Publish a complete registry transactionally; duplicates never replace existing code.
     CodeResult<std::shared_ptr<const LoadedModule>> load(ModuleDefinition definition);
+    // Reserve removal/hot-unload while retaining all published modules and pinned handles on failure.
+    CodeResult<void> unload(std::string_view name, DiagnosticSink sink = {}) noexcept;
     // Select only the exact all-Term entry and return a module-pinning call handle.
     CodeResult<ResolvedFunction> resolve(FunctionRequest request) const;
     // Retain immutable module ownership or report a missing module.

@@ -1,6 +1,6 @@
 #include <array>
 #include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
+#include <erlang_aot/runtime/builtins.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 
 namespace erlang_aot::abi::v1 {
@@ -29,13 +29,16 @@ Status call_status(CallError error) noexcept {
     return Status::internal_error;
 }
 
-// A missing module/signature is an unavailable BIF, not an invented return value.
-Status lookup_status(CodeError error, std::string_view module, std::string_view function) noexcept {
+// Only explicitly known signatures are deferred; unknown names never masquerade as recognized BIFs.
+Status lookup_status(CodeError error, FunctionRequest request) noexcept {
     if (error == CodeError::resource_limit) {
         return Status::resource_limit;
     }
+    if (!is_deferred_builtin(request)) {
+        return Status::unknown_builtin;
+    }
     FeatureFailure failure;
-    return failure.report(FeatureId::builtins, {.module = module, .operation = function});
+    return failure.report(FeatureId::builtins, {.module = request.module, .operation = request.function});
 }
 
 // Adapt calling shape with bounded stack storage, without numeric/native conversions.
@@ -63,7 +66,7 @@ Status dispatch(Context &context, std::string_view module, std::string_view func
     try {
         const auto target = context.code_server().resolve({.module = module, .function = function, .arity = arity});
         if (!target) {
-            return lookup_status(target.error(), module, function);
+            return lookup_status(target.error(), {.module = module, .function = function, .arity = arity});
         }
         return invoke(*target, context, arguments, arity, output);
     } catch (const std::bad_alloc &) {

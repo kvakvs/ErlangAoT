@@ -12,9 +12,10 @@ focused reporting test. `abi_features` checks the ID/name compatibility snapshot
 `codegen_features` and `runtime_features` exercise all their respective entries.
 These are reporting-contract tests, not evidence that the future source/service
 handlers have been installed. Step 11 additionally installs the
-[builtin dispatch boundary](runtime-builtins.md): unavailable registered bodies and
-missing generic BIF entries report once, while normal registration and calls stay
-silent. `runtime_builtin_output` exercises that actual service boundary.
+[builtin dispatch boundary](runtime-builtins.md). Step 14 installs
+[runtime service placeholders](runtime-services.md) and distinguishes unknown BIFs
+from explicitly known deferred signatures. Unavailable services report once; normal
+registration and calls stay silent. Direct and subprocess tests exercise these owners.
 
 ## Owning boundaries
 
@@ -23,9 +24,9 @@ silent. `runtime_builtin_output` exercises that actual service boundary.
 | Compiler | Capability checks over the existing [AST](../compiler/include/erlang_aot/compiler/ast/), then binding/call-graph analysis | Steps 16–19 add `compiler/src/semantic/` and select catalog entries before lowering/publication |
 | Compiler | Expression lowering under `compiler/src/codegen/` | Steps 17/24 add defensive rejection at reached lowering operations; normal verification/emission failures keep their ordinary diagnostics |
 | Runtime terms/BIFs | [Term/TermFactory](../runtime/include/terms.hpp) and [Callable](../runtime/include/callable.hpp) | Steps 10/11/14 distinguish known unavailable services from invalid values or unknown BIFs |
-| Runtime processes | [ProcessCode::resume and ProcessContext::send](../runtime/include/process.hpp), [scheduler workers](../runtime/include/scheduler.hpp) | Steps 13/14 add the service boundaries without making successful lifecycle calls invoke placeholders |
-| Runtime memory | [ProcessHeap::allocate/collect](../runtime/include/process_heap.hpp), [AtomStorage::collect](../runtime/include/atom_storage.hpp) | Steps 12/14 report reached deferred operations; successful allocation or silent growth does not call the reporter |
-| Runtime modules | [CodeServer](../runtime/include/code_server.hpp) module-loading boundary | Step 14 reserves dynamic-image hooks; later static descriptor registration must not be mislabeled as dynamic loading |
+| Runtime processes | [ProcessContext::send](../runtime/include/erlang_aot/runtime/process_context.hpp), [SchedulerService::run/execute](../runtime/include/erlang_aot/runtime/scheduler.hpp) | Step 14 reports execution/send attempts without invoking code or changing lifecycle state |
+| Runtime memory | [ProcessHeap::allocate/collect](../runtime/include/process_heap.hpp), reserved [AtomStorage::collect](../runtime/include/atom_storage.hpp) | Step 14 reports heap service attempts; atom collection awaits an implemented table owner |
+| Runtime modules | [CodeServer](../runtime/include/code_server.hpp) unload boundary | Step 14 reports deferred unload; linked native registration stays supported; dynamic-image/descriptor loading awaits its ABI |
 | Driver | Final executable output after the [frontend handoff](../compiler/src/driver/frontend.cpp) | Step 35 integrates the batch; executable linking remains reserved and must be diagnosed only when actually requested |
 
 There are no synthetic subsystem implementations behind these entries. The
@@ -93,5 +94,6 @@ context, escaped control bytes, invalid IDs, artifact invalidation, failure
 propagation and both throwing/nonthrowing sink failures. Subprocess tests capture
 real stdout/stderr and assert one report with a nonzero exit, plus silence for an
 unused reporter. Runtime-only builds exercise reporting without LLVM. Capability
-selection, other runtime placeholders and native foreign-platform
-execution remain later work.
+selection and native foreign-platform execution remain later work. Step 14 adds
+[direct runtime service tests](runtime-services.md), including state preservation,
+known/unknown BIFs and once-only reporting through nested service wrappers.

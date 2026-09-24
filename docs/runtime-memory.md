@@ -98,3 +98,8 @@ construction allocation failures and exercises memory boundaries with host
 allocation forced to fail. Native layout tests compile the prefix assertions.
 Sanitizer runs cover these boundaries; they do not validate an allocator, collector,
 heap graph or message implementation. Foreign native runtime runs remain pending.
+
+Step 14 connects valid allocation/collection attempts to the shared diagnostic catalog.
+Each call reports once to stderr or its optional borrowed `DiagnosticSink`; failed
+formatting/delivery returns `HeapError::diagnostic_failure`. Validation and immediate
+copying remain silent. See [runtime service placeholders](runtime-services.md).

@@ -188,3 +188,11 @@
   Full C++23, compiler-only and ASan/UBSan builds pass all 64 tests; runtime-only
   remains independent. See docs/{projects,project-validation,parser,parser-validation,
   preprocessor}.md for contracts and evidence.
+
+- Step 14 installs host reporting placeholders for TermFactory, heap allocation/GC,
+  send, SchedulerService run/execute and CodeServer unload. Typed diagnostic_failure
+  preserves delivery failure; state and owners remain unchanged. Factory retains only
+  a weak context token and borrowed sink. BIF bridge resolves registrations first,
+  then recognizes a bounded exact deferred signature catalog; unknown_builtin=11
+  distinguishes other missing signatures. No atoms, workers, roots or loader ABI are
+  invented; atom collection stays reserved. See docs/runtime-services.md.
