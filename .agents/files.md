@@ -65,10 +65,16 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   and lifetime tokens; `runtime/src/runtime{.cpp,_state.hpp}`: startup/shutdown, identity
   allocation and reserved code/atom ownership. The former C lifecycle adapter is removed.
   `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
-  context registry and lazy heap/empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
+  context registry and empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
   `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback and registry/publication failure sweeps;
   `lifecycle_output.cmake`: silence; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer
   link/run through the mandatory target and missing-runtime link failure.
+- `runtime/src/memory/heap.cpp`: lazy heap lifecycle, checked allocation rejection,
+  unavailable collection and word accounting; `heap_policy.hpp`: byte-budget validation;
+  `copy.cpp`: immediate-only heap add/Term::copy_to. `docs/runtime-memory.md`: current
+  boundaries and future roots, alignment, transit and C++ resource teardown contracts.
+  `tests/runtime/memory.cpp`: separate owners/budgets, overflow, copy and exit behavior;
+  `lifecycle_failure.cpp` also checks memory operations under forced host allocation failure.
 - `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
   definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
   structural classification and native ABI integer encoding/decoding without LLVM.

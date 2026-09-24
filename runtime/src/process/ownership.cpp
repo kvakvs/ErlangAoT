@@ -1,3 +1,4 @@
+#include "../memory/heap_policy.hpp"
 #include "../runtime_state.hpp"
 #include <algorithm>
 #include <limits>
@@ -7,19 +8,11 @@
 namespace erlang_aot::runtime {
 using abi::v1::Status;
 
-namespace {
-// Validate byte budgets before creating owners; no backing memory is allocated by this milestone.
-bool valid_heap_options(HeapOptions options) noexcept {
-    return options.chunk_bytes != 0 && options.chunk_bytes <= options.limit_bytes &&
-           options.chunk_bytes % sizeof(Word) == 0 && options.limit_bytes % sizeof(Word) == 0;
-}
-} // namespace
-
 std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions options) noexcept {
     if (!impl_) {
         return std::unexpected(Status::stopped);
     }
-    if (!valid_heap_options(options)) {
+    if (!detail::valid_heap_options(options)) {
         return std::unexpected(Status::invalid_argument);
     }
     if (impl_->contexts.size() >= impl_->options.max_contexts ||

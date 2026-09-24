@@ -5,7 +5,9 @@ host Term values for generic calls, 2026-09-25. See
 [runtime builtin dispatch](../../docs/runtime-builtins.md) for that limited boundary.
 The rooted/heap contracts below remain proposals.
 [Runtime term boundary](../../docs/runtime-terms.md) documents checked classification
-and integer encoding/decoding. Heap ownership, allocation, rooting and collection remain proposed and unimplemented.
+and integer encoding/decoding. Step 12 implements process ownership and
+immediate-only copying; see [process memory](../../docs/runtime-memory.md). Backing allocation, graph copying,
+rooting and collection remain unimplemented.
 [terms.hpp](../include/erlang_aot/runtime/terms.hpp) preserves the one-word public value API;
 [term_layout.hpp](../src/terms/term_layout.hpp) contains compile-checked private prefixes.
 Implemented word/tag/error declarations live in
@@ -154,7 +156,7 @@ not retain that storage. The one-word `Term` still needs external root/owner met
   and bit encodings are rejected. Allocation/traversal budgets return
   `resource_limit`; later unimplemented operations return `not_implemented`.
   There are no success-shaped stub definitions in this sketch.
-- C++ bookkeeping allocation may throw `std::bad_alloc`, including handle copies;
+- Future host APIs without a nonthrowing contract may throw `std::bad_alloc`;
   no general `noexcept` promise is made. The future ABI adapter must catch and
   translate host exceptions. Term errors are not automatically Erlang exceptions;
   the BIF/compiler boundary chooses the appropriate Erlang failure behavior.
@@ -174,6 +176,10 @@ heap pointers. Heap-resident cells are copied even for a same-heap request; imme
 values and immutable runtime-wide atom/identity/descriptor entries need no duplicate
 registry allocation. Copying a pid/reference/fun preserves identity, not liveness.
 
+Owner-independent small integers and empty containers already copy without roots,
+including across runtimes, and survive context exit. The remaining graph-copy
+rules below apply to future owner-bound values.
+
 Both heaps must belong to the same runtime, be live, and be exclusively accessible
 to the caller on their owner thread. Different heaps assigned to the same scheduler
 can be copied directly while the source is rooted and quiescent. Calling from one
@@ -181,7 +187,8 @@ worker into another worker's heap is forbidden (`wrong_owner`); messaging uses
 independently owned transit storage, then receiver-side import instead. Cross-runtime
 and remote serialization remain outside this copy API. An expired source or
 destination reports `expired_context`; allocation/budget exhaustion reports
-`resource_limit` (host bookkeeping allocation may still throw `std::bad_alloc`).
+`resource_limit`, including host bookkeeping failures contained by the nonthrowing
+`copy_to`/`add` boundary.
 
 Copying registers temporary source/destination roots before any allocating safe
 point and publishes the result only after success. Failure must release those
@@ -191,10 +198,10 @@ copying does not promise rollback of backing capacity. Work/size limits must bou
 graph traversal. Tests must verify all term categories and that a copied value stays
 usable after the source process exits.
 
-`ProcessHeap::collect()` is the explicit GC boundary. Only the owner at a registered
-safe point may collect; otherwise return `HeapError::unsafe_point`. The first
-non-collecting implementation reports `not_implemented`, never fabricated reclamation
-statistics. The future collector enumerates host roots, saved continuation roots,
+`ProcessHeap::collect()` is the explicit GC boundary. A future collector requires
+the owner at a registered safe point; otherwise it must return `HeapError::unsafe_point`. The step 12
+non-collecting implementation always reports `not_implemented`, never fabricated
+reclamation statistics. The future collector enumerates host roots, saved continuation roots,
 mailbox terms and active receive candidates, traces the private layout, releases
 unreachable cells/resources and rewrites moved slots. Heap growth alone keeps addresses
 stable. Raw `allocate()` spans are runtime-internal construction borrows: publish/root

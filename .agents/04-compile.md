@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–11 complete, 2026-09-25. Steps 12–46 remain pending.
+Status: steps 1–12 complete, 2026-09-25. Steps 13–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -16,7 +16,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
-Immediate-only host Terms and builtin dispatch are implemented; TermFactory and heap services remain pending.
+Immediate-only host Terms, builtin dispatch and memory service boundaries are implemented;
+TermFactory, backing heap allocation and collection remain pending.
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
@@ -38,8 +39,8 @@ update this inventory and affected steps together when sketches change.
 | `terms.hpp`                     | Host `Term`/`TermFactory` sketch; word/tag/error API moved to namespaced header         | 7, 9, 10, 12  |
 | `../src/terms/term_layout.hpp`   | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
 | `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
-| `process_heap.hpp`              | Lazy owned heap/accounting implemented; allocation, graph addition, collection reserved          | 9, 12         |
-| `binary_heap_object.hpp`        | Shared immutable word vector and optional valid tail bits                                        | 12            |
+| `process_heap.hpp`              | Lazy owner/accounting, checked allocation/collection rejection and immediate addition implemented; graph storage reserved | 9, 12 |
+| `binary_heap_object.hpp`        | Shared immutable word vector sketch; zero tail means full words, otherwise valid high bits       | 12            |
 | `process.hpp`                   | State/priority, reductions, cooperative code, owned signals/inbox (reserved)                     | 9, 12, 13     |
 | `mailbox.hpp`                   | Empty owner implemented; selective cursor, reads and signal handling reserved                    | 12, 13        |
 | `scheduler.hpp`                 | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling                  | 9, 13, 14     |
@@ -88,6 +89,15 @@ output word and reports missing/unavailable BIFs once. Publication/lookup remain
 host-serialized; unload and concurrent workers remain deferred. Top-level callable
 and code-server headers now forward to the namespaced implementation.
 
+Step 12 adds [process memory ownership](../docs/runtime-memory.md) under
+`runtime/src/memory/`: lazy heap lifecycle, byte-budget validation, word-size/limit
+checks and explicit unavailable allocation/collection. `Term::copy_to` and heap
+`add` revalidate owner-independent immediates only; they need no roots and may cross
+runtimes. Heap graph copying, root registration, safe points and binary allocation
+remain deferred. Future mailbox/cursor roots and owned signal transit must be
+included before heap Terms are admitted; C++ cell resources require explicit
+construction/destruction rather than byte relocation.
+
 Carry these ownership and service contracts into implementation:
 
 - `ProcessContext` owns its heap/mailbox. `Term::copy_to` and `ProcessHeap::add`
@@ -95,8 +105,8 @@ Carry these ownership and service contracts into implementation:
   receive-candidate roots. Emitted widths come from target data layout, not host `Word`.
 - `BinaryHeapObject::create` returns shared ownership of immutable `std::vector<Word>`
   storage. Counts must exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 / sizeof(Word));
-  otherwise return `BinaryHeapObjectError::invalid_size`. Optional tails count valid
-  high bits in the last word, including byte-aligned tails; absent means full words.
+  otherwise return `BinaryHeapObjectError::invalid_size`. Nonzero tails count valid
+  high bits in the last word, including byte-aligned tails; zero means full words.
   Last-owner destruction releases storage directly, without a pool or owner callback.
 - One `AtomStorage` per runtime provides stable, non-recycled IDs with dense indexing
   and name lookup; default/hard caps are 2^20/2^26, collection a placeholder. Emit
@@ -1112,3 +1122,25 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   Native evidence remains macOS arm64; Linux/Windows/32-bit runtime execution and
   generated Erlang execution remain pending. CLI/source acceptance is unchanged.
   Stopped before step 12.
+
+- Step 12 complete (2026-09-25): process memory ownership now lives under
+  `runtime/src/memory/`, with shared byte-budget validation, target-word request
+  checks, zero accounting and explicit not_implemented allocation/collection.
+  Heap add/Term::copy_to revalidate owner-independent immediates without allocation;
+  invalid slots fail, and copied values survive source/destination destruction.
+  Removed unused contiguous heap/stack/growth sketches; no custom allocator,
+  collector, roots, heap Terms or graph-copy implementation was introduced.
+  Private layout assertions preserve word slots and identify nontrivial C++ cells.
+  Binary allocation stays deferred; the sketch consistently uses zero for full
+  final words. docs/runtime-memory.md specifies future alignment, roots, owned
+  signal transit, resource failure and shared-handle destruction contracts.
+  Final fresh full Debug configure/build and all 90 CTests passed. Full Lizard and
+  clang-tidy passed without threshold changes or suppressions; the initial tidy
+  finding was fixed by defaulting the now-trivial heap destructor in its declaration.
+  Focused changed-production/test tidy, test Lizard, make format/dry verification,
+  local documentation links and git diff --check passed. Release runtime-only all
+  15 CTests and ASan/UBSan five layout/memory/lifecycle tests passed after that fix;
+  macOS LeakSanitizer remains unavailable, while allocation injection counts verify
+  failure cleanup and allocation-free service responses. Native Linux/Windows/32-bit
+  runtime runs, actual heap allocation and generated heap code remain pending.
+  Stopped before step 13.

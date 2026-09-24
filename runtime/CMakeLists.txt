@@ -2,6 +2,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
 add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
+    src/memory/heap.cpp src/memory/copy.cpp
     src/terms/immediate.cpp src/terms/term.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp
     src/modules/code_server.cpp)

@@ -1,3 +1,27 @@
+# Step 12 completion — 2026-09-25
+
+- Heap lifecycle moved to runtime/src/memory/heap.cpp; heap_policy.hpp centralizes
+  byte-budget validation. allocate takes words, rejects zero/size_t byte overflow
+  as invalid_size and budget excess as limit_exceeded; valid requests and collect
+  return not_implemented. No backing storage, allocator, safe-point registry or GC.
+- memory/copy.cpp implements heap.add and Term::copy_to via checked from_word;
+  only smallints/empty tuple/nil, owner independent, may cross runtimes and survive
+  both exits. Default invalid slots fail. Roots/graph copying/TermFactory still
+  deferred; do not admit heap Terms until external root/lifetime design exists.
+- Removed unused contiguous heap/stack/growth sketch fields. Future chunks retain
+  addresses; options remain bytes (exact word multiples), usage/capacity words.
+  docs/runtime-memory.md specifies host/continuation/mailbox/cursor roots, owned
+  pending transit and C++ resource destruction before heap release. Shared binary
+  creation stays deferred; corrected stale optional tail sketch to existing zero
+  sentinel. No binary allocation implementation or pool.
+- Fresh full Debug all90 tests pass; Release runtime-only all15; ASan/UBSan five
+  memory/lifecycle/layout tests pass (macOS leak sanitizer disabled; injection
+  tracks live allocations). Focused test Lizard/tidy, format and links pass.
+  Initial full tidy found a newly trivial heap destructor; defaulted it in the
+  header. Final fresh full Debug/all90, full Lizard/tidy, Release all15 and five
+  sanitizer checks passed after the fix. Focused production tidy also passed.
+- User requested step12 only. Stop before step13; native foreign runs pending.
+
 # Step 11 completion — 2026-09-25
 
 - Fresh Debug all89 CTests + full Lizard/clang-tidy pass. Release runtime-only all14

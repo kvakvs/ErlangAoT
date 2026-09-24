@@ -70,6 +70,23 @@ void check_startup() {
     require(succeeded, "startup failpoint sweep never reached success");
 }
 
+// Memory service rejection and immediate copying must work even when host allocation is exhausted.
+void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
+    using namespace erlang_aot::runtime;
+    const auto baseline = live_allocations;
+    remaining = 0;
+    const auto allocation = heap.allocate(1);
+    const auto collection = heap.collect();
+    const auto copied = Term::from_word(*encode_integer(7))->copy_to(heap);
+    const auto invalid = heap.add(Term{});
+    remaining = std::numeric_limits<std::size_t>::max();
+    require(allocation == std::unexpected(HeapError::not_implemented), "allocation stub changed under OOM");
+    require(collection == std::unexpected(HeapError::not_implemented), "collection stub changed under OOM");
+    require(copied && copied->integer_value() == 7, "immediate copy allocated bookkeeping");
+    require(invalid == std::unexpected(TermError::invalid_encoding), "invalid copy changed under OOM");
+    require(live_allocations == baseline, "memory boundary retained allocations");
+}
+
 // Fail each context/mailbox/token/registry allocation; existing contexts must survive every rollback.
 void check_context_creation() {
     bool succeeded = false;
@@ -79,6 +96,7 @@ void check_context_creation() {
         require(runtime.has_value(), "fixture startup failed");
         auto existing = (*runtime)->create_context();
         require(existing.has_value(), "fixture context failed");
+        check_heap_without_allocation((*existing)->heap());
         const auto retained = live_allocations;
         remaining = ordinal;
         auto created = (*runtime)->create_context();

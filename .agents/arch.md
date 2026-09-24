@@ -47,7 +47,7 @@
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);
   smaller values stay on process heaps and empty refcounted objects are forbidden.
-  Immutable word arrays carry optional valid-tail-bit counts; final shared-owner
+  Immutable word arrays carry valid-tail-bit counts (zero means full words); final shared-owner
   destruction releases the vector directly. No binary heap, pool or evacuation service.
   Checked object creation remains an API sketch without an implementation.
 - Step 10 adds LLVM-free immediate word services under `runtime/src/terms/` with public
@@ -72,6 +72,15 @@
   bodies once. abi::v1::dispatch_builtin carries a Status plus success-only output word
   across the native generated-service boundary. Production BIFs, compiler lowering,
   unload and concurrent workers remain deferred. See docs/runtime-builtins.md.
+- Step 12 places heap lifecycle, byte-budget policy and memory boundaries under
+  `runtime/src/memory/`. Word requests reject zero/byte overflow and budget excess;
+  valid allocation and collection return not_implemented, accounting stays zero.
+  Heap add/Term::copy_to revalidate owner-independent immediates without allocation;
+  copies survive source/destination exit and may cross runtimes. No heap Terms,
+  graph copies, roots, binary allocation or collector are enabled. Future roots
+  cover host/continuation/mailbox/cursor state; signals own independent transit data.
+  C++ cell resources require destruction, never byte relocation of shared handles.
+  `docs/runtime-memory.md` defines units, errors, teardown and shared binary contracts.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction

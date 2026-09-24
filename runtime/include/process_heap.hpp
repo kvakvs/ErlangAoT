@@ -1,15 +1,13 @@
 #pragma once
 
-// Lazy owner construction/destruction is implemented; allocation/copy/collection remain sketches.
-// See processes.md for allocation, ownership and future collection boundaries.
-#include "terms.hpp"
+// Lazy ownership, checked allocation rejection and immediate copying are implemented; no allocator or GC.
+// See docs/runtime-memory.md and runtime/design/processes.md for future roots and collection.
+#include <erlang_aot/runtime/terms.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <expected>
-#include <memory>
 #include <span>
-#include <vector>
 
 namespace erlang_aot::runtime {
 // Distinguish invalid requests, configured limits and backing allocation failures.
@@ -31,27 +29,25 @@ struct HeapOptions final {
     std::size_t limit_bytes = std::size_t{64} * 1024 * 1024;
 };
 
-// Own process term memory and roots; growth preserves addresses, future collection may move cells.
-// A new process is born with a heap set to a default value (configurable via stdlib Erlang call)
-// A heap can grow as necessary without limitation, and can shrink via garbage collection
-// Heap storage sizes are measured in Words (machine word width of target architecture)
+// Reserve one process's term storage; future growth preserves addresses until an explicit GC safe point.
+// Allocation/accounting use target words, while configuration budgets remain exact byte multiples.
 class ProcessHeap final {
   public:
-    // Release every chunk when the owning process is reaped.
-    ~ProcessHeap();
+    // The lazy boundary owns no backing storage; future chunk/resource owners must clean up on exit.
+    ~ProcessHeap() = default;
     // Keep heap identity and all borrowed allocation addresses fixed.
     ProcessHeap(const ProcessHeap &) = delete;
     ProcessHeap &operator=(const ProcessHeap &) = delete;
     ProcessHeap(ProcessHeap &&) = delete;
     ProcessHeap &operator=(ProcessHeap &&) = delete;
 
-    // Allocate nonzero bytes rounded to target words; no existing allocation moves.
-    std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words);
-    // Add an independently owned term graph; equivalent to value.copy_to(*this).
-    TermResult<Term> add(const Term &value);
-    // Trace registered roots at a safe point; TODO(gc): initially report not_implemented.
-    std::expected<CollectionStats, HeapError> collect();
-    // Report rounded allocated bytes and total retained backing capacity, respectively.
+    // Validate nonzero word count, byte overflow and budget; valid requests return not_implemented.
+    std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words) noexcept;
+    // Copy checked owner-independent immediates; rooted graph addition remains deferred.
+    TermResult<Term> add(const Term &value) noexcept;
+    // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
+    std::expected<CollectionStats, HeapError> collect() noexcept;
+    // Report allocated and retained capacity in words; both stay zero until allocation is implemented.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
 
@@ -65,24 +61,10 @@ class ProcessHeap final {
     HeapOptions options_;
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
     ProcessContext &owner_;
-    // Owned memory is always growing forward and never resized without a garbage collection
-    std::unique_ptr<Word[]> memory_;
-    // A brazen move: Stack is separate from heap memory. Might someday merge them in one block.
-    std::unique_ptr<Word[]> stack_;
-    // Track host handles, mailbox and continuation roots plus owner/safe-point validation.
-    // class Roots;
-    // std::unique_ptr<Roots> roots_;
+    // Future storage must own stable chunks and destroy C++ resources before freeing their backing memory.
+    // Host, continuation, mailbox and cursor roots require a separate registry before heap Terms are admitted.
     // Track checked allocation/capacity totals without rescanning chunks.
     std::size_t used_words_ = 0;
     std::size_t capacity_words_ = 0;
-
-    // Append a checked-size chunk after the collection placeholder declines to reclaim.
-    // TODO: Growing process heap by inserting a Term can not fail, and OOM error must lead to OOM shutdown with "Erlang
-    // core" dump
-    // TODO: Inserting a term increases heap pointer by term size and places words sequentially
-    std::expected<void, HeapError> grow_by(std::size_t words_to_append);
-    // TODO: Stack operations push/pop/create frame of N words/release frame of N words
-    // TODO(gc): ignore collect()'s initial not_implemented result and grow without reclamation.
-    void collection_placeholder(std::size_t requested_words) noexcept;
 };
 } // namespace erlang_aot::runtime

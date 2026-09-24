@@ -78,7 +78,7 @@ struct alignas(Word) HeapBinaryCell final {
 struct alignas(Word) RefcBinaryCell final {
     // Shared ownership is runtime-private C++ state, never part of generated-code access.
     BoxHeader header_;
-    // Future factories must use BinaryHeapObject::create; destruction releases the final owner.
+    // Construct/destroy explicitly on copy, collection and exit; never relocate this handle with memcpy.
     std::shared_ptr<BinaryHeapObject> binary_;
 };
 
@@ -110,6 +110,9 @@ static_assert(static_cast<unsigned>(BoxedKind::empty_list) < (1U << BoxHeader::B
 static_assert(sizeof(BoxHeader) == sizeof(Word));
 static_assert(alignof(BoxHeader) == alignof(Word));
 static_assert(std::is_standard_layout_v<Term>);
+static_assert(sizeof(Term) == sizeof(Word));
+static_assert(alignof(Term) == alignof(Word));
+static_assert(std::is_trivially_copyable_v<Term>);
 static_assert(sizeof(ConsCell) == 2 * sizeof(Word));
 static_assert(offsetof(ConsCell, tail_) == sizeof(Word));
 static_assert(sizeof(TupleCell) == sizeof(Word));
@@ -124,5 +127,7 @@ static_assert(sizeof(NativeRecordPrefix) == 3 * sizeof(Word));
 static_assert(sizeof(BignumCell) % sizeof(Word) == 0);
 static_assert(alignof(BignumCell) >= alignof(Word));
 static_assert(sizeof(RefcBinaryCell) % sizeof(Word) == 0);
+static_assert(!std::is_trivially_copyable_v<RefcBinaryCell>);
+static_assert(!std::is_trivially_copyable_v<BignumCell>);
 static_assert(sizeof(ClosureCell) % sizeof(Word) == 0);
 } // namespace erlang_aot::runtime::detail::layout

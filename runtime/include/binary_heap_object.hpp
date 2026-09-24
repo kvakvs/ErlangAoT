@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <expected>
 #include <memory>
-#include <optional>
 #include <span>
 #include <vector>
 
@@ -28,9 +27,8 @@ class BinaryHeapObject final : public std::enable_shared_from_this<BinaryHeapObj
   public:
     using Ptr = std::shared_ptr<BinaryHeapObject>;
     // Validate word count and tail, check bit/byte sizes, then copy into a vector and zero unused low bits.
-    // Nullopt means all supplied words are full; roll back on failure without publishing an object.
+    // Zero means all supplied words are full; roll back on failure without publishing an object.
     static std::expected<Ptr, BinaryHeapObjectError> create(std::span<const Word> words, Word trailing_word_bits = 0);
-    // TODO in create(): std::copy(values.begin(), values.end(), values_);
 
     // Release the owned vector when the last shared object owner disappears.
     ~BinaryHeapObject() = default;
@@ -42,7 +40,7 @@ class BinaryHeapObject final : public std::enable_shared_from_this<BinaryHeapObj
 
     // Borrow more than HEAP_BINARY_THRESHOLD_WORDS immutable words; retain a shared owner while using them.
     std::span<const Word> words() const noexcept;
-    // Return valid high bits in a partial last word (1..ERL_WORD_BITS-1); nullopt means no partial word.
+    // Return valid high bits in a partial last word (1..ERL_WORD_BITS-1); zero means no partial word.
     Word trailing_word_bits() const noexcept;
     // Return the exact logical length in bits, excluding zeroed low padding bits; always greater than 512.
     std::size_t bit_size() const noexcept;
@@ -51,7 +49,7 @@ class BinaryHeapObject final : public std::enable_shared_from_this<BinaryHeapObj
 
   private:
     // Move validated, normalized vector storage into an object before create() publishes its shared_ptr.
-    BinaryHeapObject(std::vector<Word> words, std::optional<Word> trailing_word_bits) noexcept;
+    BinaryHeapObject(std::vector<Word> words, Word trailing_word_bits) noexcept;
 
     // Own contiguous words directly; no resizing or mutation is allowed after publication.
     std::vector<Word> words_;

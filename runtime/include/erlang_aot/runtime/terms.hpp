@@ -87,7 +87,7 @@ class Term final {
     // Reserve zero as an invalid slot until checked immediate construction supplies a value.
     Term() : value_(0) {}
 
-    // Copy/move the immediate value; heap ownership is deferred to step 12.
+    // Copy/move the immediate value; admitting heap values first requires external roots and lifetime checks.
     Term(const Term &other) = default;
     Term(Term &&other) noexcept = default;
     // Rebind only this host handle, leaving every other alias unchanged.
@@ -101,9 +101,10 @@ class Term final {
     // Expose the immediate representation for the generated service bridge.
     Word word() const noexcept;
 
+    // Copy checked owner-independent immediates; future graph copies must return a destination-owned root.
+    TermResult<Term> copy_to(ProcessHeap &destination) const noexcept;
+
     // Remaining semantic/heap operations below are reserved unless documented as implemented.
-    // Copy the reachable value graph into destination storage and return a destination-owned root.
-    TermResult<Term> copy_to(ProcessHeap &destination) const;
 
     // Identify the semantic category; binaries are byte-sized bitstrings.
     TermKind kind() const;

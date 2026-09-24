@@ -60,3 +60,7 @@ runtime classification/encoding/decoding against their bit patterns. Runtime-onl
 builds run the non-LLVM tests and the standalone generated-program link consumer.
 This proves word agreement; execution of LLVM-generated Erlang functions remains
 step 40, and native foreign-platform runtime validation remains pending.
+
+Step 12 adds allocation-free `Term::copy_to` / `ProcessHeap::add` for the same
+checked immediates; see [process memory ownership](runtime-memory.md). Heap-valued
+Terms, graph copies and roots remain unavailable.

@@ -43,9 +43,10 @@ policy, not backing memory; new heap usage and capacity are zero.
 
 The runtime uniquely owns stable context addresses. Each context owns a distinct
 lazy heap and empty mailbox. Initialization publishes a successful result only
-after all bookkeeping succeeds; failure preserves existing contexts. Heap/mailbox
-operations beyond lifecycle and heap accounting remain declarations. No workers
-or pending signals are created by these APIs.
+after all bookkeeping succeeds; failure preserves existing contexts. Step 12 adds
+checked allocation/collection rejection and immediate-only copying; see
+[process memory](runtime-memory.md). Receive operations remain declarations.
+No workers or pending signals are created by these APIs.
 
 The runtime allocates non-recycled runtime/serial identities independently of raw
 addresses. Identity exhaustion fails rather than wrapping. A context pointer is a
@@ -101,7 +102,7 @@ through those retained modules.
 The [process sketch](../runtime/include/process.hpp) retains future signal-inbox and
 continuation ownership. Once admission/execution exists, exit must discard pending
 signals, resolve replies and release continuation/receive roots before heap teardown.
-Those paths, heap services, allocation, GC and scheduling remain subsequent steps.
+Those paths, backing allocation, GC and scheduling remain future work.
 
 Native macOS arm64 tests cover independent/repeated lifetimes, ownership errors,
 limits, invalidation, shutdown ordering, silence and allocation-failure rollback.
