@@ -1,6 +1,6 @@
 #pragma once
 #include <erlang_aot/abi/feature_diagnostic.hpp>
-#include <erlang_aot/abi/status.h>
+#include <erlang_aot/abi/status.hpp>
 
 namespace erlang_aot::runtime {
 struct DiagnosticSink {
@@ -11,7 +11,7 @@ struct DiagnosticSink {
 };
 
 // One owner-side failure per operation; propagation reads status without reporting a second time.
-// This host-side object is not a C ABI parameter and must not be shared across concurrent operations.
+// This host-side object is not a generated-function parameter and must not be shared across concurrent operations.
 class FeatureFailure final {
   public:
     // Reserve a report without emitting anything; default delivery goes to stderr.
@@ -21,15 +21,15 @@ class FeatureFailure final {
     FeatureFailure(FeatureFailure &&) = delete;
     FeatureFailure &operator=(FeatureFailure &&) = delete;
     ~FeatureFailure() = default;
-    // Latch the first failure, translate sink/formatting exceptions and return an explicit C ABI status.
-    eaot_v1_status report(abi::v1::FeatureId feature, const abi::v1::FeatureContext &context = {}) noexcept;
+    // Latch the first failure, translate sink/formatting exceptions and return an explicit project status.
+    abi::v1::Status report(abi::v1::FeatureId feature, const abi::v1::FeatureContext &context = {}) noexcept;
     // Inspect/propagate the existing outcome; OK means no failure has been reported by this owner.
-    eaot_v1_status status() const noexcept;
+    abi::v1::Status status() const noexcept;
 
   private:
     // Retain only a borrowed sink; no runtime-wide diagnostic state or LLVM dependency is required.
     DiagnosticSink sink_;
     // Prevent retries, reformatting and duplicate output while failure propagates through callers.
-    eaot_v1_status status_ = EAOT_V1_STATUS_OK;
+    abi::v1::Status status_ = abi::v1::Status::ok;
 };
 } // namespace erlang_aot::runtime

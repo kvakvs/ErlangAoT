@@ -4,7 +4,7 @@ Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
 target setup, IR verification, in-memory object emission and the immediate-term ABI
 implemented in steps 2–7. Step 8 adds the shared
 [deferred-feature catalog and reporting contract](features.md), with separate compiler/runtime
-reporters and explicit C status transport; placeholder integration remains later work.
+reporters and typed C++ status results; placeholder integration remains later work.
 Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mandatory
 `ErlangAoT::generated_program` CMake link target without LLVM dependencies.
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
@@ -121,20 +121,23 @@ including dispatch. Generate no Cartesian products or clones without a benefit.
 
 ## Private generated-code ABI v1
 
-[v1.h](../abi/include/erlang_aot/abi/v1.h) defines the versioned C term/context/function
+[v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) defines the versioned C++ term/context/function
 types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
-integer encoding for explicit 32/64-bit targets. Runtime term services and lifecycle
-remain later steps, and this contract does not match BEAM. Native `Term` and private
+integer encoding for explicit 32/64-bit targets. Runtime lifecycle is implemented;
+term services remain later work. This contract does not match BEAM. Native `Term` and private
 headers have compile-checked one-word layouts; heap prefixes remain reservations.
 `codegen::term_type` and `generated_function_type` derive LLVM types from the configured
-target, rejecting unsupported widths/alignment. LLVM C calling convention is required.
+target, rejecting unsupported widths/alignment. LLVM `CallingConv::C` denotes the
+native free-function machine convention used here; it does not require C headers
+or C linkage. All APIs are C++23 and private to this project. External C compatibility
+can be added later if needed.
 
 - A term is an unsigned target-pointer-width integer (32 or 64 bits), aligned to
   the target word. Immediate small integers have low four bits `0xf`, matching the
   sketch's primary/secondary small-integer tags. Payload width is `word_bits - 4`;
   the signed range is `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Range-check exact
   source values before encoding with unsigned shift/OR; decode sign explicitly.
-- Generated C-convention entries conceptually have signature
+- Generated native-convention entries conceptually have signature
   `Term function(ProcessContext*, const Term* arguments)`. Arity is part of the
   resolved identity. Arguments are a borrowed, word-aligned array in source order,
   valid for the call; zero-arity calls may pass null. The context is live and
@@ -144,10 +147,12 @@ target, rejecting unsupported widths/alignment. LLVM C calling convention is req
   lowercase byte hex, no normalization, canonical decimal without leading zeroes.
   Separate `eaot_v1_register_m<hex-module-UTF8>` names reserve registration entries.
   Exported entries/registration are externally visible; other functions are internal.
-  These names specify IR/C symbols before platform mangling.
+  These names specify project-owned LLVM symbols before platform decoration; future
+  project registration binds their addresses to the C++ generated-function type.
 - Descriptors declare ABI version and term width; runtime registration validates them
-  before invocation. Runtime services use C linkage, opaque handles and explicit
-  status/error results. No STL types, RTTI protocol or C++ exceptions cross this ABI.
+  before invocation. Runtime services use ordinary C++ APIs, scoped status enums,
+  `std::expected` and RAII ownership. Generated entries retain simple word/pointer
+  signatures; no STL values, RTTI protocol or C++ exceptions cross those entries.
 - Every runnable link includes the matching target runtime once. The harness explicitly
   initializes runtime state, registers modules, obtains a context and tears down
   contexts before global services. Cross-target programs need a target-built runtime.

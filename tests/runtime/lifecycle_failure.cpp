@@ -1,9 +1,12 @@
 #include <cstdlib>
-#include <erlang_aot/abi/runtime.h>
+#include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
 #include <new>
 #include <stdexcept>
+
+using erlang_aot::abi::v1::Status;
+using erlang_aot::runtime::Runtime;
 
 namespace {
 // Only this isolated test executable replaces allocation; production has no failpoint hooks.
@@ -46,20 +49,21 @@ void require(bool condition, const char *message) {
     }
 }
 
-// Every startup allocation must roll back before a handle can escape to the host.
+// Every startup allocation must roll back before an owner can escape to the host.
 void check_startup() {
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
-        eaot_v1_runtime *runtime = nullptr;
         const auto baseline = live_allocations;
         remaining = ordinal;
-        const auto status = eaot_v1_runtime_start(nullptr, &runtime);
+        auto runtime = Runtime::start();
         remaining = std::numeric_limits<std::size_t>::max();
-        succeeded = status == EAOT_V1_STATUS_OK;
-        if (!succeeded) {
-            require(status == EAOT_V1_STATUS_OUT_OF_MEMORY && runtime == nullptr, "startup failure published a handle");
+        succeeded = runtime.has_value();
+        if (succeeded) {
+            require((*runtime)->shutdown() == Status::ok, "startup cleanup failed");
+            runtime->reset();
+        } else {
+            require(runtime.error() == Status::out_of_memory, "wrong startup failure");
         }
-        require(eaot_v1_runtime_shutdown(&runtime) == EAOT_V1_STATUS_OK, "startup cleanup failed");
         require(live_allocations == baseline, "partial runtime initialization leaked");
     }
     require(succeeded, "startup failpoint sweep never reached success");
@@ -70,24 +74,24 @@ void check_context_creation() {
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
-        eaot_v1_runtime *runtime = nullptr;
-        eaot_v1_context *existing = nullptr;
-        eaot_v1_context *created = nullptr;
-        require(eaot_v1_runtime_start(nullptr, &runtime) == EAOT_V1_STATUS_OK, "fixture startup failed");
-        require(eaot_v1_context_create(runtime, nullptr, &existing) == EAOT_V1_STATUS_OK, "fixture context failed");
+        auto runtime = Runtime::start();
+        require(runtime.has_value(), "fixture startup failed");
+        auto existing = (*runtime)->create_context();
+        require(existing.has_value(), "fixture context failed");
         const auto retained = live_allocations;
         remaining = ordinal;
-        const auto status = eaot_v1_context_create(runtime, nullptr, &created);
+        auto created = (*runtime)->create_context();
         remaining = std::numeric_limits<std::size_t>::max();
-        succeeded = status == EAOT_V1_STATUS_OK;
-        if (!succeeded) {
-            require(status == EAOT_V1_STATUS_OUT_OF_MEMORY && created == nullptr, "context failure published a handle");
+        succeeded = created.has_value();
+        if (succeeded) {
+            require((*runtime)->destroy_context(*created) == Status::ok, "new context cleanup failed");
+        } else {
+            require(created.error() == Status::out_of_memory, "wrong context failure");
             require(live_allocations == retained, "partial context initialization leaked");
         }
-        require(eaot_v1_context_destroy(runtime, &created) == EAOT_V1_STATUS_OK, "new context cleanup failed");
-        require(eaot_v1_context_destroy(runtime, &existing) == EAOT_V1_STATUS_OK,
-                "failed creation damaged existing context");
-        require(eaot_v1_runtime_shutdown(&runtime) == EAOT_V1_STATUS_OK, "runtime cleanup failed");
+        require((*runtime)->destroy_context(*existing) == Status::ok, "failed creation damaged existing context");
+        require((*runtime)->shutdown() == Status::ok, "runtime cleanup failed");
+        runtime->reset();
         require(live_allocations == baseline, "failed construction retained memory after shutdown");
     }
     require(succeeded, "context failpoint sweep never reached success");

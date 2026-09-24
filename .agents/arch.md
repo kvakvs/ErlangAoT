@@ -1,7 +1,7 @@
 # Architecture
 
 - `docs/compile.md` freezes the LLVM milestone: global stable LLVM 23.1.x (>=23.1.1),
-  acyclic small-integer/parameter/direct-call subset and private tagged C ABI v1.
+  acyclic small-integer/parameter/direct-call subset and private tagged project ABI v1.
   Private `erlang_codegen` links the SDK through target-local `erlang_llvm_sdk`.
   Global-only CMake discovery validates version/RTTI and host C++ linking; runtime-only
   builds never load LLVM. A move-only private compilation owner retains batch ASTs,
@@ -17,21 +17,25 @@
   `emit_objects` clones verified IR and runs LLVM's legacy machine-code pipeline into
   owned buffers; repeated emission replaces output and failures invalidate the batch.
   Backend printers/parsers support synthetic native and cross-target object tests.
-  ABI v1 headers share a C-compatible unsigned term/context/function contract;
+  ABI v1 C++23 headers share namespaced unsigned term/context/function types
+  and constexpr version/tag constants;
   constexpr integer codecs check signed 28/60-bit payloads with low tag 0xf.
   LLVM term/signature types derive from the selected target, never host word size.
   Step8 shares stable deferred-feature IDs/names, owner/step/test metadata and an
   escaped context formatter in the ABI headers. Compiler reject_feature latches
   batch failure, clears outputs and marks diagnostics already reported; runtime
   FeatureFailure reports once per operation through a borrowed sink (default stderr)
-  and returns fixed-width C status, containing delivery exceptions. No LLVM dependency
+  and returns fixed-width scoped C++ Status, containing delivery exceptions. No LLVM dependency
   enters runtime reporting. Actual capability/service handlers and CLI integration
   remain later steps; lowering and generated-code execution are still pending.
 
 - Step 9 runtime/context lifecycle is implemented in the LLVM-free static library.
-  C ABI startup/create/destroy/shutdown return fixed-width status without exceptions;
-  explicit shutdown refuses live contexts, while C++ RAII drains them. Runtime owns
-  stable contexts with distinct lazy heap/empty mailbox owners and non-recycled
+  Runtime startup/create/destroy/shutdown use std::expected, scoped Status and RAII;
+  explicit shutdown refuses live contexts, while RAII drains them. C compatibility
+  and its lifecycle adapter are removed;
+  all APIs are project C++. Generated functions borrow the actual forward-declared
+  ProcessContext type using the native machine convention, with no extern-C surface.
+  Runtime owns stable contexts with distinct lazy heap/empty mailbox owners and non-recycled
   identities. Context lifetime tokens invalidate before mailbox/heap teardown and
   can survive as dead host bindings; term roots/factories remain deferred.
   Empty CodeServer/AtomStorage ownership slots outlive contexts; future code roots

@@ -1,6 +1,6 @@
 include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
-add_library(erlang_runtime STATIC src/runtime.cpp src/lifecycle.cpp src/diagnostics/features.cpp
+add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp)
 # List review headers for IDE navigation; they are not separate compilation units.
 target_sources(erlang_runtime PRIVATE

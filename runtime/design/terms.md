@@ -20,14 +20,15 @@ tracking will require external metadata and explicit safepoints; a one-word valu
 cannot itself contain a smart-pointer lifetime token. Those services are not yet
 implemented and the eventual root design must be validated before heap lowering.
 
-The implemented private/versioned contract is [ABI v1](../../abi/include/erlang_aot/abi/v1.h)
+The implemented private/versioned contract is [ABI v1](../../abi/include/erlang_aot/abi/v1.hpp)
 with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
-A generated function uses the platform C calling convention and returns an unsigned
-pointer-width term, accepting an opaque live context and a borrowed term-array
-pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
+A generated function uses the native free-function calling convention and returns
+an unsigned pointer-width term, accepting a forward-declared live project context
+and a borrowed term-array pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
 The context propagates unchanged through direct calls. C++ `Term`, STL values,
-`std::expected` and exceptions never cross that boundary. There is no BEAM/FFI
-compatibility promise or public heap ABI. Step 9 implements
+`std::expected` and exceptions never cross that generated-function boundary. Host
+services use C++ APIs; no C linkage or C-compatible header surface is maintained.
+There is no BEAM/FFI compatibility promise or public heap ABI. Step 9 implements
 [runtime lifecycle](../../docs/runtime-lifecycle.md) independently of term services.
 
 Tags are numerical low bits, decoded with masks/shifts rather than C++ bitfields
@@ -41,7 +42,7 @@ conversion or signed right shift. No heap pointer encoder is provided yet.
 
 Both 32-bit and 64-bit codecs are tested on every host. Cross compilation takes
 width/alignment from the LLVM target layout, never host `sizeof(Word)`. The native
-C header, C++ layouts and LLVM term/signature types agree on size and alignment.
+C++ ABI declarations, runtime layouts and LLVM term/signature types agree on size and alignment.
 Other native runtime toolchains still need their own full layout validation.
 
 ## Explicit process-heap layout

@@ -18,5 +18,7 @@ not establish Windows support.
 - Add Windows CI for both independent targets, CLI tests, and eventually generated
   program/runtime integration tests. Audit test execution for cross-builds.
 
-The generated-code/runtime ABI remains undecided; Windows support does not imply
-a requirement for either C or C++ linkage.
+Project APIs use C++23 and C++ linkage. Generated entries follow the word/pointer
+contract in [v1.hpp](include/erlang_aot/abi/v1.hpp) and the native free-function
+calling convention. Validate that agreement on Windows before claiming support;
+C-compatible headers and wrappers remain deferred until needed.

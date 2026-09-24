@@ -1,5 +1,5 @@
 #pragma once
-#include "v1.h"
+#include "v1.hpp"
 #include <cstdint>
 #include <expected>
 #include <type_traits>
@@ -13,8 +13,8 @@ template <unsigned Bits>
 struct IntegerEncoding {
     using Word = std::conditional_t<Bits == 32, std::uint32_t, std::uint64_t>;
     // Four low bits identify an immediate integer; the remaining payload is signed.
-    static constexpr unsigned tag_bits = EAOT_V1_SMALL_INTEGER_BITS;
-    static constexpr Word tag = EAOT_V1_SMALL_INTEGER_TAG;
+    static constexpr unsigned tag_bits = small_integer_bits;
+    static constexpr Word tag = small_integer_tag;
     static constexpr Word payload_mask = static_cast<Word>(~Word{0}) >> tag_bits;
     // Keep checked bounds in int64_t so both target widths accept the same exact input type.
     static constexpr std::int64_t minimum = -(std::int64_t{1} << (Bits - tag_bits - 1));
@@ -42,5 +42,5 @@ struct IntegerEncoding {
 };
 
 // Native runtime consumers share the contract; cross compilers must select 32 or 64 explicitly.
-using NativeIntegerEncoding = IntegerEncoding<sizeof(eaot_v1_term) * 8>;
+using NativeIntegerEncoding = IntegerEncoding<sizeof(TermWord) * 8>;
 } // namespace erlang_aot::abi::v1

@@ -1,11 +1,11 @@
 #pragma once
 #include <cstdint>
-#include <erlang_aot/abi/v1.h>
+#include <erlang_aot/abi/v1.hpp>
 
 namespace erlang_aot::runtime {
 
 // Use the runtime target's pointer width, never the compiler host's width for cross emission.
-using Word = eaot_v1_term;
+using Word = abi::v1::TermWord;
 static_assert(sizeof(Word) == 4 || sizeof(Word) == 8);
 static_assert(alignof(Word) == sizeof(Word));
 

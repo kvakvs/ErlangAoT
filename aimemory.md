@@ -1,5 +1,22 @@
 # LLVM plan progress — 2026-09-25
 
+- User explicitly removed C compatibility after step9. All APIs are C++23 for
+  interoperability only inside this project; add C compatibility only if needed later.
+  abi/v1.hpp uses namespace types/constexpr constants, Context aliases forward-declared
+  runtime::ProcessContext, GeneratedFunction is ordinary native free-function type.
+  status.hpp defines enum class Status:uint8_t with preserved numeric values0–10.
+  Deleted C .h headers, lifecycle.cpp adapter, extern-C/calling/noexcept macros,
+  opaque-handle casts and ProcessContext::abi_handle. Runtime is sole lifecycle API;
+  std::expected + unique_ptr own startup, context pointers borrow runtime state.
+  RuntimeOptions now owns defaulted ABI version/width checks formerly in C wrapper.
+  ABI interface exports cxx_std_23 to standalone consumers. LLVM CallingConv::C
+  remains the native machine convention, not a C header/linkage compatibility policy.
+  Historical step7–9 C validation below is superseded; future plan/docs use C++ only.
+  Fresh full Debug/all84 tests, full Lizard/tidy and focused changed-test quality pass;
+  runtime-only all10 and ASan/UBSan5 reporting/lifecycle tests pass. Native archive
+  has C++ Runtime symbols and no eaot_v1_* exports. Format/links/whitespace pass.
+
+
 - Step9 implements LLVM-free Runtime/ProcessContext lifecycle and C ABI runtime.h.
   Runtime owns stable contexts; explicit shutdown BUSY until empty, C++ destructor
   drains survivors. Context pimpl precedes heap/mailbox so lifetime state survives

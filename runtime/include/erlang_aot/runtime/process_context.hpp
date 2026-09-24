@@ -1,7 +1,7 @@
 #pragma once
 #include "mailbox.hpp"
 #include "process_heap.hpp"
-#include <erlang_aot/abi/v1.h>
+#include <erlang_aot/abi/v1.hpp>
 
 namespace erlang_aot::runtime {
 class Runtime;
@@ -71,8 +71,6 @@ class ProcessContext final {
     ~ProcessContext();
     // Borrow a token that expires/is invalidated before process-owned resources are released.
     std::weak_ptr<const ContextLifetime> lifetime() const noexcept;
-    // Borrow this live context through the generated ABI without exposing its C++ representation.
-    eaot_v1_context *abi_handle() noexcept;
     // Identify the running process without exposing mutable scheduler state.
     const ProcessIdentity &identity() const noexcept;
     // Allocate only on this context's owning scheduler thread.

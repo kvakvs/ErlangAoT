@@ -14,9 +14,10 @@ add_executable(linked "${SOURCE_ROOT}/tests/runtime/link_consumer.cpp")
 target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
 set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin")
-# ABI headers alone must not satisfy the mandatory runtime dependency.
+# Project headers alone must not satisfy the mandatory runtime dependency.
 add_executable(unlinked EXCLUDE_FROM_ALL "${SOURCE_ROOT}/tests/runtime/link_consumer.cpp")
 target_link_libraries(unlinked PRIVATE erlang_aot_abi)
+target_include_directories(unlinked PRIVATE "${SOURCE_ROOT}/runtime/include")
 ]=])
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "CXXFLAGS=" "${CMAKE_COMMAND}"
     -S "${TEST_DIR}/source" -B "${TEST_DIR}/build" "-DSOURCE_ROOT=${SOURCE_ROOT}"
@@ -37,6 +38,6 @@ if(NOT ran STREQUAL "0" OR NOT output STREQUAL "" OR NOT errors STREQUAL "")
 endif()
 execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/build" --config Debug --target unlinked
     RESULT_VARIABLE unlinked OUTPUT_VARIABLE output ERROR_VARIABLE errors)
-if(unlinked STREQUAL "0" OR NOT "${output}${errors}" MATCHES "eaot_v1_runtime_start")
+if(unlinked STREQUAL "0" OR NOT "${output}${errors}" MATCHES "Runtime.*start")
     message(FATAL_ERROR "Missing runtime did not fail with missing ABI symbols: ${output}${errors}")
 endif()

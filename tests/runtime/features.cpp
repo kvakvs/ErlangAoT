@@ -1,4 +1,4 @@
-#include <erlang_aot/abi/v1.h>
+#include <erlang_aot/abi/v1.hpp>
 #include <erlang_aot/runtime/features.hpp>
 #include <iostream>
 #include <stdexcept>
@@ -34,9 +34,9 @@ void check_catalog() {
         }
         std::vector<std::string> messages;
         FeatureFailure failure({&messages, collect});
-        require(failure.status() == EAOT_V1_STATUS_OK && messages.empty(), "unused reporter was noisy");
-        require(failure.report(feature.id) == EAOT_V1_STATUS_NOT_IMPLEMENTED, "placeholder returned success");
-        require(failure.report(feature.id) == EAOT_V1_STATUS_NOT_IMPLEMENTED, "failure status changed");
+        require(failure.status() == Status::ok && messages.empty(), "unused reporter was noisy");
+        require(failure.report(feature.id) == Status::not_implemented, "placeholder returned success");
+        require(failure.report(feature.id) == Status::not_implemented, "failure status changed");
         require(messages == std::vector<std::string>{'[' + std::string(feature.name) + "] notimpl"},
                 "duplicate/wrong owner report");
         FeatureFailure independent({&messages, collect});
@@ -60,18 +60,18 @@ void check_context() {
 // I/O/callback errors and unknown IDs remain explicit failures with no fake terms or leaked exceptions.
 void check_errors() {
     FeatureFailure rejected({nullptr, refuse});
-    require(rejected.report(FeatureId::allocation) == EAOT_V1_STATUS_DIAGNOSTIC_FAILURE, "sink refusal swallowed");
+    require(rejected.report(FeatureId::allocation) == Status::diagnostic_failure, "sink refusal swallowed");
     FeatureFailure throwing({nullptr, throw_sink});
-    require(throwing.report(FeatureId::allocation) == EAOT_V1_STATUS_DIAGNOSTIC_FAILURE, "sink exception swallowed");
-    require(throwing.report(FeatureId::allocation) == EAOT_V1_STATUS_DIAGNOSTIC_FAILURE, "failed sink retried");
+    require(throwing.report(FeatureId::allocation) == Status::diagnostic_failure, "sink exception swallowed");
+    require(throwing.report(FeatureId::allocation) == Status::diagnostic_failure, "failed sink retried");
     std::vector<std::string> messages;
     FeatureFailure invalid({&messages, collect});
-    require(invalid.report(FeatureId::invalid) == EAOT_V1_STATUS_INVALID_ARGUMENT, "invalid ID accepted");
+    require(invalid.report(FeatureId::invalid) == Status::invalid_argument, "invalid ID accepted");
     require(messages == std::vector<std::string>{"invalid deferred feature ID 0"}, "invalid ID mislabeled notimpl");
 }
 
 // A generated-service-shaped test boundary returns status only; no C++ exception may cross it.
-extern "C" eaot_v1_status EAOT_V1_CALL unavailable_service() noexcept {
+Status unavailable_service() noexcept {
     FeatureFailure failure;
     failure.report(FeatureId::garbage_collection, {"src/example.erl", 12, 5});
     return failure.report(FeatureId::garbage_collection);
@@ -81,11 +81,11 @@ extern "C" eaot_v1_status EAOT_V1_CALL unavailable_service() noexcept {
 int main(int argc, char **argv) {
     try {
         if (argc == 2 && std::string_view(argv[1]) == "stderr") {
-            return unavailable_service() == EAOT_V1_STATUS_NOT_IMPLEMENTED ? 1 : 0;
+            return unavailable_service() == Status::not_implemented ? 1 : 0;
         }
         if (argc == 2 && std::string_view(argv[1]) == "silent") {
             FeatureFailure unused;
-            return unused.status() == EAOT_V1_STATUS_OK ? 0 : 1;
+            return unused.status() == Status::ok ? 0 : 1;
         }
         check_catalog();
         check_context();

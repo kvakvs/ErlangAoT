@@ -1,25 +1,33 @@
-#include <erlang_aot/abi/runtime.h>
+#include <erlang_aot/runtime/runtime.hpp>
+#include <type_traits>
 
-// A generated-entry-shaped host function borrows the live context without exposing its definition.
-eaot_v1_term EAOT_V1_CALL identity(eaot_v1_context *context, const eaot_v1_term *arguments) {
-    return context == nullptr ? 0 : arguments[0];
-}
+using erlang_aot::abi::v1::GeneratedFunction;
+using erlang_aot::abi::v1::Status;
+using erlang_aot::abi::v1::TermWord;
+using erlang_aot::runtime::ProcessContext;
+using erlang_aot::runtime::Runtime;
 
-// Link solely through the generated-program target and tear contexts down before their runtime.
+static_assert(std::is_same_v<erlang_aot::abi::v1::Context, ProcessContext>);
+static_assert(std::is_same_v<std::underlying_type_t<Status>, std::uint8_t>);
+static_assert(!std::is_convertible_v<Status, std::uint32_t>);
+
+// A generated-entry-shaped project function borrows the real context through the forward-declared ABI type.
+TermWord identity(ProcessContext *context, const TermWord *arguments) { return context == nullptr ? 0 : arguments[0]; }
+
+// Link solely through the generated-program target; RAII also cleans up every early failure.
 int main() {
-    eaot_v1_runtime *runtime = nullptr;
-    eaot_v1_context *context = nullptr;
-    if (eaot_v1_runtime_start(nullptr, &runtime) != EAOT_V1_STATUS_OK) {
+    auto runtime = Runtime::start();
+    if (!runtime) {
         return 1;
     }
-    if (eaot_v1_context_create(runtime, nullptr, &context) != EAOT_V1_STATUS_OK) {
-        eaot_v1_runtime_shutdown(&runtime);
+    auto context = (*runtime)->create_context();
+    if (!context) {
         return 2;
     }
-    eaot_v1_function *entry = identity;
-    const eaot_v1_term argument = 0x2af;
-    const bool matched = entry(context, &argument) == argument;
-    const auto destroyed = eaot_v1_context_destroy(runtime, &context);
-    const auto stopped = eaot_v1_runtime_shutdown(&runtime);
-    return matched && destroyed == EAOT_V1_STATUS_OK && stopped == EAOT_V1_STATUS_OK ? 0 : 3;
+    GeneratedFunction *entry = identity;
+    const TermWord argument = 0x2af;
+    const bool matched = entry(*context, &argument) == argument;
+    const auto destroyed = (*runtime)->destroy_context(*context);
+    const auto stopped = (*runtime)->shutdown();
+    return matched && destroyed == Status::ok && stopped == Status::ok ? 0 : 3;
 }

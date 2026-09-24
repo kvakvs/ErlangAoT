@@ -56,7 +56,7 @@ struct TermTag {
             TermKind::local_pid, TermKind::local_port,   TermKind::invalid,     TermKind::smallint,
             TermKind::atom,      TermKind::catch_object, TermKind::empty_tuple, TermKind::empty_list,
         };
-        const auto primary = static_cast<unsigned>(value_ & EAOT_V1_PRIMARY_MASK);
+        const auto primary = static_cast<unsigned>(value_ & abi::v1::primary_mask);
         const auto secondary = static_cast<unsigned>((value_ >> 2) & 3U);
         const auto tertiary = static_cast<unsigned>((value_ >> 4) & 3U);
         const auto use_secondary = static_cast<unsigned>(primary == 3U);
@@ -70,7 +70,7 @@ struct TermTag {
 static_assert(sizeof(TermTag) == sizeof(Word));
 static_assert(alignof(TermTag) == alignof(Word));
 static_assert((static_cast<unsigned>(TermKind2::smallint) << 2 |
-               static_cast<unsigned>(TermKindPrimary::see_termkind2)) == EAOT_V1_SMALL_INTEGER_TAG);
+               static_cast<unsigned>(TermKindPrimary::see_termkind2)) == abi::v1::small_integer_tag);
 
 // Carry a checked value or failure without fabricating an Erlang result.
 template <typename Value> using TermResult = std::expected<Value, TermError>;

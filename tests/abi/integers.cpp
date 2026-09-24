@@ -6,8 +6,8 @@
 #include <type_traits>
 
 using namespace erlang_aot::abi::v1;
-static_assert(sizeof(NativeIntegerEncoding::Word) == sizeof(eaot_v1_term));
-static_assert(alignof(NativeIntegerEncoding::Word) == alignof(eaot_v1_term));
+static_assert(sizeof(NativeIntegerEncoding::Word) == sizeof(TermWord));
+static_assert(alignof(NativeIntegerEncoding::Word) == alignof(TermWord));
 static_assert(IntegerEncoding<32>::minimum == -134217728);
 static_assert(IntegerEncoding<64>::maximum == 576460752303423487);
 static_assert(*IntegerEncoding<32>::encode(-1) == 0xffffffffU);

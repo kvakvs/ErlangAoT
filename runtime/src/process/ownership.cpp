@@ -5,6 +5,8 @@
 #include <stdexcept>
 
 namespace erlang_aot::runtime {
+using abi::v1::Status;
+
 namespace {
 // Validate byte budgets before creating owners; no backing memory is allocated by this milestone.
 bool valid_heap_options(HeapOptions options) noexcept {
@@ -13,16 +15,16 @@ bool valid_heap_options(HeapOptions options) noexcept {
 }
 } // namespace
 
-std::expected<ProcessContext *, eaot_v1_status> Runtime::create_context(HeapOptions options) noexcept {
+std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions options) noexcept {
     if (!impl_) {
-        return std::unexpected(EAOT_V1_STATUS_STOPPED);
+        return std::unexpected(Status::stopped);
     }
     if (!valid_heap_options(options)) {
-        return std::unexpected(EAOT_V1_STATUS_INVALID_ARGUMENT);
+        return std::unexpected(Status::invalid_argument);
     }
     if (impl_->contexts.size() >= impl_->options.max_contexts ||
         impl_->next_context == std::numeric_limits<std::uint64_t>::max()) {
-        return std::unexpected(EAOT_V1_STATUS_RESOURCE_LIMIT);
+        return std::unexpected(Status::resource_limit);
     }
     try {
         auto context = std::unique_ptr<ProcessContext>(
@@ -32,27 +34,27 @@ std::expected<ProcessContext *, eaot_v1_status> Runtime::create_context(HeapOpti
         ++impl_->next_context;
         return borrowed;
     } catch (const std::bad_alloc &) {
-        return std::unexpected(EAOT_V1_STATUS_OUT_OF_MEMORY);
+        return std::unexpected(Status::out_of_memory);
     } catch (const std::length_error &) {
-        return std::unexpected(EAOT_V1_STATUS_RESOURCE_LIMIT);
+        return std::unexpected(Status::resource_limit);
     } catch (...) {
-        return std::unexpected(EAOT_V1_STATUS_INTERNAL_ERROR);
+        return std::unexpected(Status::internal_error);
     }
 }
 
-eaot_v1_status Runtime::destroy_context(ProcessContext *context) noexcept {
+Status Runtime::destroy_context(ProcessContext *context) noexcept {
     if (!impl_) {
-        return EAOT_V1_STATUS_STOPPED;
+        return Status::stopped;
     }
     if (context == nullptr) {
-        return EAOT_V1_STATUS_INVALID_ARGUMENT;
+        return Status::invalid_argument;
     }
     const auto found =
         std::ranges::find_if(impl_->contexts, [context](const auto &owner) { return owner.get() == context; });
     if (found == impl_->contexts.end()) {
-        return EAOT_V1_STATUS_WRONG_OWNER;
+        return Status::wrong_owner;
     }
     impl_->contexts.erase(found);
-    return EAOT_V1_STATUS_OK;
+    return Status::ok;
 }
 } // namespace erlang_aot::runtime

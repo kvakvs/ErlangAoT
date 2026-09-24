@@ -34,15 +34,15 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `target_backends.cpp`: once-only initialization of configured SDK backends.
   `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
   layouts, triple normalization, unknown architectures and unavailable backends.
-- `abi/include/erlang_aot/abi/{v1.h,term.hpp}`: C-compatible versioned term/context/
+- `abi/include/erlang_aot/abi/{v1.hpp,term.hpp}`: namespaced C++23 term/context/
   generated-function declarations and checked target-width immediate integer codecs.
   `tests/abi/integers.cpp`: boundaries, signed round trips, overflow and wrong-tag checks.
-- `abi/include/erlang_aot/abi/{features.hpp,feature_diagnostic.hpp,status.h}`:
+- `abi/include/erlang_aot/abi/{features.hpp,feature_diagnostic.hpp,status.hpp}`:
   stable deferred-feature catalog/owner/boundary/step/test metadata, escaped context
-  formatting and C status codes; `docs/features.md` records integration and propagation.
+  formatting and scoped fixed-width Status; `docs/features.md` records integration and propagation.
 - `compiler/src/codegen/features.{hpp,cpp}`: fail-once batch reporter, owned context,
   stderr delivery and reported flag; `runtime/include/erlang_aot/runtime/features.hpp`,
-  `runtime/src/diagnostics/features.cpp`: per-operation sink/report latch, C status,
+  `runtime/src/diagnostics/features.cpp`: per-operation sink/report latch, scoped Status,
   stderr default and exception containment without LLVM.
   `tests/{abi,compiler/codegen,runtime}/features.cpp` and `tests/abi/feature_output.cmake`:
   catalog compatibility, all entries, context/errors and subprocess output/silence checks.
@@ -61,10 +61,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/CMakeLists.txt`: frontend, private codegen library and executable;
   `runtime/CMakeLists.txt`: runtime archive and `ErlangAoT::generated_program` link interface;
   `abi/CMakeLists.txt`: header-only ABI interface.
-- `abi/include/erlang_aot/abi/runtime.h`: opaque runtime/context C lifecycle declarations;
-  `runtime/include/erlang_aot/runtime/{runtime,process_context}.hpp`: host owners, identities
+- `runtime/include/erlang_aot/runtime/{runtime,process_context}.hpp`: sole C++ lifecycle API, host owners, identities
   and lifetime tokens; `runtime/src/runtime{.cpp,_state.hpp}`: startup/shutdown, identity
-  allocation and reserved code/atom ownership; `runtime/src/lifecycle.cpp`: C adapter.
+  allocation and reserved code/atom ownership. The former C lifecycle adapter is removed.
   `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
   context registry and lazy heap/empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
   `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback;

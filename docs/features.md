@@ -64,19 +64,19 @@ noncopyable/nonmovable and must not be shared between concurrent operations.
 A null sink callback selects stderr, with one complete newline-terminated write.
 A custom callback receives a borrowed message without a newline and returns whether
 it accepted delivery; it must copy retained text. The embedding runtime owns the
-callback's state/lifetime. This host-side callback does not cross generated C
+callback's state/lifetime. This host-side callback does not cross generated
 service signatures. Exceptions from formatting or callbacks are contained and
 returned as a reporting failure; no terms or successful results are fabricated.
 
-[status.h](../abi/include/erlang_aot/abi/status.h) defines unsigned 32-bit C status
-transport for future service boundaries:
+[status.hpp](../abi/include/erlang_aot/abi/status.hpp) defines the scoped C++
+`abi::v1::Status` enum with `std::uint8_t` underlying type for project service boundaries:
 
 | Status | Value | Meaning |
 |---|---:|---|
-| `EAOT_V1_STATUS_OK` | 0 | No failure recorded by the reporter; construction is not a service implementation |
-| `EAOT_V1_STATUS_NOT_IMPLEMENTED` | 1 | Known deferred feature; owner reported it |
-| `EAOT_V1_STATUS_INVALID_ARGUMENT` | 2 | Unknown feature ID; ordinary invalid-input diagnostic, never `notimpl` |
-| `EAOT_V1_STATUS_DIAGNOSTIC_FAILURE` | 3 | Formatting, callback or stderr delivery failed; operation still failed |
+| `Status::ok` | 0 | No failure recorded by the reporter; construction is not a service implementation |
+| `Status::not_implemented` | 1 | Known deferred feature; owner reported it |
+| `Status::invalid_argument` | 2 | Unknown feature ID; ordinary invalid-input diagnostic, never `notimpl` |
+| `Status::diagnostic_failure` | 3 | Formatting, callback or stderr delivery failed; operation still failed |
 
 Compiler stream/formatting failures similarly latch
 `CompilationResult::diagnostic_capture_failed()`. Neither reporter retries output
@@ -89,6 +89,6 @@ Focused tests cover every catalog entry, exact names/IDs, source and optional
 context, escaped control bytes, invalid IDs, artifact invalidation, failure
 propagation and both throwing/nonthrowing sink failures. Subprocess tests capture
 real stdout/stderr and assert one report with a nonzero exit, plus silence for an
-unused reporter. Runtime-only builds exercise reporting without LLVM. Lifecycle,
-capability selection, real service placeholders and native foreign-platform
+unused reporter. Runtime-only builds exercise reporting without LLVM. Capability
+selection, real service placeholders and native foreign-platform
 execution remain later work.

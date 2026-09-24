@@ -31,5 +31,4 @@ Mailbox &ProcessContext::mailbox() noexcept { return mailbox_; }
 
 std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept { return impl_->lifetime; }
 
-eaot_v1_context *ProcessContext::abi_handle() noexcept { return reinterpret_cast<eaot_v1_context *>(this); }
 } // namespace erlang_aot::runtime

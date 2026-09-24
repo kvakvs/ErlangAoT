@@ -36,6 +36,7 @@ The initial directory structure and implementation plan with technology choices 
 
 ## When Coding
 
+- Keep APIs project-internal C++23. C-compatible headers, linkage wrappers and external interoperability are deferred until there is a concrete need.
 - IMPORTANT: Document class fields creation intent, what will they be doing. Document function creation intent. Keep comments down to 1-2 lines.
 - The code will be read by humans, keep it readable.
 - The cyclomatic complexity of new functions and new files must remain low (avoid complex code). Use both Lizard and clang-tidy.

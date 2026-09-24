@@ -26,7 +26,7 @@ remain deferred. The selected global LLVM installation is recorded in `docs/comp
 
 Review headers in `runtime/include/` and notes in `runtime/design/` define evolving
 service/ownership proposals, not completed plan steps. CMake lists the prototype
-headers for IDE navigation. `src/runtime.cpp`, `src/lifecycle.cpp`, `src/process/`
+headers for IDE navigation. `src/runtime.cpp`, `src/process/`
 and `src/diagnostics/features.cpp` implement lifecycle and feature reporting.
 Implemented host APIs live in `include/erlang_aot/runtime/`; extend these APIs and
 update this inventory and affected steps together when sketches change.
@@ -62,7 +62,9 @@ compiles private prefix assertions and checks agreement with the immediate ABI.
 Step 9 adds `erlang_aot/runtime/{runtime,process_context}.hpp`, with stable owned
 contexts, non-recycled identities and lifetime-token invalidation before mailbox/heap
 teardown. Runtime-wide code/atom ownership slots remain empty; their accessors and
-signal admission are not implemented. [Lifecycle contract](../docs/runtime-lifecycle.md)
+signal admission are not implemented. The C compatibility layer added in steps 7–9
+was subsequently removed at user request; the C++ Runtime API is the sole lifecycle
+interface, with scoped `Status` and constexpr ABI constants. [Lifecycle contract](../docs/runtime-lifecycle.md)
 documents status reporting, host serialization and the mandatory
 `ErlangAoT::generated_program` link target.
 
@@ -96,7 +98,7 @@ Carry these ownership and service contracts into implementation:
   pins its module; direct/typed views require a retained handle through invocation
   and target destruction. Unload removes lookup access while handles retain the
   registry, atom bindings and code image.
-- STL/std::function/RTTI interfaces are host-side C++, not the generated C ABI.
+- STL/std::function/RTTI interfaces are host-side C++, not the generated-code ABI.
   Native calls are bounded and synchronous; the old virtual call-frame protocol is
   dropped. Conversion helpers, cooperative generated calls, worker execution,
   messaging, allocation and GC remain beyond this skeleton.
@@ -164,10 +166,10 @@ LLVM passes. Follow [LLVM frontend guidance](https://llvm.org/docs/Frontend/Perf
 
 Define a versioned contract in `abi/`: unsigned target-word terms, explicit checked
 unsigned encoding of immediate signed integers, exact tags/alignment, reversible
-collision-free module/function/arity symbols and export/lifetime rules. Use C
-calling convention with a live opaque process-context pointer, argument-array
+collision-free module/function/arity symbols and export/lifetime rules. Use the
+native free-function machine convention with a live project context pointer, argument-array
 pointer and term result; resolved identity carries arity and direct calls retain
-the context. External callers supply valid terms. Prove C++ harness agreement on
+the context. Project callers supply valid terms. Prove C++ harness agreement on
 each native platform; promise neither BEAM/general FFI compatibility nor future
 tail-recursion support. GC, exceptions and suspension may revise this ABI.
 
@@ -175,8 +177,10 @@ Build `erlang_runtime` separately as C++23, initially static and LLVM-free. Shar
 `cmake/BoostDependencies.cmake` provides Multiprecision to compiler/runtime and
 runtime consumers. Runtime-only builds require Boost >=1.90, not Boost.Parser,
 TOML or OTP; this wiring does not implement bignums. Generated service boundaries
-use C linkage, opaque handles and explicit error/status transport; no C++ exceptions
-or STL values cross them.
+use C++ APIs, scoped status enums and explicit error results. Host APIs use
+`std::expected` and RAII; generated entries retain simple word/pointer signatures
+without STL values or C++ exceptions crossing them. All APIs are project-internal
+C++23. C-compatible headers/linkage are deferred until an actual external use arises.
 
 | Runtime location                                 | Skeleton responsibility                                                           |
 | ------------------------------------------------ | --------------------------------------------------------------------------------- |
@@ -257,7 +261,7 @@ on stderr, independently of verbosity, with available source/module/target/opera
 context. For example: `[pattern matching] notimpl: src/example.erl:12:5`.
 Known unsupported source fails capability analysis before publication; defensive
 lowering handlers also fail. Runtime handlers use the diagnostic sink and explicit
-C ABI failure status; callers propagate failure without duplicate reports, fake
+typed C++ failure status; callers propagate failure without duplicate reports, fake
 terms, swallowed errors, unnecessary aborts or escaping C++ exceptions. The harness
 exits nonzero on unhandled failure and tears down normally.
 
@@ -268,7 +272,7 @@ after implementing and testing semantics; never contaminate stdout or artifacts.
 
 Step 8's [reporting contract](../docs/features.md) records the canonical catalog,
 existing/planned extension points, shared context spelling, failure propagation,
-compiler delivery flags and runtime C status/sink behavior. Reporters are tested
+compiler delivery flags and runtime C++ status/sink behavior. Reporters are tested
 in isolation; steps 14/17 place actual service/capability handlers. Existing CLI
 frontend behavior and ordinary diagnostics remain unchanged.
 
@@ -460,7 +464,7 @@ planning-only creation of this document does not run or claim these code gates.
   Reconcile definitions and assertions while preserving public `Term` access and
   future heap references. Record the chosen encoding in the sketch and versioned ABI.
 - Add versioned ABI headers in `abi/include/erlang_aot/abi/` for term encoding,
-  the opaque context and generated-function signatures. Implement only the
+  the forward-declared project context and generated-function signatures. Implement only the
   immediate integer encoding needed by this milestone.
 - Validate: boundary/negative integer round trips, rejected overflow, target
   widths and native C++/LLVM layout agreement. Shared gate, then commit.
@@ -482,7 +486,7 @@ planning-only creation of this document does not run or claim these code gates.
   lifetime and exit invalidation. Reserve runtime-owned `CodeServer` and `AtomStorage`
   service bindings without implementing deferred services merely to fill accessors.
 - Replace the empty runtime translation unit with explicit initialization,
-  shutdown and opaque process-context creation/destruction. Define C ABI status
+  shutdown and owned process-context creation/destruction. Define typed C++ status
   reporting and the mandatory generated-program CMake link target.
 - Validate: repeated lifecycle, independent contexts, cleanup after initialization
   failure and runtime-only builds without LLVM. Shared gate, then commit.
@@ -505,13 +509,13 @@ planning-only creation of this document does not run or claim these code gates.
 
 - Add `runtime/src/builtins/` using `runtime/include/{callable,native_callable,code_server}.hpp`
   for module ownership and function/arity/argument-type registration. Implement the
-  default all-Term signature needed here and the C ABI service-result bridge;
+  default all-Term signature needed here and the generated-code ABI service-result bridge;
   keep typed extensions exact and conversion-free when introduced. Reuse one
   registry per module, not a second BIF-specific overload table. Unimplemented BIFs
   report unavailable; the compiler's accepted source subset does not expand yet.
 - Validate: known test registrations, duplicate signature keys, distinct arities,
   missing generic entries, frozen publication and failure propagation across the
-  C ABI. No conversion support is required. Shared gate, then commit.
+  generated-code ABI. No conversion support is required. Shared gate, then commit.
 
 ### 12. Establish process memory ownership
 
@@ -680,7 +684,7 @@ planning-only creation of this document does not run or claim these code gates.
   unique registry into each loaded module and freeze it before publication. Register
   the generic signatures required by this subset; any later typed registrations
   use exact argument types and explicit Term fallback, with no conversion layer.
-  Bridge C ABI descriptors to host-side callable storage without exposing std::function
+  Bridge generated-code ABI descriptors to host-side callable storage without exposing std::function
   or RTTI across the ABI. Preserve code-image/module-root lifetime through handles.
   Reserve runtime AtomStorage initialization for future atom bindings; supporting
   module-name metadata must not silently enable atom-valued source expressions.
@@ -1025,3 +1029,21 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and freestanding C headers across six target triples passed. Native evidence is
   macOS arm64; Linux/Windows execution and LeakSanitizer remain unverified on this
   host. CLI behavior is unchanged. Stopped before step 10.
+
+- C++ API revision after step 9 (2026-09-25, user-directed): removed C-compatible
+  headers, macros, opaque handle casts and the duplicate C lifecycle adapter.
+  `v1.hpp` now supplies namespaced types/constexpr constants and aliases the real
+  forward-declared ProcessContext; `status.hpp` uses scoped Status:uint8_t with
+  unchanged values 0–10. Runtime's std::expected/RAII API is the sole lifecycle
+  interface and retains explicit ABI-version/word-width validation. The ABI target
+  exports its C++23 requirement. Generated entries retain the native machine
+  convention without C-language linkage or an external interoperability promise.
+  Future plan steps and AGENTS.md now require project-internal C++ APIs; historical
+  C validation above describes the superseded implementation.
+  Fresh full Debug compiler+runtime configure/build, all 84 CTests, full Lizard and
+  clang-tidy, focused test quality, formatting, local links and whitespace passed.
+  Runtime-only all 10 tests and ASan/UBSan lifecycle/failure/reporting tests passed.
+  Standalone C++ consumer verified exact context/status types, transitive C++23,
+  successful runtime linking and failure when omitted. Native archive inspection
+  confirmed removal of the former C lifecycle symbols. Native Linux/Windows remain
+  pending. No later numbered compilation step was started.

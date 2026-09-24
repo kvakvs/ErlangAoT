@@ -1,9 +1,10 @@
-#include <erlang_aot/abi/runtime.h>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 using namespace erlang_aot::runtime;
+using erlang_aot::abi::v1::Status;
+using erlang_aot::abi::v1::TermWord;
 
 // Keep contract assertions active in release builds.
 void require(bool condition, const char *message) {
@@ -30,14 +31,13 @@ void check_owners() {
     const auto foreign = (*other)->create_context();
     require(first && second && foreign, "context creation failed");
     check_storage(**first, **second, **foreign);
-    require(runtime.destroy_context(*foreign) == EAOT_V1_STATUS_WRONG_OWNER, "foreign context accepted");
+    require(runtime.destroy_context(*foreign) == Status::wrong_owner, "foreign context accepted");
     require(runtime.context_count() == 2 && (*other)->context_count() == 1, "foreign rejection changed ownership");
-    require(runtime.create_context() == std::unexpected(EAOT_V1_STATUS_RESOURCE_LIMIT), "context limit ignored");
+    require(runtime.create_context() == std::unexpected(Status::resource_limit), "context limit ignored");
     const auto identity = (*first)->identity();
     auto lifetime = (*first)->lifetime().lock();
     require(lifetime && lifetime->alive(), "live token unavailable");
-    require(runtime.destroy_context(*first) == EAOT_V1_STATUS_OK && !lifetime->alive(),
-            "exit did not invalidate token");
+    require(runtime.destroy_context(*first) == Status::ok && !lifetime->alive(), "exit did not invalidate token");
     auto replacement = runtime.create_context();
     require(replacement && (*replacement)->identity() != identity, "process identity recycled after exit");
 }
@@ -51,14 +51,13 @@ void check_shutdown() {
     require(context.has_value(), "context startup failed");
     const auto weak = (*context)->lifetime();
     auto token = weak.lock();
-    require(runtime.shutdown() == EAOT_V1_STATUS_BUSY && token->alive(), "busy shutdown changed liveness");
-    require(runtime.destroy_context(*context) == EAOT_V1_STATUS_OK, "context teardown failed");
+    require(runtime.shutdown() == Status::busy && token->alive(), "busy shutdown changed liveness");
+    require(runtime.destroy_context(*context) == Status::ok, "context teardown failed");
     require(!token->alive(), "teardown left a live host binding");
     token.reset();
     require(weak.expired(), "context retained lifetime storage after exit");
-    require(runtime.shutdown() == EAOT_V1_STATUS_OK && runtime.shutdown() == EAOT_V1_STATUS_OK,
-            "shutdown not idempotent");
-    require(runtime.create_context() == std::unexpected(EAOT_V1_STATUS_STOPPED), "stopped runtime admitted context");
+    require(runtime.shutdown() == Status::ok && runtime.shutdown() == Status::ok, "shutdown not idempotent");
+    require(runtime.create_context() == std::unexpected(Status::stopped), "stopped runtime admitted context");
     auto automatic = Runtime::start();
     require(automatic.has_value(), "second runtime startup failed");
     auto remaining = (*automatic)->create_context();
@@ -70,61 +69,43 @@ void check_shutdown() {
 
 // Invalid budgets fail before publishing a process and leave later valid operations usable.
 void check_options() {
-    require(Runtime::start({0}) == std::unexpected(EAOT_V1_STATUS_INVALID_ARGUMENT), "invalid runtime limit accepted");
+    require(Runtime::start({0}) == std::unexpected(Status::invalid_argument), "invalid runtime limit accepted");
     auto started = Runtime::start();
     require(started.has_value(), "runtime startup failed");
     for (const HeapOptions options :
          {HeapOptions{0, 1024}, HeapOptions{16, 8}, HeapOptions{1, 1024}, HeapOptions{8, 9}}) {
-        require((*started)->create_context(options) == std::unexpected(EAOT_V1_STATUS_INVALID_ARGUMENT),
+        require((*started)->create_context(options) == std::unexpected(Status::invalid_argument),
                 "invalid heap budget accepted");
     }
     require((*started)->context_count() == 0, "failed initialization published a context");
-    require((*started)->destroy_context(nullptr) == EAOT_V1_STATUS_INVALID_ARGUMENT, "null context accepted");
-    require((*started)->create_context({sizeof(eaot_v1_term), sizeof(eaot_v1_term)}).has_value(),
+    require((*started)->destroy_context(nullptr) == Status::invalid_argument, "null context accepted");
+    require((*started)->create_context({sizeof(TermWord), sizeof(TermWord)}).has_value(),
             "valid minimal budget rejected");
 }
 
-// C callers receive explicit errors and retain non-null outputs/foreign handles on failure.
-void check_c_errors() {
-    eaot_v1_runtime *runtime = nullptr;
-    eaot_v1_context *context = nullptr;
-    require(eaot_v1_runtime_start(nullptr, nullptr) == EAOT_V1_STATUS_INVALID_ARGUMENT, "null output accepted");
-    eaot_v1_runtime_options options{EAOT_ABI_VERSION + 1, sizeof(eaot_v1_term) * 8, 2};
-    require(eaot_v1_runtime_start(&options, &runtime) == EAOT_V1_STATUS_ABI_MISMATCH && runtime == nullptr,
-            "wrong ABI accepted");
-    options.abi_version = EAOT_ABI_VERSION;
-    options.term_bits = sizeof(eaot_v1_term) == 8 ? 32 : 64;
-    require(eaot_v1_runtime_start(&options, &runtime) == EAOT_V1_STATUS_ABI_MISMATCH, "wrong word width accepted");
-    require(eaot_v1_context_create(nullptr, nullptr, &context) == EAOT_V1_STATUS_INVALID_ARGUMENT,
-            "null runtime accepted");
-    require(eaot_v1_runtime_start(nullptr, &runtime) == EAOT_V1_STATUS_OK, "C startup failed");
-    require(eaot_v1_runtime_start(nullptr, &runtime) == EAOT_V1_STATUS_INVALID_ARGUMENT, "live output overwritten");
-    require(eaot_v1_context_create(runtime, nullptr, &context) == EAOT_V1_STATUS_OK, "C context creation failed");
-    require(eaot_v1_context_create(runtime, nullptr, &context) == EAOT_V1_STATUS_INVALID_ARGUMENT,
-            "live context overwritten");
-    require(eaot_v1_runtime_shutdown(&runtime) == EAOT_V1_STATUS_BUSY && runtime != nullptr,
-            "C busy shutdown freed runtime");
-    require(eaot_v1_context_destroy(runtime, &context) == EAOT_V1_STATUS_OK && context == nullptr,
-            "C context destruction failed");
-    require(eaot_v1_runtime_shutdown(&runtime) == EAOT_V1_STATUS_OK && runtime == nullptr, "C shutdown failed");
+// Explicit version/width checks remain project contracts after removing the external C adapter.
+void check_abi_options() {
+    RuntimeOptions options;
+    ++options.abi_version;
+    require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "wrong ABI accepted");
+    options.abi_version = erlang_aot::abi::v1::version;
+    options.term_bits = sizeof(TermWord) == 8 ? 32 : 64;
+    require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "wrong word width accepted");
 }
 
-// Repeated independent C lifecycles include foreign-owner rejection and null-handle idempotence.
-void check_c_lifecycles() {
+// Repeated independent owners reject foreign contexts and shut down without retaining state.
+void check_lifecycles() {
     for (unsigned iteration = 0; iteration < 32; ++iteration) {
-        eaot_v1_runtime *first = nullptr;
-        eaot_v1_runtime *second = nullptr;
-        eaot_v1_context *context = nullptr;
-        require(eaot_v1_runtime_start(nullptr, &first) == EAOT_V1_STATUS_OK, "first startup failed");
-        require(eaot_v1_runtime_start(nullptr, &second) == EAOT_V1_STATUS_OK, "second startup failed");
-        require(eaot_v1_context_create(first, nullptr, &context) == EAOT_V1_STATUS_OK, "context startup failed");
-        require(eaot_v1_context_destroy(second, &context) == EAOT_V1_STATUS_WRONG_OWNER && context != nullptr,
-                "foreign destroy corrupted handle");
-        require(eaot_v1_context_destroy(first, &context) == EAOT_V1_STATUS_OK, "destroy failed");
-        require(eaot_v1_context_destroy(first, &context) == EAOT_V1_STATUS_OK, "repeated destroy failed");
-        require(eaot_v1_runtime_shutdown(&first) == EAOT_V1_STATUS_OK, "first shutdown failed");
-        require(eaot_v1_runtime_shutdown(&second) == EAOT_V1_STATUS_OK, "second shutdown failed");
-        require(eaot_v1_runtime_shutdown(&first) == EAOT_V1_STATUS_OK, "repeated shutdown failed");
+        auto first = Runtime::start();
+        auto second = Runtime::start();
+        require(first && second, "independent startup failed");
+        auto context = (*first)->create_context();
+        require(context.has_value(), "context startup failed");
+        require((*second)->destroy_context(*context) == Status::wrong_owner, "foreign destroy accepted");
+        require((*first)->destroy_context(*context) == Status::ok, "destroy failed");
+        require((*first)->shutdown() == Status::ok, "first shutdown failed");
+        require((*second)->shutdown() == Status::ok, "second shutdown failed");
+        require((*first)->shutdown() == Status::ok, "repeated shutdown failed");
     }
 }
 
@@ -134,8 +115,8 @@ int main() {
         check_owners();
         check_shutdown();
         check_options();
-        check_c_errors();
-        check_c_lifecycles();
+        check_abi_options();
+        check_lifecycles();
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

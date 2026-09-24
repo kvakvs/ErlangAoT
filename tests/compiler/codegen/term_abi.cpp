@@ -11,7 +11,7 @@
 using namespace erlang_aot;
 using namespace erlang_aot::codegen;
 using namespace erlang_aot::abi::v1;
-static_assert(std::is_same_v<decltype(std::declval<eaot_v1_function &>()(nullptr, nullptr)), eaot_v1_term>);
+static_assert(std::is_same_v<decltype(std::declval<GeneratedFunction &>()(nullptr, nullptr)), TermWord>);
 
 // Keep assertions active in release builds.
 void require(bool condition, const char *message) {
@@ -41,7 +41,7 @@ template <unsigned Bits> void check_constant(llvm::IntegerType *type) {
     }
 }
 
-// Emit a C-convention synthetic ABI function and inspect layout against the selected target.
+// Emit a native-convention synthetic ABI function and inspect layout against the selected target.
 void check_target(const std::string &triple, unsigned bits) {
     auto compilation = target_batch(triple);
     auto *word = term_type(compilation);
@@ -75,10 +75,10 @@ void check_unconfigured() {
     require(compilation.result().diagnostics().size() == 1, "missing or duplicate ABI diagnostic");
 }
 
-// Native width/alignment agrees with the C header; cross-target checks stay independent of host sizeof.
+// Native width/alignment agrees with the C++ header; cross-target checks stay independent of host sizeof.
 int main() {
     try {
-        check_target({}, sizeof(eaot_v1_term) * 8);
+        check_target({}, sizeof(TermWord) * 8);
 #ifdef ERLANG_AOT_LLVM_X86
         check_target("i686-unknown-linux-gnu", 32);
         check_target("i686-pc-windows-msvc", 32);

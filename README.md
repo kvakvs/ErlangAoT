@@ -8,6 +8,7 @@ The next compilation milestone is frozen in [docs/compile.md](docs/compile.md),
 including its global LLVM SDK prerequisite and provisional ABI.
 The separate runtime now supports [startup, context ownership and shutdown](docs/runtime-lifecycle.md),
 with a reusable CMake target for linking native consumers.
+All APIs are project-internal C++23; C compatibility is deferred until needed.
 
 Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 

@@ -1,10 +1,10 @@
 # Runtime lifecycle
 
-Compilation step 9 implements startup, context ownership and shutdown in the
-LLVM-free C++23 `erlang_runtime` library. The [C API](../abi/include/erlang_aot/abi/runtime.h)
-uses ABI v1 opaque handles and fixed-width status codes. The
-[host API](../runtime/include/erlang_aot/runtime/runtime.hpp) owns the same state.
-These APIs do not yet execute Erlang processes or allocate terms.
+The LLVM-free C++23 `erlang_runtime` library implements startup, context ownership
+and shutdown through [Runtime](../runtime/include/erlang_aot/runtime/runtime.hpp).
+All interfaces are private project C++ APIs; C compatibility and external consumers
+are deferred until needed. These APIs do not yet execute Erlang processes or
+allocate terms.
 
 ## Linking and calling
 
@@ -17,47 +17,48 @@ add_executable(harness harness.cpp)
 target_link_libraries(harness PRIVATE ErlangAoT::generated_program)
 ```
 
-This interface supplies the runtime archive, ABI/runtime headers and its public
-dependencies. Current lifecycle operations need no additional OS libraries. It
-does not link the host LLVM SDK; runtime-only configuration never discovers LLVM.
-Use Clang's C++ driver for the native harness. Foreign objects need a separately
-built runtime for that target. Installation/export packaging and a production
-launcher remain future work.
+This interface supplies the runtime archive, ABI/runtime headers, the C++23 language
+requirement and public dependencies. Current lifecycle operations need no additional
+OS libraries. It does not link the host LLVM SDK; runtime-only configuration never
+discovers LLVM. Use Clang's C++ driver for the native harness. Foreign objects need
+a separately built runtime for that target. Installation/export packaging and a
+production launcher remain future work.
 
-Initialize output handles to null, check every status, and destroy contexts before
-shutting down their runtime. A complete minimal host example is
-[link_consumer.cpp](../tests/runtime/link_consumer.cpp). It calls a native function
-with the generated ABI shape; execution of compiler-emitted Erlang code is deferred.
+`Runtime::start()` returns `std::expected<std::unique_ptr<Runtime>, abi::v1::Status>`.
+Check the result before use; RAII releases all owned state on scope exit.
+`create_context()` returns an expected borrowed `ProcessContext*`, stable until the
+runtime destroys that context. [link_consumer.cpp](../tests/runtime/link_consumer.cpp)
+shows a complete checked lifecycle through the generated-program link target. It
+calls a native function with the generated ABI shape; execution of compiler-emitted
+Erlang code is deferred.
 
-`eaot_v1_runtime_start` accepts null options for defaults. Explicit options must
-contain `EAOT_ABI_VERSION`, `sizeof(eaot_v1_term) * 8` and a positive maximum context
-count (default 1024). `eaot_v1_context_create` accepts null options for a 64 KiB heap
-chunk budget and 64 MiB heap limit. Explicit byte budgets must be nonzero target-word
-multiples, with chunk size at most the limit. They reserve policy, not backing memory;
-new heap usage and capacity are zero.
+`RuntimeOptions` defaults to at most 1024 contexts, the current `abi::v1::version`
+and `sizeof(abi::v1::TermWord) * 8` term bits. Startup rejects a zero context cap or
+incompatible explicit ABI settings. `create_context()` defaults to a 64 KiB heap
+chunk budget and 64 MiB heap limit. Explicit `HeapOptions` byte budgets must be
+nonzero target-word multiples, with chunk size at most the limit. They reserve
+policy, not backing memory; new heap usage and capacity are zero.
 
 ## Ownership and failure
 
 The runtime uniquely owns stable context addresses. Each context owns a distinct
-lazy heap and empty mailbox. Initialization publishes an output only after all
-bookkeeping succeeds; a failure leaves the caller's output and existing contexts
-unchanged. Heap/mailbox operations beyond lifecycle and heap accounting are still
-declarations. No workers or pending signals are created by these APIs.
+lazy heap and empty mailbox. Initialization publishes a successful result only
+after all bookkeeping succeeds; failure preserves existing contexts. Heap/mailbox
+operations beyond lifecycle and heap accounting remain declarations. No workers
+or pending signals are created by these APIs.
 
 The runtime allocates non-recycled runtime/serial identities independently of raw
-addresses. Identity exhaustion fails rather than wrapping. A raw pointer is a borrow,
-not an identity: use only live issued handles, never manually delete a borrowed
-context, and do not call through stale aliases after destruction. Successful C
-destruction clears only the handle slot passed to it. Destroying another live
-runtime's context fails without dereferencing or modifying that context.
+addresses. Identity exhaustion fails rather than wrapping. A context pointer is a
+borrow, not an identity: never manually delete it or use it after destruction.
+`abi::v1::Context` aliases the forward-declared `ProcessContext`; no opaque C handle,
+reinterpret cast or lifecycle adapter is involved. Destroying another live runtime's
+context fails without dereferencing or modifying that context.
 
-Explicit runtime shutdown returns `BUSY` while any context remains and preserves
-all runtime state. After destroying the contexts, successful shutdown releases the
-runtime and nulls the C handle. Repeating shutdown on a null handle succeeds;
-destroying a null context also succeeds when supplied a live runtime. Passing a
-null handle-slot pointer is invalid. The C++ `Runtime` destructor additionally
-provides RAII cleanup of any remaining contexts; a successfully stopped C++ owner
-rejects further creation with `STOPPED`.
+Explicit `shutdown()` returns `Status::busy` while any context remains and preserves
+runtime state. After destroying the contexts, successful shutdown releases that
+state. Repeating shutdown succeeds; further context creation/destruction returns
+`Status::stopped`. Destroying a null context on a running runtime is invalid. The
+`Runtime` destructor additionally provides RAII cleanup of any remaining contexts.
 
 `ProcessContext::lifetime()` supplies a weak `ContextLifetime` token. A retained
 token observes `alive() == false` before mailbox or heap destruction; it never keeps
@@ -70,21 +71,22 @@ Calls and token observations require host serialization per runtime. No call may
 race creation, destruction, shutdown or resource access. Independent runtimes have
 independent state; identity allocation alone uses a process-wide atomic counter.
 
-All four C functions are nonthrowing and return a status; lifecycle success and
-failure produce no stdout/stderr. Startup and creation contain C++ allocation and
-unexpected exceptions. The existing feature-reporting statuses retain their values.
+Lifecycle methods are nonthrowing; success and failure produce no stdout/stderr.
+Startup and creation contain C++ allocation and unexpected exceptions. The scoped
+[Status enum](../abi/include/erlang_aot/abi/status.hpp) has an explicit `std::uint8_t`
+underlying type and preserves the existing numeric values.
 
 | Status | Lifecycle meaning |
 |---|---|
-| `OK` (0) | Operation completed |
-| `INVALID_ARGUMENT` (2) | Null required pointer, occupied output, zero context cap or invalid heap budgets |
-| `OUT_OF_MEMORY` (4) | Bookkeeping allocation failed; partial state was released |
-| `BUSY` (5) | Explicit shutdown still has live contexts |
-| `WRONG_OWNER` (6) | Context belongs to another runtime |
-| `RESOURCE_LIMIT` (7) | Context cap, identity space or registry capacity exhausted |
-| `STOPPED` (8) | C++ owner has already shut down |
-| `ABI_MISMATCH` (9) | Explicit ABI version or term width differs |
-| `INTERNAL_ERROR` (10) | Unexpected construction failure was contained |
+| `ok` (0) | Operation completed |
+| `invalid_argument` (2) | Zero context cap, invalid heap budgets or null context |
+| `out_of_memory` (4) | Bookkeeping allocation failed; partial state was released |
+| `busy` (5) | Explicit shutdown still has live contexts |
+| `wrong_owner` (6) | Context belongs to another runtime |
+| `resource_limit` (7) | Context cap, identity space or registry capacity exhausted |
+| `stopped` (8) | Owner has already shut down |
+| `abi_mismatch` (9) | Explicit ABI version or term width differs |
+| `internal_error` (10) | Unexpected construction failure was contained |
 
 ## Reserved services and validation
 
@@ -101,6 +103,6 @@ Those paths, term services, allocation, GC and scheduling remain subsequent step
 
 Native macOS arm64 tests cover independent/repeated lifetimes, ownership errors,
 limits, invalidation, shutdown ordering, silence and allocation-failure rollback.
-The standalone consumer proves runtime-only linking and failure without the runtime.
-ASan/UBSan cover lifecycle and injected failures; cross-target C header checks do
-not establish native Linux/Windows runtime support.
+The standalone C++ consumer proves runtime-only linking and failure without the
+runtime, plus exact context/status types. ASan/UBSan cover lifecycle and injected
+failures. Native Linux/Windows runtime support remains unverified.
