@@ -4,6 +4,7 @@
 // No allocator, accessor, tag encoder or collector is implemented here. See terms.md.
 #include "../include/base_types.hpp"
 #include "../include/binary_heap_object.hpp"
+#include "../include/callable.hpp"
 #include "../include/terms.hpp"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -19,11 +20,13 @@ namespace erlang_aot::runtime::detail::layout {
 // GC state belongs in side metadata in this proposal.
 // Tagged term implementation keeps this in 1 word: Fits kind in the BoxTag field
 struct alignas(Word) BoxHeader final {
+    static constexpr std::size_t BOXED_KIND_BITS = 5;
+
     // Defines the type of contents of a boxed value
     // This tag is appended via union to the arity value in higher bits.
     struct BoxTag {
         // TODO: Logic extracting the boxed object kind and arity should go here?
-        BoxedKind boxed_kind_ : 5;
+        BoxedKind boxed_kind_ : BOXED_KIND_BITS;
         TermKindPrimary tag_primary_header_ : 2; // this is always 'header', otherwise not used
 
         explicit constexpr BoxTag(const BoxedKind kind)
@@ -35,7 +38,7 @@ struct alignas(Word) BoxHeader final {
     // Total allocated words, after the header word, this should be consistent for different
     // cell types, to assist garbage collector.
     // How many words the content spans AFTER the header word
-    Word arity_ : (ERL_WORD_BITS - 6);
+    Word arity_ : (ERL_WORD_BITS - BOXED_KIND_BITS - 2);
     // The type of content is determined from this
     BoxTag tag_;
 
@@ -51,7 +54,8 @@ struct BignumCell final {
     BoxHeader header_;
     Bignum value_;
 
-    explicit constexpr BignumCell(const Bignum &input) : header_(BoxedKind::bignum, 0), value_(input) {}
+    explicit constexpr BignumCell(const Bignum &input)
+        : header_(BoxedKind::bignum, sizeof(BignumCell) / sizeof(Word)), value_(input) {}
 };
 
 // Raw float bytes avoid platform-specific double field alignment in the heap layout.
@@ -63,7 +67,8 @@ struct alignas(Word) FloatCell final {
     // IEEE 754 binary64 bytes in target-native order; access through copying/bit conversion.
     double value_;
 
-    explicit constexpr FloatCell(const double value) : header_(BoxedKind::floating, 0), value_(value) {}
+    explicit constexpr FloatCell(const double value)
+        : header_(BoxedKind::floating, sizeof(FloatCell) / sizeof(Word)), value_(value) {}
 };
 
 // Pid, port and reference use separate kinds with the same private registry-key layout.
@@ -76,7 +81,8 @@ struct alignas(Word) RemoteIdentityCell final {
     Term remote_host_;
 
     explicit constexpr RemoteIdentityCell(const Word remote_id, const Term remote_host)
-        : header_(BoxedKind::ext_pid, 0), identity_id_(remote_id), remote_host_(remote_host) {}
+        : header_(BoxedKind::ext_pid, sizeof(RemoteIdentityCell) / sizeof(Word)), identity_id_(remote_id),
+          remote_host_(remote_host) {}
 };
 
 // A cons preserves a list head and an arbitrary tail, including an improper-list tail.
@@ -97,20 +103,31 @@ struct alignas(Word) TupleCell final {
     // Unsized array of tuple elements, Erlang index starting at 1
     Term elements_[];
 
-    explicit constexpr TupleCell(const std::size_t arity) : header_(BoxedKind::tuple, arity) {}
+    explicit constexpr TupleCell(const std::size_t arity)
+        : header_(BoxedKind::tuple, sizeof(TupleCell) / sizeof(Word) + arity) {}
 
-    explicit constexpr TupleCell(const std::span<Term> elements) : header_(BoxedKind::tuple, elements.size()) {
+    explicit constexpr TupleCell(const std::span<Term> elements)
+        : header_(BoxedKind::tuple, sizeof(TupleCell) / sizeof(Word) + elements.size()) {
         std::copy(elements.begin(), elements.end(), elements_);
     }
+};
+
+using KeyValuePair = struct {
+    Term key;
+    Term value;
 };
 
 // Initially maps use count trailing MapEntry records; a tree layout can replace this privately.
 struct alignas(Word) MapCell final {
     // Identify a flat map and bound its trailing storage.
     BoxHeader header_;
+
     // Each entry is two Terms key and value, so step size is 2 Words. BoxHeader's `arity`
-    // counts each array element of entries_ including keys and values.
-    Term entries_[];
+    // counts each array element of key_value_pairs_ including keys and values.
+    KeyValuePair key_value_pairs_[];
+
+    explicit constexpr MapCell(const std::span<KeyValuePair> key_value_pairs)
+        : header_(BoxedKind::map, sizeof(MapCell) / sizeof(Word) + key_value_pairs.size() * 2) {}
 };
 
 // Heap binary stores data right on heap in the cell.
@@ -124,85 +141,65 @@ struct alignas(Word) HeapBinaryCell final {
     Word trailing_word_bits_;
     // Followed by 1 or more content Words.
     Word values_[];
+
+    explicit constexpr HeapBinaryCell(const std::span<const Word> values, Word trailing_word_bits = 0)
+        : header_(BoxedKind::heap_binary, values.size() + sizeof(HeapBinaryCell) / sizeof(Word)),
+          trailing_word_bits_(trailing_word_bits) {
+        std::copy(values.begin(), values.end(), values_);
+    }
 };
 
-// Refc binary holds a shared object that owns its data in a vector of Words.
+// Refc binary holds a shared object that owns its data in a vector of Words, the object
+// is freed automatically when last user forgets about it.
 // A newly made binary bigger than HEAP_BINARY_THRESHOLD_WORDS will become this.
 struct alignas(Word) RefcBinaryCell final {
     // Identify untraced bit storage, including byte-sized binaries.
     BoxHeader header_;
     std::shared_ptr<BinaryHeapObject> binary_;
+
+    explicit constexpr RefcBinaryCell(const std::span<const Word> values, Word trailing_word_bits = 0)
+        : header_(BoxedKind::refc_binary, sizeof(RefcBinaryCell) / sizeof(Word)),
+          binary_(std::make_shared<BinaryHeapObject>(values, trailing_word_bits)) {
+        // TODO: Call BinaryHeapObject::create and unwrap the result to store shared ptr
+    }
 };
 
 // External functions retain names for later module resolution, not executable pointers.
 struct alignas(Word) ExternalFunctionCell final {
     // Select scanning of the module and name slots only.
-    BoxHeader header;
+    BoxHeader header_;
     // Trace atom terms naming the module and function.
-    TermSlot module;
-    TermSlot name;
+    Term module_;
+    Term function_;
     // Argument count, validated against the supported Erlang arity limit.
-    Word arity;
+    Word arity_;
+
+    explicit constexpr ExternalFunctionCell(const Term module, const Term function, const Word arity)
+        : header_(BoxedKind::external_function, sizeof(ExternalFunctionCell) / sizeof(Word)), module_(module),
+          function_(function), arity_(arity) {}
 };
 
 // Closures have capture_count trailing TermSlots; descriptors live outside process heaps.
-struct alignas(Word) ClosurePrefix final {
+struct alignas(Word) ClosureCell final {
     // Identify the capture array and complete allocation extent.
-    BoxHeader header;
-    // Immutable registered code/environment-schema identity, not a raw code pointer.
-    Word descriptor_id;
-    // Runtime-issued fun identity preserves equality independently of heap location.
-    Word identity_id;
+    BoxHeader header_;
+    // Investigate whether this needs to be a weak_ptr or we can go with shared_ptr or raw pointer
+    std::weak_ptr<Callable> function_;
     // Number of traced captured values following this prefix.
-    Word capture_count;
+    Word capture_count_;
+    Term captured_values_[];
 };
 
 // Native-record fields follow this prefix; descriptor identity is part of the value.
 struct alignas(Word) NativeRecordPrefix final {
     // Identify a record allocation and bound all field slots.
-    BoxHeader header;
-    // Immutable registered module/record/schema identity, distinct from a tuple tag.
-    Word descriptor_id;
+    BoxHeader header_;
+    // Immutable registered schema identity, distinct from a tuple tag.
+    // TODO: Record registry to store schemas
+    Word descriptor_;
     // Number of trailing traced fields, checked against the registered descriptor.
-    Word field_count;
+    Word field_count_;
+    Term field_[];
 };
 
-// Reject padding or layout drift at build time on every actual runtime target.
-static_assert(std::is_standard_layout_v<Term> && std::is_trivially_copyable_v<Term>);
-static_assert(sizeof(TermSlot) == sizeof(Word) && alignof(TermSlot) == alignof(Word));
-static_assert(offsetof(TermSlot, encoded) == 0);
-static_assert(sizeof(BoxHeader) == 2 * sizeof(Word));
-static_assert(offsetof(BoxHeader, kind) == 0 && offsetof(BoxHeader, size_words) == sizeof(Word));
-static_assert(sizeof(NilCell) == 2 * sizeof(Word));
-static_assert(sizeof(IntegerHeader) == 4 * sizeof(Word));
-static_assert(offsetof(IntegerHeader, negative) == 2 * sizeof(Word));
-static_assert(offsetof(IntegerHeader, limb_count) == 3 * sizeof(Word));
-static_assert(sizeof(FloatCell) == 2 * sizeof(Word) + 8);
-static_assert(offsetof(FloatCell, ieee754) == 2 * sizeof(Word));
-static_assert(sizeof(AtomCell) == 3 * sizeof(Word));
-static_assert(offsetof(AtomCell, atom_id) == 2 * sizeof(Word));
-static_assert(sizeof(IdentityCell) == 3 * sizeof(Word));
-static_assert(offsetof(IdentityCell, identity_id) == 2 * sizeof(Word));
-static_assert(sizeof(ConsCell) == 4 * sizeof(Word));
-static_assert(offsetof(ConsCell, head) == 2 * sizeof(Word));
-static_assert(offsetof(ConsCell, tail) == 3 * sizeof(Word));
-static_assert(sizeof(TuplePrefix) == 3 * sizeof(Word));
-static_assert(offsetof(TuplePrefix, arity) == 2 * sizeof(Word));
-static_assert(sizeof(MapEntry) == 2 * sizeof(Word));
-static_assert(offsetof(MapEntry, key) == 0 && offsetof(MapEntry, value) == sizeof(Word));
-static_assert(sizeof(MapPrefix) == 3 * sizeof(Word));
-static_assert(offsetof(MapPrefix, count) == 2 * sizeof(Word));
-static_assert(sizeof(BitstringPrefix) == 3 * sizeof(Word));
-static_assert(offsetof(BitstringPrefix, bit_count) == 2 * sizeof(Word));
-static_assert(sizeof(ExternalFunctionCell) == 5 * sizeof(Word));
-static_assert(offsetof(ExternalFunctionCell, module) == 2 * sizeof(Word));
-static_assert(offsetof(ExternalFunctionCell, name) == 3 * sizeof(Word));
-static_assert(offsetof(ExternalFunctionCell, arity) == 4 * sizeof(Word));
-static_assert(sizeof(ClosurePrefix) == 5 * sizeof(Word));
-static_assert(offsetof(ClosurePrefix, descriptor_id) == 2 * sizeof(Word));
-static_assert(offsetof(ClosurePrefix, identity_id) == 3 * sizeof(Word));
-static_assert(offsetof(ClosurePrefix, capture_count) == 4 * sizeof(Word));
-static_assert(sizeof(NativeRecordPrefix) == 4 * sizeof(Word));
-static_assert(offsetof(NativeRecordPrefix, descriptor_id) == 2 * sizeof(Word));
-static_assert(offsetof(NativeRecordPrefix, field_count) == 3 * sizeof(Word));
 } // namespace erlang_aot::runtime::detail::layout

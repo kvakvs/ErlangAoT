@@ -259,9 +259,9 @@ class TermFactory final {
     // Construct a registered native record with all fields in descriptor order.
     TermResult<Term> native_record(const NativeRecordDescriptor &descriptor, std::span<const Term> fields);
 
-    // private:
-    //   // Hide process binding, resource budgets and allocation policy from consumers.
-    //   class Impl;
-    //   std::unique_ptr<Impl> impl_;
+  private:
+    // Hide process binding, resource budgets and allocation policy from consumers.
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
 } // namespace erlang_aot::runtime

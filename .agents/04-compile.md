@@ -1,181 +1,120 @@
 # LLVM compilation integration plan
 
 Status: proposed, 2026-09-22. No implementation steps have started.
-This document plans the work only. Execute the numbered steps individually;
-each step ends with passing validation and its own commit.
-
-## Runtime API sketches to build upon
-
-The current review headers live in `runtime/include/`; design notes remain in
-`runtime/design/`. CMake lists all prototype headers on `erlang_runtime` for IDE
-navigation; only `src/runtime.cpp` is compiled. These proposed service and ownership
-boundaries do not complete any numbered implementation step. Refine these sketches
-as implementation proceeds rather than introducing competing APIs.
-When a runtime sketch is added, renamed, removed or redesigned, update this
-inventory and the affected implementation steps together.
-
-| Current header                                                  | API or representation sketch                                                                                                                               | Relevant steps |
-|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
-| [`base_types.hpp`](../runtime/include/base_types.hpp)           | Target-runtime `Word` and `ERL_WORD_BITS`; word width and alignment assumptions.                                                                           | 7, 10, 12      |
-| [`terms.hpp`](../runtime/include/terms.hpp)                     | `Term`, tag sketches, `TermResult`, `AtomId` and process-bound `TermFactory`; inspection, immutable updates, construction and explicit cross-heap copying. | 7, 9, 10, 12   |
-| [`term_layout.hpp`](../runtime/include/term_layout.hpp)         | Private `TermSlot`, object/header tags, heap cells/prefixes, Multiprecision `Bignum` alias and layout assertions; not a public or wire ABI.                | 7, 10, 12      |
-| [`atom_storage.hpp`](../runtime/include/atom_storage.hpp)       | Runtime-wide `AtomStorage`; nested options/statistics, create/find/lookup/name APIs and a collection placeholder.                                          | 9, 10, 14, 28  |
-| [`process_heap.hpp`](../runtime/include/process_heap.hpp)       | `HeapOptions`, owned `ProcessHeap`, word allocation/accounting, graph addition and safe-point collection boundary.                                         | 9, 12          |
-| [`binary_heap_object.hpp`](../runtime/include/binary_heap_object.hpp) | Shared `BinaryHeapObject` with owned immutable word vector, checked creation and optional valid tail bits. | 12 |
-| [`process.hpp`](../runtime/include/process.hpp)                 | Process identities/state/priority, `ReductionBudget`, cooperative `ProcessCode`, `ProcessContext`, owned signals and a per-process signal inbox.           | 9, 12, 13      |
-| [`mailbox.hpp`](../runtime/include/mailbox.hpp)                 | `Mailbox`, selective `ReceiveCursor`, asynchronous `MailboxRead` and private append after message-signal handling.                                         | 12, 13         |
-| [`scheduler.hpp`](../runtime/include/scheduler.hpp)             | `Scheduler`/`SchedulerPool`, creation options, snapshots, command replies and bounded signal handling on owner workers.                                    | 9, 13, 14      |
-| [`callable.hpp`](../runtime/include/callable.hpp)               | `Callable`/`TypedCallable`, call results, `FunctionKey` and one noncopyable `ModuleRegistry` per loaded module.                                            | 11, 28         |
-| [`native_callable.hpp`](../runtime/include/native_callable.hpp) | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`; no adapter hierarchy or conversion layer.                                                    | 11, 28         |
-| [`code_server.hpp`](../runtime/include/code_server.hpp)         | `CodeImage`, module definitions, immutable loaded modules, checked generic `ResolvedFunction` calls and runtime-wide `CodeServer`.                         | 9, 11, 28      |
-
-Use the [term design](../runtime/design/terms.md),
-[process/scheduler design](../runtime/design/processes.md),
-[atom-storage design](../runtime/design/atom_storage.md) and
-[module-registry design](../runtime/design/code_server.md) for the supporting
-contracts. Current headers are evolving sketches: reconcile tag/header definitions
-with their layout assertions and heap word/byte units with their options/comments
-before promoting them into implemented APIs. Their presence is not layout or
-behavioral validation. `TermTag::get_kind()` resolves the three tag levels into
-`TermKind` with a constexpr lookup; boxed kinds still require header inspection.
-Immediate identities resolve to `local_pid`/`local_port`; empty containers to `empty_tuple`/`empty_list`.
-`tests/runtime/term_tag.cpp` checks all 64 tag combinations against an explicit truth
-table through CTest `runtime_term_tag`; this validates decoding only, not heap layouts.
-
-Carry these contracts into the relevant implementation boundaries:
-
-- **Terms and memory:** `ProcessContext` owns its heap and mailbox. `Term::copy_to`
-  and `ProcessHeap::add` explicitly copy owned graphs; future collection traces
-  host, continuation, mailbox and receive-candidate roots. Target widths come from
-  LLVM's selected data layout when emitting code, not the compiler host's `Word`.
-- **Binary storage:** `BinaryHeapObject::create` publishes objects owning immutable
-  `std::vector<Word>` storage as `std::shared_ptr<BinaryHeapObject>`. Word counts must exceed
-  `HEAP_BINARY_THRESHOLD_WORDS` (64 / sizeof(Word)); empty and smaller/equal-sized
-  inputs are rejected with `BinaryHeapObjectError::invalid_size`. Optional tail counts describe valid high
-  bits in a partial last word, including byte-aligned tails; absent means full words.
-  Final shared-owner destruction releases the vector directly. There is no binary
-  heap or pool, owner callback, migration or separate service lifetime to manage.
-- **Atoms:** one `AtomStorage` per runtime supplies stable, non-recycled IDs,
-  initially dense ID indexing and name lookup. Its nested options reserve a 2^20
-  default and 2^26 hard entry cap; collection remains a placeholder. Compiled atoms
-  are read-only bindings initialized through runtime calls before module publication.
-  Emit spellings/slots, never numeric atom IDs assigned by the compiler. Retain
-  metadata roots through loaded-code lifetime; function bodies read initialized
-  bindings. Atom-valued expressions remain unsupported in the initial subset.
-- **Processes and messages:** continuations cooperate through `ReductionBudget`
-  and `StepResult`. Every message, including self-send, is a `ProcessSignal` queued
-  in the recipient's `signal_inbox_`. Bounded safe-point handling on its owner worker
-  copies the payload into its heap and calls `Mailbox::append_handled_message`;
-  enqueueing a signal never directly inserts into the mailbox or resumes code.
-  Signal handling services waiting/suspended processes without clearing explicit
-  suspension. Receive cursors retain unmatched messages and scan position, remove
-  only the selected match and use an arrival/waiter handshake at the tail.
-  Process-facing send acknowledges local acceptance; scheduler diagnostic replies
-  acknowledge handling. Per-sender signal order is preserved across signal kinds.
-- **Modules and functions:** one runtime-wide `CodeServer` publishes each module
-  with exactly one uniquely owned, frozen `ModuleRegistry`. Keys are function name,
-  arity and exact argument types. Default `Callable` targets use all-Term spans;
-  typed targets accept declared values, with no argument/result conversion registry.
-  Generic fallback requires explicit Term arguments and results are explicitly
-  constructed as `CallResult<Term>`. `ResolvedFunction` pins the module for generic
-  calls; direct target pointers and typed views require a retained module handle
-  through invocation and target destruction. Unload removes future lookup access;
-  retained handles keep the old registry, atom bindings and code image alive.
-- **Integration scope:** std::function, RTTI and STL signatures are host-side C++
-  interfaces, not the generated LLVM/C ABI. Native targets are bounded synchronous
-  calls; the old virtual call-frame preparation protocol is no longer part of the
-  proposal. Conversion utilities and cooperative generated-call integration are
-  deferred. Worker execution, messaging, heap allocation and GC also remain later
-  work beyond this milestone's supported skeleton.
+Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
 
-Produce native object modules from a deliberately small, correctly implemented
-subset of Erlang/OTP 29. Also expose LLVM IR and bitcode for inspection. Prove
-that generated functions execute correctly by linking objects to a small C++
-test harness with Clang and the mandatory `erlang_runtime` library. Build the
-runtime skeleton in this milestone; complete Erlang runtime behavior and a
-production executable launcher remain later milestones.
+Compile a small Erlang/OTP 29 subset to verified LLVM IR, bitcode and native
+objects. Prove execution with a Clang-linked C++ harness and the mandatory
+`erlang_runtime` library. This milestone builds the runtime skeleton; full Erlang
+behavior and a production executable launcher remain later work.
 
-The existing preprocessor supplies expanded tokens to the parser. The parser
-owns a move-only `ast::Module`; syntax success does not establish semantic
-validity. `compiler/src/driver/frontend.cpp` currently calls a no-op
-`compile_module` after successful parsing. Default positional and project
-requests reach that placeholder and return success without writing executables.
-Explicit check/print actions and `[pp]`/`[parse]` verbose tracing already work.
+The preprocessor supplies expanded tokens to a parser owning a move-only
+`ast::Module`. Parsing does not establish semantic validity. The driver's
+`compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
+project compilation currently succeed without writing executables. Frontend
+check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a placeholder
+static library, `erlang_aot_abi` an empty interface target; no LLVM integration or
+generated-code ABI exists. Planning found neither `llvm-config` on PATH nor the
+usual Homebrew LLVM prefixes; this was not an exhaustive SDK inventory.
 
-The runtime is a placeholder static library; `erlang_aot_abi` is an empty
-interface target. There is no existing LLVM integration or generated-code ABI.
-During planning, `llvm-config` was absent from PATH and the usual Homebrew LLVM
-prefixes were absent. This is not an exhaustive SDK inventory. An available
-Clang executable alone does not establish availability of LLVM development
-headers, libraries, CMake configuration, or inspection tools.
+## Runtime API sketches to build upon
+
+Review headers in `runtime/include/` and notes in `runtime/design/` define evolving
+service/ownership proposals, not completed plan steps. CMake lists the prototype
+headers for IDE navigation; only `src/runtime.cpp` is compiled. Extend these APIs
+and update this inventory and affected steps together when sketches change.
+
+| Header under `runtime/include/` | Sketch | Steps |
+|---|---|---|
+| `base_types.hpp` | Target `Word`, `ERL_WORD_BITS`, alignment | 7, 10, 12 |
+| `terms.hpp` | `Term`, tags, `TermResult`, `AtomId`, process-bound `TermFactory`, explicit graph copies | 7, 9, 10, 12 |
+| `term_layout.hpp` | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12 |
+| `atom_storage.hpp` | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder | 9, 10, 14, 28 |
+| `process_heap.hpp` | Owned heap, allocation/accounting, graph addition, safe-point collection | 9, 12 |
+| `binary_heap_object.hpp` | Shared immutable word vector and optional valid tail bits | 12 |
+| `process.hpp` | Identity/state/priority, reductions, cooperative code/context, owned signals/inbox | 9, 12, 13 |
+| `mailbox.hpp` | Selective cursor, asynchronous reads, append after signal handling | 12, 13 |
+| `scheduler.hpp` | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling | 9, 13, 14 |
+| `callable.hpp` | `Callable`/`TypedCallable`, results/keys, one noncopyable registry per module | 11, 28 |
+| `native_callable.hpp` | `NativeCallable<Args...>` alias for `TypedCallable<Args...>` | 11, 28 |
+| `code_server.hpp` | Code images, immutable loaded modules, pinned generic calls, runtime-wide server | 9, 11, 28 |
+
+Supporting contracts: [terms](../runtime/design/terms.md),
+[processes/schedulers](../runtime/design/processes.md),
+[atoms](../runtime/design/atom_storage.md), and
+[module registries](../runtime/design/code_server.md).
+Reconcile tag/header assertions and heap word/byte units before implementation.
+`TermTag::get_kind()` uses a constexpr three-level lookup; boxed kinds still need
+header inspection. Immediate identities resolve to `local_pid`/`local_port`, empty
+containers to `empty_tuple`/`empty_list`. CTest `runtime_term_tag` checks all 64 tag
+combinations in `tests/runtime/term_tag.cpp`; it does not validate heap layouts.
+
+Carry these ownership and service contracts into implementation:
+
+- `ProcessContext` owns its heap/mailbox. `Term::copy_to` and `ProcessHeap::add`
+  explicitly copy owned graphs; future GC traces host, continuation, mailbox and
+  receive-candidate roots. Emitted widths come from target data layout, not host `Word`.
+- `BinaryHeapObject::create` returns shared ownership of immutable `std::vector<Word>`
+  storage. Counts must exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 / sizeof(Word));
+  otherwise return `BinaryHeapObjectError::invalid_size`. Optional tails count valid
+  high bits in the last word, including byte-aligned tails; absent means full words.
+  Last-owner destruction releases storage directly, without a pool or owner callback.
+- One `AtomStorage` per runtime provides stable, non-recycled IDs with dense indexing
+  and name lookup; default/hard caps are 2^20/2^26, collection a placeholder. Emit
+  atom spellings/slots, never compiler-assigned IDs. Initialize read-only bindings
+  through runtime calls before publication and retain roots for loaded-code lifetime.
+  This metadata support does not enable atom-valued source expressions.
+- Cooperative continuations use `ReductionBudget`/`StepResult`. All messages,
+  including self-send, enter the recipient's signal inbox as `ProcessSignal`.
+  Bounded owner-worker safe-point handling copies payloads to its heap and invokes
+  `Mailbox::append_handled_message`; enqueueing neither inserts nor resumes code.
+  Service waiting/suspended processes without clearing explicit suspension. Receive
+  cursors retain unmatched messages/position, remove only a match and handshake at
+  the tail. Sends acknowledge local acceptance; scheduler replies acknowledge handling.
+  Preserve per-sender ordering across signal kinds.
+- One runtime-wide `CodeServer` publishes uniquely owned, frozen per-module registries.
+  Keys include function name, arity and exact argument types. Generic calls use
+  all-Term spans; typed calls use declared values without a conversion registry.
+  Generic fallback and `CallResult<Term>` construction are explicit. `ResolvedFunction`
+  pins its module; direct/typed views require a retained handle through invocation
+  and target destruction. Unload removes lookup access while handles retain the
+  registry, atom bindings and code image.
+- STL/std::function/RTTI interfaces are host-side C++, not the generated C ABI.
+  Native calls are bounded and synchronous; the old virtual call-frame protocol is
+  dropped. Conversion helpers, cooperative generated calls, worker execution,
+  messaging, allocation and GC remain beyond this skeleton.
 
 ## Responsibility split
 
-ErlangAoT is a **language frontend to LLVM**, not a new LLVM machine target.
-Use the existing X86, ARM and AArch64 backends. Do not implement an LLVM target,
-instruction descriptions, assembler, object format writer, or register allocator.
+ErlangAoT is a language frontend to LLVM, using its X86, ARM and AArch64 backends.
+The project owns Erlang semantics, binding, types, lowering, the shared ABI and
+runtime behavior. LLVM owns generic optimization, instruction selection, register
+allocation and object emission; Clang/platform linkers own native linking.
+Use SDK APIs and standard passes, not a new machine target, optimizer, assembler,
+object writer or linker. `llvm-link` does not link native executables.
 
-| Responsibility                                                                                         | Owner                                            |
-|--------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| Erlang source, preprocessing, syntax and source diagnostics                                            | Existing ErlangAoT frontend                      |
-| Binding, module/function resolution, patterns, guards and evaluation semantics                         | ErlangAoT semantic analysis and lowering         |
-| Erlang type declarations, inference and bounded type-specialization policy                             | ErlangAoT; LLVM optimizes the resulting typed IR |
-| Runtime term representation and generated-function interface                                           | Shared project ABI                               |
-| Mapping accepted Erlang operations to LLVM IR                                                          | Thin ErlangAoT lowering layer                    |
-| Generic IR analysis, simplification, inlining and machine-independent optimization                     | LLVM standard passes                             |
-| Instruction selection, legalization, scheduling, register allocation, machine-code and object emission | Existing LLVM target backends                    |
-| Linking native objects and platform libraries                                                          | Existing Clang driver and platform linker/LLD    |
-| Process heaps, GC policy, scheduling, reductions, mailboxes, exceptions and Erlang BIF behavior        | Erlang runtime, with compiler cooperation        |
-
-LLVM already exposes target selection, data layout and object emission through
-its SDK; use those APIs rather than building a parallel backend. See the
-[LLVM object-code tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl08.html).
-Use Clang to select the appropriate linker and platform support when linking
-test executables; do not construct a linker implementation or assume that
-`llvm-link` links native executables. See
-[Clang's toolchain description](https://clang.llvm.org/docs/Toolchain.html).
-
-LLVM does not supply Erlang semantics. In particular:
-
-- Arbitrary-precision integer arithmetic is not wrapping machine arithmetic.
-  Future arithmetic needs proven fast paths plus correct runtime fallbacks;
-  LLVM `APInt` is a compiler-side value, not an Erlang runtime bignum library.
-- Atom identity, term equality/order, clause selection, guard failure and
-  exception behavior must be defined before selecting LLVM instructions.
-- LLVM verification checks IR consistency, not Erlang correctness. Do not attach
-  `nsw`, `nuw`, `inbounds`, alias, memory-effect or exception attributes without
-  satisfying their contracts. See the
-  [LLVM language reference](https://llvm.org/docs/LangRef.html).
-- LLVM GC support supplies compiler mechanisms such as root descriptions and
-  safepoints; it does not provide this project's collector. Its example named
-  `erlang` is not an OTP runtime. See
-  [LLVM garbage collection support](https://llvm.org/docs/GarbageCollection.html).
-- Coroutines can help lower suspension, but do not supply Erlang scheduling,
-  mailbox semantics or process isolation. Tail-call optimization alone is not
-  an implementation of Erlang's bounded-stack tail recursion. Defer those
-  runtime/ABI decisions instead of assuming LLVM implements them automatically.
+LLVM verification proves IR consistency, not Erlang correctness. Define atom/term
+semantics, clauses, guards and exceptions before lowering; justify every `nsw`,
+`nuw`, `inbounds`, alias, memory-effect or exception attribute. Future integer
+arithmetic needs correct bignum fallbacks, not machine wrapping or runtime use of
+compiler-side `APInt`. LLVM GC/coroutine mechanisms do not supply an Erlang
+collector, scheduler, isolation or bounded-stack tail recursion; its example GC
+named `erlang` is not OTP. References: [object emission](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl08.html),
+[Clang linking](https://clang.llvm.org/docs/Toolchain.html),
+[IR contracts](https://llvm.org/docs/LangRef.html), [GC](https://llvm.org/docs/GarbageCollection.html).
 
 ## Recommended first milestone
 
-### Language scope
+### Language scope and lowering
 
-Start with ordinary named modules containing exports and single-clause
-functions. Accept distinct variable or wildcard parameters and a single body
-expression composed of:
-
-- Integer literals representable by the initial tagged-small-integer ABI.
-- References to named parameters.
-- Direct local calls and literal `module:function(...)` calls to accepted
-  functions in the same compilation batch, with nested argument expressions.
-
-Require an acyclic call graph in this milestone. Diagnose recursive cycles,
-including cross-module cycles, until proper tail calls and process stacks have
-a deliberate design. Require declared exports for cross-module calls. Do not
-silently resolve unknown calls to hypothetical runtime functions.
-
-For example, these modules must eventually produce separately linkable objects:
+Accept named modules, exports and single-clause functions with distinct variable
+or wildcard parameters. Bodies contain one expression: tagged-small-integer
+literals, parameter references, or direct local/literal `module:function(...)`
+calls within the compilation batch, including nested arguments. Require an acyclic
+call graph and declared exports for remote calls; diagnose unknown calls and
+local/cross-module recursion. Separately linkable acceptance examples:
 
 ```erlang
 -module(answer).
@@ -190,428 +129,209 @@ identity(X) -> X.
 value() -> answer:identity(answer:value()).
 ```
 
-Initially reject bignum literals, arithmetic, constructed heap terms, atom-valued
-expressions, matching beyond variable/wildcard parameters, guards, multiple
-clauses, closures, dynamic calls, exceptions, receive, concurrency and code
-loading. Negative integer literal syntax needs explicit recognition; accepting
-it does not enable general unary arithmetic. Reject unsupported code even in
-unexported functions; optimization must not hide unsupported semantics.
+Reject unsupported syntax even in unused functions: bignums, arithmetic, heap
+terms, atom expressions, other patterns, guards, multiple clauses, closures,
+dynamic calls, exceptions, receive, concurrency and code loading. Recognize
+negative integer literals explicitly without enabling general unary arithmetic.
+Handle file/module/export and type/spec attributes explicitly; allowlist inert
+metadata and reject other attributes, including behavior-changing compile options,
+parse transforms, `on_load` and parameterized modules. Syntax-only checking keeps
+its broader coverage; describe compilation as a subset.
 
-File/module/export attributes and type declarations/specifications are handled
-explicitly. Specify a small allowlist
-of metadata that has no execution effect; reject other attributes by default.
-In particular, do not ignore parse transforms, `on_load`, parameterized modules
-or compile attributes that change name resolution or behavior. Syntax-only
-checking retains its current broader language coverage.
+Keep binding, resolution, type and capability results in side tables beside the
+immutable AST. Pipeline: declarations/bindings/calls → declared types → inference
+→ generic lowering → optional specialization → LLVM optimization/emission.
+Lower with `IRBuilder`; defer a custom IR until a concrete Erlang transformation
+needs it. Do not add SSA/MLIR infrastructure, Core Erlang/BEAM readers or custom
+LLVM passes. Follow [LLVM frontend guidance](https://llvm.org/docs/Frontend/PerformanceTips.html).
 
-This narrow slice exercises the runtime skeleton without requiring the full
-runtime first. It must be labelled a subset, not advertised as full Erlang support.
+### Private ABI and runtime skeleton
 
-### Internal representation and ABI
+Define a versioned contract in `abi/`: unsigned target-word terms, explicit checked
+unsigned encoding of immediate signed integers, exact tags/alignment, reversible
+collision-free module/function/arity symbols and export/lifetime rules. Use C
+calling convention with a live opaque process-context pointer, argument-array
+pointer and term result; resolved identity carries arity and direct calls retain
+the context. External callers supply valid terms. Prove C++ harness agreement on
+each native platform; promise neither BEAM/general FFI compatibility nor future
+tail-recursion support. GC, exceptions and suspension may revise this ABI.
 
-Use the existing AST plus small semantic tables: module identities, function
-symbols, parameter bindings, resolved call sites, declared/inferred types and
-capability diagnostics. Keep analysis results in side tables without rewriting
-the immutable AST. Lower accepted nodes directly with LLVM `IRBuilder`. Do not
-first implement a
-generic SSA IR, optimizer, register model, Core Erlang/BEAM reader, MLIR dialect,
-or custom LLVM pass. Add a language-specific intermediate representation later
-only if a concrete Erlang transformation needs it. LLVM's
-[frontend guidance](https://llvm.org/docs/Frontend/PerformanceTips.html) informs
-the emitted IR; it does not require copying LLVM analyses into the frontend.
+Build `erlang_runtime` separately as C++23, initially static and LLVM-free. Shared
+`cmake/BoostDependencies.cmake` provides Multiprecision to compiler/runtime and
+runtime consumers. Runtime-only builds require Boost >=1.90, not Boost.Parser,
+TOML or OTP; this wiring does not implement bignums. Generated service boundaries
+use C linkage, opaque handles and explicit error/status transport; no C++ exceptions
+or STL values cross them.
 
-Define a private, versioned ABI in `abi/` before exposing native symbols:
+| Runtime location | Skeleton responsibility |
+|---|---|
+| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Explicit startup/shutdown and host API |
+| `src/process/` | Isolated contexts and ownership; reserve reductions, signals, mailbox, exceptions |
+| `src/terms/` | Immediate-term inspection; extend the opaque Term sketch for later values |
+| `src/builtins/` | Module-owned registries, all-Term defaults, unavailable-BIF errors |
+| `src/memory/` | Memory ownership/lifecycle; reserve allocation, roots and GC |
+| `src/scheduler/` | Process registration/lifecycle; reserve queues, reductions, signals and wakeups |
+| `src/modules/` | ABI-checked descriptors, frozen registries, code lifetime and initialization |
 
-- A term is an unsigned target-word-sized value. Initially only the documented
-  immediate signed-integer encoding is constructed; use explicit unsigned
-  encoding operations and range checks. Do not claim compatibility with BEAM's ABI.
-- Use a uniform C calling convention with an opaque process-context pointer,
-  an argument-array pointer, and a term result. Arity belongs to the resolved
-  function identity. Even this allocation-free subset receives a live context
-  created by the runtime; direct calls propagate that same context.
-- Define collision-free module/function/arity symbol names, export visibility,
-  ownership, pointer lifetimes and exact tag bits. External callers supply valid
-  ABI terms; this is not a general-purpose FFI yet.
-- Derive widths and alignment from the selected target, not host `sizeof`.
-  Prove agreement with C++ harness declarations on each native test platform.
-- Permit an explicit ABI revision when GC, exceptions or suspension arrive.
-  Do not promise this initial stack-based call convention supports tail recursion.
+Implement useful lifecycle, immediate inspection and module registration; reserve
+later services without fabricated successful results. Extend the term sketch's
+private word-aligned layouts/slots and synchronize API/layout notes. The harness
+explicitly initializes runtime state, registers ABI/word-width-compatible modules,
+creates live contexts and tears contexts down before runtime-wide services.
 
-Keep the runtime separately buildable and free of LLVM SDK dependencies. Shared
-`cmake/BoostDependencies.cmake` supplies Boost.Multiprecision headers to compiler
-and runtime; `erlang_runtime` propagates them to its consumers. Runtime-only builds
-require Boost >=1.90, but do not discover Boost.Parser, TOML or OTP. This dependency
-wiring does not implement runtime bignum allocation or arithmetic. Runtime
-service declarations use C linkage and opaque handles; C++ exceptions and STL
-types must not cross the generated-code boundary. Define explicit status/error
-transport for service calls before exposing them to generated functions.
+Every runnable generated-program link must use the matching runtime through a
+reusable CMake interface target carrying runtime/platform dependencies, never the
+host LLVM SDK or test replacement symbols. Objects/IR/bitcode retain registration
+and ABI references; link one runtime per program, not per module. Compiler-only
+builds can emit objects; foreign-target linking requires a separately built target
+runtime. Clang performs harness linking; production startup/linking stays deferred.
 
-### Erlang type analysis and simple inference
+### Types and bounded specialization
 
-Type analysis is a required stage before LLVM lowering. Consume the existing
-`ast/types.hpp` and type/specification forms in `ast/forms.hpp`, rather than
-parsing annotation text again. Erlang types describe sets of terms; LLVM types
-describe their chosen machine representation. Follow
-[OTP's type/specification contract](https://www.erlang.org/doc/system/typespec.html).
+Consume `ast/types.hpp` and `ast/forms.hpp` exhaustively under
+[OTP's type/spec contract](https://www.erlang.org/doc/system/typespec.html).
+Support `-type`, `-opaque`, `-nominal`, `-export_type`, `-spec`, `-callback`, aliases,
+parameters, remote references, overloads and `when` constraints, preserving identity
+and visibility. Represent all structural categories symbolically when needed;
+annotation support does not expand executable syntax. Resolve batch-exported types,
+diagnose malformed/duplicate/undefined locals and treat unavailable external metadata
+as diagnosed unknowns. Memoize recursive type graphs; executable recursion stays excluded.
 
-The pipeline becomes declaration/binding/call resolution, declared-type resolution,
-inference, generic lowering, optional bounded specialization, then LLVM optimization
-and emission. Keep user-declared contracts distinct from facts proven by analysis.
+Inference uses `term()`/`none()` as top/bottom, singleton/category facts, bounded
+ranges/unions and parameter/result relations. Unknown is top. Bound expansion/work,
+widen conservatively and diagnose work-budget exhaustion. Analyze exported inputs
+as arbitrary valid terms; specs are contracts, not guards or representation proofs.
+Warn on provable contradictions without rejecting valid dynamic behavior solely
+for a narrow spec. Propagate freshly instantiated summaries in acyclic dependency
+order, including remote calls, independently per project target. Infer `42` as a
+singleton and identity as an argument/result relation. Wrong or missing specs must
+not alter execution. This is not full [Dialyzer](https://www.erlang.org/doc/apps/dialyzer/dialyzer.html);
+OTP comparison tools are not inference dependencies.
 
-- Understand `-type`, `-opaque`, `-nominal`, `-export_type`, `-spec` and `-callback`,
-  including aliases, type parameters, remote references, overloads and `when`
-  constraints. Preserve opaque/nominal identity and visibility across modules.
-- Handle every existing type AST alternative explicitly. Represent built-in term
-  categories, singletons, ranges, unions, variables and structural tuple/list/map/
-  record/bitstring/function types. Understanding their annotations does not enable
-  construction or operations on those values in the initial executable subset.
-- Use a small inference domain: `term()` as top, `none()` as bottom, singleton and
-  category facts, bounded integer ranges/unions and simple parameter/result
-  relations. Unknown information is top, never bottom. Retain richer declarations
-  symbolically when analysis cannot reason about them precisely.
-- Resolve available exported remote types from the batch. Diagnose malformed,
-  duplicate or undefined local declarations; unavailable external type metadata
-  yields conservative unknown information with a diagnostic, not an invented type.
-  Resolve recursive type aliases using memoized graph nodes rather than infinite
-  expansion. Recursive types are distinct from unsupported executable recursion.
-- Infer missing types from literals, parameters and direct calls. An unannotated
-  `identity(X) -> X` must preserve the argument/result relation; instantiate it
-  independently at each call. Propagate summaries through the acyclic call graph
-  in dependency order, including cross-module calls, separately per project target.
-- Bound expansion, union size and analysis work. Widen to safe supertypes when
-  precision budgets are reached; resource exhaustion beyond the work budget is a
-  clear diagnostic. Uncertain code retains the generic tagged-term path.
-- Analyze exported parameters as arbitrary valid terms. A written spec is not a
-  runtime guard or representation proof. Infer implementation facts independently
-  and warn on provable spec contradictions; do not reject otherwise valid dynamic
-  Erlang solely because its specification is narrower than its behavior.
+Keep a generic tagged-ABI body for every function. Default `-O0` performs analysis
+but no specialization; `-O2` enables LLVM O2 and useful bounded type variants.
+`--no-type-specialization` overrides either policy regardless of option order.
 
-Acceptance examples: `value() -> 42` infers a singleton integer result;
-`identity(X) -> X` infers a parameter/result relation;
-`answer:identity(answer:value())` infers the singleton across modules. Annotated
-and unannotated equivalents must behave identically. Incorrect specs must not
-introduce invalid LLVM assumptions or change execution results.
-
-This is a small compiler analysis, not full
-[Dialyzer success typing](https://www.erlang.org/doc/apps/dialyzer/dialyzer.html).
-OTP tools may provide comparison evidence, but are not production dependencies
-for inference. LLVM cannot recover Erlang type semantics from a generic term word.
-
-### Bounded specialization by inferred type
-
-Keep a generic implementation for every accepted function. Under the explicit
-`-O2` speed-optimization policy, when one or a few concrete argument-type profiles
-enable cheaper lowering, pre-generate specialized variants ahead of time.
-Default `-O0` disables type specialization but still runs type analysis for
-diagnostics and correct lowering. Type precision creates an opportunity, not a guarantee
-of faster execution: dispatch, boxing and code size can outweigh the saving.
-
-- Preserve the public tagged-term/runtime ABI. Specialized entries are internal
-  implementation details. Select them directly at proven call sites; otherwise
-  use a bounded sequence of safe runtime type tests and fall back to the generic
-  body. A failed test must not become an Erlang error or change evaluation order.
-- A profile is a canonical tuple of relevant argument facts, not the Cartesian
-  product of all argument unions. Generate candidates from statically established
-  call-site profiles; keep unrelated arguments generic and reuse equivalent
-  candidates. Do not clone once per literal value or per calling context.
-- Initial hard limits: at most three specialized variants per source function,
-  32 per Erlang module and 128 per compilation target, plus the generic bodies.
-  Bound candidate analysis as well as emitted variants; exceeding a budget uses
-  the generic path, not a compilation failure. Deduplicate/rank candidates in a
-  stable order and prevent recursive clone generation through callees.
-- Also limit compiler-generated IR growth, including dispatch: no more than 2x
-  the generic baseline per function and per module before LLVM optimization.
-  Reject oversized candidates before publication and keep generic code. These
-  are initial compiler defaults to validate, not promises about final machine-code
-  size; LLVM inlining and its own transforms can affect that separately.
-- Use a simple benefit test: the profile must remove an actual dynamic operation,
-  tag check, conversion or dispatch cost. Pure identity/constant functions may
-  need no variants. Do not generate redundant clones just to reach the limit.
-- Begin with representations whose operations and guards are implemented, such
-  as tagged-small-integer facts. `integer()` also includes bignums and is not
-  proof of a machine-sized payload. Unsupported types and mixed unknown cases
-  keep the generic path; specialization does not expand language support.
-- Emit unchecked unboxing or LLVM assumptions only inside a region dominated
-  by the required proof/test. Specs alone never justify them. Preserve overflow,
-  exceptions, allocation, GC-rooting and process-context rules as those operations
-  become supported; use correct runtime fallbacks instead of machine wrapping.
-
-ErlangAoT owns the profiles, guards, eligibility and budgets. First use ordinary
-LLVM constant propagation, inlining and simplification where they achieve the
-same result. For remaining useful variants, reuse
-[LLVM cloning utilities](https://llvm.org/doxygen/Cloning_8h.html) where suitable,
-or the same lowering visitor with a different proven type environment; do not
-write a second optimizer. Apply the normal verified LLVM pipeline to each body.
-
-Add `--no-type-specialization` for baseline comparisons and diagnosis.
-`-O2 --no-type-specialization` retains LLVM's O2 pipeline but disables compiler-created
-type variants. With `-O0`, the override is accepted but has no additional effect.
-Resolve this override after the optimization level, independently of option order.
-Speed-mode specialization remains subject to the benefit test and budgets. Report accepted
-and skipped profiles/reasons under `[comp]` verbosity. Measure compile time,
-pre/post-optimization size and runtime on representative supported inputs; use
-results to tune policy, without making noisy timing a required unit-test gate.
-
-### Mandatory runtime skeleton
-
-All runtime implementations live under repository-root `runtime/`. `abi/` owns
-only the shared contract, while the compiler emits calls and descriptors against
-that contract. Build `erlang_runtime` as a separate C++23 static library initially.
-Every runnable link of produced modules, including test harnesses, must include
-the matching runtime. There is no freestanding or optional-runtime program mode.
-
-Native `.o`/`.obj` emission itself is not a final link: objects contain module
-registration/runtime ABI references, and the runtime is linked once when those
-objects are assembled into a runnable artifact. IR and bitcode retain equivalent
-declarations. Do not embed a runtime copy into each module or misuse LLVM IR
-linking to combine a native archive with an object file. The harness link step
-must exercise this dependency, not supply test-only replacement runtime symbols.
-
-| Location under `runtime/`                        | Responsibility and initial boundary                                                                                                  |
-|--------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Runtime startup/shutdown and host embedding API; own runtime-wide state                                                              |
-| `src/process/`                                   | Opaque process contexts, ownership and lifecycle; reserve reductions, signal inboxes, mailbox and exception state                    |
-| `src/terms/`                                     | Term inspection/manipulation services; initially immediate integers, later atoms, lists, tuples, maps, binaries and numeric helpers  |
-| `src/builtins/`                                  | Module-owned function registries for Erlang BIFs, with default all-Term signatures; missing entries report unavailable               |
-| `src/memory/`                                    | Per-process memory ownership and allocation boundary; reserve heap/root/GC integration without pretending a collector exists         |
-| `src/scheduler/`                                 | Scheduler-owned process registration and lifecycle; reserve runnable queues, reductions, bounded signal handling and receive wakeups |
-| `src/modules/`                                   | ABI-checked module descriptors, one frozen function registry per module, code lifetime and explicit initialization ordering          |
-
-Build the runtime term library upon the existing [term sketch](../runtime/design/terms.md): a common opaque
-`Term` value API, per-type creation/predicates/extraction and immutable updates.
-Private word-aligned heap structs and one-word term slots keep memory layout
-controlled and permit later immediate/tagged values without exposing encoding
-to callers. Resolve ownership, roots, layout and the C ABI bridge by extending
-this sketch, keeping its API and layout notes synchronized with implementation.
-Its full API inventory does not expand this milestone's executable subset.
-
-Implement useful skeleton behavior: create/destroy runtime and process contexts,
-inspect immediate terms, report unavailable BIFs, initialize/tear down memory and
-scheduler service state, and register compatible modules. Do not add functions
-that return fabricated successful Erlang results for unimplemented features.
-Generated heap operations, scheduling operations and BIF calls remain rejected
-until their actual semantics are implemented and tested.
-
-Use explicit initialization called by the embedding harness, not hidden global
-constructors. Registration checks ABI version and term width before execution;
-the harness obtains a live process context and uses it for generated calls.
-One runtime instance can own several isolated process contexts. Teardown order
-must release contexts and their owned resources before runtime-wide services.
-
-Add a reusable CMake interface target for the mandatory generated-program link
-dependencies. It includes `erlang_runtime` and its platform libraries, but never
-the host LLVM SDK. Clang and the platform linker perform the actual link. For
-cross compilation, select a separately built runtime for the emitted target;
-never link the host runtime into a foreign-target program. Compiler-only builds
-can still emit objects, but cannot run/link them without a supplied target runtime.
+- Canonical candidates come from proven call-site argument profiles, never Cartesian
+  union products or one clone per literal/context. Keep unrelated arguments generic;
+  deduplicate/rank deterministically and prevent recursive callee cloning.
+- Cap variants at 3/function, 32/module and 128/target, plus generic bodies. Bound
+  candidate analysis and pre-LLVM IR growth, including dispatch, to 2x the generic
+  baseline per function/module. Over-budget candidates use generic code, not errors.
+- Require removal of actual dynamic operations, checks, conversions or dispatch.
+  Constants/identity may need no variants. Prefer ordinary LLVM optimization; reuse
+  [cloning utilities](https://llvm.org/doxygen/Cloning_8h.html) or the same lowering
+  visitor for remaining benefits, then apply the verified standard pipeline.
+- Specialize only implemented representations/guards: `integer()` is not proof of
+  a small integer. Select directly with proof, otherwise use bounded safe tests and
+  generic fallback. Unboxing/assumptions require dominating proofs, never specs alone.
+  Preserve evaluation order, errors, overflow, context and future allocation/root rules.
+- Report accepted/skipped profiles and reasons in `[comp]`; measure compile time,
+  IR/object growth and execution to tune policy, without noisy timing test gates.
 
 ### Future-feature placeholders and diagnostics
 
-Place explicit placeholders at real compiler/runtime extension points wherever
-the surrounding interface is known. Use one shared feature identifier/catalog
-and small reporting helpers, rather than scattered strings or empty functions.
-A reached placeholder reports a stable message on stderr, for example:
+Maintain one shared feature catalog mapping IDs to owner/boundary, status and
+focused failure tests. Cover deferred semantic/lowering operations, term/BIF
+services, processes/scheduling, allocation/GC, dynamic modules and future driver
+linking. Place handlers only at real extension points and reference the plan/step
+or explain the remaining work in TODOs; do not prebuild unused subsystems/readers.
 
-```text
-[pattern matching] notimpl: src/example.erl:12:5
-[garbage collection] notimpl: process memory service
-[builtin erlang:spawn/1] notimpl
-```
+A reached placeholder reports `[feature name] notimpl` once at its owning boundary
+on stderr, independently of verbosity, with available source/module/target/operation
+context. For example: `[pattern matching] notimpl: src/example.erl:12:5`.
+Known unsupported source fails capability analysis before publication; defensive
+lowering handlers also fail. Runtime handlers use the diagnostic sink and explicit
+C ABI failure status; callers propagate failure without duplicate reports, fake
+terms, swallowed errors, unnecessary aborts or escaping C++ exceptions. The harness
+exits nonzero on unhandled failure and tears down normally.
 
-The `[feature name] notimpl` marker is required; append available source, module,
-project target or runtime operation context. These are actionable diagnostics,
-independent of `--verbose`, not `[comp]` progress messages. Never put them in
-printed source/type/IR output or generated artifact bytes.
-Leave references to unimplemented plan filename and step or a generous TODO comment explaining what should be
-implemented here.
-
-| Extension point                    | Deferred features to identify explicitly                                                                                                                           |
-|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Semantic analysis and lowering     | Patterns/guards, records, general arithmetic/bignums, heap-term construction, closures, dynamic calls, exceptions, receive, proper tail calls and parse transforms |
-| Runtime term/BIF services          | Unsupported term operations and known unimplemented Erlang BIFs, identified by module/name/arity                                                                   |
-| Runtime process/scheduler services | Spawn, message delivery, mailbox receive, yielding, reductions and scheduling                                                                                      |
-| Runtime memory services            | Process-heap allocation operations, roots/safepoints and garbage collection not provided by the skeleton                                                           |
-| Runtime module services            | Dynamic code loading/upgrades and unsupported initialization hooks                                                                                                 |
-| Driver/toolchain integration       | Future executable startup/linking when explicitly requested through an implemented command boundary                                                                |
-
-Use the following behavior contract:
-
-- Known unsupported source constructs fail at capability analysis, before lowering
-  or artifact publication. A defensive lowering placeholder also fails if such a
-  construct reaches it unexpectedly. Do not generate a successful-looking native
-  module whose unsupported operations merely print a message at execution time.
-- Runtime service placeholders report through the runtime's diagnostic sink and
-  return an explicit not-implemented status through the C ABI. Callers must stop
-  the affected operation and propagate failure; never synthesize `ok`, zero or a
-  valid-looking term. The host harness prints to stderr by default and exits
-  nonzero on an unhandled placeholder failure, performing normal teardown.
-- Report each failure once at its owning boundary; propagation must not print it
-  again. Do not swallow failures, abort the host unnecessarily or let C++ exceptions
-  cross the generated-code ABI. A runtime with several contexts retains enough
-  operation/context information to attribute the failure.
-- Unused placeholders remain silent. Do not call them from ordinary initialization,
-  supported compilation, successful skeleton lifecycle or help/version handling.
-  Skipping optional optimization or using a correct generic fallback is supported
-  behavior and must not produce `notimpl` diagnostics.
-- Distinguish known deferred capabilities from invalid inputs, unknown function
-  names, missing LLVM SDKs, I/O errors and internal bugs; keep those existing error
-  categories. Type-inference uncertainty with a sound generic fallback is not an
-  unimplemented-feature failure.
-- Keep an inventory mapping feature IDs to the owning file/boundary, supported
-  status and a focused failure test. Define only interfaces needed at actual
-  extension points; do not prebuild unused subsystems or intermediate-stage readers.
-  Replacing a placeholder requires implementation and semantic tests, then updates
-  to the catalog and capability checks so stale `notimpl` paths are removed.
+Unused placeholders, successful lifecycle, optional optimization skips and sound
+generic fallback stay silent. Distinguish deferred features from invalid/unknown
+inputs, missing SDKs, I/O errors and bugs. Remove stale catalog/capability paths only
+after implementing and testing semantics; never contaminate stdout or artifacts.
 
 ### Artifact and command contract
 
-Keep first artifact emission explicit to avoid reinterpreting existing future
-executable destinations. Proposed options are:
-
 ```text
---emit <obj|llvm-ir|llvm-bc>  Compile and write one artifact per Erlang module.
---artifact-dir <directory>  Override the root directory for emitted modules.
---target-triple <triple>    Select machine/OS/ABI; --target still selects a project target.
--O0 | -O2                  Default O0 uses generic code; O2 optimizes for speed,
-                           enabling bounded type specialization and LLVM O2.
---print-ir                 Print verified LLVM IR before optimization to stdout.
---print-optimized-ir       Print verified LLVM IR after the selected O0/O2 pipeline.
---print-types              Print declared and inferred Erlang types before lowering.
---no-type-specialization   Keep generic bodies for comparison and diagnosis.
+--emit <obj|llvm-ir|llvm-bc>  Write one artifact per Erlang module.
+--artifact-dir <directory>  Override artifact root.
+--target-triple <triple>    Select machine/OS/ABI; --target selects project targets.
+-O0 | -O2                  Default generic O0; O2 enables bounded variants and LLVM O2.
+--print-ir                 Print verified IR before LLVM optimization.
+--print-optimized-ir       Print verified IR after the selected pipeline.
+--print-types              Print declared/inferred types before lowering.
+--no-type-specialization   Disable compiler-created variants regardless of option order.
 ```
 
-- Default requests still engage every implemented compiler stage. After
-  integration, generate and verify native object buffers in memory, returning
-  success only when compilation succeeds. `--emit` requests persistence of
-  objects or the selected IR form. Standalone executable linking stays deferred.
-  This preserves the current default no-output contract while replacing its no-op.
-- Default artifact roots are `build/aot` relative to the positional invocation,
-  and `build/aot/<encoded-target-name>` relative to the manifest for projects.
-  An explicit artifact root is relative to the invocation; project targets
-  retain separate encoded subdirectories. Module filenames use a reversible,
-  portable encoding of module identity, not potentially colliding source stems.
-- Use `.o` for ELF/Mach-O objects, `.obj` for COFF, `.ll` for text IR and `.bc`
-  for bitcode. Derive format from the selected target, not the compiler host.
-- Every artifact records the runtime ABI dependency through its generated module
-  descriptor/registration entry. Document the matching runtime archive and link
-  recipe; object-only output is not a self-contained runnable Erlang module.
-- Preserve `-o/--output` and TOML `output` as reserved executable destinations;
-  neither becomes an artifact directory or an object filename. Preserve existing
-  validation, reject explicit `--emit` combined with explicit `-o`, and document
-  that the manifest's future executable path is not written by this milestone.
-- Existing frontend check/print modes do not invoke the backend or emit artifacts.
-  Reject compilation-only switches mixed with those modes or `--new-project`;
-  preserve informational precedence and all existing frontend options. The new
-  IR inspection actions run the backend only through the requested IR stage.
-- Each positional invocation is one compilation batch; each selected project
-  target is its own batch. No implicit dependencies between project targets.
-- Validate all selected batches and stage their requested artifacts before
-  publication. Never truncate inputs or existing outputs on compiler failure.
-  Publish each complete file by a tested replacement operation; do not claim
-  whole-invocation atomicity if publishing several files fails partway through.
+Default compilation runs all implemented stages and verifies native object buffers
+in memory; only `--emit` persists artifacts. Each positional invocation is one
+batch; each selected project target is independent. Roots default to invocation-
+relative `build/aot`, or manifest-relative `build/aot/<encoded-target-name>`.
+Explicit roots are invocation-relative with separate project-target subdirectories.
+Use reversible portable module-identity filenames; target format selects `.o`
+(ELF/Mach-O), `.obj` (COFF), `.ll` or `.bc`. Descriptors retain the runtime dependency.
 
-### Compilation tracing and intermediate inspection
+Keep `-o/--output` and TOML `output` reserved for future executables; reject explicit
+`--emit` with explicit `-o`. Frontend check/print actions do not run the backend;
+reject compilation switches with them or `--new-project`, preserving informational
+precedence. Validate every batch and stage artifacts before publication, protecting
+inputs/existing outputs on compilation failure. Replace complete files with tested
+operations; do not claim multi-file atomicity if publication fails partway through.
 
-Extend the existing `--verbose` option; do not add a separate verbosity switch
-for the backend. Keep `[pp]` and `[parse]` ingestion messages, and emit compilation
-progress on stderr with `[comp]` at the start of every trace line. Include the
-original source filename, the phase, module identity and project target when
-applicable. For example:
+### Compilation tracing and inspection
 
-```text
-[comp] src/answer.erl stage=lower module=answer target=app
-[comp] src/answer.erl stage=optimize module=answer target=app
-[comp] src/answer.erl stage=emit-object module=answer target=app
-```
+Extend `--verbose` through a shared backend callback. Preserve `[pp]`/`[parse]` and
+prefix each compilation event with `[comp]` on stderr, including original source,
+phase, module and applicable project target. Trace analysis, inference, lowering,
+specialization, verification, optimization and emission only when they begin;
+escape control characters and omit phases prevented by failure. Tracing changes
+neither outcomes nor artifacts and stays absent from frontend/help/version output.
 
-Trace semantic analysis, type inference, lowering, specialization, verification,
-optimization and emission only
-as each operation actually begins. A failed phase must not produce messages for
-later phases it prevented. Escape control characters in paths/names to keep one
-event per line. Compilation traces must not appear in frontend-only actions,
-help/version output, LLVM text, bitcode or native objects. Ordinary diagnostics
-retain their source/context formatting; verbose tracing does not affect success
-or failure. Carry a progress callback through the shared backend rather than
-duplicating trace logic in positional and project drivers.
+IR inspection uses the shared compiler and LLVM text printer, emits no files and
+never emits machine code or links. `--print-ir` stops after verified lowering and
+compiler specialization; `--print-optimized-ir` also runs/verifies the chosen LLVM
+pipeline. Both flags print before/after snapshots per module, retaining pre-pipeline
+text only when requested. Optimization level affects the optimized stage's pipeline.
 
-`--print-ir` and `--print-optimized-ir` are explicit inspection actions, usable
-with positional inputs and selected project targets. They run the same semantic
-analysis and lowering as compilation, use LLVM's existing textual printer and
-produce no artifact files or executable. Do not add a custom IR representation
-or printer merely for inspection.
+Allow preprocessing, target-triple, project selection, optimization/specialization
+and verbosity with IR inspection. Reject `--emit`, `--artifact-dir`, `--output`,
+`--new-project` and frontend check/print combinations; preserve existing combined
+`--print-pp`/`--print-ast` behavior. Single-module/stage stdout is LLVM assembly;
+multiple snapshots use escaped LLVM-comment headers for target/module/source/stage
+in stable target/module order. Document concatenation as separate modules and use
+`--emit llvm-ir` for machine consumption; never stream bitcode to stdout. Print
+only verified snapshots; later failures may leave earlier valid output but return
+nonzero with stderr diagnostics.
 
-- `--print-ir` stops after verification of lowered IR, before optimization.
-  `--print-optimized-ir` also runs the selected O0/O2 pipeline and verifies its
-  result. Neither action runs machine-code emission or links a runtime.
-- Allow both flags together: retain the pre-optimization text before mutating
-  the module and print before/after snapshots in that order for each module.
-  Allocate snapshots only when requested. An explicit optimization level affects
-  only the optimized snapshot, not the meaning of the unoptimized one.
-- Allow target-triple, optimization, preprocessing configuration, project target
-  selection and `--verbose` with inspection. Reject combinations with `--emit`,
-  `--artifact-dir`, `--output`, `--new-project`, or existing frontend check/print
-  actions. Existing `--print-pp`/`--print-ast` combinations remain unchanged.
-- For a single module/stage, stdout is valid LLVM assembly. For multiple modules
-  or both stages, add escaped LLVM-comment headers identifying target, module,
-  source and stage in stable target/module order. Document that this concatenated
-  inspection output is not one LLVM module; use per-module `--emit llvm-ir`
-  artifacts for machine consumption. Do not stream binary bitcode to stdout.
-- Print only verified snapshots. If later work fails, previously printed valid
-  snapshots may remain on stdout, with diagnostics on stderr and a nonzero exit.
-  Never publish invalid IR as if inspection succeeded.
-
-The IR snapshots include the selected variant bodies and any guards before/after
-LLVM optimization. `--no-type-specialization` is valid for compilation and IR
-inspection, but not for frontend-only actions. The unoptimized snapshot is taken
-after the compiler's specialization stage, before the LLVM optimization pipeline.
-
-`--print-types` runs only the shared semantic/type analysis stages and prints
-stable module/function and expression-location summaries to stdout. Distinguish
-declared contracts, inferred facts and unknown/widened results; warnings and
-`[comp]` traces stay on stderr. Permit preprocessing configuration, project target
-selection and verbosity; reject other check/print actions, `--emit`, output
-destinations, `--new-project`, target-triple, optimization and specialization
-switches. Emit no files or LLVM code. This semantic report is not a new compiler IR
-or stage-input format, and missing specifications are normal input.
+`--print-types` stops after semantic/type analysis, showing stable module/function
+and expression-location summaries with declared, inferred and unknown/widened
+provenance. Allow preprocessing, project selection and verbosity; reject other
+check/print actions, emission/output options, `--new-project`, target-triple,
+optimization and specialization. Warnings/traces stay on stderr; no files or LLVM
+code are produced. This report is not a new IR or stage-input format.
 
 ### LLVM dependency policy
 
-Require a globally installed LLVM C++ SDK through `find_package(LLVM REQUIRED CONFIG)`, behind a
-private `erlang_codegen` target. Keep LLVM headers out of parser, project model
-and runtime public interfaces. Support one pinned stable LLVM major initially;
-record the exact tested release and SDK build configuration in step 1. The
-unversioned online documentation can describe development APIs, so implementation
-must follow the chosen release's installed headers and matching documentation.
+Require one pinned stable globally installed LLVM C++ SDK via
+`find_package(LLVM REQUIRED CONFIG)` behind private `erlang_codegen`. Step 1 records
+the tested release/build configuration; use its headers and matching documentation.
+Keep SDK headers out of parser/project/runtime public interfaces and apply imported
+components locally without copying global `llvm-config --cxxflags` or weakening
+C++23/warnings-as-errors. See [LLVM CMake integration](https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project).
 
-Automatically search standard system and installed package-manager prefixes,
-including Homebrew on macOS, on compiler-enabled configuration. A user should
-not need to supply a private dependency path for a normal global installation.
-An explicit `LLVM_DIR` may select an existing global installation, but must not
-enable a repository-local, build-tree, vendored or downloaded LLVM SDK fallback.
-Report the selected version and installation prefix.
+Automatically search standard system/package-manager prefixes, including Homebrew,
+and report version/prefix. `LLVM_DIR` may select a global installation only. Missing
+or incompatible SDKs fail compiler configuration with required version and searched
+locations; Clang alone is insufficient. Never download, clone, vendor, build or
+install a private SDK through configuration, builds, tests or helpers. Global SDK
+installation is an external prerequisite. Runtime-only builds never discover LLVM.
 
-If no compatible globally installed SDK is found, stop configuration with a
-fatal, actionable error describing the required version and searched locations.
-Do not silently disable compilation or continue with only a Clang executable.
-Never download, clone, vendor or build a private copy of LLVM: no `FetchContent`,
-`ExternalProject`, dependency bootstrap, automatic package installation, or retry
-that obtains an SDK. This rule applies to configuration, builds, tests and helper
-scripts. Installing the global SDK is an external prerequisite, not a build step.
-
-Import supported SDK targets/components with target-local usage requirements;
-do not copy `llvm-config --cxxflags` globally or change C++23/warnings-as-errors. LLVM's
-[CMake integration documentation](https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project)
-describes the SDK entry point.
-
-Validate host architecture, standard-library/CRT, RTTI and exception compatibility.
-LLVM is a host dependency; emitted target code and the future runtime may have
-a different target. Keep exception support needed by existing project code.
-Runtime-only builds must configure without finding LLVM. A compiler build with
-the new backend requires a compatible SDK and gives an actionable error otherwise.
-
-Native macOS arm64 is the first execution baseline. Then inspect object output
-for Linux x86/x86-64, ARM/AArch64 and Windows x86/x86-64 as enabled by the SDK.
-Cross-object emission is not evidence of native ABI/runtime/platform support.
+Check host architecture, standard-library/CRT, RTTI and exception compatibility;
+retain project exception support. Host LLVM and emitted/runtime targets may differ.
+Start native execution on macOS arm64; inspect Linux x86/x86-64/ARM/AArch64 and
+Windows x86/x86-64 objects where SDK backends exist. Object inspection does not
+establish native ABI/runtime/platform support.
 
 ## Validation and commit rule for every step
 
@@ -619,6 +339,8 @@ Every numbered step is a separate implementation commit. Complete its focused
 tests, then run the shared gate below **before committing**. If a step grows
 beyond its stated topic, split it and update this plan rather than combining
 unrelated work. Do not commit a failing or partially implemented step.
+The commit message must contain "[compiler] <step title>" and reading git history
+helps establish last performed plan step. Refuse to begin work if git state is not clean.
 
 1. Add or adjust behavior tests appropriate to that step, including meaningful
    failure cases; preserve all existing CLI/preprocessor/parser/project tests.

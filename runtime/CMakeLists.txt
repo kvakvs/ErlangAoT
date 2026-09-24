@@ -6,10 +6,10 @@ target_sources(erlang_runtime PRIVATE
     include/atom_storage.hpp
     include/base_types.hpp
     include/binary_heap_object.hpp
-    include/callable.hpp
+    # include/callable.hpp
     include/code_server.hpp
     include/mailbox.hpp
-    include/native_callable.hpp
+    # include/native_callable.hpp
     include/process.hpp
     include/process_heap.hpp
     include/scheduler.hpp

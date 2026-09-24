@@ -16,7 +16,7 @@ namespace erlang_aot::runtime {
 enum class BinaryHeapObjectError : std::uint8_t {
     // Refcounted storage requires words.size() > HEAP_BINARY_THRESHOLD_WORDS; includes rejecting empty input.
     invalid_size,
-    // A supplied tail count must be in 1..ERL_WORD_BITS-1.
+    // A supplied tail count must be in 0..ERL_WORD_BITS-1.
     invalid_trailing_bits,
     size_overflow,
     out_of_memory
@@ -24,12 +24,14 @@ enum class BinaryHeapObjectError : std::uint8_t {
 
 // Share immutable, stable-address binary data across processes through std::shared_ptr.
 // Words occur in sequence; each word's most significant bit comes first, independent of host byte order.
-class BinaryHeapObject final {
+class BinaryHeapObject final : public std::enable_shared_from_this<BinaryHeapObject> {
   public:
+    using Ptr = std::shared_ptr<BinaryHeapObject>;
     // Validate word count and tail, check bit/byte sizes, then copy into a vector and zero unused low bits.
     // Nullopt means all supplied words are full; roll back on failure without publishing an object.
-    static std::expected<std::shared_ptr<BinaryHeapObject>, BinaryHeapObjectError>
-    create(std::span<const Word> words, Word trailing_word_bits = 0);
+    static std::expected<Ptr, BinaryHeapObjectError> create(std::span<const Word> words, Word trailing_word_bits = 0);
+    // TODO in create(): std::copy(values.begin(), values.end(), values_);
+
     // Release the owned vector when the last shared object owner disappears.
     ~BinaryHeapObject() = default;
     // Preserve object identity and borrowed word addresses; share ownership instead of copying or moving.
@@ -53,7 +55,7 @@ class BinaryHeapObject final {
 
     // Own contiguous words directly; no resizing or mutation is allowed after publication.
     std::vector<Word> words_;
-    // Record valid bits in the final word only when that word is partial; absent when all words are full.
+    // Record valid bits in the final word only when that word is partial; 0 when all words are full.
     Word trailing_word_bits_;
 };
 } // namespace erlang_aot::runtime

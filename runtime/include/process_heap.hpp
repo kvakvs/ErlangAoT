@@ -61,21 +61,25 @@ class ProcessHeap final {
     friend class Term;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
-    // Back each chunk with target words; vector growth moves owners, never word arrays.
-    struct Chunk;
     // Keep allocation policy independent of term layout or scheduler priority.
     HeapOptions options_;
-    // Retain all chunks until process exit; there is no individual deallocation yet.
-    std::vector<std::unique_ptr<Chunk>> chunks_;
+    // Owned memory is always growing forward and never resized without a garbage collection
+    std::unique_ptr<Word[]> memory_;
+    // A brazen move: Stack is separate from heap memory. Might someday merge them in one block.
+    std::unique_ptr<Word[]> stack_;
     // Track host handles, mailbox and continuation roots plus owner/safe-point validation.
-    class Roots;
-    std::unique_ptr<Roots> roots_;
+    // class Roots;
+    // std::unique_ptr<Roots> roots_;
     // Track checked allocation/capacity totals without rescanning chunks.
     std::size_t used_words_ = 0;
     std::size_t capacity_words_ = 0;
 
     // Append a checked-size chunk after the collection placeholder declines to reclaim.
+    // TODO: Growing process heap by inserting a Term can not fail, and OOM error must lead to OOM shutdown with "Erlang
+    // core" dump
+    // TODO: Inserting a term increases heap pointer by term size and places words sequentially
     std::expected<void, HeapError> grow_by(std::size_t words_to_append);
+    // TODO: Stack operations push/pop/create frame of N words/release frame of N words
     // TODO(gc): ignore collect()'s initial not_implemented result and grow without reclamation.
     void collection_placeholder(std::size_t requested_words) noexcept;
 };
