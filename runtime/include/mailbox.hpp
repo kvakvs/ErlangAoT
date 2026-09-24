@@ -1,6 +1,6 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: owner-thread selective receive with scheduler-managed suspension.
+// Empty owner lifecycle is implemented; selective receive and scheduler-managed suspension remain sketches.
 // C++ co_await illustrates the continuation protocol; see processes.md for lowering rules.
 #include "terms.hpp"
 

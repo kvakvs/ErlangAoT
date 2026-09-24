@@ -1,4 +1,25 @@
-# LLVM plan progress — 2026-09-24
+# LLVM plan progress — 2026-09-25
+
+- Step9 implements LLVM-free Runtime/ProcessContext lifecycle and C ABI runtime.h.
+  Runtime owns stable contexts; explicit shutdown BUSY until empty, C++ destructor
+  drains survivors. Context pimpl precedes heap/mailbox so lifetime state survives
+  mailbox then heap teardown; destructor invalidates host ContextLifetime token first.
+  Token is noncopyable, retainable, owner-thread confined; not a GC root registry.
+  Lazy heap/mailbox lifecycle only, no allocation/receive/send implementations.
+  Runtime identity atomic+local serial never recycle; cap/default1024. C options
+  validate version/width and word-multiple heap budgets, default64KiB/64MiB.
+  Status values4–10 extend existing0–3, contain construction exceptions, no output.
+  Empty shared_ptr CodeServer/AtomStorage reservations: contexts die before code,
+  code before atoms. Accessors remain undefined; term/root/scheduler services later.
+  ErlangAoT::generated_program interface links one runtime plus ABI/Boost, no LLVM.
+  New tests cover owners/repeats/limits/BUSY/RAII/token invalidation and failure sweep
+  via isolated new/delete override (including sized delete); no production failhooks.
+  Standalone consumer runs through interface, omission fails on lifecycle symbols.
+  docs/runtime-lifecycle.md records ownership/serialization/status/link contract.
+  Fresh full Debug build/all84 CTests and full Lizard/clang-tidy pass, as do focused
+  test quality, runtime-only all10 tests, lifecycle/failure ASan/UBSan, C native link/run,
+  six-triple C headers, format/links/whitespace. Step9 complete; stop before10.
+  Validation ledger is authoritative.
 
 - Step8 implementation: ABI features.hpp holds23 explicit stable IDs/names plus
   invalid0 sentinel, owners/boundaries/status/plan-step/focused-test metadata.

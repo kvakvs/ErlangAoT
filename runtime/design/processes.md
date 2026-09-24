@@ -1,12 +1,14 @@
 # Processes and scheduler — manual review skeleton
 
-Status: proposed, 2026-09-20. C++23 declarations only, listed as CMake headers
-for IDE navigation alongside the [term sketch](terms.md), without compilation. No workers, allocator, continuation or signal delivery
-are implemented. This is the implementation boundary for review, not a runnable
-runtime or a claim of OTP scheduling compatibility.
+Status: context lifecycle implemented in compilation step 9, 2026-09-25; scheduling
+remains proposed. [Runtime/context ownership](../../docs/runtime-lifecycle.md) now
+provides startup, lazy heap/empty mailbox owners, lifetime invalidation and shutdown.
+No workers, allocator, continuation or signal delivery are implemented. The remaining
+C++23 declarations are review sketches, not a claim of OTP scheduling compatibility.
 
 Read [scheduler.hpp](../include/scheduler.hpp) for creation/control and worker lifecycle,
 [process.hpp](../include/process.hpp) for process state, signals and cooperative execution,
+[process_context.hpp](../include/erlang_aot/runtime/process_context.hpp) for the implemented context,
 [process_heap.hpp](../include/process_heap.hpp) for term storage/copying and the GC boundary,
 and [mailbox.hpp](../include/mailbox.hpp) for selective-receive cursors and asynchronous reads.
 Review headers live in `runtime/include/`; design notes live in this directory.
@@ -20,7 +22,8 @@ affinity need platform implementations for Windows, Linux and macOS; thread coun
 alone does not promise pinning. CPU hotplug and worker resizing are deferred.
 Startup is transactional: join already-started workers if another worker fails.
 
-The pool allocates immutable runtime/serial identities and routes commands; each
+The future pool will use the owning runtime's immutable runtime/serial identities
+and route commands; each
 scheduler exclusively owns its assigned processes, heap access, continuation
 execution, run queue and cleanup. Default placement is round robin; callers may
 choose a scheduler index. There is no migration or stealing in this first sketch.
@@ -156,7 +159,7 @@ part of this skeleton. Invalid options, a null continuation, zero tick grants an
 invalid heap limits fail without publishing a process. The placeholder OS-thread
 backend explicitly returns unsupported_backend.
 
-`request_shutdown()` closes admission and wakes workers. Pending unprocessed
+The proposed scheduler `request_shutdown()` closes admission and wakes workers. Pending unprocessed
 creation commands fail as stopped and release adopted continuations. Workers exit
 existing processes at safe points and resolve all pending promises (including
 controls for reaped processes) before joining. Destruction must occur on a host
@@ -166,9 +169,12 @@ sketch; accepted commands must still complete their promises during failure clea
 
 ## Heap, term ownership and signals
 
-Each `ProcessContext` owns a `ProcessHeap`, mailbox and root/lifetime bookkeeping.
-It supplies the previously forward-declared context used by `TermFactory`.
-Allocation uses word-aligned chunks compatible with [term_layout.hpp](term_layout.hpp).
+Each implemented `ProcessContext` owns a lazy `ProcessHeap`, empty mailbox and
+lifetime token. Root registration and `TermFactory` binding remain future work.
+Explicit runtime shutdown requires contexts to be destroyed first; C++ RAII cleanup
+invalidates remaining contexts before releasing reserved runtime-wide services.
+
+Proposed allocation uses word-aligned chunks compatible with [term_layout.hpp](../include/term_layout.hpp).
 Appending chunks never relocates earlier allocations. Allocations are nonzero,
 rounded to target words with checked arithmetic; limits cover total backing capacity,
 including padding and unused chunk tails. Grow by at least one configured chunk,
@@ -222,7 +228,8 @@ remain extensions. Signal
 buffer/inbox/continuation memory needs separate resource budgets before production;
 the proposed heap limit does not cover those allocations. Host term handles become
 expired before heap release, as required by terms.md; they must not retain raw freed
-storage. The implementation of that invalidation remains part of the term work.
+storage. Step 9 implements context lifetime-token invalidation before mailbox/heap
+release; wiring host term/factory roots to that token remains part of the term work.
 
 ## Sending and selective receive
 

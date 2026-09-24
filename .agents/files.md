@@ -58,9 +58,18 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   gate for target settings, function bodies and whole modules; owned errors invalidate
   batch outputs. `tests/compiler/codegen/verification.cpp`: IRBuilder synthetic IR,
   malformed bodies/globals, post-verification mutation, target mismatches and failure latching.
-- `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
-  and `runtime/CMakeLists.txt`: runtime archive with lifecycle reserved and reporting implemented;
+- `compiler/CMakeLists.txt`: frontend, private codegen library and executable;
+  `runtime/CMakeLists.txt`: runtime archive and `ErlangAoT::generated_program` link interface;
   `abi/CMakeLists.txt`: header-only ABI interface.
+- `abi/include/erlang_aot/abi/runtime.h`: opaque runtime/context C lifecycle declarations;
+  `runtime/include/erlang_aot/runtime/{runtime,process_context}.hpp`: host owners, identities
+  and lifetime tokens; `runtime/src/runtime{.cpp,_state.hpp}`: startup/shutdown, identity
+  allocation and reserved code/atom ownership; `runtime/src/lifecycle.cpp`: C adapter.
+  `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
+  context registry and lazy heap/empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
+  `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback;
+  `lifecycle_output.cmake`: silence; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer
+  link/run through the mandatory target and missing-runtime link failure.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
   `base_types.hpp`: word types, 64-byte heap-binary word threshold and raw/resolved tag enums; `terms.hpp`: opaque C++ API,
   explicit cross-heap copy declarations and constexpr `TermTag::get_kind()` decoding into `TermKind`, including empty tuples/lists;
@@ -72,15 +81,15 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `runtime/include/binary_heap_object.hpp`: shared binary objects owning immutable
   `std::vector<Word>` storage, checked creation/errors, word views and exact bit-length/tail
   metadata. API sketch listed for IDE navigation; no binary heap or pool service.
-- `runtime/design/atom_storage.{hpp,md}`: runtime-local atom interning/lookup API,
+- `runtime/include/atom_storage.hpp`, `runtime/design/atom_storage.md`: runtime-local atom interning/lookup API,
   startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
   `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
-  `runtime/include/process.hpp`: identities, continuation/reductions, owned signal inbox,
-  deferred signal handling, context and process state;
+  `runtime/include/process.hpp`: continuation/reductions, owned signal inbox,
+  deferred signal handling and process state; context declarations moved to the host API;
   `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
   `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
-  Review-only declarations listed on the runtime CMake target alongside the term sketches.
+  Scheduling/receive declarations remain sketches; heap/mailbox lifecycle is implemented.
 - `runtime/design/code_server.md`: registry, exact-signature and code-lifetime contract;
   `runtime/include/code_server.hpp`: module publication, unique registry ownership and
   checked generic resolution; `callable.hpp`: std::function aliases, signature keys and

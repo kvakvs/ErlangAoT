@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–8 complete, 2026-09-24. Steps 9–46 remain pending.
+Status: steps 1–9 complete, 2026-09-25. Steps 10–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -15,8 +15,9 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
-with feature reporting; lifecycle and term services remain pending. `erlang_aot_abi` supplies versioned term/context/function headers
-and checked immediate integer encoding; global LLVM SDK discovery/linkage, target
+with feature reporting and runtime/context lifecycle; term services remain pending.
+`erlang_aot_abi` supplies versioned term/context/function headers and checked
+immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
 owners retain batch ASTs, LLVM state and results; Erlang lowering and driver integration
 remain deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
@@ -25,8 +26,10 @@ remain deferred. The selected global LLVM installation is recorded in `docs/comp
 
 Review headers in `runtime/include/` and notes in `runtime/design/` define evolving
 service/ownership proposals, not completed plan steps. CMake lists the prototype
-headers for IDE navigation; `src/runtime.cpp` and `src/diagnostics/features.cpp`
-are compiled. Extend these APIs and update this inventory and affected steps together when sketches change.
+headers for IDE navigation. `src/runtime.cpp`, `src/lifecycle.cpp`, `src/process/`
+and `src/diagnostics/features.cpp` implement lifecycle and feature reporting.
+Implemented host APIs live in `include/erlang_aot/runtime/`; extend these APIs and
+update this inventory and affected steps together when sketches change.
 
 | Header under `runtime/include/` | Sketch                                                                                           | Steps         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
@@ -34,10 +37,10 @@ are compiled. Extend these APIs and update this inventory and affected steps tog
 | `terms.hpp`                     | `Term`, tags, `TermResult`, `AtomId`, process-bound `TermFactory`, explicit graph copies         | 7, 9, 10, 12  |
 | `term_layout.hpp`               | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
 | `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
-| `process_heap.hpp`              | Owned heap, allocation/accounting, graph addition, safe-point collection                         | 9, 12         |
+| `process_heap.hpp`              | Lazy owned heap/accounting implemented; allocation, graph addition, collection reserved          | 9, 12         |
 | `binary_heap_object.hpp`        | Shared immutable word vector and optional valid tail bits                                        | 12            |
-| `process.hpp`                   | Identity/state/priority, reductions, cooperative code/context, owned signals/inbox               | 9, 12, 13     |
-| `mailbox.hpp`                   | Selective cursor, asynchronous reads, append after signal handling                               | 12, 13        |
+| `process.hpp`                   | State/priority, reductions, cooperative code, owned signals/inbox (reserved)                     | 9, 12, 13     |
+| `mailbox.hpp`                   | Empty owner implemented; selective cursor, reads and signal handling reserved                    | 12, 13        |
 | `scheduler.hpp`                 | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling                  | 9, 13, 14     |
 | `callable.hpp`                  | `Callable`/`TypedCallable`, results/keys, one noncopyable registry per module                    | 11, 28        |
 | `native_callable.hpp`           | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`                                     | 11, 28        |
@@ -55,6 +58,13 @@ header inspection. Immediate identities resolve to `local_pid`/`local_port`, emp
 containers to `empty_tuple`/`empty_list`. CTest `runtime_term_tag` checks all 64 tag
 combinations in `tests/runtime/term_tag.cpp`; `runtime_term_layout` separately
 compiles private prefix assertions and checks agreement with the immediate ABI.
+
+Step 9 adds `erlang_aot/runtime/{runtime,process_context}.hpp`, with stable owned
+contexts, non-recycled identities and lifetime-token invalidation before mailbox/heap
+teardown. Runtime-wide code/atom ownership slots remain empty; their accessors and
+signal admission are not implemented. [Lifecycle contract](../docs/runtime-lifecycle.md)
+documents status reporting, host serialization and the mandatory
+`ErlangAoT::generated_program` link target.
 
 Carry these ownership and service contracts into implementation:
 
@@ -995,3 +1005,23 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   Native foreign-platform execution remains pending. Existing/planned extension
   points are documented in docs/features.md; actual capability/service handlers and
   lifecycle remain their later steps. CLI behavior is unchanged. Stopped before step 9.
+
+- Step 9 (2026-09-25): runtime startup/shutdown and stable owned process contexts
+  now have nonthrowing C ABI functions and a C++ RAII owner. Contexts own lazy
+  heap/empty mailbox storage, non-recycled identities and host lifetime tokens;
+  exit invalidates tokens before releasing mailbox/heap state. Explicit shutdown
+  refuses live contexts; RAII cleanup drains them. Runtime-wide code/atom bindings
+  remain empty reservations, with contexts/code/atoms ordered for future teardown.
+  No allocation, term roots, signal admission, workers or fake service accessors
+  were implemented. The mandatory ErlangAoT::generated_program interface exports
+  runtime/ABI dependencies without LLVM. Standalone Clang-linked consumer passed;
+  omission of runtime linkage failed on the expected lifecycle symbol.
+  Repeated/independent lifetimes, wrong owners, invalid options, ABI/width mismatch,
+  context caps, BUSY preservation, token invalidation, silence and allocation-failure
+  rollback passed. Fresh full Debug compiler+runtime configure/build, all 84 CTests,
+  make format, full Lizard/clang-tidy, focused test quality, local links and
+  git diff --check passed. Runtime-only build/all 10 tests passed without LLVM;
+  lifecycle and injected failures passed ASan/UBSan. Native C compilation/link/run
+  and freestanding C headers across six target triples passed. Native evidence is
+  macOS arm64; Linux/Windows execution and LeakSanitizer remain unverified on this
+  host. CLI behavior is unchanged. Stopped before step 10.

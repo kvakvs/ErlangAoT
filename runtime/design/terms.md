@@ -27,7 +27,8 @@ pointer-width term, accepting an opaque live context and a borrowed term-array
 pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
 The context propagates unchanged through direct calls. C++ `Term`, STL values,
 `std::expected` and exceptions never cross that boundary. There is no BEAM/FFI
-compatibility promise, public heap ABI or runtime lifecycle implementation yet.
+compatibility promise or public heap ABI. Step 9 implements
+[runtime lifecycle](../../docs/runtime-lifecycle.md) independently of term services.
 
 Tags are numerical low bits, decoded with masks/shifts rather than C++ bitfields
 or inactive union members. Primary bits 0–1 reserve header=0, list=1, boxed=2 and
@@ -116,6 +117,10 @@ Distribution and serialization, including imports of remote identities, are defe
 ## Values, ownership and errors
 
 The following are proposed service contracts; step 7 implements only raw integer encoding.
+Step 9 supplies `ProcessContext::lifetime()`: host binding/root metadata will lock or
+retain its `ContextLifetime` token and check liveness before touching the context.
+Destruction clears liveness before mailbox/heap release; retaining the token does
+not retain that storage. The one-word `Term` still needs external root/owner metadata.
 
 - Factories bind to one process context. Every returned term is a rooted host
   handle; copying retains the value, assigning rebinds only that C++ handle.

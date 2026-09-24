@@ -15,3 +15,19 @@ add_test(NAME runtime_features COMMAND runtime_feature_tests)
 add_test(NAME runtime_feature_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_feature_tests>" "-DFEATURE_NAME=garbage collection"
     -P "${PROJECT_SOURCE_DIR}/tests/abi/feature_output.cmake")
+
+foreach(suite IN ITEMS lifecycle lifecycle_failure)
+    add_executable(runtime_${suite} ${suite}.cpp)
+    erlang_aot_project_options(runtime_${suite})
+    target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)
+    add_test(NAME runtime_${suite} COMMAND runtime_${suite})
+endforeach()
+add_test(NAME runtime_lifecycle_output COMMAND "${CMAKE_COMMAND}"
+    "-DPROGRAM=$<TARGET_FILE:runtime_lifecycle>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/lifecycle_output.cmake")
+
+add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
+    "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer"
+    "-DHOST_CXX=${CMAKE_CXX_COMPILER}" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/link.cmake")
+set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)

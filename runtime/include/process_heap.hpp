@@ -1,6 +1,6 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: declarations without definitions, excluded from the build.
+// Lazy owner construction/destruction is implemented; allocation/copy/collection remain sketches.
 // See processes.md for allocation, ownership and future collection boundaries.
 #include "terms.hpp"
 
@@ -63,6 +63,8 @@ class ProcessHeap final {
     ProcessHeap(ProcessContext &owner, HeapOptions options);
     // Keep allocation policy independent of term layout or scheduler priority.
     HeapOptions options_;
+    // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
+    ProcessContext &owner_;
     // Owned memory is always growing forward and never resized without a garbage collection
     std::unique_ptr<Word[]> memory_;
     // A brazen move: Stack is separate from heap memory. Might someday merge them in one block.

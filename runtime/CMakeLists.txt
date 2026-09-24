@@ -1,6 +1,7 @@
 include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
-add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp)
+add_library(erlang_runtime STATIC src/runtime.cpp src/lifecycle.cpp src/diagnostics/features.cpp
+    src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp)
 # List review headers for IDE navigation; they are not separate compilation units.
 target_sources(erlang_runtime PRIVATE
     include/atom_storage.hpp
@@ -25,3 +26,9 @@ target_include_directories(erlang_runtime PUBLIC include)
 target_link_libraries(erlang_runtime
     PUBLIC erlang_aot_multiprecision_dependency erlang_aot_abi
 )
+
+# Every generated-program consumer links one matching target runtime through this boundary.
+# Current lifecycle has no additional OS libraries; future platform dependencies belong here/runtime.
+add_library(erlang_generated_program INTERFACE)
+target_link_libraries(erlang_generated_program INTERFACE erlang_runtime)
+add_library(ErlangAoT::generated_program ALIAS erlang_generated_program)

@@ -1,10 +1,11 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: declarations without definitions, excluded from the build.
+// Scheduler, signals and continuations remain sketches; process-context lifecycle is implemented separately.
 // Cooperative execution is a compiler continuation contract, not yet a C++ coroutine ABI.
 #include "mailbox.hpp"
 #include "process_heap.hpp"
 #include "terms.hpp"
+#include <erlang_aot/runtime/process_context.hpp>
 
 #include <cstdint>
 #include <deque>
@@ -23,32 +24,6 @@ enum class ProcessPriority : std::uint8_t { idle, low, normal, high, realtime };
 enum class ProcessState : std::uint8_t { runnable, running, waiting, exited };
 // Reserve the alternate backend without implementing per-process native threads.
 enum class ProcessBackend : std::uint8_t { cooperative, os_thread_placeholder };
-// Keep control/creation failures separate from Erlang exceptions and exit reasons.
-enum class ProcessError : std::uint8_t {
-    invalid_argument,
-    unknown_process,
-    stopped,
-    unsupported_backend,
-    resource_limit
-};
-template <typename Value> using ProcessResult = std::expected<Value, ProcessError>;
-
-// Keep identity stable after exit and reject identities from other runtime instances.
-class ProcessIdentity final {
-  public:
-    // Compare immutable registry keys, never addresses or process liveness.
-    bool operator==(const ProcessIdentity &other) const noexcept = default;
-
-  private:
-    friend class SchedulerPool;
-    // Allocate a non-reused runtime/serial pair; exhaustion fails creation.
-    ProcessIdentity(std::uint64_t runtime, std::uint64_t serial);
-    // Distinguish pools even when handles outlive pool destruction.
-    std::uint64_t runtime_;
-    // Monotonically allocated identity within one runtime, never recycled.
-    std::uint64_t serial_;
-};
-
 // Carry a runtime exit category; arbitrary Erlang reason terms remain a later extension.
 enum class ExitReason : std::uint8_t { normal, requested, killed, code_failure, heap_limit, runtime_shutdown };
 // A dispatch ends only at a compiler-inserted cooperative safe point or code completion.
@@ -121,44 +96,6 @@ class ProcessSignal final {
     std::unique_ptr<Impl> impl_;
     // Construct only validated, owning signal envelopes.
     explicit ProcessSignal(std::unique_ptr<Impl> impl);
-};
-
-// Bind the existing TermFactory sketch to one process's storage and registered roots.
-class ProcessContext final {
-  public:
-    // Keep context addresses stable for the full continuation/heap lifetime.
-    ProcessContext(const ProcessContext &) = delete;
-    ProcessContext &operator=(const ProcessContext &) = delete;
-    // Invalidate host handles before releasing process-owned terms and heap storage.
-    ~ProcessContext();
-    // Identify the running process without exposing mutable scheduler state.
-    const ProcessIdentity &identity() const noexcept;
-    // Allocate only on this context's owning scheduler thread.
-    ProcessHeap &heap() noexcept;
-    // Start selective receive through mailbox().begin_receive() on this process's owner thread.
-    Mailbox &mailbox() noexcept;
-    // Resolve loaded code through the runtime-wide server shared by scheduler workers.
-    CodeServer &code_server() noexcept;
-    // Share one runtime-owned atom identity/name table across every scheduler and process.
-    AtomStorage &atom_storage() noexcept;
-    // Post a message signal without awaiting handling; sending to a dead local pid is a no-op.
-    ProcessResult<void> send(ProcessIdentity recipient, const Term &value);
-
-  private:
-    friend class Scheduler;
-    friend class TermFactory;
-    friend class Process;
-    friend class ProcessHeap;
-    friend class Mailbox;
-    // Own all process term storage; declared first so mailbox/host bindings are destroyed before it.
-    ProcessHeap heap_;
-    // Retain incoming messages and one active receive cursor independently of code dispatches.
-    Mailbox mailbox_;
-    // Keep scheduler binding, continuation roots and lifetime checks behind the existing term API.
-    class Impl;
-    std::unique_ptr<Impl> impl_;
-    // Create only after scheduler identity/ownership and heap limits are validated.
-    ProcessContext(ProcessIdentity identity, HeapOptions heap_options);
 };
 
 // Store scheduler-owned state; external callers operate through identity-based commands.

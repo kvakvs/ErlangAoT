@@ -5,6 +5,8 @@ target setup, IR verification, in-memory object emission and the immediate-term 
 implemented in steps 2–7. Step 8 adds the shared
 [deferred-feature catalog and reporting contract](features.md), with separate compiler/runtime
 reporters and explicit C status transport; placeholder integration remains later work.
+Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mandatory
+`ErlangAoT::generated_program` CMake link target without LLVM dependencies.
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.

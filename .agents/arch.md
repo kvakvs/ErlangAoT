@@ -28,6 +28,18 @@
   enters runtime reporting. Actual capability/service handlers and CLI integration
   remain later steps; lowering and generated-code execution are still pending.
 
+- Step 9 runtime/context lifecycle is implemented in the LLVM-free static library.
+  C ABI startup/create/destroy/shutdown return fixed-width status without exceptions;
+  explicit shutdown refuses live contexts, while C++ RAII drains them. Runtime owns
+  stable contexts with distinct lazy heap/empty mailbox owners and non-recycled
+  identities. Context lifetime tokens invalidate before mailbox/heap teardown and
+  can survive as dead host bindings; term roots/factories remain deferred.
+  Empty CodeServer/AtomStorage ownership slots outlive contexts; future code roots
+  release before atoms. No workers, signals or fake service accessors exist. Calls
+  require host serialization. `ErlangAoT::generated_program` exports runtime/ABI
+  dependencies without LLVM; every generated consumer must use this target.
+  `docs/runtime-lifecycle.md` defines ownership, statuses and current boundaries.
+
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);
   smaller values stay on process heaps and empty refcounted objects are forbidden.
@@ -50,7 +62,7 @@
   Compiler atom constants retain spellings/slots, receive IDs from AtomStorage during
   module initialization, then remain read-only. Bindings/metadata roots are per-runtime
   module instances and retained through pinned code lifetime; no IDs assigned at compile time.
-- Runtime process/scheduler review declarations in `runtime/design/{process_heap,
+- Runtime process/scheduler review declarations in `runtime/include/{process_heap,
   process,scheduler,mailbox}.hpp` and `processes.md` extend that sketch: one worker per
   logical CPU, owner-thread commands, cooperative tick grants, per-process 1:8:9
   weighted service, sole-live-process idle eligibility and realtime tenure until
@@ -94,7 +106,7 @@
   parse, then reach a compile placeholder; successful processing returns 0 without output files.
 
 - CMake fixes project targets to C++23 with warnings as errors, building the host
-  tool `erlangaot` and a separate placeholder runtime.
+  tool `erlangaot` and a separate runtime with lifecycle/feature reporting.
   Project validation uses C++23. LLVM SDK linkage is implemented; lowering and
   generated-code/runtime execution remain future work.
   Shared Boost >=1.90 discovery supplies header-only Multiprecision to compiler and
