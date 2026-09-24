@@ -1,17 +1,28 @@
 # LLVM compilation contract
 
 Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
-target setup and IR verification implemented in steps 2–5. LLVM lowering, artifact
-emission and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
+target setup, IR verification and in-memory object emission implemented in steps 2–6.
+Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
 
 The private backend's `verify_ir` gate checks target consistency, defined function
-bodies and whole modules using LLVM's nonfatal verifier APIs. Every future emission
-entry point must call this gate on the current batch before producing bytes; success
+bodies and whole modules using LLVM's nonfatal verifier APIs. The object emission
+entry point calls this gate on the current batch before producing bytes; success
 is not cached across mutations. Failures become owned project diagnostics and discard
 all staged outputs. Synthetic IRBuilder fixtures cover valid and malformed IR;
 verification alone does not establish Erlang semantics or complete compilation.
+
+`emit_objects` uses the SDK's legacy machine-code pass manager and
+`TargetMachine::addPassesToEmitFile`, separately from future middle-end optimization.
+It emits clones to preserve original IR, replaces previous buffers on repeat calls,
+and discards the entire batch on verification or emission errors. No files are
+published and the batch remains incomplete until its caller completes the pipeline.
+Configured backends register their assembly printers/parsers; recoverable LLVM
+assembler errors flow through the owned diagnostic callback. LLVM fatal errors are
+not converted into ordinary diagnostics by this in-process API.
+Synthetic tests inspect Mach-O/ELF/COFF architecture, executable sections and an
+`answer` symbol; they do not yet use the Erlang ABI or execute generated programs.
 
 ## SDK prerequisite
 

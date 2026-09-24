@@ -34,6 +34,10 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `target_backends.cpp`: once-only initialization of configured SDK backends.
   `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
   layouts, triple normalization, unknown architectures and unavailable backends.
+- `compiler/src/codegen/emission.{hpp,cpp}`: fresh batch verification, cloned IR,
+  legacy target emission and transactional in-memory object buffers;
+  `tests/compiler/codegen/emission.cpp`: native/cross object inspection, repeat emission,
+  stale verification rejection and recoverable assembler-error cleanup.
 - `compiler/src/codegen/verification.{hpp,cpp}`: mandatory pre-emission verification
   gate for target settings, function bodies and whole modules; owned errors invalidate
   batch outputs. `tests/compiler/codegen/verification.cpp`: IRBuilder synthetic IR,

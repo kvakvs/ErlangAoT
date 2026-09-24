@@ -43,6 +43,8 @@ class CompilationResult {
     void report(CompilationDiagnostic diagnostic);
     // Stage bytes only while the batch is incomplete; never publish files here.
     bool add_output(OutputBuffer output);
+    // Discard stale serialized bytes before regenerating a verified batch.
+    void discard_outputs();
     // Record that the caller completed its phases, unless an earlier failure was latched.
     bool complete();
     // Record callback allocation/formatting failure without allocating or unwinding through LLVM.

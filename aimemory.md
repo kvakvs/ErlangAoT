@@ -1,5 +1,15 @@
 # LLVM plan progress — 2026-09-24
 
+- Step6 complete: emit_objects reverifies batch each attempt, clones IR, runs legacy
+  TargetMachine object pipeline, replaces buffers on retry; errors clear whole batch.
+  Backend asm printers/parsers initialized, static components extended. Native LLVM
+  tools + object reader architecture/text/symbol checks, ELF/COFF cross emission,
+  post-success IR mutation and assembler error pass. Fresh full Debug all72 tests,
+  full quality, focused test tidy/Lizard, format/whitespace and static LLVM link pass.
+  LLVM23 module inline asm uses Module::GlobalAsmFragment. SDK emits informational
+  codegen remarks through callback; tests allow notes, reject warnings/errors.
+  User requests steps6 and7; proceed to immediate ABI, stop before step8.
+
 - Step 5 complete: codegen::verify_ir checks current target triple/layout,
   defined functions then whole modules; nonfatal SDK failures become owned errors
   and invalidate all staged batch output. No cached success across IR mutation.

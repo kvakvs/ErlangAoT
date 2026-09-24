@@ -10,16 +10,22 @@ void register_backends() {
     LLVMInitializeX86TargetInfo();
     LLVMInitializeX86Target();
     LLVMInitializeX86TargetMC();
+    LLVMInitializeX86AsmPrinter();
+    LLVMInitializeX86AsmParser();
 #endif
 #ifdef ERLANG_AOT_LLVM_ARM
     LLVMInitializeARMTargetInfo();
     LLVMInitializeARMTarget();
     LLVMInitializeARMTargetMC();
+    LLVMInitializeARMAsmPrinter();
+    LLVMInitializeARMAsmParser();
 #endif
 #ifdef ERLANG_AOT_LLVM_AArch64
     LLVMInitializeAArch64TargetInfo();
     LLVMInitializeAArch64Target();
     LLVMInitializeAArch64TargetMC();
+    LLVMInitializeAArch64AsmPrinter();
+    LLVMInitializeAArch64AsmParser();
 #endif
 }
 } // namespace

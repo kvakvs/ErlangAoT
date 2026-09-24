@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–5 complete, 2026-09-24. Steps 6–46 remain pending.
+Status: steps 1–6 complete, 2026-09-24. Steps 7–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -937,3 +937,15 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and Lizard also passed. Native evidence is macOS arm64 with global LLVM 23.1.1;
   native Linux/Windows remain pending. No emission or CLI integration was added;
   stopped before step 6.
+
+- Step 6 (2026-09-24): `emit_objects` reverifies the current whole batch before
+  each attempt, emits cloned modules with the SDK legacy machine-code pass manager,
+  and stages owned objects without filesystem publication. Repeated emission
+  replaces buffers; verifier and assembler failures discard the entire batch.
+  Native llvm-readobj/llvm-nm confirmed Mach-O arm64, executable sections and
+  `_answer`; LLVM object-reader tests also covered i686/ARM/AArch64 ELF and x64 COFF.
+  Mutation after successful emission and a valid-IR assembler-error fixture passed.
+  Fresh full Debug compiler+runtime configure/build, all 72 CTests, make format,
+  full Lizard/clang-tidy, focused test quality and git diff --check passed.
+  The emission suite also passed against static LLVM component libraries.
+  Native foreign execution, Erlang lowering and CLI artifact publication remain pending.

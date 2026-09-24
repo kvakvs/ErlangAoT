@@ -14,7 +14,9 @@
   `verify_ir` is the required gate before emission: check current target settings,
   defined functions and whole modules, retaining LLVM failures in project diagnostics.
   Success is never cached across IR mutations; failure clears staged batch outputs.
-  Synthetic IR tests exercise this boundary; emission itself remains step 6.
+  `emit_objects` clones verified IR and runs LLVM's legacy machine-code pipeline into
+  owned buffers; repeated emission replaces output and failures invalidate the batch.
+  Backend printers/parsers support synthetic native and cross-target object tests.
   CLI integration, lowering and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.

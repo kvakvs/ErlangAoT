@@ -26,6 +26,8 @@ bool CompilationResult::add_output(OutputBuffer output) {
     return true;
 }
 
+void CompilationResult::discard_outputs() { outputs_.clear(); }
+
 bool CompilationResult::complete() {
     if (status_ == CompilationStatus::failed) {
         return false;
