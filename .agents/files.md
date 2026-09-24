@@ -1,5 +1,8 @@
 # File map
 
+- `docs/compile.md`: pinned SDK provenance/tools, frozen compilation subset, provisional
+  ABI and command/artifact contract; `.agents/04-compile.md`: ordered implementation plan.
+
 Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
 Public headers live in `compiler/include/erlang_aot/compiler/`.
 

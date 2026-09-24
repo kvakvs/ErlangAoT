@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: proposed, 2026-09-22. No implementation steps have started.
+Status: step 1 complete, 2026-09-24. Steps 2–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -876,4 +876,11 @@ object modules.
 Do not create intermediate-stage parsers. Their only reserved locations remain
 `compiler/src/stage_readers/{preprocessed,abstract,ir}/`.
 
-Validation ledger: none yet; this is the implementation plan, not completion evidence.
+## Validation ledger
+
+- Step 1 (2026-09-24): pinned global Homebrew LLVM 23.1.1_1 / SDK 23.1.1;
+  verified paths, tool versions, build metadata and documentation links. Frozen
+  subset, CLI/artifact and provisional ABI contract in `docs/compile.md`.
+  Fresh Debug compiler+runtime configure/build, all 65 CTests, make format,
+  Lizard, clang-tidy and git diff --check passed. Native reference: macOS arm64;
+  other native platforms and generated-code execution remain pending.

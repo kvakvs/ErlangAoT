@@ -1,3 +1,11 @@
+# LLVM plan progress — 2026-09-24
+
+- Step 1 complete: docs/compile.md pins global Homebrew LLVM 23.1.1_1, stable 23.1.x
+  >=23.1.1. Prefix /opt/homebrew/opt/llvm; real /opt/homebrew/Cellar/llvm/23.1.1_1.
+  SDK Release/assertions OFF/RTTI ON/EH OFF, system libc++; X86/ARM/AArch64 available.
+  Full fresh Debug gate passed all65 tests and quality. User requests steps1–3 only.
+  Each step needs its own [compiler] title commit; clean tree required before starting.
+
 # Current working memory — 2026-09-22
 
 - Binary object API sketch simplified 2026-09-23 at user request: remove BinaryHeap

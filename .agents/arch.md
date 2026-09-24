@@ -1,5 +1,9 @@
 # Architecture
 
+- `docs/compile.md` freezes the LLVM milestone: global stable LLVM 23.1.x (>=23.1.1),
+  acyclic small-integer/parameter/direct-call subset and private tagged C ABI v1.
+  Step 1 is documentation only; generated-code execution remains future work.
+
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);
   smaller values stay on process heaps and empty refcounted objects are forbidden.

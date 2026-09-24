@@ -4,6 +4,9 @@ An ahead-of-time compiler project for Erlang/OTP 29. Currently supports
 preprocessing and syntax parsing; semantic analysis, executable generation and
 runtime execution are not yet implemented.
 
+The next compilation milestone is frozen in [docs/compile.md](docs/compile.md),
+including its global LLVM SDK prerequisite and provisional ABI.
+
 Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 
 ## Features
