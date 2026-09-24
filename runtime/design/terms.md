@@ -44,27 +44,27 @@ The initial executable subset can still implement only immediate integers.
 The heap proposal is a word-aligned arena of **plain structs**, not C++ objects
 with virtual dispatch, inheritance, smart pointers or container members. `Word`
 is the runtime target's unsigned pointer-width integer (32 or 64 bits).
-`TermSlot` is exactly one word. All object prefixes start with a two-word
+`Term` is exactly one word. All object prefixes start with a two-word
 `Header { kind, size_words }`. `size_words` includes the prefix, trailing payload
 and word-rounding padding. The draft asserts field offsets and sizes instead of
 depending on packing pragmas or implementation-defined bitfields. GC mark and
 forwarding state use side metadata in this proposal, keeping the payload layout
 simple until a collector is chosen.
 
-| Private struct | Fixed words | Trailing payload | Slots traced by a future GC |
-| --- | --- | --- | --- |
-| `NilCell` | 2 | None | None |
-| `IntegerPrefix` | 4 | `limb_count` unsigned words | None |
-| `FloatCell` | 2 + 8 / word bytes | None | None |
-| `AtomCell` | 3 | None | None; runtime table ID |
-| `IdentityCell` (pid/port/reference) | 3 | None | None; runtime registry ID |
-| `ConsCell` | 4 | None | Head and tail |
-| `TuplePrefix` | 3 | `arity` slots | Every element |
-| `MapPrefix` | 3 | `count` pairs of slots | Every key and value |
-| `BitstringPrefix` | 3 | `ceil(bit_count / 8)` bytes, padded | None |
-| `ExternalFunctionCell` | 5 | None | Module and name atoms |
-| `ClosurePrefix` | 5 | `capture_count` slots | Every capture |
-| `NativeRecordPrefix` | 4 | `field_count` slots | Every field |
+| Private struct                      | Fixed words        | Trailing payload                    | Slots traced by a future GC |
+| ----------------------------------- | ------------------ | ----------------------------------- | --------------------------- |
+| `NilCell`                           | 2                  | None                                | None                        |
+| `IntegerPrefix`                     | 4                  | `limb_count` unsigned words         | None                        |
+| `FloatCell`                         | 2 + 8 / word bytes | None                                | None                        |
+| `AtomCell`                          | 3                  | None                                | None; runtime table ID      |
+| `IdentityCell` (pid/port/reference) | 3                  | None                                | None; runtime registry ID   |
+| `ConsCell`                          | 4                  | None                                | Head and tail               |
+| `TuplePrefix`                       | 3                  | `arity` slots                       | Every element               |
+| `MapPrefix`                         | 3                  | `count` pairs of slots              | Every key and value         |
+| `BitstringPrefix`                   | 3                  | `ceil(bit_count / 8)` bytes, padded | None                        |
+| `ExternalFunctionCell`              | 5                  | None                                | Module and name atoms       |
+| `ClosurePrefix`                     | 5                  | `capture_count` slots               | Every capture               |
+| `NativeRecordPrefix`                | 4                  | `field_count` slots                 | Every field                 |
 
 For example, a cons is `header | head-slot | tail-slot`, a tuple is
 `header | arity | element-slots...`, and an integer is
@@ -119,18 +119,18 @@ Native records are a distinct, experimental OTP 29 category; traditional records
 remain tuples. Booleans are atoms and strings can be integer lists; neither needs
 a separate storage kind. Binaries are bitstrings with a bit count divisible by eight.
 
-| Category | Creation | Inspection / extraction | Functional changes |
-| --- | --- | --- | --- |
-| Integer, including bignum | `integer`, `integer_decimal` | `is_integer`, checked `integer_value`, lossless `integer_decimal` | Construct a replacement |
-| Float | `floating` | `is_float`, `float_value` | Construct a replacement |
-| Atom / boolean | `atom`, `boolean` | `is_atom`, `is_boolean`, `atom_utf8`, `atom_id`, `boolean_value` | Construct a replacement |
-| Nil / cons / proper or improper list | `nil`, `cons`, `list` | `is_nil`, `is_cons`, `is_list`, `is_proper_list`, `head`, `tail`, `list_length`, `list_elements` | `prepend`, `append`, `with_list_element` |
-| Tuple | `tuple` | `is_tuple`, `tuple_size`, `tuple_element`, `tuple_elements` | `with_tuple_element` |
-| Map | `map` | `is_map`, `map_size`, `map_contains`, `map_find`, `map_entries` | `with_map_entry`, `with_existing_map_entry`, `without_map_entry` |
-| Bitstring / binary | `bitstring`, `binary` | `is_bitstring`, `is_binary`, `bit_size`, copied bytes | `bit_slice`, `concat_bits` |
-| Pid / port / reference | Wrap issued identity; `make_reference` creates a fresh reference | Corresponding predicate and opaque identity accessor | Identities are immutable |
-| Function | `external_function`, `closure`, `function` | `is_function`, arity predicate, `function_arity`, opaque identity | Construct a replacement closure |
-| Native record | `native_record` | Category/descriptor predicates, descriptor and named fields | `with_record_field` |
+| Category                             | Creation                                                         | Inspection / extraction                                                                          | Functional changes                                               |
+| ------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| Integer, including bignum            | `integer`, `integer_decimal`                                     | `is_integer`, checked `integer_value`, lossless `integer_decimal`                                | Construct a replacement                                          |
+| Float                                | `floating`                                                       | `is_float`, `float_value`                                                                        | Construct a replacement                                          |
+| Atom / boolean                       | `atom`, `boolean`                                                | `is_atom`, `is_boolean`, `atom_utf8`, `atom_id`, `boolean_value`                                 | Construct a replacement                                          |
+| Nil / cons / proper or improper list | `nil`, `cons`, `list`                                            | `is_nil`, `is_cons`, `is_list`, `is_proper_list`, `head`, `tail`, `list_length`, `list_elements` | `prepend`, `append`, `with_list_element`                         |
+| Tuple                                | `tuple`                                                          | `is_tuple`, `tuple_size`, `tuple_element`, `tuple_elements`                                      | `with_tuple_element`                                             |
+| Map                                  | `map`                                                            | `is_map`, `map_size`, `map_contains`, `map_find`, `map_entries`                                  | `with_map_entry`, `with_existing_map_entry`, `without_map_entry` |
+| Bitstring / binary                   | `bitstring`, `binary`                                            | `is_bitstring`, `is_binary`, `bit_size`, copied bytes                                            | `bit_slice`, `concat_bits`                                       |
+| Pid / port / reference               | Wrap issued identity; `make_reference` creates a fresh reference | Corresponding predicate and opaque identity accessor                                             | Identities are immutable                                         |
+| Function                             | `external_function`, `closure`, `function`                       | `is_function`, arity predicate, `function_arity`, opaque identity                                | Construct a replacement closure                                  |
+| Native record                        | `native_record`                                                  | Category/descriptor predicates, descriptor and named fields                                      | `with_record_field`                                              |
 
 `ProcessContext` and `ProcessIdentity` are forward-declared here and sketched in
 [process.hpp](process.hpp). Other identity classes, closure and record descriptors

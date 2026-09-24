@@ -27,20 +27,20 @@ service/ownership proposals, not completed plan steps. CMake lists the prototype
 headers for IDE navigation; only `src/runtime.cpp` is compiled. Extend these APIs
 and update this inventory and affected steps together when sketches change.
 
-| Header under `runtime/include/` | Sketch | Steps |
-|---|---|---|
-| `base_types.hpp` | Target `Word`, `ERL_WORD_BITS`, alignment | 7, 10, 12 |
-| `terms.hpp` | `Term`, tags, `TermResult`, `AtomId`, process-bound `TermFactory`, explicit graph copies | 7, 9, 10, 12 |
-| `term_layout.hpp` | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12 |
-| `atom_storage.hpp` | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder | 9, 10, 14, 28 |
-| `process_heap.hpp` | Owned heap, allocation/accounting, graph addition, safe-point collection | 9, 12 |
-| `binary_heap_object.hpp` | Shared immutable word vector and optional valid tail bits | 12 |
-| `process.hpp` | Identity/state/priority, reductions, cooperative code/context, owned signals/inbox | 9, 12, 13 |
-| `mailbox.hpp` | Selective cursor, asynchronous reads, append after signal handling | 12, 13 |
-| `scheduler.hpp` | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling | 9, 13, 14 |
-| `callable.hpp` | `Callable`/`TypedCallable`, results/keys, one noncopyable registry per module | 11, 28 |
-| `native_callable.hpp` | `NativeCallable<Args...>` alias for `TypedCallable<Args...>` | 11, 28 |
-| `code_server.hpp` | Code images, immutable loaded modules, pinned generic calls, runtime-wide server | 9, 11, 28 |
+| Header under `runtime/include/` | Sketch                                                                                           | Steps         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
+| `base_types.hpp`                | Target `Word`, `ERL_WORD_BITS`, alignment                                                        | 7, 10, 12     |
+| `terms.hpp`                     | `Term`, tags, `TermResult`, `AtomId`, process-bound `TermFactory`, explicit graph copies         | 7, 9, 10, 12  |
+| `term_layout.hpp`               | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
+| `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
+| `process_heap.hpp`              | Owned heap, allocation/accounting, graph addition, safe-point collection                         | 9, 12         |
+| `binary_heap_object.hpp`        | Shared immutable word vector and optional valid tail bits                                        | 12            |
+| `process.hpp`                   | Identity/state/priority, reductions, cooperative code/context, owned signals/inbox               | 9, 12, 13     |
+| `mailbox.hpp`                   | Selective cursor, asynchronous reads, append after signal handling                               | 12, 13        |
+| `scheduler.hpp`                 | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling                  | 9, 13, 14     |
+| `callable.hpp`                  | `Callable`/`TypedCallable`, results/keys, one noncopyable registry per module                    | 11, 28        |
+| `native_callable.hpp`           | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`                                     | 11, 28        |
+| `code_server.hpp`               | Code images, immutable loaded modules, pinned generic calls, runtime-wide server                 | 9, 11, 28     |
 
 Supporting contracts: [terms](../runtime/design/terms.md),
 [processes/schedulers](../runtime/design/processes.md),
@@ -164,15 +164,15 @@ TOML or OTP; this wiring does not implement bignums. Generated service boundarie
 use C linkage, opaque handles and explicit error/status transport; no C++ exceptions
 or STL values cross them.
 
-| Runtime location | Skeleton responsibility |
-|---|---|
-| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Explicit startup/shutdown and host API |
-| `src/process/` | Isolated contexts and ownership; reserve reductions, signals, mailbox, exceptions |
-| `src/terms/` | Immediate-term inspection; extend the opaque Term sketch for later values |
-| `src/builtins/` | Module-owned registries, all-Term defaults, unavailable-BIF errors |
-| `src/memory/` | Memory ownership/lifecycle; reserve allocation, roots and GC |
-| `src/scheduler/` | Process registration/lifecycle; reserve queues, reductions, signals and wakeups |
-| `src/modules/` | ABI-checked descriptors, frozen registries, code lifetime and initialization |
+| Runtime location                                 | Skeleton responsibility                                                           |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `include/erlang_aot/runtime/`, `src/runtime.cpp` | Explicit startup/shutdown and host API                                            |
+| `src/process/`                                   | Isolated contexts and ownership; reserve reductions, signals, mailbox, exceptions |
+| `src/terms/`                                     | Immediate-term inspection; extend the opaque Term sketch for later values         |
+| `src/builtins/`                                  | Module-owned registries, all-Term defaults, unavailable-BIF errors                |
+| `src/memory/`                                    | Memory ownership/lifecycle; reserve allocation, roots and GC                      |
+| `src/scheduler/`                                 | Process registration/lifecycle; reserve queues, reductions, signals and wakeups   |
+| `src/modules/`                                   | ABI-checked descriptors, frozen registries, code lifetime and initialization      |
 
 Implement useful lifecycle, immediate inspection and module registration; reserve
 later services without fabricated successful results. Extend the term sketch's
@@ -436,7 +436,7 @@ planning-only creation of this document does not run or claim these code gates.
 ### 7. Define the immediate-term ABI
 
 - Derive the term-word contract from `runtime/include/base_types.hpp`, the tag
-  sketch in `terms.hpp` and the private `TermSlot`/header layout in `term_layout.hpp`.
+  sketch in `terms.hpp` and the private `Term`/header layout in `term_layout.hpp`.
   Reconcile definitions and assertions while preserving public `Term` access and
   future heap references. Record the chosen encoding in the sketch and versioned ABI.
 - Add versioned ABI headers in `abi/include/erlang_aot/abi/` for term encoding,
