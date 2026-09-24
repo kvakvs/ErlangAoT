@@ -46,7 +46,10 @@ lazy heap and empty mailbox. Initialization publishes a successful result only
 after all bookkeeping succeeds; failure preserves existing contexts. Step 12 adds
 checked allocation/collection rejection and immediate-only copying; see
 [process memory](runtime-memory.md). Receive operations remain declarations.
-No workers or pending signals are created by these APIs.
+No workers or pending signals are created by these APIs. Step 13 adds an explicit
+[scheduler lifecycle registry](runtime-scheduler.md); context creation alone does
+not register a process. Destruction automatically removes a non-running registration
+and returns `busy` while a registered dispatch is marked running.
 
 The runtime allocates non-recycled runtime/serial identities independently of raw
 addresses. Identity exhaustion fails rather than wrapping. A context pointer is a
@@ -82,7 +85,7 @@ underlying type and preserves the existing numeric values.
 | `ok` (0) | Operation completed |
 | `invalid_argument` (2) | Zero context cap, invalid heap budgets or null context |
 | `out_of_memory` (4) | Bookkeeping allocation failed; partial state was released |
-| `busy` (5) | Explicit shutdown still has live contexts |
+| `busy` (5) | Shutdown still has live contexts, or context destruction has a running registration |
 | `wrong_owner` (6) | Context belongs to another runtime |
 | `resource_limit` (7) | Context cap, identity space or registry capacity exhausted |
 | `stopped` (8) | Owner has already shut down |
@@ -94,8 +97,9 @@ underlying type and preserves the existing numeric values.
 Step 11 adds one runtime-owned [CodeServer](runtime-builtins.md), borrowed by every
 context. `Runtime::code_server()` returns null after shutdown; live contexts expose
 that same server by reference. AtomStorage and its accessor remain reserved.
-Contexts are destroyed before code registrations, which precede the future atom
-table. Resolved/module handles may retain code beyond runtime teardown, but do not
+Runtime teardown first closes and clears scheduler lifecycle records, then destroys
+contexts before code registrations. The stopped scheduler service remains alive
+through code teardown, and the future atom table outlives both. Resolved/module handles may retain code beyond runtime teardown, but do not
 retain a process context. Future atom bindings must preserve their runtime lifetime
 through those retained modules.
 

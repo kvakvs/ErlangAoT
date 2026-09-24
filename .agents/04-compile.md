@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–12 complete, 2026-09-25. Steps 13–46 remain pending.
+Status: steps 1–13 complete, 2026-09-25. Steps 14–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -41,9 +41,9 @@ update this inventory and affected steps together when sketches change.
 | `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
 | `process_heap.hpp`              | Lazy owner/accounting, checked allocation/collection rejection and immediate addition implemented; graph storage reserved | 9, 12 |
 | `binary_heap_object.hpp`        | Shared immutable word vector sketch; zero tail means full words, otherwise valid high bits       | 12            |
-| `process.hpp`                   | State/priority, reductions, cooperative code, owned signals/inbox (reserved)                     | 9, 12, 13     |
+| `process.hpp`                   | Shared state enums implemented; reductions, cooperative code, owned signals/inbox reserved       | 9, 12, 13     |
 | `mailbox.hpp`                   | Empty owner implemented; selective cursor, reads and signal handling reserved                    | 12, 13        |
-| `scheduler.hpp`                 | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling                  | 9, 13, 14     |
+| `scheduler.hpp`                 | Includes implemented SchedulerService; worker/pool options, replies and signal handling reserved | 9, 13, 14     |
 | `callable.hpp`                  | Implemented generic Callable/results/keys/registry forwarding header; typed proposals unverified                    | 11, 28        |
 | `unverified/native_callable.hpp.txt` | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`                                     | 11, 28        |
 | `code_server.hpp`               | Code images, immutable loaded modules, pinned generic calls, runtime-wide server                 | 9, 11, 28     |
@@ -97,6 +97,15 @@ runtimes. Heap graph copying, root registration, safe points and binary allocati
 remain deferred. Future mailbox/cursor roots and owned signal transit must be
 included before heap Terms are admitted; C++ cell resources require explicit
 construction/destruction rather than byte relocation.
+
+Step 13 adds [scheduler lifecycle bookkeeping](../docs/runtime-scheduler.md) in
+`erlang_aot/runtime/{process_state,scheduler}.hpp` and `runtime/src/scheduler/`.
+Each runtime owns one SchedulerService; explicit once-only registration references
+existing context identities without taking context ownership. Checked dispatch
+boundaries, suspension, returns and removal change metadata only. Runtime teardown
+clears records before contexts and code; destroying a running registration's context
+returns busy. Worker execution, reduction grants, wake/signal handling and receive
+remain reserved in the original process/pool/mailbox sketches.
 
 Carry these ownership and service contracts into implementation:
 
@@ -1144,3 +1153,25 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   failure cleanup and allocation-free service responses. Native Linux/Windows/32-bit
   runtime runs, actual heap allocation and generated heap code remain pending.
   Stopped before step 13.
+
+- Step 13 complete (2026-09-25): each Runtime owns one SchedulerService with
+  explicit once-only registration of live contexts, identity lookup/removal,
+  suspension, checked dispatch/return bookkeeping and shutdown admission.
+  Shared process enums/StepResult moved to the canonical process_state.hpp;
+  worker/pool/continuation/signal/receive declarations remain reserved sketches.
+  Context destruction retires registrations before storage or returns busy for a
+  running record. Runtime RAII clears records before contexts/code, retaining the
+  stopped service through code destruction. Failed registration leaves retry
+  possible without consuming the once-only identity marker. No workers, queues,
+  reduction grants, wake operation, receive or Erlang execution are implemented.
+  docs/runtime-scheduler.md records current transitions and future owner-worker,
+  bounded signal handling, ordering, suspension and receive-tail contracts.
+  Final fresh full Debug configure/build and all 91 CTests passed; full Lizard
+  and clang-tidy passed with unchanged checks/thresholds. Focused production/test
+  tidy and Lizard, combined implemented/sketch header compilation with runtime
+  warnings-as-errors flags, make format/dry verification, local documentation links
+  and git diff --check passed. Release runtime-only all 16 CTests and ASan/UBSan
+  five scheduler/lifecycle/memory tests passed. Allocation injection verifies startup
+  cleanup and registration rollback/retry; macOS LeakSanitizer remains unavailable.
+  Native Linux/Windows/32-bit runs and actual scheduling behavior remain pending.
+  Stopped before step 14.

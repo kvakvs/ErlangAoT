@@ -17,7 +17,7 @@ add_test(NAME runtime_feature_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_feature_tests>" "-DFEATURE_NAME=garbage collection"
     -P "${PROJECT_SOURCE_DIR}/tests/abi/feature_output.cmake")
 
-foreach(suite IN ITEMS lifecycle lifecycle_failure memory)
+foreach(suite IN ITEMS lifecycle lifecycle_failure memory scheduler)
     add_executable(runtime_${suite} ${suite}.cpp)
     erlang_aot_project_options(runtime_${suite})
     target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)

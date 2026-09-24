@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
+#include <erlang_aot/runtime/scheduler.hpp>
 #include <iostream>
 #include <limits>
 #include <new>
@@ -172,6 +173,28 @@ void check_module_publication() {
     require(succeeded, "module allocation sweep never succeeded");
 }
 
+// Failed registry growth must leave both the entry and the once-only context marker unpublished.
+void check_scheduler_registration() {
+    using namespace erlang_aot::runtime;
+    const auto baseline = live_allocations;
+    auto runtime = Runtime::start();
+    require(runtime.has_value(), "scheduler fixture startup failed");
+    auto context = (*runtime)->create_context();
+    require(context.has_value(), "scheduler fixture context failed");
+    auto &scheduler = *(*runtime)->scheduler();
+    const auto retained = live_allocations;
+    remaining = 0;
+    const auto failed = scheduler.register_process(**context);
+    remaining = std::numeric_limits<std::size_t>::max();
+    require(failed == std::unexpected(SchedulerError::resource_limit), "wrong scheduler allocation failure");
+    require(live_allocations == retained && scheduler.process_count() == 0, "partial registration retained resources");
+    require(scheduler.register_process(**context).has_value(), "failed registration consumed once-only identity");
+    require((*runtime)->destroy_context(*context) == Status::ok, "registered context cleanup failed");
+    require(scheduler.process_count() == 0, "context cleanup retained registration");
+    runtime->reset();
+    require(live_allocations == baseline, "scheduler cleanup leaked");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
@@ -179,6 +202,7 @@ int main() {
         check_context_creation();
         check_registry_creation();
         check_module_publication();
+        check_scheduler_registration();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::cerr << error.what() << '\n';

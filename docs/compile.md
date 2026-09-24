@@ -16,6 +16,9 @@ or compiler BIF lowering is enabled.
 Step 12 adds [process memory ownership](runtime-memory.md), checked unsupported
 allocation/collection and immediate copying between owners. Heap values remain deferred.
 
+Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
+registration, checked transitions and ordered teardown without worker execution.
+
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.

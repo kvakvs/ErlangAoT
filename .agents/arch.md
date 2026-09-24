@@ -81,6 +81,16 @@
   cover host/continuation/mailbox/cursor state; signals own independent transit data.
   C++ cell resources require destruction, never byte relocation of shared handles.
   `docs/runtime-memory.md` defines units, errors, teardown and shared binary contracts.
+- Step 13 adds runtime-owned SchedulerService lifecycle bookkeeping, separate from
+  proposed Scheduler/Pool workers. Existing contexts register explicitly once;
+  records hold identity/state/suspension/terminal reason, never heap/context pointers.
+  begin/finish_dispatch record transitions only; no code, queue or budget runs.
+  Resume cannot wake waiting state; wake/signal/receive integration remains reserved.
+  remove retires a non-running identity; context destruction removes its record or
+  returns busy while running. Registration allocation failure leaves retry possible.
+  Shutdown closes new work but permits returns/inspection/removal. Runtime RAII
+  clears records, destroys contexts, releases code, then destroys the stopped service.
+  Host serialization remains mandatory. See docs/runtime-scheduler.md.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction

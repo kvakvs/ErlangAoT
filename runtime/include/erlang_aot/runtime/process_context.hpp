@@ -26,6 +26,7 @@ class ProcessIdentity final {
 
   private:
     friend class SchedulerPool;
+    friend class SchedulerService;
     friend class Runtime;
 
     struct RuntimeKey {
@@ -87,6 +88,7 @@ class ProcessContext final {
 
   private:
     friend class Scheduler;
+    friend class SchedulerService;
     friend class Runtime;
     friend class TermFactory;
     friend class Process;
@@ -99,6 +101,8 @@ class ProcessContext final {
     ProcessHeap heap_;
     // Retain future messages/receive state within this same owner; currently empty and lazy.
     Mailbox mailbox_;
+    // Retire scheduling identity on removal; successful registration may occur only once per context.
+    bool scheduler_registered_once_ = false;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options);
 };

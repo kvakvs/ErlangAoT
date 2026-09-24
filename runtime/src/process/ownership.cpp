@@ -47,6 +47,10 @@ Status Runtime::destroy_context(ProcessContext *context) noexcept {
     if (found == impl_->contexts.end()) {
         return Status::wrong_owner;
     }
+    const auto removed = impl_->scheduler.remove_process(context->identity());
+    if (!removed && removed.error() != SchedulerError::unknown_process) {
+        return Status::busy;
+    }
     impl_->contexts.erase(found);
     return Status::ok;
 }

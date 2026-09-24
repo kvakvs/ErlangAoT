@@ -1,8 +1,9 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: declarations without definitions, excluded from the build.
+// Worker/pool declarations remain sketches; the included SchedulerService is implemented without workers.
 // See processes.md for ordering, queue invariants and literal realtime ownership.
 #include "process.hpp"
+#include <erlang_aot/runtime/scheduler.hpp>
 
 #include <cstddef>
 #include <future>

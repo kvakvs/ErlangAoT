@@ -4,6 +4,8 @@
 #include <expected>
 
 namespace erlang_aot::runtime {
+class SchedulerService;
+
 struct RuntimeOptions {
     // Bound live context owners independently of future heap and atom budgets.
     std::size_t max_contexts = 1024;
@@ -35,6 +37,8 @@ class Runtime final {
 
     // Borrow the runtime-wide server while active; stopped runtimes return null.
     CodeServer *code_server() noexcept;
+    // Borrow lifecycle bookkeeping while active; no scheduler workers are started and stopped runtimes return null.
+    SchedulerService *scheduler() noexcept;
 
   private:
     // Retain contexts and service reservations independently of the public C++/generated ABI layout.

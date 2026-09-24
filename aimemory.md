@@ -1,3 +1,28 @@
+# Step 13 completion — 2026-09-25
+
+- One runtime-owned SchedulerService (canonical scheduler.hpp) implements serialized
+  lifecycle bookkeeping in src/scheduler/{state.hpp,registry.cpp,transitions.cpp}.
+  Common process enums/StepResult moved to canonical process_state.hpp; original
+  process/scheduler/mailbox headers remain worker/continuation/signal/receive sketches.
+  No worker, queue, reduction grant, wake operation, priority policy or code execution.
+- Contexts remain Runtime-owned and initially unregistered. Explicit registration
+  publishes a runnable entry then marks context once-only; removal retires identity
+  permanently, leaving context available for host cleanup. Failed vector growth
+  returns resource_limit without setting marker. Entries contain IDs/state only.
+- begin/finish_dispatch are bookkeeping boundaries. Suspend/resume outside dispatch
+  changes only flag; waiting stays waiting. Invalid/foreign/unknown/terminal/running
+  transitions rejected without mutation; terminal reasons retained until removal.
+  Invalid enum byte representations tested with bit_cast (enum casts trigger tidy).
+- destroy_context removes registration or returns BUSY while recorded running.
+  request_shutdown closes new work but permits inspection/returns/removal. Busy
+  Runtime.shutdown changes nothing. Runtime::Impl destructor clears registry before
+  contexts, then code, then service (member ordering); no real code runs to join yet.
+- Final fresh Debug build/all91 CTests + full Lizard/tidy pass. Release runtime-only
+  all16 and ASan/UBSan five scheduler/lifecycle/memory checks pass. Focused changed
+  production/test tidy/Lizard, combined header syntax, format, links and whitespace pass.
+  docs/runtime-scheduler.md defines future signal enqueue/handling, bounded owner
+  servicing, suspension and receive-tail handshake. Stop before step14.
+
 # Step 12 completion — 2026-09-25
 
 - Heap lifecycle moved to runtime/src/memory/heap.cpp; heap_policy.hpp centralizes

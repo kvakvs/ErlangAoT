@@ -75,6 +75,14 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   boundaries and future roots, alignment, transit and C++ resource teardown contracts.
   `tests/runtime/memory.cpp`: separate owners/budgets, overflow, copy and exit behavior;
   `lifecycle_failure.cpp` also checks memory operations under forced host allocation failure.
+- `runtime/include/erlang_aot/runtime/process_state.hpp`: shared process enums/StepResult;
+  `scheduler.hpp`: SchedulerService and lifecycle/error API. `runtime/src/scheduler/`
+  `state.hpp`: private identity/metadata registry; `registry.cpp`: once-only publication,
+  lookup, removal and admission; `transitions.cpp`: checked dispatch/return/suspension.
+  Runtime state owns the service and clears it before context/code teardown.
+  `docs/runtime-scheduler.md`: implemented boundary and reserved execution contracts;
+  `tests/runtime/scheduler.cpp`: lifecycle, isolation, growth and ordered teardown;
+  `lifecycle_failure.cpp`: scheduler registration allocation rollback/retry.
 - `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
   definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
   structural classification and native ABI integer encoding/decoding without LLVM.
@@ -99,7 +107,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   deferred signal handling and process state; context declarations moved to the host API;
   `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
   `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
-  Scheduling/receive declarations remain sketches; heap/mailbox lifecycle is implemented.
+  Worker/receive declarations remain sketches; SchedulerService and heap/mailbox lifecycle are implemented.
 - `runtime/include/erlang_aot/runtime/{callable,code_server}.hpp`: exact generic keys,
   frozen module registries, code-image ownership and pinned checked calls; former
   top-level headers forward here. `runtime/src/builtins/registry.cpp`: registration;

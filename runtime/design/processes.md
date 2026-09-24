@@ -1,7 +1,8 @@
 # Processes and scheduler — manual review skeleton
 
-Status: context lifecycle implemented in compilation step 9, 2026-09-25; scheduling
-remains proposed. [Runtime/context ownership](../../docs/runtime-lifecycle.md) now
+Status: context lifecycle is implemented (step 9), and step 13 adds
+[scheduler lifecycle bookkeeping](../../docs/runtime-scheduler.md), 2026-09-25.
+Worker execution and scheduling remain proposed. [Runtime/context ownership](../../docs/runtime-lifecycle.md) now
 provides startup, lazy heap/empty mailbox owners, lifetime invalidation and shutdown.
 No workers, allocator, continuation or signal delivery are implemented. The remaining
 C++23 declarations are review sketches, not a claim of OTP scheduling compatibility.
@@ -14,6 +15,15 @@ and [mailbox.hpp](../include/mailbox.hpp) for selective-receive cursors and asyn
 Review headers live in `runtime/include/`; design notes live in this directory.
 
 ## Ownership and startup
+
+The implemented `Runtime::scheduler()` exposes one `SchedulerService`, with
+explicit once-only registration of existing contexts, checked state transitions
+and shutdown admission. It stores identities and metadata only. Context destruction
+removes non-running registrations; running records require a return boundary first.
+Runtime teardown retires records before contexts and code. `begin_dispatch` and
+`finish_dispatch` only record lifecycle state; they never invoke a continuation.
+The `Scheduler`/`SchedulerPool` design below still reserves actual worker ownership.
+
 
 `SchedulerPool::start()` creates one `Scheduler` with one OS worker thread per
 available **logical CPU**, with a one-worker fallback if CPU discovery is unknown.
@@ -42,7 +52,7 @@ shows the execution state and ownership fields they control.
 
 `ProcessCode::resume(context, budget)` models compiler-generated async code with
 saved continuation state. The scheduler alone invokes it. Compiler-inserted safe
-points debit `TickBudget::consume(work)`; subtraction saturates at zero, requiring
+points debit `ReductionBudget::consume(work)`; subtraction saturates at zero, requiring
 a return. Every dispatch gets the same positive finite tick grant. Ticks are work
 units, not milliseconds, and no timer preempts a C++ function.
 

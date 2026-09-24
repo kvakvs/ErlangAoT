@@ -1,6 +1,7 @@
 #pragma once
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
+#include <erlang_aot/runtime/scheduler.hpp>
 #include <vector>
 
 namespace erlang_aot::runtime {
@@ -9,8 +10,12 @@ class Runtime::Impl final {
   public:
     // Preserve validated limits and the unique runtime identity before creating any contexts.
     Impl(RuntimeOptions options, std::uint64_t identity);
+    // Retire scheduling records before contexts, then release code while the stopped service still exists.
+    ~Impl();
     // Atom storage remains reserved until runtime atom initialization is implemented.
     std::shared_ptr<AtomStorage> atom_storage;
+    // Own one host-serialized lifecycle service; no worker pool or process continuations exist yet.
+    SchedulerService scheduler;
     // Own one server and destroy registrations before the future atom table.
     CodeServer code_server;
     // Retain admission policy and the runtime portion of each immutable process identity.

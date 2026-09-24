@@ -3,6 +3,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
     src/memory/heap.cpp src/memory/copy.cpp
+    src/scheduler/registry.cpp src/scheduler/transitions.cpp
     src/terms/immediate.cpp src/terms/term.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp
     src/modules/code_server.cpp)
@@ -20,6 +21,8 @@ target_sources(erlang_runtime PRIVATE
     src/terms/term_layout.hpp
     include/erlang_aot/runtime/base_types.hpp
     include/erlang_aot/runtime/terms.hpp
+    include/erlang_aot/runtime/process_state.hpp
+    include/erlang_aot/runtime/scheduler.hpp
     include/terms.hpp
 )
 set_target_properties(erlang_runtime PROPERTIES

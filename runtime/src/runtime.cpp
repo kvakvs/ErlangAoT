@@ -21,7 +21,10 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
 }
 } // namespace
 
-Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity) : options(options), identity(identity) {}
+Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
+    : scheduler(identity), options(options), identity(identity) {}
+
+Runtime::Impl::~Impl() { scheduler.clear(); }
 
 Runtime::Runtime(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
 
@@ -57,6 +60,8 @@ Status Runtime::shutdown() noexcept {
 }
 
 CodeServer *Runtime::code_server() noexcept { return impl_ ? &impl_->code_server : nullptr; }
+
+SchedulerService *Runtime::scheduler() noexcept { return impl_ ? &impl_->scheduler : nullptr; }
 
 std::size_t Runtime::context_count() const noexcept { return impl_ ? impl_->contexts.size() : 0; }
 } // namespace erlang_aot::runtime

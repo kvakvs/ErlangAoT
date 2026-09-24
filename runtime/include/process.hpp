@@ -1,11 +1,12 @@
 #pragma once
 
-// Scheduler, signals and continuations remain sketches; process-context lifecycle is implemented separately.
+// Execution, signals and continuations remain sketches; SchedulerService implements lifecycle bookkeeping.
 // Cooperative execution is a compiler continuation contract, not yet a C++ coroutine ABI.
 #include "mailbox.hpp"
 #include "process_heap.hpp"
 #include "terms.hpp"
 #include <erlang_aot/runtime/process_context.hpp>
+#include <erlang_aot/runtime/process_state.hpp>
 
 #include <cstdint>
 #include <deque>
@@ -17,24 +18,6 @@ class Scheduler;
 class SchedulerPool;
 class CodeServer;
 class AtomStorage;
-
-// Preserve exactly the requested five scheduler classes; these are not OS priorities.
-enum class ProcessPriority : std::uint8_t { idle, low, normal, high, realtime };
-// Suspended is orthogonal to execution state, so a waiting process stays waiting on resume.
-enum class ProcessState : std::uint8_t { runnable, running, waiting, exited };
-// Reserve the alternate backend without implementing per-process native threads.
-enum class ProcessBackend : std::uint8_t { cooperative, os_thread_placeholder };
-// Carry a runtime exit category; arbitrary Erlang reason terms remain a later extension.
-enum class ExitReason : std::uint8_t { normal, requested, killed, code_failure, heap_limit, runtime_shutdown };
-// A dispatch ends only at a compiler-inserted cooperative safe point or code completion.
-enum class StepDisposition : std::uint8_t { yielded, waiting, exited };
-
-struct StepResult final {
-    // Tell the scheduler whether to enqueue, park or reap this continuation.
-    StepDisposition disposition = StepDisposition::yielded;
-    // Supply the terminal reason only when disposition is exited.
-    ExitReason reason = ExitReason::normal;
-};
 
 // Count compiler-defined work units (reductions), never wall time; zero means a return is required.
 // One unit of ReductionBudget should be roughly equal to one Erlang function call.
