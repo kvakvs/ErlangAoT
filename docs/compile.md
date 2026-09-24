@@ -1,6 +1,6 @@
 # LLVM compilation contract
 
-Status: step 1 contract, frozen 2026-09-24. LLVM lowering, artifact emission and
+Status: contract frozen 2026-09-24; SDK integration implemented in step 2. LLVM lowering, artifact emission and
 runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
@@ -168,3 +168,38 @@ The full inspection/conflict, ownership, placeholder and validation contracts re
 in [the plan](../.agents/04-compile.md). Each numbered step requires its own full gate
 and commit. Cross-platform execution, generated objects and runtime behavior are not
 yet validated by this contract.
+
+## SDK integration validation (step 2)
+
+Compiler-enabled configuration now requires the SDK and creates private
+`erlang_codegen`/`erlang_llvm_sdk` targets; no new CLI actions are enabled.
+LLVM headers/definitions do not propagate to frontend or runtime compilation.
+C is enabled for LLVM package dependency probes; project implementations stay C++23.
+A configure-time C++23 link probe checks LLVM context/module ABI compatibility,
+with RTTI and exceptions retained in project code. `codegen_sdk` also executes
+that boundary in CTest.
+
+Automatic discovery searches `/usr`, `/usr/local`, `/opt/homebrew`, `/opt/local`,
+`/opt/llvm`, `/home/linuxbrew/.linuxbrew` and `/Library/Developer/Toolchains` on Unix,
+and LLVM under Program Files on Windows. Versioned distro and Homebrew layouts
+are included. These are global installation roots, not configurable private-copy
+fallbacks. Canonical paths reject repository copies and CMake build trees.
+`LLVM_DIR` explicitly selects a package beneath those roots; invalid selections
+fail without falling back. Compiler configuration reports searched locations,
+selected version/prefix, host triple and available backends. Runtime-only
+configuration does not load the dependency module.
+
+```sh
+CXXFLAGS= cmake --preset debug --fresh
+cmake --build --preset debug
+ctest --test-dir build/debug -R '^codegen_' --output-on-failure
+# Optional selection of the existing global reference installation:
+CXXFLAGS= cmake --preset debug --fresh -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cmake/llvm
+```
+
+Dependency tests use fresh configurations for automatic/explicit selection,
+missing SDKs, private-only prefixes, explicit private paths, incompatible release
+metadata and runtime-only builds. They never install or download dependencies.
+Only one distinct LLVM installation is available on the reference host; explicit
+selection is tested through its canonical Cellar path. A second independent global
+installation and native Windows/Linux SDK compatibility remain unvalidated.

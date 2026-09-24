@@ -1,5 +1,11 @@
 # LLVM plan progress — 2026-09-24
 
+- Step 2 complete: cmake/LLVM{Dependencies,Policy}.cmake restrict discovery to global
+  roots, stable23.1.x>=23.1.1, RTTI ON and a real C++23 ABI link probe. C enabled only
+  for LLVM dependency probes; imported erlang_llvm_sdk feeds private erlang_codegen.
+  All67 tests/full quality gate pass; CLI unchanged. One SDK exists; canonical-path
+  selection tested, second installation/native Windows/Linux pending.
+
 - Step 1 complete: docs/compile.md pins global Homebrew LLVM 23.1.1_1, stable 23.1.x
   >=23.1.1. Prefix /opt/homebrew/opt/llvm; real /opt/homebrew/Cellar/llvm/23.1.1_1.
   SDK Release/assertions OFF/RTTI ON/EH OFF, system libc++; X86/ARM/AArch64 available.

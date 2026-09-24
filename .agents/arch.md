@@ -2,7 +2,9 @@
 
 - `docs/compile.md` freezes the LLVM milestone: global stable LLVM 23.1.x (>=23.1.1),
   acyclic small-integer/parameter/direct-call subset and private tagged C ABI v1.
-  Step 1 is documentation only; generated-code execution remains future work.
+  Private `erlang_codegen` links the SDK through target-local `erlang_llvm_sdk`.
+  Global-only CMake discovery validates version/RTTI and host C++ linking; runtime-only
+  builds never load LLVM. CLI behavior and generated-code execution remain unchanged.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);
@@ -69,7 +71,8 @@
 
 - CMake fixes project targets to C++23 with warnings as errors, building the host
   tool `erlangaot` and a separate placeholder runtime.
-  Project validation uses C++23. No LLVM/backend/runtime execution is implemented yet.
+  Project validation uses C++23. LLVM SDK linkage is implemented; lowering and
+  generated-code/runtime execution remain future work.
   Shared Boost >=1.90 discovery supplies header-only Multiprecision to compiler and
   runtime; runtime consumers inherit its system includes. Root CMake also supplies
   Boost system includes to every project target for orphan-header IDE contexts.

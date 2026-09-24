@@ -1,3 +1,4 @@
+include(${PROJECT_SOURCE_DIR}/cmake/LLVMDependencies.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
 add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
     src/parsing/token_syntax.cpp src/parsing/operator_info.cpp
@@ -39,3 +40,9 @@ target_link_libraries(erlang_aot PRIVATE erlang_aot_abi)
 add_subdirectory(src/project)
 
 target_link_libraries(erlang_aot PRIVATE erlang_project)
+
+# Keep all LLVM usage private; the CLI continues to use its existing compile placeholder.
+add_library(erlang_codegen STATIC src/codegen/sdk.cpp)
+erlang_aot_project_options(erlang_codegen)
+target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk)
+target_link_libraries(erlang_aot PRIVATE erlang_codegen)

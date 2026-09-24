@@ -24,6 +24,8 @@ Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 Requirements:
 
 - CMake 3.28+ and a C++23-capable compiler.
+- Globally installed LLVM 23.1.x (>=23.1.1) C++ SDK for compiler builds;
+  see [SDK setup and compilation contract](docs/compile.md). No LLVM download fallback is provided.
 - Boost 1.90+ with Boost.Multiprecision for compiler and runtime; the compiler also
   requires Boost.Parser. Multiprecision is header-only and needs no Boost binary library.
 - toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
@@ -34,7 +36,7 @@ On macOS:
 
 ```sh
 xcode-select --install
-brew install cmake boost erlang tomlplusplus
+brew install cmake boost erlang tomlplusplus llvm@23
 ```
 
 From the repository root:
@@ -64,6 +66,7 @@ Pass these options when configuring to override defaults:
 | `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
 | `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
 | `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select an Erlang installation; versions below 29 are rejected |
+| `-DLLVM_DIR=/global/prefix/lib/cmake/llvm` | Select an existing global LLVM 23.1.x SDK |
 | `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
 | `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
 | `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |

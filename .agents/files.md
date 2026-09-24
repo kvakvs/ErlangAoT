@@ -17,7 +17,12 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `ErlangVersion.escript`: host OTP discovery/version checks.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
-- `compiler/CMakeLists.txt`: frontend library and executable; `runtime/src/runtime.cpp`
+- `cmake/LLVMDependencies.cmake`, `LLVMPolicy.cmake`, `probes/llvm.cpp`: global-only
+  LLVM 23.1.x discovery, path/version policy and host ABI link probe.
+- `compiler/src/codegen/sdk.{hpp,cpp}`: private SDK version boundary;
+  `tests/compiler/codegen/{sdk.cpp,dependency.cmake,CMakeLists.txt}`: linked smoke,
+  discovery/rejection fixtures and LLVM-independent runtime configuration/build.
+- `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
   `base_types.hpp`: word types, 64-byte heap-binary word threshold and raw/resolved tag enums; `terms.hpp`: opaque C++ API,

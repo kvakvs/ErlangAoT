@@ -274,3 +274,5 @@ add_test(NAME parser_binaries COMMAND parser_binaries)
 set_tests_properties(parser_binaries PROPERTIES TIMEOUT 20)
 
 add_subdirectory(compiler/project)
+
+add_subdirectory(compiler/codegen)

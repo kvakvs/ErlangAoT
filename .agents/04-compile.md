@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: step 1 complete, 2026-09-24. Steps 2–46 remain pending.
+Status: steps 1–2 complete, 2026-09-24. Steps 3–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -15,8 +15,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a placeholder
-static library, `erlang_aot_abi` an empty interface target; no LLVM integration or
-generated-code ABI exists. Planning found neither `llvm-config` on PATH nor the
+static library, `erlang_aot_abi` an empty interface target; global LLVM SDK discovery/linkage is implemented, while lowering and the
+generated-code ABI remain pending. Planning found neither `llvm-config` on PATH nor the
 usual Homebrew LLVM prefixes; this was not an exhaustive SDK inventory.
 
 ## Runtime API sketches to build upon
@@ -884,3 +884,12 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   Fresh Debug compiler+runtime configure/build, all 65 CTests, make format,
   Lizard, clang-tidy and git diff --check passed. Native reference: macOS arm64;
   other native platforms and generated-code execution remain pending.
+
+- Step 2 (2026-09-24): private `erlang_codegen` and global-only LLVM discovery/link
+  probe implemented without CLI changes. Automatic and canonical-path selection,
+  missing/private-only/private-path rejection, incompatible version policy and
+  runtime-only configure/build passed; no download/bootstrap artifacts appeared.
+  Only one distinct global SDK is installed; selection of a second installation
+  and native Linux/Windows remain pending. Fresh full Debug configure/build,
+  all 67 CTests, make format, Lizard, clang-tidy and git diff --check passed;
+  compile commands retain C++23/-Werror with LLVM includes confined to codegen/tests.
