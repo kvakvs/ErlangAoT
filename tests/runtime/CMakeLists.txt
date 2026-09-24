@@ -6,6 +6,7 @@ add_test(NAME runtime_term_tag COMMAND runtime_term_tag_tests)
 add_executable(runtime_term_layout_tests term_layout.cpp)
 erlang_aot_project_options(runtime_term_layout_tests)
 target_link_libraries(runtime_term_layout_tests PRIVATE erlang_runtime)
+target_include_directories(runtime_term_layout_tests PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src/terms")
 add_test(NAME runtime_term_layout COMMAND runtime_term_layout_tests)
 
 add_executable(runtime_feature_tests features.cpp)
@@ -31,3 +32,8 @@ add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
     "-DHOST_CXX=${CMAKE_CXX_COMPILER}" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/link.cmake")
 set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)
+
+add_executable(runtime_immediate_tests immediate.cpp)
+erlang_aot_project_options(runtime_immediate_tests)
+target_link_libraries(runtime_immediate_tests PRIVATE ErlangAoT::generated_program)
+add_test(NAME runtime_immediate COMMAND runtime_immediate_tests)

@@ -1,4 +1,5 @@
 #include <erlang_aot/runtime/runtime.hpp>
+#include <erlang_aot/runtime/terms.hpp>
 #include <type_traits>
 
 using erlang_aot::abi::v1::GeneratedFunction;
@@ -26,7 +27,8 @@ int main() {
     }
     GeneratedFunction *entry = identity;
     const TermWord argument = 0x2af;
-    const bool matched = entry(*context, &argument) == argument;
+    const auto result = entry(*context, &argument);
+    const bool matched = erlang_aot::runtime::decode_integer(result) == 42;
     const auto destroyed = (*runtime)->destroy_context(*context);
     const auto stopped = (*runtime)->shutdown();
     return matched && destroyed == Status::ok && stopped == Status::ok ? 0 : 3;

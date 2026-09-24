@@ -1,10 +1,14 @@
-# Runtime term API — manual review sketch
+# Runtime term API — immediate services and heap sketch
 
-Status: immediate ABI defined in compilation step 7, 2026-09-24. Heap allocation,
-term services, rooting and collection remain proposed and unimplemented.
+Status: immediate word services implemented in compilation step 10, 2026-09-25.
+[Runtime term boundary](../../docs/runtime-terms.md) documents checked classification
+and integer encoding/decoding. Host handles, heap allocation, rooting and collection
+remain proposed and unimplemented.
 [terms.hpp](../include/terms.hpp) preserves the one-word public value API;
-[term_layout.hpp](../include/term_layout.hpp) contains compile-checked private prefixes.
-These headers are listed for IDE navigation and compiled by focused tests.
+[term_layout.hpp](../src/terms/term_layout.hpp) contains compile-checked private prefixes.
+Implemented word/tag/error declarations live in
+[erlang_aot/runtime/terms.hpp](../include/erlang_aot/runtime/terms.hpp);
+heap structs are private runtime sources, compiled by focused layout tests.
 [process_heap.hpp](../include/process_heap.hpp) reserves process storage and graph copying.
 [atom_storage.hpp](../include/atom_storage.hpp) and [atom_storage.md](atom_storage.md)
 reserve runtime-wide interning. Compiled metadata will record atom spellings, never
@@ -117,7 +121,8 @@ Distribution and serialization, including imports of remote identities, are defe
 
 ## Values, ownership and errors
 
-The following are proposed service contracts; step 7 implements only raw integer encoding.
+The following are proposed host-handle contracts. Step 10 implements raw word
+services only; these neither construct host handles nor register process roots.
 Step 9 supplies `ProcessContext::lifetime()`: host binding/root metadata will lock or
 retain its `ContextLifetime` token and check liveness before touching the context.
 Destruction clears liveness before mailbox/heap release; retaining the token does
@@ -253,9 +258,9 @@ errors with host allocation exceptions, and whether bulk extraction is sufficien
 before adding iterators. Immediate tag allocation is fixed by ABI v1; GC/root machinery, heap services
 and runtime bridging remain implementation decisions.
 
-After approval, implement in small steps under `runtime/src/terms/` and move the
-approved API declarations into `runtime/include/erlang_aot/runtime/`; keep heap
-structs private under `runtime/src/terms/`. Define all opaque
+Continue implementing host services in small steps under `runtime/src/terms/` and
+move each implemented declaration into `runtime/include/erlang_aot/runtime/`.
+Heap structs now reside privately under `runtime/src/terms/`. Define all opaque
 dependencies and review their lifetimes before enabling identity/descriptor APIs.
 Keep unsupported capabilities explicit; a declaration does not expand the compiler
 subset. Future tests must cover all predicates, bignum/narrowing boundaries,

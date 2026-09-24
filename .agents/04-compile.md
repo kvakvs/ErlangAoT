@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–9 complete, 2026-09-25. Steps 10–46 remain pending.
+Status: steps 1–10 complete, 2026-09-25. Steps 11–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -15,7 +15,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
-with feature reporting and runtime/context lifecycle; term services remain pending.
+with feature reporting, runtime/context lifecycle and immediate word services.
+Host Term/TermFactory and heap services remain pending.
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
@@ -33,9 +34,9 @@ update this inventory and affected steps together when sketches change.
 
 | Header under `runtime/include/` | Sketch                                                                                           | Steps         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
-| `base_types.hpp`                | Target `Word`, `ERL_WORD_BITS`, alignment                                                        | 7, 10, 12     |
-| `terms.hpp`                     | `Term`, tags, `TermResult`, `AtomId`, process-bound `TermFactory`, explicit graph copies         | 7, 9, 10, 12  |
-| `term_layout.hpp`               | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
+| `base_types.hpp`                | Forwards implemented target word/tag definitions to namespaced runtime API                                                        | 7, 10, 12     |
+| `terms.hpp`                     | Host `Term`/`TermFactory` sketch; word/tag/error API moved to namespaced header         | 7, 9, 10, 12  |
+| `../src/terms/term_layout.hpp`   | Private slots, headers, heap layouts, Multiprecision `Bignum`, assertions; not a public/wire ABI | 7, 10, 12     |
 | `atom_storage.hpp`              | Runtime-wide stable atom IDs, lookup, options/statistics, collection placeholder                 | 9, 10, 14, 28 |
 | `process_heap.hpp`              | Lazy owned heap/accounting implemented; allocation, graph addition, collection reserved          | 9, 12         |
 | `binary_heap_object.hpp`        | Shared immutable word vector and optional valid tail bits                                        | 12            |
@@ -67,6 +68,15 @@ was subsequently removed at user request; the C++ Runtime API is the sole lifecy
 interface, with scoped `Status` and constexpr ABI constants. [Lifecycle contract](../docs/runtime-lifecycle.md)
 documents status reporting, host serialization and the mandatory
 `ErlangAoT::generated_program` link target.
+
+Step 10 adds [immediate word services](../docs/runtime-terms.md) in
+`erlang_aot/runtime/terms.hpp`: checked structural classification and native integer
+encoding/decoding using ABI v1. Shared word/tag/error declarations moved into the
+namespaced public headers; the host Term/TermFactory sketch remains unimplemented.
+Heap structs moved to `runtime/src/terms/term_layout.hpp`, visible only to runtime
+internals and the focused layout test. Atom/pid/port tag recognition is structural,
+not identity validation. Header/catch and malformed empty encodings fail; heap tags
+are rejected without dereferencing. No host ownership or atom table is fabricated.
 
 Carry these ownership and service contracts into implementation:
 
@@ -460,7 +470,8 @@ planning-only creation of this document does not run or claim these code gates.
 ### 7. Define the immediate-term ABI
 
 - Derive the term-word contract from `runtime/include/base_types.hpp`, the tag
-  sketch in `terms.hpp` and the private `Term`/header layout in `term_layout.hpp`.
+  sketch in `terms.hpp` and the `Term`/header layout now located privately in
+  `runtime/src/terms/term_layout.hpp`.
   Reconcile definitions and assertions while preserving public `Term` access and
   future heap references. Record the chosen encoding in the sketch and versioned ABI.
 - Add versioned ABI headers in `abi/include/erlang_aot/abi/` for term encoding,
@@ -493,8 +504,9 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 10. Add the runtime term-service boundary
 
-- Use `runtime/design/terms.md` and `runtime/include/{base_types,terms,term_layout}.hpp`
-  as the starting contract and extend it into the runtime term library. Move implemented API
+- Use `runtime/design/terms.md`, `runtime/include/{base_types,terms}.hpp` and the
+  private `runtime/src/terms/term_layout.hpp` as the starting contract and extend it
+  into the runtime term library. Move implemented API
   declarations into `runtime/include/erlang_aot/runtime/` and keep heap layout
   structs private under `runtime/src/terms/`; update the sketch as choices settle.
 - Add `runtime/src/terms/` services for immediate-term classification and checked
@@ -1047,3 +1059,23 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   successful runtime linking and failure when omitted. Native archive inspection
   confirmed removal of the former C lifecycle symbols. Native Linux/Windows remain
   pending. No later numbered compilation step was started.
+
+
+- Step 10 (2026-09-25): added LLVM-free immediate word classification and checked
+  native integer encoding/decoding using the shared ABI. Moved implemented word,
+  tag and error declarations into `erlang_aot/runtime/`; moved heap prefixes into
+  private `runtime/src/terms/`. Structural atom/pid/port recognition does not validate
+  registry identities; malformed empty/header/catch encodings fail and heap tags
+  are rejected without dereferencing. Host Term/TermFactory ownership, heap services
+  and atom construction remain reserved under the existing contracts.
+  Fresh automatic-SDK Debug compiler+runtime configure/build, all 86 CTests,
+  full Lizard/clang-tidy gate, make format/dry verification and git diff --check
+  passed. Focused test-source clang-tidy/Lizard and local documentation links passed.
+  Native LLVM constants independently agree with runtime encoding/decoding across
+  signed boundaries. Release runtime-only build passed all 11 tests, including the
+  mandatory generated-program consumer; compile flags/archive symbols confirm no
+  compiler/LLVM dependency. ASan/UBSan passed all 3 focused runtime term tests,
+  including malformed and hostile pointer-shaped inputs. Existing ABI codec tests
+  exercise both 32/64-bit widths; native evidence here is macOS arm64 only.
+  Native Windows/Linux/32-bit runtimes and generated Erlang execution remain pending.
+  CLI behavior is unchanged. Stopped before step 11.

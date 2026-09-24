@@ -174,7 +174,7 @@ lifetime token. Root registration and `TermFactory` binding remain future work.
 Explicit runtime shutdown requires contexts to be destroyed first; C++ RAII cleanup
 invalidates remaining contexts before releasing reserved runtime-wide services.
 
-Proposed allocation uses word-aligned chunks compatible with [term_layout.hpp](../include/term_layout.hpp).
+Proposed allocation uses word-aligned chunks compatible with [term_layout.hpp](../src/terms/term_layout.hpp).
 Appending chunks never relocates earlier allocations. Allocations are nonzero,
 rounded to target words with checked arithmetic; limits cover total backing capacity,
 including padding and unused chunk tails. Grow by at least one configured chunk,

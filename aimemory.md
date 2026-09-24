@@ -1,3 +1,23 @@
+# Step 10 completion — 2026-09-25
+
+- Implemented the raw word boundary only: runtime/include/erlang_aot/runtime/
+  {base_types,terms}.hpp + runtime/src/terms/immediate.cpp. classify_immediate checks
+  canonical empty encodings, rejects headers/catches as invalid_encoding and heap
+  tags as wrong_type without dereference; atom/pid/port classification is structural.
+  encode_integer/decode_integer use NativeIntegerEncoding with explicit errors.
+  Raw word services have no context/ownership. Term/TermFactory stay declarations
+  until external roots/lifetime tracking exist; do not fabricate rooted handles.
+  Existing atom-storage/module-root contract unchanged; no separate atom table.
+- Private heap layout moved from runtime/include/term_layout.hpp to src/terms/;
+  only its layout test has the private include path. Old base_types.hpp forwards
+  sketch consumers; old terms.hpp retains host sketch and imports canonical types.
+- Fresh Debug automatic SDK build/all86 CTests and full Lizard/clang-tidy passed.
+  Focused test-source tidy/Lizard, format dry check, links/whitespace passed.
+  Release runtime-only all11 pass; flags/archive have no compiler/LLVM dependency.
+  ASan/UBSan runtime tag/layout/immediate all3 pass. LLVM constant agreement fixture
+  is test-only and native width; ABI tests separately cover32/64. Native foreign
+  runtimes and generated Erlang execution remain pending. Stop before step11.
+
 # LLVM plan progress — 2026-09-25
 
 - User explicitly removed C compatibility after step9. All APIs are C++23 for

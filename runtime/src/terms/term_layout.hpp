@@ -2,13 +2,13 @@
 
 // Private target-runtime layout reservations, not an allocator, public ABI or wire format.
 // Trailing storage starts after each fixed prefix and needs checked allocation and object lifetimes.
-#include "base_types.hpp"
 #include "binary_heap_object.hpp"
 #include "callable.hpp"
 #include "terms.hpp"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cstddef>
+#include <erlang_aot/runtime/base_types.hpp>
 #include <memory>
 #include <type_traits>
 

@@ -50,15 +50,18 @@
   Immutable word arrays carry optional valid-tail-bit counts; final shared-owner
   destruction releases the vector directly. No binary heap, pool or evacuation service.
   Checked object creation remains an API sketch without an implementation.
-- Runtime terms have a sketch in `runtime/include/` with notes in `runtime/design/`: an opaque C++
-  `Term`/factory API over private word-aligned heap structs and traceable one-word
-  slots and immutable updates. Term/tag/header are one word with explicit low-bit
-  masks instead of C++ bitfield/union layout; fixed prefixes reserve trailing storage.
-  Boost bignums retain their stronger native alignment; heap/root/GC services remain
-  unimplemented. CMake lists headers for IDEs; focused tests compile their assertions.
-- Native runtime tests compile `terms.hpp` to check `TermTag::get_kind()` against all
-  64 expected tag combinations and private layout assertions; independent ABI tests
-  cover integer encoding at both widths. Runtime-only builds remain LLVM-free.
+- Step 10 adds LLVM-free immediate word services under `runtime/src/terms/` with public
+  `erlang_aot/runtime/{base_types,terms}.hpp`: structural immediate classification
+  and checked native integer encode/decode sharing ABI v1. Headers/catches and
+  noncanonical empty values fail; heap tags return wrong_type without dereferencing.
+  Atom/pid/port recognition does not validate runtime IDs. Raw words have no host
+  ownership; Term/TermFactory remain sketches until roots/lifetime tracking exists.
+  Heap layouts now live privately in `runtime/src/terms/term_layout.hpp`; allocation,
+  bignums, graph copying and GC remain reserved. Term/tag/header retain one-word
+  representation; Boost bignums honor stronger alignment. No atom table is added.
+  Runtime tests cover boundaries, malformed words and all 64 tags; a compiler-side
+  fixture checks independently constructed LLVM constants against runtime services.
+  Runtime-only builds and the generated-program consumer remain LLVM-free.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction

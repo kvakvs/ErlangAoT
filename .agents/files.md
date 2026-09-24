@@ -69,12 +69,16 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback;
   `lifecycle_output.cmake`: silence; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer
   link/run through the mandatory target and missing-runtime link failure.
-- `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
-  `base_types.hpp`: word types, 64-byte heap-binary word threshold and raw/resolved tag enums; `terms.hpp`: opaque C++ API,
-  explicit cross-heap copy declarations and constexpr `TermTag::get_kind()` decoding into `TermKind`, including empty tuples/lists;
-  `term_layout.hpp`: private heap struct
-  sketch and size/offset assertions. Listed on the runtime CMake target for IDE
-  navigation, without runtime service implementations or header compilation.
+- `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
+  definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
+  structural classification and native ABI integer encoding/decoding without LLVM.
+  `runtime/include/base_types.hpp` forwards sketch consumers to the canonical types;
+  `runtime/include/terms.hpp` retains only proposed host Term/TermFactory services.
+  `runtime/src/terms/term_layout.hpp`: private heap prefixes and layout assertions.
+  `docs/runtime-terms.md`: implemented word boundary; `runtime/design/terms.md`:
+  remaining host ownership, heap/GC and immutable-value contract.
+  `tests/runtime/immediate.cpp`: boundaries, malformed immediates, heap-tag rejection;
+  `tests/compiler/codegen/runtime_terms.cpp`: independent LLVM constant agreement.
 - `tests/runtime/{CMakeLists.txt,term_tag.cpp}`: native CTest `runtime_term_tag`, available
   with the runtime independently of the compiler; explicit expected values cover all 64 tag combinations.
 - `runtime/include/binary_heap_object.hpp`: shared binary objects owning immutable

@@ -38,3 +38,12 @@ target_link_libraries(codegen_features PRIVATE erlang_aot_abi)
 add_test(NAME codegen_feature_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:codegen_features>" "-DFEATURE_NAME=pattern matching"
     -P "${PROJECT_SOURCE_DIR}/tests/abi/feature_output.cmake")
+
+if(ERLANG_AOT_BUILD_RUNTIME)
+    add_executable(codegen_runtime_terms runtime_terms.cpp)
+    erlang_aot_project_options(codegen_runtime_terms)
+    target_include_directories(codegen_runtime_terms PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+    target_link_libraries(codegen_runtime_terms PRIVATE erlang_codegen erlang_frontend erlang_llvm_sdk
+        ErlangAoT::generated_program)
+    add_test(NAME codegen_runtime_terms COMMAND codegen_runtime_terms)
+endif()

@@ -7,6 +7,8 @@ implemented in steps 2–7. Step 8 adds the shared
 reporters and typed C++ status results; placeholder integration remains later work.
 Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mandatory
 `ErlangAoT::generated_program` CMake link target without LLVM dependencies.
+Step 10 adds [runtime immediate-term services](runtime-terms.md): checked tag
+classification and native small-integer encoding/decoding, independently of LLVM.
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.

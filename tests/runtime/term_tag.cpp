@@ -1,4 +1,4 @@
-#include "terms.hpp"
+#include <erlang_aot/runtime/terms.hpp>
 
 #include <array>
 #include <cstddef>
