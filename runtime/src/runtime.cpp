@@ -1,3 +1,2 @@
-// Placeholder translation unit so the independent runtime archive can be built.
-// Runtime behavior and the generated-code ABI have not been implemented yet.
+// Lifecycle remains deferred to compilation-plan step 9; feature reporting lives in diagnostics/.
 namespace erlang_aot::runtime {}

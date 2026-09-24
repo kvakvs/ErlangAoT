@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–7 complete, 2026-09-24. Steps 8–46 remain pending.
+Status: steps 1–8 complete, 2026-09-24. Steps 9–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -14,8 +14,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `ast::Module`. Parsing does not establish semantic validity. The driver's
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
-check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a placeholder
-static library. `erlang_aot_abi` supplies versioned term/context/function headers
+check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
+with feature reporting; lifecycle and term services remain pending. `erlang_aot_abi` supplies versioned term/context/function headers
 and checked immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
 owners retain batch ASTs, LLVM state and results; Erlang lowering and driver integration
@@ -25,8 +25,8 @@ remain deferred. The selected global LLVM installation is recorded in `docs/comp
 
 Review headers in `runtime/include/` and notes in `runtime/design/` define evolving
 service/ownership proposals, not completed plan steps. CMake lists the prototype
-headers for IDE navigation; only `src/runtime.cpp` is compiled. Extend these APIs
-and update this inventory and affected steps together when sketches change.
+headers for IDE navigation; `src/runtime.cpp` and `src/diagnostics/features.cpp`
+are compiled. Extend these APIs and update this inventory and affected steps together when sketches change.
 
 | Header under `runtime/include/` | Sketch                                                                                           | Steps         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------- |
@@ -255,6 +255,12 @@ Unused placeholders, successful lifecycle, optional optimization skips and sound
 generic fallback stay silent. Distinguish deferred features from invalid/unknown
 inputs, missing SDKs, I/O errors and bugs. Remove stale catalog/capability paths only
 after implementing and testing semantics; never contaminate stdout or artifacts.
+
+Step 8's [reporting contract](../docs/features.md) records the canonical catalog,
+existing/planned extension points, shared context spelling, failure propagation,
+compiler delivery flags and runtime C status/sink behavior. Reporters are tested
+in isolation; steps 14/17 place actual service/capability handlers. Existing CLI
+frontend behavior and ordinary diagnostics remain unchanged.
 
 ### Artifact and command contract
 
@@ -971,3 +977,21 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   full Lizard/clang-tidy, focused test quality, local links and git diff --check passed.
   Full native foreign runtime layouts/execution remain pending; cross-target checks
   are not native platform validation. Stopped before step 8.
+
+- Step 8 (2026-09-24): shared catalog now records 23 stable deferred-feature IDs/
+  names, owners, boundaries, status, integration steps and focused reporting tests.
+  One escaped context formatter serves separate compiler/runtime reporters.
+  Compiler rejection latches batch failure, discards artifacts and marks diagnostic
+  delivery to prevent future driver replay. Runtime FeatureFailure reports once per
+  operation via a borrowed sink (default stderr), contains delivery/format exceptions
+  and returns fixed-width C status. Unknown IDs remain ordinary invalid-input errors.
+  Catalog compatibility, every entry, full/partial/escaped context, retries/propagation,
+  independent failures, artifact cleanup and throwing/nonthrowing sink failures passed.
+  Subprocess tests verified one stderr report/nonzero exit, empty stdout and silence
+  without a reached placeholder. Fresh full Debug compiler+runtime configure/build,
+  all 80 CTests, make format, full Lizard/clang-tidy, focused test quality, local links
+  and git diff --check passed. Runtime-only build/all 6 tests and LLVM-free link passed;
+  runtime reporting ASan/UBSan and C status syntax/values across six triples passed.
+  Native foreign-platform execution remains pending. Existing/planned extension
+  points are documented in docs/features.md; actual capability/service handlers and
+  lifecycle remain their later steps. CLI behavior is unchanged. Stopped before step 9.

@@ -1,0 +1,12 @@
+# Capture real process streams rather than substituting the reporters' default stderr sink.
+execute_process(COMMAND "${PROGRAM}" stderr RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+if(NOT status STREQUAL "1")
+    message(FATAL_ERROR "Unhandled feature failure did not exit nonzero: ${status}")
+endif()
+if(NOT output STREQUAL "" OR NOT errors STREQUAL "[${FEATURE_NAME}] notimpl: src/example.erl:12:5\n")
+    message(FATAL_ERROR "Wrong stream, duplicate report or wrong context: stdout=${output} stderr=${errors}")
+endif()
+execute_process(COMMAND "${PROGRAM}" silent RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+if(NOT status STREQUAL "0" OR NOT output STREQUAL "" OR NOT errors STREQUAL "")
+    message(FATAL_ERROR "Unused placeholder was not silent: ${status}: ${output}${errors}")
+endif()

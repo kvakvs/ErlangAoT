@@ -20,7 +20,13 @@
   ABI v1 headers share a C-compatible unsigned term/context/function contract;
   constexpr integer codecs check signed 28/60-bit payloads with low tag 0xf.
   LLVM term/signature types derive from the selected target, never host word size.
-  CLI integration, lowering and generated-code execution are still pending.
+  Step8 shares stable deferred-feature IDs/names, owner/step/test metadata and an
+  escaped context formatter in the ABI headers. Compiler reject_feature latches
+  batch failure, clears outputs and marks diagnostics already reported; runtime
+  FeatureFailure reports once per operation through a borrowed sink (default stderr)
+  and returns fixed-width C status, containing delivery exceptions. No LLVM dependency
+  enters runtime reporting. Actual capability/service handlers and CLI integration
+  remain later steps; lowering and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);

@@ -14,7 +14,7 @@ add_test(NAME codegen_dependency COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/dependency.cmake")
 set_tests_properties(codegen_dependency PROPERTIES TIMEOUT 120)
 
-foreach(suite IN ITEMS results ownership target verification emission term_abi)
+foreach(suite IN ITEMS results ownership target verification emission term_abi features)
     add_executable(codegen_${suite} ${suite}.cpp)
     erlang_aot_project_options(codegen_${suite})
     target_include_directories(codegen_${suite} PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
@@ -33,3 +33,8 @@ foreach(backend IN LISTS test_backends)
     target_compile_definitions(codegen_emission PRIVATE "ERLANG_AOT_LLVM_${backend}=1")
     target_compile_definitions(codegen_term_abi PRIVATE "ERLANG_AOT_LLVM_${backend}=1")
 endforeach()
+
+target_link_libraries(codegen_features PRIVATE erlang_aot_abi)
+add_test(NAME codegen_feature_output COMMAND "${CMAKE_COMMAND}"
+    "-DPROGRAM=$<TARGET_FILE:codegen_features>" "-DFEATURE_NAME=pattern matching"
+    -P "${PROJECT_SOURCE_DIR}/tests/abi/feature_output.cmake")

@@ -20,6 +20,8 @@ struct CompilationDiagnostic {
     std::optional<LogicalLocation> location;
     // Attach semantic module identity when known; context-wide SDK diagnostics leave it empty.
     std::string module_name;
+    // Mark owner-side delivery attempts so future drivers never replay an already reported failure.
+    bool reported = false;
 };
 
 // Own a batch outcome independently of its compiler state; inspection spans borrow this owner.

@@ -37,6 +37,15 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `abi/include/erlang_aot/abi/{v1.h,term.hpp}`: C-compatible versioned term/context/
   generated-function declarations and checked target-width immediate integer codecs.
   `tests/abi/integers.cpp`: boundaries, signed round trips, overflow and wrong-tag checks.
+- `abi/include/erlang_aot/abi/{features.hpp,feature_diagnostic.hpp,status.h}`:
+  stable deferred-feature catalog/owner/boundary/step/test metadata, escaped context
+  formatting and C status codes; `docs/features.md` records integration and propagation.
+- `compiler/src/codegen/features.{hpp,cpp}`: fail-once batch reporter, owned context,
+  stderr delivery and reported flag; `runtime/include/erlang_aot/runtime/features.hpp`,
+  `runtime/src/diagnostics/features.cpp`: per-operation sink/report latch, C status,
+  stderr default and exception containment without LLVM.
+  `tests/{abi,compiler/codegen,runtime}/features.cpp` and `tests/abi/feature_output.cmake`:
+  catalog compatibility, all entries, context/errors and subprocess output/silence checks.
 - `compiler/src/codegen/term_abi.{hpp,cpp}`: target-derived LLVM word/function types;
   `tests/compiler/codegen/term_abi.cpp`: native/cross layouts, signed LLVM constants,
   C-convention object emission and missing-target errors.
@@ -50,7 +59,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   batch outputs. `tests/compiler/codegen/verification.cpp`: IRBuilder synthetic IR,
   malformed bodies/globals, post-verification mutation, target mismatches and failure latching.
 - `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
-  and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
+  and `runtime/CMakeLists.txt`: runtime archive with lifecycle reserved and reporting implemented;
+  `abi/CMakeLists.txt`: header-only ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;
   `base_types.hpp`: word types, 64-byte heap-binary word threshold and raw/resolved tag enums; `terms.hpp`: opaque C++ API,
   explicit cross-heap copy declarations and constexpr `TermTag::get_kind()` decoding into `TermKind`, including empty tuples/lists;

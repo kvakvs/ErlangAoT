@@ -2,7 +2,9 @@
 
 Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
 target setup, IR verification, in-memory object emission and the immediate-term ABI
-implemented in steps 2–7.
+implemented in steps 2–7. Step 8 adds the shared
+[deferred-feature catalog and reporting contract](features.md), with separate compiler/runtime
+reporters and explicit C status transport; placeholder integration remains later work.
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.

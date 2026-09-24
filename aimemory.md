@@ -1,5 +1,22 @@
 # LLVM plan progress — 2026-09-24
 
+- Step8 implementation: ABI features.hpp holds23 explicit stable IDs/names plus
+  invalid0 sentinel, owners/boundaries/status/plan-step/focused-test metadata.
+  feature_diagnostic.hpp formats source/module/target/operation with control-byte
+  escaping; unknown IDs are ordinary errors. status.h defines uint32 C failure
+  codes with UINT32_C constants (portable C, avoids enum-size ambiguity).
+  Compiler reject_feature fails incomplete batch once, clears artifacts, retains
+  owned diagnostic context and reported=true delivery flag; default stderr with
+  injectable ostream. Runtime FeatureFailure is per-operation, noncopy/move,
+  borrows sink, defaults to one fwrite line, catches delivery/format exceptions,
+  returns status only; no LLVM/lifecycle/service implementation dependency.
+  docs/features.md maps actual/planned extension points. No CLI behavior change;
+  actual capability/runtime placeholder placement stays steps17/14.
+  Fresh full Debug build/all80 CTests, focused tidy/Lizard, runtime-only all6 tests,
+  six-triple C status syntax, runtime reporting ASan/UBSan, formatting/links/whitespace
+  passed. Full step8 quality gate passed. Implementation and docs are complete.
+  Step8 completed as requested; stop before9.
+
 - Step7 implementation: abi/v1.h exposes uintptr_t term, opaque context, C/cdecl
   function typedef; term.hpp has explicit32/64 checked constexpr integer codecs.
   Low nibble0xf, signed payload28/60; encode unsigned shifts, decode sign without
