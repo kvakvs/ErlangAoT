@@ -18,7 +18,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
 - `cmake/LLVMDependencies.cmake`, `LLVMPolicy.cmake`, `probes/llvm.cpp`: global-only
-  LLVM 23.1.x discovery, path/version policy and host ABI link probe.
+  LLVM 23.1.x discovery, path/version policy, host ABI link probe and available
+  X86/ARM/AArch64 backend selection/component linkage.
 - `compiler/src/codegen/sdk.{hpp,cpp}`: private SDK version boundary;
   `tests/compiler/codegen/{sdk.cpp,dependency.cmake,CMakeLists.txt}`: linked smoke,
   discovery/rejection fixtures and LLVM-independent runtime configuration/build.
@@ -28,6 +29,11 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `llvm_state.hpp` confines LLVM access; `diagnostics.cpp` copies SDK callbacks safely.
   `tests/compiler/codegen/{results,ownership}.cpp`: opaque consumer, AST/buffer lifetimes,
   moves, context isolation, diagnostic propagation and callback failure tests.
+- `compiler/src/codegen/target.{hpp,cpp}`: explicit target setup, native CPU/features,
+  foreign generic baseline, PIC/Small policy, module layouts and failure diagnostics;
+  `target_backends.cpp`: once-only initialization of configured SDK backends.
+  `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
+  layouts, triple normalization, unknown architectures and unavailable backends.
 - `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;

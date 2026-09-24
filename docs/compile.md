@@ -1,7 +1,8 @@
 # LLVM compilation contract
 
-Status: contract frozen 2026-09-24; SDK integration and compilation ownership implemented in steps 2–3. LLVM lowering, artifact emission and
-runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
+Status: contract frozen 2026-09-24; SDK integration, compilation ownership and
+target setup implemented in steps 2–4. LLVM lowering, artifact emission and runtime
+execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
 
@@ -231,6 +232,35 @@ Focused ASan/UBSan runs instrument the backend and these tests, using the existi
 frontend archive and installed LLVM. Leak detection is unavailable on this macOS
 sanitizer runtime and is not claimed.
 
-No target machine, data layout, semantic validation, lowering, IR verification,
-serialization or CLI compilation integration is implemented by this ownership
-layer. Those remain subsequent plan steps; the CLI still uses its placeholder.
+Ownership construction does not select a target or lower syntax. Target setup is
+an explicit next phase; the CLI still uses its placeholder.
+
+## Target machine (step 4)
+
+The private `configure_target` phase constructs one LLVM target machine per batch
+and applies its normalized triple and data layout to every owned module. Empty
+target requests use LLVM's running-process triple and detected host CPU/features.
+An explicit matching native triple uses the same CPU policy. Foreign triples use
+the generic CPU baseline with no host feature overrides. Host features are sorted
+for stable configuration strings; no CPU/feature switches are exposed yet.
+
+CMake selects the installed SDK's intersection with X86, ARM and AArch64. Only
+these backends' target information, code generation and MC layers initialize,
+once across compilation instances. Shared LLVM and component-library linkage use
+the same selection. An unknown architecture or unavailable backend produces one
+owned error diagnostic including the triple, invalidates staged output and leaves
+modules unconfigured. Target lookup never falls back to the host.
+
+Relocation defaults to PIC to accommodate future shared modules; the code model
+is Small. Machine optimization follows the request: O0 maps to LLVM None and O2
+to Default. Other target options retain SDK defaults. The target data layout,
+including pointer width, comes exclusively from the machine. Configuring a target
+keeps the batch incomplete, emits no artifacts and reuses the machine on repeated
+calls. Moves preserve it; teardown releases modules before the machine and context.
+
+`codegen_target` checks native pointer size/CPU/features, per-module propagation,
+machine moves/reuse, normalized triples, unknown architectures and an unconfigured
+RISC-V backend. Available cross backends are checked for Linux x86/x86-64/ARM/AArch64
+ELF and Windows x86/x86-64 COFF layouts, including 32-bit widths on the 64-bit host.
+These are target-construction tests, not object-emission or native-platform ABI
+validation. IR verification, lowering, emission and CLI integration remain deferred.

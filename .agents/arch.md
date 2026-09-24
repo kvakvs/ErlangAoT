@@ -7,8 +7,11 @@
   builds never load LLVM. A move-only private compilation owner retains batch ASTs,
   one context and ordered empty IR modules; owned diagnostics/output buffers survive
   teardown, and errors invalidate staged output. LLVM callbacks retain stable result
-  addresses across moves. CLI behavior remains unchanged; target selection/lowering
-  and generated-code execution are still pending.
+  addresses across moves. Explicit target setup retains one machine per batch,
+  defaults to host triple/CPU/features, and stamps module triples/data layouts.
+  Foreign triples use generic CPUs; missing backends fail without host fallback.
+  Only installed X86/ARM/AArch64 backends initialize; PIC/Small are fixed defaults.
+  CLI integration, lowering and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);

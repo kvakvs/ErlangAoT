@@ -1,5 +1,16 @@
 # LLVM plan progress — 2026-09-24
 
+- Step 4 complete: explicit codegen::configure_target owns a per-batch TargetMachine
+  and stamps module triples/layouts. Empty/matching native triple uses process host
+  CPU/features; foreign requests use generic CPU. CMake selects SDK intersection
+  X86/ARM/AArch64, initializes those once; PIC/Small fixed, O0/O2 maps None/Default.
+  Unknown architecture/unavailable backend errors latch failure without fallback.
+  Fresh full Debug all70 CTests + full Lizard/tidy + format/whitespace passed;
+  final focused target suite/test-source tidy and static LLVM component link/run
+  passed. Native word size/alignment/endianness/features, moves/reuse, foreign
+  32/64-bit ELF/COFF layouts checked. No object emission or native foreign execution.
+  User requested step4 only; no CLI switches yet. Stop before step5.
+
 - Steps 1–3 completed; user explicitly requested stopping before step4. Step3 adds
   private codegen request/output/result and pimpl Compilation; one independent LLVM
   context per batch, empty IR modules per input, stable callback result storage.

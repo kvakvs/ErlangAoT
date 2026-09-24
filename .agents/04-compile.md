@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–3 complete, 2026-09-24. Stopped before step 4; steps 4–46 remain pending.
+Status: steps 1–4 complete, 2026-09-24. Steps 5–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -410,6 +410,8 @@ planning-only creation of this document does not run or claim these code gates.
 - Resolve a target triple, CPU baseline and data layout using the SDK. Initialize
   only configured backends and define relocation/code-model defaults. Never
   silently substitute host settings for an unavailable requested target.
+  Default to the running host triple and detected CPU/features; explicit foreign
+  triples use a generic CPU baseline. Configuration switches remain deferred.
 - Validate: host layout, unknown triples, absent backends and differing target
   word sizes. Shared gate, then commit.
 
@@ -904,5 +906,18 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and ownership/result tests passed ASan/UBSan against the existing frontend archive
   and installed SDK; LeakSanitizer is unsupported on this host and was not run.
   Opaque consumer compiled without LLVM includes. No target machine, data layout,
-  lowering, verification, emission or CLI integration was added. Stopped here as
-  requested; step 4 has not started.
+  lowering, verification, emission or CLI integration was added. This completed
+  the original steps 1–3 request.
+
+- Step 4 (2026-09-24): explicit target setup defaults to the running host's triple,
+  CPU and detected features; foreign triples use the generic baseline. Installed
+  X86/ARM/AArch64 backends initialize once; machine-derived module layouts use
+  PIC/Small defaults. Unknown architectures and unavailable backends fail without
+  host fallback and invalidate staged output. Native width/alignment/byte order,
+  CPU/features, moves/reuse, normalized triples and Linux/Windows 32/64-bit target
+  layouts passed. Fresh full Debug compiler+runtime configure/build, all 70 CTests,
+  make format, Lizard, clang-tidy and git diff --check passed. Final focused target
+  tests and test-source clang-tidy passed after test refinements. The same target
+  suite also linked and passed against installed static LLVM components without
+  libLLVM dylib linkage. Native Linux/Windows execution, object emission and CLI
+  target switches remain pending. Stopped before step 5.

@@ -43,7 +43,12 @@ target_link_libraries(erlang_aot PRIVATE erlang_project)
 
 # Keep all LLVM usage private; the CLI continues to use its existing compile placeholder.
 add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp
-    src/codegen/result.cpp src/codegen/diagnostics.cpp)
+    src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
+    src/codegen/target_backends.cpp)
 erlang_aot_project_options(erlang_codegen)
 target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk erlang_frontend)
+get_target_property(codegen_backends erlang_llvm_sdk ERLANG_AOT_LLVM_BACKENDS)
+foreach(backend IN LISTS codegen_backends)
+    target_compile_definitions(erlang_codegen PRIVATE "ERLANG_AOT_LLVM_${backend}=1")
+endforeach()
 target_link_libraries(erlang_aot PRIVATE erlang_codegen)

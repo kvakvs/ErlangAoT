@@ -38,7 +38,7 @@ struct CompilationRequest {
     std::vector<CompilationInput> inputs;
     // Attach project diagnostic context without interpreting it as a machine target.
     std::string project_target;
-    // Reserve target selection for step 4; empty means the eventual native default.
+    // Select a normalized LLVM triple; empty prefers the running host's triple, CPU and features.
     std::string target_triple;
     // Carry the requested pipeline policy without performing optimization yet.
     OptimizationLevel optimization = OptimizationLevel::none;
