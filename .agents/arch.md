@@ -4,7 +4,11 @@
   acyclic small-integer/parameter/direct-call subset and private tagged C ABI v1.
   Private `erlang_codegen` links the SDK through target-local `erlang_llvm_sdk`.
   Global-only CMake discovery validates version/RTTI and host C++ linking; runtime-only
-  builds never load LLVM. CLI behavior and generated-code execution remain unchanged.
+  builds never load LLVM. A move-only private compilation owner retains batch ASTs,
+  one context and ordered empty IR modules; owned diagnostics/output buffers survive
+  teardown, and errors invalidate staged output. LLVM callbacks retain stable result
+  addresses across moves. CLI behavior remains unchanged; target selection/lowering
+  and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
   Refcounted payloads exceed `HEAP_BINARY_THRESHOLD_WORDS` (64 bytes in target words);

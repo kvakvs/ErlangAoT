@@ -42,7 +42,8 @@ add_subdirectory(src/project)
 target_link_libraries(erlang_aot PRIVATE erlang_project)
 
 # Keep all LLVM usage private; the CLI continues to use its existing compile placeholder.
-add_library(erlang_codegen STATIC src/codegen/sdk.cpp)
+add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp
+    src/codegen/result.cpp src/codegen/diagnostics.cpp)
 erlang_aot_project_options(erlang_codegen)
-target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk)
+target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk erlang_frontend)
 target_link_libraries(erlang_aot PRIVATE erlang_codegen)

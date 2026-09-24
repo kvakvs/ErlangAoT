@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–2 complete, 2026-09-24. Steps 3–46 remain pending.
+Status: steps 1–3 complete, 2026-09-24. Stopped before step 4; steps 4–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -16,7 +16,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a placeholder
 static library, `erlang_aot_abi` an empty interface target; global LLVM SDK discovery/linkage is implemented, while lowering and the
-generated-code ABI remain pending. Planning found neither `llvm-config` on PATH nor the
+generated-code ABI remain pending. Private compilation owners retain batch ASTs,
+LLVM state and results; driver integration is still deferred. Planning found neither `llvm-config` on PATH nor the
 usual Homebrew LLVM prefixes; this was not an exhaustive SDK inventory.
 
 ## Runtime API sketches to build upon
@@ -893,3 +894,15 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and native Linux/Windows remain pending. Fresh full Debug configure/build,
   all 67 CTests, make format, Lizard, clang-tidy and git diff --check passed;
   compile commands retain C++23/-Werror with LLVM includes confined to codegen/tests.
+
+- Step 3 (2026-09-24): private move-only request/result/compilation ownership added;
+  AST provenance, empty modules and independent LLVM contexts retain explicit
+  lifetimes. Diagnostic text and binary buffers survive teardown; errors invalidate
+  staged batch outputs, and callback reporting failures cannot unwind into LLVM.
+  Fresh full Debug configure/build, all 69 CTests, make format, Lizard, clang-tidy
+  and git diff --check passed. Focused clang-tidy also passed on new tests. Backend
+  and ownership/result tests passed ASan/UBSan against the existing frontend archive
+  and installed SDK; LeakSanitizer is unsupported on this host and was not run.
+  Opaque consumer compiled without LLVM includes. No target machine, data layout,
+  lowering, verification, emission or CLI integration was added. Stopped here as
+  requested; step 4 has not started.

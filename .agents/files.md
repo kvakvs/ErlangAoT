@@ -22,6 +22,12 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/src/codegen/sdk.{hpp,cpp}`: private SDK version boundary;
   `tests/compiler/codegen/{sdk.cpp,dependency.cmake,CMakeLists.txt}`: linked smoke,
   discovery/rejection fixtures and LLVM-independent runtime configuration/build.
+- `compiler/src/codegen/{request,output,result}.hpp`, `result.cpp`: move-only batch
+  requests/results, owned diagnostics/bytes and latched failure/completion status.
+  `compilation.{hpp,cpp}` owns stable context/module state behind a private interface;
+  `llvm_state.hpp` confines LLVM access; `diagnostics.cpp` copies SDK callbacks safely.
+  `tests/compiler/codegen/{results,ownership}.cpp`: opaque consumer, AST/buffer lifetimes,
+  moves, context isolation, diagnostic propagation and callback failure tests.
 - `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;

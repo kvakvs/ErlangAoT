@@ -1,6 +1,6 @@
 # LLVM compilation contract
 
-Status: contract frozen 2026-09-24; SDK integration implemented in step 2. LLVM lowering, artifact emission and
+Status: contract frozen 2026-09-24; SDK integration and compilation ownership implemented in steps 2–3. LLVM lowering, artifact emission and
 runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
@@ -203,3 +203,34 @@ metadata and runtime-only builds. They never install or download dependencies.
 Only one distinct LLVM installation is available on the reference host; explicit
 selection is tested through its canonical Cellar path. A second independent global
 installation and native Windows/Linux SDK compatibility remain unvalidated.
+
+## Compilation ownership (step 3)
+
+Private types under `compiler/src/codegen/` own one ordered compilation batch.
+`CompilationRequest` transfers input ASTs, native source paths and options into a
+move-only `Compilation`. Each instance has an independent LLVM context and one
+empty IR module per input; module identifiers initially contain source paths,
+not resolved Erlang module identities. Moves retain stable context/module/callback
+addresses. Modules are destroyed before their context, and diagnostic storage
+outlives both. Consuming the owner transfers results after LLVM teardown.
+
+`CompilationResult` owns diagnostic text/optional logical locations and binary
+output buffers, independent of the request, AST and LLVM. It starts incomplete;
+ownership operations do not claim successful compilation. Pipeline callers may
+stage output and explicitly mark completion. An error latches failure, discards
+all batch outputs and prevents later completion/output staging. LLVM notes/remarks,
+warnings and errors are copied through a context-local callback without printing;
+callback formatting/allocation failure sets an observable failure flag without
+unwinding through LLVM. LLVM fatal errors are not made recoverable by this handler.
+
+The `codegen_results` consumer compiles without LLVM include paths. The internal
+`codegen_ownership` tests cover retained AST/source data, multiple modules,
+move construction/assignment and reuse, independent contexts, real SDK diagnostic
+callbacks, failure propagation and result lifetime after compiler destruction.
+Focused ASan/UBSan runs instrument the backend and these tests, using the existing
+frontend archive and installed LLVM. Leak detection is unavailable on this macOS
+sanitizer runtime and is not claimed.
+
+No target machine, data layout, semantic validation, lowering, IR verification,
+serialization or CLI compilation integration is implemented by this ownership
+layer. Those remain subsequent plan steps; the CLI still uses its placeholder.

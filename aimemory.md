@@ -1,5 +1,14 @@
 # LLVM plan progress — 2026-09-24
 
+- Steps 1–3 completed; user explicitly requested stopping before step4. Step3 adds
+  private codegen request/output/result and pimpl Compilation; one independent LLVM
+  context per batch, empty IR modules per input, stable callback result storage.
+  ASTs/paths owned; modules/context die before result transfer; errors latch and clear
+  output buffers. LLVM23 callback takes DiagnosticInfo pointer, not reference.
+  Full fresh Debug all69 tests + Lizard/tidy + format/whitespace passed; focused tidy
+  includes new tests. ASan/UBSan backend/tests passed with existing frontend/LLVM;
+  macOS runtime does not support detect_leaks. No step4 target/IR lowering implemented.
+
 - Step 2 complete: cmake/LLVM{Dependencies,Policy}.cmake restrict discovery to global
   roots, stable23.1.x>=23.1.1, RTTI ON and a real C++23 ABI link probe. C enabled only
   for LLVM dependency probes; imported erlang_llvm_sdk feeds private erlang_codegen.
