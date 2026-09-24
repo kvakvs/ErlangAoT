@@ -1,10 +1,17 @@
 # LLVM compilation contract
 
-Status: contract frozen 2026-09-24; SDK integration, compilation ownership and
-target setup implemented in steps 2–4. LLVM lowering, artifact emission and runtime
-execution are future steps of [the implementation plan](../.agents/04-compile.md).
+Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
+target setup and IR verification implemented in steps 2–5. LLVM lowering, artifact
+emission and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
+
+The private backend's `verify_ir` gate checks target consistency, defined function
+bodies and whole modules using LLVM's nonfatal verifier APIs. Every future emission
+entry point must call this gate on the current batch before producing bytes; success
+is not cached across mutations. Failures become owned project diagnostics and discard
+all staged outputs. Synthetic IRBuilder fixtures cover valid and malformed IR;
+verification alone does not establish Erlang semantics or complete compilation.
 
 ## SDK prerequisite
 

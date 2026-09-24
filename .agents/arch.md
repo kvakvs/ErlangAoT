@@ -11,6 +11,10 @@
   defaults to host triple/CPU/features, and stamps module triples/data layouts.
   Foreign triples use generic CPUs; missing backends fail without host fallback.
   Only installed X86/ARM/AArch64 backends initialize; PIC/Small are fixed defaults.
+  `verify_ir` is the required gate before emission: check current target settings,
+  defined functions and whole modules, retaining LLVM failures in project diagnostics.
+  Success is never cached across IR mutations; failure clears staged batch outputs.
+  Synthetic IR tests exercise this boundary; emission itself remains step 6.
   CLI integration, lowering and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.

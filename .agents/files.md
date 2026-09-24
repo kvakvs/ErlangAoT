@@ -34,6 +34,10 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `target_backends.cpp`: once-only initialization of configured SDK backends.
   `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
   layouts, triple normalization, unknown architectures and unavailable backends.
+- `compiler/src/codegen/verification.{hpp,cpp}`: mandatory pre-emission verification
+  gate for target settings, function bodies and whole modules; owned errors invalidate
+  batch outputs. `tests/compiler/codegen/verification.cpp`: IRBuilder synthetic IR,
+  malformed bodies/globals, post-verification mutation, target mismatches and failure latching.
 - `compiler/CMakeLists.txt`: frontend, private codegen library and executable; `runtime/src/runtime.cpp`
   and `runtime/CMakeLists.txt`: placeholder runtime archive; `abi/CMakeLists.txt`: ABI interface.
 - `runtime/design/terms.md`: manual-review term contract, heap/GC layout and open choices;

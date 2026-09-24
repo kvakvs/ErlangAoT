@@ -1,5 +1,17 @@
 # LLVM plan progress — 2026-09-24
 
+- Step 5 complete: codegen::verify_ir checks current target triple/layout,
+  defined functions then whole modules; nonfatal SDK failures become owned errors
+  and invalidate all staged batch output. No cached success across IR mutation.
+  Emission is still step6 and must invoke verify_ir before producing bytes.
+  New IRBuilder tests cover valid/external functions, missing terminator/wrong
+  return type, common global with nonzero initializer, target mismatches, repeated
+  verification, moves/teardown and failure latching. Fresh full Debug build/all71
+  CTests/full quality + focused test tidy/Lizard + format/whitespace passed.
+  Focused tidy needs ALL QualityToolchain implicit includes, not just libc++/clang;
+  create fixture globals through Module::getOrInsertGlobal to expose SDK ownership.
+  User requested step5 only; no lowering/emission/CLI changes. Stop before step6.
+
 - Step 4 complete: explicit codegen::configure_target owns a per-batch TargetMachine
   and stamps module triples/layouts. Empty/matching native triple uses process host
   CPU/features; foreign requests use generic CPU. CMake selects SDK intersection

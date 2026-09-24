@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–4 complete, 2026-09-24. Steps 5–46 remain pending.
+Status: steps 1–5 complete, 2026-09-24. Steps 6–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -428,6 +428,8 @@ planning-only creation of this document does not run or claim these code gates.
 - Add in-memory object emission using `TargetMachine` and the selected release's
   supported code-generation pass interface. Do not assume its pass-manager API
   is identical to the middle-end API. Keep this accessible through backend tests.
+  Call step 5's `verify_ir` gate before producing any bytes; recheck the current
+  batch on every emission attempt rather than caching verification success.
 - Validate: inspect architecture, sections and a known symbol with LLVM tools;
   emission errors produce diagnostics. Shared gate, then commit.
 
@@ -921,3 +923,17 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   suite also linked and passed against installed static LLVM components without
   libLLVM dylib linkage. Native Linux/Windows execution, object emission and CLI
   target switches remain pending. Stopped before step 5.
+
+- Step 5 (2026-09-24): `verify_ir` checks configured triple/layout consistency,
+  every defined function and whole modules with LLVM's nonfatal verifier APIs.
+  Owned project diagnostics retain module/function context and SDK details;
+  errors invalidate all staged output and latch failure without duplicate reports.
+  Success is never cached; every future emission entry point must recheck the
+  current batch. IRBuilder synthetic fixtures cover valid bodies/declarations,
+  missing terminators, mismatched return types, malformed globals, target setup
+  errors, mutation after successful verification, moves and result lifetimes.
+  Fresh full Debug compiler+runtime configure/build, all 71 CTests, make format,
+  Lizard, clang-tidy and git diff --check passed. Focused test-source clang-tidy
+  and Lizard also passed. Native evidence is macOS arm64 with global LLVM 23.1.1;
+  native Linux/Windows remain pending. No emission or CLI integration was added;
+  stopped before step 6.
