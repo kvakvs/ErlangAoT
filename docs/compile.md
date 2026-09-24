@@ -9,6 +9,10 @@ Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mand
 `ErlangAoT::generated_program` CMake link target without LLVM dependencies.
 Step 10 adds [runtime immediate-term services](runtime-terms.md): checked tag
 classification and native small-integer encoding/decoding, independently of LLVM.
+Step 11 adds [builtin dispatch](runtime-builtins.md): frozen generic module registries,
+pinned native targets and an explicit status/word service bridge. No production BIF
+or compiler BIF lowering is enabled.
+
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.

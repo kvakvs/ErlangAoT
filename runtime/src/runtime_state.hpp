@@ -1,17 +1,18 @@
 #pragma once
+#include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <vector>
 
 namespace erlang_aot::runtime {
-// Runtime-wide services are reserved, not instantiated; future module/atom work supplies their definitions.
+// Contexts die before code registrations; atom services remain reserved.
 class Runtime::Impl final {
   public:
     // Preserve validated limits and the unique runtime identity before creating any contexts.
     Impl(RuntimeOptions options, std::uint64_t identity);
-    // These empty ownership slots outlive all contexts; accessors remain undefined until services exist.
+    // Atom storage remains reserved until runtime atom initialization is implemented.
     std::shared_ptr<AtomStorage> atom_storage;
-    // Destroy future code registrations/atom roots before the runtime-wide atom table.
-    std::shared_ptr<CodeServer> code_server;
+    // Own one server and destroy registrations before the future atom table.
+    CodeServer code_server;
     // Retain admission policy and the runtime portion of each immutable process identity.
     RuntimeOptions options;
     std::uint64_t identity;

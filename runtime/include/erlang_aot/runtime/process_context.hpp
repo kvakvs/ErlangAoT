@@ -77,9 +77,9 @@ class ProcessContext final {
     ProcessHeap &heap() noexcept;
     // Start selective receive through mailbox().begin_receive() on this process's owner thread.
     Mailbox &mailbox() noexcept;
-    // Reserved declarations (steps 11–14): no code/atom service or send implementation is supplied yet.
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
+    // Reserved for steps 13–14: atom storage and send are not implemented.
     // Share one runtime-owned atom identity/name table across every scheduler and process.
     AtomStorage &atom_storage() noexcept;
     // Post a message signal without awaiting handling; sending to a dead local pid is a no-op.

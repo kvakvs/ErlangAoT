@@ -90,16 +90,18 @@ underlying type and preserves the existing numeric values.
 
 ## Reserved services and validation
 
-Runtime state reserves empty ownership bindings for `CodeServer` and `AtomStorage`.
-Their context accessors remain undefined until those services exist. Contexts are
-destroyed first, then future code registrations, then the atom table so loaded-code
-atom roots can be released in order. No fake service instance or successful service
-result is supplied.
+Step 11 adds one runtime-owned [CodeServer](runtime-builtins.md), borrowed by every
+context. `Runtime::code_server()` returns null after shutdown; live contexts expose
+that same server by reference. AtomStorage and its accessor remain reserved.
+Contexts are destroyed before code registrations, which precede the future atom
+table. Resolved/module handles may retain code beyond runtime teardown, but do not
+retain a process context. Future atom bindings must preserve their runtime lifetime
+through those retained modules.
 
 The [process sketch](../runtime/include/process.hpp) retains future signal-inbox and
 continuation ownership. Once admission/execution exists, exit must discard pending
 signals, resolve replies and release continuation/receive roots before heap teardown.
-Those paths, term services, allocation, GC and scheduling remain subsequent steps.
+Those paths, heap services, allocation, GC and scheduling remain subsequent steps.
 
 Native macOS arm64 tests cover independent/repeated lifetimes, ownership errors,
 limits, invalidation, shutdown ordering, silence and allocation-failure rollback.

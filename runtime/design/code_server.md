@@ -1,15 +1,16 @@
 # Code server and module function registry — manual review sketch
 
-Status: proposed, 2026-09-22. API declarations listed as CMake headers for IDE
-navigation, without compilation. Registration,
-lookup, invocation and module loading are not implemented.
+Status: generic native skeleton implemented in compilation step 11, 2026-09-25.
+See [runtime builtin dispatch](../../docs/runtime-builtins.md) for the implemented
+boundary. The remaining sections describe the wider proposed contract: typed
+registrations, atom names/bindings, concurrent publication, export listings and
+unload are not implemented. Native typed sketches are retained under
+`runtime/include/unverified/`; there is no implemented `native_callable.hpp`.
 
-- [callable.hpp](../include/callable.hpp): plain function targets, signature keys and
-  one `ModuleRegistry` per loaded module.
-- [code_server.hpp](../include/code_server.hpp): module publication, code lifetime
-  and default all-Term resolution.
-- [native_callable.hpp](../include/native_callable.hpp): optional `NativeCallable<Args...>`
-  alias for `TypedCallable<Args...>`, without an adapter class.
+- [callable.hpp](../include/erlang_aot/runtime/callable.hpp): generic targets,
+  exact signature keys and one frozen `ModuleRegistry` per module.
+- [code_server.hpp](../include/erlang_aot/runtime/code_server.hpp): native module
+  publication, pinned generic resolution and code-image lifetime.
 
 ## Function registration
 
@@ -135,7 +136,7 @@ roots while handles pin the code, as described in the
 
 ## Illustrative API usage
 
-This is a declaration-only example; check each result before using its value:
+This illustrates the future atom/typed API, not the implemented string-name skeleton:
 
 ```cpp
 using namespace erlang_aot::runtime;
@@ -159,7 +160,5 @@ auto generic_result = generic->call(context, argument_terms);
 ```
 
 The native body receives the vector directly. The generic body receives one Term
-from `argument_terms`; neither call consults a conversion registry. Behavioral tests
-for registration, exact matching, duplicates, freeze, lifetimes and invocation belong
-to the future implementation. This sketch can currently be checked only for API
-shape, template constraints, formatting and static analysis.
+from `argument_terms`; neither call consults a conversion registry. Generic registration, duplicates, freeze, lifetimes and invocation now have behavior
+tests. Exact native specialization and atom binding tests remain future work.

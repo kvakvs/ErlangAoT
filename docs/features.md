@@ -11,7 +11,10 @@ owner, semantic/service boundary, deferred status, planned integration step and
 focused reporting test. `abi_features` checks the ID/name compatibility snapshot;
 `codegen_features` and `runtime_features` exercise all their respective entries.
 These are reporting-contract tests, not evidence that the future source/service
-handlers have been installed.
+handlers have been installed. Step 11 additionally installs the
+[builtin dispatch boundary](runtime-builtins.md): unavailable registered bodies and
+missing generic BIF entries report once, while normal registration and calls stay
+silent. `runtime_builtin_output` exercises that actual service boundary.
 
 ## Owning boundaries
 
@@ -90,5 +93,5 @@ context, escaped control bytes, invalid IDs, artifact invalidation, failure
 propagation and both throwing/nonthrowing sink failures. Subprocess tests capture
 real stdout/stderr and assert one report with a nonzero exit, plus silence for an
 unused reporter. Runtime-only builds exercise reporting without LLVM. Capability
-selection, real service placeholders and native foreign-platform
+selection, other runtime placeholders and native foreign-platform
 execution remain later work.

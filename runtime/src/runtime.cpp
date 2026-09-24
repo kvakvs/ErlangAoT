@@ -56,5 +56,7 @@ Status Runtime::shutdown() noexcept {
     return Status::ok;
 }
 
+CodeServer *Runtime::code_server() noexcept { return impl_ ? &impl_->code_server : nullptr; }
+
 std::size_t Runtime::context_count() const noexcept { return impl_ ? impl_->contexts.size() : 0; }
 } // namespace erlang_aot::runtime

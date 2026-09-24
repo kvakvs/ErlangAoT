@@ -36,15 +36,17 @@ if (encoded) {
 }
 ```
 
-The [Term/TermFactory sketch](../runtime/include/terms.hpp) retains the future
-process-bound host interface. Its constructors, lifetime/root registration, graph
-copies and heap accessors remain reserved declarations. Word services deliberately
-do not publish a host handle without that ownership machinery. Heap prefixes now
-live privately in [runtime/src/terms/term_layout.hpp](../runtime/src/terms/term_layout.hpp),
-with only the layout test receiving their private include path. Allocators, bignums,
-heap predicates/accessors and GC remain deferred. Future atom construction stays
-with the runtime-wide [AtomStorage](../runtime/include/atom_storage.hpp), including
-module initialization and loaded-code lifetime roots; no separate table is introduced.
+Step 11 adds a minimal immediate-only `Term` in the namespaced header for
+[generic builtin dispatch](runtime-builtins.md). `Term::from_word` accepts small
+integers and canonical empty containers; identities and heap values are rejected.
+`word()`, `kind()` and `integer_value()` are implemented. Copy/move are word copies
+without roots. The other declared semantic/heap operations and the
+[TermFactory sketch](../runtime/include/terms.hpp) remain reserved until ownership
+machinery exists. Heap prefixes live privately in
+[runtime/src/terms/term_layout.hpp](../runtime/src/terms/term_layout.hpp).
+Future atom construction stays with runtime-wide
+[AtomStorage](../runtime/include/atom_storage.hpp), including loaded-code roots;
+no separate atom table is introduced.
 
 These checks report ordinary input errors and remain silent; they are not reached
 feature placeholders. The catalog continues reserving the unimplemented host-term

@@ -38,8 +38,8 @@
   Runtime owns stable contexts with distinct lazy heap/empty mailbox owners and non-recycled
   identities. Context lifetime tokens invalidate before mailbox/heap teardown and
   can survive as dead host bindings; term roots/factories remain deferred.
-  Empty CodeServer/AtomStorage ownership slots outlive contexts; future code roots
-  release before atoms. No workers, signals or fake service accessors exist. Calls
+  One CodeServer outlives contexts and releases registrations before the reserved
+  AtomStorage slot. No workers or signals exist. Calls
   require host serialization. `ErlangAoT::generated_program` exports runtime/ABI
   dependencies without LLVM; every generated consumer must use this target.
   `docs/runtime-lifecycle.md` defines ownership, statuses and current boundaries.
@@ -55,13 +55,23 @@
   and checked native integer encode/decode sharing ABI v1. Headers/catches and
   noncanonical empty values fail; heap tags return wrong_type without dereferencing.
   Atom/pid/port recognition does not validate runtime IDs. Raw words have no host
-  ownership; Term/TermFactory remain sketches until roots/lifetime tracking exists.
+  ownership; step 11 adds immediate-only Term values, while factories/roots remain deferred.
   Heap layouts now live privately in `runtime/src/terms/term_layout.hpp`; allocation,
   bignums, graph copying and GC remain reserved. Term/tag/header retain one-word
   representation; Boost bignums honor stronger alignment. No atom table is added.
   Runtime tests cover boundaries, malformed words and all 64 tags; a compiler-side
   fixture checks independently constructed LLVM constants against runtime services.
   Runtime-only builds and the generated-program consumer remain LLVM-free.
+- Step 11 implements one runtime-owned CodeServer and one frozen ModuleRegistry per
+  module. Generic function/arity/type keys use only all-Term signatures; typed/native
+  extensions remain unverified sketches. Publication transfers unique registry ownership;
+  ResolvedFunction pins targets and their image, whose destruction follows captures.
+  String names await atom binding in step 28; mutation/lookup are host-serialized.
+  Immediate-only Term copies need no roots; identities/heap values are rejected.
+  Checked calls validate arguments/results, contain host exceptions and report unavailable
+  bodies once. abi::v1::dispatch_builtin carries a Status plus success-only output word
+  across the native generated-service boundary. Production BIFs, compiler lowering,
+  unload and concurrent workers remain deferred. See docs/runtime-builtins.md.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
@@ -83,16 +93,10 @@
   unmatched messages, remove only a selected candidate and asynchronously park at
   the tail with arrival-version wakeup; process send accepts without waiting for delivery.
   `04-compile.md` references these contracts without expanding its implemented subset.
-- Code-server review sketch uses one unique ModuleRegistry per loaded module,
-  frozen at publication. Keys are exact function/arity/argument-type sequences;
-  default targets are std::function<CallResult<Term>(ProcessContext&, span<const Term>)>.
-  TypedCallable<Args...> passes exact values, including custom types without codecs.
-  Generic fallback requires explicit Term arguments; no automatic argument/result
-  conversions or conversion registration. ResolvedFunction pins the module for
-  checked generic calls; direct pointers/copied typed targets require a retained
-  module handle. NativeCallable is only an alias; conversion utilities are deferred.
-  Virtual callable/frame preparation is removed; cooperative call ABI remains
-  deferred. API sketches only, listed on the runtime target without compilation.
+- Wider code-server proposals reserve exact typed values, explicit generic fallback,
+  atom-bound names and concurrent publication. Unverified native templates stay under
+  `runtime/include/unverified/`; no conversion registry or virtual call frames exist.
+  Cooperative generated-call integration remains deferred.
 
 - Project support lives in `compiler/src/project/`; its private
   toml++ 3.4.0 dependency is discovered locally, with no configure-time downloads.

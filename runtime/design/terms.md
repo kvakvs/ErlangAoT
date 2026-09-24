@@ -1,10 +1,12 @@
 # Runtime term API — immediate services and heap sketch
 
-Status: immediate word services implemented in compilation step 10, 2026-09-25.
+Status: immediate word services implemented in step 10; step 11 adds immediate-only
+host Term values for generic calls, 2026-09-25. See
+[runtime builtin dispatch](../../docs/runtime-builtins.md) for that limited boundary.
+The rooted/heap contracts below remain proposals.
 [Runtime term boundary](../../docs/runtime-terms.md) documents checked classification
-and integer encoding/decoding. Host handles, heap allocation, rooting and collection
-remain proposed and unimplemented.
-[terms.hpp](../include/terms.hpp) preserves the one-word public value API;
+and integer encoding/decoding. Heap ownership, allocation, rooting and collection remain proposed and unimplemented.
+[terms.hpp](../include/erlang_aot/runtime/terms.hpp) preserves the one-word public value API;
 [term_layout.hpp](../src/terms/term_layout.hpp) contains compile-checked private prefixes.
 Implemented word/tag/error declarations live in
 [erlang_aot/runtime/terms.hpp](../include/erlang_aot/runtime/terms.hpp);

@@ -27,6 +27,8 @@ const ProcessIdentity &ProcessContext::identity() const noexcept { return impl_-
 
 ProcessHeap &ProcessContext::heap() noexcept { return heap_; }
 
+CodeServer &ProcessContext::code_server() noexcept { return *impl_->runtime.code_server(); }
+
 Mailbox &ProcessContext::mailbox() noexcept { return mailbox_; }
 
 std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept { return impl_->lifetime; }

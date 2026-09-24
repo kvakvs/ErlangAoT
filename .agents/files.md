@@ -66,14 +66,15 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   allocation and reserved code/atom ownership. The former C lifecycle adapter is removed.
   `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
   context registry and lazy heap/empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
-  `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback;
+  `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback and registry/publication failure sweeps;
   `lifecycle_output.cmake`: silence; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer
   link/run through the mandatory target and missing-runtime link failure.
 - `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
   definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
   structural classification and native ABI integer encoding/decoding without LLVM.
   `runtime/include/base_types.hpp` forwards sketch consumers to the canonical types;
-  `runtime/include/terms.hpp` retains only proposed host Term/TermFactory services.
+  `runtime/include/terms.hpp` retains the proposed TermFactory; canonical terms.hpp
+  declares Term, with immediate-only operations in src/terms/term.cpp.
   `runtime/src/terms/term_layout.hpp`: private heap prefixes and layout assertions.
   `docs/runtime-terms.md`: implemented word boundary; `runtime/design/terms.md`:
   remaining host ownership, heap/GC and immutable-value contract.
@@ -93,10 +94,16 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
   `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
   Scheduling/receive declarations remain sketches; heap/mailbox lifecycle is implemented.
-- `runtime/design/code_server.md`: registry, exact-signature and code-lifetime contract;
-  `runtime/include/code_server.hpp`: module publication, unique registry ownership and
-  checked generic resolution; `callable.hpp`: std::function aliases, signature keys and
-  per-module ModuleRegistry declarations; `native_callable.hpp`: typed callable alias.
+- `runtime/include/erlang_aot/runtime/{callable,code_server}.hpp`: exact generic keys,
+  frozen module registries, code-image ownership and pinned checked calls; former
+  top-level headers forward here. `runtime/src/builtins/registry.cpp`: registration;
+  `invocation.cpp`: validation, exceptions and once-only unavailable reports;
+  `bridge.cpp` + `abi/include/erlang_aot/abi/builtins.hpp`: status/word service bridge.
+  `runtime/src/modules/code_server.cpp`: native publication and generic resolution.
+  `docs/runtime-builtins.md`: implemented boundary; `runtime/design/code_server.md`:
+  wider typed/atom/concurrency proposals, with typed sketches under include/unverified/.
+  `tests/runtime/{builtins,builtin_bridge}.cpp`, `builtin_output.cmake`: signatures,
+  freeze, pinning/capture lifetimes, failure propagation and diagnostic count/silence.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
   diagnostic callback and printing, with a positional-mode adapter and a compile

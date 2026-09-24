@@ -1,3 +1,32 @@
+# Step 11 completion — 2026-09-25
+
+- Fresh Debug all89 CTests + full Lizard/clang-tidy pass. Release runtime-only all14
+  and ASan/UBSan4 focused dispatch/rollback tests pass; final trivial-test-copy cleanup
+  rebuilt/passed in all3 configurations. Focused test tidy/Lizard, formatting, links
+  and whitespace pass. Native Linux/Windows/32-bit and generated Erlang remain pending.
+- Generic dispatch now lives in namespaced callable/code_server headers and
+  src/builtins/{registry,invocation,bridge}.cpp + src/modules/code_server.cpp.
+  Each Runtime owns a CodeServer by value, contexts borrow it; Runtime accessor
+  returns null after shutdown. All publication/lookup still host-serialized.
+  ModuleDefinition transfers one unique registry; freeze same owner after successful
+  map insertion. ResolvedFunction pins module/image; target captures die before image.
+- FunctionKey owns name/arity/vector<type_index>, all typeid(Term) for now. add consumes
+  Callable&&; explicitly copy lvalue callables. resolve takes named FunctionRequest.
+  Typed/native templates remain under runtime/include/unverified/, not implemented.
+  String-name metadata avoids fabricating atom storage; atom binding/ABI module
+  descriptors deferred to step28. No unload, hot upgrade, workers or production BIFs.
+- Term moved to canonical terms.hpp with preserved reserved semantic declarations.
+  Only from_word/word/kind/integer_value and default copy/move/dtor work. from_word
+  admits smallints and exact empty tuple/list only; no roots/owners needed. Never
+  use those trivial copies for future heap values without implementing ownership.
+  TermFactory stays top-level sketch; identities/heap values cannot enter calls.
+- abi/builtins.hpp dispatch_builtin takes live context, exact borrowed name arrays,
+  argument words/arity and output pointer; Status return is separate. Only OK writes
+  output, max arity255, null args only arity0. std::function/STL never cross that ABI.
+  Checked invocation validates inputs/results, translates exceptions, reports
+  unavailable once; CallFailure.reported prevents nested duplicate reports.
+  Source compilation/BIF lowering remains unchanged. Stop before step12.
+
 # Step 10 completion — 2026-09-25
 
 - Implemented the raw word boundary only: runtime/include/erlang_aot/runtime/

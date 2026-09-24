@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–10 complete, 2026-09-25. Steps 11–46 remain pending.
+Status: steps 1–11 complete, 2026-09-25. Steps 12–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -15,8 +15,8 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
-with feature reporting, runtime/context lifecycle and immediate word services.
-Host Term/TermFactory and heap services remain pending.
+with feature reporting, lifecycle, immediate terms and generic native dispatch.
+Immediate-only host Terms and builtin dispatch are implemented; TermFactory and heap services remain pending.
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
@@ -43,8 +43,8 @@ update this inventory and affected steps together when sketches change.
 | `process.hpp`                   | State/priority, reductions, cooperative code, owned signals/inbox (reserved)                     | 9, 12, 13     |
 | `mailbox.hpp`                   | Empty owner implemented; selective cursor, reads and signal handling reserved                    | 12, 13        |
 | `scheduler.hpp`                 | Scheduler/pool, options/snapshots/replies, bounded owner-worker signal handling                  | 9, 13, 14     |
-| `callable.hpp`                  | `Callable`/`TypedCallable`, results/keys, one noncopyable registry per module                    | 11, 28        |
-| `native_callable.hpp`           | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`                                     | 11, 28        |
+| `callable.hpp`                  | Implemented generic Callable/results/keys/registry forwarding header; typed proposals unverified                    | 11, 28        |
+| `unverified/native_callable.hpp.txt` | `NativeCallable<Args...>` alias for `TypedCallable<Args...>`                                     | 11, 28        |
 | `code_server.hpp`               | Code images, immutable loaded modules, pinned generic calls, runtime-wide server                 | 9, 11, 28     |
 
 Supporting contracts: [terms](../runtime/design/terms.md),
@@ -62,8 +62,8 @@ compiles private prefix assertions and checks agreement with the immediate ABI.
 
 Step 9 adds `erlang_aot/runtime/{runtime,process_context}.hpp`, with stable owned
 contexts, non-recycled identities and lifetime-token invalidation before mailbox/heap
-teardown. Runtime-wide code/atom ownership slots remain empty; their accessors and
-signal admission are not implemented. The C compatibility layer added in steps 7–9
+teardown. The runtime-wide code server is implemented by step 11; atom ownership and
+signal admission remain deferred. The C compatibility layer added in steps 7–9
 was subsequently removed at user request; the C++ Runtime API is the sole lifecycle
 interface, with scoped `Status` and constexpr ABI constants. [Lifecycle contract](../docs/runtime-lifecycle.md)
 documents status reporting, host serialization and the mandatory
@@ -72,11 +72,21 @@ documents status reporting, host serialization and the mandatory
 Step 10 adds [immediate word services](../docs/runtime-terms.md) in
 `erlang_aot/runtime/terms.hpp`: checked structural classification and native integer
 encoding/decoding using ABI v1. Shared word/tag/error declarations moved into the
-namespaced public headers; the host Term/TermFactory sketch remains unimplemented.
+namespaced public headers; step 11 implements immediate-only Term values, while TermFactory remains reserved.
 Heap structs moved to `runtime/src/terms/term_layout.hpp`, visible only to runtime
 internals and the focused layout test. Atom/pid/port tag recognition is structural,
 not identity validation. Header/catch and malformed empty encodings fail; heap tags
 are rejected without dereferencing. No host ownership or atom table is fabricated.
+
+Step 11 implements [generic builtin dispatch](../docs/runtime-builtins.md), using one
+frozen registry per module and one runtime-owned code server. Generic keys contain
+exact name/arity and all-Term type sequences. Typed/native sketches now live under
+`runtime/include/unverified/` and remain deferred. Immediate-only host Terms support
+calls without roots; heap/identity values are rejected. Owned string names await atom
+binding in step 28. The generated service bridge returns Status separately from the
+output word and reports missing/unavailable BIFs once. Publication/lookup remain
+host-serialized; unload and concurrent workers remain deferred. Top-level callable
+and code-server headers now forward to the namespaced implementation.
 
 Carry these ownership and service contracts into implementation:
 
@@ -519,7 +529,7 @@ planning-only creation of this document does not run or claim these code gates.
 
 ### 11. Add the builtin dispatch skeleton
 
-- Add `runtime/src/builtins/` using `runtime/include/{callable,native_callable,code_server}.hpp`
+- Add `runtime/src/builtins/` using `runtime/include/erlang_aot/runtime/{callable,code_server}.hpp`
   for module ownership and function/arity/argument-type registration. Implement the
   default all-Term signature needed here and the generated-code ABI service-result bridge;
   keep typed extensions exact and conversion-free when introduced. Reuse one
@@ -692,7 +702,7 @@ planning-only creation of this document does not run or claim these code gates.
   calls the runtime's module-registration ABI. Implement `runtime/src/modules/`
   validation and storage; require explicit registration before harness execution.
   Keep descriptor/registration symbols alive through standard LLVM/linker mechanisms.
-- Build on `runtime/include/{callable,native_callable,code_server}.hpp`: transfer one
+- Build on `runtime/include/erlang_aot/runtime/{callable,code_server}.hpp`: transfer one
   unique registry into each loaded module and freeze it before publication. Register
   the generic signatures required by this subset; any later typed registrations
   use exact argument types and explicit Term fallback, with no conversion layer.
@@ -1079,3 +1089,26 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   exercise both 32/64-bit widths; native evidence here is macOS arm64 only.
   Native Windows/Linux/32-bit runtimes and generated Erlang execution remain pending.
   CLI behavior is unchanged. Stopped before step 11.
+
+
+- Step 11 (2026-09-25): implemented generic native dispatch with one runtime-owned
+  CodeServer, exact name/arity/all-Term signature keys, transactional unique-registry
+  publication and frozen draft aliases. ResolvedFunction pins callable state and
+  destroys captures before their CodeImage. Minimal immediate-only Term values
+  support small integers/empty containers without roots; identities and heap values
+  remain rejected. Owned string metadata awaits atom binding in step 28; typed
+  signatures, unload, concurrent workers and production BIFs remain deferred.
+  The generated service ABI returns scoped Status separately from a success-only
+  output word, contains host exceptions and reports missing/unavailable BIFs once.
+  FunctionRequest names lookup fields; registration explicitly consumes a Callable.
+  Fresh automatic-SDK Debug compiler+runtime configure/build and all 89 CTests
+  passed. Full Lizard/clang-tidy gate passed with unchanged thresholds; focused
+  changed-test Lizard/clang-tidy, make format/dry verification, documentation links
+  and git diff --check passed. Release runtime-only all 14 CTests passed. ASan/UBSan
+  passed the 4 focused dispatch/output/allocation-failure tests, including registry
+  insertion and module publication rollback sweeps. After removing an unnecessary
+  move from a trivially-copyable test value, runtime_builtins was rebuilt and passed
+  again in Debug, Release and ASan/UBSan. No compiler/LLVM dependency enters runtime.
+  Native evidence remains macOS arm64; Linux/Windows/32-bit runtime execution and
+  generated Erlang execution remain pending. CLI/source acceptance is unchanged.
+  Stopped before step 12.

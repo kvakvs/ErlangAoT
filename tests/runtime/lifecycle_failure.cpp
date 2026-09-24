@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
@@ -97,11 +98,69 @@ void check_context_creation() {
     require(succeeded, "context failpoint sweep never reached success");
 }
 
+// Fail registry key/type-vector/node allocations without disturbing existing signatures.
+void check_registry_creation() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            ModuleRegistry registry;
+            const Callable target = [](ProcessContext &, std::span<const Term>) { return CallResult<Term>(Term{}); };
+            require(registry.add("existing", 0, Callable{target}).has_value(), "registry fixture failed");
+            const auto retained = live_allocations;
+            remaining = ordinal;
+            auto added = registry.add("allocation_failure_signature", 2, Callable{target});
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = added.has_value();
+            if (!succeeded) {
+                require(added.error() == RegistryError::resource_limit, "wrong registry failure");
+                require(live_allocations == retained, "partial signature leaked");
+                require(!registry.find("allocation_failure_signature", 2), "failed signature published");
+            }
+            require(registry.find("existing", 0).has_value(), "failed add damaged existing signature");
+        }
+        require(live_allocations == baseline, "registry cleanup leaked");
+    }
+    require(succeeded, "registry allocation sweep never succeeded");
+}
+
+// Sweep publication allocations, proving neither partial modules nor leaked captures survive failure.
+void check_module_publication() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            CodeServer server;
+            require(server.load({"existing", CodeImage::linked(), std::make_unique<ModuleRegistry>()}).has_value(),
+                    "module fixture failed");
+            const auto retained = live_allocations;
+            ModuleDefinition definition{"allocation_failure_module", CodeImage::linked(),
+                                        std::make_unique<ModuleRegistry>()};
+            remaining = ordinal;
+            auto loaded = server.load(std::move(definition));
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = loaded.has_value();
+            if (!succeeded) {
+                require(loaded.error() == CodeError::resource_limit, "wrong publication failure");
+                require(live_allocations == retained, "failed module retained draft storage");
+                require(!server.find_module("allocation_failure_module"), "failed module published");
+            }
+            require(server.find_module("existing").has_value(), "failed publication damaged existing module");
+        }
+        require(live_allocations == baseline, "module cleanup leaked");
+    }
+    require(succeeded, "module allocation sweep never succeeded");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
         check_startup();
         check_context_creation();
+        check_registry_creation();
+        check_module_publication();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::cerr << error.what() << '\n';

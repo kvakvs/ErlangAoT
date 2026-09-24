@@ -37,3 +37,13 @@ add_executable(runtime_immediate_tests immediate.cpp)
 erlang_aot_project_options(runtime_immediate_tests)
 target_link_libraries(runtime_immediate_tests PRIVATE ErlangAoT::generated_program)
 add_test(NAME runtime_immediate COMMAND runtime_immediate_tests)
+
+foreach(suite IN ITEMS builtins builtin_bridge)
+    add_executable(runtime_${suite} ${suite}.cpp)
+    erlang_aot_project_options(runtime_${suite})
+    target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)
+    add_test(NAME runtime_${suite} COMMAND runtime_${suite})
+endforeach()
+add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
+    "-DPROGRAM=$<TARGET_FILE:runtime_builtin_bridge>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/builtin_output.cmake")

@@ -33,6 +33,9 @@ class Runtime final {
     // Observe active context ownership without claiming scheduler/process execution support.
     std::size_t context_count() const noexcept;
 
+    // Borrow the runtime-wide server while active; stopped runtimes return null.
+    CodeServer *code_server() noexcept;
+
   private:
     // Retain contexts and service reservations independently of the public C++/generated ABI layout.
     class Impl;
