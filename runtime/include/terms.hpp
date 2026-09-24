@@ -1,7 +1,7 @@
 #pragma once
 
-// REVIEW SKETCH ONLY: API declarations and a tag decoder, excluded from compilation by the build.
-// See terms.md for ownership, errors, immutable updates and the private ABI boundary.
+// Term service declarations remain a sketch; ABI-aligned tag/layout checks compile in focused tests.
+// See runtime/design/terms.md for proposed ownership, immutable updates and the private ABI boundary.
 #include "../include/base_types.hpp"
 #include <array>
 #include <cstddef>
@@ -46,15 +46,8 @@ enum class TermError : std::uint8_t {
 };
 
 struct TermTag {
-    // Reserve the payload bits outside the three tag fields.
-    Word _padding : (ERL_WORD_BITS - 6);
-
-    // Third-level leaf, meaningful only when both preceding levels delegate.
-    TermKind3 tag3_ : 2;
-    // Second-level leaf or delegation to tag3_, selected by tag_primary_.
-    TermKind2 tag2_ : 2;
-    // First-level category or delegation to tag2_.
-    TermKindPrimary tag_primary_ : 2;
+    // Keep the encoded word intact; C++ bitfield order never defines the term ABI.
+    Word value_;
 
     // Resolve the first non-delegating tag, including immediate empty tuples and lists.
     [[nodiscard]] constexpr TermKind get_kind() const noexcept {
@@ -63,16 +56,21 @@ struct TermTag {
             TermKind::local_pid, TermKind::local_port,   TermKind::invalid,     TermKind::smallint,
             TermKind::atom,      TermKind::catch_object, TermKind::empty_tuple, TermKind::empty_list,
         };
-        const auto primary = static_cast<unsigned>(tag_primary_);
-        const auto secondary = static_cast<unsigned>(tag2_);
-        const auto tertiary = static_cast<unsigned>(tag3_);
-        const auto use_secondary = static_cast<unsigned>(tag_primary_ == TermKindPrimary::see_termkind2);
-        const auto use_tertiary = use_secondary & static_cast<unsigned>(tag2_ == TermKind2::see_termkind3);
+        const auto primary = static_cast<unsigned>(value_ & EAOT_V1_PRIMARY_MASK);
+        const auto secondary = static_cast<unsigned>((value_ >> 2) & 3U);
+        const auto tertiary = static_cast<unsigned>((value_ >> 4) & 3U);
+        const auto use_secondary = static_cast<unsigned>(primary == 3U);
+        const auto use_tertiary = use_secondary & static_cast<unsigned>(secondary == 2U);
         // Delegation advances index 3 to row 4, then index 6 to row 8; ignored fields contribute zero.
         const auto index = primary + use_secondary * (1U + secondary) + use_tertiary * (4U + tertiary - secondary);
         return kinds[index];
     }
 };
+
+static_assert(sizeof(TermTag) == sizeof(Word));
+static_assert(alignof(TermTag) == alignof(Word));
+static_assert((static_cast<unsigned>(TermKind2::smallint) << 2 |
+               static_cast<unsigned>(TermKindPrimary::see_termkind2)) == EAOT_V1_SMALL_INTEGER_TAG);
 
 // Carry a checked value or failure without fabricating an Erlang result.
 template <typename Value> using TermResult = std::expected<Value, TermError>;
@@ -83,6 +81,7 @@ template <typename Value> using TermResult = std::expected<Value, TermError>;
 // terms contain bits of a memory pointer, which can be resolved into a boxed term of some kind.
 class Term final {
   public:
+    // Reserve zero as an invalid/uninitialized slot until a factory supplies a value.
     Term() : value_(0) {}
 
     // Copy retains the same immutable value; move transfers this host handle.
@@ -199,15 +198,12 @@ class Term final {
     friend class TermFactory;
     friend class AtomStorage;
 
-    union {
-        Word value_;
-        TermTag tag_;
-    };
-
-    // // Hide process binding, resource budgets and allocation policy from consumers.
-    // class Impl;
-    // std::unique_ptr<Impl> impl_;
+    // Store immediates or future tagged heap pointers; roots/owners require external runtime metadata.
+    Word value_;
 };
+
+static_assert(sizeof(Term) == sizeof(Word));
+static_assert(alignof(Term) == alignof(Word));
 
 // Create terms owned by one live process; inputs are copied/retained before return.
 class TermFactory final {

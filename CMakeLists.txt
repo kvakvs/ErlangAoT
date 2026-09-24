@@ -56,3 +56,7 @@ endif()
 if(BUILD_TESTING AND ERLANG_AOT_BUILD_RUNTIME AND NOT CMAKE_CROSSCOMPILING)
     add_subdirectory(tests/runtime)
 endif()
+
+if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
+    add_subdirectory(tests/abi)
+endif()

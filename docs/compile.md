@@ -1,7 +1,8 @@
 # LLVM compilation contract
 
 Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
-target setup, IR verification and in-memory object emission implemented in steps 2–6.
+target setup, IR verification, in-memory object emission and the immediate-term ABI
+implemented in steps 2–7.
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults still preprocess/parse and return without executable output;
 the proposed compilation switches below are not implemented yet.
@@ -114,10 +115,15 @@ O2 may add proven/guarded variants with generic fallback: at most 3/function,
 32/module and 128/target, with pre-LLVM IR growth at most 2x per function/module,
 including dispatch. Generate no Cartesian products or clones without a benefit.
 
-## Provisional generated-code ABI v1
+## Private generated-code ABI v1
 
-This is a private contract to implement and test in step 7, not a claim that current
-runtime sketches implement it or that it matches BEAM.
+[v1.h](../abi/include/erlang_aot/abi/v1.h) defines the versioned C term/context/function
+types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
+integer encoding for explicit 32/64-bit targets. Runtime term services and lifecycle
+remain later steps, and this contract does not match BEAM. Native `Term` and private
+headers have compile-checked one-word layouts; heap prefixes remain reservations.
+`codegen::term_type` and `generated_function_type` derive LLVM types from the configured
+target, rejecting unsupported widths/alignment. LLVM C calling convention is required.
 
 - A term is an unsigned target-pointer-width integer (32 or 64 bits), aligned to
   the target word. Immediate small integers have low four bits `0xf`, matching the

@@ -1,10 +1,11 @@
 #pragma once
 #include <cstdint>
+#include <erlang_aot/abi/v1.h>
 
 namespace erlang_aot::runtime {
 
 // Use the runtime target's pointer width, never the compiler host's width for cross emission.
-using Word = std::uintptr_t;
+using Word = eaot_v1_term;
 static_assert(sizeof(Word) == 4 || sizeof(Word) == 8);
 static_assert(alignof(Word) == sizeof(Word));
 
@@ -58,8 +59,7 @@ enum class TermKind : std::uint8_t {
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.
-// This is currently represented by 4 bits in the BoxTag, raise alarm if more than 16
-// enum elements are added.
+// The private BoxHeader reserves five bits for these kinds.
 enum class BoxedKind : std::uint8_t {
     tuple = 0, // corresponds to BEAM VM constant ARITYVAL=0
     native_record = 1,
@@ -81,7 +81,7 @@ enum class BoxedKind : std::uint8_t {
     // Tuple value of {} is an immediate like NIL is
     empty_tuple = 16,
     empty_list = 17,
-    // NOTE: This must fit in 5 bits allocated in `BoxHeader` struct for `boxed_kind_`
+    // This must fit in the five kind bits reserved by BoxHeader.
 };
 
 enum class TermKindPrimary : std::uint8_t {
@@ -89,7 +89,7 @@ enum class TermKindPrimary : std::uint8_t {
     // the rest of `Term` value bits are a pointer to a cons cell
     list = 1,
     // the rest of `Term` value bits are a pointer to a `BoxHeader` object, a boxed in memory
-    // determined by its `boxed_kind_`
+    // determined by the kind bits in that header
     boxed = 2,
     // if tag1 == see_termkind2, allows reading tag2
     see_termkind2 = 3,

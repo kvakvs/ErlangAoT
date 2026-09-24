@@ -1,5 +1,20 @@
 # LLVM plan progress — 2026-09-24
 
+- Step7 implementation: abi/v1.h exposes uintptr_t term, opaque context, C/cdecl
+  function typedef; term.hpp has explicit32/64 checked constexpr integer codecs.
+  Low nibble0xf, signed payload28/60; encode unsigned shifts, decode sign without
+  signed right shift or overflowing unsigned-to-signed casts. Native uint64_t and
+  uintptr_t differ in C++ type on macOS but match size/alignment.
+  Term/tag/header one word; tag decoder uses masks, no inactive unions/bitfields.
+  Heap sketches now compile fixed prefixes instead of flexible arrays or unsafe
+  constructors; Boost cpp_int requires alignment16 here, so BignumCell honors it.
+  No term services/rooting/heap allocation implemented. Codegen term_abi derives
+  word/signature from target layout and rejects missing/unsupported layouts.
+  Focused tests + all75 Debug CTests pass; runtime-only all3 pass, C header syntax
+  checks six native/foreign triples, integer ASan/UBSan and focused tidy/Lizard pass.
+  Fresh full step7 quality gate passed; formatting/whitespace/local links passed.
+  Steps6/7 complete as requested; stop before8.
+
 - Step6 complete: emit_objects reverifies batch each attempt, clones IR, runs legacy
   TargetMachine object pipeline, replaces buffers on retry; errors clear whole batch.
   Backend asm printers/parsers initialized, static components extended. Native LLVM

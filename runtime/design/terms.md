@@ -1,116 +1,83 @@
 # Runtime term API — manual review sketch
 
-Status: proposed, 2026-09-20. **No runtime implementation.**
-[terms.hpp](terms.hpp) contains API declarations only;
-[term_layout.hpp](term_layout.hpp) sketches private heap structs and layout assertions.
-[process_heap.hpp](process_heap.hpp) owns process term storage and declares addition,
-cross-heap copying and collection. All sketches are deliberately outside the
-exported include tree and all CMake targets.
-[atom_storage.hpp](atom_storage.hpp) and [atom_storage.md](atom_storage.md) define
-runtime-wide interning, stable numeric atom IDs, startup caps and the atom-GC placeholder.
-Compiled atom literals are read-only constants initialized through AtomStorage at
-runtime; the compiler records spellings/constant slots and never assigns numeric IDs.
-Nothing here can be linked yet;
-this is not completion of a step in the [compilation plan](../../.agents/04-compile.md).
+Status: immediate ABI defined in compilation step 7, 2026-09-24. Heap allocation,
+term services, rooting and collection remain proposed and unimplemented.
+[terms.hpp](../include/terms.hpp) preserves the one-word public value API;
+[term_layout.hpp](../include/term_layout.hpp) contains compile-checked private prefixes.
+These headers are listed for IDE navigation and compiled by focused tests.
+[process_heap.hpp](../include/process_heap.hpp) reserves process storage and graph copying.
+[atom_storage.hpp](../include/atom_storage.hpp) and [atom_storage.md](atom_storage.md)
+reserve runtime-wide interning. Compiled metadata will record atom spellings, never
+compiler-assigned IDs; runtime binding and atom-valued expressions are later steps.
 
-## Class boundary and representation
+## Class boundary and immediate ABI
 
-`Term` is the common parent **value API** for all categories. The proposed public
-classes are `Term` and process-bound `TermFactory`; category-specific payloads
-are private structs with controlled memory layout. This deliberately proposes one final
-public value class rather than a public `IntegerTerm : Term` hierarchy. Review
-this choice explicitly: consumers use checked accessors rather than downcasts,
-and replacing boxed scalar structs with tagged words leaves their source API
-unchanged. If public typed wrappers are wanted, they can be added as checked
-views without exposing payload inheritance or storage.
+`Term` remains a final common value API with private storage and process-bound
+`TermFactory` construction. Its sole `Word` stores an immediate or a future tagged
+heap pointer. Public checked accessor declarations are preserved. The default zero
+word is an invalid/uninitialized slot, not nil or a valid boxed value. Root/owner
+tracking will require external metadata and explicit safepoints; a one-word value
+cannot itself contain a smart-pointer lifetime token. Those services are not yet
+implemented and the eventual root design must be validated before heap lowering.
 
-The forward-declared `Term::Impl` is an external host root handle, not a heap
-payload or a polymorphic term tree. It hides representation, allocation, roots and
-ownership. The sketch's private smart pointer retains that host root only; it is
-not stored in heap cells and does not mandate allocating every future integer.
-No public tag bits, integer limbs, pointers to
-heap cells, STL container references or mutable payload references are exposed.
-Changing the C++ object layout may require rebuilding C++ consumers; this is a
-source-compatibility goal, not a stable C++ binary ABI promise.
+The implemented private/versioned contract is [ABI v1](../../abi/include/erlang_aot/abi/v1.h)
+with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
+A generated function uses the platform C calling convention and returns an unsigned
+pointer-width term, accepting an opaque live context and a borrowed term-array
+pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
+The context propagates unchanged through direct calls. C++ `Term`, STL values,
+`std::expected` and exceptions never cross that boundary. There is no BEAM/FFI
+compatibility promise, public heap ABI or runtime lifecycle implementation yet.
 
-The generated-code ABI remains a separate private/versioned contract in `abi/`.
-The plan's unsigned word representation can coexist with these host handles.
-Only a runtime-private bridge will box/unbox and register roots. Neither these
-C++ classes nor `std::expected`, STL types or C++ exceptions cross that C boundary.
-The initial executable subset can still implement only immediate integers.
+Tags are numerical low bits, decoded with masks/shifts rather than C++ bitfields
+or inactive union members. Primary bits 0–1 reserve header=0, list=1, boxed=2 and
+secondary=3. Bits 2–3 then select pid=0, port=1, tertiary=2 or small integer=3.
+Tertiary bits 4–5 reserve atom=0, catch=1, empty tuple=2 and nil=3. Only small integer
+encoding is implemented: `(unsigned(value) << 4) | 0xf`, after checking the exact
+signed range `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Negative decoding explicitly
+reconstructs the signed payload without implementation-defined unsigned-to-signed
+conversion or signed right shift. No heap pointer encoder is provided yet.
+
+Both 32-bit and 64-bit codecs are tested on every host. Cross compilation takes
+width/alignment from the LLVM target layout, never host `sizeof(Word)`. The native
+C header, C++ layouts and LLVM term/signature types agree on size and alignment.
+Other native runtime toolchains still need their own full layout validation.
 
 ## Explicit process-heap layout
 
-The heap proposal is a word-aligned arena of **plain structs**, not C++ objects
-with virtual dispatch, inheritance, smart pointers or container members. `Word`
-is the runtime target's unsigned pointer-width integer (32 or 64 bits).
-`Term` is exactly one word. All object prefixes start with a two-word
-`Header { kind, size_words }`. `size_words` includes the prefix, trailing payload
-and word-rounding padding. The draft asserts field offsets and sizes instead of
-depending on packing pragmas or implementation-defined bitfields. GC mark and
-forwarding state use side metadata in this proposal, keeping the payload layout
-simple until a collector is chosen.
+`Word` is the runtime target's unsigned pointer-width type, aligned to 4 or 8 bytes.
+`Term`, `TermTag` and `BoxHeader` are each one word. The private header reserves low
+two bits 00, five kind bits at bits 2–6, and a content-word count starting at bit 7.
+That count excludes the header and includes all remaining prefix, trailing payload
+and allocation padding. Checked header construction remains future heap work.
+Cons cells have no header; they contain exactly a head term and a tail term.
 
-| Private struct                      | Fixed words        | Trailing payload                    | Slots traced by a future GC |
-| ----------------------------------- | ------------------ | ----------------------------------- | --------------------------- |
-| `NilCell`                           | 2                  | None                                | None                        |
-| `IntegerPrefix`                     | 4                  | `limb_count` unsigned words         | None                        |
-| `FloatCell`                         | 2 + 8 / word bytes | None                                | None                        |
-| `AtomCell`                          | 3                  | None                                | None; runtime table ID      |
-| `IdentityCell` (pid/port/reference) | 3                  | None                                | None; runtime registry ID   |
-| `ConsCell`                          | 4                  | None                                | Head and tail               |
-| `TuplePrefix`                       | 3                  | `arity` slots                       | Every element               |
-| `MapPrefix`                         | 3                  | `count` pairs of slots              | Every key and value         |
-| `BitstringPrefix`                   | 3                  | `ceil(bit_count / 8)` bytes, padded | None                        |
-| `ExternalFunctionCell`              | 5                  | None                                | Module and name atoms       |
-| `ClosurePrefix`                     | 5                  | `capture_count` slots               | Every capture               |
-| `NativeRecordPrefix`                | 4                  | `field_count` slots                 | Every field                 |
+| Private prefix | Fixed size | Trailing storage / future tracing |
+|---|---|---|
+| `BignumCell` | Native C++ layout | Owned Boost value; no term slots; may need alignment stronger than a word |
+| `FloatCell` | One word + 8 bytes | IEEE binary64 bytes, no traced slots |
+| `RemoteIdentityCell` | 3 words | Registry ID untraced, remote-host term traced |
+| `ConsCell` | 2 words | Head and tail traced |
+| `TupleCell` | 1 word | Arity consecutive term slots |
+| `MapCell` | 1 word | Key/value term pairs |
+| `HeapBinaryCell` | 2 words | Untraced Word data; valid high tail bits, zero means full final word |
+| `RefcBinaryCell` | Native C++ layout | Shared `BinaryHeapObject`, released by explicit C++ destruction |
+| `ExternalFunctionCell` | 4 words | Module/name terms traced; arity untraced |
+| `ClosureCell` | Native C++ layout | Reserved callable weak reference and count, followed by traced capture slots |
+| `NativeRecordPrefix` | 3 words | Descriptor ID/count followed by traced field slots |
 
-For example, a cons is `header | head-slot | tail-slot`, a tuple is
-`header | arity | element-slots...`, and an integer is
-`header | negative | limb-count | magnitude-limbs...`. Fields are addressed by
-the checked offsets in the draft. Trailing arrays start at `sizeof(Prefix)`;
-they are separate arena storage, **not** a C++ flexible array or a fake `[1]`
-member accessed out of bounds. Allocation must check count multiplication,
-addition, word rounding and budgets before reserving memory. The implementation
-must establish the C++ lifetime of prefixes and trailing arrays correctly, and
-never read padding/uninitialized slots as values. There is no allocator or
-pointer arithmetic implementation in this change.
+All variable payloads follow fixed prefixes as separately allocated storage, without
+flexible arrays or fake `[1]` members. Future allocation must check count arithmetic,
+word rounding and budgets, respect each prefix's alignment, and establish the C++
+lifetimes of both prefixes and trailing elements before access. Native C++ members
+need explicit construction/destruction and cannot be serialized or moved by blind
+byte copying. No constructors perform writes into unallocated trailing storage.
 
-Initially a valid slot contains the address of a boxed, word-aligned cell;
-zero is invalid, so nil has its own cell. Every link, including an element inside
-a container and a host root, uses this same slot format. Future small integers
-can use low tag bits without changing container layouts or the public API;
-32-bit targets guarantee fewer alignment bits than 64-bit targets. Exact masks,
-payload range and tag allocation remain a versioned ABI decision. The plan's
-immediate-integer milestone may introduce those tags directly rather than first
-implementing the all-boxed representation. These proposed layouts are private,
-not BEAM-compatible, serializable or fixed across ABI revisions.
-
-A moving collector must rewrite all rooted and heap-contained slots that point
-to moved cells; it must not reinterpret integer limbs, float bits, packed bytes
-or registry IDs as references. Internal C++ cell pointers cannot survive a
-safepoint without re-resolution through a root. Atom/identity/descriptor IDs are
-stable for the runtime instance and cannot be recycled while values could refer
-to them. Initially tables retain entries until runtime shutdown and fail at their
-resource limit. The atom-storage sketch reserves future reclamation/compaction of
-unreachable atoms without renumbering survivors or reusing IDs; other registry
-reclamation remains deferred. Closure descriptors retain their code metadata.
-Process termination does not erase the identity of an existing pid term. Future
-table reclamation needs its own reachability and generation contract.
-
-Integer magnitude limbs use target-native words, least significant first, with
-no leading zero limb. A zero integer has zero limbs and `negative == 0`; other
-signs are 0/1. Floats copy IEEE binary64 bits into byte storage so a 32-bit
-target's `double` alignment cannot introduce hidden heap padding. Byte order is
-target-native, not a cross-platform wire format. Maps start as flat unique-key
-entries; replacing them with trees or hashes is private. Binaries start inline;
-off-heap backing storage and sub-binaries need separately reviewed ownership.
-
-Cross compilation must derive this contract from the **target** word size/data
-layout. A host-side `sizeof` of these structs is not evidence for a different
-target. Build the assertions with each actual target runtime toolchain; test
-generated LLVM access against the same target contract before emitting heap ops.
+A future collector must trace only term slots, rewrite relocated pointers, and avoid
+interpreting numeric bytes, registry IDs, smart pointers or Boost internals as terms.
+Raw heap pointers cannot survive safepoints without re-resolution through roots.
+Runtime IDs remain stable while referenced, and code references require pinning.
+These are private reservations, not implemented GC, identity or callable services.
 
 ## Coverage and construction
 
@@ -133,7 +100,7 @@ a separate storage kind. Binaries are bitstrings with a bit count divisible by e
 | Native record                        | `native_record`                                                  | Category/descriptor predicates, descriptor and named fields                                      | `with_record_field`                                              |
 
 `ProcessContext` and `ProcessIdentity` are forward-declared here and sketched in
-[process.hpp](process.hpp). Other identity classes, closure and record descriptors
+[process.hpp](../include/process.hpp). Other identity classes, closure and record descriptors
 remain forward declarations for their owning subsystems. Their complete types are
 required before calling corresponding `expected<T, ...>` accessors. None of these
 declarations represents an implemented process, port, module or scheduler API.
@@ -148,9 +115,12 @@ Distribution and serialization, including imports of remote identities, are defe
 
 ## Values, ownership and errors
 
+The following are proposed service contracts; step 7 implements only raw integer encoding.
+
 - Factories bind to one process context. Every returned term is a rooted host
   handle; copying retains the value, assigning rebinds only that C++ handle.
-  No default/invalid term is constructible. Moved-from handles support only
+  The current sketch permits an invalid default slot; it must be initialized before use.
+  Moved-from handles support only
   destruction or assignment; all inspection requires a live handle.
 - Input spans and strings are borrowed only for the duration of a call. Extraction
   returns owned text/bytes, copied opaque identities or rooted child handles.
@@ -274,8 +244,8 @@ Review the explicit heap prefixes/slot format and tracing table, the unified
 public `Term` versus typed wrapper classes, persistent update
 names, process confinement/root lifetime, opaque identity ownership, explicit
 errors with host allocation exceptions, and whether bulk extraction is sufficient
-before adding iterators. Tag allocation, GC/root machinery,
-integer backend and C ABI bridging remain implementation decisions.
+before adding iterators. Immediate tag allocation is fixed by ABI v1; GC/root machinery, heap services
+and runtime bridging remain implementation decisions.
 
 After approval, implement in small steps under `runtime/src/terms/` and move the
 approved API declarations into `runtime/include/erlang_aot/runtime/`; keep heap
@@ -289,10 +259,7 @@ Add cross-heap graph-copy coverage, source-exit independence, partial-copy failu
 mailbox/cursor roots and collection-safe-point rejection.
 Validate prefix/array alignment, allocation overflow, scanner coverage and layout
 assertions on 32-bit and 64-bit target builds before enabling heap code generation.
-No behavior tests or implementation are added by this review-only change.
-
-Sketch validation: both headers pass a combined C++23 syntax check with warnings
-as errors on macOS arm64, clang-format, the repository clang-tidy configuration,
-Lizard (no function bodies) and whitespace checks. Layout assertions were evaluated
-only for that native 64-bit target; 32-bit and other platform layouts are not yet
-validated. No full build/behavior gate or commit was performed for this draft.
+Step 7 compiles all prefix assertions on native macOS arm64 and tests the complete
+64-way tag truth table, immediate integer boundaries/overflow for both widths,
+and target-derived LLVM layouts/signatures. These checks do not establish heap
+allocation, ownership, collection or native foreign-platform runtime correctness.

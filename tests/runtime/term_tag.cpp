@@ -32,8 +32,7 @@ bool check_combination(std::size_t combination) {
     const auto primary = combination / 16;
     const auto secondary = (combination / 4) % 4;
     const auto tertiary = combination % 4;
-    const TermTag tag{0, static_cast<TermKind3>(tertiary), static_cast<TermKind2>(secondary),
-                      static_cast<TermKindPrimary>(primary)};
+    const TermTag tag{static_cast<Word>(primary | (secondary << 2) | (tertiary << 4))};
     const auto actual = tag.get_kind();
     const auto wanted = expected[combination / 4][tertiary];
     if (actual == wanted) {

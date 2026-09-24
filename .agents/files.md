@@ -34,6 +34,13 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `target_backends.cpp`: once-only initialization of configured SDK backends.
   `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
   layouts, triple normalization, unknown architectures and unavailable backends.
+- `abi/include/erlang_aot/abi/{v1.h,term.hpp}`: C-compatible versioned term/context/
+  generated-function declarations and checked target-width immediate integer codecs.
+  `tests/abi/integers.cpp`: boundaries, signed round trips, overflow and wrong-tag checks.
+- `compiler/src/codegen/term_abi.{hpp,cpp}`: target-derived LLVM word/function types;
+  `tests/compiler/codegen/term_abi.cpp`: native/cross layouts, signed LLVM constants,
+  C-convention object emission and missing-target errors.
+- `tests/runtime/term_layout.cpp`: compile private prefix assertions and test ABI/tag agreement.
 - `compiler/src/codegen/emission.{hpp,cpp}`: fresh batch verification, cloned IR,
   legacy target emission and transactional in-memory object buffers;
   `tests/compiler/codegen/emission.cpp`: native/cross object inspection, repeat emission,

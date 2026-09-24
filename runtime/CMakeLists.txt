@@ -23,6 +23,5 @@ erlang_aot_project_options(erlang_runtime)
 # Runtime headers use Multiprecision, so consumers need the same header-only dependency.
 target_include_directories(erlang_runtime PUBLIC include)
 target_link_libraries(erlang_runtime
-    PUBLIC erlang_aot_multiprecision_dependency
-    PRIVATE erlang_aot_abi
+    PUBLIC erlang_aot_multiprecision_dependency erlang_aot_abi
 )

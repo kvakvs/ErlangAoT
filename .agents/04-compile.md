@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–6 complete, 2026-09-24. Steps 7–46 remain pending.
+Status: steps 1–7 complete, 2026-09-24. Steps 8–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -15,10 +15,11 @@ The preprocessor supplies expanded tokens to a parser owning a move-only
 `compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
 project compilation currently succeed without writing executables. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a placeholder
-static library, `erlang_aot_abi` an empty interface target; global LLVM SDK discovery/linkage is implemented, while lowering and the
-generated-code ABI remain pending. Private compilation owners retain batch ASTs,
-LLVM state and results; driver integration is still deferred. Planning found neither `llvm-config` on PATH nor the
-usual Homebrew LLVM prefixes; this was not an exhaustive SDK inventory.
+static library. `erlang_aot_abi` supplies versioned term/context/function headers
+and checked immediate integer encoding; global LLVM SDK discovery/linkage, target
+setup, verification and synthetic object emission are implemented. Private compilation
+owners retain batch ASTs, LLVM state and results; Erlang lowering and driver integration
+remain deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
 
@@ -46,11 +47,14 @@ Supporting contracts: [terms](../runtime/design/terms.md),
 [processes/schedulers](../runtime/design/processes.md),
 [atoms](../runtime/design/atom_storage.md), and
 [module registries](../runtime/design/code_server.md).
-Reconcile tag/header assertions and heap word/byte units before implementation.
+ABI v1 now fixes immediate low tags and target-word encoding. The private tag/header
+are one word with mask/shift decoding and compile-checked fixed heap prefixes;
+header content counts exclude its own word. Heap construction/allocation remains deferred.
 `TermTag::get_kind()` uses a constexpr three-level lookup; boxed kinds still need
 header inspection. Immediate identities resolve to `local_pid`/`local_port`, empty
 containers to `empty_tuple`/`empty_list`. CTest `runtime_term_tag` checks all 64 tag
-combinations in `tests/runtime/term_tag.cpp`; it does not validate heap layouts.
+combinations in `tests/runtime/term_tag.cpp`; `runtime_term_layout` separately
+compiles private prefix assertions and checks agreement with the immediate ABI.
 
 Carry these ownership and service contracts into implementation:
 
@@ -949,3 +953,21 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   full Lizard/clang-tidy, focused test quality and git diff --check passed.
   The emission suite also passed against static LLVM component libraries.
   Native foreign execution, Erlang lowering and CLI artifact publication remain pending.
+
+- Step 7 (2026-09-24): versioned C term/context/function declarations and checked
+  constexpr integer codecs added to the header-only ABI target. Explicit 32/64-bit
+  encodings use low nibble 0xf and signed 28/60-bit payloads; overflow and wrong tags
+  fail without signed shifts or out-of-range unsigned-to-signed conversions.
+  Runtime Word shares the native ABI type; Term/tag/header are one word. Explicit
+  mask/shift decoding replaces bitfields/union aliasing. Private heap sketches now
+  compile fixed prefixes, reserve separate trailing storage and respect Boost's
+  stronger native alignment; no heap services or constructors were implemented.
+  Target-derived LLVM term/signature checks, signed constants and C-convention
+  object emission passed for native arm64 and supported foreign 32/64-bit targets.
+  Boundary/negative/dense round trips, overflow, all tag combinations and native
+  prefix assertions passed. C header syntax passed six platform triples, runtime-only
+  build/all 3 tests passed without LLVM, and integer ASan/UBSan passed.
+  Fresh full Debug compiler+runtime configure/build, all 75 CTests, make format,
+  full Lizard/clang-tidy, focused test quality, local links and git diff --check passed.
+  Full native foreign runtime layouts/execution remain pending; cross-target checks
+  are not native platform validation. Stopped before step 8.

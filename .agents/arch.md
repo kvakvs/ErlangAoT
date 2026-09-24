@@ -17,6 +17,9 @@
   `emit_objects` clones verified IR and runs LLVM's legacy machine-code pipeline into
   owned buffers; repeated emission replaces output and failures invalidate the batch.
   Backend printers/parsers support synthetic native and cross-target object tests.
+  ABI v1 headers share a C-compatible unsigned term/context/function contract;
+  constexpr integer codecs check signed 28/60-bit payloads with low tag 0xf.
+  LLVM term/signature types derive from the selected target, never host word size.
   CLI integration, lowering and generated-code execution are still pending.
 
 - `runtime/include/binary_heap_object.hpp` sketches shared binary objects owning `std::vector<Word>`.
@@ -25,13 +28,15 @@
   Immutable word arrays carry optional valid-tail-bit counts; final shared-owner
   destruction releases the vector directly. No binary heap, pool or evacuation service.
   Checked object creation remains an API sketch without an implementation.
-- Runtime terms have a manual-review sketch in `runtime/design/`: an opaque C++
+- Runtime terms have a sketch in `runtime/include/` with notes in `runtime/design/`: an opaque C++
   `Term`/factory API over private word-aligned heap structs and traceable one-word
-  slots, with immutable updates and a future tagged-value boundary. Declarations
-  and layout assertions only, listed as CMake headers for IDE navigation; the runtime
-  remains a placeholder and does not compile the sketches.
+  slots and immutable updates. Term/tag/header are one word with explicit low-bit
+  masks instead of C++ bitfield/union layout; fixed prefixes reserve trailing storage.
+  Boost bignums retain their stronger native alignment; heap/root/GC services remain
+  unimplemented. CMake lists headers for IDEs; focused tests compile their assertions.
 - Native runtime tests compile `terms.hpp` to check `TermTag::get_kind()` against all
-  64 expected tag combinations; CTest registration is independent of compiler tests.
+  64 expected tag combinations and private layout assertions; independent ABI tests
+  cover integer encoding at both widths. Runtime-only builds remain LLVM-free.
 - AtomStorage review API owns runtime-local interning: sequential word-sized atom
   IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
   default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
