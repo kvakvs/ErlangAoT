@@ -8,10 +8,11 @@ namespace erlang_aot::codegen {
 namespace {
 // Preserve verifier text and the LLVM module identifier without inventing Erlang source coordinates.
 bool reject(CompilationResult &result, const llvm::Module &module, const std::string &reason) {
-    result.report({DiagnosticLevel::error,
-                   "LLVM IR verification failed for module '" + module.getModuleIdentifier() + "': " + reason,
-                   {},
-                   {}});
+    result.report(
+        {.level = DiagnosticLevel::error,
+         .message = "LLVM IR verification failed for module '" + module.getModuleIdentifier() + "': " + reason,
+         .location = {},
+         .module_name = {}});
     return false;
 }
 
@@ -61,8 +62,10 @@ bool verify_ir(Compilation &compilation) {
         return false;
     }
     if (!state.target_machine) {
-        state.result.report(
-            {DiagnosticLevel::error, "LLVM IR verification requires a configured target machine", {}, {}});
+        state.result.report({.level = DiagnosticLevel::error,
+                             .message = "LLVM IR verification requires a configured target machine",
+                             .location = {},
+                             .module_name = {}});
         return false;
     }
     for (const auto &module : state.modules) {

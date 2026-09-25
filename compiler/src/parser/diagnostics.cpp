@@ -3,7 +3,7 @@
 #include <algorithm>
 
 namespace erlang_aot {
-void FormParser::work(std::size_t amount) {
+void FormParser::work(const std::size_t amount) const {
     if (amount > work_) {
         fail(DiagnosticCode::resource_limit, "parser work budget exhausted");
     }
@@ -13,7 +13,7 @@ void FormParser::work(std::size_t amount) {
 void FormParser::expected(std::string description) const {
     auto diagnostic = token_diagnostic(DiagnosticCode::parser_syntax, "expected " + description, cursor_.anchor());
     diagnostic.expected = std::move(description);
-    throw diagnostic;
+    throw DiagnosticError(std::move(diagnostic));
 }
 
 void FormParser::enrich(Diagnostic &diagnostic) const {

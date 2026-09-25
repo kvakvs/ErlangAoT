@@ -65,6 +65,7 @@ class ContextLifetime final {
 };
 
 // Bind the existing TermFactory sketch to one process's storage and registered roots.
+// This is passed to function calls as Context parameter.
 class ProcessContext final {
   public:
     // Keep context addresses stable for the full continuation/heap lifetime.

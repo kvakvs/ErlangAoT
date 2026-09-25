@@ -10,7 +10,7 @@ ast::RecordDeclaration FormParser::record_declaration() {
     if (!native) {
         expect(U",");
     }
-    ast::RecordDeclaration result{std::move(name), native, declaration_fields()};
+    ast::RecordDeclaration result{.name = std::move(name), .native = native, .fields = declaration_fields()};
     if (enclosed) {
         expect(U")");
     }
@@ -62,7 +62,10 @@ ast::RecordDeclarationField FormParser::declaration_field() {
     if (cursor_.take_syntax(U"::")) {
         type = top_type();
     }
-    return {field_name, std::move(default_value), builder_.source(begin, cursor_.offset(), begin), std::move(type)};
+    return {.name = field_name,
+            .default_value = std::move(default_value),
+            .source = builder_.source(begin, cursor_.offset(), begin),
+            .type = std::move(type)};
 }
 
 ast::TypeDeclaration FormParser::type_declaration(const ast::Atom &name, const ast::ExprId &head) {
@@ -88,7 +91,8 @@ ast::TypeDeclaration FormParser::type_declaration(const ast::Atom &name, const a
             parameters.push_back(std::move(variable));
         }
         auto type = top_type();
-        return {kind, std::move(type_name), std::move(parameters), std::move(type)};
+        return {
+            .kind = kind, .name = std::move(type_name), .parameters = std::move(parameters), .type = std::move(type)};
     } catch (const EvaluationFailure &) {
         fail(DiagnosticCode::parser_syntax, "bad type declaration");
     }

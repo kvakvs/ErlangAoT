@@ -3,7 +3,7 @@
 namespace erlang_aot {
 ast::TypeValue FormParser::hash_type() {
     if (cursor_.take_syntax(U"{")) {
-        ast::MapType result{false, {}};
+        ast::MapType result{.any = false, .fields = {}};
         if (cursor_.take_syntax(U"}")) {
             return result;
         }
@@ -20,7 +20,7 @@ ast::TypeValue FormParser::hash_type() {
         name = record_name();
     }
     expect(U"{");
-    ast::RecordType result{std::move(module), std::move(name), {}};
+    ast::RecordType result{.module = std::move(module), .name = std::move(name), .fields = {}};
     if (cursor_.take_syntax(U"}")) {
         return result;
     }
@@ -41,7 +41,10 @@ ast::MapTypeField FormParser::map_type_field() {
         kind = ast::MapFieldKind::exact;
     }
     auto type = top_type();
-    return {kind, std::move(key), std::move(type), builder_.source(begin, cursor_.offset(), anchor)};
+    return {.kind = kind,
+            .key = std::move(key),
+            .value = std::move(type),
+            .source = builder_.source(begin, cursor_.offset(), anchor)};
 }
 
 ast::RecordTypeField FormParser::record_type_field() {
@@ -49,7 +52,8 @@ ast::RecordTypeField FormParser::record_type_field() {
     auto name = ast::Atom{value<std::u32string>(category(TokenKind::atom, "record field name"))};
     expect(U"::");
     auto type = top_type();
-    return {std::move(name), std::move(type), builder_.source(begin, cursor_.offset(), begin)};
+    return {
+        .name = std::move(name), .type = std::move(type), .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 std::pair<bool, ast::TypeId> FormParser::binary_type_part() {

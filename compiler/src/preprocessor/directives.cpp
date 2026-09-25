@@ -33,7 +33,7 @@ FeatureSetting feature(DirectiveCursor &cursor) {
     cursor.expect(U",");
     auto action = cursor.category(TokenKind::atom, "enable or disable");
     if (action.text() != U"enable" && action.text() != U"disable") {
-        throw Diagnostic{DiagnosticCode::malformed_directive, "expected enable or disable", action.spelling, {}};
+        throw DiagnosticError({DiagnosticCode::malformed_directive, "expected enable or disable", action.spelling, {}});
     }
     cursor.finish();
     return {std::move(name), action.text() == U"enable"};
@@ -61,8 +61,8 @@ TokenOperand include_operand(DirectiveCursor &cursor) {
     }
     for (const auto &token : result.tokens) {
         if (token.kind != TokenKind::string) {
-            throw Diagnostic{
-                DiagnosticCode::malformed_directive, "expected include string or macro", token.spelling, {}};
+            throw DiagnosticError(
+                {DiagnosticCode::malformed_directive, "expected include string or macro", token.spelling, {}});
         }
     }
     return result;
@@ -103,8 +103,8 @@ Directive parse(std::span<const Token> tokens, DirectiveKind kind) {
     }
     cursor.expect(U"(");
     if (input.size() < 2 || input.back().kind != TokenKind::symbol || input.back().text() != U")") {
-        throw Diagnostic{
-            DiagnosticCode::malformed_directive, "expected closing ')' before '.'", tokens.back().spelling, {}};
+        throw DiagnosticError(
+            {DiagnosticCode::malformed_directive, "expected closing ')' before '.'", tokens.back().spelling, {}});
     }
     DirectiveCursor arguments(input.subspan(1, input.size() - 2), input.back().spelling);
     return {kind, operand(kind, arguments), span};
@@ -144,8 +144,8 @@ std::variant<Directive, Diagnostic> parse_directive(std::span<const Token> token
     }
     try {
         return parse(tokens, *kind);
-    } catch (const Diagnostic &error) {
-        return error;
+    } catch (const DiagnosticError &error) {
+        return error.diagnostic;
     }
 }
 } // namespace erlang_aot

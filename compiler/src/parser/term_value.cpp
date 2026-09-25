@@ -20,7 +20,7 @@ void map_entry(Value &result, const Value &key, Value mapped, std::size_t &work)
 }
 } // namespace
 
-Value TermNormalizer::read(const ast::ExprId &id, bool farity) const {
+Value TermNormalizer::read(const ast::ExprId &id, const bool farity) const {
     literal_work(work_, 1);
     auto visitor = *this;
     visitor.farity_ = farity;
@@ -58,7 +58,7 @@ Value TermNormalizer::operator()(const ast::UnaryExpression &value) const {
     const auto spelling = operator_spelling(value.operation);
     const auto &operand = module_.expression(value.operand).value;
     if (const auto *group = std::get_if<ast::Group>(&operand)) {
-        return (*this)(ast::UnaryExpression{value.operation, group->expression});
+        return (*this)(ast::UnaryExpression{.operation = value.operation, .operand = group->expression});
     }
     const bool scalar = std::holds_alternative<ast::IntegerLiteral>(operand) ||
                         std::holds_alternative<ast::FloatLiteral>(operand) ||

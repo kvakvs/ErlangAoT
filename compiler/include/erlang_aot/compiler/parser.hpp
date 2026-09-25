@@ -35,7 +35,7 @@ class ParserSession {
     ParserSession(const ParserSession &) = delete;
     ParserSession &operator=(const ParserSession &) = delete;
     // Parse exactly one expanded form with an explicit EOF anchor, including empty input.
-    void parse_form(std::span<const Token> tokens, const Token &end, FeatureSnapshot features = {});
+    void parse_form(std::span<const Token> tokens, const Token &end, FeatureSnapshot features = {}) const;
     // Consume semantic preprocessor events; unexpected directives are contract errors.
     void consume(const PreprocessorEvent &event);
     // A resource limit stops further input work; ordinary syntax errors permit recovery.

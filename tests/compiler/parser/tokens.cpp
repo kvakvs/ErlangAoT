@@ -102,6 +102,27 @@ void diagnostics() {
     require(error.related.size() == 1 && error.primary.source->name == "physical.erl");
 }
 
+// Directive failures reach standard handlers without losing structured source context.
+void diagnostic_exception() {
+    SourceManager sources;
+    Lexer lexer(sources.add("invalid.erl", "+"));
+    const auto token = lexer.next().value();
+    DirectiveCursor cursor(std::span(&token, 1), token.spelling);
+    bool caught = false;
+    try {
+        cursor.expect(U"(");
+    } catch (const std::exception &error) {
+        caught = true;
+        require(std::string_view(error.what()) == "expected '('");
+        const auto *failure = dynamic_cast<const DiagnosticError *>(&error);
+        require(failure != nullptr);
+        require(failure->diagnostic.code == DiagnosticCode::malformed_directive);
+        require(failure->diagnostic.primary.source == token.spelling.source);
+        require(failure->diagnostic.location.value().file == "invalid.erl");
+    }
+    require(caught);
+}
+
 // Run shared cursor, lexical-boundary, operator, and provenance regressions.
 int main() {
     cursor_bounds();
@@ -109,4 +130,5 @@ int main() {
     terminals();
     operators();
     diagnostics();
+    diagnostic_exception();
 }

@@ -1,7 +1,7 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-std::optional<ast::ExprValue> FormParser::control(OperatorContext context) {
+std::optional<ast::ExprValue> FormParser::control(const OperatorContext context) {
     if (context == OperatorContext::pattern) {
         return std::nullopt;
     }
@@ -41,7 +41,10 @@ ast::BranchClause FormParser::branch() {
     auto guards = optional_guard();
     expect(U"->");
     auto body = sequence();
-    return {std::move(candidate), std::move(guards), std::move(body), builder_.source(begin, cursor_.offset(), begin)};
+    return {.pattern = std::move(candidate),
+            .guard = std::move(guards),
+            .body = std::move(body),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 std::vector<ast::BranchClause> FormParser::branches() {
@@ -57,7 +60,7 @@ ast::CaseExpression FormParser::case_expression() {
     expect(U"of");
     auto clauses = branches();
     expect(U"end");
-    return {std::move(value), std::move(clauses)};
+    return {.value = std::move(value), .clauses = std::move(clauses)};
 }
 
 ast::IfExpression FormParser::if_expression() {
@@ -67,7 +70,9 @@ ast::IfExpression FormParser::if_expression() {
         auto guards = guard(begin);
         expect(U"->");
         auto body = sequence();
-        clauses.push_back({std::move(guards), std::move(body), builder_.source(begin, cursor_.offset(), begin)});
+        clauses.push_back({.guard = std::move(guards),
+                           .body = std::move(body),
+                           .source = builder_.source(begin, cursor_.offset(), begin)});
     } while (cursor_.take_syntax(U";"));
     expect(U"end");
     return {std::move(clauses)};
@@ -83,8 +88,9 @@ ast::ReceiveExpression FormParser::receive_expression() {
         auto timeout = expression();
         expect(U"->");
         auto body = sequence();
-        result.after =
-            ast::ReceiveTimeout{std::move(timeout), std::move(body), builder_.source(begin, cursor_.offset(), begin)};
+        result.after = ast::ReceiveTimeout{.timeout = std::move(timeout),
+                                           .body = std::move(body),
+                                           .source = builder_.source(begin, cursor_.offset(), begin)};
     }
     expect(U"end");
     return result;

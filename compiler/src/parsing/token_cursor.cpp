@@ -2,9 +2,9 @@
 #include <stdexcept>
 
 namespace erlang_aot {
-TokenCursor::TokenCursor(std::span<const Token> tokens, Token end) : tokens_(tokens), end_(std::move(end)) {}
+TokenCursor::TokenCursor(const std::span<const Token> tokens, Token end) : tokens_(tokens), end_(std::move(end)) {}
 
-const Token *TokenCursor::peek(std::size_t lookahead) const {
+const Token *TokenCursor::peek(const std::size_t lookahead) const {
     return lookahead < tokens_.size() - offset_ ? &tokens_[offset_ + lookahead] : nullptr;
 }
 
@@ -16,7 +16,7 @@ const Token *TokenCursor::consume() {
     return token;
 }
 
-bool TokenCursor::take(TokenKind kind, std::u32string_view text) {
+bool TokenCursor::take(const TokenKind kind, const std::u32string_view text) {
     const auto *token = peek();
     if (!token || token->kind != kind || token->text() != text) {
         return false;
@@ -25,7 +25,7 @@ bool TokenCursor::take(TokenKind kind, std::u32string_view text) {
     return true;
 }
 
-bool TokenCursor::take_syntax(std::u32string_view text) {
+bool TokenCursor::take_syntax(const std::u32string_view text) {
     const auto *token = peek();
     if (!token || !syntax(*token, text)) {
         return false;
@@ -36,7 +36,7 @@ bool TokenCursor::take_syntax(std::u32string_view text) {
 
 std::size_t TokenCursor::checkpoint() const { return offset_; }
 
-void TokenCursor::restore(std::size_t offset) {
+void TokenCursor::restore(const std::size_t offset) {
     if (offset > tokens_.size()) {
         throw std::out_of_range("token cursor checkpoint");
     }

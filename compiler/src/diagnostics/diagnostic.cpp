@@ -2,6 +2,8 @@
 #include <utility>
 
 namespace erlang_aot {
+DiagnosticError::DiagnosticError(Diagnostic value) : std::runtime_error(value.message), diagnostic(std::move(value)) {}
+
 LexicalError::LexicalError(Diagnostic value) : std::runtime_error(value.message), diagnostic(std::move(value)) {}
 
 std::string render(const Diagnostic &diagnostic) {

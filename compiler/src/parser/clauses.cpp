@@ -2,7 +2,7 @@
 
 namespace erlang_aot {
 // Wrap the selected grammar entry point without claiming semantic pattern validity.
-ast::PatternSyntaxId FormParser::pattern(bool permissive) {
+ast::PatternSyntaxId FormParser::pattern(const bool permissive) {
     const auto begin = cursor_.offset();
     auto child = expression(0, permissive ? OperatorContext::expression : OperatorContext::pattern);
     ast::PatternValue value = ast::RestrictedPattern{child};
@@ -37,23 +37,26 @@ std::vector<ast::ExprId> FormParser::sequence() {
 }
 
 // Preserve semicolon alternatives and per-conjunction extents through the body arrow.
-ast::GuardSyntax FormParser::guard(std::size_t begin) {
+ast::GuardSyntax FormParser::guard(const std::size_t begin) {
     std::vector<ast::GuardConjunction> alternatives;
     do {
         const auto start = cursor_.offset();
         auto tests = sequence();
-        alternatives.push_back({std::move(tests), builder_.source(start, cursor_.offset(), start)});
+        alternatives.push_back({.tests = std::move(tests), .source = builder_.source(start, cursor_.offset(), start)});
     } while (cursor_.take_syntax(U";"));
-    return {std::move(alternatives), builder_.source(begin, cursor_.offset(), begin)};
+    return {.alternatives = std::move(alternatives), .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 // Complete one head, optional guard and nonempty body before publishing a clause.
-ast::FunctionClause FormParser::clause(std::size_t begin) {
+ast::FunctionClause FormParser::clause(const std::size_t begin) {
     auto args = arguments();
     auto guards = optional_guard();
     expect(U"->");
     auto body = sequence();
-    return {std::move(args), std::move(guards), std::move(body), builder_.source(begin, cursor_.offset(), begin)};
+    return {.arguments = std::move(args),
+            .guard = std::move(guards),
+            .body = std::move(body),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 // Reuse the optional guard envelope in all pattern-headed clause families.
@@ -79,13 +82,13 @@ ast::Function FormParser::function() {
         check_clause(value<std::u32string>(next), name.name, arity, current, next);
         clauses.push_back(std::move(current));
     }
-    return {std::move(name), std::move(clauses)};
+    return {.name = std::move(name), .clauses = std::move(clauses)};
 }
 
-void FormParser::check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
-                              const ast::FunctionClause &clause, const Token &site) const {
+void FormParser::check_clause(const std::u32string_view actual, const std::u32string_view expected,
+                              const std::size_t arity, const ast::FunctionClause &clause, const Token &site) {
     if (actual != expected || clause.arguments.size() != arity) {
-        throw token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", site);
+        throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", site));
     }
 }
 } // namespace erlang_aot

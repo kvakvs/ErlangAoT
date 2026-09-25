@@ -2,7 +2,7 @@
 
 namespace erlang_aot {
 // Consume map fields as general expressions even when the enclosing root is a pattern.
-ast::ExprValue FormParser::map(std::optional<ast::ExprId> base, bool comprehension) {
+ast::ExprValue FormParser::map(std::optional<ast::ExprId> base, const bool comprehension) {
     expect(U"{");
     std::vector<ast::MapField> fields;
     if (!cursor_.take_syntax(U"}")) {
@@ -13,11 +13,11 @@ ast::ExprValue FormParser::map(std::optional<ast::ExprId> base, bool comprehensi
             require_comprehension(comprehension && !base);
             auto items = qualifiers();
             expect(U"}");
-            return ast::MapComprehension{std::move(fields), std::move(items)};
+            return ast::MapComprehension{.templates = std::move(fields), .qualifiers = std::move(items)};
         }
         expect(U"}");
     }
-    return ast::MapExpression{std::move(base), std::move(fields)};
+    return ast::MapExpression{.base = std::move(base), .fields = std::move(fields)};
 }
 
 // Anchor each field at its association/exact operator, preserving the complete field extent.
@@ -31,6 +31,9 @@ ast::MapField FormParser::map_field() {
         kind = ast::MapFieldKind::exact;
     }
     auto value = expression();
-    return {kind, std::move(key), std::move(value), builder_.source(begin, cursor_.offset(), anchor)};
+    return {.kind = kind,
+            .key = std::move(key),
+            .value = std::move(value),
+            .source = builder_.source(begin, cursor_.offset(), anchor)};
 }
 } // namespace erlang_aot

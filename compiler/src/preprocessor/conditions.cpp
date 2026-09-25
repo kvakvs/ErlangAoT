@@ -6,7 +6,7 @@ namespace {
 Directive checked_directive(std::span<const Token> tokens) {
     auto parsed = parse_directive(tokens);
     if (auto *error = std::get_if<Diagnostic>(&parsed)) {
-        throw std::move(*error);
+        throw DiagnosticError(std::move(*error));
     }
     return std::get<Directive>(std::move(parsed));
 }
@@ -34,7 +34,7 @@ void PreprocessorSession::State::begin_branch(DirectiveKind kind, std::span<cons
     }
     auto parsed = parse_directive(tokens);
     if (auto *error = std::get_if<Diagnostic>(&parsed)) {
-        throw std::move(*error);
+        throw DiagnosticError(std::move(*error));
     }
     const bool selected = test_branch(std::get<Directive>(parsed));
     auto &branch = files.back().branches.back();
@@ -81,7 +81,7 @@ void PreprocessorSession::State::select_branch(DirectiveKind kind, std::span<con
     }
     auto parsed = parse_directive(tokens);
     if (auto *error = std::get_if<Diagnostic>(&parsed)) {
-        throw std::move(*error);
+        throw DiagnosticError(std::move(*error));
     }
     branch.active = test_branch(std::get<Directive>(parsed));
     branch.selected = branch.active;

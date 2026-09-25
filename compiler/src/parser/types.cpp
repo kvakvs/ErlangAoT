@@ -11,7 +11,7 @@ ast::BinaryOperator type_operation(const OperatorInfo &info) {
 }
 } // namespace
 
-ast::TypeId FormParser::make_type(ast::TypeValue value, std::size_t begin, std::size_t anchor) {
+ast::TypeId FormParser::make_type(ast::TypeValue value, const std::size_t begin, const std::size_t anchor) {
     node();
     return builder_.type(std::move(value), builder_.source(begin, cursor_.offset(), anchor));
 }
@@ -25,18 +25,18 @@ ast::TypeId FormParser::top_type() {
         cursor_.consume();
         auto type = top_type();
         --depth_;
-        return make_type(ast::AnnotatedType{std::move(variable), std::move(type)}, begin, begin);
+        return make_type(ast::AnnotatedType{.variable = std::move(variable), .type = std::move(type)}, begin, begin);
     }
     auto left = type_expression();
     if (cursor_.take_syntax(U"|")) {
         auto right = top_type();
-        left = make_type(ast::UnionType{std::move(left), std::move(right)}, begin, begin);
+        left = make_type(ast::UnionType{.left = std::move(left), .right = std::move(right)}, begin, begin);
     }
     --depth_;
     return left;
 }
 
-ast::TypeId FormParser::type_expression(int minimum) {
+ast::TypeId FormParser::type_expression(const int minimum) {
     enter();
     const auto begin = cursor_.offset();
     auto left = type_prefix();
@@ -48,10 +48,12 @@ ast::TypeId FormParser::type_expression(int minimum) {
         cursor_.consume();
         auto right = type_expression(info->precedence + 1);
         if (info->spelling == U"..") {
-            left = make_type(ast::RangeType{std::move(left), std::move(right)}, begin, anchor);
+            left = make_type(ast::RangeType{.first = std::move(left), .last = std::move(right)}, begin, anchor);
         } else {
-            left = make_type(ast::BinaryTypeOperator{type_operation(*info), std::move(left), std::move(right)}, begin,
-                             anchor);
+            left = make_type(ast::BinaryTypeOperator{.operation = type_operation(*info),
+                                                     .left = std::move(left),
+                                                     .right = std::move(right)},
+                             begin, anchor);
         }
         const auto next = infix_operator(cursor_.anchor(), OperatorContext::type);
         if (info->associativity == Associativity::none && next && next->precedence == info->precedence) {
@@ -67,12 +69,13 @@ ast::TypeId FormParser::type_prefix() {
     if (const auto operation = prefix_operator(cursor_.anchor())) {
         cursor_.consume();
         auto operand = type_expression(operation->precedence);
-        return make_type(ast::UnaryType{operation->operation, std::move(operand)}, begin, begin);
+        return make_type(ast::UnaryType{.operation = operation->operation, .operand = std::move(operand)}, begin,
+                         begin);
     }
     return make_type(type_primary(), begin, begin);
 }
 
-std::vector<ast::TypeId> FormParser::type_elements(std::u32string_view close) {
+std::vector<ast::TypeId> FormParser::type_elements(const std::u32string_view close) {
     std::vector<ast::TypeId> result;
     if (cursor_.take_syntax(close)) {
         return result;

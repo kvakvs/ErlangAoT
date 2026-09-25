@@ -1,7 +1,7 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-ast::ExprId FormParser::make(ast::ExprValue value, std::size_t begin, std::size_t anchor) {
+ast::ExprId FormParser::make(ast::ExprValue value, const std::size_t begin, const std::size_t anchor) {
     node();
     return builder_.expression(std::move(value), builder_.source(begin, cursor_.offset(), anchor));
 }
@@ -14,7 +14,7 @@ void FormParser::enter() {
     ++depth_;
 }
 
-ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
+ast::ExprId FormParser::expression(const int minimum, const OperatorContext context) {
     enter();
     auto left = prefix(context);
     while (const auto info = next_operator(context)) {
@@ -28,7 +28,7 @@ ast::ExprId FormParser::expression(int minimum, OperatorContext context) {
     return left;
 }
 
-ast::ExprId FormParser::prefix(OperatorContext context) {
+ast::ExprId FormParser::prefix(const OperatorContext context) {
     if (cursor_.empty()) {
         fail(DiagnosticCode::parser_syntax, "expected expression");
     }
@@ -40,12 +40,12 @@ ast::ExprId FormParser::prefix(OperatorContext context) {
     if (const auto info = prefix_operator(cursor_.anchor())) {
         cursor_.consume();
         auto operand = expression(info->precedence, context);
-        return make(ast::UnaryExpression{info->operation, std::move(operand)}, begin, begin);
+        return make(ast::UnaryExpression{.operation = info->operation, .operand = std::move(operand)}, begin, begin);
     }
     return structural(context);
 }
 
-std::optional<OperatorInfo> FormParser::next_operator(OperatorContext context) const {
+std::optional<OperatorInfo> FormParser::next_operator(const OperatorContext context) const {
     if (cursor_.empty()) {
         return std::nullopt;
     }
@@ -57,29 +57,30 @@ std::optional<OperatorInfo> FormParser::next_operator(OperatorContext context) c
     return infix_operator(cursor_.anchor(), context);
 }
 
-ast::ExprId FormParser::continuation(ast::ExprId left, const OperatorInfo &info, OperatorContext context) {
+ast::ExprId FormParser::continuation(ast::ExprId left, const OperatorInfo &info, const OperatorContext context) {
     const auto begin = builder_.view().expression(left).source.begin;
     const auto anchor = cursor_.offset();
     cursor_.consume();
     if (info.spelling == U"(") {
         auto arguments = elements(U")");
-        return make(ast::CallExpression{std::move(left), std::move(arguments)}, begin, anchor);
+        return make(ast::CallExpression{.target = std::move(left), .arguments = std::move(arguments)}, begin, anchor);
     }
     const auto minimum = info.precedence + (info.associativity == Associativity::right ? 0 : 1);
     auto right = expression(minimum, context);
     if (info.spelling == U"=") {
-        return make(ast::MatchExpression{std::move(left), std::move(right)}, begin, anchor);
+        return make(ast::MatchExpression{.left = std::move(left), .right = std::move(right)}, begin, anchor);
     }
     if (info.spelling == U":") {
-        return make(ast::RemoteExpression{std::move(left), std::move(right)}, begin, anchor);
+        return make(ast::RemoteExpression{.module = std::move(left), .function = std::move(right)}, begin, anchor);
     }
     if (!info.operation) {
         throw std::logic_error("missing binary operator identity");
     }
-    return make(ast::BinaryExpression{*info.operation, std::move(left), std::move(right)}, begin, anchor);
+    return make(ast::BinaryExpression{.operation = *info.operation, .left = std::move(left), .right = std::move(right)},
+                begin, anchor);
 }
 
-void FormParser::nonassociative(const OperatorInfo &info, OperatorContext context) const {
+void FormParser::nonassociative(const OperatorInfo &info, const OperatorContext context) const {
     if (info.associativity != Associativity::none) {
         return;
     }

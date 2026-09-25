@@ -6,7 +6,7 @@
 namespace erlang_aot::codegen::detail {
 namespace {
 // Preserve all LLVM severity categories without treating informational remarks as errors.
-DiagnosticLevel level(llvm::DiagnosticSeverity severity) {
+DiagnosticLevel level(const llvm::DiagnosticSeverity severity) {
     switch (severity) {
     case llvm::DS_Error:
         return DiagnosticLevel::error;
@@ -34,7 +34,10 @@ std::string message(const llvm::DiagnosticInfo &diagnostic) {
 void capture_diagnostic(const llvm::DiagnosticInfo *diagnostic, void *destination) noexcept {
     auto &result = *static_cast<CompilationResult *>(destination);
     try {
-        result.report({level(diagnostic->getSeverity()), message(*diagnostic), std::nullopt, {}});
+        result.report({.level = level(diagnostic->getSeverity()),
+                       .message = message(*diagnostic),
+                       .location = std::nullopt,
+                       .module_name = {}});
     } catch (...) {
         result.fail_diagnostic_capture();
     }

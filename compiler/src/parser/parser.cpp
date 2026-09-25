@@ -38,18 +38,19 @@ void ParserSession::State::record(Diagnostic diagnostic) {
     diagnostics.push_back(std::move(diagnostic));
 }
 
-void ParserSession::State::budget(std::size_t count, const Token &anchor) {
+void ParserSession::State::budget(const std::size_t count, const Token &anchor) {
     if (count > limits.form_tokens || count > limits.total_tokens - tokens) {
-        throw token_diagnostic(DiagnosticCode::resource_limit, "parser token budget exhausted", anchor);
+        throw DiagnosticError(
+            token_diagnostic(DiagnosticCode::resource_limit, "parser token budget exhausted", anchor));
     }
     tokens += count;
     if (count > work) {
-        throw token_diagnostic(DiagnosticCode::resource_limit, "parser work budget exhausted", anchor);
+        throw DiagnosticError(token_diagnostic(DiagnosticCode::resource_limit, "parser work budget exhausted", anchor));
     }
     work -= count;
 }
 
-void ParserSession::State::parse(std::span<const Token> input, const Token &end, FeatureSnapshot features) {
+void ParserSession::State::parse(const std::span<const Token> input, const Token &end, FeatureSnapshot features) {
     if (stopped) {
         return;
     }
@@ -58,10 +59,12 @@ void ParserSession::State::parse(std::span<const Token> input, const Token &end,
         auto transaction = builder.begin(input, end, std::move(features));
         const auto used = builder.view().forms().size() + builder.view().expression_count() +
                           builder.view().pattern_count() + builder.view().term_count() + builder.view().type_count();
-        FormParser parser(input, end, builder, {limits.nodes - used, std::min<std::size_t>(limits.nesting, 512), work});
+        FormParser parser(
+            input, end, builder,
+            {.nodes = limits.nodes - used, .nesting = std::min<std::size_t>(limits.nesting, 512), .work = work});
         transaction.commit(parser.parse());
-    } catch (const Diagnostic &diagnostic) {
-        record(diagnostic);
+    } catch (const DiagnosticError &error) {
+        record(error.diagnostic);
     }
 }
 
@@ -77,12 +80,12 @@ void ParserSession::State::consume(const OrdinaryForm &form) {
 void ParserSession::State::consume(const Diagnostic &diagnostic) { record(diagnostic); }
 
 void ParserSession::State::consume(const Directive &directive) {
-    Diagnostic diagnostic{DiagnosticCode::parser_contract,
-                          "preprocessing directive reached the syntax parser",
-                          directive.spelling,
-                          {},
-                          Severity::error,
-                          {}};
+    Diagnostic diagnostic{.code = DiagnosticCode::parser_contract,
+                          .message = "preprocessing directive reached the syntax parser",
+                          .primary = directive.spelling,
+                          .related = {},
+                          .severity = Severity::error,
+                          .location = {}};
     record(std::move(diagnostic));
 }
 
@@ -93,7 +96,7 @@ ParserSession::ParserSession(ParserLimits limits) : state_(std::make_unique<Stat
 
 ParserSession::~ParserSession() = default;
 
-void ParserSession::parse_form(std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
+void ParserSession::parse_form(const std::span<const Token> tokens, const Token &end, FeatureSnapshot features) const {
     if (!state_) {
         throw std::logic_error("finished parser session");
     }
@@ -114,7 +117,9 @@ ParseResult ParserSession::finish(FeatureSnapshot features) && {
         throw std::logic_error("finished parser session");
     }
     auto state = std::move(state_);
-    return {std::move(state->builder).finish(std::move(features)), std::move(state->diagnostics), state->failed};
+    return {.module = std::move(state->builder).finish(std::move(features)),
+            .diagnostics = std::move(state->diagnostics),
+            .failed = state->failed};
 }
 
 ParseResult parse_module(PreprocessorSession &preprocessor, ParserLimits limits) {

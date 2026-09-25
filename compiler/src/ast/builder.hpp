@@ -39,13 +39,13 @@ class Builder {
     Transaction begin(std::span<const Token> tokens, const Token &end, FeatureSnapshot features = {});
     // Construct checked extents and typed nodes only inside the active form.
     NodeSource source(std::size_t begin, std::size_t end, std::size_t anchor) const;
-    ExprId expression(ExprValue value, NodeSource source);
-    TermId term(TermValue value, NodeSource source);
-    TypeId type(TypeValue value, NodeSource source);
+    ExprId expression(ExprValue value, NodeSource source) const;
+    TermId term(TermValue value, NodeSource source) const;
+    TypeId type(TypeValue value, NodeSource source) const;
     // Reclaim temporary attribute expressions after conversion to independently owned literal terms.
-    void discard_expressions(std::size_t begin);
-    FormId form(FormValue value, NodeSource source);
-    PatternSyntaxId pattern(PatternValue value, NodeSource source);
+    void discard_expressions(std::size_t begin) const;
+    FormId form(FormValue value, NodeSource source) const;
+    PatternSyntaxId pattern(PatternValue value, NodeSource source) const;
     // Read-only inspection is valid until the next builder mutation.
     const Module &view() const;
     Module finish(FeatureSnapshot features = {}) &&;

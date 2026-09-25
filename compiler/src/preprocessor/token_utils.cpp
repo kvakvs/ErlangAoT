@@ -9,7 +9,7 @@ Token generated(const Token &origin, TokenKind kind, TokenValue value) {
 }
 
 void pp_fail(DiagnosticCode code, std::string message, const Token &token) {
-    throw token_diagnostic(code, std::move(message), token);
+    throw DiagnosticError(token_diagnostic(code, std::move(message), token));
 }
 
 std::vector<Token> fragment(std::string text) {

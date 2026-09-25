@@ -17,43 +17,44 @@ constexpr auto left = Associativity::left;
 constexpr auto right = Associativity::right;
 constexpr auto none = Associativity::none;
 using enum ast::BinaryOperator;
-constexpr Entry entries[]{{{U":", 800, none}, false, false},
-                          {{U"=", 100, right}, false, false},
-                          {{U"!", 100, right, send}, false, false},
-                          {{U"orelse", 150, right, or_else}, true, false},
-                          {{U"andalso", 160, right, and_also}, true, false},
-                          {{U"==", 200, none, equal}, true, false},
-                          {{U"/=", 200, none, not_equal}, true, false},
-                          {{U"=<", 200, none, less_equal}, true, false},
-                          {{U"<", 200, none, less}, true, false},
-                          {{U">=", 200, none, greater_equal}, true, false},
-                          {{U">", 200, none, greater}, true, false},
-                          {{U"=:=", 200, none, exact_equal}, true, false},
-                          {{U"=/=", 200, none, exact_not_equal}, true, false},
-                          {{U"++", 300, right, append}, true, false},
-                          {{U"--", 300, right, subtract_list}, true, false},
-                          {{U"+", 400, left, add}, true, true},
-                          {{U"-", 400, left, subtract}, true, true},
-                          {{U"bor", 400, left, bit_or}, true, true},
-                          {{U"bxor", 400, left, bit_xor}, true, true},
-                          {{U"bsl", 400, left, shift_left}, true, true},
-                          {{U"bsr", 400, left, shift_right}, true, true},
-                          {{U"or", 400, left, logical_or}, true, true},
-                          {{U"xor", 400, left, logical_xor}, true, true},
-                          {{U"*", 500, left, multiply}, true, true},
-                          {{U"/", 500, left, divide}, true, true},
-                          {{U"div", 500, left, integer_divide}, true, true},
-                          {{U"rem", 500, left, remainder}, true, true},
-                          {{U"band", 500, left, bit_and}, true, true},
-                          {{U"and", 500, left, logical_and}, true, true}};
-constexpr OperatorInfo type_entries[]{{U"::", 150, right}, {U"|", 170, left}, {U"..", 200, none}};
+constexpr Entry entries[]{
+    {.info = {.spelling = U":", .precedence = 800, .associativity = none}, .condition = false, .type = false},
+                          {.info = {.spelling = U"=", .precedence = 100, .associativity = right}, .condition = false, .type = false},
+                          {.info = {.spelling = U"!", .precedence = 100, .associativity = right, .operation = send}, .condition = false, .type = false},
+                          {.info = {.spelling = U"orelse", .precedence = 150, .associativity = right, .operation = or_else}, .condition = true, .type = false},
+                          {.info = {.spelling = U"andalso", .precedence = 160, .associativity = right, .operation = and_also}, .condition = true, .type = false},
+                          {.info = {.spelling = U"==", .precedence = 200, .associativity = none, .operation = equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U"/=", .precedence = 200, .associativity = none, .operation = not_equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U"=<", .precedence = 200, .associativity = none, .operation = less_equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U"<", .precedence = 200, .associativity = none, .operation = less}, .condition = true, .type = false},
+                          {.info = {.spelling = U">=", .precedence = 200, .associativity = none, .operation = greater_equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U">", .precedence = 200, .associativity = none, .operation = greater}, .condition = true, .type = false},
+                          {.info = {.spelling = U"=:=", .precedence = 200, .associativity = none, .operation = exact_equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U"=/=", .precedence = 200, .associativity = none, .operation = exact_not_equal}, .condition = true, .type = false},
+                          {.info = {.spelling = U"++", .precedence = 300, .associativity = right, .operation = append}, .condition = true, .type = false},
+                          {.info = {.spelling = U"--", .precedence = 300, .associativity = right, .operation = subtract_list}, .condition = true, .type = false},
+                          {.info = {.spelling = U"+", .precedence = 400, .associativity = left, .operation = add}, .condition = true, .type = true},
+                          {.info = {.spelling = U"-", .precedence = 400, .associativity = left, .operation = subtract}, .condition = true, .type = true},
+                          {.info = {.spelling = U"bor", .precedence = 400, .associativity = left, .operation = bit_or}, .condition = true, .type = true},
+                          {.info = {.spelling = U"bxor", .precedence = 400, .associativity = left, .operation = bit_xor}, .condition = true, .type = true},
+                          {.info = {.spelling = U"bsl", .precedence = 400, .associativity = left, .operation = shift_left}, .condition = true, .type = true},
+                          {.info = {.spelling = U"bsr", .precedence = 400, .associativity = left, .operation = shift_right}, .condition = true, .type = true},
+                          {.info = {.spelling = U"or", .precedence = 400, .associativity = left, .operation = logical_or}, .condition = true, .type = true},
+                          {.info = {.spelling = U"xor", .precedence = 400, .associativity = left, .operation = logical_xor}, .condition = true, .type = true},
+                          {.info = {.spelling = U"*", .precedence = 500, .associativity = left, .operation = multiply}, .condition = true, .type = true},
+                          {.info = {.spelling = U"/", .precedence = 500, .associativity = left, .operation = divide}, .condition = true, .type = true},
+                          {.info = {.spelling = U"div", .precedence = 500, .associativity = left, .operation = integer_divide}, .condition = true, .type = true},
+                          {.info = {.spelling = U"rem", .precedence = 500, .associativity = left, .operation = remainder}, .condition = true, .type = true},
+                          {.info = {.spelling = U"band", .precedence = 500, .associativity = left, .operation = bit_and}, .condition = true, .type = true},
+                          {.info = {.spelling = U"and", .precedence = 500, .associativity = left, .operation = logical_and}, .condition = true, .type = true}};
+constexpr OperatorInfo type_entries[]{{.spelling = U"::", .precedence = 150, .associativity = right}, {.spelling = U"|", .precedence = 170, .associativity = left}, {.spelling = U"..", .precedence = 200, .associativity = none}};
 constexpr std::pair<std::u32string_view, ast::UnaryOperator> prefixes[]{{U"+", ast::UnaryOperator::positive},
                                                                         {U"-", ast::UnaryOperator::negative},
                                                                         {U"bnot", ast::UnaryOperator::bit_not},
                                                                         {U"not", ast::UnaryOperator::logical_not}};
 
 // Apply the grammar context without changing a shared operator's binding strength.
-bool allowed(const Entry &entry, OperatorContext context) {
+bool allowed(const Entry &entry, const OperatorContext context) {
     if (context == OperatorContext::pattern) {
         const auto name = entry.info.spelling;
         return name != U"!" && name != U"orelse" && name != U"andalso" && name != U":";
@@ -68,7 +69,7 @@ bool allowed(const Entry &entry, OperatorContext context) {
 std::optional<PrefixOperatorInfo> prefix_operator(const Token &token) {
     for (const auto &[spelling, operation] : prefixes) {
         if (syntax(token, spelling)) {
-            return PrefixOperatorInfo{operation};
+            return PrefixOperatorInfo{.operation = operation};
         }
     }
     return std::nullopt;
@@ -76,12 +77,12 @@ std::optional<PrefixOperatorInfo> prefix_operator(const Token &token) {
 
 std::optional<OperatorInfo> call_operator(const Token &token) {
     if (syntax(token, U"(")) {
-        return OperatorInfo{U"(", 750, Associativity::left};
+        return OperatorInfo{.spelling = U"(", .precedence = 750, .associativity = Associativity::left};
     }
     return std::nullopt;
 }
 
-std::optional<OperatorInfo> infix_operator(const Token &token, OperatorContext context) {
+std::optional<OperatorInfo> infix_operator(const Token &token, const OperatorContext context) {
     if (token.kind != TokenKind::keyword && token.kind != TokenKind::symbol) {
         return std::nullopt;
     }

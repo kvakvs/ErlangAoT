@@ -1,7 +1,7 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-void FormParser::require_comprehension(bool allowed) const {
+void FormParser::require_comprehension(const bool allowed) const {
     if (!allowed) {
         fail(DiagnosticCode::parser_syntax, "comprehension is not allowed in this grammar context");
     }
@@ -40,7 +40,8 @@ ast::ComprehensionQualifier FormParser::qualifier_group() {
     do {
         items.push_back(qualifier());
     } while (cursor_.take_syntax(U"&&"));
-    return ast::ZippedQualifier{std::move(items), builder_.source(begin, cursor_.offset(), begin)};
+    return ast::ZippedQualifier{.qualifiers = std::move(items),
+                                .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 ast::Qualifier FormParser::qualifier() {
@@ -52,7 +53,7 @@ ast::Qualifier FormParser::qualifier() {
     return generator(std::move(left), begin);
 }
 
-ast::Qualifier FormParser::map_generator(ast::ExprId key, std::size_t begin) {
+ast::Qualifier FormParser::map_generator(ast::ExprId key, const std::size_t begin) {
     auto value = expression();
     const auto anchor = cursor_.offset();
     const bool strict = cursor_.take_syntax(U"<:-");
@@ -60,27 +61,30 @@ ast::Qualifier FormParser::map_generator(ast::ExprId key, std::size_t begin) {
         expect(U"<-");
     }
     auto input = expression();
-    return {ast::MapGenerator{candidate(std::move(key)), candidate(std::move(value)), std::move(input), strict},
-            builder_.source(begin, cursor_.offset(), anchor)};
+    return {.value = ast::MapGenerator{.key = candidate(std::move(key)),
+                                       .value = candidate(std::move(value)),
+                                       .input = std::move(input),
+                                       .strict = strict},
+            .source = builder_.source(begin, cursor_.offset(), anchor)};
 }
 
 std::optional<GeneratorOperator> FormParser::generator_operator() const {
     if (syntax(cursor_.anchor(), U"<-")) {
-        return GeneratorOperator{false, false};
+        return GeneratorOperator{.binary = false, .strict = false};
     }
     if (syntax(cursor_.anchor(), U"<:-")) {
-        return GeneratorOperator{false, true};
+        return GeneratorOperator{.binary = false, .strict = true};
     }
     if (syntax(cursor_.anchor(), U"<=")) {
-        return GeneratorOperator{true, false};
+        return GeneratorOperator{.binary = true, .strict = false};
     }
     if (syntax(cursor_.anchor(), U"<:=")) {
-        return GeneratorOperator{true, true};
+        return GeneratorOperator{.binary = true, .strict = true};
     }
     return std::nullopt;
 }
 
-void FormParser::require_binary_generator(const ast::ExprId &pattern, std::size_t begin) {
+void FormParser::require_binary_generator(const ast::ExprId &pattern, const std::size_t begin) {
     if (!std::holds_alternative<ast::Bitstring>(builder_.view().expression(pattern).value)) {
         fail(DiagnosticCode::parser_syntax, "binary generator requires binary syntax");
     }
@@ -106,11 +110,12 @@ ast::ExprId FormParser::binary_template(const std::vector<ast::BinarySegment> &s
     return first.value;
 }
 
-ast::Qualifier FormParser::generator(ast::ExprId left, std::size_t begin) {
+ast::Qualifier FormParser::generator(ast::ExprId left, const std::size_t begin) {
     const auto anchor = cursor_.offset();
     const auto operation = generator_operator();
     if (!operation) {
-        return {ast::FilterQualifier{std::move(left)}, builder_.source(begin, cursor_.offset(), begin)};
+        return {.value = ast::FilterQualifier{std::move(left)},
+                .source = builder_.source(begin, cursor_.offset(), begin)};
     }
     if (operation->binary) {
         require_binary_generator(left, begin);
@@ -120,8 +125,14 @@ ast::Qualifier FormParser::generator(ast::ExprId left, std::size_t begin) {
     auto pattern = candidate(std::move(left));
     const auto source = builder_.source(begin, cursor_.offset(), anchor);
     if (operation->binary) {
-        return {ast::BinaryGenerator{std::move(pattern), std::move(input), operation->strict}, source};
+        return {.value = ast::BinaryGenerator{.pattern = std::move(pattern),
+                                              .input = std::move(input),
+                                              .strict = operation->strict},
+                .source = source};
     }
-    return {ast::ListGenerator{std::move(pattern), std::move(input), operation->strict}, source};
+    return {
+        .value =
+            ast::ListGenerator{.pattern = std::move(pattern), .input = std::move(input), .strict = operation->strict},
+        .source = source};
 }
 } // namespace erlang_aot

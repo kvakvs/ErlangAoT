@@ -1,3 +1,16 @@
+# Diagnostic exception transport — 2026-09-25
+
+- Diagnostic stays aggregate result data (including designated initializers).
+  Parser/preprocessor throws now use DiagnosticError : std::runtime_error, carrying
+  mutable diagnostic context for opener enrichment; recovery extracts the payload.
+  LexicalError stays distinct for lexer recovery. No raw Diagnostic throw/catch remains.
+- parser_tokens exercises a real directive failure caught through std::exception,
+  checking what() and retained source metadata. Fresh Debug build/all93 tests,
+  full check-quality (Lizard + clang-tidy), formatting and whitespace pass.
+  Optional whole-test-file tidy additionally exposed pre-existing unchecked optional
+  and main exception-escape warnings; new test uses checked optional access.
+  Existing unrelated working-tree edits retained; no commit.
+
 # Step 14 completion — 2026-09-25
 
 - Shared deferred_service<Error> owns a FeatureFailure report and maps delivery/OOM

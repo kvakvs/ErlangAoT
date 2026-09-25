@@ -33,9 +33,9 @@ void Children::qualifier_value(const ListGenerator &value) const {
 }
 
 void Children::qualifier_value(const BinaryGenerator &value) const {
-    qualifier_value(ListGenerator{value.pattern, value.input, value.strict});
-    const auto &candidate = std::get<PatternCandidate>(builder.view().pattern(value.pattern).value);
-    if (!std::holds_alternative<Bitstring>(builder.view().expression(candidate.expression).value)) {
+    qualifier_value(ListGenerator{.pattern = value.pattern, .input = value.input, .strict = value.strict});
+    if (const auto &[expression] = std::get<PatternCandidate>(builder.view().pattern(value.pattern).value);
+        !std::holds_alternative<Bitstring>(builder.view().expression(expression).value)) {
         throw std::invalid_argument("binary generator requires binary syntax");
     }
 }

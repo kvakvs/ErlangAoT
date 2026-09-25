@@ -9,20 +9,28 @@ llvm::IntegerType *term_type(Compilation &compilation) {
         return nullptr;
     }
     if (!state.target_machine) {
-        state.result.report({DiagnosticLevel::error, "Term ABI requires a configured target machine", {}, {}});
+        state.result.report({.level = DiagnosticLevel::error,
+                             .message = "Term ABI requires a configured target machine",
+                             .location = {},
+                             .module_name = {}});
         return nullptr;
     }
     const auto layout = state.target_machine->createDataLayout();
     const auto bits = layout.getPointerSizeInBits();
     if (bits != 32 && bits != 64) {
-        state.result.report({DiagnosticLevel::error, "Term ABI requires 32-bit or 64-bit target words", {}, {}});
+        state.result.report({.level = DiagnosticLevel::error,
+                             .message = "Term ABI requires 32-bit or 64-bit target words",
+                             .location = {},
+                             .module_name = {}});
         return nullptr;
     }
     auto *type = llvm::IntegerType::get(*state.context, bits);
     if (layout.getABITypeAlign(type).value() != bits / 8 || layout.getPointerABIAlignment(0).value() != bits / 8 ||
         layout.isNonIntegralAddressSpace(0)) {
-        state.result.report(
-            {DiagnosticLevel::error, "Term ABI requires integral word-aligned pointers and terms", {}, {}});
+        state.result.report({.level = DiagnosticLevel::error,
+                             .message = "Term ABI requires integral word-aligned pointers and terms",
+                             .location = {},
+                             .module_name = {}});
         return nullptr;
     }
     return type;

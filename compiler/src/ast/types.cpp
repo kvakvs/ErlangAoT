@@ -2,13 +2,13 @@
 #include "storage.hpp"
 
 namespace erlang_aot::ast {
-TypeId Builder::type(TypeValue value, NodeSource source) {
+TypeId Builder::type(TypeValue value, NodeSource source) const {
     if (!active_) {
         throw std::logic_error("type requires active transaction");
     }
     validate(source);
-    std::visit(Children{*this, *active_}, value);
-    return module_.storage_->types.append({std::move(value), std::move(source)});
+    std::visit(Children{.builder = *this, .form = *active_}, value);
+    return module_.storage_->types.append({.value = std::move(value), .source = std::move(source)});
 }
 
 void Children::operator()(const TypeGroup &value) const { child(value.type); }

@@ -48,6 +48,7 @@ struct LogicalLocation {
     std::size_t column;
 };
 
+// Structured result data; use DiagnosticError when unwinding a failed parse.
 struct Diagnostic {
     // Keep stable machine-readable identity separately from presentation.
     DiagnosticCode code;
@@ -62,6 +63,14 @@ struct Diagnostic {
     // Parser expectations and the nearest unmatched opener are structured, optional context.
     std::string expected{};
     std::optional<LogicalLocation> opener{};
+};
+
+class DiagnosticError : public std::runtime_error {
+  public:
+    // Transport a structured diagnostic through standard exception handlers.
+    explicit DiagnosticError(Diagnostic diagnostic);
+    // Allow parser recovery to attach expectations and unmatched opener locations.
+    Diagnostic diagnostic;
 };
 
 class LexicalError : public std::runtime_error {

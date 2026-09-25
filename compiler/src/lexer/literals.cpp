@@ -51,17 +51,17 @@ char32_t numeric_escape(std::u32string_view &input, const EscapeDigits syntax) {
 
 // Handle both fixed-width and braced Erlang hexadecimal escapes.
 char32_t hexadecimal(std::u32string_view &input) {
-    if (input.starts_with(U"{")) {
+    if (input.starts_with(U'{')) {
         input.remove_prefix(1);
-        const auto value = numeric_escape(input, {16, input.size()});
-        if (!input.starts_with(U"}")) {
+        const auto value = numeric_escape(input, {.base = 16, .limit = input.size()});
+        if (!input.starts_with(U'}')) {
             throw std::invalid_argument("missing hexadecimal closing brace");
         }
         input.remove_prefix(1);
         return value;
     }
     const auto before = input.size();
-    const auto value = numeric_escape(input, {16, 2});
+    const auto value = numeric_escape(input, {.base = 16, .limit = 2});
     if (before - input.size() != 2) {
         throw std::invalid_argument("hexadecimal escape needs two digits");
     }
@@ -91,7 +91,7 @@ char32_t escaped(std::u32string_view &input) {
         throw std::invalid_argument("incomplete escape");
     }
     if (input.front() >= U'0' && input.front() <= U'7') {
-        return numeric_escape(input, {8, 3});
+        return numeric_escape(input, {.base = 8, .limit = 3});
     }
     const auto value = input.front();
     input.remove_prefix(1);
@@ -185,10 +185,10 @@ std::u32string Lexer::strip_indent(const std::u32string_view text, const Indenta
         result += line;
         remaining.remove_prefix(count);
     }
-    if (result.ends_with(U"\n")) {
+    if (result.ends_with(U'\n')) {
         result.pop_back();
     }
-    if (result.ends_with(U"\r")) {
+    if (result.ends_with(U'\r')) {
         result.pop_back();
     }
     return result;
@@ -196,7 +196,7 @@ std::u32string Lexer::strip_indent(const std::u32string_view text, const Indenta
 
 Token Lexer::triple(const bool verbatim) {
     const auto begin = cursor_;
-    while (rest().starts_with(U"\"")) {
+    while (rest().starts_with(U'\"')) {
         ++cursor_;
     }
     const std::u32string delimiter(cursor_ - begin, U'"');

@@ -9,7 +9,7 @@ ast::CharacterLiteral character(const Integer &integer, const Token &token) {
     const auto *end = integer.decimal.data() + integer.decimal.size();
     const auto result = std::from_chars(integer.decimal.data(), end, codepoint);
     if (result.ec != std::errc{} || result.ptr != end || codepoint > 0x10ffff) {
-        throw token_diagnostic(DiagnosticCode::parser_contract, "invalid character token", token);
+        throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_contract, "invalid character token", token));
     }
     return {static_cast<char32_t>(codepoint)};
 }
@@ -30,7 +30,7 @@ ast::ExprValue FormParser::literal_value(const Token &token) const {
     case TokenKind::character:
         return character(value<Integer>(token), token);
     default:
-        throw token_diagnostic(DiagnosticCode::parser_syntax, "expected expression", token);
+        throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "expected expression", token));
     }
 }
 
@@ -51,7 +51,7 @@ ast::ExprValue FormParser::sigil() {
     auto content = value<std::u32string>(category(TokenKind::string, "sigil content"));
     const auto &suffix = category(TokenKind::sigil_suffix, "sigil suffix");
     if (!value<std::u32string>(suffix).empty()) {
-        throw token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil suffix", suffix);
+        throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil suffix", suffix));
     }
     const auto &name = value<std::u32string>(prefix);
     if (name == U"s" || name == U"S") {
@@ -60,6 +60,6 @@ ast::ExprValue FormParser::sigil() {
     if (name.empty() || name == U"b" || name == U"B") {
         return binary_sigil(std::move(content), begin);
     }
-    throw token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil prefix", prefix);
+    throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil prefix", prefix));
 }
 } // namespace erlang_aot

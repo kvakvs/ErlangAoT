@@ -14,7 +14,7 @@ std::string filename(const std::filesystem::path &path) {
 }
 
 // Keep ingestion messages out of source/AST output and project diagnostic wrappers.
-void trace_ingestion(bool verbose, std::string_view stage, const std::filesystem::path &path) {
+void trace_ingestion(const bool verbose, const std::string_view stage, const std::filesystem::path &path) {
     if (verbose) {
         std::cerr << '[' << stage << "] " << filename(path) << '\n';
     }
@@ -120,7 +120,7 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
 int process_inputs(const Options &options) {
     const FrontendRequest request{options.print_pp,    options.print_ast, options.parse_check,
                                   !options.preprocess, options.verbose,   options.preprocessing};
-    const DiagnosticSink sink = [](std::string_view message) { std::cerr << message << '\n'; };
+    const DiagnosticSink sink = [](const std::string_view message) { std::cerr << message << '\n'; };
     bool failed = false;
     for (const auto &path : options.inputs) {
         failed = process_file(path, request, sink) || failed;

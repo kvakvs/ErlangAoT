@@ -27,7 +27,7 @@ std::optional<DirectiveProbe> probe_directive(std::string_view source) {
         return std::nullopt;
     }
     const auto begin = static_cast<std::size_t>(parsed->begin() - source.begin());
-    return DirectiveProbe{std::string(parsed->begin(), parsed->end()), begin,
-                          begin + static_cast<std::size_t>(parsed->size())};
+    return DirectiveProbe{.name = std::string(parsed->begin(), parsed->end()), .begin = begin,
+                          .end = begin + static_cast<std::size_t>(parsed->size())};
 }
 } // namespace erlang_aot

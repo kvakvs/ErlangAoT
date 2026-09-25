@@ -24,8 +24,8 @@ std::vector<ast::NameArity> attribute_arities(const ast::Module &module, const a
         if (operator_spelling(division.operation) != U"/") {
             throw EvaluationFailure();
         }
-        result.push_back({attribute_as<ast::Atom>(module, division.left),
-                          attribute_as<ast::IntegerLiteral>(module, division.right).value});
+        result.push_back({.name = attribute_as<ast::Atom>(module, division.left),
+                          .arity = attribute_as<ast::IntegerLiteral>(module, division.right).value});
     }
     return result;
 }
@@ -46,7 +46,7 @@ ast::ModuleAttribute module_attribute(const ast::Module &module, const std::vect
     if (arguments.size() > 2) {
         throw EvaluationFailure();
     }
-    ast::ModuleAttribute result{attribute_as<ast::Atom>(module, arguments.front()), {}};
+    ast::ModuleAttribute result{.name = attribute_as<ast::Atom>(module, arguments.front()), .parameters = {}};
     if (arguments.size() == 2) {
         result.parameters.emplace();
         for (const auto &id : attribute_list(module, arguments[1])) {
@@ -60,15 +60,16 @@ ast::ModuleAttribute module_attribute(const ast::Module &module, const std::vect
 ast::FormValue paired_attribute(const ast::Module &module, const ast::Atom &name,
                                 const std::vector<ast::ExprId> &arguments) {
     if (name.name == U"file") {
-        return ast::FileAttribute{attribute_as<ast::StringLiteral>(module, arguments[0]).value,
-                                  attribute_as<ast::IntegerLiteral>(module, arguments[1]).value};
+        return ast::FileAttribute{.name = attribute_as<ast::StringLiteral>(module, arguments[0]).value,
+                                  .line = attribute_as<ast::IntegerLiteral>(module, arguments[1]).value};
     }
     auto module_name = attribute_as<ast::Atom>(module, arguments[0]);
     if (name.name == U"import") {
-        return ast::ImportAttribute{std::move(module_name), attribute_arities(module, arguments[1])};
+        return ast::ImportAttribute{.module = std::move(module_name),
+                                    .functions = attribute_arities(module, arguments[1])};
     }
     if (name.name == U"import_record") {
-        ast::ImportRecordAttribute result{std::move(module_name), {}};
+        ast::ImportRecordAttribute result{.module = std::move(module_name), .names = {}};
         for (const auto &id : attribute_list(module, arguments[1])) {
             result.names.push_back(attribute_as<ast::Atom>(module, id));
         }
@@ -100,6 +101,6 @@ ast::FormValue FormParser::checked_attribute(ast::Atom name, const std::vector<a
     if (std::ranges::find(paired, name.name) != std::end(paired)) {
         throw EvaluationFailure();
     }
-    return ast::GenericAttribute{std::move(name), term(arguments.front())};
+    return ast::GenericAttribute{.name = std::move(name), .value = term(arguments.front())};
 }
 } // namespace erlang_aot

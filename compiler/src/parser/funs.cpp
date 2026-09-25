@@ -31,14 +31,15 @@ ast::ExprValue FormParser::fun_expression() {
     if (cursor_.take_syntax(U":")) {
         auto name = atom_or_variable();
         expect(U"/");
-        return ast::RemoteFunReference{std::move(first), std::move(name), fun_arity()};
+        return ast::RemoteFunReference{.module = std::move(first), .name = std::move(name), .arity = fun_arity()};
     }
     const auto *name = std::get_if<ast::Atom>(&first);
     if (!name) {
         fail(DiagnosticCode::parser_syntax, "local fun reference requires an atom name");
     }
     expect(U"/");
-    return ast::LocalFunReference{*name, value<Integer>(category(TokenKind::integer, "local fun arity"))};
+    return ast::LocalFunReference{.name = *name,
+                                  .arity = value<Integer>(category(TokenKind::integer, "local fun arity"))};
 }
 
 ast::FunExpression FormParser::fun_clauses() {
@@ -56,6 +57,6 @@ ast::FunExpression FormParser::fun_clauses() {
         clauses.push_back(std::move(current));
     }
     expect(U"end");
-    return {std::move(name), std::move(clauses)};
+    return {.name = std::move(name), .clauses = std::move(clauses)};
 }
 } // namespace erlang_aot

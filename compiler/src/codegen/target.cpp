@@ -28,14 +28,19 @@ std::string host_features() {
 // Own lookup failures in the batch diagnostic sink; never substitute a different architecture.
 const llvm::Target *find_target(const llvm::Triple &triple, CompilationResult &result) {
     if (triple.getArch() == llvm::Triple::UnknownArch) {
-        result.report({DiagnosticLevel::error, "unknown target architecture in triple: " + triple.str(), {}, {}});
+        result.report({.level = DiagnosticLevel::error,
+                       .message = "unknown target architecture in triple: " + triple.str(),
+                       .location = {},
+                       .module_name = {}});
         return nullptr;
     }
     std::string error;
     const auto *target = llvm::TargetRegistry::lookupTarget(triple, error);
     if (!target) {
-        result.report(
-            {DiagnosticLevel::error, "target backend unavailable for " + triple.str() + ": " + error, {}, {}});
+        result.report({.level = DiagnosticLevel::error,
+                       .message = "target backend unavailable for " + triple.str() + ": " + error,
+                       .location = {},
+                       .module_name = {}});
     }
     return target;
 }
@@ -58,7 +63,10 @@ std::unique_ptr<llvm::TargetMachine> create_machine(const CompilationRequest &re
     auto machine = std::unique_ptr<llvm::TargetMachine>(target->createTargetMachine(
         triple, cpu, features, llvm::TargetOptions{}, llvm::Reloc::PIC_, llvm::CodeModel::Small, level));
     if (!machine) {
-        result.report({DiagnosticLevel::error, "cannot construct target machine for " + triple.str(), {}, {}});
+        result.report({.level = DiagnosticLevel::error,
+                       .message = "cannot construct target machine for " + triple.str(),
+                       .location = {},
+                       .module_name = {}});
     }
     return machine;
 }
@@ -78,7 +86,7 @@ bool configure_target(Compilation &compilation) {
         return false;
     }
     const auto layout = machine->createDataLayout();
-    for (auto &module : state.modules) {
+    for (const auto &module : state.modules) {
         module->setTargetTriple(machine->getTargetTriple());
         module->setDataLayout(layout);
     }

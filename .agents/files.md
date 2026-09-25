@@ -126,7 +126,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
   source/token/events, immutable features, parser ownership/limits/results and output APIs.
 - `src/source/source.cpp`: decoding/positions; `src/diagnostics/diagnostic.cpp`: logical
-  locations, physical traces and opener rendering.
+  locations, physical traces and opener rendering; `diagnostic.hpp` keeps Diagnostic
+  aggregate data separate from DiagnosticError/LexicalError standard exceptions.
 - `src/lexer/{lexer,numbers,literals}.cpp`: incremental scanning, arbitrary numeric
   values, strings/sigils and keyword state.
 - `src/parsing/{probe.cpp,boost_parser.hpp}`: Boost boundary;

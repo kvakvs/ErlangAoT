@@ -1,7 +1,7 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-ast::ExprValue FormParser::primary(OperatorContext context) {
+ast::ExprValue FormParser::primary(const OperatorContext context) {
     if (auto value = control(context)) {
         return std::move(*value);
     }
@@ -31,7 +31,7 @@ ast::ExprValue FormParser::primary(OperatorContext context) {
     return literal();
 }
 
-std::vector<ast::ExprId> FormParser::elements(std::u32string_view close) {
+std::vector<ast::ExprId> FormParser::elements(const std::u32string_view close) {
     std::vector<ast::ExprId> result;
     if (cursor_.take_syntax(close)) {
         return result;
@@ -45,7 +45,7 @@ std::vector<ast::ExprId> FormParser::elements(std::u32string_view close) {
 
 ast::Tuple FormParser::tuple() { return {elements(U"}")}; }
 
-ast::ExprValue FormParser::list(bool comprehension) {
+ast::ExprValue FormParser::list(const bool comprehension) {
     ast::List result;
     if (cursor_.take_syntax(U"]")) {
         return result;
@@ -57,7 +57,7 @@ ast::ExprValue FormParser::list(bool comprehension) {
         require_comprehension(comprehension);
         auto items = qualifiers();
         expect(U"]");
-        return ast::ListComprehension{std::move(result.elements), std::move(items)};
+        return ast::ListComprehension{.templates = std::move(result.elements), .qualifiers = std::move(items)};
     }
     if (cursor_.take_syntax(U"|")) {
         result.tail = expression();

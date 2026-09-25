@@ -2,13 +2,13 @@
 #include "storage.hpp"
 
 namespace erlang_aot::ast {
-TermId Builder::term(TermValue value, NodeSource source) {
+TermId Builder::term(TermValue value, NodeSource source) const {
     if (!active_) {
         throw std::logic_error("literal term requires active transaction");
     }
     validate(source);
-    std::visit(Children{*this, *active_}, value);
-    return module_.storage_->terms.append({std::move(value), std::move(source)});
+    std::visit(Children{.builder = *this, .form = *active_}, value);
+    return module_.storage_->terms.append({.value = std::move(value), .source = std::move(source)});
 }
 
 void Children::operator()(const TermTuple &value) const {

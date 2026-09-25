@@ -21,7 +21,7 @@ void Children::guard(const GuardSyntax &value) const {
     }
 }
 
-void Children::pattern(const PatternSyntaxId &id, bool restricted) const {
+void Children::pattern(const PatternSyntaxId &id, const bool restricted) const {
     const auto &value = builder.view().pattern(id);
     source(value.source);
     if (std::holds_alternative<RestrictedPattern>(value.value) != restricted) {

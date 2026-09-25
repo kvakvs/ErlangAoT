@@ -59,12 +59,12 @@ class DirectiveCursor {
     // Throw only within the transactional parser, which returns structured
     // errors.
     [[noreturn]] void fail(std::string message) const {
-        throw Diagnostic{DiagnosticCode::malformed_directive,
-                         std::move(message),
-                         cursor_.anchor().spelling,
-                         {},
-                         Severity::error,
-                         cursor_.empty() ? std::nullopt : std::optional(cursor_.anchor().location)};
+        throw DiagnosticError({DiagnosticCode::malformed_directive,
+                               std::move(message),
+                               cursor_.anchor().spelling,
+                               {},
+                               Severity::error,
+                               cursor_.empty() ? std::nullopt : std::optional(cursor_.anchor().location)});
     }
 
   private:

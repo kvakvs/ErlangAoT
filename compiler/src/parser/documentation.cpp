@@ -57,21 +57,21 @@ std::vector<ast::DocumentationEntry> FormParser::documentation_entries(const ast
         if (previous && compare(*previous, key, true) == 0) {
             entries.pop_back();
         }
-        entries.push_back({term(field.key, false), std::move(value)});
+        entries.push_back({.key = term(field.key, false), .value = std::move(value)});
         previous = key;
     }
     return entries;
 }
 
-ast::DocumentationAttribute FormParser::documentation(bool module, const ast::ExprId &id) {
+ast::DocumentationAttribute FormParser::documentation(const bool module, const ast::ExprId &id) {
     const auto &expression = ungroup(builder_.view(), id).value;
     if (const auto *map = std::get_if<ast::MapExpression>(&expression)) {
-        return {module, documentation_entries(*map, module)};
+        return {.module = module, .value = documentation_entries(*map, module)};
     }
     const auto value = TermNormalizer(builder_.view(), work_).read(id, false);
     if (!documentation_literal(builder_.view(), id, value)) {
         throw EvaluationFailure();
     }
-    return {module, term_value(value, builder_.view().expression(id).source)};
+    return {.module = module, .value = term_value(value, builder_.view().expression(id).source)};
 }
 } // namespace erlang_aot

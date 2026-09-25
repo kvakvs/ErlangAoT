@@ -4,11 +4,13 @@
 namespace erlang_aot::ast {
 namespace {
 // Copy source metadata without retaining decoded token values in every node.
-TokenOrigin origin(const Token &token) { return {token.spelling, token.location, token.origins}; }
+TokenOrigin origin(const Token &token) {
+    return {.spelling = token.spelling, .location = token.location, .related = token.origins};
+}
 
 // Empty forms retain their explicitly supplied EOF anchor independently of tokens.
-detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
-    detail::OriginTable table{{}, origin(end), std::move(features)};
+detail::OriginTable origin_table(const std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
+    detail::OriginTable table{.tokens = {}, .eof = origin(end), .features = std::move(features)};
     table.tokens.reserve(tokens.size());
     for (const auto &token : tokens) {
         table.tokens.push_back(origin(token));
@@ -17,7 +19,7 @@ detail::OriginTable origin_table(std::span<const Token> tokens, const Token &end
 }
 } // namespace
 
-Builder::Transaction::Transaction(Builder &builder, std::span<const Token> tokens, const Token &end,
+Builder::Transaction::Transaction(Builder &builder, const std::span<const Token> tokens, const Token &end,
                                   FeatureSnapshot features)
     : builder_(builder), expressions_(builder.module_.storage().expressions.size()),
       terms_(builder.module_.storage().terms.size()), types_(builder.module_.storage().types.size()),
@@ -56,15 +58,15 @@ void Builder::Transaction::commit(FormId root) {
     builder_.active_.reset();
 }
 
-Builder::Transaction Builder::begin(std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
+Builder::Transaction Builder::begin(const std::span<const Token> tokens, const Token &end, FeatureSnapshot features) {
     return Transaction(*this, tokens, end, std::move(features));
 }
 
-NodeSource Builder::source(std::size_t begin, std::size_t end, std::size_t anchor) const {
+NodeSource Builder::source(const std::size_t begin, const std::size_t end, const std::size_t anchor) const {
     if (!active_) {
         throw std::logic_error("AST source requires a form transaction");
     }
-    NodeSource result{*active_, begin, end, anchor};
+    NodeSource result{.form = *active_, .begin = begin, .end = end, .anchor = anchor};
     validate(result);
     return result;
 }
@@ -76,21 +78,21 @@ void Builder::validate(const NodeSource &source) const {
     detail::source_table(module_.storage(), source);
 }
 
-ExprId Builder::expression(ExprValue value, NodeSource source) {
+ExprId Builder::expression(ExprValue value, NodeSource source) const {
     validate(source);
     validate(value);
-    return module_.storage_->expressions.append({std::move(value), std::move(source)});
+    return module_.storage_->expressions.append({.value = std::move(value), .source = std::move(source)});
 }
 
-FormId Builder::form(FormValue value, NodeSource source) {
+FormId Builder::form(FormValue value, NodeSource source) const {
     validate(source);
     validate(value);
-    return module_.storage_->forms.append({std::move(value), std::move(source)});
+    return module_.storage_->forms.append({.value = std::move(value), .source = std::move(source)});
 }
 
 const Module &Builder::view() const { return module_; }
 
-void Builder::discard_expressions(std::size_t begin) {
+void Builder::discard_expressions(const std::size_t begin) const {
     if (!active_ || begin > module_.expression_count()) {
         throw std::logic_error("invalid temporary expression checkpoint");
     }

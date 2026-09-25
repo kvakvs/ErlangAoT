@@ -70,15 +70,15 @@ void PreprocessorSession::State::initialize() {
     for (const auto &[name, enabled] : options.features) {
         try {
             initial_feature(name, enabled);
-        } catch (const Diagnostic &error) {
-            diagnostic(error);
+        } catch (const DiagnosticError &error) {
+            diagnostic(error.diagnostic);
         }
     }
     for (const auto &definition : options.definitions) {
         try {
             predefine(definition);
-        } catch (const Diagnostic &error) {
-            diagnostic(error);
+        } catch (const DiagnosticError &error) {
+            diagnostic(error.diagnostic);
         } catch (const LexicalError &error) {
             diagnostic(error.diagnostic);
         }
@@ -148,8 +148,8 @@ void PreprocessorSession::State::scan() {
         if (active()) {
             diagnostic(error.diagnostic);
         }
-    } catch (const Diagnostic &error) {
-        diagnostic(error);
+    } catch (const DiagnosticError &error) {
+        diagnostic(error.diagnostic);
     }
 }
 
@@ -167,7 +167,7 @@ void PreprocessorSession::State::process(std::vector<Token> tokens) {
     }
     auto parsed = parse_directive(tokens);
     if (auto *error = std::get_if<Diagnostic>(&parsed)) {
-        throw std::move(*error);
+        throw DiagnosticError(std::move(*error));
     }
     apply(std::get<Directive>(std::move(parsed)), tokens[1]);
 }

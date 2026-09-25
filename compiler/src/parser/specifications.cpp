@@ -1,7 +1,7 @@
 #include "forms.hpp"
 
 namespace erlang_aot {
-ast::Specification FormParser::specification(bool callback) {
+ast::Specification FormParser::specification(const bool callback) {
     const auto enclosed = cursor_.take_syntax(U"(");
     auto name = ast::Atom{value<std::u32string>(category(TokenKind::atom, "specification function name"))};
     std::optional<ast::Atom> module;
@@ -20,7 +20,11 @@ ast::Specification FormParser::specification(bool callback) {
     if (!arguments) {
         fail(DiagnosticCode::parser_syntax, "first specification requires a fixed argument product");
     }
-    return {callback, std::move(module), std::move(name), arguments->size(), std::move(signatures)};
+    return {.callback = callback,
+            .module = std::move(module),
+            .name = std::move(name),
+            .arity = arguments->size(),
+            .signatures = std::move(signatures)};
 }
 
 ast::SpecificationSignature FormParser::signature() {
@@ -32,7 +36,9 @@ ast::SpecificationSignature FormParser::signature() {
             constraints.push_back(constraint());
         } while (cursor_.take_syntax(U","));
     }
-    return {std::move(function), std::move(constraints), builder_.source(begin, cursor_.offset(), begin)};
+    return {.function = std::move(function),
+            .constraints = std::move(constraints),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 ast::TypeConstraint FormParser::constraint() {
@@ -46,10 +52,13 @@ ast::TypeConstraint FormParser::constraint() {
     }
     expect(U"::");
     auto bound = top_type();
-    return {std::move(variable), std::move(bound), false, builder_.source(begin, cursor_.offset(), begin)};
+    return {.variable = std::move(variable),
+            .bound = std::move(bound),
+            .legacy = false,
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
-ast::TypeConstraint FormParser::legacy_constraint(std::size_t begin) {
+ast::TypeConstraint FormParser::legacy_constraint(const std::size_t begin) {
     const auto &name = category(TokenKind::atom, "constraint name");
     if (name.text() != U"is_subtype") {
         fail(DiagnosticCode::parser_syntax, "unsupported legacy constraint");
@@ -67,6 +76,9 @@ ast::TypeConstraint FormParser::legacy_constraint(std::size_t begin) {
     if (!variable || variable->name == U"_") {
         fail(DiagnosticCode::parser_syntax, "bad type variable");
     }
-    return {*variable, arguments[1], true, builder_.source(begin, cursor_.offset(), begin)};
+    return {.variable = *variable,
+            .bound = arguments[1],
+            .legacy = true,
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 } // namespace erlang_aot

@@ -37,7 +37,7 @@ class FormParser {
     std::size_t &work_;
     std::span<const Token> tokens_;
     // Charge grammar operations and attach actionable syntax context before rollback.
-    void work(std::size_t amount = 1);
+    void work(std::size_t amount = 1) const;
     void enrich(Diagnostic &diagnostic) const;
     [[noreturn]] void expected(std::string description) const;
     // Parse and terminate one form within the caller's AST transaction.
@@ -100,8 +100,8 @@ class FormParser {
     std::optional<ast::Variable> fun_name();
     std::variant<ast::Atom, ast::Variable> atom_or_variable();
     std::variant<Integer, ast::Variable> fun_arity();
-    void check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
-                      const ast::FunctionClause &clause, const Token &site) const;
+    static void check_clause(std::u32string_view actual, std::u32string_view expected, std::size_t arity,
+                             const ast::FunctionClause &clause, const Token &site);
     ast::TryExpression try_expression();
     ast::CatchClause catch_clause();
     ast::MaybeExpression maybe_expression();
@@ -166,7 +166,8 @@ class FormParser {
     template <typename Value> const Value &value(const Token &token) const {
         const auto *result = std::get_if<Value>(&token.value);
         if (!result) {
-            throw token_diagnostic(DiagnosticCode::parser_contract, "inconsistent token kind/value", token);
+            throw DiagnosticError(
+                token_diagnostic(DiagnosticCode::parser_contract, "inconsistent token kind/value", token));
         }
         return *result;
     }

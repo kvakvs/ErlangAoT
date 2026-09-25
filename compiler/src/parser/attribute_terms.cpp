@@ -2,7 +2,7 @@
 #include "term_value.hpp"
 
 namespace erlang_aot {
-ast::TermId FormParser::term(const ast::ExprId &expression, bool farity) {
+ast::TermId FormParser::term(const ast::ExprId &expression, const bool farity) {
     const auto source = builder_.view().expression(expression).source;
     return term_value(TermNormalizer(builder_.view(), work_).read(expression, farity), source);
 }
@@ -26,7 +26,9 @@ ast::TermValue FormParser::term_container(const Value &value, const ast::NodeSou
     case ValueKind::bits:
         return ast::TermBits{value.bits};
     case ValueKind::function:
-        return ast::TermFunction{{value.elements[0].text}, {value.elements[1].text}, {value.elements[2].integer.str()}};
+        return ast::TermFunction{.module = {value.elements[0].text},
+                                 .name = {value.elements[1].text},
+                                 .arity = {value.elements[2].integer.str()}};
     case ValueKind::map: {
         ast::TermMap result;
         for (std::size_t i = 0; i < value.elements.size(); i += 2) {
@@ -54,6 +56,6 @@ ast::TermValue FormParser::term_sequence(const Value &value, const ast::NodeSour
     if (value.tail) {
         tail = term_value(*value.tail, source);
     }
-    return ast::TermList{std::move(elements), std::move(tail)};
+    return ast::TermList{.elements = std::move(elements), .tail = std::move(tail)};
 }
 } // namespace erlang_aot

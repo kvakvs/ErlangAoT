@@ -17,12 +17,16 @@ ast::CatchClause FormParser::catch_clause() {
     auto guards = optional_guard();
     expect(U"->");
     auto body = sequence();
-    return {std::move(exception_class), std::move(reason), std::move(stacktrace),
-            std::move(guards),          std::move(body),   builder_.source(begin, cursor_.offset(), begin)};
+    return {.exception_class = std::move(exception_class),
+            .reason = std::move(reason),
+            .stacktrace = std::move(stacktrace),
+            .guard = std::move(guards),
+            .body = std::move(body),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 ast::TryExpression FormParser::try_expression() {
-    ast::TryExpression result{sequence(), {}, {}, {}};
+    ast::TryExpression result{.body = sequence(), .of = {}, .handlers = {}, .after = {}};
     if (cursor_.take_syntax(U"of")) {
         result.of = branches();
     }
@@ -52,7 +56,9 @@ std::variant<ast::ExprId, ast::MaybeMatch> FormParser::maybe_item() {
     node();
     auto candidate = builder_.pattern(ast::PatternCandidate{std::move(left)}, builder_.source(begin, end, begin));
     auto right = expression();
-    return ast::MaybeMatch{std::move(candidate), std::move(right), builder_.source(begin, cursor_.offset(), end)};
+    return ast::MaybeMatch{.pattern = std::move(candidate),
+                           .value = std::move(right),
+                           .source = builder_.source(begin, cursor_.offset(), end)};
 }
 
 ast::MaybeExpression FormParser::maybe_expression() {

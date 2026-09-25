@@ -12,7 +12,7 @@ bool is_record(const ast::ExprValue &value) {
 } // namespace
 
 // Dispatch hash syntax before general expression continuation, preserving pattern restrictions.
-ast::ExprId FormParser::structural(OperatorContext context) {
+ast::ExprId FormParser::structural(const OperatorContext context) {
     const auto begin = cursor_.offset();
     const bool hashed = syntax(cursor_.anchor(), U"#") || syntax(cursor_.anchor(), U"#_");
     auto value = hashed ? hash({}, context != OperatorContext::pattern) : primary(context);
@@ -34,7 +34,7 @@ ast::ExprId FormParser::hash_suffix(ast::ExprId base) {
 }
 
 // Local record chains and map chains recur; qualified/inferred postfixes require expr_max.
-void FormParser::check_hash_base(const ast::ExprId &base, bool map, bool local) const {
+void FormParser::check_hash_base(const ast::ExprId &base, const bool map, const bool local) const {
     const auto &value = builder_.view().expression(base).value;
     if (is_map(value)) {
         if (!map) {
@@ -48,7 +48,7 @@ void FormParser::check_hash_base(const ast::ExprId &base, bool map, bool local) 
 }
 
 // Discriminate maps and record identities without allowing arbitrary expr postfix bases.
-ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base, bool comprehension) {
+ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base, const bool comprehension) {
     const auto *next = cursor_.peek(1);
     if (syntax(cursor_.anchor(), U"#") && next && syntax(*next, U"{")) {
         if (base) {

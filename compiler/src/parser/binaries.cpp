@@ -2,7 +2,7 @@
 
 namespace erlang_aot {
 // Parse ordered segments after the opening delimiter, including the empty binary.
-ast::ExprValue FormParser::binary(bool comprehension) {
+ast::ExprValue FormParser::binary(const bool comprehension) {
     std::vector<ast::BinarySegment> segments;
     if (!cursor_.take_syntax(U">>")) {
         do {
@@ -13,7 +13,7 @@ ast::ExprValue FormParser::binary(bool comprehension) {
             auto value = binary_template(segments);
             auto items = qualifiers();
             expect(U">>");
-            return ast::BinaryComprehension{std::move(value), std::move(items)};
+            return ast::BinaryComprehension{.expression = std::move(value), .qualifiers = std::move(items)};
         }
         expect(U">>");
     }
@@ -29,7 +29,10 @@ ast::BinarySegment FormParser::binary_segment() {
         size = bit_primary();
     }
     auto modifiers = binary_modifiers();
-    return {std::move(value), std::move(size), std::move(modifiers), builder_.source(begin, cursor_.offset(), begin)};
+    return {.value = std::move(value),
+            .size = std::move(size),
+            .modifiers = std::move(modifiers),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 // bit_expr allows one prefix operator on expr_max; repeated prefixes need parentheses.
@@ -39,7 +42,8 @@ ast::ExprId FormParser::bit_value() {
         if (const auto operation = prefix_operator(cursor_.anchor())) {
             cursor_.consume();
             auto operand = bit_primary();
-            return make(ast::UnaryExpression{operation->operation, std::move(operand)}, begin, begin);
+            return make(ast::UnaryExpression{.operation = operation->operation, .operand = std::move(operand)}, begin,
+                        begin);
         }
     }
     return bit_primary();
@@ -75,15 +79,21 @@ ast::BinaryModifier FormParser::binary_modifier() {
     if (cursor_.take_syntax(U":")) {
         parameter = value<Integer>(category(TokenKind::integer, "type parameter integer"));
     }
-    return {std::move(name), std::move(parameter), builder_.source(begin, cursor_.offset(), begin)};
+    return {.name = std::move(name),
+            .parameter = std::move(parameter),
+            .source = builder_.source(begin, cursor_.offset(), begin)};
 }
 
 // OTP lowers binary sigils to one decoded string segment with an implicit UTF-8 modifier.
-ast::Bitstring FormParser::binary_sigil(std::u32string content, std::size_t begin) {
+ast::Bitstring FormParser::binary_sigil(std::u32string content, const std::size_t begin) {
     node();
     const auto string_source = builder_.source(begin + 1, begin + 2, begin + 1);
     auto string = builder_.expression(ast::StringLiteral{std::move(content)}, string_source);
-    std::vector<ast::BinaryModifier> modifiers{{{U"utf8"}, {}, builder_.source(begin, begin + 1, begin)}};
-    return {{{std::move(string), {}, std::move(modifiers), builder_.source(begin, cursor_.offset(), begin + 1)}}};
+    std::vector<ast::BinaryModifier> modifiers{
+        {.name = {U"utf8"}, .parameter = {}, .source = builder_.source(begin, begin + 1, begin)}};
+    return {{{.value = std::move(string),
+              .size = {},
+              .modifiers = std::move(modifiers),
+              .source = builder_.source(begin, cursor_.offset(), begin + 1)}}};
 }
 } // namespace erlang_aot

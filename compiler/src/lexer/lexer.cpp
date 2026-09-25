@@ -60,27 +60,30 @@ void Lexer::set_location(std::string file, const std::size_t line) {
 
 LogicalLocation Lexer::logical_location(const std::size_t offset) const {
     const auto position = source_->position(offset);
-    return {logical_file_, logical_base_ + position.line - physical_base_, position.column};
+    return {.file = logical_file_, .line = logical_base_ + position.line - physical_base_, .column = position.column};
 }
 
 Token Lexer::token(const TokenKind kind, TokenValue value, const std::size_t begin, const std::size_t end) const {
     const auto position = source_->position(begin);
-    return {kind,
-            std::move(value),
-            {source_, begin, end},
-            {logical_file_, logical_base_ + position.line - physical_base_, position.column},
-            {}};
+    return {.kind = kind,
+            .value = std::move(value),
+            .spelling = {.source = source_, .begin = begin, .end = end},
+            .location = {.file = logical_file_,
+                         .line = logical_base_ + position.line - physical_base_,
+                         .column = position.column},
+            .origins = {}};
 }
 
 void Lexer::fail(const DiagnosticCode code, std::string message, const std::size_t begin) const {
     const auto position = source_->position(begin);
-    throw LexicalError(
-        {code,
-         std::move(message),
-         {source_, begin, cursor_},
-         {},
-         Severity::error,
-         LogicalLocation{logical_file_, logical_base_ + position.line - physical_base_, position.column}});
+    throw LexicalError({.code = code,
+                        .message = std::move(message),
+                        .primary = {.source = source_, .begin = begin, .end = cursor_},
+                        .related = {},
+                        .severity = Severity::error,
+                        .location = LogicalLocation{.file = logical_file_,
+                                                    .line = logical_base_ + position.line - physical_base_,
+                                                    .column = position.column}});
 }
 
 std::optional<Token> Lexer::trivia() {

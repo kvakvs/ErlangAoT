@@ -8,7 +8,7 @@ ast::TypeValue FormParser::type_primary() {
         return ast::TypeGroup{std::move(type)};
     }
     if (cursor_.take_syntax(U"{")) {
-        return ast::TupleType{false, type_elements(U"}")};
+        return ast::TupleType{.any = false, .elements = type_elements(U"}")};
     }
     if (cursor_.take_syntax(U"[")) {
         return list_type();
@@ -33,7 +33,7 @@ ast::TypeValue FormParser::type_primary() {
 
 ast::ListType FormParser::list_type() {
     if (cursor_.take_syntax(U"]")) {
-        return {{}, false};
+        return {.element = {}, .nonempty = false};
     }
     auto element = top_type();
     const auto nonempty = cursor_.take_syntax(U",");
@@ -41,7 +41,7 @@ ast::ListType FormParser::list_type() {
         expect(U"...");
     }
     expect(U"]");
-    return {std::move(element), nonempty};
+    return {.element = std::move(element), .nonempty = nonempty};
 }
 
 ast::FunType FormParser::fun_type() {
@@ -53,6 +53,6 @@ ast::FunType FormParser::fun_type() {
         arguments = type_elements(U")");
     }
     expect(U"->");
-    return {std::move(arguments), top_type()};
+    return {.arguments = std::move(arguments), .result = top_type()};
 }
 } // namespace erlang_aot

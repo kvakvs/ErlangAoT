@@ -3,8 +3,8 @@
 
 namespace erlang_aot::cli {
 // Apply validated preprocessing operands to the per-module configuration.
-std::optional<std::string> apply_pp_option(int kind, const std::string &value,
-                                           erlang_aot::PreprocessorOptions &settings) {
+static std::optional<std::string> apply_pp_option(const int kind, const std::string &value,
+                                                  erlang_aot::PreprocessorOptions &settings) {
     switch (kind) {
     case 0:
         settings.include_paths.insert(settings.include_paths.begin(), value);
@@ -28,7 +28,7 @@ std::optional<std::string> apply_pp_option(int kind, const std::string &value,
 }
 
 // Consume one option operand, including joined -Ipath/-Dname spellings.
-std::optional<std::string> pp_option(std::string_view argument, std::span<char *> &remaining, Options &options) {
+static std::optional<std::string> pp_option(std::string_view argument, std::span<char *> &remaining, Options &options) {
     std::string value;
     if (argument.size() > 2 && (argument.starts_with("-I") || argument.starts_with("-D"))) {
         value = argument.substr(2);
@@ -57,7 +57,8 @@ std::optional<std::string> pp_option(std::string_view argument, std::span<char *
 }
 
 // Consume an output operand while retaining explicit option presence.
-std::optional<std::string> parse_output(std::string_view option, std::span<char *> &remaining, Options &options) {
+static std::optional<std::string> parse_output(const std::string_view option, std::span<char *> &remaining,
+                                               Options &options) {
     if (options.output_explicit) {
         return "output path specified more than once";
     }
@@ -78,7 +79,7 @@ struct Flag {
 };
 
 // Keep generic mode/informational flags separate from operand-consuming options.
-bool parse_flag(std::string_view argument, Options &options) {
+bool parse_flag(const std::string_view argument, Options &options) {
     static const std::map<std::string_view, Flag> flags{
         {"-h", {&Options::show_help, false}},           {"--help", {&Options::show_help, false}},
         {"--version", {&Options::show_version, false}}, {"--preprocess-check", {&Options::preprocess, true}},
@@ -95,7 +96,8 @@ bool parse_flag(std::string_view argument, Options &options) {
 } // namespace
 
 // Delegate project operands while retaining the original generic CLI spelling rules.
-std::optional<std::string> parse_option(std::string_view argument, std::span<char *> &remaining, Options &options) {
+static std::optional<std::string> parse_option(const std::string_view argument, std::span<char *> &remaining,
+                                               Options &options) {
     if (parse_flag(argument, options)) {
         return std::nullopt;
     }
@@ -109,7 +111,7 @@ std::optional<std::string> parse_option(std::string_view argument, std::span<cha
 }
 
 // Check command combinations before honoring informational requests or reading inputs.
-std::optional<std::string> validate_options(const Options &options) {
+static std::optional<std::string> validate_options(const Options &options) {
     if (const auto error =
             project::validate(options.project, {!options.inputs.empty(), options.output_explicit, options.preprocess,
                                                 options.frontend_options_explicit})) {

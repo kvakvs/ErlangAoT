@@ -87,13 +87,14 @@ ast::TypeValue FormParser::type_application(std::optional<ast::Atom> module, ast
                                             std::vector<ast::TypeId> arguments) {
     if (!module && arguments.empty()) {
         if (name.name == U"tuple") {
-            return ast::TupleType{true, {}};
+            return ast::TupleType{.any = true, .elements = {}};
         }
         if (name.name == U"map") {
-            return ast::MapType{true, {}};
+            return ast::MapType{.any = true, .fields = {}};
         }
     }
     const bool builtin = !module && predefined(name.name, arguments.size());
-    return ast::TypeApplication{std::move(module), std::move(name), builtin, std::move(arguments)};
+    return ast::TypeApplication{
+        .module = std::move(module), .name = std::move(name), .predefined = builtin, .arguments = std::move(arguments)};
 }
 } // namespace erlang_aot

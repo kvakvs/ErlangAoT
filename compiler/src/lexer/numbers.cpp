@@ -1,5 +1,4 @@
 #include "parsing/boost_parser.hpp"
-#include <algorithm>
 #include <cmath>
 #include <erlang_aot/compiler/lexer.hpp>
 #include <locale>
@@ -137,7 +136,7 @@ Token Lexer::based_number(const std::size_t begin) {
         throw std::invalid_argument("missing based integer digits");
     }
     if (rest().size() > 1 && rest().front() == U'.' && rest()[1] < 128 && word_length(rest().substr(1)) != 0) {
-        return based_float(begin, BasedMantissa{value_begin, base});
+        return based_float(begin, BasedMantissa{.begin = value_begin, .base = base});
     }
     number_end();
     return token(TokenKind::integer,
@@ -160,11 +159,11 @@ std::u32string Lexer::exponent(const bool based) {
             return {};
         }
         ++cursor_;
-    } else if (!rest().starts_with(U"e") && !rest().starts_with(U"E")) {
+    } else if (!rest().starts_with(U'e') && !rest().starts_with(U"E")) {
         return {};
     }
     const auto begin = cursor_++;
-    if (rest().starts_with(U"+") || rest().starts_with(U"-")) {
+    if (rest().starts_with(U'+') || rest().starts_with(U"-")) {
         ++cursor_;
     }
     const auto count = digits(rest(), false);
