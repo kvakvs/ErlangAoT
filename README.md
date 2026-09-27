@@ -5,12 +5,14 @@ preprocessing and syntax parsing; semantic analysis, executable generation and
 runtime execution are not yet implemented.
 
 The next compilation milestone is frozen in [docs/compile.md](docs/compile.md),
-including its global LLVM SDK prerequisite and provisional ABI.
+including its LLVM SDK requirements and provisional ABI.
 The separate runtime now supports [startup, context ownership and shutdown](docs/runtime-lifecycle.md),
 with a reusable CMake target for linking native consumers.
 All APIs are project-internal C++23; C compatibility is deferred until needed.
 
-Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
+Validated on macOS Apple Silicon. Windows x64 runtime builds are checked in Debug
+and Release; full compiler and platform validation remains pending. See
+[Windows status](abi/plan-windows.md) for prerequisites and known gaps. Linux validation is pending.
 
 ## Features
 
@@ -27,8 +29,11 @@ Validated on macOS Apple Silicon. Linux and Windows validation remains pending.
 Requirements:
 
 - CMake 3.28+ and a C++23-capable compiler.
-- Globally installed LLVM 23.1.x (>=23.1.1) C++ SDK for compiler builds;
-  see [SDK setup and compilation contract](docs/compile.md). No LLVM download fallback is provided.
+- On Windows, an installed Clang executable on `PATH` or under `Program Files/LLVM/bin`;
+  configuration fails immediately if it is missing or cannot run.
+- LLVM 23.1.x (>=23.1.1) C++ SDK for compiler builds. CMake prefers a global
+  installation, then downloads the pinned 23.1.2 SDK into `thirdparty/` if missing;
+  see [SDK setup and compilation contract](docs/compile.md).
 - Boost 1.90+ with Boost.Multiprecision for compiler and runtime; the compiler also
   requires Boost.Parser. Multiprecision is header-only and needs no Boost binary library.
 - toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
@@ -42,6 +47,40 @@ xcode-select --install
 brew install cmake boost erlang tomlplusplus llvm@23
 ```
 
+On Windows, install LLVM/Clang globally for the host compiler tools.
+Install Visual Studio's **Desktop development with C++** workload and a Windows SDK,
+plus Ninja. Use an **x64 Native Tools** command prompt or Developer PowerShell
+configured for x64, with `clang-cl`, `cmake`, and `ninja` on `PATH`.
+CMake checks the MSVC ABI, Windows SDK linkage, and C++23 `std::expected` support.
+The LLVM command-line tools alone do not provide the required C++ SDK; CMake
+downloads it separately when `LLVMConfig.cmake` and matching libraries are absent.
+
+CMake downloads Boost 1.90.0 and toml++ 3.4.0 into the ignored `thirdparty/`
+directory on first use, verifies their SHA-256 checksums, and retains both archives
+and extracted sources. Subsequent configurations, including fresh build directories,
+reuse those files without network access. Removing `build/` does not remove dependencies.
+Runtime-only builds download only Boost. Explicit dependency roots below take
+precedence and allow offline setup; an invalid explicit root fails without downloading.
+Linux and macOS continue to use installed dependencies or local `thirdparty/` sources.
+LLVM SDK fallback downloads apply on **all three platforms**, with SHA-256-pinned
+official archives for Windows x64/ARM64, Linux x64/ARM64, and macOS ARM64.
+Archives and extracted SDKs stay in `thirdparty/` for offline reuse. Other host
+architectures and cross-builds require an explicit matching `LLVM_DIR`.
+
+For compiler builds, LLVM's zlib dependency is detected from installed libraries.
+On Windows, missing zlib triggers a SHA-256-verified download of zlib 1.3.2 and
+configure-time static Debug/Release builds under `thirdparty/`. These builds are
+reused across build directories and match the host compiler, architecture and CRT.
+Set `ZLIB_ROOT` to prefer an installed zlib, or `ERLANG_AOT_DOWNLOAD_ZLIB=OFF`
+to disable this fallback. Linux and macOS use their installed zlib development packages.
+
+For compiler builds, LLVM's zlib dependency is detected from installed libraries.
+On Windows, missing zlib triggers a SHA-256-verified download of zlib 1.3.2 and
+configure-time static Debug/Release builds under `thirdparty/`. These builds are
+reused across build directories and match the host compiler, architecture and CRT.
+Set `ZLIB_ROOT` to prefer an installed zlib, or `ERLANG_AOT_DOWNLOAD_ZLIB=OFF`
+to disable this fallback. Linux and macOS use their installed zlib development packages.
+
 From the repository root:
 
 ```sh
@@ -50,9 +89,34 @@ cmake --build --preset debug
 ctest --preset debug
 ```
 
+On Windows, use the clang-cl/Ninja Multi-Config preset from the developer shell:
+
+```powershell
+cmake --preset windows
+cmake --build --preset windows-debug
+ctest --preset windows-debug
+cmake --build --preset windows-release
+ctest --preset windows-release
+```
+
+For runtime development without downloading or using the LLVM C++ SDK, configure with
+`cmake --preset windows -DERLANG_AOT_BUILD_COMPILER=OFF`; the same build/test presets
+apply. Set the option back to `ON` when the SDK is available. MSVC `cl` is also
+accepted in a separate build directory; MinGW is not supported for native Windows
+development builds. Select x86 or x64 through the developer environment (or `-A`
+with a Visual Studio generator), and use an LLVM SDK and runtime of that architecture.
+
+The Windows default CRT is `/MDd` for Debug and `/MD` for other configurations,
+including the static runtime library and its consumers. An explicit
+`CMAKE_MSVC_RUNTIME_LIBRARY` setting is preserved; it must match the LLVM SDK and
+all linked C++ libraries. Avoid mixing Debug and Release STL/CRT artifacts.
+Windows project sources use UTF-8; Unicode CLI/path handling is still pending.
+
 All project targets use C++23 and treat compiler warnings as errors.
 The executable is `build/debug/bin/erlangaot`. Builds use two parallel jobs;
 override with `cmake --build --preset debug --parallel 8`.
+The Windows preset places the executable in `build/windows/bin/<Config>/erlangaot.exe`
+and the runtime in `build/windows/lib/<Config>/erlang_runtime.lib`.
 
 Alternatively, use `make build` to build only `erlangaot` and its dependencies,
 or `make test` to build and run the full test suite. For a different configuration:
@@ -69,14 +133,16 @@ Pass these options when configuring to override defaults:
 | `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
 | `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
 | `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select an Erlang installation; versions below 29 are rejected |
-| `-DLLVM_DIR=/global/prefix/lib/cmake/llvm` | Select an existing global LLVM 23.1.x SDK |
+| `-DERLANG_AOT_CLANG_EXECUTABLE=C:/path/to/clang.exe` | Select an installed Windows Clang executable |
+| `-DLLVM_DIR=/prefix/lib/cmake/llvm` | Select an existing LLVM 23.1.x SDK (invalid explicit paths fail) |
+| `-DERLANG_AOT_DOWNLOAD_LLVM=OFF` | Require an installed SDK; disable automatic LLVM downloads |
 | `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
 | `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
 | `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
 
 For multi-configuration generators, add `--config Debug` when building and
 `-C Debug` when testing. CMake-aware IDEs can open the repository using the
-`debug` preset.
+`debug` preset, or the `windows` preset with a Visual Studio development toolchain.
 
 Boost and toml++ headers use CMake `SYSTEM` includes, keeping warnings as errors
 for project code. On native macOS builds, CMake also marks Homebrew's linked include

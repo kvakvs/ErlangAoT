@@ -1,5 +1,20 @@
 # Architecture
 
+- LLVM's zlib lookup prefers installed libraries. Windows builds missing zlib
+  download pinned 1.3.2 and build static Debug/Release libraries during configuration,
+  retaining compiler/architecture/CRT-specific installations under `thirdparty/`.
+  Linux/macOS keep system discovery; runtime-only builds never request zlib.
+
+- Windows configuration requires installed Clang before language detection. Default
+  Boost 1.90.0 and toml++ 3.4.0 sources/archives persist in ignored `thirdparty/`, with
+  pinned SHA-256 downloads, serialized extraction and offline reuse across build trees.
+  Explicit roots take precedence; LLVM retains its global SDK/version/link policy.
+  Native Windows hosts require MSVC ABI plus a linkable Windows SDK/C++23 library;
+  clang-cl/Ninja Multi-Config presets select Debug/Release, with DLL CRT defaults
+  (/MDd, /MD) and UTF-8 MSVC source flags. Nested consumer/SDK tests inherit the
+  parent generator, compiler, architecture, configuration and CRT. Runtime remains
+  static; full Windows compiler/platform validation awaits the global LLVM SDK.
+
 - `docs/compile.md` freezes the LLVM milestone: global stable LLVM 23.1.x (>=23.1.1),
   acyclic small-integer/parameter/direct-call subset and private tagged project ABI v1.
   Private `erlang_codegen` links the SDK through target-local `erlang_llvm_sdk`.

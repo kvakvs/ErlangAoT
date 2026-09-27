@@ -12,6 +12,22 @@
         "ERLANG_AOT_BUILD_COMPILER": "ON",
         "ERLANG_AOT_BUILD_RUNTIME": "ON"
       }
+    },
+    {
+      "name": "windows",
+      "displayName": "Windows clang-cl (Debug/Release)",
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/windows",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TESTING": "ON",
+        "ERLANG_AOT_BUILD_COMPILER": "ON",
+        "ERLANG_AOT_BUILD_RUNTIME": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -20,7 +36,9 @@
       "configurePreset": "debug",
       "configuration": "Debug",
       "jobs": 2
-    }
+    },
+    { "name": "windows-debug", "configurePreset": "windows", "configuration": "Debug", "jobs": 2 },
+    { "name": "windows-release", "configurePreset": "windows", "configuration": "Release", "jobs": 2 }
   ],
   "testPresets": [
     {
@@ -30,6 +48,18 @@
       "output": {
         "outputOnFailure": true
       }
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows",
+      "configuration": "Debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows",
+      "configuration": "Release",
+      "output": { "outputOnFailure": true }
     }
   ]
 }

@@ -28,8 +28,9 @@ add_test(NAME runtime_lifecycle_output COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/lifecycle_output.cmake")
 
 add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
-    "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer"
-    "-DHOST_CXX=${CMAKE_CXX_COMPILER}" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+    "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer/$<CONFIG>"
+    "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+    "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/link.cmake")
 set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)
 

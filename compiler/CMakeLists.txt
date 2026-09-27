@@ -1,4 +1,3 @@
-include(${PROJECT_SOURCE_DIR}/cmake/LLVMDependencies.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
 add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
     src/parsing/token_syntax.cpp src/parsing/operator_info.cpp

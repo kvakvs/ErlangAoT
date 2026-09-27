@@ -3,6 +3,7 @@ include_guard(GLOBAL)
 
 # Explicit roots remain optional; installed Boost and local dependency checkouts are also searched.
 set(ERLANG_AOT_BOOST_ROOT "" CACHE PATH "Boost 1.90 or newer source or installed prefix")
+include("${CMAKE_CURRENT_LIST_DIR}/ThirdPartyDependencies.cmake")
 
 # Homebrew's formula prefix also covers unlinked/keg-only installations and custom brew locations.
 set(boost_hints)
@@ -33,11 +34,23 @@ function(erlang_aot_check_boost_version include_dir)
 endfunction()
 
 # Multiprecision is header-only; propagate its include path without a binary Boost library.
-find_path(ERLANG_AOT_BOOST_INCLUDE boost/multiprecision/cpp_int.hpp
-    HINTS "${ERLANG_AOT_BOOST_ROOT}" "${ERLANG_AOT_BOOST_ROOT}/include"
-        "${ERLANG_AOT_BOOST_PARSER_ROOT}" "${ERLANG_AOT_BOOST_PARSER_ROOT}/include"
-        "${ERLANG_AOT_BOOST_PARSER_INCLUDE}" ${boost_hints}
-    PATHS "${PROJECT_SOURCE_DIR}/build/deps/boost_1_90_0")
+unset(ERLANG_AOT_BOOST_INCLUDE CACHE)
+if(ERLANG_AOT_BOOST_ROOT)
+    find_path(ERLANG_AOT_BOOST_INCLUDE boost/multiprecision/cpp_int.hpp
+        PATHS "${ERLANG_AOT_BOOST_ROOT}" "${ERLANG_AOT_BOOST_ROOT}/include" NO_DEFAULT_PATH)
+elseif(CMAKE_HOST_WIN32)
+    erlang_aot_download_dependency(boost_1_90_0
+        "https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.bz2"
+        "49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305"
+        "boost/multiprecision/cpp_int.hpp" boost_source)
+    find_path(ERLANG_AOT_BOOST_INCLUDE boost/multiprecision/cpp_int.hpp
+        PATHS "${boost_source}" NO_DEFAULT_PATH)
+else()
+    find_path(ERLANG_AOT_BOOST_INCLUDE boost/multiprecision/cpp_int.hpp
+        HINTS "${ERLANG_AOT_BOOST_PARSER_ROOT}" "${ERLANG_AOT_BOOST_PARSER_ROOT}/include"
+            "${ERLANG_AOT_BOOST_PARSER_INCLUDE}" ${boost_hints}
+        PATHS "${PROJECT_SOURCE_DIR}/thirdparty/boost_1_90_0")
+endif()
 if(NOT ERLANG_AOT_BOOST_INCLUDE)
     message(FATAL_ERROR "Boost.Multiprecision is required. Install Boost 1.90 or newer (brew install boost on macOS), or set ERLANG_AOT_BOOST_ROOT.")
 endif()

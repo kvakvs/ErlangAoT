@@ -67,12 +67,19 @@ Use imported SDK components and target-local system includes/definitions, not gl
 `llvm-config --cxxflags`. A compile/link smoke check must establish compatibility.
 The runtime remains a separate LLVM-free C++23 library.
 
-A compatible SDK must already be globally installed. Configuration searches standard
-system/package-manager prefixes (including Homebrew); `LLVM_DIR` can choose another
-global installation. Repository-local SDKs, build trees and private downloaded or
-vendored copies are rejected. Missing/incompatible SDKs are fatal for compiler builds;
-Clang alone is insufficient. No configure/build/test helper may download, bootstrap,
-install or build LLVM. Runtime-only builds never discover it.
+Configuration prefers an installed SDK from standard system/package-manager prefixes
+(including Homebrew). If none is found, CMake downloads the official **23.1.2** SDK
+into `thirdparty/`, verifies its pinned SHA-256 checksum, and retains the archive
+and extracted installation for reuse across build directories and offline reloads.
+`LLVM_DIR` explicitly selects any existing installed SDK; invalid selections fail
+without falling back. LLVM build trees are still rejected. Set
+`ERLANG_AOT_DOWNLOAD_LLVM=OFF` to require an installed SDK without downloads.
+
+Pinned binary archives cover Windows x64/ARM64, Linux x64/ARM64, and macOS ARM64.
+They are selected for the compiler executable's architecture, independently of
+Erlang output targets. Other hosts and cross-builds need a matching explicit SDK;
+LLVM is not built from source automatically. System link dependencies and native
+SDKs must still be installed. Runtime-only builds never discover or download LLVM.
 
 Inspect this reference installation without changing it:
 
@@ -228,9 +235,9 @@ that boundary in CTest.
 Automatic discovery searches `/usr`, `/usr/local`, `/opt/homebrew`, `/opt/local`,
 `/opt/llvm`, `/home/linuxbrew/.linuxbrew` and `/Library/Developer/Toolchains` on Unix,
 and LLVM under Program Files on Windows. Versioned distro and Homebrew layouts
-are included. These are global installation roots, not configurable private-copy
-fallbacks. Canonical paths reject repository copies and CMake build trees.
-`LLVM_DIR` explicitly selects a package beneath those roots; invalid selections
+are included. The pinned `thirdparty/` SDK is the fallback when that search fails.
+Canonical paths reject CMake build trees.
+`LLVM_DIR` explicitly selects an installed package; invalid selections
 fail without falling back. Compiler configuration reports searched locations,
 selected version/prefix, host triple and available backends. Runtime-only
 configuration does not load the dependency module.
@@ -244,8 +251,9 @@ CXXFLAGS= cmake --preset debug --fresh -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cma
 ```
 
 Dependency tests use fresh configurations for automatic/explicit selection,
-missing SDKs, private-only prefixes, explicit private paths, incompatible release
-metadata and runtime-only builds. They never install or download dependencies.
+missing SDKs with downloads disabled, ignored private prefixes, rejected build
+trees, incompatible release metadata and runtime-only builds. Automatic selection
+reuses the SDK already acquired during the parent configuration.
 Only one distinct LLVM installation is available on the reference host; explicit
 selection is tested through its canonical Cellar path. A second independent global
 installation and native Windows/Linux SDK compatibility remain unvalidated.

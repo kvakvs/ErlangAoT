@@ -1,3 +1,31 @@
+# Windows zlib fallback — 2026-09-27
+
+- LLVM-scoped modules/FindZLIB.cmake probes installed static zlib, then builds pinned
+  zlib 1.3.2 in thirdparty/ using ZlibDependencies.cmake. Debug/Release builds use
+  compiler/architecture/CRT fingerprints and locks; completed installs reuse offline.
+  Downloaded LLVM flag must be visible locally before package loading for /MT choice.
+- Actual download/build passed; compression round trips passed Debug/Release for
+  /MT and /MD[d], plus installed-root/downloads-OFF discovery. Lizard passes.
+  Fresh full Debug configure passes zlib lookup but fails missing zstd::libzstd_static;
+  check-quality cannot run without generated build.ninja. No C++ source edits.
+  Isolated harness/logs: build/zlib-validation; full log: build/zlib-configure.log.
+
+# Windows dependency storage — 2026-09-27
+
+- CMake requires runnable installed Clang on Windows before project()/downloads.
+  Boost 1.90.0 and toml++ 3.4.0 default to SHA-256-pinned downloads retained with
+  extracted sources in ignored thirdparty/. Shared lock and extraction markers
+  permit offline reuse across builds; explicit roots win, invalid roots fail.
+  Removed build/deps discovery hints. LLVM global 23.1.x SDK policy unchanged.
+- Real downloads verified; eight configure cases plus unchanged cache timestamps
+  pass. Runtime Debug build and consumer link pass; CTests 17/18, with silent
+  runtime_lifecycle_failure failure on this Windows host. Lizard and runtime-only
+  clang-tidy pass. Fresh full build/debug configure and check-quality blocked by
+  missing global LLVMConfig.cmake/23.1.x SDK (installed Clang is 22.1.8).
+- Validation uses CLion CMake 4.3.1; Strawberry CMake 3.29.2 rejected GitHub TLS.
+  Native compiler detection stalls in sandbox, succeeds with escalation. Validation
+  scripts/logs and temporary Lizard install are under build/dependency-validation/.
+
 # Diagnostic exception transport — 2026-09-25
 
 - Diagnostic stays aggregate result data (including designated initializers).

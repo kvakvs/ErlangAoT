@@ -2,12 +2,17 @@
 set(ERLANG_AOT_BOOST_PARSER_ROOT "" CACHE PATH "Standalone Boost.Parser source or installed Boost prefix")
 include("${CMAKE_CURRENT_LIST_DIR}/BoostDependencies.cmake")
 
-find_path(ERLANG_AOT_BOOST_PARSER_INCLUDE boost/parser/parser.hpp
-    HINTS "${ERLANG_AOT_BOOST_PARSER_ROOT}" "${ERLANG_AOT_BOOST_PARSER_ROOT}/include"
-        "${ERLANG_AOT_BOOST_ROOT}" "${ERLANG_AOT_BOOST_ROOT}/include"
-        "${ERLANG_AOT_BOOST_INCLUDE}" ${boost_hints}
-    PATHS "${PROJECT_SOURCE_DIR}/build/deps/boost-parser/include"
-        "${PROJECT_SOURCE_DIR}/build/deps/boost_1_90_0")
+unset(ERLANG_AOT_BOOST_PARSER_INCLUDE CACHE)
+if(ERLANG_AOT_BOOST_PARSER_ROOT)
+    find_path(ERLANG_AOT_BOOST_PARSER_INCLUDE boost/parser/parser.hpp
+        PATHS "${ERLANG_AOT_BOOST_PARSER_ROOT}" "${ERLANG_AOT_BOOST_PARSER_ROOT}/include"
+        NO_DEFAULT_PATH)
+else()
+    find_path(ERLANG_AOT_BOOST_PARSER_INCLUDE boost/parser/parser.hpp
+        HINTS "${ERLANG_AOT_BOOST_INCLUDE}" ${boost_hints}
+        PATHS "${PROJECT_SOURCE_DIR}/thirdparty/boost-parser/include"
+            "${PROJECT_SOURCE_DIR}/thirdparty/boost_1_90_0")
+endif()
 if(NOT ERLANG_AOT_BOOST_PARSER_INCLUDE)
     message(FATAL_ERROR "Boost.Parser is required. Install Boost 1.90 or newer (brew install boost on macOS), or see README.md dependency setup.")
 endif()

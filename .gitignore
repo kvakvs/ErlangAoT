@@ -1,4 +1,6 @@
+/cmake-build*/
 /build/
+/thirdparty/
 /.venv-quality/
 /references/otp/
 /CMakeUserPresets.json

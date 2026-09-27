@@ -299,9 +299,11 @@ version is 3.4.0. CMake queries the installed formula prefix and reports the cho
 header directory, including for unlinked installations. An explicit TOML root
 takes precedence; every selected installation is checked for the pinned version.
 
-Install that version or extract its source into `build/deps/tomlplusplus-3.4.0`.
+On Windows, CMake downloads and verifies this release automatically, retaining its
+archive and extracted source in `thirdparty/` for reuse across build directories.
+On other hosts, install that version or extract its source into `thirdparty/tomlplusplus-3.4.0`.
 Alternatively pass `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` when
-configuring. No automatic downloads occur; runtime-only builds do not discover it.
+configuring; this takes precedence and disables the download. Runtime-only builds do not discover it.
 The private build enables header-only parsing with exceptions and disables
 unreleased TOML syntax. TOML headers never appear in public frontend interfaces.
 

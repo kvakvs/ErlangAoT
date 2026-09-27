@@ -1,14 +1,32 @@
-# Windows support — future work
+# Windows development host and remaining platform work
 
-Windows is not yet a supported or tested platform. CMake keeps the compiler and
-runtime independent and includes basic MSVC-style warning flags, but that does
-not establish Windows support.
+CMake provides a `windows` preset using clang-cl and Ninja Multi-Config, with
+`windows-debug` and `windows-release` build/test presets. Run these from a Visual
+Studio developer environment with the C++ tools, Windows SDK and installed Clang
+on PATH. Native Windows builds require the MSVC ABI; MinGW is rejected. A configure
+probe links the Windows SDK and checks C++23 `std::expected` support. MSVC-style
+project builds use `/W4 /WX`, conforming language flags and UTF-8 source encoding.
 
-- Select and validate MSVC or clang-cl with a Windows SDK, supported C++ standard,
-  and CMake generator. Test Debug/Release with multi-configuration generators.
-- Select consistent target architecture, C++ ABI, and CRT settings for the runtime
-  and generated programs. Decide `/MD` versus `/MT` before exposing ownership
-  across library boundaries; do not assume MinGW and MSVC artifacts interoperate.
+The default CRT is `/MDd` in Debug and `/MD` otherwise. Explicit
+`CMAKE_MSVC_RUNTIME_LIBRARY` choices are preserved and must match all linked C++
+libraries, including LLVM. The developer environment selects the Ninja target
+architecture; Visual Studio generators use `-A`. Use one matching architecture,
+configuration and CRT for the runtime and generated-program consumers. Nested
+consumer/SDK tests inherit the parent toolchain and active configuration.
+The runtime remains a static `.lib`; no DLL export contract is introduced.
+Cross-builds still omit tests that execute target programs.
+
+Validation on this Windows x64 host: clang-cl 23.1.2 runtime/ABI Debug and Release
+builds pass. Release passes all 18 CTests; Debug passes 17/18, with the existing
+`runtime_lifecycle_failure` allocation-failure test failing silently. The generated
+consumer link test passes in both configurations. Full compiler/CLI tests and the
+combined quality gate remain blocked by the absent global LLVM 23.1.x C++ SDK
+(`LLVMConfig.cmake`); installed command-line tools are insufficient.
+
+Remaining work before claiming full Windows support:
+
+- Validate the full compiler and CLI with the required global LLVM SDK in both
+  configurations, resolve the Debug allocation-failure test, and validate x86.
 - Add Unicode command-line/path handling (the initial CLI uses narrow `main`
   arguments), Windows path tests, and safe process invocation for external tools.
 - Implement runtime platform facilities: threads, synchronization, event polling

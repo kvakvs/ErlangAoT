@@ -1,10 +1,18 @@
 # Project TOML support uses a tested, compiler-private header-only dependency.
 set(ERLANG_AOT_TOML_ROOT "" CACHE PATH "toml++ 3.4.0 installation or source root")
+include("${PROJECT_SOURCE_DIR}/cmake/ThirdPartyDependencies.cmake")
 # Re-evaluate the explicit root even when a prior configuration found another copy.
 unset(ERLANG_AOT_TOML_INCLUDE CACHE)
 if(ERLANG_AOT_TOML_ROOT)
     find_path(ERLANG_AOT_TOML_INCLUDE toml++/toml.hpp
         PATHS "${ERLANG_AOT_TOML_ROOT}/include" "${ERLANG_AOT_TOML_ROOT}" NO_DEFAULT_PATH)
+elseif(CMAKE_HOST_WIN32)
+    erlang_aot_download_dependency(tomlplusplus-3.4.0
+        "https://github.com/marzer/tomlplusplus/archive/refs/tags/v3.4.0.tar.gz"
+        "8517f65938a4faae9ccf8ebb36631a38c1cadfb5efa85d9a72e15b9e97d25155"
+        "include/toml++/toml.hpp" toml_source)
+    find_path(ERLANG_AOT_TOML_INCLUDE toml++/toml.hpp
+        PATHS "${toml_source}/include" NO_DEFAULT_PATH)
 else()
     # Ask Homebrew for the formula prefix so unlinked/custom installations also work.
     set(toml_hints)
@@ -21,10 +29,10 @@ else()
     endif()
     find_path(ERLANG_AOT_TOML_INCLUDE toml++/toml.hpp
         HINTS ${toml_hints}
-        PATHS "${PROJECT_SOURCE_DIR}/build/deps/tomlplusplus-3.4.0/include")
+        PATHS "${PROJECT_SOURCE_DIR}/thirdparty/tomlplusplus-3.4.0/include")
 endif()
 if(NOT ERLANG_AOT_TOML_INCLUDE)
-    message(FATAL_ERROR "toml++ 3.4.0 is required. Set ERLANG_AOT_TOML_ROOT to its source/install root; see docs/projects.md. Configuration never downloads dependencies.")
+    message(FATAL_ERROR "toml++ 3.4.0 is required. Set ERLANG_AOT_TOML_ROOT to its source/install root; see docs/projects.md.")
 endif()
 file(READ "${ERLANG_AOT_TOML_INCLUDE}/toml++/impl/version.hpp" toml_version)
 foreach(part IN ITEMS MAJOR MINOR PATCH)

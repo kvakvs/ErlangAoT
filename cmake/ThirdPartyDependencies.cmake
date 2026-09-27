@@ -1,0 +1,28 @@
+# Keep pinned dependency archives and extracted installations independent of build directories.
+include_guard(GLOBAL)
+
+# Download once, verify the archive, and retain its upstream top-level directory.
+function(erlang_aot_download_dependency name url sha256 required_file output)
+    get_filename_component(repository "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/.." ABSOLUTE)
+    set(dependencies "${repository}/thirdparty")
+    set(source "${dependencies}/${name}")
+    file(MAKE_DIRECTORY "${dependencies}")
+    file(LOCK "${dependencies}/.download.lock" GUARD FUNCTION TIMEOUT 1800)
+    if(NOT EXISTS "${source}/.erlangaot-extracted" OR NOT EXISTS "${source}/${required_file}")
+        get_filename_component(archive_name "${url}" NAME)
+        set(archive "${dependencies}/${archive_name}")
+        message(STATUS "Downloading ${name} to ${dependencies}")
+        file(DOWNLOAD "${url}" "${archive}" EXPECTED_HASH "SHA256=${sha256}"
+            TLS_VERIFY ON STATUS download_status TIMEOUT 1800 INACTIVITY_TIMEOUT 60)
+        list(GET download_status 0 download_result)
+        if(NOT download_result EQUAL 0)
+            message(FATAL_ERROR "Cannot download ${name}: ${download_status}. Set the dependency's ERLANG_AOT_*_ROOT (LLVM_DIR for LLVM) to an existing installation for offline configuration.")
+        endif()
+        file(ARCHIVE_EXTRACT INPUT "${archive}" DESTINATION "${dependencies}")
+        if(NOT EXISTS "${source}/${required_file}")
+            message(FATAL_ERROR "${name} archive is missing ${required_file}")
+        endif()
+        file(TOUCH "${source}/.erlangaot-extracted")
+    endif()
+    set(${output} "${source}" PARENT_SCOPE)
+endfunction()

@@ -15,8 +15,17 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   including SYSTEM classification of Homebrew's matching linked include alias;
   `CompilerDependencies.cmake`: compiler-only Parser discovery; `ErlangDependencies.cmake` and
   `ErlangVersion.escript`: host OTP discovery/version checks.
+- `cmake/WindowsToolchain.cmake`: fail early without a runnable installed Windows Clang;
+  `WindowsHost.cmake`, `probes/windows.cpp`: native MSVC ABI/SDK/C++23 checks and
+  default DLL CRT; `CMakePresets.json`: clang-cl/Ninja Multi-Config Windows presets;
+  `TestHost.cmake.in`: parent toolchain/CRT/dependency settings for nested native tests;
+  `ThirdPartyDependencies.cmake`: SHA-256-verified archives/extraction retained under
+  ignored `thirdparty/`, shared by Windows Boost and toml++ dependency discovery.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
+- `cmake/ZlibDependencies.cmake`, `modules/FindZLIB.cmake`: LLVM-scoped installed
+  zlib detection and Windows pinned download/static build fallback; retained under
+  `thirdparty/` with compiler/architecture/CRT-specific Debug and Release libraries.
 - `cmake/LLVMDependencies.cmake`, `LLVMPolicy.cmake`, `probes/llvm.cpp`: global-only
   LLVM 23.1.x discovery, path/version policy, host ABI link probe and available
   X86/ARM/AArch64 backend selection/component linkage.

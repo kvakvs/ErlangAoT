@@ -1,4 +1,4 @@
-# Discover and validate installed project dependencies, including Homebrew prefixes.
+# Discover and validate project dependencies, downloading pinned headers on Windows.
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/Dependencies.cmake")
 add_library(erlang_project STATIC diagnostics.cpp loader.cpp)
 erlang_aot_project_options(erlang_project)
