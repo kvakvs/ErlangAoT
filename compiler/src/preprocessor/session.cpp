@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 
 namespace erlang_aot {
 namespace {
@@ -14,9 +15,21 @@ std::optional<std::string> read_file(const std::filesystem::path &path) {
     return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
 }
 
+// Copy environment values into session-owned storage using the platform CRT API.
 std::optional<std::string> environment(std::string_view name) {
+#ifdef _WIN32
+    char *buffer = nullptr;
+    std::size_t size = 0;
+    const auto error = _dupenv_s(&buffer, &size, std::string(name).c_str());
+    const std::unique_ptr<char, decltype(&std::free)> value(buffer, &std::free);
+    if (error != 0 || !value) {
+        return std::nullopt;
+    }
+    return std::string(value.get());
+#else
     const auto *value = std::getenv(std::string(name).c_str());
     return value ? std::optional<std::string>(value) : std::nullopt;
+#endif
 }
 
 // Preserve token source/location ownership for EOF and initialization errors.
