@@ -97,7 +97,8 @@ ctest --preset windows-release
 The batch scripts mirror the Makefile's `build`, `format`, and `clean` targets:
 `make-build.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
 Studio developer shell with CMake and Clang available. Build defaults are
-`BUILD_DIR=build/debug`, `BUILD_TYPE=Debug`, and `JOBS=2`; environment variables
+`BUILD_DIR=build/debug`, `BUILD_TYPE=Debug`, and native build tool parallelism
+(override with `JOBS=N`); environment variables
 `CMAKE`, `CMAKE_ARGS`, and `CLANG_FORMAT` also override the corresponding tools/options.
 Clean removes repository-local `build/` and `cmake-build*/` directories.
 
@@ -119,8 +120,11 @@ all linked C++ libraries. Avoid mixing Debug and Release STL/CRT artifacts.
 Windows project sources use UTF-8; Unicode CLI/path handling is still pending.
 
 All project targets use C++23 and treat compiler warnings as errors.
-The executable is `build/debug/bin/erlangaot`. Builds use two parallel jobs;
-override with `cmake --build --preset debug --parallel 8`.
+The executable is `build/debug/bin/erlangaot`. Build presets and wrappers request
+parallel builds on Windows, Linux, and macOS using the native build tool's default
+job count (`jobs: 0` in presets, `--parallel` in wrappers). Set an explicit limit
+with `cmake --build --preset debug --parallel 8` or `JOBS=8` for the wrappers.
+For a build directory without a preset, use `cmake --build <dir> --parallel`.
 The Windows preset places the executable in `build/windows/bin/<Config>/erlangaot.exe`
 and the runtime in `build/windows/lib/<Config>/erlang_runtime.lib`.
 

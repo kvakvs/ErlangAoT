@@ -35,10 +35,10 @@
       "name": "debug",
       "configurePreset": "debug",
       "configuration": "Debug",
-      "jobs": 2
+      "jobs": 0
     },
-    { "name": "windows-debug", "configurePreset": "windows", "configuration": "Debug", "jobs": 2 },
-    { "name": "windows-release", "configurePreset": "windows", "configuration": "Release", "jobs": 2 }
+    { "name": "windows-debug", "configurePreset": "windows", "configuration": "Debug", "jobs": 0 },
+    { "name": "windows-release", "configurePreset": "windows", "configuration": "Release", "jobs": 0 }
   ],
   "testPresets": [
     {
