@@ -9,6 +9,21 @@ option(ERLANG_AOT_DOWNLOAD_LLVM "Download a pinned LLVM SDK into thirdparty when
 # Prefer explicit installations, then global packages, then the shared verified download.
 function(erlang_aot_select_llvm)
     if(WIN32)
+        # MinGW archives on PATH (for example Strawberry Perl) cannot satisfy the MSVC SDK.
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .lib)
+        foreach(variable IN ITEMS ZLIB_LIBRARY ZLIB_LIBRARY_RELEASE ZLIB_LIBRARY_DEBUG
+            zstd_LIBRARY zstd_STATIC_LIBRARY zstd_LIBRARY_RELEASE zstd_LIBRARY_DEBUG LIBXML2_LIBRARY)
+            if("${${variable}}" MATCHES "\\.a$")
+                message(STATUS "Ignoring incompatible Windows library: ${${variable}}")
+                unset(${variable} CACHE)
+                unset(${variable})
+                # A header cached beside that archive may belong to the same incompatible install.
+                foreach(include_variable IN ITEMS ZLIB_INCLUDE_DIR zstd_INCLUDE_DIR LIBXML2_INCLUDE_DIR)
+                    unset(${include_variable} CACHE)
+                    unset(${include_variable})
+                endforeach()
+            endif()
+        endforeach()
         list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/modules")
         set(ERLANG_AOT_ZLIB_ROOT_HINT "${ZLIB_ROOT}")
     endif()

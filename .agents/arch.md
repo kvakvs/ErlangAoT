@@ -1,9 +1,10 @@
 # Architecture
 
-- LLVM's zlib lookup prefers installed libraries. Windows builds missing zlib
-  download pinned 1.3.2 and build static Debug/Release libraries during configuration,
+- LLVM's compression lookups prefer installed libraries. Windows builds missing
+  zlib/zstd download pinned 1.3.2/1.5.7 and build static Debug/Release libraries during configuration,
   retaining compiler/architecture/CRT-specific installations under `thirdparty/`.
-  Linux/macOS keep system discovery; runtime-only builds never request zlib.
+  MSVC lookups exclude MinGW archives and clear incompatible cached selections.
+  Linux/macOS keep system discovery; runtime-only builds never request these libraries.
 
 - Windows configuration requires installed Clang before language detection. Default
   Boost 1.90.0 and toml++ 3.4.0 sources/archives persist in ignored `thirdparty/`, with

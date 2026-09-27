@@ -67,19 +67,14 @@ official archives for Windows x64/ARM64, Linux x64/ARM64, and macOS ARM64.
 Archives and extracted SDKs stay in `thirdparty/` for offline reuse. Other host
 architectures and cross-builds require an explicit matching `LLVM_DIR`.
 
-For compiler builds, LLVM's zlib dependency is detected from installed libraries.
-On Windows, missing zlib triggers a SHA-256-verified download of zlib 1.3.2 and
-configure-time static Debug/Release builds under `thirdparty/`. These builds are
-reused across build directories and match the host compiler, architecture and CRT.
-Set `ZLIB_ROOT` to prefer an installed zlib, or `ERLANG_AOT_DOWNLOAD_ZLIB=OFF`
-to disable this fallback. Linux and macOS use their installed zlib development packages.
-
-For compiler builds, LLVM's zlib dependency is detected from installed libraries.
-On Windows, missing zlib triggers a SHA-256-verified download of zlib 1.3.2 and
-configure-time static Debug/Release builds under `thirdparty/`. These builds are
-reused across build directories and match the host compiler, architecture and CRT.
-Set `ZLIB_ROOT` to prefer an installed zlib, or `ERLANG_AOT_DOWNLOAD_ZLIB=OFF`
-to disable this fallback. Linux and macOS use their installed zlib development packages.
+For compiler builds, LLVM's zlib and zstd dependencies are detected from installed
+libraries. On Windows, missing libraries trigger SHA-256-verified downloads of
+zlib 1.3.2 and zstd 1.5.7, followed by static Debug/Release builds under `thirdparty/`.
+These builds are reused across build directories and match the host compiler,
+architecture and CRT. Set `ZLIB_ROOT` or `zstd_ROOT` to prefer an installed library;
+`ERLANG_AOT_DOWNLOAD_ZLIB=OFF` and `ERLANG_AOT_DOWNLOAD_ZSTD=OFF` disable the respective
+fallbacks. MSVC SDK discovery rejects cached MinGW `.a` libraries such as those
+bundled with Strawberry Perl. Linux and macOS use installed development packages.
 
 From the repository root:
 

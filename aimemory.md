@@ -1,3 +1,24 @@
+# Windows LLVM compression dependencies — 2026-09-27
+
+- Added pinned zstd 1.5.7 Windows fallback plus zstd::libzstd_static with separate
+  Debug/Release locations. Shared WindowsDependencyBuild.cmake retains zlib/zstd
+  builds by compiler, architecture, CRT and dependency options under thirdparty/.
+- LLVM MSVC discovery restricts library suffixes to .lib and clears cached .a
+  selections. FindZLIB resolves native libraries before builtin FindZLIB can add
+  .a suffixes again (important with Strawberry CMake). Linux/macOS unchanged.
+- Actual Strawberry 3.29 configuration with deliberately seeded MinGW zlib cache
+  now passes LLVM link probe; CLion CMake 4.3 plus clang-cl also passes. Compression
+  round trips pass Debug/Release for /MT and /MD[d], installed roots with downloads
+  disabled, RelWithDebInfo Release mapping, and cached reconfiguration. Lizard passes.
+- Full compiler build proceeds beyond dependencies but hits existing source issues:
+  cl.exe C4702 in Boost.Parser text/algorithm.hpp:355; clang-cl rejects deprecated
+  std::getenv in compiler/src/preprocessor/session.cpp:18. No C++ source edits.
+  Validation logs/scripts in ignored build/windows-dependency-validation/.
+- Fresh full build/debug was switched to clang-cl for validation. Full check-quality
+  was started, then stopped after focused clang-tidy on session.cpp established
+  existing exception-escape failures in Lexer/PreprocessorOptions/File. No quality
+  pass claimed; pinned tools are installed in ignored .venv-quality/.
+
 # Windows batch entry points — 2026-09-27
 
 - make-build/format/clean.bat mirror Makefile defaults and scope; build supports

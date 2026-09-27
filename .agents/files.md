@@ -25,8 +25,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   ignored `thirdparty/`, shared by Windows Boost and toml++ dependency discovery.
 - `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
   `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
-- `cmake/ZlibDependencies.cmake`, `modules/FindZLIB.cmake`: LLVM-scoped installed
-  zlib detection and Windows pinned download/static build fallback; retained under
+- `cmake/{Zlib,Zstd}Dependencies.cmake`, `modules/Find{ZLIB,zstd}.cmake`,
+  `WindowsDependencyBuild.cmake`: LLVM-scoped installed compression library detection
+  and shared Windows pinned download/static build fallback; retained under
   `thirdparty/` with compiler/architecture/CRT-specific Debug and Release libraries.
 - `cmake/LLVMDependencies.cmake`, `LLVMPolicy.cmake`, `probes/llvm.cpp`: global-only
   LLVM 23.1.x discovery, path/version policy, host ABI link probe and available
