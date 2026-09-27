@@ -99,6 +99,17 @@ cmake --build --preset windows-release
 ctest --preset windows-release
 ```
 
+The batch scripts mirror the Makefile's `build`, `format`, and `clean` targets:
+`make-build.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
+Studio developer shell with CMake and Clang available. Build defaults are
+`BUILD_DIR=build/debug`, `BUILD_TYPE=Debug`, and `JOBS=2`; environment variables
+`CMAKE`, `CMAKE_ARGS`, and `CLANG_FORMAT` also override the corresponding tools/options.
+Clean removes repository-local `build/` and `cmake-build*/` directories.
+
+`erlangaot.bat --help` builds first, then forwards all arguments to the selected
+configuration's executable. Build failures stop execution; compiler input paths
+remain relative to the caller's working directory, and its exit code is preserved.
+
 For runtime development without downloading or using the LLVM C++ SDK, configure with
 `cmake --preset windows -DERLANG_AOT_BUILD_COMPILER=OFF`; the same build/test presets
 apply. Set the option back to `ON` when the SDK is available. MSVC `cl` is also

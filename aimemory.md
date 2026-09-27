@@ -1,3 +1,15 @@
+# Windows batch entry points — 2026-09-27
+
+- make-build/format/clean.bat mirror Makefile defaults and scope; build supports
+  CMAKE, BUILD_DIR, BUILD_TYPE, JOBS, CMAKE_ARGS; format supports CLANG_FORMAT.
+  erlangaot.bat builds to stderr, preserves caller cwd/arguments/status, selects
+  bin/<configuration>/erlangaot.exe then bin/erlangaot.exe, refuses stale runs on failure.
+- Disposable fixture checks with native mock tools passed command/options handling,
+  configure/build failures, quoted/empty/special-character arguments, both executable
+  layouts, absolute output path, Release overrides, formatting scope/error, cleanup
+  scope/idempotence and junction rejection. No actual repository clean/format run.
+  Harness retained in ignored build/batch-validation; no full compiler build attempted.
+
 # Windows zlib fallback — 2026-09-27
 
 - LLVM-scoped modules/FindZLIB.cmake probes installed static zlib, then builds pinned
