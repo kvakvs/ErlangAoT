@@ -1,5 +1,9 @@
 # Architecture
 
+- Local implementation inference owns a separate bounded type graph and AST side
+  tables. Unknown inputs remain top; identity/projection results retain argument
+  positions independently of specifications. Traversal is iterative and budgeted.
+
 - Windows executables reserve 8 MiB stacks for bounded recursive parsing. Lexer
   state and preprocessor application overrides use vector storage with allocation-free
   moves; application lookup reads last matching override. CLI dispatch is separate

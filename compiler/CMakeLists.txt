@@ -65,7 +65,8 @@ add_library(erlang_semantic STATIC
     src/semantic/types/domain.cpp src/semantic/types/syntax.cpp
     src/semantic/types/declarations.cpp src/semantic/types/collect.cpp
     src/semantic/types/resolver.cpp src/semantic/types/traversal.cpp
-    src/semantic/types/constants.cpp src/semantic/types/expansion.cpp)
+    src/semantic/types/constants.cpp src/semantic/types/expansion.cpp
+    src/semantic/types/inference.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_include_directories(erlang_semantic PRIVATE src)
 target_link_libraries(erlang_semantic PUBLIC erlang_frontend PRIVATE erlang_aot_abi)

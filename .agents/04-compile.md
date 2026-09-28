@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–21 complete, 2026-09-28. Steps 22–46 remain pending.
+Status: steps 1–22 complete, 2026-09-28. Steps 23–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1342,3 +1342,13 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and clang-tidy pass; focused new-source/test quality, formatting and whitespace pass.
   Official maint-29 was fetched and remains 21776803ecd11f5fa948732c0ec66b8f325dedfc.
   Other native hosts and frontend sanitizers remain pending. Stopped before step 22.
+
+- Step 22 (2026-09-28): local implementation inference owns an independent bounded
+  graph and expression/function side tables. Integer singletons and exact parameter
+  projection relations survive missing/partial/incorrect annotations; all inputs
+  remain top. Iterative traversal bounds work across the batch and widens safely.
+  Calls remain unknown until step 23. The driver runs inference after valid declared
+  types; no product inspection switch or backend output was introduced.
+  Fresh Windows x64 compiler+runtime Debug build and all 79 CTests pass.
+  Full Lizard/clang-tidy, focused test tidy, formatting and whitespace pass. Official maint-29 remains
+  21776803ecd11f5fa948732c0ec66b8f325dedfc; other native hosts remain pending.

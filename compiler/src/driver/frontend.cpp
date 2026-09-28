@@ -4,6 +4,7 @@
 #include "../semantic/calls.hpp"
 #include "../semantic/capabilities.hpp"
 #include "../semantic/types/declarations.hpp"
+#include "../semantic/types/inference.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
@@ -73,6 +74,9 @@ bool compile_batch(const Inputs &inputs, const DiagnosticSink &sink) {
         const auto calls = semantic::resolve_calls(modules, report);
         if (!failed) {
             const auto types = semantic::types::resolve_declarations(modules, report);
+            if (!failed) {
+                const auto inferred = semantic::types::infer(calls);
+            }
         }
     }
     return failed;

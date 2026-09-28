@@ -566,6 +566,10 @@
 
 # Implementation notes
 
+- Step22 complete: independent bounded inference graph, top inputs and singleton/
+  projection facts. Fresh full Debug79/79 and full quality pass; gate22 logs in
+  build/compile-steps. No lowering or call propagation yet.
+
 - Project errors own manifest coordinates, target/key context; decode owns values.
   Select before selected-only filesystem resolution; validate all selected plans
   before processing. Definitions/features use existing PP validation. Mutable

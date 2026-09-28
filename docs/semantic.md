@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Expression inference and lowering are
+Lowering and cross-call inference are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -78,5 +78,11 @@ Registry source locations borrow the batch-owned AST. The driver reports graph/w
 exhaustion as warning-only widening; future inference callers of the expansion API
 must also inspect the graph's widening flag. Constant evaluation accepts at most
 10,000 decimal digits per operand/result and shares the preprocessor's bounded shifts.
-Inference, contract-discrepancy warnings, type inspection and Erlang lowering remain
-later plan steps.
+Local inference now owns an independent type graph. Integer expressions retain
+singleton values; parameters retain top-valued types plus exact result/argument
+relations for identity and projection functions. Missing or partial specifications
+do not reduce precision, and incorrect specifications cannot narrow these facts.
+Iterative traversal has a batch work budget; exhaustion returns top and discards
+relations. Node exhaustion widens constants to top. Calls remain unknown until
+the next propagation step. Contract warnings, type inspection and Erlang lowering
+remain later plan steps.

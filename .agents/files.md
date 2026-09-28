@@ -1,5 +1,9 @@
 # File map
 
+- `compiler/src/semantic/types/inference.{hpp,cpp}`: independent implementation
+  facts, parameter/result relations and bounded iterative expression analysis.
+  `tests/compiler/semantic/inference.cpp`: temporary relational/budget invariants.
+
 - `references/otp-pin.cmake`: current maint-29 source revision and branch.
   `docs/otp-reference.md`: refresh procedure, checksum/grammar review and validation.
   `tests/compiler/parser/pinned.cmake`: shared offline revision/cleanliness/hash gate.
