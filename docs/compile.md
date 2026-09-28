@@ -382,3 +382,17 @@ inferred inputs. Generated-module runtime registration begins at step 28.
 Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
 full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
 later work. Cross-target object checks do not claim native execution on those hosts.
+
+### Step 28
+
+Generated modules now carry immutable ABI/word-width descriptors, export tables
+and explicit registration entries. Runtime publication validates the descriptor,
+freezes one unique generic registry and retains executable image ownership through
+resolved handles. See [module registration](runtime-modules.md) for symbol and
+lifetime contracts. A separate Clang consumer executes the real answer/client
+objects with the mandatory runtime; linking those objects without it must fail.
+Atom initialization remains reserved; this step adds no atom-valued expressions.
+
+Validation: fresh Windows x64 Debug compiler/runtime build; 82/82 CTests,
+Lizard and clang-tidy pass (156 production commands). Additional native hosts
+and full frontend sanitizer validation remain pending.

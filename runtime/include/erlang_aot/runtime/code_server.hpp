@@ -11,7 +11,9 @@ enum class CodeError : std::uint8_t {
     function_not_exported,
     resource_limit,
     not_implemented,
-    diagnostic_failure
+    diagnostic_failure,
+    abi_mismatch,
+    stopped
 };
 template <typename Value> using CodeResult = std::expected<Value, CodeError>;
 
@@ -25,7 +27,7 @@ class CodeImage {
 };
 
 struct ModuleDefinition final {
-    // Own exact module spelling; runtime atom metadata is deferred to step 28.
+    // Own exact module spelling; runtime atom binding remains reserved until atom initialization exists.
     std::string name;
     // Declaration order keeps executable memory alive through target destruction.
     std::shared_ptr<const CodeImage> image;

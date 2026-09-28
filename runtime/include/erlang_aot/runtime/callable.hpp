@@ -36,7 +36,7 @@ enum class RegistryError : std::uint8_t { invalid_entry, duplicate_key, function
 template <typename Value> using RegistryResult = std::expected<Value, RegistryError>;
 
 struct FunctionKey final {
-    // Own exact spelling independently of draft buffers; atom bindings arrive in step 28.
+    // Own exact spelling independently of draft buffers; future atom bindings require runtime initialization.
     std::string name;
     // Exclude the leading process context from Erlang arity and type identity.
     std::size_t arity;

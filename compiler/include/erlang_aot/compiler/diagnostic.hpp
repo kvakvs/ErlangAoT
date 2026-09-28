@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/compiler/source.hpp>
+#include <functional>
 #include <optional>
 #include <stdexcept>
 #include <vector>

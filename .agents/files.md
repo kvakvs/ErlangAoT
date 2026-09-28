@@ -286,3 +286,10 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `lowering_calls.cpp` emits generic calls and imports resolved remote exports.
   `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/` provide the
   real-source backend adapter, target-width/ABI checks and object symbol inspection.
+
+- `abi/.../modules.hpp`: descriptor layout and generated registration ABI.
+  `codegen/module_registration.{hpp,cpp}` emits descriptors, startup and service references.
+  `runtime/.../modules.hpp`, `runtime/src/modules/registration.cpp`: descriptor validation,
+  generic marshaling and transactional publication. `docs/runtime-modules.md`: contract.
+  `tests/compiler/codegen/registration*` links real generated objects with/without runtime;
+  `tests/runtime/registration.cpp` checks rejection and lifetime ownership.

@@ -264,5 +264,10 @@
   Explicit iterative traversal preserves source-order argument evaluation and the
   process context. Exported remote identities become matching external declarations.
   Real-source adapter tests inspect native/cross-width objects and ABI data flow;
-  CLI publication, runtime registration and native generated execution remain later.
-  Final Windows x64 Debug 80/80 and full Lizard/clang-tidy pass. Stop before step 28.
+  CLI publication remains later; step 28 adds registration and native harness execution.
+  Final Windows x64 Debug 80/80 and full Lizard/clang-tidy pass. Historical step 27 validation.
+
+- Step 28: target-layout descriptors and retained registration entries call a native
+  C++ runtime service. Publication copies names, validates ABI/width/exports and
+  freezes a unique registry; resolved handles pin code images. Atoms remain reserved.
+  Separately linked real-source objects execute through the mandatory runtime.

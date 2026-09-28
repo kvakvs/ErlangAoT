@@ -18,8 +18,8 @@ CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinitio
     }
     try {
         auto module = std::shared_ptr<LoadedModule>(new LoadedModule(std::move(definition)));
-        modules_.emplace(module->name(), module);
         module->definition_.functions->freeze();
+        modules_.emplace(module->name(), module);
         return module;
     } catch (const std::bad_alloc &) {
         return std::unexpected(CodeError::resource_limit);

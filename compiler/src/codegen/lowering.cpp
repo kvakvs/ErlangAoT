@@ -1,6 +1,7 @@
 #include "lowering.hpp"
 #include "llvm_state.hpp"
 #include "lowering_expressions.hpp"
+#include "module_registration.hpp"
 #include "target.hpp"
 #include "term_abi.hpp"
 #include "verification.hpp"
@@ -75,6 +76,7 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
             define(*outputs[i], *modules[i], word, inferred);
+            emit_registration(*outputs[i], *modules[i], word);
         }
         return verify_ir(compilation);
     } catch (const std::exception &error) {

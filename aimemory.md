@@ -201,3 +201,8 @@
 - Historical logs: build/{test-migration,ast-format,windows-dependency-validation,
   dependency-validation,zlib-validation,batch-validation}/. Test migration replaced
   native suites with CLI workflows; its old 74/75 parser failure was later repaired.
+
+- Step 28: descriptor/registration bridge and separate real-source native consumer added.
+  Fresh Windows Debug 82/82 tests and full quality (156 production commands) passed.
+  Native C++ service symbols use Microsoft/Itanium spellings, no C wrapper.
+  Atoms remain reserved. Missing diagnostic.hpp <functional> include fixed.

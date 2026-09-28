@@ -22,7 +22,7 @@ TermFactory reporting placeholders are installed; term creation, backing allocat
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
-owners retain batch ASTs, LLVM state and results; Generic integer/parameter/direct-call lowering is implemented privately; backend driver integration
+owners retain batch ASTs, LLVM state and results; Generic integer/parameter/direct-call lowering is implemented privately; generated-module registration is implemented; backend driver integration
 remains deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
@@ -84,8 +84,8 @@ Step 11 implements [generic builtin dispatch](../docs/runtime-builtins.md), usin
 frozen registry per module and one runtime-owned code server. Generic keys contain
 exact name/arity and all-Term type sequences. Typed/native sketches now live under
 `runtime/include/unverified/` and remain deferred. Immediate-only host Terms support
-calls without roots; heap/identity values are rejected. Owned string names await atom
-binding in step 28. The generated service bridge returns Status separately from the
+calls without roots; heap/identity values are rejected. Owned string names are copied from generated descriptors in step 28; atom
+initialization remains reserved. The generated service bridge returns Status separately from the
 output word and reports missing/unavailable BIFs once. Publication/lookup remain
 host-serialized; unload and concurrent workers remain deferred. Top-level callable
 and code-server headers now forward to the namespaced implementation.
@@ -1092,8 +1092,12 @@ programs. Each of those four steps passed 80/80 tests with zero skips and full
 quality; final step 27 analyzed all 154 production translation units. Reproduction
 scripts and logs are under ignored `build/compile-steps/`.
 
-Current stopping point: step 27 complete; step 28 generated-module registration
-has not started. CLI artifact publication, generated-program execution, additional
-native hosts and full frontend sanitizer validation remain pending. See
+Current boundary: step 28 implements generated-module registration and explicit
+native harness execution. CLI artifact publication, additional native hosts and
+full frontend sanitizer validation remain pending. See
 [compile](../docs/compile.md) and [test migration](../docs/test-migration.md) for
 current scope and platform limitations.
+
+Step 28: versioned descriptors and retained startup symbols, transactional runtime
+registration, frozen ownership and linked real-source execution. Atom bindings remain
+reserved. Fresh Windows x64 Debug: 82/82 CTests; quality validation recorded in docs/compile.md.
