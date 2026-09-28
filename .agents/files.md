@@ -283,3 +283,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/src/codegen/lowering.{hpp,cpp}`: validated-batch declaration/literal lowering.
   `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/`: real-source
   backend adapter, target-width boundaries and actual object checks.
+
+- Step25: `lowering_expressions.{hpp,cpp}` lowers tagged literals and parameter-array reads.

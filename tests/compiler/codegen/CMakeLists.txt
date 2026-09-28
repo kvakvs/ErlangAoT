@@ -50,3 +50,7 @@ target_include_directories(codegen_lowering PRIVATE "${PROJECT_SOURCE_DIR}/compi
 target_link_libraries(codegen_lowering PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
 target_compile_definitions(codegen_lowering PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
 add_test(NAME codegen_lowering COMMAND codegen_lowering)
+
+if("X86" IN_LIST test_backends)
+    target_compile_definitions(codegen_lowering PRIVATE ERLANG_AOT_LLVM_X86=1)
+endif()

@@ -3,7 +3,7 @@
 #include "codegen/llvm_state.hpp"
 #include "semantic/bindings.hpp"
 #include "semantic/capabilities.hpp"
-#include "semantic/types/declarations.hpp"
+#include "semantic/types/contracts.hpp"
 #include <cstdio>
 #include <erlang_aot/compiler/parser.hpp>
 #include <llvm/IR/Constants.h>
@@ -50,6 +50,7 @@ bool analyze_and_lower(cg::Compilation &compilation) {
     const auto calls = semantic::resolve_calls(modules, report);
     const auto declared = semantic::types::resolve_declarations(modules, report);
     const auto inferred = semantic::types::infer(calls);
+    semantic::types::check_contracts(*declared, *inferred, calls, report);
     return cg::lower(compilation, modules, *inferred);
 }
 
@@ -95,12 +96,40 @@ void target_overflow() {
     require(!cg::emit_objects(compilation) && compilation.result().outputs().empty(), "failed batch emitted output");
 }
 
+// Project source positions directly; equal argument values cannot collapse distinct slots.
+void parameters(const std::string &triple = {}, unsigned bits = sizeof(void *) * 8) {
+    auto compilation = fixture("parameters.erl", triple);
+    require(analyze_and_lower(compilation), "parameter lowering failed");
+    const std::vector<std::uint64_t> expected{0, 0, 1, 2};
+    std::size_t index = 0;
+    for (const auto &function : *cg::detail::state(compilation).modules.front()) {
+        auto instruction = function.getEntryBlock().begin();
+        const auto *slot = llvm::cast<llvm::GetElementPtrInst>(&*instruction++);
+        const auto *load = llvm::cast<llvm::LoadInst>(&*instruction++);
+        const auto *ret = llvm::cast<llvm::ReturnInst>(&*instruction);
+        require(slot->hasOneUse() && *slot->user_begin() == load && ret->getReturnValue() == load,
+                "projection changed the term");
+        require(slot->getPointerOperand() == function.getArg(1), "parameter lost argument array");
+        require(!slot->isInBounds(), "parameter adds an unjustified pointer promise");
+        const auto offset = llvm::cast<llvm::ConstantInt>(slot->getOperand(1))->getZExtValue();
+        require(offset == expected.at(index++), "parameter order changed");
+        require(load->getAlign().value() == bits / 8, "parameter alignment differs from ABI");
+    }
+    require(index == expected.size(), "missing projection");
+    inspect_object(compilation);
+}
+
 // Check source-to-object behavior without publishing artifacts or linking a program.
 int main() {
     try {
         constants(sizeof(void *) == 8 ? "constants64.erl" : "constants32.erl", "", sizeof(void *) * 8);
+#ifdef ERLANG_AOT_LLVM_X86
         constants("constants32.erl", "i686-unknown-linux-gnu", 32);
+        constants("constants64.erl", "x86_64-unknown-linux-gnu", 64);
         target_overflow();
+        parameters("i686-unknown-linux-gnu", 32);
+#endif
+        parameters();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

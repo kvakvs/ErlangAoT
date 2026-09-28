@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–24 complete, 2026-09-28. Steps 25–46 remain pending.
+Status: steps 1–25 complete, 2026-09-28. Steps 26–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1382,3 +1382,12 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   prints analyzed lowering inputs; normal artifact publication remains step35/36.
   Fresh full Windows Debug build, 80/80 CTests, full Lizard/clang-tidy, formatting
   and whitespace pass. Official maint-29 fetched unchanged. Other hosts remain pending.
+
+- Step 25 (2026-09-28): Parameter lowering borrows the binding table and emits a target-word-aligned
+  load from the original argument position. Grouped identity and three-argument
+  projections with unused wildcards retain tagged terms unchanged, without type
+  assumptions or inbounds promises. Native and 32-bit object/IR checks pass.
+  Debug25 exposes inferred input/result relations.
+  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
+  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
+  whitespace pass. Other native hosts and frontend sanitizers remain pending.

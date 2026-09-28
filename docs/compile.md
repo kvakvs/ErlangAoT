@@ -341,3 +341,15 @@ returns and emits native objects. It checks 32/64-bit endpoints and rejects host
 literals that overflow a 32-bit target. This is a stage adapter, not CLI artifact
 publication or generated-program execution. `--impldebug 24` prints the analyzed
 input facts on stderr. Normal CLI compilation still ends after analysis.
+
+### Step 25
+
+Parameter lowering borrows the binding table and emits a target-word-aligned
+load from the original argument position. Grouped identity and three-argument
+projections with unused wildcards retain tagged terms unchanged, without type
+assumptions or inbounds promises. Native and 32-bit object/IR checks pass.
+Debug25 exposes inferred input/result relations.
+
+Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
+full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
+later work. Cross-target object checks do not claim native execution on those hosts.

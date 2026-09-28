@@ -1,10 +1,9 @@
 #include "lowering.hpp"
-#include "../semantic/capabilities.hpp"
 #include "llvm_state.hpp"
+#include "lowering_expressions.hpp"
 #include "target.hpp"
 #include "term_abi.hpp"
 #include "verification.hpp"
-#include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/IRBuilder.h>
 #include <stdexcept>
 
@@ -35,16 +34,7 @@ void declare(llvm::Module &output, const semantic::Module &module, llvm::Functio
     }
 }
 
-// Checked canonical decimal parsing rejects arbitrary-size values before LLVM sees them.
-llvm::ConstantInt *literal(const ast::Module &syntax, const ast::ExprId &expression, llvm::IntegerType *word) {
-    const auto value = semantic::integer_literal(syntax, expression, word->getBitWidth());
-    require(value.has_value(), "lowering: expected a representable integer literal");
-    const auto encoded = word->getBitWidth() == 32 ? *abi::v1::IntegerEncoding<32>::encode(*value)
-                                                   : *abi::v1::IntegerEncoding<64>::encode(*value);
-    return llvm::ConstantInt::get(word, encoded);
-}
-
-// Keep literal bodies independent of declared types and inferred representation guesses.
+// Keep generic bodies independent of declared types and inferred representation guesses.
 void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word) {
     for (const auto &function : module.functions) {
         auto *entry = output.getFunction(function.symbol);
@@ -52,7 +42,7 @@ void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerT
         const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
         const auto root = definition.clauses.at(0).body.at(0);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-        builder.CreateRet(literal(syntax, root, word));
+        builder.CreateRet(lower_expression(builder, *entry, module, function, root, word));
     }
 }
 

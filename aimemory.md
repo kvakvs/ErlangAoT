@@ -686,3 +686,6 @@
 - Step24 complete: real-source generic declaration/literal lowering, full fresh
   Debug80/80 + quality. No CLI artifact integration; debug24 prints inferred inputs.
   Gate logs build/compile-steps/step24*. OTP maint29 unchanged.
+
+- Step25 complete and individually committed after fresh full80/80 + quality.
+  Logs build/compile-steps/step25*. `lowering_expressions.{hpp,cpp}` lowers tagged literals and parameter-array reads.
