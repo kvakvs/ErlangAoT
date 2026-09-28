@@ -7,7 +7,8 @@ Current native test builds discover installed OTP 29+ at CMake configure time an
 fail for missing/older installations. Live suites run on that selected version;
 the source-dependent reduction audit separately verifies the pinned grammar.
 
-Implementation follows [.agents/02-parser.md](../.agents/02-parser.md).
+Implementation history and remaining validation are in the
+[completed-work archive](../.agents/00-finished.md#parser).
 
 ## Using the parser
 

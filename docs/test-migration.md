@@ -1,7 +1,8 @@
 # Test migration coverage ledger
 
-This implements `.agents/05-tests.md`. Replacements use the production CLI unless
-an API boundary cannot be reached through it. A subprocess around the old unit
+The [migration strategy](../.agents/00-finished.md#testing-strategy-and-migration)
+is archived with completed work. Replacements use the production CLI unless an API
+boundary cannot be reached through it. A subprocess around the old unit
 executable does not count as migration. Backend compilation remains deferred.
 
 ## Baseline (Windows x64, 2026-09-28)

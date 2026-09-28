@@ -416,7 +416,8 @@ helps establish last performed plan step. Refuse to begin work if git state is n
 
 1. Add or adjust behavior tests appropriate to that step, including meaningful
    failure cases; preserve useful CLI/preprocessor/parser/project behavior coverage.
-   Follow [05-tests.md](05-tests.md) and the [coverage ledger](../docs/test-migration.md)
+   Follow the [test migration strategy](00-finished.md#testing-strategy-and-migration)
+   and the [coverage ledger](../docs/test-migration.md)
    when replacing tests; retired implementation-coupled executables need not be recreated.
 2. Run `make format` and verify formatting. Document each new function and class
    field's intent in one or two lines; keep functions and files simple.

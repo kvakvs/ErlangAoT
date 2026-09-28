@@ -39,7 +39,7 @@ std::string input_text(const Summary &summary) {
 } // namespace
 
 void trace_inference(const Inference &inferred, const CallGraph &calls,
-                     const std::function<void(std::string_view)> &sink, const int step) {
+                     const DiagnosticSink &sink, const int step) {
     for (const auto function : calls.order) {
         const auto &summary = inferred.functions.at(function.function);
         sink("[impldebug " + std::to_string(step) + "] " + escaped(function.module->file) + " inference " +

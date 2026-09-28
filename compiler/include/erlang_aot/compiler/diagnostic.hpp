@@ -73,6 +73,9 @@ class DiagnosticError : public std::runtime_error {
     Diagnostic diagnostic;
 };
 
+// Allow callers to attach project context without changing frontend source rendering.
+using DiagnosticSink = std::function<void(std::string_view)>;
+
 class LexicalError : public std::runtime_error {
   public:
     // Transport a source diagnostic from a lexical helper to the form driver.

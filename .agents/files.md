@@ -210,7 +210,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `phase5/coverage.tsv`: attribute/type row index; `phase6/`: measured full inventory,
   closure fixtures, historical ASTs and checksum-pinned real OTP source manifest.
 - `docs/{preprocessor,parser,parser-validation}.md`: contracts and evidence;
-  `.agents/02-parser.md`: ordered plan/status; `references/otp`: ignored research checkout.
+  `references/otp`: ignored research checkout.
   `compiler/src/stage_readers/{preprocessed,abstract,ir}/` remains reserved only.
 
 - `src/project/{CMakeLists.txt,cmake/Dependencies.cmake}`: private toml++ 3.4.0,
@@ -239,9 +239,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `docs/projects.md`: delivered format, precedence, discovery and creation workflows;
   `docs/project-validation.md`: C++23 evidence and pending host matrix;
   `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
-- `.agents/03-project.md`: implementation plan, per-step validation ledger and status.
-- `.agents/05-tests.md`: migration status, retained exceptions and deferred backend
-  work; `docs/test-migration.md`: case-level disposition and validation evidence.
+- `.agents/00-finished.md`: compact foundations, preprocessor/OTP inventory, parser,
+  project and test migration archive, historical evidence and remaining obligations.
+  `docs/test-migration.md`: case-level disposition and validation evidence.
   `.agents/04-compile.md`: remaining compiler steps route tests to observable workflows.
 - `tests/runtime/link_consumer.cpp`, `link.cmake`: independently configured runtime
   startup/context/dispatch/copy/publication/pinning/teardown integration; term layout

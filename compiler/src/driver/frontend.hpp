@@ -1,5 +1,6 @@
 #pragma once
 #include "../implementation_debug.hpp"
+#include <erlang_aot/compiler/diagnostic.hpp>
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <functional>
 #include <span>
@@ -20,8 +21,6 @@ struct FrontendRequest {
     ImplementationDebug implementation_debug;
 };
 
-// Allow callers to attach project context without changing frontend source rendering.
-using DiagnosticSink = std::function<void(std::string_view)>;
 // Process one isolated batch; project targets never share declaration tables.
 bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &diagnostics);
