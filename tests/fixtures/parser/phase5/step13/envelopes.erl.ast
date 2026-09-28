@@ -1,60 +1,86 @@
-file	656e76656c6f7065732e65726c	1
-module	656e76656c6f706573
-export	1
-66	0
-attribute	637573746f6d
-term_map	2
-atom	61
-integer	2
-atom	62
-term_tuple	1
-term_tuple	2
-atom	66
-integer	3
-attribute	637573746f6d
-term_bits	0110100001100101011011000110110001101111
-attribute	637573746f6d
-cons
-integer	1
-cons
-integer	2
-nil
-attribute	637573746f6d
-term_tuple	3
-term_tuple	2
-atom	66
-integer	2
-integer	-1
-term_bits	0110001001111001011101000110010101110011
-record_decl	67726f75706564	0	2
-record_decl_field	61	0
-record_decl_field	62	1
-integer	1
-record_decl	72	0	0
-record_decl	4f74686572	1	0
-doc	1
-metadata	2
-atom	73696e6365
-cons
-integer	50
-cons
-integer	57
-nil
-atom	7469746c65
-cons
-integer	69
-cons
-integer	120
-cons
-integer	97
-cons
-integer	109
-cons
-integer	112
-cons
-integer	108
-cons
-integer	101
-nil
-function	66
-atom	7265636f7264
+(file name_hex=656e76656c6f7065732e65726c line=1)
+(module name_hex=656e76656c6f706573)
+(export functions=1
+  (arity name_hex=66 value=0)
+)
+(attribute name_hex=637573746f6d
+  (term_map entries=2
+    (atom name_hex=61)
+    (integer value=2)
+    (atom name_hex=62)
+    (term_tuple elements=1
+      (term_tuple elements=2
+        (atom name_hex=66)
+        (integer value=3)
+      )
+    )
+  )
+)
+(attribute name_hex=637573746f6d
+  (term_bits bits=0110100001100101011011000110110001101111)
+)
+(attribute name_hex=637573746f6d
+  (cons
+    (integer value=1)
+    (cons
+      (integer value=2)
+      (nil)
+    )
+  )
+)
+(attribute name_hex=637573746f6d
+  (term_tuple elements=3
+    (term_tuple elements=2
+      (atom name_hex=66)
+      (integer value=2)
+    )
+    (integer value=-1)
+    (term_bits bits=0110001001111001011101000110010101110011)
+  )
+)
+(record_decl name_hex=67726f75706564 native=0 fields=2
+  (record_decl_field name_hex=61 default=0)
+  (record_decl_field name_hex=62 default=1
+    (integer value=1)
+  )
+)
+(record_decl name_hex=72 native=0 fields=0)
+(record_decl name_hex=4f74686572 native=1 fields=0)
+(doc module=1
+  (metadata entries=2
+    (atom name_hex=73696e6365)
+    (cons
+      (integer value=50)
+      (cons
+        (integer value=57)
+        (nil)
+      )
+    )
+    (atom name_hex=7469746c65)
+    (cons
+      (integer value=69)
+      (cons
+        (integer value=120)
+        (cons
+          (integer value=97)
+          (cons
+            (integer value=109)
+            (cons
+              (integer value=112)
+              (cons
+                (integer value=108)
+                (cons
+                  (integer value=101)
+                  (nil)
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)
+(function name_hex=66
+  (atom name_hex=7265636f7264)
+)

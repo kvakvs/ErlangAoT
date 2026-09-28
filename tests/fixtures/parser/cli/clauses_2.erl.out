@@ -1,8 +1,13 @@
-Module forms=3
-  form[0]: FileAttribute name="clauses_2.erl" line=1
-  form[1]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: Atom name=first
-  form[2]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: Atom name=second
+(Module forms=3
+  form[0]=(FileAttribute name="clauses_2.erl" line=1)
+  form[1]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=(Atom name=first)
+    )
+  )
+  form[2]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=(Atom name=second)
+    )
+  )
+)

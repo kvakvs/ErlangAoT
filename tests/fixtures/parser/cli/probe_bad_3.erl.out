@@ -1,2 +1,3 @@
-Module forms=1
-  form[0]: FileAttribute name="probe_bad_3.erl" line=1
+(Module forms=1
+  form[0]=(FileAttribute name="probe_bad_3.erl" line=1)
+)

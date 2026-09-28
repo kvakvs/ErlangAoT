@@ -39,6 +39,16 @@ Other structure, sequence order, native record identifiers, and literal strings
 remain unchanged. Error wording is deliberately excluded. Native expansion traces
 are tested separately because OTP annotations cannot represent our full origins.
 
+AST records use parenthesized objects and two-space indentation. `.phase1` and
+`.ast` retain the native/OTP comparison projection with named scalar fields.
+Fields ending in `_hex` retain the original byte encoding, and float `bits` fields
+retain exact binary64 bits. CLI `.out` snapshots use the full typed AST with
+`role[index]=(Object ...)` child fields. The September 2026 formatting migration
+converted the existing records without changing their historical baseline or
+values and refreshed `SHA256SUMS`; it did not regenerate historical observations
+against a newer OTP revision. `.raw` and `.epp` remain Erlang-term records in their
+original syntax. No AST text deserializer is currently implemented.
+
 Offline `parser_reference` checks all native scanner outputs and recorded-file
 integrity/classification. `parser_oracle` replays all three reference modes with
 the configured installed OTP >=29; native test configuration requires it.

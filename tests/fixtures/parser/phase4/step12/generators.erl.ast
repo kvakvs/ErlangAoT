@@ -1,140 +1,209 @@
-file	67656e657261746f72732e65726c	1
-module	67656e657261746f7273
-function_full	66	3	1
-clause	3	0	1
-var	4c
-var	4d
-var	42
-tuple	18
-lc	1	1
-var	58
-generate	<-
-var	58
-var	4c
-mc	1	1
-map_field	=>
-var	58
-var	58
-generate	<-
-var	58
-var	4c
-bc	1
-bitstring	1
-segment	0	default
-var	58
-generate	<-
-var	58
-var	4c
-lc	1	1
-var	58
-generate	<:-
-var	58
-var	4c
-mc	1	1
-map_field	=>
-var	58
-var	58
-generate	<:-
-var	58
-var	4c
-bc	1
-bitstring	1
-segment	0	default
-var	58
-generate	<:-
-var	58
-var	4c
-lc	1	1
-var	58
-b_generate	<=
-bitstring	1
-segment	0	default
-var	58
-var	42
-mc	1	1
-map_field	=>
-var	58
-var	58
-b_generate	<=
-bitstring	1
-segment	0	default
-var	58
-var	42
-bc	1
-bitstring	1
-segment	0	default
-var	58
-b_generate	<=
-bitstring	1
-segment	0	default
-var	58
-var	42
-lc	1	1
-var	58
-b_generate	<:=
-bitstring	1
-segment	0	default
-var	58
-var	42
-mc	1	1
-map_field	=>
-var	58
-var	58
-b_generate	<:=
-bitstring	1
-segment	0	default
-var	58
-var	42
-bc	1
-bitstring	1
-segment	0	default
-var	58
-b_generate	<:=
-bitstring	1
-segment	0	default
-var	58
-var	42
-lc	1	1
-var	58
-m_generate	<-
-var	4b
-var	58
-var	4d
-mc	1	1
-map_field	=>
-var	58
-var	58
-m_generate	<-
-var	4b
-var	58
-var	4d
-bc	1
-bitstring	1
-segment	0	default
-var	58
-m_generate	<-
-var	4b
-var	58
-var	4d
-lc	1	1
-var	58
-m_generate	<:-
-var	4b
-var	58
-var	4d
-mc	1	1
-map_field	=>
-var	58
-var	58
-m_generate	<:-
-var	4b
-var	58
-var	4d
-bc	1
-bitstring	1
-segment	0	default
-var	58
-m_generate	<:-
-var	4b
-var	58
-var	4d
+(file name_hex=67656e657261746f72732e65726c line=1)
+(module name_hex=67656e657261746f7273)
+(function_full name_hex=66 arity=3 clauses=1
+  (clause arguments=3 guards=0 body=1
+    (var name_hex=4c)
+    (var name_hex=4d)
+    (var name_hex=42)
+    (tuple elements=18
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (generate operator=<:-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (generate operator=<:-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (generate operator=<:-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (b_generate operator=<=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (b_generate operator=<=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (b_generate operator=<=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (b_generate operator=<:=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (b_generate operator=<:=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (b_generate operator=<:=
+          (bitstring segments=1
+            (segment size=0 modifiers=default
+              (var name_hex=58)
+            )
+          )
+          (var name_hex=42)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (m_generate operator=<-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (m_generate operator=<-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (m_generate operator=<-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (m_generate operator=<:-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (m_generate operator=<:-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+      (bc qualifiers=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=58)
+          )
+        )
+        (m_generate operator=<:-
+          (var name_hex=4b)
+          (var name_hex=58)
+          (var name_hex=4d)
+        )
+      )
+    )
+  )
+)

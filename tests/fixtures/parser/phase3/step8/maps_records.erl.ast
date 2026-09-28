@@ -1,177 +1,250 @@
-file	6d6170735f7265636f7264732e65726c	1
-module	6d6170735f7265636f726473
-function_full	66	5	1
-clause	5	0	1
-map	0	2
-map_field	=>
-var	4b
-call	0
-atom	66
-map_field	:=
-atom	61
-var	58
-record	0	1
-record_local	5374617465
-record_field
-var	5f
-var	59
-record	0	1
-record_qualified	6d6f64	726563
-record_field
-atom	61
-var	58
-record	0	1
-record_inferred
-record_field
-atom	61
-var	58
-record_index
-atom	72
-atom	61
-tuple	31
-map	0	0
-map	0	2
-map_field	=>
-atom	61
-integer	1
-map_field	:=
-binary	+
-var	4b
-integer	1
-call	0
-atom	66
-map	1	1
-map	1	1
-var	4d
-map_field	=>
-atom	61
-var	56
-map_field	:=
-atom	62
-var	57
-record	0	0
-record_local	72
-record	0	3
-record_local	72
-record_field
-atom	61
-integer	42
-record_field
-var	5f
-atom	64656661756c74
-record_field
-var	58
-call	0
-atom	67
-record	1	1
-var	52
-record_local	72
-record_field
-atom	61
-integer	2
-record_access
-var	52
-record_local	72
-atom	61
-record	0	0
-record_local	5374617465
-record	0	0
-record_qualified	6d6f64	726563
-record	0	0
-record_inferred
-record	1	1
-var	52
-record_qualified	6d6f64	726563
-record_field
-atom	61
-integer	1
-record_access
-var	52
-record_qualified	6d6f64	726563
-atom	61
-record	1	1
-var	52
-record_inferred
-record_field
-atom	61
-integer	1
-record_access
-var	52
-record_inferred
-atom	61
-record	0	0
-record_local	656e64
-record	0	0
-record_qualified	6d6f64	5374617465
-record	0	0
-record_qualified	6d6f64	656e64
-record_access
-var	52
-record_local	5374617465
-atom	61
-record_access
-var	52
-record_local	656e64
-atom	61
-record_access
-record	1	1
-record	0	0
-record_local	72
-record_local	73
-record_field
-atom	61
-integer	1
-record_local	74
-atom	61
-record	1	0
-record	0	0
-record_qualified	6d6f64	72
-record_local	73
-record	1	0
-map	0	0
-record_local	72
-map	1	0
-record	0	0
-record_local	72
-record	1	0
-record	1	0
-var	52
-record_local	72
-record_qualified	6d6f64	73
-map	1	1
-call	0
-atom	66
-map_field	=>
-atom	61
-integer	1
-record	1	0
-call	0
-atom	66
-record_local	72
-record_access
-record_index
-atom	72
-atom	61
-record_local	73
-atom	62
-remote
-var	4d
-record	1	0
-var	46
-record_local	72
-binary	+
-var	41
-map	1	1
-var	42
-map_field	=>
-atom	61
-integer	1
-unary	-
-record_access
-var	52
-record_local	72
-atom	61
-call	1
-record	0	0
-record_local	72
-var	58
+(file name_hex=6d6170735f7265636f7264732e65726c line=1)
+(module name_hex=6d6170735f7265636f726473)
+(function_full name_hex=66 arity=5 clauses=1
+  (clause arguments=5 guards=0 body=1
+    (map base=0 fields=2
+      (map_field operator==>
+        (var name_hex=4b)
+        (call arguments=0
+          (atom name_hex=66)
+        )
+      )
+      (map_field operator=:=
+        (atom name_hex=61)
+        (var name_hex=58)
+      )
+    )
+    (record base=0 fields=1
+      (record_local name_hex=5374617465)
+      (record_field
+        (var name_hex=5f)
+        (var name_hex=59)
+      )
+    )
+    (record base=0 fields=1
+      (record_qualified module_hex=6d6f64 name_hex=726563)
+      (record_field
+        (atom name_hex=61)
+        (var name_hex=58)
+      )
+    )
+    (record base=0 fields=1
+      (record_inferred)
+      (record_field
+        (atom name_hex=61)
+        (var name_hex=58)
+      )
+    )
+    (record_index
+      (atom name_hex=72)
+      (atom name_hex=61)
+    )
+    (tuple elements=31
+      (map base=0 fields=0)
+      (map base=0 fields=2
+        (map_field operator==>
+          (atom name_hex=61)
+          (integer value=1)
+        )
+        (map_field operator=:=
+          (binary operator=+
+            (var name_hex=4b)
+            (integer value=1)
+          )
+          (call arguments=0
+            (atom name_hex=66)
+          )
+        )
+      )
+      (map base=1 fields=1
+        (map base=1 fields=1
+          (var name_hex=4d)
+          (map_field operator==>
+            (atom name_hex=61)
+            (var name_hex=56)
+          )
+        )
+        (map_field operator=:=
+          (atom name_hex=62)
+          (var name_hex=57)
+        )
+      )
+      (record base=0 fields=0
+        (record_local name_hex=72)
+      )
+      (record base=0 fields=3
+        (record_local name_hex=72)
+        (record_field
+          (atom name_hex=61)
+          (integer value=42)
+        )
+        (record_field
+          (var name_hex=5f)
+          (atom name_hex=64656661756c74)
+        )
+        (record_field
+          (var name_hex=58)
+          (call arguments=0
+            (atom name_hex=67)
+          )
+        )
+      )
+      (record base=1 fields=1
+        (var name_hex=52)
+        (record_local name_hex=72)
+        (record_field
+          (atom name_hex=61)
+          (integer value=2)
+        )
+      )
+      (record_access
+        (var name_hex=52)
+        (record_local name_hex=72)
+        (atom name_hex=61)
+      )
+      (record base=0 fields=0
+        (record_local name_hex=5374617465)
+      )
+      (record base=0 fields=0
+        (record_qualified module_hex=6d6f64 name_hex=726563)
+      )
+      (record base=0 fields=0
+        (record_inferred)
+      )
+      (record base=1 fields=1
+        (var name_hex=52)
+        (record_qualified module_hex=6d6f64 name_hex=726563)
+        (record_field
+          (atom name_hex=61)
+          (integer value=1)
+        )
+      )
+      (record_access
+        (var name_hex=52)
+        (record_qualified module_hex=6d6f64 name_hex=726563)
+        (atom name_hex=61)
+      )
+      (record base=1 fields=1
+        (var name_hex=52)
+        (record_inferred)
+        (record_field
+          (atom name_hex=61)
+          (integer value=1)
+        )
+      )
+      (record_access
+        (var name_hex=52)
+        (record_inferred)
+        (atom name_hex=61)
+      )
+      (record base=0 fields=0
+        (record_local name_hex=656e64)
+      )
+      (record base=0 fields=0
+        (record_qualified module_hex=6d6f64 name_hex=5374617465)
+      )
+      (record base=0 fields=0
+        (record_qualified module_hex=6d6f64 name_hex=656e64)
+      )
+      (record_access
+        (var name_hex=52)
+        (record_local name_hex=5374617465)
+        (atom name_hex=61)
+      )
+      (record_access
+        (var name_hex=52)
+        (record_local name_hex=656e64)
+        (atom name_hex=61)
+      )
+      (record_access
+        (record base=1 fields=1
+          (record base=0 fields=0
+            (record_local name_hex=72)
+          )
+          (record_local name_hex=73)
+          (record_field
+            (atom name_hex=61)
+            (integer value=1)
+          )
+        )
+        (record_local name_hex=74)
+        (atom name_hex=61)
+      )
+      (record base=1 fields=0
+        (record base=0 fields=0
+          (record_qualified module_hex=6d6f64 name_hex=72)
+        )
+        (record_local name_hex=73)
+      )
+      (record base=1 fields=0
+        (map base=0 fields=0)
+        (record_local name_hex=72)
+      )
+      (map base=1 fields=0
+        (record base=0 fields=0
+          (record_local name_hex=72)
+        )
+      )
+      (record base=1 fields=0
+        (record base=1 fields=0
+          (var name_hex=52)
+          (record_local name_hex=72)
+        )
+        (record_qualified module_hex=6d6f64 name_hex=73)
+      )
+      (map base=1 fields=1
+        (call arguments=0
+          (atom name_hex=66)
+        )
+        (map_field operator==>
+          (atom name_hex=61)
+          (integer value=1)
+        )
+      )
+      (record base=1 fields=0
+        (call arguments=0
+          (atom name_hex=66)
+        )
+        (record_local name_hex=72)
+      )
+      (record_access
+        (record_index
+          (atom name_hex=72)
+          (atom name_hex=61)
+        )
+        (record_local name_hex=73)
+        (atom name_hex=62)
+      )
+      (remote
+        (var name_hex=4d)
+        (record base=1 fields=0
+          (var name_hex=46)
+          (record_local name_hex=72)
+        )
+      )
+      (binary operator=+
+        (var name_hex=41)
+        (map base=1 fields=1
+          (var name_hex=42)
+          (map_field operator==>
+            (atom name_hex=61)
+            (integer value=1)
+          )
+        )
+      )
+      (unary operator=-
+        (record_access
+          (var name_hex=52)
+          (record_local name_hex=72)
+          (atom name_hex=61)
+        )
+      )
+      (call arguments=1
+        (record base=0 fields=0
+          (record_local name_hex=72)
+        )
+        (var name_hex=58)
+      )
+    )
+  )
+)

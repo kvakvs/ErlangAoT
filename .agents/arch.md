@@ -194,7 +194,9 @@
 - CLI drivers isolate each file, share options/loading/diagnostics and expose
   --preprocess-check, --parse-check, --print-pp and --print-ast. Check modes never
   write executable outputs. Printing uses canonical tokens or an exhaustive
-  iterative AST visitor with bounded indentation and an explicit visit budget.
+  iterative AST visitor with parenthesized objects, two-space indentation and
+  name=value scalar/child fields. Indentation stays bounded after depth 64; an
+  explicit visit budget bounds traversal. There is no AST text reader.
   --verbose traces physical source/include ingestion as [pp] and parser inputs as
   [parse] on stderr; resolved include notifications come from the preprocessor.
 - Binding, guard legality, record/type resolution, lint, transforms, lowering and

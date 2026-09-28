@@ -21,6 +21,23 @@ retain a failing exit status when an earlier input fails. `--` permits paths tha
 start with a dash. Exit codes are 0 for success (including warnings), 1 for source/
 filesystem failures, and 2 for usage errors. Check modes do not write output files.
 
+AST output uses parenthesized objects, two spaces per nesting level and
+`name=value` fields. Child roles retain their ordered indices; leaves stay on one
+line and a parent's closing parenthesis aligns with its opening line:
+
+```lisp
+(Function name=i arity=0 clauses=1
+  clause[0]=(FunctionClause arguments=0 guard=none body=1
+    body[0]=(IntegerLiteral value=42)
+  )
+)
+```
+
+The printer traverses iteratively. Beyond 64 levels it caps indentation and adds
+`[depth=N]` labels to bound output growth, including on closing lines. AST text is
+for inspection and testing; no AST text reader is implemented. Compiler stages
+exchange the owned AST directly.
+
 The public entry point is `erlang_aot/compiler/parser.hpp`, linked through the
 `erlang_frontend` CMake target:
 

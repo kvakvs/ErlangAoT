@@ -1,36 +1,55 @@
-file	657870616e6465642e65726c	1
-module	657870616e6465645f7479706573
-file	617474726962757465732e68726c	1
-record_decl	696e636c75646564	0	1
-record_decl_field	76616c7565	1
-map	0	1
-map_field	=>
-atom	63726561746564
-call	0
-atom	666163746f7279
-file	657870616e6465642e65726c	3
-type_decl	0	657870616e646564	1
-var	41
-type	6d6170	1
-type_field	:=
-var	41
-type	6e6f6e656d7074795f6c697374	1
-type	7475706c65	2
-atom	746167
-type	696e7465676572	0
-type_decl	1	68696464656e	1
-var	41
-fun_type	1
-var	41
-binary_type
-integer	8
-integer	8
-record_decl	7479706564	0	1
-typed_field
-map_any
-record_decl_field	6669656c64	1
-map	0	1
-map_field	=>
-atom	63726561746564
-call	0
-atom	666163746f7279
+(file name_hex=657870616e6465642e65726c line=1)
+(module name_hex=657870616e6465645f7479706573)
+(file name_hex=617474726962757465732e68726c line=1)
+(record_decl name_hex=696e636c75646564 native=0 fields=1
+  (record_decl_field name_hex=76616c7565 default=1
+    (map base=0 fields=1
+      (map_field operator==>
+        (atom name_hex=63726561746564)
+        (call arguments=0
+          (atom name_hex=666163746f7279)
+        )
+      )
+    )
+  )
+)
+(file name_hex=657870616e6465642e65726c line=3)
+(type_decl kind=0 name_hex=657870616e646564 parameters=1
+  (var name_hex=41)
+  (type name_hex=6d6170 arguments=1
+    (type_field operator=:=
+      (var name_hex=41)
+      (type name_hex=6e6f6e656d7074795f6c697374 arguments=1
+        (type name_hex=7475706c65 arguments=2
+          (atom name_hex=746167)
+          (type name_hex=696e7465676572 arguments=0)
+        )
+      )
+    )
+  )
+)
+(type_decl kind=1 name_hex=68696464656e parameters=1
+  (var name_hex=41)
+  (fun_type arguments=1
+    (var name_hex=41)
+    (binary_type
+      (integer value=8)
+      (integer value=8)
+    )
+  )
+)
+(record_decl name_hex=7479706564 native=0 fields=1
+  (typed_field
+    (map_any)
+    (record_decl_field name_hex=6669656c64 default=1
+      (map base=0 fields=1
+        (map_field operator==>
+          (atom name_hex=63726561746564)
+          (call arguments=0
+            (atom name_hex=666163746f7279)
+          )
+        )
+      )
+    )
+  )
+)

@@ -1,2 +1,3 @@
-Module forms=1
-  form[0]: FileAttribute name="expected_closer.erl" line=1
+(Module forms=1
+  form[0]=(FileAttribute name="expected_closer.erl" line=1)
+)

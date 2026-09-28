@@ -1,4 +1,6 @@
-Module forms=2
-  form[0]: FileAttribute name="types_1.erl" line=1
-  form[1]: TypeDeclaration kind=type name=good
-    type: TypeApplication name=atom predefined=1
+(Module forms=2
+  form[0]=(FileAttribute name="types_1.erl" line=1)
+  form[1]=(TypeDeclaration kind=type name=good
+    type=(TypeApplication name=atom predefined=1)
+  )
+)

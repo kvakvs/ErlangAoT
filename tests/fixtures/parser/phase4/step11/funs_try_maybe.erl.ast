@@ -1,179 +1,251 @@
-file	66756e735f7472795f6d617962652e65726c	1
-module	66756e735f7472795f6d61796265
-file	73796e7461782e68726c	1
-file	66756e735f7472795f6d617962652e65726c	4
-function_full	66	3	1
-clause	3	0	1
-var	4d
-var	46
-var	41
-tuple	19
-local_fun
-atom	6c6f63616c
-integer	0
-remote_fun
-atom	6d
-atom	66
-integer	2
-remote_fun
-var	4d
-var	46
-var	41
-remote_fun
-var	4d
-atom	66
-integer	0
-remote_fun
-atom	6d
-var	46
-integer	1
-fun	-	2
-clause	1	2	1
-var	58
-guard	1
-call	1
-atom	69735f61746f6d
-var	58
-guard	1
-binary	=:=
-var	58
-integer	1
-var	58
-clause	1	0	1
-var	5f
-atom	6e6f
-fun	4c6f6f70	2
-clause	1	0	1
-integer	0
-atom	646f6e65
-clause	1	0	1
-var	4e
-call	1
-var	4c6f6f70
-binary	-
-var	4e
-integer	1
-try	2	0	0	2
-atom	61
-atom	62
-call	0
-atom	636c65616e7570
-atom	646f6e65
-try	1	2	0	1
-atom	61
-clause	1	0	1
-call	0
-atom	66
-atom	796573
-clause	1	0	1
-var	5f
-atom	6e6f
-call	0
-atom	636c65616e7570
-try	1	0	3	0
-catch
-call	0
-atom	66
-clause	1	0	1
-tuple	3
-atom	7468726f77
-var	52
-var	5f
-var	52
-clause	1	1	1
-tuple	3
-atom	6572726f72
-tuple	2
-atom	61
-var	52
-var	53
-guard	1
-call	1
-atom	69735f6c697374
-var	53
-tuple	2
-var	52
-var	53
-clause	1	0	1
-tuple	3
-var	43
-var	45
-var	5f
-tuple	2
-var	43
-var	45
-try	1	1	1	1
-atom	61
-clause	1	0	1
-var	58
-var	58
-clause	1	0	1
-tuple	3
-atom	7468726f77
-var	52
-var	5f
-var	52
-block	2
-atom	61
-atom	62
-try	1	0	1	1
-atom	61
-clause	1	0	1
-tuple	3
-atom	7468726f77
-var	52
-var	5f
-try	1	0	0	1
-atom	62
-atom	63
-atom	646f6e65
-maybe	2	0
-atom	61
-atom	62
-maybe	4	2
-maybe_match
-tuple	2
-atom	6f6b
-var	58
-call	0
-atom	67
-match
-var	58
-integer	1
-maybe_match
-var	58
-integer	1
-var	58
-clause	1	0	1
-atom	6572726f72
-atom	6e6f
-clause	1	2	1
-call	0
-atom	66
-guard	1
-atom	74727565
-guard	1
-atom	66616c7365
-atom	696d706f737369626c65
-maybe	1	0
-maybe_match
-case	1
-atom	61
-clause	1	0	1
-atom	61
-atom	796573
-atom	6f6b
-fun	-	1
-clause	1	0	1
-var	58
-var	58
-maybe	2	0
-maybe_match
-tuple	2
-atom	6f6b
-var	58
-call	0
-atom	67
-var	58
-atom	6d61796265
-atom	656c7365
+(file name_hex=66756e735f7472795f6d617962652e65726c line=1)
+(module name_hex=66756e735f7472795f6d61796265)
+(file name_hex=73796e7461782e68726c line=1)
+(file name_hex=66756e735f7472795f6d617962652e65726c line=4)
+(function_full name_hex=66 arity=3 clauses=1
+  (clause arguments=3 guards=0 body=1
+    (var name_hex=4d)
+    (var name_hex=46)
+    (var name_hex=41)
+    (tuple elements=19
+      (local_fun
+        (atom name_hex=6c6f63616c)
+        (integer value=0)
+      )
+      (remote_fun
+        (atom name_hex=6d)
+        (atom name_hex=66)
+        (integer value=2)
+      )
+      (remote_fun
+        (var name_hex=4d)
+        (var name_hex=46)
+        (var name_hex=41)
+      )
+      (remote_fun
+        (var name_hex=4d)
+        (atom name_hex=66)
+        (integer value=0)
+      )
+      (remote_fun
+        (atom name_hex=6d)
+        (var name_hex=46)
+        (integer value=1)
+      )
+      (fun name_hex=- clauses=2
+        (clause arguments=1 guards=2 body=1
+          (var name_hex=58)
+          (guard tests=1
+            (call arguments=1
+              (atom name_hex=69735f61746f6d)
+              (var name_hex=58)
+            )
+          )
+          (guard tests=1
+            (binary operator==:=
+              (var name_hex=58)
+              (integer value=1)
+            )
+          )
+          (var name_hex=58)
+        )
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=5f)
+          (atom name_hex=6e6f)
+        )
+      )
+      (fun name_hex=4c6f6f70 clauses=2
+        (clause arguments=1 guards=0 body=1
+          (integer value=0)
+          (atom name_hex=646f6e65)
+        )
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=4e)
+          (call arguments=1
+            (var name_hex=4c6f6f70)
+            (binary operator=-
+              (var name_hex=4e)
+              (integer value=1)
+            )
+          )
+        )
+      )
+      (try body=2 clauses=0 handlers=0 after=2
+        (atom name_hex=61)
+        (atom name_hex=62)
+        (call arguments=0
+          (atom name_hex=636c65616e7570)
+        )
+        (atom name_hex=646f6e65)
+      )
+      (try body=1 clauses=2 handlers=0 after=1
+        (atom name_hex=61)
+        (clause arguments=1 guards=0 body=1
+          (call arguments=0
+            (atom name_hex=66)
+          )
+          (atom name_hex=796573)
+        )
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=5f)
+          (atom name_hex=6e6f)
+        )
+        (call arguments=0
+          (atom name_hex=636c65616e7570)
+        )
+      )
+      (try body=1 clauses=0 handlers=3 after=0
+        (catch
+          (call arguments=0
+            (atom name_hex=66)
+          )
+        )
+        (clause arguments=1 guards=0 body=1
+          (tuple elements=3
+            (atom name_hex=7468726f77)
+            (var name_hex=52)
+            (var name_hex=5f)
+          )
+          (var name_hex=52)
+        )
+        (clause arguments=1 guards=1 body=1
+          (tuple elements=3
+            (atom name_hex=6572726f72)
+            (tuple elements=2
+              (atom name_hex=61)
+              (var name_hex=52)
+            )
+            (var name_hex=53)
+          )
+          (guard tests=1
+            (call arguments=1
+              (atom name_hex=69735f6c697374)
+              (var name_hex=53)
+            )
+          )
+          (tuple elements=2
+            (var name_hex=52)
+            (var name_hex=53)
+          )
+        )
+        (clause arguments=1 guards=0 body=1
+          (tuple elements=3
+            (var name_hex=43)
+            (var name_hex=45)
+            (var name_hex=5f)
+          )
+          (tuple elements=2
+            (var name_hex=43)
+            (var name_hex=45)
+          )
+        )
+      )
+      (try body=1 clauses=1 handlers=1 after=1
+        (atom name_hex=61)
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+        (clause arguments=1 guards=0 body=1
+          (tuple elements=3
+            (atom name_hex=7468726f77)
+            (var name_hex=52)
+            (var name_hex=5f)
+          )
+          (var name_hex=52)
+        )
+        (block body=2
+          (atom name_hex=61)
+          (atom name_hex=62)
+        )
+      )
+      (try body=1 clauses=0 handlers=1 after=1
+        (atom name_hex=61)
+        (clause arguments=1 guards=0 body=1
+          (tuple elements=3
+            (atom name_hex=7468726f77)
+            (var name_hex=52)
+            (var name_hex=5f)
+          )
+          (try body=1 clauses=0 handlers=0 after=1
+            (atom name_hex=62)
+            (atom name_hex=63)
+          )
+        )
+        (atom name_hex=646f6e65)
+      )
+      (maybe body=2 clauses=0
+        (atom name_hex=61)
+        (atom name_hex=62)
+      )
+      (maybe body=4 clauses=2
+        (maybe_match
+          (tuple elements=2
+            (atom name_hex=6f6b)
+            (var name_hex=58)
+          )
+          (call arguments=0
+            (atom name_hex=67)
+          )
+        )
+        (match
+          (var name_hex=58)
+          (integer value=1)
+        )
+        (maybe_match
+          (var name_hex=58)
+          (integer value=1)
+        )
+        (var name_hex=58)
+        (clause arguments=1 guards=0 body=1
+          (atom name_hex=6572726f72)
+          (atom name_hex=6e6f)
+        )
+        (clause arguments=1 guards=2 body=1
+          (call arguments=0
+            (atom name_hex=66)
+          )
+          (guard tests=1
+            (atom name_hex=74727565)
+          )
+          (guard tests=1
+            (atom name_hex=66616c7365)
+          )
+          (atom name_hex=696d706f737369626c65)
+        )
+      )
+      (maybe body=1 clauses=0
+        (maybe_match
+          (case clauses=1
+            (atom name_hex=61)
+            (clause arguments=1 guards=0 body=1
+              (atom name_hex=61)
+              (atom name_hex=796573)
+            )
+          )
+          (atom name_hex=6f6b)
+        )
+      )
+      (fun name_hex=- clauses=1
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=58)
+          (var name_hex=58)
+        )
+      )
+      (maybe body=2 clauses=0
+        (maybe_match
+          (tuple elements=2
+            (atom name_hex=6f6b)
+            (var name_hex=58)
+          )
+          (call arguments=0
+            (atom name_hex=67)
+          )
+        )
+        (var name_hex=58)
+      )
+      (atom name_hex=6d61796265)
+      (atom name_hex=656c7365)
+    )
+  )
+)

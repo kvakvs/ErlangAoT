@@ -1,127 +1,185 @@
-file	66756e6374696f6e732e65726c	1
-module	66756e6374696f6e73
-function_full	66	2	2
-clause	2	2	2
-tuple	2
-atom	746167
-var	58
-list	1	1
-var	48
-var	54
-guard	2
-call	1
-atom	69735f696e7465676572
-var	48
-binary	>
-var	48
-integer	0
-guard	1
-binary	==
-var	58
-atom	66616c6c6261636b
-match
-var	41
-binary	+
-var	48
-integer	1
-tuple	2
-var	41
-var	54
-clause	2	0	1
-var	5f
-list	0	0
-atom	656d707479
-function_full	7a65726f	0	2
-clause	0	2	2
-guard	1
-atom	74727565
-guard	1
-atom	66616c7365
-atom	61
-atom	62
-clause	0	0	1
-atom	63
-function_full	7768656e	8	1
-clause	8	0	1
-match
-var	41
-match
-var	42
-var	43
-unary	+
-integer	1
-unary	-
-integer	2
-unary	bnot
-integer	3
-unary	not
-atom	74727565
-binary	<
-var	58
-var	59
-string	6162
-binary_sigil	cebb
-tuple	5
-var	41
-var	42
-var	43
-var	58
-var	59
-function_full	7065726d697373697665	4	1
-clause	4	0	1
-tuple	3
-call	0
-atom	66
-binary	!
-var	41
-var	42
-remote
-var	4d
-var	46
-list	1	1
-call	0
-atom	67
-call	0
-atom	68
-tuple	1
-catch
-call	0
-atom	66
-list	1	0
-binary	andalso
-var	41
-var	42
-var	556e626f756e64
-function_full	677561726473	1	1
-clause	1	2	1
-var	58
-guard	2
-call	1
-atom	637573746f6d
-var	58
-match
-var	58
-integer	1
-guard	1
-binary	!
-var	58
-atom	6d657373616765
-atom	6f6b
-function_full	6475706c6963617465	1	1
-clause	1	0	1
-var	58
-var	58
-function_full	6475706c6963617465	1	1
-clause	1	0	1
-var	58
-var	58
-function_full	67756172645f616c7465726e6174697665	1	1
-clause	1	2	1
-var	58
-guard	1
-atom	74727565
-guard	1
-call	1
-atom	66
-var	59
-atom	6f6b
+(file name_hex=66756e6374696f6e732e65726c line=1)
+(module name_hex=66756e6374696f6e73)
+(function_full name_hex=66 arity=2 clauses=2
+  (clause arguments=2 guards=2 body=2
+    (tuple elements=2
+      (atom name_hex=746167)
+      (var name_hex=58)
+    )
+    (list elements=1 tail=1
+      (var name_hex=48)
+      (var name_hex=54)
+    )
+    (guard tests=2
+      (call arguments=1
+        (atom name_hex=69735f696e7465676572)
+        (var name_hex=48)
+      )
+      (binary operator=>
+        (var name_hex=48)
+        (integer value=0)
+      )
+    )
+    (guard tests=1
+      (binary operator===
+        (var name_hex=58)
+        (atom name_hex=66616c6c6261636b)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=48)
+        (integer value=1)
+      )
+    )
+    (tuple elements=2
+      (var name_hex=41)
+      (var name_hex=54)
+    )
+  )
+  (clause arguments=2 guards=0 body=1
+    (var name_hex=5f)
+    (list elements=0 tail=0)
+    (atom name_hex=656d707479)
+  )
+)
+(function_full name_hex=7a65726f arity=0 clauses=2
+  (clause arguments=0 guards=2 body=2
+    (guard tests=1
+      (atom name_hex=74727565)
+    )
+    (guard tests=1
+      (atom name_hex=66616c7365)
+    )
+    (atom name_hex=61)
+    (atom name_hex=62)
+  )
+  (clause arguments=0 guards=0 body=1
+    (atom name_hex=63)
+  )
+)
+(function_full name_hex=7768656e arity=8 clauses=1
+  (clause arguments=8 guards=0 body=1
+    (match
+      (var name_hex=41)
+      (match
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (unary operator=+
+      (integer value=1)
+    )
+    (unary operator=-
+      (integer value=2)
+    )
+    (unary operator=bnot
+      (integer value=3)
+    )
+    (unary operator=not
+      (atom name_hex=74727565)
+    )
+    (binary operator=<
+      (var name_hex=58)
+      (var name_hex=59)
+    )
+    (string value_hex=6162)
+    (binary_sigil value_hex=cebb)
+    (tuple elements=5
+      (var name_hex=41)
+      (var name_hex=42)
+      (var name_hex=43)
+      (var name_hex=58)
+      (var name_hex=59)
+    )
+  )
+)
+(function_full name_hex=7065726d697373697665 arity=4 clauses=1
+  (clause arguments=4 guards=0 body=1
+    (tuple elements=3
+      (call arguments=0
+        (atom name_hex=66)
+      )
+      (binary operator=!
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (remote
+        (var name_hex=4d)
+        (var name_hex=46)
+      )
+    )
+    (list elements=1 tail=1
+      (call arguments=0
+        (atom name_hex=67)
+      )
+      (call arguments=0
+        (atom name_hex=68)
+      )
+    )
+    (tuple elements=1
+      (catch
+        (call arguments=0
+          (atom name_hex=66)
+        )
+      )
+    )
+    (list elements=1 tail=0
+      (binary operator=andalso
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+    )
+    (var name_hex=556e626f756e64)
+  )
+)
+(function_full name_hex=677561726473 arity=1 clauses=1
+  (clause arguments=1 guards=2 body=1
+    (var name_hex=58)
+    (guard tests=2
+      (call arguments=1
+        (atom name_hex=637573746f6d)
+        (var name_hex=58)
+      )
+      (match
+        (var name_hex=58)
+        (integer value=1)
+      )
+    )
+    (guard tests=1
+      (binary operator=!
+        (var name_hex=58)
+        (atom name_hex=6d657373616765)
+      )
+    )
+    (atom name_hex=6f6b)
+  )
+)
+(function_full name_hex=6475706c6963617465 arity=1 clauses=1
+  (clause arguments=1 guards=0 body=1
+    (var name_hex=58)
+    (var name_hex=58)
+  )
+)
+(function_full name_hex=6475706c6963617465 arity=1 clauses=1
+  (clause arguments=1 guards=0 body=1
+    (var name_hex=58)
+    (var name_hex=58)
+  )
+)
+(function_full name_hex=67756172645f616c7465726e6174697665 arity=1 clauses=1
+  (clause arguments=1 guards=2 body=1
+    (var name_hex=58)
+    (guard tests=1
+      (atom name_hex=74727565)
+    )
+    (guard tests=1
+      (call arguments=1
+        (atom name_hex=66)
+        (var name_hex=59)
+      )
+    )
+    (atom name_hex=6f6b)
+  )
+)

@@ -126,6 +126,8 @@ class TreePrinter {
     // Children are scheduled in source order, then reversed for depth-first traversal.
     std::vector<Work> pending_;
     std::size_t depth_ = 0;
+    // Remember open parents so closing delimiters never require recursive calls.
+    std::vector<std::size_t> open_depths_;
     // Charge scheduled objects before growing the explicit traversal stack.
     std::size_t visits_;
 
@@ -141,6 +143,9 @@ class TreePrinter {
     void qualifier_children(const std::vector<ast::ComprehensionQualifier> &values);
     // Write one object's role and indentation; its visitor supplies the scalar fields.
     void prefix(const Work &work) const;
+    // Align closing delimiters and finish parents before starting a sibling.
+    void indentation(std::size_t depth) const;
+    void close_objects(std::size_t next_depth);
     // Dispatch arena handles through the module's ownership-checked accessors.
     void visit(const ast::FormId &id);
     void visit(const ast::ExprId &id);

@@ -1,36 +1,57 @@
-file	636f6e7465787475616c2e65726c	1
-module	636f6e7465787475616c
-spec	0	-	73706563	0	1
-signature	0
-fun_type	0
-atom	73706563
-spec	0	-	63616c6c6261636b	0	1
-signature	0
-fun_type	0
-atom	63616c6c6261636b
-spec	0	-	7265636f7264	0	1
-signature	0
-fun_type	0
-atom	7265636f7264
-spec	1	-	73706563	1	1
-signature	1
-fun_type	1
-var	41
-var	41
-constraint
-var	41
-type	7465726d	0
-function	73706563
-atom	73706563
-function	63616c6c6261636b
-atom	63616c6c6261636b
-function	7265636f7264
-atom	7265636f7264
-record_decl	706c61696e	0	2
-record_decl_field	61	0
-record_decl_field	62	1
-fun	-	1
-clause	0	0	1
-atom	6f6b
-record_decl	4f74686572	1	1
-record_decl_field	6669656c64	0
+(file name_hex=636f6e7465787475616c2e65726c line=1)
+(module name_hex=636f6e7465787475616c)
+(spec callback=0 module_hex=- name_hex=73706563 arity=0 signatures=1
+  (signature constraints=0
+    (fun_type arguments=0
+      (atom name_hex=73706563)
+    )
+  )
+)
+(spec callback=0 module_hex=- name_hex=63616c6c6261636b arity=0 signatures=1
+  (signature constraints=0
+    (fun_type arguments=0
+      (atom name_hex=63616c6c6261636b)
+    )
+  )
+)
+(spec callback=0 module_hex=- name_hex=7265636f7264 arity=0 signatures=1
+  (signature constraints=0
+    (fun_type arguments=0
+      (atom name_hex=7265636f7264)
+    )
+  )
+)
+(spec callback=1 module_hex=- name_hex=73706563 arity=1 signatures=1
+  (signature constraints=1
+    (fun_type arguments=1
+      (var name_hex=41)
+      (var name_hex=41)
+    )
+    (constraint
+      (var name_hex=41)
+      (type name_hex=7465726d arguments=0)
+    )
+  )
+)
+(function name_hex=73706563
+  (atom name_hex=73706563)
+)
+(function name_hex=63616c6c6261636b
+  (atom name_hex=63616c6c6261636b)
+)
+(function name_hex=7265636f7264
+  (atom name_hex=7265636f7264)
+)
+(record_decl name_hex=706c61696e native=0 fields=2
+  (record_decl_field name_hex=61 default=0)
+  (record_decl_field name_hex=62 default=1
+    (fun name_hex=- clauses=1
+      (clause arguments=0 guards=0 body=1
+        (atom name_hex=6f6b)
+      )
+    )
+  )
+)
+(record_decl name_hex=4f74686572 native=1 fields=1
+  (record_decl_field name_hex=6669656c64 default=0)
+)

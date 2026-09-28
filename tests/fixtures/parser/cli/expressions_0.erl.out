@@ -1,11 +1,17 @@
-Module forms=2
-  form[0]: FileAttribute name="expressions_0.erl" line=1
-  form[1]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: [count=2 tail=explicit
-        element[0]: Tuple elements=2
-          element[0]: Variable name=_
-          element[1]: CharacterLiteral value=$λ
-        element[1]: Group
-          expression: StringLiteral value="ab"
-        tail: Variable name=Tail
+(Module forms=2
+  form[0]=(FileAttribute name="expressions_0.erl" line=1)
+  form[1]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=([count=2 tail=explicit
+        element[0]=(Tuple elements=2
+          element[0]=(Variable name=_)
+          element[1]=(CharacterLiteral value=$λ)
+        )
+        element[1]=(Group
+          expression=(StringLiteral value="ab")
+        )
+        tail=(Variable name=Tail)
+      )
+    )
+  )
+)

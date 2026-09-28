@@ -1,24 +1,38 @@
-Module forms=2
-  form[0]: FileAttribute name="comprehensions_0.erl" line=1
-  form[1]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: ListComprehension templates=2 qualifiers=2
-        template[0]: Variable name=X
-        template[1]: BinaryExpression operator=+
-          left: Variable name=X
-          right: IntegerLiteral value=1
-        qualifier[0]: ZippedQualifier qualifiers=2
-          qualifier[0]: ListGenerator operator=<:-
-            pattern: PatternCandidate
-              expression: Variable name=X
-            input: Variable name=L
-          qualifier[1]: BinaryGenerator operator=<=
-            pattern: PatternCandidate
-              expression: Bitstring segments=1
-                segment[0]: BinarySegment size=omitted modifiers=omitted
-                  value: Variable name=Y
-            input: Variable name=B
-        qualifier[1]: FilterQualifier
-          expression: MatchExpression
-            left: Variable name=Z
-            right: Variable name=X
+(Module forms=2
+  form[0]=(FileAttribute name="comprehensions_0.erl" line=1)
+  form[1]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=(ListComprehension templates=2 qualifiers=2
+        template[0]=(Variable name=X)
+        template[1]=(BinaryExpression operator=+
+          left=(Variable name=X)
+          right=(IntegerLiteral value=1)
+        )
+        qualifier[0]=(ZippedQualifier qualifiers=2
+          qualifier[0]=(ListGenerator operator=<:-
+            pattern=(PatternCandidate
+              expression=(Variable name=X)
+            )
+            input=(Variable name=L)
+          )
+          qualifier[1]=(BinaryGenerator operator=<=
+            pattern=(PatternCandidate
+              expression=(Bitstring segments=1
+                segment[0]=(BinarySegment size=omitted modifiers=omitted
+                  value=(Variable name=Y)
+                )
+              )
+            )
+            input=(Variable name=B)
+          )
+        )
+        qualifier[1]=(FilterQualifier
+          expression=(MatchExpression
+            left=(Variable name=Z)
+            right=(Variable name=X)
+          )
+        )
+      )
+    )
+  )
+)

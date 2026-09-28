@@ -1,36 +1,53 @@
-file	636f6e74726f6c2e65726c	1
-module	636f6e74726f6c
-function_full	66	1	1
-clause	1	0	4
-var	58
-block	1
-case	2
-var	58
-clause	1	0	1
-atom	61
-atom	6f6b
-clause	1	0	1
-var	5f
-atom	6e6f
-if	2
-clause	0	1	1
-guard	1
-binary	>
-var	58
-integer	0
-atom	796573
-clause	0	1	1
-guard	1
-atom	74727565
-atom	6e6f
-receive	1	1
-clause	1	0	1
-var	4d
-var	4d
-integer	0
-after	1
-atom	74696d656f7574
-receive	0	1
-integer	1
-after	1
-atom	6f6b
+(file name_hex=636f6e74726f6c2e65726c line=1)
+(module name_hex=636f6e74726f6c)
+(function_full name_hex=66 arity=1 clauses=1
+  (clause arguments=1 guards=0 body=4
+    (var name_hex=58)
+    (block body=1
+      (case clauses=2
+        (var name_hex=58)
+        (clause arguments=1 guards=0 body=1
+          (atom name_hex=61)
+          (atom name_hex=6f6b)
+        )
+        (clause arguments=1 guards=0 body=1
+          (var name_hex=5f)
+          (atom name_hex=6e6f)
+        )
+      )
+    )
+    (if clauses=2
+      (clause arguments=0 guards=1 body=1
+        (guard tests=1
+          (binary operator=>
+            (var name_hex=58)
+            (integer value=0)
+          )
+        )
+        (atom name_hex=796573)
+      )
+      (clause arguments=0 guards=1 body=1
+        (guard tests=1
+          (atom name_hex=74727565)
+        )
+        (atom name_hex=6e6f)
+      )
+    )
+    (receive clauses=1 timeout=1
+      (clause arguments=1 guards=0 body=1
+        (var name_hex=4d)
+        (var name_hex=4d)
+      )
+      (integer value=0)
+      (after body=1
+        (atom name_hex=74696d656f7574)
+      )
+    )
+    (receive clauses=0 timeout=1
+      (integer value=1)
+      (after body=1
+        (atom name_hex=6f6b)
+      )
+    )
+  )
+)

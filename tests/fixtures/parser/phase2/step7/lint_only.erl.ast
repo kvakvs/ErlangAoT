@@ -1,11 +1,17 @@
-file	6c696e745f6f6e6c792e65726c	1
-module	6c696e745f6f6e6c79
-function_full	66	1	1
-clause	1	1	1
-tuple	1
-call	0
-atom	67
-guard	1
-call	0
-atom	637573746f6d
-var	556e626f756e64
+(file name_hex=6c696e745f6f6e6c792e65726c line=1)
+(module name_hex=6c696e745f6f6e6c79)
+(function_full name_hex=66 arity=1 clauses=1
+  (clause arguments=1 guards=1 body=1
+    (tuple elements=1
+      (call arguments=0
+        (atom name_hex=67)
+      )
+    )
+    (guard tests=1
+      (call arguments=0
+        (atom name_hex=637573746f6d)
+      )
+    )
+    (var name_hex=556e626f756e64)
+  )
+)

@@ -1,46 +1,64 @@
-file	6f70657261746f72732e65726c	1
-module	6f70657261746f7273
-function_full	66	3	1
-clause	3	0	7
-var	41
-var	42
-var	43
-match
-var	41
-match
-var	42
-var	43
-binary	!
-var	41
-binary	!
-var	42
-var	43
-catch
-binary	+
-call	3
-atom	66
-var	41
-var	42
-var	43
-integer	1
-call	1
-remote
-var	4d
-var	46
-integer	1
-binary	+
-integer	1
-binary	*
-integer	2
-integer	3
-binary	++
-var	41
-binary	--
-var	42
-var	43
-binary	orelse
-binary	andalso
-unary	not
-var	41
-var	42
-var	43
+(file name_hex=6f70657261746f72732e65726c line=1)
+(module name_hex=6f70657261746f7273)
+(function_full name_hex=66 arity=3 clauses=1
+  (clause arguments=3 guards=0 body=7
+    (var name_hex=41)
+    (var name_hex=42)
+    (var name_hex=43)
+    (match
+      (var name_hex=41)
+      (match
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=!
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (catch
+      (binary operator=+
+        (call arguments=3
+          (atom name_hex=66)
+          (var name_hex=41)
+          (var name_hex=42)
+          (var name_hex=43)
+        )
+        (integer value=1)
+      )
+    )
+    (call arguments=1
+      (remote
+        (var name_hex=4d)
+        (var name_hex=46)
+      )
+      (integer value=1)
+    )
+    (binary operator=+
+      (integer value=1)
+      (binary operator=*
+        (integer value=2)
+        (integer value=3)
+      )
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (binary operator=--
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (binary operator=andalso
+        (unary operator=not
+          (var name_hex=41)
+        )
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+  )
+)

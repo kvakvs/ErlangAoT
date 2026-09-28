@@ -20,7 +20,7 @@ foreach(input IN LISTS cases)
     endif()
 endforeach()
 
-# Exercise printer depth iteratively; exact depth, tail and output size catch truncated success.
+# Bound deep output including aligned closing lines; exact depth/tail catch truncated success.
 file(MAKE_DIRECTORY "${WORK}")
 string(REPEAT "+1" 9000 chain)
 file(WRITE "${WORK}/deep.erl" "f() -> 0${chain}.")
@@ -28,6 +28,7 @@ execute_process(COMMAND "${TOOL}" --print-ast deep.erl WORKING_DIRECTORY "${WORK
     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 15)
 string(LENGTH "${output}" length)
 if(NOT result STREQUAL "0" OR NOT error STREQUAL "" OR NOT output MATCHES "\\[depth=9000\\]"
-    OR NOT output MATCHES "right: IntegerLiteral value=1\n$" OR length GREATER_EQUAL 4000000)
+    OR NOT output MATCHES "right=\\(IntegerLiteral value=1\\)\n      \\)\n    \\)\n  \\)\n\\)\n$"
+    OR length GREATER_EQUAL 5000000)
     message(FATAL_ERROR "Deep CLI AST printing failed: ${result}: ${error}")
 endif()

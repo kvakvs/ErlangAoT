@@ -1,150 +1,221 @@
-file	7374727563747572652e65726c	1
-module	737472756374757265
-function_full	66	3	1
-clause	3	0	1
-var	4c
-var	4d
-var	42
-tuple	13
-lc	3	2
-var	58
-binary	+
-var	58
-integer	1
-tuple	1
-var	58
-generate	<-
-var	58
-var	4c
-filter
-binary	>
-var	58
-integer	0
-mc	2	1
-map_field	=>
-var	4b
-var	56
-map_field	:=
-var	56
-var	4b
-m_generate	<:-
-var	4b
-var	56
-var	4d
-lc	1	3
-var	58
-zip	3
-generate	<-
-var	58
-var	4c
-b_generate	<:=
-bitstring	1
-segment	0	default
-var	59
-var	42
-m_generate	<-
-var	4b
-var	56
-var	4d
-filter
-atom	74727565
-zip	2
-generate	<-
-var	41
-var	4c
-generate	<-
-var	4230
-var	4c
-lc	1	1
-var	58
-zip	2
-filter
-atom	74727565
-filter
-atom	66616c7365
-lc	1	1
-var	58
-generate	<-
-call	0
-atom	66
-var	4c
-lc	1	1
-var	58
-m_generate	<-
-call	0
-atom	6b
-call	0
-atom	76
-var	4d
-lc	1	1
-lc	1	1
-var	59
-generate	<-
-var	59
-var	58
-generate	<-
-var	58
-var	4c
-bc	1
-call	1
-atom	66
-var	58
-generate	<-
-var	58
-var	4c
-bc	1
-block	1
-var	58
-generate	<-
-var	58
-var	4c
-bc	1
-mc	1	1
-map_field	=>
-var	4b
-var	56
-m_generate	<-
-var	4b
-var	56
-var	4d
-filter
-atom	74727565
-mc	1	1
-map_field	=>
-lc	1	1
-var	58
-generate	<-
-var	58
-var	4c
-bc	1
-bitstring	1
-segment	0	default
-var	58
-generate	<-
-var	58
-var	4c
-filter
-atom	74727565
-lc	1	1
-var	58
-filter
-case	1
-var	58
-clause	1	0	1
-var	5f
-atom	74727565
-lc	1	1
-var	58
-filter
-match
-var	58
-integer	1
-function_full	67	1	1
-clause	1	0	1
-tuple	1
-lc	1	1
-var	58
-generate	<-
-var	58
-var	4c
-atom	6f6b
+(file name_hex=7374727563747572652e65726c line=1)
+(module name_hex=737472756374757265)
+(function_full name_hex=66 arity=3 clauses=1
+  (clause arguments=3 guards=0 body=1
+    (var name_hex=4c)
+    (var name_hex=4d)
+    (var name_hex=42)
+    (tuple elements=13
+      (lc templates=3 qualifiers=2
+        (var name_hex=58)
+        (binary operator=+
+          (var name_hex=58)
+          (integer value=1)
+        )
+        (tuple elements=1
+          (var name_hex=58)
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+        (filter
+          (binary operator=>
+            (var name_hex=58)
+            (integer value=0)
+          )
+        )
+      )
+      (mc templates=2 qualifiers=1
+        (map_field operator==>
+          (var name_hex=4b)
+          (var name_hex=56)
+        )
+        (map_field operator=:=
+          (var name_hex=56)
+          (var name_hex=4b)
+        )
+        (m_generate operator=<:-
+          (var name_hex=4b)
+          (var name_hex=56)
+          (var name_hex=4d)
+        )
+      )
+      (lc templates=1 qualifiers=3
+        (var name_hex=58)
+        (zip qualifiers=3
+          (generate operator=<-
+            (var name_hex=58)
+            (var name_hex=4c)
+          )
+          (b_generate operator=<:=
+            (bitstring segments=1
+              (segment size=0 modifiers=default
+                (var name_hex=59)
+              )
+            )
+            (var name_hex=42)
+          )
+          (m_generate operator=<-
+            (var name_hex=4b)
+            (var name_hex=56)
+            (var name_hex=4d)
+          )
+        )
+        (filter
+          (atom name_hex=74727565)
+        )
+        (zip qualifiers=2
+          (generate operator=<-
+            (var name_hex=41)
+            (var name_hex=4c)
+          )
+          (generate operator=<-
+            (var name_hex=4230)
+            (var name_hex=4c)
+          )
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (zip qualifiers=2
+          (filter
+            (atom name_hex=74727565)
+          )
+          (filter
+            (atom name_hex=66616c7365)
+          )
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (generate operator=<-
+          (call arguments=0
+            (atom name_hex=66)
+          )
+          (var name_hex=4c)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (m_generate operator=<-
+          (call arguments=0
+            (atom name_hex=6b)
+          )
+          (call arguments=0
+            (atom name_hex=76)
+          )
+          (var name_hex=4d)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (lc templates=1 qualifiers=1
+          (var name_hex=59)
+          (generate operator=<-
+            (var name_hex=59)
+            (var name_hex=58)
+          )
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (bc qualifiers=1
+        (call arguments=1
+          (atom name_hex=66)
+          (var name_hex=58)
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (bc qualifiers=1
+        (block body=1
+          (var name_hex=58)
+        )
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+      (bc qualifiers=1
+        (mc templates=1 qualifiers=1
+          (map_field operator==>
+            (var name_hex=4b)
+            (var name_hex=56)
+          )
+          (m_generate operator=<-
+            (var name_hex=4b)
+            (var name_hex=56)
+            (var name_hex=4d)
+          )
+        )
+        (filter
+          (atom name_hex=74727565)
+        )
+      )
+      (mc templates=1 qualifiers=1
+        (map_field operator==>
+          (lc templates=1 qualifiers=1
+            (var name_hex=58)
+            (generate operator=<-
+              (var name_hex=58)
+              (var name_hex=4c)
+            )
+          )
+          (bc qualifiers=1
+            (bitstring segments=1
+              (segment size=0 modifiers=default
+                (var name_hex=58)
+              )
+            )
+            (generate operator=<-
+              (var name_hex=58)
+              (var name_hex=4c)
+            )
+          )
+        )
+        (filter
+          (atom name_hex=74727565)
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (filter
+          (case clauses=1
+            (var name_hex=58)
+            (clause arguments=1 guards=0 body=1
+              (var name_hex=5f)
+              (atom name_hex=74727565)
+            )
+          )
+        )
+      )
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (filter
+          (match
+            (var name_hex=58)
+            (integer value=1)
+          )
+        )
+      )
+    )
+  )
+)
+(function_full name_hex=67 arity=1 clauses=1
+  (clause arguments=1 guards=0 body=1
+    (tuple elements=1
+      (lc templates=1 qualifiers=1
+        (var name_hex=58)
+        (generate operator=<-
+          (var name_hex=58)
+          (var name_hex=4c)
+        )
+      )
+    )
+    (atom name_hex=6f6b)
+  )
+)

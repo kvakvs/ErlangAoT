@@ -1,46 +1,68 @@
-file	617474726962757465732e65726c	1
-module	61747472696275746573
-export	1
-66	0
-import	6c69737473	1
-72657665727365	1
-attribute	6578706f72745f74797065
-cons
-term_tuple	2
-atom	74
-integer	0
-nil
-attribute	6265686176696f7572
-atom	67656e5f736572766572
-attribute	636f6d70696c65
-term_tuple	2
-atom	70617273655f7472616e73666f726d
-atom	6578616d706c65
-import_record	6d	1
-atom	72
-attribute	6578706f72745f7265636f7264
-cons
-atom	72
-nil
-attribute	637573746f6d
-term_tuple	2
-term_tuple	2
-atom	66
-integer	1
-term_map	1
-atom	6b6579
-term_tuple	2
-atom	66
-integer	2
-doc	0
-metadata	2
-atom	6571756976
-equiv
-call	0
-atom	66
-atom	73696e6365
-cons
-integer	49
-nil
-function	66
-atom	6f6b
+(file name_hex=617474726962757465732e65726c line=1)
+(module name_hex=61747472696275746573)
+(export functions=1
+  (arity name_hex=66 value=0)
+)
+(import module_hex=6c69737473 functions=1
+  (arity name_hex=72657665727365 value=1)
+)
+(attribute name_hex=6578706f72745f74797065
+  (cons
+    (term_tuple elements=2
+      (atom name_hex=74)
+      (integer value=0)
+    )
+    (nil)
+  )
+)
+(attribute name_hex=6265686176696f7572
+  (atom name_hex=67656e5f736572766572)
+)
+(attribute name_hex=636f6d70696c65
+  (term_tuple elements=2
+    (atom name_hex=70617273655f7472616e73666f726d)
+    (atom name_hex=6578616d706c65)
+  )
+)
+(import_record module_hex=6d names=1
+  (atom name_hex=72)
+)
+(attribute name_hex=6578706f72745f7265636f7264
+  (cons
+    (atom name_hex=72)
+    (nil)
+  )
+)
+(attribute name_hex=637573746f6d
+  (term_tuple elements=2
+    (term_tuple elements=2
+      (atom name_hex=66)
+      (integer value=1)
+    )
+    (term_map entries=1
+      (atom name_hex=6b6579)
+      (term_tuple elements=2
+        (atom name_hex=66)
+        (integer value=2)
+      )
+    )
+  )
+)
+(doc module=0
+  (metadata entries=2
+    (atom name_hex=6571756976)
+    (equiv
+      (call arguments=0
+        (atom name_hex=66)
+      )
+    )
+    (atom name_hex=73696e6365)
+    (cons
+      (integer value=49)
+      (nil)
+    )
+  )
+)
+(function name_hex=66
+  (atom name_hex=6f6b)
+)

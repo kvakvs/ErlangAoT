@@ -1,34 +1,41 @@
-file	76616c7565732e65726c	1
-module	76616c756573
-function	76616c756573
-tuple	20
-list	0	0
-tuple	0
-list	1	0
-atom	61
-list	2	1
-atom	61
-atom	62
-var	5461696c
-list	2	1
-atom	61
-atom	62
-var	5461696c
-var	5f
-var	5f4e616d6564
-tuple	2
-atom	686561646572
-char	955
-tuple	1
-atom	6f6b
-integer	1208925819614629174706175
-float	3ff4000000000000
-char	65
-integer	65
-string	68c3a9cebb
-string	68656c6c6f0a
-string	68656c6c6f5c6e
-binary_sigil	cebb
-binary_sigil	78
-binary_sigil	5c6e
-string	6d756c74690a6c696e65
+(file name_hex=76616c7565732e65726c line=1)
+(module name_hex=76616c756573)
+(function name_hex=76616c756573
+  (tuple elements=20
+    (list elements=0 tail=0)
+    (tuple elements=0)
+    (list elements=1 tail=0
+      (atom name_hex=61)
+    )
+    (list elements=2 tail=1
+      (atom name_hex=61)
+      (atom name_hex=62)
+      (var name_hex=5461696c)
+    )
+    (list elements=2 tail=1
+      (atom name_hex=61)
+      (atom name_hex=62)
+      (var name_hex=5461696c)
+    )
+    (var name_hex=5f)
+    (var name_hex=5f4e616d6564)
+    (tuple elements=2
+      (atom name_hex=686561646572)
+      (char value=955)
+    )
+    (tuple elements=1
+      (atom name_hex=6f6b)
+    )
+    (integer value=1208925819614629174706175)
+    (float bits=3ff4000000000000)
+    (char value=65)
+    (integer value=65)
+    (string value_hex=68c3a9cebb)
+    (string value_hex=68656c6c6f0a)
+    (string value_hex=68656c6c6f5c6e)
+    (binary_sigil value_hex=cebb)
+    (binary_sigil value_hex=78)
+    (binary_sigil value_hex=5c6e)
+    (string value_hex=6d756c74690a6c696e65)
+  )
+)

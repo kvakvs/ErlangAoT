@@ -1,24 +1,34 @@
-file	7061747465726e732e65726c	1
-module	7061747465726e73
-function_full	66	1	2
-clause	1	2	1
-match
-tuple	2
-var	58
-var	59
-var	41
-guard	2
-binary	>
-var	58
-integer	0
-binary	<
-var	59
-integer	2
-guard	1
-binary	=:=
-var	58
-integer	0
-var	41
-clause	1	0	1
-var	5f
-atom	6f6b
+(file name_hex=7061747465726e732e65726c line=1)
+(module name_hex=7061747465726e73)
+(function_full name_hex=66 arity=1 clauses=2
+  (clause arguments=1 guards=2 body=1
+    (match
+      (tuple elements=2
+        (var name_hex=58)
+        (var name_hex=59)
+      )
+      (var name_hex=41)
+    )
+    (guard tests=2
+      (binary operator=>
+        (var name_hex=58)
+        (integer value=0)
+      )
+      (binary operator=<
+        (var name_hex=59)
+        (integer value=2)
+      )
+    )
+    (guard tests=1
+      (binary operator==:=
+        (var name_hex=58)
+        (integer value=0)
+      )
+    )
+    (var name_hex=41)
+  )
+  (clause arguments=1 guards=0 body=1
+    (var name_hex=5f)
+    (atom name_hex=6f6b)
+  )
+)

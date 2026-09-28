@@ -1,37 +1,59 @@
-Module forms=2
-  form[0]: FileAttribute name="clauses_1.erl" line=1
-  form[1]: Function name=f arity=3 clauses=1
-    clause[0]: FunctionClause arguments=3 guard=present body=1
-      argument[0]: RestrictedPattern
-        expression: Tuple elements=2
-          element[0]: CallExpression arguments=0
-            target: Atom name=g
-          element[1]: BinaryExpression operator=!
-            left: Variable name=A
-            right: Variable name=B
-      argument[1]: RestrictedPattern
-        expression: [count=1 tail=explicit
-          element[0]: RemoteExpression
-            module: Variable name=M
-            function: Variable name=F
-          tail: CallExpression arguments=0
-            target: Atom name=h
-      argument[2]: RestrictedPattern
-        expression: Group
-          expression: MatchExpression
-            left: Variable name=A
-            right: MatchExpression
-              left: Variable name=B
-              right: Variable name=C
-      guard: GuardSyntax alternatives=2
-        alternative[0]: GuardConjunction tests=2
-          test[0]: CallExpression arguments=0
-            target: Atom name=g
-          test[1]: MatchExpression
-            left: Variable name=A
-            right: Variable name=B
-        alternative[1]: GuardConjunction tests=1
-          test[0]: CatchExpression
-            expression: CallExpression arguments=0
-              target: Atom name=h
-      body[0]: Variable name=Unbound
+(Module forms=2
+  form[0]=(FileAttribute name="clauses_1.erl" line=1)
+  form[1]=(Function name=f arity=3 clauses=1
+    clause[0]=(FunctionClause arguments=3 guard=present body=1
+      argument[0]=(RestrictedPattern
+        expression=(Tuple elements=2
+          element[0]=(CallExpression arguments=0
+            target=(Atom name=g)
+          )
+          element[1]=(BinaryExpression operator=!
+            left=(Variable name=A)
+            right=(Variable name=B)
+          )
+        )
+      )
+      argument[1]=(RestrictedPattern
+        expression=([count=1 tail=explicit
+          element[0]=(RemoteExpression
+            module=(Variable name=M)
+            function=(Variable name=F)
+          )
+          tail=(CallExpression arguments=0
+            target=(Atom name=h)
+          )
+        )
+      )
+      argument[2]=(RestrictedPattern
+        expression=(Group
+          expression=(MatchExpression
+            left=(Variable name=A)
+            right=(MatchExpression
+              left=(Variable name=B)
+              right=(Variable name=C)
+            )
+          )
+        )
+      )
+      guard=(GuardSyntax alternatives=2
+        alternative[0]=(GuardConjunction tests=2
+          test[0]=(CallExpression arguments=0
+            target=(Atom name=g)
+          )
+          test[1]=(MatchExpression
+            left=(Variable name=A)
+            right=(Variable name=B)
+          )
+        )
+        alternative[1]=(GuardConjunction tests=1
+          test[0]=(CatchExpression
+            expression=(CallExpression arguments=0
+              target=(Atom name=h)
+            )
+          )
+        )
+      )
+      body[0]=(Variable name=Unbound)
+    )
+  )
+)

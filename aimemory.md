@@ -618,3 +618,19 @@
   Pinned grammar audit excludes new product-only cli fixtures;344 reductions
   and checksum-pinned corpus pass. Test Lizard passes; new project exception
   suites/runtime consumer/features tidy pass; retained-test tidy findings remain.
+
+# AST display format (2026-09-28)
+
+- User approved parenthesized objects, two-space indentation and name=value fields.
+  CLI printer closes parents iteratively; existing depth-64 indentation cap remains.
+  Native/OTP AST projections use child-counted record printers. No AST reader exists.
+- Migrated 60 CLI snapshots, 43 .ast files and 3 .phase1 files; only the three
+  .phase1 SHA256SUMS entries changed. RAW/EPP are Erlang terms: user explicitly
+  excluded them. Their bytes and oracle serialization remain unchanged.
+- Fetched official maint-29; HEAD still21776803ecd11f5fa948732c0ec66b8f325dedfc.
+  Fresh full Debug build succeeds; final CTest74/75, existing parser_hardening crash.
+  After test-writer tidy fixes, all7 projection golden suites pass again.
+- Full check-quality: Lizard passes; existing Windows exception-escape/Boost
+  findings still fail clang-tidy. Focused tree.cpp/dump.cpp (including changed test
+  headers) pass clang-tidy; test-helper Lizard and changed-file clang-format pass.
+  Logs and one-off conversion scripts are ignored under build/ast-format/.

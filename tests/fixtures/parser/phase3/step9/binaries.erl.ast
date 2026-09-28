@@ -1,191 +1,277 @@
-file	62696e61726965732e65726c	1
-module	62696e6172696573
-function_full	66	2	1
-clause	2	0	1
-bitstring	2
-segment	1	default
-var	48
-integer	8
-segment	0	1
-var	54
-modifier	62696e617279	none
-bitstring	1
-segment	1	2
-call	0
-atom	67
-var	4e
-modifier	637573746f6d	none
-modifier	637573746f6d	none
-tuple	24
-bitstring	0
-bitstring	4
-segment	0	default
-integer	1
-segment	1	default
-integer	2
-integer	3
-segment	1	default
-var	58
-var	4e
-segment	1	1
-var	58
-atom	64656661756c74
-modifier	64656661756c74	none
-bitstring	1
-segment	1	4
-var	58
-var	53697a65
-modifier	696e7465676572	none
-modifier	7369676e6564	none
-modifier	6c6974746c65	none
-modifier	756e6974	8
-bitstring	1
-segment	1	3
-binary	+
-var	41
-var	42
-binary	*
-var	4e
-integer	8
-modifier	756e7369676e6564	none
-modifier	626967	none
-modifier	696e7465676572	none
-bitstring	5
-segment	0	default
-unary	+
-var	58
-segment	0	default
-unary	-
-integer	42
-segment	0	default
-unary	bnot
-var	58
-segment	0	default
-unary	not
-var	58
-segment	0	default
-unary	-
-binary	+
-var	41
-var	42
-bitstring	3
-segment	0	default
-string	68c3a9cebb
-segment	0	1
-string	cebb
-modifier	75746638	none
-segment	1	default
-string	74657874
-integer	8
-bitstring	1
-segment	0	1
-bitstring	2
-segment	0	default
-integer	1
-segment	0	default
-integer	2
-modifier	62696e617279	none
-bitstring	1
-segment	1	1
-call	0
-atom	66
-call	1
-atom	73697a65
-var	58
-modifier	62696e617279	none
-bitstring	5
-segment	0	1
-map	0	1
-map_field	=>
-atom	61
-integer	1
-modifier	62696e617279	none
-segment	0	1
-record	0	0
-record_local	72
-modifier	62696e617279	none
-segment	0	default
-tuple	2
-atom	61
-atom	62
-segment	0	default
-list	2	0
-atom	61
-atom	62
-segment	0	default
-call	1
-remote
-var	4d
-var	46
-var	58
-bitstring	1
-segment	0	4
-var	58
-modifier	666f6f	none
-modifier	626172	0
-modifier	62617a	999999999999999999999999999999999999
-modifier	666f6f	none
-bitstring	1
-segment	0	9
-var	58
-modifier	696e7465676572	none
-modifier	696e7465676572	none
-modifier	7369676e6564	none
-modifier	756e7369676e6564	none
-modifier	626967	none
-modifier	6c6974746c65	none
-modifier	6e6174697665	none
-modifier	756e6974	8
-modifier	756e6974	1
-bitstring	2
-segment	1	1
-var	41
-var	42
-modifier	696e7465676572	none
-segment	1	1
-var	43
-binary	/
-var	44
-var	45
-modifier	756e6974	8
-bitstring	1
-segment	0	1
-var	41
-modifier	62	none
-bitstring	1
-segment	1	default
-var	58
-float	3ff8000000000000
-bitstring	1
-segment	1	default
-var	58
-string	73697a65
-binary_sigil	cebb
-binary_sigil	cebb
-binary_sigil	cebb
-binary_sigil	5c6e
-binary_sigil	cebb
-bitstring	1
-segment	0	1
-binary_sigil	cebb
-modifier	62696e617279	none
-map	1	1
-bitstring	1
-segment	0	default
-integer	1
-map_field	=>
-atom	61
-integer	2
-record_access
-bitstring	1
-segment	0	default
-integer	1
-record_local	72
-atom	61
-binary	=:=
-bitstring	1
-segment	0	default
-var	41
-bitstring	1
-segment	0	default
-var	42
+(file name_hex=62696e61726965732e65726c line=1)
+(module name_hex=62696e6172696573)
+(function_full name_hex=66 arity=2 clauses=1
+  (clause arguments=2 guards=0 body=1
+    (bitstring segments=2
+      (segment size=1 modifiers=default
+        (var name_hex=48)
+        (integer value=8)
+      )
+      (segment size=0 modifiers=1
+        (var name_hex=54)
+        (modifier name_hex=62696e617279 parameter=none)
+      )
+    )
+    (bitstring segments=1
+      (segment size=1 modifiers=2
+        (call arguments=0
+          (atom name_hex=67)
+        )
+        (var name_hex=4e)
+        (modifier name_hex=637573746f6d parameter=none)
+        (modifier name_hex=637573746f6d parameter=none)
+      )
+    )
+    (tuple elements=24
+      (bitstring segments=0)
+      (bitstring segments=4
+        (segment size=0 modifiers=default
+          (integer value=1)
+        )
+        (segment size=1 modifiers=default
+          (integer value=2)
+          (integer value=3)
+        )
+        (segment size=1 modifiers=default
+          (var name_hex=58)
+          (var name_hex=4e)
+        )
+        (segment size=1 modifiers=1
+          (var name_hex=58)
+          (atom name_hex=64656661756c74)
+          (modifier name_hex=64656661756c74 parameter=none)
+        )
+      )
+      (bitstring segments=1
+        (segment size=1 modifiers=4
+          (var name_hex=58)
+          (var name_hex=53697a65)
+          (modifier name_hex=696e7465676572 parameter=none)
+          (modifier name_hex=7369676e6564 parameter=none)
+          (modifier name_hex=6c6974746c65 parameter=none)
+          (modifier name_hex=756e6974 parameter=8)
+        )
+      )
+      (bitstring segments=1
+        (segment size=1 modifiers=3
+          (binary operator=+
+            (var name_hex=41)
+            (var name_hex=42)
+          )
+          (binary operator=*
+            (var name_hex=4e)
+            (integer value=8)
+          )
+          (modifier name_hex=756e7369676e6564 parameter=none)
+          (modifier name_hex=626967 parameter=none)
+          (modifier name_hex=696e7465676572 parameter=none)
+        )
+      )
+      (bitstring segments=5
+        (segment size=0 modifiers=default
+          (unary operator=+
+            (var name_hex=58)
+          )
+        )
+        (segment size=0 modifiers=default
+          (unary operator=-
+            (integer value=42)
+          )
+        )
+        (segment size=0 modifiers=default
+          (unary operator=bnot
+            (var name_hex=58)
+          )
+        )
+        (segment size=0 modifiers=default
+          (unary operator=not
+            (var name_hex=58)
+          )
+        )
+        (segment size=0 modifiers=default
+          (unary operator=-
+            (binary operator=+
+              (var name_hex=41)
+              (var name_hex=42)
+            )
+          )
+        )
+      )
+      (bitstring segments=3
+        (segment size=0 modifiers=default
+          (string value_hex=68c3a9cebb)
+        )
+        (segment size=0 modifiers=1
+          (string value_hex=cebb)
+          (modifier name_hex=75746638 parameter=none)
+        )
+        (segment size=1 modifiers=default
+          (string value_hex=74657874)
+          (integer value=8)
+        )
+      )
+      (bitstring segments=1
+        (segment size=0 modifiers=1
+          (bitstring segments=2
+            (segment size=0 modifiers=default
+              (integer value=1)
+            )
+            (segment size=0 modifiers=default
+              (integer value=2)
+            )
+          )
+          (modifier name_hex=62696e617279 parameter=none)
+        )
+      )
+      (bitstring segments=1
+        (segment size=1 modifiers=1
+          (call arguments=0
+            (atom name_hex=66)
+          )
+          (call arguments=1
+            (atom name_hex=73697a65)
+            (var name_hex=58)
+          )
+          (modifier name_hex=62696e617279 parameter=none)
+        )
+      )
+      (bitstring segments=5
+        (segment size=0 modifiers=1
+          (map base=0 fields=1
+            (map_field operator==>
+              (atom name_hex=61)
+              (integer value=1)
+            )
+          )
+          (modifier name_hex=62696e617279 parameter=none)
+        )
+        (segment size=0 modifiers=1
+          (record base=0 fields=0
+            (record_local name_hex=72)
+          )
+          (modifier name_hex=62696e617279 parameter=none)
+        )
+        (segment size=0 modifiers=default
+          (tuple elements=2
+            (atom name_hex=61)
+            (atom name_hex=62)
+          )
+        )
+        (segment size=0 modifiers=default
+          (list elements=2 tail=0
+            (atom name_hex=61)
+            (atom name_hex=62)
+          )
+        )
+        (segment size=0 modifiers=default
+          (call arguments=1
+            (remote
+              (var name_hex=4d)
+              (var name_hex=46)
+            )
+            (var name_hex=58)
+          )
+        )
+      )
+      (bitstring segments=1
+        (segment size=0 modifiers=4
+          (var name_hex=58)
+          (modifier name_hex=666f6f parameter=none)
+          (modifier name_hex=626172 parameter=0)
+          (modifier name_hex=62617a parameter=999999999999999999999999999999999999)
+          (modifier name_hex=666f6f parameter=none)
+        )
+      )
+      (bitstring segments=1
+        (segment size=0 modifiers=9
+          (var name_hex=58)
+          (modifier name_hex=696e7465676572 parameter=none)
+          (modifier name_hex=696e7465676572 parameter=none)
+          (modifier name_hex=7369676e6564 parameter=none)
+          (modifier name_hex=756e7369676e6564 parameter=none)
+          (modifier name_hex=626967 parameter=none)
+          (modifier name_hex=6c6974746c65 parameter=none)
+          (modifier name_hex=6e6174697665 parameter=none)
+          (modifier name_hex=756e6974 parameter=8)
+          (modifier name_hex=756e6974 parameter=1)
+        )
+      )
+      (bitstring segments=2
+        (segment size=1 modifiers=1
+          (var name_hex=41)
+          (var name_hex=42)
+          (modifier name_hex=696e7465676572 parameter=none)
+        )
+        (segment size=1 modifiers=1
+          (var name_hex=43)
+          (binary operator=/
+            (var name_hex=44)
+            (var name_hex=45)
+          )
+          (modifier name_hex=756e6974 parameter=8)
+        )
+      )
+      (bitstring segments=1
+        (segment size=0 modifiers=1
+          (var name_hex=41)
+          (modifier name_hex=62 parameter=none)
+        )
+      )
+      (bitstring segments=1
+        (segment size=1 modifiers=default
+          (var name_hex=58)
+          (float bits=3ff8000000000000)
+        )
+      )
+      (bitstring segments=1
+        (segment size=1 modifiers=default
+          (var name_hex=58)
+          (string value_hex=73697a65)
+        )
+      )
+      (binary_sigil value_hex=cebb)
+      (binary_sigil value_hex=cebb)
+      (binary_sigil value_hex=cebb)
+      (binary_sigil value_hex=5c6e)
+      (binary_sigil value_hex=cebb)
+      (bitstring segments=1
+        (segment size=0 modifiers=1
+          (binary_sigil value_hex=cebb)
+          (modifier name_hex=62696e617279 parameter=none)
+        )
+      )
+      (map base=1 fields=1
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (integer value=1)
+          )
+        )
+        (map_field operator==>
+          (atom name_hex=61)
+          (integer value=2)
+        )
+      )
+      (record_access
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (integer value=1)
+          )
+        )
+        (record_local name_hex=72)
+        (atom name_hex=61)
+      )
+      (binary operator==:=
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=41)
+          )
+        )
+        (bitstring segments=1
+          (segment size=0 modifiers=default
+            (var name_hex=42)
+          )
+        )
+      )
+    )
+  )
+)

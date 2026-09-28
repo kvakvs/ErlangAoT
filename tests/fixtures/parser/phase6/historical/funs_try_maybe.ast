@@ -1,53 +1,73 @@
-file	66756e735f7472795f6d617962652e65726c	1
-module	66756e735f7472795f6d61796265
-function_full	66	1	1
-clause	1	0	5
-var	58
-local_fun
-atom	66
-integer	1
-remote_fun
-var	4d
-var	46
-var	41
-fun	4c6f6f70	2
-clause	1	0	1
-integer	0
-atom	6f6b
-clause	1	0	1
-var	4e
-call	1
-var	4c6f6f70
-binary	-
-var	4e
-integer	1
-try	1	1	2	1
-var	58
-clause	1	0	1
-var	59
-var	59
-clause	1	0	1
-tuple	3
-atom	6572726f72
-var	52
-var	53
-tuple	2
-var	52
-var	53
-clause	1	0	1
-tuple	3
-atom	7468726f77
-var	54
-var	5f
-var	54
-atom	6f6b
-maybe	2	1
-maybe_match
-tuple	2
-atom	6f6b
-var	56
-var	58
-var	56
-clause	1	0	1
-var	5f
-atom	6e6f
+(file name_hex=66756e735f7472795f6d617962652e65726c line=1)
+(module name_hex=66756e735f7472795f6d61796265)
+(function_full name_hex=66 arity=1 clauses=1
+  (clause arguments=1 guards=0 body=5
+    (var name_hex=58)
+    (local_fun
+      (atom name_hex=66)
+      (integer value=1)
+    )
+    (remote_fun
+      (var name_hex=4d)
+      (var name_hex=46)
+      (var name_hex=41)
+    )
+    (fun name_hex=4c6f6f70 clauses=2
+      (clause arguments=1 guards=0 body=1
+        (integer value=0)
+        (atom name_hex=6f6b)
+      )
+      (clause arguments=1 guards=0 body=1
+        (var name_hex=4e)
+        (call arguments=1
+          (var name_hex=4c6f6f70)
+          (binary operator=-
+            (var name_hex=4e)
+            (integer value=1)
+          )
+        )
+      )
+    )
+    (try body=1 clauses=1 handlers=2 after=1
+      (var name_hex=58)
+      (clause arguments=1 guards=0 body=1
+        (var name_hex=59)
+        (var name_hex=59)
+      )
+      (clause arguments=1 guards=0 body=1
+        (tuple elements=3
+          (atom name_hex=6572726f72)
+          (var name_hex=52)
+          (var name_hex=53)
+        )
+        (tuple elements=2
+          (var name_hex=52)
+          (var name_hex=53)
+        )
+      )
+      (clause arguments=1 guards=0 body=1
+        (tuple elements=3
+          (atom name_hex=7468726f77)
+          (var name_hex=54)
+          (var name_hex=5f)
+        )
+        (var name_hex=54)
+      )
+      (atom name_hex=6f6b)
+    )
+    (maybe body=2 clauses=1
+      (maybe_match
+        (tuple elements=2
+          (atom name_hex=6f6b)
+          (var name_hex=56)
+        )
+        (var name_hex=58)
+      )
+      (var name_hex=56)
+      (clause arguments=1 guards=0 body=1
+        (var name_hex=5f)
+        (atom name_hex=6e6f)
+      )
+    )
+  )
+)

@@ -176,8 +176,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `src/printing/{source,token_text}.cpp`: source output and shared canonical tokens;
   `printable.{hpp,cpp}`: shared Erlang Unicode/control character decoding for AST and term printers;
   `tree.{hpp,cpp}`, `tree_{forms,expressions,structural,control,exceptions,comprehensions,
-  attributes,types,specifications}.cpp`: iterative typed AST output with escaped strings
-  for nonempty proper lists of printable character integers.
+  attributes,types,specifications}.cpp`: iterative parenthesized AST output, named
+  fields and two-space indentation; escaped strings for printable integer lists.
 - `tests/cli.cmake`: CLI contracts; `tests/compiler/frontend_cases.cmake` and
   `tests/fixtures/parser/cli/`: exact source/AST/diagnostic/status regressions.
   `printing_roundtrip.cmake`: CLI source printing/reprocessing equivalence;
@@ -190,7 +190,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   source mutation/recovery corpus; `consumer.{cpp,cmake}`: separately built public
   frontend consumer retaining syntax after sessions and source managers die.
 - `tests/compiler/parser/{dump.cpp,operators.hpp,terms_dump.hpp,types_dump.hpp}`,
-  `oracle.escript`: exhaustive native/OTP structural projections; `tests/compiler/encoding.hpp`:
+  `record_printer.hpp`, `oracle.escript`: native/OTP parenthesized AST projections;
+  RAW/EPP keep Erlang-term syntax. `tests/compiler/encoding.hpp`:
   shared exact encodings; `{reference,oracle,phase1,phase2}.cmake`: existing suites.
 - `tests/compiler/parser/historical.cmake`: seed AST closure and offline inventory audit;
   `coverage.{cmake,escript}`: measured pinned reductions; `pinned.cmake`: source verification;

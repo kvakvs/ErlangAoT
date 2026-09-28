@@ -1,56 +1,85 @@
-file	74797065732e65726c	1
-module	7479706573
-type_decl	0	74	1
-var	41
-union
-var	41
-union
-type	7475706c65	2
-atom	6f6b
-var	41
-union
-type	6e6f6e656d7074795f6c697374	1
-var	41
-union
-type	6d6170	1
-type_field	=>
-type	61746f6d	0
-type	696e7465676572	0
-binary_type
-integer	8
-integer	16
-type_decl	1	6f	0
-range
-integer	1
-integer	10
-type_decl	2	6e	0
-type	61746f6d	0
-record_decl	72	0	2
-typed_field
-type	696e7465676572	0
-record_decl_field	78	1
-integer	0
-typed_field
-remote	6d
-user_type	74	0
-record_decl_field	79	0
-type_decl	0	666e	0
-fun_type	any
-type	61746f6d	0
-spec	0	-	66	1	2
-signature	1
-fun_type	1
-var	41
-var	41
-constraint
-var	41
-type	7465726d	0
-signature	0
-fun_type	1
-type	696e7465676572	0
-type	61746f6d	0
-spec	1	-	6362	1	1
-signature	0
-fun_type	1
-type	7465726d	0
-atom	6f6b
+(file name_hex=74797065732e65726c line=1)
+(module name_hex=7479706573)
+(type_decl kind=0 name_hex=74 parameters=1
+  (var name_hex=41)
+  (union
+    (var name_hex=41)
+    (union
+      (type name_hex=7475706c65 arguments=2
+        (atom name_hex=6f6b)
+        (var name_hex=41)
+      )
+      (union
+        (type name_hex=6e6f6e656d7074795f6c697374 arguments=1
+          (var name_hex=41)
+        )
+        (union
+          (type name_hex=6d6170 arguments=1
+            (type_field operator==>
+              (type name_hex=61746f6d arguments=0)
+              (type name_hex=696e7465676572 arguments=0)
+            )
+          )
+          (binary_type
+            (integer value=8)
+            (integer value=16)
+          )
+        )
+      )
+    )
+  )
+)
+(type_decl kind=1 name_hex=6f parameters=0
+  (range
+    (integer value=1)
+    (integer value=10)
+  )
+)
+(type_decl kind=2 name_hex=6e parameters=0
+  (type name_hex=61746f6d arguments=0)
+)
+(record_decl name_hex=72 native=0 fields=2
+  (typed_field
+    (type name_hex=696e7465676572 arguments=0)
+    (record_decl_field name_hex=78 default=1
+      (integer value=0)
+    )
+  )
+  (typed_field
+    (remote module_hex=6d
+      (user_type name_hex=74 arguments=0)
+    )
+    (record_decl_field name_hex=79 default=0)
+  )
+)
+(type_decl kind=0 name_hex=666e parameters=0
+  (fun_type arguments=any
+    (type name_hex=61746f6d arguments=0)
+  )
+)
+(spec callback=0 module_hex=- name_hex=66 arity=1 signatures=2
+  (signature constraints=1
+    (fun_type arguments=1
+      (var name_hex=41)
+      (var name_hex=41)
+    )
+    (constraint
+      (var name_hex=41)
+      (type name_hex=7465726d arguments=0)
+    )
+  )
+  (signature constraints=0
+    (fun_type arguments=1
+      (type name_hex=696e7465676572 arguments=0)
+      (type name_hex=61746f6d arguments=0)
+    )
+  )
+)
+(spec callback=1 module_hex=- name_hex=6362 arity=1 signatures=1
+  (signature constraints=0
+    (fun_type arguments=1
+      (type name_hex=7465726d arguments=0)
+      (atom name_hex=6f6b)
+    )
+  )
+)

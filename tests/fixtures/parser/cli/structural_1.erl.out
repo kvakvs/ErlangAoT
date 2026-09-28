@@ -1,19 +1,30 @@
-Module forms=2
-  form[0]: FileAttribute name="structural_1.erl" line=1
-  form[1]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: Tuple elements=2
-        element[0]: MapExpression mode=update fields=2
-          base: Variable name=M
-          field[0]: MapField operator==>
-            key: Atom name=a
-            value: CallExpression arguments=0
-              target: Atom name=f
-          field[1]: MapField operator=:=
-            key: Atom name=b
-            value: Variable name=X
-        element[1]: RecordExpression mode=construct identity=local name=r fields=2
-          field[0]: RecordField Variable name=_
-            value: Atom name=default
-          field[1]: RecordField Atom name=a
-            value: IntegerLiteral value=42
+(Module forms=2
+  form[0]=(FileAttribute name="structural_1.erl" line=1)
+  form[1]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=(Tuple elements=2
+        element[0]=(MapExpression mode=update fields=2
+          base=(Variable name=M)
+          field[0]=(MapField operator==>
+            key=(Atom name=a)
+            value=(CallExpression arguments=0
+              target=(Atom name=f)
+            )
+          )
+          field[1]=(MapField operator=:=
+            key=(Atom name=b)
+            value=(Variable name=X)
+          )
+        )
+        element[1]=(RecordExpression mode=construct identity=local name=r fields=2
+          field[0]=(RecordField Variable name=_
+            value=(Atom name=default)
+          )
+          field[1]=(RecordField Atom name=a
+            value=(IntegerLiteral value=42)
+          )
+        )
+      )
+    )
+  )
+)

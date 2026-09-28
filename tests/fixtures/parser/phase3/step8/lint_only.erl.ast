@@ -1,18 +1,26 @@
-file	6c696e745f6f6e6c792e65726c	1
-module	6c696e745f6f6e6c79
-function_full	66	2	1
-clause	2	0	1
-map	0	1
-map_field	=>
-atom	61
-var	58
-record	0	1
-record_local	6d697373696e67
-record_field
-var	5f
-var	58
-record	0	1
-record_local	6d697373696e67
-record_field
-atom	61
-var	58
+(file name_hex=6c696e745f6f6e6c792e65726c line=1)
+(module name_hex=6c696e745f6f6e6c79)
+(function_full name_hex=66 arity=2 clauses=1
+  (clause arguments=2 guards=0 body=1
+    (map base=0 fields=1
+      (map_field operator==>
+        (atom name_hex=61)
+        (var name_hex=58)
+      )
+    )
+    (record base=0 fields=1
+      (record_local name_hex=6d697373696e67)
+      (record_field
+        (var name_hex=5f)
+        (var name_hex=58)
+      )
+    )
+    (record base=0 fields=1
+      (record_local name_hex=6d697373696e67)
+      (record_field
+        (atom name_hex=61)
+        (var name_hex=58)
+      )
+    )
+  )
+)

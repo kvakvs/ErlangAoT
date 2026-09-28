@@ -1,15 +1,24 @@
-Module forms=2
-  form[0]: FileAttribute name="exceptions_2.erl" line=1
-  form[1]: Function name=f arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: MaybeExpression body=2 else=present
-        body[0]: MaybeMatch
-          pattern: PatternCandidate
-            expression: CallExpression arguments=0
-              target: Atom name=f
-          value: Atom name=value
-        body[1]: Atom name=done
-        else[0]: BranchClause guard=none body=1
-          pattern: PatternCandidate
-            expression: Variable name=_
-          body[0]: Atom name=no
+(Module forms=2
+  form[0]=(FileAttribute name="exceptions_2.erl" line=1)
+  form[1]=(Function name=f arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=(MaybeExpression body=2 else=present
+        body[0]=(MaybeMatch
+          pattern=(PatternCandidate
+            expression=(CallExpression arguments=0
+              target=(Atom name=f)
+            )
+          )
+          value=(Atom name=value)
+        )
+        body[1]=(Atom name=done)
+        else[0]=(BranchClause guard=none body=1
+          pattern=(PatternCandidate
+            expression=(Variable name=_)
+          )
+          body[0]=(Atom name=no)
+        )
+      )
+    )
+  )
+)

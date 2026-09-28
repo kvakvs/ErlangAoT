@@ -1,6 +1,10 @@
-Module forms=2
-  form[0]: FileAttribute name="specifications_1.erl" line=1
-  form[1]: Specification name=good arity=0
-    signature[0]: SpecificationSignature constraints=0
-      function: FunType arguments=0
-        result: Atom name=ok
+(Module forms=2
+  form[0]=(FileAttribute name="specifications_1.erl" line=1)
+  form[1]=(Specification name=good arity=0
+    signature[0]=(SpecificationSignature constraints=0
+      function=(FunType arguments=0
+        result=(Atom name=ok)
+      )
+    )
+  )
+)

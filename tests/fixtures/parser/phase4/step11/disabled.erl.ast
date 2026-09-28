@@ -1,6 +1,8 @@
-file	64697361626c65642e65726c	1
-module	64697361626c6564
-function	6d61796265
-tuple	2
-atom	6d61796265
-atom	656c7365
+(file name_hex=64697361626c65642e65726c line=1)
+(module name_hex=64697361626c6564)
+(function name_hex=6d61796265
+  (tuple elements=2
+    (atom name_hex=6d61796265)
+    (atom name_hex=656c7365)
+  )
+)

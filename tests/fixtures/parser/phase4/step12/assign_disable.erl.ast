@@ -1,9 +1,13 @@
-file	61737369676e5f64697361626c652e65726c	1
-module	61737369676e5f64697361626c65
-function	66
-lc	1	1
-var	58
-filter
-match
-var	58
-integer	1
+(file name_hex=61737369676e5f64697361626c652e65726c line=1)
+(module name_hex=61737369676e5f64697361626c65)
+(function name_hex=66
+  (lc templates=1 qualifiers=1
+    (var name_hex=58)
+    (filter
+      (match
+        (var name_hex=58)
+        (integer value=1)
+      )
+    )
+  )
+)

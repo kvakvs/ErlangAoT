@@ -1,583 +1,816 @@
-file	6f70657261746f72732e65726c	1
-module	6f70657261746f7273
-function	66
-tuple	129
-binary	!
-var	41
-var	42
-binary	orelse
-var	41
-var	42
-binary	andalso
-var	41
-var	42
-binary	==
-var	41
-var	42
-binary	/=
-var	41
-var	42
-binary	=<
-var	41
-var	42
-binary	<
-var	41
-var	42
-binary	>=
-var	41
-var	42
-binary	>
-var	41
-var	42
-binary	=:=
-var	41
-var	42
-binary	=/=
-var	41
-var	42
-binary	++
-var	41
-var	42
-binary	--
-var	41
-var	42
-binary	+
-var	41
-var	42
-binary	-
-var	41
-var	42
-binary	bor
-var	41
-var	42
-binary	bxor
-var	41
-var	42
-binary	bsl
-var	41
-var	42
-binary	bsr
-var	41
-var	42
-binary	or
-var	41
-var	42
-binary	xor
-var	41
-var	42
-binary	*
-var	41
-var	42
-binary	/
-var	41
-var	42
-binary	div
-var	41
-var	42
-binary	rem
-var	41
-var	42
-binary	band
-var	41
-var	42
-binary	and
-var	41
-var	42
-match
-var	41
-match
-var	42
-var	43
-binary	!
-var	41
-binary	!
-var	42
-var	43
-binary	++
-var	41
-binary	--
-var	42
-var	43
-binary	+
-binary	-
-var	41
-var	42
-var	43
-unary	+
-var	41
-unary	-
-var	41
-unary	bnot
-var	41
-unary	not
-var	41
-unary	-
-unary	-
-var	41
-catch
-binary	+
-call	0
-atom	66
-integer	1
-binary	+
-var	41
-catch
-binary	+
-var	42
-var	43
-binary	<
-binary	<
-var	41
-var	42
-var	43
-binary	<
-var	41
-binary	<
-var	42
-var	43
-call	1
-remote
-var	4d
-var	46
-var	58
-call	1
-call	1
-call	0
-atom	66
-var	58
-var	59
-call	1
-integer	1
-integer	2
-call	1
-binary	+
-var	41
-var	42
-var	58
-call	1
-remote
-call	0
-atom	66
-atom	67
-var	58
-remote
-var	4d
-call	1
-var	46
-var	58
-remote
-list	1	0
-atom	61
-tuple	1
-atom	62
-call	2
-atom	2b
-integer	1
-integer	2
-call	1
-atom	6361746368
-atom	6f6b
-tuple	3
-call	1
-atom	66
-var	41
-list	1	1
-call	0
-atom	67
-var	54
-atom	616e64616c736f
-match
-var	41
-match
-var	42
-var	43
-match
-var	41
-binary	!
-var	42
-var	43
-match
-var	41
-binary	orelse
-var	42
-var	43
-match
-var	41
-binary	andalso
-var	42
-var	43
-match
-var	41
-binary	==
-var	42
-var	43
-match
-var	41
-binary	++
-var	42
-var	43
-match
-var	41
-binary	+
-var	42
-var	43
-match
-var	41
-binary	*
-var	42
-var	43
-match
-var	41
-remote
-var	42
-var	43
-binary	!
-var	41
-match
-var	42
-var	43
-binary	!
-var	41
-binary	!
-var	42
-var	43
-binary	!
-var	41
-binary	orelse
-var	42
-var	43
-binary	!
-var	41
-binary	andalso
-var	42
-var	43
-binary	!
-var	41
-binary	==
-var	42
-var	43
-binary	!
-var	41
-binary	++
-var	42
-var	43
-binary	!
-var	41
-binary	+
-var	42
-var	43
-binary	!
-var	41
-binary	*
-var	42
-var	43
-binary	!
-var	41
-remote
-var	42
-var	43
-match
-binary	orelse
-var	41
-var	42
-var	43
-binary	!
-binary	orelse
-var	41
-var	42
-var	43
-binary	orelse
-var	41
-binary	orelse
-var	42
-var	43
-binary	orelse
-var	41
-binary	andalso
-var	42
-var	43
-binary	orelse
-var	41
-binary	==
-var	42
-var	43
-binary	orelse
-var	41
-binary	++
-var	42
-var	43
-binary	orelse
-var	41
-binary	+
-var	42
-var	43
-binary	orelse
-var	41
-binary	*
-var	42
-var	43
-binary	orelse
-var	41
-remote
-var	42
-var	43
-match
-binary	andalso
-var	41
-var	42
-var	43
-binary	!
-binary	andalso
-var	41
-var	42
-var	43
-binary	orelse
-binary	andalso
-var	41
-var	42
-var	43
-binary	andalso
-var	41
-binary	andalso
-var	42
-var	43
-binary	andalso
-var	41
-binary	==
-var	42
-var	43
-binary	andalso
-var	41
-binary	++
-var	42
-var	43
-binary	andalso
-var	41
-binary	+
-var	42
-var	43
-binary	andalso
-var	41
-binary	*
-var	42
-var	43
-binary	andalso
-var	41
-remote
-var	42
-var	43
-match
-binary	==
-var	41
-var	42
-var	43
-binary	!
-binary	==
-var	41
-var	42
-var	43
-binary	orelse
-binary	==
-var	41
-var	42
-var	43
-binary	andalso
-binary	==
-var	41
-var	42
-var	43
-binary	==
-var	41
-binary	++
-var	42
-var	43
-binary	==
-var	41
-binary	+
-var	42
-var	43
-binary	==
-var	41
-binary	*
-var	42
-var	43
-binary	==
-var	41
-remote
-var	42
-var	43
-match
-binary	++
-var	41
-var	42
-var	43
-binary	!
-binary	++
-var	41
-var	42
-var	43
-binary	orelse
-binary	++
-var	41
-var	42
-var	43
-binary	andalso
-binary	++
-var	41
-var	42
-var	43
-binary	==
-binary	++
-var	41
-var	42
-var	43
-binary	++
-var	41
-binary	++
-var	42
-var	43
-binary	++
-var	41
-binary	+
-var	42
-var	43
-binary	++
-var	41
-binary	*
-var	42
-var	43
-binary	++
-var	41
-remote
-var	42
-var	43
-match
-binary	+
-var	41
-var	42
-var	43
-binary	!
-binary	+
-var	41
-var	42
-var	43
-binary	orelse
-binary	+
-var	41
-var	42
-var	43
-binary	andalso
-binary	+
-var	41
-var	42
-var	43
-binary	==
-binary	+
-var	41
-var	42
-var	43
-binary	++
-binary	+
-var	41
-var	42
-var	43
-binary	+
-binary	+
-var	41
-var	42
-var	43
-binary	+
-var	41
-binary	*
-var	42
-var	43
-binary	+
-var	41
-remote
-var	42
-var	43
-match
-binary	*
-var	41
-var	42
-var	43
-binary	!
-binary	*
-var	41
-var	42
-var	43
-binary	orelse
-binary	*
-var	41
-var	42
-var	43
-binary	andalso
-binary	*
-var	41
-var	42
-var	43
-binary	==
-binary	*
-var	41
-var	42
-var	43
-binary	++
-binary	*
-var	41
-var	42
-var	43
-binary	+
-binary	*
-var	41
-var	42
-var	43
-binary	*
-binary	*
-var	41
-var	42
-var	43
-binary	*
-var	41
-remote
-var	42
-var	43
-match
-remote
-var	41
-var	42
-var	43
-binary	!
-remote
-var	41
-var	42
-var	43
-binary	orelse
-remote
-var	41
-var	42
-var	43
-binary	andalso
-remote
-var	41
-var	42
-var	43
-binary	==
-remote
-var	41
-var	42
-var	43
-binary	++
-remote
-var	41
-var	42
-var	43
-binary	+
-remote
-var	41
-var	42
-var	43
-binary	*
-remote
-var	41
-var	42
-var	43
+(file name_hex=6f70657261746f72732e65726c line=1)
+(module name_hex=6f70657261746f7273)
+(function name_hex=66
+  (tuple elements=129
+    (binary operator=!
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator===
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=/=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==<
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=<
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=>=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=>
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==:=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==/=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=--
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=+
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=-
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bxor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bsl
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bsr
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=or
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=xor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=*
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=/
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=div
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=rem
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=band
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=and
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (match
+      (var name_hex=41)
+      (match
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=!
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (binary operator=--
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=+
+      (binary operator=-
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (unary operator=+
+      (var name_hex=41)
+    )
+    (unary operator=-
+      (var name_hex=41)
+    )
+    (unary operator=bnot
+      (var name_hex=41)
+    )
+    (unary operator=not
+      (var name_hex=41)
+    )
+    (unary operator=-
+      (unary operator=-
+        (var name_hex=41)
+      )
+    )
+    (catch
+      (binary operator=+
+        (call arguments=0
+          (atom name_hex=66)
+        )
+        (integer value=1)
+      )
+    )
+    (binary operator=+
+      (var name_hex=41)
+      (catch
+        (binary operator=+
+          (var name_hex=42)
+          (var name_hex=43)
+        )
+      )
+    )
+    (binary operator=<
+      (binary operator=<
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=<
+      (var name_hex=41)
+      (binary operator=<
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (call arguments=1
+      (remote
+        (var name_hex=4d)
+        (var name_hex=46)
+      )
+      (var name_hex=58)
+    )
+    (call arguments=1
+      (call arguments=1
+        (call arguments=0
+          (atom name_hex=66)
+        )
+        (var name_hex=58)
+      )
+      (var name_hex=59)
+    )
+    (call arguments=1
+      (integer value=1)
+      (integer value=2)
+    )
+    (call arguments=1
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=58)
+    )
+    (call arguments=1
+      (remote
+        (call arguments=0
+          (atom name_hex=66)
+        )
+        (atom name_hex=67)
+      )
+      (var name_hex=58)
+    )
+    (remote
+      (var name_hex=4d)
+      (call arguments=1
+        (var name_hex=46)
+        (var name_hex=58)
+      )
+    )
+    (remote
+      (list elements=1 tail=0
+        (atom name_hex=61)
+      )
+      (tuple elements=1
+        (atom name_hex=62)
+      )
+    )
+    (call arguments=2
+      (atom name_hex=2b)
+      (integer value=1)
+      (integer value=2)
+    )
+    (call arguments=1
+      (atom name_hex=6361746368)
+      (atom name_hex=6f6b)
+    )
+    (tuple elements=3
+      (call arguments=1
+        (atom name_hex=66)
+        (var name_hex=41)
+      )
+      (list elements=1 tail=1
+        (call arguments=0
+          (atom name_hex=67)
+        )
+        (var name_hex=54)
+      )
+      (atom name_hex=616e64616c736f)
+    )
+    (match
+      (var name_hex=41)
+      (match
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=!
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=orelse
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=andalso
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator===
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (match
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=!
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=orelse
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=andalso
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator===
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=!
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator=orelse
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator=orelse
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator=orelse
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator=andalso
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator===
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=orelse
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator=andalso
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator=andalso
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (binary operator=andalso
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (binary operator=andalso
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (binary operator===
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=andalso
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator===
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator===
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (binary operator===
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (binary operator===
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator===
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator===
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator===
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator===
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator=++
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator=++
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (binary operator=++
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (binary operator=++
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator===
+      (binary operator=++
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (binary operator=++
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (binary operator=+
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator===
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=++
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=+
+      (binary operator=+
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=+
+      (var name_hex=41)
+      (binary operator=*
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (binary operator=+
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator===
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=++
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=+
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=*
+      (binary operator=*
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=*
+      (var name_hex=41)
+      (remote
+        (var name_hex=42)
+        (var name_hex=43)
+      )
+    )
+    (match
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=!
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=orelse
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=andalso
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator===
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=++
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=+
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+    (binary operator=*
+      (remote
+        (var name_hex=41)
+        (var name_hex=42)
+      )
+      (var name_hex=43)
+    )
+  )
+)

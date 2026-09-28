@@ -1,80 +1,107 @@
-file	7061747465726e732e65726c	1
-module	7061747465726e73
-function_full	66	25	1
-clause	25	0	1
-match
-var	41
-var	42
-binary	==
-var	41
-var	42
-binary	/=
-var	41
-var	42
-binary	=<
-var	41
-var	42
-binary	<
-var	41
-var	42
-binary	>=
-var	41
-var	42
-binary	>
-var	41
-var	42
-binary	=:=
-var	41
-var	42
-binary	=/=
-var	41
-var	42
-binary	++
-var	41
-var	42
-binary	--
-var	41
-var	42
-binary	+
-var	41
-var	42
-binary	-
-var	41
-var	42
-binary	bor
-var	41
-var	42
-binary	bxor
-var	41
-var	42
-binary	bsl
-var	41
-var	42
-binary	bsr
-var	41
-var	42
-binary	or
-var	41
-var	42
-binary	xor
-var	41
-var	42
-binary	*
-var	41
-var	42
-binary	/
-var	41
-var	42
-binary	div
-var	41
-var	42
-binary	rem
-var	41
-var	42
-binary	band
-var	41
-var	42
-binary	and
-var	41
-var	42
-atom	6f6b
+(file name_hex=7061747465726e732e65726c line=1)
+(module name_hex=7061747465726e73)
+(function_full name_hex=66 arity=25 clauses=1
+  (clause arguments=25 guards=0 body=1
+    (match
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator===
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=/=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==<
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=<
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=>=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=>
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==:=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator==/=
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=++
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=--
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=+
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=-
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bxor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bsl
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=bsr
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=or
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=xor
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=*
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=/
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=div
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=rem
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=band
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (binary operator=and
+      (var name_hex=41)
+      (var name_hex=42)
+    )
+    (atom name_hex=6f6b)
+  )
+)

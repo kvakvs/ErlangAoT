@@ -1,33 +1,49 @@
-file	657870616e6465642e65726c	1
-module	657870616e6465645f7370656373
-file	617474726962757465732e68726c	1
-record_decl	696e636c75646564	0	1
-record_decl_field	76616c7565	1
-map	0	1
-map_field	=>
-atom	63726561746564
-call	0
-atom	666163746f7279
-file	657870616e6465642e65726c	3
-spec	0	-	72756e	1	1
-signature	1
-fun_type	1
-ann_type
-var	41
-type	696e7465676572	0
-record_type	-	696e636c75646564	0
-constraint
-var	41
-type	696e7465676572	0
-spec	1	-	636865636b	1	1
-signature	1
-fun_type	1
-var	41
-type	626f6f6c65616e	0
-constraint
-var	41
-type	696e7465676572	0
-function_full	72756e	1	1
-clause	1	0	1
-var	41
-var	41
+(file name_hex=657870616e6465642e65726c line=1)
+(module name_hex=657870616e6465645f7370656373)
+(file name_hex=617474726962757465732e68726c line=1)
+(record_decl name_hex=696e636c75646564 native=0 fields=1
+  (record_decl_field name_hex=76616c7565 default=1
+    (map base=0 fields=1
+      (map_field operator==>
+        (atom name_hex=63726561746564)
+        (call arguments=0
+          (atom name_hex=666163746f7279)
+        )
+      )
+    )
+  )
+)
+(file name_hex=657870616e6465642e65726c line=3)
+(spec callback=0 module_hex=- name_hex=72756e arity=1 signatures=1
+  (signature constraints=1
+    (fun_type arguments=1
+      (ann_type
+        (var name_hex=41)
+        (type name_hex=696e7465676572 arguments=0)
+      )
+      (record_type module_hex=- name_hex=696e636c75646564 fields=0)
+    )
+    (constraint
+      (var name_hex=41)
+      (type name_hex=696e7465676572 arguments=0)
+    )
+  )
+)
+(spec callback=1 module_hex=- name_hex=636865636b arity=1 signatures=1
+  (signature constraints=1
+    (fun_type arguments=1
+      (var name_hex=41)
+      (type name_hex=626f6f6c65616e arguments=0)
+    )
+    (constraint
+      (var name_hex=41)
+      (type name_hex=696e7465676572 arguments=0)
+    )
+  )
+)
+(function_full name_hex=72756e arity=1 clauses=1
+  (clause arguments=1 guards=0 body=1
+    (var name_hex=41)
+    (var name_hex=41)
+  )
+)

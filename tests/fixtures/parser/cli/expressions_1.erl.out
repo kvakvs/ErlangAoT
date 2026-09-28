@@ -1,6 +1,10 @@
-Module forms=2
-  form[0]: FileAttribute name="expressions_1.erl" line=1
-  form[1]: Function name=good arity=0 clauses=1
-    clause[0]: FunctionClause arguments=0 guard=none body=1
-      body[0]: [count=1 tail=nil
-        element[0]: Atom name=ok
+(Module forms=2
+  form[0]=(FileAttribute name="expressions_1.erl" line=1)
+  form[1]=(Function name=good arity=0 clauses=1
+    clause[0]=(FunctionClause arguments=0 guard=none body=1
+      body[0]=([count=1 tail=nil
+        element[0]=(Atom name=ok)
+      )
+    )
+  )
+)
