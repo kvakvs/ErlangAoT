@@ -736,7 +736,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
 - Validate: native objects for `value() -> 42`, negative/boundary values and
   rejected out-of-range literals; verify every resulting module. Shared gate,
   then commit.
-- When running with `--verbose` log the inferred information to screen.
+- When running with `--impldebug 24` log the inferred information to screen.
 
 ### 25. Lower parameter references
 
@@ -744,7 +744,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
   argument order and pointer alignment explicit in the generated interface.
 - Validate: identity and multi-argument projection functions, including identical
   argument values and unused wildcard parameters. Shared gate, then commit.
-- When running with `--verbose` log the inferred information to screen.
+- When running with `--impldebug 25` log the inferred information to screen.
 
 ### 26. Lower resolved direct local calls
 
@@ -753,7 +753,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
   call-graph checks instead of resolving names during LLVM emission.
 - Validate: forward calls, nested calls, wrong arity, missing functions and
   direct/indirect recursion diagnostics. Shared gate, then commit.
-- When running with `--verbose` log the inferred information to screen.
+- When running with `--impldebug 26` log the inferred information to screen.
 
 ### 27. Lower resolved calls across modules
 
@@ -762,7 +762,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
   earlier call-graph validation and do not invoke native linking here.
 - Validate: the `answer`/`client` example, private/missing callees, duplicate
   module identities and cross-module recursion. Shared gate, then commit.
-- When running with `--verbose` log the inferred information to screen.
+- When running with `--impldebug 26` log the inferred information to screen.
 
 ### 28. Bind generated modules to the runtime
 
