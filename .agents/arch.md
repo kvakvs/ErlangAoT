@@ -239,3 +239,5 @@
   arity. Default CLI paths validate declarations; check/print paths remain syntax-only.
 
 - Step16 adds exhaustive capability visitors and ABI-width integer decoding before binding/lowering.
+
+- Step17 routes capability rejections through the shared catalog and adds fail-closed lowering extension points.

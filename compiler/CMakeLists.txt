@@ -47,7 +47,7 @@ target_link_libraries(erlang_aot PRIVATE erlang_project)
 # Keep all LLVM usage private; the CLI continues to use its existing compile placeholder.
 add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp
     src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
-    src/codegen/target_backends.cpp src/codegen/verification.cpp src/codegen/emission.cpp src/codegen/term_abi.cpp src/codegen/features.cpp)
+    src/codegen/target_backends.cpp src/codegen/verification.cpp src/codegen/emission.cpp src/codegen/term_abi.cpp src/codegen/features.cpp src/codegen/lowering_boundaries.cpp)
 erlang_aot_project_options(erlang_codegen)
 target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk erlang_frontend erlang_aot_abi)
 get_target_property(codegen_backends erlang_llvm_sdk ERLANG_AOT_LLVM_BACKENDS)
@@ -58,7 +58,7 @@ target_link_libraries(erlang_aot PRIVATE erlang_codegen)
 
 # Semantic analysis owns language identities without depending on LLVM representations.
 add_library(erlang_semantic STATIC src/semantic/declarations.cpp src/semantic/symbols.cpp
-    src/semantic/capabilities.cpp src/semantic/literals.cpp src/semantic/expression_capability.cpp)
+    src/semantic/features.cpp src/semantic/capabilities.cpp src/semantic/literals.cpp src/semantic/expression_capability.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_link_libraries(erlang_semantic PUBLIC erlang_frontend PRIVATE erlang_aot_abi)
 target_link_libraries(erlang_aot PRIVATE erlang_semantic)

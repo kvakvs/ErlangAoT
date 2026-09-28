@@ -650,3 +650,5 @@
   included from tests/compiler/semantic/cases.cmake; symbol native invariant retained.
 
 - Step16 complete: all76 CTests and full quality pass. Draft step17/apply17.py and step18/apply18.py remain ignored until applied.
+
+- Step17 full tests and quality passed; one nondiagnostic analyzer failure preceded successful complete rerun.

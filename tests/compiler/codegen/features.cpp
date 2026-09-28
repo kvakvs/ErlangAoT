@@ -1,4 +1,5 @@
 #include "codegen/features.hpp"
+#include "codegen/lowering_boundaries.hpp"
 #include <sstream>
 #include <stdexcept>
 
@@ -28,6 +29,21 @@ void check_catalog() {
         require(!result.complete(), "failed batch completed");
         require(result.diagnostics().size() == 1, "duplicate owner report");
         require(errors.str() == '[' + std::string(feature.name) + "] notimpl\n", "unexpected compiler report");
+    }
+}
+
+// Lowering entry points fail closed even when capability analysis was bypassed.
+void check_lowering_boundaries() {
+    for (const auto operation : {DeferredOperation::heap_value, DeferredOperation::dynamic_call,
+                                 DeferredOperation::closure, DeferredOperation::exception, DeferredOperation::receive,
+                                 DeferredOperation::send, DeferredOperation::sequence}) {
+        CompilationResult result;
+        require(result.add_output({"staged", OutputKind::object, {std::byte{1}}}), "failed staging");
+        std::ostringstream errors;
+        require(!reject_lowering_operation(result, operation, {"bypass.erl", 3, 7}, errors),
+                "deferred lowering succeeded");
+        require(result.outputs().empty() && result.status() == CompilationStatus::failed, "lowering retained output");
+        require(errors.str().contains("] notimpl") && errors.str().contains("bypass.erl"), "lowering context missing");
     }
 }
 
@@ -102,6 +118,7 @@ int main(int argc, char **argv) {
             return unused.complete() ? 0 : 1;
         }
         check_catalog();
+        check_lowering_boundaries();
         check_context();
         check_nonfeatures();
         check_sink_failure();

@@ -30,7 +30,9 @@ enum class FeatureId : std::uint8_t {
     garbage_collection = 20,
     atom_collection = 21,
     dynamic_modules = 22,
-    executable_linking = 23
+    executable_linking = 23,
+    send_expressions = 24,
+    expression_sequences = 25
 };
 enum class FeatureOwner : std::uint8_t { compiler, runtime, driver };
 enum class FeatureStatus : std::uint8_t { deferred };
@@ -212,6 +214,21 @@ inline constexpr std::array feature_catalog{
                 .status = FeatureStatus::deferred,
                 .plan_step = 35,
                 .failure_test = "codegen_features"},
+    FeatureInfo{.id = FeatureId::send_expressions,
+                .name = "send expressions",
+                .owner = FeatureOwner::compiler,
+                .boundary = "send expression lowering",
+                .status = FeatureStatus::deferred,
+                .plan_step = 17,
+                .failure_test = "frontend_cli"},
+    FeatureInfo{.id = FeatureId::expression_sequences,
+                .name = "expression sequences",
+                .owner = FeatureOwner::compiler,
+                .boundary = "sequence lowering",
+                .status = FeatureStatus::deferred,
+                .plan_step = 17,
+                .failure_test = "frontend_cli"},
+
 };
 
 // Unknown IDs are invalid inputs, never an invented future feature or a successful fallback.

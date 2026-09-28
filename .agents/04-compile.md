@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–16 complete, 2026-09-28. Steps 17–46 remain pending.
+Status: steps 1–17 complete, 2026-09-28. Steps 18–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1284,3 +1284,10 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   and pinned native clang-tidy22.1.8 pass; formatting and whitespace pass.
   Integer decoding accepts explicit negative literals and uses ABI target-width
   limits (the current CLI supplies native width; target selection remains later).
+
+- Step17 (2026-09-28): capability failures use the shared compiler-owned catalog;
+  defensive heap/call/closure/exception/receive/send/sequence lowering boundaries
+  invalidate staged output and preserve failure context. IDs24/25 distinguish
+  compiler send/sequence syntax from runtime service ownership. Fresh full Debug
+  build and all76 CTests pass. Full Lizard/native pinned clang-tidy passed on rerun
+  after a nondiagnostic analyzer process failure; no checks or files excluded.

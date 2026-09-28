@@ -1,4 +1,5 @@
 #include "expression_capability.hpp"
+#include "features.hpp"
 #include <algorithm>
 #include <array>
 
@@ -37,7 +38,7 @@ struct FormCapability {
 
 // Use one located diagnostic path for all capability rejection sites.
 void unsupported(const Module &module, const ast::NodeSource &source, std::string_view reason, const Reporter &out) {
-    report(module, &source, "unsupported " + std::string(reason), out);
+    reject_capability(module, source, reason, out);
 }
 
 // Inspect every executable child iteratively, including unused functions and nested call arguments.

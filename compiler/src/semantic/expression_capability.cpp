@@ -34,6 +34,6 @@ std::string_view ExpressionCapability::operator()(const ast::CallExpression &val
 }
 
 std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {
-    return value.operation == ast::BinaryOperator::send ? "message passing" : "arithmetic";
+    return value.operation == ast::BinaryOperator::send ? "send expressions" : "arithmetic";
 }
 } // namespace erlang_aot::semantic

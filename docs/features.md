@@ -99,3 +99,15 @@ unused reporter. Runtime-only builds exercise reporting without LLVM. Capability
 selection and native foreign-platform execution remain later work. Step 14 adds
 [direct runtime service tests](runtime-services.md), including state preservation,
 known/unknown BIFs and once-only reporting through nested service wrappers.
+
+## Compiler capability boundaries
+
+Default compilation reports located `[feature name] notimpl` diagnostics through
+semantic capability analysis, including unused functions. Shared compiler IDs24/25
+name send expressions and expression sequences; runtime message passing retains
+its existing ID. Concrete defensive lowering entry points reject heap values,
+dynamic calls, closures, exceptions, receive, send and sequences and clear staged
+artifacts even if capability analysis was bypassed. Future driver publication must
+require a successful CompilationResult before writing any artifact. Executable
+linking will use the existing catalog boundary when the driver reaches that stage;
+these hooks do not implement lowering, linking or runtime services.

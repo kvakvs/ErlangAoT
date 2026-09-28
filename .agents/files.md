@@ -259,3 +259,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   emitted objects. Project declaration cases live in `tests/compiler/project/cli.cmake`.
 
 - `compiler/src/semantic/{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the executable subset while retaining symbolic type metadata.
+
+- `semantic/features.{hpp,cpp}` maps capability names to shared compiler IDs; `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
