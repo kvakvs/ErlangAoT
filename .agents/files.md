@@ -279,3 +279,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   opacity invariants until emitted artifacts or step 39 type inspection replace them.
   `docs/semantic.md` documents the implemented analysis boundary.
 - `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
+
+- `compiler/src/codegen/lowering.{hpp,cpp}`: validated-batch declaration/literal lowering.
+  `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/`: real-source
+  backend adapter, target-width boundaries and actual object checks.

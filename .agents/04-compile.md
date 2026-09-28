@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–23 complete, 2026-09-28. Steps 24–46 remain pending.
+Status: steps 1–24 complete, 2026-09-28. Steps 25–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -22,8 +22,8 @@ TermFactory reporting placeholders are installed; term creation, backing allocat
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
-owners retain batch ASTs, LLVM state and results; Erlang lowering and backend driver integration
-remain deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
+owners retain batch ASTs, LLVM state and results; Generic declaration/literal lowering is implemented privately; backend driver integration
+remains deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
 
@@ -1373,3 +1373,12 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   removing it and rebuilding the ownership test preceded the passing full rerun.
   Official maint-29 was fetched unchanged at 21776803ecd11f5fa948732c0ec66b8f325dedfc.
   Other native hosts and frontend sanitizers remain pending. Stopped before step 24.
+
+- Step 24 (2026-09-28): private lowering creates all generic ABI declarations before
+  constant bodies, derives width from the target and checks canonical exact literals
+  before constructing tagged constants. Inferred facts are consumed without LLVM
+  assumptions. Export linkage is explicit. Real parsed source produces verified native
+  objects; 32/64-bit endpoints and narrower-target overflow are covered. CLI debug24
+  prints analyzed lowering inputs; normal artifact publication remains step35/36.
+  Fresh full Windows Debug build, 80/80 CTests, full Lizard/clang-tidy, formatting
+  and whitespace pass. Official maint-29 fetched unchanged. Other hosts remain pending.

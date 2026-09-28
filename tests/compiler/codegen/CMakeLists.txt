@@ -42,3 +42,11 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         ErlangAoT::generated_program)
     add_test(NAME codegen_runtime_terms COMMAND codegen_runtime_terms)
 endif()
+
+# Real-source backend adapter remains private until CLI artifact integration (steps 35/36).
+add_executable(codegen_lowering lowering.cpp)
+erlang_aot_project_options(codegen_lowering)
+target_include_directories(codegen_lowering PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(codegen_lowering PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
+target_compile_definitions(codegen_lowering PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
+add_test(NAME codegen_lowering COMMAND codegen_lowering)

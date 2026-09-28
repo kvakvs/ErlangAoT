@@ -682,3 +682,7 @@
   so traversal frames uniquely own use maps. Decimal bounds use validated decimal-only
   accumulation instead of Boost's general string parser. All gates have no suppressions.
   Logs/reproduction: build/compile-steps/{gate.cmd,step21*,type-tidy21*,type-oracle.escript}.
+
+- Step24 complete: real-source generic declaration/literal lowering, full fresh
+  Debug80/80 + quality. No CLI artifact integration; debug24 prints inferred inputs.
+  Gate logs build/compile-steps/step24*. OTP maint29 unchanged.

@@ -327,3 +327,17 @@ RISC-V backend. Available cross backends are checked for Linux x86/x86-64/ARM/AA
 ELF and Windows x86/x86-64 COFF layouts, including 32-bit widths on the 64-bit host.
 These are target-construction tests, not object-emission or native-platform ABI
 validation. IR verification, lowering, emission and CLI integration remain deferred.
+
+## Source lowering (step 24)
+
+The private `codegen::lower` phase consumes batch-owned syntax and semantic/type
+side tables. It creates generic native-convention declarations before constant
+bodies and verifies the complete LLVM batch. Literals are checked against the
+configured target width before encoding; specifications add no LLVM assumptions.
+Exported entries have external linkage; private entries have internal linkage.
+
+`codegen_lowering` parses real Erlang fixtures, runs analysis, inspects tagged
+returns and emits native objects. It checks 32/64-bit endpoints and rejects host-valid
+literals that overflow a 32-bit target. This is a stage adapter, not CLI artifact
+publication or generated-program execution. `--impldebug 24` prints the analyzed
+input facts on stderr. Normal CLI compilation still ends after analysis.

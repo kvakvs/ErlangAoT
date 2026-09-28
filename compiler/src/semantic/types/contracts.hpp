@@ -7,7 +7,7 @@ namespace erlang_aot::semantic::types {
 void check_contracts(Registry &declared, const Inference &inferred, const CallGraph &calls, const Reporter &out);
 // Render deterministic, escaped implementation facts for opt-in debug output.
 void trace_inference(const Inference &inferred, const CallGraph &calls,
-                     const std::function<void(std::string_view)> &sink);
+                     const std::function<void(std::string_view)> &sink, int step = 23);
 // Test singleton membership conservatively; unknown structures never prove a discrepancy.
 bool excludes_integer(Registry &declared, std::string_view value, Id type, std::string_view owner);
 } // namespace erlang_aot::semantic::types

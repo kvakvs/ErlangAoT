@@ -59,7 +59,7 @@ check(impldebug_project 0 "^$" "\\[target app\\]: \\[impldebug 23\\].*result=1.*
     --impldebug 23,24 --project project.toml --impldebug 27)
 check(impldebug_project_target 0 "^$" "\\[target tests\\]: \\[impldebug 23\\].*result=2"
     --project project.toml --target tests --impldebug 23)
-check(impldebug_project_other_step 0 "^$" "^$" --project project.toml --impldebug 24)
+check(impldebug_project_other_step 0 "^$" "^$" --project project.toml --impldebug 99)
 check(impldebug_project_invalid 2 "^$" "--impldebug expects decimal integers" --project project.toml --impldebug 23,bad)
 check(default_output 0 "^$" "^$" --project project.toml --target app -o sentinel)
 check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n$"

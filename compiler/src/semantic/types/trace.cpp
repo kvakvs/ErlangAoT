@@ -39,15 +39,16 @@ std::string input_text(const Summary &summary) {
 } // namespace
 
 void trace_inference(const Inference &inferred, const CallGraph &calls,
-                     const std::function<void(std::string_view)> &sink) {
+                     const std::function<void(std::string_view)> &sink, const int step) {
     for (const auto function : calls.order) {
         const auto &summary = inferred.functions.at(function.function);
-        sink("[impldebug 23] " + escaped(function.module->file) + " inference " + escaped(utf8(function.module->name)) +
-             ":" + escaped(utf8(function.function->key.name)) + "/" + std::to_string(function.function->key.arity) +
-             " inputs=" + input_text(summary) + " result=" + fact_text(inferred, summary.result));
+        sink("[impldebug " + std::to_string(step) + "] " + escaped(function.module->file) + " inference " +
+             escaped(utf8(function.module->name)) + ":" + escaped(utf8(function.function->key.name)) + "/" +
+             std::to_string(function.function->key.arity) + " inputs=" + input_text(summary) +
+             " result=" + fact_text(inferred, summary.result));
     }
     if (inferred.graph.widened()) {
-        sink("[impldebug 23] inference budget exhausted; widened to term()");
+        sink("[impldebug " + std::to_string(step) + "] inference budget exhausted; widened to term()");
     }
 }
 } // namespace erlang_aot::semantic::types

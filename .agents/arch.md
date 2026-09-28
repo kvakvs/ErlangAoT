@@ -257,3 +257,7 @@
 - Final step 21 Windows x64 Debug validation: 78/78 CTests and full Lizard/clang-tidy
   pass. Earlier migration failures remain historical; full frontend sanitizers and
   additional native platforms still require validation.
+
+- Step24 adds private LLVM lowering of generic declarations and tagged integer returns.
+  Target-width checking precedes constants; analysis facts never add assumptions.
+  A real-source stage adapter verifies/emits objects; CLI publication remains deferred.

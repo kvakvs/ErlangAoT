@@ -62,8 +62,10 @@ void infer_batch(semantic::types::Registry &types, const semantic::CallGraph &ca
                  const ImplementationDebug &debug, const DiagnosticSink &sink) {
     const auto inferred = semantic::types::infer(calls);
     semantic::types::check_contracts(types, *inferred, calls, report);
-    if (debug.enabled(23)) {
-        semantic::types::trace_inference(*inferred, calls, sink);
+    for (const auto step : {23, 24}) {
+        if (debug.enabled(step)) {
+            semantic::types::trace_inference(*inferred, calls, sink, step);
+        }
     }
 }
 
