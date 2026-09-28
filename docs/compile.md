@@ -396,3 +396,15 @@ Atom initialization remains reserved; this step adds no atom-valued expressions.
 Validation: fresh Windows x64 Debug compiler/runtime build; 82/82 CTests,
 Lizard and clang-tidy pass (156 production commands). Additional native hosts
 and full frontend sanitizer validation remain pending.
+
+### Step 29
+
+The private backend plans bounded speed-mode variants from proven implementation
+profiles, with deterministic deduplication, hard function/module/target caps and
+dispatch-inclusive growth estimates. O0 and the explicit disable override retain
+generic code. The current source subset has no removable representation checks,
+so constants/identity/direct calls receive no variants. See [specialization](specialization.md).
+
+Validation: fresh Windows x64 Debug compiler/runtime build; 83/83 CTests and
+full Lizard/clang-tidy pass (159 production commands). A clang-tidy crash in
+unchanged tree_attributes.cpp passed on an unchanged complete quality retry.

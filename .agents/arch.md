@@ -271,3 +271,8 @@
   C++ runtime service. Publication copies names, validates ABI/width/exports and
   freezes a unique registry; resolved handles pin code images. Atoms remain reserved.
   Separately linked real-source objects execute through the mandatory runtime.
+
+- Step 29: speed-only specialization planning consumes bounded implementation profiles,
+  recognizes exact entry-block small-integer checks and deduplicates useful constraints.
+  Caps are 3/function, 32/module, 128/target and 2x generic IR including dispatch.
+  Current supported source has no removable checks and therefore stays generic.

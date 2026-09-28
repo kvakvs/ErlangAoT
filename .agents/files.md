@@ -293,3 +293,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   generic marshaling and transactional publication. `docs/runtime-modules.md`: contract.
   `tests/compiler/codegen/registration*` links real generated objects with/without runtime;
   `tests/runtime/registration.cpp` checks rejection and lifetime ownership.
+
+- `codegen/specialization.{hpp,cpp}`: canonical profiles, decisions and bounded selection.
+  `specialization_analysis.{hpp,cpp}`: real inference profiles and generic IR measurements.
+  `integer_guards.{hpp,cpp}`: exact side-effect-free argument tag-check recognition
+  using LLVM use lists and instruction comparison. `docs/specialization.md`: policy.
+  `tests/compiler/codegen/specialization.cpp`: stress limits and real-source no-benefit cases.

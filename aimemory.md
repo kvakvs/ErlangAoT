@@ -206,3 +206,9 @@
   Fresh Windows Debug 82/82 tests and full quality (156 production commands) passed.
   Native C++ service symbols use Microsoft/Itanium spellings, no C wrapper.
   Atoms remain reserved. Missing diagnostic.hpp <functional> include fixed.
+
+- Step 29: bounded profile planner integrated privately; current source remains generic
+  because there are no removable type checks. Windows 83/83 tests/full quality passed.
+  LLVM 23 ConstantData has no use lists; recognize tag operands with SDK exact
+  instruction comparisons, and argument data flow with use lists (no suppressions).
+  Test vector.assign count/value must copy the nested source element before resizing.

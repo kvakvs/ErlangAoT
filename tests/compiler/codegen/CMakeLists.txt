@@ -44,6 +44,13 @@ if(ERLANG_AOT_BUILD_RUNTIME)
 endif()
 
 # Real-source backend adapter remains private until CLI artifact integration (steps 35/36).
+add_executable(codegen_specialization specialization.cpp)
+erlang_aot_project_options(codegen_specialization)
+target_include_directories(codegen_specialization PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(codegen_specialization PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
+target_compile_definitions(codegen_specialization PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
+add_test(NAME codegen_specialization COMMAND codegen_specialization)
+
 add_executable(codegen_lowering lowering.cpp)
 erlang_aot_project_options(codegen_lowering)
 target_include_directories(codegen_lowering PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")

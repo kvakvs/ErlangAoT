@@ -2,6 +2,7 @@
 #include "llvm_state.hpp"
 #include "lowering_expressions.hpp"
 #include "module_registration.hpp"
+#include "specialization_analysis.hpp"
 #include "target.hpp"
 #include "term_abi.hpp"
 #include "verification.hpp"
@@ -78,6 +79,7 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
             define(*outputs[i], *modules[i], word, inferred);
             emit_registration(*outputs[i], *modules[i], word);
         }
+        detail::state(compilation).specializations = analyze_specializations(compilation, modules, inferred);
         return verify_ir(compilation);
     } catch (const std::exception &error) {
         compilation.result().report(

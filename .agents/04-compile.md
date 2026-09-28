@@ -1101,3 +1101,9 @@ current scope and platform limitations.
 Step 28: versioned descriptors and retained startup symbols, transactional runtime
 registration, frozen ownership and linked real-source execution. Atom bindings remain
 reserved. Fresh Windows x64 Debug: 82/82 CTests; quality validation recorded in docs/compile.md.
+
+Step 29: canonical implementation profiles, exact-check benefit recognition and
+deterministic function/module/target work, count and growth caps. O0/disable stay
+generic; no-benefit source subset produces no variants. Fresh Windows Debug 83/83
+CTests and full Lizard/clang-tidy (159 production commands) pass. One analyzer
+crash on unchanged tree_attributes.cpp passed on a complete unchanged retry.
