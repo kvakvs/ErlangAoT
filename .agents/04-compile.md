@@ -991,6 +991,19 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
 
 ## Validation ledger
 
+- Windows prerequisite (2026-09-28): restored the shared gate without suppressions or
+  changed thresholds. LLVM's runner now analyzes the same production compilation
+  commands with at most six concurrent processes. Lexer queues/keywords and application overlays use movable
+  contiguous storage; application precedence remains last-entry-wins. Numeric
+  conversions have an explicit exact binary64 boundary and independent decimal
+  serialization; binary slice guards borrow coordinates. The CLI entry point owns
+  failure reporting separately from command dispatch. Windows project executables
+  reserve 8 MiB stacks for bounded parsing. Fresh full Debug build, all 75 CTests,
+  full Lizard/clang-tidy, formatting and whitespace pass. Added real CLI numeric
+  boundary cases including the largest finite binary64. No numbered compiler step
+  advanced. One pinned clang-tidy run crashed inside Boost.Parser; the unchanged
+  complete rerun passed (build/compile-steps/quality.log). Official maint-29 was fetched and remains at the recorded pin.
+
 - Step 1 (2026-09-24): pinned global Homebrew LLVM 23.1.1_1 / SDK 23.1.1;
   verified paths, tool versions, build metadata and documentation links. Frozen
   subset, CLI/artifact and provisional ABI contract in `docs/compile.md`.

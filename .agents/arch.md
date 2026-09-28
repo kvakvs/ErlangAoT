@@ -1,5 +1,11 @@
 # Architecture
 
+- Windows executables reserve 8 MiB stacks for bounded recursive parsing. Lexer
+  state and preprocessor application overrides use vector storage with allocation-free
+  moves; application lookup reads last matching override. CLI dispatch is separate
+  from the failure-contained process entry point. Exact binary64 integer conversion
+  uses a bounded native mantissa and arbitrary-precision shifts.
+
 - OTP source validation follows official `maint-29`, with an exact reviewed commit
   in `references/otp-pin.cmake`; `pinned.cmake` consumes it without network access.
   Refresh before future OTP-dependent work and review hashes/grammar evidence;

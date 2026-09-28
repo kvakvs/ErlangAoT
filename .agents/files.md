@@ -247,3 +247,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   builtins/bridge.cpp distinguishes unknown_builtin from known deferred signatures.
   `tests/runtime/services.cpp`, `service_output.cmake`: real boundary/sink/state/
   cleanup and once-only stderr tests. `docs/runtime-services.md`: scope and contracts.
+
+- `compiler/src/driver/command.{hpp,cpp}` owns CLI help and positional/project dispatch;
+  `main.cpp` contains unexpected failures. `preprocessor/integer.cpp` owns decimal
+  integer formatting and exact finite binary64-to-integer conversion.

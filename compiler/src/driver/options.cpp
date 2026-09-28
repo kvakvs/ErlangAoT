@@ -17,7 +17,7 @@ static std::optional<std::string> apply_pp_option(const int kind, const std::str
         if (equals == std::string::npos || equals == 0 || equals + 1 == value.size()) {
             return "expected app=directory";
         }
-        settings.applications.insert_or_assign(value.substr(0, equals), value.substr(equals + 1));
+        settings.applications.emplace_back(value.substr(0, equals), value.substr(equals + 1));
         break;
     }
     default:

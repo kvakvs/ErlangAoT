@@ -33,6 +33,10 @@ struct Value {
     std::vector<bool> bits;
 };
 
+// Serialize exact integers and decode finite binary64 independently of term structure.
+std::string decimal_integer(const BigInt &number);
+BigInt integer_from_double(double number);
+
 // Construct and inspect primitive values without C++ truthiness/coercion leaks.
 Value integer(BigInt number);
 Value atom(std::u32string text);

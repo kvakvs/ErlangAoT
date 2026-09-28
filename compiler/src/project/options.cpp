@@ -41,15 +41,17 @@ std::vector<std::pair<std::string, bool>> features(const TargetOptions &target, 
 }
 
 // Overlay application names while resolving each layer against its own directory.
-std::map<std::string, std::filesystem::path> applications(const TargetOptions &target, const PreprocessorOptions &cli,
-                                                          const std::filesystem::path &base,
-                                                          const std::filesystem::path &invocation) {
-    std::map<std::string, std::filesystem::path> result;
+std::vector<std::pair<std::string, std::filesystem::path>> applications(const TargetOptions &target,
+                                                                        const PreprocessorOptions &cli,
+                                                                        const std::filesystem::path &base,
+                                                                        const std::filesystem::path &invocation) {
+    std::vector<std::pair<std::string, std::filesystem::path>> result;
+    result.reserve(target.applications.size() + cli.applications.size());
     for (const auto &[name, path] : target.applications) {
-        result.emplace(name, absolute_path(base, native_path(path.value)));
+        result.emplace_back(name, absolute_path(base, native_path(path.value)));
     }
     for (const auto &[name, path] : cli.applications) {
-        result.insert_or_assign(name, absolute_path(invocation, path));
+        result.emplace_back(name, absolute_path(invocation, path));
     }
     return result;
 }

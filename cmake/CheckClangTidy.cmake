@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.25)
 # Analyze project translation units using the configured compiler flags.
 get_filename_component(project_root "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 if(NOT DEFINED QUALITY_BUILD_DIR)
@@ -37,6 +38,8 @@ if(command_count EQUAL 0)
 endif()
 math(EXPR last_command "${command_count} - 1")
 set(sources)
+set(selected_commands "[")
+set(separator "")
 foreach(index RANGE ${last_command})
     string(JSON source GET "${commands}" ${index} file)
     string(JSON directory GET "${commands}" ${index} directory)
@@ -44,6 +47,9 @@ foreach(index RANGE ${last_command})
     file(RELATIVE_PATH relative "${project_root}" "${source}")
     if(relative MATCHES "^(compiler|runtime|abi)/")
         list(APPEND sources "${source}")
+        string(JSON entry GET "${commands}" ${index})
+        string(APPEND selected_commands "${separator}${entry}")
+        set(separator ",")
     endif()
 endforeach()
 list(REMOVE_DUPLICATES sources)
@@ -51,19 +57,33 @@ if(NOT sources)
     message(FATAL_ERROR "No project translation units found in ${database}.")
 endif()
 
-# Run all selected files and preserve failures instead of silently skipping them.
-set(failed FALSE)
-foreach(source IN LISTS sources)
-    execute_process(
-        COMMAND "${CLANG_TIDY_EXECUTABLE}" "-p=${QUALITY_BUILD_DIR}"
-            "--config-file=${project_root}/.clang-tidy" ${toolchain_args} "${source}"
-        WORKING_DIRECTORY "${project_root}"
-        RESULT_VARIABLE tidy_result
-    )
-    if(NOT tidy_result STREQUAL "0")
-        set(failed TRUE)
-    endif()
-endforeach()
-if(failed)
+# Run the same translation units/flags independently with LLVM's bounded parallel runner.
+find_program(RUN_CLANG_TIDY_EXECUTABLE NAMES run-clang-tidy run-clang-tidy.py
+    HINTS "${project_root}/.venv-quality/bin" "${project_root}/.venv-quality/Scripts"
+        "${clang_directory}" REQUIRED)
+cmake_host_system_information(RESULT quality_cpus QUERY NUMBER_OF_LOGICAL_CORES)
+if(NOT DEFINED QUALITY_JOBS)
+    set(QUALITY_JOBS "${quality_cpus}")
+endif()
+if(NOT QUALITY_JOBS MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "QUALITY_JOBS must be a positive integer.")
+endif()
+if(QUALITY_JOBS GREATER 6)
+    set(QUALITY_JOBS 6)
+endif()
+# Preserve every selected command verbatim, including its original working directory.
+set(selected_database "${QUALITY_BUILD_DIR}/quality")
+file(MAKE_DIRECTORY "${selected_database}")
+file(WRITE "${selected_database}/compile_commands.json" "${selected_commands}]")
+list(TRANSFORM toolchain_args REPLACE "^--extra-arg=" "-extra-arg=")
+list(LENGTH sources source_count)
+message(STATUS "Analyzing all ${source_count} production translation units (${QUALITY_JOBS} concurrent jobs)")
+execute_process(
+    COMMAND "${RUN_CLANG_TIDY_EXECUTABLE}" "-p=${selected_database}" "-j=${QUALITY_JOBS}"
+        "-clang-tidy-binary=${CLANG_TIDY_EXECUTABLE}" "-config-file=${project_root}/.clang-tidy" ${toolchain_args}
+    WORKING_DIRECTORY "${project_root}"
+    RESULT_VARIABLE tidy_result
+)
+if(NOT tidy_result STREQUAL "0")
     message(FATAL_ERROR "clang-tidy failed. Fix the diagnostics above before committing.")
 endif()

@@ -15,6 +15,11 @@ foreach(expression IN ITEMS "(1 bsl 100) + 1 > (1 bsl 100)" "defined(MODULE)"
     "not defined(MISSING)" "1 == 1.0 andalso 1 =/= 1.0" "length([1,2|[]]) =:= 2"
     "map_get(key, #{key => 3}) =:= 3" "element(2,{a,b}) =:= b" "is_pid(self())"
     "bit_size(<<1:3>>) =:= 3" "is_integer(5,1,9)" "true orelse (1 div 0 =:= 0)"
+    "trunc(0.75) =:= 0" "trunc(-1.75) =:= -1" "round(1.5) =:= 2"
+    "trunc(9007199254740992.0) =:= 9007199254740992"
+    "trunc(1.2676506002282294e30) =:= (1 bsl 100)"
+    "trunc(-1.2676506002282294e30) =:= -(1 bsl 100)"
+    "trunc(1.7976931348623157e308) =:= ((1 bsl 1024) - (1 bsl 971))"
     "false =:= (false andalso 1 div 0)" "node() =:= nonode@nohost")
     check(condition "-if(${expression}). yes. -else. no. -endif." 0 "yes \\." "^$")
 endforeach()
@@ -71,3 +76,5 @@ foreach(size RANGE 0 ${length})
     endforeach()
 endforeach()
 
+
+check(big_decimal "?BIG." 0 "-123456789012345678901234567890" "^$" -DBIG=-123456789012345678901234567890)

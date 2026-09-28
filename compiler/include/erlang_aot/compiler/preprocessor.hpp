@@ -62,7 +62,8 @@ struct PreprocessorOptions {
     // Resolve host paths independently of the executable's eventual target.
     std::filesystem::path working_directory;
     std::vector<std::filesystem::path> include_paths;
-    std::map<std::string, std::filesystem::path> applications;
+    // Ordered application overrides use the last matching entry; moving options cannot allocate.
+    std::vector<std::pair<std::string, std::filesystem::path>> applications;
     // Initial macro names or NAME=TERM values and ordered feature changes.
     std::vector<std::string> definitions;
     std::vector<std::pair<std::string, bool>> features;

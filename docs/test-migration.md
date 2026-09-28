@@ -165,3 +165,13 @@ migration and native 32-bit runs remain pending; earlier host results are histor
 The subsequent source-reference refresh follows `maint-29`; see
 [the current pin and refresh policy](otp-reference.md). The active Debug build
 now uses `references/otp`; the migration worktree remains historical evidence.
+
+## Windows gate repair (2026-09-28)
+
+The subsequent compiler-plan prerequisite run passes all 75 Debug CTests and the
+full Lizard/clang-tidy gate. An 8 MiB executable stack resolves the retained raised-depth
+parser test. Move-safe frontend storage and isolated numeric/CLI boundaries resolve
+the earlier quality findings without disabling checks. Real preprocessor CLI cases
+cover binary64 truncation through the largest finite value and large signed decimal
+output. Earlier failing runs above remain historical evidence. Other native hosts
+and full frontend sanitizers remain pending.

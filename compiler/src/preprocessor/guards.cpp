@@ -91,7 +91,7 @@ Value rounded(const Value &value, double (*operation)(double)) {
     if (value.kind == ValueKind::integer) {
         return value;
     }
-    return integer(BigInt(operation(real(value))));
+    return integer(integer_from_double(operation(real(value))));
 }
 
 Value record(const Values &arguments) {
@@ -105,21 +105,26 @@ Value record(const Values &arguments) {
                    compare(value.elements[0], arguments[1], true) == 0);
 }
 
+// Borrow validated slice coordinates instead of copying unrelated recursive term payloads.
+std::span<const Value> binary_coordinates(const Values &arguments) {
+    if (arguments.size() == 3) {
+        return std::span(arguments).subspan(1);
+    }
+    const auto &pair = typed(arguments[1], ValueKind::tuple);
+    if (pair.elements.size() != 2) {
+        throw EvaluationFailure();
+    }
+    return pair.elements;
+}
+
 Value binary_part(const Values &arguments) {
     const auto &binary = typed(arguments[0], ValueKind::bits);
     if (binary.bits.size() % 8 != 0) {
         throw EvaluationFailure();
     }
-    auto position = arguments[1];
-    auto count = arguments.back();
-    if (arguments.size() == 2) {
-        const auto &pair = typed(arguments[1], ValueKind::tuple);
-        if (pair.elements.size() != 2) {
-            throw EvaluationFailure();
-        }
-        count = pair.elements[1];
-        position = pair.elements[0];
-    }
+    const auto coordinates = binary_coordinates(arguments);
+    const auto &position = coordinates[0];
+    const auto &count = coordinates[1];
     const auto total = binary.bits.size() / 8;
     const auto position_index = index(position, total);
     const bool backwards = integral(count) < 0;

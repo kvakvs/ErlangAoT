@@ -123,7 +123,7 @@ void compound(std::vector<Token> &output, const Value &value, const Token &site)
 std::vector<Token> term_tokens(const Value &value, const Token &site) {
     switch (value.kind) {
     case ValueKind::integer:
-        return {generated(site, TokenKind::integer, Integer{value.integer.str()})};
+        return {generated(site, TokenKind::integer, Integer{decimal_integer(value.integer)})};
     case ValueKind::floating:
         return {generated(site, TokenKind::floating, value.real)};
     case ValueKind::atom:

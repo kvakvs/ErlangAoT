@@ -634,3 +634,11 @@
   findings still fail clang-tidy. Focused tree.cpp/dump.cpp (including changed test
   headers) pass clang-tidy; test-helper Lizard and changed-file clang-format pass.
   Logs and one-off conversion scripts are ignored under build/ast-format/.
+
+- 2026-09-28 compile-plan prerequisite: fresh Debug75/75 and full pinned22.1.8
+  tidy/Lizard pass. Windows /STACK:8388608 fixes raised-depth parser regression.
+  No suppressions/threshold changes; numeric conversion isolated with frexp/mantissa,
+  binary_part borrows coordinates, Lexer/options move via vectors, main dispatch split.
+  Maint29 fetch unchanged21776803ecd11f5fa948732c0ec66b8f325dedfc. Logs/scripts
+  build/compile-steps; native VsDevCmd18 plus LLVM PATH required. Ninja probes need
+  elevated execution here; sandbox probe hung. Step15+ drafts ignored under staging.

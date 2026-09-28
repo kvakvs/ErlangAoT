@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include <algorithm>
 
 namespace erlang_aot {
 std::string PreprocessorSession::State::expand_environment(std::string name) const {
@@ -20,8 +21,9 @@ void append_application(std::vector<std::filesystem::path> &result, const std::f
                         const PreprocessorOptions &options) {
     if (path.begin() != path.end()) {
         auto component = path.begin();
-        const auto app = options.applications.find(component->string());
-        if (app != options.applications.end()) {
+        const auto app = std::find_if(options.applications.rbegin(), options.applications.rend(),
+                                      [&](const auto &entry) { return entry.first == component->string(); });
+        if (app != options.applications.rend()) {
             auto candidate = app->second;
             if (candidate.is_relative()) {
                 candidate = options.working_directory / candidate;

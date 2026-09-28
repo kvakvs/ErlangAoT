@@ -1,5 +1,4 @@
 #pragma once
-#include <deque>
 #include <erlang_aot/compiler/diagnostic.hpp>
 #include <optional>
 #include <set>
@@ -83,13 +82,13 @@ class Lexer {
     std::size_t cursor_ = 0;
     // Control comment reporting and feature-sensitive reserved words.
     bool comments_;
-    std::set<std::u32string> keywords_;
+    std::vector<std::u32string> keywords_;
     // Map physical line movement onto a caller-selected logical origin.
     std::string logical_file_;
     std::size_t physical_base_ = 1;
     std::size_t logical_base_ = 1;
     // Sigils produce prefix, string, and suffix tokens from one lexical unit.
-    std::deque<Token> pending_;
+    std::vector<Token> pending_;
     // Reject adjacent quoted strings without separating whitespace/comments.
     bool previous_string_ = false;
 

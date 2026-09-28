@@ -42,13 +42,12 @@ std::u32string_view Lexer::rest() const { return std::u32string_view(source_->te
 
 std::size_t Lexer::offset() const { return cursor_; }
 
-void Lexer::set_keywords(std::set<std::u32string> keywords) { keywords_ = std::move(keywords); }
+void Lexer::set_keywords(std::set<std::u32string> keywords) { keywords_.assign(keywords.begin(), keywords.end()); }
 
 void Lexer::set_keyword(std::u32string keyword, const bool enabled) {
+    std::erase(keywords_, keyword);
     if (enabled) {
-        keywords_.insert(std::move(keyword));
-    } else {
-        keywords_.erase(keyword);
+        keywords_.push_back(std::move(keyword));
     }
 }
 
@@ -112,7 +111,7 @@ Token Lexer::word() {
     cursor_ += word_length(rest());
     auto text = source_->text.substr(begin, cursor_ - begin);
     auto kind = variable_start(text.front()) ? TokenKind::variable : TokenKind::atom;
-    if (kind == TokenKind::atom && keywords_.contains(text)) {
+    if (kind == TokenKind::atom && std::ranges::contains(keywords_, text)) {
         kind = TokenKind::keyword;
     }
     if (text.size() > 255) {
@@ -144,7 +143,7 @@ Token Lexer::punctuation() {
 std::optional<Token> Lexer::next() {
     if (!pending_.empty()) {
         auto result = std::move(pending_.front());
-        pending_.pop_front();
+        pending_.erase(pending_.begin());
         return result;
     }
     if (auto comment = trivia()) {
