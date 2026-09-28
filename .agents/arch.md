@@ -263,3 +263,5 @@
   A real-source stage adapter verifies/emits objects; CLI publication remains deferred.
 
 - Step25: Parameter lowering borrows the binding table and emits a target-word-aligned load from the original argument position. Grouped identity and three-argument projections with unused wildcards retain tagged terms unchanged, without type assumptions or inbounds promises. Native and 32-bit object/IR checks pass. Debug25 exposes inferred input/result relations.
+
+- Step26: Direct local calls consume resolved identities and inferred summaries. An iterative postorder walk evaluates nested arguments in source order, builds aligned argument arrays and forwards the original process context. Zero-arity calls pass an unused null argument pointer. Forward/private calls, nested calls and identical argument positions are covered; CLI wrong-arity/missing/cycle regressions remain active. Debug26 prints inferred lowering inputs.

@@ -353,3 +353,16 @@ Debug25 exposes inferred input/result relations.
 Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
 full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
 later work. Cross-target object checks do not claim native execution on those hosts.
+
+### Step 26
+
+Direct local calls consume resolved identities and inferred summaries. An
+iterative postorder walk evaluates nested arguments in source order, builds
+aligned argument arrays and forwards the original process context. Zero-arity
+calls pass an unused null argument pointer. Forward/private calls, nested calls
+and identical argument positions are covered; CLI wrong-arity/missing/cycle
+regressions remain active. Debug26 prints inferred lowering inputs.
+
+Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
+full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
+later work. Cross-target object checks do not claim native execution on those hosts.

@@ -35,14 +35,15 @@ void declare(llvm::Module &output, const semantic::Module &module, llvm::Functio
 }
 
 // Keep generic bodies independent of declared types and inferred representation guesses.
-void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word) {
+void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word,
+            const semantic::types::Inference &inferred) {
     for (const auto &function : module.functions) {
         auto *entry = output.getFunction(function.symbol);
         const auto &syntax = *module.syntax;
         const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
         const auto root = definition.clauses.at(0).body.at(0);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-        builder.CreateRet(lower_expression(builder, *entry, module, function, root, word));
+        builder.CreateRet(lower_expression(builder, *entry, module, function, root, word, inferred));
     }
 }
 
@@ -73,7 +74,7 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
             declare(*outputs[i], *modules[i], signature, inferred);
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
-            define(*outputs[i], *modules[i], word);
+            define(*outputs[i], *modules[i], word, inferred);
         }
         return verify_ir(compilation);
     } catch (const std::exception &error) {

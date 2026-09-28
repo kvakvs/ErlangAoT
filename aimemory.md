@@ -689,3 +689,6 @@
 
 - Step25 complete and individually committed after fresh full80/80 + quality.
   Logs build/compile-steps/step25*. `lowering_expressions.{hpp,cpp}` lowers tagged literals and parameter-array reads.
+
+- Step26 complete and individually committed after fresh full80/80 + quality.
+  Logs build/compile-steps/step26*. `lowering_state.hpp` and `lowering_calls.cpp` own iterative expression state and generic call emission.

@@ -318,3 +318,8 @@ execute_process(COMMAND "${TOOL}" --impldebug 25 inference_user.erl inference_ow
 if(NOT result STREQUAL "0" OR NOT out STREQUAL "" OR NOT err MATCHES "impldebug 25.*third.*result=argument")
  message(FATAL_ERROR "Step 25 inferred lowering input: ${out}${err}")
 endif()
+
+execute_process(COMMAND "${TOOL}" --impldebug 26 inference_user.erl inference_owner.erl WORKING_DIRECTORY "${semantic_work}" RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
+if(NOT result STREQUAL "0" OR NOT out STREQUAL "" OR NOT err MATCHES "impldebug 26.*fourth.*result=-7")
+ message(FATAL_ERROR "Step 26 inferred lowering input: ${out}${err}")
+endif()

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–25 complete, 2026-09-28. Steps 26–46 remain pending.
+Status: steps 1–26 complete, 2026-09-28. Steps 27–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1388,6 +1388,16 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   projections with unused wildcards retain tagged terms unchanged, without type
   assumptions or inbounds promises. Native and 32-bit object/IR checks pass.
   Debug25 exposes inferred input/result relations.
+  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
+  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
+  whitespace pass. Other native hosts and frontend sanitizers remain pending.
+
+- Step 26 (2026-09-28): Direct local calls consume resolved identities and inferred summaries. An
+  iterative postorder walk evaluates nested arguments in source order, builds
+  aligned argument arrays and forwards the original process context. Zero-arity
+  calls pass an unused null argument pointer. Forward/private calls, nested calls
+  and identical argument positions are covered; CLI wrong-arity/missing/cycle
+  regressions remain active. Debug26 prints inferred lowering inputs.
   Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
   Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
   whitespace pass. Other native hosts and frontend sanitizers remain pending.

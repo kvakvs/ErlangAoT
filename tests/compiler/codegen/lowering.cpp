@@ -3,7 +3,9 @@
 #include "codegen/llvm_state.hpp"
 #include "semantic/bindings.hpp"
 #include "semantic/capabilities.hpp"
+#include "semantic/symbols.hpp"
 #include "semantic/types/contracts.hpp"
+#include <algorithm>
 #include <cstdio>
 #include <erlang_aot/compiler/parser.hpp>
 #include <llvm/IR/Constants.h>
@@ -119,6 +121,54 @@ void parameters(const std::string &triple = {}, unsigned bits = sizeof(void *) *
     inspect_object(compilation);
 }
 
+// Recover call targets through LLVM use lists, preserving exact decoded source identities.
+std::map<const llvm::User *, std::string> call_targets(const llvm::Module &module) {
+    std::map<const llvm::User *, std::string> result;
+    for (const auto &function : module) {
+        const auto identity = semantic::decode_symbol(function.getName().str());
+        if (!identity) {
+            throw std::runtime_error("invalid generated function symbol");
+        }
+        for (const auto *user : function.users()) {
+            result.emplace(user, identity->function);
+        }
+    }
+    return result;
+}
+
+// Inspect source-order nested calls and the exact context forwarded at every ABI boundary.
+void local_calls() {
+    auto compilation = fixture("calls.erl");
+    require(analyze_and_lower(compilation), "local call lowering failed");
+    auto &module = *cg::detail::state(compilation).modules.front();
+    auto *entry = module.getFunction(semantic::encode_symbol({"calls", "value", 0}));
+    const auto targets = call_targets(module);
+    std::vector<std::string> names;
+    for (const auto &instruction : entry->getEntryBlock()) {
+        if (const auto *call = llvm::dyn_cast<llvm::CallInst>(&instruction)) {
+            names.push_back(targets.at(call));
+            require(std::ranges::count(entry->getArg(0)->users(), call) == 1, "call lost process context");
+            require(call->getCallingConv() == llvm::CallingConv::C, "call uses wrong convention");
+        }
+    }
+    for (const auto &use : entry->getArg(0)->uses()) {
+        require(use.getOperandNo() == 0, "call moved the process context");
+    }
+    require(names == std::vector<std::string>{"left", "right", "identity", "left", "project"},
+            "nested calls changed source evaluation order");
+    auto *equal = module.getFunction(semantic::encode_symbol({"calls", "equal", 0}));
+    std::size_t stores = 0;
+    for (const auto &instruction : equal->getEntryBlock()) {
+        if (const auto *store = llvm::dyn_cast<llvm::StoreInst>(&instruction)) {
+            const auto *value = llvm::cast<llvm::ConstantInt>(store->getValueOperand());
+            require(value->getValue().ashr(4).getSExtValue() == 7, "identical call argument changed");
+            ++stores;
+        }
+    }
+    require(stores == 3, "identical arguments lost their distinct positions");
+    inspect_object(compilation);
+}
+
 // Check source-to-object behavior without publishing artifacts or linking a program.
 int main() {
     try {
@@ -130,6 +180,7 @@ int main() {
         parameters("i686-unknown-linux-gnu", 32);
 #endif
         parameters();
+        local_calls();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

@@ -285,3 +285,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   backend adapter, target-width boundaries and actual object checks.
 
 - Step25: `lowering_expressions.{hpp,cpp}` lowers tagged literals and parameter-array reads.
+
+- Step26: `lowering_state.hpp` and `lowering_calls.cpp` own iterative expression state and generic call emission.
