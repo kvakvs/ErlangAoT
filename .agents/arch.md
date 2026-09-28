@@ -237,3 +237,5 @@
   and exports. Module tables have stable unique ownership and borrow their AST.
   Versioned symbols encode UTF-8 bytes as separated hex components with canonical
   arity. Default CLI paths validate declarations; check/print paths remain syntax-only.
+
+- Step16 adds exhaustive capability visitors and ABI-width integer decoding before binding/lowering.

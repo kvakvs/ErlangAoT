@@ -257,3 +257,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   private ABI function identities. `tests/compiler/semantic/cases.cmake` extends
   frontend CLI behavior; `symbols.cpp` protects round-trip/collision invariants pending
   emitted objects. Project declaration cases live in `tests/compiler/project/cli.cmake`.
+
+- `compiler/src/semantic/{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the executable subset while retaining symbolic type metadata.

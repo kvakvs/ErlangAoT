@@ -60,7 +60,7 @@ add_test(NAME cli COMMAND "${CMAKE_COMMAND}"
 
 add_test(NAME frontend_cli COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser/cli"
-    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/frontend-cli"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/frontend-cli" "-DWORD_BYTES=${CMAKE_SIZEOF_VOID_P}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/frontend_cases.cmake")
 add_test(NAME printing_roundtrip COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DDUMP=$<TARGET_FILE:preprocessor_dump>"

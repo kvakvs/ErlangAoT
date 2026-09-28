@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–14 complete, 2026-09-25. Steps 15–46 remain pending.
+Status: steps 1–16 complete, 2026-09-28. Steps 17–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1275,3 +1275,12 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   The direct pinned analyzer was selected with CMAKE_PROGRAM_PATH after intermittent
   launcher/analyzer failures; the complete target passed without excluding files.
   Other native platforms remain pending. Body capabilities/bindings/calls are later steps.
+
+- Step 16 (2026-09-28): exhaustive form/expression capability visitors enforce
+  single-clause variable/wildcard functions, one body expression, immediate integer
+  bounds, and direct-call syntax throughout unused functions and nested arguments.
+  Inert metadata and type/spec syntax remain accepted. Syntax-only actions retain
+  broader coverage. Fresh full Windows x64 Debug build, all 76 CTests, full Lizard
+  and pinned native clang-tidy22.1.8 pass; formatting and whitespace pass.
+  Integer decoding accepts explicit negative literals and uses ABI target-width
+  limits (the current CLI supplies native width; target selection remains later).

@@ -9,10 +9,19 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Function-body capability checking, parameter/call resolution and type analysis are
+Parameter/call resolution and type analysis are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
 Each name component contains lowercase hexadecimal UTF-8 bytes; arities use canonical
 unsigned decimal. Separators cannot occur in encoded names, so encoding is reversible
 and independent of compiler-host hashing, locale and table order.
+
+Compilation checks every function, including unused definitions. The current subset
+accepts one clause with variable/wildcard arguments and one expression: an ABI-small
+integer, parameter reference, or syntactically direct local/literal remote call.
+Nested call arguments are checked. Explicit negative integers are supported;
+arithmetic, atoms, heap values, matching, guards, exceptions, concurrency, dynamic
+calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
+is symbolic and does not enable executable syntax. Current CLI bounds are native;
+the analysis API accepts explicit 32/64-bit target bounds for later target setup.

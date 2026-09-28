@@ -1,5 +1,5 @@
 #include "frontend.hpp"
-#include "../semantic/declarations.hpp"
+#include "../semantic/capabilities.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
@@ -51,10 +51,12 @@ void print_form(const PreprocessorEvent &event) {
 // Establish language declarations before the still-deferred lowering stage.
 bool compile_module(const ast::Module &syntax, const std::filesystem::path &path, const DiagnosticSink &sink) {
     bool failed = false;
-    semantic::index(syntax, filename(path), [&](const Diagnostic &diagnostic) {
+    const semantic::Reporter report = [&](const Diagnostic &diagnostic) {
         failed = failed || diagnostic.severity == Severity::error;
         print_diagnostic(diagnostic, sink);
-    });
+    };
+    const auto module = semantic::index(syntax, filename(path), report);
+    semantic::check_capabilities(*module, report);
     return failed;
 }
 

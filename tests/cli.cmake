@@ -153,9 +153,9 @@ check_cli(default_pp_error 1 "^$" "error:.*stop" error.erl)
 check_cli(default_parse_error 1 "^$" "error:.*parse-error.erl" parse-error.erl)
 check_cli(default_failure_latches 1 "^$" "parse-error.erl.*warning:.*notice" parse-error.erl warning.erl)
 check_cli(default_isolation 0 "^$" "^$" first.erl second.erl)
-check_cli(default_expansion 0 "^$" "^$"
+check_cli(default_expansion 1 "^$" "heap expressions"
     -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
-check_cli(default_options 0 "^$" "^$" --app-dir demo=app
+check_cli(default_options 1 "^$" "heap expressions" --app-dir demo=app
     --enable-feature compr_assign --disable-feature maybe_expr parse-options.erl)
 
 # Verbose traces describe only ingested files and never become printed source or AST.
@@ -168,7 +168,7 @@ set(include_trace "\\[pp\\] [^\n]*outer.hrl\n\\[pp\\] [^\n]*inner.hrl\n\\[pp\\] 
 check_cli(verbose_help 0 "--verbose" "^$" --verbose --help)
 check_cli(verbose_version 0 "^erlangaot" "^$" --verbose --version)
 check_cli(verbose_no_inputs 2 "^$" "no input files" --verbose)
-check_cli(verbose_default 0 "^$" "^${pp_trace}${parse_trace}${include_trace}$" --verbose --app-dir demo=app trace.erl)
+check_cli(verbose_default 1 "^$" "^${pp_trace}${parse_trace}${include_trace}error:.*atom expressions" --verbose --app-dir demo=app trace.erl)
 check_cli(verbose_pp_only 0 "^$" "^${pp_trace}${include_trace}$" --verbose --preprocess-check --app-dir demo=app trace.erl)
 check_cli(verbose_parse 0 "^$" "^${pp_trace}${parse_trace}${include_trace}$" --verbose --parse-check --app-dir demo=app trace.erl)
 check_cli(verbose_print_pp 0 "^- file .*f [(] [)] -> true [.]\n$" "^${pp_trace}${include_trace}$"
@@ -177,4 +177,4 @@ check_cli(verbose_print_ast 0 "^\\(Module .*Atom name=true\\)\n    \\)\n  \\)\n\
     --verbose --print-ast --app-dir demo=app trace.erl)
 check_cli(verbose_multiple 0 "^$" "^\\[pp\\] first.erl\n\\[parse\\] first.erl\n\\[pp\\] second.erl\n\\[parse\\] second.erl\n$"
     --verbose first.erl second.erl)
-check_cli(verbose_opt_in 0 "^$" "^$" --app-dir demo=app trace.erl)
+check_cli(verbose_opt_in 1 "^$" "^error:.*atom expressions" --app-dir demo=app trace.erl)
