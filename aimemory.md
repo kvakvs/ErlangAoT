@@ -656,3 +656,5 @@
 - Step18 completed with76/76 and full quality. Windows analyzer concurrency2; step19–21 drafts under build/compile-steps, apply individually.
 
 - Step 19 completed: full fresh build, 76/76 CTests and Lizard/tidy pass. TargetExecutor now receives a source span; frontend process_files retains batch ASTs. Step 20 next.
+
+- Step 20 complete: final fresh full build, 77/77 tests, full Lizard/tidy. Type test declaration lookup must skip generated file attributes. Step 21 draft needs OTP-checked union variable counting, nominal barriers, duplicate-formal last substitution and duplicate constraint support.

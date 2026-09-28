@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Type analysis and lowering are
+Declared type resolution, inference and lowering are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -39,3 +39,12 @@ including self-qualified calls, require explicit exports. Missing/private callee
 duplicate module identities and direct or indirect recursion are errors.
 The call graph retains a deterministic callee-before-caller dependency order for
 future inference. No executable body inference or code emission is performed yet.
+
+The private semantic type graph represents all parsed type categories independently
+of runtime/LLVM layouts. It retains exact singleton spellings, range endpoints,
+container shapes, map field roles, function products and unresolved applications.
+Graph-owned identities survive storage growth and reject foreign children. Union
+joins flatten and deduplicate members, with top (`term()`) and bottom (`none()`)
+identities. Analysis defaults cap the graph at 16,384 nodes, unions at 16 alternatives,
+and each syntax translation at 100,000 work items. Exhaustion yields top and an
+observable widening flag; it never justifies a narrower runtime representation.

@@ -265,3 +265,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/src/semantic/bindings.{hpp,cpp}` resolves parameter reads, wildcards and repeated-pattern rejection.
 
 - `semantic/calls.{hpp,cpp}` resolves exact direct calls and acyclic dependency order. `driver/frontend.cpp` owns AST batches; `project/execution.{hpp,cpp}` supplies one batch per target.
+
+- `semantic/types/domain.{hpp,cpp}` owns type identities, joins and limits; `syntax.{hpp,cpp}` exhaustively describes/translates AST types. `tests/compiler/semantic/types.cpp` protects unobservable ownership/lattice/structural invariants.

@@ -175,3 +175,11 @@ the earlier quality findings without disabling checks. Real preprocessor CLI cas
 cover binary64 truncation through the largest finite value and large signed decimal
 output. Earlier failing runs above remain historical evidence. Other native hosts
 and full frontend sanitizers remain pending.
+
+
+Compiler steps 18–20 keep source binding/call diagnostics in `frontend_cli`, including
+project batches and target isolation. `semantic_types` is a temporary focused
+exception for type identity ownership, lattice/widening and structural distinctions
+without public inspection until step 39. It parses actual Erlang type declarations;
+it does not add a product testing switch. Step 20's full Windows Debug gate passes
+77/77 tests and full Lizard/clang-tidy.

@@ -245,3 +245,5 @@
 - Step18 records argument-position bindings beside immutable function syntax.
 
 - Step 19 owns complete positional/target AST batches before semantic analysis; call side tables and an iterative dependency order remain LLVM-free and target-isolated.
+
+- Step 20 adds an LLVM-free bounded symbolic type graph; immutable syntax is translated iteratively, and resource exhaustion conservatively widens to top.

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–19 complete, 2026-09-28. Steps 20–46 remain pending.
+Status: steps 1–20 complete, 2026-09-28. Steps 21–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1307,3 +1307,15 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   duplicate module identities, project batch success and target isolation.
   Fresh Windows x64 Debug compiler+runtime build, all 76 CTests, full Lizard and
   clang-tidy pass; formatting and whitespace pass. Other native hosts remain pending.
+
+- Step 20 (2026-09-28): LLVM-independent semantic type graph interns stable,
+  owner-checked identities and exhaustively describes every AST type alternative.
+  Exact integer/atom spellings and structural flags remain symbolic; unions flatten,
+  sort and deduplicate, with explicit top/bottom and conservative bounded widening.
+  Node, union-member and syntax-work limits report exhaustion to callers. Focused
+  ownership/lattice tests and parsed source fixtures cover all categories and empty
+  versus unrestricted structural shapes; these remain private invariants until
+  step 39 supplies public inspection. Initial checks corrected a complexity finding,
+  an unnecessary handle copy and fixture lookup of preprocessing file attributes.
+  Final fresh Windows x64 Debug build and all 77 CTests pass, as do full Lizard,
+  clang-tidy, formatting and whitespace. Other native platforms remain pending.
