@@ -57,7 +57,7 @@ endforeach()
 target_link_libraries(erlang_aot PRIVATE erlang_codegen)
 
 # Semantic analysis owns language identities without depending on LLVM representations.
-add_library(erlang_semantic STATIC src/semantic/bindings.cpp src/semantic/declarations.cpp src/semantic/symbols.cpp
+add_library(erlang_semantic STATIC src/semantic/calls.cpp src/semantic/bindings.cpp src/semantic/declarations.cpp src/semantic/symbols.cpp
     src/semantic/features.cpp src/semantic/capabilities.cpp src/semantic/literals.cpp src/semantic/expression_capability.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_link_libraries(erlang_semantic PUBLIC erlang_frontend PRIVATE erlang_aot_abi)

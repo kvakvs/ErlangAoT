@@ -654,3 +654,5 @@
 - Step17 full tests and quality passed; one nondiagnostic analyzer failure preceded successful complete rerun.
 
 - Step18 completed with76/76 and full quality. Windows analyzer concurrency2; step19–21 drafts under build/compile-steps, apply individually.
+
+- Step 19 completed: full fresh build, 76/76 CTests and Lizard/tidy pass. TargetExecutor now receives a source span; frontend process_files retains batch ASTs. Step 20 next.

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–18 complete, 2026-09-28. Steps 19–46 remain pending.
+Status: steps 1–19 complete, 2026-09-28. Steps 20–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1298,3 +1298,12 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   all76 CTests, full Lizard and pinned native clang-tidy pass. Windows analysis
   concurrency now defaults to2 to bound memory after nondiagnostic process failures;
   source coverage, checks and thresholds remain unchanged.
+
+- Step 19 (2026-09-28): positional inputs share one owned AST batch; each project
+  target receives an independent batch. Direct calls resolve exact module/name/arity
+  and remote exports, retaining expression/declaration links and deterministic
+  callee-before-caller order. Iterative ordering rejects local/cross-module cycles.
+  CLI tests cover forward/nested calls, 501-function chains, located errors,
+  duplicate module identities, project batch success and target isolation.
+  Fresh Windows x64 Debug compiler+runtime build, all 76 CTests, full Lizard and
+  clang-tidy pass; formatting and whitespace pass. Other native hosts remain pending.

@@ -1,6 +1,7 @@
 #pragma once
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <functional>
+#include <span>
 
 namespace erlang_aot::cli {
 struct FrontendRequest {
@@ -18,6 +19,7 @@ struct FrontendRequest {
 
 // Allow callers to attach project context without changing frontend source rendering.
 using DiagnosticSink = std::function<void(std::string_view)>;
-// Process one source in isolated sessions, reporting failures through the caller's sink.
-bool process_file(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &diagnostics);
+// Process one isolated batch; project targets never share declaration tables.
+bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
+                   const DiagnosticSink &diagnostics);
 } // namespace erlang_aot::cli

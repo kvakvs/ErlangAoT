@@ -1,17 +1,16 @@
 #include "execution.hpp"
 #include "diagnostics.hpp"
-#include "paths.hpp"
 
 namespace erlang_aot::project {
 namespace {
-// Attach owning project, target, and physical source context to every frontend diagnostic.
-bool process(const Invocation &invocation, const PlannedTarget &target, const std::filesystem::path &path,
-             const FileExecutor &executor, const MessageSink &diagnostics) {
+// Attach project/target context; the shared frontend retains each diagnostic's source.
+bool process(const Invocation &invocation, const PlannedTarget &target, const TargetExecutor &executor,
+             const MessageSink &diagnostics) {
     const MessageSink report = [&](std::string_view message) {
-        diagnostics(render({{invocation.file, path_text(path), target.name, 0, 0}, std::string(message), 1}));
+        diagnostics(render({{invocation.file, "", target.name, 0, 0}, std::string(message), 1}));
     };
     try {
-        return executor(path, target.preprocessing, report);
+        return executor(target.sources, target.preprocessing, report);
     } catch (const std::exception &error) {
         report("error: " + std::string(error.what()));
     }
@@ -19,12 +18,10 @@ bool process(const Invocation &invocation, const PlannedTarget &target, const st
 }
 } // namespace
 
-int execute(const Invocation &invocation, const FileExecutor &executor, const MessageSink &diagnostics) {
+int execute(const Invocation &invocation, const TargetExecutor &executor, const MessageSink &diagnostics) {
     bool failed = false;
     for (const auto &target : invocation.targets) {
-        for (const auto &path : target.sources) {
-            failed = process(invocation, target, path, executor, diagnostics) || failed;
-        }
+        failed = process(invocation, target, executor, diagnostics) || failed;
     }
     return failed ? 1 : 0;
 }

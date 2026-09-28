@@ -1,5 +1,7 @@
 #include "frontend.hpp"
+#include "../codegen/request.hpp"
 #include "../semantic/bindings.hpp"
+#include "../semantic/calls.hpp"
 #include "../semantic/capabilities.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
@@ -49,24 +51,32 @@ void print_form(const PreprocessorEvent &event) {
     }
 }
 
-// Establish language declarations before the still-deferred lowering stage.
-bool compile_module(const ast::Module &syntax, const std::filesystem::path &path, const DiagnosticSink &sink) {
+// Own syntax for the entire batch before borrowing it in semantic side tables.
+using Inputs = std::vector<codegen::CompilationInput>;
+
+// Finish declaration and binding checks before resolving the batch dependency graph.
+bool compile_batch(const Inputs &inputs, const DiagnosticSink &sink) {
     bool failed = false;
     const semantic::Reporter report = [&](const Diagnostic &diagnostic) {
         failed = failed || diagnostic.severity == Severity::error;
         print_diagnostic(diagnostic, sink);
     };
-    const auto module = semantic::index(syntax, filename(path), report);
-    semantic::check_capabilities(*module, report);
-    if (!failed) {
+    std::vector<std::unique_ptr<semantic::Module>> modules;
+    for (const auto &input : inputs) {
+        auto module = semantic::index(input.syntax, filename(input.source_path), report);
+        semantic::check_capabilities(*module, report);
         semantic::bind_parameters(*module, report);
+        modules.push_back(std::move(module));
+    }
+    if (!failed) {
+        const auto calls = semantic::resolve_calls(modules, report);
     }
     return failed;
 }
 
 // Consume a parsing pass and dispatch successful modules to the requested final stage.
 bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
-                     const std::filesystem::path &path) {
+                     const std::filesystem::path &path, Inputs &inputs) {
     ParserSession parser;
     while (!parser.stopped()) {
         const auto event = session.next();
@@ -89,20 +99,21 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
         return true;
     }
     if (request.compile) {
-        return compile_module(result.module, path, sink);
+        inputs.emplace_back(path, std::move(result.module));
     }
     return false;
 }
 
 // Keep source ownership and all mutable frontend state local to one file.
-bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink) {
+bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink,
+                    Inputs &inputs) {
     SourceManager sources;
     const auto source = sources.read(path);
     trace_ingestion(request.verbose, "pp", path);
     PreprocessorSession session(source, preprocessing_options(request));
     if (request.parse_check || request.print_ast || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
-        return parse_and_print(session, request, sink, path);
+        return parse_and_print(session, request, sink, path, inputs);
     }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<Diagnostic>(&*event)) {
@@ -115,12 +126,11 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     return session.failed();
 }
 
-} // namespace
-
-bool process_file(const std::filesystem::path &path, const FrontendRequest &request,
-                  const DiagnosticSink &diagnostics) {
+// Preserve per-file recovery while retaining successful syntax for the batch.
+bool process_file(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &diagnostics,
+                  Inputs &inputs) {
     try {
-        return process_module(path, request, diagnostics);
+        return process_module(path, request, diagnostics, inputs);
     } catch (const EncodingError &error) {
         diagnostics(filename(path) + ": byte " + std::to_string(error.byte) + ": " + error.what());
     } catch (const std::exception &error) {
@@ -129,16 +139,27 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
     return true;
 }
 
+} // namespace
+
+bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
+                   const DiagnosticSink &sink) {
+    Inputs inputs;
+    bool failed = false;
+    for (const auto &path : paths) {
+        failed = process_file(path, request, sink, inputs) || failed;
+    }
+    if (request.compile) {
+        failed = compile_batch(inputs, sink) || failed;
+    }
+    return failed;
+}
+
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
     const FrontendRequest request{options.print_pp,    options.print_ast, options.parse_check,
                                   !options.preprocess, options.verbose,   options.preprocessing};
     const DiagnosticSink sink = [](const std::string_view message) { std::cerr << message << '\n'; };
-    bool failed = false;
-    for (const auto &path : options.inputs) {
-        failed = process_file(path, request, sink) || failed;
-    }
-    return failed ? 1 : 0;
+    return process_files(options.inputs, request, sink) ? 1 : 0;
 }
 
 // Check physical inputs before entering either preprocessing or future compilation.

@@ -44,12 +44,12 @@ int run_project(const erlang_aot::cli::Options &options) {
     if (options.output_explicit) {
         settings.output = options.output;
     }
-    const erlang_aot::project::FileExecutor execute = [&](const auto &path, const auto &preprocessing,
-                                                          const auto &sink) {
-        return erlang_aot::cli::process_file(path,
-                                             {options.print_pp, options.print_ast, options.parse_check,
-                                              !options.preprocess, options.verbose, preprocessing},
-                                             sink);
+    const erlang_aot::project::TargetExecutor execute = [&](const auto &path, const auto &preprocessing,
+                                                            const auto &sink) {
+        return erlang_aot::cli::process_files(path,
+                                              {options.print_pp, options.print_ast, options.parse_check,
+                                               !options.preprocess, options.verbose, preprocessing},
+                                              sink);
     };
     return erlang_aot::project::run(options.project, settings, execute, std::cout, std::cerr);
 }

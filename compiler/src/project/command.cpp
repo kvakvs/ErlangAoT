@@ -16,7 +16,7 @@ std::filesystem::path resolve_project_file(std::filesystem::path file) {
 }
 } // namespace
 
-int run(const Request &request, const PlanOptions &options, const FileExecutor &executor, std::ostream &output,
+int run(const Request &request, const PlanOptions &options, const TargetExecutor &executor, std::ostream &output,
         std::ostream &diagnostics) {
     try {
         if (request.create) {

@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Call resolution and type analysis are
+Type analysis and lowering are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -30,3 +30,12 @@ Each named parameter must be distinct. `_` consumes an argument position without
 creating a binding; `_Name` is an ordinary named variable. Body reads retain the
 original argument index in semantic side tables. Reading `_`, using an unbound
 name, or repeating a named parameter is rejected before lowering.
+
+Positional inputs form one compilation batch. Each selected project target forms
+its own batch with independent preprocessing sessions and declaration tables.
+All ASTs remain owned until analysis finishes. Forward and nested calls resolve
+within that batch by decoded module/function name and arity. Remote calls,
+including self-qualified calls, require explicit exports. Missing/private callees,
+duplicate module identities and direct or indirect recursion are errors.
+The call graph retains a deterministic callee-before-caller dependency order for
+future inference. No executable body inference or code emission is performed yet.

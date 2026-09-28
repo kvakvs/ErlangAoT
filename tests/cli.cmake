@@ -32,8 +32,10 @@ check_cli(missing_input 1 "^$" "cannot access|not a regular file" missing.erl)
 check_cli(directory_input 1 "^$" "not a regular file" .)
 check_cli(default_pipeline 0 "^$" "^$" "source with spaces.erl")
 check_cli(end_of_options 0 "^$" "^$" -- -source.erl)
+file(WRITE "${TEST_DIR}/-source.erl" "-module(other).\n")
 check_cli(multiple_inputs 0 "^$" "^$"
     "source with spaces.erl" ./-source.erl)
+file(WRITE "${TEST_DIR}/-source.erl" "-module(example).\n")
 
 set(output "${TEST_DIR}/output file")
 file(REMOVE "${output}")

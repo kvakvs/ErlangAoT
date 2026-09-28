@@ -243,3 +243,5 @@
 - Step17 routes capability rejections through the shared catalog and adds fail-closed lowering extension points.
 
 - Step18 records argument-position bindings beside immutable function syntax.
+
+- Step 19 owns complete positional/target AST batches before semantic analysis; call side tables and an iterative dependency order remain LLVM-free and target-isolated.

@@ -5,6 +5,6 @@
 
 namespace erlang_aot::project {
 // Load, prepare, and execute a project through the caller's existing frontend boundary.
-int run(const Request &request, const PlanOptions &options, const FileExecutor &executor, std::ostream &output,
+int run(const Request &request, const PlanOptions &options, const TargetExecutor &executor, std::ostream &output,
         std::ostream &diagnostics);
 } // namespace erlang_aot::project

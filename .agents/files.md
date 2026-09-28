@@ -263,3 +263,5 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `semantic/features.{hpp,cpp}` maps capability names to shared compiler IDs; `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
 
 - `compiler/src/semantic/bindings.{hpp,cpp}` resolves parameter reads, wildcards and repeated-pattern rejection.
+
+- `semantic/calls.{hpp,cpp}` resolves exact direct calls and acyclic dependency order. `driver/frontend.cpp` owns AST batches; `project/execution.{hpp,cpp}` supplies one batch per target.
