@@ -90,7 +90,7 @@ check_cli(print_pp_failure_latches 1 "- module [(] first [)] [.]\n$" "error:.*st
     --print-pp error.erl first.erl)
 check_cli(print_pp_isolation 0 "- module [(] first [)].*- module [(] second [)]" "^$"
     --print-pp first.erl second.erl)
-file(WRITE "${TEST_DIR}/printing.erl" "-include(\"pick.hrl\"). -ifdef(FLAG). f() -> {?PICK, ?VALUE}. -else. -error(branch). -endif.\n")
+file(WRITE "${TEST_DIR}/printing.erl" "-module(printing). -include(\"pick.hrl\"). -ifdef(FLAG). f() -> {?PICK, ?VALUE}. -else. -error(branch). -endif.\n")
 check_cli(print_pp_expansion 0 "f [(] [)] -> [{] 2 , 42 [}] [.]\n$" "^$"
     --print-pp -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
 check_cli(print_pp_end_options 0 "- module [(] example [)]" "^$" --print-pp -- -source.erl)
@@ -128,7 +128,7 @@ check_cli(parse_check_ast 0 "ModuleAttribute name=first" "^$" --parse-check --pr
 check_cli(parse_check_pp 0 "- module [(] first [)]" "^$" --parse-check --print-pp first.erl)
 check_cli(parse_check_expansion 0 "^$" "^$" --parse-check
     -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
-file(WRITE "${TEST_DIR}/parse-options.erl" "-include_lib(\"demo/include/lib.hrl\"). f() -> {?LIB, ?FEATURE_ENABLED(compr_assign), maybe}.\n")
+file(WRITE "${TEST_DIR}/parse-options.erl" "-module(parse_options). -include_lib(\"demo/include/lib.hrl\"). f() -> {?LIB, ?FEATURE_ENABLED(compr_assign), maybe}.\n")
 check_cli(parse_check_options 0 "^$" "^$" --parse-check --app-dir demo=app
     --enable-feature compr_assign --disable-feature maybe_expr parse-options.erl)
 file(WRITE "${TEST_DIR}/semantic-error.erl" "f() -> Unbound.\n")

@@ -55,3 +55,9 @@ foreach(backend IN LISTS codegen_backends)
     target_compile_definitions(erlang_codegen PRIVATE "ERLANG_AOT_LLVM_${backend}=1")
 endforeach()
 target_link_libraries(erlang_aot PRIVATE erlang_codegen)
+
+# Semantic analysis owns language identities without depending on LLVM representations.
+add_library(erlang_semantic STATIC src/semantic/declarations.cpp src/semantic/symbols.cpp)
+erlang_aot_project_options(erlang_semantic)
+target_link_libraries(erlang_semantic PUBLIC erlang_frontend)
+target_link_libraries(erlang_aot PRIVATE erlang_semantic)

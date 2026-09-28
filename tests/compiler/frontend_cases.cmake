@@ -32,3 +32,5 @@ if(NOT result STREQUAL "0" OR NOT error STREQUAL "" OR NOT output MATCHES "\\[de
     OR length GREATER_EQUAL 5000000)
     message(FATAL_ERROR "Deep CLI AST printing failed: ${result}: ${error}")
 endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/semantic/cases.cmake")

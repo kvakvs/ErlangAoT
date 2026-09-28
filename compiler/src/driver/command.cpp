@@ -26,7 +26,7 @@ Options:
       --               Treat all remaining arguments as input paths.
 
 Checks do not validate semantics or run parse transforms.
-With no check/print action, preprocess and parse before the compilation placeholder.
+With no check/print action, preprocess, parse and validate module/function declarations.
 Code generation is not implemented yet; successful processing writes no output file.
 Input paths may contain spaces when quoted by the shell.
 )";

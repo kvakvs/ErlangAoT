@@ -642,3 +642,9 @@
   Maint29 fetch unchanged21776803ecd11f5fa948732c0ec66b8f325dedfc. Logs/scripts
   build/compile-steps; native VsDevCmd18 plus LLVM PATH required. Ninja probes need
   elevated execution here; sandbox probe hung. Step15+ drafts ignored under staging.
+
+- Step15 implemented/committed: semantic declaration index and reversible symbols;
+  default per-file CLI validation, located diagnostics; no body analysis/output yet.
+  Fresh Debug76/76 + full pinned quality pass. Step16 draft lives ignored in
+  build/compile-steps/staging16; apply script still to create. New frontend checks
+  included from tests/compiler/semantic/cases.cmake; symbol native invariant retained.

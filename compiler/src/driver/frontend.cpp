@@ -1,4 +1,5 @@
 #include "frontend.hpp"
+#include "../semantic/declarations.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
@@ -47,13 +48,19 @@ void print_form(const PreprocessorEvent &event) {
     }
 }
 
-// Reserve the handoff from a successfully parsed module to future code generation.
-void compile_module(const ast::Module &) {
-    // TODO: Invoke the compiler here once lowering and code generation are implemented.
+// Establish language declarations before the still-deferred lowering stage.
+bool compile_module(const ast::Module &syntax, const std::filesystem::path &path, const DiagnosticSink &sink) {
+    bool failed = false;
+    semantic::index(syntax, filename(path), [&](const Diagnostic &diagnostic) {
+        failed = failed || diagnostic.severity == Severity::error;
+        print_diagnostic(diagnostic, sink);
+    });
+    return failed;
 }
 
 // Consume a parsing pass and dispatch successful modules to the requested final stage.
-bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink) {
+bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
+                     const std::filesystem::path &path) {
     ParserSession parser;
     while (!parser.stopped()) {
         const auto event = session.next();
@@ -76,7 +83,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
         return true;
     }
     if (request.compile) {
-        compile_module(result.module);
+        return compile_module(result.module, path, sink);
     }
     return false;
 }
@@ -89,7 +96,7 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     PreprocessorSession session(source, preprocessing_options(request));
     if (request.parse_check || request.print_ast || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
-        return parse_and_print(session, request, sink);
+        return parse_and_print(session, request, sink, path);
     }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<Diagnostic>(&*event)) {

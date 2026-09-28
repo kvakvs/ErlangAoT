@@ -287,3 +287,10 @@ set_tests_properties(parser_binaries PROPERTIES TIMEOUT 20)
 add_subdirectory(compiler/project)
 
 add_subdirectory(compiler/codegen)
+
+# Symbol round trips have no observable emitted-object replacement until lowering exists.
+add_executable(semantic_symbols compiler/semantic/symbols.cpp)
+erlang_aot_project_options(semantic_symbols)
+target_include_directories(semantic_symbols PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(semantic_symbols PRIVATE erlang_semantic)
+add_test(NAME semantic_symbols COMMAND semantic_symbols)

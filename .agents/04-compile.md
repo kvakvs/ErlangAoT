@@ -12,8 +12,8 @@ behavior and a production executable launcher remain later work.
 
 The preprocessor supplies expanded tokens to a parser owning a move-only
 `ast::Module`. Parsing does not establish semantic validity. The driver's
-`compiler/src/driver/frontend.cpp` calls a no-op `compile_module`: positional and
-project compilation currently succeed without writing executables. Frontend
+`compiler/src/driver/frontend.cpp` validates module/function declarations and exports
+after parsing; positional and project compilation still write no executable. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
 Immediate-only host Terms, builtin dispatch and memory service boundaries are implemented;
@@ -1262,3 +1262,16 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   Updated the OTP source reference to current official maint-29 at user request;
   its grammar audit and ten-file corpus pass with unchanged hashes/witnesses.
   Step 15 has not started; no additional compiler step or clean commit is claimed.
+
+- Step 15 (2026-09-28): private LLVM-free semantic declaration tables validate
+  module identity, function arities/duplicates and all exports, including forward
+  references. ABI-v1 symbols use reversible hexadecimal UTF-8 components and canonical
+  arity, with no host hashes. Default positional/project CLI paths report located
+  failures and continue to later files; syntax-only modes retain broader acceptance.
+  Real frontend/project cases and 147 symbol identity round trips pass. Fresh full
+  Debug build, all 76 CTests, full Lizard/clang-tidy, formatting and whitespace pass.
+  Native host: Windows x64, Clang/SDK23.1.2, pinned clang-tidy22.1.8; the SDK is the
+  pre-existing installation under thirdparty/ (no SDK downloaded for these gates).
+  The direct pinned analyzer was selected with CMAKE_PROGRAM_PATH after intermittent
+  launcher/analyzer failures; the complete target passed without excluding files.
+  Other native platforms remain pending. Body capabilities/bindings/calls are later steps.

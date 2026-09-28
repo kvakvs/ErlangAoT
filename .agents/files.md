@@ -251,3 +251,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/src/driver/command.{hpp,cpp}` owns CLI help and positional/project dispatch;
   `main.cpp` contains unexpected failures. `preprocessor/integer.cpp` owns decimal
   integer formatting and exact finite binary64-to-integer conversion.
+
+- `compiler/src/semantic/declarations.{hpp,cpp}` indexes modules/functions/exports and
+  preserves source provenance in diagnostics; `symbols.{hpp,cpp}` reversibly encodes
+  private ABI function identities. `tests/compiler/semantic/cases.cmake` extends
+  frontend CLI behavior; `symbols.cpp` protects round-trip/collision invariants pending
+  emitted objects. Project declaration cases live in `tests/compiler/project/cli.cmake`.

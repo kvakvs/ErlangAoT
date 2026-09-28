@@ -114,12 +114,19 @@ check(new_populate_check 0 "^$" "^$" --parse-check --project starter.toml)
 
 # Default processing preserves target-specific options, selection, and error aggregation.
 check(default_duplicate_macro 1 "^$" "redefining macro" --project project.toml -DVALUE=3)
-file(WRITE "${TEST_DIR}/shared.erl" "-if(?VALUE =:= 1). broken() -> . -else. -warning(later_target). -endif.\n")
+file(WRITE "${TEST_DIR}/shared.erl" "-module(shared). -if(?VALUE =:= 1). broken() -> . -else. -warning(later_target). -endif.\n")
 check(default_parse_error 1 "^$" "target app.*error:.*target tests.*warning:.*later_target" --project project.toml)
 check(default_selected 0 "^$" "target tests.*warning:.*later_target" --project project.toml --target tests)
 check(explicit_preprocess_only 0 "^$" "warning:.*later_target" --project project.toml --preprocess-check)
-file(WRITE "${TEST_DIR}/shared.erl" "-if(?VALUE =:= 1). -error(stop). -else. -warning(later_target). -endif.\n")
+file(WRITE "${TEST_DIR}/shared.erl" "-module(shared). -if(?VALUE =:= 1). -error(stop). -else. -warning(later_target). -endif.\n")
 check(default_pp_error 1 "^$" "target app.*error:.*stop.*target tests.*warning:.*later_target" --project project.toml)
 
 include("${CMAKE_CURRENT_LIST_DIR}/manifest_cases.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/selection_cases.cmake")
+
+# Declaration errors aggregate across files and retain the owning target.
+file(WRITE "${TEST_DIR}/decl_bad.erl" "-module(decl_bad). -export([missing/0]).")
+file(WRITE "${TEST_DIR}/decl_later.erl" "f() -> 1.")
+file(WRITE "${TEST_DIR}/declarations.toml" "schema_version=1\n[[targets]]\nname='declarations'\nsources=['decl_bad.erl','decl_later.erl']\n")
+check(declaration_batch 1 "^$" "target declarations.*undefined function missing/0.*missing module" --project declarations.toml)
+check(declaration_syntax_only 0 "^$" "^$" --project declarations.toml --parse-check)

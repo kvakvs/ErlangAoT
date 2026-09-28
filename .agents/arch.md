@@ -231,3 +231,9 @@
   then recognizes a bounded exact deferred signature catalog; unknown_builtin=11
   distinguishes other missing signatures. No atoms, workers, roots or loader ABI are
   invented; atom collection stays reserved. See docs/runtime-services.md.
+
+- Step15 adds LLVM-free semantic declaration tables outside the immutable AST.
+  Source-ordered functions plus deterministic name/arity lookup validate definitions
+  and exports. Module tables have stable unique ownership and borrow their AST.
+  Versioned symbols encode UTF-8 bytes as separated hex components with canonical
+  arity. Default CLI paths validate declarations; check/print paths remain syntax-only.

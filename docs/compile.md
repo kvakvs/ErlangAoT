@@ -20,7 +20,8 @@ Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
 registration, checked transitions and ordered teardown without worker execution.
 
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
-Current CLI defaults still preprocess/parse and return without executable output;
+Current CLI defaults preprocess/parse and validate [declarations](semantic.md),
+then return without executable output;
 the proposed compilation switches below are not implemented yet.
 
 The private backend's `verify_ir` gate checks target consistency, defined function
