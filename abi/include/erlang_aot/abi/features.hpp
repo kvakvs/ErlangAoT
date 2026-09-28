@@ -197,7 +197,7 @@ inline constexpr std::array feature_catalog{
                 .boundary = "AtomStorage::collect",
                 .status = FeatureStatus::deferred,
                 .plan_step = 14,
-                .failure_test = "runtime_features"},
+                .failure_test = "runtime_feature_output"},
     FeatureInfo{.id = FeatureId::dynamic_modules,
                 .name = "dynamic modules",
                 .owner = FeatureOwner::runtime,

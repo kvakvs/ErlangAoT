@@ -1,0 +1,3 @@
+- file ( "directive_misplaced.erl" , 1 ) .
+f ( ) -> - define ( X , 1 ) .
+next ( ) -> ok .

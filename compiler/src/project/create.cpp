@@ -71,6 +71,10 @@ std::filesystem::path create_project(const std::filesystem::path &base, const Ne
     const auto path = creation_path(base, filename);
     const Site site{path, {}, {}, 0, 0};
     const auto text = starter_template();
+    std::error_code link_error;
+    if (std::filesystem::is_symlink(std::filesystem::symlink_status(path, link_error))) {
+        fail(site, "cannot create manifest exclusively; destination is a symbolic link");
+    }
     std::ofstream output(path, std::ios::out | std::ios::binary | std::ios::noreplace);
     if (!output) {
         fail(site, "cannot create manifest exclusively; destination exists or parent is not writable");

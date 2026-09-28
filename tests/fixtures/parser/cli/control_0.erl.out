@@ -1,0 +1,18 @@
+Module forms=2
+  form[0]: FileAttribute name="control_0.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: CaseExpression clauses=1
+        value: Atom name=x
+        clause[0]: BranchClause guard=present body=1
+          pattern: PatternCandidate
+            expression: CallExpression arguments=0
+              target: Atom name=f
+          guard: GuardSyntax alternatives=2
+            alternative[0]: GuardConjunction tests=1
+              test[0]: Atom name=true
+            alternative[1]: GuardConjunction tests=1
+              test[0]: Atom name=false
+          body[0]: BlockExpression body=2
+            body[0]: Atom name=a
+            body[1]: Atom name=b

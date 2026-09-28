@@ -1,0 +1,27 @@
+Module forms=2
+  form[0]: FileAttribute name="comprehensions_1.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Tuple elements=2
+        element[0]: MapComprehension templates=2 qualifiers=1
+          template[0]: MapField operator==>
+            key: Variable name=K
+            value: Variable name=V
+          template[1]: MapField operator=:=
+            key: Variable name=K
+            value: Variable name=V
+          qualifier[0]: MapGenerator operator=<:-
+            key: PatternCandidate
+              expression: Variable name=K
+            value: PatternCandidate
+              expression: Variable name=V
+            input: Variable name=M
+        element[1]: BinaryComprehension qualifiers=1
+          template: Group
+            expression: CallExpression arguments=1
+              target: Atom name=f
+              argument[0]: Variable name=X
+          qualifier[0]: ListGenerator operator=<-
+            pattern: PatternCandidate
+              expression: Variable name=X
+            input: Variable name=L

@@ -1,0 +1,7 @@
+Module forms=2
+  form[0]: FileAttribute name="exceptions_3.erl" line=1
+  form[1]: Function name='maybe' arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Tuple elements=2
+        element[0]: Atom name='maybe'
+        element[1]: Atom name='else'

@@ -1,0 +1,1 @@
+-warning(#{fun erlang:length/1 => a, fun erlang:abs/1 => b}).

@@ -1,3 +1,4 @@
+// Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include "ast/builder.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
@@ -20,33 +21,8 @@ ParseResult parse(std::string text, ParserLimits limits = {}) {
     return parse_module(pp, limits);
 }
 
-// Return a committed function body after normal parsing or failed-form recovery.
-const ast::Expression &body(const ParseResult &result) {
-    const auto &function = std::get<ast::Function>(result.module.form(result.module.forms().back()).value);
-    return result.module.expression(function.clauses.front().body.front());
-}
-
-// Macro-generated branching retains candidate categories, ranges, and guard grouping.
-void structure() {
-    const auto result = parse("-define(C(X), case X of f() when true; false -> begin a,b end end).\nf() -> ?C(x).");
-    require(result.succeeded());
-    const auto &value = std::get<ast::CaseExpression>(body(result).value);
-    const auto &branch = value.clauses.front();
-    require(std::holds_alternative<ast::PatternCandidate>(result.module.pattern(branch.pattern).value));
-    require(branch.guard && branch.guard->alternatives.size() == 2);
-    require(!result.module.anchor(branch.source).related.empty());
-    require(std::get<ast::BlockExpression>(result.module.expression(branch.body.front()).value).body.size() == 2);
-    std::ostringstream printed;
-    print_ast(printed, result.module);
-    require(printed.str().find("PatternCandidate") != std::string::npos);
-}
-
 // Failed blocks rollback their patterns and expressions without swallowing the next form.
 void recovery_and_limits() {
-    auto result = parse("bad() -> case x of X -> begin end end. good() -> receive after 0 -> ok end.");
-    require(result.failed && result.module.pattern_count() == 0);
-    const auto &receive = std::get<ast::ReceiveExpression>(body(result).value);
-    require(receive.clauses.empty() && receive.after);
     ParserLimits limits;
     limits.nesting = 8;
     std::string text = "f() -> ";
@@ -81,7 +57,6 @@ void invariants() {
 }
 
 int main() {
-    structure();
     recovery_and_limits();
     invariants();
 }

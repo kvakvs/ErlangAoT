@@ -1,0 +1,3 @@
+error: binary_rejection_0.erl:1:14: expected '>>'
+  construct opened at binary_rejection_0.erl:1:11
+  from binary_rejection_0.erl:1:11

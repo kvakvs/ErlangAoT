@@ -1,3 +1,14 @@
+# IDE configure investigation — 2026-09-28
+
+- VS Code debug preset enables BUILD_TESTING; batch wrappers disable it. IDE log
+  failed in ErlangDependencies.cmake because generic OTP/bin/escript.exe crashes
+  with 0xC0000005 (also reproduced directly with erl.exe).
+- Installed OTP tree contains erts-16.4 and erts-17.1. Direct 17.1 escript reports
+  OTP 29.1.1 successfully. Set build/debug cache ERLANG_AOT_ESCRIPT to
+  C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe; full configure/generate
+  with tests/compiler/runtime ON passes. Cache reset needs this override again
+  until the global Erlang installation is repaired. No project build logic changed.
+
 # Windows LLVM compression dependencies — 2026-09-27
 
 - Added pinned zstd 1.5.7 Windows fallback plus zstd::libzstd_static with separate
@@ -552,3 +563,34 @@
   before joining caller; include-return line advances only for immediate LF; native
   records/templates preserve syntax with feature/lint legality deferred. Prefer
   eager cpp_int values over expression-template temporaries in shared exact terms.
+
+# Test migration (2026-09-28, Windows x64)
+
+- Executed .agents/05-tests.md available migrations; docs/test-migration.md is the
+  case ledger. 04-compile.md routes pending15–46 tests and preserves backend
+  exceptions until real CLI lowering/output exists. No compiler step advanced.
+- Baseline93:78pass/15fail. Current75; project CLI now covers16 removed native
+  suites, leaving limits/creation-failure injection. Source semantics migrated
+  into exact CLI fixtures, real PP workflows, stress and900 seeded mutations.
+  Runtime consumer combines lifecycle/dispatch/copy/pinning/teardown32times.
+- Windows native argv fixed with UTF-8 manifest; create refuses dangling symlinks.
+  .gitattributes disables line ending conversion under fixtures (byte contracts).
+- Logs/scripts/XML are ignored build/test-migration/. Native builds need VS18
+  VsDevCmd -arch=x64 -host_arch=x64 then LLVM/bin on PATH; use installed OTP
+  erts-17.1/bin/escript.exe (generic OTP/bin wrapper crashes here).
+- Existing references/otp stays unchanged. Isolated pinned worktree at
+  build/test-migration/otp uses751f87b703fe5948607d08e82599ce644b772e76; generated
+  beam_opcodes.hrl via that checkout's beam_makeops, LF-normalized to pinned hash.
+- Full LLVM ASan blocked by SDK rpmalloc duplicate CRT allocator symbols;
+  runtime-only ASan15/15 passes with /MT and matching ASan dynamic/static thunk.
+  TestHost propagates sanitizer flags into independently configured consumers.
+- Fresh full check-quality ran; Lizard passes, clang-tidy fails on existing
+  Windows exception-escape and Boost analyzer findings. Do not suppress checks.
+  Raised parser nesting ceiling still crashes Windows stack; keep its test.
+  Retain AST/raw-attribute lifetime tests pending compatible frontend sanitizers.
+
+- Final full Debug/Release74/75 each, only parser_hardening fails; runtime
+  ASan15/15. Final affected reruns4+4+2 pass. All filesystem capabilities ran.
+  Pinned grammar audit excludes new product-only cli fixtures;344 reductions
+  and checksum-pinned corpus pass. Test Lizard passes; new project exception
+  suites/runtime consumer/features tidy pass; retained-test tidy findings remain.

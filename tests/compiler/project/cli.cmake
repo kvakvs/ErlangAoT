@@ -17,7 +17,7 @@ defines=["VALUE=2"]
 # Check the project CLI contract through its public executable.
 function(check name code stdout stderr)
     execute_process(COMMAND "${TOOL}" ${ARGN} WORKING_DIRECTORY "${TEST_DIR}"
-        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
+        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 15)
     if(NOT "${result}" STREQUAL "${code}" OR NOT out MATCHES "${stdout}" OR NOT err MATCHES "${stderr}")
         message(FATAL_ERROR "${name}: exit=${result} stdout=[${out}] stderr=[${err}]")
     endif()
@@ -120,3 +120,6 @@ check(default_selected 0 "^$" "target tests.*warning:.*later_target" --project p
 check(explicit_preprocess_only 0 "^$" "warning:.*later_target" --project project.toml --preprocess-check)
 file(WRITE "${TEST_DIR}/shared.erl" "-if(?VALUE =:= 1). -error(stop). -else. -warning(later_target). -endif.\n")
 check(default_pp_error 1 "^$" "target app.*error:.*stop.*target tests.*warning:.*later_target" --project project.toml)
+
+include("${CMAKE_CURRENT_LIST_DIR}/manifest_cases.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/selection_cases.cmake")

@@ -1,3 +1,4 @@
+// Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include <algorithm>
 #include <bit>
 #include <erlang_aot/compiler/parser.hpp>
@@ -35,35 +36,6 @@ const ast::Function &function(const ast::Module &module, std::u32string_view nam
 // Inspect the single scalar expression supported by Phase I function bodies.
 const ast::Expression &body(const ast::Module &module, std::u32string_view name) {
     return module.expression(function(module, name).clauses.front().body.front());
-}
-
-// Preserve scalar categories, precision, and decoded character/string values.
-void scalars() {
-    const auto result = parse("-module(m).\ni() -> 123456789012345678901234567890.\n"
-                              "a() -> 'end'.\nf() -> 1.25.\nc() -> $λ.\ns() -> \"hello λ\".\n");
-    require(result.succeeded() && result.diagnostics.empty());
-    require(std::get<ast::IntegerLiteral>(body(result.module, U"i").value).value.decimal ==
-            "123456789012345678901234567890");
-    require(std::get<ast::Atom>(body(result.module, U"a").value).name == U"end");
-    require(std::bit_cast<std::uint64_t>(std::get<ast::FloatLiteral>(body(result.module, U"f").value).value) ==
-            std::bit_cast<std::uint64_t>(1.25));
-    require(std::get<ast::CharacterLiteral>(body(result.module, U"c").value).value == U'λ');
-    require(std::get<ast::StringLiteral>(body(result.module, U"s").value).value == U"hello λ");
-}
-
-// Distinguish syntax errors, pending grammar, warnings, and preprocessor failures.
-void recovery() {
-    const auto result = parse("-module(m).\nbad() -> .\n-pending(run()).\ngood() -> 42.\n");
-    require(result.failed && result.diagnostics.size() == 2);
-    require(result.diagnostics[0].code == DiagnosticCode::parser_syntax);
-    require(result.diagnostics[1].code == DiagnosticCode::parser_syntax);
-    require(result.module.term_count() == 0);
-    require(std::get<ast::IntegerLiteral>(body(result.module, U"good").value).value.decimal == "42");
-    const auto warning = parse("-warning(hello).\ngood() -> ok.\n");
-    require(warning.succeeded() && warning.diagnostics.size() == 1);
-    const auto preprocessing = parse("bad() -> ?MISSING.\ngood() -> ok.\n");
-    require(preprocessing.failed && preprocessing.diagnostics[0].code == DiagnosticCode::undefined_macro);
-    require(function(preprocessing.module, U"good").clauses.front().body.size() == 1);
 }
 
 // Build raw tokens for entry-point contract and exact form-boundary checks.
@@ -207,8 +179,6 @@ void limits() {
 
 // Exercise the minimal native grammar, integration contracts, and recovery invariants.
 int main() {
-    scalars();
-    recovery();
     raw_forms();
     event_contract();
     features();

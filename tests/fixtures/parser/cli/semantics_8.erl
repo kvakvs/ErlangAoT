@@ -1,0 +1,1 @@
+-ifdef(NO). -include("missing.hrl"). ?MISSING. -else. -define(X,2). -endif. ?X.

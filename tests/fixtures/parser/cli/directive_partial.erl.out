@@ -1,0 +1,2 @@
+- file ( "directive_partial.erl" , 1 ) .
+f ( ) -> { a , b , "-endif." } .

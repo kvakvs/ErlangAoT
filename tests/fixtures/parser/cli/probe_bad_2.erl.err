@@ -1,0 +1,2 @@
+error: probe_bad_2.erl:1:10: expected ','
+error: probe_bad_2.erl:1:13: expected form-ending '.'

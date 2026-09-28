@@ -1,0 +1,1 @@
+-define(S(X), ??X). -define(A,42). {?S(?A + 16#ff), ?S('quoted atom'), ?S("str")}.

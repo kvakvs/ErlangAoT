@@ -110,6 +110,9 @@ Those paths, backing allocation, GC and scheduling remain future work.
 
 Native macOS arm64 tests cover independent/repeated lifetimes, ownership errors,
 limits, invalidation, shutdown ordering, silence and allocation-failure rollback.
-The standalone C++ consumer proves runtime-only linking and failure without the
-runtime, plus exact context/status types. ASan/UBSan cover lifecycle and injected
-failures. Native Linux/Windows runtime support remains unverified.
+The standalone C++ consumer also combines these boundaries with real builtin
+dispatch, copies and retained code handles. It proves runtime-only linking and
+failure without the runtime, plus exact context/status types. Current Windows x64
+Debug/Release and runtime ASan results are in the [migration ledger](test-migration.md).
+Historical macOS ASan/UBSan covers lifecycle and injected failures; native Linux
+and 32-bit runtime validation remain pending.

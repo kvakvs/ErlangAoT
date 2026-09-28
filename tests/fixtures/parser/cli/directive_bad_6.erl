@@ -1,0 +1,2 @@
+-undef().
+-ordinary(ok).

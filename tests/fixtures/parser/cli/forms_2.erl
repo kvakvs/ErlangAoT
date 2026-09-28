@@ -1,0 +1,2 @@
+-warning(hello).
+good() -> ok.

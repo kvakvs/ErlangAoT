@@ -1,0 +1,2 @@
+-error().
+-ordinary(ok).

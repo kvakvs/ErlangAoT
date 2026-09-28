@@ -1,0 +1,40 @@
+# Exercise schema failures through the real loader, decoder and diagnostic renderer.
+function(reject_manifest name text diagnostic)
+    file(WRITE "${TEST_DIR}/${name}.toml" "${text}")
+    check("manifest_${name}" 1 "^$" "${name}.toml:[0-9]+:[0-9]+.*${diagnostic}"
+        --project "${name}.toml" --parse-check)
+endfunction()
+
+reject_manifest(syntax "schema_version = [" "")
+reject_manifest(duplicate_key "schema_version=1\nschema_version=1" "")
+reject_manifest(missing_version "targets=[]" "schema_version")
+reject_manifest(float_version "schema_version=1.0\ntargets=[]" "schema_version")
+reject_manifest(version "schema_version=2\ntargets=[]" "schema_version")
+reject_manifest(empty_targets "schema_version=1\ntargets=[]" "nonempty")
+reject_manifest(target_type "schema_version=1\ntargets=[3]" "expected a table")
+reject_manifest(root_key "schema_version=1\nextra=1\ntargets=[]" "unknown key")
+set(prefix "schema_version=1\n[[targets]]\n")
+reject_manifest(missing_name "${prefix}sources=['shared.erl']" "missing target name")
+reject_manifest(invalid_name "${prefix}name='-app'\nsources=['shared.erl']" "invalid target name")
+reject_manifest(missing_sources "${prefix}name='app'" "requires sources")
+reject_manifest(source_number "${prefix}name='app'\nsources=[1]" "nonempty string")
+reject_manifest(source_empty "${prefix}name='app'\nsources=['']" "nonempty string")
+reject_manifest(source_scalar "${prefix}name='app'\nsources='shared.erl'" "array of strings")
+set(one "name='app'\nsources=['shared.erl']")
+reject_manifest(target_key "${prefix}${one}\nbogus=1" "unknown key")
+reject_manifest(duplicate_target "${prefix}${one}\n[[targets]]\n${one}" "duplicate target")
+set(options "${prefix}${one}\n[targets.options]\n")
+reject_manifest(option_key "${options}unknown=[]" "unknown key")
+reject_manifest(define_type "${options}defines=[true]" "nonempty string")
+reject_manifest(include_type "${options}include_dirs='include'" "array of strings")
+reject_manifest(feature_conflict "${options}enable_features=['x']\ndisable_features=['x']" "feature")
+reject_manifest(application_type "${options}applications=[]" "table")
+reject_manifest(application_number "${options}[targets.options.applications]\ndemo=1" "nonempty string")
+reject_manifest(application_empty "${options}[targets.options.applications]\ndemo=''" "nonempty string")
+reject_manifest(application_name "${options}[targets.options.applications]\n''='vendor'" "application")
+
+# Source coordinates must survive parsing and ownership transfer to the driver.
+file(WRITE "${TEST_DIR}/coordinates.toml" "${prefix}name='app'\nsources=['missing.erl']\n")
+check(manifest_coordinates 1 "^$" "coordinates.toml:4:[0-9]+.*target app.*sources.*cannot find source"
+    --project coordinates.toml --parse-check)
+

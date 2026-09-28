@@ -10,3 +10,13 @@ execute_process(COMMAND "${PROGRAM}" silent RESULT_VARIABLE status OUTPUT_VARIAB
 if(NOT status STREQUAL "0" OR NOT output STREQUAL "" OR NOT errors STREQUAL "")
     message(FATAL_ERROR "Unused placeholder was not silent: ${status}: ${output}${errors}")
 endif()
+if(DEFINED CONTEXT_FIXTURES)
+    foreach(mode IN ITEMS context escaping partial reserved)
+        file(READ "${CONTEXT_FIXTURES}/${mode}.stderr" expected)
+        execute_process(COMMAND "${PROGRAM}" "${mode}" RESULT_VARIABLE status
+            OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 10 ENCODING UTF-8)
+        if(NOT status STREQUAL "1" OR NOT output STREQUAL "" OR NOT errors STREQUAL expected)
+            message(FATAL_ERROR "${mode}: ${status}: stdout=${output} stderr=${errors}")
+        endif()
+    endforeach()
+endif()

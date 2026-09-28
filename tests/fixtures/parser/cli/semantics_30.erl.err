@@ -1,0 +1,2 @@
+warning: semantics_30.erl:1:2: # { a => << 1 , 2 , 3 : 2 >> , b => [ 1 | tail ] }
+warning: semantics_30.erl:1:48: fun erlang : length / 1

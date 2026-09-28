@@ -99,13 +99,14 @@ that budget; exhaustion throws `std::length_error`. Flat arena destruction
 does not recurse through child IDs. Consumers should also traverse iteratively
 when following long flat operator chains.
 
-`parser_hardening` covers a 12,000-operator parse/print/normalization regression,
-wide lists and qualifier groups, recursive expressions/patterns/types/blocks,
-repeated errors, explicit expanded EOF and macro/include origins. It reports an
-observed duration without asserting an asymptotic bound. `parser_mutations`
-replays 900 fixed-seed token mutations twice, verifies deterministic diagnostics
-and checked traversal, and requires the next valid form to survive. Both tests
-have 60-second termination bounds and run under ASan/UBSan as well.
+`parser_stress` exercises real CLI source files with a 12,000-operator
+parse/print/normalization regression, wide lists/qualifiers and recursive syntax.
+`parser_hardening` retains injected budgets, explicit expanded EOF and the raised
+API nesting ceiling. `parser_mutations` replays 900 fixed-seed mutations as real
+source twice, verifies exact AST/diagnostic repeatability and requires the next
+valid form to survive. Each subprocess and suite has a termination bound. See
+[test migration](test-migration.md) for current sanitizer evidence and retained
+ownership checks; historical validation below predates this migration.
 
 Step 16 validation: all 39 Debug tests passed across the full run and corrected
 hardening rerun; the three ASan/UBSan hardening/mutation/printing tests passed.

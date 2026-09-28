@@ -1,0 +1,2 @@
+-module(other).
+f() -> ok.

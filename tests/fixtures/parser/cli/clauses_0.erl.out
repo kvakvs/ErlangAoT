@@ -1,0 +1,28 @@
+Module forms=2
+  form[0]: FileAttribute name="clauses_0.erl" line=1
+  form[1]: Function name=f arity=1 clauses=2
+    clause[0]: FunctionClause arguments=1 guard=present body=2
+      argument[0]: RestrictedPattern
+        expression: Tuple elements=2
+          element[0]: Atom name=tag
+          element[1]: Variable name=X
+      guard: GuardSyntax alternatives=2
+        alternative[0]: GuardConjunction tests=2
+          test[0]: CallExpression arguments=1
+            target: Atom name=is_integer
+            argument[0]: Variable name=X
+          test[1]: BinaryExpression operator=>
+            left: Variable name=X
+            right: IntegerLiteral value=0
+        alternative[1]: GuardConjunction tests=1
+          test[0]: BinaryExpression operator===
+            left: Variable name=X
+            right: Atom name=fallback
+      body[0]: MatchExpression
+        left: Variable name=A
+        right: Variable name=X
+      body[1]: Variable name=A
+    clause[1]: FunctionClause arguments=1 guard=none body=1
+      argument[0]: RestrictedPattern
+        expression: Variable name=_
+      body[0]: Atom name=empty

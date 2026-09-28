@@ -53,9 +53,11 @@ These checks report ordinary input errors and remain silent; they are not reache
 feature placeholders. TermFactory service attempts use the shared catalog and
 reporting contract separately from these raw validators.
 
-`runtime_immediate` exercises signed boundaries, overflow, reserved immediate tags,
+`runtime_generated_link` round-trips signed native boundaries through real dispatch.
+`runtime_immediate` exercises overflow, reserved immediate tags,
 malformed encodings and hostile pointer-shaped words. `runtime_term_tag` covers all
-64 low-tag combinations; `runtime_term_layout` compiles private prefix assertions.
+64 low-tag combinations; the build-only `runtime_term_layout_tests` object target
+compiles private prefix assertions without registering a runnable smoke test.
 `codegen_runtime_terms` independently builds native LLVM integer constants and checks
 runtime classification/encoding/decoding against their bit patterns. Runtime-only
 builds run the non-LLVM tests and the standalone generated-program link consumer.

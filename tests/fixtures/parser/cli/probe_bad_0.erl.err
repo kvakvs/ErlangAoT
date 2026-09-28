@@ -1,0 +1,5 @@
+error: probe_bad_0.erl:1:25: expected ')'
+  construct opened at probe_bad_0.erl:1:24
+  from probe_bad_0.erl:1:11
+  from probe_bad_0.erl:1:9
+  from probe_bad_0.erl:1:24

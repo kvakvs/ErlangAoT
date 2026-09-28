@@ -1,0 +1,3 @@
+- file ( "semantics_27.erl" , 1 ) .
+- file ( "logical.erl" , 100 ) .
+ok .

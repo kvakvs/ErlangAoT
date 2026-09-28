@@ -9,7 +9,9 @@ The canonical [feature catalog](../abi/include/erlang_aot/abi/features.hpp) assi
 explicit, non-recycled IDs and stable diagnostic names. Each entry records its
 owner, semantic/service boundary, deferred status, planned integration step and
 focused reporting test. `abi_features` checks the ID/name compatibility snapshot;
-`codegen_features` and `runtime_features` exercise all their respective entries.
+`codegen_features` covers compiler reporting; `runtime_service_output` and
+`runtime_feature_output` cover runtime service diagnostics and escaped context.
+`runtime_features` retains sink refusal/exception and invalid-ID injection.
 These are reporting-contract tests, not evidence that the future source/service
 handlers have been installed. Step 11 additionally installs the
 [builtin dispatch boundary](runtime-builtins.md). Step 14 installs

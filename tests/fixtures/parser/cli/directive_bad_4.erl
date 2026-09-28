@@ -1,0 +1,2 @@
+-define(X(A,), ok).
+-ordinary(ok).

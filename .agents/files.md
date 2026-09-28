@@ -33,8 +33,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   LLVM 23.1.x discovery, path/version policy, host ABI link probe and available
   X86/ARM/AArch64 backend selection/component linkage.
 - `compiler/src/codegen/sdk.{hpp,cpp}`: private SDK version boundary;
-  `tests/compiler/codegen/{sdk.cpp,dependency.cmake,CMakeLists.txt}`: linked smoke,
-  discovery/rejection fixtures and LLVM-independent runtime configuration/build.
+  `tests/compiler/codegen/{dependency.cmake,CMakeLists.txt}`: independent SDK
+  consumer build/run, discovery/rejection fixtures and LLVM-independent runtime build.
 - `compiler/src/codegen/{request,output,result}.hpp`, `result.cpp`: move-only batch
   requests/results, owned diagnostics/bytes and latched failure/completion status.
   `compilation.{hpp,cpp}` owns stable context/module state behind a private interface;
@@ -78,14 +78,14 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   allocation and reserved code/atom ownership. The former C lifecycle adapter is removed.
   `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
   context registry and empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
-  `tests/runtime/{lifecycle,lifecycle_failure}.cpp`: lifetimes/errors and allocation rollback and registry/publication failure sweeps;
-  `lifecycle_output.cmake`: silence; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer
-  link/run through the mandatory target and missing-runtime link failure.
+  `tests/runtime/lifecycle_failure.cpp`: allocation rollback and registry/publication
+  failure sweeps; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer lifecycle,
+  dispatch/copy/pinning/silence and mandatory-target/missing-runtime link validation.
 - `runtime/src/memory/heap.cpp`: lazy heap lifecycle, checked allocation rejection,
   unavailable collection and word accounting; `heap_policy.hpp`: byte-budget validation;
   `copy.cpp`: immediate-only heap add/Term::copy_to. `docs/runtime-memory.md`: current
   boundaries and future roots, alignment, transit and C++ resource teardown contracts.
-  `tests/runtime/memory.cpp`: separate owners/budgets, overflow, copy and exit behavior;
+  `tests/runtime/memory.cpp`: budgets, overflow, invalid words/slots and deferred allocation;
   `lifecycle_failure.cpp` also checks memory operations under forced host allocation failure.
 - `runtime/include/erlang_aot/runtime/process_state.hpp`: shared process enums/StepResult;
   `scheduler.hpp`: SchedulerService and lifecycle/error API. `runtime/src/scheduler/`
@@ -93,7 +93,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   lookup, removal and admission; `transitions.cpp`: checked dispatch/return/suspension.
   Runtime state owns the service and clears it before context/code teardown.
   `docs/runtime-scheduler.md`: implemented boundary and reserved execution contracts;
-  `tests/runtime/scheduler.cpp`: lifecycle, isolation, growth and ordered teardown;
+  `tests/runtime/scheduler.cpp`: invalid/stale/foreign states, growth and synthetic teardown;
   `lifecycle_failure.cpp`: scheduler registration allocation rollback/retry.
 - `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
   definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
@@ -174,12 +174,17 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `tree.{hpp,cpp}`, `tree_{forms,expressions,structural,control,exceptions,comprehensions,
   attributes,types,specifications}.cpp`: iterative typed AST output with escaped strings
   for nonempty proper lists of printable character integers.
-- `tests/cli.cmake`: CLI contracts; `tests/compiler/{lexer,printing,printing_ast}.cpp`:
-  scanner/printing; `tests/compiler/preprocessor/`: PP native and OTP oracle tests.
+- `tests/cli.cmake`: CLI contracts; `tests/compiler/frontend_cases.cmake` and
+  `tests/fixtures/parser/cli/`: exact source/AST/diagnostic/status regressions.
+  `printing_roundtrip.cmake`: CLI source printing/reprocessing equivalence;
+  `preprocessor/workflow.cmake`: includes/options/conditions/depth/truncation workflows.
 - `tests/compiler/parser/{tokens,ast,forms,expressions,clauses,structural,binaries,
-  control,exceptions,comprehensions,attributes,types,specifications}.cpp`: grammar,
-  ownership, provenance and invariant tests; `hardening.cpp`, `mutations.cpp`,
-  `consumer.cpp`: stress, generated recovery/determinism and post-session API use.
+  control,exceptions,comprehensions,attributes,types,specifications}.cpp`: retained
+  API-only limits, ownership, provenance, rollback and invalid-handle invariants.
+  `hardening.cpp`: injected ceilings/EOF; `stress.cmake`: bounded source CLI stress;
+  `mutations.cmake` + `tests/fixtures/parser/mutations.json`: deterministic 900-case
+  source mutation/recovery corpus; `consumer.{cpp,cmake}`: separately built public
+  frontend consumer retaining syntax after sessions and source managers die.
 - `tests/compiler/parser/{dump.cpp,operators.hpp,terms_dump.hpp,types_dump.hpp}`,
   `oracle.escript`: exhaustive native/OTP structural projections; `tests/compiler/encoding.hpp`:
   shared exact encodings; `{reference,oracle,phase1,phase2}.cmake`: existing suites.
@@ -211,15 +216,23 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   and `.toml` completion for missing manifest paths;
   `template.{hpp,cpp}`: annotated defaults; `create.{hpp,cpp}`: exclusive native creation,
   extension completion and identity-checked write/close failure cleanup.
-- `tests/compiler/project/`: matching unit tests, dependency/model/support contracts
-  and local CMake ownership; `cli.cmake`: public invocation and creation contracts;
-  `workflow.cmake` + `tests/fixtures/project/workflow/`: multi-target/include/search,
-  deterministic output, native-path and no-write regressions; `hardening.cpp`: combined
-  resource limits and filesystem capability/alias checks.
+- `tests/compiler/project/{cli,workflow}.cmake` include `{manifest,selection,
+  discovery,options}_cases.cmake`: real multi-target/schema/options/creation/race,
+  discovery/alias/native-path/corpus and no-write workflows. `limits.cpp` retains
+  injected budgets/read failure/invalid UTF-8/native syntax; `creation_failure.cpp`
+  retains injected partial-write/close cleanup. `support.hpp`: active assertions.
 - `docs/projects.md`: delivered format, precedence, discovery and creation workflows;
   `docs/project-validation.md`: C++23 evidence and pending host matrix;
   `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
 - `.agents/03-project.md`: implementation plan, per-step validation ledger and status.
+- `.agents/05-tests.md`: migration status, retained exceptions and deferred backend
+  work; `docs/test-migration.md`: case-level disposition and validation evidence.
+  `.agents/04-compile.md`: remaining compiler steps route tests to observable workflows.
+- `tests/runtime/link_consumer.cpp`, `link.cmake`: independently configured runtime
+  startup/context/dispatch/copy/publication/pinning/teardown integration; term layout
+  is a build-only object. `tests/fixtures/runtime/diagnostics/`: exact stderr context.
+  `cmake/TestHost.cmake.in`: propagate host compiler/CRT/sanitizer flags to consumers.
+  `compiler/erlangaot.manifest`: Windows UTF-8 argv; `.gitattributes`: byte-exact fixtures.
 
 - `runtime/src/terms/factory.cpp`: lifetime-checked TermFactory reporting placeholders.
   `runtime/src/{process,scheduler,modules}/services.cpp`: deferred send, run/execute

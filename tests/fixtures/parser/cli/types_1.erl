@@ -1,0 +1,1 @@
+-type broken() :: {integer(),}. -type good() :: atom().

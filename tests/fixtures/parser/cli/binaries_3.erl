@@ -1,0 +1,1 @@
+f(<<(g()):N/unknown>>) -> <<-(A+B):(f())/integer>>.

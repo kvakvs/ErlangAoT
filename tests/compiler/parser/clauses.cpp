@@ -1,3 +1,4 @@
+// Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include "ast/builder.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <stdexcept>
@@ -33,43 +34,6 @@ ParseResult parse(std::string text, ParserLimits limits = {}) {
 // Retrieve the last successfully published function after recovery or implicit file forms.
 const ast::Function &function(const ast::Module &module) {
     return std::get<ast::Function>(module.form(module.forms().back()).value);
-}
-
-// Preserve ordered argument patterns, macro origins, guard alternatives and body sequences.
-void structure() {
-    const auto result = parse("-define(P, {tag, X}).\nf(?P) when is_integer(X), X > 0; X == fallback -> A = X, A;\n"
-                              "f(_) -> empty.\n");
-    require(result.succeeded());
-    const auto &f = function(result.module);
-    require(f.name.name == U"f" && f.clauses.size() == 2);
-    const auto &first = f.clauses[0];
-    require(first.arguments.size() == 1 && first.body.size() == 2 && first.guard.has_value());
-    require(first.guard->alternatives.size() == 2);
-    require(first.guard->alternatives[0].tests.size() == 2);
-    require(first.guard->alternatives[1].tests.size() == 1);
-    require(result.module.anchor(first.guard->source).location.line == 2);
-    const auto &pattern = result.module.pattern(first.arguments[0]);
-    const auto &restricted = std::get<ast::RestrictedPattern>(pattern.value);
-    require(std::holds_alternative<ast::Tuple>(result.module.expression(restricted.expression).value));
-    require(!result.module.anchor(pattern.source).related.empty());
-    require(result.module.anchor(first.source).location.line == 2);
-    require(result.module.anchor(f.clauses[1].source).location.line == 3);
-    require(!f.clauses[1].guard && f.clauses[1].body.size() == 1);
-}
-
-// Restricted roots and parentheses differ from OTP's expression-based nested containers.
-void acceptance() {
-    require(parse("f({g(), A ! B}, [M:F|h()], (A = B = C)) when g(), A = B; catch h() -> Unbound.").succeeded());
-    require(parse("f() -> first.\nf() -> second.").succeeded());
-    for (const std::string head : {"g()", "(g())", "A ! B", "catch A", "A andalso B", "M:F"}) {
-        const auto result = parse("bad(" + head + ") -> bad.\ngood(X) -> X.");
-        require(result.failed && function(result.module).name.name == U"good");
-        require(result.module.pattern_count() == 1 && result.module.expression_count() == 2);
-    }
-    const auto mismatch = parse("f(X) -> X;\ng(X) -> X.\ngood() -> ok.");
-    require(mismatch.failed && mismatch.diagnostics.front().code == DiagnosticCode::parser_syntax);
-    require(mismatch.diagnostics.front().location->line == 2);
-    require(mismatch.module.pattern_count() == 0 && mismatch.module.expression_count() == 1);
 }
 
 // Pattern arena allocations participate in node limits and all-or-nothing form rollback.
@@ -147,8 +111,6 @@ void invariants() {
 }
 
 int main() {
-    structure();
-    acceptance();
     limits();
     pattern_ownership();
     invariants();

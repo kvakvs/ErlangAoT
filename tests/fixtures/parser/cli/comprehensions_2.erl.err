@@ -1,0 +1,3 @@
+error: comprehensions_2.erl:1:21: expected expression
+  construct opened at comprehensions_2.erl:1:10
+  from comprehensions_2.erl:1:10

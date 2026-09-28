@@ -123,8 +123,25 @@ void diagnostic_exception() {
     require(caught);
 }
 
+// Physical byte offsets are an embedding contract not printed by CLI diagnostics.
+void source_offsets() {
+    SourceManager sources;
+    const auto source = sources.add("unicode.erl", "% λ\r\natom.");
+    require(source->position(6).line == 2 && source->position(6).byte == 7);
+    Lexer lexer(source);
+    const auto token = lexer.next().value();
+    require(token.spelling.source->spelling(token.spelling.begin, token.spelling.end) == "atom");
+    try {
+        sources.add("invalid.erl", "\xc0\x80");
+        require(false);
+    } catch (const EncodingError &error) {
+        require(error.byte == 0);
+    }
+}
+
 // Run shared cursor, lexical-boundary, operator, and provenance regressions.
 int main() {
+    source_offsets();
     cursor_bounds();
     categories();
     terminals();

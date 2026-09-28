@@ -1,0 +1,2 @@
+-feature(maybe_expr, disable).
+-module(features). f() -> {maybe, else}.

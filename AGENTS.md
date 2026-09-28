@@ -42,3 +42,9 @@ The initial directory structure and implementation plan with technology choices 
 - The cyclomatic complexity of new functions and new files must remain low (avoid complex code). Use both Lizard and clang-tidy.
 - Before a clean commit, run `cmake --build build/debug --target check-quality` in a freshly configured build with both compiler and runtime enabled. Both Lizard and clang-tidy must pass; do not bypass findings with threshold increases or suppressions merely to pass the gate.
 - Keep all code clang-formatted (Use either makefile target 'format' or invoke clang-format)
+
+## Testing Strategy
+
+- Minimize unit testing and maximize meaningful black-box and end-to-end coverage. Prefer real Erlang source files and project fixtures exercised through the compiler CLI, checking exit status, diagnostics, generated artifacts, and executable behavior as those features become available.
+- Exercise real compiler stages and runtime integrations together; compare observable behavior with Erlang/OTP where appropriate. Avoid mocks and assertions tied to private implementation details when a real workflow can cover the behavior.
+- Add focused unit tests only for important edge cases or invariants that cannot be covered reliably or practically through black-box or end-to-end tests. Avoid duplicating coverage across layers; preserve existing useful tests unless equivalent behavioral coverage replaces them.

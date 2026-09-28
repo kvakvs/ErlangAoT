@@ -1,0 +1,2 @@
+- file ( "directive_fun.erl" , 1 ) .
+f ( ) -> fun ( ) -> - include ( "text" ) end .

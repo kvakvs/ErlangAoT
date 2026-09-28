@@ -1,0 +1,2 @@
+-else().
+-ordinary(ok).

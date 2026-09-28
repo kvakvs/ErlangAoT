@@ -9,7 +9,7 @@ file(READ "${project}/project.toml" original)
 # Invoke the real CLI from an unrelated working directory and inspect its streams.
 function(check name code stdout stderr manifest)
     execute_process(COMMAND "${TOOL}" --project "${manifest}" ${ARGN}
-        WORKING_DIRECTORY "${outside}" RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
+        WORKING_DIRECTORY "${outside}" RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 20)
     if(NOT "${result}" STREQUAL "${code}" OR NOT out MATCHES "${stdout}" OR NOT err MATCHES "${stderr}")
         message(FATAL_ERROR "${name}: exit=${result} stdout=[${out}] stderr=[${err}]")
     endif()
@@ -65,3 +65,6 @@ execute_process(COMMAND "${TOOL}" --project "${semidir}/project.toml" --parse-ch
 if(NOT result EQUAL 0 OR NOT out STREQUAL "" OR NOT err STREQUAL "")
     message(FATAL_ERROR "Semicolon paths failed: ${err}")
 endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/discovery_cases.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/options_cases.cmake")

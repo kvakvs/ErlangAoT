@@ -1,0 +1,3 @@
+- file ( "semantics_14.erl" , 1 ) .
+- module ( 'quoted module' ) .
+f ( A , B ) -> { 'quoted module' , "quoted module" , f , 2 , 3 , 29 , 'BEAM' } .

@@ -1,0 +1,20 @@
+Module forms=2
+  form[0]: FileAttribute name="exceptions_0.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Tuple elements=3
+        element[0]: LocalFunReference name=f arity=9999999999999999999999
+        element[1]: RemoteFunReference module=variable:M name=variable:F arity=variable:A
+        element[2]: FunExpression name=Loop clauses=2
+          clause[0]: FunctionClause arguments=1 guard=none body=1
+            argument[0]: RestrictedPattern
+              expression: IntegerLiteral value=0
+            body[0]: Atom name=ok
+          clause[1]: FunctionClause arguments=1 guard=none body=1
+            argument[0]: RestrictedPattern
+              expression: Variable name=N
+            body[0]: CallExpression arguments=1
+              target: Variable name=Loop
+              argument[0]: BinaryExpression operator=-
+                left: Variable name=N
+                right: IntegerLiteral value=1

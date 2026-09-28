@@ -91,9 +91,10 @@ or callback. Allocation and integration with term layouts remain deferred.
 
 ## Validation
 
-`runtime_memory` exercises separate process owners/budgets, size overflow, limits,
-unsupported allocation/collection, invalid slots, immediate copy equivalence and
-survival after source/destination teardown. `runtime_lifecycle_failure` sweeps
+`runtime_generated_link` exercises separate process owners, immediate copies and
+survival after source/destination teardown in an independently built consumer.
+`runtime_memory` retains size overflow, budgets, unsupported allocation/collection
+and invalid slots/words. `runtime_lifecycle_failure` sweeps
 construction allocation failures and exercises memory boundaries with host
 allocation forced to fail. Native layout tests compile the prefix assertions.
 Sanitizer runs cover these boundaries; they do not validate an allocator, collector,

@@ -137,68 +137,6 @@ void check_dispatch() {
     check_bad_returns(scheduler, process);
 }
 
-// Resume clears explicit suspension only; a waiting process still needs future signal handling to wake.
-void check_waiting() {
-    auto runtime = start_runtime();
-    auto &context = register_context(*runtime);
-    auto &scheduler = *runtime->scheduler();
-    const auto process = context.identity();
-    require(scheduler.begin_dispatch(process).has_value(), "dispatch failed");
-    require(scheduler.finish_dispatch(process, {StepDisposition::waiting}).has_value(), "wait failed");
-    require(scheduler.set_suspended(process, true).has_value(), "waiting suspension failed");
-    require(scheduler.inspect(process)->suspended, "suspension lost");
-    require(scheduler.set_suspended(process, false).has_value(), "waiting resume failed");
-    require(scheduler.set_suspended(process, false).has_value(), "resume not idempotent");
-    const auto waiting = scheduler.inspect(process);
-    require(waiting->state == ProcessState::waiting && !waiting->suspended, "resume spuriously woke waiter");
-    require(scheduler.begin_dispatch(process) == std::unexpected(SchedulerError::invalid_transition),
-            "waiting dispatch");
-    require(runtime->destroy_context(&context) == Status::ok, "waiting context cleanup failed");
-    require(scheduler.process_count() == 0, "context destruction retained registration");
-}
-
-// Terminal state preserves its reason and cannot return, resume or dispatch again.
-void check_exit() {
-    auto runtime = start_runtime();
-    auto &context = register_context(*runtime);
-    auto &scheduler = *runtime->scheduler();
-    const auto process = context.identity();
-    require(scheduler.begin_dispatch(process).has_value(), "dispatch failed");
-    require(scheduler.finish_dispatch(process, {StepDisposition::exited, ExitReason::normal}).has_value(),
-            "exit failed");
-    const auto exited = scheduler.inspect(process);
-    require(exited->state == ProcessState::exited && exited->exit_reason == ExitReason::normal, "exit metadata lost");
-    const auto invalid = std::unexpected(SchedulerError::invalid_transition);
-    require(scheduler.begin_dispatch(process) == invalid, "exited dispatch");
-    require(scheduler.finish_dispatch(process, {}) == invalid, "exited return");
-    require(scheduler.set_suspended(process, false) == invalid, "exited resume");
-    require(runtime->destroy_context(&context) == Status::ok, "exit cleanup failed");
-    require(scheduler.inspect(process) == std::unexpected(SchedulerError::unknown_process), "stale identity resolved");
-}
-
-// Closing admission preserves in-flight state until its return; runtime shutdown still requires no contexts.
-void check_shutdown() {
-    auto runtime = start_runtime();
-    auto &context = register_context(*runtime);
-    auto &unregistered = create_context(*runtime);
-    auto &scheduler = *runtime->scheduler();
-    const auto process = context.identity();
-    require(runtime->shutdown() == Status::busy && !scheduler.stopping(), "busy shutdown closed admission");
-    require(scheduler.begin_dispatch(process).has_value(), "dispatch failed");
-    scheduler.request_shutdown();
-    scheduler.request_shutdown();
-    require(scheduler.stopping(), "shutdown not recorded");
-    require(scheduler.register_process(unregistered) == std::unexpected(SchedulerError::stopped),
-            "closed registration");
-    require(scheduler.begin_dispatch(process) == std::unexpected(SchedulerError::stopped), "closed dispatch");
-    require(scheduler.set_suspended(process, false) == std::unexpected(SchedulerError::stopped), "closed control");
-    require(scheduler.finish_dispatch(process, {StepDisposition::exited, ExitReason::runtime_shutdown}).has_value(),
-            "in-flight shutdown return rejected");
-    require(runtime->destroy_context(&context) == Status::ok, "closed cleanup failed");
-    require(runtime->destroy_context(&unregistered) == Status::ok, "unregistered cleanup failed");
-    require(runtime->shutdown() == Status::ok && runtime->scheduler() == nullptr, "stopped service exposed");
-}
-
 // Observe destruction while the stopped registry still exists but all context tokens are invalid.
 struct CleanupProbe final {
     // Borrow only through runtime-owned registry destruction, never through a surviving loaded-module handle.
@@ -240,9 +178,6 @@ int main() {
         check_growth();
         check_isolation();
         check_dispatch();
-        check_waiting();
-        check_exit();
-        check_shutdown();
         check_ordered_teardown();
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

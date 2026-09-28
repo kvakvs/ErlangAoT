@@ -194,15 +194,21 @@
   [parse] on stderr; resolved include notifications come from the preprocessor.
 - Binding, guard legality, record/type resolution, lint, transforms, lowering and
   execution remain later stages. Stage-reader directories are reserved only.
-- Tests combine native invariants/provenance/recovery/stress/mutations, CLI/API
-  consumers, offline records and live OTP projections. A pinned grammar reduction
+- Tests prefer real source/project CLI workflows, exact AST/diagnostic snapshots,
+  bounded source stress/mutations and separately built frontend/runtime consumers.
+  Keep API-only invariants, raw-stage ownership, injected limits/faults and cross-width
+  ABI boundaries. Backend synthetic cases retire only after real compiled Erlang
+  covers them; see docs/test-migration.md and .agents/04-compile.md steps 15–46.
+  Existing offline records and live OTP projections remain. A pinned grammar reduction
   audit observes all 344 ordinary productions; 79 SSA test productions are excluded.
   Ten checksum-pinned real OTP sources are checked by stage and for deterministic trees.
 - Fresh full-build quality requires Lizard CCN <=10 and clang-tidy cognitive <=10
   plus analyzer/bugprone/performance checks, without suppressions or raised limits.
-  Host evidence is macOS arm64; Linux x86/ARM and Windows x86-family remain pending.
-  Full C++23, compiler-only and ASan/UBSan builds pass all 64 tests; runtime-only
-  remains independent. See docs/{projects,project-validation,parser,parser-validation,
+  Historical macOS arm64 evidence includes all 64 then-current tests in full,
+  compiler-only and ASan/UBSan builds. Windows x64 migration evidence is recorded
+  in docs/test-migration.md, including outstanding parser/quality/frontend-ASan
+  blockers; runtime-only remains independent and passes all 15 tests under ASan.
+  Linux x86/ARM and native 32-bit runs remain pending. See docs/{projects,project-validation,parser,parser-validation,
   preprocessor}.md for contracts and evidence.
 
 - Step 14 installs host reporting placeholders for TermFactory, heap allocation/GC,

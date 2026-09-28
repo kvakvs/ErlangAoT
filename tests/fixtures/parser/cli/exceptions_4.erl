@@ -1,0 +1,1 @@
+bad() -> fun A(X)->X; B(X)->X end. good() -> ok.

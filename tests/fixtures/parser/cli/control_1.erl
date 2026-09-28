@@ -1,0 +1,1 @@
+bad() -> case x of X -> begin end end. good() -> receive after 0 -> ok end.

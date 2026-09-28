@@ -1,0 +1,1 @@
+-type (t(A)) :: X :: {A, [integer(),...], #{atom() := binary()}}. -record #Point{field = run() :: integer(), plain}. -nominal n(A) :: other:t(A).

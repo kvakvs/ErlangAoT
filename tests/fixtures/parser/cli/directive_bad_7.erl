@@ -1,0 +1,2 @@
+-undef(A,B).
+-ordinary(ok).

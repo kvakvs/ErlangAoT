@@ -1,0 +1,1 @@
+-module(tree). f(X) -> {X, 42}.

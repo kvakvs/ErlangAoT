@@ -29,13 +29,28 @@ foreach(mode IN ITEMS golden oracle)
         set_tests_properties(parser_${suite}_${mode} PROPERTIES TIMEOUT 90)
     endforeach()
 endforeach()
-foreach(name IN ITEMS hardening mutations consumer)
+foreach(name IN ITEMS hardening)
     add_executable(parser_${name} compiler/parser/${name}.cpp)
     erlang_aot_project_options(parser_${name})
     target_link_libraries(parser_${name} PRIVATE erlang_frontend)
     add_test(NAME parser_${name} COMMAND parser_${name})
     set_tests_properties(parser_${name} PROPERTIES TIMEOUT 60)
 endforeach()
+add_test(NAME parser_consumer COMMAND "${CMAKE_COMMAND}"
+    "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-consumer/$<CONFIG>"
+    "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake" "-DHOST_CONFIG=$<CONFIG>"
+    "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/consumer.cmake")
+set_tests_properties(parser_consumer PROPERTIES TIMEOUT 180)
+add_test(NAME parser_mutations COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-mutations"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/mutations.cmake")
+set_tests_properties(parser_mutations PROPERTIES TIMEOUT 180)
+add_test(NAME parser_stress COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-stress"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/stress.cmake")
+set_tests_properties(parser_stress PROPERTIES TIMEOUT 90)
 
 add_test(NAME cli COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>"
@@ -43,15 +58,20 @@ add_test(NAME cli COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/cli.cmake"
 )
 
-add_executable(printing_tests compiler/printing.cpp)
-erlang_aot_project_options(printing_tests)
-target_link_libraries(printing_tests PRIVATE erlang_frontend)
-add_test(NAME printing COMMAND printing_tests)
-
-add_executable(printing_ast_tests compiler/printing_ast.cpp)
-erlang_aot_project_options(printing_ast_tests)
-target_link_libraries(printing_ast_tests PRIVATE erlang_frontend)
-add_test(NAME printing_ast COMMAND printing_ast_tests)
+add_test(NAME frontend_cli COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser/cli"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/frontend-cli"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/frontend_cases.cmake")
+add_test(NAME printing_roundtrip COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DDUMP=$<TARGET_FILE:preprocessor_dump>"
+    "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor/printing"
+    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/printing-roundtrip"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/printing_roundtrip.cmake")
+set_tests_properties(frontend_cli printing_roundtrip PROPERTIES TIMEOUT 90)
+add_test(NAME preprocessor_workflow COMMAND "${CMAKE_COMMAND}"
+    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/preprocessor-workflow"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/workflow.cmake")
+set_tests_properties(preprocessor_workflow PROPERTIES TIMEOUT 90)
 add_executable(parser_control compiler/parser/control.cpp)
 erlang_aot_project_options(parser_control)
 target_include_directories(parser_control PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
@@ -103,12 +123,7 @@ foreach(mode IN ITEMS golden oracle)
         "-DLIVE=${live}" -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
 endforeach()
 set_tests_properties(parser_phase4_oracle PROPERTIES TIMEOUT 180)
-set_tests_properties(printing_ast PROPERTIES TIMEOUT 20)
 
-add_executable(parser_probe compiler/probe.cpp)
-erlang_aot_project_options(parser_probe)
-target_link_libraries(parser_probe PRIVATE erlang_frontend)
-add_test(NAME parser_probe COMMAND parser_probe)
 add_test(NAME otp_oracle COMMAND "${CMAKE_COMMAND}"
     "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.escript"
@@ -116,10 +131,6 @@ add_test(NAME otp_oracle COMMAND "${CMAKE_COMMAND}"
     "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/oracle"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.cmake")
 
-add_executable(lexer_tests compiler/lexer.cpp)
-erlang_aot_project_options(lexer_tests)
-target_link_libraries(lexer_tests PRIVATE erlang_frontend)
-add_test(NAME lexer COMMAND lexer_tests)
 add_executable(lexer_dump compiler/lexer_dump.cpp)
 erlang_aot_project_options(lexer_dump)
 target_link_libraries(lexer_dump PRIVATE erlang_frontend)

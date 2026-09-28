@@ -13,8 +13,9 @@ main([Root, Fixtures, Work, Report]) ->
     {ok, Generated} = yecc:file(Target),
     {ok, erlangaot_coverage, Binary, _} = compile:file(Generated, [binary, return_errors, return_warnings]),
     {module, erlangaot_coverage} = code:load_binary(erlangaot_coverage, Generated, Binary),
-    Inputs = lists:sort(filelib:fold_files(Fixtures, "\\.(erl|reject|builder-reject)$", true,
-                                         fun(Path, Acc) -> [Path | Acc] end, [])),
+    Candidates = filelib:fold_files(Fixtures, "\\.(erl|reject|builder-reject)$", true,
+                                    fun(Path, Acc) -> [Path | Acc] end, []),
+    Inputs = lists:sort([Path || Path <- Candidates, reference_fixture(Path, Fixtures)]),
     lists:foreach(fun(Path) -> scan(Path, Fixtures) end, Inputs),
     {ok, Inventory} = file:read_file(filename:join(Fixtures, "grammar.tsv")),
     [_Header | Rows] = string:split(binary_to_list(Inventory), "\n", all),
@@ -24,6 +25,10 @@ main([Root, Fixtures, Work, Report]) ->
     io:format("Grammar reductions: ~B rows, ~B ordinary rows pending; report ~s~n",
               [length(Results),length(Missing),Report]),
     case Missing of [] -> ok; _ -> halt(1) end.
+
+%% Keep the pinned witness corpus independent of product-only malformed CLI inputs.
+reference_fixture(Path, Fixtures) ->
+    not lists:prefix(filename:split(filename:join(Fixtures, "cli")), filename:split(Path)).
 
 instrument(Line, {N, Previous}) ->
     Pending = case re:run(Line, "^[a-z][a-z_0-9]* +->") of

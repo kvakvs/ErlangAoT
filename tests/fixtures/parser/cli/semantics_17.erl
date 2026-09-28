@@ -1,0 +1,1 @@
+-feature(maybe_expr,disable). -if(?FEATURE_AVAILABLE(maybe_expr)). yes. -endif.

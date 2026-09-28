@@ -3,6 +3,10 @@
 Project support requires C++23. This validation uses that baseline; C++26 checks
 are excluded. Executable generation remains unimplemented.
 
+The host record below predates the test migration. Current Windows x64 results,
+CLI replacements, capability checks and remaining validation blockers are in
+[the migration ledger](test-migration.md).
+
 ## Host and dependencies
 
 Evidence recorded on 2026-09-20:
@@ -26,7 +30,7 @@ planner over the same 129-source tree and exercises small explicit limits.
 
 Hard links, file/directory symlinks and case aliases are available on the tested
 filesystem. Tests conditionally exercise links where native permissions permit;
-`project_hardening` prints the observed link/case capabilities. Windows drive,
+`project_workflow` prints the observed link/case capabilities. Windows drive,
 UNC and backslash assertions are compiled only on Windows. Their presence in the
 test source is not evidence that they have run on this host.
 

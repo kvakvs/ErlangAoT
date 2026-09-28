@@ -1,0 +1,18 @@
+Module forms=7
+  form[0]: FileAttribute name="forms_0.erl" line=1
+  form[1]: ModuleAttribute name=m
+  form[2]: Function name=i arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: IntegerLiteral value=123456789012345678901234567890
+  form[3]: Function name=a arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Atom name='end'
+  form[4]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: FloatLiteral value=1.25
+  form[5]: Function name=c arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: CharacterLiteral value=$λ
+  form[6]: Function name=s arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: StringLiteral value="hello λ"

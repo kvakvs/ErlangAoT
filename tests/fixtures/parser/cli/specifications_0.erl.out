@@ -1,0 +1,31 @@
+Module forms=4
+  form[0]: FileAttribute name="specifications_0.erl" line=1
+  form[1]: Specification name=f arity=1 module=m
+    signature[0]: SpecificationSignature constraints=2
+      function: FunType arguments=1
+        argument[0]: Variable name=A
+        result: Variable name=A
+      constraint[0]: TypeConstraint variable=A legacy=0
+        bound: TypeApplication name=integer predefined=1
+      constraint[1]: TypeConstraint variable=A legacy=1
+        bound: RangeType
+          first: IntegerLiteral value=1
+          last: IntegerLiteral value=10
+    signature[1]: SpecificationSignature constraints=0
+      function: FunType arguments=2
+        argument[0]: Variable name=A
+        argument[1]: Variable name=B
+        result: TupleType any=0
+          element[0]: Variable name=A
+          element[1]: Variable name=B
+  form[2]: Callback name=run arity=0
+    signature[0]: SpecificationSignature constraints=0
+      function: FunType arguments=0
+        result: Atom name=ok
+  form[3]: Specification name=any arity=0
+    signature[0]: SpecificationSignature constraints=0
+      function: FunType arguments=0
+        result: Atom name=ok
+    signature[1]: SpecificationSignature constraints=0
+      function: FunType arguments=any
+        result: TypeApplication name=any predefined=1

@@ -1,0 +1,5 @@
+Module forms=2
+  form[0]: FileAttribute name="binary_rejection_2.erl" line=1
+  form[1]: Function name=good arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Bitstring segments=0

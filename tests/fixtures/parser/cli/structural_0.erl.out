@@ -1,0 +1,12 @@
+Module forms=2
+  form[0]: FileAttribute name="structural_0.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Tuple elements=6
+        element[0]: RecordExpression mode=construct identity=local name='State' fields=0
+        element[1]: RecordExpression mode=construct identity=qualified module=mod name='end' fields=0
+        element[2]: RecordExpression mode=construct identity=inferred fields=0
+        element[3]: RecordExpression mode=construct identity=local name='_' fields=0
+        element[4]: RecordAccess identity=local name=r field=a
+          base: Variable name=R
+        element[5]: RecordIndex record=r field=a

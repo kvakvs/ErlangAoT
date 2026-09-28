@@ -1,0 +1,2 @@
+-include(42).
+-ordinary(ok).

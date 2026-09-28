@@ -1,0 +1,2 @@
+- file ( "directive_lexical_recovery.erl" , 1 ) .
+good ( ) -> ok .

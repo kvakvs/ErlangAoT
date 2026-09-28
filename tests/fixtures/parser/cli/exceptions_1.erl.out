@@ -1,0 +1,21 @@
+Module forms=2
+  form[0]: FileAttribute name="exceptions_1.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: TryExpression body=1 of=none catch=present after=present
+        body[0]: CallExpression arguments=0
+          target: Atom name=f
+        catch[0]: CatchClause class=<omitted> stacktrace=<omitted>
+          reason: RestrictedPattern
+            expression: Variable name=R
+          body[0]: Variable name=R
+        catch[1]: CatchClause class=atom:error stacktrace=S
+          reason: RestrictedPattern
+            expression: Variable name=E
+          guard: GuardSyntax alternatives=1
+            alternative[0]: GuardConjunction tests=1
+              test[0]: Atom name=true
+          body[0]: Tuple elements=2
+            element[0]: Variable name=E
+            element[1]: Variable name=S
+        after[0]: Atom name=done

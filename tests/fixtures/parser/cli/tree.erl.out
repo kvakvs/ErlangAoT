@@ -1,0 +1,10 @@
+Module forms=3
+  form[0]: FileAttribute name="tree.erl" line=1
+  form[1]: ModuleAttribute name=tree
+  form[2]: Function name=f arity=1 clauses=1
+    clause[0]: FunctionClause arguments=1 guard=none body=1
+      argument[0]: RestrictedPattern
+        expression: Variable name=X
+      body[0]: Tuple elements=2
+        element[0]: Variable name=X
+        element[1]: IntegerLiteral value=42

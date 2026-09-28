@@ -1,0 +1,1 @@
+-define(T, try f() catch R -> R; error:E:S when true -> {E,S} after done end). f() -> ?T.

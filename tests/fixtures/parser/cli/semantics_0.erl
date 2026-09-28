@@ -1,0 +1,1 @@
+-define(A, ?B). -define(B, 42). -define(F(X), {X,X}). ?F(?A). -undef(B). -define(B,7). ?A.

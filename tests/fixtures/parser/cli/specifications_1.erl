@@ -1,0 +1,1 @@
+-spec bad(A) -> A when A :: integer(), _ :: atom(). -record broken() -> ok. -spec any(...) -> atom(). -spec good() -> ok.

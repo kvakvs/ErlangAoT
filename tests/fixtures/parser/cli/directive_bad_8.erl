@@ -1,0 +1,2 @@
+-ifdef(42).
+-ordinary(ok).

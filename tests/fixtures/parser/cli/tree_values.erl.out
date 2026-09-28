@@ -1,0 +1,85 @@
+Module forms=3
+  form[0]: FileAttribute name="tree_values.erl" line=1
+  form[1]: ModuleAttribute name=tree
+  form[2]: Function name=f arity=1 clauses=2
+    clause[0]: FunctionClause arguments=1 guard=present body=1
+      argument[0]: RestrictedPattern
+        expression: Variable name=X
+      guard: GuardSyntax alternatives=2
+        alternative[0]: GuardConjunction tests=2
+          test[0]: CallExpression arguments=1
+            target: Atom name=is_integer
+            argument[0]: Variable name=X
+          test[1]: BinaryExpression operator=>
+            left: Variable name=X
+            right: IntegerLiteral value=0
+        alternative[1]: GuardConjunction tests=1
+          test[0]: BinaryExpression operator==:=
+            left: Variable name=X
+            right: IntegerLiteral value=0
+      body[0]: Tuple elements=21
+        element[0]: [count=0 tail=nil
+        element[1]: [count=1 tail=explicit
+          element[0]: Variable name=X
+          tail: Atom name=tail
+        element[2]: Group
+          expression: Variable name=X
+        element[3]: FloatLiteral value=1.25
+        element[4]: CharacterLiteral value=$\n
+        element[5]: StringLiteral value="a\n\"Î»"
+        element[6]: Atom name='fun'
+        element[7]: UnaryExpression operator=-
+          operand: Variable name=X
+        element[8]: BinaryExpression operator=+
+          left: Variable name=X
+          right: IntegerLiteral value=1
+        element[9]: MatchExpression
+          left: Variable name=X
+          right: IntegerLiteral value=1
+        element[10]: CatchExpression
+          expression: CallExpression arguments=1
+            target: RemoteExpression
+              module: Atom name=m
+              function: Atom name=f
+            argument[0]: Variable name=X
+        element[11]: MapExpression mode=construct fields=1
+          field[0]: MapField operator==>
+            key: Atom name=a
+            value: IntegerLiteral value=1
+        element[12]: MapExpression mode=update fields=1
+          base: Variable name=X
+          field[0]: MapField operator=:=
+            key: Atom name=a
+            value: IntegerLiteral value=2
+        element[13]: RecordExpression mode=construct identity=local name=r fields=2
+          field[0]: RecordField Atom name=a
+            value: IntegerLiteral value=1
+          field[1]: RecordField Variable name=_
+            value: Variable name=X
+        element[14]: RecordAccess identity=local name=r field=a
+          base: Variable name=X
+        element[15]: RecordIndex record=r field=a
+        element[16]: RecordExpression mode=construct identity=qualified module=m name=r fields=1
+          field[0]: RecordField Atom name=a
+            value: IntegerLiteral value=1
+        element[17]: RecordExpression mode=update identity=inferred fields=1
+          base: Variable name=X
+          field[0]: RecordField Atom name=a
+            value: IntegerLiteral value=1
+        element[18]: Bitstring segments=0
+        element[19]: Bitstring segments=2
+          segment[0]: BinarySegment size=explicit modifiers=2
+            value: Variable name=X
+            size: IntegerLiteral value=8
+            modifier[0]: BinaryModifier name=integer parameter=none
+            modifier[1]: BinaryModifier name=unit parameter=8
+          segment[1]: BinarySegment size=omitted modifiers=omitted
+            value: Variable name=X
+        element[20]: Bitstring segments=1
+          segment[0]: BinarySegment size=omitted modifiers=1
+            value: StringLiteral value="Î»"
+            modifier[0]: BinaryModifier name=utf8 parameter=none
+    clause[1]: FunctionClause arguments=1 guard=none body=1
+      argument[0]: RestrictedPattern
+        expression: Variable name=_
+      body[0]: Atom name=ok

@@ -1,0 +1,2 @@
+-ifndef(A) extra.
+-ordinary(ok).

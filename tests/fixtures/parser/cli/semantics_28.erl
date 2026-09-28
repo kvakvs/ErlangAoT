@@ -1,0 +1,2 @@
+-file("logical.erl",100).
+-undef().

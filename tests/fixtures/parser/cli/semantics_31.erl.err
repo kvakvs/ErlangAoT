@@ -1,0 +1,1 @@
+warning: semantics_31.erl:1:2: # { fun erlang : abs / 1 => b , fun erlang : length / 1 => a }

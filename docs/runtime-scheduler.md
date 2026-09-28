@@ -112,13 +112,15 @@ fairness also remain proposals.
 
 ## Validation
 
-`runtime_scheduler` covers once-only registration, growth/removal, invalid and
-foreign identities, dispatch/return validation, suspension versus waiting, terminal
-state, admission closure, automatic removal and registry/context/code teardown order.
+`runtime_generated_link` combines registration, suspension, dispatch, real builtin
+calls, waiting, exit, admission closure and teardown in an independent consumer.
+`runtime_scheduler` retains growth/removal, invalid/stale/foreign identities,
+invalid in-flight transitions and synthetic registry/context/code teardown order.
 `runtime_lifecycle_failure` injects allocation failures at startup and registration,
-checking cleanup and retry without consuming an identity. Native macOS arm64 tests
-and sanitizer runs validate the implemented bookkeeping only; native Linux/Windows
-and actual Erlang scheduling remain pending.
+checking cleanup and retry without consuming an identity. Native macOS arm64 and
+Windows x64 tests and sanitizer runs validate the implemented bookkeeping only;
+native Linux and actual Erlang scheduling remain pending. See the current
+[migration evidence](test-migration.md) for host/toolchain limits.
 
 Step 14 adds `SchedulerService::run` and `execute(identity)` reporting placeholders.
 They return `not_implemented` (or `diagnostic_failure`) without running workers,

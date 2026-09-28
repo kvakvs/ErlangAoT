@@ -1,0 +1,35 @@
+# A separately configured embedding application sees public frontend headers and link requirements.
+include("${HOST_SETTINGS}")
+file(REMOVE_RECURSE "${WORK}")
+file(MAKE_DIRECTORY "${WORK}/source")
+file(WRITE "${WORK}/source/CMakeLists.txt" [=[
+cmake_minimum_required(VERSION 3.28)
+project(FrontendConsumer LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(ERLANG_AOT_BUILD_COMPILER ON CACHE BOOL "" FORCE)
+set(ERLANG_AOT_BUILD_RUNTIME OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+add_subdirectory("${SOURCE_ROOT}" compiler-build)
+add_executable(consumer "${SOURCE_ROOT}/tests/compiler/parser/consumer.cpp")
+target_link_libraries(consumer PRIVATE erlang_frontend)
+erlang_aot_project_options(consumer)
+set_target_properties(consumer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
+]=])
+execute_process(COMMAND "${CMAKE_COMMAND}" -S "${WORK}/source" -B "${WORK}/build"
+    "-DSOURCE_ROOT=${SOURCE_ROOT}" ${host_configure_args}
+    RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT status STREQUAL "0")
+    message(FATAL_ERROR "Frontend consumer configure failed: ${output}${error}")
+endif()
+execute_process(COMMAND "${CMAKE_COMMAND}" --build "${WORK}/build" --config "${HOST_CONFIG}" --target consumer -j 4
+    RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT status STREQUAL "0")
+    message(FATAL_ERROR "Frontend consumer build failed: ${output}${error}")
+endif()
+execute_process(COMMAND "${WORK}/build/bin/${HOST_CONFIG}/consumer${HOST_SUFFIX}"
+    RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 15)
+if(NOT status STREQUAL "0" OR NOT output STREQUAL "" OR NOT error STREQUAL "")
+    message(FATAL_ERROR "Frontend consumer lost its owned syntax: ${status}: ${output}${error}")
+endif()

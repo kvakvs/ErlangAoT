@@ -1,0 +1,2 @@
+bad() -> ?MISSING.
+good() -> ok.

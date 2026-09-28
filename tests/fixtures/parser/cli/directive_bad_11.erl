@@ -1,0 +1,2 @@
+-endif(no).
+-ordinary(ok).

@@ -1,0 +1,1 @@
+-if(42). no. -elif(1 div 0). no. -else. yes. -endif.

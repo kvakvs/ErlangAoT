@@ -1,0 +1,1 @@
+-spec m:f(A) -> A when A :: integer(), is_subtype(A, 1..10); (A,B) -> {A,B}. -callback run() -> ok. -spec any() -> ok; (...) -> any().

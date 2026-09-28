@@ -1,6 +1,6 @@
+#include <cstdio>
 #include <erlang_aot/abi/v1.hpp>
 #include <erlang_aot/runtime/features.hpp>
-#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -26,37 +26,6 @@ bool refuse(void *, std::string_view) { return false; }
 // Simulate a host callback that violates its normal-delivery contract.
 bool throw_sink(void *, std::string_view) { throw std::runtime_error("sink failure"); }
 
-// Every runtime feature reports once; propagation/retries preserve the first explicit failure status.
-void check_catalog() {
-    for (const auto &feature : feature_catalog) {
-        if (feature.owner != FeatureOwner::runtime) {
-            continue;
-        }
-        std::vector<std::string> messages;
-        FeatureFailure failure({&messages, collect});
-        require(failure.status() == Status::ok && messages.empty(), "unused reporter was noisy");
-        require(failure.report(feature.id) == Status::not_implemented, "placeholder returned success");
-        require(failure.report(feature.id) == Status::not_implemented, "failure status changed");
-        require(messages == std::vector<std::string>{'[' + std::string(feature.name) + "] notimpl"},
-                "duplicate/wrong owner report");
-        FeatureFailure independent({&messages, collect});
-        independent.report(feature.id);
-        require(messages.size() == 2, "independent failure was globally suppressed");
-    }
-}
-
-// Runtime reports include available source/module/target/operation data without depending on LLVM.
-void check_context() {
-    std::vector<std::string> messages;
-    FeatureFailure failure({&messages, collect});
-    failure.report(FeatureId::garbage_collection, {"src/example.erl", 12, 5, "example", "native", "collect"});
-    require(messages.front() == "[garbage collection] notimpl: src/example.erl:12:5 [module=\"example\"] "
-                                "[target=\"native\"] [operation=\"collect\"]",
-            "runtime context changed");
-    failure.report(FeatureId::allocation);
-    require(messages.size() == 1, "propagation replaced the original failure");
-}
-
 // I/O/callback errors and unknown IDs remain explicit failures with no fake terms or leaked exceptions.
 void check_errors() {
     FeatureFailure rejected({nullptr, refuse});
@@ -77,22 +46,48 @@ Status unavailable_service() noexcept {
     return failure.report(FeatureId::garbage_collection);
 }
 
+// Render full/partial/escaped context through the actual stderr sink, retaining the first failure.
+Status contextual_service(std::string_view mode) noexcept {
+    FeatureFailure failure;
+    if (mode == "context") {
+        failure.report(FeatureId::garbage_collection, {"src/example.erl", 12, 5, "example", "native", "collect"});
+    } else if (mode == "escaping") {
+        failure.report(FeatureId::garbage_collection,
+                       {"C:\\source\nfile.erl", 0, 99, "m\"\\\t", {}, std::string_view("x\0y", 3)});
+    } else if (mode == "partial") {
+        failure.report(FeatureId::garbage_collection, {"test.erl"});
+    } else {
+        failure.report(FeatureId::atom_collection);
+    }
+    return failure.report(FeatureId::allocation);
+}
+
 // Subprocess modes expose only stderr on failure and remain silent without a reached placeholder.
+int run(int argc, char **argv) {
+    if (argc != 2) {
+        check_errors();
+        return 0;
+    }
+    const std::string_view mode(argv[1]);
+    if (mode == "stderr") {
+        return unavailable_service() == Status::not_implemented ? 1 : 0;
+    }
+    if (mode == "silent") {
+        FeatureFailure unused;
+        return unused.status() == Status::ok ? 0 : 1;
+    }
+    return contextual_service(mode) == Status::not_implemented ? 1 : 0;
+}
+
+// Convert every host exception into a failing process result without throwing from main.
 int main(int argc, char **argv) {
     try {
-        if (argc == 2 && std::string_view(argv[1]) == "stderr") {
-            return unavailable_service() == Status::not_implemented ? 1 : 0;
-        }
-        if (argc == 2 && std::string_view(argv[1]) == "silent") {
-            FeatureFailure unused;
-            return unused.status() == Status::ok ? 0 : 1;
-        }
-        check_catalog();
-        check_context();
-        check_errors();
+        return run(argc, argv);
     } catch (const std::exception &error) {
-        std::cerr << error.what() << '\n';
+        std::fprintf(stderr, "%s\n", error.what());
+        return 1;
+    } catch (...) {
+        std::fputs("unexpected feature reporting exception\n", stderr);
         return 1;
     }
-    return 0;
 }

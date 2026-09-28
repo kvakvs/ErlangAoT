@@ -92,8 +92,10 @@ This does not alter the separate `GeneratedFunction` entry signature.
 | Explicit ownership/liveness failure | `wrong_owner` / `stopped` |
 | Diagnostic delivery failure | `diagnostic_failure` |
 
-`runtime_builtins` covers keys, arities, freeze, shared target state and code/capture
-lifetimes. `runtime_builtin_bridge` calls the service's actual native signature and
+`runtime_generated_link` covers keys, arities, freeze, publication, shared target
+state and retained calls across runtime teardown. `runtime_builtins` retains
+malformed inputs, callback failures and synthetic code/capture teardown ordering.
+`runtime_builtin_bridge` calls the service's actual native signature and
 checks value/error propagation; `runtime_builtin_output` verifies silence and one
 unavailable diagnostic. These are host registration/ABI tests; compiler BIF lowering
 and execution of generated Erlang functions remain future work.

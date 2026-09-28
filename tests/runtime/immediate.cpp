@@ -16,17 +16,8 @@ void require(bool condition, const char *message) {
     }
 }
 
-// Compare the runtime boundary with the shared codec at signed boundaries and representative values.
+// Out-of-range host integers cannot be supplied as native small integers by valid Erlang programs.
 void check_integers() {
-    constexpr std::array values{Encoding::minimum, Encoding::minimum + 1, std::int64_t{-42},
-                                std::int64_t{-1},  std::int64_t{0},       std::int64_t{1},
-                                std::int64_t{42},  Encoding::maximum - 1, Encoding::maximum};
-    for (const auto value : values) {
-        const auto encoded = encode_integer(value);
-        require(encoded && *encoded == *Encoding::encode(value), "runtime/ABI encoding mismatch");
-        require(classify_immediate(*encoded) == TermKind::smallint, "integer misclassified");
-        require(decode_integer(*encoded) == value, "integer round trip failed");
-    }
     for (const auto value : {std::numeric_limits<std::int64_t>::min(), Encoding::minimum - 1, Encoding::maximum + 1,
                              std::numeric_limits<std::int64_t>::max()}) {
         require(encode_integer(value) == std::unexpected(TermError::out_of_range), "integer overflow accepted");

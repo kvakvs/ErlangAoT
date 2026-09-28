@@ -229,7 +229,7 @@ Compiler-enabled configuration now requires the SDK and creates private
 LLVM headers/definitions do not propagate to frontend or runtime compilation.
 C is enabled for LLVM package dependency probes; project implementations stay C++23.
 A configure-time C++23 link probe checks LLVM context/module ABI compatibility,
-with RTTI and exceptions retained in project code. `codegen_sdk` also executes
+with RTTI and exceptions retained in project code. The `codegen_dependency` consumer also executes
 that boundary in CTest.
 
 Automatic discovery searches `/usr`, `/usr/local`, `/opt/homebrew`, `/opt/local`,

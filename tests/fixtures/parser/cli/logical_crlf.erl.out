@@ -1,0 +1,6 @@
+Module forms=3
+  form[0]: FileAttribute name="logical_crlf.erl" line=1
+  form[1]: FileAttribute name="logical.erl" line=40
+  form[2]: Function name=good arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: Atom name=ok

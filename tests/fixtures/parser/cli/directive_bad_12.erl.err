@@ -1,0 +1,2 @@
+error: directive_bad_12.erl:1:5: expected directive operand
+error: directive_bad_12.erl:1:2: unterminated conditional

@@ -1,0 +1,2 @@
+- file ( "directive_empty.erl" , 1 ) .
+f ( ) -> { ok , yes } .

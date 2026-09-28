@@ -1,0 +1,2 @@
+-feature(foo, nope).
+-ordinary(ok).

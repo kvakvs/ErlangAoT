@@ -1,0 +1,21 @@
+Module forms=4
+  form[0]: FileAttribute name="types_0.erl" line=1
+  form[1]: TypeDeclaration kind=type name=t parameter=A
+    type: AnnotatedType variable=X
+      type: TupleType any=0
+        element[0]: Variable name=A
+        element[1]: ListType nonempty=1
+          element: TypeApplication name=integer predefined=1
+        element[2]: MapType any=0
+          field[0]: MapTypeField kind=:=
+            key: TypeApplication name=atom predefined=1
+            value: TypeApplication name=binary predefined=1
+  form[2]: RecordDeclaration name='Point' native=1
+    field[0]: RecordDeclarationField name=field
+      default: CallExpression arguments=0
+        target: Atom name=run
+      type: TypeApplication name=integer predefined=1
+    field[1]: RecordDeclarationField name=plain
+  form[3]: TypeDeclaration kind=nominal name=n parameter=A
+    type: TypeApplication name=t predefined=0 module=other
+      argument[0]: Variable name=A

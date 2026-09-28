@@ -1,0 +1,3 @@
+error: exceptions_4.erl:1:23: function head mismatch
+  construct opened at exceptions_4.erl:1:10
+  from exceptions_4.erl:1:10

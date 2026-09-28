@@ -28,6 +28,10 @@ target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
 
 add_executable(erlang_aot src/main.cpp src/driver/options.cpp src/driver/frontend.cpp)
+if(WIN32 AND MSVC)
+    # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
+    target_sources(erlang_aot PRIVATE erlangaot.manifest)
+endif()
 set_target_properties(erlang_aot PROPERTIES
     OUTPUT_NAME erlangaot
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

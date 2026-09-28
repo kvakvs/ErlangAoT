@@ -1,0 +1,1 @@
+-define(DROP(X),ok). -define(A,?DROP(?A)). ?A.

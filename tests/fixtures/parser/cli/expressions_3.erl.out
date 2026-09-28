@@ -1,0 +1,11 @@
+Module forms=2
+  form[0]: FileAttribute name="expressions_3.erl" line=1
+  form[1]: Function name=f arity=0 clauses=1
+    clause[0]: FunctionClause arguments=0 guard=none body=1
+      body[0]: CallExpression arguments=1
+        target: CallExpression arguments=1
+          target: RemoteExpression
+            module: Variable name=M
+            function: Variable name=F
+          argument[0]: Variable name=X
+        argument[0]: Variable name=Y

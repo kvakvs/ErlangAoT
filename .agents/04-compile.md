@@ -58,8 +58,8 @@ header content counts exclude its own word. Heap construction/allocation remains
 `TermTag::get_kind()` uses a constexpr three-level lookup; boxed kinds still need
 header inspection. Immediate identities resolve to `local_pid`/`local_port`, empty
 containers to `empty_tuple`/`empty_list`. CTest `runtime_term_tag` checks all 64 tag
-combinations in `tests/runtime/term_tag.cpp`; `runtime_term_layout` separately
-compiles private prefix assertions and checks agreement with the immediate ABI.
+combinations in `tests/runtime/term_tag.cpp`; the build-only object target
+`runtime_term_layout_tests` compiles private prefix assertions and immediate ABI agreement.
 
 Step 9 adds `erlang_aot/runtime/{runtime,process_context}.hpp`, with stable owned
 contexts, non-recycled identities and lifetime-token invalidation before mailbox/heap
@@ -414,7 +414,9 @@ The commit message must contain "[compiler] <step title>" and reading git histor
 helps establish last performed plan step. Refuse to begin work if git state is not clean.
 
 1. Add or adjust behavior tests appropriate to that step, including meaningful
-   failure cases; preserve all existing CLI/preprocessor/parser/project tests.
+   failure cases; preserve useful CLI/preprocessor/parser/project behavior coverage.
+   Follow [05-tests.md](05-tests.md) and the [coverage ledger](../docs/test-migration.md)
+   when replacing tests; retired implementation-coupled executables need not be recreated.
 2. Run `make format` and verify formatting. Document each new function and class
    field's intent in one or two lines; keep functions and files simple.
 3. Freshly configure with both compiler and runtime enabled, then build and test:
@@ -443,6 +445,40 @@ Focused tests below supplement this shared gate; they never replace it. The
 planning-only creation of this document does not run or claim these code gates.
 
 ## Implementation steps
+
+### Test routing for the remaining steps (15–46)
+
+Use the following destinations together with each step's Validate requirements.
+The test migration changes coverage ownership, not the supported compiler subset
+or completion status of any implementation step. Historical test counts below
+remain historical evidence, not targets for the new suite.
+
+| Steps | Required observable coverage and retirement condition |
+| --- | --- |
+| 15–19 | Real Erlang sources through positional and project CLI modes; verify located diagnostics, target isolation, no partial output and later-file recovery. Extend `frontend_cli`, `project_cli` and `project_workflow`; do not rebuild deleted project model/decoder/selection/callback suites. |
+| 20–27 | Reuse parser type/specification fixtures and source-level semantic cases. Prefer supported public inspection output once step 39 exists; until then retain only focused lattice/widening/ownership invariants without an observable replacement. Never add a product switch solely for testing private state. |
+| 28–35 | Extend the separately built `runtime_generated_link` consumer with generated registration, ABI round trips, calls and teardown as lowering becomes reachable. Keep current synthetic backend tests until equivalent real Erlang fixtures produce inspected artifacts; replacing a test driver alone is not migration. |
+| 36–39 | CLI option matrices and project workflows verify real artifact paths, conflicting options, failure atomicity, verbose streams and inspection output. Inspect IR with LLVM tools; compare semantic structures rather than unstable complete LLVM text. |
+| 40–42 | Link and execute real emitted modules through the actual runtime, compare decoded behavior with OTP at O0/O2, and exercise repeatability and deterministic resource caps. Replace synthetic emission/term tests only after case-level coverage review. |
+| 43 | Inspect cross-target architecture, format, symbols and ABI widths separately from native execution. Keep mathematical 32/64-bit ABI boundary tests until both native widths provide equivalent evidence. |
+| 44–45 | Keep diagnostic subprocess scenarios and real state-preservation/teardown checks. Retain deterministic allocation, sink, invalid-IR and otherwise unreachable rollback injections as documented exceptions. Run lifetime/stress cases under supported sanitizers; unavailable hosts remain pending. |
+| 46 | Publish current CTest inventory with passing, failing and skipped counts separately, commands, native capabilities and sanitizer evidence. Update the migration ledger and feature catalog test references; do not label stage adapters as end-to-end Erlang compilation. |
+
+Current replacements include complete CLI AST/diagnostic fixtures, preprocessed
+token round trips, real include/encoding workflows and project directory/corpus
+workflows. Remaining internal parser tests protect injected budgets, checked
+handles, source ownership and raw stage contracts that the CLI cannot express.
+The backend driver is still a stub: none of these frontend replacements proves
+generated Erlang execution. No remaining implementation step is marked complete
+by this migration.
+
+Migration validation on Windows x64 (2026-09-28): full Debug and Release each
+pass 74/75, with the retained raised-depth parser stack-overflow regression failing;
+runtime-only ASan passes 15/15. Full Lizard passes, but the fresh full clang-tidy
+gate has unresolved Windows exception-escape/Boost analyzer findings. Resolve
+these before claiming a clean commit; do not disable the parser test or suppress
+quality checks. Full frontend ASan is blocked by the installed LLVM SDK allocator
+conflict. The ledger records exact evidence and remaining host coverage.
 
 ### 1. Pin the SDK and freeze the milestone contract
 

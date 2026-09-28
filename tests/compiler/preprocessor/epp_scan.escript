@@ -29,5 +29,8 @@ encoded(Value, _) when is_float(Value) -> binary:encode_hex(<<Value:64/float>>, 
 encoded(Value, Root) when is_integer(Value) -> encoded(integer_to_list(Value), Root);
 encoded(Value, Root) when is_atom(Value) -> encoded(atom_to_list(Value), Root);
 encoded(Value, Root) ->
-    Normalized = lists:flatten(string:replace(Value, Root, "<FIXTURES>", all)),
+    %% OTP canonicalizes Windows drive letters; normalize only the fixture-root spelling.
+    CanonicalRoot = filename:dirname(filename:absname(filename:join(Root, "fixture"))),
+    Original = lists:flatten(string:replace(Value, Root, "<FIXTURES>", all)),
+    Normalized = lists:flatten(string:replace(Original, CanonicalRoot, "<FIXTURES>", all)),
     binary:encode_hex(unicode:characters_to_binary(Normalized), lowercase).

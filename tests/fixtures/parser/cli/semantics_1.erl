@@ -1,0 +1,1 @@
+-define(F(X), X). ?F(?F(3)). -define(F(), 2). -define(F, 1). {?F,?F(),?F(4)}.

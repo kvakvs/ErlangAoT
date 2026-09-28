@@ -23,33 +23,11 @@ ParseResult parse(std::string text, ParserLimits limits = {}) {
     return parse_module(pp, limits);
 }
 
-// Preserve declarations, parameters, annotations and mixed field categories.
-void structure() {
-    auto result = parse("-type (t(A)) :: X :: {A, [integer(),...], #{atom() := binary()}}. "
-                        "-record #Point{field = run() :: integer(), plain}. "
-                        "-nominal n(A) :: other:t(A).");
-    require(result.succeeded());
-    auto moved = std::move(result.module);
-    const auto &declaration = std::get<ast::TypeDeclaration>(moved.form(moved.forms()[1]).value);
-    require(declaration.parameters[0].name == U"A");
-    require(std::holds_alternative<ast::AnnotatedType>(moved.type(declaration.type).value));
-    const auto &record = std::get<ast::RecordDeclaration>(moved.form(moved.forms()[2]).value);
-    require(record.fields[0].type && record.fields[0].default_value && !record.fields[1].type);
-    require(moved.anchor(moved.type(declaration.type).source).spelling.source != nullptr);
-    std::ostringstream tree;
-    print_ast(tree, moved);
-    require(tree.str().find("kind=nominal") != std::string::npos);
-    require(tree.str().find("MapTypeField kind=:=") != std::string::npos);
-}
-
-// Syntax failures and resource exhaustion cannot publish partial type arenas.
+// Injected node/depth exhaustion must roll back types; ordinary syntax is covered by frontend_cli.
 void recovery() {
-    auto result = parse("-type broken() :: {integer(),}. -type good() :: atom().");
-    require(result.failed && result.module.type_count() == 1);
-    require(result.module.forms().size() == 2);
     ParserLimits limits;
     limits.nodes = 8;
-    result = parse("-type t() :: {a,b,c,d,e,f}.", limits);
+    auto result = parse("-type t() :: {a,b,c,d,e,f}.", limits);
     require(result.failed && result.module.type_count() == 0);
     limits = {};
     limits.nesting = 8;
@@ -89,7 +67,6 @@ void ownership() {
 }
 
 int main() {
-    structure();
     recovery();
     ownership();
 }

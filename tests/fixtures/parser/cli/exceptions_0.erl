@@ -1,0 +1,1 @@
+f() -> {fun f/9999999999999999999999, fun M:F/A, fun Loop(0)->ok; Loop(N)->Loop(N-1) end}.

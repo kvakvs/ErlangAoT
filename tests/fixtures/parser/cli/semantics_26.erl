@@ -1,0 +1,1 @@
+-if(is_tuple(#r{x=1})). no. -endif.

@@ -23,6 +23,7 @@ endif()
 include("${SOURCE_ROOT}/cmake/LLVMDependencies.cmake")
 add_executable(smoke "${SOURCE_ROOT}/cmake/probes/llvm.cpp")
 target_link_libraries(smoke PRIVATE erlang_llvm_sdk)
+set_target_properties(smoke PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 ]=])
 
 # Preserve child diagnostics and check the expected reason, rather than only its exit code.
@@ -53,6 +54,11 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/selected" --conf
     RESULT_VARIABLE built OUTPUT_VARIABLE output ERROR_VARIABLE error)
 if(NOT built EQUAL 0)
     message(FATAL_ERROR "Selected SDK smoke build failed: ${output}\n${error}")
+endif()
+execute_process(COMMAND "${TEST_DIR}/selected/bin/${HOST_CONFIG}/smoke${HOST_SUFFIX}"
+    RESULT_VARIABLE ran OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 15)
+if(NOT ran STREQUAL "0" OR NOT output STREQUAL "" OR NOT error STREQUAL "")
+    message(FATAL_ERROR "Selected SDK consumer failed: ${ran}: ${output}${error}")
 endif()
 configure_case(absent "No global LLVM.*SDK found.*ERLANG_AOT_DOWNLOAD_LLVM is OFF")
 configure_case(private "LLVM build-tree SDK is not supported" "-DLLVM_DIR=${TEST_DIR}/private-sdk/lib/cmake/llvm")

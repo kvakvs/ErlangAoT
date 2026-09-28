@@ -1,0 +1,3 @@
+error: clause_rejection_3.erl:1:5: expected expression
+  construct opened at clause_rejection_3.erl:1:4
+  from clause_rejection_3.erl:1:4

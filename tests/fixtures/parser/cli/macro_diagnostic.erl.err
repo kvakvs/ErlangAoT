@@ -1,0 +1,7 @@
+error: logical.erl:101:9: expected expression
+  construct opened at logical.erl:101:9
+  from macro_diagnostic.erl:1:9
+  from macro_diagnostic.erl:3:9
+  from macro_diagnostic.erl:1:14
+  from macro_diagnostic.erl:1:9
+  from macro_diagnostic.erl:3:9
