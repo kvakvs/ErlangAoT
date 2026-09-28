@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–20 complete, 2026-09-28. Steps 21–46 remain pending.
+Status: steps 1–21 complete, 2026-09-28. Steps 22–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -12,7 +12,7 @@ behavior and a production executable launcher remain later work.
 
 The preprocessor supplies expanded tokens to a parser owning a move-only
 `ast::Module`. Parsing does not establish semantic validity. The driver's
-`compiler/src/driver/frontend.cpp` validates module/function declarations and exports
+`compiler/src/driver/frontend.cpp` validates declarations, parameter bindings, batch calls and declared types
 after parsing; positional and project compilation still write no executable. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
@@ -21,7 +21,7 @@ TermFactory reporting placeholders are installed; term creation, backing allocat
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
-owners retain batch ASTs, LLVM state and results; Erlang lowering and driver integration
+owners retain batch ASTs, LLVM state and results; Erlang lowering and backend driver integration
 remain deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
@@ -1319,3 +1319,21 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   an unnecessary handle copy and fixture lookup of preprocessing file attributes.
   Final fresh Windows x64 Debug build and all 77 CTests pass, as do full Lizard,
   clang-tidy, formatting and whitespace. Other native platforms remain pending.
+
+- Step 21 (2026-09-28): batch-owned declared-type registry resolves aliases/formals,
+  exported remote types, opaque/nominal identities, record annotations, specs,
+  callbacks, overloads, constraints and optional callback metadata. Recursive aliases
+  retain finite references with memoized one-layer substitution; opaque expansion is
+  limited to its defining module and nominal names are never erased. Source/form
+  provenance and declared contracts remain separate from future inferred facts.
+  OTP-checked scope rules count union alternatives separately; repeated formal names
+  use the last actual argument, and repeated constraints remain separate contracts.
+  Collision-free scope identities handle quoted names. Unknown external metadata
+  warns and widens; malformed/duplicate/undefined batch declarations fail.
+  Exact constant arithmetic and graph/work budgets cannot imply a narrow runtime type.
+  CLI cases cover source/include diagnostics, batch visibility and project isolation;
+  the temporary private invariant test covers substitution, opacity, identity and limits.
+  Final fresh Windows x64 Debug compiler+runtime build, all 78 CTests, full Lizard
+  and clang-tidy pass; focused new-source/test quality, formatting and whitespace pass.
+  Official maint-29 was fetched and remains 21776803ecd11f5fa948732c0ec66b8f325dedfc.
+  Other native hosts and frontend sanitizers remain pending. Stopped before step 22.

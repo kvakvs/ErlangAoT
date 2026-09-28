@@ -658,3 +658,15 @@
 - Step 19 completed: full fresh build, 76/76 CTests and Lizard/tidy pass. TargetExecutor now receives a source span; frontend process_files retains batch ASTs. Step 20 next.
 
 - Step 20 complete: final fresh full build, 77/77 tests, full Lizard/tidy. Type test declaration lookup must skip generated file attributes. Step 21 draft needs OTP-checked union variable counting, nominal barriers, duplicate-formal last substitution and duplicate constraint support.
+
+
+- 2026-09-28: requested reset of incomplete work performed from step17 HEAD; then
+  steps18–21 committed individually after fresh full build/test/quality. Final78/78.
+  Stop before22. OTP official fetch unchanged21776803ecd11f5fa948732c0ec66b8f325dedfc.
+  Type scopes use encoded keys; union alternatives max variable-use counts, products
+  add. Oracle confirms duplicate formal names (last wins in erl_types) and repeated
+  constraints accepted; bare wildcard formals rejected by parser. Nominal expansion
+  returns none, opaque only owner; alias expansion memoized. Windows map moves allocate,
+  so traversal frames uniquely own use maps. Decimal bounds use validated decimal-only
+  accumulation instead of Boost's general string parser. All gates have no suppressions.
+  Logs/reproduction: build/compile-steps/{gate.cmd,step21*,type-tidy21*,type-oracle.escript}.

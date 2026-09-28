@@ -183,3 +183,10 @@ exception for type identity ownership, lattice/widening and structural distincti
 without public inspection until step 39. It parses actual Erlang type declarations;
 it does not add a product testing switch. Step 20's full Windows Debug gate passes
 77/77 tests and full Lizard/clang-tidy.
+
+Step 21 extends the same real CLI workflows with declared type/spec diagnostics,
+remote visibility, include provenance and project isolation. `semantic_declared_types`
+is a second temporary invariant exception for parameter substitution, opaque/nominal
+barriers, quoted-name identity and bounded graph ownership. No inference or emitted
+Erlang execution coverage is claimed. The final fresh full gate passes 78/78 CTests,
+Lizard and clang-tidy on Windows x64; other native hosts remain pending.

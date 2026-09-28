@@ -4,7 +4,8 @@ Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
 target setup, IR verification, in-memory object emission and the immediate-term ABI
 implemented in steps 2–7. Step 8 adds the shared
 [deferred-feature catalog and reporting contract](features.md), with separate compiler/runtime
-reporters and typed C++ status results; placeholder integration remains later work.
+reporters and typed C++ status results. Steps 14 and 17 integrate compiler/runtime
+placeholders at concrete service and lowering boundaries.
 Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mandatory
 `ErlangAoT::generated_program` CMake link target without LLVM dependencies.
 Step 10 adds [runtime immediate-term services](runtime-terms.md): checked tag
@@ -20,7 +21,7 @@ Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
 registration, checked transitions and ordered teardown without worker execution.
 
 Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
-Current CLI defaults preprocess/parse and validate [declarations](semantic.md),
+Current CLI defaults preprocess/parse and validate [declarations, bindings, batch calls and declared types](semantic.md),
 then return without executable output;
 the proposed compilation switches below are not implemented yet.
 

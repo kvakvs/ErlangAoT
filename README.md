@@ -1,8 +1,9 @@
 # ErlangAoT
 
 An ahead-of-time compiler project for Erlang/OTP 29. Currently supports
-preprocessing and syntax parsing; semantic analysis, executable generation and
-runtime execution are not yet implemented.
+preprocessing, syntax parsing and semantic validation of the initial compilation
+subset, including bindings, batch calls and declared types. Erlang executable
+generation and execution are not yet implemented.
 
 The next compilation milestone is frozen in [docs/compile.md](docs/compile.md),
 including its LLVM SDK requirements and provisional ABI.
@@ -11,7 +12,8 @@ with a reusable CMake target for linking native consumers.
 All APIs are project-internal C++23; C compatibility is deferred until needed.
 
 Validated on macOS Apple Silicon. Windows x64 runtime builds are checked in Debug
-and Release; full compiler and platform validation remains pending. See
+and Release; the full Windows x64 Debug compiler/runtime gate now passes. Additional
+platform and generated-code execution validation remains pending. See
 [Windows status](abi/plan-windows.md) for prerequisites and known gaps. Linux validation is pending.
 
 ## Features
@@ -21,6 +23,8 @@ and Release; full compiler and platform validation remains pending. See
   control flow and comprehensions.
 - Syntax checking, expanded Erlang source output and an indented syntax-tree view.
 - Source diagnostics and multiple input files.
+- Compilation subset checks, parameter bindings, batch call resolution and declared
+  type/specification analysis; see [semantic analysis](docs/semantic.md).
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
 
@@ -218,8 +222,9 @@ tree for each input. Adding `--preprocess-check` does not disable parsing reques
 by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 
 With no check/print action, source inputs and `--project` run preprocessing and
-parsing, then reach a compilation placeholder. Successful processing returns `0`;
-code generation is not implemented, so no executable is written.
+parsing, then validate the supported subset, bindings, calls and declared types.
+Positional inputs form one batch; each project target forms its own batch. Successful
+processing returns `0`; code generation is not implemented, so no executable is written.
 
 `--verbose` prints `[pp] <filename>` for source files and resolved preprocessor
 includes, and `[parse] <filename>` when each source enters the parser. Nested and
@@ -229,11 +234,11 @@ traces. Tracing goes to stderr in every mode, including projects.
 
 Exit codes: **0** for success (including warnings), **1** for source/project errors,
 **2** for usage errors or unknown target names.
-Each input is processed independently; any source error makes the overall command fail.
+Each input has independent preprocessing state; any source error makes the overall command fail.
 
 Syntax checks do not validate semantics or execute parse transforms. Check/print
-modes do not create output files and reject `-o`/`--output`. Requests to generate
-an executable currently fail.
+modes do not create output files and reject `-o`/`--output`. Default compilation
+also writes no executable yet.
 
 See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
 [validation status](docs/parser-validation.md) for further details.

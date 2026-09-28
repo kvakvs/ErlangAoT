@@ -205,8 +205,9 @@
   explicit visit budget bounds traversal. There is no AST text reader.
   --verbose traces physical source/include ingestion as [pp] and parser inputs as
   [parse] on stderr; resolved include notifications come from the preprocessor.
-- Binding, guard legality, record/type resolution, lint, transforms, lowering and
-  execution remain later stages. Stage-reader directories are reserved only.
+- Guard legality, general lint/transforms, expression inference, lowering and execution
+  remain later stages. The supported subset has binding/call/type metadata analysis;
+  stage-reader directories are reserved only.
 - Tests prefer real source/project CLI workflows, exact AST/diagnostic snapshots,
   bounded source stress/mutations and separately built frontend/runtime consumers.
   Keep API-only invariants, raw-stage ownership, injected limits/faults and cross-width
@@ -219,8 +220,8 @@
   plus analyzer/bugprone/performance checks, without suppressions or raised limits.
   Historical macOS arm64 evidence includes all 64 then-current tests in full,
   compiler-only and ASan/UBSan builds. Windows x64 migration evidence is recorded
-  in docs/test-migration.md, including outstanding parser/quality/frontend-ASan
-  blockers; runtime-only remains independent and passes all 15 tests under ASan.
+  in docs/test-migration.md, including historical parser/quality failures and the remaining frontend-ASan
+  limitation; runtime-only remains independent and passes all 15 tests under ASan.
   Linux x86/ARM and native 32-bit runs remain pending. See docs/{projects,project-validation,parser,parser-validation,
   preprocessor}.md for contracts and evidence.
 
@@ -232,18 +233,16 @@
   distinguishes other missing signatures. No atoms, workers, roots or loader ABI are
   invented; atom collection stays reserved. See docs/runtime-services.md.
 
-- Step15 adds LLVM-free semantic declaration tables outside the immutable AST.
-  Source-ordered functions plus deterministic name/arity lookup validate definitions
-  and exports. Module tables have stable unique ownership and borrow their AST.
-  Versioned symbols encode UTF-8 bytes as separated hex components with canonical
-  arity. Default CLI paths validate declarations; check/print paths remain syntax-only.
-
-- Step16 adds exhaustive capability visitors and ABI-width integer decoding before binding/lowering.
-
-- Step17 routes capability rejections through the shared catalog and adds fail-closed lowering extension points.
-
-- Step18 records argument-position bindings beside immutable function syntax.
-
-- Step 19 owns complete positional/target AST batches before semantic analysis; call side tables and an iterative dependency order remain LLVM-free and target-isolated.
-
-- Step 20 adds an LLVM-free bounded symbolic type graph; immutable syntax is translated iteratively, and resource exhaustion conservatively widens to top.
+- Compiler steps 15–21: the driver owns complete positional/target AST batches.
+  LLVM-free side tables validate module/function/export identities, subset capabilities,
+  parameter positions and exact local/remote calls. Each project target is isolated;
+  iterative dependency ordering rejects executable cycles. Versioned symbols and
+  type-variable scopes encode names without delimiter collisions.
+- `semantic/types/` interns bounded symbolic types, flattens joins and widens to top
+  on exhausted limits. Declared aliases, record contracts, overloads and constraints
+  borrow source provenance. Recursive references remain finite; memoized substitution
+  respects opaque module boundaries and preserves nominal identities. No body inference,
+  Erlang lowering, native artifact publication or new product switches are implemented.
+- Final step 21 Windows x64 Debug validation: 78/78 CTests and full Lizard/clang-tidy
+  pass. Earlier migration failures remain historical; full frontend sanitizers and
+  additional native platforms still require validation.

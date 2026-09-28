@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Declared type resolution, inference and lowering are
+Expression inference and lowering are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -48,3 +48,35 @@ joins flatten and deduplicate members, with top (`term()`) and bottom (`none()`)
 identities. Analysis defaults cap the graph at 16,384 nodes, unions at 16 alternatives,
 and each syntax translation at 100,000 work items. Exhaustion yields top and an
 observable widening flag; it never justifies a narrower runtime representation.
+
+
+Declared types are resolved after the acyclic call graph, following the
+[OTP type/specification contract](https://www.erlang.org/doc/system/typespec.html)
+and the pinned `erl_lint.erl`, `erl_internal.erl` and Dialyzer `erl_types.erl` sources.
+The registry indexes all `-type`, `-opaque`, `-nominal`, `-export_type`, `-spec`,
+`-callback` and `-optional_callbacks` metadata before resolving bodies. Local aliases
+may shadow builtin names. Exact integer arithmetic resolves singleton/range/bitstring
+bounds without narrowing to a host word. Record declarations supply symbolic field
+contracts; their defaults remain unevaluated and executable records remain unsupported.
+
+Remote references to batch types require exports. Missing local/batch types,
+duplicate declarations/exports, malformed metadata, singleton type variables,
+invalid bounds and specifications for missing functions are errors. Unavailable
+external metadata produces a warning and unknown/top; it is never borrowed from
+another project target. Syntax-only actions keep their broader acceptance.
+
+Each alias or overload has independent, collision-free variable scope. Union branches
+are alternatives for variable-use counting. Repeated formal names follow OTP's
+last-argument substitution; repeated `when` constraints remain separate bounds.
+Overloads retain their individual function products, constraints and source anchors.
+These are declared contracts, not runtime guards or inferred implementation facts.
+
+Recursive aliases remain finite named references. One-layer substitution is memoized
+and bounded, leaving further recursive edges as references. Opaque bodies can expand
+only inside their defining module; nominal references retain their names everywhere.
+Registry source locations borrow the batch-owned AST. The driver reports graph/work
+exhaustion as warning-only widening; future inference callers of the expansion API
+must also inspect the graph's widening flag. Constant evaluation accepts at most
+10,000 decimal digits per operand/result and shares the preprocessor's bounded shifts.
+Inference, contract-discrepancy warnings, type inspection and Erlang lowering remain
+later plan steps.

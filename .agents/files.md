@@ -252,18 +252,20 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `main.cpp` contains unexpected failures. `preprocessor/integer.cpp` owns decimal
   integer formatting and exact finite binary64-to-integer conversion.
 
-- `compiler/src/semantic/declarations.{hpp,cpp}` indexes modules/functions/exports and
-  preserves source provenance in diagnostics; `symbols.{hpp,cpp}` reversibly encodes
-  private ABI function identities. `tests/compiler/semantic/cases.cmake` extends
-  frontend CLI behavior; `symbols.cpp` protects round-trip/collision invariants pending
-  emitted objects. Project declaration cases live in `tests/compiler/project/cli.cmake`.
-
-- `compiler/src/semantic/{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the executable subset while retaining symbolic type metadata.
-
-- `semantic/features.{hpp,cpp}` maps capability names to shared compiler IDs; `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
-
-- `compiler/src/semantic/bindings.{hpp,cpp}` resolves parameter reads, wildcards and repeated-pattern rejection.
-
-- `semantic/calls.{hpp,cpp}` resolves exact direct calls and acyclic dependency order. `driver/frontend.cpp` owns AST batches; `project/execution.{hpp,cpp}` supplies one batch per target.
-
-- `semantic/types/domain.{hpp,cpp}` owns type identities, joins and limits; `syntax.{hpp,cpp}` exhaustively describes/translates AST types. `tests/compiler/semantic/types.cpp` protects unobservable ownership/lattice/structural invariants.
+- `compiler/src/semantic/declarations.{hpp,cpp}` indexes modules/functions/exports
+  and renders located diagnostics; `symbols.{hpp,cpp}` provides reversible identities.
+  `{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the subset;
+  `features.{hpp,cpp}` maps failures to the shared catalog. `bindings.{hpp,cpp}`
+  resolves parameter positions; `calls.{hpp,cpp}` resolves direct calls and ordering.
+  `driver/frontend.cpp` owns batches; `project/execution.{hpp,cpp}` dispatches each target.
+- `compiler/src/semantic/types/`: `domain.{hpp,cpp}` owns type identities, joins and
+  limits; `syntax.{hpp,cpp}` exhaustively describes/translates AST type categories.
+  `declarations.{hpp,cpp}` owns the registry and resolves bodies/contracts; `collect.cpp`
+  indexes declarations/exports/callback metadata. `resolver.{hpp,cpp}` resolves nodes
+  and visibility; `traversal.cpp` owns bounded traversal, scopes and union-use counting.
+  `constants.cpp` evaluates exact bounds; `expansion.cpp` memoizes bounded substitution.
+- `tests/compiler/semantic/cases.cmake` extends real frontend/project CLI workflows.
+  `symbols.cpp`, `types.cpp`, `declared_types.cpp` retain identity/lattice/ownership/
+  opacity invariants until emitted artifacts or step 39 type inspection replace them.
+  `docs/semantic.md` documents the implemented analysis boundary.
+- `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
