@@ -997,417 +997,102 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
 
 ## Validation ledger
 
-- Windows prerequisite (2026-09-28): restored the shared gate without suppressions or
-  changed thresholds. LLVM's runner now analyzes the same production compilation
-  commands with at most six concurrent processes. Lexer queues/keywords and application overlays use movable
-  contiguous storage; application precedence remains last-entry-wins. Numeric
-  conversions have an explicit exact binary64 boundary and independent decimal
-  serialization; binary slice guards borrow coordinates. The CLI entry point owns
-  failure reporting separately from command dispatch. Windows project executables
-  reserve 8 MiB stacks for bounded parsing. Fresh full Debug build, all 75 CTests,
-  full Lizard/clang-tidy, formatting and whitespace pass. Added real CLI numeric
-  boundary cases including the largest finite binary64. No numbered compiler step
-  advanced. One pinned clang-tidy run crashed inside Boost.Parser; the unchanged
-  complete rerun passed (build/compile-steps/quality.log). Official maint-29 was fetched and remains at the recorded pin.
+Steps 1–27 each passed a fresh compiler+runtime Debug configure/build, the full
+CTest suite, Lizard, clang-tidy, formatting and whitespace checks before their
+individual commits. Counts below describe those historical suites; test migration
+later changed the inventory. Cross-target checks do not establish native execution.
+Implementation contracts and test routing remain in the sections above.
 
-- Step 1 (2026-09-24): pinned global Homebrew LLVM 23.1.1_1 / SDK 23.1.1;
-  verified paths, tool versions, build metadata and documentation links. Frozen
-  subset, CLI/artifact and provisional ABI contract in `docs/compile.md`.
-  Fresh Debug compiler+runtime configure/build, all 65 CTests, make format,
-  Lizard, clang-tidy and git diff --check passed. Native reference: macOS arm64;
-  other native platforms and generated-code execution remain pending.
+### SDK and ABI: steps 1–8 (2026-09-24, macOS arm64)
 
-- Step 2 (2026-09-24): private `erlang_codegen` and global-only LLVM discovery/link
-  probe implemented without CLI changes. Automatic and canonical-path selection,
-  missing/private-only/private-path rejection, incompatible version policy and
-  runtime-only configure/build passed; no download/bootstrap artifacts appeared.
-  Only one distinct global SDK is installed; selection of a second installation
-  and native Linux/Windows remain pending. Fresh full Debug configure/build,
-  all 67 CTests, make format, Lizard, clang-tidy and git diff --check passed;
-  compile commands retain C++23/-Werror with LLVM includes confined to codegen/tests.
+Global Homebrew LLVM 23.1.1_1 / SDK 23.1.1 was used. Native Linux/Windows execution
+was pending at these checkpoints; focused ASan/UBSan passed where listed, but
+LeakSanitizer was unavailable.
 
-- Step 3 (2026-09-24): private move-only request/result/compilation ownership added;
-  AST provenance, empty modules and independent LLVM contexts retain explicit
-  lifetimes. Diagnostic text and binary buffers survive teardown; errors invalidate
-  staged batch outputs, and callback reporting failures cannot unwind into LLVM.
-  Fresh full Debug configure/build, all 69 CTests, make format, Lizard, clang-tidy
-  and git diff --check passed. Focused clang-tidy also passed on new tests. Backend
-  and ownership/result tests passed ASan/UBSan against the existing frontend archive
-  and installed SDK; LeakSanitizer is unsupported on this host and was not run.
-  Opaque consumer compiled without LLVM includes. No target machine, data layout,
-  lowering, verification, emission or CLI integration was added. This completed
-  the original steps 1–3 request.
+| Step | Delivered and validated | Full CTests |
+| --- | --- | --- |
+| 1 | Frozen subset, artifact/CLI and provisional ABI contract; SDK paths, versions and documentation links. | 65 |
+| 2 | Private codegen target and global-only SDK discovery; selection/rejection policies and LLVM-free runtime-only build. Only one distinct global installation was available. | 67 |
+| 3 | Move-only compilation ownership, AST provenance, isolated LLVM contexts, durable results and diagnostic-failure containment; opaque consumer and focused ownership/result ASan/UBSan. | 69 |
+| 4 | Native/foreign target policy, PIC/Small layouts, backend initialization and failure handling; 32/64-bit layouts, moves/reuse and static-component LLVM linkage. | 70 |
+| 5 | Fresh function/module verification, target consistency and batch invalidation; malformed IR, post-verification mutations and result lifetimes. | 71 |
+| 6 | Reverified, repeatable object emission from cloned modules; Mach-O arm64 symbol/section inspection, foreign ELF/COFF, assembler failures and static LLVM linkage. | 72 |
+| 7 | ABI v1, checked 32/64-bit integer codecs and private layout assertions; boundary/tag tests, cross-target signatures/objects, six-triple C header checks and integer ASan/UBSan. Runtime-only: 3 tests. | 75 |
+| 8 | Shared 23-feature catalog, escaped context and separate compiler/runtime reporting; once-only diagnostics, sink failures and artifact cleanup. Runtime-only: 6 tests; reporting ASan/UBSan and six-triple C status checks. | 80 |
 
-- Step 4 (2026-09-24): explicit target setup defaults to the running host's triple,
-  CPU and detected features; foreign triples use the generic baseline. Installed
-  X86/ARM/AArch64 backends initialize once; machine-derived module layouts use
-  PIC/Small defaults. Unknown architectures and unavailable backends fail without
-  host fallback and invalidate staged output. Native width/alignment/byte order,
-  CPU/features, moves/reuse, normalized triples and Linux/Windows 32/64-bit target
-  layouts passed. Fresh full Debug compiler+runtime configure/build, all 70 CTests,
-  make format, Lizard, clang-tidy and git diff --check passed. Final focused target
-  tests and test-source clang-tidy passed after test refinements. The same target
-  suite also linked and passed against installed static LLVM components without
-  libLLVM dylib linkage. Native Linux/Windows execution, object emission and CLI
-  target switches remain pending. Stopped before step 5.
+### Runtime skeleton: steps 9–14 (2026-09-25, macOS arm64)
 
-- Step 5 (2026-09-24): `verify_ir` checks configured triple/layout consistency,
-  every defined function and whole modules with LLVM's nonfatal verifier APIs.
-  Owned project diagnostics retain module/function context and SDK details;
-  errors invalidate all staged output and latch failure without duplicate reports.
-  Success is never cached; every future emission entry point must recheck the
-  current batch. IRBuilder synthetic fixtures cover valid bodies/declarations,
-  missing terminators, mismatched return types, malformed globals, target setup
-  errors, mutation after successful verification, moves and result lifetimes.
-  Fresh full Debug compiler+runtime configure/build, all 71 CTests, make format,
-  Lizard, clang-tidy and git diff --check passed. Focused test-source clang-tidy
-  and Lizard also passed. Native evidence is macOS arm64 with global LLVM 23.1.1;
-  native Linux/Windows remain pending. No emission or CLI integration was added;
-  stopped before step 6.
+Native Linux/Windows/32-bit runtime execution and LeakSanitizer remained pending.
+Runtime-only builds stayed LLVM-free; steps 10–14 also recorded Release validation. Allocation-failure injection covered
+rollback and cleanup; no heap allocation, workers or generated Erlang execution
+were claimed.
 
-- Step 6 (2026-09-24): `emit_objects` reverifies the current whole batch before
-  each attempt, emits cloned modules with the SDK legacy machine-code pass manager,
-  and stages owned objects without filesystem publication. Repeated emission
-  replaces buffers; verifier and assembler failures discard the entire batch.
-  Native llvm-readobj/llvm-nm confirmed Mach-O arm64, executable sections and
-  `_answer`; LLVM object-reader tests also covered i686/ARM/AArch64 ELF and x64 COFF.
-  Mutation after successful emission and a valid-IR assembler-error fixture passed.
-  Fresh full Debug compiler+runtime configure/build, all 72 CTests, make format,
-  full Lizard/clang-tidy, focused test quality and git diff --check passed.
-  The emission suite also passed against static LLVM component libraries.
-  Native foreign execution, Erlang lowering and CLI artifact publication remain pending.
+| Step | Delivered and validated | Full CTests | Runtime-only / focused ASan/UBSan |
+| --- | --- | --- | --- |
+| 9 | Runtime/context lifecycle, stable identities, token invalidation and ordered teardown; independent lifetimes, busy preservation, rollback and mandatory generated-program runtime linkage. | 84 | 10 tests; lifecycle/failure checks |
+| 10 | Structural immediate-term classification and checked native integer services; malformed/pointer-shaped values, private layouts and agreement with LLVM constants. | 86 | 11 tests; 3 term tests |
+| 11 | Frozen module registries, pinned generic dispatch, immediate-only Terms and status/output bridge; publication rollback and missing/unavailable BIF reporting. | 89 | 14 tests; 4 dispatch/failure tests |
+| 12 | Lazy process memory ownership, checked budgets and allocation-free immediate copying; explicit unavailable allocation/collection and future root/resource contracts. | 90 | 15 tests; 5 memory/lifecycle tests |
+| 13 | Scheduler registration and lifecycle bookkeeping; checked transitions, teardown order and registration rollback/retry. | 91 | 16 tests; 5 scheduler/lifecycle/memory tests |
+| 14 | TermFactory, memory, send, execution and unload reporting boundaries; known-deferred versus unknown BIFs, state preservation and once-only propagation. | 93 | 18 tests; 6 service/memory/dispatch/failure tests |
 
-- Step 7 (2026-09-24): versioned C term/context/function declarations and checked
-  constexpr integer codecs added to the header-only ABI target. Explicit 32/64-bit
-  encodings use low nibble 0xf and signed 28/60-bit payloads; overflow and wrong tags
-  fail without signed shifts or out-of-range unsigned-to-signed conversions.
-  Runtime Word shares the native ABI type; Term/tag/header are one word. Explicit
-  mask/shift decoding replaces bitfields/union aliasing. Private heap sketches now
-  compile fixed prefixes, reserve separate trailing storage and respect Boost's
-  stronger native alignment; no heap services or constructors were implemented.
-  Target-derived LLVM term/signature checks, signed constants and C-convention
-  object emission passed for native arm64 and supported foreign 32/64-bit targets.
-  Boundary/negative/dense round trips, overflow, all tag combinations and native
-  prefix assertions passed. C header syntax passed six platform triples, runtime-only
-  build/all 3 tests passed without LLVM, and integer ASan/UBSan passed.
-  Fresh full Debug compiler+runtime configure/build, all 75 CTests, make format,
-  full Lizard/clang-tidy, focused test quality, local links and git diff --check passed.
-  Full native foreign runtime layouts/execution remain pending; cross-target checks
-  are not native platform validation. Stopped before step 8.
+After step 9, a user-directed C++ API revision removed the C headers and lifecycle
+adapter. Namespaced ABI constants, scoped status and the real ProcessContext became
+the sole project-internal interface, retaining the native generated-function machine
+convention. The full 84-test gate, runtime-only 10 tests, focused sanitizers, C++
+consumer and archive-symbol checks passed again. Earlier C compilation/link/run and
+six-triple header evidence refers to the superseded API, not the current contract.
+Minor destructor/test expectation findings in steps 11–14 were corrected before
+the final passing gates; no checks or thresholds were weakened.
 
-- Step 8 (2026-09-24): shared catalog now records 23 stable deferred-feature IDs/
-  names, owners, boundaries, status, integration steps and focused reporting tests.
-  One escaped context formatter serves separate compiler/runtime reporters.
-  Compiler rejection latches batch failure, discards artifacts and marks diagnostic
-  delivery to prevent future driver replay. Runtime FeatureFailure reports once per
-  operation via a borrowed sink (default stderr), contains delivery/format exceptions
-  and returns fixed-width C status. Unknown IDs remain ordinary invalid-input errors.
-  Catalog compatibility, every entry, full/partial/escaped context, retries/propagation,
-  independent failures, artifact cleanup and throwing/nonthrowing sink failures passed.
-  Subprocess tests verified one stderr report/nonzero exit, empty stdout and silence
-  without a reached placeholder. Fresh full Debug compiler+runtime configure/build,
-  all 80 CTests, make format, full Lizard/clang-tidy, focused test quality, local links
-  and git diff --check passed. Runtime-only build/all 6 tests and LLVM-free link passed;
-  runtime reporting ASan/UBSan and C status syntax/values across six triples passed.
-  Native foreign-platform execution remains pending. Existing/planned extension
-  points are documented in docs/features.md; actual capability/service handlers and
-  lifecycle remain their later steps. CLI behavior is unchanged. Stopped before step 9.
+### Windows transition and reference refresh (2026-09-28)
 
-- Step 9 (2026-09-25): runtime startup/shutdown and stable owned process contexts
-  now have nonthrowing C ABI functions and a C++ RAII owner. Contexts own lazy
-  heap/empty mailbox storage, non-recycled identities and host lifetime tokens;
-  exit invalidates tokens before releasing mailbox/heap state. Explicit shutdown
-  refuses live contexts; RAII cleanup drains them. Runtime-wide code/atom bindings
-  remain empty reservations, with contexts/code/atoms ordered for future teardown.
-  No allocation, term roots, signal admission, workers or fake service accessors
-  were implemented. The mandatory ErlangAoT::generated_program interface exports
-  runtime/ABI dependencies without LLVM. Standalone Clang-linked consumer passed;
-  omission of runtime linkage failed on the expected lifecycle symbol.
-  Repeated/independent lifetimes, wrong owners, invalid options, ABI/width mismatch,
-  context caps, BUSY preservation, token invalidation, silence and allocation-failure
-  rollback passed. Fresh full Debug compiler+runtime configure/build, all 84 CTests,
-  make format, full Lizard/clang-tidy, focused test quality, local links and
-  git diff --check passed. Runtime-only build/all 10 tests passed without LLVM;
-  lifecycle and injected failures passed ASan/UBSan. Native C compilation/link/run
-  and freestanding C headers across six target triples passed. Native evidence is
-  macOS arm64; Linux/Windows execution and LeakSanitizer remain unverified on this
-  host. CLI behavior is unchanged. Stopped before step 10.
+The initial steps 14–19 attempt reproduced existing exception-escape/Boost analyzer
+findings and the raised-depth parser crash; it advanced no numbered step. The OTP
+reference moved to official `maint-29` at
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`; the grammar audit and ten-file corpus
+retained their hashes/witnesses. Subsequent upstream checks through step 27 found
+that revision unchanged. Historical validation above retains its original context.
 
-- C++ API revision after step 9 (2026-09-25, user-directed): removed C-compatible
-  headers, macros, opaque handle casts and the duplicate C lifecycle adapter.
-  `v1.hpp` now supplies namespaced types/constexpr constants and aliases the real
-  forward-declared ProcessContext; `status.hpp` uses scoped Status:uint8_t with
-  unchanged values 0–10. Runtime's std::expected/RAII API is the sole lifecycle
-  interface and retains explicit ABI-version/word-width validation. The ABI target
-  exports its C++23 requirement. Generated entries retain the native machine
-  convention without C-language linkage or an external interoperability promise.
-  Future plan steps and AGENTS.md now require project-internal C++ APIs; historical
-  C validation above describes the superseded implementation.
-  Fresh full Debug compiler+runtime configure/build, all 84 CTests, full Lizard and
-  clang-tidy, focused test quality, formatting, local links and whitespace passed.
-  Runtime-only all 10 tests and ASan/UBSan lifecycle/failure/reporting tests passed.
-  Standalone C++ consumer verified exact context/status types, transitive C++23,
-  successful runtime linking and failure when omitted. Native archive inspection
-  confirmed removal of the former C lifecycle symbols. Native Linux/Windows remain
-  pending. No later numbered compilation step was started.
+A prerequisite repair restored all 75 CTests and the full quality gate: Windows
+executables reserve 8 MiB stacks, movable frontend storage avoids throwing moves,
+and numeric/binary-slice/CLI boundaries were clarified. Real CLI tests include
+largest-finite-binary64 conversion. One analyzer crash inside Boost.Parser passed
+on an unchanged complete rerun (`build/compile-steps/quality.log`).
 
+### Semantic analysis and lowering: steps 15–27 (2026-09-28, Windows x64)
 
-- Step 10 (2026-09-25): added LLVM-free immediate word classification and checked
-  native integer encoding/decoding using the shared ABI. Moved implemented word,
-  tag and error declarations into `erlang_aot/runtime/`; moved heap prefixes into
-  private `runtime/src/terms/`. Structural atom/pid/port recognition does not validate
-  registry identities; malformed empty/header/catch encodings fail and heap tags
-  are rejected without dereferencing. Host Term/TermFactory ownership, heap services
-  and atom construction remain reserved under the existing contracts.
-  Fresh automatic-SDK Debug compiler+runtime configure/build, all 86 CTests,
-  full Lizard/clang-tidy gate, make format/dry verification and git diff --check
-  passed. Focused test-source clang-tidy/Lizard and local documentation links passed.
-  Native LLVM constants independently agree with runtime encoding/decoding across
-  signed boundaries. Release runtime-only build passed all 11 tests, including the
-  mandatory generated-program consumer; compile flags/archive symbols confirm no
-  compiler/LLVM dependency. ASan/UBSan passed all 3 focused runtime term tests,
-  including malformed and hostile pointer-shaped inputs. Existing ABI codec tests
-  exercise both 32/64-bit widths; native evidence here is macOS arm64 only.
-  Native Windows/Linux/32-bit runtimes and generated Erlang execution remain pending.
-  CLI behavior is unchanged. Stopped before step 11.
+These gates used Clang/SDK 23.1.2 from the pre-existing `thirdparty/` installation
+(no SDK download) and pinned clang-tidy 22.1.8 selected via `CMAKE_PROGRAM_PATH`.
+Nondiagnostic launcher/analyzer failures in early runs passed on complete reruns;
+from step 18, Windows analysis defaults to two concurrent jobs to bound memory.
+All production commands, checks and thresholds remained enabled.
 
+| Step | Delivered and validated | Full CTests |
+| --- | --- | --- |
+| 15 | Module/function/export indexing, located CLI errors and reversible ABI symbols; real positional/project cases and 147 symbol round trips. | 76 |
+| 16 | Exhaustive subset checks, including unused bodies/nested arguments, metadata policy and explicit negative integer bounds. | 76 |
+| 17 | Catalog-owned capability diagnostics and defensive lowering boundaries; distinct compiler send/sequence IDs and failed-output invalidation. | 76 |
+| 18 | Parameter-position side tables; wildcard slots, repeated/unbound names and include provenance. | 76 |
+| 19 | Owned per-target batches, exact local/remote resolution and iterative cycle rejection; nested/forward calls, 501-function chains and target isolation. | 76 |
+| 20 | Owner-checked symbolic type graph, exhaustive AST categories, canonical unions and bounded widening; temporary lattice/ownership invariants. | 77 |
+| 21 | Declared aliases, visibility, opaque/nominal identity, specs and constraints; finite recursion, bounded substitution and OTP-checked scope rules. Unknown external metadata warns; invalid batch declarations fail. | 78 |
+| 22 | Independent bounded implementation inference; integer singletons and parameter relations unaffected by annotations, with unknown inputs and safe widening. Calls remained unknown at this step. | 79 |
+| 23 | Fresh call-summary instantiation and conservative contract warnings; escaped opt-in `--impldebug` output, nested remote calls and target isolation. Final full quality covered 151 production commands. | 79 |
+| 24 | Generic declarations and checked target-width tagged literals; verified native objects, 32/64-bit endpoints and narrower-target overflow rejection. | 80 |
+| 25 | Aligned parameter-array loads preserving terms and source positions; grouped identity, wildcard projections and native/32-bit objects. | 80 |
+| 26 | Resolved local calls with iterative source-order argument evaluation, aligned arrays and context forwarding; forward/private/nested calls and identical arguments. | 80 |
+| 27 | Separate-module remote declarations and matching object imports/definitions; `answer`/`client` in both input orders, plus private/missing/cycle/duplicate-module diagnostics. | 80 |
 
-- Step 11 (2026-09-25): implemented generic native dispatch with one runtime-owned
-  CodeServer, exact name/arity/all-Term signature keys, transactional unique-registry
-  publication and frozen draft aliases. ResolvedFunction pins callable state and
-  destroys captures before their CodeImage. Minimal immediate-only Term values
-  support small integers/empty containers without roots; identities and heap values
-  remain rejected. Owned string metadata awaits atom binding in step 28; typed
-  signatures, unload, concurrent workers and production BIFs remain deferred.
-  The generated service ABI returns scoped Status separately from a success-only
-  output word, contains host exceptions and reports missing/unavailable BIFs once.
-  FunctionRequest names lookup fields; registration explicitly consumes a Callable.
-  Fresh automatic-SDK Debug compiler+runtime configure/build and all 89 CTests
-  passed. Full Lizard/clang-tidy gate passed with unchanged thresholds; focused
-  changed-test Lizard/clang-tidy, make format/dry verification, documentation links
-  and git diff --check passed. Release runtime-only all 14 CTests passed. ASan/UBSan
-  passed the 4 focused dispatch/output/allocation-failure tests, including registry
-  insertion and module publication rollback sweeps. After removing an unnecessary
-  move from a trivially-copyable test value, runtime_builtins was rebuilt and passed
-  again in Debug, Release and ASan/UBSan. No compiler/LLVM dependency enters runtime.
-  Native evidence remains macOS arm64; Linux/Windows/32-bit runtime execution and
-  generated Erlang execution remain pending. CLI/source acceptance is unchanged.
-  Stopped before step 12.
+Step 23's obsolete debug-silence assertion was corrected before its passing full
+rerun. Steps 24–27 expose inferred lowering inputs under their own debug prefixes;
+the real-source backend adapter verifies/emits objects without linking generated
+programs. Each of those four steps passed 80/80 tests with zero skips and full
+quality; final step 27 analyzed all 154 production translation units. Reproduction
+scripts and logs are under ignored `build/compile-steps/`.
 
-- Step 12 complete (2026-09-25): process memory ownership now lives under
-  `runtime/src/memory/`, with shared byte-budget validation, target-word request
-  checks, zero accounting and explicit not_implemented allocation/collection.
-  Heap add/Term::copy_to revalidate owner-independent immediates without allocation;
-  invalid slots fail, and copied values survive source/destination destruction.
-  Removed unused contiguous heap/stack/growth sketches; no custom allocator,
-  collector, roots, heap Terms or graph-copy implementation was introduced.
-  Private layout assertions preserve word slots and identify nontrivial C++ cells.
-  Binary allocation stays deferred; the sketch consistently uses zero for full
-  final words. docs/runtime-memory.md specifies future alignment, roots, owned
-  signal transit, resource failure and shared-handle destruction contracts.
-  Final fresh full Debug configure/build and all 90 CTests passed. Full Lizard and
-  clang-tidy passed without threshold changes or suppressions; the initial tidy
-  finding was fixed by defaulting the now-trivial heap destructor in its declaration.
-  Focused changed-production/test tidy, test Lizard, make format/dry verification,
-  local documentation links and git diff --check passed. Release runtime-only all
-  15 CTests and ASan/UBSan five layout/memory/lifecycle tests passed after that fix;
-  macOS LeakSanitizer remains unavailable, while allocation injection counts verify
-  failure cleanup and allocation-free service responses. Native Linux/Windows/32-bit
-  runtime runs, actual heap allocation and generated heap code remain pending.
-  Stopped before step 13.
-
-- Step 13 complete (2026-09-25): each Runtime owns one SchedulerService with
-  explicit once-only registration of live contexts, identity lookup/removal,
-  suspension, checked dispatch/return bookkeeping and shutdown admission.
-  Shared process enums/StepResult moved to the canonical process_state.hpp;
-  worker/pool/continuation/signal/receive declarations remain reserved sketches.
-  Context destruction retires registrations before storage or returns busy for a
-  running record. Runtime RAII clears records before contexts/code, retaining the
-  stopped service through code destruction. Failed registration leaves retry
-  possible without consuming the once-only identity marker. No workers, queues,
-  reduction grants, wake operation, receive or Erlang execution are implemented.
-  docs/runtime-scheduler.md records current transitions and future owner-worker,
-  bounded signal handling, ordering, suspension and receive-tail contracts.
-  Final fresh full Debug configure/build and all 91 CTests passed; full Lizard
-  and clang-tidy passed with unchanged checks/thresholds. Focused production/test
-  tidy and Lizard, combined implemented/sketch header compilation with runtime
-  warnings-as-errors flags, make format/dry verification, local documentation links
-  and git diff --check passed. Release runtime-only all 16 CTests and ASan/UBSan
-  five scheduler/lifecycle/memory tests passed. Allocation injection verifies startup
-  cleanup and registration rollback/retry; macOS LeakSanitizer remains unavailable.
-  Native Linux/Windows/32-bit runs and actual scheduling behavior remain pending.
-  Stopped before step 14.
-
-
-- Step 14 complete (2026-09-25): installed shared catalog reporting at TermFactory,
-  heap allocation/collection, ProcessContext::send, SchedulerService::run/execute
-  and CodeServer::unload. Factory lifetime bindings allocate no roots and reject
-  expired contexts; all constructors remain explicit placeholders. Service failures
-  leave heap accounting, process state, module publication and output words intact.
-  A bounded exact BIF signature catalog identifies known deferred calls after native
-  lookup; other missing signatures return Status::unknown_builtin (11), silently.
-  Reporting failures become typed diagnostic_failure. A GC failure propagated through
-  a native wrapper and generated bridge reports once; supported lifecycle is silent.
-  Atom storage/collection, file loading and generated descriptors remain reservations
-  until their actual owners/ABIs exist. No executable language support was added.
-  Fresh automatic-SDK Debug compiler+runtime configuration/build and all 93 CTests
-  passed. Full Lizard/clang-tidy passed without suppressions or threshold changes;
-  focused production/test tidy, test Lizard, make format/299-file dry verification,
-  local documentation links and git diff --check passed. The initial full run exposed
-  the old ABI catalog test's generic-reporter assumption; its expected owner-test
-  mapping was updated, and the full suite passed on rerun.
-  Release runtime-only all 18 CTests and ASan/UBSan six service/memory/dispatch/failure
-  tests passed. Allocation injection verifies reporting failure under host OOM and
-  balanced cleanup; macOS LeakSanitizer remains unavailable. Native evidence is macOS
-  arm64; Linux/Windows/32-bit execution remains pending. Stopped before step 15.
-
-- 2026-09-28 steps 14–19 request: step 14 was already complete and the initial
-  parent working tree was clean. Fresh full Windows Debug configure/build passed;
-  Lizard passed, but clang-tidy reproduced the recorded exception-escape and
-  Boost analyzer findings. The raised-depth parser hardening case still crashes.
-  Updated the OTP source reference to current official maint-29 at user request;
-  its grammar audit and ten-file corpus pass with unchanged hashes/witnesses.
-  Step 15 has not started; no additional compiler step or clean commit is claimed.
-
-- Step 15 (2026-09-28): private LLVM-free semantic declaration tables validate
-  module identity, function arities/duplicates and all exports, including forward
-  references. ABI-v1 symbols use reversible hexadecimal UTF-8 components and canonical
-  arity, with no host hashes. Default positional/project CLI paths report located
-  failures and continue to later files; syntax-only modes retain broader acceptance.
-  Real frontend/project cases and 147 symbol identity round trips pass. Fresh full
-  Debug build, all 76 CTests, full Lizard/clang-tidy, formatting and whitespace pass.
-  Native host: Windows x64, Clang/SDK23.1.2, pinned clang-tidy22.1.8; the SDK is the
-  pre-existing installation under thirdparty/ (no SDK downloaded for these gates).
-  The direct pinned analyzer was selected with CMAKE_PROGRAM_PATH after intermittent
-  launcher/analyzer failures; the complete target passed without excluding files.
-  Other native platforms remain pending. Body capabilities/bindings/calls are later steps.
-
-- Step 16 (2026-09-28): exhaustive form/expression capability visitors enforce
-  single-clause variable/wildcard functions, one body expression, immediate integer
-  bounds, and direct-call syntax throughout unused functions and nested arguments.
-  Inert metadata and type/spec syntax remain accepted. Syntax-only actions retain
-  broader coverage. Fresh full Windows x64 Debug build, all 76 CTests, full Lizard
-  and pinned native clang-tidy22.1.8 pass; formatting and whitespace pass.
-  Integer decoding accepts explicit negative literals and uses ABI target-width
-  limits (the current CLI supplies native width; target selection remains later).
-
-- Step17 (2026-09-28): capability failures use the shared compiler-owned catalog;
-  defensive heap/call/closure/exception/receive/send/sequence lowering boundaries
-  invalidate staged output and preserve failure context. IDs24/25 distinguish
-  compiler send/sequence syntax from runtime service ownership. Fresh full Debug
-  build and all76 CTests pass. Full Lizard/native pinned clang-tidy passed on rerun
-  after a nondiagnostic analyzer process failure; no checks or files excluded.
-
-- Step18 (2026-09-28): variable reads bind to original argument-array positions in
-  side tables; wildcards consume separate positions, named repeats reject matching,
-  and unbound/wildcard reads retain include provenance. Fresh full Debug build,
-  all76 CTests, full Lizard and pinned native clang-tidy pass. Windows analysis
-  concurrency now defaults to2 to bound memory after nondiagnostic process failures;
-  source coverage, checks and thresholds remain unchanged.
-
-- Step 19 (2026-09-28): positional inputs share one owned AST batch; each project
-  target receives an independent batch. Direct calls resolve exact module/name/arity
-  and remote exports, retaining expression/declaration links and deterministic
-  callee-before-caller order. Iterative ordering rejects local/cross-module cycles.
-  CLI tests cover forward/nested calls, 501-function chains, located errors,
-  duplicate module identities, project batch success and target isolation.
-  Fresh Windows x64 Debug compiler+runtime build, all 76 CTests, full Lizard and
-  clang-tidy pass; formatting and whitespace pass. Other native hosts remain pending.
-
-- Step 20 (2026-09-28): LLVM-independent semantic type graph interns stable,
-  owner-checked identities and exhaustively describes every AST type alternative.
-  Exact integer/atom spellings and structural flags remain symbolic; unions flatten,
-  sort and deduplicate, with explicit top/bottom and conservative bounded widening.
-  Node, union-member and syntax-work limits report exhaustion to callers. Focused
-  ownership/lattice tests and parsed source fixtures cover all categories and empty
-  versus unrestricted structural shapes; these remain private invariants until
-  step 39 supplies public inspection. Initial checks corrected a complexity finding,
-  an unnecessary handle copy and fixture lookup of preprocessing file attributes.
-  Final fresh Windows x64 Debug build and all 77 CTests pass, as do full Lizard,
-  clang-tidy, formatting and whitespace. Other native platforms remain pending.
-
-- Step 21 (2026-09-28): batch-owned declared-type registry resolves aliases/formals,
-  exported remote types, opaque/nominal identities, record annotations, specs,
-  callbacks, overloads, constraints and optional callback metadata. Recursive aliases
-  retain finite references with memoized one-layer substitution; opaque expansion is
-  limited to its defining module and nominal names are never erased. Source/form
-  provenance and declared contracts remain separate from future inferred facts.
-  OTP-checked scope rules count union alternatives separately; repeated formal names
-  use the last actual argument, and repeated constraints remain separate contracts.
-  Collision-free scope identities handle quoted names. Unknown external metadata
-  warns and widens; malformed/duplicate/undefined batch declarations fail.
-  Exact constant arithmetic and graph/work budgets cannot imply a narrow runtime type.
-  CLI cases cover source/include diagnostics, batch visibility and project isolation;
-  the temporary private invariant test covers substitution, opacity, identity and limits.
-  Final fresh Windows x64 Debug compiler+runtime build, all 78 CTests, full Lizard
-  and clang-tidy pass; focused new-source/test quality, formatting and whitespace pass.
-  Official maint-29 was fetched and remains 21776803ecd11f5fa948732c0ec66b8f325dedfc.
-  Other native hosts and frontend sanitizers remain pending. Stopped before step 22.
-
-- Step 22 (2026-09-28): local implementation inference owns an independent bounded
-  graph and expression/function side tables. Integer singletons and exact parameter
-  projection relations survive missing/partial/incorrect annotations; all inputs
-  remain top. Iterative traversal bounds work across the batch and widens safely.
-  Calls remain unknown until step 23. The driver runs inference after valid declared
-  types; no product inspection switch or backend output was introduced.
-  Fresh Windows x64 compiler+runtime Debug build and all 79 CTests pass.
-  Full Lizard/clang-tidy, focused test tidy, formatting and whitespace pass. Official maint-29 remains
-  21776803ecd11f5fa948732c0ec66b8f325dedfc; other native hosts remain pending.
-
-- Step 23 (2026-09-28): resolved dependency-order inference instantiates each call's
-  constant/projection summary with its own source-ordered arguments, including
-  nested and remote calls. Contracts remain separate; exact integer exclusions
-  warn when all overloads contradict a known result/argument. Constraints, unknown
-  values and recursive/hidden identities remain inconclusive; no runtime guards or
-  representation assumptions are introduced. Remote opaque bodies stay hidden.
-  Added repeatable `--impldebug` integer/list parsing and request-owned selections.
-  `--impldebug 23` reports escaped inferred inputs/results and parameter relations
-  on stderr; ordinary verbosity and frontend-only actions do not enable it.
-  Source-level tests cover independent identity uses, nested cross-module constants,
-  warning-only discrepancies, exact bounds, alias/overload uncertainty, debug gating,
-  escaped names, malformed options and project target isolation.
-  Fresh Windows x64 compiler+runtime Debug build and final 79/79 CTests pass.
-  Full Lizard and all 151 production clang-tidy commands pass without suppressions;
-  focused new-source tidy, changed-test Lizard, formatting and whitespace pass.
-  The initial project CLI failure was a duplicate obsolete silence assertion;
-  removing it and rebuilding the ownership test preceded the passing full rerun.
-  Official maint-29 was fetched unchanged at 21776803ecd11f5fa948732c0ec66b8f325dedfc.
-  Other native hosts and frontend sanitizers remain pending. Stopped before step 24.
-
-- Step 24 (2026-09-28): private lowering creates all generic ABI declarations before
-  constant bodies, derives width from the target and checks canonical exact literals
-  before constructing tagged constants. Inferred facts are consumed without LLVM
-  assumptions. Export linkage is explicit. Real parsed source produces verified native
-  objects; 32/64-bit endpoints and narrower-target overflow are covered. CLI debug24
-  prints analyzed lowering inputs; normal artifact publication remains step35/36.
-  Fresh full Windows Debug build, 80/80 CTests, full Lizard/clang-tidy, formatting
-  and whitespace pass. Official maint-29 fetched unchanged. Other hosts remain pending.
-
-- Step 25 (2026-09-28): Parameter lowering borrows the binding table and emits a target-word-aligned
-  load from the original argument position. Grouped identity and three-argument
-  projections with unused wildcards retain tagged terms unchanged, without type
-  assumptions or inbounds promises. Native and 32-bit object/IR checks pass.
-  Debug25 exposes inferred input/result relations.
-  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
-  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
-  whitespace pass. Other native hosts and frontend sanitizers remain pending.
-
-- Step 26 (2026-09-28): Direct local calls consume resolved identities and inferred summaries. An
-  iterative postorder walk evaluates nested arguments in source order, builds
-  aligned argument arrays and forwards the original process context. Zero-arity
-  calls pass an unused null argument pointer. Forward/private calls, nested calls
-  and identical argument positions are covered; CLI wrong-arity/missing/cycle
-  regressions remain active. Debug26 prints inferred lowering inputs.
-  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
-  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
-  whitespace pass. Other native hosts and frontend sanitizers remain pending.
-
-- Step 27 (2026-09-28): Batch-resolved remote calls import exported generic declarations into separate
-  LLVM modules. Matching definition/import symbols are checked in emitted objects
-  for the answer/client example, including reversed source order; no native
-  linking occurs. Private/missing callees, duplicate modules and cross-module
-  recursion remain diagnosed by the existing semantic phase. Debug27 prints
-  inferred inputs. Stopped before generated-module runtime registration (step 28).
-  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
-  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
-  whitespace pass. Other native hosts and frontend sanitizers remain pending.
+Current stopping point: step 27 complete; step 28 generated-module registration
+has not started. CLI artifact publication, generated-program execution, additional
+native hosts and full frontend sanitizer validation remain pending. See
+[compile](../docs/compile.md) and [test migration](../docs/test-migration.md) for
+current scope and platform limitations.
