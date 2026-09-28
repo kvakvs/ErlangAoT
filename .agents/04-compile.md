@@ -762,7 +762,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
   earlier call-graph validation and do not invoke native linking here.
 - Validate: the `answer`/`client` example, private/missing callees, duplicate
   module identities and cross-module recursion. Shared gate, then commit.
-- When running with `--impldebug 26` log the inferred information to screen.
+- When running with `--impldebug 27` log the inferred information to screen.
 
 ### 28. Bind generated modules to the runtime
 

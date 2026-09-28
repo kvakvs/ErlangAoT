@@ -10,12 +10,17 @@ name = "erlang_xmerl"
 
 # List files or patterns, e.g. ["main.erl", "src/*.erl", "shared/**/*.erl"].
 # Patterns support *, ?, and ** as a whole directory component.
-sources = ["references/otp/lib/xmerl/src/*.erl"]
+sources = [
+#  "references/otp/lib/xmerl/src/*.erl"
+  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/inference_owner.erl",
+  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/inference_user.erl",
+  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/opaque_owner.erl"
+]
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
 source_dirs = []
 # Future executable path; checks/printing do not write it. Windows: build/app.exe.
-output = "build/xmerl"
+output = "build/lists"
 
 [targets.options]
 # Fallback roots for listed source filenames, e.g. ["src", "generated"].
@@ -23,7 +28,10 @@ output = "build/xmerl"
 source_search_paths = []
 # Header search directories, first listed first, e.g. ["include", "vendor/include"].
 # CLI -I directories take precedence; the last CLI -I is searched first.
-include_dirs = ["references/otp/lib/xmerl/include", "references/otp/lib"]
+include_dirs = [
+#   "references/otp/lib/xmerl/include", 
+  "references/otp/lib"
+]
 # Predefined macros, e.g. ["DEBUG", "LIMIT=100", 'LABEL="demo"'].
 # A bare name means true; values are Erlang literal terms. Duplicates are errors.
 defines = []
