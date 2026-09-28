@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Lowering and cross-call inference are
+Lowering and public type inspection are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -38,7 +38,7 @@ within that batch by decoded module/function name and arity. Remote calls,
 including self-qualified calls, require explicit exports. Missing/private callees,
 duplicate module identities and direct or indirect recursion are errors.
 The call graph retains a deterministic callee-before-caller dependency order for
-future inference. No executable body inference or code emission is performed yet.
+inference. Executable body inference is now implemented; code emission remains pending.
 
 The private semantic type graph represents all parsed type categories independently
 of runtime/LLVM layouts. It retains exact singleton spellings, range endpoints,
@@ -83,6 +83,16 @@ singleton values; parameters retain top-valued types plus exact result/argument
 relations for identity and projection functions. Missing or partial specifications
 do not reduce precision, and incorrect specifications cannot narrow these facts.
 Iterative traversal has a batch work budget; exhaustion returns top and discards
-relations. Node exhaustion widens constants to top. Calls remain unknown until
-the next propagation step. Contract warnings, type inspection and Erlang lowering
-remain later plan steps.
+relations. Node exhaustion widens constants to top. Resolved callee-before-caller
+order propagates constants and freshly instantiated parameter relations through
+nested local and remote calls. Different calls never share mutable type variables.
+
+Specifications remain advisory: known integer results or arguments excluded by all
+overloads produce located warnings, never runtime guards. Membership compares exact
+decimal bounds and respects aliases, recursive budgets, opaque and nominal barriers.
+Unknown values, constrained signatures and unresolved alternatives are inconclusive;
+the checker deliberately does not promise full success typing or contract validation.
+`--impldebug 23` reports escaped function summaries on stderr, with unknown inputs,
+singleton results, parameter relations and batch widening. Ordinary `--verbose`
+does not enable these summaries. Public type inspection and Erlang lowering remain
+later plan steps.

@@ -1,4 +1,5 @@
 #include "options.hpp"
+#include "implementation_debug.hpp"
 #include <map>
 
 namespace erlang_aot::cli {
@@ -100,6 +101,9 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
                                                Options &options) {
     if (parse_flag(argument, options)) {
         return std::nullopt;
+    }
+    if (argument == "--impldebug") {
+        return parse_implementation_debug(remaining, options.implementation_debug);
     }
     if (argument == "-o" || argument == "--output") {
         return parse_output(argument, remaining, options);

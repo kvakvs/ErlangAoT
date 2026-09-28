@@ -1,4 +1,5 @@
 #pragma once
+#include "../implementation_debug.hpp"
 #include "output.hpp"
 #include <cstdint>
 #include <erlang_aot/compiler/ast/module.hpp>
@@ -38,6 +39,8 @@ struct CompilationRequest {
     std::vector<CompilationInput> inputs;
     // Attach project diagnostic context without interpreting it as a machine target.
     std::string project_target;
+    // Carry opt-in implementation-step diagnostics without coupling them to ordinary tracing.
+    ImplementationDebug implementation_debug;
     // Select a normalized LLVM triple; empty prefers the running host's triple, CPU and features.
     std::string target_triple;
     // Carry the requested pipeline policy without performing optimization yet.

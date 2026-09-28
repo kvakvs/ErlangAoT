@@ -13,6 +13,7 @@ Options:
   -h, --help           Show this help and exit.
       --version        Show the tool version and exit.
       --verbose        Trace ingested filenames to stderr with [pp]/[parse] prefixes.
+      --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
   -o, --output <path>  Set the future executable output path (default: a.out).
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
@@ -48,7 +49,8 @@ int run_project(const erlang_aot::cli::Options &options) {
                                                             const auto &sink) {
         return erlang_aot::cli::process_files(path,
                                               {options.print_pp, options.print_ast, options.parse_check,
-                                               !options.preprocess, options.verbose, preprocessing},
+                                               !options.preprocess, options.verbose, preprocessing,
+                                               options.implementation_debug},
                                               sink);
     };
     return erlang_aot::project::run(options.project, settings, execute, std::cout, std::cerr);

@@ -3,6 +3,7 @@
 #include "../semantic/bindings.hpp"
 #include "../semantic/calls.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/types/contracts.hpp"
 #include "../semantic/types/declarations.hpp"
 #include "../semantic/types/inference.hpp"
 #include "options.hpp"
@@ -56,8 +57,18 @@ void print_form(const PreprocessorEvent &event) {
 // Own syntax for the entire batch before borrowing it in semantic side tables.
 using Inputs = std::vector<codegen::CompilationInput>;
 
+// Keep inferred implementation facts independent from contracts, with opt-in debug reporting.
+void infer_batch(semantic::types::Registry &types, const semantic::CallGraph &calls, const semantic::Reporter &report,
+                 const ImplementationDebug &debug, const DiagnosticSink &sink) {
+    const auto inferred = semantic::types::infer(calls);
+    semantic::types::check_contracts(types, *inferred, calls, report);
+    if (debug.enabled(23)) {
+        semantic::types::trace_inference(*inferred, calls, sink);
+    }
+}
+
 // Finish declaration and binding checks before resolving the batch dependency graph.
-bool compile_batch(const Inputs &inputs, const DiagnosticSink &sink) {
+bool compile_batch(const Inputs &inputs, const DiagnosticSink &sink, const ImplementationDebug &debug) {
     bool failed = false;
     const semantic::Reporter report = [&](const Diagnostic &diagnostic) {
         failed = failed || diagnostic.severity == Severity::error;
@@ -75,7 +86,7 @@ bool compile_batch(const Inputs &inputs, const DiagnosticSink &sink) {
         if (!failed) {
             const auto types = semantic::types::resolve_declarations(modules, report);
             if (!failed) {
-                const auto inferred = semantic::types::infer(calls);
+                infer_batch(*types, calls, report, debug, sink);
             }
         }
     }
@@ -157,15 +168,16 @@ bool process_files(std::span<const std::filesystem::path> paths, const FrontendR
         failed = process_file(path, request, sink, inputs) || failed;
     }
     if (request.compile) {
-        failed = compile_batch(inputs, sink) || failed;
+        failed = compile_batch(inputs, sink, request.implementation_debug) || failed;
     }
     return failed;
 }
 
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
-    const FrontendRequest request{options.print_pp,    options.print_ast, options.parse_check,
-                                  !options.preprocess, options.verbose,   options.preprocessing};
+    const FrontendRequest request{
+        options.print_pp, options.print_ast,     options.parse_check,         !options.preprocess,
+        options.verbose,  options.preprocessing, options.implementation_debug};
     const DiagnosticSink sink = [](const std::string_view message) { std::cerr << message << '\n'; };
     return process_files(options.inputs, request, sink) ? 1 : 0;
 }

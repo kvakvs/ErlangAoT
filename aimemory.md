@@ -566,6 +566,14 @@
 
 # Implementation notes
 
+- Step23: call inference instantiates exact result/argument relations independently;
+  conservative integer/spec exclusions warn without guards. --impldebug signed int32
+  list selections are repeatable/unique; step23 prints escaped stderr summaries only
+  when enabled. Preserve user-owned pending-step debug edits in 04-compile.md.
+  Fresh Debug full79/79, full151 production tidy/Lizard, formatting/whitespace pass.
+  Logs/scripts build/compile-steps/step23* and tests23.cmd. Initial gate exit1 reflects
+  obsolete duplicate project test; final full tests23 rerun passes, quality log clean.
+
 - Step22 complete: independent bounded inference graph, top inputs and singleton/
   projection facts. Fresh full Debug79/79 and full quality pass; gate22 logs in
   build/compile-steps. No lowering or call propagation yet.

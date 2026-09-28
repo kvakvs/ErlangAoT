@@ -49,6 +49,7 @@ unknown(X) -> id(X).
     require(identity.result.type == inferred->graph.top() && identity.result.argument == 0);
     const auto &projection = inferred->functions.at(&module.functions[2]);
     require(projection.inputs == std::vector(3, inferred->graph.top()) && projection.result.argument == 1);
+    require(inferred->functions.at(&module.functions[3]).result.argument == 0);
     const auto bounded = t::infer(calls, {.syntax_work = 0});
     require(bounded->graph.widened());
     for (const auto &[function, summary] : bounded->functions) {

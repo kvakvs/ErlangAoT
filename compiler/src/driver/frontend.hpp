@@ -1,4 +1,5 @@
 #pragma once
+#include "../implementation_debug.hpp"
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <functional>
 #include <span>
@@ -15,6 +16,8 @@ struct FrontendRequest {
     bool verbose = false;
     // Supply a fresh preprocessing configuration to each module session.
     PreprocessorOptions preprocessing;
+    // Preserve the same debug selection for every module in a positional or project batch.
+    ImplementationDebug implementation_debug;
 };
 
 // Allow callers to attach project context without changing frontend source rendering.

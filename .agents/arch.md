@@ -1,8 +1,15 @@
 # Architecture
 
+- `--impldebug` carries a value-owned set of signed decimal step IDs through
+  positional/project frontend requests and private backend requests. Step-specific
+  diagnostics query `enabled(step)` independently of ordinary verbosity.
+
 - Local implementation inference owns a separate bounded type graph and AST side
   tables. Unknown inputs remain top; identity/projection results retain argument
   positions independently of specifications. Traversal is iterative and budgeted.
+  Resolved dependency order instantiates each call's relations afresh. Conservative
+  singleton/contract comparison warns without guards, narrowing or representation
+  assumptions; `--impldebug 23` reports escaped implementation summaries.
 
 - Windows executables reserve 8 MiB stacks for bounded recursive parsing. Lexer
   state and preprocessor application overrides use vector storage with allocation-free

@@ -23,6 +23,8 @@ struct Inference {
     std::map<const Function *, Summary> functions;
     // Borrow stable AST nodes for location-aware inspection without mutating syntax.
     std::map<const ast::Expression *, Fact> expressions;
+    // Preserve validated call targets for fresh instantiation at each expression.
+    std::map<const ast::Expression *, FunctionRef> callees;
 };
 
 // Infer supported bodies iteratively; budget exhaustion conservatively loses precision.

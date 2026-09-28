@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–22 complete, 2026-09-28. Steps 23–46 remain pending.
+Status: steps 1–23 complete, 2026-09-28. Steps 24–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -12,7 +12,8 @@ behavior and a production executable launcher remain later work.
 
 The preprocessor supplies expanded tokens to a parser owning a move-only
 `ast::Module`. Parsing does not establish semantic validity. The driver's
-`compiler/src/driver/frontend.cpp` validates declarations, parameter bindings, batch calls and declared types
+`compiler/src/driver/frontend.cpp` validates declarations, parameter bindings, batch calls and declared types,
+then infers implementation facts and checks declared contracts conservatively
 after parsing; positional and project compilation still write no executable. Frontend
 check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
@@ -723,7 +724,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
   without treating specs as runtime guards or representation proofs.
 - Validate: cross-module singletons, polymorphic identity uses, incorrect specs,
   overload uncertainty and target isolation. Shared gate, then commit.
-- When running with `--verbose` log the inferred information to screen.
+- When running with `--impldebug 23` log the inferred information to screen.
 
 ### 24. Lower function declarations and integer literals
 
@@ -1352,3 +1353,23 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   Fresh Windows x64 compiler+runtime Debug build and all 79 CTests pass.
   Full Lizard/clang-tidy, focused test tidy, formatting and whitespace pass. Official maint-29 remains
   21776803ecd11f5fa948732c0ec66b8f325dedfc; other native hosts remain pending.
+
+- Step 23 (2026-09-28): resolved dependency-order inference instantiates each call's
+  constant/projection summary with its own source-ordered arguments, including
+  nested and remote calls. Contracts remain separate; exact integer exclusions
+  warn when all overloads contradict a known result/argument. Constraints, unknown
+  values and recursive/hidden identities remain inconclusive; no runtime guards or
+  representation assumptions are introduced. Remote opaque bodies stay hidden.
+  Added repeatable `--impldebug` integer/list parsing and request-owned selections.
+  `--impldebug 23` reports escaped inferred inputs/results and parameter relations
+  on stderr; ordinary verbosity and frontend-only actions do not enable it.
+  Source-level tests cover independent identity uses, nested cross-module constants,
+  warning-only discrepancies, exact bounds, alias/overload uncertainty, debug gating,
+  escaped names, malformed options and project target isolation.
+  Fresh Windows x64 compiler+runtime Debug build and final 79/79 CTests pass.
+  Full Lizard and all 151 production clang-tidy commands pass without suppressions;
+  focused new-source tidy, changed-test Lizard, formatting and whitespace pass.
+  The initial project CLI failure was a duplicate obsolete silence assertion;
+  removing it and rebuilding the ownership test preceded the passing full rerun.
+  Official maint-29 was fetched unchanged at 21776803ecd11f5fa948732c0ec66b8f325dedfc.
+  Other native hosts and frontend sanitizers remain pending. Stopped before step 24.

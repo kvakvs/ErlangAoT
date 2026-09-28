@@ -1,8 +1,14 @@
 # File map
 
+- `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
+  `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
+  parsing with atomic merging of repeatable `--impldebug` operands.
+
 - `compiler/src/semantic/types/inference.{hpp,cpp}`: independent implementation
   facts, parameter/result relations and bounded iterative expression analysis.
   `tests/compiler/semantic/inference.cpp`: temporary relational/budget invariants.
+- `compiler/src/semantic/types/{contracts,membership,trace}.cpp`: conservative
+  singleton/spec warnings, bounded exact membership and step 23 debug summaries.
 
 - `references/otp-pin.cmake`: current maint-29 source revision and branch.
   `docs/otp-reference.md`: refresh procedure, checksum/grammar review and validation.

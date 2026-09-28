@@ -24,9 +24,25 @@ struct Visit {
     bool ready = false;
 };
 
-// Evaluate a postorder node after its children; unresolved calls remain unknown for now.
+// Instantiate each projection with this call's actual fact, never a shared mutable type variable.
+Fact call_result(const Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
+                 const ast::CallExpression &call) {
+    const auto callee = inference.callees.at(&expression);
+    const auto &summary = inference.functions.at(callee.function);
+    if (!summary.result.argument) {
+        return summary.result;
+    }
+    const auto argument = call.arguments.at(*summary.result.argument);
+    return inference.expressions.at(&syntax.expression(argument));
+}
+
+// Evaluate a postorder node only after all source-order argument facts are available.
 Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id) {
     const auto &syntax = *function.module->syntax;
+    const auto &expression = syntax.expression(id);
+    if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        return call_result(inference, syntax, expression, *call);
+    }
     if (const auto *group = std::get_if<ast::Group>(&syntax.expression(id).value)) {
         return inference.expressions.at(&syntax.expression(group->expression));
     }
@@ -63,6 +79,9 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
 
 std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
     auto result = std::make_unique<Inference>(limits);
+    for (const auto &call : calls.calls) {
+        result->callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
+    }
     std::size_t work = 0;
     for (const auto function : calls.order) {
         const auto fact = body(*result, function, work);

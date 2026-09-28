@@ -219,6 +219,14 @@ begin, including source/module/target and specialization decisions. Future-featu
 failures report `[feature name] notimpl` once with context on stderr, independently
 of verbosity, and propagate explicit failure without fake results or artifacts.
 
+Implementation debugging is separate from ordinary tracing. `--impldebug <n[,n...]>`
+option selects signed 32-bit decimal step IDs (repeatable, deduplicated, no spaces).
+`ImplementationDebug::enabled(step)` is available in frontend/backend requests;
+step-specific diagnostics use stderr and this selection instead of ordinary
+verbosity. Step 23 reports inferred function inputs/results and parameter relations
+with an `[impldebug 23]` prefix. Debugging changes neither inferred facts nor warning
+policy and never runs inference in frontend-only check/print modes.
+
 The full inspection/conflict, ownership, placeholder and validation contracts remain
 in [the plan](../.agents/04-compile.md). Each numbered step requires its own full gate
 and commit. Cross-platform execution, generated objects and runtime behavior are not
