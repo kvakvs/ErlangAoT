@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–27 complete, 2026-09-28. Steps 28–46 remain pending.
+Status: steps 1-30 complete, 2026-09-28. Steps 31-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -22,8 +22,9 @@ TermFactory reporting placeholders are installed; term creation, backing allocat
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
-owners retain batch ASTs, LLVM state and results; Generic integer/parameter/direct-call lowering is implemented privately; generated-module registration is implemented; backend driver integration
-remains deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
+owners retain batch ASTs, LLVM state and results. Generic lowering, runtime module
+registration, bounded specialization planning and guarded variant lowering are
+implemented privately. Backend driver integration remains deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
 
@@ -1084,6 +1085,9 @@ All production commands, checks and thresholds remained enabled.
 | 25 | Aligned parameter-array loads preserving terms and source positions; grouped identity, wildcard projections and native/32-bit objects. | 80 |
 | 26 | Resolved local calls with iterative source-order argument evaluation, aligned arrays and context forwarding; forward/private/nested calls and identical arguments. | 80 |
 | 27 | Separate-module remote declarations and matching object imports/definitions; `answer`/`client` in both input orders, plus private/missing/cycle/duplicate-module diagnostics. | 80 |
+| 28 | Versioned module/export descriptors, retained explicit startup and transactional frozen runtime registration; linked real-source execution, rejection/lifetime tests and missing-runtime link failure. | 82 |
+| 29 | Canonical implementation profiles, exact-check benefit recognition, deterministic count/work/growth limits and generic no-benefit fallback. | 83 |
+| 30 | Guarded LLVM variants, unchanged public ABI and retained generic bodies; measured 2x growth rollback, native hit/miss equivalence and exhausted-inference fallback. | 84 |
 
 Step 23's obsolete debug-silence assertion was corrected before its passing full
 rerun. Steps 24–27 expose inferred lowering inputs under their own debug prefixes;
@@ -1092,8 +1096,8 @@ programs. Each of those four steps passed 80/80 tests with zero skips and full
 quality; final step 27 analyzed all 154 production translation units. Reproduction
 scripts and logs are under ignored `build/compile-steps/`.
 
-Current boundary: step 28 implements generated-module registration and explicit
-native harness execution. CLI artifact publication, additional native hosts and
+Current stopping point: step 30 complete; step 31 has not started. Generated-module
+registration, linked harness execution and bounded guarded specialization are implemented. CLI artifact publication, additional native hosts and
 full frontend sanitizer validation remain pending. See
 [compile](../docs/compile.md) and [test migration](../docs/test-migration.md) for
 current scope and platform limitations.
@@ -1107,3 +1111,9 @@ deterministic function/module/target work, count and growth caps. O0/disable sta
 generic; no-benefit source subset produces no variants. Fresh Windows Debug 83/83
 CTests and full Lizard/clang-tidy (159 production commands) pass. One analyzer
 crash on unchanged tree_attributes.cpp passed on a complete unchanged retry.
+
+Step 30: fresh Windows x64 Debug compiler/runtime build, 84/84 CTests, full
+Lizard/clang-tidy (162 production commands), formatting and whitespace pass.
+The final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
+unchanged quality retry. No step beyond 30 was started. Native execution remains
+Windows x64 evidence; cross-width IR/objects do not claim execution on other hosts.

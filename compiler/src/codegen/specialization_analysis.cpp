@@ -28,8 +28,9 @@ TypeProfile call_profile(const ast::Module &syntax, const ast::CallExpression &c
                          const semantic::types::Inference &inferred, unsigned bits) {
     TypeProfile result;
     for (const auto &id : call.arguments) {
-        const auto &fact = inferred.expressions.at(&syntax.expression(id));
-        result.push_back(representation(inferred.graph, fact.type, bits));
+        const auto fact = inferred.expressions.find(&syntax.expression(id));
+        result.push_back(fact == inferred.expressions.end() ? Representation::generic
+                                                            : representation(inferred.graph, fact->second.type, bits));
     }
     return result;
 }

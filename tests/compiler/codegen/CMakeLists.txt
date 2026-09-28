@@ -75,4 +75,21 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/registration.cmake")
     set_tests_properties(codegen_registration PROPERTIES TIMEOUT 120)
+
+    add_executable(codegen_specialization_emit specialization_emit.cpp)
+    erlang_aot_project_options(codegen_specialization_emit)
+    target_include_directories(codegen_specialization_emit PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+    target_link_libraries(codegen_specialization_emit PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
+    target_compile_definitions(codegen_specialization_emit PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
+    if("X86" IN_LIST test_backends)
+        target_compile_definitions(codegen_specialization_emit PRIVATE ERLANG_AOT_LLVM_X86=1)
+    endif()
+    add_test(NAME codegen_specialized_execution COMMAND "${CMAKE_COMMAND}"
+        "-DEMITTER=$<TARGET_FILE:codegen_specialization_emit>"
+        "-DCONSUMER=${CMAKE_CURRENT_SOURCE_DIR}/specialization_consumer.cpp"
+        "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/specialization/$<CONFIG>"
+        "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+        "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/registration.cmake")
+    set_tests_properties(codegen_specialized_execution PROPERTIES TIMEOUT 120)
 endif()

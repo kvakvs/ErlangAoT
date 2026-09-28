@@ -21,8 +21,11 @@ Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
 registration, checked transitions and ordered teardown without worker execution.
 
 Steps 24–27 implement private generic lowering of integer returns, parameter references
-and resolved local/remote calls. Artifact publication and runtime execution remain
-future steps of [the implementation plan](../.agents/04-compile.md).
+and resolved local/remote calls. Step 28 adds explicit [generated-module registration](runtime-modules.md)
+and separately linked native harness execution. Steps 29-30 add bounded
+[specialization planning and guarded lowering](specialization.md); the current
+guard-free source subset correctly remains generic. Artifact publication and
+CLI backend integration remain later steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults preprocess/parse and validate [declarations, bindings, batch calls and declared types](semantic.md),
 infer implementation facts and check contracts, then return without executable output;
 the proposed compilation switches below are not implemented yet.
@@ -408,3 +411,20 @@ so constants/identity/direct calls receive no variants. See [specialization](spe
 Validation: fresh Windows x64 Debug compiler/runtime build; 83/83 CTests and
 full Lizard/clang-tidy pass (159 production commands). A clang-tidy crash in
 unchanged tree_attributes.cpp passed on an unchanged complete quality retry.
+
+### Step 30
+
+Private guarded lowering uses LLVM cloning/simplification utilities and retains
+the generic tagged ABI. Dispatch tests only implemented small-integer tags and
+forwards context and arguments unchanged. Actual clone-plus-dispatch IR growth
+is checked transactionally against function/module budgets; excess variants
+are discarded without rejecting the program. See [specialization](specialization.md).
+Native LLVM fixtures cover guarded equivalence and executed generic fallback
+after growth rejection. The accepted Erlang source subset still has no profitable
+representation checks, so speed-mode source compilation correctly remains generic.
+
+Validation: fresh Windows x64 Debug compiler/runtime build; 84/84 CTests,
+Lizard, full clang-tidy (162 production commands), formatting and whitespace pass.
+A final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
+unchanged quality retry. Work stops after step 30; standard LLVM optimization
+pipelines (step 31) and subsequent driver/artifact work remain pending.

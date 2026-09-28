@@ -72,6 +72,9 @@ void real_sources() {
     const auto &plan = cg::detail::state(compilation).specializations;
     require(plan.candidates.empty() && plan.decisions.contains(cg::SpecializationReason::no_benefit),
             "identity/constant cloned without benefit");
+    auto exhausted = fixtures({"client.erl", "answer.erl"}, "", cg::OptimizationLevel::speed);
+    require(analyze_and_lower(exhausted, {.syntax_work = 0}), "exhausted inference rejected generic compilation");
+    require(cg::detail::state(exhausted).specializations.candidates.empty(), "missing facts became proofs");
 }
 
 // Validate the policy layer and real inference boundary without requiring future source operations.

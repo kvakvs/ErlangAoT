@@ -287,9 +287,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/` provide the
   real-source backend adapter, target-width/ABI checks and object symbol inspection.
 
-- `abi/.../modules.hpp`: descriptor layout and generated registration ABI.
+- `abi/include/erlang_aot/abi/modules.hpp`: descriptor layout and generated registration ABI.
   `codegen/module_registration.{hpp,cpp}` emits descriptors, startup and service references.
-  `runtime/.../modules.hpp`, `runtime/src/modules/registration.cpp`: descriptor validation,
+  `runtime/include/erlang_aot/runtime/modules.hpp`, `runtime/src/modules/registration.cpp`: descriptor validation,
   generic marshaling and transactional publication. `docs/runtime-modules.md`: contract.
   `tests/compiler/codegen/registration*` links real generated objects with/without runtime;
   `tests/runtime/registration.cpp` checks rejection and lifetime ownership.
@@ -299,3 +299,10 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `integer_guards.{hpp,cpp}`: exact side-effect-free argument tag-check recognition
   using LLVM use lists and instruction comparison. `docs/specialization.md`: policy.
   `tests/compiler/codegen/specialization.cpp`: stress limits and real-source no-benefit cases.
+
+- `codegen/specialization_lowering.{hpp,cpp}`: measured draft admission and public-entry
+  replacement. `specialization_cloning.cpp`: LLVM cloning and proven-check removal;
+  `specialization_dispatch.cpp`: bounded low-tag guards and generic fallback.
+  `tests/compiler/codegen/specialization_{emit,consumer}.cpp`: focused synthetic IR
+  and separately linked native guard/fallback equivalence; `guards.erl` supplies
+  real semantic/descriptor setup without adding supported source guard syntax.

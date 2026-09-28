@@ -104,7 +104,7 @@
   module. Generic function/arity/type keys use only all-Term signatures; typed/native
   extensions remain unverified sketches. Publication transfers unique registry ownership;
   ResolvedFunction pins targets and their image, whose destruction follows captures.
-  String names await atom binding in step 28; mutation/lookup are host-serialized.
+  Owned string metadata awaits future runtime atom initialization; mutation/lookup are host-serialized.
   Immediate-only Term copies need no roots; identities/heap values are rejected.
   Checked calls validate arguments/results, contain host exceptions and report unavailable
   bodies once. abi::v1::dispatch_builtin carries a Status plus success-only output word
@@ -276,3 +276,8 @@
   recognizes exact entry-block small-integer checks and deduplicates useful constraints.
   Caps are 3/function, 32/module, 128/target and 2x generic IR including dispatch.
   Current supported source has no removable checks and therefore stays generic.
+
+- Step 30: LLVM clones remove recognized checks only under runtime low-tag guards.
+  Transactional dispatch installation preserves public symbols, descriptor references
+  and the original generic fallback. Actual clone/dispatch instruction counts enforce
+  2x function/module limits before publication; no frontend language expansion.

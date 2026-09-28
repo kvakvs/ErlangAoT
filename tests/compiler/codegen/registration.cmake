@@ -1,4 +1,7 @@
 include("${HOST_SETTINGS}")
+if(NOT DEFINED CONSUMER)
+    set(CONSUMER "${SOURCE_ROOT}/tests/compiler/codegen/registration_consumer.cpp")
+endif()
 file(REMOVE_RECURSE "${TEST_DIR}")
 file(MAKE_DIRECTORY "${TEST_DIR}/source")
 execute_process(COMMAND "${EMITTER}" "${TEST_DIR}/source" RESULT_VARIABLE emitted)
@@ -16,7 +19,7 @@ add_subdirectory("${SOURCE_ROOT}" runtime-build)
 if(TARGET erlang_llvm_sdk)
     message(FATAL_ERROR "Generated-program consumer acquired host LLVM")
 endif()
-add_executable(linked "${SOURCE_ROOT}/tests/compiler/codegen/registration_consumer.cpp")
+add_executable(linked "${CONSUMER}")
 target_sources(linked PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/0.obj" "${CMAKE_CURRENT_SOURCE_DIR}/1.obj")
 target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
 set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
@@ -26,7 +29,7 @@ target_link_libraries(unlinked PRIVATE erlang_aot_abi)
 target_include_directories(unlinked PRIVATE "${SOURCE_ROOT}/runtime/include")
 ]=])
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "CXXFLAGS=" "${CMAKE_COMMAND}"
-    -S "${TEST_DIR}/source" -B "${TEST_DIR}/build" "-DSOURCE_ROOT=${SOURCE_ROOT}"
+    -S "${TEST_DIR}/source" -B "${TEST_DIR}/build" "-DSOURCE_ROOT=${SOURCE_ROOT}" "-DCONSUMER=${CONSUMER}"
     ${host_configure_args}
     RESULT_VARIABLE configured OUTPUT_VARIABLE output ERROR_VARIABLE errors)
 if(NOT configured STREQUAL "0")

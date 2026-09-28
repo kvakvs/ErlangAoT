@@ -46,7 +46,7 @@ cg::Compilation fixtures(std::initializer_list<const char *> names, const std::s
 cg::Compilation fixture(const char *name, const std::string &triple = {}) { return fixtures({name}, triple); }
 
 // Run existing declaration, capability, binding, call and type stages without replacement mocks.
-bool analyze_and_lower(cg::Compilation &compilation) {
+bool analyze_and_lower(cg::Compilation &compilation, semantic::types::Limits inference_limits = {}) {
     const semantic::Reporter report = [](const Diagnostic &diagnostic) {
         require(diagnostic.severity != Severity::error, "fixture semantics failed");
     };
@@ -59,7 +59,7 @@ bool analyze_and_lower(cg::Compilation &compilation) {
     }
     const auto calls = semantic::resolve_calls(modules, report);
     const auto declared = semantic::types::resolve_declarations(modules, report);
-    const auto inferred = semantic::types::infer(calls);
+    const auto inferred = semantic::types::infer(calls, inference_limits);
     semantic::types::check_contracts(*declared, *inferred, calls, report);
     return cg::lower(compilation, modules, *inferred);
 }

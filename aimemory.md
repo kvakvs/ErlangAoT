@@ -4,7 +4,7 @@
 
 - `.agents/00-finished.md`: completed foundations/frontend/project work and migration;
   project steps 1–22 complete. `.agents/04-compile.md`: steps
-  1–27 complete; user requested stopping before step 28. Do not resume implicitly.
+  1-30 complete; user requested stopping after step 30. Do not start step 31 implicitly.
   The compile plan's compact validation ledger retains per-step historical evidence.
 - Steps 24–27 commits: c86f539 (declarations/literals), f09e7b4 (parameters),
   5db13f0 (local calls), 4301401 (remote calls). Each passed fresh Windows x64
@@ -13,7 +13,8 @@
 - Current CLI owns positional/project-target AST batches and runs declaration,
   capability, binding, call, declared-type and implementation-type analysis.
   Private backend lowers the accepted subset to verified LLVM modules/objects;
-  CLI artifact publication, generated-module registration and execution remain later.
+  Generated-module registration and linked harness execution work; CLI artifact
+  publication remains later.
 - `--impldebug` accepts repeatable unique signed-int32 step selections/lists.
   Steps 23–27 print escaped inferred inputs/results and parameter relations on stderr;
   these are lowering inputs, not IR dumps. Frontend-only actions do not infer.
@@ -48,7 +49,7 @@
   never change the reference silently in configuration/tests or rewrite old provenance.
 - `references/otp-pin.cmake` currently pins
   `21776803ecd11f5fa948732c0ec66b8f325dedfc` (upstream 2026-09-22, fetched 2026-09-28).
-  Subsequent checks through step 27 were unchanged. `build/debug` uses references/otp.
+  The upstream check at the start of steps 28-30 was unchanged. `build/debug` uses references/otp.
 - Grammar and ten corpus entries matched the previous pin byte-for-byte; 344 ordinary
   productions have witnesses, 79 SSA productions are excluded. Stale-pin rejection passed.
 - Existing Windows checkout has core.autocrlf=true: only manifest text/grammar files
@@ -167,7 +168,7 @@
   unknown_builtin=11 silently. Reporting failure maps to diagnostic_failure.
 - Send, heap/GC, worker execution and unload boundaries report without mutating
   state. Workers, reductions, queues, wakeups, receive and production BIFs are absent.
-- Atom design for step 28: one runtime storage; stable non-recycled dense IDs,
+- Reserved atom design (initialization deferred beyond step 28): one runtime storage; stable non-recycled dense IDs,
   default cap 2^20 / hard 2^26. Compiler emits spellings/slots, never IDs; initialize
   read-only bindings through runtime calls before publication and retain module roots.
   No per-use interning. Preserve name_atom(), ExportName arity and rooted metadata.
@@ -212,3 +213,15 @@
   LLVM 23 ConstantData has no use lists; recognize tag operands with SDK exact
   instruction comparisons, and argument data flow with use lists (no suppressions).
   Test vector.assign count/value must copy the nested source element before resizing.
+
+- Steps 28/29 commits: 30d8260 / 2d0d7d5. Step 30 adds clone/dispatch/measured
+  rollback and native guard/fallback execution; final Windows 84/84 and full
+  quality (162 production commands) pass. Current source has no removable checks,
+  so O2 correctly keeps it generic; source guards and the LLVM O2 pipeline remain
+  future work. Missing inference facts must become generic profiles, never map::at failures.
+- LLVM comparison construction uses the SDK CmpInst factory; use selective replacement
+  to preserve fallback calls without intrusive CallBase operand access. No suppressions.
+  Final transient ShowIncludes probe access error and analyzer crash on unchanged
+  preprocessor/integer.cpp passed unchanged retries. Keep all production commands.
+- Read/write project text with explicit UTF-8 in Python, including markdown updates;
+  Windows default decoding can silently prevent non-ASCII status replacements.

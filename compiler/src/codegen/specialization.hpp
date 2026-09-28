@@ -40,6 +40,9 @@ struct SpecializationPlan {
     // Own selected profiles and bounded aggregate decisions for future compiler tracing.
     std::vector<SpecializationCandidate> candidates;
     std::map<SpecializationReason, std::size_t> decisions;
+    // Distinguish planned estimates from measured, installed IR and rolled-back candidates.
+    std::size_t lowered_variants = 0;
+    std::size_t rejected_variants = 0;
 };
 
 // Plan deterministically within 3/function, 32/module, 128/target and 2x instruction/work budgets.
