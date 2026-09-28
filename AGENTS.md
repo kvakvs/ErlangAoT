@@ -14,6 +14,13 @@ The expected modules this project will have:
 
 `references/otp` is a gitignored clone of Erlang OTP source repository used to look at tests and other implementation details to comply with.
 
+Track the latest official `maint-29` branch, not a fixed release tag or `master`.
+At the start of future OTP-dependent work, check upstream and refresh the pin when
+the branch advances. Keep `references/otp-pin.cmake`, the checkout, corpus hashes,
+grammar evidence and current documentation synchronized; follow
+`docs/otp-reference.md`. Preserve historical validation records with their original
+revisions. Never silently change the reference during configuration or tests.
+
 # End Goal
 
 The source code of existing pure Erlang projects will be buildable via LLVM into runnable executables which retain most of Erlang features

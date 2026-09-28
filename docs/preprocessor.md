@@ -1,7 +1,8 @@
 # Preprocessor behavior and validation
 
-The language baseline is OTP 29.1, source commit
-`751f87b703fe5948607d08e82599ce644b772e76`. Production preprocessing is native C++;
+The current source reference follows OTP `maint-29`, revision
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`; see [refresh policy](otp-reference.md).
+Historical fixture provenance remains recorded with each corpus. Production preprocessing is native C++;
 Installed OTP 29+ is the test oracle, validated by CMake for native compiler test
 builds (see README for discovery/overrides). Boost.Parser handles character rules; shared compiler
 metadata supplies operator precedence. An explicit cursor parses project tokens because the pinned parser's

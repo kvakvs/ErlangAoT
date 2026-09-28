@@ -1,5 +1,9 @@
 # File map
 
+- `references/otp-pin.cmake`: current maint-29 source revision and branch.
+  `docs/otp-reference.md`: refresh procedure, checksum/grammar review and validation.
+  `tests/compiler/parser/pinned.cmake`: shared offline revision/cleanliness/hash gate.
+
 - `docs/compile.md`: pinned SDK provenance/tools, frozen compilation subset, provisional
   ABI and command/artifact contract; `.agents/04-compile.md`: ordered implementation plan.
 

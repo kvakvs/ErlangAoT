@@ -43,13 +43,14 @@ test AST dump into a public serialization contract.
 
 ## Reference baseline and compatibility rules
 
-Use the same pinned checkout as preprocessing: `references/otp/`, tag `OTP-29.1`,
-commit `751f87b703fe5948607d08e82599ce644b772e76`. It is an ignored research
+Use the same pinned checkout as preprocessing: `references/otp/`, branch `maint-29`,
+commit `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Follow
+[the refresh policy](../docs/otp-reference.md) for future updates. It is an ignored research
 checkout and optional oracle, never a normal build dependency.
 
 Primary implementation references:
 
-- [Pinned erl_parse.yrl](https://github.com/erlang/otp/blob/751f87b703fe5948607d08e82599ce644b772e76/lib/stdlib/src/erl_parse.yrl):
+- [Pinned erl_parse.yrl](https://github.com/erlang/otp/blob/21776803ecd11f5fa948732c0ec66b8f325dedfc/lib/stdlib/src/erl_parse.yrl):
   productions, precedence, `parse_form/1` token preparation, and `build_*` actions.
 - Local `lib/stdlib/src/erl_parse.erl`: generated executable parser, inspected
   alongside its `.yrl` source. It exists in the locally built OTP checkout but

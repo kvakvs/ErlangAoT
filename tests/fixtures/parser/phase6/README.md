@@ -1,6 +1,9 @@
 # Parser completion corpus
 
-Baseline source: OTP 29.1, commit `751f87b703fe5948607d08e82599ce644b772e76`.
+Current source: OTP `maint-29`, commit `21776803ecd11f5fa948732c0ec66b8f325dedfc`.
+Its grammar and ten corpus entries match the original OTP-29.1 baseline
+`751f87b703fe5948607d08e82599ce644b772e76`; hashes and witnesses are unchanged.
+See [reference refresh policy](../../../../docs/otp-reference.md).
 Live projection records were produced with installed OTP 29.0.5. CTest never
 regenerates committed records.
 

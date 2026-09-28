@@ -1,5 +1,9 @@
 # OTP preprocessor test inventory
 
+This is a historical inventory. Current work follows `maint-29` and the
+[reference refresh policy](../docs/otp-reference.md); the tag below records the
+original inspection and reproduction context.
+
 Inspected 2026-09-18. Local checkout: `references/otp/`, ignored by the parent
 repository. Upstream: <https://github.com/erlang/otp>. Shallow checkout of
 `OTP-29.1`, commit `751f87b703fe5948607d08e82599ce644b772e76`.

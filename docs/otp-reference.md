@@ -1,0 +1,47 @@
+# Erlang/OTP source reference
+
+The source reference follows the official Erlang/OTP `maint-29` branch. The current
+reviewed pin is `21776803ecd11f5fa948732c0ec66b8f325dedfc`, fetched on 2026-09-28
+(upstream commit dated 2026-09-22). The machine-readable revision and branch live
+in [`references/otp-pin.cmake`](../references/otp-pin.cmake).
+
+Before future OTP-dependent work, fetch `maint-29` and refresh the pin if its head
+has advanced. Each refresh records an exact commit so offline validation stays
+reproducible. Configuration and tests never fetch or advance the reference.
+The installed OTP used for live oracle tests is a separate dependency.
+
+1. Check `git -C references/otp status --short` and preserve any local work. Fetch
+   the official branch with
+   `git -C references/otp fetch https://github.com/erlang/otp.git refs/heads/maint-29:refs/remotes/origin/maint-29`.
+   Inspect `git -C references/otp log -1 origin/maint-29` and review changes since
+   the recorded pin, especially grammar, scanner, preprocessor and corpus inputs.
+2. Advance the clean local `maint-29` branch with `git merge --ff-only origin/maint-29`
+   from the checkout. On first setup use `git switch --create maint-29 --track origin/maint-29`.
+   Use LF checkout bytes (`core.autocrlf=false`) so checksums match on every host;
+   set this at clone time for a new checkout. For an existing Windows checkout,
+   normalize only the manifest-listed text files and `erl_parse.yrl` to LF, and
+   verify Git still reports no source changes. Preserve upstream binary fixtures.
+3. Generate the compiler header from that same revision, from the project root:
+   `perl references/otp/erts/emulator/utils/beam_makeops -compiler -outdir references/otp/lib/compiler/src references/otp/lib/compiler/src/genop.tab`.
+   On Windows normalize only the generated `beam_opcodes.hrl` from CRLF to LF.
+4. Update the pin and verify every path in `tests/fixtures/parser/phase6/otp.tsv`.
+   Refresh hashes only after reviewing actual upstream changes. If `erl_parse.yrl`
+   changes, review `tests/fixtures/parser/grammar.tsv`, its authored fixtures and
+   `phase6/coverage.tsv`; every ordinary production still needs a measured witness.
+   Historical oracle records keep their original provenance.
+5. Configure with `ERLANG_AOT_OTP_SOURCE_ROOT` pointing to the refreshed checkout.
+   Run `parser_coverage`, `parser_corpus`, parser historical/integrity tests and the
+   affected frontend/oracle tests. Update current reference documentation and
+   record the exact revision, outcomes and any remaining failures.
+
+The 2026-09-28 refresh has identical grammar and all ten corpus entries compared
+with the previous `OTP-29.1` pin. Their existing hashes and reduction witnesses
+remain applicable; no expected output was regenerated merely to pass validation.
+
+Validation for this refresh: `parser_coverage` and `parser_corpus` pass, and the old
+pin is rejected with the required branch/revision diagnostic. Final Windows Debug
+CTest passes 74/75, with only the existing `parser_hardening` stack overflow.
+The freshly configured full build and Lizard pass; the full clang-tidy gate still
+reports the pre-existing Windows exception-escape and Boost analyzer findings.
+The checkout is clean; relative documentation links and `git diff --check` pass.
+No compiler-plan step beyond 14 or clean commit is claimed by this reference update.

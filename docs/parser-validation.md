@@ -4,6 +4,9 @@ Phase VI implementation and local validation are complete. The full parser plan
 remains **partially complete** because required Linux and Windows host execution
 is unavailable in this workspace. No cross-host success is inferred from macOS.
 
+Current reference updates follow [`maint-29`](otp-reference.md). The validation
+record below describes its original revision and host.
+
 ## Reference and coverage
 
 The grammar source is OTP 29.1, revision

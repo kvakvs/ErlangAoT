@@ -1241,3 +1241,11 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   tests passed. Allocation injection verifies reporting failure under host OOM and
   balanced cleanup; macOS LeakSanitizer remains unavailable. Native evidence is macOS
   arm64; Linux/Windows/32-bit execution remains pending. Stopped before step 15.
+
+- 2026-09-28 steps 14–19 request: step 14 was already complete and the initial
+  parent working tree was clean. Fresh full Windows Debug configure/build passed;
+  Lizard passed, but clang-tidy reproduced the recorded exception-escape and
+  Boost analyzer findings. The raised-depth parser hardening case still crashes.
+  Updated the OTP source reference to current official maint-29 at user request;
+  its grammar audit and ten-file corpus pass with unchanged hashes/witnesses.
+  Step 15 has not started; no additional compiler step or clean commit is claimed.

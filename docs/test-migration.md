@@ -120,11 +120,11 @@ no generated Erlang execution is claimed. Hard links, file/directory symlinks,
 dangling links, symlinked manifest bases and case aliases were all available and
 exercised. No filesystem capability cases were skipped.
 
-`references/otp` was left unchanged. An isolated worktree at
+During the migration, `references/otp` was left unchanged. An isolated worktree at
 `build/test-migration/otp` uses commit
 `751f87b703fe5948607d08e82599ce644b772e76`. Its own Perl `beam_makeops -compiler`
 generated `lib/compiler/src/beam_opcodes.hrl`; LF bytes match the already pinned
-SHA256. `ERLANG_AOT_OTP_SOURCE_ROOT` points the test builds there. Both corpus and
+SHA256. `ERLANG_AOT_OTP_SOURCE_ROOT` pointed the migration builds there. Both corpus and
 344-production grammar audits pass. The grammar audit excludes the new `cli/`
 product-only malformed inputs, retaining its original checksum/witness contract;
 those inputs have their own CLI snapshots. They must not silently change pinned
@@ -161,3 +161,7 @@ Reproduction scripts `debug.cmd`, `final-{debug,release}.cmd`,
 All changed C++ files are clang-formatted; `git diff --check` passes. Logs/builds
 stay ignored. No clean-commit gate is claimed. Linux, macOS revalidation of this
 migration and native 32-bit runs remain pending; earlier host results are historical.
+
+The subsequent source-reference refresh follows `maint-29`; see
+[the current pin and refresh policy](otp-reference.md). The active Debug build
+now uses `references/otp`; the migration worktree remains historical evidence.

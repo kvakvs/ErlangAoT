@@ -1,3 +1,27 @@
+# OTP maint-29 source policy — 2026-09-28
+
+- User requests latest maint-29 now and ongoing updates. AGENTS.md requires checking
+  upstream before future OTP-dependent work; docs/otp-reference.md gives the workflow.
+- references/otp-pin.cmake is the single executable branch/revision pin:
+  21776803ecd11f5fa948732c0ec66b8f325dedfc (upstream 2026-09-22, fetched 2026-09-28).
+  references/otp now tracks maint-29. Prior master branch and migration worktree remain.
+- Grammar and all ten corpus files are byte-identical to the old tag after LF checkout;
+  source-dependent tests both pass unchanged. Stale-pin rejection also verified.
+  Final full Debug CTest74/75; only parser_hardening fails. Logs/XML in
+  build/compile-steps/maint29-final.*; docs links and whitespace pass.
+  build/debug now uses references/otp, not build/test-migration/otp. Historical docs
+  keep old provenance; current docs/plans and architecture/file map point to new policy.
+- Windows existing checkout retains its original core.autocrlf=true. Only the ten
+  manifest text files and grammar were normalized to LF; generated beam_opcodes.hrl
+  came from this revision's beam_makeops. Reference index and working tree are clean.
+  For new clones use core.autocrlf=false from creation; do not globally renormalize an
+  existing mixed-EOL checkout. No content changes remain from index-refresh attempts.
+- Original requested compile steps14–19: 14 already complete; 15 not started.
+  Initial clean tree and fresh full build verified. Full Lizard passes; full pinned
+  tidy22 and focused installed tidy23 reproduce existing exception/multiprecision
+  findings. parser_hardening still stack-overflows. No clean step commit is permitted
+  until these gates pass. Current reference-policy edits are uncommitted.
+
 # IDE configure investigation — 2026-09-28
 
 - VS Code debug preset enables BUILD_TESTING; batch wrappers disable it. IDE log

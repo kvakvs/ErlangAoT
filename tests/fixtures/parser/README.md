@@ -1,6 +1,7 @@
 # Parser reference corpus
 
-Baseline: OTP-29.1, source commit `751f87b703fe5948607d08e82599ce644b772e76`.
+Current source pin follows `maint-29`; see [reference policy](../../../docs/otp-reference.md).
+Historical record baseline: OTP-29.1, source commit `751f87b703fe5948607d08e82599ce644b772e76`.
 Records were produced with the locally built `build/otp29-install/bin/escript`
 (OTP 29.1, macOS arm64). The ignored checkout/install is not a build dependency.
 

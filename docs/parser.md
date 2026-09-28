@@ -1,6 +1,7 @@
 # Parser implementation and validation
 
-Baseline: OTP 29.1 (`751f87b703fe5948607d08e82599ce644b772e76`).
+Current source baseline: OTP `maint-29` (`21776803ecd11f5fa948732c0ec66b8f325dedfc`).
+See [reference refresh policy](otp-reference.md); historical records retain their original revisions.
 
 Current native test builds discover installed OTP 29+ at CMake configure time and
 fail for missing/older installations. Live suites run on that selected version;

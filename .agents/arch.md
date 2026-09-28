@@ -1,5 +1,10 @@
 # Architecture
 
+- OTP source validation follows official `maint-29`, with an exact reviewed commit
+  in `references/otp-pin.cmake`; `pinned.cmake` consumes it without network access.
+  Refresh before future OTP-dependent work and review hashes/grammar evidence;
+  `docs/otp-reference.md` defines the workflow. Historical records retain provenance.
+
 - LLVM's compression lookups prefer installed libraries. Windows builds missing
   zlib/zstd download pinned 1.3.2/1.5.7 and build static Debug/Release libraries during configuration,
   retaining compiler/architecture/CRT-specific installations under `thirdparty/`.

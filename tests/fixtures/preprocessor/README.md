@@ -1,6 +1,7 @@
 # Preprocessor reference fixtures
 
-Baseline: OTP-29.1, commit `751f87b703fe5948607d08e82599ce644b772e76`.
+Current source pin follows `maint-29`; see [reference policy](../../../docs/otp-reference.md).
+Historical record baseline: OTP-29.1, commit `751f87b703fe5948607d08e82599ce644b772e76`.
 The `.tokens` files were recorded by `scan.escript` using a locally built OTP-29.1.
 They contain category, line, column, and hexadecimal decoded value separated by
 tabs; `-` denotes an empty value and floats use IEEE-754 binary64 bits.

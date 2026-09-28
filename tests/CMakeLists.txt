@@ -1,6 +1,6 @@
 include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
 set(ERLANG_AOT_OTP_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/references/otp" CACHE PATH
-    "Optional pinned OTP 29.1 source checkout for parser reduction and real-source tests")
+    "Optional pinned OTP maint-29 source checkout for parser reduction and real-source tests")
 foreach(name IN ITEMS coverage corpus)
     add_test(NAME parser_${name} COMMAND "${CMAKE_COMMAND}"
         "-DOTP_ROOT=${ERLANG_AOT_OTP_SOURCE_ROOT}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
