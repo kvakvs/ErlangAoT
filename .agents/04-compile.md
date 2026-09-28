@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–17 complete, 2026-09-28. Steps 18–46 remain pending.
+Status: steps 1–18 complete, 2026-09-28. Steps 19–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1291,3 +1291,10 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   compiler send/sequence syntax from runtime service ownership. Fresh full Debug
   build and all76 CTests pass. Full Lizard/native pinned clang-tidy passed on rerun
   after a nondiagnostic analyzer process failure; no checks or files excluded.
+
+- Step18 (2026-09-28): variable reads bind to original argument-array positions in
+  side tables; wildcards consume separate positions, named repeats reject matching,
+  and unbound/wildcard reads retain include provenance. Fresh full Debug build,
+  all76 CTests, full Lizard and pinned native clang-tidy pass. Windows analysis
+  concurrency now defaults to2 to bound memory after nondiagnostic process failures;
+  source coverage, checks and thresholds remain unchanged.

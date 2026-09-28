@@ -61,9 +61,19 @@ endif()
 find_program(RUN_CLANG_TIDY_EXECUTABLE NAMES run-clang-tidy run-clang-tidy.py
     HINTS "${project_root}/.venv-quality/bin" "${project_root}/.venv-quality/Scripts"
         "${clang_directory}" REQUIRED)
+# LLVM installations may provide a Python script instead of an executable launcher.
+set(tidy_runner "${RUN_CLANG_TIDY_EXECUTABLE}")
+if(WIN32 AND NOT RUN_CLANG_TIDY_EXECUTABLE MATCHES "\\.exe$")
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    list(PREPEND tidy_runner "${Python3_EXECUTABLE}")
+endif()
 cmake_host_system_information(RESULT quality_cpus QUERY NUMBER_OF_LOGICAL_CORES)
 if(NOT DEFINED QUALITY_JOBS)
     set(QUALITY_JOBS "${quality_cpus}")
+    if(WIN32)
+        # Bound memory used by concurrent Boost/LLVM analyzer processes on Windows.
+        set(QUALITY_JOBS 2)
+    endif()
 endif()
 if(NOT QUALITY_JOBS MATCHES "^[1-9][0-9]*$")
     message(FATAL_ERROR "QUALITY_JOBS must be a positive integer.")
@@ -79,7 +89,7 @@ list(TRANSFORM toolchain_args REPLACE "^--extra-arg=" "-extra-arg=")
 list(LENGTH sources source_count)
 message(STATUS "Analyzing all ${source_count} production translation units (${QUALITY_JOBS} concurrent jobs)")
 execute_process(
-    COMMAND "${RUN_CLANG_TIDY_EXECUTABLE}" "-p=${selected_database}" "-j=${QUALITY_JOBS}"
+    COMMAND ${tidy_runner} "-p=${selected_database}" "-j=${QUALITY_JOBS}"
         "-clang-tidy-binary=${CLANG_TIDY_EXECUTABLE}" "-config-file=${project_root}/.clang-tidy" ${toolchain_args}
     WORKING_DIRECTORY "${project_root}"
     RESULT_VARIABLE tidy_result

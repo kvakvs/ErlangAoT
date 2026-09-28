@@ -652,3 +652,5 @@
 - Step16 complete: all76 CTests and full quality pass. Draft step17/apply17.py and step18/apply18.py remain ignored until applied.
 
 - Step17 full tests and quality passed; one nondiagnostic analyzer failure preceded successful complete rerun.
+
+- Step18 completed with76/76 and full quality. Windows analyzer concurrency2; step19–21 drafts under build/compile-steps, apply individually.

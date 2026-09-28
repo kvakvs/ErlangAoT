@@ -12,6 +12,12 @@ struct FunctionKey {
     auto operator<=>(const FunctionKey &) const = default;
 };
 
+struct Binding {
+    // Associate an immutable variable read with its original argument-array position.
+    ast::ExprId expression;
+    std::size_t argument;
+};
+
 struct Function {
     // Retain declaration identity beside the immutable AST.
     FunctionKey key;
@@ -20,6 +26,8 @@ struct Function {
     bool exported = false;
     // Stable private ABI name is independent of addresses and table order.
     std::string symbol;
+    // Preserve source-order parameter reads independently of syntax ownership.
+    std::vector<Binding> bindings = {};
 };
 
 struct Module {

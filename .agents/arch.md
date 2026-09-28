@@ -241,3 +241,5 @@
 - Step16 adds exhaustive capability visitors and ABI-width integer decoding before binding/lowering.
 
 - Step17 routes capability rejections through the shared catalog and adds fail-closed lowering extension points.
+
+- Step18 records argument-position bindings beside immutable function syntax.

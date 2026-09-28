@@ -9,7 +9,7 @@ error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
 contracts. Successful compilation still emits no executable or other artifact.
-Parameter/call resolution and type analysis are
+Call resolution and type analysis are
 later steps of the [compile plan](../.agents/04-compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
@@ -25,3 +25,8 @@ arithmetic, atoms, heap values, matching, guards, exceptions, concurrency, dynam
 calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.
+
+Each named parameter must be distinct. `_` consumes an argument position without
+creating a binding; `_Name` is an ordinary named variable. Body reads retain the
+original argument index in semantic side tables. Reading `_`, using an unbound
+name, or repeating a named parameter is rejected before lowering.

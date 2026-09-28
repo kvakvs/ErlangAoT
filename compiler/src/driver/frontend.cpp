@@ -1,4 +1,5 @@
 #include "frontend.hpp"
+#include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
@@ -57,6 +58,9 @@ bool compile_module(const ast::Module &syntax, const std::filesystem::path &path
     };
     const auto module = semantic::index(syntax, filename(path), report);
     semantic::check_capabilities(*module, report);
+    if (!failed) {
+        semantic::bind_parameters(*module, report);
+    }
     return failed;
 }
 
