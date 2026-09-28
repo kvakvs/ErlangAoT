@@ -280,10 +280,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `docs/semantic.md` documents the implemented analysis boundary.
 - `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
 
-- `compiler/src/codegen/lowering.{hpp,cpp}`: validated-batch declaration/literal lowering.
-  `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/`: real-source
-  backend adapter, target-width boundaries and actual object checks.
-
-- Step25: `lowering_expressions.{hpp,cpp}` lowers tagged literals and parameter-array reads.
-
-- Step26: `lowering_state.hpp` and `lowering_calls.cpp` own iterative expression state and generic call emission.
+- `compiler/src/codegen/lowering.{hpp,cpp}`: validated-batch declarations, body dispatch
+  and verification. `lowering_expressions.{hpp,cpp}` lowers literals/parameters and
+  walks nested calls; `lowering_state.hpp` retains iterative expression state.
+  `lowering_calls.cpp` emits generic calls and imports resolved remote exports.
+  `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/` provide the
+  real-source backend adapter, target-width/ABI checks and object symbol inspection.

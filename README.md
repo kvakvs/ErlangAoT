@@ -225,7 +225,8 @@ by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 With no check/print action, source inputs and `--project` run preprocessing and
 parsing, then validate the supported subset, bindings, calls and declared types.
 Positional inputs form one batch; each project target forms its own batch. Successful
-processing returns `0`; code generation is not implemented, so no executable is written.
+processing returns `0`; CLI artifact publication is not implemented, so no executable is written.
+The private backend lowers the supported subset to verified LLVM modules and objects.
 
 `--verbose` prints `[pp] <filename>` for source files and resolved preprocessor
 includes, and `[parse] <filename>` when each source enters the parser. Nested and
@@ -236,8 +237,9 @@ traces. Tracing goes to stderr in every mode, including projects.
 `--impldebug 23` or `--impldebug 23,24,27` selects optional implementation-step
 debug output independently of `--verbose`. Repeated options combine their selections;
 duplicates are ignored. Values are signed 32-bit decimal integers, with optional
-`+`/`-` signs and no spaces or empty list members. Step 23 prints inferred function
-inputs/results and parameter relations to stderr with an `[impldebug 23]` prefix.
+`+`/`-` signs and no spaces or empty list members. Steps 23–27 print inferred function
+inputs/results and parameter relations to stderr with the selected step prefix
+(for example, `[impldebug 27]`). These are analyzed lowering inputs, not an IR dump.
 Future steps can check their own number; selecting a step without debug output has
 no effect. The same selection applies to positional inputs and every selected
 project target. Frontend-only check/print actions do not run inference.

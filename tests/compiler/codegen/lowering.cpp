@@ -25,17 +25,22 @@ void require(bool condition, const char *message) {
 }
 
 // Own parsed fixture syntax before borrowing any semantic declaration addresses.
-cg::Compilation fixture(const char *name, const std::string &triple = {}) {
-    SourceManager sources;
-    const auto path = std::filesystem::path(LOWERING_FIXTURES) / name;
-    PreprocessorSession pp(sources.read(path));
-    auto parsed = parse_module(pp);
-    require(!parsed.failed, "fixture parse failed");
+cg::Compilation fixtures(std::initializer_list<const char *> names, const std::string &triple = {}) {
     cg::CompilationRequest request;
     request.target_triple = triple;
-    request.inputs.emplace_back(path, std::move(parsed.module));
+    for (const auto *name : names) {
+        SourceManager sources;
+        const auto path = std::filesystem::path(LOWERING_FIXTURES) / name;
+        PreprocessorSession pp(sources.read(path));
+        auto parsed = parse_module(pp);
+        require(!parsed.failed, "fixture parse failed");
+        request.inputs.emplace_back(path, std::move(parsed.module));
+    }
     return cg::Compilation(std::move(request));
 }
+
+// Preserve the single-module adapter for earlier literal and parameter cases.
+cg::Compilation fixture(const char *name, const std::string &triple = {}) { return fixtures({name}, triple); }
 
 // Run existing declaration, capability, binding, call and type stages without replacement mocks.
 bool analyze_and_lower(cg::Compilation &compilation) {
@@ -83,6 +88,7 @@ void constants(const char *name, const std::string &triple, unsigned bits) {
         const auto *ret = llvm::cast<llvm::ReturnInst>(function.getEntryBlock().getTerminator());
         const auto &value = llvm::cast<llvm::ConstantInt>(ret->getReturnValue())->getValue();
         require(value.getBitWidth() == bits, "literal uses host width");
+        require((value.getZExtValue() & 15U) == 15U, "literal lost its integer tag");
         require(value.ashr(4).getSExtValue() == expected.at(index++), "literal was truncated or mistagged");
         require(function.getCallingConv() == llvm::CallingConv::C && function.arg_size() == 2, "wrong entry ABI");
     }
@@ -169,6 +175,61 @@ void local_calls() {
     inspect_object(compilation);
 }
 
+// Check separately emitted definitions/imports without invoking a native linker.
+void imported_symbols(const cg::OutputBuffer &output, const std::string &symbol_name, bool undefined) {
+    const llvm::StringRef bytes(reinterpret_cast<const char *>(output.bytes.data()), output.bytes.size());
+    auto object = llvm::object::ObjectFile::createObjectFile(llvm::MemoryBufferRef(bytes, "remote"));
+    if (!object) {
+        throw std::runtime_error(llvm::toString(object.takeError()));
+    }
+    bool found = false;
+    for (const auto &symbol : (*object)->symbols()) {
+        auto name = symbol.getName();
+        if (!name) {
+            throw std::runtime_error(llvm::toString(name.takeError()));
+        }
+        auto flags = symbol.getFlags();
+        if (!flags) {
+            throw std::runtime_error(llvm::toString(flags.takeError()));
+        }
+        if (*name == symbol_name || *name == "_" + symbol_name) {
+            require(((*flags & llvm::object::SymbolRef::SF_Undefined) != 0) == undefined,
+                    "object definition/import mismatch");
+            found = true;
+        }
+    }
+    require(found, "object lost cross-module symbol");
+}
+
+// Keep forward batch references external and match the defining module's generic signature.
+void remote_calls() {
+    auto compilation = fixtures({"client.erl", "answer.erl"});
+    require(analyze_and_lower(compilation), "remote call lowering failed");
+    auto &modules = cg::detail::state(compilation).modules;
+    for (const auto &name : {"value", "identity"}) {
+        const auto symbol = semantic::encode_symbol({"answer", name, name == std::string_view("identity") ? 1U : 0U});
+        const auto *imported = modules.front()->getFunction(symbol);
+        const auto *defined = modules.back()->getFunction(symbol);
+        require(imported && imported->isDeclaration() && imported->hasExternalLinkage(),
+                "missing external declaration");
+        require(defined && !defined->isDeclaration() && defined->hasExternalLinkage(), "missing exported definition");
+        require(imported->getFunctionType() == defined->getFunctionType(), "remote ABI signature mismatch");
+    }
+    require(!modules.front()->getFunction(semantic::encode_symbol({"answer", "private", 0})),
+            "imported private function");
+    inspect_object(compilation);
+    const auto outputs = compilation.result().outputs();
+    require(outputs.size() == 2, "batch did not retain separate objects");
+    for (const auto &identity : {semantic::SymbolIdentity{"answer", "value", 0}, {"answer", "identity", 1}}) {
+        const auto symbol = semantic::encode_symbol(identity);
+        imported_symbols(outputs.front(), symbol, true);
+        imported_symbols(outputs.back(), symbol, false);
+    }
+    auto reversed = fixtures({"answer.erl", "client.erl"});
+    require(analyze_and_lower(reversed), "batch order affected remote lowering");
+    inspect_object(reversed);
+}
+
 // Check source-to-object behavior without publishing artifacts or linking a program.
 int main() {
     try {
@@ -181,6 +242,7 @@ int main() {
 #endif
         parameters();
         local_calls();
+        remote_calls();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

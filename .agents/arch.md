@@ -9,7 +9,7 @@
   positions independently of specifications. Traversal is iterative and budgeted.
   Resolved dependency order instantiates each call's relations afresh. Conservative
   singleton/contract comparison warns without guards, narrowing or representation
-  assumptions; `--impldebug 23` reports escaped implementation summaries.
+  assumptions; `--impldebug 23` through `27` report escaped implementation summaries.
 
 - Windows executables reserve 8 MiB stacks for bounded recursive parsing. Lexer
   state and preprocessor application overrides use vector storage with allocation-free
@@ -64,8 +64,8 @@
   batch failure, clears outputs and marks diagnostics already reported; runtime
   FeatureFailure reports once per operation through a borrowed sink (default stderr)
   and returns fixed-width scoped C++ Status, containing delivery exceptions. No LLVM dependency
-  enters runtime reporting. Actual capability/service handlers and CLI integration
-  remain later steps; lowering and generated-code execution are still pending.
+  enters runtime reporting. Compiler/runtime capability handlers are implemented;
+  CLI artifact publication and generated-code execution remain pending.
 
 - Step 9 runtime/context lifecycle is implemented in the LLVM-free static library.
   Runtime startup/create/destroy/shutdown use std::expected, scoped Status and RAII;
@@ -108,7 +108,7 @@
   Immediate-only Term copies need no roots; identities/heap values are rejected.
   Checked calls validate arguments/results, contain host exceptions and report unavailable
   bodies once. abi::v1::dispatch_builtin carries a Status plus success-only output word
-  across the native generated-service boundary. Production BIFs, compiler lowering,
+  across the native generated-service boundary. Production BIFs, compiler BIF lowering,
   unload and concurrent workers remain deferred. See docs/runtime-builtins.md.
 - Step 12 places heap lifecycle, byte-budget policy and memory boundaries under
   `runtime/src/memory/`. Word requests reject zero/byte overflow and budget excess;
@@ -171,12 +171,12 @@
   target, validating all work before execution and reserving outputs without writes.
   Execution visits each target/file independently through a shared frontend callback,
   adds diagnostic context and aggregates failures. Default requests preprocess and
-  parse, then reach a compile placeholder; successful processing returns 0 without output files.
+  parse, then validate and infer the selected subset; successful processing returns 0 without output files.
 
 - CMake fixes project targets to C++23 with warnings as errors, building the host
   tool `erlangaot` and a separate runtime with lifecycle/feature reporting.
-  Project validation uses C++23. LLVM SDK linkage is implemented; lowering and
-  generated-code/runtime execution remain future work.
+  Project validation uses C++23. LLVM SDK linkage and private generic lowering are
+  implemented; generated-code/runtime execution remains future work.
   Shared Boost >=1.90 discovery supplies header-only Multiprecision to compiler and
   runtime; runtime consumers inherit its system includes. Root CMake also supplies
   Boost system includes to every project target for orphan-header IDE contexts.
@@ -216,8 +216,8 @@
   explicit visit budget bounds traversal. There is no AST text reader.
   --verbose traces physical source/include ingestion as [pp] and parser inputs as
   [parse] on stderr; resolved include notifications come from the preprocessor.
-- Guard legality, general lint/transforms, expression inference, lowering and execution
-  remain later stages. The supported subset has binding/call/type metadata analysis;
+- General guard legality, lint/transforms and execution remain later stages. The
+  supported subset has binding/call/type analysis, inference and private generic lowering;
   stage-reader directories are reserved only.
 - Tests prefer real source/project CLI workflows, exact AST/diagnostic snapshots,
   bounded source stress/mutations and separately built frontend/runtime consumers.
@@ -252,16 +252,17 @@
 - `semantic/types/` interns bounded symbolic types, flattens joins and widens to top
   on exhausted limits. Declared aliases, record contracts, overloads and constraints
   borrow source provenance. Recursive references remain finite; memoized substitution
-  respects opaque module boundaries and preserves nominal identities. No body inference,
-  Erlang lowering, native artifact publication or new product switches are implemented.
+  respects opaque module boundaries and preserves nominal identities. Later steps add
+  inference and generic lowering; native CLI artifact publication remains pending.
 - Final step 21 Windows x64 Debug validation: 78/78 CTests and full Lizard/clang-tidy
   pass. Earlier migration failures remain historical; full frontend sanitizers and
   additional native platforms still require validation.
 
-- Step24 adds private LLVM lowering of generic declarations and tagged integer returns.
-  Target-width checking precedes constants; analysis facts never add assumptions.
-  A real-source stage adapter verifies/emits objects; CLI publication remains deferred.
-
-- Step25: Parameter lowering borrows the binding table and emits a target-word-aligned load from the original argument position. Grouped identity and three-argument projections with unused wildcards retain tagged terms unchanged, without type assumptions or inbounds promises. Native and 32-bit object/IR checks pass. Debug25 exposes inferred input/result relations.
-
-- Step26: Direct local calls consume resolved identities and inferred summaries. An iterative postorder walk evaluates nested arguments in source order, builds aligned argument arrays and forwards the original process context. Zero-arity calls pass an unused null argument pointer. Forward/private calls, nested calls and identical argument positions are covered; CLI wrong-arity/missing/cycle regressions remain active. Debug26 prints inferred lowering inputs.
+- Steps 24–27 lower validated batch declarations, integer/parameter returns and
+  resolved calls into separately verified LLVM modules. Every entry retains the
+  generic target-word ABI; specifications never create representation assumptions.
+  Explicit iterative traversal preserves source-order argument evaluation and the
+  process context. Exported remote identities become matching external declarations.
+  Real-source adapter tests inspect native/cross-width objects and ABI data flow;
+  CLI publication, runtime registration and native generated execution remain later.
+  Final Windows x64 Debug 80/80 and full Lizard/clang-tidy pass. Stop before step 28.

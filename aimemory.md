@@ -692,3 +692,6 @@
 
 - Step26 complete and individually committed after fresh full80/80 + quality.
   Logs build/compile-steps/step26*. `lowering_state.hpp` and `lowering_calls.cpp` own iterative expression state and generic call emission.
+
+- Step27 complete and individually committed after fresh full80/80 + quality.
+  Logs build/compile-steps/step27*. `lowering_calls.cpp` also imports resolved cross-module exports with matching ABI signatures.

@@ -20,9 +20,11 @@ allocation/collection and immediate copying between owners. Heap values remain d
 Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
 registration, checked transitions and ordered teardown without worker execution.
 
-Erlang lowering, artifact publication and runtime execution are future steps of [the implementation plan](../.agents/04-compile.md).
+Steps 24–27 implement private generic lowering of integer returns, parameter references
+and resolved local/remote calls. Artifact publication and runtime execution remain
+future steps of [the implementation plan](../.agents/04-compile.md).
 Current CLI defaults preprocess/parse and validate [declarations, bindings, batch calls and declared types](semantic.md),
-then return without executable output;
+infer implementation facts and check contracts, then return without executable output;
 the proposed compilation switches below are not implemented yet.
 
 The private backend's `verify_ir` gate checks target consistency, defined function
@@ -296,7 +298,7 @@ frontend archive and installed LLVM. Leak detection is unavailable on this macOS
 sanitizer runtime and is not claimed.
 
 Ownership construction does not select a target or lower syntax. Target setup is
-an explicit next phase; the CLI still uses its placeholder.
+an explicit next phase; the CLI still stops after semantic analysis.
 
 ## Target machine (step 4)
 
@@ -326,7 +328,8 @@ machine moves/reuse, normalized triples, unknown architectures and an unconfigur
 RISC-V backend. Available cross backends are checked for Linux x86/x86-64/ARM/AArch64
 ELF and Windows x86/x86-64 COFF layouts, including 32-bit widths on the 64-bit host.
 These are target-construction tests, not object-emission or native-platform ABI
-validation. IR verification, lowering, emission and CLI integration remain deferred.
+validation. Later implemented phases add verification, lowering and in-memory object
+emission; CLI artifact integration remains deferred.
 
 ## Source lowering (step 24)
 
@@ -362,6 +365,19 @@ aligned argument arrays and forwards the original process context. Zero-arity
 calls pass an unused null argument pointer. Forward/private calls, nested calls
 and identical argument positions are covered; CLI wrong-arity/missing/cycle
 regressions remain active. Debug26 prints inferred lowering inputs.
+
+Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
+full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
+later work. Cross-target object checks do not claim native execution on those hosts.
+
+### Step 27
+
+Batch-resolved remote calls import exported generic declarations into separate
+LLVM modules. Matching definition/import symbols are checked in emitted objects
+for the answer/client example, including reversed source order; no native
+linking occurs. Private/missing callees, duplicate modules and cross-module
+recursion remain diagnosed by the existing semantic phase. Debug27 prints
+inferred inputs. Generated-module runtime registration begins at step 28.
 
 Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
 full Lizard/clang-tidy pass. CLI artifact publication and native execution remain

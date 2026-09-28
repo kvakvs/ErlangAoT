@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1–26 complete, 2026-09-28. Steps 27–46 remain pending.
+Status: steps 1–27 complete, 2026-09-28. Steps 28–46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -22,7 +22,7 @@ TermFactory reporting placeholders are installed; term creation, backing allocat
 `erlang_aot_abi` supplies versioned term/context/function headers and checked
 immediate integer encoding; global LLVM SDK discovery/linkage, target
 setup, verification and synthetic object emission are implemented. Private compilation
-owners retain batch ASTs, LLVM state and results; Generic declaration/literal lowering is implemented privately; backend driver integration
+owners retain batch ASTs, LLVM state and results; Generic integer/parameter/direct-call lowering is implemented privately; backend driver integration
 remains deferred. The selected global LLVM installation is recorded in `docs/compile.md`.
 
 ## Runtime API sketches to build upon
@@ -1398,6 +1398,16 @@ Do not create intermediate-stage parsers. Their only reserved locations remain
   calls pass an unused null argument pointer. Forward/private calls, nested calls
   and identical argument positions are covered; CLI wrong-arity/missing/cycle
   regressions remain active. Debug26 prints inferred lowering inputs.
+  Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
+  Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
+  whitespace pass. Other native hosts and frontend sanitizers remain pending.
+
+- Step 27 (2026-09-28): Batch-resolved remote calls import exported generic declarations into separate
+  LLVM modules. Matching definition/import symbols are checked in emitted objects
+  for the answer/client example, including reversed source order; no native
+  linking occurs. Private/missing callees, duplicate modules and cross-module
+  recursion remain diagnosed by the existing semantic phase. Debug27 prints
+  inferred inputs. Stopped before generated-module runtime registration (step 28).
   Fresh full Windows x64 compiler+runtime Debug build: 80/80 CTests pass.
   Full Lizard/clang-tidy, focused changed-source/test checks, formatting and
   whitespace pass. Other native hosts and frontend sanitizers remain pending.

@@ -21,22 +21,34 @@ llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &cal
     }
     return array;
 }
+
+// Import only batch-resolved exported entries, using exactly the current generic ABI signature.
+llvm::Function *callee_declaration(ExpressionLowering &state, const semantic::FunctionRef callee) {
+    auto &output = *state.entry.getParent();
+    if (callee.module != &state.module && !callee.function->exported) {
+        throw std::invalid_argument("lowering: remote callee is not exported");
+    }
+    if (auto *existing = output.getFunction(callee.function->symbol)) {
+        return existing;
+    }
+    if (callee.module == &state.module) {
+        throw std::invalid_argument("lowering: missing local declaration");
+    }
+    auto *entry = llvm::Function::Create(state.entry.getFunctionType(), llvm::GlobalValue::ExternalLinkage,
+                                         callee.function->symbol, output);
+    entry->setCallingConv(llvm::CallingConv::C);
+    return entry;
+}
 } // namespace
 
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto callee = state.inferred.callees.at(&expression);
-    if (callee.module != &state.module) {
-        throw std::invalid_argument("lowering: remote calls are not implemented");
-    }
     // Consume the resolved identity and summary, never repeat Erlang name resolution here.
     const auto &summary = state.inferred.functions.at(callee.function);
     if (summary.inputs.size() != call.arguments.size()) {
         throw std::invalid_argument("lowering: inconsistent resolved call arity");
     }
-    auto *target = state.entry.getParent()->getFunction(callee.function->symbol);
-    if (!target) {
-        throw std::invalid_argument("lowering: missing resolved declaration");
-    }
+    auto *target = callee_declaration(state, callee);
     auto *result = state.builder.CreateCall(target, {state.entry.getArg(0), arguments(state, call)}, "call.result");
     result->setCallingConv(llvm::CallingConv::C);
     return result;

@@ -190,3 +190,12 @@ is a second temporary invariant exception for parameter substitution, opaque/nom
 barriers, quoted-name identity and bounded graph ownership. No inference or emitted
 Erlang execution coverage is claimed. The final fresh full gate passes 78/78 CTests,
 Lizard and clang-tidy on Windows x64; other native hosts remain pending.
+
+Compiler steps 24–27 add `codegen_lowering`, a temporary real-source stage adapter
+that parses fixture files, runs semantic/type analysis, verifies LLVM modules and
+inspects emitted objects. It covers literal limits, parameter projections, ordered
+local calls and separate remote definition/import symbols. Frontend CLI cases retain
+invalid-call, export, cycle and batch-isolation diagnostics. This does not claim
+CLI artifact publication or execution; no synthetic failure/lifetime tests are retired.
+Final fresh Windows x64 Debug validation passes 80/80 CTests and full Lizard/clang-tidy.
+Other native hosts and frontend sanitizers remain pending.

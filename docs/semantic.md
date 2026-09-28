@@ -94,5 +94,6 @@ Unknown values, constrained signatures and unresolved alternatives are inconclus
 the checker deliberately does not promise full success typing or contract validation.
 `--impldebug 23` reports escaped function summaries on stderr, with unknown inputs,
 singleton results, parameter relations and batch widening. Ordinary `--verbose`
-does not enable these summaries. Public type inspection and Erlang lowering remain
-later plan steps.
+does not enable these summaries. Steps 24–27 expose the same facts under their own
+debug prefix as lowering inputs. Private generic lowering consumes the side tables;
+public type inspection and CLI artifact publication remain later plan steps.
