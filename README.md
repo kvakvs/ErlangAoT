@@ -95,11 +95,13 @@ ctest --preset windows-release
 ```
 
 The batch scripts mirror the Makefile's `build`, `format`, and `clean` targets:
-`make-build.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
+`make-build.bat`, `make-test.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
 Studio developer shell with CMake and Clang available. Build defaults are
 `BUILD_DIR=build/debug`, `BUILD_TYPE=Debug`, and native build tool parallelism
 (override with `JOBS=N`); environment variables
-`CMAKE`, `CMAKE_ARGS`, and `CLANG_FORMAT` also override the corresponding tools/options.
+`CMAKE`, `CTEST`, `CMAKE_ARGS`, and `CLANG_FORMAT` also override the corresponding tools/options.
+`make-test.bat` configures with testing enabled, builds all targets, then runs CTest,
+matching `make test` and propagating configuration, build, or test failures.
 Clean removes repository-local `build/` and `cmake-build*/` directories.
 
 `erlangaot.bat --help` builds first, then forwards all arguments to the selected

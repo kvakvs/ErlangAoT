@@ -10,7 +10,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   configuration (root CMake requires C++23 without extensions in all subdirectories
   and supplies shared Boost system includes for IDE header analysis),
   parallel builds, test/format targets, transparent macOS runner.
-- `make-{build,format,clean}.bat`: Windows equivalents of the Makefile targets;
+- `make-{build,test,format,clean}.bat`: Windows equivalents of the Makefile targets;
   `erlangaot.bat`: build then run the selected configuration with caller-relative arguments.
 - `cmake/ProjectOptions.cmake`: target warnings as errors; `BoostDependencies.cmake`:
   shared installed/Homebrew/local Boost discovery and Multiprecision interface target,
