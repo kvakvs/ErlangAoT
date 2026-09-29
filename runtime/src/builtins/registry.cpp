@@ -16,7 +16,9 @@ RegistryResult<void> ModuleRegistry::add(std::string_view name, std::size_t arit
         return std::unexpected(RegistryError::invalid_entry);
     }
     try {
-        if (!entries_.try_emplace(generic_key(name, arity), std::move(target)).second) {
+        // Copy the key so Debug STL proxy allocations cannot occur in noexcept string moves.
+        const auto key = generic_key(name, arity);
+        if (!entries_.try_emplace(key, std::move(target)).second) {
             return std::unexpected(RegistryError::duplicate_key);
         }
         return {};
@@ -41,7 +43,7 @@ RegistryResult<const Callable *> ModuleRegistry::find(std::string_view name, std
 }
 
 std::vector<FunctionKey> ModuleRegistry::keys() const {
-    std::vector<FunctionKey> result;
+    std::vector<FunctionKey> result(0);
     result.reserve(entries_.size());
     for (const auto &entry : entries_) {
         result.push_back(entry.first);

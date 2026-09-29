@@ -50,7 +50,7 @@ class LoadedModule final {
   private:
     friend class CodeServer;
     // Adopt a validated draft without copying targets or their mutable capture state.
-    explicit LoadedModule(ModuleDefinition definition);
+    explicit LoadedModule(ModuleDefinition &&definition);
     // Preserve image-before-registry declaration order for safe destruction.
     ModuleDefinition definition_;
 };
@@ -92,7 +92,7 @@ class CodeServer final {
     CodeServer &operator=(const CodeServer &) = delete;
     ~CodeServer() = default;
     // Publish a complete registry transactionally; duplicates never replace existing code.
-    CodeResult<std::shared_ptr<const LoadedModule>> load(ModuleDefinition definition);
+    CodeResult<std::shared_ptr<const LoadedModule>> load(ModuleDefinition &&definition);
     // Reserve removal/hot-unload while retaining all published modules and pinned handles on failure.
     CodeResult<void> unload(std::string_view name, DiagnosticSink sink = {}) noexcept;
     // Select only the exact all-Term entry and return a module-pinning call handle.

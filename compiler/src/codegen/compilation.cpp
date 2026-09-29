@@ -1,4 +1,5 @@
 #include "compilation.hpp"
+#include "limits.hpp"
 #include "llvm_state.hpp"
 #include <stdexcept>
 #include <utility>
@@ -22,6 +23,7 @@ const CompilationState &state(const Compilation &compilation) {
 CompilationState::CompilationState(CompilationRequest owned_request)
     : request(std::move(owned_request)), context(std::make_unique<llvm::LLVMContext>()) {
     // Respect LLVM opt-in remark filters while retaining ordinary warnings and errors.
+    validate_input_limits(request.inputs, request.limits);
     context->setDiagnosticHandlerCallBack(capture_diagnostic, &result, true);
     modules.reserve(request.inputs.size());
     for (const auto &input : request.inputs) {

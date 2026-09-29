@@ -29,3 +29,4 @@ foreach(variable IN ITEMS CMAKE_MAKE_PROGRAM CMAKE_C_COMPILER CMAKE_CXX_COMPILER
     endif()
 endforeach()
 list(APPEND host_configure_args "-DCMAKE_BUILD_TYPE=${HOST_CONFIG}")
+list(APPEND host_configure_args "-DCMAKE_TRY_COMPILE_CONFIGURATION=${HOST_CONFIG}")

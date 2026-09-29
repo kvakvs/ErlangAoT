@@ -15,6 +15,10 @@
 - `tests/compiler/codegen/placeholders.py`: catalog-complete compiler capability
   audit through both CLI modes and verbosity/optimization policies; explicit
   executable requests reach the driver-owned deferred-linking diagnostic.
+- `codegen/limits.*` and `bounded_stream.*`: frontend/semantic admission ceilings
+  and latched LLVM writer capacity failures. `codegen/{limits.cpp,resource_cli.py,
+  write_failure.cpp}` under tests checks real pipeline ceilings and staged partial
+  write/close/interruption rollback; `PublicationIO` follows existing creation hooks.
 
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI

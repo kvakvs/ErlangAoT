@@ -6,3 +6,4 @@
 /CMakeUserPresets.json
 .DS_Store
 /.idea
+__pycache__/

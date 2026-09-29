@@ -528,3 +528,36 @@ the current CLI-generated native harness.
 Step 43 (2026-09-29): CLI-emitted objects pass SDK readobj/nm inspection for seven ELF, Mach-O and COFF targets at O0/O2, including architecture, exports/imports, runtime references, ABI widths/tags, exact integer endpoints and failure without publication. Foreign native execution remains pending. Fresh Windows x64 Debug compiler/runtime build: 98/98 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
 
 Step 44 (2026-09-29): All compiler catalog families are audited through both CLI modes at O0/O2 with verbosity on/off. Explicit executable output now fails instead of silently succeeding. Native allocation rejection preserves generated calls, heap accounting and clean teardown; atom collection is documented as a reservation without an owner. Fresh Windows x64 Debug compiler/runtime build: 99/99 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
+
+Compilation budgets are per target: 1,024 modules, 250,000 owned AST nodes per
+module and 1,000,000 per batch. Counts include forms, expressions, patterns, literal
+terms and declared types. The frontend checks counts while retaining inputs;
+semantic/backend admission checks them again for internal callers. Defaults are
+internal policy, not new CLI switches. Rejection is an ordinary resource diagnostic.
+
+LLVM text, bitcode, objects and inspection snapshots retain at most 64 MiB per
+module and 256 MiB per batch. A checked stream latches overflow, discards subsequent
+bytes and reports failure after LLVM returns; it does not throw resource-limit
+exceptions through the SDK. Buffer allocation failure is contained at the same
+boundary. These are serialized-output budgets, not a promise to recover from LLVM
+internal bugs or to cap all SDK allocator usage. Failed batches publish nothing.
+Existing artifact replacement is complete-file atomic, not a whole-batch transaction.
+Injected partial-write, close and interrupted-write exceptions verify owned staging
+cleanup and destination preservation. Abrupt process termination can leave a private
+staging directory; it cannot publish that partial file as the destination.
+
+Runtime-only Debug validation additionally found MSVC iterator proxies allocating
+inside noexcept default container constructors/string moves. Explicit catchable
+empty-container construction and publication key/name copies preserve the existing
+allocation-failure status/rollback contracts without disabling iterator debugging.
+
+Windows sanitizer setup uses Release probes, `/EHsc /fsanitize=address`, `/MT`, the
+installed Clang ASan import library and whole-archive static runtime thunk, with its
+DLL directory on PATH. Nested consumers inherit probe configuration and link flags.
+See [Clang sanitizer setup](https://clang.llvm.org/docs/AddressSanitizer.html).
+The current prebuilt LLVM SDK rejects full compiler ASan linkage because its MSVC
+STL `annotate_string=0` conflicts with instrumented code's value 1. No annotation
+checks were disabled to bypass that incompatibility; full compiler/frontend ASan,
+UBSan and LeakSanitizer remain pending. Runtime-only ASan is validated independently.
+
+Step 45 (2026-09-29): Batch/AST and bounded writer byte ceilings reject without publication; injected partial/close/interrupted writes preserve destinations and clean staging. Debug STL OOM termination paths were repaired without suppressing iterator checks. Compiler-only 80/80, runtime-only Debug 16/16 and runtime ASan 16/16 pass; full compiler ASan remains blocked by the installed SDK annotation ABI. Full quality covers 182 production commands. Fresh Windows x64 Debug compiler/runtime build: 102/102 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.

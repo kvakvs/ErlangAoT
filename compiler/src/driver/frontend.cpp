@@ -1,4 +1,5 @@
 #include "frontend.hpp"
+#include "../codegen/limits.hpp"
 #include "../codegen/request.hpp"
 #include "backend.hpp"
 #include "options.hpp"
@@ -77,6 +78,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
         return true;
     }
     if (request.compile) {
+        codegen::validate_input_limits(inputs, {}, &result.module);
         inputs.emplace_back(path, std::move(result.module));
     }
     return false;
@@ -122,6 +124,10 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
 bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &sink) {
     Inputs inputs;
+    if (request.compile && paths.size() > codegen::CompilationLimits{}.modules) {
+        sink("error: compilation module count limit exceeded");
+        return true;
+    }
     bool failed = false;
     for (const auto &path : paths) {
         failed = process_file(path, request, sink, inputs) || failed;

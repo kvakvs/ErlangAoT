@@ -8,6 +8,13 @@
   after successful semantic analysis. Default in-memory compilation and artifact
   emission remain supported. Native consumers propagate reached allocation failure
   while preserving subsequent generated calls and orderly teardown.
+- Compilation admission bounds module count and module/batch AST work before
+  analysis. LLVM writers retain bounded module/batch buffers, latch overflow or
+  buffer allocation failure without unwinding through LLVM, then discard failed
+  outputs. Publication uses real staging with deterministic write/close fault hooks.
+- Runtime startup and publication use catchable empty-container construction and
+  key/name copies where MSVC Debug STL's noexcept constructors/moves can allocate.
+  Iterator checks stay enabled in runtime-only Debug; failure sweeps cover rollback.
 
 - `--impldebug` carries a value-owned set of signed decimal step IDs through
   positional/project frontend requests and private backend requests. Step-specific

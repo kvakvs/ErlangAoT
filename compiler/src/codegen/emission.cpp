@@ -1,4 +1,6 @@
 #include "emission.hpp"
+#include "bounded_stream.hpp"
+#include "limits.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
 #include "verification.hpp"
@@ -23,8 +25,7 @@ bool reject(detail::CompilationState &state, const llvm::Module &module, const s
 // Run LLVM's machine-code pipeline on a clone so repeated emission preserves the original IR.
 bool emit_module(detail::CompilationState &state, const llvm::Module &module) {
     const auto working = llvm::CloneModule(module);
-    llvm::SmallVector<char, 0> bytes;
-    llvm::raw_svector_ostream stream(bytes);
+    BoundedStream stream(output_capacity(state.request.limits, state.result.outputs()));
     llvm::legacy::PassManager passes;
     if (state.target_machine->addPassesToEmitFile(passes, stream, nullptr, llvm::CodeGenFileType::ObjectFile, false)) {
         return reject(state, module, "target does not support object emission");
@@ -33,13 +34,12 @@ bool emit_module(detail::CompilationState &state, const llvm::Module &module) {
     if (state.result.status() == CompilationStatus::failed) {
         return false;
     }
+    auto bytes = stream.take_bytes();
     if (bytes.empty()) {
         return reject(state, module, "target produced an empty object");
     }
-    OutputBuffer output{.module_name = module.getModuleIdentifier(),
-                        .kind = OutputKind::object,
-                        .bytes = std::vector<std::byte>(bytes.size())};
-    std::memcpy(output.bytes.data(), bytes.data(), bytes.size());
+    OutputBuffer output{
+        .module_name = module.getModuleIdentifier(), .kind = OutputKind::object, .bytes = std::move(bytes)};
     return state.result.add_output(std::move(output));
 }
 } // namespace

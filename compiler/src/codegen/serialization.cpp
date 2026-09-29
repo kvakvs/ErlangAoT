@@ -1,4 +1,6 @@
 #include "serialization.hpp"
+#include "bounded_stream.hpp"
+#include "limits.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
 #include "verification.hpp"
@@ -11,18 +13,14 @@
 namespace erlang_aot::codegen {
 namespace {
 // Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
-OutputBuffer serialize(const llvm::Module &module, OutputKind kind) {
-    llvm::SmallVector<char, 0> bytes;
-    llvm::raw_svector_ostream stream(bytes);
+OutputBuffer serialize(const llvm::Module &module, OutputKind kind, std::size_t capacity) {
+    BoundedStream stream(capacity);
     if (kind == OutputKind::llvm_ir) {
         module.print(stream, nullptr);
     } else {
         llvm::WriteBitcodeToFile(module, stream);
     }
-    OutputBuffer output{
-        .module_name = module.getModuleIdentifier(), .kind = kind, .bytes = std::vector<std::byte>(bytes.size())};
-    std::memcpy(output.bytes.data(), bytes.data(), bytes.size());
-    return output;
+    return {.module_name = module.getModuleIdentifier(), .kind = kind, .bytes = stream.take_bytes()};
 }
 
 // Verify all modules before capturing any snapshot; failures discard earlier staged artifacts.
@@ -38,7 +36,7 @@ std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, Outpu
                 progress_module(compilation, index, "emission");
             }
             ++index;
-            outputs.push_back(serialize(*module, kind));
+            outputs.push_back(serialize(*module, kind, output_capacity(compilation.request().limits, outputs)));
         }
     } catch (const std::exception &error) {
         compilation.result().report({.level = DiagnosticLevel::error,

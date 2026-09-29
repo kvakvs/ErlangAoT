@@ -39,6 +39,16 @@ struct CompilationProgress {
 
 using ProgressCallback = std::function<void(const CompilationProgress &)>;
 
+struct CompilationLimits {
+    // Bound retained module owners and total syntax work before semantic/backend traversal.
+    std::size_t modules = 1024;
+    std::size_t module_nodes = 250000;
+    std::size_t batch_nodes = 1000000;
+    // Stop serialization before buffers exceed per-module or aggregate byte budgets.
+    std::size_t module_bytes = 64 * 1024 * 1024;
+    std::size_t batch_bytes = 256 * 1024 * 1024;
+};
+
 struct CompilationRequest {
     // Create an empty batch, then transfer it as a single owner into compilation.
     CompilationRequest() = default;
@@ -49,6 +59,8 @@ struct CompilationRequest {
     ~CompilationRequest() = default;
     // Own one ordered batch; project targets must supply separate requests.
     std::vector<CompilationInput> inputs;
+    // Keep injectable internal ceilings separate from language and optimization policy.
+    CompilationLimits limits;
     // Attach project diagnostic context without interpreting it as a machine target.
     std::string project_target;
     // Observe only started phases; absent observers keep ordinary compilation silent.

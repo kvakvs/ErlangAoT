@@ -67,7 +67,8 @@ inline void append_source(std::string &output, const FeatureContext &context) {
 // Owners call this once and retain/emit the same message; callers must propagate the resulting failure.
 inline std::string format_feature_failure(FeatureId id, const FeatureContext &context = {}) {
     const auto *feature = find_feature(id);
-    std::string message;
+    // String-view construction keeps Debug STL proxy allocation failures catchable by the owner.
+    std::string message(std::string_view{});
     if (feature == nullptr) {
         message = "invalid deferred feature ID " + std::to_string(static_cast<std::uint32_t>(id));
     } else {

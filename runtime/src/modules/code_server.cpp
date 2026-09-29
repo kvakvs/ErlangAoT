@@ -3,13 +3,15 @@
 namespace erlang_aot::runtime {
 std::shared_ptr<const CodeImage> CodeImage::linked() { return std::make_shared<CodeImage>(); }
 
-LoadedModule::LoadedModule(ModuleDefinition definition) : definition_(std::move(definition)) {}
+// Copy spelling inside the caller's failure boundary; Debug STL string moves may allocate in noexcept code.
+LoadedModule::LoadedModule(ModuleDefinition &&definition)
+    : definition_{definition.name, definition.image, std::move(definition.functions)} {}
 
 std::string_view LoadedModule::name() const noexcept { return definition_.name; }
 
 const ModuleRegistry &LoadedModule::functions() const noexcept { return *definition_.functions; }
 
-CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition definition) {
+CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);
     }

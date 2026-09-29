@@ -155,11 +155,14 @@ void check_module_publication() {
             require(server.load({"existing", CodeImage::linked(), std::make_unique<ModuleRegistry>()}).has_value(),
                     "module fixture failed");
             const auto retained = live_allocations;
-            ModuleDefinition definition{"allocation_failure_module", CodeImage::linked(),
-                                        std::make_unique<ModuleRegistry>()};
-            remaining = ordinal;
-            auto loaded = server.load(std::move(definition));
-            remaining = std::numeric_limits<std::size_t>::max();
+            CodeResult<std::shared_ptr<const LoadedModule>> loaded = std::unexpected(CodeError::resource_limit);
+            {
+                ModuleDefinition definition{"allocation_failure_module", CodeImage::linked(),
+                                            std::make_unique<ModuleRegistry>()};
+                remaining = ordinal;
+                loaded = server.load(std::move(definition));
+                remaining = std::numeric_limits<std::size_t>::max();
+            }
             succeeded = loaded.has_value();
             if (!succeeded) {
                 require(loaded.error() == CodeError::resource_limit, "wrong publication failure");

@@ -21,8 +21,9 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
 }
 } // namespace
 
+// Explicit count construction keeps Debug STL proxy allocation failures catchable during startup.
 Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
-    : scheduler(identity), options(options), identity(identity) {}
+    : scheduler(identity), options(options), identity(identity), contexts(0) {}
 
 Runtime::Impl::~Impl() { scheduler.clear(); }
 

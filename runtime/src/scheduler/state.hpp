@@ -5,8 +5,8 @@
 namespace erlang_aot::runtime {
 class SchedulerService::Impl final {
   public:
-    // Fix registry ownership before accepting the first process identity.
-    explicit Impl(std::uint64_t identity) : runtime_identity(identity) {}
+    // Fix ownership; empty-range construction lets Debug STL proxy allocation failures propagate.
+    explicit Impl(std::uint64_t identity) : runtime_identity(identity), entries(std::initializer_list<Entry>{}) {}
 
     // Resolve only this runtime's identities; returned indices are borrowed within a serialized call.
     SchedulerResult<std::size_t> find(ProcessIdentity process) const noexcept;

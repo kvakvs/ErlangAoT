@@ -1,4 +1,5 @@
 #include "analysis.hpp"
+#include "../codegen/limits.hpp"
 #include "../codegen/progress.hpp"
 #include "../project/paths.hpp"
 #include "../semantic/bindings.hpp"
@@ -35,6 +36,7 @@ void debug_inference(const Analysis &analysis, const ImplementationDebug &debug,
 } // namespace
 
 bool analyze(const codegen::CompilationRequest &request, Analysis &analysis, const DiagnosticSink &sink) {
+    codegen::validate_input_limits(request.inputs, request.limits);
     bool failed = false;
     const semantic::Reporter report = [&](const Diagnostic &diagnostic) {
         failed = failed || diagnostic.severity == Severity::error;
