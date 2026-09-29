@@ -102,3 +102,9 @@ target_include_directories(codegen_serialization PRIVATE "${PROJECT_SOURCE_DIR}/
 target_link_libraries(codegen_serialization PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
 target_compile_definitions(codegen_serialization PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
 add_test(NAME codegen_serialization COMMAND codegen_serialization)
+
+add_executable(codegen_artifacts artifacts.cpp)
+erlang_aot_project_options(codegen_artifacts)
+target_include_directories(codegen_artifacts PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(codegen_artifacts PRIVATE erlang_artifacts erlang_project erlang_semantic)
+add_test(NAME codegen_artifacts COMMAND codegen_artifacts "${CMAKE_CURRENT_BINARY_DIR}/artifact-files/$<CONFIG>")

@@ -22,6 +22,7 @@ void require(bool condition, const char *message) {
 // Declare every definition first, retaining private linkage for unexported entries.
 void declare(llvm::Module &output, const semantic::Module &module, llvm::FunctionType *signature,
              const semantic::types::Inference &inferred) {
+    output.setModuleIdentifier(utf8(module.name));
     for (const auto &function : module.functions) {
         const auto &summary = inferred.functions.at(&function);
         require(summary.inputs.size() == function.key.arity, "lowering: inconsistent inferred arity");

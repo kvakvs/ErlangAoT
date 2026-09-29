@@ -312,3 +312,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `codegen/serialization.{hpp,cpp}`: verified snapshots and assembly/bitcode writers.
   `tests/compiler/codegen/serialization.cpp`: real-source SDK round trips and invalid-IR rejection.
+
+- `compiler/src/artifacts/{artifacts,paths,replace}.*`: staged writes, portable
+  semantic names/alias preflight, and platform complete-file replacement.
+  `tests/compiler/codegen/artifacts.cpp`: filesystem preservation/failure cases.

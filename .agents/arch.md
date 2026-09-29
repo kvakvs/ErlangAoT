@@ -287,3 +287,7 @@
 
 - Step 32: verified assembly snapshots and text/bitcode output own their bytes;
   serialization uses LLVM writers without adding product readers.
+
+- Step 33: the LLVM-free artifact publisher validates encoded module paths and
+  physical aliases, stages complete batches with checked exclusive writes, then
+  uses platform file replacement. Publication is not atomic across multiple files.

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-32 complete, 2026-09-29. Steps 33-46 remain pending.
+Status: steps 1-33 complete, 2026-09-29. Steps 34-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1127,3 +1127,8 @@ Step 32: fresh Windows Debug build, final 86/86 CTests and full Lizard/clang-tid
 structures at O0/O2 and invalidated snapshots. FileCheck is absent from this SDK.
 The initial test supplied unterminated assembly to the SDK reader; corrected.
 Nested consumer tests require the Visual Studio environment, used for the final run.
+
+Step 33: fresh Windows Debug build, 87/87 CTests and full Lizard/clang-tidy
+(167 production units) pass. Filesystem tests cover native Unicode roots, reversible
+traversal-like/case-distinct identities, replacement, duplicate paths, hard-link
+input aliases, inaccessible parents and preserved outputs/temporary cleanup on failure.

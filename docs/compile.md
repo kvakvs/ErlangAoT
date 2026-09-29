@@ -438,3 +438,10 @@ Step 32 uses LLVM assembly and bitcode writers on freshly verified modules.
 Text snapshots own their bytes without altering staged artifacts; failed verification
 discards the batch. SDK assembly/bitcode readers and structural ABI checks validate
 round trips at O0/O2. FileCheck is absent from this installed Windows SDK.
+
+Step 33 plans module artifacts with the reversible `eav1_<hex-module>__0` basename.
+Text uses `.ll`, bitcode `.bc`, and objects use the target-selected extension. Native
+paths preserve Unicode; links, input aliases and duplicate destinations are rejected.
+The publisher writes and closes a whole batch in a private directory before replacing
+files. Windows uses MoveFileExW replacement; POSIX uses rename. A publication failure
+can leave earlier complete files replaced: this is not a multi-file transaction.
