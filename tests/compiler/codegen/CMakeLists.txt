@@ -108,3 +108,6 @@ erlang_aot_project_options(codegen_artifacts)
 target_include_directories(codegen_artifacts PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
 target_link_libraries(codegen_artifacts PRIVATE erlang_artifacts erlang_project erlang_semantic)
 add_test(NAME codegen_artifacts COMMAND codegen_artifacts "${CMAKE_CURRENT_BINARY_DIR}/artifact-files/$<CONFIG>")
+
+add_test(NAME codegen_options COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/options/$<CONFIG>" -P "${CMAKE_CURRENT_SOURCE_DIR}/options.cmake")

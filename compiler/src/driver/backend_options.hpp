@@ -1,0 +1,29 @@
+#pragma once
+#include "../codegen/request.hpp"
+#include <optional>
+#include <span>
+
+namespace erlang_aot::cli {
+struct Options;
+
+struct BackendOptions {
+    // Absence runs the complete backend in memory without publishing artifacts.
+    std::optional<codegen::OutputKind> emit;
+    // Override the invocation-relative artifact root; projects append encoded target names.
+    std::optional<std::filesystem::path> artifact_directory;
+    // Select a machine triple independently of project target selection.
+    std::string target_triple;
+    // Retain explicit optimization presence for conflicts, defaulting to generic O0 at execution.
+    std::optional<codegen::OptimizationLevel> optimization;
+    // Disable variants independently of optimization option order.
+    bool disable_type_specialization = false;
+};
+
+// Recognize backend options separately from preprocessing and project operands.
+bool is_backend_option(std::string_view option);
+// Validate one backend operand before storing its value; perform no filesystem I/O.
+std::optional<std::string> parse_backend_option(std::string_view option, std::span<char *> &remaining,
+                                                BackendOptions &options);
+// Reject action conflicts before informational dispatch or source/path access.
+std::optional<std::string> validate_backend_options(const Options &options);
+} // namespace erlang_aot::cli

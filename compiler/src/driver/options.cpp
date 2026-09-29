@@ -108,6 +108,9 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
     if (argument == "-o" || argument == "--output") {
         return parse_output(argument, remaining, options);
     }
+    if (is_backend_option(argument)) {
+        return parse_backend_option(argument, remaining, options.backend);
+    }
     if (project::is_option(argument)) {
         return project::parse_option(argument, remaining, options.project);
     }
@@ -116,6 +119,9 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
 
 // Check command combinations before honoring informational requests or reading inputs.
 static std::optional<std::string> validate_options(const Options &options) {
+    if (const auto error = validate_backend_options(options)) {
+        return error;
+    }
     if (const auto error =
             project::validate(options.project, {!options.inputs.empty(), options.output_explicit, options.preprocess,
                                                 options.frontend_options_explicit})) {

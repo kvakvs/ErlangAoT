@@ -316,3 +316,6 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `compiler/src/artifacts/{artifacts,paths,replace}.*`: staged writes, portable
   semantic names/alias preflight, and platform complete-file replacement.
   `tests/compiler/codegen/artifacts.cpp`: filesystem preservation/failure cases.
+
+- `driver/backend_options.{hpp,cpp}`: compilation operands and action conflicts.
+  `tests/compiler/codegen/options.cmake`: public positional/project option matrix.

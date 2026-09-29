@@ -445,3 +445,10 @@ paths preserve Unicode; links, input aliases and duplicate destinations are reje
 The publisher writes and closes a whole batch in a private directory before replacing
 files. Windows uses MoveFileExW replacement; POSIX uses rename. A publication failure
 can leave earlier complete files replaced: this is not a multi-file transaction.
+
+Step 34 parses the compilation command options. `--emit` accepts `obj`, `llvm-ir`,
+and `llvm-bc`; `--artifact-dir` requires emission. Value options and optimization
+levels may appear only once. O0 is the default; O2 selects speed policy, with
+`--no-type-specialization` overriding it in either order. Compilation switches
+conflict with frontend actions and project creation; explicit emission conflicts
+with executable `--output`. The following integration steps consume this policy.

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-33 complete, 2026-09-29. Steps 34-46 remain pending.
+Status: steps 1-34 complete, 2026-09-29. Steps 35-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1132,3 +1132,8 @@ Step 33: fresh Windows Debug build, 87/87 CTests and full Lizard/clang-tidy
 (167 production units) pass. Filesystem tests cover native Unicode roots, reversible
 traversal-like/case-distinct identities, replacement, duplicate paths, hard-link
 input aliases, inaccessible parents and preserved outputs/temporary cleanup on failure.
+
+Step 34: fresh Windows Debug build, 88/88 CTests and full Lizard/clang-tidy
+(168 production units) pass. The public option matrix covers operands, repetition,
+action conflicts, informational no-I/O precedence and both input modes. Backend
+policy consumption and publication are wired by the following integration steps.

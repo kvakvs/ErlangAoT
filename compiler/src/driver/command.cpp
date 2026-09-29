@@ -15,6 +15,11 @@ Options:
       --verbose        Trace ingested filenames to stderr with [pp]/[parse] prefixes.
       --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
   -o, --output <path>  Set the future executable output path (default: a.out).
+      --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
+      --artifact-dir <dir>  Override artifact root; requires --emit.
+      --target-triple <triple>  Select machine/OS/ABI, independently of --target.
+      -O0 | -O2          Select generic O0 (default) or speed specialization and LLVM O2.
+      --no-type-specialization  Disable variants regardless of optimization option order.
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
       --print-pp         Print preprocessed Erlang source to stdout.
@@ -29,6 +34,9 @@ Options:
 Checks do not validate semantics or run parse transforms.
 With no check/print action, preprocess, parse and validate the supported compilation subset.
 Code generation is not implemented yet; successful processing writes no output file.
+Compilation switches conflict with frontend check/print actions and --new-project.
+--emit conflicts with explicit --output; --output remains reserved for executables.
+Value options and optimization levels may appear only once.
 Input paths may contain spaces when quoted by the shell.
 )";
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "../implementation_debug.hpp"
+#include "backend_options.hpp"
 #include "project/cli.hpp"
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <span>
@@ -19,6 +20,8 @@ struct Options {
     bool output_explicit = false;
     // Distinguish explicit frontend settings from defaults for standalone commands.
     bool frontend_options_explicit = false;
+    // Retain backend policy independently of frontend and project selection.
+    BackendOptions backend;
     // Delegate project selection data and policy to the project component.
     erlang_aot::project::Request project;
     // Preserve source order for input validation and future compilation.

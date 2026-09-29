@@ -291,3 +291,6 @@
 - Step 33: the LLVM-free artifact publisher validates encoded module paths and
   physical aliases, stages complete batches with checked exclusive writes, then
   uses platform file replacement. Publication is not atomic across multiple files.
+
+- Step 34: driver backend options retain explicit optimization/emission policy
+  independently of preprocessing and project selectors; conflicts fail before I/O.
