@@ -32,8 +32,8 @@ Options:
       --               Treat all remaining arguments as input paths.
 
 Checks do not validate semantics or run parse transforms.
-With no check/print action, preprocess, parse and validate the supported compilation subset.
-Code generation is not implemented yet; successful processing writes no output file.
+With no check/print action, positional batches compile to verified objects in memory.
+Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output remains reserved for executables.
 Value options and optimization levels may appear only once.

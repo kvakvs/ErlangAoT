@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-34 complete, 2026-09-29. Steps 35-46 remain pending.
+Status: steps 1-35 complete, 2026-09-29. Steps 36-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1137,3 +1137,9 @@ Step 34: fresh Windows Debug build, 88/88 CTests and full Lizard/clang-tidy
 (168 production units) pass. The public option matrix covers operands, repetition,
 action conflicts, informational no-I/O precedence and both input modes. Backend
 policy consumption and publication are wired by the following integration steps.
+
+Step 35: fresh Windows Debug build, 89/89 CTests and full Lizard/clang-tidy
+(170 production units) pass. Positional CLI coverage exercises in-memory compilation,
+O0/O2 objects/text/bitcode, quoted identities/native paths, failed-batch preservation,
+input aliases, syntax/semantic/target errors and existing frontend compatibility.
+LLVM callback filters now suppress disabled optimization remarks without hiding warnings/errors.

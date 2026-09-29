@@ -294,3 +294,7 @@
 
 - Step 34: driver backend options retain explicit optimization/emission policy
   independently of preprocessing and project selectors; conflicts fail before I/O.
+
+- Step 35: positional batches retain ASTs through LLVM-free semantic analysis and
+  the shared backend, then optimize and emit in memory. Explicit emission publishes
+  only after all source modules succeed; ordinary LLVM remarks remain opt-in.

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/TargetParser/Host.h>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -92,5 +93,13 @@ bool configure_target(Compilation &compilation) {
     }
     state.target_machine = std::move(machine);
     return true;
+}
+
+std::string object_extension(const Compilation &compilation) {
+    const auto &machine = detail::state(compilation).target_machine;
+    if (!machine) {
+        throw std::logic_error("object extension requires a configured target");
+    }
+    return machine->getTargetTriple().isOSBinFormatCOFF() ? ".obj" : ".o";
 }
 } // namespace erlang_aot::codegen

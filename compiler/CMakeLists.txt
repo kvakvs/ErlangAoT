@@ -28,7 +28,7 @@ target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
 
 add_executable(erlang_aot src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
-    src/driver/implementation_debug.cpp src/driver/backend_options.cpp)
+    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/backend.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
     target_sources(erlang_aot PRIVATE erlangaot.manifest)
@@ -45,7 +45,7 @@ add_subdirectory(src/project)
 
 target_link_libraries(erlang_aot PRIVATE erlang_project)
 
-# Keep all LLVM usage private; the CLI continues to use its existing compile placeholder.
+# Keep LLVM headers and representation private behind the shared compilation backend.
 add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_registration.cpp
     src/codegen/specialization.cpp src/codegen/specialization_analysis.cpp src/codegen/integer_guards.cpp
     src/codegen/specialization_cloning.cpp src/codegen/specialization_dispatch.cpp src/codegen/specialization_lowering.cpp

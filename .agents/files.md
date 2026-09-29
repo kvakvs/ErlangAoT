@@ -319,3 +319,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `driver/backend_options.{hpp,cpp}`: compilation operands and action conflicts.
   `tests/compiler/codegen/options.cmake`: public positional/project option matrix.
+
+- `driver/analysis.{hpp,cpp}` owns shared semantic/type passes;
+  `driver/backend.{hpp,cpp}` drives lowering, optimization, diagnostics and emission.
+  `tests/compiler/codegen/positional.cmake` checks real CLI artifacts and failure preservation.

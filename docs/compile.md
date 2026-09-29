@@ -452,3 +452,10 @@ levels may appear only once. O0 is the default; O2 selects speed policy, with
 `--no-type-specialization` overriding it in either order. Compilation switches
 conflict with frontend actions and project creation; explicit emission conflicts
 with executable `--output`. The following integration steps consume this policy.
+
+Step 35 connects positional source batches to the real backend. Default commands
+lower, specialize under the selected policy, optimize, verify and emit native objects
+in memory. `--emit obj|llvm-ir|llvm-bc` publishes the whole successful batch under
+`build/aot` or `--artifact-dir`. Parse/semantic/target failures publish nothing.
+LLVM diagnostic callbacks respect opt-in remark filters; warnings/errors remain visible.
+For example: `erlangaot -O2 --emit llvm-ir answer.erl client.erl`.

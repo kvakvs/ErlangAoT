@@ -21,7 +21,8 @@ const CompilationState &state(const Compilation &compilation) {
 
 CompilationState::CompilationState(CompilationRequest owned_request)
     : request(std::move(owned_request)), context(std::make_unique<llvm::LLVMContext>()) {
-    context->setDiagnosticHandlerCallBack(capture_diagnostic, &result);
+    // Respect LLVM opt-in remark filters while retaining ordinary warnings and errors.
+    context->setDiagnosticHandlerCallBack(capture_diagnostic, &result, true);
     modules.reserve(request.inputs.size());
     for (const auto &input : request.inputs) {
         const auto path = input.source_path.generic_u8string();
