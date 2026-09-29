@@ -7,6 +7,8 @@
 #include <span>
 
 namespace erlang_aot::cli {
+struct Publication;
+
 struct FrontendRequest {
     // Select existing frontend output/check behavior independently of input selection.
     bool print_pp = false;
@@ -20,8 +22,13 @@ struct FrontendRequest {
     PreprocessorOptions preprocessing;
     // Preserve the same debug selection for every module in a positional or project batch.
     ImplementationDebug implementation_debug;
-    // Enable the shared backend for positional batches; project routing follows separately.
-    std::optional<BackendOptions> backend = {};
+    // Select shared backend policy for positional and project batches.
+    BackendOptions backend = {};
+    // Retain target identity and protect all selected project inputs during publication.
+    std::string project_target = {};
+    std::vector<std::filesystem::path> protected_inputs = {};
+    // Borrow the invocation-owned queue so a later target failure discards every pending artifact.
+    std::vector<Publication> *pending_publications = nullptr;
 };
 
 // Process one isolated batch; project targets never share declaration tables.

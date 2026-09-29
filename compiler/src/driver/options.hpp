@@ -42,6 +42,8 @@ struct Options {
 std::optional<std::string> parse_options(std::span<char *> remaining, Options &options);
 // Process every input using an independent frontend ownership context.
 int process_inputs(const Options &options);
+// Execute independent project batches and publish only after the selected invocation succeeds.
+int run_project(const Options &options);
 // Check physical input paths before running the selected frontend mode.
 bool validate_inputs(const std::vector<std::filesystem::path> &inputs);
 } // namespace erlang_aot::cli

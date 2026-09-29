@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-35 complete, 2026-09-29. Steps 36-46 remain pending.
+Status: steps 1-36 complete, 2026-09-29. Steps 37-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1143,3 +1143,10 @@ Step 35: fresh Windows Debug build, 89/89 CTests and full Lizard/clang-tidy
 O0/O2 objects/text/bitcode, quoted identities/native paths, failed-batch preservation,
 input aliases, syntax/semantic/target errors and existing frontend compatibility.
 LLVM callback filters now suppress disabled optimization remarks without hiding warnings/errors.
+
+Step 36: fresh Windows Debug build, final 90/90 CTests and full Lizard/clang-tidy
+(172 production units) pass. Real project CLI tests cover target selection/order,
+macro isolation, within-target remote calls, encoded roots, reserved TOML outputs,
+cross-target call rejection and no publication when a later selected target fails.
+The transitional optional backend policy was removed after the analyzer identified
+an unchecked helper access; both input modes now always provide backend policy.

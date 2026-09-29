@@ -459,3 +459,9 @@ in memory. `--emit obj|llvm-ir|llvm-bc` publishes the whole successful batch und
 `build/aot` or `--artifact-dir`. Parse/semantic/target failures publish nothing.
 LLVM diagnostic callbacks respect opt-in remark filters; warnings/errors remain visible.
 For example: `erlangaot -O2 --emit llvm-ir answer.erl client.erl`.
+
+Step 36 uses the same backend for independent selected project targets. Default
+artifact roots are manifest-relative `build/aot/<encoded-target>`; explicit roots
+are invocation-relative and append the same target component. TOML executable
+outputs do not redirect artifacts. All selected targets must compile successfully
+before publication begins, and source/manifest aliases are protected across targets.

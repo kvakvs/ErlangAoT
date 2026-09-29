@@ -32,37 +32,13 @@ Options:
       --               Treat all remaining arguments as input paths.
 
 Checks do not validate semantics or run parse transforms.
-With no check/print action, positional batches compile to verified objects in memory.
+With no check/print action, source batches compile to verified objects in memory.
 Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output remains reserved for executables.
 Value options and optimization levels may appear only once.
 Input paths may contain spaces when quoted by the shell.
 )";
-
-// Map generic invocation settings onto the project command's existing frontend callback.
-int run_project(const erlang_aot::cli::Options &options) {
-    erlang_aot::project::PlanOptions settings;
-    std::error_code path_error;
-    settings.working_directory = std::filesystem::current_path(path_error);
-    if (path_error) {
-        throw std::runtime_error("cannot determine working directory: " + path_error.message());
-    }
-    settings.preprocessing = options.preprocessing;
-    settings.frontend = options.preprocess;
-    if (options.output_explicit) {
-        settings.output = options.output;
-    }
-    const erlang_aot::project::TargetExecutor execute = [&](const auto &path, const auto &preprocessing,
-                                                            const auto &sink) {
-        return erlang_aot::cli::process_files(path,
-                                              {options.print_pp, options.print_ast, options.parse_check,
-                                               !options.preprocess, options.verbose, preprocessing,
-                                               options.implementation_debug},
-                                              sink);
-    };
-    return erlang_aot::project::run(options.project, settings, execute, std::cout, std::cerr);
-}
 
 // Validate the request and dispatch explicit actions or the default compiler pipeline.
 int run_command(std::span<char *> arguments) {

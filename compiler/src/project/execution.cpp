@@ -10,7 +10,7 @@ bool process(const Invocation &invocation, const PlannedTarget &target, const Ta
         diagnostics(render({{invocation.file, "", target.name, 0, 0}, std::string(message), 1}));
     };
     try {
-        return executor(target.sources, target.preprocessing, report);
+        return executor(invocation, target, report);
     } catch (const std::exception &error) {
         report("error: " + std::string(error.what()));
     }

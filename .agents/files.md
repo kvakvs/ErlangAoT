@@ -323,3 +323,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `driver/analysis.{hpp,cpp}` owns shared semantic/type passes;
   `driver/backend.{hpp,cpp}` drives lowering, optimization, diagnostics and emission.
   `tests/compiler/codegen/positional.cmake` checks real CLI artifacts and failure preservation.
+
+- `driver/project_backend.cpp`: target options, root isolation and deferred publication.
+  `driver/publication.{hpp,cpp}`: owned completed results and protected input paths.
+  `tests/compiler/codegen/project.cmake`: real multi-target artifacts, macro isolation and failure preservation.

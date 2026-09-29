@@ -298,3 +298,7 @@
 - Step 35: positional batches retain ASTs through LLVM-free semantic analysis and
   the shared backend, then optimize and emit in memory. Explicit emission publishes
   only after all source modules succeed; ordinary LLVM remarks remain opt-in.
+
+- Step 36: project execution passes full target/invocation context to the shared
+  frontend/backend. Each target owns an independent batch and encoded artifact root;
+  complete serialized results wait in a driver queue until all selected targets succeed.

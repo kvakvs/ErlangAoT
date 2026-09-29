@@ -115,3 +115,6 @@ add_test(NAME codegen_options COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:e
 add_test(NAME codegen_positional COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/positional/$<CONFIG>" "-DFIXTURES=${PROJECT_SOURCE_DIR}/tests/fixtures/codegen"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/positional.cmake")
+
+add_test(NAME codegen_project COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/project/$<CONFIG>" -P "${CMAKE_CURRENT_SOURCE_DIR}/project.cmake")
