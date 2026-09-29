@@ -1,11 +1,11 @@
 # ErlangAoT
 
-An ahead-of-time compiler project for Erlang/OTP 29. Currently supports
-preprocessing, syntax parsing and semantic validation of the initial compilation
-subset, including bindings, batch calls and declared types. Erlang executable
-generation and execution are not yet implemented.
+An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
+analyzes and compiles a small integer/parameter/direct-call subset to LLVM IR,
+bitcode and native objects. Generated code executes through test-owned native
+harnesses and the runtime; a production executable launcher remains unimplemented.
 
-The next compilation milestone is frozen in [docs/compile.md](docs/compile.md),
+The compilation contract is described in [docs/compile.md](docs/compile.md),
 including its LLVM SDK requirements and provisional ABI.
 The separate runtime now supports [startup, context ownership and shutdown](docs/runtime-lifecycle.md),
 with a reusable CMake target for linking native consumers.
@@ -13,7 +13,7 @@ All APIs are project-internal C++23; C compatibility is deferred until needed.
 
 Validated on macOS Apple Silicon. Windows x64 runtime builds are checked in Debug
 and Release; the full Windows x64 Debug compiler/runtime gate now passes. Additional
-platform and generated-code execution validation remains pending. See
+platform validation remains pending; generated-code execution is checked on Windows x64. See
 [Windows status](abi/plan-windows.md) for prerequisites and known gaps. Linux validation is pending.
 
 ## Features
@@ -25,6 +25,7 @@ platform and generated-code execution validation remains pending. See
 - Source diagnostics and multiple input files.
 - Compilation subset checks, parameter bindings, batch call resolution and declared
   type/specification analysis; see [semantic analysis](docs/semantic.md).
+- LLVM O0/O2 compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
 
@@ -198,7 +199,15 @@ erlangaot [options] <source.erl>...
   --parse-check            Preprocess and check syntax
   --print-pp               Print expanded Erlang source
   --print-ast              Print an indented syntax tree
-  --verbose                Trace ingested filenames to stderr with [pp]/[parse]
+  --print-types            Report declared/inferred types before LLVM lowering
+  --print-ir               Print verified IR before LLVM optimization
+  --print-optimized-ir     Print verified IR after LLVM optimization
+  --emit obj|llvm-ir|llvm-bc  Write one artifact per module
+  --artifact-dir <dir>     Override the artifact root (requires --emit)
+  --target-triple <triple>  Select the machine/OS/ABI
+  -O0 / -O2               Generic O0 (default) / speed optimization
+  --no-type-specialization  Disable compiler variants at either optimization level
+  --verbose               Trace files and compilation phases to stderr
   --impldebug <n[,n...]>   Enable debug output for selected implementation steps
   -I, --include <dir>      Add an include directory (last supplied searched first)
   -D, --define <name[=term]>  Define a macro (default value: true)
@@ -222,17 +231,31 @@ to stdout and can be combined: `--print-pp --print-ast` prints source before the
 tree for each input. Adding `--preprocess-check` does not disable parsing requested
 by `--parse-check` or `--print-ast`. Errors may leave partial printed output.
 
-With no check/print action, source inputs and `--project` run preprocessing and
-parsing, then validate the supported subset, bindings, calls and declared types.
-Positional inputs form one batch; each project target forms its own batch. Successful
-processing returns `0`; CLI artifact publication is not implemented, so no executable is written.
-The private backend lowers the supported subset to verified LLVM modules and objects.
+With no check/print action, source inputs and `--project` run the complete pipeline
+through verified native object buffers in memory. Positional inputs form one batch;
+each project target forms its own batch. `--emit` writes artifacts under `build/aot`
+or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
+default root. Filenames encode module identity. No production executable is linked;
+`--output` and TOML `output` remain reserved executable destinations.
+
+```sh
+erlangaot -O2 --emit obj answer.erl client.erl
+erlangaot --print-ir --print-optimized-ir -O2 answer.erl
+erlangaot --print-types answer.erl client.erl
+```
+
+IR inspection allows both stages together and stops before object emission. Multiple
+snapshots are separate modules; use `--emit llvm-ir` for individual assembly files.
+Type inspection stops before LLVM and distinguishes contracts, inferred facts and
+unknown inputs. It accepts preprocessing/project/verbosity options, but rejects other
+actions, output destinations and backend policy. See [compilation options](docs/compile.md).
 
 `--verbose` prints `[pp] <filename>` for source files and resolved preprocessor
 includes, and `[parse] <filename>` when each source enters the parser. Nested and
 library includes are traced as they are loaded; inactive includes are skipped.
 The parser consumes expanded tokens incrementally, so its trace can precede include
-traces. Tracing goes to stderr in every mode, including projects.
+traces. `[comp]` adds semantic/backend phases and bounded specialization decisions
+as they start. Tracing goes to stderr in every mode, including projects.
 
 `--impldebug 23` or `--impldebug 23,24,27` selects optional implementation-step
 debug output independently of `--verbose`. Repeated options combine their selections;

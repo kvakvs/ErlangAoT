@@ -1,10 +1,10 @@
-# Working memory — 2026-09-28
+# Working memory — 2026-09-29
 
 ## Current state and authoritative records
 
 - `.agents/00-finished.md`: completed foundations/frontend/project work and migration;
   project steps 1–22 complete. `.agents/04-compile.md`: steps
-  1-30 complete; user requested stopping after step 30. Do not start step 31 implicitly.
+  1-39 complete; user requested stopping after step 39. Do not start step 40 implicitly.
   The compile plan's compact validation ledger retains per-step historical evidence.
 - Steps 24–27 commits: c86f539 (declarations/literals), f09e7b4 (parameters),
   5db13f0 (local calls), 4301401 (remote calls). Each passed fresh Windows x64
@@ -12,13 +12,14 @@
   formatting and whitespace. Final quality covered all 154 production commands.
 - Current CLI owns positional/project-target AST batches and runs declaration,
   capability, binding, call, declared-type and implementation-type analysis.
-  Private backend lowers the accepted subset to verified LLVM modules/objects;
-  Generated-module registration and linked harness execution work; CLI artifact
-  publication remains later.
+  Shared backend lowers the accepted subset, optimizes at O0/O2 and emits verified
+  objects in memory. Explicit --emit publishes per-module objects/IR/bitcode; project
+  publication waits for all selected targets. IR/type inspection stops at its boundary.
+  Generated-module registration and Windows x64 linked harness execution work.
 - `--impldebug` accepts repeatable unique signed-int32 step selections/lists.
   Steps 23–27 print escaped inferred inputs/results and parameter relations on stderr;
   these are lowering inputs, not IR dumps. Frontend-only actions do not infer.
-  `--verbose` separately prints [pp] source/resolved includes and [parse] source paths;
+  `--verbose` prints [comp] phase/specialization events plus [pp]/[parse] source paths;
   parser-start tracing can precede include tracing because tokens stream to the parser.
 - Detailed maps/contracts: `.agents/{arch,files}.md`, `docs/{compile,semantic,
   otp-reference,test-migration,project-validation}.md`, runtime design/service docs.
@@ -30,8 +31,7 @@
   C++. User removed C compatibility after step 9: no C headers/adapters/linkage
   wrappers without a concrete new need. LLVM CallingConv::C is the native machine
   convention, not a C interoperability promise.
-- No subagents unless newly authorized. Preserve user edits, particularly the
-  Makefile clean target and runtime sketches; do not touch/stage those owned edits.
+- No subagents unless newly authorized. Preserve user edits; check Git status before work.
 - Use/build upon the term library sketches; synchronize compile-plan inventory,
   architecture and file map when changing them. Keep private layouts controlled.
 - Before each implementation-step commit: fresh compiler+runtime configure/build,
@@ -48,8 +48,8 @@
   Synchronize pin, checkout, corpus hashes, grammar evidence and current docs;
   never change the reference silently in configuration/tests or rewrite old provenance.
 - `references/otp-pin.cmake` currently pins
-  `21776803ecd11f5fa948732c0ec66b8f325dedfc` (upstream 2026-09-22, fetched 2026-09-28).
-  The upstream check at the start of steps 28-30 was unchanged. `build/debug` uses references/otp.
+  `21776803ecd11f5fa948732c0ec66b8f325dedfc` (upstream 2026-09-22, fetched 2026-09-29).
+  The upstream check at the start of steps 31-39 was unchanged. `build/debug` uses references/otp.
 - Grammar and ten corpus entries matched the previous pin byte-for-byte; 344 ordinary
   productions have witnesses, 79 SSA productions are excluded. Stale-pin rejection passed.
 - Existing Windows checkout has core.autocrlf=true: only manifest text/grammar files
@@ -217,11 +217,25 @@
 - Steps 28/29 commits: 30d8260 / 2d0d7d5. Step 30 adds clone/dispatch/measured
   rollback and native guard/fallback execution; final Windows 84/84 and full
   quality (162 production commands) pass. Current source has no removable checks,
-  so O2 correctly keeps it generic; source guards and the LLVM O2 pipeline remain
-  future work. Missing inference facts must become generic profiles, never map::at failures.
+  so O2 correctly keeps it generic; source guards remain future work. Step 31 adds LLVM O2. Missing inference facts must become generic profiles, never map::at failures.
 - LLVM comparison construction uses the SDK CmpInst factory; use selective replacement
   to preserve fallback calls without intrusive CallBase operand access. No suppressions.
   Final transient ShowIncludes probe access error and analyzer crash on unchanged
   preprocessor/integer.cpp passed unchanged retries. Keep all production commands.
 - Read/write project text with explicit UTF-8 in Python, including markdown updates;
   Windows default decoding can silently prevent non-ASCII status replacements.
+
+- Steps 31–39 each have their own validated commit. Standard LLVM passes/writers,
+  safe artifact staging/replacement, backend CLI policies, positional/project
+  orchestration, [comp] tracing, IR snapshots and type inspection are implemented.
+  Artifact basename is eav1_<UTF8 hex module>__0 with target-selected suffix; project
+  roots append the same encoding of target identity. Multi-file replacement is not atomic.
+- LLVM callbacks must respect enabled remark filters. CMake Unicode captures need
+  ENCODING UTF-8. Python test scripts must not shadow stdlib modules (e.g. types.py).
+  SDK llvm-as/llvm-dis roundtrip snapshots; FileCheck is absent in the installed SDK.
+- Ignored build/compile-steps/gate.cmd configures fresh Debug with both components,
+  builds, runs all CTests and then full quality. Nested native consumers require VS
+  x64 environment. llvm-tidy is pinned via CMAKE_PROGRAM_PATH; do not suppress checks.
+- Final step 39 validation: fresh Windows x64 Debug, 93/93 CTests, zero skips,
+  full Lizard/clang-tidy over 180 production units, formatting and whitespace pass.
+  User-requested stopping point reached; step 40 is not started.

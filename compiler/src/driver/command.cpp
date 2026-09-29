@@ -21,6 +21,7 @@ Options:
       -O0 | -O2          Select generic O0 (default) or speed specialization and LLVM O2.
       --no-type-specialization  Disable variants regardless of optimization option order.
       --print-ir          Print verified IR before LLVM optimization; no files or object emission.
+      --print-types       Report declared/inferred types; stop before LLVM lowering.
       --print-optimized-ir  Print verified IR after the selected pipeline; combine for both stages.
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
@@ -39,6 +40,8 @@ Only --emit writes module artifacts (default root: build/aot); native executable
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output remains reserved for executables.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.
+Type inspection accepts preprocessing/project/verbosity options; it rejects other actions and backend policy.
+Type reports describe conservative analysis and are not an intermediate stage input format.
 Multiple IR snapshots use LLVM-comment headers; use --emit llvm-ir for separate machine-readable files.
 Value options and optimization levels may appear only once.
 Input paths may contain spaces when quoted by the shell.

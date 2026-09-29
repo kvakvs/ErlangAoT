@@ -53,7 +53,9 @@ std::optional<std::string> value_option(std::string_view option, const std::stri
 // Parse idempotent inspection flags without consuming source operands.
 bool inspection_flag(std::string_view option, BackendOptions &options) {
     static const std::map<std::string_view, bool BackendOptions::*> flags{
-        {"--print-ir", &BackendOptions::print_ir}, {"--print-optimized-ir", &BackendOptions::print_optimized_ir}};
+        {"--print-types", &BackendOptions::print_types},
+        {"--print-ir", &BackendOptions::print_ir},
+        {"--print-optimized-ir", &BackendOptions::print_optimized_ir}};
     const auto found = flags.find(option);
     if (found == flags.end()) {
         return false;
@@ -62,8 +64,18 @@ bool inspection_flag(std::string_view option, BackendOptions &options) {
     return true;
 }
 
-// IR inspection has no filesystem outputs and keeps executable output reserved.
+// Semantic inspection cannot consume backend policy or select another output action.
+bool type_conflict_options(const Options &options) {
+    const auto &backend = options.backend;
+    return backend.inspect_ir() || backend.emit || backend.artifact_directory || options.output_explicit ||
+           !backend.target_triple.empty() || backend.optimization || backend.disable_type_specialization;
+}
+
+// Inspection has no filesystem outputs and keeps executable output reserved.
 std::optional<std::string> inspection_conflict(const Options &options) {
+    if (options.backend.print_types && type_conflict_options(options)) {
+        return "--print-types cannot be combined with IR, emission, output, target, or optimization options";
+    }
     if (options.backend.inspect_ir() &&
         (options.backend.emit || options.backend.artifact_directory || options.output_explicit)) {
         return "IR inspection cannot be combined with --emit, --artifact-dir, or --output";
@@ -74,14 +86,14 @@ std::optional<std::string> inspection_conflict(const Options &options) {
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
-           options.disable_type_specialization || options.inspect_ir();
+           options.disable_type_specialization || options.inspect_ir() || options.print_types;
 }
 } // namespace
 
 bool is_backend_option(std::string_view option) {
     return option == "--emit" || option == "--artifact-dir" || option == "--target-triple" || option == "-O0" ||
            option == "-O2" || option == "--no-type-specialization" || option == "--print-ir" ||
-           option == "--print-optimized-ir";
+           option == "--print-optimized-ir" || option == "--print-types";
 }
 
 std::optional<std::string> parse_backend_option(std::string_view option, std::span<char *> &remaining,

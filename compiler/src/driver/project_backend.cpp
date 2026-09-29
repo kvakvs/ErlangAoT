@@ -46,7 +46,8 @@ int run_project(const Options &options) {
     project::PlanOptions settings;
     settings.working_directory = std::filesystem::current_path();
     settings.preprocessing = options.preprocessing;
-    settings.frontend = options.preprocess || options.backend.emit.has_value() || options.backend.inspect_ir();
+    settings.frontend = options.preprocess || options.backend.emit.has_value() || options.backend.inspect_ir() ||
+                        options.backend.print_types;
     if (options.output_explicit) {
         settings.output = options.output;
     }

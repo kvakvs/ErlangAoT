@@ -146,8 +146,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   freeze, pinning/capture lifetimes, failure propagation and diagnostic count/silence.
 - `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
   validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
-  diagnostic callback and printing, with a positional-mode adapter and a compile
-  placeholder for successfully parsed modules in the default pipeline; verbose
+  diagnostic callback and printing, with a positional-mode adapter and complete
+  AST batches passed to shared analysis/backend orchestration; verbose
   stage/file tracing stays on stderr, outside project diagnostic wrappers.
 - Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
   source/token/events, immutable features, parser ownership/limits/results and output APIs.
@@ -335,3 +335,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `driver/inspection.{hpp,cpp}`: verified before/after snapshots with stable escaped headers.
   `tests/compiler/codegen/inspection.py`: real CLI inspection, option conflicts, stage/target
   ordering, ABI structures and per-snapshot llvm-as/llvm-dis round trips.
+
+- `driver/type_{format,declarations,report}.{hpp,cpp}`: bounded symbolic formatting,
+  declaration metadata and deterministic function/expression inference reports.
+  `tests/compiler/codegen/type_inspection.py`: real CLI contracts/relations, recursive
+  declarations, diagnostics, action conflicts and isolated project facts without LLVM.

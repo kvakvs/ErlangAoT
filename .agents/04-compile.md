@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-38 complete, 2026-09-29. Steps 39-46 remain pending.
+Status: steps 1-39 complete, 2026-09-29. Steps 40-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -12,10 +12,11 @@ behavior and a production executable launcher remain later work.
 
 The preprocessor supplies expanded tokens to a parser owning a move-only
 `ast::Module`. Parsing does not establish semantic validity. The driver's
-`compiler/src/driver/frontend.cpp` validates declarations, parameter bindings, batch calls and declared types,
+`compiler/src/driver/analysis.cpp` validates declarations, parameter bindings, batch calls and declared types,
 then infers implementation facts and checks declared contracts conservatively
-after parsing; positional and project compilation still write no executable. Frontend
-check/print actions and `[pp]`/`[parse]` tracing work. The runtime is a static library
+after parsing. Positional/project compilation lowers and optimizes to verified object
+buffers; explicit emission publishes per-module artifacts. IR/type inspection and
+`[comp]` tracing are implemented; production executable linking remains deferred. The runtime is a static library
 with feature reporting, lifecycle, immediate terms and generic native dispatch.
 Immediate-only host Terms, builtin dispatch and memory service boundaries are implemented;
 TermFactory reporting placeholders are installed; term creation, backing allocation and collection remain pending.
@@ -1096,7 +1097,7 @@ programs. Each of those four steps passed 80/80 tests with zero skips and full
 quality; final step 27 analyzed all 154 production translation units. Reproduction
 scripts and logs are under ignored `build/compile-steps/`.
 
-Current stopping point: step 30 complete; step 31 has not started. Generated-module
+Historical stopping point after step 30 (superseded by the status above). Generated-module
 registration, linked harness execution and bounded guarded specialization are implemented. CLI artifact publication, additional native hosts and
 full frontend sanitizer validation remain pending. See
 [compile](../docs/compile.md) and [test migration](../docs/test-migration.md) for
@@ -1161,3 +1162,12 @@ Step 38: fresh Windows Debug build, 92/92 CTests and full Lizard/clang-tidy
 (177 production units) pass. Real CLI snapshots round-trip through matching SDK
 llvm-as/llvm-dis at O0/O2, including combined before/after, ordered projects, Unicode
 paths, escaped identifiers, conflicts and no artifact writes. FileCheck remains absent.
+
+Step 39: fresh Windows x64 Debug compiler/runtime build, final 93/93 CTests
+with zero skips and full Lizard/clang-tidy (180 production units), formatting
+and whitespace pass. Public reports cover annotated/unannotated functions,
+local/remote inference, recursive aliases, opaque/nominal types, callbacks,
+wrong-spec warnings, unknown inputs and parameter relations, stable source/target
+order, option conflicts and no LLVM phases/files. Renamed the initial types.py
+test to avoid shadowing Python's standard library; the complete final gate passed.
+Current stopping point: step 39 complete; step 40 has not started.

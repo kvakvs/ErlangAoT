@@ -36,14 +36,14 @@
   clang-cl/Ninja Multi-Config presets select Debug/Release, with DLL CRT defaults
   (/MDd, /MD) and UTF-8 MSVC source flags. Nested consumer/SDK tests inherit the
   parent generator, compiler, architecture, configuration and CRT. Runtime remains
-  static; full Windows compiler/platform validation awaits the global LLVM SDK.
+  static; the Windows x64 Debug compiler/runtime gate uses the pinned LLVM 23.1.2 SDK.
 
 - `docs/compile.md` freezes the LLVM milestone: global stable LLVM 23.1.x (>=23.1.1),
   acyclic small-integer/parameter/direct-call subset and private tagged project ABI v1.
   Private `erlang_codegen` links the SDK through target-local `erlang_llvm_sdk`.
-  Global-only CMake discovery validates version/RTTI and host C++ linking; runtime-only
+  Global SDK discovery or pinned fallback validates version/RTTI and host C++ linking; runtime-only
   builds never load LLVM. A move-only private compilation owner retains batch ASTs,
-  one context and ordered empty IR modules; owned diagnostics/output buffers survive
+  one context and ordered IR modules; owned diagnostics/output buffers survive
   teardown, and errors invalidate staged output. LLVM callbacks retain stable result
   addresses across moves. Explicit target setup retains one machine per batch,
   defaults to host triple/CPU/features, and stamps module triples/data layouts.
@@ -65,7 +65,7 @@
   FeatureFailure reports once per operation through a borrowed sink (default stderr)
   and returns fixed-width scoped C++ Status, containing delivery exceptions. No LLVM dependency
   enters runtime reporting. Compiler/runtime capability handlers are implemented;
-  CLI artifact publication and generated-code execution remain pending.
+  explicit CLI artifacts and Windows x64 native harness execution are implemented.
 
 - Step 9 runtime/context lifecycle is implemented in the LLVM-free static library.
   Runtime startup/create/destroy/shutdown use std::expected, scoped Status and RAII;
@@ -171,12 +171,13 @@
   target, validating all work before execution and reserving outputs without writes.
   Execution visits each target/file independently through a shared frontend callback,
   adds diagnostic context and aggregates failures. Default requests preprocess and
-  parse, then validate and infer the selected subset; successful processing returns 0 without output files.
+  parse, validate, infer, lower, optimize and emit in memory; explicit emission publishes
+  only after every selected target succeeds. Production executable linking remains deferred.
 
 - CMake fixes project targets to C++23 with warnings as errors, building the host
   tool `erlangaot` and a separate runtime with lifecycle/feature reporting.
   Project validation uses C++23. LLVM SDK linkage and private generic lowering are
-  implemented; generated-code/runtime execution remains future work.
+  implemented, with generated-code/runtime execution checked by separate native consumers.
   Shared Boost >=1.90 discovery supplies header-only Multiprecision to compiler and
   runtime; runtime consumers inherit its system includes. Root CMake also supplies
   Boost system includes to every project target for orphan-header IDE contexts.
@@ -252,8 +253,8 @@
 - `semantic/types/` interns bounded symbolic types, flattens joins and widens to top
   on exhausted limits. Declared aliases, record contracts, overloads and constraints
   borrow source provenance. Recursive references remain finite; memoized substitution
-  respects opaque module boundaries and preserves nominal identities. Later steps add
-  inference and generic lowering; native CLI artifact publication remains pending.
+  respects opaque module boundaries and preserves nominal identities. Independent inference
+  feeds generic lowering; type inspection reports both domains before entering LLVM.
 - Final step 21 Windows x64 Debug validation: 78/78 CTests and full Lizard/clang-tidy
   pass. Earlier migration failures remain historical; full frontend sanitizers and
   additional native platforms still require validation.
@@ -264,7 +265,7 @@
   Explicit iterative traversal preserves source-order argument evaluation and the
   process context. Exported remote identities become matching external declarations.
   Real-source adapter tests inspect native/cross-width objects and ABI data flow;
-  CLI publication remains later; step 28 adds registration and native harness execution.
+  step 28 adds registration and native harness execution; steps 35/36 add CLI publication.
   Final Windows x64 Debug 80/80 and full Lizard/clang-tidy pass. Historical step 27 validation.
 
 - Step 28: target-layout descriptors and retained registration entries call a native
@@ -310,3 +311,8 @@
 - Step 38: IR inspection reuses lowering/specialization and verified LLVM text
   serialization, retaining a before snapshot only when requested. Optimized inspection
   runs the selected standard pipeline; neither path emits objects or publishes files.
+
+- Step 39: type inspection stops after shared semantic analysis, before LLVM state.
+  Source-ordered modules/functions/expressions distinguish declared contracts from
+  inferred facts, unknown inputs and argument relations. Recursive aliases stay
+  symbolic; bounded displays and graph widening are explicit.

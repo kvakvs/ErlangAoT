@@ -129,3 +129,6 @@ find_program(ERLANG_AOT_LLVM_DIS NAMES llvm-dis HINTS "${llvm_tools}" NO_DEFAULT
 add_test(NAME codegen_inspection COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/inspection.py"
     "$<TARGET_FILE:erlang_aot>" "${ERLANG_AOT_LLVM_AS}" "${ERLANG_AOT_LLVM_DIS}"
     "${CMAKE_CURRENT_BINARY_DIR}/inspection/$<CONFIG>" "${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
+
+add_test(NAME codegen_types COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/type_inspection.py"
+    "$<TARGET_FILE:erlang_aot>" "${CMAKE_CURRENT_BINARY_DIR}/types/$<CONFIG>")

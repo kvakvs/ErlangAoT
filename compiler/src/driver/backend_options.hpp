@@ -7,6 +7,8 @@ namespace erlang_aot::cli {
 struct Options;
 
 struct BackendOptions {
+    // Report declared and inferred types before constructing any LLVM state.
+    bool print_types = false;
     // Select verified before/after LLVM snapshots instead of machine-code emission.
     bool print_ir = false;
     bool print_optimized_ir = false;

@@ -8,6 +8,7 @@
 #include "inspection.hpp"
 #include "progress.hpp"
 #include "publication.hpp"
+#include "type_report.hpp"
 
 namespace erlang_aot::cli {
 namespace {
@@ -91,6 +92,10 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
     Analysis analysis;
     if (!analyze(request, analysis, sink)) {
         return true;
+    }
+    if (frontend.backend.print_types) {
+        print_types(analysis, request);
+        return false;
     }
     codegen::Compilation compilation(std::move(request));
     const bool succeeded = generate(compilation, analysis, frontend);

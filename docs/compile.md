@@ -24,11 +24,13 @@ Steps 24–27 implement private generic lowering of integer returns, parameter r
 and resolved local/remote calls. Step 28 adds explicit [generated-module registration](runtime-modules.md)
 and separately linked native harness execution. Steps 29-30 add bounded
 [specialization planning and guarded lowering](specialization.md); the current
-guard-free source subset correctly remains generic. Artifact publication and
-CLI backend integration remain later steps of [the implementation plan](../.agents/04-compile.md).
-Current CLI defaults preprocess/parse and validate [declarations, bindings, batch calls and declared types](semantic.md),
-infer implementation facts and check contracts, then return without executable output;
-the proposed compilation switches below are not implemented yet.
+guard-free source subset correctly remains generic. Steps 31–39 implement standard
+LLVM optimization, text/bitcode serialization, artifact publication and the shared
+positional/project driver. Default compilation validates
+[declarations, bindings, calls and types](semantic.md), infers implementation facts,
+then lowers, optimizes, verifies and emits native objects in memory. Explicit `--emit`
+publishes artifacts; IR and type inspection stop at their selected boundaries.
+No production executable launcher or linker driver is implemented.
 
 The private backend's `verify_ir` gate checks target consistency, defined function
 bodies and whole modules using LLVM's nonfatal verifier APIs. The object emission
@@ -38,7 +40,7 @@ all staged outputs. Synthetic IRBuilder fixtures cover valid and malformed IR;
 verification alone does not establish Erlang semantics or complete compilation.
 
 `emit_objects` uses the SDK's legacy machine-code pass manager and
-`TargetMachine::addPassesToEmitFile`, separately from future middle-end optimization.
+`TargetMachine::addPassesToEmitFile`, separately from the standard PassBuilder O0/O2 pipeline.
 It emits clones to preserve original IR, replaces previous buffers on repeat calls,
 and discards the entire batch on verification or emission errors. No files are
 published and the batch remains incomplete until its caller completes the pipeline.
@@ -187,7 +189,7 @@ can be added later if needed.
 
 ## Frozen command and artifact contract
 
-These switches are reserved for later implementation, not commands to run today:
+The following compilation and inspection switches are implemented:
 
 | Option | Milestone behavior |
 |---|---|
@@ -234,8 +236,8 @@ policy and never runs inference in frontend-only check/print modes.
 
 The full inspection/conflict, ownership, placeholder and validation contracts remain
 in [the plan](../.agents/04-compile.md). Each numbered step requires its own full gate
-and commit. Cross-platform execution, generated objects and runtime behavior are not
-yet validated by this contract.
+and commit. Native generated-code execution is validated on Windows x64; additional
+native host platforms remain pending. Cross-target object checks do not prove execution.
 
 ## SDK integration validation (step 2)
 
@@ -331,8 +333,8 @@ machine moves/reuse, normalized triples, unknown architectures and an unconfigur
 RISC-V backend. Available cross backends are checked for Linux x86/x86-64/ARM/AArch64
 ELF and Windows x86/x86-64 COFF layouts, including 32-bit widths on the 64-bit host.
 These are target-construction tests, not object-emission or native-platform ABI
-validation. Later implemented phases add verification, lowering and in-memory object
-emission; CLI artifact integration remains deferred.
+validation. Later implemented phases add verification, lowering, object emission
+and explicit CLI artifact publication.
 
 ## Source lowering (step 24)
 
@@ -426,8 +428,8 @@ representation checks, so speed-mode source compilation correctly remains generi
 Validation: fresh Windows x64 Debug compiler/runtime build; 84/84 CTests,
 Lizard, full clang-tidy (162 production commands), formatting and whitespace pass.
 A final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
-unchanged quality retry. Work stops after step 30; standard LLVM optimization
-pipelines (step 31) and subsequent driver/artifact work remain pending.
+unchanged quality retry. At that checkpoint work stopped after step 30; the
+following records describe the subsequent optimization and driver/artifact work.
 
 Step 31 adds target-aware LLVM PassBuilder O0/O2 pipelines, with verification
 before and after optimization and local analysis-manager lifetimes. Public entries
@@ -481,3 +483,24 @@ snapshots have escaped LLVM-comment headers and must be separated before assembl
 Use `--emit llvm-ir` for individual machine-consumable files. Preprocessing, target,
 optimization and specialization options are allowed; frontend actions, project
 creation and all emission/output destinations conflict. Traces remain on stderr.
+
+Step 39 implements `--print-types` through the shared semantic pipeline, stopping
+before LLVM state, target setup or lowering. Reports follow input module and
+selected-target order; functions and expressions retain logical source locations.
+Declared aliases, opaque/nominal identities, callbacks, specs and record metadata
+stay separate from inferred inputs/results and exact parameter relations. Unknown
+implementation facts are explicit `term() [unknown]`; declared specs never narrow
+them. Graph widening and bounded display truncation are visible. Recursive aliases
+remain symbolic references. Diagnostics and optional traces stay on stderr;
+reports go to stdout and are not a public stage-input serialization format.
+
+```sh
+erlangaot --print-types answer.erl client.erl
+erlangaot --print-types --project project.toml --target demo --verbose
+```
+
+Validation through step 39 (2026-09-29): fresh Windows x64 Debug compiler/runtime
+build, 93/93 CTests with zero skips, full Lizard and clang-tidy over 180 production
+translation units, formatting and whitespace checks pass. Native execution evidence
+remains Windows x64; other native hosts and full frontend sanitizer coverage remain
+pending. Steps 40–46 have not been started in this implementation batch.

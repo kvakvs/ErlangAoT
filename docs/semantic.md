@@ -8,9 +8,9 @@ module declarations are errors. Diagnostics retain macro/include origins, and an
 error does not prevent diagnostics from later input files.
 
 `--parse-check`, `--print-ast` and preprocessing actions retain their syntax-only
-contracts. Successful compilation still emits no executable or other artifact.
-Lowering and public type inspection are
-later steps of the [compile plan](../.agents/04-compile.md).
+contracts. Default compilation continues through LLVM object buffers in memory;
+explicit `--emit` publishes artifacts. `--print-types` runs the shared analysis
+pipeline and stops before constructing LLVM state. See the [compilation contract](compile.md).
 
 Private ABI v1 function symbols are `eav1_<module hex>_<function hex>_<arity>`.
 Each name component contains lowercase hexadecimal UTF-8 bytes; arities use canonical
@@ -38,7 +38,8 @@ within that batch by decoded module/function name and arity. Remote calls,
 including self-qualified calls, require explicit exports. Missing/private callees,
 duplicate module identities and direct or indirect recursion are errors.
 The call graph retains a deterministic callee-before-caller dependency order for
-inference. Executable body inference is now implemented; code emission remains pending.
+inference. Lowering consumes these independently inferred facts, never treating
+specifications as proven runtime representation guarantees.
 
 The private semantic type graph represents all parsed type categories independently
 of runtime/LLVM layouts. It retains exact singleton spellings, range endpoints,
@@ -97,3 +98,13 @@ singleton results, parameter relations and batch widening. Ordinary `--verbose`
 does not enable these summaries. Steps 24–27 expose the same facts under their own
 debug prefix as lowering inputs. Private generic lowering consumes the side tables;
 public type inspection and CLI artifact publication remain later plan steps.
+
+`--print-types` reports declarations independently of implementation inference.
+Function lines identify whether a specification exists, list conservative inputs
+and results, and retain zero-based argument relations for identity/projection.
+Expression facts include logical file/line/column locations. Module sections follow
+input order, with project target context; recursive aliases print as finite symbolic
+references. Unknown inferred facts are labeled explicitly, as are graph widening
+and display limits. The report is human-readable, not a stage interchange format.
+Warnings (including contradictory specs) remain on stderr and do not prevent reports;
+semantic errors stop the affected batch before reporting or LLVM construction.
