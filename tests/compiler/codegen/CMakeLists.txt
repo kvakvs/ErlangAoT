@@ -68,13 +68,15 @@ if(ERLANG_AOT_BUILD_RUNTIME)
     target_include_directories(codegen_registration_emit PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
     target_link_libraries(codegen_registration_emit PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
     target_compile_definitions(codegen_registration_emit PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
-    add_test(NAME codegen_registration COMMAND "${CMAKE_COMMAND}"
-        "-DEMITTER=$<TARGET_FILE:codegen_registration_emit>"
-        "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/registration/$<CONFIG>"
-        "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
-        "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
-        -P "${CMAKE_CURRENT_SOURCE_DIR}/registration.cmake")
-    set_tests_properties(codegen_registration PROPERTIES TIMEOUT 120)
+    foreach(level IN ITEMS O0 O2)
+        add_test(NAME codegen_registration_${level} COMMAND "${CMAKE_COMMAND}"
+            "-DEMITTER=$<TARGET_FILE:codegen_registration_emit>" "-DOPTIMIZATION=${level}"
+            "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/registration-${level}/$<CONFIG>"
+            "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+            "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/registration.cmake")
+        set_tests_properties(codegen_registration_${level} PROPERTIES TIMEOUT 120)
+    endforeach()
 
     add_executable(codegen_specialization_emit specialization_emit.cpp)
     erlang_aot_project_options(codegen_specialization_emit)

@@ -281,3 +281,6 @@
   Transactional dispatch installation preserves public symbols, descriptor references
   and the original generic fallback. Actual clone/dispatch instruction counts enforce
   2x function/module limits before publication; no frontend language expansion.
+
+- Step 31: target-aware PassBuilder selects LLVM standard O0/O2 pipelines, with
+  full batch verification on both sides and per-module analysis lifetimes.

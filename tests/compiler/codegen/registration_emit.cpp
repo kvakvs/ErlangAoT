@@ -1,12 +1,16 @@
+#include "codegen/optimization.hpp"
 #include "lowering_support.hpp"
 #include <fstream>
 
 // Emit real compiled modules for a separate, LLVM-free Clang consumer.
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "expected output directory");
-        auto compilation = fixtures({"client.erl", "answer.erl"});
-        require(analyze_and_lower(compilation) && cg::emit_objects(compilation), "registration emission failed");
+        require(argc == 3, "expected output directory");
+        auto compilation =
+            fixtures({"client.erl", "answer.erl"}, {},
+                     std::string_view(argv[2]) == "O2" ? cg::OptimizationLevel::speed : cg::OptimizationLevel::none);
+        require(analyze_and_lower(compilation) && cg::optimize(compilation) && cg::emit_objects(compilation),
+                "registration emission failed");
         std::size_t index = 0;
         for (const auto &output : compilation.result().outputs()) {
             std::ofstream file(std::filesystem::path(argv[1]) / (std::to_string(index++) + ".obj"), std::ios::binary);

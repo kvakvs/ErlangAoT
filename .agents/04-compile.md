@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-30 complete, 2026-09-28. Steps 31-46 remain pending.
+Status: steps 1-31 complete, 2026-09-29. Steps 32-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1117,3 +1117,7 @@ Lizard/clang-tidy (162 production commands), formatting and whitespace pass.
 The final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
 unchanged quality retry. No step beyond 30 was started. Native execution remains
 Windows x64 evidence; cross-width IR/objects do not claim execution on other hosts.
+
+Step 31: fresh Windows x64 Debug build, 85/85 CTests and full Lizard/clang-tidy
+pass. Standard O0/O2 native consumers retain registration, call results and ABI.
+The 2026-09-29 official maint-29 fetch remains at 21776803ecd11f5fa948732c0ec66b8f325dedfc.

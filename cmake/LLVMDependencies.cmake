@@ -104,7 +104,7 @@ function(erlang_aot_find_llvm)
     set_property(TARGET erlang_llvm_sdk APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "${definitions}")
     # Initialize/link only project backends present in this installed SDK.
     set(backends)
-    set(components Core Support Target TransformUtils CodeGen MC Object)
+    set(components Core Support Target TransformUtils CodeGen MC Object Passes)
     foreach(backend IN ITEMS X86 ARM AArch64)
         if(backend IN_LIST LLVM_TARGETS_TO_BUILD)
             list(APPEND backends "${backend}")

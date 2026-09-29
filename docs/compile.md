@@ -428,3 +428,8 @@ Lizard, full clang-tidy (162 production commands), formatting and whitespace pas
 A final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
 unchanged quality retry. Work stops after step 30; standard LLVM optimization
 pipelines (step 31) and subsequent driver/artifact work remain pending.
+
+Step 31 adds target-aware LLVM PassBuilder O0/O2 pipelines, with verification
+before and after optimization and local analysis-manager lifetimes. Public entries
+and runtime registration remain externally retained. The separate native consumer
+runs the answer/client and identity checks at both optimization levels.

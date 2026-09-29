@@ -306,3 +306,6 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `tests/compiler/codegen/specialization_{emit,consumer}.cpp`: focused synthetic IR
   and separately linked native guard/fallback equivalence; `guards.erl` supplies
   real semantic/descriptor setup without adding supported source guard syntax.
+
+- `codegen/optimization.{hpp,cpp}`: verified standard LLVM PassBuilder O0/O2.
+  `tests/compiler/codegen/registration*`: native runtime consumer at both levels.
