@@ -1,4 +1,5 @@
 #include "codegen/integer_guards.hpp"
+#include "codegen/optimization.hpp"
 #include "codegen/specialization_lowering.hpp"
 #include "codegen/verification.hpp"
 #include "lowering_support.hpp"
@@ -41,49 +42,62 @@ void specialize(cg::Compilation &compilation) {
     reference->setName(symbol + ".reference");
     reference->setLinkage(llvm::GlobalValue::ExternalLinkage);
     const auto baseline = function.getInstructionCount();
-    cg::CompilationRequest speed;
-    speed.optimization = cg::OptimizationLevel::speed;
+    const auto &policy = compilation.request();
+    const bool enabled = policy.optimization == cg::OptimizationLevel::speed && !policy.disable_type_specialization;
     const cg::SpecializationInput input{
         "guards", symbol, baseline, {16, 0}, {{cg::Representation::small_integer, cg::Representation::generic}}};
-    auto plan = cg::plan_specializations(speed, std::span(&input, 1));
-    require(plan.candidates.size() == 1, "useful candidate was not planned");
+    auto plan = cg::plan_specializations(policy, std::span(&input, 1));
+    require(plan.candidates.size() == static_cast<std::size_t>(enabled), "candidate policy ignored");
     const auto budgeted_symbol = semantic::encode_symbol({"guards", "budgeted", 2});
     auto *oversize = module.getFunction(budgeted_symbol);
     checked_body(*oversize, 1);
     const auto oversized_baseline = oversize->getInstructionCount();
     // Deliberately stale estimate proves that emission independently measures and rolls back actual growth.
-    plan.candidates.push_back({"guards", budgeted_symbol, input.profiles.front(), 1});
+    if (enabled) {
+        plan.candidates.push_back({"guards", budgeted_symbol, input.profiles.front(), 1});
+    }
     cg::lower_specializations(module, plan);
-    require(plan.lowered_variants == 1 && plan.rejected_variants == 1, "actual growth limit not enforced");
+    require(plan.lowered_variants == static_cast<std::size_t>(enabled) &&
+                plan.rejected_variants == static_cast<std::size_t>(enabled),
+            "actual growth limit not enforced");
     require(oversize->getInstructionCount() == oversized_baseline && !module.getFunction(budgeted_symbol + ".type"),
             "over-budget draft changed generic IR");
-    std::size_t added = module.getFunction(symbol)->getInstructionCount();
-    added += module.getFunction(symbol + ".type")->getInstructionCount();
+    std::size_t added = 0;
+    if (enabled) {
+        added = module.getFunction(symbol)->getInstructionCount();
+        added += module.getFunction(symbol + ".type")->getInstructionCount();
+    }
     require(added <= baseline, "pre-optimization function grew beyond 2x");
     for (const auto &use : module.getFunction(symbol)->getArg(0)->uses()) {
         require(use.getOperandNo() == 0, "dispatch lost context position");
     }
     require(cg::verify_ir(compilation), "specialized IR verification failed");
+    std::printf("bits=%u baseline=%u added=%zu variants=%zu rejected=%zu\n",
+                function.getReturnType()->getIntegerBitWidth(), baseline, added, plan.lowered_variants,
+                plan.rejected_variants);
 }
 
 // Keep source/spec analysis generic, then exercise the narrower LLVM-stage invariant explicitly.
-cg::Compilation exercise(const std::string &triple = {}) {
-    auto compilation = fixtures({"guards.erl", "answer.erl"}, triple, cg::OptimizationLevel::speed);
+cg::Compilation exercise(const std::string &triple, std::string_view mode) {
+    auto compilation = fixtures({"guards.erl", "answer.erl"}, triple,
+                                mode == "O0" ? cg::OptimizationLevel::none : cg::OptimizationLevel::speed);
+    cg::detail::state(compilation).request.disable_type_specialization = mode == "O2-disabled";
     require(analyze_and_lower(compilation), "source lowering failed");
     require(cg::detail::state(compilation).specializations.candidates.empty(), "specification invented a benefit");
     specialize(compilation);
-    require(cg::emit_objects(compilation), "specialized object emission failed");
+    require(cg::optimize(compilation) && cg::emit_objects(compilation), "specialized object emission failed");
     return compilation;
 }
 
 // Hand native objects to an independent runtime-only consumer; also verify 32-bit guard IR where available.
 int main(int argc, char **argv) {
     try {
-        require(argc == 2, "expected output directory");
+        require(argc == 2 || argc == 3, "expected output directory and optional policy");
+        const std::string_view mode = argc == 3 ? argv[2] : "O2";
 #ifdef ERLANG_AOT_LLVM_X86
-        (void)exercise("i686-unknown-linux-gnu");
+        (void)exercise("i686-unknown-linux-gnu", mode);
 #endif
-        const auto compilation = exercise();
+        const auto compilation = exercise({}, mode);
         std::size_t index = 0;
         for (const auto &output : compilation.result().outputs()) {
             std::ofstream file(std::filesystem::path(argv[1]) / (std::to_string(index++) + ".obj"), std::ios::binary);

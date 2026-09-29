@@ -1,8 +1,8 @@
 # Bounded type specialization
 
 The private backend plans representation variants only in speed mode. O0 and
-`disable_type_specialization` produce no candidates; command-line integration is
-still reserved for the later driver steps.
+`disable_type_specialization` produce no candidates. The CLI selects these policies
+with `-O0`, `-O2` and `--no-type-specialization`.
 
 Observed call-site implementation facts supply profiles of generic or small-integer
 arguments. Only exact, target-representable inferred integer singletons establish
@@ -52,4 +52,30 @@ small-integer endpoints, negative/zero values and empty tuple/list inputs, inclu
 mixed argument pairs. A deliberately stale estimate proves actual-growth rollback;
 the rejected function is also executed through its normal registered entry.
 Cross-width checks verify 32-bit IR/objects; native execution is validated separately.
-These fixtures do not claim new Erlang source support or an optimization pipeline.
+These fixtures do not claim new Erlang source support. All three policies now run
+the standard selected LLVM pipeline before native execution.
+
+`codegen_measurements` writes `measurements/<configuration>/measurements.json` in
+the codegen test build directory. It records compiler wall time, IR/object bytes,
+installed source variants and native process time (including startup and text I/O).
+Times are evidence, never pass/fail thresholds. The seeded source workload includes
+150 calls plus a 255-argument projection whose contract uses a 64-member union.
+O2 with specialization enabled/disabled must produce identical bytes for this
+guard-free workload, zero variants and bounded artifact sizes.
+
+The separate synthetic guard workload records pre-optimization instruction counts,
+installed/rejected variants, object bytes and total build/check time at O0, O2
+disabled and O2 enabled. Its native consumer executes integer hits and non-integer
+fallbacks in every mode. The planner stress test retains the hard 3/32/128 caps,
+5000 observed profiles, 255-argument unknown profiles and deterministic ordering.
+Together these checks retain the benefit rule: only removable implemented checks
+justify variants; narrower declared types alone never justify cloning.
+
+Windows x64 / LLVM 23.1.2 measurement on 2026-09-29: this workload produced
+232,876 IR bytes / 40,498 object bytes at O0 and 204,408 / 35,886 at both O2
+policies. All source modes installed zero variants. The synthetic function had
+55 baseline instructions and added 30 for one accepted variant; one oversized
+draft was rejected. Both O2 policies emitted 2,252 synthetic object bytes (O0:
+3,486), so this fixture establishes bounded correctness, not a final-code speedup.
+The recorded source compiler times were roughly 0.05–0.09 seconds and native
+process times 0.007–0.009 seconds; startup/I/O dominate this small experiment.

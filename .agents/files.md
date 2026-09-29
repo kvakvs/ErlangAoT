@@ -6,6 +6,9 @@
 - `tests/compiler/codegen/{differential.py,execution_oracle.escript}`: seeded bounded
   nested calls, paired specs, incorrect contracts and repeated OTP/native comparisons
   across O0/O2 with specialization enabled and disabled.
+- `tests/compiler/codegen/measurements.py`: source and synthetic guard cost
+  records, wide-union/high-arity stress and deterministic no-benefit byte equality;
+  timing values are descriptive, never performance thresholds.
 
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
