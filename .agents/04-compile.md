@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-39 complete, 2026-09-29. Steps 40-46 remain pending.
+Status: steps 1-40 complete, 2026-09-29. Steps 41-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1170,4 +1170,6 @@ local/remote inference, recursive aliases, opaque/nominal types, callbacks,
 wrong-spec warnings, unknown inputs and parameter relations, stable source/target
 order, option conflicts and no LLVM phases/files. Renamed the initial types.py
 test to avoid shadowing Python's standard library; the complete final gate passed.
-Current stopping point: step 39 complete; step 40 has not started.
+Step 39 was the previous stopping point; subsequent validation follows.
+
+Step 40 (2026-09-29): Public CLI objects execute in a separately configured Clang harness through the mandatory runtime link target at O0/O2; integer/immediate boundaries, projection and nested calls, ABI rejection, missing-runtime failure and explicit teardown pass. Fresh Windows x64 Debug compiler/runtime build: 95/95 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.

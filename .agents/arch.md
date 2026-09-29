@@ -1,5 +1,10 @@
 # Architecture
 
+- Public CLI object emission is exercised by a separately configured Clang/runtime
+  consumer at O0/O2. It registers both modules, validates ABI rejection, runs
+  decoded integer calls and immediate identity boundaries, and explicitly tears down.
+  Native linking remains test-owned; the consumer must never acquire the LLVM SDK.
+
 - `--impldebug` carries a value-owned set of signed decimal step IDs through
   positional/project frontend requests and private backend requests. Step-specific
   diagnostics query `enabled(step)` independently of ordinary verbosity.

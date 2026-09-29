@@ -1,5 +1,9 @@
 # File map
 
+- `tests/compiler/codegen/native{.cmake,_consumer.cpp}` and
+  `tests/fixtures/codegen/native/`: public CLI object emission, separate Clang
+  linking, real runtime registration/execution/teardown and missing-runtime failure.
+
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
   parsing with atomic merging of repeatable `--impldebug` operands.

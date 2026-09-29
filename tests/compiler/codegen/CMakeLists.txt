@@ -132,3 +132,15 @@ add_test(NAME codegen_inspection COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURREN
 
 add_test(NAME codegen_types COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/type_inspection.py"
     "$<TARGET_FILE:erlang_aot>" "${CMAKE_CURRENT_BINARY_DIR}/types/$<CONFIG>")
+
+if(ERLANG_AOT_BUILD_RUNTIME)
+    foreach(level IN ITEMS O0 O2)
+        add_test(NAME codegen_native_${level} COMMAND "${CMAKE_COMMAND}"
+            "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DOPTIMIZATION=${level}"
+            "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/native-${level}/$<CONFIG>"
+            "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+            "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/native.cmake")
+        set_tests_properties(codegen_native_${level} PROPERTIES TIMEOUT 180)
+    endforeach()
+endif()

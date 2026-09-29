@@ -239,3 +239,5 @@
 - Final step 39 validation: fresh Windows x64 Debug, 93/93 CTests, zero skips,
   full Lizard/clang-tidy over 180 production units, formatting and whitespace pass.
   User-requested stopping point reached; step 40 is not started.
+
+Step 40 (2026-09-29): Public CLI objects execute in a separately configured Clang harness through the mandatory runtime link target at O0/O2; integer/immediate boundaries, projection and nested calls, ABI rejection, missing-runtime failure and explicit teardown pass. Fresh Windows x64 Debug compiler/runtime build: 95/95 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
