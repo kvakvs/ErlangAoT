@@ -433,3 +433,8 @@ Step 31 adds target-aware LLVM PassBuilder O0/O2 pipelines, with verification
 before and after optimization and local analysis-manager lifetimes. Public entries
 and runtime registration remain externally retained. The separate native consumer
 runs the answer/client and identity checks at both optimization levels.
+
+Step 32 uses LLVM assembly and bitcode writers on freshly verified modules.
+Text snapshots own their bytes without altering staged artifacts; failed verification
+discards the batch. SDK assembly/bitcode readers and structural ABI checks validate
+round trips at O0/O2. FileCheck is absent from this installed Windows SDK.

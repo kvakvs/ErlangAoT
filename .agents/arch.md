@@ -284,3 +284,6 @@
 
 - Step 31: target-aware PassBuilder selects LLVM standard O0/O2 pipelines, with
   full batch verification on both sides and per-module analysis lifetimes.
+
+- Step 32: verified assembly snapshots and text/bitcode output own their bytes;
+  serialization uses LLVM writers without adding product readers.

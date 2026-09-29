@@ -309,3 +309,6 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 
 - `codegen/optimization.{hpp,cpp}`: verified standard LLVM PassBuilder O0/O2.
   `tests/compiler/codegen/registration*`: native runtime consumer at both levels.
+
+- `codegen/serialization.{hpp,cpp}`: verified snapshots and assembly/bitcode writers.
+  `tests/compiler/codegen/serialization.cpp`: real-source SDK round trips and invalid-IR rejection.

@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-31 complete, 2026-09-29. Steps 32-46 remain pending.
+Status: steps 1-32 complete, 2026-09-29. Steps 33-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1121,3 +1121,9 @@ Windows x64 evidence; cross-width IR/objects do not claim execution on other hos
 Step 31: fresh Windows x64 Debug build, 85/85 CTests and full Lizard/clang-tidy
 pass. Standard O0/O2 native consumers retain registration, call results and ABI.
 The 2026-09-29 official maint-29 fetch remains at 21776803ecd11f5fa948732c0ec66b8f325dedfc.
+
+Step 32: fresh Windows Debug build, final 86/86 CTests and full Lizard/clang-tidy
+(164 production units) pass. LLVM SDK text/bitcode round trips check public ABI
+structures at O0/O2 and invalidated snapshots. FileCheck is absent from this SDK.
+The initial test supplied unterminated assembly to the SDK reader; corrected.
+Nested consumer tests require the Visual Studio environment, used for the final run.

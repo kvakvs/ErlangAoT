@@ -1,0 +1,68 @@
+#include "serialization.hpp"
+#include "llvm_state.hpp"
+#include "verification.hpp"
+#include <cstring>
+#include <exception>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Support/raw_ostream.h>
+#include <stdexcept>
+
+namespace erlang_aot::codegen {
+namespace {
+// Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
+OutputBuffer serialize(const llvm::Module &module, OutputKind kind) {
+    llvm::SmallVector<char, 0> bytes;
+    llvm::raw_svector_ostream stream(bytes);
+    if (kind == OutputKind::llvm_ir) {
+        module.print(stream, nullptr);
+    } else {
+        llvm::WriteBitcodeToFile(module, stream);
+    }
+    OutputBuffer output{
+        .module_name = module.getModuleIdentifier(), .kind = kind, .bytes = std::vector<std::byte>(bytes.size())};
+    std::memcpy(output.bytes.data(), bytes.data(), bytes.size());
+    return output;
+}
+
+// Verify all modules before capturing any snapshot; failures discard earlier staged artifacts.
+std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, OutputKind kind) {
+    if (!verify_ir(compilation)) {
+        return {};
+    }
+    std::vector<OutputBuffer> outputs;
+    try {
+        for (const auto &module : detail::state(compilation).modules) {
+            outputs.push_back(serialize(*module, kind));
+        }
+    } catch (const std::exception &error) {
+        compilation.result().report({.level = DiagnosticLevel::error,
+                                     .message = "LLVM serialization failed: " + std::string(error.what()),
+                                     .location = {},
+                                     .module_name = {}});
+        return {};
+    }
+    return outputs;
+}
+} // namespace
+
+std::optional<std::vector<OutputBuffer>> snapshot_ir(Compilation &compilation) {
+    return capture(compilation, OutputKind::llvm_ir);
+}
+
+bool emit_ir(Compilation &compilation, OutputKind kind) {
+    if (kind == OutputKind::object) {
+        throw std::invalid_argument("IR serialization requires text or bitcode output");
+    }
+    auto outputs = capture(compilation, kind);
+    if (!outputs) {
+        return false;
+    }
+    compilation.result().discard_outputs();
+    for (auto &output : *outputs) {
+        if (!compilation.result().add_output(std::move(output))) {
+            return false;
+        }
+    }
+    return true;
+}
+} // namespace erlang_aot::codegen
