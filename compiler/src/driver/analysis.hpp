@@ -12,6 +12,5 @@ struct Analysis {
 };
 
 // Run declaration, binding, call, declared-type and inference phases without creating LLVM state.
-bool analyze(std::span<const codegen::CompilationInput> inputs, Analysis &analysis, const ImplementationDebug &debug,
-             const DiagnosticSink &sink);
+bool analyze(const codegen::CompilationRequest &request, Analysis &analysis, const DiagnosticSink &sink);
 } // namespace erlang_aot::cli

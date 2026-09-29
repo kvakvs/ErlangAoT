@@ -2,6 +2,7 @@
 #include "../semantic/capabilities.hpp"
 #include "integer_guards.hpp"
 #include "llvm_state.hpp"
+#include "progress.hpp"
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
 
@@ -61,6 +62,20 @@ void observe(const semantic::Module &module, const semantic::Function &function,
     }
 }
 
+// Explain the policy shortcut without measuring or enumerating specialization profiles.
+void trace_disabled(const Compilation &compilation, std::span<const std::unique_ptr<semantic::Module>> modules) {
+    if (!compilation.request().progress) {
+        return;
+    }
+    for (std::size_t i = 0; i < modules.size(); ++i) {
+        for (const auto &function : modules[i]->functions) {
+            progress(compilation.request(), "specialization", compilation.request().inputs[i].source_path,
+                     utf8(modules[i]->name),
+                     "function=" + function.symbol + " profile=not-planned skipped=disabled-by-policy");
+        }
+    }
+}
+
 // Measure actual generic IR and recognize only checks implemented by the specialization rewriter.
 std::map<std::string, SpecializationInput> measurements(Compilation &compilation,
                                                         std::span<const std::unique_ptr<semantic::Module>> modules) {
@@ -73,7 +88,8 @@ std::map<std::string, SpecializationInput> measurements(Compilation &compilation
                                       function.symbol,
                                       entry.getInstructionCount(),
                                       std::vector<std::size_t>(function.key.arity),
-                                      {}};
+                                      {},
+                                      compilation.request().inputs[i].source_path};
             for (const auto &[check, argument] : integer_guards(entry, function.key.arity)) {
                 (void)check;
                 ++input.checks[argument];
@@ -93,6 +109,7 @@ SpecializationPlan analyze_specializations(Compilation &compilation,
     }
     if (compilation.request().optimization != OptimizationLevel::speed ||
         compilation.request().disable_type_specialization) {
+        trace_disabled(compilation, modules);
         SpecializationPlan disabled;
         disabled.decisions[SpecializationReason::disabled] = 1;
         return disabled;

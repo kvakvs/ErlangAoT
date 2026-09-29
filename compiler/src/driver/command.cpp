@@ -12,7 +12,7 @@ Ahead-of-time compiler for Erlang/OTP 29.
 Options:
   -h, --help           Show this help and exit.
       --version        Show the tool version and exit.
-      --verbose        Trace ingested filenames to stderr with [pp]/[parse] prefixes.
+      --verbose        Trace inputs and compilation phases to stderr with [pp]/[parse]/[comp].
       --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
   -o, --output <path>  Set the future executable output path (default: a.out).
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).

@@ -2,6 +2,7 @@
 #include "llvm_state.hpp"
 #include "lowering_expressions.hpp"
 #include "module_registration.hpp"
+#include "progress.hpp"
 #include "specialization_analysis.hpp"
 #include "specialization_lowering.hpp"
 #include "target.hpp"
@@ -75,16 +76,23 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
         auto &outputs = detail::state(compilation).modules;
         auto *word = llvm::cast<llvm::IntegerType>(signature->getReturnType());
         for (std::size_t i = 0; i < modules.size(); ++i) {
+            progress(compilation.request(), "lowering", compilation.request().inputs[i].source_path,
+                     utf8(modules[i]->name));
             declare(*outputs[i], *modules[i], signature, inferred);
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
             define(*outputs[i], *modules[i], word, inferred);
             emit_registration(*outputs[i], *modules[i], word);
         }
+        progress_modules(compilation, "specialization");
         detail::state(compilation).specializations = analyze_specializations(compilation, modules, inferred);
         for (auto &output : outputs) {
             lower_specializations(*output, detail::state(compilation).specializations);
         }
+        const auto &plan = detail::state(compilation).specializations;
+        progress_modules(compilation, "specialization",
+                         "batch installed=" + std::to_string(plan.lowered_variants) +
+                             " skipped-measured-growth=" + std::to_string(plan.rejected_variants));
         return verify_ir(compilation);
     } catch (const std::exception &error) {
         compilation.result().report(

@@ -25,6 +25,8 @@ struct SpecializationInput {
     std::vector<std::size_t> checks;
     // Retain observed implementation profiles only; never enumerate unions or literal values.
     std::vector<TypeProfile> profiles;
+    // Preserve the owning source for optional per-profile decision tracing.
+    std::filesystem::path source_path = {};
 };
 
 struct SpecializationCandidate {

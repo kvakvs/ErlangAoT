@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-36 complete, 2026-09-29. Steps 37-46 remain pending.
+Status: steps 1-37 complete, 2026-09-29. Steps 38-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1150,3 +1150,9 @@ macro isolation, within-target remote calls, encoded roots, reserved TOML output
 cross-target call rejection and no publication when a later selected target fails.
 The transitional optional backend policy was removed after the analyzer identified
 an unchecked helper access; both input modes now always provide backend policy.
+
+Step 37: fresh Windows Debug build, 91/91 CTests and full Lizard/clang-tidy
+(176 production units) pass. CLI checks cover phase ordering, opt-in behavior,
+source/target context, Unicode/control escaping, early failures, frontend-only modes
+and identical emitted bytes. Focused planner tests observe acceptance and all bounded
+rejection reasons. Existing verbose expectations now include the intended [comp] events.

@@ -118,3 +118,6 @@ add_test(NAME codegen_positional COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FIL
 
 add_test(NAME codegen_project COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/project/$<CONFIG>" -P "${CMAKE_CURRENT_SOURCE_DIR}/project.cmake")
+
+add_test(NAME codegen_progress COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
+    "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/progress/$<CONFIG>" -P "${CMAKE_CURRENT_SOURCE_DIR}/progress.cmake")

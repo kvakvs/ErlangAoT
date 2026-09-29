@@ -185,13 +185,13 @@ set(include_trace "\\[pp\\] [^\n]*outer.hrl\n\\[pp\\] [^\n]*inner.hrl\n\\[pp\\] 
 check_cli(verbose_help 0 "--verbose" "^$" --verbose --help)
 check_cli(verbose_version 0 "^erlangaot" "^$" --verbose --version)
 check_cli(verbose_no_inputs 2 "^$" "no input files" --verbose)
-check_cli(verbose_default 1 "^$" "^${pp_trace}${parse_trace}${include_trace}error:.*atom expressions" --verbose --app-dir demo=app trace.erl)
+check_cli(verbose_default 1 "^$" "^${pp_trace}${parse_trace}${include_trace}\\[comp\\] [^\n]*phase=analysis[^\n]*\nerror:.*atom expressions" --verbose --app-dir demo=app trace.erl)
 check_cli(verbose_pp_only 0 "^$" "^${pp_trace}${include_trace}$" --verbose --preprocess-check --app-dir demo=app trace.erl)
 check_cli(verbose_parse 0 "^$" "^${pp_trace}${parse_trace}${include_trace}$" --verbose --parse-check --app-dir demo=app trace.erl)
 check_cli(verbose_print_pp 0 "^- file .*f [(] [)] -> true [.]\n$" "^${pp_trace}${include_trace}$"
     --verbose --print-pp --app-dir demo=app trace.erl)
 check_cli(verbose_print_ast 0 "^\\(Module .*Atom name=true\\)\n    \\)\n  \\)\n\\)\n$" "^${pp_trace}${parse_trace}${include_trace}$"
     --verbose --print-ast --app-dir demo=app trace.erl)
-check_cli(verbose_multiple 0 "^$" "^\\[pp\\] first.erl\n\\[parse\\] first.erl\n\\[pp\\] second.erl\n\\[parse\\] second.erl\n$"
+check_cli(verbose_multiple 0 "^$" "^\\[pp\\] first.erl\n\\[parse\\] first.erl\n\\[pp\\] second.erl\n\\[parse\\] second.erl\n\\[comp\\].*phase=emission module=\"second\"\n$"
     --verbose first.erl second.erl)
 check_cli(verbose_opt_in 1 "^$" "^error:.*atom expressions" --app-dir demo=app trace.erl)

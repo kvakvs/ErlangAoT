@@ -465,3 +465,10 @@ artifact roots are manifest-relative `build/aot/<encoded-target>`; explicit root
 are invocation-relative and append the same target component. TOML executable
 outputs do not redirect artifacts. All selected targets must compile successfully
 before publication begins, and source/manifest aliases are protected across targets.
+
+Step 37 extends `--verbose` with `[comp]` events on stderr. Events retain original
+source paths, known module names, project targets and phase order; controls and
+delimiters are escaped. Analysis/inference, lowering, specialization decisions,
+verification, optimization and emission are reported only when started. Profile
+displays are bounded, and disabled/no-benefit/work/growth/variant-limit decisions
+are explicit. Frontend-only and informational actions do not produce backend traces.

@@ -62,7 +62,7 @@ check(impldebug_project_target 0 "^$" "\\[target tests\\]: \\[impldebug 23\\].*r
 check(impldebug_project_other_step 0 "^$" "^$" --project project.toml --impldebug 99)
 check(impldebug_project_invalid 2 "^$" "--impldebug expects decimal integers" --project project.toml --impldebug 23,bad)
 check(default_output 0 "^$" "^$" --project project.toml --target app -o sentinel)
-check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n$"
+check(verbose_project 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n\\[parse\\] [^\n]*shared.erl\n\\[comp\\].*phase=emission.*target=\"tests\""
     --verbose --project project --target tests)
 check(verbose_project_pp 0 "^$" "^\\[pp\\] [^\n]*shared.erl\n$"
     --verbose --project project.toml --target app --preprocess-check)

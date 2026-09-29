@@ -1,4 +1,5 @@
 #include "specialization.hpp"
+#include "specialization_trace.hpp"
 #include <algorithm>
 #include <set>
 #include <tuple>
@@ -49,13 +50,14 @@ bool consume(std::size_t cost, WorkBudget &budget) {
 }
 
 // Charge each observed profile before inspecting it; exhaustion preserves the generic body.
-std::set<TypeProfile> profiles(const SpecializationInput &input, SpecializationPlan &plan) {
+std::set<TypeProfile> profiles(const SpecializationInput &input, SpecializationPlan &plan,
+                               const CompilationRequest &request) {
     std::set<TypeProfile> result;
     WorkBudget work{input.baseline, input.baseline};
     for (const auto &observed : input.profiles) {
         const auto cost = observed.size() + 1;
         if (!consume(cost, work)) {
-            ++plan.decisions[SpecializationReason::work_limit];
+            record_decision(request, plan, input, observed, SpecializationReason::work_limit);
             break;
         }
         if (observed.size() != input.checks.size()) {
@@ -63,9 +65,9 @@ std::set<TypeProfile> profiles(const SpecializationInput &input, SpecializationP
         }
         auto profile = observed;
         if (canonicalize(profile, input) == 0) {
-            ++plan.decisions[SpecializationReason::no_benefit];
-        } else if (!result.insert(std::move(profile)).second) {
-            ++plan.decisions[SpecializationReason::duplicate];
+            record_decision(request, plan, input, profile, SpecializationReason::no_benefit);
+        } else if (!result.insert(profile).second) {
+            record_decision(request, plan, input, profile, SpecializationReason::duplicate);
         }
     }
     return result;
@@ -79,23 +81,27 @@ std::size_t estimate(const SpecializationInput &input, TypeProfile profile) {
 }
 
 // Admit only useful profiles whose estimated whole-function and whole-module growth both fit.
-void select(const SpecializationInput &input, Budget &module, SpecializationPlan &plan) {
+void select(const SpecializationInput &input, Budget &module, SpecializationPlan &plan,
+            const CompilationRequest &request) {
+    if (input.profiles.empty()) {
+        record_decision(request, plan, input, {}, SpecializationReason::no_benefit);
+    }
     Budget function{input.baseline, 0};
-    for (const auto &profile : profiles(input, plan)) {
+    for (const auto &profile : profiles(input, plan, request)) {
         if (function.variants == 3 || module.variants == 32 || plan.candidates.size() == 128) {
-            ++plan.decisions[SpecializationReason::variant_limit];
+            record_decision(request, plan, input, profile, SpecializationReason::variant_limit);
             break;
         }
         const auto growth = estimate(input, profile);
         if (growth > function.remaining || growth > module.remaining) {
-            ++plan.decisions[SpecializationReason::growth_limit];
+            record_decision(request, plan, input, profile, SpecializationReason::growth_limit);
             continue;
         }
         function.remaining -= growth;
         module.remaining -= growth;
         ++function.variants;
         ++module.variants;
-        ++plan.decisions[SpecializationReason::accepted];
+        record_decision(request, plan, input, profile, SpecializationReason::accepted);
         plan.candidates.push_back({input.module, input.symbol, profile, growth});
     }
 }
@@ -105,7 +111,9 @@ SpecializationPlan plan_specializations(const CompilationRequest &request,
                                         std::span<const SpecializationInput> inputs) {
     SpecializationPlan result;
     if (request.optimization != OptimizationLevel::speed || request.disable_type_specialization) {
-        result.decisions[SpecializationReason::disabled] = inputs.size();
+        for (const auto &input : inputs) {
+            record_decision(request, result, input, {}, SpecializationReason::disabled);
+        }
         return result;
     }
     std::vector<const SpecializationInput *> ordered;
@@ -118,7 +126,7 @@ SpecializationPlan plan_specializations(const CompilationRequest &request,
         return std::tie(left->module, left->symbol) < std::tie(right->module, right->symbol);
     });
     for (const auto *input : ordered) {
-        select(*input, modules.at(input->module), result);
+        select(*input, modules.at(input->module), result, request);
     }
     return result;
 }

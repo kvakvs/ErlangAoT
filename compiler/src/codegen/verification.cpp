@@ -1,5 +1,6 @@
 #include "verification.hpp"
 #include "llvm_state.hpp"
+#include "progress.hpp"
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
 #include <string>
@@ -68,7 +69,9 @@ bool verify_ir(Compilation &compilation) {
                              .module_name = {}});
         return false;
     }
+    std::size_t index = 0;
     for (const auto &module : state.modules) {
+        progress_module(compilation, index++, "verification");
         if (!verify_target(*module, *state.target_machine, state.result) || !verify_module(*module, state.result)) {
             return false;
         }

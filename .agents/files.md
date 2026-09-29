@@ -327,3 +327,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `driver/project_backend.cpp`: target options, root isolation and deferred publication.
   `driver/publication.{hpp,cpp}`: owned completed results and protected input paths.
   `tests/compiler/codegen/project.cmake`: real multi-target artifacts, macro isolation and failure preservation.
+
+- `codegen/progress.*` and `driver/{progress,display}.*`: shared phase events and safe rendering.
+  `codegen/specialization_trace.*`: bounded profile/decision reporting.
+  `tests/compiler/codegen/progress.cmake`: ordering, opt-in, control escaping and artifact equivalence.

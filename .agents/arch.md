@@ -302,3 +302,7 @@
 - Step 36: project execution passes full target/invocation context to the shared
   frontend/backend. Each target owns an independent batch and encoded artifact root;
   complete serialized results wait in a driver queue until all selected targets succeed.
+
+- Step 37: an optional synchronous backend observer reports only started phases.
+  Driver rendering escapes user names and writes [comp] events to stderr; bounded
+  specialization profiles retain concrete policy/benefit/budget reasons.

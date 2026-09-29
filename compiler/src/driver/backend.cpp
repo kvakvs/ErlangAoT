@@ -5,6 +5,7 @@
 #include "../codegen/serialization.hpp"
 #include "../codegen/target.hpp"
 #include "analysis.hpp"
+#include "progress.hpp"
 #include "publication.hpp"
 
 namespace erlang_aot::cli {
@@ -16,6 +17,7 @@ codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInpu
     request.inputs = std::move(inputs);
     request.implementation_debug = frontend.implementation_debug;
     request.project_target = frontend.project_target;
+    request.progress = progress_callback(frontend);
     const auto &options = frontend.backend;
     request.target_triple = options.target_triple;
     request.optimization = options.optimization.value_or(codegen::OptimizationLevel::none);
@@ -75,7 +77,7 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
              const DiagnosticSink &sink) {
     auto request = backend_request(std::move(inputs), frontend);
     Analysis analysis;
-    if (!analyze(request.inputs, analysis, request.implementation_debug, sink)) {
+    if (!analyze(request, analysis, sink)) {
         return true;
     }
     codegen::Compilation compilation(std::move(request));

@@ -77,12 +77,36 @@ void real_sources() {
     require(cg::detail::state(exhausted).specializations.candidates.empty(), "missing facts became proofs");
 }
 
+// Observe acceptance and each bounded rejection reason without enabling unsupported source guards.
+void trace_profiles() {
+    cg::CompilationRequest request;
+    std::string events;
+    request.progress = [&](const cg::CompilationProgress &event) { events += event.detail + "\n"; };
+    std::vector inputs{useful("module", "function")};
+    (void)cg::plan_specializations(request, inputs);
+    request.optimization = cg::OptimizationLevel::speed;
+    (void)cg::plan_specializations(request, inputs);
+    inputs.front().checks.assign(4, 1);
+    (void)cg::plan_specializations(request, inputs);
+    inputs.front() = useful("module", "function");
+    const auto repeated = inputs.front().profiles.front();
+    inputs.front().profiles.assign(5000, repeated);
+    (void)cg::plan_specializations(request, inputs);
+    inputs.front().checks.assign(4, 0);
+    (void)cg::plan_specializations(request, inputs);
+    for (const auto *reason : {"accepted-benefit", "disabled-by-policy", "variant-limit", "growth-limit", "work-limit",
+                               "duplicate-profile", "no-benefit"}) {
+        require(events.find(reason) != std::string::npos, "specialization decision lost its reason");
+    }
+}
+
 // Validate the policy layer and real inference boundary without requiring future source operations.
 int main() {
     try {
         budgets();
         policies();
         real_sources();
+        trace_profiles();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

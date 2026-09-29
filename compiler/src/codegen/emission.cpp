@@ -1,5 +1,6 @@
 #include "emission.hpp"
 #include "llvm_state.hpp"
+#include "progress.hpp"
 #include "verification.hpp"
 #include <cstring>
 #include <exception>
@@ -49,7 +50,9 @@ bool emit_objects(Compilation &compilation) {
     }
     auto &state = detail::state(compilation);
     state.result.discard_outputs();
+    std::size_t index = 0;
     for (const auto &module : state.modules) {
+        progress_module(compilation, index++, "emission");
         try {
             if (!emit_module(state, *module)) {
                 return false;

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,17 @@ struct CompilationInput {
     ast::Module syntax;
 };
 
+struct CompilationProgress {
+    // Own one synchronous event's phase and original source/module context.
+    std::string phase;
+    std::filesystem::path source_path;
+    std::string module_name;
+    // Explain specialization policy or phase details without exposing LLVM objects.
+    std::string detail;
+};
+
+using ProgressCallback = std::function<void(const CompilationProgress &)>;
+
 struct CompilationRequest {
     // Create an empty batch, then transfer it as a single owner into compilation.
     CompilationRequest() = default;
@@ -39,6 +51,8 @@ struct CompilationRequest {
     std::vector<CompilationInput> inputs;
     // Attach project diagnostic context without interpreting it as a machine target.
     std::string project_target;
+    // Observe only started phases; absent observers keep ordinary compilation silent.
+    ProgressCallback progress;
     // Carry opt-in implementation-step diagnostics without coupling them to ordinary tracing.
     ImplementationDebug implementation_debug;
     // Select a normalized LLVM triple; empty prefers the running host's triple, CPU and features.

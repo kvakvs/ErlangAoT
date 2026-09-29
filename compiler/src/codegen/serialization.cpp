@@ -1,5 +1,6 @@
 #include "serialization.hpp"
 #include "llvm_state.hpp"
+#include "progress.hpp"
 #include "verification.hpp"
 #include <cstring>
 #include <exception>
@@ -25,13 +26,18 @@ OutputBuffer serialize(const llvm::Module &module, OutputKind kind) {
 }
 
 // Verify all modules before capturing any snapshot; failures discard earlier staged artifacts.
-std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, OutputKind kind) {
+std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, OutputKind kind, bool artifact) {
     if (!verify_ir(compilation)) {
         return {};
     }
     std::vector<OutputBuffer> outputs;
     try {
+        std::size_t index = 0;
         for (const auto &module : detail::state(compilation).modules) {
+            if (artifact) {
+                progress_module(compilation, index, "emission");
+            }
+            ++index;
             outputs.push_back(serialize(*module, kind));
         }
     } catch (const std::exception &error) {
@@ -46,14 +52,14 @@ std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, Outpu
 } // namespace
 
 std::optional<std::vector<OutputBuffer>> snapshot_ir(Compilation &compilation) {
-    return capture(compilation, OutputKind::llvm_ir);
+    return capture(compilation, OutputKind::llvm_ir, false);
 }
 
 bool emit_ir(Compilation &compilation, OutputKind kind) {
     if (kind == OutputKind::object) {
         throw std::invalid_argument("IR serialization requires text or bitcode output");
     }
-    auto outputs = capture(compilation, kind);
+    auto outputs = capture(compilation, kind, true);
     if (!outputs) {
         return false;
     }
