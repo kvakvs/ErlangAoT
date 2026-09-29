@@ -143,4 +143,9 @@ if(ERLANG_AOT_BUILD_RUNTIME)
             -P "${CMAKE_CURRENT_SOURCE_DIR}/native.cmake")
         set_tests_properties(codegen_native_${level} PROPERTIES TIMEOUT 180)
     endforeach()
+    add_test(NAME codegen_differential COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/differential.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"
+        "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/differential/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+    set_tests_properties(codegen_differential PROPERTIES TIMEOUT 240)
 endif()

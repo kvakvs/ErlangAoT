@@ -3,6 +3,9 @@
 - `tests/compiler/codegen/native{.cmake,_consumer.cpp}` and
   `tests/fixtures/codegen/native/`: public CLI object emission, separate Clang
   linking, real runtime registration/execution/teardown and missing-runtime failure.
+- `tests/compiler/codegen/{differential.py,execution_oracle.escript}`: seeded bounded
+  nested calls, paired specs, incorrect contracts and repeated OTP/native comparisons
+  across O0/O2 with specialization enabled and disabled.
 
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
