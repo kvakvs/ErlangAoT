@@ -64,6 +64,7 @@ int run_project(const Options &options) {
                                 options.implementation_debug,
                                 target_options(options, invocation, target)};
         request.project_target = target.name;
+        request.executable_requested = options.output_explicit;
         request.multiple_targets = invocation.targets.size() > 1;
         request.protected_inputs = protected_inputs(invocation);
         request.pending_publications = &pending;

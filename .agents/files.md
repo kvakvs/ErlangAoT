@@ -12,6 +12,9 @@
 - `tests/compiler/codegen/cross_targets.py`: public CLI ELF/Mach-O/COFF matrix,
   SDK readobj/nm architecture/symbol inspection, target-width limits and unavailable
   backend failures; emitted foreign objects are never executed.
+- `tests/compiler/codegen/placeholders.py`: catalog-complete compiler capability
+  audit through both CLI modes and verbosity/optimization policies; explicit
+  executable requests reach the driver-owned deferred-linking diagnostic.
 
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI

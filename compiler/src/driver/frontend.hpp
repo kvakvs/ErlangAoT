@@ -31,6 +31,8 @@ struct FrontendRequest {
     std::vector<Publication> *pending_publications = nullptr;
     // Preserve unambiguous inspection headers across independently processed project targets.
     bool multiple_targets = false;
+    // Distinguish an explicit executable request from default in-memory compilation.
+    bool executable_requested = false;
 };
 
 // Process one isolated batch; project targets never share declaration tables.

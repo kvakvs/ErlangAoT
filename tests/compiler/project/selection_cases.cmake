@@ -37,7 +37,7 @@ output='same'
 check(output_collision 1 "^$" "output" --project collision.toml)
 check(frontend_ignores_outputs 0 "value=7.*value=7" "^$"
     --project collision.toml --print-ast -DVALUE=7)
-check(single_output_override 0 "^$" "^$" --project collision.toml --target app --target app -o requested -DVALUE=7)
+check(single_output_override 1 "^$" "executable linking.*notimpl" --project collision.toml --target app --target app -o requested -DVALUE=7)
 if(EXISTS "${TEST_DIR}/out" OR EXISTS "${TEST_DIR}/requested" OR EXISTS "${TEST_DIR}/same")
     message(FATAL_ERROR "Planning created output destinations")
 endif()

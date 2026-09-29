@@ -38,7 +38,7 @@ Checks do not validate semantics or run parse transforms.
 With no check/print action, source batches compile to verified objects in memory.
 Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
 Compilation switches conflict with frontend check/print actions and --new-project.
---emit conflicts with explicit --output; --output remains reserved for executables.
+--emit conflicts with explicit --output; --output reports [executable linking] notimpl.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.
 Type inspection accepts preprocessing/project/verbosity options; it rejects other actions and backend policy.
 Type reports describe conservative analysis and are not an intermediate stage input format.

@@ -4,6 +4,10 @@
   consumer at O0/O2. It registers both modules, validates ABI rejection, runs
   decoded integer calls and immediate identity boundaries, and explicitly tears down.
   Native linking remains test-owned; the consumer must never acquire the LLVM SDK.
+- Explicit `--output` requests fail through the executable-linking feature owner
+  after successful semantic analysis. Default in-memory compilation and artifact
+  emission remain supported. Native consumers propagate reached allocation failure
+  while preserving subsequent generated calls and orderly teardown.
 
 - `--impldebug` carries a value-owned set of signed decimal step IDs through
   positional/project frontend requests and private backend requests. Step-specific

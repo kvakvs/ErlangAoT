@@ -133,6 +133,10 @@ add_test(NAME codegen_cross_targets COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CUR
     "$<TARGET_FILE:erlang_aot>" "${ERLANG_AOT_LLVM_READOBJ}" "${ERLANG_AOT_LLVM_NM}"
     "${CMAKE_CURRENT_BINARY_DIR}/cross-targets/$<CONFIG>" "${backend_list}")
 set_tests_properties(codegen_cross_targets PROPERTIES TIMEOUT 120)
+add_test(NAME codegen_placeholders COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/placeholders.py"
+    "$<TARGET_FILE:erlang_aot>" "${CMAKE_CURRENT_BINARY_DIR}/placeholders/$<CONFIG>"
+    "${PROJECT_SOURCE_DIR}/abi/include/erlang_aot/abi/features.hpp")
+set_tests_properties(codegen_placeholders PROPERTIES TIMEOUT 120)
 add_test(NAME codegen_inspection COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/inspection.py"
     "$<TARGET_FILE:erlang_aot>" "${ERLANG_AOT_LLVM_AS}" "${ERLANG_AOT_LLVM_DIS}"
     "${CMAKE_CURRENT_BINARY_DIR}/inspection/$<CONFIG>" "${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")

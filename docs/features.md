@@ -1,9 +1,8 @@
 # Deferred-feature reporting
 
-Compilation-plan step 8 defines the reporting contract. It does not install
-capability checks, deferred runtime services or executable linking. Those handlers
-arrive at their owning steps; ordinary CLI parsing and existing diagnostics retain
-their behavior.
+The feature catalog separates supported generic fallback from deferred semantics.
+Capability checks, reached runtime service failures and explicit executable-output
+requests use this reporting contract; ordinary invalid input retains ordinary errors.
 
 The canonical [feature catalog](../abi/include/erlang_aot/abi/features.hpp) assigns
 explicit, non-recycled IDs and stable diagnostic names. Each entry records its
@@ -12,8 +11,11 @@ focused reporting test. `abi_features` checks the ID/name compatibility snapshot
 `codegen_features` covers compiler reporting; `runtime_service_output` and
 `runtime_feature_output` cover runtime service diagnostics and escaped context.
 `runtime_features` retains sink refusal/exception and invalid-ID injection.
-These are reporting-contract tests, not evidence that the future source/service
-handlers have been installed. Step 11 additionally installs the
+`codegen_placeholders` now audits every compiler-owned catalog entry through real
+positional and project CLI calls at O0/O2, with and without verbosity. It verifies
+exact markers, source/module/target context, nonzero exit, clean stdout and preserved
+outputs. The catalog test references identify the actual owner workflows.
+Step 11 additionally installs the
 [builtin dispatch boundary](runtime-builtins.md). Step 14 installs
 [runtime service placeholders](runtime-services.md) and distinguishes unknown BIFs
 from explicitly known deferred signatures. Unavailable services report once; normal
@@ -29,7 +31,7 @@ registration and calls stay silent. Direct and subprocess tests exercise these o
 | Runtime processes | [ProcessContext::send](../runtime/include/erlang_aot/runtime/process_context.hpp), [SchedulerService::run/execute](../runtime/include/erlang_aot/runtime/scheduler.hpp) | Step 14 reports execution/send attempts without invoking code or changing lifecycle state |
 | Runtime memory | [ProcessHeap::allocate/collect](../runtime/include/process_heap.hpp), reserved [AtomStorage::collect](../runtime/include/atom_storage.hpp) | Step 14 reports heap service attempts; atom collection awaits an implemented table owner |
 | Runtime modules | [CodeServer](../runtime/include/code_server.hpp) unload boundary | Step 14 reports deferred unload; linked native registration stays supported; dynamic-image/descriptor loading awaits its ABI |
-| Driver | Final executable output after the [frontend handoff](../compiler/src/driver/frontend.cpp) | Step 35 integrates the batch; executable linking remains reserved and must be diagnosed only when actually requested |
+| Driver | Final executable output after the [frontend handoff](../compiler/src/driver/frontend.cpp) | Explicit `--output` reaches the deferred-linking owner after semantic analysis; default in-memory compilation stays supported |
 
 There are no synthetic subsystem implementations behind these entries. The
 catalog's step number identifies a relevant boundary/integration step, not a
@@ -96,7 +98,7 @@ context, escaped control bytes, invalid IDs, artifact invalidation, failure
 propagation and both throwing/nonthrowing sink failures. Subprocess tests capture
 real stdout/stderr and assert one report with a nonzero exit, plus silence for an
 unused reporter. Runtime-only builds exercise reporting without LLVM. Capability
-selection and native foreign-platform execution remain later work. Step 14 adds
+selection is covered by CLI workflows; native foreign-platform execution remains pending. Step 14 adds
 [direct runtime service tests](runtime-services.md), including state preservation,
 known/unknown BIFs and once-only reporting through nested service wrappers.
 
@@ -107,7 +109,16 @@ semantic capability analysis, including unused functions. Shared compiler IDs24/
 name send expressions and expression sequences; runtime message passing retains
 its existing ID. Concrete defensive lowering entry points reject heap values,
 dynamic calls, closures, exceptions, receive, send and sequences and clear staged
-artifacts even if capability analysis was bypassed. Future driver publication must
-require a successful CompilationResult before writing any artifact. Executable
-linking will use the existing catalog boundary when the driver reaches that stage;
-these hooks do not implement lowering, linking or runtime services.
+artifacts even if capability analysis was bypassed. Driver publication requires a successful CompilationResult before writing any
+artifact. An explicit `--output` request fails with `[executable linking] notimpl`;
+manifest output fields remain reserved metadata. No production linker is invoked.
+The native O0/O2 consumer additionally reaches real allocation failure, verifies
+its exact once-only stderr message, runs generated calls with unchanged heap
+accounting, tears down explicitly and exits nonzero. Ordinary runs remain silent.
+
+Atom collection is the sole runtime catalog reservation without a constructible
+service owner: atom storage and registration bindings are still deferred. Its
+reporter test validates the message contract only, and claims no collection path.
+Other runtime entries are exercised by `runtime_services`/`runtime_service_output`:
+TermFactory, BIF bridge, send, scheduler run/execute, allocation/GC and unload.
+Allocation/sink/invalid-IR injections remain deliberate coverage exceptions.

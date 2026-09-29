@@ -134,9 +134,9 @@ bool process_files(std::span<const std::filesystem::path> paths, const FrontendR
 
 // Preserve positional order and warning-only success using the same per-file operation.
 int process_inputs(const Options &options) {
-    const FrontendRequest request{
-        options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
-        options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
+    FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
+                            options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
+    request.executable_requested = options.output_explicit;
     const DiagnosticSink sink = [](const std::string_view message) { std::cerr << message << '\n'; };
     return process_files(options.inputs, request, sink) ? 1 : 0;
 }

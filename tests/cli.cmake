@@ -53,13 +53,13 @@ file(WRITE "${TEST_DIR}/-source.erl" "-module(example).\n")
 
 set(output "${TEST_DIR}/output file")
 file(REMOVE "${output}")
-check_cli(no_output_created 0 "^$" "^$"
+check_cli(no_output_created 1 "^$" "executable linking.*notimpl"
     --output "${output}" "source with spaces.erl")
 if(EXISTS "${output}")
     message(FATAL_ERROR "Default pipeline created an output file")
 endif()
 file(WRITE "${output}" "preserve existing output\n")
-check_cli(no_output_overwritten 0 "^$" "^$"
+check_cli(no_output_overwritten 1 "^$" "executable linking.*notimpl"
     -o "${output}" "source with spaces.erl")
 file(READ "${output}" contents)
 if(NOT contents STREQUAL "preserve existing output\n")

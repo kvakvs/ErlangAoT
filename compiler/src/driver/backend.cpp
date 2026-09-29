@@ -9,6 +9,7 @@
 #include "progress.hpp"
 #include "publication.hpp"
 #include "type_report.hpp"
+#include <erlang_aot/abi/feature_diagnostic.hpp>
 
 namespace erlang_aot::cli {
 namespace {
@@ -91,6 +92,11 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
     auto request = backend_request(std::move(inputs), frontend);
     Analysis analysis;
     if (!analyze(request, analysis, sink)) {
+        return true;
+    }
+    if (frontend.executable_requested) {
+        sink("error: " + abi::v1::format_feature_failure(abi::v1::FeatureId::executable_linking,
+                                                         {.target = request.project_target, .operation = "link"}));
         return true;
     }
     if (frontend.backend.print_types) {

@@ -54,6 +54,14 @@ foreach(repeat RANGE 1 2)
         message(FATAL_ERROR "Native execution ${repeat}: ${result}\nExpected:\n${expected}\nActual:\n${output}\n${errors}")
     endif()
 endforeach()
+execute_process(COMMAND "${TEST_DIR}/build/bin/${HOST_CONFIG}/linked${HOST_SUFFIX}" --deferred-allocation
+    INPUT_FILE "${INPUT_ROOT}/calls.txt" RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 30)
+string(REPLACE "\r\n" "\n" output "${output}")
+string(REPLACE "\r\n" "\n" errors "${errors}")
+if(NOT result STREQUAL "1" OR NOT output STREQUAL expected OR
+        NOT errors STREQUAL "[allocation] notimpl [operation=\"ProcessHeap::allocate\"]\n")
+    message(FATAL_ERROR "Deferred allocation did not fail cleanly before generated execution/teardown: ${result}: ${output}${errors}")
+endif()
 execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/build" --config "${HOST_CONFIG}" --target unlinked
     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors)
 if(result STREQUAL "0" OR NOT "${output}${errors}" MATCHES "erlang_aot_register_module_v1")

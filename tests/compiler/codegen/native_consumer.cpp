@@ -1,6 +1,7 @@
 #include <array>
 #include <erlang_aot/runtime/modules.hpp>
 #include <iostream>
+#include <process_heap.hpp>
 #include <string>
 #include <vector>
 
@@ -67,20 +68,29 @@ bool calls(Runtime &runtime, ProcessContext &context) {
     }
     return std::cin.eof();
 }
+
+// Preserve generated calls and explicit teardown even when a reached service returns deferred failure.
+int execute(Runtime &runtime, bool deferred) {
+    auto *context = runtime.create_context().value();
+    if (deferred && (context->heap().allocate(1) != std::unexpected(HeapError::not_implemented) ||
+                     context->heap().used_words() != 0 || context->heap().capacity_words() != 0)) {
+        return 4;
+    }
+    const bool success = identity_boundaries(runtime, *context) && calls(runtime, *context);
+    if (runtime.destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
+        runtime.shutdown() != erlang_aot::abi::v1::Status::ok) {
+        return 2;
+    }
+    return success ? static_cast<int>(deferred) : 3;
+}
 } // namespace
 
-// Own explicit startup, registration, context execution and teardown around real CLI-generated objects.
-int main() {
+// Own explicit startup and registration around real CLI-generated objects.
+int main(int argc, char **argv) {
     using namespace erlang_aot::runtime;
     auto runtime = Runtime::start().value();
     if (!rejects_incompatible(*runtime) || register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;
     }
-    auto *context = runtime->create_context().value();
-    const bool success = identity_boundaries(*runtime, *context) && calls(*runtime, *context);
-    if (runtime->destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
-        runtime->shutdown() != erlang_aot::abi::v1::Status::ok) {
-        return 2;
-    }
-    return success ? 0 : 3;
+    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-allocation");
 }
