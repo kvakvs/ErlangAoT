@@ -1,0 +1,85 @@
+"""Inspect CLI-produced foreign objects with LLVM tools; never execute them."""
+import pathlib
+import subprocess
+import sys
+from differential import run
+
+
+def rejected(tool, source, root, triple, reason):
+    """Require a useful target error and no artifact publication."""
+    result = subprocess.run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(root),
+                             str(source)], capture_output=True, text=True, timeout=30)
+    assert result.returncode == 1 and reason in result.stderr and not result.stdout, result
+    assert not root.exists(), f"failed target published {root}"
+
+
+def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
+    """Compare target headers, native symbol surfaces, immediate tags and descriptors."""
+    minimum, maximum = -(1 << (bits - 5)), (1 << (bits - 5)) - 1
+    answer = work / "answer.erl"
+    client = work / "client.erl"
+    answer.write_text(f"-module(answer). -export([value/0, identity/1, minimum/0, maximum/0]).\n"
+                      f"value() -> 42. identity(X) -> X. minimum() -> {minimum}. maximum() -> {maximum}.\n",
+                      encoding="utf-8")
+    client.write_text("-module(client). -export([value/0]). value() -> answer:identity(answer:value()).\n",
+                      encoding="utf-8")
+    extension = ".obj" if format_name == "COFF" else ".o"
+    for level in ["-O0", "-O2"]:
+        root = work / triple / level
+        for kind in ["obj", "llvm-ir"]:
+            run([tool, "--target-triple", triple, level, "--emit", kind, "--artifact-dir", str(root / kind),
+                 str(answer), str(client)])
+        objects = sorted((root / "obj").iterdir())
+        assert len(objects) == 2 and all(p.suffix == extension for p in objects)
+        reports = []
+        for path in objects:
+            headers = run([readobj, "--file-headers", "--symbols", str(path)]).stdout
+            assert f"Format: {format_name}" in headers, headers
+            assert f"Arch: {architecture}\n" in headers, headers
+            assert f"AddressSize: {bits}bit" in headers, headers
+            imports = run([nm, "--undefined-only", str(path)]).stdout
+            exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
+            assert "erlang_aot_register_module_v1" in imports, imports
+            assert ".register" in exports and "eav1_" in exports, exports
+            reports.append(headers + imports + exports)
+            if "636c69656e74" in path.name:
+                assert "eav1_616e73776572_76616c7565_0" in imports, imports
+                assert "eav1_616e73776572_6964656e74697479_1" in imports, imports
+        (root / "inspection.txt").write_text("\n".join(reports), encoding="utf-8")
+        ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
+        assert f"ret i{bits} {minimum * 16 + 15}" in ir, ir
+        assert f"ret i{bits} {maximum * 16 + 15}" in ir, ir
+        assert f"i32 1, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+    answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
+    rejected(tool, answer, work / triple / "overflow", triple,
+             "representable integer literal" if bits == 32 else "bignum expressions")
+
+
+def main():
+    """Cover each supported backend and preserve explicit unavailable-backend diagnostics."""
+    tool, readobj, nm, directory, backends = sys.argv[1:]
+    work = pathlib.Path(directory)
+    work.mkdir(parents=True, exist_ok=True)
+    targets = [
+        ("X86", "i686-unknown-linux-gnu", 32, "elf", "i386"),
+        ("X86", "x86_64-unknown-linux-gnu", 64, "elf", "x86_64"),
+        ("ARM", "armv7-unknown-linux-gnueabihf", 32, "elf", "arm"),
+        ("AArch64", "aarch64-unknown-linux-gnu", 64, "elf", "aarch64"),
+        ("AArch64", "arm64-apple-macosx14.0.0", 64, "Mach-O", "aarch64"),
+        ("X86", "i686-pc-windows-msvc", 32, "COFF", "i386"),
+        ("X86", "x86_64-pc-windows-msvc", 64, "COFF", "x86_64"),
+    ]
+    source = work / "answer.erl"
+    source.write_text("-module(answer). value() -> 42.\n", encoding="utf-8")
+    for backend, triple, bits, format_name, architecture in targets:
+        if backend in backends.split(","):
+            inspect(tool, readobj, nm, work, triple, bits, format_name, architecture)
+        else:
+            rejected(tool, source, work / triple / "unavailable", triple, "backend unavailable")
+    source.write_text("-module(answer). value() -> 42.\n", encoding="utf-8")
+    rejected(tool, source, work / "invalid", "notacpu-unknown-linux-gnu", "unknown target architecture")
+    rejected(tool, source, work / "unsupported", "riscv64-unknown-linux-gnu", "backend unavailable")
+
+
+if __name__ == "__main__":
+    main()

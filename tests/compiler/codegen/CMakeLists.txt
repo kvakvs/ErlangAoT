@@ -126,6 +126,13 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter)
 get_filename_component(llvm_tools "${sdk_dir}/../../../bin" ABSOLUTE)
 find_program(ERLANG_AOT_LLVM_AS NAMES llvm-as HINTS "${llvm_tools}" NO_DEFAULT_PATH REQUIRED)
 find_program(ERLANG_AOT_LLVM_DIS NAMES llvm-dis HINTS "${llvm_tools}" NO_DEFAULT_PATH REQUIRED)
+find_program(ERLANG_AOT_LLVM_READOBJ NAMES llvm-readobj HINTS "${llvm_tools}" NO_DEFAULT_PATH REQUIRED)
+find_program(ERLANG_AOT_LLVM_NM NAMES llvm-nm HINTS "${llvm_tools}" NO_DEFAULT_PATH REQUIRED)
+string(REPLACE ";" "," backend_list "${test_backends}")
+add_test(NAME codegen_cross_targets COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/cross_targets.py"
+    "$<TARGET_FILE:erlang_aot>" "${ERLANG_AOT_LLVM_READOBJ}" "${ERLANG_AOT_LLVM_NM}"
+    "${CMAKE_CURRENT_BINARY_DIR}/cross-targets/$<CONFIG>" "${backend_list}")
+set_tests_properties(codegen_cross_targets PROPERTIES TIMEOUT 120)
 add_test(NAME codegen_inspection COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/inspection.py"
     "$<TARGET_FILE:erlang_aot>" "${ERLANG_AOT_LLVM_AS}" "${ERLANG_AOT_LLVM_DIS}"
     "${CMAKE_CURRENT_BINARY_DIR}/inspection/$<CONFIG>" "${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")

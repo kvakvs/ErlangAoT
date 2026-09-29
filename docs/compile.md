@@ -510,3 +510,19 @@ Step 40 (2026-09-29): Public CLI objects execute in a separately configured Clan
 Step 41 (2026-09-29): 150 seeded/fixed calls agree with OTP and an independent evaluator across four optimization/specialization modes, repeated twice; annotated/unannotated pairs and incorrect specs preserve behavior. CRLF and CMake native-path issues in the new test were fixed before the passing gate. Fresh Windows x64 Debug compiler/runtime build: 96/96 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
 
 Step 42 (2026-09-29): Cost records cover source and synthetic guards at O0/O2 with specialization disabled/enabled. High-arity wide-union inputs remain generic, O2 outputs match byte-for-byte, 3/32/128 caps and 2x growth hold, and native guard/fallback results agree. Timings are descriptive only. Fresh Windows x64 Debug compiler/runtime build: 97/97 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
+
+The `codegen_cross_targets` test emits through the CLI and invokes the selected
+SDK's `llvm-readobj --file-headers --symbols` and `llvm-nm` on every object.
+Its O0/O2 matrix covers Linux i686/x86_64/armv7/aarch64, Windows i686/x86_64,
+and arm64 Apple macOS. It checks target formats, architectures, term widths,
+encoded small-integer endpoints, descriptor ABI v1, registration symbols and
+cross-module/runtime imports. Target overflow, unknown architectures and
+unavailable backends fail without artifacts. SDKs lacking a supported backend
+must report that absence rather than substitute a host target.
+
+These are object/IR inspection results. Current native generated-code execution
+is Windows x64 only; native Linux, Apple Silicon and 32-bit runtime/ABI execution
+remain pending. Historical macOS runtime skeleton results are not evidence for
+the current CLI-generated native harness.
+
+Step 43 (2026-09-29): CLI-emitted objects pass SDK readobj/nm inspection for seven ELF, Mach-O and COFF targets at O0/O2, including architecture, exports/imports, runtime references, ABI widths/tags, exact integer endpoints and failure without publication. Foreign native execution remains pending. Fresh Windows x64 Debug compiler/runtime build: 98/98 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
