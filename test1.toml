@@ -6,7 +6,7 @@ schema_version = 1
 # Add another [[targets]] block after this target's option tables for more targets.
 # All targets run by default; select with --target app (repeat for more names).
 [[targets]]
-name = "erlang_xmerl"
+name = "erlangaot_test1"
 
 # List files or patterns, e.g. ["main.erl", "src/*.erl", "shared/**/*.erl"].
 # Patterns support *, ?, and ** as a whole directory component.
@@ -20,7 +20,7 @@ sources = [
 # Set source_dirs = [] when selecting files exclusively through sources.
 source_dirs = []
 # Future executable path; checks/printing do not write it. Windows: build/app.exe.
-output = "build/lists"
+output = "build/erlangaot_test1"
 
 [targets.options]
 # Fallback roots for listed source filenames, e.g. ["src", "generated"].

@@ -877,7 +877,7 @@ conflict. The ledger records exact evidence and remaining host coverage.
 
 ### 38. Add intermediate-representation inspection actions
 
-- Implement and document `--print-ir` and `--print-optimized-ir`, including their
+- Implement and document `--print-ir` and ` `, including their
   validation, backend stopping points, before/after snapshots and module headers.
   Reuse LLVM text serialization and the same compilation path for both input modes.
 - Validate: each stage at O0/O2, both flags together, positional/project ordering,
