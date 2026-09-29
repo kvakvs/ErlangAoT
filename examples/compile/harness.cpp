@@ -1,0 +1,51 @@
+#include <array>
+#include <cstdio>
+#include <erlang_aot/runtime/modules.hpp>
+#include <stdexcept>
+#include <utility>
+
+// Match ABI v1's reversible registration symbols; these are project C++ machine interfaces.
+extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
+extern erlang_aot::abi::v1::GeneratedRegistration register_client asm("eav1_636c69656e74__0.register");
+
+// Convert failed host operations into one contained example error before accessing their values.
+template <class Result> auto checked(Result result) {
+    if (!result) {
+        throw std::runtime_error("runtime operation failed");
+    }
+    return std::move(*result);
+}
+
+// Initialize one real runtime, register separate objects, decode results and shut down explicitly.
+int execute() {
+    using namespace erlang_aot::runtime;
+    auto runtime = checked(Runtime::start());
+    if (register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
+        return 1;
+    }
+    auto *context = checked(runtime->create_context());
+    const auto entry = checked(runtime->code_server()->resolve({"client", "value", 0}));
+    const auto value = checked(entry.call(*context, {}));
+    const auto identity = checked(runtime->code_server()->resolve({"answer", "identity", 1}));
+    const std::array arguments{checked(Term::from_word(checked(encode_integer(-7))))};
+    const auto copied = checked(identity.call(*context, arguments));
+    std::printf("%lld\n%lld\n", static_cast<long long>(checked(value.integer_value())),
+                static_cast<long long>(checked(copied.integer_value())));
+    if (runtime->destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
+        runtime->shutdown() != erlang_aot::abi::v1::Status::ok) {
+        return 2;
+    }
+    return 0;
+}
+
+// Keep startup/lookup failures visible to a native caller without providing a production Erlang launcher.
+int main() {
+    try {
+        return execute();
+    } catch (const std::exception &error) {
+        std::fprintf(stderr, "%s\n", error.what());
+        return 1;
+    } catch (...) {
+        return 1;
+    }
+}

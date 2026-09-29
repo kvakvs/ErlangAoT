@@ -1,0 +1,51 @@
+include("${HOST_SETTINGS}")
+set(example "${SOURCE_ROOT}/examples/compile")
+# Execute the documented commands at both levels and link using the public example CMake recipe.
+foreach(level IN ITEMS O0 O2)
+    foreach(kind IN ITEMS obj llvm-ir llvm-bc)
+        execute_process(COMMAND "${TOOL}" -${level} --emit ${kind} --artifact-dir "${TEST_DIR}/${level}/${kind}"
+            "${example}/answer.erl" "${example}/client.erl"
+            RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+        if(NOT status STREQUAL "0" OR NOT output STREQUAL "" OR NOT errors STREQUAL "")
+            message(FATAL_ERROR "Documented emission failed: ${status}: ${output}${errors}")
+        endif()
+        file(GLOB artifacts "${TEST_DIR}/${level}/${kind}/*")
+        list(LENGTH artifacts count)
+        if(NOT count EQUAL 2)
+            message(FATAL_ERROR "Example did not emit two ${kind} artifacts")
+        endif()
+    endforeach()
+    execute_process(COMMAND "${CMAKE_COMMAND}" -S "${example}" -B "${TEST_DIR}/${level}/native"
+        "-DGENERATED_DIR=${TEST_DIR}/${level}/obj" ${host_configure_args}
+        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+    if(NOT status STREQUAL "0")
+        message(FATAL_ERROR "Example configure failed: ${output}${errors}")
+    endif()
+    execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/${level}/native" --config "${HOST_CONFIG}"
+        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+    if(NOT status STREQUAL "0")
+        message(FATAL_ERROR "Example build failed: ${output}${errors}")
+    endif()
+    execute_process(COMMAND "${TEST_DIR}/${level}/native/bin/${HOST_CONFIG}/compiled_modules${HOST_SUFFIX}"
+        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+    string(REPLACE "\r\n" "\n" output "${output}")
+    if(NOT status STREQUAL "0" OR NOT output STREQUAL "42\n-7\n" OR NOT errors STREQUAL "")
+        message(FATAL_ERROR "Example execution failed: ${status}: ${output}${errors}")
+    endif()
+endforeach()
+foreach(action IN ITEMS --print-types --print-ir --print-optimized-ir both)
+    set(options ${action})
+    if(action STREQUAL "both")
+        set(options --print-ir --print-optimized-ir)
+    endif()
+    execute_process(COMMAND "${TOOL}" ${options} --verbose "${example}/answer.erl" "${example}/client.erl"
+        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+    if(NOT status STREQUAL "0" OR output STREQUAL "" OR NOT errors MATCHES "\\[comp\\]")
+        message(FATAL_ERROR "Documented inspection failed: ${status}: ${output}${errors}")
+    endif()
+endforeach()
+execute_process(COMMAND "${TOOL}" -O2 --no-type-specialization --verbose "${example}/answer.erl" "${example}/client.erl"
+    RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+if(NOT status STREQUAL "0" OR NOT output STREQUAL "" OR NOT errors MATCHES "disabled-by-policy")
+    message(FATAL_ERROR "Documented specialization override failed: ${status}: ${output}${errors}")
+endif()

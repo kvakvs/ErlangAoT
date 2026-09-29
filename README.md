@@ -11,10 +11,15 @@ The separate runtime now supports [startup, context ownership and shutdown](docs
 with a reusable CMake target for linking native consumers.
 All APIs are project-internal C++23; C compatibility is deferred until needed.
 
-Validated on macOS Apple Silicon. Windows x64 runtime builds are checked in Debug
-and Release; the full Windows x64 Debug compiler/runtime gate now passes. Additional
-platform validation remains pending; generated-code execution is checked on Windows x64. See
-[Windows status](abi/plan-windows.md) for prerequisites and known gaps. Linux validation is pending.
+Current generated-code validation is Windows x64: native O0/O2 execution,
+OTP differential comparisons, runtime ASan and the full compiler/runtime quality
+gate. ELF/Mach-O/COFF objects are inspected for seven targets; other native hosts
+remain pending. Earlier macOS evidence covers the foundational/runtime work.
+See the [validation inventory and limitations](docs/compile-validation.md).
+
+The [compiled-module example](examples/compile/) contains two Erlang modules,
+a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
+[emission, inspection and native execution commands](docs/compile.md#run-the-compiled-module-example).
 
 ## Features
 
@@ -124,7 +129,7 @@ The Windows default CRT is `/MDd` for Debug and `/MD` for other configurations,
 including the static runtime library and its consumers. An explicit
 `CMAKE_MSVC_RUNTIME_LIBRARY` setting is preserved; it must match the LLVM SDK and
 all linked C++ libraries. Avoid mixing Debug and Release STL/CRT artifacts.
-Windows project sources use UTF-8; Unicode CLI/path handling is still pending.
+Windows project sources and CLI/path fixtures use UTF-8.
 
 All project targets use C++23 and treat compiler warnings as errors.
 The executable is `build/debug/bin/erlangaot`. Build presets and wrappers request
@@ -236,7 +241,7 @@ through verified native object buffers in memory. Positional inputs form one bat
 each project target forms its own batch. `--emit` writes artifacts under `build/aot`
 or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
 default root. Filenames encode module identity. No production executable is linked;
-`--output` and TOML `output` remain reserved executable destinations.
+`--output` explicitly fails with `[executable linking] notimpl`; TOML `output` remains reserved metadata.
 
 ```sh
 erlangaot -O2 --emit obj answer.erl client.erl

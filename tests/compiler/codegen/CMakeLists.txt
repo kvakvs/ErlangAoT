@@ -178,4 +178,10 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}"
         "$<TARGET_FILE:codegen_specialization_emit>")
     set_tests_properties(codegen_measurements PROPERTIES TIMEOUT 240)
+    add_test(NAME codegen_examples COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
+        "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/examples/$<CONFIG>"
+        "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+        "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/examples.cmake")
+    set_tests_properties(codegen_examples PROPERTIES TIMEOUT 180)
 endif()

@@ -1,5 +1,10 @@
 # Architecture
 
+- Compiler milestone 1–46 delivers CLI-to-native-object compilation and a separate
+  Clang/runtime example host. `docs/compile-validation.md` records current Windows
+  execution, OTP comparison, seven-target object inspection and sanitizer limits.
+  Production Erlang startup/linking, heap values, workers and full semantics stay deferred.
+
 - Public CLI object emission is exercised by a separately configured Clang/runtime
   consumer at O0/O2. It registers both modules, validates ABI rejection, runs
   decoded integer calls and immediate identity boundaries, and explicitly tears down.

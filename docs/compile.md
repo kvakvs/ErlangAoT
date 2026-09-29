@@ -1,58 +1,108 @@
 # LLVM compilation contract
 
-Status: contract frozen 2026-09-24; SDK integration, compilation ownership,
-target setup, IR verification, in-memory object emission and the immediate-term ABI
-implemented in steps 2–7. Step 8 adds the shared
-[deferred-feature catalog and reporting contract](features.md), with separate compiler/runtime
-reporters and typed C++ status results. Steps 14 and 17 integrate compiler/runtime
-placeholders at concrete service and lowering boundaries.
-Step 9 implements [runtime/context lifecycle](runtime-lifecycle.md) and the mandatory
-`ErlangAoT::generated_program` CMake link target without LLVM dependencies.
-Step 10 adds [runtime immediate-term services](runtime-terms.md): checked tag
-classification and native small-integer encoding/decoding, independently of LLVM.
-Step 11 adds [builtin dispatch](runtime-builtins.md): frozen generic module registries,
-pinned native targets and an explicit status/word service bridge. No production BIF
-or compiler BIF lowering is enabled.
+The implemented milestone compiles an acyclic Erlang/OTP 29 subset through the
+public positional/project CLI to verified LLVM IR, bitcode and native objects.
+A separately configured Clang C++ harness links those objects with the real runtime,
+registers modules explicitly and executes decoded values at O0/O2. See the
+[runnable example](#run-the-compiled-module-example) and
+[current validation inventory](compile-validation.md).
 
-Step 12 adds [process memory ownership](runtime-memory.md), checked unsupported
-allocation/collection and immediate copying between owners. Heap values remain deferred.
+The supported subset is named modules/exports, one clause with distinct variable
+or wildcard parameters, and one expression containing a tagged-small integer,
+parameter reference, or resolved local/literal remote call within the compilation
+batch. Negative literals and nested call arguments are supported. Remote calls
+require exports; recursive call graphs fail. Unsupported syntax is rejected even
+in unused functions. Syntax-only checking supports the wider OTP grammar.
 
-Step 13 adds [scheduler lifecycle bookkeeping](runtime-scheduler.md): explicit
-registration, checked transitions and ordered teardown without worker execution.
+Declared types/specs remain separate from bounded implementation inference.
+Unknown inputs stay generic, identity/projection relations propagate through calls,
+and wrong contracts warn without changing code semantics. `--print-types` stops
+before LLVM. O0 disables compiler specialization and uses LLVM O0; O2 enables the
+bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compiler
+policy. Current guard-free source has no profitable variants. See
+[specialization budgets and measurements](specialization.md).
 
-Steps 24–27 implement private generic lowering of integer returns, parameter references
-and resolved local/remote calls. Step 28 adds explicit [generated-module registration](runtime-modules.md)
-and separately linked native harness execution. Steps 29-30 add bounded
-[specialization planning and guarded lowering](specialization.md); the current
-guard-free source subset correctly remains generic. Steps 31–39 implement standard
-LLVM optimization, text/bitcode serialization, artifact publication and the shared
-positional/project driver. Default compilation validates
-[declarations, bindings, calls and types](semantic.md), infers implementation facts,
-then lowers, optimizes, verifies and emits native objects in memory. Explicit `--emit`
-publishes artifacts; IR and type inspection stop at their selected boundaries.
-No production executable launcher or linker driver is implemented.
+ABI v1 uses target-word tagged terms, a live process context and an argument array.
+All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
+checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
+The runtime implements lifecycle, immediate Terms, frozen generic registries,
+module registration and service failures. Allocation/GC, scheduling workers,
+message delivery, BIF implementations, atom bindings and dynamic loading remain
+future work. A production Erlang launcher/linker is not implemented; explicit
+`--output` fails with `[executable linking] notimpl`.
 
-The private backend's `verify_ir` gate checks target consistency, defined function
-bodies and whole modules using LLVM's nonfatal verifier APIs. The object emission
-entry point calls this gate on the current batch before producing bytes; success
-is not cached across mutations. Failures become owned project diagnostics and discard
-all staged outputs. Synthetic IRBuilder fixtures cover valid and malformed IR;
-verification alone does not establish Erlang semantics or complete compilation.
+LLVM owns standard optimization and machine emission. Verification is fresh before
+and after transformation, does not establish Erlang correctness, and invalidates
+failed output batches. Reached deferred semantics fail explicitly; supported
+no-benefit/budget fallback remains generic and silent. See the
+[deferred-feature inventory and reporting convention](features.md).
 
-`emit_objects` uses the SDK's legacy machine-code pass manager and
-`TargetMachine::addPassesToEmitFile`, separately from the standard PassBuilder O0/O2 pipeline.
-It emits clones to preserve original IR, replaces previous buffers on repeat calls,
-and discards the entire batch on verification or emission errors. No files are
-published and the batch remains incomplete until its caller completes the pipeline.
-Configured backends register their assembly printers/parsers; recoverable LLVM
-assembler errors flow through the owned diagnostic callback. LLVM fatal errors are
-not converted into ordinary diagnostics by this in-process API.
-Synthetic tests inspect Mach-O/ELF/COFF architecture, executable sections and an
-`answer` symbol; they do not yet use the Erlang ABI or execute generated programs.
+## Run the compiled-module example
+
+From a Windows x64 Developer PowerShell with the built compiler:
+
+```powershell
+$tool = './build/debug/bin/erlangaot.exe'
+& $tool -O0 --emit obj --artifact-dir build/example-aot examples/compile/answer.erl examples/compile/client.erl
+cmake -S examples/compile -B build/example-native -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Debug "-DGENERATED_DIR:PATH=$((Resolve-Path build/example-aot).Path)"
+cmake --build build/example-native
+./build/example-native/bin/Debug/compiled_modules.exe
+```
+
+The program prints `42` and `-7`, one per line. Repeat emission with `-O2` and
+rebuild the consumer to check speed policy. The example CMake project builds the
+matching runtime with compiler/tests disabled and links exactly one
+`ErlangAoT::generated_program` dependency. No LLVM libraries enter the executable.
+It uses explicit module registration, real context ownership and ABI integer
+decoding; the C++ harness is an example host, not a production Erlang entry point.
+
+On a compatible Unix host, use `build/debug/bin/erlangaot`, `clang++` in place of
+`clang-cl`, `-DGENERATED_DIR="$PWD/build/example-aot"`, and run
+`build/example-native/bin/Debug/compiled_modules`. These native runs remain pending
+on Linux and current Apple Silicon; object inspection alone does not validate them.
+
+The following commands use the same two sources and are also exercised by CTest:
+
+```powershell
+& $tool -O2 --emit llvm-ir --artifact-dir build/example-ir examples/compile/answer.erl examples/compile/client.erl
+& $tool -O2 --emit llvm-bc --artifact-dir build/example-bc examples/compile/answer.erl examples/compile/client.erl
+& $tool --print-types --verbose examples/compile/answer.erl examples/compile/client.erl
+& $tool --print-ir --verbose examples/compile/answer.erl examples/compile/client.erl
+& $tool --print-optimized-ir --verbose examples/compile/answer.erl examples/compile/client.erl
+& $tool --print-ir --print-optimized-ir --verbose examples/compile/answer.erl examples/compile/client.erl
+& $tool -O2 --no-type-specialization --verbose examples/compile/answer.erl examples/compile/client.erl
+```
+
+Artifacts use reversible module names: `eav1_616e73776572__0` for `answer` and
+`eav1_636c69656e74__0` for `client`, followed by `.obj` on Windows, `.o` on
+ELF/Mach-O targets, `.ll` for text IR or `.bc` for bitcode. Inspection writes only
+stdout, with escaped LLVM-comment headers between snapshots. Combined IR inspection
+shows before/after snapshots per module. Use separate emitted `.ll` files as SDK
+tool input. `[comp]` phase/decision events go to stderr; `--print-types` emits no
+LLVM phases. A no-benefit or disabled specialization decision is supported fallback,
+not a `notimpl` error. Resource-limit and deferred-feature failures publish nothing.
 
 ## SDK prerequisite
 
-Support stable LLVM **23.1.x**, minimum **23.1.1**, initially. The reference SDK is
+Support stable LLVM **23.1.x**, minimum **23.1.1**. Current milestone validation:
+
+| Component | Windows x64 installation used on 2026-09-29 |
+|---|---|
+| Host Clang / clang-cl | `C:/Program Files/LLVM/bin`, 23.1.2 |
+| Existing SDK | `F:/Projects/ErlangAoT/thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc` |
+| LLVM_DIR | SDK prefix plus `/lib/cmake/llvm` |
+| Native environment | Visual Studio 18 Community x64 tools, Windows SDK 10.0.26100.0, Ninja |
+| Project SDK ABI | `/MT`, `_ITERATOR_DEBUG_LEVEL=0`, C++23, project exceptions/RTTI enabled |
+| OTP oracle / source | Installed OTP 29.1.1; official `maint-29` pin `21776803ecd11f5fa948732c0ec66b8f325dedfc` |
+| Quality tools | Lizard 1.24.0; clang-tidy 22.1.8, full original compilation flags |
+
+The SDK above already existed before these steps; this milestone did not download,
+build or install another LLVM SDK. Set `ERLANG_AOT_DOWNLOAD_LLVM=OFF` and an explicit
+existing `LLVM_DIR` for reproducible validation without fallback network access.
+The official `maint-29` fetch on 2026-09-29 found the pin unchanged; source corpus
+hashes/grammar evidence remain synchronized. Historical validation retains its pin.
+
+Historical initial macOS SDK evidence follows. Its reference SDK is
 Homebrew `llvm` **23.1.1_1** (alias `llvm@23`), a `homebrew/core` stable arm64 bottle:
 
 | Property | Validated installation |
@@ -99,19 +149,22 @@ Inspect this reference installation without changing it:
 /opt/homebrew/opt/llvm/bin/clang --version
 ```
 
-Required milestone tools from the same SDK are `llvm-config`, `clang`/`clang++`,
-`llvm-as`, `llvm-dis`, `llvm-readobj`, `llvm-nm`, `FileCheck`, `opt` and `llc`.
-The reference installation reports 23.1.1 for these tools. CMake >=3.28, a C++23
+Milestone tools from the SDK include `llvm-config`, `clang`/`clang++`,
+`llvm-as`, `llvm-dis`, `llvm-readobj`, `llvm-nm`, `opt` and `llc`.
+The historical macOS installation also provides `FileCheck`; it is absent from the
+current Windows SDK, where SDK round trips and explicit artifact checks are used.
+CMake >=3.28, a C++23
 compiler, a native linker/platform SDK, Boost >=1.90, toml++ and the existing OTP/quality
 tools remain project prerequisites; see [README](../README.md). Installed headers and
 CMake configuration are authoritative for this release. References:
 [LLVM CMake integration](https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project),
 [LLVM license](https://llvm.org/LICENSE.txt).
 
-The SDK includes X86, ARM and AArch64 for the project's intended targets. Native
-execution starts with macOS arm64/Mach-O; later object inspection covers Linux
-x86/x86-64/ARM/AArch64 ELF and Windows x86/x86-64 COFF. Available backends do not
-establish native runtime support. Other native platforms remain pending.
+The SDK includes X86, ARM and AArch64 for the project's intended targets. Current
+native execution covers Windows x64. Object inspection covers Linux
+x86/x86-64/ARM/AArch64 ELF, Windows x86/x86-64 COFF and Apple Silicon Mach-O.
+Available backends do not establish native runtime support. Other native platforms
+remain pending.
 
 ## Frozen executable subset
 
@@ -503,7 +556,7 @@ Validation through step 39 (2026-09-29): fresh Windows x64 Debug compiler/runtim
 build, 93/93 CTests with zero skips, full Lizard and clang-tidy over 180 production
 translation units, formatting and whitespace checks pass. Native execution evidence
 remains Windows x64; other native hosts and full frontend sanitizer coverage remain
-pending. Steps 40–46 have not been started in this implementation batch.
+pending. That checkpoint preceded the steps 40–46 records below.
 
 Step 40 (2026-09-29): Public CLI objects execute in a separately configured Clang harness through the mandatory runtime link target at O0/O2; integer/immediate boundaries, projection and nested calls, ABI rejection, missing-runtime failure and explicit teardown pass. Fresh Windows x64 Debug compiler/runtime build: 95/95 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
 
@@ -561,3 +614,5 @@ checks were disabled to bypass that incompatibility; full compiler/frontend ASan
 UBSan and LeakSanitizer remain pending. Runtime-only ASan is validated independently.
 
 Step 45 (2026-09-29): Batch/AST and bounded writer byte ceilings reject without publication; injected partial/close/interrupted writes preserve destinations and clean staging. Debug STL OOM termination paths were repaired without suppressing iterator checks. Compiler-only 80/80, runtime-only Debug 16/16 and runtime ASan 16/16 pass; full compiler ASan remains blocked by the installed SDK annotation ABI. Full quality covers 182 production commands. Fresh Windows x64 Debug compiler/runtime build: 102/102 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
+
+Step 46 (2026-09-29): Published and executed the two-module native example at O0/O2, all artifact kinds, type/IR inspections and specialization override. Exact SDK setup, accepted semantics, ABI/runtime recipe, deferred features and 103-test inventory are documented. The example also passes focused Lizard/clang-tidy; full production quality preserves 182 commands. Fresh Windows x64 Debug compiler/runtime build: 103/103 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.

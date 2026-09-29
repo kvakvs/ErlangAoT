@@ -19,6 +19,10 @@
   and latched LLVM writer capacity failures. `codegen/{limits.cpp,resource_cli.py,
   write_failure.cpp}` under tests checks real pipeline ceilings and staged partial
   write/close/interruption rollback; `PublicationIO` follows existing creation hooks.
+- `examples/compile/`: accepted two-module source, explicit native runtime harness
+  and standalone LLVM-free CMake link recipe. `tests/compiler/codegen/examples.cmake`
+  executes documented emission/inspection/link commands. `docs/compile-validation.md`
+  and `compile-tests.txt` publish current scope, inventory and unavailable coverage.
 
 - `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
   `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
