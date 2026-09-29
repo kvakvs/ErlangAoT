@@ -46,7 +46,7 @@ int run_project(const Options &options) {
     project::PlanOptions settings;
     settings.working_directory = std::filesystem::current_path();
     settings.preprocessing = options.preprocessing;
-    settings.frontend = options.preprocess || options.backend.emit.has_value();
+    settings.frontend = options.preprocess || options.backend.emit.has_value() || options.backend.inspect_ir();
     if (options.output_explicit) {
         settings.output = options.output;
     }
@@ -63,6 +63,7 @@ int run_project(const Options &options) {
                                 options.implementation_debug,
                                 target_options(options, invocation, target)};
         request.project_target = target.name;
+        request.multiple_targets = invocation.targets.size() > 1;
         request.protected_inputs = protected_inputs(invocation);
         request.pending_publications = &pending;
         return process_files(target.sources, request, sink);

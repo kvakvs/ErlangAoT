@@ -20,6 +20,8 @@ Options:
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
       -O0 | -O2          Select generic O0 (default) or speed specialization and LLVM O2.
       --no-type-specialization  Disable variants regardless of optimization option order.
+      --print-ir          Print verified IR before LLVM optimization; no files or object emission.
+      --print-optimized-ir  Print verified IR after the selected pipeline; combine for both stages.
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
       --print-pp         Print preprocessed Erlang source to stdout.
@@ -36,6 +38,8 @@ With no check/print action, source batches compile to verified objects in memory
 Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output remains reserved for executables.
+IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.
+Multiple IR snapshots use LLVM-comment headers; use --emit llvm-ir for separate machine-readable files.
 Value options and optimization levels may appear only once.
 Input paths may contain spaces when quoted by the shell.
 )";

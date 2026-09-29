@@ -1,6 +1,6 @@
 # LLVM compilation integration plan
 
-Status: steps 1-37 complete, 2026-09-29. Steps 38-46 remain pending.
+Status: steps 1-38 complete, 2026-09-29. Steps 39-46 remain pending.
 Execute the numbered steps individually, each with passing validation and its own commit.
 
 ## Objective and current boundary
@@ -1156,3 +1156,8 @@ Step 37: fresh Windows Debug build, 91/91 CTests and full Lizard/clang-tidy
 source/target context, Unicode/control escaping, early failures, frontend-only modes
 and identical emitted bytes. Focused planner tests observe acceptance and all bounded
 rejection reasons. Existing verbose expectations now include the intended [comp] events.
+
+Step 38: fresh Windows Debug build, 92/92 CTests and full Lizard/clang-tidy
+(177 production units) pass. Real CLI snapshots round-trip through matching SDK
+llvm-as/llvm-dis at O0/O2, including combined before/after, ordered projects, Unicode
+paths, escaped identifiers, conflicts and no artifact writes. FileCheck remains absent.

@@ -472,3 +472,12 @@ delimiters are escaped. Analysis/inference, lowering, specialization decisions,
 verification, optimization and emission are reported only when started. Profile
 displays are bounded, and disabled/no-benefit/work/growth/variant-limit decisions
 are explicit. Frontend-only and informational actions do not produce backend traces.
+
+Step 38 implements `--print-ir` (after compiler specialization, before LLVM passes)
+and `--print-optimized-ir` (after the selected verified pipeline). Neither action
+emits machine code or files. Both flags print adjacent before/after snapshots per
+module, in input/selected-target order. A single snapshot is LLVM assembly; multiple
+snapshots have escaped LLVM-comment headers and must be separated before assembly.
+Use `--emit llvm-ir` for individual machine-consumable files. Preprocessing, target,
+optimization and specialization options are allowed; frontend actions, project
+creation and all emission/output destinations conflict. Traces remain on stderr.

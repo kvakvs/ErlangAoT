@@ -331,3 +331,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `codegen/progress.*` and `driver/{progress,display}.*`: shared phase events and safe rendering.
   `codegen/specialization_trace.*`: bounded profile/decision reporting.
   `tests/compiler/codegen/progress.cmake`: ordering, opt-in, control escaping and artifact equivalence.
+
+- `driver/inspection.{hpp,cpp}`: verified before/after snapshots with stable escaped headers.
+  `tests/compiler/codegen/inspection.py`: real CLI inspection, option conflicts, stage/target
+  ordering, ABI structures and per-snapshot llvm-as/llvm-dis round trips.

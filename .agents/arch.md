@@ -306,3 +306,7 @@
 - Step 37: an optional synchronous backend observer reports only started phases.
   Driver rendering escapes user names and writes [comp] events to stderr; bounded
   specialization profiles retain concrete policy/benefit/budget reasons.
+
+- Step 38: IR inspection reuses lowering/specialization and verified LLVM text
+  serialization, retaining a before snapshot only when requested. Optimized inspection
+  runs the selected standard pipeline; neither path emits objects or publishes files.

@@ -50,20 +50,45 @@ std::optional<std::string> value_option(std::string_view option, const std::stri
     return {};
 }
 
+// Parse idempotent inspection flags without consuming source operands.
+bool inspection_flag(std::string_view option, BackendOptions &options) {
+    static const std::map<std::string_view, bool BackendOptions::*> flags{
+        {"--print-ir", &BackendOptions::print_ir}, {"--print-optimized-ir", &BackendOptions::print_optimized_ir}};
+    const auto found = flags.find(option);
+    if (found == flags.end()) {
+        return false;
+    }
+    options.*(found->second) = true;
+    return true;
+}
+
+// IR inspection has no filesystem outputs and keeps executable output reserved.
+std::optional<std::string> inspection_conflict(const Options &options) {
+    if (options.backend.inspect_ir() &&
+        (options.backend.emit || options.backend.artifact_directory || options.output_explicit)) {
+        return "IR inspection cannot be combined with --emit, --artifact-dir, or --output";
+    }
+    return {};
+}
+
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
-           options.disable_type_specialization;
+           options.disable_type_specialization || options.inspect_ir();
 }
 } // namespace
 
 bool is_backend_option(std::string_view option) {
     return option == "--emit" || option == "--artifact-dir" || option == "--target-triple" || option == "-O0" ||
-           option == "-O2" || option == "--no-type-specialization";
+           option == "-O2" || option == "--no-type-specialization" || option == "--print-ir" ||
+           option == "--print-optimized-ir";
 }
 
 std::optional<std::string> parse_backend_option(std::string_view option, std::span<char *> &remaining,
                                                 BackendOptions &options) {
+    if (inspection_flag(option, options)) {
+        return {};
+    }
     if (option == "--no-type-specialization") {
         options.disable_type_specialization = true;
         return {};
@@ -83,6 +108,9 @@ std::optional<std::string> parse_backend_option(std::string_view option, std::sp
 }
 
 std::optional<std::string> validate_backend_options(const Options &options) {
+    if (const auto error = inspection_conflict(options)) {
+        return error;
+    }
     if ((options.preprocess || options.project.create) && explicit_backend(options.backend)) {
         return "compilation switches cannot be combined with frontend actions or --new-project";
     }

@@ -28,7 +28,7 @@ target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
 
 add_executable(erlang_aot src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
-    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp)
+    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
     target_sources(erlang_aot PRIVATE erlangaot.manifest)

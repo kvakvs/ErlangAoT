@@ -7,6 +7,13 @@ namespace erlang_aot::cli {
 struct Options;
 
 struct BackendOptions {
+    // Select verified before/after LLVM snapshots instead of machine-code emission.
+    bool print_ir = false;
+    bool print_optimized_ir = false;
+
+    // Identify the shared IR inspection action independently of requested stage order.
+    bool inspect_ir() const { return print_ir || print_optimized_ir; }
+
     // Absence runs the complete backend in memory without publishing artifacts.
     std::optional<codegen::OutputKind> emit;
     // Override the invocation-relative artifact root; projects append encoded target names.

@@ -5,6 +5,7 @@
 #include "../codegen/serialization.hpp"
 #include "../codegen/target.hpp"
 #include "analysis.hpp"
+#include "inspection.hpp"
 #include "progress.hpp"
 #include "publication.hpp"
 
@@ -72,6 +73,17 @@ void deliver(codegen::Compilation compilation, const FrontendRequest &frontend) 
     }
 }
 
+// Share lowering and specialization, then stop at the selected inspection or artifact boundary.
+bool generate(codegen::Compilation &compilation, const Analysis &analysis, const FrontendRequest &frontend) {
+    if (!codegen::lower(compilation, analysis.modules, *analysis.inferred)) {
+        return false;
+    }
+    if (frontend.backend.inspect_ir()) {
+        return inspect_ir(compilation, frontend);
+    }
+    return codegen::optimize(compilation) && emit(compilation);
+}
+
 // Analyze before constructing LLVM state; moving the vector preserves borrowed AST addresses.
 bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendRequest &frontend,
              const DiagnosticSink &sink) {
@@ -81,8 +93,7 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
         return true;
     }
     codegen::Compilation compilation(std::move(request));
-    const bool succeeded = codegen::lower(compilation, analysis.modules, *analysis.inferred) &&
-                           codegen::optimize(compilation) && emit(compilation);
+    const bool succeeded = generate(compilation, analysis, frontend);
     report_backend(compilation.result(), sink);
     if (!succeeded || !compilation.result().complete()) {
         return true;

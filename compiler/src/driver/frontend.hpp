@@ -29,6 +29,8 @@ struct FrontendRequest {
     std::vector<std::filesystem::path> protected_inputs = {};
     // Borrow the invocation-owned queue so a later target failure discards every pending artifact.
     std::vector<Publication> *pending_publications = nullptr;
+    // Preserve unambiguous inspection headers across independently processed project targets.
+    bool multiple_targets = false;
 };
 
 // Process one isolated batch; project targets never share declaration tables.
