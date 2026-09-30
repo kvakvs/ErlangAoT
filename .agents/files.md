@@ -1,5 +1,8 @@
 # File map
 
+- `.agents/01-todo.md`: missing-feature backlog with implementation checklists,
+  validation obligations and optional scope; IDs do not prescribe execution order.
+
 - `tests/compiler/codegen/native{.cmake,_consumer.cpp}` and
   `tests/fixtures/codegen/native/`: public CLI object emission, separate Clang
   linking, real runtime registration/execution/teardown and missing-runtime failure.
@@ -39,7 +42,8 @@
   `tests/compiler/parser/pinned.cmake`: shared offline revision/cleanliness/hash gate.
 
 - `docs/compile.md`: pinned SDK provenance/tools, frozen compilation subset, provisional
-  ABI and command/artifact contract; `.agents/04-compile.md`: ordered implementation plan.
+  ABI and command/artifact contract; `.agents/00-finished.md`: completed compiler
+  milestone and outstanding work.
 
 Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
 Public headers live in `compiler/include/erlang_aot/compiler/`.
@@ -264,9 +268,9 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `docs/project-validation.md`: C++23 evidence and pending host matrix;
   `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
 - `.agents/00-finished.md`: compact foundations, preprocessor/OTP inventory, parser,
-  project and test migration archive, historical evidence and remaining obligations.
+  project/compiler/runtime and test migration archive, historical evidence and
+  unfinished-work checklist.
   `docs/test-migration.md`: case-level disposition and validation evidence.
-  `.agents/04-compile.md`: remaining compiler steps route tests to observable workflows.
 - `tests/runtime/link_consumer.cpp`, `link.cmake`: independently configured runtime
   startup/context/dispatch/copy/publication/pinning/teardown integration; term layout
   is a build-only object. `tests/fixtures/runtime/diagnostics/`: exact stderr context.

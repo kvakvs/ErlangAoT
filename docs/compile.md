@@ -287,10 +287,10 @@ verbosity. Step 23 reports inferred function inputs/results and parameter relati
 with an `[impldebug 23]` prefix. Debugging changes neither inferred facts nor warning
 policy and never runs inference in frontend-only check/print modes.
 
-The full inspection/conflict, ownership, placeholder and validation contracts remain
-in [the plan](../.agents/04-compile.md). Each numbered step requires its own full gate
-and commit. Native generated-code execution is validated on Windows x64; additional
-native host platforms remain pending. Cross-target object checks do not prove execution.
+The completed milestone, ownership boundaries and unfinished work are summarized
+in the [implementation archive](../.agents/00-finished.md#compiler-and-runtime-milestone).
+All 46 numbered steps recorded their own full gate and commit. Native generated-code
+execution is validated on Windows x64; additional native host platforms remain pending. Cross-target object checks do not prove execution.
 
 ## SDK integration validation (step 2)
 

@@ -1,22 +1,22 @@
-# Completed foundations and frontend work
+# Completed implementation work
 
-Compact implementation record, consolidated 2026-09-28. This archive preserves
+Compact implementation record, consolidated 2026-09-30. This archive preserves
 completed work, compatibility decisions, historical evidence and open obligations.
 Current behavior lives in the linked documentation; current architecture and file
 ownership are in [arch.md](arch.md) and [files.md](files.md).
 
 | Area | Delivered status | Remaining qualification |
 | --- | --- | --- |
-| Foundations | CLI/CMake scaffold, 2026-09-17 | Production executable pipeline remains active compiler work. |
+| Foundations | CLI/CMake scaffold, 2026-09-17 | Native objects implemented; production executable startup/linking remains deferred. |
 | Preprocessor | Steps 1–13 implemented, 2026-09-18 | Focused OTP comparisons; no full upstream Common Test run. |
 | Parser | Steps 1–17 complete; step 18 implementation and macOS validation, 2026-09-19 | Required platform matrix is not fully closed. |
 | Projects | Steps 1–22 complete, 2026-09-20 | Historical host evidence and later Windows evidence remain distinct. |
-| Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program migration and frontend sanitizer closure remain deferred. |
+| Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program workflows delivered; frontend sanitizers remain pending. |
+| Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Immediate-only subset and runtime skeleton; full Erlang execution remains unfinished. |
 
-[04-compile.md](04-compile.md) owns ongoing compiler/runtime work: steps 1–27 are
-complete, 28–46 pending. The user requested stopping before step 28. Steps 24–27
-validate lowering through real-source stage adapters; they do not publish CLI
-artifacts or execute generated Erlang programs.
+**Still unfinished:** production executable startup/linking, heap terms and GC,
+process execution/messaging, broader Erlang lowering, and native platform/sanitizer
+closure. See the [explicit completion checklist](#outstanding-work-to-finish).
 
 ## Foundations
 
@@ -235,8 +235,9 @@ Macro duplicates fail instead of replacing definitions.
 Outputs reserve future executable paths, defaulting to `build/<target>[.exe]`.
 CLI `-o` requires one compilation target and is forbidden for check/print modes;
 those modes ignore manifest outputs. Preflight detects output aliases without
-creating directories/artifacts. Current normal invocation performs analysis;
-production artifact generation remains in the active compiler plan.
+creating directories/artifacts. Current normal invocation compiles to verified object buffers in memory;
+explicit `--emit` publishes module objects, LLVM IR or bitcode. Explicit executable
+output requests fail as unimplemented; TOML output paths remain reserved.
 
 `--new-project` is standalone, validates native filenames/parents, appends `.toml`
 unless already present case-insensitively, and creates exclusively without
@@ -274,17 +275,11 @@ Keep private backend success/failure checks until equivalent real CLI artifact,
 link and execution coverage exists. Steps 24–27's source-driven lowering adapters
 do not satisfy that retirement condition. Do not add product flags solely to expose
 internals or confuse an independent oracle with another path through the product.
-Remaining migration routes follow the active compiler plan:
-
-| Compiler steps | Intended observable coverage |
-| --- | --- |
-| 20–27 | Source/type behavior plus retained invariants; implemented through 27. |
-| 28–35 | Generated runtime consumers. |
-| 36–39 | CLI artifacts, inspection and options. |
-| 40–42 | Executable behavior, OTP comparisons and performance. |
-| 43 | Cross-object inspection, explicitly separate from native execution. |
-| 44–45 | Faults, lifetime and resource limits. |
-| 46 | Published validation matrix. |
+Compiler steps 1–46 now supply CLI type/IR inspection, artifact workflows,
+separate generated-runtime consumers, OTP differential execution, specialization
+measurements, cross-object inspection and fault/lifetime/resource coverage. This
+does not automatically retire synthetic tests: the case-level ledger must identify
+equivalent behavioral coverage first.
 
 ## Validation and open work
 
@@ -311,15 +306,283 @@ Historical evidence remains tied to its original host, reference and test invent
   runtime ASan 15/15. These initial results did not establish a clean commit gate.
   Subsequent stack/frontend fixes closed Debug/quality failures; see the compiler
   history and migration ledger rather than rewriting the earlier result as passing.
-- Latest compiler steps 24–27: fresh Windows x64 compiler+runtime Debug 80/80 each,
+- Historical compiler steps 24–27: fresh Windows x64 compiler+runtime Debug 80/80 each,
   zero skips, full Lizard/clang-tidy and formatting/whitespace checks. Commits:
   `c86f539`, `f09e7b4`, `5db13f0`, `4301401`, respectively. This adds Windows evidence
   without completing the Linux x86/ARM or every 32-bit/native platform obligation.
 
-Full LLVM-linked Windows frontend ASan remains blocked by rpmalloc/CRT duplicate
-symbols; runtime-only ASan works with its documented thunk configuration. Keep
-lifetime coverage and record toolchain limitations rather than suppressing them.
-Full upstream OTP suites, remaining native/cross platform matrix, generated-program
-behavior and production artifact/link workflows are not declared complete here.
-Future implementation commits still require the active plan's gates and AGENTS.md;
-this archive replaces obsolete proposals, not those requirements.
+Later compiler evidence and current unfinished work follow. The original migration
+failures above are historical; they were repaired before the passing compiler gates.
+
+## Compiler and runtime milestone
+
+**Steps 1–46 complete, 2026-09-29.** Contracts and usage:
+[compilation](../docs/compile.md), [semantics](../docs/semantic.md),
+[specialization](../docs/specialization.md), [feature reporting](../docs/features.md).
+Current validation: [compiler matrix](../docs/compile-validation.md).
+The numbered plan is consolidated here; earlier stopping instructions are obsolete.
+
+| Steps | Delivered behavior |
+| --- | --- |
+| 1–8 | LLVM SDK discovery/linkage, owned compilation/results, target policy, fresh verification, object emission, ABI v1 and feature reporting. |
+| 9–14 | Runtime/context lifecycle, immediate terms, frozen generic builtin registries, lazy memory ownership, scheduler bookkeeping and explicit unavailable-service failures. |
+| 15–23 | Declarations/exports, exhaustive subset checks, bindings and acyclic batch calls, symbolic declared types, independent inference and conservative contract warnings. |
+| 24–28 | Target-width integers, parameter projections, local/remote calls, versioned descriptors and transactional module registration with native execution. |
+| 29–32 | Bounded specialization planning/guarded variants, standard LLVM O0/O2, verified text/bitcode serialization. |
+| 33–39 | Module artifact publication, command options, positional/project integration, verbose tracing, IR and declared/inferred type inspection. |
+| 40–46 | CLI-generated native harnesses, OTP comparisons, specialization costs/caps, cross-target inspection, placeholder audit, resource/failure hardening and examples. |
+
+### Delivered language and driver boundary
+
+Accepted source has named modules/exports and single-clause functions with distinct
+variable or wildcard parameters. One body expression may be a tagged-small-integer
+literal (including negatives), parameter reference, or nested direct local/literal
+remote call within an acyclic batch. Remote calls require exports. Unsupported
+syntax is rejected even in unused functions; parsing remains broader than compilation.
+Metadata is allowlisted; behavior-changing attributes fail.
+
+Owned side tables preserve the immutable AST. Declared type/opaque/nominal aliases,
+remote visibility, specs/callbacks and constraints are modeled symbolically and
+bounded. Independent inference propagates integer singletons and argument/result
+relations; unknown inputs stay top. Specs warn on provable contradictions but never
+narrow executable representation or supply guards. Recursive types do not enable
+recursive functions. This is not full Dialyzer analysis.
+
+`-O0` stays generic; `-O2` enables useful bounded variants and LLVM O2.
+`--no-type-specialization` wins regardless of option order. Limits are 3 variants
+per function, 32 per module, 128 per target and 2x pre-LLVM growth per function/module.
+Generic ABI bodies/fallbacks remain. Current source has no removable checks and
+correctly stays generic; synthetic guarded fixtures prove hits/misses, rollback and
+caps without implying source guard support.
+
+Positional inputs form one batch; selected project targets have independent batches.
+Default compilation verifies object buffers in memory. `--emit obj|llvm-ir|llvm-bc`
+publishes per-module artifacts; `--artifact-dir` overrides roots and `--target-triple`
+selects the backend target. Encoded UTF-8 identities avoid filename collisions;
+target format determines suffixes. All selected project targets validate before
+publication. Compilation failure preserves outputs; multi-file replacement is not
+atomic if publication itself fails partway through.
+
+`--print-ir` / `--print-optimized-ir` produce verified snapshots without files or
+machine code; combined snapshots retain stable module/stage order. `--print-types`
+stops before LLVM. Action conflicts and frontend-only boundaries are checked;
+`--verbose` traces begun phases and specialization decisions as escaped `[comp]`
+events on stderr. Reached unsupported features report once and fail explicitly.
+Successful lifecycle and sound generic fallback remain silent.
+
+### ABI and runtime boundary
+
+LLVM owns optimization and machine/object generation; Clang links native consumers.
+Verification is not proof of Erlang semantics. Compiler LLVM dependencies stay
+private; runtime-only builds need Boost Multiprecision, not LLVM, Boost.Parser, TOML
+or OTP. SDK/toolchain provenance remains in the compilation contract and ledger.
+
+ABI v1 uses unsigned target words, checked signed 28/60-bit integer payloads and
+collision-free module/function/arity symbols. Generic entries take a live context
+and aligned term array (null at arity zero), returning a term word. Width/alignment
+come from target layout. APIs are internal C++23; historical C wrappers were removed.
+GC, exceptions and suspension may require ABI revision.
+
+Every runnable generated program links one matching runtime through
+`ErlangAoT::generated_program`. Descriptors validate ABI/word width; transactional
+registration copies names. Runtime owns stable contexts, CodeServer and
+SchedulerService; contexts own lazy heap/mailbox and invalidate lifetime tokens
+before teardown. Scheduler dispatch records only metadata. Host Terms admit small
+integers and exact empty tuple/list; structural atom/pid/port tag recognition does
+not validate identity. Heap pointers are not dereferenced. Immediate copies are
+owner-independent; they are not future graph-copy operations. Frozen registries
+use exact name/arity/all-Term keys; resolved calls pin module/code lifetime.
+Publication/lookup remain host-serialized. Service bridges separate status from
+output and contain exceptions without fabricating success.
+
+Runtime contracts: [lifecycle](../docs/runtime-lifecycle.md),
+[terms](../docs/runtime-terms.md), [builtins](../docs/runtime-builtins.md),
+[memory](../docs/runtime-memory.md), [scheduler](../docs/runtime-scheduler.md) and
+[services](../docs/runtime-services.md). Proposals in `runtime/include/` and
+`runtime/include/unverified/` are not completed APIs merely because headers exist.
+Carry forward ownership contracts from [terms](../runtime/design/terms.md),
+[processes](../runtime/design/processes.md), [atoms](../runtime/design/atom_storage.md)
+and [code server](../runtime/design/code_server.md) when filling the gaps.
+
+## Compiler validation history
+
+Each numbered step recorded a fresh compiler+runtime Debug build, full CTest and
+Lizard/clang-tidy gate before its individual commit, with formatting/whitespace
+checks. Historical counts/revisions below are evidence, not current suite targets.
+Cross-object inspection never establishes native execution. Current inventory,
+commands and limits: [compile-validation.md](../docs/compile-validation.md).
+
+### SDK and ABI: steps 1–8 (2026-09-24, macOS arm64)
+
+Global Homebrew LLVM 23.1.1_1 / SDK 23.1.1 was used. Native Linux/Windows execution
+was pending at these checkpoints; focused ASan/UBSan passed where listed, but
+LeakSanitizer was unavailable.
+
+| Step | Delivered and validated | Full CTests |
+| --- | --- | --- |
+| 1 | Frozen subset, artifact/CLI and provisional ABI contract; SDK paths, versions and documentation links. | 65 |
+| 2 | Private codegen target and global-only SDK discovery; selection/rejection policies and LLVM-free runtime-only build. Only one distinct global installation was available. | 67 |
+| 3 | Move-only compilation ownership, AST provenance, isolated LLVM contexts, durable results and diagnostic-failure containment; opaque consumer and focused ownership/result ASan/UBSan. | 69 |
+| 4 | Native/foreign target policy, PIC/Small layouts, backend initialization and failure handling; 32/64-bit layouts, moves/reuse and static-component LLVM linkage. | 70 |
+| 5 | Fresh function/module verification, target consistency and batch invalidation; malformed IR, post-verification mutations and result lifetimes. | 71 |
+| 6 | Reverified, repeatable object emission from cloned modules; Mach-O arm64 symbol/section inspection, foreign ELF/COFF, assembler failures and static LLVM linkage. | 72 |
+| 7 | ABI v1, checked 32/64-bit integer codecs and private layout assertions; boundary/tag tests, cross-target signatures/objects, six-triple C header checks and integer ASan/UBSan. Runtime-only: 3 tests. | 75 |
+| 8 | Shared 23-feature catalog, escaped context and separate compiler/runtime reporting; once-only diagnostics, sink failures and artifact cleanup. Runtime-only: 6 tests; reporting ASan/UBSan and six-triple C status checks. | 80 |
+
+### Runtime skeleton: steps 9–14 (2026-09-25, macOS arm64)
+
+Native Linux/Windows/32-bit runtime execution and LeakSanitizer remained pending.
+Runtime-only builds stayed LLVM-free; steps 10–14 also recorded Release validation. Allocation-failure injection covered
+rollback and cleanup; no heap allocation, workers or generated Erlang execution
+were claimed.
+
+| Step | Delivered and validated | Full CTests | Runtime-only / focused ASan/UBSan |
+| --- | --- | --- | --- |
+| 9 | Runtime/context lifecycle, stable identities, token invalidation and ordered teardown; independent lifetimes, busy preservation, rollback and mandatory generated-program runtime linkage. | 84 | 10 tests; lifecycle/failure checks |
+| 10 | Structural immediate-term classification and checked native integer services; malformed/pointer-shaped values, private layouts and agreement with LLVM constants. | 86 | 11 tests; 3 term tests |
+| 11 | Frozen module registries, pinned generic dispatch, immediate-only Terms and status/output bridge; publication rollback and missing/unavailable BIF reporting. | 89 | 14 tests; 4 dispatch/failure tests |
+| 12 | Lazy process memory ownership, checked budgets and allocation-free immediate copying; explicit unavailable allocation/collection and future root/resource contracts. | 90 | 15 tests; 5 memory/lifecycle tests |
+| 13 | Scheduler registration and lifecycle bookkeeping; checked transitions, teardown order and registration rollback/retry. | 91 | 16 tests; 5 scheduler/lifecycle/memory tests |
+| 14 | TermFactory, memory, send, execution and unload reporting boundaries; known-deferred versus unknown BIFs, state preservation and once-only propagation. | 93 | 18 tests; 6 service/memory/dispatch/failure tests |
+
+After step 9, a user-directed C++ API revision removed the C headers and lifecycle
+adapter. Namespaced ABI constants, scoped status and the real ProcessContext became
+the sole project-internal interface, retaining the native generated-function machine
+convention. The full 84-test gate, runtime-only 10 tests, focused sanitizers, C++
+consumer and archive-symbol checks passed again. Earlier C compilation/link/run and
+six-triple header evidence refers to the superseded API, not the current contract.
+Minor destructor/test expectation findings in steps 11–14 were corrected before
+the final passing gates; no checks or thresholds were weakened.
+
+### Windows transition and reference refresh (2026-09-28)
+
+The initial steps 14–19 attempt reproduced existing exception-escape/Boost analyzer
+findings and the raised-depth parser crash; it advanced no numbered step. The OTP
+reference moved to official `maint-29` at
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`; the grammar audit and ten-file corpus
+retained their hashes/witnesses. Subsequent upstream checks through step 27 found
+that revision unchanged. Historical validation above retains its original context.
+
+A prerequisite repair restored all 75 CTests and the full quality gate: Windows
+executables reserve 8 MiB stacks, movable frontend storage avoids throwing moves,
+and numeric/binary-slice/CLI boundaries were clarified. Real CLI tests include
+largest-finite-binary64 conversion. One analyzer crash inside Boost.Parser passed
+on an unchanged complete rerun (`build/compile-steps/quality.log`).
+
+### Semantic analysis, lowering and specialization: steps 15–30 (2026-09-28–29, Windows x64)
+
+These gates used Clang/SDK 23.1.2 from the pre-existing `thirdparty/` installation
+(no SDK download) and pinned clang-tidy 22.1.8 selected via `CMAKE_PROGRAM_PATH`.
+Nondiagnostic launcher/analyzer failures in early runs passed on complete reruns;
+from step 18, Windows analysis defaults to two concurrent jobs to bound memory.
+All production commands, checks and thresholds remained enabled.
+
+| Step | Delivered and validated | Full CTests |
+| --- | --- | --- |
+| 15 | Module/function/export indexing, located CLI errors and reversible ABI symbols; real positional/project cases and 147 symbol round trips. | 76 |
+| 16 | Exhaustive subset checks, including unused bodies/nested arguments, metadata policy and explicit negative integer bounds. | 76 |
+| 17 | Catalog-owned capability diagnostics and defensive lowering boundaries; distinct compiler send/sequence IDs and failed-output invalidation. | 76 |
+| 18 | Parameter-position side tables; wildcard slots, repeated/unbound names and include provenance. | 76 |
+| 19 | Owned per-target batches, exact local/remote resolution and iterative cycle rejection; nested/forward calls, 501-function chains and target isolation. | 76 |
+| 20 | Owner-checked symbolic type graph, exhaustive AST categories, canonical unions and bounded widening; temporary lattice/ownership invariants. | 77 |
+| 21 | Declared aliases, visibility, opaque/nominal identity, specs and constraints; finite recursion, bounded substitution and OTP-checked scope rules. Unknown external metadata warns; invalid batch declarations fail. | 78 |
+| 22 | Independent bounded implementation inference; integer singletons and parameter relations unaffected by annotations, with unknown inputs and safe widening. Calls remained unknown at this step. | 79 |
+| 23 | Fresh call-summary instantiation and conservative contract warnings; escaped opt-in `--impldebug` output, nested remote calls and target isolation. Final full quality covered 151 production commands. | 79 |
+| 24 | Generic declarations and checked target-width tagged literals; verified native objects, 32/64-bit endpoints and narrower-target overflow rejection. | 80 |
+| 25 | Aligned parameter-array loads preserving terms and source positions; grouped identity, wildcard projections and native/32-bit objects. | 80 |
+| 26 | Resolved local calls with iterative source-order argument evaluation, aligned arrays and context forwarding; forward/private/nested calls and identical arguments. | 80 |
+| 27 | Separate-module remote declarations and matching object imports/definitions; `answer`/`client` in both input orders, plus private/missing/cycle/duplicate-module diagnostics. | 80 |
+| 28 | Versioned module/export descriptors, retained explicit startup and transactional frozen runtime registration; linked real-source execution, rejection/lifetime tests and missing-runtime link failure. | 82 |
+| 29 | Canonical implementation profiles, exact-check benefit recognition, deterministic count/work/growth limits and generic no-benefit fallback. | 83 |
+| 30 | Guarded LLVM variants, unchanged public ABI and retained generic bodies; measured 2x growth rollback, native hit/miss equivalence and exhausted-inference fallback. | 84 |
+
+Steps 24–27 each passed 80/80 with zero skips (commits `c86f539`, `f09e7b4`,
+`5db13f0`, `4301401`); step 27 quality covered 154 production commands. Steps 28–30
+passed 82/83/84 tests; steps 29/30 covered 159/162 production commands. Unchanged
+analyzer crashes passed complete retries without exclusions/suppressions. Step 23's
+debug-silence assertion was corrected before its passing rerun.
+
+### Public workflows and closure: steps 31–46 (2026-09-29, Windows x64)
+
+Same Clang/SDK 23.1.2 and clang-tidy 22.1.8; official `maint-29` remained
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. All rows passed full CTest and quality.
+Native generated-program execution here is Windows x64 evidence only.
+
+| Step | Validated behavior | Full CTests | Production quality commands, where recorded |
+| --- | --- | ---: | ---: |
+| 31 | O0/O2 consumers preserve registration, results and ABI. | 85 | — |
+| 32 | SDK text/bitcode round trips and invalid snapshots; corrected unterminated test assembly. | 86 | 164 |
+| 33 | Unicode/encoded paths, replacement, collisions, input aliases and failure cleanup. | 87 | 167 |
+| 34 | Both CLI modes: option operands, repetition, conflicts and informational no-I/O precedence. | 88 | 168 |
+| 35 | Positional artifacts, failed batches and frontend compatibility; LLVM remark filters respected. | 89 | 170 |
+| 36 | Project order/isolation/roots and no publication on later-target failure; unchecked optional backend policy removed. | 90 | 172 |
+| 37 | Phase ordering, escaping, early failures, specialization reasons and unchanged artifact bytes. | 91 | 176 |
+| 38 | Before/after IR round trips, projects, conflicts and no writes; SDK FileCheck unavailable. | 92 | 177 |
+| 39 | Types, aliases, callbacks, warnings and unknowns; renamed test script shadowing Python types. | 93 | 180 |
+| 40 | CLI objects link/run with the real runtime at O0/O2; immediate boundaries, calls, ABI rejection, missing-runtime failure and teardown. | 95 | — |
+| 41 | 150 seeded/fixed calls match OTP and an independent evaluator under four policies, each twice; wrong/missing specs preserve behavior. | 96 | — |
+| 42 | Source/synthetic measurements; 255-argument/64-member-union inputs, byte-identical source O2 policies, count/growth caps and native fallback. | 97 | — |
+| 43 | O0/O2 ELF/Mach-O/COFF objects for seven targets: symbols/imports, widths/tags, integer endpoints and failure without publication. | 98 | — |
+| 44 | Both CLI modes audit compiler placeholders; executable output fails explicitly; rejected runtime allocation preserves state/calls. | 99 | — |
+| 45 | Batch/AST/writer ceilings, partial/close/interrupted writes and Debug STL OOM repairs retaining iterator checks. | 102 | 182 |
+| 46 | Two-module example at O0/O2; artifacts, inspections, specialization override; documented SDK/ABI/runtime recipe and inventory. | 103 | 182 |
+
+Steps 40–46 report zero skips. Step 45 also passed compiler-only Debug 80/80,
+runtime-only Debug 16/16 and runtime-only ASan Release 16/16. Runtime ASan uses
+`/MT` and matching thunks; it instruments neither the SDK nor emitted Erlang.
+Full compiler ASan was unavailable due to the SDK's MSVC STL annotation ABI
+(`annotate_string` 1 versus 0); earlier attempts hit rpmalloc/CRT duplicate symbols.
+Neither limitation was suppressed or counted as passing coverage. Logs/scripts
+remain under ignored `build/compile-steps/`; the tracked [103-test inventory](../docs/compile-tests.txt)
+and matrix preserve reproducible scope.
+
+## Outstanding work to finish
+
+The [feature backlog](01-todo.md) expands these gaps into explanations and
+implementation checklists for separately chosen detailed plans.
+
+**These are unfinished features or validation obligations, not completed compiler
+steps.** The 46-step immediate-term milestone is complete; the overall Erlang-to-native
+goal still requires the following work.
+
+- [ ] **Production executables:** startup/entrypoint policy and native linking with
+  the matching runtime; replace explicit executable-output failure.
+- [ ] **Executable Erlang semantics:** arithmetic with correct bignum fallback,
+  atom/float/heap values, patterns, guards, multiple clauses, branching/sequences,
+  records, closures/dynamic calls, exceptions and recursion/proper bounded-stack
+  tail calls. Parsing/type metadata support does not implement their execution.
+- [ ] **Terms, allocation and GC:** real TermFactory constructors, backing heaps,
+  bignums/binaries/containers, rooted graph copying and collection. Validate roots/
+  safepoints before movable terms; include host, continuation, mailbox/cursor and
+  in-transit roots with explicit C++ cell resource construction/destruction.
+- [ ] **Atoms and identities:** runtime-owned stable atom storage, descriptor bindings
+  initialized before publication and retained roots; valid owned pid/port/reference
+  services. Atom collection is a reservation without an implemented owner.
+- [ ] **Processes and scheduling:** cooperative generated execution, reductions,
+  workers/queues, wakeups, signals, send and selective receive. Preserve per-sender
+  order; all messages, including self-send, enter the signal inbox before owner-side
+  copying/mailbox insertion. Compare continuations with LLVM coroutines before
+  suspension; current scheduler records do not run processes.
+- [ ] **Runtime services:** production BIFs, typed/native callable integration and
+  conversions, concurrent module publication/lookup and cooperative generated calls.
+  Dynamic loading/unload/code upgrades remain deferred and may be omitted under the
+  project scope; resolve that choice explicitly before promising support.
+- [ ] **Later code generation tooling:** useful source-driven specialization as the
+  subset expands, debug information, profiling and LTO.
+- [ ] **Native platform validation:** current compiler/runtime/harness execution on
+  Linux x86/x64/ARM/AArch64, macOS Apple Silicon and Windows x86. Historical macOS
+  skeleton evidence and seven inspected object targets do not close this matrix.
+- [ ] **Sanitizers and compatibility:** full compiler/frontend ASan, UBSan and
+  LeakSanitizer with a compatible SDK; retain lifetime/failure tests. Full upstream
+  OTP Common Test suites remain unrun. Refresh `maint-29` per the reference procedure
+  at the next OTP-dependent task while preserving historical revisions.
+- [ ] **Test migration closure:** retire adapters/synthetic successes only after
+  case-level equivalent public coverage; retain justified API-only invariants,
+  injected failures and cross-width boundaries.
+
+Explicitly deferred rather than required for this milestone: public interchange,
+C/FFI compatibility, intermediate-stage readers (reserved directories only), and
+project-schema extensions such as dependencies, imports, profiles, package fetching,
+watch/cache or parallel execution. Do not prebuild these as part of closure.
+Future code changes retain AGENTS.md's formatting, meaningful behavioral tests and
+fresh combined Debug `check-quality` gate with no weakened thresholds/suppressions.

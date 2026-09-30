@@ -170,7 +170,7 @@
   rooted graph copies, collect reserves safe-point tracing. Receive cursors preserve
   unmatched messages, remove only a selected candidate and asynchronously park at
   the tail with arrival-version wakeup; process send accepts without waiting for delivery.
-  `04-compile.md` references these contracts without expanding its implemented subset.
+  `00-finished.md` archives the completed milestone and flags these unfinished services.
 - Wider code-server proposals reserve exact typed values, explicit generic fallback,
   atom-bound names and concurrent publication. Unverified native templates stay under
   `runtime/include/unverified/`; no conversion registry or virtual call frames exist.
@@ -245,7 +245,8 @@
   bounded source stress/mutations and separately built frontend/runtime consumers.
   Keep API-only invariants, raw-stage ownership, injected limits/faults and cross-width
   ABI boundaries. Backend synthetic cases retire only after real compiled Erlang
-  covers them; see docs/test-migration.md and .agents/04-compile.md steps 15–46.
+  covers them; see docs/test-migration.md and .agents/00-finished.md for coverage
+  and remaining work.
   Existing offline records and live OTP projections remain. A pinned grammar reduction
   audit observes all 344 ordinary productions; 79 SSA test productions are excluded.
   Ten checksum-pinned real OTP sources are checked by stage and for deterministic trees.

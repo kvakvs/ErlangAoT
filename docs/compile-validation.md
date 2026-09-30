@@ -36,7 +36,8 @@ The local validation selects pinned clang-tidy 22.1.8 via `CMAKE_PROGRAM_PATH`;
 Lizard 1.24.0 runs from `.venv-quality`. Neither checks nor thresholds were disabled.
 Each numbered step 40–46 has a separate commit and passing fresh shared gate.
 Local command logs/JUnit/inventories live under ignored `build/compile-steps/`;
-the numbered [plan ledger](../.agents/04-compile.md) preserves historical results.
+the [archived compiler ledger](../.agents/00-finished.md#compiler-validation-history)
+preserves historical results.
 
 `codegen_differential` checks 150 fixed/seeded native calls against OTP and an
 independent evaluator in four policies, each run twice. `codegen_measurements`

@@ -1,11 +1,16 @@
-# Working memory — 2026-09-29
+# Working memory — 2026-09-30
 
 ## Current state and authoritative records
 
-- `.agents/00-finished.md`: completed foundations/frontend/project work and migration;
-  project steps 1–22 complete. `.agents/04-compile.md`: steps
-  1-39 complete; user requested stopping after step 39. Do not start step 40 implicitly.
-  The compile plan's compact validation ledger retains per-step historical evidence.
+- `.agents/01-todo.md`: feature backlog derived from the archive, with explanations,
+  implementation checklists, validation obligations and optional scope. The user
+  chooses the order and creates detailed plans; this does not authorize coding.
+
+- `.agents/00-finished.md`: consolidated foundations/frontend/project/compiler/runtime
+  milestone archive, historical validation and explicit unfinished-work checklist.
+  Compiler steps 1–46 complete; earlier stopping points are superseded. The numbered
+  plan was compacted into the archive and removed on 2026-09-30.
+  Latest gate: Windows x64 Debug 103/103, zero skips, full quality (182 commands).
 - Steps 24–27 commits: c86f539 (declarations/literals), f09e7b4 (parameters),
   5db13f0 (local calls), 4301401 (remote calls). Each passed fresh Windows x64
   compiler+runtime Debug, 80/80 CTests with zero skips, full Lizard/clang-tidy,

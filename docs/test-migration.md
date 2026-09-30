@@ -92,7 +92,7 @@ syntax and printing, not execution semantics that the compiler does not implemen
 | runtime_term_layout | Private static assertions now compile in the build-only `runtime_term_layout_tests` object library; runnable registration removed. |
 | runtime_lifecycle_failure / runtime_term_tag / abi_integers | Retain allocation rollback/failure sweeps, reserved low-tag truth table and mathematical 32/64-bit overflow boundaries. Real native execution cannot reproduce all these inputs or substitute for both word widths. |
 | codegen_sdk | Remove duplicate executable/CTest. `codegen_dependency` now builds **and executes** its separate LLVM consumer; configuration retains the SDK compile/link/version probe. |
-| codegen_results / ownership / target / verification / emission / term_abi / features / runtime_terms | Defer source-driven migration until lowering/artifact emission is reachable through the CLI. Preserve invalid IR, rollback, target widths, diagnostic sink failures and compiler/runtime word agreement. `.agents/04-compile.md` routes steps 15–46 to their eventual replacements. |
+| codegen_results / ownership / target / verification / emission / term_abi / features / runtime_terms | Defer source-driven migration until lowering/artifact emission is reachable through the CLI. Preserve invalid IR, rollback, target widths, diagnostic sink failures and compiler/runtime word agreement. The [compiler archive](../.agents/00-finished.md#compiler-and-runtime-milestone) records subsequent steps 15–46 and public workflows; retirement still requires case-level coverage review. |
 
 The plan's baseline inventory remains a record of old names, not a list of current
 registrations. Removed suites have their registrations, sources and unused helpers
