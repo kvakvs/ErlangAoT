@@ -3,6 +3,7 @@
 #include "lowering_expressions.hpp"
 #include "module_registration.hpp"
 #include "progress.hpp"
+#include "source_locations.hpp"
 #include "specialization_analysis.hpp"
 #include "specialization_lowering.hpp"
 #include "target.hpp"
@@ -48,7 +49,9 @@ void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerT
         const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
         const auto root = definition.clauses.at(0).body.at(0);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-        builder.CreateRet(lower_expression(builder, *entry, module, function, root, word, inferred));
+        auto *result = lower_expression(builder, *entry, module, function, root, word, inferred);
+        locate_source(builder, syntax, syntax.expression(root).source);
+        builder.CreateRet(result);
     }
 }
 
@@ -79,6 +82,11 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
             progress(compilation.request(), "lowering", compilation.request().inputs[i].source_path,
                      utf8(modules[i]->name));
             declare(*outputs[i], *modules[i], signature, inferred);
+            if (compilation.request().annotate_source) {
+                prepare_source_locations(*outputs[i], *modules[i],
+                                         compilation.request().optimization == OptimizationLevel::speed,
+                                         detail::state(compilation).source_scopes);
+            }
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
             define(*outputs[i], *modules[i], word, inferred);

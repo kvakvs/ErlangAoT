@@ -73,6 +73,8 @@ struct CompilationRequest {
     OptimizationLevel optimization = OptimizationLevel::none;
     // Keep the specialization override independent of option ordering.
     bool disable_type_specialization = false;
+    // Preserve instruction locations for source comments in requested human-readable IR.
+    bool annotate_source = false;
     // Select future in-memory serialization; filesystem publication belongs to the driver.
     OutputKind output_kind = OutputKind::object;
 };

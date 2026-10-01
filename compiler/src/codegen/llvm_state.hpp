@@ -1,5 +1,6 @@
 #pragma once
 #include "compilation.hpp"
+#include "source_locations.hpp"
 #include "specialization.hpp"
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -22,6 +23,8 @@ struct CompilationState {
     std::unique_ptr<llvm::TargetMachine> target_machine;
     // Destroy all modules before their shared context; indices match request input order.
     std::vector<std::unique_ptr<llvm::Module>> modules;
+    // Match surviving LLVM lexical scopes directly to retained physical source text.
+    SourceScopes source_scopes;
     // Retain bounded decisions independently of temporary semantic ownership for later tracing/lowering.
     SpecializationPlan specializations;
 };

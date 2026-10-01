@@ -39,10 +39,13 @@ void artifact_limits(cg::OutputKind kind, bool batch) {
 }
 
 // Inspection uses the same writer ceiling and cannot retain earlier successful snapshots after failure.
-void snapshot_limit() {
+void snapshot_limit(bool tiny) {
     auto compilation = fixture("answer.erl");
+    cg::detail::state(compilation).request.annotate_source = true;
     require(analyze_and_lower(compilation), "snapshot fixture lowering failed");
-    cg::detail::state(compilation).request.limits.module_bytes = 1;
+    const auto baseline = cg::snapshot_ir(compilation);
+    require(baseline && !baseline->front().bytes.empty(), "annotated snapshot failed");
+    cg::detail::state(compilation).request.limits.module_bytes = tiny ? 1 : baseline->front().bytes.size() - 1;
     require(!cg::snapshot_ir(compilation), "snapshot limit ignored");
     require(compilation.result().status() == cg::CompilationStatus::failed, "snapshot failure not latched");
 }
@@ -55,7 +58,8 @@ int main() {
             artifact_limits(kind, false);
             artifact_limits(kind, true);
         }
-        snapshot_limit();
+        snapshot_limit(false);
+        snapshot_limit(true);
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

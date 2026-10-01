@@ -20,9 +20,9 @@ Options:
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
       -O0 | -O2          Select generic O0 (default) or speed specialization and LLVM O2.
       --no-type-specialization  Disable variants regardless of optimization option order.
-      --print-ir          Print verified IR before LLVM optimization; no files or object emission.
+      --print-ir          Print verified IR with Erlang source comments before LLVM optimization.
       --print-types       Report declared/inferred types; stop before LLVM lowering.
-      --print-optimized-ir  Print verified IR after the selected pipeline; combine for both stages.
+      --print-optimized-ir  Print verified IR with Erlang source comments after the selected pipeline.
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
       --print-pp         Print preprocessed Erlang source to stdout.

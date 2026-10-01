@@ -12,7 +12,7 @@ if work.exists():
     shutil.rmtree(work)
 work.mkdir(parents=True)
 (work / 'oracle').mkdir()
-for name in ('answer.erl', 'client.erl'):
+for name in ('answer.erl', 'client.erl', 'source_comments.erl', 'source_comments.hrl'):
     shutil.copyfile(Path(fixtures) / name, work / name)
 sequence = itertools.count()
 
@@ -51,6 +51,11 @@ for level in ('-O0', '-O2'):
         assert ('phase=optimization' in result.stderr) == (flag == '--print-optimized-ir')
         assert re.search(r'define[^\n]*@eav1_616e73776572_6964656e74697479_1\(', result.stdout)
         assert '.register' in result.stdout
+        assert re.search(r'ret i\d+ [^\n]*; value\(\) -> 42\.', result.stdout)
+        assert re.search(r'(?:getelementptr|load) [^\n]*; identity\(X\) -> X\.', result.stdout)
+        assert result.stdout.startswith('; Erlang source files:\n; "answer.erl"\n')
+        assert result.stdout.count('; "answer.erl"') == 1
+        assert result.stdout.count('; identity(X) -> X.') == 1
 
 both = run('-O2', '--print-optimized-ir', '--print-ir', 'client.erl', 'answer.erl')
 parts = round_trip(both.stdout)
@@ -71,6 +76,39 @@ assert 'module="line\\x0abreak"' in quoted.stdout
 round_trip(quoted.stdout)
 shutil.copyfile(work / 'answer.erl', work / 'space å.erl')
 round_trip(run('--print-ir', 'space å.erl').stdout)
+
+# Physical source lines survive includes, nested macros, logical file remapping and LLVM inlining.
+annotated = run('-O2', '--print-ir', '--print-optimized-ir', 'source_comments.erl', 'answer.erl')
+source_parts = round_trip(annotated.stdout)[:2]
+before, after = [assembly for _, assembly in source_parts]
+assert re.search(r'getelementptr [^\n]*;         Value\)\.', before)
+assert re.search(r'alloca [^\n]*;     \?OUTER\(', before)
+assert re.search(r'alloca [^\n]*;     answer:identity\(', before)
+assert re.search(r'ret i\d+[^\n]*;     7\. % original literal line', after)
+assert ';     answer:identity(' in after and 'inlinedAt:' in after
+for assembly in (before, after):
+    assert assembly.count('; "source_comments.erl"') == 1
+    assert len(re.findall(r'^; "[^"\n]*source_comments.hrl"$', assembly, re.MULTILINE)) == 1
+    assert not re.search(r'^  [^\n]*; [^\n]*source_comments\.(erl|hrl)', assembly, re.MULTILINE)
+assert 'logical-only.erl' not in before + after
+
+# Source comments use UTF-8 even for Latin-1 input, and controls cannot create new IR lines.
+for flag, ending in (('--print-ir', b'\r\n'), ('--print-optimized-ir', b'')):
+    (work / 'latin.erl').write_bytes(b'% coding: latin-1\r\n-module(latin).\r\n-export([value/0]).\r\n'
+                                   b'value() -> 7. % caf\xe9\t\x1b\x00' + ending)
+    latin = run('-O2', flag, 'latin.erl').stdout
+    assert '; value() -> 7. % café\t\\x1b\\x00' in latin, latin
+    round_trip(latin)
+
+# Saved textual IR carries the same comments and remains valid LLVM assembly.
+run('-O2', '--emit', 'llvm-ir', '--artifact-dir', 'source-artifacts', 'source_comments.erl', 'answer.erl')
+artifacts = list((work / 'source-artifacts').glob('*.ll'))
+assert len(artifacts) == 2
+for artifact in artifacts:
+    text = artifact.read_text(encoding='utf-8')
+    assert text.startswith('; Erlang source files:\n'), artifact
+    assert re.search(r'^  [^\n]+ ; (?:value\(|    )', text, re.MULTILINE), artifact
+    round_trip(text)
 (work / 'project.toml').write_text('''schema_version=1
 [[targets]]
 name="one"
@@ -82,6 +120,7 @@ sources=["client.erl","answer.erl"]
 project = run('--project', 'project.toml', '--target', 'two', '--target', 'one', '--print-ir', '--verbose')
 project_parts = round_trip(project.stdout)
 assert len(project_parts) == 4
+assert all(assembly.startswith('; Erlang source files:\n') for _, assembly in project_parts)
 assert ['target="two"' in h for h, _ in project_parts] == [True, True, False, False]
 assert 'target="one"' in project_parts[-1][0]
 assert 'phase=emission' not in project.stderr and '[comp]' in project.stderr

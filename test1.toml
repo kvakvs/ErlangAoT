@@ -11,10 +11,10 @@ name = "erlangaot_test1"
 # List files or patterns, e.g. ["main.erl", "src/*.erl", "shared/**/*.erl"].
 # Patterns support *, ?, and ** as a whole directory component.
 sources = [
-#  "references/otp/lib/xmerl/src/*.erl"
-  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/inference_owner.erl",
-  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/inference_user.erl",
-  "F:/Projects/ErlangAoT/build/debug/tests/frontend-cli/semantics/opaque_owner.erl"
+  # "references/otp/lib/compiler/src/*.erl",
+  # "references/otp/lib/compiler/src/beam_a.erl"
+  # "references/otp/lib/stdlib/src/dict.erl"
+  "build/debug/tests/compiler/codegen/measurements/Debug/answer.erl"
 ]
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
@@ -29,12 +29,13 @@ source_search_paths = []
 # Header search directories, first listed first, e.g. ["include", "vendor/include"].
 # CLI -I directories take precedence; the last CLI -I is searched first.
 include_dirs = [
-#   "references/otp/lib/xmerl/include", 
+  "references/otp/lib/compiler/include", 
+  "references/otp/lib/stdlib/include",
   "references/otp/lib"
 ]
 # Predefined macros, e.g. ["DEBUG", "LIMIT=100", 'LABEL="demo"'].
 # A bare name means true; values are Erlang literal terms. Duplicates are errors.
-defines = []
+defines = ["COMPILER_VSN=1"]
 # Empty lists preserve compiler feature defaults; CLI feature settings apply last.
 # Example overrides: enable_features = ["maybe_expr"].
 # Do not list a feature in both arrays.

@@ -3,6 +3,7 @@
 #include "limits.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
+#include "source_annotations.hpp"
 #include "verification.hpp"
 #include <cstring>
 #include <exception>
@@ -13,10 +14,13 @@
 namespace erlang_aot::codegen {
 namespace {
 // Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
-OutputBuffer serialize(const llvm::Module &module, OutputKind kind, std::size_t capacity) {
+OutputBuffer serialize(const llvm::Module &module, const ast::Module &syntax, const SourceScopes &sources,
+                       OutputKind kind, std::size_t capacity) {
     BoundedStream stream(capacity);
     if (kind == OutputKind::llvm_ir) {
-        module.print(stream, nullptr);
+        SourceAnnotations annotations(module, syntax, sources, capacity);
+        annotations.print_sources(stream);
+        module.print(stream, &annotations);
     } else {
         llvm::WriteBitcodeToFile(module, stream);
     }
@@ -35,8 +39,10 @@ std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, Outpu
             if (artifact) {
                 progress_module(compilation, index, "emission");
             }
+            outputs.push_back(serialize(*module, compilation.request().inputs.at(index).syntax,
+                                        detail::state(compilation).source_scopes, kind,
+                                        output_capacity(compilation.request().limits, outputs)));
             ++index;
-            outputs.push_back(serialize(*module, kind, output_capacity(compilation.request().limits, outputs)));
         }
     } catch (const std::exception &error) {
         compilation.result().report({.level = DiagnosticLevel::error,

@@ -224,8 +224,8 @@ erlangaot [options] <source.erl>...
   --print-pp               Print expanded Erlang source
   --print-ast              Print an indented syntax tree
   --print-types            Report declared/inferred types before LLVM lowering
-  --print-ir               Print verified IR before LLVM optimization
-  --print-optimized-ir     Print verified IR after LLVM optimization
+  --print-ir               Print verified IR with Erlang source comments before LLVM optimization
+  --print-optimized-ir     Print verified IR with Erlang source comments after LLVM optimization
   --emit obj|llvm-ir|llvm-bc  Write one artifact per module
   --artifact-dir <dir>     Override the artifact root (requires --emit)
   --target-triple <triple>  Select the machine/OS/ABI

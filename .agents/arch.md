@@ -1,5 +1,11 @@
 # Architecture
 
+- Textual IR views/artifacts retain per-instruction source locations through LLVM
+  line-only metadata. Bounded comments beside instructions use retained physical
+  source code only, with filenames listed once in a header; macros and includes keep
+  original provenance. Repeated adjacent locations share one comment per block.
+  Object/bitcode requests omit this inspection metadata.
+
 - CMake defaults `BUILD_TESTING` to OFF, including normal Debug/Windows presets.
   Explicit `-DBUILD_TESTING=ON`, `make build_test/test` or `make-test.bat` enables
   test executables and host OTP discovery; manual build/run wrappers keep it OFF.

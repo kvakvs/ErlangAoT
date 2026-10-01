@@ -1,5 +1,12 @@
 # File map
 
+- `compiler/src/codegen/source_locations.{hpp,cpp}`: original physical invocation
+  scopes/locations for IR inspection and textual emission, surviving optimization.
+  `source_annotations.{hpp,cpp}`: bounded, UTF-8 source comments beside mapped IR
+  instruction groups and one filename header; preparation precedes LLVM callbacks.
+  `tests/fixtures/codegen/source_comments.{erl,hrl}` and `inspection.py`: public
+  source mapping, nested inlining/macros/includes, encodings and LLVM round trips.
+
 - `CMakeLists.txt` and `CMakePresets.json`: compiler/runtime builds default to
   `BUILD_TESTING=OFF`; test subdirectories are included only with explicit opt-in.
 

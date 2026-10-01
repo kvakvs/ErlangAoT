@@ -26,6 +26,7 @@ codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInpu
     request.optimization = options.optimization.value_or(codegen::OptimizationLevel::none);
     request.disable_type_specialization = options.disable_type_specialization;
     request.output_kind = options.emit.value_or(codegen::OutputKind::object);
+    request.annotate_source = options.inspect_ir() || request.output_kind == codegen::OutputKind::llvm_ir;
     return request;
 }
 

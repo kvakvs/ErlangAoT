@@ -2,6 +2,23 @@
 
 ## Current state and authoritative records
 
+- IR source comments (2026-10-01): user chose comments beside corresponding LLVM
+  instructions. `--print-ir`, `--print-optimized-ir` and `--emit llvm-ir` enable
+  private `annotate_source`; lowering attaches physical line-only LLVM metadata.
+  CompilationState retains a scope-to-source map; textual snapshots resolve
+  DebugLoc scopes directly without rereading files or walking LLVM metadata operands.
+  Standard O2 retains locations/inlined-at chains; comments use owned source text,
+  including macro invocation sites, includes and physical lines despite `-file`.
+  User requires code-only instruction comments; filenames occur once in a header.
+  Consecutive identical locations share one comment per basic block.
+  SourceAnnotations preformats bounded UTF-8 comments before LLVM callbacks;
+  ordinary object/bitcode requests omit the metadata. Tests extend inspection.py
+  and annotated snapshot budget coverage in limits.cpp. Logs: build/source-comments/.
+  Validation: all 103 CTests passed; full check-quality passed (Lizard and all
+  184 production translation units through clang-tidy); changed C++ is formatted.
+  Normal Debug configuration restored to BUILD_TESTING=OFF after validation.
+  User-owned untracked `1.ir` was present before work and is left untouched.
+
 - Build selection (2026-10-01): `BUILD_TESTING` defaults OFF before CTest; normal
   Debug/Windows presets set OFF. Explicit `-DBUILD_TESTING=ON` enables the 53
   helper executables/103 tests; Makefile and batch test wrappers already opt in.

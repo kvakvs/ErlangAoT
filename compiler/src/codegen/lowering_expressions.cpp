@@ -1,5 +1,6 @@
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
+#include "source_locations.hpp"
 #include <algorithm>
 #include <erlang_aot/abi/term.hpp>
 #include <stdexcept>
@@ -38,6 +39,7 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
 // Each parent is emitted only after its child values, including grouping and nested calls.
 llvm::Value *evaluate(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
+    locate_source(state.builder, *state.module.syntax, expression.source);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
         return lower_call(state, expression, *call);
     }

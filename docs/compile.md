@@ -251,7 +251,7 @@ The following compilation and inspection switches are implemented:
 | `--target-triple TRIPLE` | Select machine/OS/ABI; `--target` retains project selection |
 | `-O0` / `-O2` | Default generic O0 / bounded specialization plus LLVM O2 |
 | `--no-type-specialization` | Disable variants independently of option order |
-| `--print-ir` / `--print-optimized-ir` | Verified text snapshots before/after LLVM optimization |
+| `--print-ir` / `--print-optimized-ir` | Verified snapshots with original Erlang lines beside mapped instructions, before/after LLVM optimization |
 | `--print-types` | Declared/inferred/unknown type summaries before LLVM lowering |
 
 Default compilation verifies object buffers in memory without output files.
@@ -536,6 +536,30 @@ snapshots have escaped LLVM-comment headers and must be separated before assembl
 Use `--emit llvm-ir` for individual machine-consumable files. Preprocessing, target,
 optimization and specialization options are allowed; frontend actions, project
 creation and all emission/output destinations conflict. Traces remain on stderr.
+
+Both IR views and `--emit llvm-ir` place the original Erlang source line beside
+the corresponding LLVM instructions, for example:
+
+```llvm
+; Erlang source files:
+; "answer.erl"
+; ...
+  ret i64 687, !dbg !6 ; value() -> 42.
+```
+
+Instruction comments contain only source code, with original indentation and
+unexpanded macro invocations. Consecutive instructions with the same source
+location share one comment within each basic block. Physical filenames appear
+once in a header at the start of each snapshot. Comments use the immutable
+source buffers retained during parsing.
+Included files retain their own locations; `-file` attributes do not redirect the
+source-text lookup. Latin-1 input is displayed as UTF-8, and embedded controls are
+escaped. LLVM line metadata carries locations and inlining chains through
+optimization, so surviving instructions still show their source. Removed
+instructions have no output, and instructions without a retained location receive
+no source comment.
+The annotated text remains valid LLVM assembly. Object and bitcode compilation
+do not enable this source-annotation metadata.
 
 Step 39 implements `--print-types` through the shared semantic pipeline, stopping
 before LLVM state, target setup or lowering. Reports follow input module and
