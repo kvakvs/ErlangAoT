@@ -39,7 +39,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             assert f"AddressSize: {bits}bit" in headers, headers
             imports = run([nm, "--undefined-only", str(path)]).stdout
             exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
-            assert "erlang_aot_register_module_v1" in imports, imports
+            assert "erlang_aot_register_module_v2" in imports, imports
             assert ".register" in exports and "eav1_" in exports, exports
             reports.append(headers + imports + exports)
             if "636c69656e74" in path.name:
@@ -49,7 +49,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
         ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
         assert f"ret i{bits} {minimum * 16 + 15}" in ir, ir
         assert f"ret i{bits} {maximum * 16 + 15}" in ir, ir
-        assert f"i32 1, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert f"i32 2, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
     rejected(tool, answer, work / triple / "overflow", triple,
              "representable integer literal" if bits == 32 else "bignum expressions")

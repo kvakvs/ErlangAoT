@@ -78,7 +78,10 @@ Only success writes output. Null arguments are allowed at arity zero; other
 required null pointers, empty names, oversized arities and unsupported terms fail.
 Non-null pointers must denote valid live objects/arrays for their declared lengths.
 There are no STL values or exceptions across this generated-service boundary.
-This does not alter the separate `GeneratedFunction` entry signature.
+The `GeneratedFunction` machine signature is unchanged. In call contract revision 2,
+an active generated invocation also retains the first structured failure in its
+context channel. Erlang errors use `erlang_error` (12); runtime failures preserve
+their exact infrastructure status. See [failure transport](generated-call-failures.md).
 
 | Condition | Service status |
 | --- | --- |

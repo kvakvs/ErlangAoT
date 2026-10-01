@@ -14,13 +14,37 @@ CodeResult<void> validate(const abi::v1::ModuleDescriptor &descriptor) {
     return {};
 }
 
+// Contain native entry exceptions while the invocation channel still owns its first failure.
+CallResult<Word> invoke_entry(abi::v1::GeneratedFunction *entry, ProcessContext &context,
+                              const Word *arguments) noexcept {
+    try {
+        return entry(&context, arguments);
+    } catch (const std::bad_alloc &) {
+        return std::unexpected(CallFailure{CallError::resource_limit});
+    } catch (...) {
+        return std::unexpected(CallFailure{CallError::native_exception});
+    }
+}
+
 // Marshal checked host Terms without aliasing their C++ object representation.
 CallResult<Term> invoke(abi::v1::GeneratedFunction *entry, ProcessContext &context, std::span<const Term> arguments) {
+    auto &state = context.generated_calls();
+    GeneratedInvocation invocation(state);
+    if (state.failure()) {
+        return std::unexpected(*state.failure());
+    }
     std::array<Word, 255> words{};
     for (std::size_t i = 0; i < arguments.size(); ++i) {
         words[i] = arguments[i].word();
     }
-    const auto result = Term::from_word(entry(&context, arguments.empty() ? nullptr : words.data()));
+    const auto word = invoke_entry(entry, context, arguments.empty() ? nullptr : words.data());
+    if (state.failure()) {
+        return std::unexpected(*state.failure());
+    }
+    if (!word) {
+        return std::unexpected(word.error());
+    }
+    const auto result = Term::from_word(*word);
     if (!result) {
         return std::unexpected(CallFailure{CallError::argument_type_mismatch, {}, result.error()});
     }
@@ -70,7 +94,7 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
 }
 } // namespace erlang_aot::runtime
 
-std::uint8_t erlang_aot_register_module_v1(void *runtime, const void *descriptor) noexcept {
+std::uint8_t erlang_aot_register_module_v2(void *runtime, const void *descriptor) noexcept {
     using namespace erlang_aot;
     using abi::v1::Status;
     if (!runtime || !descriptor) {

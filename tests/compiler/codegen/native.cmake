@@ -64,6 +64,6 @@ if(NOT result STREQUAL "1" OR NOT output STREQUAL expected OR
 endif()
 execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/build" --config "${HOST_CONFIG}" --target unlinked
     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors)
-if(result STREQUAL "0" OR NOT "${output}${errors}" MATCHES "erlang_aot_register_module_v1")
+if(result STREQUAL "0" OR NOT "${output}${errors}" MATCHES "erlang_aot_register_module_v2")
     message(FATAL_ERROR "Missing runtime did not fail at the ABI reference: ${output}${errors}")
 endif()

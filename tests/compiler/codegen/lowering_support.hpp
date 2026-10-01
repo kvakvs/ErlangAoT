@@ -27,10 +27,11 @@ void require(bool condition, const char *message) {
 
 // Own parsed fixture syntax before borrowing any semantic declaration addresses.
 cg::Compilation fixtures(std::initializer_list<const char *> names, const std::string &triple = {},
-                         cg::OptimizationLevel optimization = cg::OptimizationLevel::none) {
+                         cg::OptimizationLevel optimization = cg::OptimizationLevel::none, bool specialize = true) {
     cg::CompilationRequest request;
     request.target_triple = triple;
     request.optimization = optimization;
+    request.disable_type_specialization = !specialize;
     for (const auto *name : names) {
         SourceManager sources;
         const auto path = std::filesystem::path(LOWERING_FIXTURES) / name;

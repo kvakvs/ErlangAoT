@@ -9,22 +9,19 @@ using namespace runtime;
 
 // Keep generated callers independent of host std::expected and CallFailure layout.
 Status call_status(CallError error) noexcept {
-    switch (error) {
-    case CallError::bad_arity:
-    case CallError::argument_type_mismatch:
-        return Status::invalid_argument;
-    case CallError::wrong_owner:
-        return Status::wrong_owner;
-    case CallError::expired_context:
-        return Status::stopped;
-    case CallError::resource_limit:
-        return Status::resource_limit;
-    case CallError::native_exception:
-        return Status::internal_error;
-    case CallError::not_implemented:
-        return Status::not_implemented;
-    case CallError::diagnostic_failure:
-        return Status::diagnostic_failure;
+    static constexpr std::array statuses{std::pair{CallError::bad_arity, Status::invalid_argument},
+                                         std::pair{CallError::argument_type_mismatch, Status::invalid_argument},
+                                         std::pair{CallError::wrong_owner, Status::wrong_owner},
+                                         std::pair{CallError::expired_context, Status::stopped},
+                                         std::pair{CallError::resource_limit, Status::resource_limit},
+                                         std::pair{CallError::native_exception, Status::internal_error},
+                                         std::pair{CallError::not_implemented, Status::not_implemented},
+                                         std::pair{CallError::diagnostic_failure, Status::diagnostic_failure},
+                                         std::pair{CallError::erlang_exception, Status::erlang_error}};
+    for (const auto &[code, status] : statuses) {
+        if (code == error) {
+            return status;
+        }
     }
     return Status::internal_error;
 }
@@ -54,10 +51,21 @@ Status invoke(const ResolvedFunction &target, Context &context, const TermWord *
     }
     const auto result = target.call(context, std::span<const Term>(terms.data(), arity));
     if (!result) {
-        return call_status(result.error().code);
+        context.generated_calls().fail(result.error());
+        return result.error().status.value_or(call_status(result.error().code));
+    }
+    if (const auto &failure = context.generated_calls().failure()) {
+        return failure->status.value_or(call_status(failure->code));
     }
     output = result->word();
     return Status::ok;
+}
+
+// Validate borrowed arrays before resolution or output writes; the live context is checked separately.
+bool valid_request(const char *module, std::size_t module_size, const char *function, std::size_t function_size,
+                   const TermWord *arguments, std::size_t arity, const TermWord *result) noexcept {
+    return module && module_size != 0 && function && function_size != 0 && result && arity <= 255 &&
+           (arity == 0 || arguments);
 }
 
 // Resolve and invoke within a single pin while containing allocation and unexpected host failures.
@@ -80,12 +88,20 @@ Status dispatch(Context &context, std::string_view module, std::string_view func
 Status dispatch_builtin(Context *context, const char *module, std::size_t module_size, const char *function,
                         std::size_t function_size, const TermWord *arguments, std::size_t arity,
                         TermWord *result) noexcept {
-    if (context == nullptr || module == nullptr || function == nullptr || result == nullptr) {
+    if (context == nullptr) {
         return Status::invalid_argument;
     }
-    if (module_size == 0 || function_size == 0 || arity > 255 || (arity != 0 && arguments == nullptr)) {
+    if (!valid_request(module, module_size, function, function_size, arguments, arity, result)) {
+        context->generated_calls().fail_service(Status::invalid_argument);
         return Status::invalid_argument;
     }
-    return dispatch(*context, {module, module_size}, {function, function_size}, arguments, arity, *result);
+    if (context->generated_calls().failure()) {
+        const auto &failure = *context->generated_calls().failure();
+        return failure.status.value_or(call_status(failure.code));
+    }
+    const auto status = dispatch(*context, {module, module_size}, {function, function_size}, arguments, arity, *result);
+    context->generated_calls().fail_service(status,
+                                            status == Status::not_implemented || status == Status::diagnostic_failure);
+    return status;
 }
 } // namespace erlang_aot::abi::v1

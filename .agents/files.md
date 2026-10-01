@@ -1,5 +1,14 @@
 # File map
 
+- `abi/include/erlang_aot/abi/calls.hpp`: revision-2 checked failure and raise services.
+  `runtime/include/erlang_aot/runtime/generated_calls.hpp` and
+  `runtime/src/process/generated_calls.cpp`: first-error channel, owned immediate
+  reasons/payloads and nested invocation cleanup. `lowering_calls.cpp` emits checks
+  and shares failure exits; registration, builtin bridge and heap services propagate.
+  `tests/compiler/codegen/failure_{emit,consumer}.cpp` + `failure_*.erl`: real call
+  graph with labeled leaf fault seams, four native policies and retry/cleanup checks.
+  `docs/generated-call-failures.md`, `patternmatch-step2-validation.md`: contract/evidence.
+
 - `docs/patternmatch-matrix.md`: step-1 pattern/guard legality, source evidence
   and implementation/dependency ownership; `tests/fixtures/patternmatch/` holds
   the signature catalog, hashes, acceptance seeds and expected results.

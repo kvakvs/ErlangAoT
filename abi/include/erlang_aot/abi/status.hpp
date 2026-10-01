@@ -15,6 +15,7 @@ enum class Status : std::uint8_t {
     stopped = 8,
     abi_mismatch = 9,
     internal_error = 10,
-    unknown_builtin = 11
+    unknown_builtin = 11,
+    erlang_error = 12
 };
 } // namespace erlang_aot::abi::v1

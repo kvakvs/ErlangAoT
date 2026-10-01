@@ -30,12 +30,14 @@ tracking will require external metadata and explicit safepoints; a one-word valu
 cannot itself contain a smart-pointer lifetime token. Those services are not yet
 implemented and the eventual root design must be validated before heap lowering.
 
-The implemented private/versioned contract is [ABI v1](../../abi/include/erlang_aot/abi/v1.hpp)
+The implemented term representation retains [v1 names](../../abi/include/erlang_aot/abi/v1.hpp)
 with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
 A generated function uses the native free-function calling convention and returns
 an unsigned pointer-width term, accepting a forward-declared live project context
 and a borrowed term-array pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
-The context propagates unchanged through direct calls. C++ `Term`, STL values,
+The context propagates unchanged through direct calls. Call contract revision 2
+requires [checked failure propagation](../../docs/generated-call-failures.md) before
+using a returned word. C++ `Term`, STL values,
 `std::expected` and exceptions never cross that generated-function boundary. Host
 services use C++ APIs; no C linkage or C-compatible header surface is maintained.
 There is no BEAM/FFI compatibility promise or public heap ABI. Step 9 implements

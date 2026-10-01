@@ -1,5 +1,7 @@
 #pragma once
 #include "terms.hpp"
+#include <erlang_aot/abi/calls.hpp>
+#include <erlang_aot/abi/status.hpp>
 #include <functional>
 #include <map>
 #include <typeindex>
@@ -14,7 +16,9 @@ enum class CallError : std::uint8_t {
     resource_limit,
     native_exception,
     not_implemented,
-    diagnostic_failure
+    diagnostic_failure,
+    erlang_exception,
+    runtime_failure
 };
 
 struct CallFailure final {
@@ -26,6 +30,12 @@ struct CallFailure final {
     std::optional<TermError> term_error = {};
     // Prevent nested checked calls from reporting the same unavailable body again.
     bool reported = false;
+    // Retain exact infrastructure status separately from Erlang exception reasons.
+    std::optional<abi::v1::Status> status = {};
+    // All admitted Erlang exceptions have class error; catch/try and stacks remain deferred.
+    std::optional<abi::v1::ErrorReason> reason = {};
+    // Own an admitted immediate badmatch value; heap payload roots arrive with heap admission.
+    std::optional<Term> value = {};
 };
 
 template <typename Value> using CallResult = std::expected<Value, CallFailure>;

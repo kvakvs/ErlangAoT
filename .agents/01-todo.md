@@ -45,6 +45,10 @@ requiring the separately written C++ harness used today.
 
 ### F02 — Roots, safepoints and generated-code ABI evolution
 
+Patternmatch step 2 delivered revision-2 checked call failure propagation and owned
+immediate error payloads; see [the contract](../docs/generated-call-failures.md).
+Heap roots, relocation and suspension remain open below.
+
 Meaning: keep live values visible and valid when allocation, collection, calls,
 exceptions or suspension can change where values are stored.
 
@@ -249,6 +253,10 @@ names instead of resolving every call within the compilation batch.
 - [ ] Verify successful calls, bad targets, missing exports and arity failures.
 
 ### F20 — Erlang exceptions
+
+Patternmatch step 2 delivered checked nested-call transport for class error,
+function_clause/badmatch reasons and immediate payloads, with clean retry and
+infrastructure failures kept separate. Source raising and handlers remain open.
 
 Meaning: implement error/exit/throw and source catch/try behavior without native
 C++ exceptions escaping generated entry boundaries.

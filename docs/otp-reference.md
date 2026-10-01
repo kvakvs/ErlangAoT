@@ -59,3 +59,12 @@ fixture hashes, original-suite parsing, separate syntax/semantic acceptance and
 unchanged helper native execution. Its stale-hash rejection passes. The fresh
 combined Windows x64 Debug gate passes 104/104 tests and full Lizard/clang-tidy.
 The older refresh record above retains its original results and revision.
+
+## Pattern/guard step 2 check (2026-10-01)
+
+Re-fetched official `maint-29`; upstream, checkout and pin still match
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Existing grammar/corpus and step-1
+source hashes pass unchanged. The original untracked `lib/stdlib/src/1.ir` remains.
+The separate installed oracle is still OTP 29.1.1 / ERTS 17.1.
+[Step-2 validation](patternmatch-step2-validation.md) records failure-transport
+execution, the 108/108 combined Windows Debug result and full quality pass.

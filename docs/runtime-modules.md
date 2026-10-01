@@ -1,6 +1,6 @@
 # Generated module registration
 
-ABI v1 `modules.hpp` describes immutable module/export metadata using fixed version
+ABI revision 2 `modules.hpp` describes immutable module/export metadata using fixed version
 and word-width fields, target-sized counts, borrowed UTF-8 bytes and generic entry
 pointers. LLVM constructs layouts from the target word type; native compile-time
 layout assertions and a separately Clang-linked consumer check agreement.
@@ -14,7 +14,7 @@ replace existing code; malformed or duplicate exports discard the entire draft.
 Borrowed descriptor storage must remain valid during registration; native code
 must remain executable for the loaded module's lifetime.
 
-Generated entries call the native C++ function `erlang_aot_register_module_v1`.
+Generated entries call the native C++ function `erlang_aot_register_module_v2`.
 The backend emits its Itanium or Microsoft C++ linker spelling for the target;
 this is a project ABI contract, not a C wrapper. LLVM `llvm.used` retains startup
 and descriptor symbols, whose references retain the service dependency. A linked
@@ -28,7 +28,9 @@ loader ownership. Generated startup uses a linked-program image. `ResolvedFuncti
 pins the image and frozen registry, including after runtime teardown. Host calls
 marshal immediate words, pass the actual runtime-owned context, and validate results
 through the existing checked invocation boundary. Native direct entries require
-the caller to obey the live-context/valid-term ABI.
+the caller to obey the live-context/valid-term ABI and establish a checked invocation
+scope. See [generated-call failures](generated-call-failures.md) for the mandatory
+channel checks, structured errors, cleanup and revision-1 rejection.
 
 AtomStorage initialization and module atom roots remain reserved. Metadata names
 are owned strings, never compiler-assigned atom IDs; this support does not admit

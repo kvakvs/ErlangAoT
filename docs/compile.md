@@ -22,7 +22,7 @@ bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compi
 policy. Current guard-free source has no profitable variants. See
 [specialization budgets and measurements](specialization.md).
 
-ABI v1 uses target-word tagged terms, a live process context and an argument array.
+ABI revision 2 uses target-word tagged terms, a live process context and an argument array.
 All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
 checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
 The runtime implements lifecycle, immediate Terms, frozen generic registries,
@@ -200,7 +200,7 @@ O2 may add proven/guarded variants with generic fallback: at most 3/function,
 32/module and 128/target, with pre-LLVM IR growth at most 2x per function/module,
 including dispatch. Generate no Cartesian products or clones without a benefit.
 
-## Private generated-code ABI v1
+## Private generated-code ABI revision 2
 
 [v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) defines the versioned C++ term/context/function
 types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
@@ -223,10 +223,13 @@ can be added later if needed.
   resolved identity. Arguments are a borrowed, word-aligned array in source order,
   valid for the call; zero-arity calls may pass null. The context is live and
   runtime-owned, propagated unchanged through direct calls. Callers supply valid
-  ABI terms. Returned terms follow context ownership; this subset allocates nothing.
-- Symbol names use `eaot_v1_m<hex-module-UTF8>_f<hex-function-UTF8>_a<decimal-arity>`:
+  ABI terms. A return word is usable only after checking the context error channel.
+  [Generated-call failures](generated-call-failures.md) defines structured errors and
+  host scope cleanup. This subset allocates no term storage.
+- Symbol names use `eav1_<hex-module-UTF8>_<hex-function-UTF8>_<decimal-arity>`:
   lowercase byte hex, no normalization, canonical decimal without leading zeroes.
-  Separate `eaot_v1_register_m<hex-module-UTF8>` names reserve registration entries.
+  Module registration and descriptors use `eav1_<hex-module-UTF8>__0.register`
+  and `.descriptor`; this symbol encoding remains unchanged in call ABI revision 2.
   Exported entries/registration are externally visible; other functions are internal.
   These names specify project-owned LLVM symbols before platform decoration; future
   project registration binds their addresses to the C++ generated-function type.
@@ -592,7 +595,7 @@ The `codegen_cross_targets` test emits through the CLI and invokes the selected
 SDK's `llvm-readobj --file-headers --symbols` and `llvm-nm` on every object.
 Its O0/O2 matrix covers Linux i686/x86_64/armv7/aarch64, Windows i686/x86_64,
 and arm64 Apple macOS. It checks target formats, architectures, term widths,
-encoded small-integer endpoints, descriptor ABI v1, registration symbols and
+encoded small-integer endpoints, descriptor ABI revision 2, registration symbols and
 cross-module/runtime imports. Target overflow, unknown architectures and
 unavailable backends fail without artifacts. SDKs lacking a supported backend
 must report that absence rather than substitute a host target.

@@ -109,13 +109,24 @@
 
 ## Windows toolchain and validation
 
+- Patternmatch step 2 (2026-10-01): call contract revision 2 keeps v1 word/symbol
+  encoding but requires checked context errors. RAII host scopes preserve nested
+  first failures and clear on return/unwind; generated calls share one failure exit.
+  Heap/builtin services retain exact status; function_clause/badmatch own immediate
+  payloads only (heap roots step 11). Startup service is register_module_v2.
+  Four native fault policies cover ten failures plus ten retries each, including
+  reentry and raw native exceptions after pending errors. Fresh Windows Debug
+  108/108 CTests, Lizard and full clang-tidy over 185 commands pass. Stop after step 2.
+  Logs/script: build/patternmatch-step2/. LLVM comparison factory avoids the SDK
+  analyzer path; use typed ErrorReason parameters and no moves of trivial failures.
+
 - Patternmatch step 1 (2026-10-01): upstream maint-29 remains 21776803; original
   untracked 1.ir preserved. New matrix/catalog and patternmatch_evidence CTest:
   81 signatures, 14 acceptance modules, 40 OTP outcomes, three real suites parsed,
   unchanged first/2 + id/1 native in four policies. O0 always bypasses specialization.
   Fresh combined Windows Debug 104/104 and full quality over 184 commands pass;
   new Python driver max CCN 4. Reusable gate/logs: build/patternmatch-step1/.
-  Steps 2–20 remain pending; production compiler/runtime code was not changed.
+  At that checkpoint steps 2–20 remained pending; production code was unchanged.
 
 - Use VS18 Community `VsDevCmd.bat -arch=x64 -host_arch=x64`, then LLVM/bin on PATH.
   Toolchain executables are under `C:/Program Files/LLVM`; the validated SDK is the

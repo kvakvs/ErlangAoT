@@ -95,11 +95,13 @@ void local_calls() {
     auto *entry = module.getFunction(semantic::encode_symbol({"calls", "value", 0}));
     const auto targets = call_targets(module);
     std::vector<std::string> names;
-    for (const auto &instruction : entry->getEntryBlock()) {
-        if (const auto *call = llvm::dyn_cast<llvm::CallInst>(&instruction)) {
-            names.push_back(targets.at(call));
-            require(std::ranges::count(entry->getArg(0)->users(), call) == 1, "call lost process context");
-            require(call->getCallingConv() == llvm::CallingConv::C, "call uses wrong convention");
+    for (const auto &block : *entry) {
+        for (const auto &instruction : block) {
+            if (const auto *call = llvm::dyn_cast<llvm::CallInst>(&instruction); call && targets.contains(call)) {
+                names.push_back(targets.at(call));
+                require(std::ranges::count(entry->getArg(0)->users(), call) == 1, "call lost process context");
+                require(call->getCallingConv() == llvm::CallingConv::C, "call uses wrong convention");
+            }
         }
     }
     for (const auto &use : entry->getArg(0)->uses()) {

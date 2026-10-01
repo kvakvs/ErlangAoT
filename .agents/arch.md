@@ -1,9 +1,18 @@
 # Architecture
 
+- Pattern/guard step 2 versions the generated-call contract to revision 2 while
+  retaining v1 term/symbol encoding and target-derived layouts. Every local/remote
+  call checks a context error channel before result use; calls share one failure
+  exit per function. Native registration establishes an RAII scope; nested callbacks
+  preserve the first error and outer cleanup permits independent retry. Builtin and
+  heap services retain exact infrastructure failures separately from error reasons
+  function_clause/badmatch and owned immediate payloads. Heap roots await step 11;
+  source matching/guards remain steps 3–20. See docs/generated-call-failures.md.
+
 - Pattern/guard step 1 freezes semantics in `docs/patternmatch-matrix.md` and
   a source-checked guard signature catalog. Evidence separates suite parsing,
   authored OTP acceptance/results and unchanged immediate helper native execution.
-  Matching and guard implementation awaits steps 2–20; executable admission is unchanged.
+  Matching and guard implementation awaits steps 3–20; executable admission is unchanged.
 
 - Textual IR views/artifacts retain per-instruction source locations through LLVM
   line-only metadata. Bounded comments beside instructions use retained physical

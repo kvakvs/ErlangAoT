@@ -13,6 +13,8 @@ struct ExpressionLowering {
     llvm::IntegerType *word;
     // Keep source-node results for iterative, left-to-right argument evaluation.
     std::map<const ast::Expression *, llvm::Value *> values;
+    // Share a terminal failure exit across calls instead of duplicating return blocks per expression.
+    llvm::BasicBlock *failure = nullptr;
 };
 
 // Emit one resolved call after its arguments have been evaluated in source order.

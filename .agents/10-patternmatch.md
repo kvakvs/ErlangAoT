@@ -1,7 +1,7 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary prerequisites
-are included below in implementation order. Step 1 is complete; steps 2–20
+are included below in implementation order. Steps 1–2 are complete; steps 3–20
 remain incomplete. Completion evidence is linked under each finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler] <step name>"
@@ -17,7 +17,7 @@ body sequences/matches are the required F15/F16 slices.
 The compiler currently executes one clause with distinct variable/wildcard
 parameters and one small-integer, parameter-read or direct-call body expression.
 The parser retains broader syntax, but atoms, heap construction, general equality,
-guard BIFs and Erlang failure propagation are not executable. The steps below
+guard BIFs and source-generated Erlang failures are not executable. The steps below
 replace these gaps in one sequence; there is no separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -100,14 +100,14 @@ step-2 failure transport is implemented by this step.
 
 ### 2. Implement generated-call failure propagation (F20/F02 slice)
 
-- [ ] Coordinate a minimal F20/F02 contract for successful results, clause mismatch,
+- [x] Coordinate a minimal F20/F02 contract for successful results, clause mismatch,
   guard rejection, Erlang errors and runtime infrastructure failures. Decide the
   concrete transport before emitting fallible code: explicit status/result or a
   checked context error channel; document why the chosen scheme fits later F20.
-- [ ] Implement propagation through local/remote generated calls, runtime services,
+- [x] Implement propagation through local/remote generated calls, runtime services,
   registration and native consumers. Version descriptors/signatures if their
   contract changes; retain target-derived layout and native C++ service linkage.
-- [ ] Preserve enough structured error information for `function_clause` and
+- [x] Preserve enough structured error information for `function_clause` and
   `badmatch` with its offending value, with rooted ownership where needed. Add
   heap payload ownership in step 11. Full catch/try is separate.
 
@@ -120,6 +120,17 @@ and guard rejection are silent selection outcomes, not feature diagnostics.
 **Tests:** Execute baseline helpers across two generated modules. Use the existing
 native service failure seam to verify propagation, cleanup and successful retry.
 Steps 6/10 add source function_clause/badmatch; step 13 adds real badarith.
+
+**Completed 2026-10-01:** [Revision-2 failure contract](../docs/generated-call-failures.md)
+uses a checked context channel with first-failure ownership and outer-scope cleanup.
+Local/remote generated calls stop before result use or later argument/body work;
+registration and builtin/heap services preserve structured errors and exact status.
+Revision-1 descriptors reject and startup requires the revision-2 runtime service.
+Four O0/O2/specialization fault workflows cover nested and reentrant calls,
+function_clause/badmatch payload transport, service/diagnostic/native failures and
+successful retry. Fresh Windows x64 Debug: 108/108 CTests, zero skips, full
+Lizard/clang-tidy pass. See [validation](../docs/patternmatch-step2-validation.md).
+Source matching/guards and heap payload roots remain with their later steps.
 
 ### 3. Implement atoms and boolean values (F06)
 

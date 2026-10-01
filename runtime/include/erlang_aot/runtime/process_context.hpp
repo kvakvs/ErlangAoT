@@ -1,4 +1,5 @@
 #pragma once
+#include "generated_calls.hpp"
 #include "mailbox.hpp"
 #include "process_heap.hpp"
 #include <erlang_aot/abi/v1.hpp>
@@ -89,6 +90,9 @@ class ProcessContext final {
     // Reserve signal sending; currently report message_passing without claiming acceptance or delivery.
     ProcessResult<void> send(ProcessIdentity recipient, const Term &value, DiagnosticSink sink = {}) noexcept;
 
+    // Share failure state across a synchronous generated invocation and its runtime services.
+    GeneratedCallState &generated_calls() noexcept { return generated_calls_; }
+
   private:
     friend class Scheduler;
     friend class SchedulerService;
@@ -106,6 +110,8 @@ class ProcessContext final {
     Mailbox mailbox_;
     // Retire scheduling identity on removal; successful registration may occur only once per context.
     bool scheduler_registered_once_ = false;
+    // Destroy pending immediate payloads with the context; host invocation scopes normally clear them first.
+    GeneratedCallState generated_calls_;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options);
 };

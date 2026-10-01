@@ -1,9 +1,40 @@
 #include "lowering_state.hpp"
 #include <llvm/IR/Module.h>
+#include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
 
 namespace erlang_aot::codegen {
 namespace {
+// Reuse one terminal exit; callers must inspect the channel before interpreting its invalid word.
+llvm::BasicBlock *failure_exit(ExpressionLowering &state) {
+    if (!state.failure) {
+        state.failure = llvm::BasicBlock::Create(state.entry.getContext(), "call.failure", &state.entry);
+        llvm::IRBuilder<> exit_builder(state.failure);
+        exit_builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
+    }
+    return state.failure;
+}
+
+// Check the context channel before a result can feed another argument or body operation.
+void propagate_failure(ExpressionLowering &state) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    const auto &triple = output.getTargetTriple();
+    const auto symbol =
+        triple.isWindowsMSVCEnvironment()
+            ? (triple.isArch64Bit() ? "?erlang_aot_call_failed_v2@@YAEPEAX@Z" : "?erlang_aot_call_failed_v2@@YAEPAX@Z")
+            : "_Z25erlang_aot_call_failed_v2Pv";
+    auto service =
+        output.getOrInsertFunction(symbol, llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy()}, false));
+    auto *failed = builder.CreateCall(service, {state.entry.getArg(0)}, "call.failed");
+    auto *failure = failure_exit(state);
+    auto *success = llvm::BasicBlock::Create(output.getContext(), "call.success", &state.entry);
+    auto *check = builder.Insert(
+        llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_NE, failed, builder.getInt8(0)));
+    builder.CreateCondBr(check, failure, success);
+    builder.SetInsertPoint(success);
+}
+
 // Allocate a word-aligned borrowed argument array; zero arity passes an unused null pointer.
 llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &call) {
     auto &builder = state.builder;
@@ -51,6 +82,7 @@ llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expres
     auto *target = callee_declaration(state, callee);
     auto *result = state.builder.CreateCall(target, {state.entry.getArg(0), arguments(state, call)}, "call.result");
     result->setCallingConv(llvm::CallingConv::C);
+    propagate_failure(state);
     return result;
 }
 } // namespace erlang_aot::codegen

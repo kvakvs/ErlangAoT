@@ -1,0 +1,71 @@
+#include <erlang_aot/runtime/process_context.hpp>
+
+namespace erlang_aot::runtime {
+bool GeneratedCallState::enter() noexcept {
+    const bool outer = !active_;
+    active_ = true;
+    return outer;
+}
+
+bool GeneratedCallState::active() const noexcept { return active_; }
+
+void GeneratedCallState::leave(bool outer) noexcept {
+    if (outer) {
+        failure_.reset();
+        active_ = false;
+    }
+}
+
+void GeneratedCallState::fail(CallFailure failure) noexcept {
+    if (active_ && !failure_) {
+        failure_ = failure;
+    }
+}
+
+void GeneratedCallState::fail_service(abi::v1::Status status, bool reported) noexcept {
+    if (status != abi::v1::Status::ok) {
+        fail({.code = CallError::runtime_failure, .reported = reported, .status = status});
+    }
+}
+
+const std::optional<CallFailure> &GeneratedCallState::failure() const noexcept { return failure_; }
+
+GeneratedInvocation::GeneratedInvocation(GeneratedCallState &state) noexcept : state_(state), outer_(state.enter()) {}
+
+GeneratedInvocation::~GeneratedInvocation() { state_.leave(outer_); }
+} // namespace erlang_aot::runtime
+
+std::uint8_t erlang_aot_call_failed_v2(void *context) noexcept {
+    if (!context) {
+        return 1;
+    }
+    const auto &state = static_cast<erlang_aot::runtime::ProcessContext *>(context)->generated_calls();
+    return !state.active() || state.failure().has_value();
+}
+
+std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason reason,
+                                 erlang_aot::abi::v1::TermWord value) noexcept {
+    using namespace erlang_aot;
+    using namespace runtime;
+    if (!context) {
+        return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
+    }
+    auto &state = static_cast<ProcessContext *>(context)->generated_calls();
+    if (!state.active()) {
+        return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
+    }
+    CallFailure failure{.code = CallError::erlang_exception, .reason = reason};
+    if (reason == abi::v1::ErrorReason::badmatch) {
+        const auto payload = Term::from_word(value);
+        if (!payload) {
+            state.fail_service(abi::v1::Status::invalid_argument);
+            return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
+        }
+        failure.value = *payload;
+    } else if (reason != abi::v1::ErrorReason::function_clause) {
+        state.fail_service(abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
+    }
+    state.fail(failure);
+    return 0;
+}
