@@ -1,5 +1,12 @@
 # File map
 
+- `docs/patternmatch-matrix.md`: step-1 pattern/guard legality, source evidence
+  and implementation/dependency ownership; `tests/fixtures/patternmatch/` holds
+  the signature catalog, hashes, acceptance seeds and expected results.
+  `tests/compiler/patternmatch/{evidence.py,oracle.escript}` checks provenance,
+  original-suite parsing, OTP acceptance/results and unchanged native helpers.
+  `docs/patternmatch-step1-{validation.md,evidence.json}` preserves measured results.
+
 - `compiler/src/codegen/source_locations.{hpp,cpp}`: original physical invocation
   scopes/locations for IR inspection and textual emission, surviving optimization.
   `source_annotations.{hpp,cpp}`: bounded, UTF-8 source comments beside mapped IR

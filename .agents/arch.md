@@ -1,5 +1,10 @@
 # Architecture
 
+- Pattern/guard step 1 freezes semantics in `docs/patternmatch-matrix.md` and
+  a source-checked guard signature catalog. Evidence separates suite parsing,
+  authored OTP acceptance/results and unchanged immediate helper native execution.
+  Matching and guard implementation awaits steps 2–20; executable admission is unchanged.
+
 - Textual IR views/artifacts retain per-instruction source locations through LLVM
   line-only metadata. Bounded comments beside instructions use retained physical
   source code only, with filenames listed once in a header; macros and includes keep

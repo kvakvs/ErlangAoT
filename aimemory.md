@@ -109,6 +109,14 @@
 
 ## Windows toolchain and validation
 
+- Patternmatch step 1 (2026-10-01): upstream maint-29 remains 21776803; original
+  untracked 1.ir preserved. New matrix/catalog and patternmatch_evidence CTest:
+  81 signatures, 14 acceptance modules, 40 OTP outcomes, three real suites parsed,
+  unchanged first/2 + id/1 native in four policies. O0 always bypasses specialization.
+  Fresh combined Windows Debug 104/104 and full quality over 184 commands pass;
+  new Python driver max CCN 4. Reusable gate/logs: build/patternmatch-step1/.
+  Steps 2–20 remain pending; production compiler/runtime code was not changed.
+
 - Use VS18 Community `VsDevCmd.bat -arch=x64 -host_arch=x64`, then LLVM/bin on PATH.
   Toolchain executables are under `C:/Program Files/LLVM`; the validated SDK is the
   pre-existing clang+llvm-23.1.2 installation under thirdparty/ (no gate-time download).

@@ -1,0 +1,40 @@
+{wild_distinct, semantics, wild, [1, 2], {ok, 1}}.
+{named_equal, semantics, named, [7, 7], {ok, 1}}.
+{named_distinct, semantics, named, [7, 8], {ok, 2}}.
+{repeat_equal, semantics, repeated, [7, 7], {ok, 7}}.
+{repeat_numeric_exact, semantics, repeated, [7, 7.0], {error, error, function_clause}}.
+{repeat_mismatch, semantics, repeated, [7, 8], {error, error, function_clause}}.
+{alias_success, semantics, compound, [{7, 7}], {ok, {7, 7}}}.
+{alias_mismatch, semantics, compound, [{7, 8}], {error, error, function_clause}}.
+{body_success, semantics, sequence, [7], {ok, 7}}.
+{body_badmatch, semantics, sequence, [8], {error, error, {badmatch, 8}}}.
+{chain, semantics, chained, [7], {ok, {7, 7}}}.
+{alternative_recovery, semantics, alternatives, [7], {ok, 1}}.
+{alternative_fallback, semantics, alternatives, [8], {ok, 2}}.
+{reached_error, semantics, reached, [7], {ok, 2}}.
+{skipped_error, semantics, skipped, [7], {ok, 1}}.
+{strict_error, semantics, strict, [7], {ok, 2}}.
+{nonboolean_final, semantics, nonboolean, [7], {ok, 2}}.
+{boolean_final, semantics, nonboolean, [true], {ok, 1}}.
+{qualified, semantics, qualified, [7], {ok, 1}}.
+{legacy, semantics, legacy, [7], {ok, 1}}.
+{legacy_float_integer, semantics, legacy_float, [7], {ok, 2}}.
+{legacy_float_float, semantics, legacy_float, [7.0], {ok, 1}}.
+{qualified_float_conversion, semantics, converted_float, [7], {ok, 1}}.
+{qualified_float_badarg, semantics, converted_float, [not_a_number], {ok, 2}}.
+{range_low, semantics, range, [1], {ok, 1}}.
+{range_high, semantics, range, [3], {ok, 1}}.
+{range_outside, semantics, range, [4], {ok, 2}}.
+{range_float, semantics, range, [2.0], {ok, 2}}.
+{containers, semantics, containers, [{[1 | 2], #{key => 3}}], {ok, {1, 2, 3}}}.
+{bound_key, semantics, map_key, [key, #{key => 7}], {ok, 7}}.
+{missing_key, semantics, map_key, [other, #{key => 7}], {error, error, {badmatch, #{key => 7}}}}.
+{binary_size, semantics, bits, [<<3, 5:3, 1:1>>], {ok, {5, <<1:1>>}}}.
+{record, semantics, record_match, [{r, 7}], {ok, 7}}.
+{constant_pattern, semantics, constant, [3], {ok, 1}}.
+{string_prefix, semantics, prefix, ["abc"], {ok, "c"}}.
+{qualified_shadow, qualified_shadow, f, [7], {ok, 1}}.
+{otp_first, answer, first, [-134217728, 134217727], {ok, -134217728}}.
+{otp_id, client, id, [134217727], {ok, 134217727}}.
+{otp_empty_list, answer, first, [[], 7], {ok, []}}.
+{otp_empty_tuple, client, id, [{}], {ok, {}}}.

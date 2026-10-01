@@ -1,8 +1,10 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary prerequisites
-are included below in implementation order. This is a plan, not an implementation
-record; all steps start incomplete.
+are included below in implementation order. Step 1 is complete; steps 2–20
+remain incomplete. Completion evidence is linked under each finished step.
+
+Each completed step should end with a commit, commit title will be "[compiler] <step name>"
 
 ## Scope
 
@@ -32,7 +34,7 @@ pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Preserve the checkout's untracke
 `lib/stdlib/src/1.ir`. At implementation start, recheck upstream and follow
 [otp-reference.md](../docs/otp-reference.md); synchronize pin, checkout, corpus hashes
 and grammar evidence while preserving historical records. Record the installed OTP
-oracle version separately. This consolidation adds no new implementation evidence.
+oracle version separately. The step-1 record below supplies the initial evidence.
 
 Use pinned `system/doc/reference_manual/expressions.md`,
 `lib/stdlib/src/{erl_lint,erl_internal}.erl` and compiler suites as evidence.
@@ -67,13 +69,13 @@ results separately from foreign-object/32-bit layout checks and list missing run
 
 ### 1. Fix the semantic matrix and OTP evidence
 
-- [ ] Refresh/check the reference using the documented procedure, preserving local
+- [x] Refresh/check the reference using the documented procedure, preserving local
   work. Review pattern and guard rules against the pinned lint/compiler sources.
-- [ ] Create a matrix of pattern forms, guard operators/BIF name-and-arity pairs,
+- [x] Create a matrix of pattern forms, guard operators/BIF name-and-arity pairs,
   the two admitted source contexts, legal-but-deferred features and invalid constructs.
   Include legacy guard tests, qualified BIFs and OTP 29 additions such as
   `is_integer/3`; do not infer legality from the preprocessor evaluator's subset.
-- [ ] Seed small real `.erl` fixtures and an OTP oracle for acceptance, results,
+- [x] Seed small real `.erl` fixtures and an OTP oracle for acceptance, results,
   selected clause and error class/reason. Cover `_` versus `_Name`, repeated names,
   compound patterns, guard alternatives and invalid calls.
 
@@ -85,6 +87,16 @@ The initial slice and later completion boundary are reviewable without guessing.
 **Tests:** Parse `guard_SUITE.erl`, `match_SUITE.erl` and `trycatch_SUITE.erl` with real
 includes. Compile unchanged `bif_SUITE:first/2` and `guard_SUITE:id/1` on admitted
 immediates as a baseline. Record provenance and reject a deliberately stale hash.
+
+**Completed 2026-10-01:** [Semantic matrix](../docs/patternmatch-matrix.md),
+81 source-checked signature rows, 14 acceptance modules and 40 OTP outcomes.
+Original guard/match/trycatch suites parse with real headers; unchanged first/2
+and id/1 execute through the separate native consumer in all four O0/O2 and
+specialization modes. Stale source hashes reject before execution. Fresh Windows
+x64 Debug: 104/104 CTests, zero skips, full Lizard/clang-tidy pass.
+See [the validation record](../docs/patternmatch-step1-validation.md) for exact
+versions, provenance and platform limits. No executable pattern/guard support or
+step-2 failure transport is implemented by this step.
 
 ### 2. Implement generated-call failure propagation (F20/F02 slice)
 

@@ -45,3 +45,17 @@ The freshly configured full build and Lizard pass; the full clang-tidy gate stil
 reports the pre-existing Windows exception-escape and Boost analyzer findings.
 The checkout is clean; relative documentation links and `git diff --check` pass.
 No compiler-plan step beyond 14 or clean commit is claimed by this reference update.
+
+## Pattern/guard step 1 check (2026-10-01)
+
+Re-fetched official `maint-29`; the head, checkout and pin still match
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar and the ten original corpus
+hashes remain unchanged; full parser coverage/corpus tests pass. The original
+untracked `lib/stdlib/src/1.ir` is preserved. No reference checkout files were
+rewritten. The separate installed oracle is OTP 29.1.1 / ERTS 17.1.
+
+[Pattern/guard evidence](patternmatch-step1-validation.md) adds exact source and
+fixture hashes, original-suite parsing, separate syntax/semantic acceptance and
+unchanged helper native execution. Its stale-hash rejection passes. The fresh
+combined Windows x64 Debug gate passes 104/104 tests and full Lizard/clang-tidy.
+The older refresh record above retains its original results and revision.

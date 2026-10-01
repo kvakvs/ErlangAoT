@@ -1,0 +1,142 @@
+"""Verify pinned semantic evidence, OTP acceptance, and the immediate native baseline."""
+import csv
+import hashlib
+import json
+import pathlib
+import re
+import subprocess
+import sys
+
+
+def run(command):
+    """Retain both streams and the failing command in test diagnostics."""
+    result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=240)
+    if result.returncode:
+        raise AssertionError(f"{command}: {result.returncode}\n{result.stdout}\n{result.stderr}")
+    return result.stdout
+
+
+def digest(path):
+    """Hash canonical LF text so Windows checkout conversion cannot change source identity."""
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def verify_manifest(root, manifest):
+    """Refuse any changed source before extraction, parsing or execution."""
+    for row in csv.DictReader(manifest.splitlines(), delimiter="\t"):
+        actual = digest(root / row["path"])
+        if actual != row["sha256"]:
+            raise AssertionError(f"Stale evidence hash: {row['path']}: {actual}")
+
+
+def provenance(source, otp, fixtures, work):
+    """Check the pin, exact evidence bytes, authored fixtures and a deliberately stale hash."""
+    revision = run(["git", "-C", str(otp), "rev-parse", "HEAD"]).strip()
+    pin = (source / "references/otp-pin.cmake").read_text(encoding="utf-8")
+    assert revision in pin, f"OTP checkout is not pinned: {revision}"
+    run(["git", "-C", str(otp), "diff", "--exit-code", "HEAD", "--",
+         "lib/stdlib/src", "lib/compiler", "lib/stdlib/include", "lib/kernel/include",
+         "lib/common_test/include", "lib/syntax_tools/include", "system/doc/reference_manual"])
+    manifest = (fixtures / "otp.tsv").read_text(encoding="utf-8")
+    verify_manifest(otp, manifest)
+    verify_manifest(fixtures, (fixtures / "fixtures.tsv").read_text(encoding="utf-8"))
+    stale = manifest.replace(manifest.splitlines()[1].split("\t")[0], "0" * 64, 1)
+    try:
+        verify_manifest(otp, stale)
+    except AssertionError as error:
+        assert "Stale evidence hash:" in str(error)
+    else:
+        raise AssertionError("Deliberately stale hash was accepted")
+    (work / "provenance.json").write_text(json.dumps({
+        "revision": revision, "branch": "maint-29", "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+        "stale_hash": "rejected", "otp_manifest_sha256": digest(fixtures / "otp.tsv"),
+        "fixtures_manifest_sha256": digest(fixtures / "fixtures.tsv")}, indent=2) + "\n", encoding="utf-8")
+
+
+def catalog(otp, fixtures):
+    """Require a reviewed owner/rejection row for every pinned guard signature and operator."""
+    internal = (otp / "lib/stdlib/src/erl_internal.erl").read_text(encoding="utf-8")
+    groups = "guard_bif|new_type_test|old_type_test|arith_op|bool_op|comp_op"
+    expected = set(re.findall(rf"^({groups})\(([^,]+), (\d+)\) -> true;", internal, re.M))
+    rows = list(csv.DictReader((fixtures / "guards.tsv").read_text(encoding="utf-8").splitlines(), delimiter="\t"))
+    actual = {(row["category"], row["name"], row["arity"]) for row in rows}
+    assert actual == expected, f"Guard catalog drift: missing={expected - actual}, extra={actual - expected}"
+    assert len(actual) == len(rows), "Duplicate guard rows"
+    assert all(row["owner"] and row["rejection"] for row in rows)
+
+
+def suites(tool, otp, work):
+    """Parse original suites with their real headers; never call this executable coverage."""
+    options = ["-I", str(otp / "lib/compiler/src"), "--enable-feature", "maybe_expr",
+               "--disable-feature", "compr_assign"]
+    for app in ["stdlib", "kernel", "common_test", "syntax_tools"]:
+        options += ["--app-dir", f"{app}={otp / 'lib' / app}"]
+    results = []
+    for name in ["guard_SUITE", "match_SUITE", "trycatch_SUITE"]:
+        path = otp / "lib/compiler/test" / (name + ".erl")
+        run([tool, "--preprocess-check", *options, str(path)])
+        tree = run([tool, "--print-ast", *options, str(path)])
+        assert tree.strip(), f"Empty AST: {name}"
+        results.append({"source": str(path.relative_to(otp)), "source_sha256": digest(path),
+                        "preprocessing": "accepted", "syntax": "accepted", "execution": "not attempted"})
+    (work / "suites.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+
+
+def baseline(otp, work):
+    """Extract complete unmodified clauses, retaining upstream licenses and wrapper provenance."""
+    records = []
+    for suite, function, clause, module, extra in [
+        ("bif_SUITE", "first/2", "first(Fst, _Snd) -> Fst.", "answer",
+         "-export([identity/1]).\nidentity(X) -> client:id(X).\n"),
+        ("guard_SUITE", "id/1", "id(I) -> I.", "client", "")]:
+        path = otp / "lib/compiler/test" / (suite + ".erl")
+        text = path.read_text(encoding="utf-8")
+        assert len(re.findall("^" + re.escape(clause) + "$", text, re.M)) == 1, f"Upstream helper changed: {suite}:{function}"
+        license_text = text[:text.index("-module(")]
+        wrapped = license_text + f"-module({module}).\n-export([{function}]).\n"
+        # Erlang declarations must precede all functions.
+        if extra:
+            declaration, body = extra.split("\n", 1)
+            wrapped += declaration + "\n" + clause + "\n" + body
+        else:
+            wrapped += clause + "\n"
+        (work / (module + ".erl")).write_bytes(wrapped.encode("utf-8"))
+        records.append({"source": str(path.relative_to(otp)), "function": function,
+                        "source_sha256": digest(path), "clause_sha256": hashlib.sha256(clause.encode()).hexdigest(),
+                        "declarations": f"module={module}; export={function}",
+                        "adaptations": "unchanged complete clause; new module/export; " + extra.strip(),
+                        "generated_sha256": digest(work / (module + ".erl"))})
+    (work / "helpers.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
+    (work / "calls.txt").write_bytes(b"answer first 2 -134217728 134217727\nclient id 1 134217727\nanswer identity 1 -7\n")
+    (work / "expected.txt").write_bytes(b"-134217728\n134217727\n-7\n")
+
+
+def native(tool, cmake, source, work, settings, config, suffix):
+    """Run the existing separately linked consumer with four optimization/specialization policies."""
+    for level, extra, name in [("O0", "", "O0"), ("O0", "--no-type-specialization", "O0-off"),
+                               ("O2", "", "O2"), ("O2", "--no-type-specialization", "O2-off")]:
+        run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",
+             f"-DSOURCE_ROOT={source.as_posix()}", f"-DTEST_DIR={(work / name).as_posix()}",
+             f"-DINPUT_ROOT={work.as_posix()}", f"-DHOST_SETTINGS={settings}",
+             f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
+             "-P", str(source / "tests/compiler/codegen/native.cmake")])
+
+
+def main():
+    """Publish auditable evidence under the build directory without updating tracked expectations."""
+    tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
+    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    fixtures = source / "tests/fixtures/patternmatch"
+    work.mkdir(parents=True, exist_ok=True)
+    provenance(source, otp, fixtures, work)
+    catalog(otp, fixtures)
+    suites(tool, otp, work)
+    baseline(otp, work)
+    oracle = run([escript, str(source / "tests/compiler/patternmatch/oracle.escript"), str(fixtures), str(work)])
+    (work / "oracle.txt").write_text(oracle, encoding="utf-8")
+    native(tool, cmake, source, work, settings, config, suffix)
+    print(oracle + "Three original suites parsed; stale hash rejected; unchanged helpers executed in four native modes.")
+
+
+if __name__ == "__main__":
+    main()
