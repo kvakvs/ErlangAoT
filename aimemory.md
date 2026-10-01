@@ -2,6 +2,13 @@
 
 ## Current state and authoritative records
 
+- `.agents/10-patternmatch.md` (2026-10-01): user requested one focused plan;
+  necessary services are merged into 20 ordered steps and the separate prerequisites
+  file is removed. Scope is function clauses/body matches, ordinary value patterns
+  and corresponding guards. No GC, copying, workers, receive, closures, full catch/try
+  or general control-flow implementation. Each step has success criteria and OTP
+  tests; distinguish parsing from compiled kernels/native execution. Planning only.
+
 - IR source comments (2026-10-01): user chose comments beside corresponding LLVM
   instructions. `--print-ir`, `--print-optimized-ir` and `--emit llvm-ir` enable
   private `annotate_source`; lowering attaches physical line-only LLVM metadata.

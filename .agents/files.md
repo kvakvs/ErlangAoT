@@ -12,6 +12,9 @@
 
 - `.agents/01-todo.md`: missing-feature backlog with implementation checklists,
   validation obligations and optional scope; IDs do not prescribe execution order.
+- `.agents/10-patternmatch.md`: consolidated F13/F14 plan with necessary services
+  in implementation order, per-step success criteria and provenance-tracked OTP
+  tests; scoped to function clauses/body matches and admitted value representations.
 
 - `tests/compiler/codegen/native{.cmake,_consumer.cpp}` and
   `tests/fixtures/codegen/native/`: public CLI object emission, separate Clang
