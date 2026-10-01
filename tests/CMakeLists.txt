@@ -312,3 +312,10 @@ erlang_aot_project_options(semantic_inference)
 target_include_directories(semantic_inference PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
 target_link_libraries(semantic_inference PRIVATE erlang_semantic)
 add_test(NAME semantic_inference COMMAND semantic_inference)
+
+# Identity and candidate rollback invariants remain private until clause dispatch is executable.
+add_executable(semantic_bindings compiler/semantic/bindings.cpp)
+erlang_aot_project_options(semantic_bindings)
+target_include_directories(semantic_bindings PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+target_link_libraries(semantic_bindings PRIVATE erlang_semantic)
+add_test(NAME semantic_bindings COMMAND semantic_bindings)

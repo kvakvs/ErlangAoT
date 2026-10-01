@@ -78,3 +78,15 @@ OTP 29.1.1 / ERTS 17.1. [Step-3 validation](patternmatch-step3-validation.md) re
 licensed atom-leaf adaptations, four native policies, ownership/limit/fault tests,
 109/109 combined Windows Debug tests and full Lizard/clang-tidy over 189 production
 units. Earlier validation records keep their original revisions and outcomes.
+
+## Pattern/guard step 4 check (2026-10-01)
+
+Re-fetched official `maint-29`; upstream, checkout and pin remain
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus and pinned source hashes
+pass unchanged. The user confirmed removing the previously untracked
+`lib/stdlib/src/1.ir` during this task; the implementation did not modify it. Installed oracle remains
+OTP 29.1.1 / ERTS 17.1. [Step-4 validation](patternmatch-step4-validation.md) records
+26 scoped-binding legality cases, six unchanged match_SUITE helpers, native
+identity/projection in four policies, 111/111 combined Windows Debug tests and full
+Lizard/clang-tidy over 191 production units. Clause-isolation/rollback execution
+remains assigned to step 9. Earlier records retain their original evidence.

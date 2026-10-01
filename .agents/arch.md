@@ -1,5 +1,14 @@
 # Architecture
 
+- Pattern/guard step 4 adds function-relative clause/local binding identities,
+  explicit definition/read/equality uses, tentative candidates and success-only
+  scope publication. Body matches analyze RHS first; siblings share incoming
+  readable names while retaining equality constraints, and optional RHS names are
+  unsafe afterwards. Guards never define names. Whole arguments retain projection
+  facts; extracted/body definitions remain unknown. Iterative module-budgeted walks
+  preserve original diagnostics. Execution gates remain; step 9 owes clause-isolation
+  and rollback execution. See docs/scoped-bindings.md. Steps 5–20 remain open.
+
 - Pattern/guard step 3 implements runtime-owned atoms and booleans. Per-runtime
   spelling/word indexes validate UTF-8 and enforce 1..2^26 caps (default 2^20).
   Globally non-recycled atom words reject foreign raw words; runtime tables remain
@@ -9,7 +18,7 @@
   no module/slots. Generated reads use context lookup, never per-use interning.
   Host arguments/results, native/generated errors and copies check atom ownership.
   Resolved generated handles reject foreign module instances; retained atoms survive
-  runtime teardown. Host serialization, no atom GC/workers. Steps 4–20 remain open.
+  runtime teardown. Host serialization, no atom GC/workers.
   See docs/runtime-atoms.md and patternmatch-step3-validation.md.
 
 
@@ -20,12 +29,12 @@
   preserve the first error and outer cleanup permits independent retry. Builtin and
   heap services retain exact infrastructure failures separately from error reasons
   function_clause/badmatch and owned immediate payloads. Heap roots await step 11;
-  source matching/guards remain steps 4–20. See docs/generated-call-failures.md.
+  source matching/guards remain pending. See docs/generated-call-failures.md.
 
 - Pattern/guard step 1 freezes semantics in `docs/patternmatch-matrix.md` and
   a source-checked guard signature catalog. Evidence separates suite parsing,
   authored OTP acceptance/results and unchanged immediate helper native execution.
-  Matching and guard implementation awaits steps 3–20; executable admission is unchanged.
+  Executable matching and guards remain pending; executable admission is unchanged.
 
 - Textual IR views/artifacts retain per-instruction source locations through LLVM
   line-only metadata. Bounded comments beside instructions use retained physical

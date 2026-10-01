@@ -1,7 +1,7 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary prerequisites
-are included below in implementation order. Steps 1–3 are complete; steps 4–20
+are included below in implementation order. Steps 1–4 are complete; steps 5–20
 remain incomplete. Completion evidence is linked under each finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler] <step name>"
@@ -30,8 +30,8 @@ Do not claim complete Erlang guard coverage or all F13/F14 source contexts.
 ## Validation rules
 
 The official maint-29 head was checked on 2026-10-01 and matched the checkout and
-pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Preserve the checkout's untracked
-`lib/stdlib/src/1.ir`. At implementation start, recheck upstream and follow
+pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. The originally untracked
+`lib/stdlib/src/1.ir` was removed by the user during step 4. At implementation start, recheck upstream and follow
 [otp-reference.md](../docs/otp-reference.md); synchronize pin, checkout, corpus hashes
 and grammar evidence while preserving historical records. Record the installed OTP
 oracle version separately. The step-1 record below supplies the initial evidence.
@@ -159,18 +159,18 @@ Unicode, capacity, allocation-fault rollback, independent runtimes and retry pas
 Fresh Windows x64 Debug: 109/109 CTests, zero skips, full Lizard/clang-tidy over 189
 production units. See [validation](../docs/patternmatch-step3-validation.md).
 Host serialization is required; atom GC and worker synchronization remain deferred.
-Steps 4–20 have not been started by this implementation.
+At that checkpoint, steps 4–20 had not been started.
 
 ### 4. Introduce scoped bindings and conservative value facts
 
-- [ ] Extend `semantic/declarations.hpp` and `bindings.*` with stable clause-local
+- [x] Extend `semantic/declarations.hpp` and `bindings.*` with stable clause-local
   binding identities and explicit reads, definitions and already-bound checks.
   Preserve original argument provenance where applicable.
-- [ ] Represent incoming bindings and tentative candidate bindings separately.
+- [x] Represent incoming bindings and tentative candidate bindings separately.
   `_` creates no binding; `_Name` behaves as a normal name; repeated variables
   request exact equality. A successful pattern makes its bindings available to
   its guard; only a successful candidate makes them available to its body.
-- [ ] Define body-match scopes; guards may read bindings but cannot assign.
+- [x] Define body-match scopes; guards may read bindings but cannot assign.
   Update inference, lowering and inspection consumers with conservative facts for
   new identities now; step 19 checks optimization across the complete value domain.
 
@@ -182,6 +182,19 @@ candidates leave their incoming environment unchanged.
 **Tests:** Compare binding legality from selected `match_SUITE.erl` cases with OTP and
 retain identity/projection execution. In step 9, execute same-name clause isolation
 and failed-candidate rollback; keep these obligations open until dispatch exists.
+
+**Completed 2026-10-01:** [Scoped bindings](../docs/scoped-bindings.md) provide
+stable clause/local identities, explicit definitions/reads/exact checks, separate
+incoming/tentative environments and success-only publication. RHS-first matches,
+sibling visibility, read-only guards and short-circuit unsafe states retain source
+locations; only whole original arguments retain projection facts. Iterative walks
+have a shared budget and clear partial tables on exhaustion. Twenty-six authored
+OTP legality cases, six unchanged match_SUITE helpers, private identity/rollback
+invariants and native identity/projection execution in all four policies pass.
+Fresh Windows x64 Debug: 111/111 CTests, zero skips, full Lizard/clang-tidy over
+191 production units. See [validation](../docs/patternmatch-step4-validation.md).
+Executable matching/guards remain gated; step 9 still owes same-name clause
+isolation and failed-candidate rollback execution. Steps 5–20 remain pending.
 
 ### 5. Validate and normalize pattern semantics
 

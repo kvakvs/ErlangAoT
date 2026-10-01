@@ -31,10 +31,14 @@ calls, closures and behavior-changing attributes are diagnosed. Type/spec metada
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.
 
-Each named parameter must be distinct. `_` consumes an argument position without
-creating a binding; `_Name` is an ordinary named variable. Body reads retain the
-original argument index in semantic side tables. Reading `_`, using an unbound
-name, or repeating a named parameter is rejected before lowering.
+Executable named parameters must still be distinct. The semantic binder now
+assigns clause-local identities to definitions, reads and exact-equality checks.
+`_` creates no binding; `_Name` is ordinary. Tentative head bindings are readable
+by guards and publish to the successful body path. Body matches use RHS-first
+scopes; unbound, unsafe and wildcard reads retain original locations. Whole
+argument reads retain projection provenance; new/extracted values stay unknown.
+Repeated parameters remain capability-gated until matching is implemented.
+See [scoped bindings](scoped-bindings.md) for the step-4 boundary.
 
 Positional inputs form one compilation batch. Each selected project target forms
 its own batch with independent preprocessing sessions and declaration tables.
@@ -107,8 +111,8 @@ public type inspection and CLI artifact publication remain later plan steps.
 `--print-types` reports declarations independently of implementation inference.
 Function lines identify whether a specification exists, list conservative inputs
 and results, and retain zero-based argument relations for identity/projection.
-Expression facts include logical file/line/column locations. Module sections follow
-input order, with project target context; recursive aliases print as finite symbolic
+Expression facts include logical locations and clause/local identities for reads.
+Module sections follow input order, with project target context; recursive aliases print as finite symbolic
 references. Unknown inferred facts are labeled explicitly, as are graph widening
 and display limits. The report is human-readable, not a stage interchange format.
 Warnings (including contradictory specs) remain on stderr and do not prevent reports;

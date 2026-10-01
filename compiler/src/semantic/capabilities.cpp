@@ -2,6 +2,7 @@
 #include "features.hpp"
 #include <algorithm>
 #include <array>
+#include <set>
 
 namespace erlang_aot::semantic {
 namespace {
@@ -66,11 +67,13 @@ void head(const Module &module, const ast::FunctionClause &clause, const Reporte
     if (clause.guard) {
         unsupported(module, clause.guard->source, "guards", out);
     }
+    std::set<std::u32string> names;
     for (const auto &id : clause.arguments) {
         const auto &pattern = module.syntax->pattern(id);
         const auto expression = std::visit([](const auto &value) { return value.expression; }, pattern.value);
-        if (!std::holds_alternative<ast::Variable>(
-                module.syntax->expression(ungroup(*module.syntax, expression)).value)) {
+        const auto *variable =
+            std::get_if<ast::Variable>(&module.syntax->expression(ungroup(*module.syntax, expression)).value);
+        if (!variable || (variable->name != U"_" && !names.insert(variable->name).second)) {
             unsupported(module, pattern.source, "pattern matching", out);
         }
     }

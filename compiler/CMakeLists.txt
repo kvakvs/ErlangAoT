@@ -64,6 +64,7 @@ target_link_libraries(erlang_aot PRIVATE erlang_codegen)
 add_library(erlang_semantic STATIC
     src/semantic/declarations.cpp src/semantic/symbols.cpp
     src/semantic/bindings.cpp src/semantic/calls.cpp
+    src/semantic/binding_patterns.cpp src/semantic/binding_expressions.cpp
     src/semantic/features.cpp src/semantic/capabilities.cpp
     src/semantic/literals.cpp src/semantic/expression_capability.cpp
     src/semantic/types/domain.cpp src/semantic/types/syntax.cpp

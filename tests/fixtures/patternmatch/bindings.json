@@ -1,0 +1,210 @@
+[
+  {
+    "name": "identity",
+    "arity": 2,
+    "body": "f(_Name, _) -> _Name.",
+    "capability": "",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "repeat",
+    "arity": 2,
+    "body": "f(X, X) -> X.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "clauses",
+    "arity": 1,
+    "body": "f(X) -> X; f(X) -> X.",
+    "capability": "multiple clauses",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "guard_read",
+    "arity": 1,
+    "body": "f(X) when X =:= X -> X.",
+    "capability": "guards",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "body_match",
+    "arity": 1,
+    "body": "f(X) -> Y = X, Y.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "chain",
+    "arity": 0,
+    "body": "f() -> X = Y = 1, {X, Y}.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "rebind",
+    "arity": 1,
+    "body": "f(X) -> X = 1, X.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "sibling_checks",
+    "arity": 0,
+    "body": "f() -> {X = 4, _ = X = 3}, X.",
+    "capability": "heap expressions",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "sibling_local",
+    "arity": 0,
+    "body": "f() -> {begin X = 1, X end, X = 2}, X.",
+    "capability": "heap expressions",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "alias",
+    "arity": 1,
+    "body": "f(A = B) -> B.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "compound",
+    "arity": 1,
+    "body": "f({X, X, _, _Name}) -> {_Name, X}.",
+    "capability": "pattern matching",
+    "diagnostic": "",
+    "otp_diagnostic": ""
+  },
+  {
+    "name": "clause_leak",
+    "arity": 2,
+    "body": "f(X, _) -> X; f(_, _) -> X.",
+    "capability": "multiple clauses",
+    "diagnostic": "unbound variable X",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "guard_assign",
+    "arity": 1,
+    "body": "f(X) when Y = X -> X.",
+    "capability": "guards",
+    "diagnostic": "guards cannot bind variables",
+    "otp_diagnostic": "illegal_guard_expr"
+  },
+  {
+    "name": "guard_leak",
+    "arity": 1,
+    "body": "f(X) when Y = X -> Y.",
+    "capability": "guards",
+    "diagnostic": "unbound variable Y",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "unbound",
+    "arity": 0,
+    "body": "f() -> Missing.",
+    "capability": "",
+    "diagnostic": "unbound variable Missing",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "wildcard",
+    "arity": 1,
+    "body": "f(_) -> _.",
+    "capability": "",
+    "diagnostic": "wildcard '_' cannot be read",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "named_missing",
+    "arity": 1,
+    "body": "f(_) -> _Name.",
+    "capability": "",
+    "diagnostic": "unbound variable _Name",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "rhs_first",
+    "arity": 0,
+    "body": "f() -> X = Y, Y = 1.",
+    "capability": "pattern matching",
+    "diagnostic": "unbound variable Y",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "sibling_read",
+    "arity": 0,
+    "body": "f() -> {X = 1, X}.",
+    "capability": "heap expressions",
+    "diagnostic": "unbound variable X",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "call_sibling",
+    "arity": 0,
+    "body": "f() -> g(X = 1, X). g(A, _) -> A.",
+    "capability": "",
+    "diagnostic": "unbound variable X",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "unsafe_and",
+    "arity": 1,
+    "body": "f(A) -> A andalso (X = 1), X.",
+    "capability": "arithmetic",
+    "diagnostic": "unsafe variable X",
+    "otp_diagnostic": "unsafe_var"
+  },
+  {
+    "name": "unsafe_or",
+    "arity": 1,
+    "body": "f(A) -> A orelse (X = 1), X.",
+    "capability": "arithmetic",
+    "diagnostic": "unsafe variable X",
+    "otp_diagnostic": "unsafe_var"
+  },
+  {
+    "name": "unsafe_match",
+    "arity": 1,
+    "body": "f(A) -> A andalso (X = 1), X = 2.",
+    "capability": "arithmetic",
+    "diagnostic": "unsafe variable X",
+    "otp_diagnostic": "unsafe_var"
+  },
+  {
+    "name": "guard_wildcard",
+    "arity": 1,
+    "body": "f(X) when _ =:= X -> X.",
+    "capability": "guards",
+    "diagnostic": "wildcard '_' cannot be read",
+    "otp_diagnostic": "unbound_var"
+  },
+  {
+    "name": "unsafe_merge",
+    "arity": 1,
+    "body": "f(A) -> {A andalso (X = 1), X = 2}, X.",
+    "capability": "heap expressions",
+    "diagnostic": "unsafe variable X",
+    "otp_diagnostic": "unsafe_var"
+  },
+  {
+    "name": "unsafe_merge_reverse",
+    "arity": 1,
+    "body": "f(A) -> {X = 2, A orelse (X = 1)}, X.",
+    "capability": "heap expressions",
+    "diagnostic": "unsafe variable X",
+    "otp_diagnostic": "unsafe_var"
+  }
+]

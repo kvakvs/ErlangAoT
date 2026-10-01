@@ -1,3 +1,4 @@
+#include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
@@ -20,20 +21,20 @@ llvm::ConstantInt *literal(const ast::Module &syntax, const ast::ExprId &express
 
 // Use the binding's original argument index, with target-word alignment and no inbounds promise.
 llvm::Value *parameter(llvm::IRBuilder<> &builder, llvm::Function &entry, llvm::IntegerType *word,
-                       const semantic::Binding &binding) {
-    auto *slot =
-        builder.CreateGEP(word, entry.getArg(1), llvm::ConstantInt::get(word, binding.argument), "argument.slot");
+                       const std::size_t argument) {
+    auto *slot = builder.CreateGEP(word, entry.getArg(1), llvm::ConstantInt::get(word, argument), "argument.slot");
     return builder.CreateAlignedLoad(word, slot, llvm::Align(word->getBitWidth() / 8), "argument");
 }
 
 // Resolve leaves through existing parameter bindings, preserving every input term unchanged.
 llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
-    const auto &bindings = state.function.bindings;
-    const auto binding = std::ranges::find(bindings, expression, &semantic::Binding::expression);
-    if (binding != bindings.end()) {
-        return parameter(state.builder, state.entry, state.word, *binding);
+    if (const auto argument = semantic::binding_argument(state.function, expression)) {
+        return parameter(state.builder, state.entry, state.word, *argument);
     }
     const auto &value = state.module.syntax->expression(expression).value;
+    if (std::holds_alternative<ast::Variable>(value)) {
+        throw std::invalid_argument("lowering: binding has no available value");
+    }
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
     }

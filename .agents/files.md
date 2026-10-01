@@ -1,5 +1,15 @@
 # File map
 
+- `compiler/src/semantic/{declarations,bindings,binding_state}.hpp`, `bindings.cpp`:
+  clause-local identities, definition/read/equality events, tentative environments,
+  projection provenance and bounded orchestration. `binding_{patterns,expressions}.cpp`:
+  iterative pattern, RHS-first match, sibling and short-circuit scope walks.
+  Inference/lowering resolve only reads; `driver/type_report.cpp` prints binding IDs.
+  `tests/compiler/semantic/bindings.cpp`: identity/rollback/budget invariants;
+  `tests/compiler/patternmatch/bindings.{py,escript}` + `tests/fixtures/patternmatch/bindings.json`:
+  OTP/CLI legality, located errors, nonpublication and unchanged native projections.
+  `docs/scoped-bindings.md`, `patternmatch-step4-{validation.md,evidence.json}`: contract/evidence.
+
 - `runtime/include/erlang_aot/runtime/atoms.hpp`, `src/terms/{atoms,atom_spelling}.cpp`:
   bounded runtime-owned indexes, UTF-8 validation and non-recycled word reservations.
   `terms.hpp`, `term.cpp`, `factory.cpp`: atom pins, context admission and booleans;
@@ -334,7 +344,8 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   and renders located diagnostics; `symbols.{hpp,cpp}` provides reversible identities.
   `{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the subset;
   `features.{hpp,cpp}` maps failures to the shared catalog. `bindings.{hpp,cpp}`
-  resolves parameter positions; `calls.{hpp,cpp}` resolves direct calls and ordering.
+  resolves clause-local identities and original argument provenance;
+  `calls.{hpp,cpp}` resolves direct calls and ordering.
   `driver/frontend.cpp` owns batches; `project/execution.{hpp,cpp}` dispatches each target.
 - `compiler/src/semantic/types/`: `domain.{hpp,cpp}` owns type identities, joins and
   limits; `syntax.{hpp,cpp}` exhaustively describes/translates AST type categories.

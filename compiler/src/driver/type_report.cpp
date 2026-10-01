@@ -3,6 +3,7 @@
 #include "display.hpp"
 #include "type_declarations.hpp"
 #include "type_format.hpp"
+#include <algorithm>
 #include <iostream>
 #include <set>
 #include <stdexcept>
@@ -40,6 +41,16 @@ std::string input_text(const types::Inference &inferred, const types::Summary &s
     return text + ']';
 }
 
+// Identify read facts by stable clause-local slots rather than by variable spelling.
+std::string binding_text(const semantic::Function &function, const ast::ExprId &id) {
+    const auto found = std::ranges::find(function.bindings, id, &semantic::Binding::expression);
+    if (found == function.bindings.end() || found->use != semantic::BindingUse::read) {
+        return {};
+    }
+    return " binding=clause[" + std::to_string(found->identity.clause) + "].local[" +
+           std::to_string(found->identity.local) + ']';
+}
+
 // Traverse each supported expression in source order instead of iterating pointer-keyed inference maps.
 void expressions(const semantic::Module &module, const semantic::Function &function, const types::Inference &inferred) {
     const auto &syntax = *module.syntax;
@@ -52,7 +63,7 @@ void expressions(const semantic::Module &module, const semantic::Function &funct
         const auto found = inferred.expressions.find(&expression);
         if (found != inferred.expressions.end()) {
             std::cout << "    expression " << location(syntax, expression.source)
-                      << " inferred=" << fact_text(inferred, found->second) << '\n';
+                      << " inferred=" << fact_text(inferred, found->second) << binding_text(function, id) << '\n';
         }
         const auto children = semantic::expression_children(expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());

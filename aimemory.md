@@ -1,5 +1,20 @@
 # Working memory — 2026-10-01
 
+- Patternmatch step 4 complete: function-relative {clause, local} binding IDs,
+  definition/read/exact-check events, tentative candidate environments and explicit
+  commit. RHS-first matches; sibling definitions constrain matching but are hidden
+  from sibling reads; unsafe status wins merged names. Guard assignments never bind.
+  Whole argument provenance alone drives projections; extracted/body bindings stay
+  unknown. Iterative walks have a 1M module budget and clear tables on exhaustion.
+  Windows scope stacks own map-bearing entries indirectly to avoid allocating moves.
+  26 OTP legality cases, six unchanged match_SUITE helpers, four native policies;
+  fresh combined Debug 111/111 (86.79 s), all 191 production quality commands pass.
+  docs/scoped-bindings.md and step4 validation/evidence; logs build/patternmatch-step4.
+  Matching/guards remain capability-gated; step 5 owns pattern legality and key/size
+  sibling scopes, step 9 still owes clause isolation/rollback execution. Stop after 4.
+  User confirmed deleting references/otp/lib/stdlib/src/1.ir during step 4; do not
+  restore it. Earlier preservation notes are historical, not current checkout state.
+
 - Patternmatch step 3 complete (2026-10-01): atoms/booleans use runtime-owned
   spelling/word maps, UTF-8 <=255 scalars, 1..2^26 cap/default 2^20. Process-global
   non-recycled word reservations prevent foreign aliases; failed reservations may

@@ -1,4 +1,5 @@
 #include "inference.hpp"
+#include "../bindings.hpp"
 #include "../capabilities.hpp"
 #include <algorithm>
 
@@ -10,12 +11,7 @@ Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &i
     if (const auto value = integer_literal(*function.module->syntax, id, 64)) {
         return {graph.intern({Kind::integer, std::to_string(*value)})};
     }
-    const auto &bindings = function.function->bindings;
-    const auto binding = std::ranges::find(bindings, id, &Binding::expression);
-    if (binding != bindings.end()) {
-        return {graph.top(), binding->argument};
-    }
-    return {graph.top()};
+    return {graph.top(), binding_argument(*function.function, id)};
 }
 
 struct Visit {

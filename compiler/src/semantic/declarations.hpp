@@ -12,10 +12,35 @@ struct FunctionKey {
     auto operator<=>(const FunctionKey &) const = default;
 };
 
+struct BindingId {
+    // Source-ordered clause and local definition indices never depend on spelling or addresses.
+    std::size_t clause;
+    std::size_t local;
+    auto operator<=>(const BindingId &) const = default;
+};
+
+enum class BindingUse { read, definition, exact_check };
+enum class BindingContext { head, guard, body };
+
 struct Binding {
-    // Associate an immutable variable read with its original argument-array position.
+    // Locate each read, definition or exact-equality obligation in the original owned syntax.
     ast::ExprId expression;
-    std::size_t argument;
+    BindingId identity;
+    BindingUse use;
+    BindingContext context;
+};
+
+struct BindingDefinition {
+    // Retain declaration spelling/source separately from clause-local identity.
+    std::u32string name;
+    ast::ExprId expression;
+    // Only a whole original argument has a projection fact; extracted/new values remain unknown.
+    std::optional<std::size_t> argument;
+};
+
+struct ClauseBindings {
+    // Stable local slots include head and body definitions, never definitions from another clause.
+    std::vector<BindingDefinition> definitions;
 };
 
 struct Function {
@@ -26,8 +51,9 @@ struct Function {
     bool exported = false;
     // Stable private ABI name is independent of addresses and table order.
     std::string symbol;
-    // Preserve source-order parameter reads independently of syntax ownership.
+    // Preserve explicit binding operations and their clause-owned definitions outside syntax.
     std::vector<Binding> bindings = {};
+    std::vector<ClauseBindings> clause_bindings = {};
 };
 
 struct Module {
