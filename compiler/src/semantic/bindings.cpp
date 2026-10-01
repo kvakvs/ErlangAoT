@@ -90,9 +90,7 @@ void bind_clause(BindingAnalysis &state, const ast::FunctionClause &clause) {
     const BindingEnvironment incoming;
     BindingCandidate head{incoming, {}};
     for (std::size_t i = 0; i < clause.arguments.size(); ++i) {
-        const auto &pattern = state.module.syntax->pattern(clause.arguments[i]);
-        const auto id = std::visit([](const auto &value) { return value.expression; }, pattern.value);
-        bind_pattern(state, id, head, BindingContext::head, i);
+        bind_pattern(state, clause.arguments[i], head, BindingContext::head, i);
     }
     if (clause.guard) {
         guards(state, *clause.guard, head);
@@ -107,6 +105,7 @@ void clear_bindings(Module &module) {
     for (auto &function : module.functions) {
         function.bindings.clear();
         function.clause_bindings.clear();
+        function.patterns.clear();
     }
 }
 } // namespace
@@ -115,17 +114,25 @@ void bind_parameters(Module &module, const Reporter &out, const std::size_t work
     std::size_t work = 0;
     const auto limit = std::min(work_limit, std::numeric_limits<std::size_t>::max() - 1);
     clear_bindings(module);
+    bool failed = false;
+    const Reporter transactional = [&](const Diagnostic &diagnostic) {
+        failed = failed || diagnostic.severity == Severity::error;
+        out(diagnostic);
+    };
     for (auto &function : module.functions) {
         const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
         function.clause_bindings.resize(clauses.size());
         for (std::size_t i = 0; i < clauses.size(); ++i) {
-            BindingAnalysis state{module, function, out, i, work, limit};
+            BindingAnalysis state{module, function, transactional, i, work, limit};
             bind_clause(state, clauses[i]);
             if (work > limit) {
                 clear_bindings(module);
                 return;
             }
         }
+    }
+    if (failed) {
+        clear_bindings(module);
     }
 }
 

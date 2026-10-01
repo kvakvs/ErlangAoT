@@ -1,9 +1,21 @@
 # File map
 
+- `compiler/src/semantic/patterns.hpp`: flat normalized kinds, original/ungrouped IDs
+  and owned literals; `pattern_state.hpp`: private analysis helpers.
+  `pattern_analysis.cpp`: both pattern categories, grouping/aliases/containers,
+  prefix legality and explicit incoming/binary-local read scopes.
+  `pattern_constants.cpp`: iterative bounded arithmetic; `pattern_expressions.cpp`:
+  nested key/size syntax; `pattern_calls.cpp`: OTP guard catalog and call metadata;
+  `pattern_binary.cpp`: modifier/default/string/unsized-segment legality.
+  `tests/compiler/semantic/patterns.cpp`: normalization/deep-walk/rollback invariants.
+  `tests/compiler/patternmatch/patterns.{py,escript}` and fixtures `patterns.json`,
+  `pattern-{otp,fixtures}.tsv`: 92 OTP/CLI cases, licensed helpers, limits and integrity.
+  `docs/pattern-semantics.md`, `patternmatch-step5-{validation.md,evidence.json}`: contract/evidence.
+
 - `compiler/src/semantic/{declarations,bindings,binding_state}.hpp`, `bindings.cpp`:
   clause-local identities, definition/read/equality events, tentative environments,
   projection provenance and bounded orchestration. `binding_{patterns,expressions}.cpp`:
-  iterative pattern, RHS-first match, sibling and short-circuit scope walks.
+  shared child enumeration, RHS-first match, sibling and short-circuit scope walks.
   Inference/lowering resolve only reads; `driver/type_report.cpp` prints binding IDs.
   `tests/compiler/semantic/bindings.cpp`: identity/rollback/budget invariants;
   `tests/compiler/patternmatch/bindings.{py,escript}` + `tests/fixtures/patternmatch/bindings.json`:

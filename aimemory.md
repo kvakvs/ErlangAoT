@@ -1,4 +1,21 @@
-# Working memory — 2026-10-01
+# Working memory — 2026-10-02
+
+- Patternmatch step 5 complete (2026-10-02): flat Function::patterns preserves
+  original/ungrouped expression IDs, kinds/children and owned scalar constants.
+  bind_pattern overload handles RestrictedPattern/PatternCandidate; body '=' remains
+  RHS-first and pattern '=' is alias constraints. Read scopes contain incoming names
+  only, except binary-local preceding segments. Never publish sibling key/size names.
+  pattern_calls owns OTP guard signature legality for embedded expressions, including
+  erlang operators, shadowing, imports and no_auto_import metadata; not guard execution.
+  Shared 1M work budget now charges scalar text/metadata/edges as well as scopes/nodes;
+  constants cap 10k decimal chars and 1M shift bits. Any semantic error clears all
+  module binding/normalization tables. Record field/layout validation remains step17.
+  92 authored OTP cases (38 legal/54 invalid), licensed unchanged/adapted helpers,
+  both CLI modes/four policies, public resource limits and private 12k-level walks.
+  Fresh Windows Debug 113/113 (94.20 s), full 196-unit quality pass; no suppressions.
+  Logs build/patternmatch-step5; docs/pattern-semantics.md and step5 validation/evidence.
+  OTP maint-29 fetched at task start (Oct1), unchanged pin 21776803ecd11f5fa948732c0ec66b8f325dedfc.
+  User requested step 5 only: STOP AFTER STEP 5. Unrelated test1.toml edit preserved.
 
 - Patternmatch step 4 complete: function-relative {clause, local} binding IDs,
   definition/read/exact-check events, tentative candidate environments and explicit
@@ -10,8 +27,8 @@
   26 OTP legality cases, six unchanged match_SUITE helpers, four native policies;
   fresh combined Debug 111/111 (86.79 s), all 191 production quality commands pass.
   docs/scoped-bindings.md and step4 validation/evidence; logs build/patternmatch-step4.
-  Matching/guards remain capability-gated; step 5 owns pattern legality and key/size
-  sibling scopes, step 9 still owes clause isolation/rollback execution. Stop after 4.
+  Historical step-4 checkpoint: matching/guards stayed gated. Step 5 above now owns
+  legality/key-size scopes; step 9 still owes clause isolation/rollback execution.
   User confirmed deleting references/otp/lib/stdlib/src/1.ir during step 4; do not
   restore it. Earlier preservation notes are historical, not current checkout state.
 

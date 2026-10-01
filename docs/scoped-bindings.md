@@ -34,15 +34,17 @@ Unsafe status takes precedence when sibling environments merge, even if another
 sibling defines the same name unconditionally.
 
 Pattern traversal recognizes binding-bearing tuple/list/record/map/binary syntax.
-Map keys and segment sizes are read contexts. Full pattern legality, map-key and
-binary-size dependency rules (especially sibling compound patterns), and bounded
-pattern normalization remain step 5. Branch, exception, comprehension and closure
+Map keys and segment sizes are read contexts. Step 5 adds
+[bounded pattern normalization](pattern-semantics.md) and enforces incoming-only
+key reads and binary-local preceding-segment size reads, including compound
+sibling isolation. Branch, exception, comprehension and closure
 scopes are opaque and retain their capability gates; this is not their semantic
 implementation.
 
 All walks are iterative. The module-wide default budget is 1,000,000 work units,
 charging visited nodes/tasks and copied environment entries. Exhaustion produces
-one located error and clears the module's binding tables. Ordinary unbound, unsafe
+one located error and clears the module's binding/normalization tables. Step 5
+also clears those tables after ordinary semantic errors. Ordinary unbound, unsafe
 and wildcard reads use the original AST anchor, including macro/include origins.
 
 Only whole original arguments retain projection provenance through grouping or

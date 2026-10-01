@@ -1,13 +1,17 @@
 # Architecture
 
-- Pattern/guard step 4 adds function-relative clause/local binding identities,
-  explicit definition/read/equality uses, tentative candidates and success-only
-  scope publication. Body matches analyze RHS first; siblings share incoming
-  readable names while retaining equality constraints, and optional RHS names are
-  unsafe afterwards. Guards never define names. Whole arguments retain projection
-  facts; extracted/body definitions remain unknown. Iterative module-budgeted walks
-  preserve original diagnostics. Execution gates remain; step 9 owes clause-isolation
-  and rollback execution. See docs/scoped-bindings.md. Steps 5–20 remain open.
+- Pattern/guard steps 4–5 add stable clause/local binding identities and bounded
+  flat pattern normalization with owned constants and original source anchors.
+  Definitions/read/equality events, tentative candidates and success-only publication
+  preserve conservative whole-argument facts. Body '=' is RHS-first; pattern '='
+  constrains one value. Pattern siblings share incoming readable names; only a
+  binary's own preceding variable segments extend its size scope. Embedded key/size
+  expressions use OTP guard legality with shadow/import/suppression resolution.
+  Iterative walks charge nodes, scopes, metadata and scalar storage; any semantic
+  error/budget failure clears every module binding/normalization table. Runtime
+  matching/guards remain gated. Step 9 owes clause isolation/rollback execution;
+  step 17 owns record expansion/field validation. See docs/{scoped-bindings,
+  pattern-semantics}.md. Steps 6–20 remain open.
 
 - Pattern/guard step 3 implements runtime-owned atoms and booleans. Per-runtime
   spelling/word indexes validate UTF-8 and enforce 1..2^26 caps (default 2^20).

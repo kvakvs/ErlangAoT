@@ -90,3 +90,15 @@ OTP 29.1.1 / ERTS 17.1. [Step-4 validation](patternmatch-step4-validation.md) re
 identity/projection in four policies, 111/111 combined Windows Debug tests and full
 Lizard/clang-tidy over 191 production units. Clause-isolation/rollback execution
 remains assigned to step 9. Earlier records retain their original evidence.
+
+## Pattern/guard step 5 check (2026-10-02)
+
+Fetched official `maint-29` at task start on 2026-10-01; upstream, checkout and pin
+remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. The checkout is clean. Grammar,
+corpus and existing evidence hashes are unchanged; step 5 separately pins
+`erl_bits.erl` for binary modifier rules. Installed oracle remains OTP 29.1.1 /
+ERTS 17.1. [Step-5 validation](patternmatch-step5-validation.md) records 92 authored
+legality cases, unchanged/adapted suite helpers, both CLI modes/four policies,
+bounded normalization/rollback, 113/113 combined Windows Debug tests and full
+Lizard/clang-tidy over 196 production units. Matching/guard execution remains
+pending. Historical records retain their original revisions and outcomes.

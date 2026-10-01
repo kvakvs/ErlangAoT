@@ -8,6 +8,8 @@ small-integer, atom/boolean literal, parameter-read or direct-call body expressi
 [Step 3](runtime-atoms.md) adds owned atoms; matching and guards remain pending.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors. Execution admission is unchanged.
+[Step 5](pattern-semantics.md) adds bounded pattern normalization, embedded key/size
+legality and sibling scope checks; the runtime matching gates remain closed.
 
 Evidence is pinned to official `maint-29` revision
 `21776803ecd11f5fa948732c0ec66b8f325dedfc`, re-fetched and unchanged on

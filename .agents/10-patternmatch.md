@@ -1,7 +1,7 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary prerequisites
-are included below in implementation order. Steps 1–4 are complete; steps 5–20
+are included below in implementation order. Steps 1–5 are complete; steps 6–20
 remain incomplete. Completion evidence is linked under each finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler] <step name>"
@@ -198,12 +198,12 @@ isolation and failed-candidate rollback execution. Steps 5–20 remain pending.
 
 ### 5. Validate and normalize pattern semantics
 
-- [ ] Add bounded private semantic pattern analysis consuming both
+- [x] Add bounded private semantic pattern analysis consuming both
   `RestrictedPattern` and `PatternCandidate`; retain source anchors in its output.
-- [ ] Normalize variables, literals, grouping, aliases/compound patterns and legal
+- [x] Normalize variables, literals, grouping, aliases/compound patterns and legal
   constant arithmetic. Distinguish expression `=` from compound-pattern `=`.
   Recognize later container forms without enabling missing runtime operations.
-- [ ] Enforce context-specific legality, including map key expressions and binary
+- [x] Enforce context-specific legality, including map key expressions and binary
   size scopes. Do not allow one compound-pattern operand to supply a key/size
   binding to its sibling merely because lowering happens to visit it first.
 
@@ -215,6 +215,20 @@ large inputs hit documented budgets with no partial publication or host-stack cr
 **Tests:** Compare positive/negative cases from `match_SUITE.erl`,
 `map_SUITE:t_key_expressions/1` and `bs_size_expr_SUITE.erl` with OTP. Include
 illegal sibling key/size dependencies, nested invalid expressions and depth limits.
+
+**Completed 2026-10-02:** [Pattern semantics](../docs/pattern-semantics.md)
+provides bounded flat normalization of both parser pattern categories, source
+anchors, owned arithmetic constants and explicit compound-pattern constraints.
+Map keys read incoming bindings; binary sizes additionally read their own preceding
+segments, never sibling definitions. Embedded call/operator legality and binary
+modifier checks remain independent of runtime capabilities. Any semantic/budget
+failure clears all module binding/normalization tables. Ninety-two authored OTP
+cases, unchanged match/binary helpers, map-key adaptations, both CLI modes/four
+policies, 12,000-level private walks and resource/nonpublication cases pass.
+Fresh Windows x64 Debug: 113/113 CTests, zero skips, full Lizard/clang-tidy over
+196 production units. See [validation](../docs/patternmatch-step5-validation.md).
+Matching/guards remain gated; record expansion/field validation remains step 17.
+Steps 6–20 have not been started.
 
 ### 6. Implement immediate equality and matching (F12 slice)
 

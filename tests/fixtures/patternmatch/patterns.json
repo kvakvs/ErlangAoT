@@ -1,0 +1,738 @@
+[
+  {
+    "name": "pat_constants",
+    "arity": 1,
+    "body": "f({1+2*3, -(4 div 2), bnot 1, 8 bsr 1, 5 rem 2, 1 bor 2, 3 band 1, 3 bxor 2, 1/2, $a}) -> ok.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_containers",
+    "arity": 1,
+    "body": "f({[], {}, [A,B|T], \"abc\", #{a := V}}) -> {A,B,T,V}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_aliases",
+    "arity": 1,
+    "body": "f(({A,B} = {B,A}) = Whole) -> {Whole,A,B}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_groups",
+    "arity": 1,
+    "body": "f(((A))) -> A.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "pat_prefix",
+    "arity": 1,
+    "body": "f(\"abc\" ++ [65,$b] ++ Tail) -> Tail.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_prefix_empty",
+    "arity": 1,
+    "body": "f([] ++ Tail) -> Tail.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_body_compound",
+    "arity": 1,
+    "body": "f(V) -> ({A,B} = {B,A}) = V, {A,B}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_body_rhs",
+    "arity": 1,
+    "body": "f(V) -> #{K := X} = (K = V), X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_tuple",
+    "arity": 2,
+    "body": "f(Int, M) -> #{{tag,Int+1} := V} = M, V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_call",
+    "arity": 3,
+    "body": "f(X, Y, M) -> #{element(X,Y) := <<Sz:16,Bin:Sz/binary>>} = M, Bin.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_remote",
+    "arity": 3,
+    "body": "f(X, Y, M) -> #{erlang:element(X,Y) := V} = M, V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_binary",
+    "arity": 2,
+    "body": "f(Int,M) -> #{{tag,<<Int:42>>} := V} = M, V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_map",
+    "arity": 1,
+    "body": "f(#{#{a => 1} := V}) -> V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_badarith",
+    "arity": 1,
+    "body": "f(#{1 div 0 := V}) -> V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_bool",
+    "arity": 1,
+    "body": "f(#{true andalso 1 := V}) -> V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_new_bif",
+    "arity": 2,
+    "body": "f(Int,M) -> #{is_integer(Int,1,2) := V} = M, V.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_sequential",
+    "arity": 1,
+    "body": "f(<<Sz:32,Tail:(4*Sz-4)/binary>>) -> Tail.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_incoming",
+    "arity": 2,
+    "body": "f(N,B) -> <<X:(N+1)>> = B, X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_call",
+    "arity": 2,
+    "body": "f(T,B) -> <<X:(tuple_size(T))>> = B, X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_alias",
+    "arity": 1,
+    "body": "f(<<N:8,X:N>> = Whole) -> {Whole,X}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_string",
+    "arity": 1,
+    "body": "f(<<\"abc\",X/utf8>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_utf_string",
+    "arity": 1,
+    "body": "f(<<\"abc\"/utf16>>) -> ok.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_noninteger_size",
+    "arity": 1,
+    "body": "f(<<X:atom>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_negative_size",
+    "arity": 1,
+    "body": "f(<<X:(-1)>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_size_container",
+    "arity": 1,
+    "body": "f(<<X:{1,2}>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_bin_size_badarith",
+    "arity": 1,
+    "body": "f(<<X:(1 div 0)>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_record",
+    "arity": 1,
+    "body": "-record(r,{x,y}). f(#r{x=A,y=B}) -> {A,B}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_record_index",
+    "arity": 1,
+    "body": "-record(r,{x}). f(#r.x) -> ok.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_body_chain",
+    "arity": 1,
+    "body": "f(V) -> X = Y = V, {X,Y}.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_nested_call",
+    "arity": 1,
+    "body": "f({length([])}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_nested_assignment_call",
+    "arity": 1,
+    "body": "f(V) -> {X,length(X)} = V, X.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_nested_map_call",
+    "arity": 1,
+    "body": "f(#{a := {length([])}}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_nested_block",
+    "arity": 1,
+    "body": "f({begin 1 end}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_nested_case",
+    "arity": 1,
+    "body": "f({case a of a -> 1 end}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_arithmetic_var",
+    "arity": 1,
+    "body": "f({A,A+1}) -> A.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_arithmetic_type",
+    "arity": 1,
+    "body": "f({1+atom}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_divide_zero",
+    "arity": 1,
+    "body": "f({1 div 0}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_comparison",
+    "arity": 1,
+    "body": "f({1 =:= 1}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_boolean",
+    "arity": 1,
+    "body": "f({not true}) -> ok.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_prefix_atom",
+    "arity": 1,
+    "body": "f([a] ++ Tail) -> Tail.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_prefix_variable",
+    "arity": 1,
+    "body": "f({Xs,Xs ++ Tail}) -> Tail.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_map_assoc",
+    "arity": 1,
+    "body": "f(#{a => X}) -> X.",
+    "diagnostic": "map pattern requires ':='",
+    "otp_diagnostic": "illegal_map_assoc_in_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_sibling",
+    "arity": 1,
+    "body": "f({K,#{K := X}}) -> X.",
+    "diagnostic": "unbound variable K",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_argument",
+    "arity": 2,
+    "body": "f(K,#{K := X}) -> X.",
+    "diagnostic": "unbound variable K",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_alias",
+    "arity": 1,
+    "body": "f({K,_} = #{K := X}) -> X.",
+    "diagnostic": "unbound variable K",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_alias_reverse",
+    "arity": 1,
+    "body": "f(#{K := X} = {K,_}) -> X.",
+    "diagnostic": "unbound variable K",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_field",
+    "arity": 1,
+    "body": "f(#{a := K,K := X}) -> X.",
+    "diagnostic": "unbound variable K",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_alias_bound",
+    "arity": 2,
+    "body": "f(K,M) -> ({K,_} = #{K := X}) = M, X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_match",
+    "arity": 1,
+    "body": "f(#{(X=1) := V}) -> V.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_local_call",
+    "arity": 1,
+    "body": "f(#{g() := V}) -> V. g() -> a.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_nested_call",
+    "arity": 1,
+    "body": "f(#{[g()] := V}) -> V. g() -> a.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_remote_call",
+    "arity": 1,
+    "body": "f(#{other:g() := V}) -> V.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_wrong_arity",
+    "arity": 1,
+    "body": "f(#{length([],[]) := V}) -> V.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_shadow",
+    "arity": 1,
+    "body": "f(#{length([]) := V}) -> V. length(_) -> 0.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_shadow_qualified",
+    "arity": 1,
+    "body": "f(#{erlang:length([]) := V}) -> V. length(_) -> 0.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_unreachable",
+    "arity": 1,
+    "body": "f(#{false andalso g() := V}) -> V. g() -> a.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_legacy",
+    "arity": 1,
+    "body": "f(#{integer(1) := V}) -> V.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_sibling",
+    "arity": 1,
+    "body": "f({N,<<X:N>>}) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_argument",
+    "arity": 2,
+    "body": "f(N,<<X:N>>) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_alias",
+    "arity": 1,
+    "body": "f(<<N:8>> = <<X:N>>) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_alias_reverse",
+    "arity": 1,
+    "body": "f(<<X:N>> = <<N:8>>) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_cross_binary",
+    "arity": 1,
+    "body": "f({<<N:8>>,<<X:N>>}) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_same_segment",
+    "arity": 1,
+    "body": "f(<<X:X>>) -> X.",
+    "diagnostic": "unbound variable X",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_future",
+    "arity": 1,
+    "body": "f(<<X:N,N:8>>) -> X.",
+    "diagnostic": "unbound variable N",
+    "otp_diagnostic": "unbound_var",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_match",
+    "arity": 1,
+    "body": "f(<<X:(N=8)>>) -> X.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_bitsize",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_call",
+    "arity": 1,
+    "body": "f(<<X:(g())>>) -> X. g() -> 8.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_bitsize_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_segment_tuple",
+    "arity": 1,
+    "body": "f(<<{X}:8>>) -> X.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_segment_alias",
+    "arity": 1,
+    "body": "f(<<(X=Y):8>>) -> {X,Y}.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_segment_nested",
+    "arity": 1,
+    "body": "f(<<<<X>>/binary>>) -> X.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_segment_expr",
+    "arity": 1,
+    "body": "f(<<N:8,(N+1):8>>) -> N.",
+    "diagnostic": "illegal pattern",
+    "otp_diagnostic": "illegal_pattern",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_unsized",
+    "arity": 1,
+    "body": "f(<<X/binary,Y>>) -> {X,Y}.",
+    "diagnostic": "unsized binary pattern segment must be last",
+    "otp_diagnostic": "unsized_binary_not_at_end",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_modifier",
+    "arity": 1,
+    "body": "f(<<X/banana>>) -> X.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "undefined_bittype",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_modifier_conflict",
+    "arity": 1,
+    "body": "f(<<X/integer-float>>) -> X.",
+    "diagnostic": "conflicting binary pattern modifiers",
+    "otp_diagnostic": "bittype_mismatch",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_unit_zero",
+    "arity": 1,
+    "body": "f(<<X:8/unit:0>>) -> X.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "undefined_bittype",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_unit_utf",
+    "arity": 1,
+    "body": "f(<<X/utf8-unit:8>>) -> X.",
+    "diagnostic": "UTF binary pattern segment cannot have size or unit",
+    "otp_diagnostic": "utf_bittype_size_or_unit",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_utf",
+    "arity": 1,
+    "body": "f(<<X:8/utf16>>) -> X.",
+    "diagnostic": "UTF binary pattern segment cannot have size or unit",
+    "otp_diagnostic": "utf_bittype_size_or_unit",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_string_size",
+    "arity": 1,
+    "body": "f(<<\"a\":8>>) -> ok.",
+    "diagnostic": "literal string pattern cannot have this size or type",
+    "otp_diagnostic": "typed_literal_string",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_prefix_tail",
+    "arity": 1,
+    "body": "f(([1|[2|[]]]) ++ T) -> T.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_prefix_group",
+    "arity": 1,
+    "body": "f([(1),($a)] ++ T) -> T.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_operator_call",
+    "arity": 1,
+    "body": "f(#{erlang:'+'(1,2) := X}) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_no_auto",
+    "arity": 1,
+    "body": "-compile(no_auto_import). f(#{length([]) := X}) -> X.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_no_auto_one",
+    "arity": 1,
+    "body": "-compile({no_auto_import,[length/1]}). f(#{length([]) := X}) -> X.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_expr",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_no_auto_other",
+    "arity": 1,
+    "body": "-compile({no_auto_import,[length/1]}). f(#{tuple_size({}) := X}) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_no_auto_remote",
+    "arity": 1,
+    "body": "-compile(no_auto_import). f(#{erlang:length([]) := X}) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_import",
+    "arity": 1,
+    "body": "-compile({no_auto_import,[length/1]}). -import(other,[length/1]). f(#{length([]) := X}) -> X.",
+    "diagnostic": "illegal expression in pattern key or size",
+    "otp_diagnostic": "illegal_guard_local_call",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_import_erlang",
+    "arity": 1,
+    "body": "-compile(no_auto_import). -import(erlang,[length/1]). f(#{length([]) := X}) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_unit_default",
+    "arity": 1,
+    "body": "f(<<X/unit:8>>) -> X.",
+    "diagnostic": "binary pattern unit requires an explicit size",
+    "otp_diagnostic": "bittype_unit",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_unit_alias_conflict",
+    "arity": 1,
+    "body": "f(<<X:1/bytes-unit:1>>) -> X.",
+    "diagnostic": "conflicting binary pattern modifiers",
+    "otp_diagnostic": "bittype_mismatch",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_type_alias_conflict",
+    "arity": 1,
+    "body": "f(<<X:1/bytes-bits>>) -> X.",
+    "diagnostic": "conflicting binary pattern modifiers",
+    "otp_diagnostic": "bittype_mismatch",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_bad_modifier",
+    "arity": 1,
+    "body": "f(#{<<1/banana>> := X}) -> X.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "undefined_bittype",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_key_binary_string_size",
+    "arity": 1,
+    "body": "f(#{<<\"a\":16>> := X}) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": "pattern matching"
+  },
+  {
+    "name": "pat_size_bad_modifier",
+    "arity": 1,
+    "body": "f(<<X:(bit_size(<<1/banana>>))>>) -> X.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "undefined_bittype",
+    "capability": "pattern matching"
+  }
+]

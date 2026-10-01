@@ -1,4 +1,5 @@
 #pragma once
+#include "patterns.hpp"
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <functional>
 #include <map>
@@ -54,6 +55,8 @@ struct Function {
     // Preserve explicit binding operations and their clause-owned definitions outside syntax.
     std::vector<Binding> bindings = {};
     std::vector<ClauseBindings> clause_bindings = {};
+    // Validated head/body patterns retain source identities for later match planning, without enabling execution.
+    std::vector<NormalizedPattern> patterns = {};
 };
 
 struct Module {

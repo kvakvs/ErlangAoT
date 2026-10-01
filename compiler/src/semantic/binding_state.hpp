@@ -10,6 +10,8 @@ struct BindingAnalysis {
     std::size_t clause;
     std::size_t &work;
     std::size_t limit;
+    // Pattern errors invalidate tentative bindings even before the module transaction is discarded.
+    bool invalid_pattern = false;
 
     // Stop bounded iterative walks at the original node that exhausted the budget.
     bool spend(const ast::ExprId &id, std::size_t amount = 1);
@@ -20,7 +22,10 @@ struct BindingAnalysis {
                 std::optional<std::size_t> argument);
 };
 
-// Visit binding-bearing pattern syntax; pattern legality and match plans belong to later stages.
+// Validate/normalize a restricted or permissive pattern using the same bounded semantic rules.
+void bind_pattern(BindingAnalysis &state, const ast::PatternSyntaxId &id, BindingCandidate &scope,
+                  BindingContext context, std::optional<std::size_t> argument = {});
+// Body expression '=' supplies its left expression directly; pattern '=' is a compound constraint.
 void bind_pattern(BindingAnalysis &state, const ast::ExprId &id, BindingCandidate &scope, BindingContext context,
                   std::optional<std::size_t> argument = {});
 // Evaluate RHS bindings before LHS patterns, and preserve sequential expression visibility.

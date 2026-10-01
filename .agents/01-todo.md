@@ -180,6 +180,10 @@ map keys, patterns and guards as new representations become executable.
 
 ### F13 — Pattern matching and bindings
 
+Steps 4–5 now provide scoped binding identities and bounded pattern normalization,
+including sibling key/size legality; execution below remains pending.
+See [step-5 validation](../docs/patternmatch-step5-validation.md).
+
 Meaning: destructure values and bind/check variables beyond the distinct variable
 or wildcard parameters currently accepted.
 
