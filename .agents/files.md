@@ -1,5 +1,18 @@
 # File map
 
+- `runtime/include/erlang_aot/runtime/atoms.hpp`, `src/terms/{atoms,atom_spelling}.cpp`:
+  bounded runtime-owned indexes, UTF-8 validation and non-recycled word reservations.
+  `terms.hpp`, `term.cpp`, `factory.cpp`: atom pins, context admission and booleans;
+  invocation/builtin/error/copy boundaries enforce ownership. `include/atom_storage.hpp`
+  forwards to the implemented API; `runtime/design/atom_storage.md` links its contract.
+  `runtime/src/modules/atoms.{hpp,cpp}`: staged bindings and generated slot reads;
+  `compiler/src/codegen/module_atoms.{hpp,cpp}`: deterministic literal spelling slots.
+  `abi/modules.hpp`, registration and CodeServer own revision-3 image/binding lifetime.
+  `tests/compiler/patternmatch/atoms.{py,escript}`, `codegen/atoms{.cmake,_consumer.cpp}`:
+  licensed OTP-adapted CLI/native/oracle workflows; lifecycle_failure.cpp sweeps OOM.
+  `docs/runtime-atoms.md`, `patternmatch-step3-{validation.md,evidence.json}`: contract/provenance.
+
+
 - `abi/include/erlang_aot/abi/calls.hpp`: revision-2 checked failure and raise services.
   `runtime/include/erlang_aot/runtime/generated_calls.hpp` and
   `runtime/src/process/generated_calls.cpp`: first-error channel, owned immediate
@@ -182,8 +195,6 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
 - `runtime/include/binary_heap_object.hpp`: shared binary objects owning immutable
   `std::vector<Word>` storage, checked creation/errors, word views and exact bit-length/tail
   metadata. API sketch listed for IDE navigation; no binary heap or pool service.
-- `runtime/include/atom_storage.hpp`, `runtime/design/atom_storage.md`: runtime-local atom interning/lookup API,
-  startup caps, immutable monotonically assigned IDs and GC/compaction placeholder.
 - `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
   `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
   `runtime/include/process.hpp`: continuation/reductions, owned signal inbox,
@@ -306,7 +317,7 @@ Public headers live in `compiler/include/erlang_aot/compiler/`.
   `cmake/TestHost.cmake.in`: propagate host compiler/CRT/sanitizer flags to consumers.
   `compiler/erlangaot.manifest`: Windows UTF-8 argv; `.gitattributes`: byte-exact fixtures.
 
-- `runtime/src/terms/factory.cpp`: lifetime-checked TermFactory reporting placeholders.
+- `runtime/src/terms/factory.cpp`: lifetime-checked atoms/booleans and deferred constructor reporting.
   `runtime/src/{process,scheduler,modules}/services.cpp`: deferred send, run/execute
   and unload entry points. `runtime/include/erlang_aot/runtime/features.hpp` maps
   shared diagnostic status into typed host failures; memory/heap.cpp now reports.

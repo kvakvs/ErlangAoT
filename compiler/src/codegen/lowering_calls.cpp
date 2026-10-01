@@ -16,6 +16,8 @@ llvm::BasicBlock *failure_exit(ExpressionLowering &state) {
 }
 
 // Check the context channel before a result can feed another argument or body operation.
+} // namespace
+
 void propagate_failure(ExpressionLowering &state) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
@@ -35,6 +37,7 @@ void propagate_failure(ExpressionLowering &state) {
     builder.SetInsertPoint(success);
 }
 
+namespace {
 // Allocate a word-aligned borrowed argument array; zero arity passes an unused null pointer.
 llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &call) {
     auto &builder = state.builder;

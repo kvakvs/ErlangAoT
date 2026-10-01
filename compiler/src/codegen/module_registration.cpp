@@ -1,5 +1,6 @@
 #include "module_registration.hpp"
 #include "../semantic/symbols.hpp"
+#include "module_atoms.hpp"
 #include <erlang_aot/abi/v1.hpp>
 #include <erlang_aot/compiler/source.hpp>
 #include <llvm/IR/IRBuilder.h>
@@ -11,10 +12,10 @@ namespace {
 // Match the native C++ service declaration without introducing a C interoperability layer.
 std::string service_symbol(const llvm::Triple &triple) {
     if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_register_module_v2@@YAEPEAXPEBX@Z"
-                                    : "?erlang_aot_register_module_v2@@YAEPAXPBX@Z";
+        return triple.isArch64Bit() ? "?erlang_aot_register_module_v3@@YAEPEAXPEBX@Z"
+                                    : "?erlang_aot_register_module_v3@@YAEPAXPBX@Z";
     }
-    return "_Z29erlang_aot_register_module_v2PvPKv";
+    return "_Z29erlang_aot_register_module_v3PvPKv";
 }
 
 // Retain exact UTF-8 bytes, including embedded NULs, using explicit lengths in every descriptor.
@@ -49,13 +50,16 @@ llvm::Constant *exports(llvm::Module &output, const semantic::Module &module, ll
 void emit_registration(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word) {
     llvm::IRBuilder<> builder(output.getContext());
     auto *ptr = builder.getPtrTy();
-    auto *type = llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word);
+    auto *type = llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word, ptr, word);
     const auto name = utf8(module.name);
     std::size_t count = 0;
     auto *table = exports(output, module, word, count);
-    auto *data = llvm::ConstantStruct::get(
-        type, builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()), spelling(output, name),
-        llvm::ConstantInt::get(word, name.size()), table, llvm::ConstantInt::get(word, count));
+    std::size_t atom_count = 0;
+    auto *atoms = emit_atom_table(output, module, word, atom_count);
+    auto *data =
+        llvm::ConstantStruct::get(type, builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()),
+                                  spelling(output, name), llvm::ConstantInt::get(word, name.size()), table,
+                                  llvm::ConstantInt::get(word, count), atoms, llvm::ConstantInt::get(word, atom_count));
     const auto prefix = semantic::encode_symbol({name, "", 0});
     auto *descriptor =
         new llvm::GlobalVariable(output, type, true, llvm::GlobalValue::ExternalLinkage, data, prefix + ".descriptor");

@@ -1,5 +1,7 @@
+#include <cstdio>
 #include <cstdlib>
 #include <erlang_aot/runtime/code_server.hpp>
+#include <erlang_aot/runtime/modules.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <erlang_aot/runtime/scheduler.hpp>
 #include <iostream>
@@ -198,6 +200,61 @@ void check_scheduler_registration() {
     require(live_allocations == baseline, "scheduler cleanup leaked");
 }
 
+// Both spelling/word indexes must roll back together at every allocation ordinal.
+void check_atom_interning() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &atoms = *runtime->atom_storage();
+            const auto existing = atoms.intern("existing").value();
+            const auto retained = live_allocations;
+            remaining = ordinal;
+            const auto created = atoms.intern("long_atom_spelling_requiring_owned_storage");
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = created.has_value();
+            if (!succeeded) {
+                require(atoms.size() == 1 && live_allocations == retained, "partial atom insertion leaked");
+            }
+            require(atoms.intern("existing")->word() == existing.word(), "failed insertion damaged deduplication");
+            require(atoms.intern("long_atom_spelling_requiring_owned_storage").has_value(), "atom retry failed");
+            require(atoms.size() == 2, "retry retained a partial index entry");
+        }
+        require(live_allocations == baseline, "atom storage teardown leaked");
+    }
+    require(succeeded, "atom allocation sweep never succeeded");
+}
+
+// Registration may retain valid atoms after failure, but never exposes draft slots or callable modules.
+void check_atom_registration() {
+    using namespace erlang_aot::runtime;
+    using namespace erlang_aot::abi::v1;
+    bool succeeded = false;
+    const AtomDescriptor atom{"registered_atom_literal", 23};
+    const ModuleDescriptor descriptor{version, sizeof(Word) * 8, "atom_module", 11, nullptr, 0, &atom, 1};
+    for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            const auto image = CodeImage::linked();
+            remaining = ordinal;
+            const auto loaded = register_module(*runtime, descriptor, image);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = loaded.has_value();
+            if (!succeeded) {
+                require(!runtime->code_server()->find_module("atom_module"), "failed atom module published");
+                require(!runtime->code_server()->atom_word(&descriptor, 0), "failed atom slots published");
+                require(register_module(*runtime, descriptor, image).has_value(), "atom module retry failed");
+            }
+            require(runtime->atom_storage()->size() == 2, "registration retry failed to deduplicate");
+        }
+        require(live_allocations == baseline, "atom module teardown leaked");
+    }
+    require(succeeded, "atom registration sweep never succeeded");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
@@ -206,9 +263,15 @@ int main() {
         check_registry_creation();
         check_module_publication();
         check_scheduler_registration();
+        check_atom_interning();
+        check_atom_registration();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
-        std::cerr << error.what() << '\n';
+        std::fprintf(stderr, "%s\n", error.what());
+        return 1;
+    } catch (...) {
+        remaining = std::numeric_limits<std::size_t>::max();
+        std::fputs("unexpected allocation test exception\n", stderr);
         return 1;
     }
 }

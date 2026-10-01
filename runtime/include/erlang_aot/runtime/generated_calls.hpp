@@ -12,7 +12,7 @@ class GeneratedCallState final {
     // Clear only the outer invocation, after its host result has copied the failure.
     void leave(bool outer) noexcept;
     // Record once while active; direct host services keep their existing result contract.
-    void fail(CallFailure failure) noexcept;
+    void fail(const CallFailure &failure) noexcept;
     // Convert infrastructure statuses without confusing them with Erlang errors or guard rejection.
     void fail_service(abi::v1::Status status, bool reported = false) noexcept;
     // Borrow until the outer invocation ends; payload Terms currently own immediate words.

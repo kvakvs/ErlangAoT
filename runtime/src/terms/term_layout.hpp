@@ -42,14 +42,14 @@ struct alignas(Word) RemoteIdentityCell final {
     BoxHeader header_;
     Word identity_id_;
     // Trace the remote host atom independently of the registry key.
-    Term remote_host_;
+    Word remote_host_;
 };
 
 // Cons cells have no header: the list primary tag points to exactly two traceable terms.
 struct alignas(Word) ConsCell final {
     // Trace the element and the arbitrary (possibly improper) tail independently.
-    Term head_;
-    Term tail_;
+    Word head_;
+    Word tail_;
 };
 
 struct alignas(Word) TupleCell final {
@@ -59,8 +59,8 @@ struct alignas(Word) TupleCell final {
 
 struct KeyValuePair final {
     // Trace both map-key and mapped-value slots.
-    Term key;
-    Term value;
+    Word key;
+    Word value;
 };
 
 struct alignas(Word) MapCell final {
@@ -85,8 +85,8 @@ struct alignas(Word) RefcBinaryCell final {
 struct alignas(Word) ExternalFunctionCell final {
     // Identify module/name atom slots and an untraced arity word.
     BoxHeader header_;
-    Term module_;
-    Term function_;
+    Word module_;
+    Word function_;
     Word arity_;
 };
 
@@ -109,10 +109,6 @@ struct alignas(Word) NativeRecordPrefix final {
 static_assert(static_cast<unsigned>(BoxedKind::empty_list) < (1U << BoxHeader::BOXED_KIND_BITS));
 static_assert(sizeof(BoxHeader) == sizeof(Word));
 static_assert(alignof(BoxHeader) == alignof(Word));
-static_assert(std::is_standard_layout_v<Term>);
-static_assert(sizeof(Term) == sizeof(Word));
-static_assert(alignof(Term) == alignof(Word));
-static_assert(std::is_trivially_copyable_v<Term>);
 static_assert(sizeof(ConsCell) == 2 * sizeof(Word));
 static_assert(offsetof(ConsCell, tail_) == sizeof(Word));
 static_assert(sizeof(TupleCell) == sizeof(Word));

@@ -1,5 +1,10 @@
 # Process memory ownership
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 Step 12 implements the memory service boundary in `runtime/src/memory/`.
 Each live `ProcessContext` owns a distinct, noncopyable, nonmovable `ProcessHeap`
 and mailbox. The runtime publishes a context only after construction succeeds;
@@ -24,14 +29,14 @@ exactly `words * sizeof(Word)` bytes aligned for `Word`.
 | Representable allocation larger than the configured byte limit | `HeapError::limit_exceeded` |
 | Allocation within the budget | `HeapError::not_implemented` |
 | `collect()` | `HeapError::not_implemented`, without statistics or a claimed safe point |
-| `add(value)` / `value.copy_to(heap)` | Revalidated small integer, empty tuple or nil, with identical bits |
+| `add(value)` / `value.copy_to(heap)` | Revalidated small integer, empty tuple, nil or same-runtime atom, with identical bits |
 | Copy of the default invalid `Term` slot | `TermError::invalid_encoding` |
 | `used_words()` / `capacity_words()` | Zero |
 
-These operations are nonthrowing and allocate no host or process storage. Immediate
-values have no owner or lifetime dependency: copies can cross runtimes and survive
-both contexts' destruction. This exception does not extend to future identity or
-heap values. `Term::from_word` continues to reject them; no tagged pointer is
+These operations are nonthrowing and allocate no host or process storage. Integers
+and empty containers have no owner dependency and may cross runtimes. Atom copies
+retain their immutable spelling but require the destination's runtime membership;
+foreign atoms return `wrong_owner`. Neither path admits future identity or heap values. `Term::from_word` continues to reject them; no tagged pointer is
 constructed or dereferenced. Heap references themselves remain borrowed and cannot
 be used after their context exits.
 

@@ -1,5 +1,10 @@
 # Semantic compilation analysis
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 Default positional and project invocations now validate module and function
 identity, function arities (0..255), duplicate definitions, and exports after parsing.
 Exports may precede definitions; missing functions and repeated exports are errors.
@@ -19,9 +24,9 @@ and independent of compiler-host hashing, locale and table order.
 
 Compilation checks every function, including unused definitions. The current subset
 accepts one clause with variable/wildcard arguments and one expression: an ABI-small
-integer, parameter reference, or syntactically direct local/literal remote call.
+integer, atom/boolean literal, parameter reference, or syntactically direct local/literal remote call.
 Nested call arguments are checked. Explicit negative integers are supported;
-arithmetic, atoms, heap values, matching, guards, exceptions, concurrency, dynamic
+arithmetic, heap values, matching, guards, exceptions, concurrency, dynamic
 calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.

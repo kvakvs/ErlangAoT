@@ -1,5 +1,10 @@
 # ErlangAoT
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](docs/runtime-atoms.md) for ownership, limits and registration policy.
+
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a small integer/parameter/direct-call subset to LLVM IR,
 bitcode and native objects. Generated code executes through test-owned native

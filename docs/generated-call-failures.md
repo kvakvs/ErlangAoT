@@ -1,5 +1,10 @@
 # Generated-call failure contract (revision 2)
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 Step 2 of the pattern/guard plan implements the F20/F02 transport slice. Generated
 functions still use target-width `TermWord(Context*, const TermWord*)`, but a return
 word is usable **only when the context failure channel is empty**. Every non-tail
@@ -27,9 +32,10 @@ continue to derive widths/alignment from the target layout. Runtime stays LLVM-f
 
 Every admitted Erlang exception currently has class `error`. Reasons are typed IDs,
 not runtime atom IDs. `erlang_aot_raise_v2` validates badmatch payloads using actual
-host Term admission: small integers and canonical empty tuple/list only. Invalid,
-heap and identity words fail admission without dereferencing them. Immediate Terms
-own their word, so an error survives invocation cleanup and independent retries.
+host Term admission: small integers, canonical empty tuple/list and atoms owned by
+the context's runtime. Invalid, heap, foreign atom and identity words reject without
+dereferencing them. Atom Terms pin their spelling, so errors survive invocation
+cleanup, independent retries and runtime teardown.
 Heap payloads and roots are explicitly deferred to step 11 before heap admission.
 Full `catch`/`try`, stack traces, `throw`/`exit`, source clause dispatch/body matching,
 and `badarith` remain assigned to their later steps.
@@ -63,13 +69,13 @@ payload/root ownership before adding heap values; no raw heap word may be admitt
 
 ## Compatibility
 
-Descriptor/runtime `abi::v1::version` is now **2**. The namespace and `eav1_` symbol
-encoding continue to name unchanged term/symbol representations; they do not imply
-revision-1 generated-call compatibility. Revision-1 descriptors and runtime options
-are rejected before metadata use. Startup now references
-`erlang_aot_register_module_v2`, so linking against an old runtime also fails.
-The descriptor layout and generic machine signature are unchanged; their semantic
-contract changed. All generated objects and native consumers must be rebuilt.
+Descriptor/runtime `abi::v1::version` is now **3**. The namespace and `eav1_` symbol
+encoding retain the existing term/symbol representation. Revision-1/2 descriptors
+and runtime options reject before metadata use. Startup references
+`erlang_aot_register_module_v3`, so old runtime linking fails. Revision 3 appends
+atom spellings/count to descriptors; generic signatures and the revision-2 checked
+channel services are unchanged. All generated objects and native consumers must
+be rebuilt.
 
 ## Validation boundary
 

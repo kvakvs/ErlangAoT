@@ -1,5 +1,10 @@
 # Runtime builtin dispatch skeleton
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 Compilation step 11 implements native registration and checked synchronous calls
 in [callable.hpp](../runtime/include/erlang_aot/runtime/callable.hpp) and
 [code_server.hpp](../runtime/include/erlang_aot/runtime/code_server.hpp). Link the
@@ -33,10 +38,10 @@ registry pointers borrow those owners and require a retained module handle.
 Targets and captures are destroyed before their image, even if a resolved handle
 outlives its runtime. Such a handle pins code only, never a process context.
 
-Names are provisional host metadata. Atom-name overloads, atom roots, generated
-module descriptors and ABI/word-width registration checks arrive in step 28.
-Dynamic unload remains deferred. This skeleton neither creates an atom table nor
-claims atom identities are valid based on their tag bits.
+Names are owned host metadata; generated module/export spellings also enter the
+bounded runtime atom table at registration. Descriptors validate ABI/word width and
+retain immutable literal bindings. Dynamic unload remains deferred. Atom admission
+checks runtime membership, never just tag bits.
 
 ```cpp
 using namespace erlang_aot::runtime;
@@ -52,14 +57,13 @@ auto resolved = context.code_server().resolve({.module = "native_demo", .functio
 // Check resolved; call it with one validated immediate Term in the live context.
 ```
 
-The minimal `Term` value supports only small integers and canonical empty tuple/list
-words through `Term::from_word`. Copies are word copies with no heap roots.
-`word()`, `kind()` and `integer_value()` are implemented; other semantic/heap
-accessors remain reserved. `TermFactory` now exposes explicit reporting placeholders
-without creating terms; see [runtime services](runtime-services.md). The invalid default word is rejected
-at invocation. Atom/pid/port construction reports `not_implemented`; heap tags and
-malformed words fail without dereferencing. No ownership validation is fabricated:
-only context-independent immediate values can cross this boundary today.
+`Term::from_word(word)` admits small integers and canonical empty tuple/list words;
+the context overload additionally admits atoms belonging to that runtime. Host atom
+Terms retain immutable spellings. Atom/boolean accessors and factory constructors
+are implemented; heap accessors and other factory constructors remain reserved.
+Invalid words and foreign atoms reject at invocation without dereferencing heap
+pointers. Owner-independent immediates may cross runtimes; atoms require explicit
+spelling remapping into the destination table.
 
 `ResolvedFunction::call` checks arity and every argument before entering the body,
 validates successful results, preserves explicit failures and translates allocation

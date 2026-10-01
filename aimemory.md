@@ -1,5 +1,23 @@
 # Working memory — 2026-10-01
 
+- Patternmatch step 3 complete (2026-10-01): atoms/booleans use runtime-owned
+  spelling/word maps, UTF-8 <=255 scalars, 1..2^26 cap/default 2^20. Process-global
+  non-recycled word reservations prevent foreign aliases; failed reservations may
+  leave gaps. Host Term now has shared immutable atom pins; ABI/heap words stay
+  one word. Descriptor version 3 / register_module_v3 appends spelling table/count;
+  atom_v3(context, slot, descriptor) reads context-local slots. Old v2 call-failure
+  services stay unchanged. Failed registration retains valid atom prefixes but no
+  module/slots; duplicate descriptor addresses reject. Native/generated error
+  payloads, arguments/results and copies validate runtime ownership. Foreign copies
+  require explicit spelling remap. Factory atom/boolean validates weak lifetime.
+  Fresh combined Windows Debug: 109/109, full quality 189 commands; test harnesses
+  also pass tidy/Lizard. Source matching/guards remain steps 4–20. User asked step 3
+  then stop. Logs: build/patternmatch-step3; docs/runtime-atoms and step3 validation.
+  UTF-8 read_text is mandatory for test generators; default Windows decoding caused
+  mojibake in one edit and was corrected. LLVM slot globals use getOrInsertGlobal
+  for explicit module ownership; optional test payloads need actual presence guards.
+
+
 ## Current state and authoritative records
 
 - `.agents/10-patternmatch.md` (2026-10-01): user requested one focused plan;
@@ -213,9 +231,9 @@
   Checked unsigned encoding/decoding avoids signed shifts/narrowing. Private heap
   prefixes respect native C++ resource alignment; tags use masks, not union aliasing.
 - Raw immediate classification recognizes atom/pid/port structure, not ownership.
-  Host Term admits only small integers and exact empty tuple/list; heap/identity
-  values remain rejected. Immediate copies/add are owner-independent and may cross
-  runtimes; these trivial operations must not be reused for future heap graphs.
+  Host Term admits small integers, exact empty tuple/list and owned atoms; heap/identity
+  values remain rejected. Integer/empty-container copies are owner-independent and may cross
+  runtimes; atom copies require same-runtime admission. Neither path copies heap graphs.
 - Heap budgets are bytes in exact word multiples; accounting/requests use words.
   No backing allocation, roots, GC or graph copying yet. TermFactory weakly binds
   context lifetime and sink without roots; constructors report unimplemented.
@@ -229,10 +247,8 @@
   unknown_builtin=11 silently. Reporting failure maps to diagnostic_failure.
 - Send, heap/GC, worker execution and unload boundaries report without mutating
   state. Workers, reductions, queues, wakeups, receive and production BIFs are absent.
-- Reserved atom design (initialization deferred beyond step 28): one runtime storage; stable non-recycled dense IDs,
-  default cap 2^20 / hard 2^26. Compiler emits spellings/slots, never IDs; initialize
-  read-only bindings through runtime calls before publication and retain module roots.
-  No per-use interning. Preserve name_atom(), ExportName arity and rooted metadata.
+- Atom storage/bindings are implemented by patternmatch step 3; see the current
+  entry above. Atom GC, worker synchronization and dense numbering are not implemented.
 - Future heap roots include host, continuation, mailbox/cursor and pending transit.
   Every message, including self-send, enters a FIFO signal inbox; bounded owner
   handling copies into recipient heap before mailbox insertion. Service waiting/

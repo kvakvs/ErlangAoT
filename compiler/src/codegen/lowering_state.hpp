@@ -17,6 +17,11 @@ struct ExpressionLowering {
     llvm::BasicBlock *failure = nullptr;
 };
 
+// Branch to the shared failure exit before consuming a fallible service result.
+void propagate_failure(ExpressionLowering &state);
+// Load one runtime-initialized atom slot; no expression evaluation interns spelling.
+llvm::Value *lower_atom(ExpressionLowering &state, const ast::Atom &atom);
+
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
 } // namespace erlang_aot::codegen

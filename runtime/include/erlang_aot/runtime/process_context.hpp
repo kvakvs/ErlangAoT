@@ -84,7 +84,6 @@ class ProcessContext final {
     Mailbox &mailbox() noexcept;
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
-    // Atom storage remains reserved; send is an explicit reporting placeholder.
     // Share one runtime-owned atom identity/name table across every scheduler and process.
     AtomStorage &atom_storage() noexcept;
     // Reserve signal sending; currently report message_passing without claiming acceptance or delivery.

@@ -37,7 +37,7 @@ bool reject(void *, std::string_view) { return false; }
 // Exercise a throwing delivery callback without allowing exceptions through service boundaries.
 bool throwing(void *, std::string_view) { throw std::runtime_error("sink failure"); }
 
-// Every constructible factory call must fail once without manufacturing a value or root.
+// Deferred factory constructors must fail once without manufacturing a value or root.
 void check_factory(ProcessContext &context) {
     Reports reports;
     TermFactory factory(context, {&reports, record});
@@ -45,8 +45,6 @@ void check_factory(ProcessContext &context) {
     const std::array results{factory.integer(3),
                              factory.integer_decimal("123"),
                              factory.floating(1.5),
-                             factory.atom("name"),
-                             factory.boolean(true),
                              factory.nil(),
                              factory.cons(term, term),
                              factory.list({}),
@@ -63,7 +61,7 @@ void check_factory(ProcessContext &context) {
     require(reports.count == results.size() && reports.last.starts_with("[term services] notimpl"),
             "factory report count/feature wrong");
     TermFactory failed(context, {nullptr, reject});
-    require(failed.atom("name") == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
+    require(failed.nil() == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
 }
 
 // Moving/expiring a factory must not retain or dereference destroyed context storage.

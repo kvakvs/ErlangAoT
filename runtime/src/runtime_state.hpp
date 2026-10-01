@@ -5,15 +5,15 @@
 #include <vector>
 
 namespace erlang_aot::runtime {
-// Contexts die before code registrations; atom services remain reserved.
+// Contexts die before code registrations and runtime-owned atom storage.
 class Runtime::Impl final {
   public:
     // Preserve validated limits and the unique runtime identity before creating any contexts.
     Impl(RuntimeOptions options, std::uint64_t identity);
     // Retire scheduling records before contexts, then release code while the stopped service still exists.
     ~Impl();
-    // Atom storage remains reserved until runtime atom initialization is implemented.
-    std::shared_ptr<AtomStorage> atom_storage;
+    // Own the bounded spelling table after contexts and module bindings are released.
+    AtomStorage atom_storage;
     // Own one host-serialized lifecycle service; no worker pool or process continuations exist yet.
     SchedulerService scheduler;
     // Own one server and destroy registrations before the future atom table.

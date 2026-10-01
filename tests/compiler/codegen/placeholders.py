@@ -10,7 +10,6 @@ CASES = {
     "multiple clauses": "f(X) -> X; f(Y) -> Y.",
     "arithmetic": "f(X) -> X + 1.",
     "bignum expressions": "f() -> 999999999999999999999999999999999.",
-    "atom expressions": "f() -> ok.",
     "heap expressions": "f() -> {1}.",
     "dynamic calls": "f(F) -> F(1).",
     "recursive calls": "f() -> f().",
@@ -47,8 +46,8 @@ def main():
     (work / "output").mkdir(parents=True, exist_ok=True)
     (work / "output/sentinel").write_text("preserved", encoding="utf-8")
     catalog = pathlib.Path(catalog_path).read_text(encoding="utf-8")
-    entries = re.findall(r'FeatureInfo\{.*?\.name = "([^"]+)".*?\.owner = FeatureOwner::(\w+).*?\}', catalog, re.S)
-    assert {name for name, owner in entries if owner == "compiler"} == set(CASES)
+    entries = re.findall(r'FeatureInfo\{.*?\.name = "([^"]+)".*?\.owner = FeatureOwner::(\w+).*?\.status = FeatureStatus::(\w+).*?\}', catalog, re.S)
+    assert {name for name, owner, status in entries if owner == "compiler" and status == "deferred"} == set(CASES)
     (work / "project.toml").write_text("schema_version=1\n[[targets]]\nname='audit'\nsources=['sample.erl']\n",
                                         encoding="utf-8")
     for feature, body in [*CASES.items(), ("executable linking", "f() -> 42.")]:

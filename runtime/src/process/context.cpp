@@ -29,6 +29,8 @@ ProcessHeap &ProcessContext::heap() noexcept { return heap_; }
 
 CodeServer &ProcessContext::code_server() noexcept { return *impl_->runtime.code_server(); }
 
+AtomStorage &ProcessContext::atom_storage() noexcept { return *impl_->runtime.atom_storage(); }
+
 Mailbox &ProcessContext::mailbox() noexcept { return mailbox_; }
 
 std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept { return impl_->lifetime; }

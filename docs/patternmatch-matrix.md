@@ -4,7 +4,8 @@ This is the acceptance and implementation boundary for
 [steps 1–20](../.agents/10-patternmatch.md), not a claim that patterns or guards
 execute today. Step numbers below refer to that plan. The existing executable
 slice remains one clause, distinct variable/wildcard parameters, and a single
-small-integer, parameter-read or direct-call body expression.
+small-integer, atom/boolean literal, parameter-read or direct-call body expression.
+[Step 3](runtime-atoms.md) adds owned atoms; matching and guards remain pending.
 
 Evidence is pinned to official `maint-29` revision
 `21776803ecd11f5fa948732c0ec66b8f325dedfc`, re-fetched and unchanged on

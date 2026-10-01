@@ -5,11 +5,34 @@ std::shared_ptr<const CodeImage> CodeImage::linked() { return std::make_shared<C
 
 // Copy spelling inside the caller's failure boundary; Debug STL string moves may allocate in noexcept code.
 LoadedModule::LoadedModule(ModuleDefinition &&definition)
-    : definition_{definition.name, definition.image, std::move(definition.functions)} {}
+    : definition_{definition.name, definition.image, std::move(definition.functions), definition.atoms} {}
 
 std::string_view LoadedModule::name() const noexcept { return definition_.name; }
 
 const ModuleRegistry &LoadedModule::functions() const noexcept { return *definition_.functions; }
+
+const ModuleAtoms *LoadedModule::atoms() const noexcept { return definition_.atoms.get(); }
+
+const ModuleAtoms *CodeServer::find_atoms(const void *descriptor) const noexcept {
+    for (const auto &[name, module] : modules_) {
+        const auto *atoms = module->atoms();
+        if (atoms && atoms->descriptor == descriptor) {
+            return atoms;
+        }
+    }
+    return nullptr;
+}
+
+TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot) const noexcept {
+    const auto *atoms = find_atoms(descriptor);
+    if (!atoms) {
+        return std::unexpected(TermError::wrong_owner);
+    }
+    if (slot >= atoms->slots.size()) {
+        return std::unexpected(TermError::out_of_range);
+    }
+    return atoms->slots[slot].word();
+}
 
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
@@ -17,6 +40,9 @@ CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinitio
     }
     if (modules_.contains(definition.name)) {
         return std::unexpected(CodeError::duplicate_module);
+    }
+    if (definition.atoms && find_atoms(definition.atoms->descriptor)) {
+        return std::unexpected(CodeError::invalid_module);
     }
     try {
         auto module = std::shared_ptr<LoadedModule>(new LoadedModule(std::move(definition)));

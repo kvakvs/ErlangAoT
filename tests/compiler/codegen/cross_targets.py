@@ -18,8 +18,8 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
     minimum, maximum = -(1 << (bits - 5)), (1 << (bits - 5)) - 1
     answer = work / "answer.erl"
     client = work / "client.erl"
-    answer.write_text(f"-module(answer). -export([value/0, identity/1, minimum/0, maximum/0]).\n"
-                      f"value() -> 42. identity(X) -> X. minimum() -> {minimum}. maximum() -> {maximum}.\n",
+    answer.write_text(f"-module(answer). -export([value/0, identity/1, minimum/0, maximum/0, atom/0]).\n"
+                      f"value() -> 42. identity(X) -> X. minimum() -> {minimum}. maximum() -> {maximum}. atom() -> true.\n",
                       encoding="utf-8")
     client.write_text("-module(client). -export([value/0]). value() -> answer:identity(answer:value()).\n",
                       encoding="utf-8")
@@ -39,9 +39,11 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             assert f"AddressSize: {bits}bit" in headers, headers
             imports = run([nm, "--undefined-only", str(path)]).stdout
             exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
-            assert "erlang_aot_register_module_v2" in imports, imports
+            assert "erlang_aot_register_module_v3" in imports, imports
             assert ".register" in exports and "eav1_" in exports, exports
             reports.append(headers + imports + exports)
+            if "616e73776572" in path.name:
+                assert "erlang_aot_atom_v3" in imports, imports
             if "636c69656e74" in path.name:
                 assert "eav1_616e73776572_76616c7565_0" in imports, imports
                 assert "eav1_616e73776572_6964656e74697479_1" in imports, imports
@@ -49,7 +51,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
         ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
         assert f"ret i{bits} {minimum * 16 + 15}" in ir, ir
         assert f"ret i{bits} {maximum * 16 + 15}" in ir, ir
-        assert f"i32 2, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert f"i32 3, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
     rejected(tool, answer, work / triple / "overflow", triple,
              "representable integer literal" if bits == 32 else "bignum expressions")

@@ -26,13 +26,25 @@ class CodeImage {
     virtual ~CodeImage() = default;
 };
 
+struct ModuleAtoms final {
+    // Explicit empty construction keeps Debug STL bookkeeping failures inside registration's catch boundary.
+    ModuleAtoms() : slots(0) {}
+
+    // Use the image-owned descriptor address solely as a stable lookup key, never dereference it at use sites.
+    const void *descriptor = nullptr;
+    // Pin every initialized spelling in compiler slot order, including duplicate slots.
+    std::vector<Term> slots;
+};
+
 struct ModuleDefinition final {
-    // Own exact module spelling; runtime atom binding remains reserved until atom initialization exists.
+    // Own exact module spelling independently of the optional generated atom bindings.
     std::string name;
     // Declaration order keeps executable memory alive through target destruction.
     std::shared_ptr<const CodeImage> image;
     // Transfer the sole mutable registry into its published module.
     std::unique_ptr<ModuleRegistry> functions;
+    // Retain immutable runtime-specific bindings with the image and exported call handles.
+    std::shared_ptr<const ModuleAtoms> atoms = {};
 };
 
 // Pin one immutable registry and its code image independently of future lookup access.
@@ -46,6 +58,8 @@ class LoadedModule final {
     std::string_view name() const noexcept;
     // Borrow the single frozen registry; direct calls require this module handle to remain live.
     const ModuleRegistry &functions() const noexcept;
+    // Inspect initialized bindings while this loaded-module handle pins their code image.
+    const ModuleAtoms *atoms() const noexcept;
 
   private:
     friend class CodeServer;
@@ -99,8 +113,12 @@ class CodeServer final {
     CodeResult<ResolvedFunction> resolve(FunctionRequest request) const;
     // Retain immutable module ownership or report a missing module.
     CodeResult<std::shared_ptr<const LoadedModule>> find_module(std::string_view name) const;
+    // Resolve an initialized atom slot without allocation or spelling interning.
+    TermResult<Word> atom_word(const void *descriptor, std::size_t slot) const noexcept;
 
   private:
+    // Find the immutable descriptor key without dereferencing image-owned storage.
+    const ModuleAtoms *find_atoms(const void *descriptor) const noexcept;
     // One registry per exact module spelling; no secondary BIF overload table exists.
     std::map<std::string, std::shared_ptr<const LoadedModule>, std::less<>> modules_;
 };

@@ -1,7 +1,7 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary prerequisites
-are included below in implementation order. Steps 1–2 are complete; steps 3–20
+are included below in implementation order. Steps 1–3 are complete; steps 4–20
 remain incomplete. Completion evidence is linked under each finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler] <step name>"
@@ -15,8 +15,8 @@ ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
 The compiler currently executes one clause with distinct variable/wildcard
-parameters and one small-integer, parameter-read or direct-call body expression.
-The parser retains broader syntax, but atoms, heap construction, general equality,
+parameters and one small-integer, atom/boolean, parameter-read or direct-call body expression.
+The parser retains broader syntax, but heap construction, general equality,
 guard BIFs and source-generated Erlang failures are not executable. The steps below
 replace these gaps in one sequence; there is no separate prerequisite plan.
 
@@ -134,11 +134,11 @@ Source matching/guards and heap payload roots remain with their later steps.
 
 ### 3. Implement atoms and boolean values (F06)
 
-- [ ] Implement runtime-owned stable atom storage, spelling validation, configured
+- [x] Implement runtime-owned stable atom storage, spelling validation, configured
   limits, deduplication and transactional module spelling/slot initialization.
-- [ ] Lower atom literals and `true`/`false` via module bindings; never bake in
+- [x] Lower atom literals and `true`/`false` via module bindings; never bake in
   compiler-assigned IDs or intern on each expression evaluation.
-- [ ] Admit owned atoms through host Terms and error materialization; define
+- [x] Admit owned atoms through host Terms and error materialization; define
   cross-runtime rejection/remapping and preserve module lifetime rules.
 
 **Success criteria:** Equal spellings in separate modules share identity within
@@ -148,6 +148,18 @@ failure leaves no published partial module and has a documented atom-table polic
 **Tests:** Compile atom-return leaves adapted from `guard_SUITE.erl` and call them across
 modules. Compare spellings and booleans with OTP; test Unicode, deduplication,
 capacity failure and independent runtimes without comparing raw atom IDs.
+
+**Completed 2026-10-01:** [Runtime-owned atoms](../docs/runtime-atoms.md) provide
+validated UTF-8 spelling, limits, deduplication, immutable host/error pins and
+foreign-word rejection. Revision-3 descriptors publish per-runtime spelling/slot
+bindings with their registry/image; generated literal reads never intern or embed
+runtime IDs. Failed modules remain unpublished; retained valid atoms count against
+the cap. OTP-adapted return leaves match all four native optimization policies;
+Unicode, capacity, allocation-fault rollback, independent runtimes and retry pass.
+Fresh Windows x64 Debug: 109/109 CTests, zero skips, full Lizard/clang-tidy over 189
+production units. See [validation](../docs/patternmatch-step3-validation.md).
+Host serialization is required; atom GC and worker synchronization remain deferred.
+Steps 4–20 have not been started by this implementation.
 
 ### 4. Introduce scoped bindings and conservative value facts
 

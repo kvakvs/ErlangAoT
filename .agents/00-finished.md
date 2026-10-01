@@ -548,16 +548,17 @@ goal still requires the following work.
 - [ ] **Production executables:** startup/entrypoint policy and native linking with
   the matching runtime; replace explicit executable-output failure.
 - [ ] **Executable Erlang semantics:** arithmetic with correct bignum fallback,
-  atom/float/heap values, patterns, guards, multiple clauses, branching/sequences,
+  float/heap values, patterns, guards, multiple clauses, branching/sequences,
   records, closures/dynamic calls, exceptions and recursion/proper bounded-stack
   tail calls. Parsing/type metadata support does not implement their execution.
-- [ ] **Terms, allocation and GC:** real TermFactory constructors, backing heaps,
+- [ ] **Terms, allocation and GC:** remaining TermFactory constructors, backing heaps,
   bignums/binaries/containers, rooted graph copying and collection. Validate roots/
   safepoints before movable terms; include host, continuation, mailbox/cursor and
   in-transit roots with explicit C++ cell resource construction/destruction.
-- [ ] **Atoms and identities:** runtime-owned stable atom storage, descriptor bindings
-  initialized before publication and retained roots; valid owned pid/port/reference
-  services. Atom collection is a reservation without an implemented owner.
+- [x] **Atoms:** stable bounded storage, generated spelling/slot bindings, atom/boolean
+  literals and retained host/error ownership; see [step 3](../docs/patternmatch-step3-validation.md).
+- [ ] **Identities and atom GC:** owned pid/port/reference services, atom collection
+  and synchronized access before worker integration remain deferred.
 - [ ] **Processes and scheduling:** cooperative generated execution, reductions,
   workers/queues, wakeups, signals, send and selective receive. Preserve per-sender
   order; all messages, including self-send, enter the signal inbox before owner-side

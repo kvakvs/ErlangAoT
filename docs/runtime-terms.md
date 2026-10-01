@@ -36,21 +36,18 @@ if (encoded) {
 }
 ```
 
-Step 11 adds a minimal immediate-only `Term` in the namespaced header for
-[generic builtin dispatch](runtime-builtins.md). `Term::from_word` accepts small
-integers and canonical empty containers; identities and heap values are rejected.
-`word()`, `kind()` and `integer_value()` are implemented. Copy/move are word copies
-without roots. Other semantic/heap operations remain reserved until ownership
-machinery exists. Step 14 adds [TermFactory](../runtime/include/terms.hpp) lifetime
-bindings and explicit reporting placeholders for all constructors; they create no
-terms or roots. See [runtime services](runtime-services.md). Heap prefixes live privately in
+Host `Term` supports checked integer/empty-container values plus owned atoms.
+`Term::from_word(word)` admits owner-independent immediates; its context overload
+also checks atom membership in that runtime. Atom/boolean accessors and
+`TermFactory::atom/boolean` are implemented; other factory constructors and heap
+operations remain deferred. Host Terms pin immutable spelling records while ABI
+words and private heap slots remain one word. See [runtime atoms](runtime-atoms.md)
+and [generic dispatch](runtime-builtins.md) for ownership and failure contracts.
+Heap prefixes remain private in
 [runtime/src/terms/term_layout.hpp](../runtime/src/terms/term_layout.hpp).
-Future atom construction stays with runtime-wide
-[AtomStorage](../runtime/include/atom_storage.hpp), including loaded-code roots;
-no separate atom table is introduced.
 
 These checks report ordinary input errors and remain silent; they are not reached
-feature placeholders. TermFactory service attempts use the shared catalog and
+feature placeholders. Deferred TermFactory service attempts use the shared catalog and
 reporting contract separately from these raw validators.
 
 `runtime_generated_link` round-trips signed native boundaries through real dispatch.
@@ -65,5 +62,5 @@ This proves word agreement; execution of LLVM-generated Erlang functions remains
 step 40, and native foreign-platform runtime validation remains pending.
 
 Step 12 adds allocation-free `Term::copy_to` / `ProcessHeap::add` for the same
-checked immediates; see [process memory ownership](runtime-memory.md). Heap-valued
+checked immediates and, after pattern/guard step 3, same-runtime atoms; see [process memory ownership](runtime-memory.md). Heap-valued
 Terms, graph copies and roots remain unavailable.

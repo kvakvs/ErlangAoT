@@ -1,5 +1,18 @@
 # Architecture
 
+- Pattern/guard step 3 implements runtime-owned atoms and booleans. Per-runtime
+  spelling/word indexes validate UTF-8 and enforce 1..2^26 caps (default 2^20).
+  Globally non-recycled atom words reject foreign raw words; runtime tables remain
+  independent. Host Term owns an optional immutable spelling pin; ABI/heap slots
+  remain Word. Revision-3 descriptors initialize per-runtime literal slots before
+  atomic registry publication; failed registration may retain validated atoms but
+  no module/slots. Generated reads use context lookup, never per-use interning.
+  Host arguments/results, native/generated errors and copies check atom ownership.
+  Resolved generated handles reject foreign module instances; retained atoms survive
+  runtime teardown. Host serialization, no atom GC/workers. Steps 4–20 remain open.
+  See docs/runtime-atoms.md and patternmatch-step3-validation.md.
+
+
 - Pattern/guard step 2 versions the generated-call contract to revision 2 while
   retaining v1 term/symbol encoding and target-derived layouts. Every local/remote
   call checks a context error channel before result use; calls share one failure
@@ -7,7 +20,7 @@
   preserve the first error and outer cleanup permits independent retry. Builtin and
   heap services retain exact infrastructure failures separately from error reasons
   function_clause/badmatch and owned immediate payloads. Heap roots await step 11;
-  source matching/guards remain steps 3–20. See docs/generated-call-failures.md.
+  source matching/guards remain steps 4–20. See docs/generated-call-failures.md.
 
 - Pattern/guard step 1 freezes semantics in `docs/patternmatch-matrix.md` and
   a source-checked guard signature catalog. Evidence separates suite parsing,
@@ -174,13 +187,6 @@
   Shutdown closes new work but permits returns/inspection/removal. Runtime RAII
   clears records, destroys contexts, releases code, then destroys the stopped service.
   Host serialization remains mandatory. See docs/runtime-scheduler.md.
-- AtomStorage review API owns runtime-local interning: sequential word-sized atom
-  IDs, initially dense ID indexing plus name hash lookup, startup entry cap 2^20
-  default / 2^26 hard maximum. Atom GC is a placeholder for reclamation/compaction
-  preserving surviving strings/IDs and never recycling IDs; no alternate lookup type.
-  Compiler atom constants retain spellings/slots, receive IDs from AtomStorage during
-  module initialization, then remain read-only. Bindings/metadata roots are per-runtime
-  module instances and retained through pinned code lifetime; no IDs assigned at compile time.
 - Runtime process/scheduler review declarations in `runtime/include/{process_heap,
   process,scheduler,mailbox}.hpp` and `processes.md` extend that sketch: one worker per
   logical CPU, owner-thread commands, cooperative tick grants, per-process 1:8:9

@@ -1,34 +1,26 @@
 # Runtime term API — immediate services and heap sketch
 
-Status: immediate word services implemented in step 10; step 11 adds immediate-only
-host Term values for generic calls, 2026-09-25. See
-[runtime builtin dispatch](../../docs/runtime-builtins.md) for that limited boundary.
-The rooted/heap contracts below remain proposals.
-[Runtime term boundary](../../docs/runtime-terms.md) documents checked classification
-and integer encoding/decoding. Step 12 implements process ownership and
-immediate-only copying; see [process memory](../../docs/runtime-memory.md). Backing allocation, graph copying,
-rooting and collection remain unimplemented. Step 14 adds a weak-lifetime-token
-TermFactory binding and reporting placeholders for its constructors, without terms
-or roots; see [runtime service placeholders](../../docs/runtime-services.md).
-[terms.hpp](../include/erlang_aot/runtime/terms.hpp) preserves the one-word public value API;
-[term_layout.hpp](../src/terms/term_layout.hpp) contains compile-checked private prefixes.
-Implemented word/tag/error declarations live in
-[erlang_aot/runtime/terms.hpp](../include/erlang_aot/runtime/terms.hpp);
-heap structs are private runtime sources, compiled by focused layout tests.
-[process_heap.hpp](../include/process_heap.hpp) reserves process storage and graph copying.
-[atom_storage.hpp](../include/atom_storage.hpp) and [atom_storage.md](atom_storage.md)
-reserve runtime-wide interning. Compiled metadata will record atom spellings, never
-compiler-assigned IDs; runtime binding and atom-valued expressions are later steps.
+Status: immediate services and owned host atoms are implemented. Pattern/guard
+step 3 adds runtime-owned atom storage, module bindings, atom/boolean factories and
+immutable spelling pins. See [runtime atoms](../../docs/runtime-atoms.md) and
+[runtime builtin dispatch](../../docs/runtime-builtins.md). Heap/rooting contracts
+below remain proposals; backing allocation, graph copying and collection are absent.
+
+[Runtime word services](../../docs/runtime-terms.md) document checked classification
+and integer encoding/decoding. Host [Term](../include/erlang_aot/runtime/terms.hpp)
+contains an ABI word plus an optional atom pin; it is not a generated or heap layout.
+[term_layout.hpp](../src/terms/term_layout.hpp) stores Word slots in private prefixes.
+[AtomStorage](../include/erlang_aot/runtime/atoms.hpp) supplies one runtime-owned table;
+compiled literals use spellings/slots initialized before module publication.
 
 ## Class boundary and immediate ABI
 
-`Term` remains a final common value API with private storage and process-bound
-`TermFactory` construction. Its sole `Word` stores an immediate or a future tagged
-heap pointer. Public checked accessor declarations are preserved. The default zero
-word is an invalid/uninitialized slot, not nil or a valid boxed value. Root/owner
-tracking will require external metadata and explicit safepoints; a one-word value
-cannot itself contain a smart-pointer lifetime token. Those services are not yet
-implemented and the eventual root design must be validated before heap lowering.
+`Term` is a final host value API with private storage and process-bound
+`TermFactory` construction. Its Word is an admitted immediate; immutable atom
+records add spelling lifetime independently of processes and runtime teardown.
+The default zero word is an invalid slot. Heap ownership/root tracking and explicit
+safepoints must be implemented before heap lowering; atom pins do not establish
+future heap or moving-GC correctness.
 
 The implemented term representation retains [v1 names](../../abi/include/erlang_aot/abi/v1.hpp)
 with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
@@ -46,8 +38,8 @@ There is no BEAM/FFI compatibility promise or public heap ABI. Step 9 implements
 Tags are numerical low bits, decoded with masks/shifts rather than C++ bitfields
 or inactive union members. Primary bits 0–1 reserve header=0, list=1, boxed=2 and
 secondary=3. Bits 2–3 then select pid=0, port=1, tertiary=2 or small integer=3.
-Tertiary bits 4–5 reserve atom=0, catch=1, empty tuple=2 and nil=3. Only small integer
-encoding is implemented: `(unsigned(value) << 4) | 0xf`, after checking the exact
+Tertiary bits 4–5 reserve atom=0, catch=1, empty tuple=2 and nil=3. Small integer
+encoding is `(unsigned(value) << 4) | 0xf`, after checking the exact
 signed range `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Negative decoding explicitly
 reconstructs the signed payload without implementation-defined unsigned-to-signed
 conversion or signed right shift. No heap pointer encoder is provided yet.
@@ -134,7 +126,8 @@ services only; these neither construct host handles nor register process roots.
 Step 9 supplies `ProcessContext::lifetime()`: host binding/root metadata will lock or
 retain its `ContextLifetime` token and check liveness before touching the context.
 Destruction clears liveness before mailbox/heap release; retaining the token does
-not retain that storage. The one-word `Term` still needs external root/owner metadata.
+not retain that storage. Atom Terms now own spelling pins; process-heap Terms still
+need a separate root/owner protocol.
 
 - Factories bind to one process context. Every returned term is a rooted host
   handle; copying retains the value, assigning rebinds only that C++ handle.

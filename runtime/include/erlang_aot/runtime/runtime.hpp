@@ -1,4 +1,5 @@
 #pragma once
+#include "atoms.hpp"
 #include "process_context.hpp"
 #include <erlang_aot/abi/status.hpp>
 #include <expected>
@@ -9,6 +10,8 @@ class SchedulerService;
 struct RuntimeOptions {
     // Bound live context owners independently of future heap and atom budgets.
     std::size_t max_contexts = 1024;
+    // Bound retained UTF-8 atom entries; no atom garbage collection runs in this slice.
+    std::uint32_t max_atoms = AtomStorage::default_limit;
     // Reject a caller built for a different project ABI before publishing runtime state.
     std::uint32_t abi_version = abi::v1::version;
     // Keep the native runtime term width explicit for project compatibility checks.
@@ -37,6 +40,8 @@ class Runtime final {
 
     // Borrow the runtime-wide server while active; stopped runtimes return null.
     CodeServer *code_server() noexcept;
+    // Borrow active runtime-owned atom storage; stopped runtimes return null.
+    AtomStorage *atom_storage() noexcept;
     // Borrow lifecycle bookkeeping while active; no scheduler workers are started and stopped runtimes return null.
     SchedulerService *scheduler() noexcept;
 

@@ -16,7 +16,7 @@ void GeneratedCallState::leave(bool outer) noexcept {
     }
 }
 
-void GeneratedCallState::fail(CallFailure failure) noexcept {
+void GeneratedCallState::fail(const CallFailure &failure) noexcept {
     if (active_ && !failure_) {
         failure_ = failure;
     }
@@ -56,7 +56,7 @@ std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason
     }
     CallFailure failure{.code = CallError::erlang_exception, .reason = reason};
     if (reason == abi::v1::ErrorReason::badmatch) {
-        const auto payload = Term::from_word(value);
+        const auto payload = Term::from_word(value, *static_cast<ProcessContext *>(context));
         if (!payload) {
             state.fail_service(abi::v1::Status::invalid_argument);
             return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);

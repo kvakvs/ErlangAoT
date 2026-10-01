@@ -59,7 +59,7 @@ void publication() {
 // Validate the service boundary and real module publication without exposing registry implementation details.
 int main() {
     try {
-        require(erlang_aot_register_module_v2(nullptr, nullptr) ==
+        require(erlang_aot_register_module_v3(nullptr, nullptr) ==
                     static_cast<std::uint8_t>(abi::v1::Status::invalid_argument),
                 "null service input accepted");
         publication();

@@ -6,15 +6,16 @@ requests use this reporting contract; ordinary invalid input retains ordinary er
 
 The canonical [feature catalog](../abi/include/erlang_aot/abi/features.hpp) assigns
 explicit, non-recycled IDs and stable diagnostic names. Each entry records its
-owner, semantic/service boundary, deferred status, planned integration step and
+owner, semantic/service boundary, deferred/implemented status, integration step and
 focused reporting test. `abi_features` checks the ID/name compatibility snapshot;
 `codegen_features` covers compiler reporting; `runtime_service_output` and
 `runtime_feature_output` cover runtime service diagnostics and escaped context.
 `runtime_features` retains sink refusal/exception and invalid-ID injection.
-`codegen_placeholders` now audits every compiler-owned catalog entry through real
+`codegen_placeholders` audits every deferred compiler-owned catalog entry through real
 positional and project CLI calls at O0/O2, with and without verbosity. It verifies
 exact markers, source/module/target context, nonzero exit, clean stdout and preserved
-outputs. The catalog test references identify the actual owner workflows.
+outputs. Implemented atom expressions retain their stable ID and are covered by
+`codegen_atoms`. The catalog test references identify the actual owner workflows.
 Step 11 additionally installs the
 [builtin dispatch boundary](runtime-builtins.md). Step 14 installs
 [runtime service placeholders](runtime-services.md) and distinguishes unknown BIFs
@@ -29,7 +30,7 @@ registration and calls stay silent. Direct and subprocess tests exercise these o
 | Compiler | Expression lowering under `compiler/src/codegen/` | Steps 17/24 add defensive rejection at reached lowering operations; normal verification/emission failures keep their ordinary diagnostics |
 | Runtime terms/BIFs | [Term/TermFactory](../runtime/include/terms.hpp) and [Callable](../runtime/include/callable.hpp) | Steps 10/11/14 distinguish known unavailable services from invalid values or unknown BIFs |
 | Runtime processes | [ProcessContext::send](../runtime/include/erlang_aot/runtime/process_context.hpp), [SchedulerService::run/execute](../runtime/include/erlang_aot/runtime/scheduler.hpp) | Step 14 reports execution/send attempts without invoking code or changing lifecycle state |
-| Runtime memory | [ProcessHeap::allocate/collect](../runtime/include/process_heap.hpp), reserved [AtomStorage::collect](../runtime/include/atom_storage.hpp) | Step 14 reports heap service attempts; atom collection awaits an implemented table owner |
+| Runtime memory | [ProcessHeap::allocate/collect](../runtime/include/process_heap.hpp), deferred atom collection | Step 14 reports heap service attempts; atom collection remains unimplemented despite the new non-collecting atom table |
 | Runtime modules | [CodeServer](../runtime/include/code_server.hpp) unload boundary | Step 14 reports deferred unload; linked native registration stays supported; dynamic-image/descriptor loading awaits its ABI |
 | Driver | Final executable output after the [frontend handoff](../compiler/src/driver/frontend.cpp) | Explicit `--output` reaches the deferred-linking owner after semantic analysis; default in-memory compilation stays supported |
 

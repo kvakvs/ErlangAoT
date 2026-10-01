@@ -35,7 +35,7 @@ enum class FeatureId : std::uint8_t {
     expression_sequences = 25
 };
 enum class FeatureOwner : std::uint8_t { compiler, runtime, driver };
-enum class FeatureStatus : std::uint8_t { deferred };
+enum class FeatureStatus : std::uint8_t { deferred, implemented };
 
 struct FeatureInfo {
     // Keep machine identity and diagnostic spelling stable across unrelated implementations.
@@ -92,9 +92,9 @@ inline constexpr std::array feature_catalog{
                 .name = "atom expressions",
                 .owner = FeatureOwner::compiler,
                 .boundary = "literal capability analysis",
-                .status = FeatureStatus::deferred,
-                .plan_step = 16,
-                .failure_test = "codegen_placeholders"},
+                .status = FeatureStatus::implemented,
+                .plan_step = 3,
+                .failure_test = "codegen_atoms"},
     FeatureInfo{.id = FeatureId::heap_expressions,
                 .name = "heap expressions",
                 .owner = FeatureOwner::compiler,

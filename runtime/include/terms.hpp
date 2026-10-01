@@ -1,6 +1,6 @@
 #pragma once
 
-// TermFactory exposes reporting placeholders; immediate-only Term lives in the namespaced header.
+// TermFactory constructs atoms/booleans; other constructors expose reporting placeholders.
 // See runtime/design/terms.md for proposed ownership, immutable updates and the private ABI boundary.
 #include <array>
 #include <cstddef>
@@ -19,7 +19,7 @@
 namespace erlang_aot::runtime {
 class ContextLifetime;
 
-// Reserve process-owned constructors; every operation currently reports term_services and returns failure.
+// Reserve process-owned constructors; atoms/booleans use the checked runtime-owned spelling table.
 // Raw small integers and empty containers remain available through Term::from_word.
 class TermFactory final {
   public:
@@ -77,5 +77,7 @@ class TermFactory final {
     std::weak_ptr<const ContextLifetime> lifetime_;
     // Borrow diagnostic delivery state for this factory's lifetime; null selects stderr.
     DiagnosticSink sink_;
+    // Borrow the runtime table only while the context lifetime token is alive.
+    AtomStorage *atoms_;
 };
 } // namespace erlang_aot::runtime

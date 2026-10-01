@@ -1,5 +1,10 @@
 # LLVM compilation contract
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 The implemented milestone compiles an acyclic Erlang/OTP 29 subset through the
 public positional/project CLI to verified LLVM IR, bitcode and native objects.
 A separately configured Clang C++ harness links those objects with the real runtime,
@@ -8,7 +13,7 @@ registers modules explicitly and executes decoded values at O0/O2. See the
 [current validation inventory](compile-validation.md).
 
 The supported subset is named modules/exports, one clause with distinct variable
-or wildcard parameters, and one expression containing a tagged-small integer,
+or wildcard parameters, and one expression containing a tagged-small integer, atom/boolean literal,
 parameter reference, or resolved local/literal remote call within the compilation
 batch. Negative literals and nested call arguments are supported. Remote calls
 require exports; recursive call graphs fail. Unsupported syntax is rejected even
@@ -22,12 +27,12 @@ bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compi
 policy. Current guard-free source has no profitable variants. See
 [specialization budgets and measurements](specialization.md).
 
-ABI revision 2 uses target-word tagged terms, a live process context and an argument array.
+ABI revision 3 uses target-word tagged terms, a live process context and an argument array.
 All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
 checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
 The runtime implements lifecycle, immediate Terms, frozen generic registries,
 module registration and service failures. Allocation/GC, scheduling workers,
-message delivery, BIF implementations, atom bindings and dynamic loading remain
+message delivery, BIF implementations and dynamic loading remain
 future work. A production Erlang launcher/linker is not implemented; explicit
 `--output` fails with `[executable linking] notimpl`.
 
@@ -170,7 +175,7 @@ remain pending.
 
 Accept ordinary named modules with exports and single-clause functions. Parameters
 are distinct variables or independent wildcards. Each body is one expression made
-from small signed integer literals, named parameter references and direct local or
+from small signed integer/atom/boolean literals, named parameter references and direct local or
 literal remote calls within the same compilation batch, with nested arguments.
 Calls evaluate arguments in source order. Remote calls require exported functions;
 the entire call graph must be acyclic. Reject unsupported code even if unexported.
@@ -184,7 +189,7 @@ identity(X) -> X.
 
 A second module may call `answer:identity(answer:value())`; it must compile in the
 same batch to a separate object. Negative literal syntax does not enable unary
-arithmetic. Exclude bignums, arithmetic, atom expressions, heap-term construction,
+arithmetic. Atom/boolean literals use runtime-owned bindings. Exclude bignums, arithmetic, heap-term construction,
 other patterns, guards, multiple clauses, closures, dynamic calls, recursion,
 exceptions, receive, concurrency and code loading. Handle file/module/export and
 all existing type/spec AST forms explicitly. The initial inert metadata allowlist
@@ -200,13 +205,14 @@ O2 may add proven/guarded variants with generic fallback: at most 3/function,
 32/module and 128/target, with pre-LLVM IR growth at most 2x per function/module,
 including dispatch. Generate no Cartesian products or clones without a benefit.
 
-## Private generated-code ABI revision 2
+## Private generated-code ABI revision 3
 
 [v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) defines the versioned C++ term/context/function
 types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
 integer encoding for explicit 32/64-bit targets. Runtime lifecycle is implemented;
-term services remain later work. This contract does not match BEAM. Native `Term` and private
-headers have compile-checked one-word layouts; heap prefixes remain reservations.
+atom services are implemented and heap services remain later work. This contract
+does not match BEAM. ABI words and heap slots have target-word layouts; host `Term`
+additionally owns an atom spelling pin. Heap prefixes remain reservations.
 `codegen::term_type` and `generated_function_type` derive LLVM types from the configured
 target, rejecting unsupported widths/alignment. LLVM `CallingConv::C` denotes the
 native free-function machine convention used here; it does not require C headers
@@ -219,7 +225,7 @@ can be added later if needed.
   the signed range is `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Range-check exact
   source values before encoding with unsigned shift/OR; decode sign explicitly.
 - Generated native-convention entries conceptually have signature
-  `Term function(ProcessContext*, const Term* arguments)`. Arity is part of the
+  `TermWord function(ProcessContext*, const TermWord* arguments)`. Arity is part of the
   resolved identity. Arguments are a borrowed, word-aligned array in source order,
   valid for the call; zero-arity calls may pass null. The context is live and
   runtime-owned, propagated unchanged through direct calls. Callers supply valid
@@ -229,7 +235,7 @@ can be added later if needed.
 - Symbol names use `eav1_<hex-module-UTF8>_<hex-function-UTF8>_<decimal-arity>`:
   lowercase byte hex, no normalization, canonical decimal without leading zeroes.
   Module registration and descriptors use `eav1_<hex-module-UTF8>__0.register`
-  and `.descriptor`; this symbol encoding remains unchanged in call ABI revision 2.
+  and `.descriptor`; this symbol encoding remains unchanged in ABI revision 3.
   Exported entries/registration are externally visible; other functions are internal.
   These names specify project-owned LLVM symbols before platform decoration; future
   project registration binds their addresses to the C++ generated-function type.

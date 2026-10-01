@@ -68,3 +68,13 @@ source hashes pass unchanged. The original untracked `lib/stdlib/src/1.ir` remai
 The separate installed oracle is still OTP 29.1.1 / ERTS 17.1.
 [Step-2 validation](patternmatch-step2-validation.md) records failure-transport
 execution, the 108/108 combined Windows Debug result and full quality pass.
+
+## Pattern/guard step 3 check (2026-10-01)
+
+Re-fetched official `maint-29`; upstream, checkout and pin remain
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus and step-1 source hashes
+pass unchanged; untracked `lib/stdlib/src/1.ir` is preserved. Installed oracle remains
+OTP 29.1.1 / ERTS 17.1. [Step-3 validation](patternmatch-step3-validation.md) records
+licensed atom-leaf adaptations, four native policies, ownership/limit/fault tests,
+109/109 combined Windows Debug tests and full Lizard/clang-tidy over 189 production
+units. Earlier validation records keep their original revisions and outcomes.

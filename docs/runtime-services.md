@@ -6,7 +6,7 @@ nor LLVM. Calls require host serialization, as do the existing runtime owners.
 
 | Boundary | Catalog feature | Result on a valid deferred request |
 | --- | --- | --- |
-| `TermFactory` constructors | term services | `TermError::not_implemented` |
+| `TermFactory` constructors except atom/boolean | term services | `TermError::not_implemented` |
 | `ProcessHeap::allocate` | allocation | `HeapError::not_implemented` |
 | `ProcessHeap::collect` | garbage collection | `HeapError::not_implemented` |
 | `ProcessContext::send` | message passing | `ProcessError::not_implemented` |
@@ -43,20 +43,20 @@ Send reports unavailable even for self-send; it never creates a signal or touche
 the mailbox. Signal ordering, admission and receive remain future work.
 
 [TermFactory](../runtime/include/terms.hpp) now has a lightweight binding that retains
-only a weak context-lifetime token and a borrowed sink. Construction, moves and
+a weak context-lifetime token, a borrowed sink and a table pointer guarded by the token. Construction, moves and
 destruction do not allocate or register roots. Operations on expired bindings return
-`expired_context` before reporting. All factory value constructors remain deferred,
+`expired_context` before reporting. Atom/boolean factories now use the runtime atom
+table without a deferred-service report. Other factory constructors remain deferred,
 even `integer`, `nil` and empty containers. Existing supported immediate construction
-uses `encode_integer` and `Term::from_word`. Factory input semantics and atom/heap
-ownership are not implemented by these placeholders. Operations taking opaque identity
+uses `encode_integer` and `Term::from_word`. Heap ownership remains outside
+these placeholders; [atom ownership](runtime-atoms.md) is implemented separately. Operations taking opaque identity
 or descriptor types remain inaccessible until those types have concrete definitions.
 
 Raw term classifiers and `Term::from_word` remain silent validation utilities; rejecting
 an unbound identity does not attempt a term service. Other semantic `Term` accessors
-remain declarations. No atom table is fabricated: `AtomStorage` and its collection
-entry remain catalog/API reservations until table ownership exists. File loading,
-generated module descriptors and atom-root initialization have no defined service ABI
-yet; native `CodeServer::load` continues to publish linked registries successfully.
+remain declarations except atom/boolean inspection. Atom storage and revision-3
+generated bindings are implemented; atom collection and file loading remain deferred.
+Native `CodeServer::load` continues to publish linked registries successfully.
 
 ## Known BIFs
 

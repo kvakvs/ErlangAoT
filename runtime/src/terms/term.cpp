@@ -1,4 +1,5 @@
-#include <erlang_aot/runtime/terms.hpp>
+#include <erlang_aot/runtime/atoms.hpp>
+#include <erlang_aot/runtime/process_context.hpp>
 
 namespace erlang_aot::runtime {
 TermResult<Term> Term::from_word(Word value) noexcept {
@@ -13,6 +14,48 @@ TermResult<Term> Term::from_word(Word value) noexcept {
     result.value_ = value;
     return result;
 }
+
+TermResult<Term> Term::from_word(Word value, ProcessContext &context) noexcept {
+    if (TermTag{value}.get_kind() == TermKind::atom) {
+        return context.atom_storage().lookup(value);
+    }
+    return from_word(value);
+}
+
+bool Term::is_atom() const { return static_cast<bool>(atom_); }
+
+TermResult<AtomId> Term::atom_id() const {
+    if (!atom_) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    return value_ >> 6;
+}
+
+TermResult<std::string> Term::atom_utf8() const {
+    if (!atom_) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    try {
+        return atom_->spelling;
+    } catch (const std::bad_alloc &) {
+        return std::unexpected(TermError::resource_limit);
+    }
+}
+
+TermResult<bool> Term::boolean_value() const {
+    if (!atom_) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    if (atom_->spelling == "true") {
+        return true;
+    }
+    if (atom_->spelling == "false") {
+        return false;
+    }
+    return std::unexpected(TermError::wrong_type);
+}
+
+bool Term::is_boolean() const { return boolean_value().has_value(); }
 
 Word Term::word() const noexcept { return value_; }
 

@@ -1,3 +1,4 @@
+#include "atoms.hpp"
 #include <array>
 #include <erlang_aot/runtime/modules.hpp>
 
@@ -9,6 +10,9 @@ CodeResult<void> validate(const abi::v1::ModuleDescriptor &descriptor) {
         return std::unexpected(CodeError::abi_mismatch);
     }
     if (!descriptor.name || descriptor.name_size == 0 || (descriptor.export_count && !descriptor.exports)) {
+        return std::unexpected(CodeError::invalid_module);
+    }
+    if ((descriptor.atom_count && !descriptor.atoms) || descriptor.atom_count > AtomStorage::hard_limit) {
         return std::unexpected(CodeError::invalid_module);
     }
     return {};
@@ -44,7 +48,7 @@ CallResult<Term> invoke(abi::v1::GeneratedFunction *entry, ProcessContext &conte
     if (!word) {
         return std::unexpected(word.error());
     }
-    const auto result = Term::from_word(*word);
+    const auto result = Term::from_word(*word, context);
     if (!result) {
         return std::unexpected(CallFailure{CallError::argument_type_mismatch, {}, result.error()});
     }
@@ -80,6 +84,9 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
     if (!server) {
         return std::unexpected(CodeError::stopped);
     }
+    if (server->find_module({descriptor.name, descriptor.name_size})) {
+        return std::unexpected(CodeError::duplicate_module);
+    }
     try {
         ModuleDefinition definition{
             {descriptor.name, descriptor.name_size}, std::move(image), std::make_unique<ModuleRegistry>()};
@@ -87,6 +94,11 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
         if (!added) {
             return std::unexpected(added.error());
         }
+        const auto atoms = bind_atoms(*runtime.atom_storage(), descriptor);
+        if (!atoms) {
+            return std::unexpected(atoms.error());
+        }
+        definition.atoms = *atoms;
         return server->load(std::move(definition));
     } catch (const std::bad_alloc &) {
         return std::unexpected(CodeError::resource_limit);
@@ -94,7 +106,7 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
 }
 } // namespace erlang_aot::runtime
 
-std::uint8_t erlang_aot_register_module_v2(void *runtime, const void *descriptor) noexcept {
+std::uint8_t erlang_aot_register_module_v3(void *runtime, const void *descriptor) noexcept {
     using namespace erlang_aot;
     using abi::v1::Status;
     if (!runtime || !descriptor) {

@@ -16,12 +16,12 @@ bool rejects_incompatible(Runtime &runtime) {
     erlang_aot::abi::v1::ModuleDescriptor bad{};
     bad.abi_version = erlang_aot::abi::v1::version + 1;
     bad.term_bits = sizeof(Word) * 8;
-    if (erlang_aot_register_module_v2(&runtime, &bad) == 0) {
+    if (erlang_aot_register_module_v3(&runtime, &bad) == 0) {
         return false;
     }
     bad.abi_version = erlang_aot::abi::v1::version;
     bad.term_bits = sizeof(Word) == 8 ? 32 : 64;
-    return erlang_aot_register_module_v2(&runtime, &bad) != 0;
+    return erlang_aot_register_module_v3(&runtime, &bad) != 0;
 }
 
 // Exercise identity with every supported immediate family and native integer endpoints.

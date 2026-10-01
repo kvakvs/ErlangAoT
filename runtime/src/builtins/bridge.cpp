@@ -43,7 +43,7 @@ Status invoke(const ResolvedFunction &target, Context &context, const TermWord *
               TermWord &output) {
     std::array<Term, 255> terms;
     for (std::size_t index = 0; index < arity; ++index) {
-        auto term = Term::from_word(arguments[index]);
+        auto term = Term::from_word(arguments[index], context);
         if (!term) {
             return Status::invalid_argument;
         }

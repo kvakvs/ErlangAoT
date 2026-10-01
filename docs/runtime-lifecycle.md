@@ -1,5 +1,10 @@
 # Runtime lifecycle
 
+Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
+module bindings and owned host/error atoms are implemented. The module descriptor
+uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+
 The LLVM-free C++23 `erlang_runtime` library implements startup, context ownership
 and shutdown through [Runtime](../runtime/include/erlang_aot/runtime/runtime.hpp).
 All interfaces are private project C++ APIs; C compatibility and external consumers
@@ -33,7 +38,8 @@ calls a native function with the generated ABI shape; execution of compiler-emit
 Erlang code is deferred.
 
 `RuntimeOptions` defaults to at most 1024 contexts, the current `abi::v1::version`
-and `sizeof(abi::v1::TermWord) * 8` term bits. Startup rejects a zero context cap or
+and `sizeof(abi::v1::TermWord) * 8` term bits. `max_atoms` defaults to 2^20
+and accepts 1 through 2^26 retained spellings. Startup rejects a zero context cap or
 incompatible explicit ABI settings. `create_context()` defaults to a 64 KiB heap
 chunk budget and 64 MiB heap limit. Explicit `HeapOptions` byte budgets must be
 nonzero target-word multiples, with chunk size at most the limit. They reserve
@@ -68,8 +74,8 @@ state. Repeating shutdown succeeds; further context creation/destruction returns
 token observes `alive() == false` before mailbox or heap destruction; it never keeps
 the context alive. Context state survives both storage owners during teardown.
 Future host-root/TermFactory metadata must retain or lock and check this token
-before accessing a context. It is not a root registry, and the one-word `Term`
-does not acquire checked host-handle behavior in this step.
+before accessing a context. It is not a heap root registry. Atom Terms separately pin immutable spelling records
+and can survive runtime teardown without retaining a process.
 
 Calls and token observations require host serialization per runtime. No call may
 race creation, destruction, shutdown or resource access. Independent runtimes have
@@ -96,12 +102,13 @@ underlying type and preserves the existing numeric values.
 
 Step 11 adds one runtime-owned [CodeServer](runtime-builtins.md), borrowed by every
 context. `Runtime::code_server()` returns null after shutdown; live contexts expose
-that same server by reference. AtomStorage and its accessor remain reserved.
+that same server by reference. AtomStorage and its context/runtime accessors share
+one implemented table per runtime.
 Runtime teardown first closes and clears scheduler lifecycle records, then destroys
 contexts before code registrations. The stopped scheduler service remains alive
-through code teardown, and the future atom table outlives both. Resolved/module handles may retain code beyond runtime teardown, but do not
-retain a process context. Future atom bindings must preserve their runtime lifetime
-through those retained modules.
+through code teardown, and the atom table outlives both. Resolved/module handles
+retain code and immutable atom bindings beyond runtime teardown without retaining
+a process. Generated handles reject a context from another loaded module instance.
 
 The [process sketch](../runtime/include/process.hpp) retains future signal-inbox and
 continuation ownership. Once admission/execution exists, exit must discard pending

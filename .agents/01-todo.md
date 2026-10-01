@@ -100,12 +100,13 @@ do not establish safe copying of owned graphs.
 Meaning: execute named values such as `ok` and `true` through stable runtime-owned
 identities, rather than only recognizing a tagged word's shape.
 
-- [ ] Implement validated spelling lookup/interning, stable non-recycled IDs,
+- [x] Implement validated spelling lookup/interning, stable non-recycled IDs,
   limits and transactional creation in one table per runtime.
-- [ ] Initialize generated spelling/slot bindings before module publication and
+- [x] Initialize generated spelling/slot bindings before module publication and
   retain needed roots; never emit compiler-assigned atom IDs.
-- [ ] Implement atom/boolean constructors and source lowering; verify deduplication,
-  capacity failures and runtime isolation, then concurrent access before workers.
+- [x] Implement atom/boolean constructors and source lowering; verify deduplication,
+  capacity failures and runtime isolation. See [step-3 validation](../docs/patternmatch-step3-validation.md).
+- [ ] Add synchronized concurrent access before workers; current calls require host serialization.
 
 ### F07 — Process, port and reference identities
 

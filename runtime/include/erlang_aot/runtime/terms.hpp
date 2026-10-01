@@ -70,6 +70,7 @@ template <typename Value> using TermResult = std::expected<Value, TermError>;
 class ProcessContext;
 class ProcessHeap;
 class AtomStorage;
+struct AtomValue;
 class ProcessIdentity;
 class PortIdentity;
 class ReferenceIdentity;
@@ -81,7 +82,7 @@ class TermFactory;
 // Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.
 using AtomId = std::uintptr_t;
 
-// One-word value API; currently only small integers and empty containers are constructible.
+// Host value with an optional atom pin; generated code and heap cells still use one-word representations.
 // Heap/identity operations below remain reserved until roots and runtime ownership exist.
 class Term final {
   public:
@@ -94,15 +95,17 @@ class Term final {
     // Rebind only this host handle, leaving every other alias unchanged.
     Term &operator=(const Term &other) = default;
     Term &operator=(Term &&other) noexcept = default;
-    // Immediate-only handles have no roots or process-owned storage.
+    // Release any immutable atom pin; no process heap storage is retained.
     ~Term() = default;
 
     // Admit only small integers and canonical empty containers; identities/heap values remain unavailable.
     static TermResult<Term> from_word(Word value) noexcept;
+    // Admit atoms only with proof that the supplied context belongs to their runtime.
+    static TermResult<Term> from_word(Word value, ProcessContext &context) noexcept;
     // Expose the immediate representation for the generated service bridge.
     Word word() const noexcept;
 
-    // Copy checked owner-independent immediates; future graph copies must return a destination-owned root.
+    // Copy immediates and same-runtime atoms; foreign atoms reject rather than silently remapping.
     TermResult<Term> copy_to(ProcessHeap &destination) const noexcept;
 
     // Remaining semantic/heap operations below are reserved unless documented as implemented.
@@ -209,11 +212,10 @@ class Term final {
     friend class TermFactory;
     friend class AtomStorage;
 
-    // Store immediates or future tagged heap pointers; roots/owners require external runtime metadata.
+    // Store the ABI word; atom_ supplies spelling lifetime while destination admission checks membership.
     Word value_;
+    // Pin immutable atom spelling independently of process, module and runtime lifetimes.
+    std::shared_ptr<const AtomValue> atom_;
 };
-
-static_assert(sizeof(Term) == sizeof(Word));
-static_assert(alignof(Term) == alignof(Word));
 
 } // namespace erlang_aot::runtime

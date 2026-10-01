@@ -33,6 +33,10 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (binding != bindings.end()) {
         return parameter(state.builder, state.entry, state.word, *binding);
     }
+    const auto &value = state.module.syntax->expression(expression).value;
+    if (const auto *atom = std::get_if<ast::Atom>(&value)) {
+        return lower_atom(state, *atom);
+    }
     return literal(*state.module.syntax, expression, state.word);
 }
 

@@ -89,8 +89,8 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
             }
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
-            define(*outputs[i], *modules[i], word, inferred);
             emit_registration(*outputs[i], *modules[i], word);
+            define(*outputs[i], *modules[i], word, inferred);
         }
         progress_modules(compilation, "specialization");
         detail::state(compilation).specializations = analyze_specializations(compilation, modules, inferred);
