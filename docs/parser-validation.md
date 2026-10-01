@@ -89,22 +89,22 @@ of linear runtime or a wall-clock guarantee for arbitrary source sizes.
 ## Reproduce
 
 ```sh
-cmake --preset debug
+cmake --preset debug -DBUILD_TESTING=ON
 cmake --build build/debug --parallel 2
 ctest --test-dir build/debug --output-on-failure
 cmake --build build/debug --target check-quality
 
-cmake -S . -B build/phase6-cxx26 -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_CXX_STANDARD=26
+cmake -S . -B build/phase6-cxx26 -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_CXX_STANDARD=26
 cmake --build build/phase6-cxx26 --parallel 2
 ctest --test-dir build/phase6-cxx26 --output-on-failure
 
-cmake -S . -B build/phase5-sanitize -DCMAKE_BUILD_TYPE=Debug \
+cmake -S . -B build/phase5-sanitize -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug \
   '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer' \
   '-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined'
 cmake --build build/phase5-sanitize --parallel 2
 ctest --test-dir build/phase5-sanitize --output-on-failure
 
-cmake -S . -B build/phase6-compiler-only -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_BUILD_RUNTIME=OFF
+cmake -S . -B build/phase6-compiler-only -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DERLANG_AOT_BUILD_RUNTIME=OFF
 cmake --build build/phase6-compiler-only --parallel 2
 ctest --test-dir build/phase6-compiler-only --output-on-failure
 cmake -S . -B build/phase6-runtime-only -DERLANG_AOT_BUILD_COMPILER=OFF

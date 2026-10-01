@@ -1,5 +1,8 @@
 # File map
 
+- `CMakeLists.txt` and `CMakePresets.json`: compiler/runtime builds default to
+  `BUILD_TESTING=OFF`; test subdirectories are included only with explicit opt-in.
+
 - `.agents/01-todo.md`: missing-feature backlog with implementation checklists,
   validation obligations and optional scope; IDs do not prescribe execution order.
 

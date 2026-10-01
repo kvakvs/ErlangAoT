@@ -313,11 +313,11 @@ selected version/prefix, host triple and available backends. Runtime-only
 configuration does not load the dependency module.
 
 ```sh
-CXXFLAGS= cmake --preset debug --fresh
+CXXFLAGS= cmake --preset debug --fresh -DBUILD_TESTING=ON
 cmake --build --preset debug
 ctest --test-dir build/debug -R '^codegen_' --output-on-failure
 # Optional selection of the existing global reference installation:
-CXXFLAGS= cmake --preset debug --fresh -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cmake/llvm
+CXXFLAGS= cmake --preset debug --fresh -DBUILD_TESTING=ON -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cmake/llvm
 ```
 
 Dependency tests use fresh configurations for automatic/explicit selection,

@@ -47,8 +47,8 @@ Requirements:
 - Boost 1.90+ with Boost.Multiprecision for compiler and runtime; the compiler also
   requires Boost.Parser. Multiprecision is header-only and needs no Boost binary library.
 - toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
-- Erlang/OTP 29+ for tests (enabled by default). Erlang is not needed to run the
-  built tool; configure with `-DBUILD_TESTING=OFF` to build without it.
+- Erlang/OTP 29+ when tests are enabled with `-DBUILD_TESTING=ON`.
+  Ordinary builds omit tests and do not require Erlang.
 
 On macOS:
 
@@ -91,7 +91,6 @@ From the repository root:
 ```sh
 cmake --preset debug
 cmake --build --preset debug
-ctest --preset debug
 ```
 
 On Windows, use the clang-cl/Ninja Multi-Config preset from the developer shell:
@@ -99,10 +98,30 @@ On Windows, use the clang-cl/Ninja Multi-Config preset from the developer shell:
 ```powershell
 cmake --preset windows
 cmake --build --preset windows-debug
-ctest --preset windows-debug
 cmake --build --preset windows-release
-ctest --preset windows-release
 ```
+
+Tests and their helper executables are opt-in. Configure explicitly for testing:
+
+```sh
+cmake --preset debug -DBUILD_TESTING=ON
+cmake --build --preset debug
+ctest --preset debug --no-tests=error
+```
+
+On Windows:
+
+```powershell
+cmake --preset windows -DBUILD_TESTING=ON
+cmake --build --preset windows-debug
+ctest --preset windows-debug --no-tests=error
+cmake --build --preset windows-release
+ctest --preset windows-release --no-tests=error
+```
+
+For a build directory without a preset, pass `-DBUILD_TESTING=ON` to `cmake -S . -B <dir>`
+for testing. CMake caches this setting; pass `-DBUILD_TESTING=OFF` when reusing that
+directory for ordinary builds. The normal presets and build wrappers set it to `OFF`.
 
 The batch scripts mirror the Makefile's `build`, `format`, and `clean` targets:
 `make-build.bat`, `make-test.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
@@ -158,7 +177,7 @@ Pass these options when configuring to override defaults:
 | `-DERLANG_AOT_CLANG_EXECUTABLE=C:/path/to/clang.exe` | Select an installed Windows Clang executable |
 | `-DLLVM_DIR=/prefix/lib/cmake/llvm` | Select an existing LLVM 23.1.x SDK (invalid explicit paths fail) |
 | `-DERLANG_AOT_DOWNLOAD_LLVM=OFF` | Require an installed SDK; disable automatic LLVM downloads |
-| `-DBUILD_TESTING=OFF`                       | Omit tests and their Erlang dependency                        |
+| `-DBUILD_TESTING=ON`                        | Enable tests, helper executables and their Erlang dependency (default: OFF) |
 | `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
 | `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
 

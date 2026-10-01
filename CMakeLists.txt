@@ -10,6 +10,8 @@ include(cmake/WindowsHost.cmake)
 
 option(ERLANG_AOT_BUILD_COMPILER "Build the erlangaot compiler tool" ON)
 option(ERLANG_AOT_BUILD_RUNTIME "Build the runtime library" ON)
+# Override CTest's default so ordinary builds omit test executables and dependencies.
+option(BUILD_TESTING "Build test executables and register CTest tests" OFF)
 
 if(WIN32)
     message(STATUS "Windows development build; remaining platform work is tracked in abi/plan-windows.md.")

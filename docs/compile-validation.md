@@ -24,7 +24,7 @@ Reproduce the combined gate in an x64 Visual Studio developer shell with the
 existing SDK selected (adjust the installed prefix for another machine):
 
 ```powershell
-cmake --preset debug --fresh -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DLLVM_DIR=F:/Projects/ErlangAoT/thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc/lib/cmake/llvm -DERLANG_AOT_DOWNLOAD_LLVM=OFF
+cmake --preset debug --fresh -DBUILD_TESTING=ON -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DLLVM_DIR=F:/Projects/ErlangAoT/thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc/lib/cmake/llvm -DERLANG_AOT_DOWNLOAD_LLVM=OFF
 cmake --build build/debug
 ctest --test-dir build/debug --output-on-failure
 cmake --build build/debug --target check-quality

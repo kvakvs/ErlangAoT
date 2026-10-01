@@ -1,5 +1,9 @@
 # Architecture
 
+- CMake defaults `BUILD_TESTING` to OFF, including normal Debug/Windows presets.
+  Explicit `-DBUILD_TESTING=ON`, `make build_test/test` or `make-test.bat` enables
+  test executables and host OTP discovery; manual build/run wrappers keep it OFF.
+
 - Compiler milestone 1–46 delivers CLI-to-native-object compilation and a separate
   Clang/runtime example host. `docs/compile-validation.md` records current Windows
   execution, OTP comparison, seven-target object inspection and sanitizer limits.

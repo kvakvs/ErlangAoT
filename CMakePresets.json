@@ -8,7 +8,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "BUILD_TESTING": "ON",
+        "BUILD_TESTING": "OFF",
         "ERLANG_AOT_BUILD_COMPILER": "ON",
         "ERLANG_AOT_BUILD_RUNTIME": "ON"
       }
@@ -24,7 +24,7 @@
         "CMAKE_CXX_COMPILER": "clang-cl",
         "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "BUILD_TESTING": "ON",
+        "BUILD_TESTING": "OFF",
         "ERLANG_AOT_BUILD_COMPILER": "ON",
         "ERLANG_AOT_BUILD_RUNTIME": "ON"
       }

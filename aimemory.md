@@ -1,6 +1,19 @@
-# Working memory — 2026-09-30
+# Working memory — 2026-10-01
 
 ## Current state and authoritative records
+
+- Build selection (2026-10-01): `BUILD_TESTING` defaults OFF before CTest; normal
+  Debug/Windows presets set OFF. Explicit `-DBUILD_TESTING=ON` enables the 53
+  helper executables/103 tests; Makefile and batch test wrappers already opt in.
+  Normal build wrappers set OFF even when reusing a testing cache. Raw CMake
+  preserves cache values, so use OFF to switch an existing test tree back.
+  Fresh compiler/runtime Debug default build and plain runtime NMake build passed;
+  zero test sources/targets and no OTP dependency with OFF. Windows Debug/Release
+  runtime preset targets also exclude helpers. ON build and all 103 CTests passed.
+  Full Lizard/clang-tidy gate passed over all 182 production commands; normal Debug
+  preset restored OFF and its default build passed again with only the compiler executable.
+  Current validation logs: `build/testing-opt-in/`; SDK explicit selection required
+  `/MT`, `_ITERATOR_DEBUG_LEVEL=0` and preserving `/EHsc` for LLVM link probes.
 
 - `.agents/01-todo.md`: feature backlog derived from the archive, with explanations,
   implementation checklists, validation obligations and optional scope. The user
