@@ -1,5 +1,6 @@
 """Execute normalized immediate patterns against OTP in both CLI modes/four policies."""
 import json
+import struct
 import pathlib
 import re
 import sys
@@ -14,6 +15,8 @@ def token(value):
         return "c(" + token(value[0]) + "," + token(value[1:]) + ")" if value else "nil"
     if isinstance(value, dict):
         return "c(" + ",".join(map(token, value['cons'])) + ")"
+    if isinstance(value, float):
+        return "f" + struct.pack(">d", value).hex()
     if isinstance(value, int):
         return f"i{value}"
     return value if value in ["nil", "tuple"] else "a" + value.encode().hex()
@@ -27,6 +30,11 @@ def erl(value):
         return "[" + ",".join(map(erl, value)) + "]"
     if isinstance(value, dict):
         return "[" + "|".join(map(erl, value['cons'])) + "]"
+    if isinstance(value, float):
+        text = repr(value)
+        if "e" in text and "." not in text.split("e")[0]:
+            text = text.replace("e", ".0e")
+        return text
     if isinstance(value, int):
         return str(value)
     return {"nil": "[]", "tuple": "{}"}.get(value, "'" + value + "'")

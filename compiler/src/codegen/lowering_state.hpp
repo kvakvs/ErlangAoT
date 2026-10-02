@@ -60,6 +60,8 @@ llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payl
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.
 llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state);
 // Materialize arbitrary decimal literals with target-specific small encodings or rooted runtime storage.
+// Materialize finite IEEE bits through a rooted checked runtime service.
+llvm::Value *lower_float(ExpressionLowering &state, double value);
 llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal);
 // Use checked small arithmetic where safe, retaining the common runtime fallback for all other values.
 llvm::Value *lower_operation(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,

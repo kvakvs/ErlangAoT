@@ -54,7 +54,13 @@ enum class ImmediateOperation : std::uint8_t {
     positive,
     negative,
     bit_not,
-    absolute
+    absolute,
+    divide,
+    to_float,
+    round,
+    trunc,
+    floor,
+    ceil
 };
 } // namespace erlang_aot::abi::v1
 

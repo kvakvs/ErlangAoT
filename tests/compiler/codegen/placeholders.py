@@ -7,7 +7,7 @@ import sys
 CASES = {
     "pattern matching": "f(X) -> case X of Y -> Y end.",
     "guards": "f(X) -> if true -> X end.",
-    "arithmetic": "f(X) -> X / 1.",
+    "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "f() -> [X || X <- []].",
     "dynamic calls": "f(F) -> F(1).",
     "recursive calls": "f() -> f().",

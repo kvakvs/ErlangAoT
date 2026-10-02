@@ -39,6 +39,9 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (std::holds_alternative<ast::Variable>(value)) {
         return binding(state, expression);
     }
+    if (const auto *real = std::get_if<ast::FloatLiteral>(&value)) {
+        return lower_float(state, real->value);
+    }
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
     }

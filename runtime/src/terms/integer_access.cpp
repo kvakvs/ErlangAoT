@@ -6,8 +6,6 @@
 namespace erlang_aot::runtime {
 bool Term::is_integer() const { return kind() == TermKind::smallint || kind() == TermKind::bignum; }
 
-bool Term::is_float() const { return false; }
-
 bool Term::is_number() const { return is_integer() || is_float(); }
 
 TermResult<std::int64_t> Term::integer_value() const {

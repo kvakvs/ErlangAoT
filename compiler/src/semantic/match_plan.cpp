@@ -47,6 +47,9 @@ std::optional<MatchLiteral> literal(const NormalizedPattern &pattern, unsigned b
     if (const auto *atom = std::get_if<ast::Atom>(&*pattern.literal)) {
         return *atom;
     }
+    if (const auto *real = std::get_if<ast::FloatLiteral>(&*pattern.literal)) {
+        return *real;
+    }
     const auto *integer = std::get_if<ast::IntegerLiteral>(&*pattern.literal);
     return integer ? semantic::integer(*integer, bits) : std::nullopt;
 }

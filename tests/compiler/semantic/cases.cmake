@@ -44,7 +44,7 @@ semantic_case(large_function "-module(a). f(${parameters}) -> 1." 1 "function ar
 
 semantic_case(supported_subset "-module(a). -export([f/2,id/1]). -author(\"a\"). -type box(T) :: {T}. -spec f(integer(), term()) -> integer(). f(X,_) -> g(X). g(Y) -> a:id(Y). id(Z) -> Z." 0 "^$")
 semantic_case(atom_value "-module(a). f() -> ok." 0 "^$")
-semantic_case(float_value "-module(a). f() -> 1.5." 1 "heap expressions")
+semantic_case(float_value "-module(a). f() -> 1.5." 0 "")
 semantic_case(string_value "-module(a). f() -> \"a\"." 0 "^$")
 semantic_case(tuple_value "-module(a). f() -> {1}." 0 "^$")
 semantic_case(list_value "-module(a). f() -> [1]." 0 "^$")
@@ -83,11 +83,11 @@ semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "behavior-changin
 semantic_case(unknown_attribute "-module(a). -custom(1). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 1 "behavior-changing attributes")
-semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused() -> 1.5." 1 "heap expressions")
+semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused() -> [X || X <- []]." 1 "heap expressions")
 semantic_case(bignum "-module(a). f() -> 99999999999999999999999999999." 0 "^$")
 semantic_case(negative_bignum "-module(a). f() -> -99999999999999999999999999999." 0 "^$")
-semantic_case(nested_bad "-module(a). f() -> g(h(1), 1.5)." 1 "heap expressions")
-file(WRITE "${semantic_work}/unsupported.hrl" "bad() -> 1.5.\n")
+semantic_case(nested_bad "-module(a). f() -> g(h(1), [X || X <- []])." 1 "heap expressions")
+file(WRITE "${semantic_work}/unsupported.hrl" "bad() -> [X || X <- []].\n")
 semantic_case(include_origin "-module(a). -include(\"unsupported.hrl\")." 1 "unsupported.hrl:1:.*heap expressions")
 
 if(WORD_BYTES EQUAL 8)
@@ -106,7 +106,7 @@ semantic_case(maximum "-module(a). f() -> ${maximum}." 0 "^$")
 semantic_case(overflow "-module(a). f() -> ${overflow}." 0 "^$")
 semantic_case(underflow "-module(a). f() -> ${underflow}." 0 "^$")
 
-semantic_case(feature_name "-module(a). f() -> 1.5." 1 "feature_name.erl:1:.*\\[heap expressions\\] notimpl")
+semantic_case(feature_name "-module(a). f() -> [X || X <- []]." 1 "feature_name.erl:1:.*\\[heap expressions\\] notimpl")
 file(WRITE "${semantic_work}/sentinel" "existing artifact")
 execute_process(COMMAND "${TOOL}" -o sentinel supported_subset.erl unused.erl WORKING_DIRECTORY "${semantic_work}"
     RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)

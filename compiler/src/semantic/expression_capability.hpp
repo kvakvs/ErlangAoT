@@ -23,7 +23,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::Atom &) const { return {}; }
 
-    std::string_view operator()(const ast::FloatLiteral &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::FloatLiteral &) const { return {}; }
 
     std::string_view operator()(const ast::StringLiteral &) const { return {}; }
 

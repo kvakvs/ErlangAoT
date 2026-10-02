@@ -64,6 +64,11 @@
   promotion/demotion. Numeric semantic errors reject guards; badarith/abs badarg
   and infrastructure failures retain their separate body/channel outcomes.
 
+- Finite binary64 values use owned indexed storage and rooted literal services.
+  Numeric conversion has explicit rounding/range rules; mixed comparisons avoid
+  rounding arbitrary integers, and exact equality preserves signed zero. Shared
+  body/guard services retain semantic versus infrastructure failure outcomes.
+
 - Stable heap chunks support bounded word allocation, aligned reservations, rollback
   and explicit resource destruction. No GC or graph copying runs. Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
@@ -99,14 +104,14 @@
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–12 are complete; steps 13–20 remain.
+  Patternmatch steps 1–14 are complete; steps 15–20 remain.
   The current request is completion of the entire plan.
 
 - Tests prioritize real CLI/project sources, separate native runtime consumers and
   pinned OTP comparisons. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 123 CTests and all 213 production quality units;
+  Windows x64 Debug passes 129 CTests and all 238 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

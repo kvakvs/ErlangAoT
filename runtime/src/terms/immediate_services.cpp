@@ -1,6 +1,7 @@
+#include "floats.hpp"
 #include "immediate_order.hpp"
-#include "integers.hpp"
 #include "service_errors.hpp"
+#include "structural_order.hpp"
 #include <array>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
@@ -40,7 +41,7 @@ bool predicate(Op operation, const Term &value) {
                                 value.is_list(),
                                 false,
                                 false,
-                                false,
+                                value.is_float(),
                                 false,
                                 false,
                                 false,
@@ -52,7 +53,9 @@ bool predicate(Op operation, const Term &value) {
 // Exact comparisons share Term::exactly_equal with pattern matching; numeric extensions stay explicit.
 Result comparison(ProcessContext &context, Op operation, const Term &left, const Term &right) {
     if (operation <= Op::not_equal) {
-        const auto result = left.exactly_equal(right);
+        const auto result = structural_order(left, right, operation <= Op::exact_not_equal).transform([](int order) {
+            return order == 0;
+        });
         if (!result) {
             return std::unexpected(Fault{Outcome::failure, term_status(result.error())});
         }
@@ -164,7 +167,7 @@ Result logical(ProcessContext &context, Op operation, const Term &left, const Te
 Result evaluate(ProcessContext &context, Op operation, const Term &left, const Term &right) {
     if (operation >= Op::add) {
         return checked(
-            integer_service(context, operation, left, right).transform([](const Term &value) { return value.word(); }));
+            numeric_service(context, operation, left, right).transform([](const Term &value) { return value.word(); }));
     }
     if (operation >= Op::logical_not) {
         return logical(context, operation, left, right);
@@ -190,7 +193,7 @@ bool binary(Op operation) {
     return operation <= Op::greater_equal || operation == Op::is_function_arity || operation == Op::element ||
            operation == Op::minimum || operation == Op::maximum ||
            (operation >= Op::logical_and && operation <= Op::logical_xor) ||
-           (operation >= Op::add && operation < Op::positive);
+           (operation >= Op::add && operation < Op::positive) || operation == Op::divide;
 }
 
 // Ownership/encoding failures precede semantic argument classification and cannot reject a guard silently.
@@ -211,7 +214,7 @@ std::uint8_t immediate_service(ProcessContext &context, std::uint8_t operation, 
     if (!state.active() || state.failure()) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (!output || operation > static_cast<std::uint8_t>(Op::absolute)) {
+    if (!output || operation > static_cast<std::uint8_t>(Op::ceil)) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }

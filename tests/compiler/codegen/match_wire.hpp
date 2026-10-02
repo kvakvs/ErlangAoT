@@ -1,7 +1,9 @@
 #pragma once
+#include <bit>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <terms.hpp>
@@ -61,6 +63,13 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
     if (scalar.starts_with('a')) {
         return context.atom_storage().intern(unhex(scalar.substr(1))).value();
     }
+    if (scalar.starts_with('f')) {
+        check(scalar.size() == 17);
+        return TermFactory(context)
+            .floating(std::bit_cast<double>(
+                static_cast<std::uint64_t>(std::stoull(std::string(scalar.substr(1)), nullptr, 16))))
+            .value();
+    }
     check(scalar.starts_with('i'));
     return TermFactory(context).integer_decimal(scalar.substr(1)).value();
 }
@@ -93,6 +102,13 @@ inline void write(const Term &value, std::ostream &out = std::cout, unsigned dep
         for (unsigned char byte : value.atom_utf8().value()) {
             out << digits[byte >> 4] << digits[byte & 15];
         }
+    } else if (value.is_float()) {
+        const auto flags = out.flags();
+        const auto fill = out.fill();
+        out << 'f' << std::hex << std::setw(16) << std::setfill('0')
+            << std::bit_cast<std::uint64_t>(value.float_value().value());
+        out.flags(flags);
+        out.fill(fill);
     } else {
         out << 'i' << value.integer_decimal().value();
     }

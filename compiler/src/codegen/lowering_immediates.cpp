@@ -52,7 +52,8 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
                                         left, right ? right : llvm::ConstantInt::get(state.word, 0), slot},
                                        "service.outcome");
     auto *rejection =
-        operation >= abi::v1::ImmediateOperation::add && operation != abi::v1::ImmediateOperation::absolute
+        (operation >= abi::v1::ImmediateOperation::add && operation < abi::v1::ImmediateOperation::absolute) ||
+                operation == abi::v1::ImmediateOperation::divide
             ? bad_arithmetic_exit(state)
             : bad_argument_exit(state, operation == abi::v1::ImmediateOperation::boolean_check ? left : nullptr);
     return checked_value(state, {outcome, slot}, rejection);

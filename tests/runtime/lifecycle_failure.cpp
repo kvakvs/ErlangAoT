@@ -291,6 +291,32 @@ void check_integer_construction() {
     require(succeeded, "integer allocation sweep never succeeded");
 }
 
+// Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
+void check_float_construction() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            TermFactory factory(context);
+            remaining = ordinal;
+            const auto result = factory.floating(1.5);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = result.has_value();
+            if (!succeeded) {
+                require(result.error() == TermError::out_of_memory, "float allocation status lost");
+                require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
+                        "failed float left published storage");
+                require(factory.floating(1.5)->float_value() == 1.5, "float retry corrupted magnitude");
+            }
+        }
+        require(live_allocations == baseline, "float allocation sweep leaked");
+    }
+    require(succeeded, "float allocation sweep never succeeded");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 void check_root_allocation() {
     using namespace erlang_aot::runtime;
@@ -436,6 +462,7 @@ int main() {
         check_container_construction(false);
         check_container_construction(true);
         check_integer_construction();
+        check_float_construction();
         check_integer_arithmetic();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();

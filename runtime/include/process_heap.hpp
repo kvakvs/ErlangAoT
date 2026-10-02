@@ -40,6 +40,7 @@ struct HeapOptions final {
 namespace detail {
 class HeapStorage;
 struct IntegerAccess;
+struct FloatAccess;
 } // namespace detail
 
 struct HeapMark {
@@ -109,6 +110,7 @@ class ProcessHeap final {
     friend class TermFactory;
     friend class Term;
     friend struct detail::IntegerAccess;
+    friend struct detail::FloatAccess;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.

@@ -42,20 +42,16 @@ void check_factory(ProcessContext &context) {
     Reports reports;
     TermFactory factory(context, {&reports, record});
     const auto term = *Term::from_word(*encode_integer(3));
-    const std::array results{factory.floating(1.5),
-                             factory.map({}),
-                             factory.binary({}),
-                             factory.bitstring({}, 0),
-                             factory.pid(context.identity()),
-                             factory.make_reference(),
-                             factory.external_function(term, term, 0)};
+    const std::array results{factory.map({}),          factory.binary({}),
+                             factory.bitstring({}, 0), factory.pid(context.identity()),
+                             factory.make_reference(), factory.external_function(term, term, 0)};
     for (const auto &result : results) {
         require(result == std::unexpected(TermError::not_implemented), "factory fabricated a term");
     }
     require(reports.count == results.size() && reports.last.starts_with("[term services] notimpl"),
             "factory report count/feature wrong");
     TermFactory failed(context, {nullptr, reject});
-    require(failed.floating(1.5) == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
+    require(failed.map({}) == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
 }
 
 // Moving/expiring a factory must not retain or dereference destroyed context storage.
@@ -192,7 +188,7 @@ void report_nested(ProcessContext &context) {
 // Term/memory subprocess modes reach only one report owner.
 bool report_storage(std::string_view mode, ProcessContext &context) {
     if (mode == "term") {
-        require(TermFactory(context).floating(1.5) == std::unexpected(TermError::not_implemented), "term status wrong");
+        require(TermFactory(context).map({}) == std::unexpected(TermError::not_implemented), "term status wrong");
     } else if (mode == "allocate") {
         require(context.heap().allocate(1).has_value(), "allocation status wrong");
     } else if (mode == "collect") {

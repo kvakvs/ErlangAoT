@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–13 are
-complete; steps 14–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–14 are
+complete; steps 15–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Floats, maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -640,27 +640,27 @@ execution or new sanitizer run is claimed. Steps 14–20 remain open.
 
 ### 14. Implement floats, mixed comparisons and numeric guards (F11/F12)
 
-- [ ] Implement float ownership/literals, arithmetic and required conversions,
+- [x] Implement float ownership/literals, arithmetic and required conversions,
   including checked mixed integer/float paths and rounding behavior.
-  - [ ] Define the supported float representation, rooted construction and
+  - [x] Define the supported float representation, rooted construction and
     literal conversion; validate representable results before publishing runtime
     values.
-  - [ ] Implement arithmetic and required round/truncate/conversion services
+  - [x] Implement arithmetic and required round/truncate/conversion services
     using the numeric dispatcher, with explicit wrong-type and range failure
     handling.
-- [ ] Extend literal/repeated-variable matching and exact/numeric comparison;
+- [x] Extend literal/repeated-variable matching and exact/numeric comparison;
   integer/float exact equality stays distinct and mixed ordering avoids lossy
   casts.
-  - [ ] Add float exact comparison to scalar/container matching and preserve the
+  - [x] Add float exact comparison to scalar/container matching and preserve the
     distinction between exact equality and numeric equality in the shared API.
-  - [ ] Implement mixed integer/float ordering without rounding arbitrary
+  - [x] Implement mixed integer/float ordering without rounding arbitrary
     integers first; test large neighbors, signed zero and repeated patterns
     using 1 and 1.0.
-- [ ] Preserve OTP error behavior and evaluation order; exclude unsafe LLVM
+- [x] Preserve OTP error behavior and evaluation order; exclude unsafe LLVM
   fast-math assumptions and unsupported non-finite values.
-  - [ ] Check arithmetic/conversion results and propagate the recorded Erlang
+  - [x] Check arithmetic/conversion results and propagate the recorded Erlang
     failure for unsupported results; audit emitted LLVM floating-point flags.
-  - [ ] Compare rounding ties, overflow and wrong operands through bodies and
+  - [x] Compare rounding ties, overflow and wrong operands through bodies and
     guards at O0/O2; record any oracle/platform restrictions in the evidence.
 
 **Success criteria:** Float operations and conversions agree with the pinned
@@ -672,6 +672,14 @@ casts.
 selected/adapted `beam_type_SUITE:float_compare/1` cases. Compare signed zero,
 rounding ties, large integer/float neighbors, overflow, wrong operands and
 repeated patterns with 1/1.0.
+
+Completion: [step-14 validation](../docs/patternmatch-step14-validation.md),
+[retained evidence](../docs/patternmatch-step14-evidence.json) and
+[float contract](../docs/float-matching.md). Fresh Windows x64: 129/129 CTests,
+14,436 OTP/native calls in four policies, both target widths, full 238-unit
+Lizard/clang-tidy and formatting passed. Finite owned binary64 values, checked
+arithmetic/conversions, exact/numeric comparisons and rooted failure handling
+are implemented. Other native runners and new sanitizer runs remain unclaimed.
 
 ### 15. Implement maps and bound-key matching (F08/F12)
 

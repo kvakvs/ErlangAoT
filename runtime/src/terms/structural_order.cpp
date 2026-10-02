@@ -1,6 +1,6 @@
 #include "structural_order.hpp"
 #include "../memory/heap_object.hpp"
-#include "integers.hpp"
+#include "floats.hpp"
 #include <algorithm>
 #include <new>
 #include <stdexcept>
@@ -15,6 +15,7 @@ TermResult<unsigned> rank(const Term &term) {
     switch (term.kind()) {
     case TermKind::smallint:
     case TermKind::bignum:
+    case TermKind::floating:
         return 0;
     case TermKind::atom:
         return 1;
@@ -45,10 +46,8 @@ TermResult<int> scalar(const Term &left, const Term &right, bool exact) {
     if (left.is_atom()) {
         return atoms(left, right, exact);
     }
-    if (left.is_integer()) {
-        const auto lhs = integer_read(left).value();
-        const auto rhs = integer_read(right).value();
-        return lhs < rhs ? -1 : static_cast<int>(lhs > rhs);
+    if (left.is_number()) {
+        return numeric_order(left, right, exact);
     }
     return 0;
 }

@@ -60,6 +60,8 @@ enum class TermKind : std::uint8_t {
     tuple,
     // Resolve a canonical sign/magnitude integer stored as private target-word limbs.
     bignum,
+    // Resolve immutable finite binary64 storage through the owner index.
+    floating,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

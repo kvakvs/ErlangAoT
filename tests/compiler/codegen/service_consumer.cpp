@@ -286,7 +286,8 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
-        for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body"}) {
+        for (const auto name :
+             {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard", "float_body"}) {
             failures(context, "service_answer", name);
         }
         heap_lifetimes(context);

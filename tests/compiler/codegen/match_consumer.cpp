@@ -94,7 +94,8 @@ void calls(ProcessContext &context) {
             require(result->word() == arguments.front().word(), "projection reconstructed a matched term");
         }
         const auto value = result ? std::optional<Term>{*result} : result.error().value;
-        if (value && retained.size() < 128 && (value->is_cons() || value->kind() == TermKind::tuple)) {
+        if (value && retained.size() < 128 &&
+            (value->is_cons() || value->kind() == TermKind::tuple || value->is_float())) {
             std::ostringstream text;
             wire::write(*value, text);
             retained.emplace_back(*value, text.str());

@@ -14,8 +14,6 @@ TermResult<Term> TermFactory::unavailable(std::string_view operation) const noex
     return deferred_service<TermError>(abi::v1::FeatureId::term_services, operation, sink_);
 }
 
-TermResult<Term> TermFactory::floating(double) { return unavailable("TermFactory::floating"); }
-
 TermResult<Term> TermFactory::atom(std::string_view spelling) {
     const auto lifetime = lifetime_.lock();
     if (!lifetime || !lifetime->alive()) {
