@@ -1,439 +1,131 @@
-# File map
+# File lookup
 
-- `codegen/lowering_walk.cpp`: iterative eager/lazy scheduling, checked left operands and source-located target-word SSA joins. `lowering_guards.cpp`: canonical-true comma boundaries and semicolon continuations; `lowering_state.hpp`: named guard edges and rejection state. `lowering_immediates.cpp`, `lowering_match.cpp`, `abi/calls.hpp`, `runtime/src/process/generated_calls.cpp`: checked boolean operations and owned `{badarg,Value}` transport. `patternmatch/booleans.py`, `fixtures/patternmatch/booleans.json`, strengthened `codegen/service_*` tests: 2,075 OTP/native calls, both-width joins, source stress, skipped/reached faults and retry. `docs/guard-control-flow.md`, `patternmatch-step8-{validation.md,evidence.json}`: contract/evidence.
+Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` groups a family.
+**C** = `compiler/src/`, **R** = `runtime/src/`; **+** = planned, create only with implementation.
+[Architecture](arch.md) · [Backlog](01-todo.md) · [Pattern plan](10-patternmatch.md) · [History](00-finished.md).
 
-- `semantic/{services.hpp,guard_analysis.cpp,immediate_services.cpp,service_metadata.cpp}`: bounded guard legality/identity resolution, immediate opcode availability and inert metadata. `pattern_calls.cpp`: shared catalog/import/legacy rules. `codegen/lowering_immediates.cpp`: checked output, guard rejection/body badarg; expression lowering integrates grouped guards. `abi/immediate_services.hpp`, `runtime/src/terms/immediate_{order,services}.*`: LLVM-free immediate classification, spelling order, queries and three-way outcomes. `patternmatch/services.py`, `fixtures/patternmatch/guard-resolution.json`, `codegen/service_{emit,consumer}.cpp`: OTP/native resolution and labeled fault coverage. `docs/immediate-guards.md`, `patternmatch-step7-{validation.md,evidence.json}`: contract/evidence.
+## Placement
 
-- `semantic/match_plan.{hpp,cpp}`: bounded normalized input/binding/literal plans and explicit continuations. `codegen/lowering_match.cpp`: tentative SSA, checked equality and function_clause; `abi/equality.hpp`, `runtime/src/terms/equality.cpp`: shared ownership-aware immediate exact service. `patternmatch/immediate.{py,escript}`, `codegen/match{.cmake,_consumer.cpp}`, `fixtures/patternmatch/immediate.json`: licensed source/OTP/native matching and both-width evidence. `docs/immediate-matching.md`, `patternmatch-step6-{validation.md,evidence.json}`: contract/evidence.
+| Kind | Home |
+| --- | --- |
+| Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it |
+| Runtime API | `runtime/include/erlang_aot/runtime/` |
+| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `immediate_services`, `features`, `feature_diagnostic` |
+| Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
+| Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
+| New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
 
-- `compiler/src/semantic/patterns.hpp`: flat normalized kinds, original/ungrouped IDs
-  and owned literals; `pattern_state.hpp`: private analysis helpers.
-  `pattern_analysis.cpp`: both pattern categories, grouping/aliases/containers,
-  prefix legality and explicit incoming/binary-local read scopes.
-  `pattern_constants.cpp`: iterative bounded arithmetic; `pattern_expressions.cpp`:
-  nested key/size syntax; `pattern_calls.cpp`: OTP guard catalog and call metadata;
-  `pattern_binary.cpp`: modifier/default/string/unsized-segment legality.
-  `tests/compiler/semantic/patterns.cpp`: normalization/deep-walk/rollback invariants.
-  `tests/compiler/patternmatch/patterns.{py,escript}` and fixtures `patterns.json`,
-  `pattern-{otp,fixtures}.tsv`: 92 OTP/CLI cases, licensed helpers, limits and integrity.
-  `docs/pattern-semantics.md`, `patternmatch-step5-{validation.md,evidence.json}`: contract/evidence.
+## Compiler — C
 
-- `compiler/src/semantic/{declarations,bindings,binding_state}.hpp`, `bindings.cpp`:
-  clause-local identities, definition/read/equality events, tentative environments,
-  projection provenance and bounded orchestration. `binding_{patterns,expressions}.cpp`:
-  shared child enumeration, RHS-first match, sibling and short-circuit scope walks.
-  Inference/lowering resolve only reads; `driver/type_report.cpp` prints binding IDs.
-  `tests/compiler/semantic/bindings.cpp`: identity/rollback/budget invariants;
-  `tests/compiler/patternmatch/bindings.{py,escript}` + `tests/fixtures/patternmatch/bindings.json`:
-  OTP/CLI legality, located errors, nonpublication and unchanged native projections.
-  `docs/scoped-bindings.md`, `patternmatch-step4-{validation.md,evidence.json}`: contract/evidence.
+Keys in the last column are relative to the directory column.
 
-- `runtime/include/erlang_aot/runtime/atoms.hpp`, `src/terms/{atoms,atom_spelling}.cpp`:
-  bounded runtime-owned indexes, UTF-8 validation and non-recycled word reservations.
-  `terms.hpp`, `term.cpp`, `factory.cpp`: atom pins, context admission and booleans;
-  invocation/builtin/error/copy boundaries enforce ownership. `include/atom_storage.hpp`
-  forwards to the implemented API; `runtime/design/atom_storage.md` links its contract.
-  `runtime/src/modules/atoms.{hpp,cpp}`: staged bindings and generated slot reads;
-  `compiler/src/codegen/module_atoms.{hpp,cpp}`: deterministic literal spelling slots.
-  `abi/modules.hpp`, registration and CodeServer own revision-3 image/binding lifetime.
-  `tests/compiler/patternmatch/atoms.{py,escript}`, `codegen/atoms{.cmake,_consumer.cpp}`:
-  licensed OTP-adapted CLI/native/oracle workflows; lifecycle_failure.cpp sweeps OOM.
-  `docs/runtime-atoms.md`, `patternmatch-step3-{validation.md,evidence.json}`: contract/provenance.
+| Directory | Owns | File keys |
+| --- | --- | --- |
+| `source/`, `diagnostics/` | Buffers, positions / diagnostic provenance | `source`, `diagnostic`, respectively |
+| `lexer/` | Tokens, numbers, strings/sigils | `lexer`, `numbers`, `literals` |
+| `parsing/` | Boost boundary, token mechanics | `probe`, `boost_parser`, `token_{cursor,syntax}`, `operator_info`, `delimiters` |
+| `preprocessor/` | Directives, sessions, includes, macros | `preprocessor`, `directives`, `engine`, `cursor`, `session`, `conditions`, `includes`, `features`, `builtins`, `macros`, `arguments`, `token_utils` |
+| `preprocessor/` | Closed preprocessing evaluator | `expression*`, `operators`, `guards`, `terms`, `value`, `bits`, `integer` |
+| `ast/` | Owned arenas, IDs, transactions, shape checks | `arena`, `storage`, `builder`, `module`, `children`; category files mirror syntax |
+| `parser/` | Erlang grammar, recovery, budgets | `parser`, `forms`, `diagnostics`; `expressions`, `clauses`, `literals`, `aggregates`, `maps`, `records`, `structural`, `binaries`, `control`, `funs`, `exceptions`, `comprehensions` |
+| `parser/` | Attributes, records, literal terms, types/specs | `attributes`, `declarations`, `documentation`, `attribute_*`, `term_*`, `types`, `type_*`, `specifications` |
+| `printing/` | Source/token/AST output | `source`, `token_text`, `printable`, `tree*` |
+| `driver/` | CLI, frontend, analysis/backend, publication | `command`, `options`, `frontend`, `analysis`, `backend*`, `project_backend`, `publication`; `C/main.cpp`: entry/failure boundary |
+| `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
+| `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
+| `semantic/` | Symbols, calls, executable admission | `declarations`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
+| `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan` |
+| `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
+| `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `contracts`, `membership`, `trace` |
+| `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
+| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,expressions,state,calls,match,immediates,guards,walk}` |
+| `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
+| `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
+| `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
 
+## Runtime — R
 
-- `abi/include/erlang_aot/abi/calls.hpp`: revision-2 checked failure and raise services.
-  `runtime/include/erlang_aot/runtime/generated_calls.hpp` and
-  `runtime/src/process/generated_calls.cpp`: first-error channel, owned immediate
-  reasons/payloads and nested invocation cleanup. `lowering_calls.cpp` emits checks
-  and shares failure exits; registration, builtin bridge and heap services propagate.
-  `tests/compiler/codegen/failure_{emit,consumer}.cpp` + `failure_*.erl`: real call
-  graph with labeled leaf fault seams, four native policies and retry/cleanup checks.
-  `docs/generated-call-failures.md`, `patternmatch-step2-validation.md`: contract/evidence.
+Keys are relative to the directory column. Lifecycle/service boundaries do not imply heap/worker/message execution is implemented.
 
-- `docs/patternmatch-matrix.md`: step-1 pattern/guard legality, source evidence
-  and implementation/dependency ownership; `tests/fixtures/patternmatch/` holds
-  the signature catalog, hashes, acceptance seeds and expected results.
-  `tests/compiler/patternmatch/{evidence.py,oracle.escript}` checks provenance,
-  original-suite parsing, OTP acceptance/results and unchanged native helpers.
-  `docs/patternmatch-step1-{validation.md,evidence.json}` preserves measured results.
+| Directory | Owns | File keys |
+| --- | --- | --- |
+| `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
+| `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `services` |
+| `memory/` | Heap budgets/allocation boundary, copying | `heap`, `heap_policy`, `copy` |
+| `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `term_layout`, `atoms`, `atom_spelling` |
+| `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `immediate_services` |
+| `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
+| `builtins/` | Generic registry, checked invocation/ABI bridge | `registry`, `invocation`, `bridge`; known-BIF catalog: canonical API `builtins.hpp` |
+| `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
+| `diagnostics/` | Runtime feature reporting | `features` |
 
-- `compiler/src/codegen/source_locations.{hpp,cpp}`: original physical invocation
-  scopes/locations for IR inspection and textual emission, surviving optimization.
-  `source_annotations.{hpp,cpp}`: bounded, UTF-8 source comments beside mapped IR
-  instruction groups and one filename header; preparation precedes LLVM callbacks.
-  `tests/fixtures/codegen/source_comments.{erl,hrl}` and `inspection.py`: public
-  source mapping, nested inlining/macros/includes, encodings and LLVM round trips.
+## Build, support, evidence
 
-- `CMakeLists.txt` and `CMakePresets.json`: compiler/runtime builds default to
-  `BUILD_TESTING=OFF`; test subdirectories are included only with explicit opt-in.
+| Location | Lookup |
+| --- | --- |
+| Root | `CMakeLists.txt`, `CMakePresets.json`, `Makefile`, `make-*.bat`, `run-macos.sh`: build/test/format; `erlangaot.bat`: run wrapper; `.clang-{format,tidy}`: style/quality |
+| Component CMake files | `compiler/`: frontend, semantic/backend, `erlang_aot` → `erlangaot`; `runtime/`: `erlang_runtime`, `ErlangAoT::generated_program`; `abi/`: headers; `tests/`: opt-in CTest |
+| `cmake/` | `ProjectOptions.cmake`; `{Boost,Compiler,Erlang,LLVM,Zlib,Zstd}Dependencies.cmake`; `LLVM{Policy,Downloads}.cmake`; `Windows{Toolchain,Host,DependencyBuild}.cmake`; `ThirdPartyDependencies.cmake`; `ErlangVersion.escript` |
+| `cmake/` checks | `Check{Complexity,ClangTidy}.cmake`, `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
+| `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `aimemory.md`: AI notes |
+| `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
+| `docs/` | Contracts: `compile.md`, `semantic.md`, `projects.md`, `runtime-*.md`, pattern/guard docs; evidence: `*-validation.md`, `patternmatch-step*-evidence.json`; `test-migration.md`: disposition ledger |
+| `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
+| `examples/` | `compile/`: native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
+| Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies; `.venv-quality/`: tools; editor state stays local |
 
-- `.agents/01-todo.md`: missing-feature backlog with implementation checklists,
-  validation obligations and optional scope; IDs do not prescribe execution order.
-- `.agents/10-patternmatch.md`: consolidated F13/F14 plan with necessary services
-  in implementation order, per-step success criteria and provenance-tracked OTP
-  tests; scoped to function clauses/body matches and admitted value representations.
+## Tests / fixtures
 
-- `tests/compiler/codegen/native{.cmake,_consumer.cpp}` and
-  `tests/fixtures/codegen/native/`: public CLI object emission, separate Clang
-  linking, real runtime registration/execution/teardown and missing-runtime failure.
-- `tests/compiler/codegen/{differential.py,execution_oracle.escript}`: seeded bounded
-  nested calls, paired specs, incorrect contracts and repeated OTP/native comparisons
-  across O0/O2 with specialization enabled and disabled.
-- `tests/compiler/codegen/measurements.py`: source and synthetic guard cost
-  records, wide-union/high-arity stress and deterministic no-benefit byte equality;
-  timing values are descriptive, never performance thresholds.
-- `tests/compiler/codegen/cross_targets.py`: public CLI ELF/Mach-O/COFF matrix,
-  SDK readobj/nm architecture/symbol inspection, target-width limits and unavailable
-  backend failures; emitted foreign objects are never executed.
-- `tests/compiler/codegen/placeholders.py`: catalog-complete compiler capability
-  audit through both CLI modes and verbosity/optimization policies; explicit
-  executable requests reach the driver-owned deferred-linking diagnostic.
-- `codegen/limits.*` and `bounded_stream.*`: frontend/semantic admission ceilings
-  and latched LLVM writer capacity failures. `codegen/{limits.cpp,resource_cli.py,
-  write_failure.cpp}` under tests checks real pipeline ceilings and staged partial
-  write/close/interruption rollback; `PublicationIO` follows existing creation hooks.
-- `examples/compile/`: accepted two-module source, explicit native runtime harness
-  and standalone LLVM-free CMake link recipe. `tests/compiler/codegen/examples.cmake`
-  executes documented emission/inspection/link commands. `docs/compile-validation.md`
-  and `compile-tests.txt` publish current scope, inventory and unavailable coverage.
+Compiler runners: `tests/compiler/<area>/`; source/expected data: `tests/fixtures/<area>/`.
+Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime}`.
 
-- `compiler/src/implementation_debug.hpp`: sorted unique step selection/query API.
-  `compiler/src/driver/implementation_debug.{hpp,cpp}`: checked integer/list CLI
-  parsing with atomic merging of repeatable `--impldebug` operands.
+| Area | Lookup / placement |
+| --- | --- |
+| `preprocessor`, `parser` | CLI/OTP/grammar/corpus; parser `pinned.cmake`, `corpus.cmake`, `coverage.*`, `historical.cmake`; shared `tests/compiler/{frontend_cases,printing_roundtrip}.cmake`, `tests/cli.cmake` |
+| `project` | `cli.cmake`, `workflow.cmake`, `*_cases.cmake`; injected `limits.cpp`, `creation_failure.cpp` |
+| `semantic` | `cases.cmake`: CLI diagnostics; binding/pattern/type/symbol invariants; source fixtures stay in the relevant existing area |
+| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`; extend for remaining pattern/guard plan |
+| `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
+| `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
+| **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |
+| **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
+| **+** `tests/interop/` | D06 independent external consumers |
 
-- `compiler/src/semantic/types/inference.{hpp,cpp}`: independent implementation
-  facts, parameter/result relations and bounded iterative expression analysis.
-  `tests/compiler/semantic/inference.cpp`: temporary relational/budget invariants.
-- `compiler/src/semantic/types/{contracts,membership,trace}.cpp`: conservative
-  singleton/spec warnings, bounded exact membership and step 23 debug summaries.
+## Backlog → owners
 
-- `references/otp-pin.cmake`: current maint-29 source revision and branch.
-  `docs/otp-reference.md`: refresh procedure, checksum/grammar review and validation.
-  `tests/compiler/parser/pinned.cmake`: shared offline revision/cleanliness/hash gate.
+Common wiring: validation → `C/semantic`; facts → `C/semantic/types`; LLVM → `C/codegen`;
+options → `C/driver` + `C/project`; output publication → `C/artifacts`; API/ABI → homes above.
+Tests use the owning area above; generated-program behavior → `codegen`, runtime behavior → `tests/runtime/`.
+All IDs from `01-todo.md`; partial features extend existing owners; D-items remain optional.
 
-- `docs/compile.md`: pinned SDK provenance/tools, frozen compilation subset, provisional
-  ABI and command/artifact contract; `.agents/00-finished.md`: completed compiler
-  milestone and outstanding work.
-
-Paths are repository-relative; `src/` in compiler entries means `compiler/src/`.
-Public headers live in `compiler/include/erlang_aot/compiler/`.
-
-- `CMakeLists.txt`, `CMakePresets.json`, `Makefile`, `run-macos.sh`: component and
-  configuration (root CMake requires C++23 without extensions in all subdirectories
-  and supplies shared Boost system includes for IDE header analysis),
-  parallel builds, test/format targets, transparent macOS runner.
-- `make-{build,test,format,clean}.bat`: Windows equivalents of the Makefile targets;
-  `erlangaot.bat`: build then run the selected configuration with caller-relative arguments.
-- `cmake/ProjectOptions.cmake`: target warnings as errors; `BoostDependencies.cmake`:
-  shared installed/Homebrew/local Boost discovery and Multiprecision interface target,
-  including SYSTEM classification of Homebrew's matching linked include alias;
-  `CompilerDependencies.cmake`: compiler-only Parser discovery; `ErlangDependencies.cmake` and
-  `ErlangVersion.escript`: host OTP discovery/version checks.
-- `cmake/WindowsToolchain.cmake`: fail early without a runnable installed Windows Clang;
-  `WindowsHost.cmake`, `probes/windows.cpp`: native MSVC ABI/SDK/C++23 checks and
-  default DLL CRT; `CMakePresets.json`: clang-cl/Ninja Multi-Config Windows presets;
-  `TestHost.cmake.in`: parent toolchain/CRT/dependency settings for nested native tests;
-  `ThirdPartyDependencies.cmake`: SHA-256-verified archives/extraction retained under
-  ignored `thirdparty/`, shared by Windows Boost and toml++ dependency discovery.
-- `cmake/{CheckComplexity,CheckClangTidy}.cmake`, `QualityToolchain.cmake.in`,
-  `.clang-{format,tidy}`, `tools/requirements-quality.txt`: required quality policy.
-- `cmake/{Zlib,Zstd}Dependencies.cmake`, `modules/Find{ZLIB,zstd}.cmake`,
-  `WindowsDependencyBuild.cmake`: LLVM-scoped installed compression library detection
-  and shared Windows pinned download/static build fallback; retained under
-  `thirdparty/` with compiler/architecture/CRT-specific Debug and Release libraries.
-- `cmake/LLVMDependencies.cmake`, `LLVMPolicy.cmake`, `probes/llvm.cpp`: global-only
-  LLVM 23.1.x discovery, path/version policy, host ABI link probe and available
-  X86/ARM/AArch64 backend selection/component linkage.
-- `compiler/src/codegen/sdk.{hpp,cpp}`: private SDK version boundary;
-  `tests/compiler/codegen/{dependency.cmake,CMakeLists.txt}`: independent SDK
-  consumer build/run, discovery/rejection fixtures and LLVM-independent runtime build.
-- `compiler/src/codegen/{request,output,result}.hpp`, `result.cpp`: move-only batch
-  requests/results, owned diagnostics/bytes and latched failure/completion status.
-  `compilation.{hpp,cpp}` owns stable context/module state behind a private interface;
-  `llvm_state.hpp` confines LLVM access; `diagnostics.cpp` copies SDK callbacks safely.
-  `tests/compiler/codegen/{results,ownership}.cpp`: opaque consumer, AST/buffer lifetimes,
-  moves, context isolation, diagnostic propagation and callback failure tests.
-- `compiler/src/codegen/target.{hpp,cpp}`: explicit target setup, native CPU/features,
-  foreign generic baseline, PIC/Small policy, module layouts and failure diagnostics;
-  `target_backends.cpp`: once-only initialization of configured SDK backends.
-  `tests/compiler/codegen/target.cpp`: native/moved machines, cross-target 32/64-bit
-  layouts, triple normalization, unknown architectures and unavailable backends.
-- `abi/include/erlang_aot/abi/{v1.hpp,term.hpp}`: namespaced C++23 term/context/
-  generated-function declarations and checked target-width immediate integer codecs.
-  `tests/abi/integers.cpp`: boundaries, signed round trips, overflow and wrong-tag checks.
-- `abi/include/erlang_aot/abi/{features.hpp,feature_diagnostic.hpp,status.hpp}`:
-  stable deferred-feature catalog/owner/boundary/step/test metadata, escaped context
-  formatting and scoped fixed-width Status; `docs/features.md` records integration and propagation.
-- `compiler/src/codegen/features.{hpp,cpp}`: fail-once batch reporter, owned context,
-  stderr delivery and reported flag; `runtime/include/erlang_aot/runtime/features.hpp`,
-  `runtime/src/diagnostics/features.cpp`: per-operation sink/report latch, scoped Status,
-  stderr default and exception containment without LLVM.
-  `tests/{abi,compiler/codegen,runtime}/features.cpp` and `tests/abi/feature_output.cmake`:
-  catalog compatibility, all entries, context/errors and subprocess output/silence checks.
-- `compiler/src/codegen/term_abi.{hpp,cpp}`: target-derived LLVM word/function types;
-  `tests/compiler/codegen/term_abi.cpp`: native/cross layouts, signed LLVM constants,
-  C-convention object emission and missing-target errors.
-- `tests/runtime/term_layout.cpp`: compile private prefix assertions and test ABI/tag agreement.
-- `compiler/src/codegen/emission.{hpp,cpp}`: fresh batch verification, cloned IR,
-  legacy target emission and transactional in-memory object buffers;
-  `tests/compiler/codegen/emission.cpp`: native/cross object inspection, repeat emission,
-  stale verification rejection and recoverable assembler-error cleanup.
-- `compiler/src/codegen/verification.{hpp,cpp}`: mandatory pre-emission verification
-  gate for target settings, function bodies and whole modules; owned errors invalidate
-  batch outputs. `tests/compiler/codegen/verification.cpp`: IRBuilder synthetic IR,
-  malformed bodies/globals, post-verification mutation, target mismatches and failure latching.
-- `compiler/CMakeLists.txt`: frontend, private codegen library and executable;
-  `runtime/CMakeLists.txt`: runtime archive and `ErlangAoT::generated_program` link interface;
-  `abi/CMakeLists.txt`: header-only ABI interface.
-- `runtime/include/erlang_aot/runtime/{runtime,process_context}.hpp`: sole C++ lifecycle API, host owners, identities
-  and lifetime tokens; `runtime/src/runtime{.cpp,_state.hpp}`: startup/shutdown, identity
-  allocation and reserved code/atom ownership. The former C lifecycle adapter is removed.
-  `runtime/src/process/{context,ownership,storage}.cpp`: token invalidation, transactional
-  context registry and empty mailbox lifetimes. `docs/runtime-lifecycle.md`: contract.
-  `tests/runtime/lifecycle_failure.cpp`: allocation rollback and registry/publication
-  failure sweeps; `link.cmake`/`link_consumer.cpp`: LLVM-free consumer lifecycle,
-  dispatch/copy/pinning/silence and mandatory-target/missing-runtime link validation.
-- `runtime/src/memory/heap.cpp`: lazy heap lifecycle, checked allocation rejection,
-  unavailable collection and word accounting; `heap_policy.hpp`: byte-budget validation;
-  `copy.cpp`: immediate-only heap add/Term::copy_to. `docs/runtime-memory.md`: current
-  boundaries and future roots, alignment, transit and C++ resource teardown contracts.
-  `tests/runtime/memory.cpp`: budgets, overflow, invalid words/slots and deferred allocation;
-  `lifecycle_failure.cpp` also checks memory operations under forced host allocation failure.
-- `runtime/include/erlang_aot/runtime/process_state.hpp`: shared process enums/StepResult;
-  `scheduler.hpp`: SchedulerService and lifecycle/error API. `runtime/src/scheduler/`
-  `state.hpp`: private identity/metadata registry; `registry.cpp`: once-only publication,
-  lookup, removal and admission; `transitions.cpp`: checked dispatch/return/suspension.
-  Runtime state owns the service and clears it before context/code teardown.
-  `docs/runtime-scheduler.md`: implemented boundary and reserved execution contracts;
-  `tests/runtime/scheduler.cpp`: invalid/stale/foreign states, growth and synthetic teardown;
-  `lifecycle_failure.cpp`: scheduler registration allocation rollback/retry.
-- `runtime/include/erlang_aot/runtime/{base_types,terms}.hpp`: shared word/tag/error
-  definitions and checked immediate word API. `runtime/src/terms/immediate.cpp`:
-  structural classification and native ABI integer encoding/decoding without LLVM.
-  `runtime/include/base_types.hpp` forwards sketch consumers to the canonical types;
-  `runtime/include/terms.hpp` retains the proposed TermFactory; canonical terms.hpp
-  declares Term, with immediate-only operations in src/terms/term.cpp.
-  `runtime/src/terms/term_layout.hpp`: private heap prefixes and layout assertions.
-  `docs/runtime-terms.md`: implemented word boundary; `runtime/design/terms.md`:
-  remaining host ownership, heap/GC and immutable-value contract.
-  `tests/runtime/immediate.cpp`: boundaries, malformed immediates, heap-tag rejection;
-  `tests/compiler/codegen/runtime_terms.cpp`: independent LLVM constant agreement.
-- `tests/runtime/{CMakeLists.txt,term_tag.cpp}`: native CTest `runtime_term_tag`, available
-  with the runtime independently of the compiler; explicit expected values cover all 64 tag combinations.
-- `runtime/include/binary_heap_object.hpp`: shared binary objects owning immutable
-  `std::vector<Word>` storage, checked creation/errors, word views and exact bit-length/tail
-  metadata. API sketch listed for IDE navigation; no binary heap or pool service.
-- `runtime/design/processes.md`: process/scheduler manual-review contract and decisions;
-  `process_heap.hpp`: owned term storage/addition, chunked growth and collection boundary;
-  `runtime/include/process.hpp`: continuation/reductions, owned signal inbox,
-  deferred signal handling and process state; context declarations moved to the host API;
-  `runtime/include/mailbox.hpp`: selective receive, async wait, removal and private handled-message append;
-  `runtime/include/scheduler.hpp`: worker/pool lifecycle, signal servicing and process-control API.
-  Worker/receive declarations remain sketches; SchedulerService and heap/mailbox lifecycle are implemented.
-- `runtime/include/erlang_aot/runtime/{callable,code_server}.hpp`: exact generic keys,
-  frozen module registries, code-image ownership and pinned checked calls; former
-  top-level headers forward here. `runtime/src/builtins/registry.cpp`: registration;
-  `invocation.cpp`: validation, exceptions and once-only unavailable reports;
-  `bridge.cpp` + `abi/include/erlang_aot/abi/builtins.hpp`: status/word service bridge.
-  `runtime/src/modules/code_server.cpp`: native publication and generic resolution.
-  `docs/runtime-builtins.md`: implemented boundary; `runtime/design/code_server.md`:
-  wider typed/atom/concurrency proposals, with typed sketches under include/unverified/.
-  `tests/runtime/{builtins,builtin_bridge}.cpp`, `builtin_output.cmake`: signatures,
-  freeze, pinning/capture lifetimes, failure propagation and diagnostic count/silence.
-- `src/main.cpp`: help/exit contract; `src/driver/options.{hpp,cpp}`: CLI configuration/
-  validation; `src/driver/frontend.{hpp,cpp}`: shared per-file loading, PP/parser,
-  diagnostic callback and printing, with a positional-mode adapter and complete
-  AST batches passed to shared analysis/backend orchestration; verbose
-  stage/file tracing stays on stderr, outside project diagnostic wrappers.
-- Public `{source,token,diagnostic,directive,preprocessor,features,parser,printing}.hpp`:
-  source/token/events, immutable features, parser ownership/limits/results and output APIs.
-- `src/source/source.cpp`: decoding/positions; `src/diagnostics/diagnostic.cpp`: logical
-  locations, physical traces and opener rendering; `diagnostic.hpp` keeps Diagnostic
-  aggregate data separate from DiagnosticError/LexicalError standard exceptions.
-- `src/lexer/{lexer,numbers,literals}.cpp`: incremental scanning, arbitrary numeric
-  values, strings/sigils and keyword state.
-- `src/parsing/{probe.cpp,boost_parser.hpp}`: Boost boundary;
-  `{token_cursor,token_syntax,operator_info,delimiters}.{hpp,cpp}`: shared token mechanics.
-- `src/preprocessor/preprocessor.cpp`: DirectiveReader and form recovery;
-  `directives.cpp`, `cursor.hpp`: directive envelopes; `engine.hpp`, `session.cpp`:
-  semantic session; `conditions.cpp`, `includes.cpp`, `features.cpp`, `builtins.cpp`:
-  conditionals, include frames/loaded-file observation, features and contextual definitions.
-- `src/preprocessor/{macros,arguments,token_utils}.cpp`: macro expansion/arguments;
-  `{expression_parse,expression,operators,guards}.cpp`: closed condition grammar/evaluation;
-  `{terms,value,bits}.cpp`: shared literal terms, exact operations and binary encoding.
-- Public `ast/{ids,source,module}.hpp`: checked IDs, owned origins and move-only owner;
-  `ast/{expressions,patterns,clauses,forms,terms,types,operators}.hpp`: closed syntax payloads.
-- `src/ast/{arena,storage,builder}.hpp`, `{builder,module}.cpp`: flat arenas, transactions,
-  source ownership and immutable access; `children.{hpp,cpp}`, `clauses.cpp`,
-  `control.cpp`, `exceptions.cpp`, `comprehensions.cpp`, `attributes.cpp`,
-  `types.cpp`, `specifications.cpp`: exhaustive child/category/shape invariants.
-- `src/parser/parser.cpp`: module event routing/budgets/recovery; `forms.{hpp,cpp}`:
-  form dispatch; `diagnostics.cpp`: work accounting, expected tokens and opener origins.
-- `src/parser/{literals,aggregates,expressions}.cpp`: decoded literals, containers, Pratt
-  expressions/calls; `clauses.cpp`: function/pattern/guard sequences;
-  `{maps,records,structural,binaries}.cpp`: structural postfix and binary grammar.
-- `src/parser/{control,funs,exceptions,comprehensions}.cpp`: blocks/branches/receive,
-  funs/references, try/maybe, templates and qualifier groups.
-- `src/parser/{attributes,declarations,documentation}.cpp`: attribute shapes,
-  records/defaults and documentation metadata; `attribute_values.hpp`: group/list helpers;
-  `{attribute_terms,term_value,term_bits}.cpp`: bounded literal normalization.
-- `src/parser/{types,type_primary,type_structural,type_names}.cpp`: type precedence,
-  aggregates/funs and builtin classification; `specifications.cpp`: overloads/constraints.
-- `src/printing/{source,token_text}.cpp`: source output and shared canonical tokens;
-  `printable.{hpp,cpp}`: shared Erlang Unicode/control character decoding for AST and term printers;
-  `tree.{hpp,cpp}`, `tree_{forms,expressions,structural,control,exceptions,comprehensions,
-  attributes,types,specifications}.cpp`: iterative parenthesized AST output, named
-  fields and two-space indentation; escaped strings for printable integer lists.
-- `tests/cli.cmake`: CLI contracts; `tests/compiler/frontend_cases.cmake` and
-  `tests/fixtures/parser/cli/`: exact source/AST/diagnostic/status regressions.
-  `printing_roundtrip.cmake`: CLI source printing/reprocessing equivalence;
-  `preprocessor/workflow.cmake`: includes/options/conditions/depth/truncation workflows.
-- `tests/compiler/parser/{tokens,ast,forms,expressions,clauses,structural,binaries,
-  control,exceptions,comprehensions,attributes,types,specifications}.cpp`: retained
-  API-only limits, ownership, provenance, rollback and invalid-handle invariants.
-  `hardening.cpp`: injected ceilings/EOF; `stress.cmake`: bounded source CLI stress;
-  `mutations.cmake` + `tests/fixtures/parser/mutations.json`: deterministic 900-case
-  source mutation/recovery corpus; `consumer.{cpp,cmake}`: separately built public
-  frontend consumer retaining syntax after sessions and source managers die.
-- `tests/compiler/parser/{dump.cpp,operators.hpp,terms_dump.hpp,types_dump.hpp}`,
-  `record_printer.hpp`, `oracle.escript`: native/OTP parenthesized AST projections;
-  RAW/EPP keep Erlang-term syntax. `tests/compiler/encoding.hpp`:
-  shared exact encodings; `{reference,oracle,phase1,phase2}.cmake`: existing suites.
-- `tests/compiler/parser/historical.cmake`: seed AST closure and offline inventory audit;
-  `coverage.{cmake,escript}`: measured pinned reductions; `pinned.cmake`: source verification;
-  `corpus.cmake`: separate real-source preprocessing/parsing/determinism checks.
-- `tests/fixtures/parser/`: immutable original records and phase-specific probes;
-  `phase5/coverage.tsv`: attribute/type row index; `phase6/`: measured full inventory,
-  closure fixtures, historical ASTs and checksum-pinned real OTP source manifest.
-- `docs/{preprocessor,parser,parser-validation}.md`: contracts and evidence;
-  `references/otp`: ignored research checkout.
-  `compiler/src/stage_readers/{preprocessed,abstract,ir}/` remains reserved only.
-
-- `src/project/{CMakeLists.txt,cmake/Dependencies.cmake}`: private toml++ 3.4.0,
-  explicit-root precedence and Homebrew formula-prefix discovery.
-- `src/project/model.hpp`: owned located configuration, target options, limits and errors;
-  `{loader,diagnostics}.{hpp,cpp}`: bounded native TOML reading and located failures.
-- `src/project/{decode,schema,decode_options}.{hpp,cpp}`: strict versioned schema,
-  typed target/options decoding, unknown-key checks and configuration budgets.
-- `src/project/paths.{hpp,cpp}`: native UTF-8 paths, explicit bases and literal fallback;
-  `{glob,glob_utf8}.{hpp,cpp}`: iterative bounded Unicode wildcard matching.
-- `src/project/discovery.{hpp,cpp}`: sorted bounded traversal and symlink policy;
-  `{sources,identity}.{hpp,cpp}`: ordered source assembly and physical deduplication.
-- `src/project/selection.{hpp,cpp}`: ordered target selection and selector diagnostics;
-  `options.{hpp,cpp}`: independent effective settings and real frontend validation.
-- `src/project/plan.{hpp,cpp}`: selected-target preflight and output collision checks;
-  `execution.{hpp,cpp}`: ordered callbacks, diagnostic context and failure aggregation.
-- `src/project/{cli,command}.{hpp,cpp}`: project operands, conflicts, help, dispatch
-  and `.toml` completion for missing manifest paths;
-  `template.{hpp,cpp}`: annotated defaults; `create.{hpp,cpp}`: exclusive native creation,
-  extension completion and identity-checked write/close failure cleanup.
-- `tests/compiler/project/{cli,workflow}.cmake` include `{manifest,selection,
-  discovery,options}_cases.cmake`: real multi-target/schema/options/creation/race,
-  discovery/alias/native-path/corpus and no-write workflows. `limits.cpp` retains
-  injected budgets/read failure/invalid UTF-8/native syntax; `creation_failure.cpp`
-  retains injected partial-write/close cleanup. `support.hpp`: active assertions.
-- `docs/projects.md`: delivered format, precedence, discovery and creation workflows;
-  `docs/project-validation.md`: C++23 evidence and pending host matrix;
-  `examples/project/{project.toml,src/main.erl}`: runnable two-target frontend example.
-- `.agents/00-finished.md`: compact foundations, preprocessor/OTP inventory, parser,
-  project/compiler/runtime and test migration archive, historical evidence and
-  unfinished-work checklist.
-  `docs/test-migration.md`: case-level disposition and validation evidence.
-- `tests/runtime/link_consumer.cpp`, `link.cmake`: independently configured runtime
-  startup/context/dispatch/copy/publication/pinning/teardown integration; term layout
-  is a build-only object. `tests/fixtures/runtime/diagnostics/`: exact stderr context.
-  `cmake/TestHost.cmake.in`: propagate host compiler/CRT/sanitizer flags to consumers.
-  `compiler/erlangaot.manifest`: Windows UTF-8 argv; `.gitattributes`: byte-exact fixtures.
-
-- `runtime/src/terms/factory.cpp`: lifetime-checked atoms/booleans and deferred constructor reporting.
-  `runtime/src/{process,scheduler,modules}/services.cpp`: deferred send, run/execute
-  and unload entry points. `runtime/include/erlang_aot/runtime/features.hpp` maps
-  shared diagnostic status into typed host failures; memory/heap.cpp now reports.
-  `runtime/include/erlang_aot/runtime/builtins.hpp`: bounded exact known-BIF catalog;
-  builtins/bridge.cpp distinguishes unknown_builtin from known deferred signatures.
-  `tests/runtime/services.cpp`, `service_output.cmake`: real boundary/sink/state/
-  cleanup and once-only stderr tests. `docs/runtime-services.md`: scope and contracts.
-
-- `compiler/src/driver/command.{hpp,cpp}` owns CLI help and positional/project dispatch;
-  `main.cpp` contains unexpected failures. `preprocessor/integer.cpp` owns decimal
-  integer formatting and exact finite binary64-to-integer conversion.
-
-- `compiler/src/semantic/declarations.{hpp,cpp}` indexes modules/functions/exports
-  and renders located diagnostics; `symbols.{hpp,cpp}` provides reversible identities.
-  `{capabilities,expression_capability,literals}.{hpp,cpp}` enforces the subset;
-  `features.{hpp,cpp}` maps failures to the shared catalog. `bindings.{hpp,cpp}`
-  resolves clause-local identities and original argument provenance;
-  `calls.{hpp,cpp}` resolves direct calls and ordering.
-  `driver/frontend.cpp` owns batches; `project/execution.{hpp,cpp}` dispatches each target.
-- `compiler/src/semantic/types/`: `domain.{hpp,cpp}` owns type identities, joins and
-  limits; `syntax.{hpp,cpp}` exhaustively describes/translates AST type categories.
-  `declarations.{hpp,cpp}` owns the registry and resolves bodies/contracts; `collect.cpp`
-  indexes declarations/exports/callback metadata. `resolver.{hpp,cpp}` resolves nodes
-  and visibility; `traversal.cpp` owns bounded traversal, scopes and union-use counting.
-  `constants.cpp` evaluates exact bounds; `expansion.cpp` memoizes bounded substitution.
-- `tests/compiler/semantic/cases.cmake` extends real frontend/project CLI workflows.
-  `symbols.cpp`, `types.cpp`, `declared_types.cpp` retain identity/lattice/ownership/
-  opacity invariants until emitted artifacts or step 39 type inspection replace them.
-  `docs/semantic.md` documents the implemented analysis boundary.
-- `codegen/lowering_boundaries.{hpp,cpp}` invalidates staged results for deferred operations.
-
-- `compiler/src/codegen/lowering.{hpp,cpp}`: validated-batch declarations, body dispatch
-  and verification. `lowering_expressions.{hpp,cpp}` lowers literals/parameters and
-  walks nested calls; `lowering_state.hpp` retains iterative expression state.
-  `lowering_calls.cpp` emits generic calls and imports resolved remote exports.
-  `tests/compiler/codegen/lowering.cpp` and `tests/fixtures/codegen/` provide the
-  real-source backend adapter, target-width/ABI checks and object symbol inspection.
-
-- `abi/include/erlang_aot/abi/modules.hpp`: descriptor layout and generated registration ABI.
-  `codegen/module_registration.{hpp,cpp}` emits descriptors, startup and service references.
-  `runtime/include/erlang_aot/runtime/modules.hpp`, `runtime/src/modules/registration.cpp`: descriptor validation,
-  generic marshaling and transactional publication. `docs/runtime-modules.md`: contract.
-  `tests/compiler/codegen/registration*` links real generated objects with/without runtime;
-  `tests/runtime/registration.cpp` checks rejection and lifetime ownership.
-
-- `codegen/specialization.{hpp,cpp}`: canonical profiles, decisions and bounded selection.
-  `specialization_analysis.{hpp,cpp}`: real inference profiles and generic IR measurements.
-  `integer_guards.{hpp,cpp}`: exact side-effect-free argument tag-check recognition
-  using LLVM use lists and instruction comparison. `docs/specialization.md`: policy.
-  `tests/compiler/codegen/specialization.cpp`: stress limits and real-source no-benefit cases.
-
-- `codegen/specialization_lowering.{hpp,cpp}`: measured draft admission and public-entry
-  replacement. `specialization_cloning.cpp`: LLVM cloning and proven-check removal;
-  `specialization_dispatch.cpp`: bounded low-tag guards and generic fallback.
-  `tests/compiler/codegen/specialization_{emit,consumer}.cpp`: focused synthetic IR
-  and separately linked native guard/fallback equivalence; `guards.erl` supplies
-  real semantic/descriptor setup without adding supported source guard syntax.
-
-- `codegen/optimization.{hpp,cpp}`: verified standard LLVM PassBuilder O0/O2.
-  `tests/compiler/codegen/registration*`: native runtime consumer at both levels.
-
-- `codegen/serialization.{hpp,cpp}`: verified snapshots and assembly/bitcode writers.
-  `tests/compiler/codegen/serialization.cpp`: real-source SDK round trips and invalid-IR rejection.
-
-- `compiler/src/artifacts/{artifacts,paths,replace}.*`: staged writes, portable
-  semantic names/alias preflight, and platform complete-file replacement.
-  `tests/compiler/codegen/artifacts.cpp`: filesystem preservation/failure cases.
-
-- `driver/backend_options.{hpp,cpp}`: compilation operands and action conflicts.
-  `tests/compiler/codegen/options.cmake`: public positional/project option matrix.
-
-- `driver/analysis.{hpp,cpp}` owns shared semantic/type passes;
-  `driver/backend.{hpp,cpp}` drives lowering, optimization, diagnostics and emission.
-  `tests/compiler/codegen/positional.cmake` checks real CLI artifacts and failure preservation.
-
-- `driver/project_backend.cpp`: target options, root isolation and deferred publication.
-  `driver/publication.{hpp,cpp}`: owned completed results and protected input paths.
-  `tests/compiler/codegen/project.cmake`: real multi-target artifacts, macro isolation and failure preservation.
-
-- `codegen/progress.*` and `driver/{progress,display}.*`: shared phase events and safe rendering.
-  `codegen/specialization_trace.*`: bounded profile/decision reporting.
-  `tests/compiler/codegen/progress.cmake`: ordering, opt-in, control escaping and artifact equivalence.
-
-- `driver/inspection.{hpp,cpp}`: verified before/after snapshots with stable escaped headers.
-  `tests/compiler/codegen/inspection.py`: real CLI inspection, option conflicts, stage/target
-  ordering, ABI structures and per-snapshot llvm-as/llvm-dis round trips.
-
-- `driver/type_{format,declarations,report}.{hpp,cpp}`: bounded symbolic formatting,
-  declaration metadata and deterministic function/expression inference reports.
-  `tests/compiler/codegen/type_inspection.py`: real CLI contracts/relations, recursive
-  declarations, diagnostics, action conflicts and isolated project facts without LLVM.
+| Feature(s) | Main / additional destinations |
+| --- | --- |
+| F01 executable startup; F32 LTO | **+** `C/linking`; `C/codegen`; F01 bootstrap: **+** `R/startup`, using `R/runtime.cpp` lifecycle |
+| F02 roots/safepoints | `C/codegen`, `R/memory`, `R/process`, shared ABI |
+| F03 heaps; F04 GC; F05 graph copying | `R/memory`: allocation/tracing/copying; `R/terms`: constructors/layout traversal/destruction |
+| F06 atoms | `R/terms`: synchronization; `R/modules`: bindings; `C/codegen/module_atoms` |
+| F07 process/port/reference IDs | `R/terms`: representation; `R/process`: owners/lifetimes; `R/scheduler`: lookup/routing |
+| F08 containers; F09 bitstrings; F10 integers; F11 floats; F12 equality/order | `R/terms`: values/operations; `R/memory`: tracing/copying; common semantic/lowering wiring |
+| F13 patterns; F14 guards; F17 records | `C/semantic`, `C/codegen`, `R/terms`; F14 services also `R/builtins` |
+| F15 clauses; F16 control flow; F21 recursion/tail calls | `C/semantic`, `C/semantic/types`, `C/codegen`; F21 continuations: `R/process` |
+| F18 closures; F19 dynamic calls | `C/semantic`, `C/codegen`, `R/terms`, `R/modules`; F18 capture tracing/copying: `R/memory` |
+| F20 exceptions | `C/semantic`, `C/codegen`, `R/process/generated_calls`, shared ABI |
+| F22 cooperative execution | `R/process`, `R/scheduler`, `C/codegen`, shared ABI |
+| F23 workers/wakeups | `R/scheduler`; synchronize service owners in `R/{process,terms,modules}` |
+| F24 signals/send | `R/process`: inbox/mailbox; `R/memory`: transfer; `C/codegen`: send |
+| F25 receive/timeouts | `R/process`: cursors/arrival; `R/scheduler`: timers/wakeup; `C/{semantic,codegen}`: selection/resumption |
+| F26 builtins; F27 typed/native callables | `R/builtins`: wrappers/conversions; algorithms stay with value/process owners; F27 retained code: `R/modules` |
+| F28 concurrent code server | `R/modules`; atom coordination: `R/terms`; shutdown: `R/scheduler` |
+| F29 specialization | `C/codegen/specialization*`, `C/codegen/integer_guards`, `C/semantic/types` |
+| F30 debug info | `C/codegen/source_locations` + metadata; **+** `C/linking` |
+| F31 profiling | `C/codegen`: instrumentation; **+** `R/profiling`: collection/attribution/export |
+| V01 native matrix; V02 sanitizers | `cmake/`, `CMakePresets.json`, root runners, owning tests, `docs/` evidence |
+| V03 OTP evidence | `references/`, parser/patternmatch/codegen runners + fixtures, `docs/otp-reference.md` |
+| V04 test migration | Owning tests/CMake registrations; `docs/test-migration.md` |
+| D01 dynamic modules/upgrades | `R/modules`, **+** `C/linking`, shared ABI |
+| D02 atom collection | `R/terms`; roots/resources: `R/{memory,modules,process}` |
+| D03 attributes/transforms | `C/semantic`; **+** `C/transforms`; invocation: `C/{driver,project}`; on-load: `R/modules` |
+| D04 stage interchange | **+** `C/stage_writers/{preprocessed,abstract,ir}`; format contracts: `docs/` |
+| D05 stage readers | **+** `C/stage_readers/{preprocessed,abstract,ir}` — directory reservations only |
+| D06 C/FFI | **+** `R/interop`, **+** `runtime/include/erlang_aot/interop/`; concrete external use only |
+| D07 project extensions | `C/project`: schema/profiles/graphs/packages/watch/cache/scheduling; `C/driver`, `C/artifacts`; project tests/fixtures/examples; `docs/projects.md` |
