@@ -8,8 +8,7 @@ uses ABI revision 3; the revision-2 checked call channel is unchanged. See
 Pattern/guard step 5 adds [bounded pattern validation and normalization](docs/pattern-semantics.md),
 including map-key and binary-size binding scopes. Step 6 adds
 [immediate function-head matching](docs/immediate-matching.md): literals,
-repeated variables, aliases, wildcards and canonical empty values. Guards and
-later pattern representations remain deferred.
+repeated variables, aliases, wildcards and canonical empty values. Step 7 adds [immediate guard services](docs/immediate-guards.md), comparisons and single-test guards. Grouping, boolean operators and later representations remain deferred.
 
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a small integer/parameter/direct-call subset to LLVM IR,

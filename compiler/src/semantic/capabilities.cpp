@@ -1,6 +1,7 @@
 #include "expression_capability.hpp"
 #include "features.hpp"
 #include "match_plan.hpp"
+#include "services.hpp"
 #include <algorithm>
 #include <array>
 #include <set>
@@ -44,18 +45,22 @@ void unsupported(const Module &module, const ast::NodeSource &source, std::strin
 }
 
 // Inspect every executable child iteratively, including unused functions and nested call arguments.
-void body(const Module &module, const ast::FunctionClause &clause, const Reporter &out, const unsigned bits) {
-    if (clause.body.size() != 1) {
-        unsupported(module, clause.source, "expression sequences", out);
-    }
-    auto pending = clause.body;
+void expressions(const Module &module, const Function &function, std::vector<ast::ExprId> pending, const Reporter &out,
+                 const unsigned bits) {
     while (!pending.empty()) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
+        const auto service = function.services.find(&expression);
+        if (service != function.services.end() && !service->second.operation) {
+            unsupported(module, expression.source, "guards", out);
+        }
         const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits}, expression.value);
         if (!reason.empty()) {
             unsupported(module, expression.source, reason, out);
+            continue;
+        }
+        if (integer_literal(*module.syntax, id, bits)) {
             continue;
         }
         const auto children = expression_children(expression);
@@ -63,11 +68,25 @@ void body(const Module &module, const ast::FunctionClause &clause, const Reporte
     }
 }
 
+// Sequences remain deferred; every body child still gets located capability analysis.
+void body(const Module &module, const Function &function, const ast::FunctionClause &clause, const Reporter &out,
+          const unsigned bits) {
+    if (clause.body.size() != 1) {
+        unsupported(module, clause.source, "expression sequences", out);
+    }
+    expressions(module, function, clause.body, out, bits);
+}
+
 // Parameter patterns and guards remain separate from expression capability decisions.
 void head(const Module &module, const Function &function, std::size_t index, const ast::FunctionClause &clause,
           const Reporter &out, unsigned bits) {
     if (clause.guard) {
-        unsupported(module, clause.guard->source, "guards", out);
+        if (clause.guard->alternatives.size() != 1 || clause.guard->alternatives.front().tests.size() != 1) {
+            unsupported(module, clause.guard->source, "guards", out);
+        }
+        for (const auto &alternative : clause.guard->alternatives) {
+            expressions(module, function, alternative.tests, out, bits);
+        }
     }
     if (!function.clause_bindings.empty()) {
         (void)make_match_plan(module, function, out, {.clause = index, .word_bits = bits});
@@ -83,7 +102,7 @@ void function(const Module &module, const Function &function, const ast::Functio
     for (std::size_t i = 0; i < value.clauses.size(); ++i) {
         const auto &clause = value.clauses[i];
         head(module, function, i, clause, out, bits);
-        body(module, clause, out, bits);
+        body(module, function, clause, out, bits);
     }
 }
 } // namespace
@@ -92,7 +111,7 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
     for (const auto &id : module.syntax->forms()) {
         const auto &form = module.syntax->form(id);
         const auto reason = std::visit(FormCapability{}, form.value);
-        if (!reason.empty()) {
+        if (!reason.empty() && !service_metadata(*module.syntax, form.value)) {
             unsupported(module, form.source, reason, out);
         }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {

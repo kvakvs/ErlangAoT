@@ -27,7 +27,7 @@
     "name": "guard_read",
     "arity": 1,
     "body": "f(X) when X =:= X -> X.",
-    "capability": "guards",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },

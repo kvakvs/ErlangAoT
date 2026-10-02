@@ -46,7 +46,7 @@ add_subdirectory(src/project)
 target_link_libraries(erlang_aot PRIVATE erlang_project)
 
 # Keep LLVM headers and representation private behind the shared compilation backend.
-add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/lowering_match.cpp
+add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/lowering_match.cpp src/codegen/lowering_immediates.cpp
     src/codegen/specialization.cpp src/codegen/specialization_analysis.cpp src/codegen/integer_guards.cpp
     src/codegen/specialization_cloning.cpp src/codegen/specialization_dispatch.cpp src/codegen/specialization_lowering.cpp
     src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
@@ -68,6 +68,7 @@ add_library(erlang_semantic STATIC
     src/semantic/pattern_analysis.cpp src/semantic/pattern_constants.cpp
     src/semantic/pattern_expressions.cpp src/semantic/pattern_binary.cpp
     src/semantic/pattern_calls.cpp
+    src/semantic/guard_analysis.cpp src/semantic/immediate_services.cpp src/semantic/service_metadata.cpp
     src/semantic/features.cpp src/semantic/capabilities.cpp
     src/semantic/literals.cpp src/semantic/expression_capability.cpp
     src/semantic/types/domain.cpp src/semantic/types/syntax.cpp
@@ -78,7 +79,7 @@ add_library(erlang_semantic STATIC
     src/semantic/types/membership.cpp src/semantic/types/trace.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_include_directories(erlang_semantic PRIVATE src)
-target_link_libraries(erlang_semantic PUBLIC erlang_frontend PRIVATE erlang_aot_abi)
+target_link_libraries(erlang_semantic PUBLIC erlang_frontend erlang_aot_abi)
 target_link_libraries(erlang_aot PRIVATE erlang_semantic)
 target_link_libraries(erlang_codegen PRIVATE erlang_semantic)
 

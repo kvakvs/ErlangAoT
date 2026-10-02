@@ -4,6 +4,7 @@
 #include "codegen/lowering.hpp"
 #include "semantic/bindings.hpp"
 #include "semantic/capabilities.hpp"
+#include "semantic/services.hpp"
 #include "semantic/symbols.hpp"
 #include "semantic/types/contracts.hpp"
 #include <algorithm>
@@ -55,6 +56,7 @@ bool analyze_and_lower(cg::Compilation &compilation, semantic::types::Limits inf
     for (const auto &input : compilation.request().inputs) {
         auto module = semantic::index(input.syntax, "fixture.erl", report);
         semantic::bind_parameters(*module, report);
+        semantic::resolve_services(*module, report);
         semantic::check_capabilities(*module, report, 64);
         modules.push_back(std::move(module));
     }

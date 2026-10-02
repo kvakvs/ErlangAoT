@@ -134,7 +134,7 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
     }
 }
 
-void raise_function_clause(ExpressionLowering &state) {
+void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason) {
     auto &output = *state.entry.getParent();
     const auto &triple = output.getTargetTriple();
     const auto symbol =
@@ -146,8 +146,10 @@ void raise_function_clause(ExpressionLowering &state) {
     auto service = output.getOrInsertFunction(
         symbol, llvm::FunctionType::get(state.builder.getInt8Ty(),
                                         {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));
-    state.builder.CreateCall(service,
-                             {state.entry.getArg(0), state.builder.getInt8(1), llvm::ConstantInt::get(state.word, 0)});
+    state.builder.CreateCall(service, {state.entry.getArg(0), state.builder.getInt8(static_cast<std::uint8_t>(reason)),
+                                       llvm::ConstantInt::get(state.word, 0)});
     state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
 }
+
+void raise_function_clause(ExpressionLowering &state) { raise_reason(state, abi::v1::ErrorReason::function_clause); }
 } // namespace erlang_aot::codegen

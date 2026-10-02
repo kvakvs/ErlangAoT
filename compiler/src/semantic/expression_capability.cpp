@@ -1,4 +1,5 @@
 #include "expression_capability.hpp"
+#include "services.hpp"
 
 namespace erlang_aot::semantic {
 std::string_view ExpressionCapability::operator()(const ast::IntegerLiteral &) const {
@@ -34,6 +35,12 @@ std::string_view ExpressionCapability::operator()(const ast::CallExpression &val
 }
 
 std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {
+    if (immediate_operator(value.operation)) {
+        return {};
+    }
+    if (value.operation == ast::BinaryOperator::and_also || value.operation == ast::BinaryOperator::or_else) {
+        return "guards";
+    }
     return value.operation == ast::BinaryOperator::send ? "send expressions" : "arithmetic";
 }
 } // namespace erlang_aot::semantic

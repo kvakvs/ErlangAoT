@@ -6,7 +6,7 @@ import sys
 
 CASES = {
     "pattern matching": "f({X}) -> X.",
-    "guards": "f(X) when is_integer(X) -> X.",
+    "guards": "f(X) -> if true -> X end.",
     "multiple clauses": "f(X) -> X; f(Y) -> Y.",
     "arithmetic": "f(X) -> X + 1.",
     "bignum expressions": "f() -> 999999999999999999999999999999999.",

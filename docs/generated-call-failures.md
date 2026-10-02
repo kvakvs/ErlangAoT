@@ -28,6 +28,7 @@ continue to derive widths/alignment from the target layout. Runtime stays LLVM-f
 | Guard rejection | Guard continuation (steps 7/8) | Try next candidate; no diagnostic/channel mutation |
 | Exhausted function clauses | `CallError::erlang_exception`, reason `function_clause` | Stop caller; host receives failure |
 | Body match failure | Same error class, reason `badmatch`, owned offending `Term` | Stop caller; host receives failure |
+| Body service argument failure | Same error class, reason `badarg` (step 7) | Stop caller; guard context instead rejects silently |
 | Infrastructure failure | `CallError::runtime_failure` with exact `Status`, or existing native `CallError` | Stop caller; never treat as guard rejection |
 
 Every admitted Erlang exception currently has class `error`. Reasons are typed IDs,

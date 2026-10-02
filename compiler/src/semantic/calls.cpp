@@ -56,7 +56,8 @@ void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, co
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = syntax.expression(id);
-        if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+            call && !caller.function->services.contains(&expression)) {
             if (const auto resolved = callee(caller, *call, modules, expression.source, out)) {
                 graph.calls.push_back({id, caller, *resolved});
             }

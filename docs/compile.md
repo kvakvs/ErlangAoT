@@ -1,4 +1,4 @@
-Current executable matching (pattern/guard step 6): single-clause heads support small-integer/atom/empty-value literals, repeated variables and aliases through [checked immediate matching](immediate-matching.md). Guards, body matches, ordered clauses and nonempty containers remain deferred.
+Current executable matching and services (pattern/guard step 7): immediate heads, a single guard test, predicates, comparisons and queries use [checked matching](immediate-matching.md) and [immediate guard services](immediate-guards.md). Guard grouping/boolean operators, body matches, ordered clauses and nonempty containers remain deferred.
 
 # LLVM compilation contract
 
@@ -17,7 +17,7 @@ registers modules explicitly and executes decoded values at O0/O2. See the
 The supported subset is named modules/exports, one clause with immediate literal, repeated-variable, alias
 or wildcard parameters, and one expression containing a tagged-small integer, atom/boolean/empty literal,
 parameter reference, or resolved local/literal remote call within the compilation
-batch. Negative literals and nested call arguments are supported. Remote calls
+batch. Negative literals, nested calls and the immediate services/comparisons are supported; one canonical-true guard test may constrain the head. Remote calls
 require exports; recursive call graphs fail. Unsupported syntax is rejected even
 in unused functions. Syntax-only checking supports the wider OTP grammar.
 
@@ -26,7 +26,7 @@ Unknown inputs stay generic, identity/projection relations propagate through cal
 and wrong contracts warn without changing code semantics. `--print-types` stops
 before LLVM. O0 disables compiler specialization and uses LLVM O0; O2 enables the
 bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compiler
-policy. Current guard-free source has no profitable variants. See
+policy. Current service results stay conservative; specs do not remove their checks. See
 [specialization budgets and measurements](specialization.md).
 
 ABI revision 3 uses target-word tagged terms, a live process context and an argument array.
@@ -34,7 +34,7 @@ All host APIs are project-internal C++23. Generated descriptors preserve ABI/wid
 checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
 The runtime implements lifecycle, immediate Terms, frozen generic registries,
 module registration and service failures. Allocation/GC, scheduling workers,
-message delivery, BIF implementations and dynamic loading remain
+message delivery, further BIF implementations and dynamic loading remain
 future work. A production Erlang launcher/linker is not implemented; explicit
 `--output` fails with `[executable linking] notimpl`.
 

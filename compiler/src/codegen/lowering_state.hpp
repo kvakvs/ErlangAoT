@@ -1,5 +1,6 @@
 #pragma once
 #include "lowering_expressions.hpp"
+#include <erlang_aot/abi/calls.hpp>
 #include <map>
 
 namespace erlang_aot::codegen {
@@ -17,6 +18,9 @@ struct ExpressionLowering {
     std::map<semantic::BindingId, llvm::Value *> bindings = {};
     // Share a terminal failure exit across calls instead of duplicating return blocks per expression.
     llvm::BasicBlock *failure = nullptr;
+    // Semantic service errors reject the enclosing guard, while body errors raise badarg.
+    llvm::BasicBlock *rejection = nullptr;
+    llvm::BasicBlock *bad_argument = nullptr;
 };
 
 // Branch to the shared failure exit before consuming a fallible service result.
@@ -32,6 +36,11 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
 bool lower_unconditional_head(ExpressionLowering &state);
 // Raise single-clause exhaustion using the existing checked generated-call contract.
 void raise_function_clause(ExpressionLowering &state);
+// Raise a typed Erlang error; payload ownership remains with the existing checked service.
+void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason);
+// Evaluate only authorized immediate service operations with success-only outputs.
+llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
+                             llvm::Value *right = nullptr);
 // Evaluate the existing bounded body walk using the candidate's tentative bindings.
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root);
 

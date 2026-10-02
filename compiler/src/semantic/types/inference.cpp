@@ -37,6 +37,9 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        if (function.function->services.contains(&expression)) {
+            return {inference.graph.top()};
+        }
         return call_result(inference, syntax, expression, *call);
     }
     if (const auto *group = std::get_if<ast::Group>(&syntax.expression(id).value)) {

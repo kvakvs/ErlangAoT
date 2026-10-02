@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–6 are
-complete; steps 7–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–7 are
+complete; steps 8–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,11 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-The compiler currently executes one clause with distinct variable/wildcard
-parameters and one small-integer, atom/boolean, parameter-read or direct-call
-body expression. The parser retains broader syntax, but heap construction,
-general equality, guard BIFs and source-generated Erlang failures are not
-executable. The steps below replace these gaps in one sequence; there is no
+Completed steps currently execute immediate patterns and single-test guards with checked predicates, comparisons and queries in one-clause/one-expression functions. The parser retains broader syntax; grouped guards, heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -312,41 +308,41 @@ failures.
 
 ### 7. Resolve guard calls and implement immediate services (F12/F26 slice)
 
-- [ ] Validate legal operators/BIF name-and-arity pairs independently of
+- [x] Validate legal operators/BIF name-and-arity pairs independently of
   executable support. Resolve explicit erlang calls, auto-imports, shadowing and
   admitted no_auto_import metadata. Keep legacy top-level guard tests distinct.
-  - [ ] Reuse the signature catalog and embedded-expression resolution from step
+  - [x] Reuse the signature catalog and embedded-expression resolution from step
     5; record resolved identity, guard legality and executable availability
     separately.
-  - [ ] Add located cases for qualified/unqualified calls, imports, local name
+  - [x] Add located cases for qualified/unqualified calls, imports, local name
     collisions and suppression metadata, including legacy-test context
     restrictions.
-- [ ] Reject illegal calls/assignments even in unreachable branches. A generic
+- [x] Reject illegal calls/assignments even in unreachable branches. A generic
   builtin registration cannot authorize a guard call.
-  - [ ] Traverse every guard operand before lowering or constant folding;
+  - [x] Traverse every guard operand before lowering or constant folding;
     diagnose assignment, dynamic/user calls and invalid arities at their
     original locations.
-  - [ ] Keep runtime builtin lookup downstream of semantic authorization;
+  - [x] Keep runtime builtin lookup downstream of semantic authorization;
     exercise illegal calls behind constant short-circuit conditions through both
     CLI modes.
-- [ ] Implement predicates and exact/numeric comparison/order over admitted
+- [x] Implement predicates and exact/numeric comparison/order over admitted
   values, sharing step 6 equality. Atom order uses spelling, not assigned IDs;
   term-valued booleans use step 3 atoms. Extend ordinary expression lowering as
   needed to exercise the same services through source.
-  - [ ] List executable signatures for the current value domain and add checked
+  - [x] List executable signatures for the current value domain and add checked
     runtime entry points, including tag classification for available
     representations.
-  - [ ] Implement immediate type ordering and spelling-based atom ordering;
+  - [x] Implement immediate type ordering and spelling-based atom ordering;
     return canonical boolean atoms and share comparison logic between guards and
     bodies.
-  - [ ] Add cross-type and wrong-spec kernels; keep boxed numeric comparison
+  - [x] Add cross-type and wrong-spec kernels; keep boxed numeric comparison
     extensions assigned to steps 13/14 instead of assuming raw-word ordering.
-- [ ] Separate semantic argument failures from allocation/resource/ownership,
+- [x] Separate semantic argument failures from allocation/resource/ownership,
   unavailable-service and internal failures; never map every non-OK status to
   false.
-  - [ ] Classify service outcomes explicitly and define which semantic failures
+  - [x] Classify service outcomes explicitly and define which semantic failures
     become guard rejection versus Erlang errors in ordinary expression context.
-  - [ ] Preserve step 2's infrastructure-failure propagation; use the existing
+  - [x] Preserve step 2's infrastructure-failure propagation; use the existing
     fault seam to prove that such failures cannot select a successful fallback
     result.
 
@@ -358,6 +354,8 @@ cannot remove required checks; runtime code remains LLVM-free.
 and `beam_type_SUITE:numbers/1`; test cross-type inputs, boundaries and
 misleading specs. Use `overridden_bif_SUITE.erl` for shadowing and
 qualified-call diagnostics.
+
+**Completed 2026-10-02:** [Immediate guard services](../docs/immediate-guards.md) resolve the pinned legal catalog independently of availability, including qualified/imported/shadowed/suppressed and legacy calls. Shared checked predicates, comparisons, spelling order and queries distinguish semantic badarg from exact infrastructure failures. All 1,689 OTP/native calls and 31 resolution cases pass both CLI modes/four policies; injected guard/body/nested faults, ownership, head-first execution, runtime-registration isolation, budget rollback and retry pass. Fresh Windows x64 Debug: 119/119 CTests and full 205-unit Lizard/clang-tidy. See [validation](../docs/patternmatch-step7-validation.md). Grouping/boolean control flow remains step 8; ordered clauses remain step 9.
 
 ### 8. Lower guard grouping and short-circuit behavior
 

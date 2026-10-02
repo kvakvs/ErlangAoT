@@ -1,4 +1,4 @@
-Current executable matching (pattern/guard step 6): single-clause heads support small-integer/atom/empty-value literals, repeated variables and aliases through [checked immediate matching](immediate-matching.md). Guards, body matches, ordered clauses and nonempty containers remain deferred.
+Current executable matching and services (pattern/guard step 7): immediate heads, a single guard test, predicates, comparisons and queries use [checked matching](immediate-matching.md) and [immediate guard services](immediate-guards.md). Guard grouping/boolean operators, body matches, ordered clauses and nonempty containers remain deferred.
 
 # Semantic compilation analysis
 
@@ -27,8 +27,8 @@ and independent of compiler-host hashing, locale and table order.
 Compilation checks every function, including unused definitions. The current subset
 accepts one clause with immediate patterns/aliases/repeated variables and one expression: an ABI-small
 integer, atom/boolean literal, parameter reference, or syntactically direct local/literal remote call.
-Nested call arguments are checked. Explicit negative integers are supported;
-arithmetic, heap values, body/container matching, guards, exceptions, concurrency, dynamic
+Nested call arguments, immediate services/comparisons and a single guard test are checked. Explicit negative integers are supported.
+General arithmetic, heap values, body/container matching, guard grouping, exceptions, concurrency, dynamic
 calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.

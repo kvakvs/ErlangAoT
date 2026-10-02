@@ -62,7 +62,7 @@ std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason
             return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
         }
         failure.value = *payload;
-    } else if (reason != abi::v1::ErrorReason::function_clause) {
+    } else if (reason != abi::v1::ErrorReason::function_clause && reason != abi::v1::ErrorReason::badarg) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
     }

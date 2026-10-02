@@ -1,6 +1,7 @@
 #include "ast/builder.hpp"
 #include "semantic/binding_state.hpp"
 #include "semantic/match_plan.hpp"
+#include "semantic/services.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <erlang_aot/compiler/parser.hpp>
@@ -130,9 +131,26 @@ void rollback() {
     }
 }
 
+// Deliberate private exhaustion must discard service identities across the module and permit reanalysis.
+void service_budget() {
+    SourceManager sources;
+    PreprocessorSession pp(sources.add("services.erl", "-module(services). f(X) when is_integer(X) -> is_atom(X)."));
+    auto parsed = parse_module(pp);
+    std::vector<Diagnostic> errors;
+    const Reporter report = [&](const Diagnostic &d) { errors.push_back(d); };
+    auto module = index(parsed.module, "services.erl", report);
+    bind_parameters(*module, report);
+    resolve_services(*module, report, 1);
+    require(!errors.empty() && module->functions.front().services.empty());
+    errors.clear();
+    resolve_services(*module, report);
+    require(errors.empty() && module->functions.front().services.size() == 2);
+}
+
 int main() {
     try {
         match_budget();
+        service_budget();
         normalization();
         rollback();
         for (const bool permissive : {false, true}) {

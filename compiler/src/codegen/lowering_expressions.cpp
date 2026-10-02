@@ -1,5 +1,6 @@
 #include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/services.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
@@ -48,12 +49,33 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     return literal(*state.module.syntax, expression, state.word);
 }
 
+// Missing capability authorization is a phase-contract failure, never an unchecked optional access.
+abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOperation> &value) {
+    if (!value) {
+        throw std::invalid_argument("lowering: unavailable immediate service");
+    }
+    return *value;
+}
+
 // Each parent is emitted only after its child values, including grouping and nested calls.
 llvm::Value *evaluate(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
     locate_source(state.builder, *state.module.syntax, expression.source);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        const auto service = state.function.services.find(&expression);
+        if (service != state.function.services.end()) {
+            auto *left = state.values.at(&state.module.syntax->expression(call->arguments.at(0)));
+            auto *right = call->arguments.size() == 2
+                              ? state.values.at(&state.module.syntax->expression(call->arguments[1]))
+                              : nullptr;
+            return lower_immediate(state, operation(service->second.operation), left, right);
+        }
         return lower_call(state, expression, *call);
+    }
+    if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
+        return lower_immediate(state, operation(semantic::immediate_operator(binary->operation)),
+                               state.values.at(&state.module.syntax->expression(binary->left)),
+                               state.values.at(&state.module.syntax->expression(binary->right)));
     }
     if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
         return state.values.at(&state.module.syntax->expression(group->expression));
@@ -80,6 +102,9 @@ llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
             state.values.emplace(&expression, evaluate(state, visit.expression));
         } else {
             pending.push_back({visit.expression, true});
+            if (semantic::integer_literal(*state.module.syntax, visit.expression, state.word->getBitWidth())) {
+                continue;
+            }
             const auto children = semantic::expression_children(expression);
             for (auto child = children.rbegin(); child != children.rend(); ++child) {
                 pending.push_back({*child});
@@ -93,14 +118,29 @@ llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry,
                               const semantic::Function &function, const ast::ExprId &expression,
                               llvm::IntegerType *word, const semantic::types::Inference &inferred) {
     ExpressionLowering state{builder, entry, module, function, inferred, word, {}};
-    if (lower_unconditional_head(state)) {
+    const auto &clause = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(0);
+    const bool unconditional = lower_unconditional_head(state);
+    if (unconditional && !clause.guard) {
         return lower_body(state, expression);
     }
     auto *success = llvm::BasicBlock::Create(entry.getContext(), "match.success", &entry);
     auto *mismatch = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
-    lower_head(state, success, mismatch);
+    auto *guard = clause.guard ? llvm::BasicBlock::Create(entry.getContext(), "guard.entry", &entry) : success;
+    if (unconditional) {
+        builder.CreateBr(guard);
+    } else {
+        lower_head(state, guard, mismatch);
+    }
     builder.SetInsertPoint(mismatch);
     raise_function_clause(state);
+    if (clause.guard) {
+        builder.SetInsertPoint(guard);
+        state.rejection = mismatch;
+        auto *test = lower_body(state, clause.guard->alternatives.at(0).tests.at(0));
+        auto *truth = lower_atom(state, ast::Atom{U"true"});
+        builder.CreateCondBr(lower_exact(state, test, truth), success, mismatch);
+        state.rejection = nullptr;
+    }
     builder.SetInsertPoint(success);
     return lower_body(state, expression);
 }

@@ -1,5 +1,7 @@
 # File map
 
+- `semantic/{services.hpp,guard_analysis.cpp,immediate_services.cpp,service_metadata.cpp}`: bounded guard legality/identity resolution, immediate opcode availability and inert metadata. `pattern_calls.cpp`: shared catalog/import/legacy rules. `codegen/lowering_immediates.cpp`: checked output, guard rejection/body badarg; expression lowering emits single-test guards. `abi/immediate_services.hpp`, `runtime/src/terms/immediate_{order,services}.*`: LLVM-free immediate classification, spelling order, queries and three-way outcomes. `patternmatch/services.py`, `fixtures/patternmatch/guard-resolution.json`, `codegen/service_{emit,consumer}.cpp`: OTP/native resolution and labeled fault coverage. `docs/immediate-guards.md`, `patternmatch-step7-{validation.md,evidence.json}`: contract/evidence.
+
 - `semantic/match_plan.{hpp,cpp}`: bounded normalized input/binding/literal plans and explicit continuations. `codegen/lowering_match.cpp`: tentative SSA, checked equality and function_clause; `abi/equality.hpp`, `runtime/src/terms/equality.cpp`: shared ownership-aware immediate exact service. `patternmatch/immediate.{py,escript}`, `codegen/match{.cmake,_consumer.cpp}`, `fixtures/patternmatch/immediate.json`: licensed source/OTP/native matching and both-width evidence. `docs/immediate-matching.md`, `patternmatch-step6-{validation.md,evidence.json}`: contract/evidence.
 
 - `compiler/src/semantic/patterns.hpp`: flat normalized kinds, original/ungrouped IDs

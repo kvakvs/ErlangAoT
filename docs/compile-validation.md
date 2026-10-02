@@ -60,3 +60,5 @@ constructors/moves. Catchable container construction and key/name copying fixed 
 failure; the final 16/16 run retains Debug iterator checks and allocation assertions.
 Small-ceiling and partial-write injections remain intentional test exceptions; the
 [migration ledger](test-migration.md) explains why public source cannot replace them.
+
+Pattern/guard step 7 adds immediate service/guard execution, 1,689 differential calls, 31 resolution cases and four injected-service workflows. Fresh combined Windows x64 Debug: 119/119 tests and full Lizard/clang-tidy over 205 units. See [step-7 validation](patternmatch-step7-validation.md); other native hosts and new sanitizer runs remain unclaimed.

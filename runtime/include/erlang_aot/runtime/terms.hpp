@@ -148,6 +148,8 @@ class Term final {
     TermResult<double> float_value() const;
     // Copy the atom's Unicode spelling as UTF-8, or extract true/false.
     TermResult<std::string> atom_utf8() const;
+    // Borrow validated UTF-8 bytes while this Term retains its immutable spelling pin.
+    TermResult<std::string_view> atom_spelling() const noexcept;
     // Extract the atom's stable runtime-local number, not an integer Term or a storage address.
     TermResult<AtomId> atom_id() const;
     TermResult<bool> boolean_value() const;

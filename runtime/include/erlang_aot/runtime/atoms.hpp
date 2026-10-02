@@ -24,6 +24,8 @@ class AtomStorage final {
     TermResult<Term> intern(std::string_view spelling) noexcept;
     // Admit only words issued by this runtime, without allocating or interning.
     TermResult<Term> lookup(Word word) const noexcept;
+    // Read a preinitialized canonical boolean; expression services never intern atoms.
+    TermResult<Term> boolean(bool value) const noexcept;
 
     // Observe retained entries for capacity accounting and registration diagnostics.
     std::size_t size() const noexcept { return names_.size(); }

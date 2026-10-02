@@ -1,5 +1,6 @@
 #include "module_atoms.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/services.hpp"
 #include "../semantic/symbols.hpp"
 #include "lowering_state.hpp"
 #include <llvm/TargetParser/Triple.h>
@@ -22,19 +23,39 @@ void pattern_atoms(const semantic::Function &function, std::set<std::string> &re
     }
 }
 
+// Guard roots and service outputs require preinitialized true/false slots alongside body literals.
+void roots(const semantic::Module &module, const semantic::Function &function, std::vector<ast::ExprId> &pending,
+           std::set<std::string> &result) {
+    const auto &clause = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(0);
+    pending.push_back(clause.body.at(0));
+    if (clause.guard || !function.services.empty()) {
+        result.insert("true");
+        result.insert("false");
+    }
+    if (clause.guard) {
+        for (const auto &alternative : clause.guard->alternatives) {
+            pending.insert(pending.end(), alternative.tests.begin(), alternative.tests.end());
+        }
+    }
+    pattern_atoms(function, result);
+}
+
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
     std::set<std::string> result;
     std::vector<ast::ExprId> pending;
     for (const auto &function : module.functions) {
-        const auto &syntax = std::get<ast::Function>(module.syntax->form(function.form).value);
-        pending.push_back(syntax.clauses.at(0).body.at(0));
-        pattern_atoms(function, result);
+        roots(module, function, pending, result);
     }
     while (!pending.empty()) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
+        if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value);
+            binary && semantic::immediate_operator(binary->operation)) {
+            result.insert("true");
+            result.insert("false");
+        }
         if (const auto *atom = std::get_if<ast::Atom>(&expression.value)) {
             result.insert(utf8(atom->name));
         }

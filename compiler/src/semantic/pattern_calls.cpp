@@ -1,6 +1,7 @@
 #include "../preprocessor/expression.hpp"
 #include "capabilities.hpp"
 #include "pattern_state.hpp"
+#include "services.hpp"
 #include <set>
 
 namespace erlang_aot::semantic {
@@ -114,7 +115,7 @@ void import_form(BindingAnalysis &state, const ast::ExprId &site, const ast::For
     }
 }
 
-// Resolve only the metadata needed by embedded read expressions; admitting compile attributes stays deferred.
+// Resolve only import/suppression metadata; capability analysis separately admits its inert supported forms.
 bool auto_import(BindingAnalysis &state, const ast::ExprId &site, const FunctionKey &key) {
     ImportState result;
     for (const auto &id : state.module.syntax->forms()) {
@@ -135,6 +136,10 @@ bool qualified(const ast::Module &syntax, const ast::RemoteExpression &remote, c
 }
 } // namespace
 
+bool guard_signature(const FunctionKey &key) {
+    return guard_bif(key.name, key.arity) || operator_signature(key.name, key.arity);
+}
+
 bool pattern_call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call) {
     const auto &syntax = *state.module.syntax;
     const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
@@ -144,5 +149,45 @@ bool pattern_call(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
     }
     const auto *remote = std::get_if<ast::RemoteExpression>(&target);
     return remote && qualified(syntax, *remote, call.arguments.size());
+}
+
+namespace {
+// Legacy tests resolve separately from expression calls and cannot be recovered through suppression metadata.
+bool legacy_name(const ast::Atom *name, std::size_t count) {
+    static const std::set<std::u32string> legacy{U"integer", U"float",     U"number", U"atom",   U"list",    U"tuple",
+                                                 U"pid",     U"reference", U"port",   U"binary", U"function"};
+    return name && count == 1 && legacy.contains(name->name);
+}
+
+// Both the obsolete name and its modern equivalent must remain unshadowed in this module.
+std::optional<FunctionKey> legacy(BindingAnalysis &state, const ast::ExprId &id, const ast::Atom &name) {
+    const FunctionKey old{name.name, 1};
+    FunctionKey modern{U"is_" + name.name, 1};
+    if (state.module.lookup.contains(old) || state.module.lookup.contains(modern) || !auto_import(state, id, old)) {
+        return {};
+    }
+    return modern;
+}
+} // namespace
+
+std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::ExprId &id,
+                                          const ast::CallExpression &call, bool top_test) {
+    const auto &syntax = *state.module.syntax;
+    const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
+    const auto *name = std::get_if<ast::Atom>(&target);
+    if (top_test && legacy_name(name, call.arguments.size())) {
+        return legacy(state, id, *name);
+    }
+    if (top_test && name && name->name == U"record" && call.arguments.size() == 2) {
+        return FunctionKey{U"is_record", 2};
+    }
+    if (!pattern_call(state, id, call)) {
+        return {};
+    }
+    if (!name) {
+        const auto &remote = std::get<ast::RemoteExpression>(target);
+        name = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote.function)).value);
+    }
+    return FunctionKey{name->name, call.arguments.size()};
 }
 } // namespace erlang_aot::semantic

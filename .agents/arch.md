@@ -1,5 +1,7 @@
 # Architecture
 
+- Pattern/guard step 7 resolves closed legal guard identities independently of executable availability. Local/import/suppression and legacy context are checked before lowering; bounded semantic failures clear service tables. Shared immediate services classify admitted terms, compare spelling-based atom order, select/query values and return canonical booleans. Semantic badarg rejects guards or raises in bodies; exact infrastructure failures propagate before output reads. Service results remain conservative in inference/specialization. See docs/immediate-guards.md.
+
 - Pattern/guard step 6 adds bounded flat match plans from normalized patterns and stable bindings. Variables/aliases retain tentative SSA values; small-integer/owned-atom/canonical-empty tests call shared checked runtime equality. Reusable mismatch edges remain silent; single-clause exhaustion raises function_clause. Unconditional heads keep compact projection IR. See docs/immediate-matching.md.
 
 - Pattern/guard steps 4–5 add stable clause/local binding identities and bounded
@@ -11,9 +13,9 @@
   expressions use OTP guard legality with shadow/import/suppression resolution.
   Iterative walks charge nodes, scopes, metadata and scalar storage; any semantic
   error/budget failure clears every module binding/normalization table. Immediate function-head matching is implemented by step 6; later
-  matching/guards remain gated. Step 9 owes clause isolation/rollback execution;
+  representations and grouped guards remain gated. Step 9 owes clause isolation/rollback execution;
   step 17 owns record expansion/field validation. See docs/{scoped-bindings,
-  pattern-semantics}.md. Steps 7–20 remain open.
+  pattern-semantics}.md. Steps 8–20 remain open.
 
 - Pattern/guard step 3 implements runtime-owned atoms and booleans. Per-runtime
   spelling/word indexes validate UTF-8 and enforce 1..2^26 caps (default 2^20).
@@ -35,12 +37,12 @@
   preserve the first error and outer cleanup permits independent retry. Builtin and
   heap services retain exact infrastructure failures separately from error reasons
   function_clause/badmatch and owned immediate payloads. Heap roots await step 11;
-  source matching/guards remain pending. See docs/generated-call-failures.md.
+  source failures now include immediate function_clause and body badarg. See docs/generated-call-failures.md.
 
 - Pattern/guard step 1 freezes semantics in `docs/patternmatch-matrix.md` and
   a source-checked guard signature catalog. Evidence separates suite parsing,
   authored OTP acceptance/results and unchanged immediate helper native execution.
-  Executable matching and guards remain pending; executable admission is unchanged.
+  Its historical evidence remains unchanged; steps 6–7 now execute the immediate matching/guard slice.
 
 - Textual IR views/artifacts retain per-instruction source locations through LLVM
   line-only metadata. Bounded comments beside instructions use retained physical

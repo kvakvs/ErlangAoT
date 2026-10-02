@@ -3,6 +3,17 @@
 #include <limits>
 
 namespace erlang_aot::runtime {
+TermResult<Term> AtomStorage::boolean(bool value) const noexcept {
+    const auto found = names_.find(value ? "true" : "false");
+    if (found == names_.end()) {
+        return std::unexpected(TermError::wrong_owner);
+    }
+    Term result;
+    result.value_ = found->second->word;
+    result.atom_ = found->second;
+    return result;
+}
+
 namespace {
 // Never reuse a raw atom word, even across destroyed runtimes or aborted registrations.
 TermResult<Word> reserve_word() noexcept {

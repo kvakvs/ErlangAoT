@@ -1,5 +1,6 @@
 #pragma once
 #include "patterns.hpp"
+#include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <functional>
 #include <map>
@@ -44,6 +45,15 @@ struct ClauseBindings {
     std::vector<BindingDefinition> definitions;
 };
 
+struct ServiceResolution {
+    // A resolved erlang signature is semantic authorization, independent of runtime builtin registrations.
+    FunctionKey identity;
+    bool guard_legal;
+    bool legacy_test;
+    // Missing operations denote legal signatures whose numeric/container/process owner is still deferred.
+    std::optional<abi::v1::ImmediateOperation> operation;
+};
+
 struct Function {
     // Retain declaration identity beside the immutable AST.
     FunctionKey key;
@@ -57,6 +67,8 @@ struct Function {
     std::vector<ClauseBindings> clause_bindings = {};
     // Validated head/body patterns retain source identities for later match planning, without enabling execution.
     std::vector<NormalizedPattern> patterns = {};
+    // Only semantically resolved service calls may reach lowering; keys borrow immutable owned syntax.
+    std::map<const ast::Expression *, ServiceResolution> services = {};
 };
 
 struct Module {

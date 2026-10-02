@@ -79,6 +79,20 @@ if(ERLANG_AOT_BUILD_RUNTIME)
     endforeach()
 
     add_executable(codegen_failure_emit failure_emit.cpp)
+    add_executable(codegen_service_emit service_emit.cpp)
+    erlang_aot_project_options(codegen_service_emit)
+    target_include_directories(codegen_service_emit PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
+    target_link_libraries(codegen_service_emit PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
+    target_compile_definitions(codegen_service_emit PRIVATE LOWERING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/codegen")
+    foreach(mode IN ITEMS O0-on O0-off O2-on O2-off)
+        add_test(NAME codegen_service_${mode} COMMAND "${CMAKE_COMMAND}"
+            "-DEMITTER=$<TARGET_FILE:codegen_service_emit>" "-DOPTIMIZATION=${mode}"
+            "-DCONSUMER=${CMAKE_CURRENT_SOURCE_DIR}/service_consumer.cpp"
+            "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/service-${mode}/$<CONFIG>"
+            "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake" "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/registration.cmake")
+        set_tests_properties(codegen_service_${mode} PROPERTIES TIMEOUT 180)
+    endforeach()
     erlang_aot_project_options(codegen_failure_emit)
     target_include_directories(codegen_failure_emit PRIVATE "${PROJECT_SOURCE_DIR}/compiler/src")
     target_link_libraries(codegen_failure_emit PRIVATE erlang_codegen erlang_semantic erlang_llvm_sdk)
@@ -217,6 +231,12 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/immediate/$<CONFIG>"
         "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
     set_tests_properties(patternmatch_immediate PROPERTIES TIMEOUT 300)
+    add_test(NAME patternmatch_services COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/services.py"
+        "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
+        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/services/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+    set_tests_properties(patternmatch_services PROPERTIES TIMEOUT 300)
     add_test(NAME codegen_measurements COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/measurements.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"
         "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/measurements/$<CONFIG>"

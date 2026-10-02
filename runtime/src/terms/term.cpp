@@ -57,6 +57,13 @@ TermResult<bool> Term::boolean_value() const {
 
 bool Term::is_boolean() const { return boolean_value().has_value(); }
 
+TermResult<std::string_view> Term::atom_spelling() const noexcept {
+    if (!atom_) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    return atom_->spelling;
+}
+
 Word Term::word() const noexcept { return value_; }
 
 TermKind Term::kind() const { return TermTag{value_}.get_kind(); }

@@ -1,6 +1,7 @@
 #include "semantic/types/inference.hpp"
 #include "semantic/bindings.hpp"
 #include "semantic/capabilities.hpp"
+#include "semantic/services.hpp"
 #include "semantic/types/declarations.hpp"
 #include <cstdio>
 #include <erlang_aot/compiler/parser.hpp>
@@ -37,6 +38,7 @@ unknown(X) -> id(X).
     modules.push_back(index(parsed.module, "facts.erl", report));
     auto &module = *modules.front();
     bind_parameters(module, report);
+    resolve_services(module, report);
     check_capabilities(module, report);
     const auto calls = resolve_calls(modules, report);
     const auto declared = t::resolve_declarations(modules, report);

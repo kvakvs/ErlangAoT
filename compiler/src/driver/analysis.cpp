@@ -4,6 +4,7 @@
 #include "../project/paths.hpp"
 #include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/services.hpp"
 
 namespace erlang_aot::cli {
 namespace {
@@ -13,6 +14,7 @@ void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis
         codegen::progress(request, "analysis", input.source_path);
         auto module = semantic::index(input.syntax, project::path_text(input.source_path), report);
         semantic::bind_parameters(*module, report);
+        semantic::resolve_services(*module, report);
         semantic::check_capabilities(*module, report);
         analysis.modules.push_back(std::move(module));
     }

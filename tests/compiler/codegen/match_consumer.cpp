@@ -44,8 +44,12 @@ Term term(ProcessContext &context, const std::string &token) {
 void print(const CallResult<Term> &result) {
     if (!result) {
         require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
-        require(result.error().reason == erlang_aot::abi::v1::ErrorReason::function_clause, "unexpected Erlang reason");
-        std::cout << "error:function_clause\n";
+        const auto reason = result.error().reason;
+        require(reason == erlang_aot::abi::v1::ErrorReason::function_clause ||
+                    reason == erlang_aot::abi::v1::ErrorReason::badarg,
+                "unexpected Erlang reason");
+        std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badarg ? "error:badarg\n"
+                                                                         : "error:function_clause\n");
         return;
     }
     const auto &value = *result;

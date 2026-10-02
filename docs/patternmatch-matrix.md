@@ -5,7 +5,7 @@ This is the acceptance and implementation boundary for
 The executable slice supports one clause with immediate literal, repeated-variable,
 alias or wildcard patterns and a single small-integer/atom/empty literal,
 binding-read or direct-call body expression. [Step 6](immediate-matching.md)
-implements immediate head matching; guards and later representations remain pending.
+implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries and single-test guards. Grouping and later representations remain pending.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors.

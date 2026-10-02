@@ -1,0 +1,200 @@
+[
+  {
+    "name": "qualified",
+    "body": "f(X) when erlang:is_atom(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "imported",
+    "metadata": "-import(erlang,[is_atom/1]).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "shadow",
+    "body": "f(X) when is_atom(X) -> X. is_atom(_) -> true.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "qualified_shadow",
+    "metadata": "-compile({no_auto_import,[is_atom/1]}).",
+    "body": "f(X) when erlang:is_atom(X) -> X. is_atom(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "suppressed",
+    "metadata": "-compile({no_auto_import,[is_atom/1]}).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "suppressed_all",
+    "metadata": "-compile(no_auto_import).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "suppressed_other",
+    "metadata": "-compile([{no_auto_import,[length/1]}]).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "import_suppressed",
+    "metadata": "-compile(no_auto_import). -import(erlang,[is_atom/1]).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "foreign_import",
+    "metadata": "-import(other,[is_atom/1]).",
+    "body": "f(X) when is_atom(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "foreign_remote",
+    "body": "f(X) when other:is_atom(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "wrong_arity",
+    "body": "f(X) when is_atom(X, X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "dynamic",
+    "body": "f(X) when X(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "user_call",
+    "body": "f(X) when helper(X) -> X. helper(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "hidden_call",
+    "body": "f(X) when true orelse helper(X) -> X. helper(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "hidden_arity",
+    "body": "f(X) when false andalso is_atom(X,X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "hidden_assign",
+    "body": "f(X) when true orelse (Y=X) -> X.",
+    "diagnostic": "guards cannot bind variables",
+    "capability": ""
+  },
+  {
+    "name": "legacy",
+    "body": "f(X) when integer(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "legacy_group",
+    "body": "f(X) when (integer(X)) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "legacy_nested",
+    "body": "f(X) when true andalso integer(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "legacy_qualified",
+    "body": "f(X) when erlang:integer(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "legacy_shadow",
+    "metadata": "-compile({no_auto_import,[is_integer/1]}).",
+    "body": "f(X) when integer(X) -> X. is_integer(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "legacy_float",
+    "body": "f(X) when float(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "conversion_float",
+    "body": "f(X) when erlang:float(X) -> X.",
+    "diagnostic": "",
+    "capability": "guards"
+  },
+  {
+    "name": "unavailable",
+    "body": "f(X) when self() =:= X -> X.",
+    "diagnostic": "",
+    "capability": "guards"
+  },
+  {
+    "name": "hidden_unavailable",
+    "body": "f(X) when false andalso self() =:= X -> X.",
+    "diagnostic": "",
+    "capability": "guards"
+  },
+  {
+    "name": "integer3",
+    "body": "f(X) when is_integer(X,0,10) -> X.",
+    "diagnostic": "",
+    "capability": "guards"
+  },
+  {
+    "name": "operator_qualified",
+    "body": "f(X) when erlang:'=:='(X,X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bad_compile_option",
+    "metadata": "-compile([no_auto_import,export_all]).",
+    "body": "f(X) -> X.",
+    "diagnostic": "",
+    "capability": "behavior-changing attributes"
+  },
+  {
+    "name": "overridden_reference",
+    "metadata": "-compile({no_auto_import,[is_reference/1,size/1]}).",
+    "body": "f(X) when is_reference(X) -> X. is_reference(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  },
+  {
+    "name": "qualified_reference",
+    "metadata": "-compile({no_auto_import,[is_reference/1,size/1]}).",
+    "body": "f(X) when erlang:is_reference(X) -> X. is_reference(X) -> X.",
+    "diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "imported_size",
+    "metadata": "-compile({no_auto_import,[size/1]}). -import(gb_sets,[size/1]).",
+    "body": "f(X) when size(X) -> X.",
+    "diagnostic": "illegal guard call",
+    "capability": ""
+  }
+]

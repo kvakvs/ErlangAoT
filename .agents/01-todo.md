@@ -180,8 +180,7 @@ map keys, patterns and guards as new representations become executable.
 
 ### F13 — Pattern matching and bindings
 
-Steps 4–5 now provide scoped binding identities and bounded pattern normalization,
-including sibling key/size legality; execution below remains pending.
+Steps 4–6 provide scoped bindings, bounded normalization and executable immediate head matching, including sibling key/size legality. Later representations and dispatch remain pending.
 See [step-5 validation](../docs/patternmatch-step5-validation.md).
 
 Meaning: destructure values and bind/check variables beyond the distinct variable
@@ -195,6 +194,8 @@ or wildcard parameters currently accepted.
   visibility and mismatches through real source.
 
 ### F14 — Guards
+
+Delivered step-7 slice: legal call resolution, immediate predicates/comparisons/queries and single-test guards with semantic/infrastructure failure separation; see docs/immediate-guards.md. Grouping, ordered dispatch and later representations remain open.
 
 Meaning: decide whether clauses apply using restricted guard expressions and
 their special failure rules.
