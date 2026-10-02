@@ -60,7 +60,10 @@ enum class ImmediateOperation : std::uint8_t {
     round,
     trunc,
     floor,
-    ceil
+    ceil,
+    map_size,
+    map_get,
+    is_map_key
 };
 } // namespace erlang_aot::abi::v1
 

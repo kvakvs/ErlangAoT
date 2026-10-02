@@ -119,6 +119,9 @@ llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal) 
 }
 
 llvm::Value *lower_operation(ExpressionLowering &state, Op operation, llvm::Value *left, llvm::Value *right) {
+    if (auto *map = lower_map_query(state, operation, left, right)) {
+        return map;
+    }
     const auto checked = arithmetic(operation);
     if (!checked) {
         return lower_immediate(state, operation, left, right);

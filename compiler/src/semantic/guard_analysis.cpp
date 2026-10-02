@@ -91,11 +91,11 @@ void visit(BindingAnalysis &state, const Visit &visit, bool guard, std::vector<V
 }
 
 // Every operand is traversed even behind constant lazy branches; no folding can hide semantic errors.
-void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, bool guard) {
+void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, bool guard, bool legacy = true) {
     std::vector<Visit> pending;
     pending.reserve(roots.size());
     for (const auto &root : roots) {
-        pending.push_back({root, guard});
+        pending.push_back({root, guard && legacy});
     }
     while (!pending.empty()) {
         const auto visit = pending.back();
@@ -128,6 +128,8 @@ void resolve_services(Module &module, const Reporter &out, std::size_t work_limi
     };
     for (auto &function : module.functions) {
         function.services.clear();
+        BindingAnalysis pattern_state{module, function, transactional, 0, work, limit};
+        expressions(pattern_state, pattern_reads(module, function), true, false);
         const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
         for (std::size_t i = 0; i < clauses.size(); ++i) {
             BindingAnalysis state{module, function, transactional, i, work, limit};

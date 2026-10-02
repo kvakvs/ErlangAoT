@@ -24,8 +24,6 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
 
-TermResult<Term> TermFactory::map(std::span<const std::pair<Term, Term>>) { return unavailable("TermFactory::map"); }
-
 TermResult<Term> TermFactory::binary(std::span<const std::byte>) { return unavailable("TermFactory::binary"); }
 
 TermResult<Term> TermFactory::bitstring(std::span<const std::byte>, std::size_t) {

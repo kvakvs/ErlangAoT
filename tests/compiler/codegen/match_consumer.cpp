@@ -3,6 +3,7 @@
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 
@@ -42,9 +43,15 @@ void print(const CallResult<Term> &result) {
     require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
     const auto reason = result.error().reason;
     if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value ||
-        reason == erlang_aot::abi::v1::ErrorReason::badmatch) {
+        reason == erlang_aot::abi::v1::ErrorReason::badmatch || reason == erlang_aot::abi::v1::ErrorReason::badmap ||
+        reason == erlang_aot::abi::v1::ErrorReason::badkey) {
         require(result.error().value.has_value(), "missing error payload");
-        std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badmatch ? "error:badmatch:" : "error:badarg_value:");
+        const std::map<erlang_aot::abi::v1::ErrorReason, std::string_view> names{
+            {erlang_aot::abi::v1::ErrorReason::badmatch, "badmatch"},
+            {erlang_aot::abi::v1::ErrorReason::badarg_value, "badarg_value"},
+            {erlang_aot::abi::v1::ErrorReason::badmap, "badmap"},
+            {erlang_aot::abi::v1::ErrorReason::badkey, "badkey"}};
+        std::cout << "error:" << names.at(*reason) << ':';
         print_value(*result.error().value);
         return;
     }
@@ -95,7 +102,7 @@ void calls(ProcessContext &context) {
         }
         const auto value = result ? std::optional<Term>{*result} : result.error().value;
         if (value && retained.size() < 128 &&
-            (value->is_cons() || value->kind() == TermKind::tuple || value->is_float())) {
+            (value->is_cons() || value->kind() == TermKind::tuple || value->is_float() || value->is_map())) {
             std::ostringstream text;
             wire::write(*value, text);
             retained.emplace_back(*value, text.str());

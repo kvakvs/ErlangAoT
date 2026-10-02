@@ -62,6 +62,8 @@ enum class TermKind : std::uint8_t {
     bignum,
     // Resolve immutable finite binary64 storage through the owner index.
     floating,
+    // Resolve a canonical immutable exact-key table through the owning heap index.
+    map,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

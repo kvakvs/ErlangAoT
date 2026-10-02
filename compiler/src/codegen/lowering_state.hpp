@@ -75,6 +75,14 @@ struct ServiceOutput {
 
 // Consume a checked success-only output after separating infrastructure failure from semantic rejection.
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection);
+// Stage source-ordered map construction/update through rooted checked services.
+llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map);
+// Resolve map BIFs separately from the two-operand numeric service; return null for other operations.
+llvm::Value *lower_map_query(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
+                             llvm::Value *right);
+// Evaluate scoped keys with semantic errors routed to the enclosing pattern mismatch.
+llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
+                               llvm::BasicBlock *mismatch);
 // Construct tuple/list/string expression values after their source-ordered children have completed.
 llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value);
 // Check candidate ownership/shape before extracting a rooted child; mismatch belongs to the pattern caller.

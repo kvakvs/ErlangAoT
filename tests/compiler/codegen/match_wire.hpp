@@ -31,8 +31,9 @@ inline std::string unhex(std::string_view input) {
 // Keep the recursively defined test grammar bounded independently of runtime traversal limits.
 inline Term read(ProcessContext &context, std::string_view &input, unsigned depth = 0) {
     check(!input.empty() && depth < 256);
-    if (input.starts_with("t(") || input.starts_with("c(")) {
+    if (input.starts_with("t(") || input.starts_with("c(") || input.starts_with("m(")) {
         const bool tuple = input.front() == 't';
+        const bool map = input.front() == 'm';
         input.remove_prefix(2);
         std::vector<Term> values;
         while (!input.starts_with(')')) {
@@ -49,6 +50,14 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
         TermFactory factory(context);
         if (tuple) {
             return factory.tuple(values).value();
+        }
+        if (map) {
+            std::vector<std::pair<Term, Term>> entries;
+            for (const auto &entry : values) {
+                check(entry.tuple_size() == 2);
+                entries.emplace_back(entry.tuple_element(0).value(), entry.tuple_element(1).value());
+            }
+            return factory.map(entries).value();
         }
         check(values.size() == 2);
         return factory.cons(values[0], values[1]).value();
@@ -102,6 +111,21 @@ inline void write(const Term &value, std::ostream &out = std::cout, unsigned dep
         for (unsigned char byte : value.atom_utf8().value()) {
             out << digits[byte >> 4] << digits[byte & 15];
         }
+    } else if (value.is_map()) {
+        out << "m(";
+        bool first = true;
+        for (const auto &[key, entry] : value.map_entries().value()) {
+            if (!first) {
+                out << ',';
+            }
+            first = false;
+            out << "t(";
+            write(key, out, depth + 1);
+            out << ',';
+            write(entry, out, depth + 1);
+            out << ')';
+        }
+        out << ')';
     } else if (value.is_float()) {
         const auto flags = out.flags();
         const auto fill = out.fill();

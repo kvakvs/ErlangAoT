@@ -5,7 +5,7 @@ This is the acceptance and implementation boundary for
 The executable slice supports ordered clauses and body sequences with exact integer,
 atom, tuple/list/string patterns, checked construction/access, aliases, repeated
 variables, binding reads and direct calls. [Step 6](immediate-matching.md)
-implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; [Step 12](container-matching.md) adds tuples/lists/strings; [Step 13](integer-matching.md) adds exact arbitrary integers and checked integer arithmetic; [Step 14](float-matching.md) adds finite floats, conversions and exact mixed numeric comparisons; maps/bitstrings/records remain pending.
+implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; [Step 12](container-matching.md) adds tuples/lists/strings; [Step 13](integer-matching.md) adds exact arbitrary integers and checked integer arithmetic; [Step 14](float-matching.md) adds finite floats, conversions and exact mixed numeric comparisons; [Step 15](map-matching.md) adds maps and computed-key matching; bitstrings/records remain pending.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors.

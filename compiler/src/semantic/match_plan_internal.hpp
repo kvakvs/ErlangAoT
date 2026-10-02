@@ -30,6 +30,10 @@ struct MatchPlanner {
     bool node(const NormalizedPattern &pattern, std::size_t input);
 };
 
+// Schedule each required map key independently, preserving duplicate value constraints.
+bool expand_map(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
+                std::vector<MatchTask> &pending);
+
 // Recognize only the container forms admitted by the shared checked runtime services.
 bool container_pattern(const NormalizedPattern &pattern);
 // Schedule shape/extraction and child constraints without recursive calls or unbounded pending work.

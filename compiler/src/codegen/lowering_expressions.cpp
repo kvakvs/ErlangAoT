@@ -45,6 +45,9 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
     }
+    if (const auto *map = std::get_if<ast::MapExpression>(&value)) {
+        return lower_map(state, *map);
+    }
     if (auto *container = lower_container(state, value)) {
         return container;
     }

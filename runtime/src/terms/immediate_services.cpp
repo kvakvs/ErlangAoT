@@ -42,7 +42,7 @@ bool predicate(Op operation, const Term &value) {
                                 false,
                                 false,
                                 value.is_float(),
-                                false,
+                                value.is_map(),
                                 false,
                                 false,
                                 false,

@@ -11,14 +11,20 @@ main([Root]) ->
             Value -> io:format("~s~n", [token(Value)])
         catch error:{badmatch,Value} -> io:format("error:badmatch:~s~n", [token(Value)]);
               error:{badarg,Value} -> io:format("error:badarg_value:~s~n", [token(Value)]);
+              error:{badmap,Value} -> io:format("error:badmap:~s~n", [token(Value)]);
+              error:{badkey,Value} -> io:format("error:badkey:~s~n", [token(Value)]);
               error:Reason -> io:format("error:~p~n", [Reason]) end
     end, Calls).
 
 %% Serialize the admitted domain using stable spellings and mathematical integers.
 token(Value) when is_float(Value) -> "f" ++ binary_to_list(binary:encode_hex(<<Value:64/float>>, lowercase));
 token(Value) when is_integer(Value) -> "i" ++ integer_to_list(Value);
+token(Value) when is_map(Value) -> "m(" ++ lists:join(",", lists:map(fun token/1, ordered(Value))) ++ ")";
 token(Value) when is_atom(Value) -> "a" ++ binary_to_list(binary:encode_hex(atom_to_binary(Value, utf8), lowercase));
 token([]) -> "nil";
 token({}) -> "tuple";
 token(Value) when is_tuple(Value) -> "t(" ++ lists:join(",", lists:map(fun token/1, tuple_to_list(Value))) ++ ")";
 token([Head|Tail]) -> "c(" ++ token(Head) ++ "," ++ token(Tail) ++ ")".
+
+%% Singleton-map order gives the documented exact key order, including integers/floats and signed zero.
+ordered(Map) -> lists:sort(fun({K1,_},{K2,_}) -> #{K1 => 0} < #{K2 => 0} end, maps:to_list(Map)).

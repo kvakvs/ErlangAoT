@@ -11,6 +11,8 @@ enum class MatchOperation : std::uint8_t {
     cons_shape,
     cons_head,
     cons_tail,
+    map_shape,
+    map_lookup,
     success,
     mismatch
 };
@@ -30,6 +32,8 @@ struct MatchNode {
     // Checked extraction writes a distinct candidate slot; index is a tuple arity or zero-based field position.
     std::size_t output = 0;
     std::size_t index = 0;
+    // Embedded map keys retain their analyzed incoming read bindings and failure continuation.
+    std::optional<ast::ExprId> key = {};
 };
 
 struct MatchPlan {

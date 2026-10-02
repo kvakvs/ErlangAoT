@@ -3,7 +3,15 @@
 
 namespace erlang_aot::abi::v1 {
 // Selection failures stay local control flow; typed reasons identify the admitted Erlang error outcomes.
-enum class ErrorReason : std::uint8_t { function_clause = 1, badmatch = 2, badarg = 3, badarg_value = 4, badarith = 5 };
+enum class ErrorReason : std::uint8_t {
+    function_clause = 1,
+    badmatch = 2,
+    badarg = 3,
+    badarg_value = 4,
+    badarith = 5,
+    badmap = 6,
+    badkey = 7
+};
 } // namespace erlang_aot::abi::v1
 
 // Native C++ services borrow a live context; generated code never inspects its layout.

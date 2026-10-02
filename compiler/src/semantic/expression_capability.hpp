@@ -39,7 +39,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::RemoteExpression &) const { return "dynamic calls"; }
 
-    std::string_view operator()(const ast::MapExpression &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::MapExpression &) const { return {}; }
 
     std::string_view operator()(const ast::RecordExpression &) const { return "heap expressions"; }
 

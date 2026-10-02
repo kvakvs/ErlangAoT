@@ -1,0 +1,117 @@
+#include "../semantic/match_plan.hpp"
+#include "lowering_state.hpp"
+#include <array>
+#include <erlang_aot/abi/maps.hpp>
+#include <erlang_aot/abi/term.hpp>
+#include <llvm/IR/Module.h>
+#include <llvm/TargetParser/Triple.h>
+#include <utility>
+
+namespace erlang_aot::codegen {
+namespace {
+using Op = abi::v1::MapOperation;
+
+// Select the target-native C++ spelling for rooted word-array input and a checked output slot.
+std::string_view symbol(const llvm::Triple &triple) {
+    if (triple.isWindowsMSVCEnvironment()) {
+        return triple.isArch64Bit() ? "?erlang_aot_map_v1@@YAEPEAXEPEB_K_KPEA_K@Z"
+                                    : "?erlang_aot_map_v1@@YAEPAXEPBIIPAI@Z";
+    }
+    return triple.isArch64Bit() ? "_Z17erlang_aot_map_v1PvhPKmmPm" : "_Z17erlang_aot_map_v1PvhPKjjPj";
+}
+
+// Semantic map errors carry their checked offending term; root cleanup follows the shared error transport.
+llvm::BasicBlock *rejection(ExpressionLowering &state, ServiceOutput result) {
+    if (state.rejection) {
+        return state.rejection;
+    }
+    auto &builder = state.builder;
+    auto *saved = builder.GetInsertBlock();
+    auto &context = state.entry.getContext();
+    auto *dispatch = llvm::BasicBlock::Create(context, "map.rejection", &state.entry);
+    auto *bad_map = llvm::BasicBlock::Create(context, "map.badmap", &state.entry);
+    auto *bad_key = llvm::BasicBlock::Create(context, "map.badkey", &state.entry);
+    builder.SetInsertPoint(dispatch);
+    auto *payload = builder.CreateAlignedLoad(state.word, result.slot, llvm::Align(state.word->getBitWidth() / 8));
+    auto *test =
+        builder.Insert(llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ, result.outcome,
+                                             builder.getInt8(static_cast<std::uint8_t>(abi::v1::MapOutcome::bad_map))));
+    builder.CreateCondBr(test, bad_map, bad_key);
+    builder.SetInsertPoint(bad_map);
+    raise_reason(state, abi::v1::ErrorReason::badmap, payload);
+    builder.SetInsertPoint(bad_key);
+    raise_reason(state, abi::v1::ErrorReason::badkey, payload);
+    builder.SetInsertPoint(saved);
+    return dispatch;
+}
+
+// Marshal source values into runtime-owned scratch roots, avoiding source-width native stack allocations.
+llvm::Value *service(ExpressionLowering &state, Op operation, std::span<llvm::Value *const> values) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto *arguments = builder.CreateGEP(state.word, state.roots->buffer,
+                                        llvm::ConstantInt::get(state.word, state.roots->next), "map.arguments");
+    for (auto *value : values) {
+        root_value(state, value);
+    }
+    auto *slot = root_slot(state);
+    auto callee = output.getOrInsertFunction(
+        symbol(output.getTargetTriple()),
+        llvm::FunctionType::get(
+            builder.getInt8Ty(),
+            {builder.getPtrTy(), builder.getInt8Ty(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
+    auto *outcome = builder.CreateCall(callee,
+                                       {state.entry.getArg(0), builder.getInt8(static_cast<std::uint8_t>(operation)),
+                                        arguments, llvm::ConstantInt::get(state.word, values.size()), slot},
+                                       "map.outcome");
+    const ServiceOutput result{outcome, slot};
+    return checked_value(state, result, rejection(state, result));
+}
+} // namespace
+
+llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map) {
+    std::vector<llvm::Value *> values;
+    const auto read = [&](const ast::ExprId &id) { return state.values.at(&state.module.syntax->expression(id)); };
+    if (map.base) {
+        values.push_back(read(*map.base));
+    }
+    for (const auto &field : map.fields) {
+        values.push_back(read(field.key));
+        values.push_back(read(field.value));
+        if (map.base) {
+            values.push_back(llvm::ConstantInt::get(
+                state.word, *abi::v1::IntegerEncoding<32>::encode(field.kind == ast::MapFieldKind::exact ? 1 : 0)));
+        }
+    }
+    return service(state, map.base ? Op::update : Op::make, values);
+}
+
+llvm::Value *lower_map_query(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
+                             llvm::Value *right) {
+    using Query = abi::v1::ImmediateOperation;
+    switch (operation) {
+    case Query::map_size:
+        return service(state, Op::size, std::array{left});
+    case Query::map_get:
+        return service(state, Op::get, std::array{right, left});
+    case Query::is_map_key:
+        return service(state, Op::contains, std::array{right, left});
+    default:
+        return nullptr;
+    }
+}
+
+llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
+                               llvm::BasicBlock *mismatch) {
+    auto *saved = std::exchange(state.rejection, mismatch);
+    llvm::Value *value = nullptr;
+    if (node.operation == semantic::MatchOperation::map_shape) {
+        value = service(state, Op::test, std::array{input});
+    } else {
+        auto *key = lower_body(state, *node.key);
+        value = service(state, Op::get, std::array{input, key});
+    }
+    state.rejection = saved;
+    return value;
+}
+} // namespace erlang_aot::codegen

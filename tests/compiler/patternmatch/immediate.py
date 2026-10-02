@@ -13,6 +13,8 @@ def token(value):
         return "t(" + ",".join(map(token, value)) + ")" if value else "tuple"
     if isinstance(value, list):
         return "c(" + token(value[0]) + "," + token(value[1:]) + ")" if value else "nil"
+    if isinstance(value, dict) and "map" in value:
+        return "m(" + ",".join(token(tuple(entry)) for entry in value["map"]) + ")"
     if isinstance(value, dict):
         return "c(" + ",".join(map(token, value['cons'])) + ")"
     if isinstance(value, float):
@@ -28,6 +30,8 @@ def erl(value):
         return "{" + ",".join(map(erl, value)) + "}"
     if isinstance(value, list):
         return "[" + ",".join(map(erl, value)) + "]"
+    if isinstance(value, dict) and "map" in value:
+        return "#{" + ",".join(erl(k) + "=>" + erl(v) for k,v in value["map"]) + "}"
     if isinstance(value, dict):
         return "[" + "|".join(map(erl, value['cons'])) + "]"
     if isinstance(value, float):

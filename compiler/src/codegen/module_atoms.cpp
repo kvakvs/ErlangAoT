@@ -30,6 +30,8 @@ void roots(const semantic::Module &module, const semantic::Function &function, s
     const auto &definition = std::get<ast::Function>(module.syntax->form(function.form).value);
     const auto expressions = semantic::function_roots(definition);
     pending.insert(pending.end(), expressions.begin(), expressions.end());
+    const auto keys = semantic::pattern_reads(module, function);
+    pending.insert(pending.end(), keys.begin(), keys.end());
     if (!function.services.empty() ||
         std::ranges::any_of(definition.clauses, [](const auto &clause) { return clause.guard.has_value(); })) {
         result.insert("true");

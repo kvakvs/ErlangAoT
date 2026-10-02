@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–14 are
-complete; steps 15–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–15 are
+complete; added step 15a and steps 16–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -683,39 +683,39 @@ are implemented. Other native runners and new sanitizer runs remain unclaimed.
 
 ### 15. Implement maps and bound-key matching (F08/F12)
 
-- [ ] Implement rooted construction, association/exact updates, exact-key
+- [x] Implement rooted construction, association/exact updates, exact-key
   lookup, map equality/order and checked size/key services. Preserve evaluation
   order; integer/float keys remain distinct and insertion order does not affect
   equality.
-  - [ ] Define immutable map storage and staged construction/update services;
+  - [x] Define immutable map storage and staged construction/update services;
     root keys/values while evaluating entries and roll back failed construction.
-  - [ ] Use exact term equality for key identity and implement
+  - [x] Use exact term equality for key identity and implement
     missing-key/non-map outcomes for lookup and exact update separately from
     allocation failures.
-  - [ ] Implement bounded equality/order independent of insertion history; cover
+  - [x] Implement bounded equality/order independent of insertion history; cover
     nested keys/values, duplicate updates and distinct integer/float keys.
-- [ ] Use checked exact-key services and implemented guard expressions. Evaluate
+- [x] Use checked exact-key services and implemented guard expressions. Evaluate
   legal key expressions in their defined incoming scope, preserving failures and
   excluding illegal bindings.
-  - [ ] Lower normalized key expressions against the recorded incoming binding
+  - [x] Lower normalized key expressions against the recorded incoming binding
     environment; keep sibling pattern definitions unavailable to those reads.
-  - [ ] Evaluate and root each key as required by its source semantics; retain
+  - [x] Evaluate and root each key as required by its source semantics; retain
     the pattern-context failure continuation around any fallible key
     computation.
-- [ ] Match every required `:=` association; allow extra keys. Treat `#{}` as a
+- [x] Match every required `:=` association; allow extra keys. Treat `#{}` as a
   map type test, and retain all value constraints when key expressions resolve
   equally.
-  - [ ] Emit a map type test followed by required-key lookups and recursive
+  - [x] Emit a map type test followed by required-key lookups and recursive
     value plans; do not require the candidate map's size to equal the pattern's
     size.
-  - [ ] Preserve separate value constraints for duplicate/equal computed keys;
+  - [x] Preserve separate value constraints for duplicate/equal computed keys;
     test extra/missing keys, contradictory constraints and empty-map patterns.
-- [ ] Reuse rooted checked lookup rather than duplicating map layout knowledge
+- [x] Reuse rooted checked lookup rather than duplicating map layout knowledge
   in LLVM lowering. Keep key expression failure distinct from infrastructure
   failure.
-  - [ ] Pass lookup results through checked service interfaces and root
+  - [x] Pass lookup results through checked service interfaces and root
     extracted values across later key computations and nested matches.
-  - [ ] Verify mismatch discards candidate bindings/roots, semantic errors
+  - [x] Verify mismatch discards candidate bindings/roots, semantic errors
     follow the correct context, and injected failures propagate with successful
     later retry.
 
@@ -729,6 +729,22 @@ repeated names.
 t_map_size/1, t_update_exact/1, t_duplicate_keys/1 and t_key_expressions/1.
 Compare nested/compound keys, extra/missing keys, duplicate constraints, illegal
 sibling bindings, badmap/ badkey and failed-construction cleanup with OTP.
+
+Completion: [step-15 validation](../docs/patternmatch-step15-validation.md),
+[retained evidence](../docs/patternmatch-step15-evidence.json) and
+[map contract](../docs/map-matching.md). Fresh Windows x64: 131/131 CTests,
+8,010 OTP/native calls in four policies, both target widths, full 244-unit
+quality checks and formatting passed. Immutable rooted maps, exact keys,
+source-ordered updates, computed-key patterns and error payloads are implemented.
+
+### 15a. Retain project-owned OTP golden fixtures (added by user)
+
+- [ ] Pregenerate source modules, inputs and expected values/errors using OTP;
+  retain license notices, reference/oracle versions, hashes and adaptations.
+- [ ] Make routine building/testing independent of an OTP installation/checkout.
+  Keep explicit regeneration and optional upstream audits separate from tests.
+- [ ] Validate stored expectations through real native workflows, run the fresh
+  combined build/CTest/quality gate, and commit this step separately from 14/15.
 
 ### 16. Implement bitstring construction, extraction and matching (F09)
 

@@ -1,3 +1,4 @@
+#include "binding_state.hpp"
 #include "capabilities.hpp"
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
@@ -63,32 +64,13 @@ std::optional<std::int64_t> integer_literal(const ast::Module &syntax, ast::Expr
 }
 
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression) {
-    if (const auto *tuple = std::get_if<ast::Tuple>(&expression.value)) {
-        return tuple->elements;
-    }
-    if (const auto *list = std::get_if<ast::List>(&expression.value)) {
-        auto children = list->elements;
-        if (list->tail) {
-            children.push_back(*list->tail);
-        }
-        return children;
-    }
-    if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
-        return {group->expression};
-    }
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
         return call->arguments;
     }
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         return {match->right};
     }
-    if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
-        return {binary->left, binary->right};
-    }
-    if (const auto *unary = std::get_if<ast::UnaryExpression>(&expression.value)) {
-        return {unary->operand};
-    }
-    return {};
+    return binding_children(expression.value);
 }
 
 std::vector<ast::ExprId> function_roots(const ast::Function &function) {

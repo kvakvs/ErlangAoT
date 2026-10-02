@@ -1,7 +1,7 @@
 #pragma once
 
 // TermFactory constructs integers, atoms/booleans and immutable tuple/list graphs with checked ownership.
-// Later map/binary/identity constructors remain explicit reporting placeholders.
+// Later binary/identity constructors remain explicit reporting placeholders.
 #include <array>
 #include <cstddef>
 #include <cstdint>

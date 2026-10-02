@@ -13,7 +13,7 @@
     "body": "f({[], {}, [A,B|T], \"abc\", #{a := V}}) -> {A,B,T,V}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_aliases",
@@ -61,7 +61,7 @@
     "body": "f(V) -> #{K := X} = (K = V), X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_tuple",
@@ -69,7 +69,7 @@
     "body": "f(Int, M) -> #{{tag,Int+1} := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_call",
@@ -85,7 +85,7 @@
     "body": "f(X, Y, M) -> #{erlang:element(X,Y) := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_binary",
@@ -93,7 +93,7 @@
     "body": "f(Int,M) -> #{{tag,<<Int:42>>} := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": "heap expressions"
   },
   {
     "name": "pat_key_map",
@@ -101,7 +101,7 @@
     "body": "f(#{#{a => 1} := V}) -> V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_badarith",
@@ -109,7 +109,7 @@
     "body": "f(#{1 div 0 := V}) -> V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_bool",
@@ -117,7 +117,7 @@
     "body": "f(#{true andalso 1 := V}) -> V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_new_bif",
@@ -125,7 +125,7 @@
     "body": "f(Int,M) -> #{is_integer(Int,1,2) := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": "guards"
   },
   {
     "name": "pat_bin_sequential",
@@ -381,7 +381,7 @@
     "body": "f(K,M) -> ({K,_} = #{K := X}) = M, X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_match",
@@ -437,7 +437,7 @@
     "body": "f(#{erlang:length([]) := V}) -> V. length(_) -> 0.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_unreachable",
@@ -637,7 +637,7 @@
     "body": "f(#{erlang:'+'(1,2) := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_no_auto",
@@ -661,7 +661,7 @@
     "body": "-compile({no_auto_import,[length/1]}). f(#{tuple_size({}) := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_no_auto_remote",
@@ -669,7 +669,7 @@
     "body": "-compile(no_auto_import). f(#{erlang:length([]) := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_import",
@@ -685,7 +685,7 @@
     "body": "-compile(no_auto_import). -import(erlang,[length/1]). f(#{length([]) := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_unit_default",
@@ -725,7 +725,7 @@
     "body": "f(#{<<\"a\":16>> := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": "heap expressions"
   },
   {
     "name": "pat_size_bad_modifier",

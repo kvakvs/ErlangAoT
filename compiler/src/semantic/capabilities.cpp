@@ -46,6 +46,12 @@ void unsupported(const Module &module, const ast::NodeSource &source, std::strin
 
 // Literal limits precede admission and lowering even when the enclosing expression could be folded.
 bool literal_limit(const Module &module, const ast::Expression &expression, const Reporter &out) {
+    const auto *map = std::get_if<ast::MapExpression>(&expression.value);
+    if (map && !map->base &&
+        std::ranges::any_of(map->fields, [](const auto &field) { return field.kind == ast::MapFieldKind::exact; })) {
+        report(module, &expression.source, "map construction requires '=>' associations", out);
+        return true;
+    }
     const auto *integer = std::get_if<ast::IntegerLiteral>(&expression.value);
     if (integer && integer->value.decimal.size() > 10'000) {
         report(module, &expression.source, "integer literal digit limit exceeded", out);
@@ -116,6 +122,7 @@ void head(const Module &module, const Function &function, std::size_t index, con
 // Validate every candidate, including unreachable or unexported bodies.
 void function(const Module &module, const Function &function, const ast::Function &value, const Reporter &out,
               const unsigned bits) {
+    expressions(module, function, pattern_reads(module, function), out, bits);
     for (std::size_t i = 0; i < value.clauses.size(); ++i) {
         const auto &clause = value.clauses[i];
         head(module, function, i, clause, out, bits);

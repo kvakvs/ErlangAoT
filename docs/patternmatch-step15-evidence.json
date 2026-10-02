@@ -1,0 +1,35 @@
+{
+  "calls": 8010,
+  "source": "lib\\compiler\\test\\map_SUITE.erl",
+  "source_sha256": "c2a33af83830a5fa708415a7bccba4b83f16605768d7a79013b8fa9948bfe21a",
+  "helpers": [
+    {
+      "function": "map_is_size/2",
+      "body": "map_is_size(M,N) when map_size(M) =:= N -> true;\nmap_is_size(_,_) -> false.",
+      "adaptations": "none"
+    },
+    {
+      "function": "check_map_value/3",
+      "body": "check_map_value(Map, Key, Value) when map_get(Key, Map) =:= Value -> true;\ncheck_map_value(_, _, _) -> false.",
+      "adaptations": "none"
+    },
+    {
+      "function": "map_get_head/1",
+      "body": "map_get_head(M) when map_get(a, M) =:= 1 -> true;\nmap_get_head(_) -> false.",
+      "adaptations": "none"
+    }
+  ],
+  "adaptations": "t_update_exact operations use complete parameterized wrappers; t_key_expressions compound/call/division keys use body matches and retain failure; binary/case/fun/message portions remain with their owners; t_duplicate_keys repeated map tests become ordered clauses, supplemented by duplicate/equal key constraints",
+  "wrapper_sha256": "ee33ecc8878887bb92ea9ae4ca3c1cdd929341d42fcd60b0e2ed7e0cc23de8a3",
+  "client_sha256": "d7ccf12070c632111a49dbb44756946f630ecc983edba789bf2ef0f356e0fdb2",
+  "reference_revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+  "oracle": "OTP 29.1.1 / ERTS 17.1",
+  "native_platform": "Windows x64",
+  "policies": [
+    "O0",
+    "O0-no-specialization",
+    "O2",
+    "O2-no-specialization"
+  ],
+  "foreign_execution": "not attempted"
+}

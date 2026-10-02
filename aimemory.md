@@ -1,3 +1,7 @@
+# Current checkpoint 2026-10-02
+
+Step14 committed416dfd3. Step15 maps passed fresh131/131286.68s +244productionquality; commit required next. User added separate step15a: project-owned OTP generated inputs/results; OTP must NOT be required for building/testing (user modifiedAGENTS.md, preserve and exclude map commit). 15a currentlydraft filesstored.py/regenerate.py +generated10corpora49,803results about9MB; frozen native test/CMake versions backed up inbuild/patternmatch-step15/fixture-update. Tests temporarilyreturned toliveOTP fordistinctmapcommit;8oldfiles mayhaveformatting-onlydiff, exclude frommapcommit. DoNOTgitreset/restore; autoreviewrejectedHEADreset8testfiles toavoidlosingfixturework. Safe backups exist but noresetneeded. Freeze step15a must also address generalconfigure+parser/semantic OTPdependencies, notjustnative10. No subagentsauthorized. Useroriginalfinishthrough20continueafter15a.
+
 # Current task checkpoint (2026-10-02)
 
 User resumed and twice requested completing .agents/10-patternmatch.md through step20, committing each step. Latest instruction supersedes previous stop-at13. Step14 is validated; commit title `[compiler] Implement floats, mixed comparisons and numeric guards (F11/F12)`. NEXT step15 maps, then16 bitstrings,17 records,18 guards,19 optimization,20 final validation. No subagents authorized. Source branch started clean at c105939. No user changes to preserve.

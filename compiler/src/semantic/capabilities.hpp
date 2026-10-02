@@ -8,6 +8,8 @@ void check_capabilities(const Module &module, const Reporter &out, unsigned word
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression);
 // Return guard/body roots in source order across every candidate; heads use normalized pattern plans.
 std::vector<ast::ExprId> function_roots(const ast::Function &function);
+// Enumerate analyzed map key expressions independently of value-pattern definitions.
+std::vector<ast::ExprId> pattern_reads(const Module &module, const Function &function);
 // Strip source-only grouping while retaining the original node for diagnostics.
 ast::ExprId ungroup(const ast::Module &syntax, ast::ExprId expression);
 // Decode supported signed literals using the eventual target word width, never unchecked casts.

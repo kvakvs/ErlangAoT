@@ -80,23 +80,44 @@ bool constrained(const semantic::MatchPlan &plan) {
     });
 }
 
-// Binding values are tentative SSA definitions; every exact test has explicit caller-owned mismatch edges.
+// Shape checks preserve the candidate; extraction services populate a separate candidate slot.
+bool extracted(semantic::MatchOperation operation) {
+    using Op = semantic::MatchOperation;
+    return operation == Op::tuple_element || operation == Op::cons_head || operation == Op::cons_tail ||
+           operation == Op::map_lookup;
+}
+
+// Keep runtime shape/lookup emission independent from scalar binding and exact-equality constraints.
+bool extraction(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
+                const std::vector<llvm::BasicBlock *> &blocks) {
+    llvm::Value *result = nullptr;
+    if (const auto operation = inspection(node.operation)) {
+        result = lower_inspection(state, *operation, values[node.input], node.index, blocks.at(node.mismatch));
+    } else if (node.operation == semantic::MatchOperation::map_shape ||
+               node.operation == semantic::MatchOperation::map_lookup) {
+        result = lower_map_pattern(state, node, values[node.input], blocks.at(node.mismatch));
+    }
+    if (!result) {
+        return false;
+    }
+    if (extracted(node.operation)) {
+        values[node.output] = result;
+    }
+    state.builder.CreateBr(blocks.at(node.success));
+    return true;
+}
+
+// Bindings remain tentative; every failed constraint reaches the caller-owned mismatch continuation.
 void node(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
           const std::vector<llvm::BasicBlock *> &blocks) {
     locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(node.source).source);
     if (node.input >= values.size()) {
         throw std::invalid_argument("lowering: match input is out of range");
     }
-    auto *input = values[node.input];
-    if (const auto operation = inspection(node.operation)) {
-        auto *result = lower_inspection(state, *operation, input, node.index, blocks.at(node.mismatch));
-        if (node.operation != semantic::MatchOperation::tuple_shape &&
-            node.operation != semantic::MatchOperation::cons_shape) {
-            values[node.output] = result;
-        }
-        state.builder.CreateBr(blocks.at(node.success));
+    if (extraction(state, node, values, blocks)) {
         return;
     }
+    auto *input = values[node.input];
     if (node.operation == semantic::MatchOperation::bind) {
         state.bindings.emplace(*node.binding, input);
         state.builder.CreateBr(blocks.at(node.success));

@@ -95,13 +95,16 @@ bool chain(MatchPlanner &state, const PatternVisit &visit, const NormalizedPatte
 } // namespace
 
 bool container_pattern(const NormalizedPattern &pattern) {
-    return pattern.kind == PatternKind::tuple || pattern.kind == PatternKind::list ||
-           pattern.kind == PatternKind::prefix ||
+    return pattern.kind == PatternKind::map || pattern.kind == PatternKind::tuple ||
+           pattern.kind == PatternKind::list || pattern.kind == PatternKind::prefix ||
            (pattern.literal && std::holds_alternative<ast::StringLiteral>(*pattern.literal));
 }
 
 bool expand_container(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
                       std::vector<MatchTask> &pending) {
+    if (pattern.kind == PatternKind::map) {
+        return expand_map(state, visit, pattern, pending);
+    }
     if (pattern.kind == PatternKind::tuple) {
         return tuple(state, visit, pattern, pending);
     }

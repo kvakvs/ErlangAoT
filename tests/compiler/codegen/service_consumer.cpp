@@ -3,6 +3,7 @@
 #include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/immediate_services.hpp>
+#include <erlang_aot/abi/maps.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <limits>
@@ -18,6 +19,8 @@ extern Word *injected_roots(void *, std::size_t) noexcept asm("step11_roots");
 extern std::uint8_t injected_construct(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept
     asm("step12_construct");
 extern std::uint8_t injected_inspect(void *, std::uint8_t, Word, std::size_t, Word *) noexcept asm("step12_inspect");
+
+extern std::uint8_t injected_map(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept asm("step15_map");
 
 namespace {
 // Select faults after source-generated code has entered the real invocation scope.
@@ -228,6 +231,23 @@ std::uint8_t injected_construct(void *opaque, std::uint8_t operation, const Word
     return result;
 }
 
+// Map constructors and key lookups share rooted arguments, semantic payloads and exact infrastructure statuses.
+std::uint8_t injected_map(void *opaque, std::uint8_t operation, const Word *values, std::size_t count,
+                          Word *output) noexcept {
+    auto &context = *static_cast<ProcessContext *>(opaque);
+    ++calls;
+    for (const auto value : std::span(values, count)) {
+        unrooted |= !context.roots().contains(value);
+    }
+    if (fault != abi::v1::Status::ok) {
+        context.generated_calls().fail_service(fault);
+        return 3;
+    }
+    const auto result = erlang_aot_map_v1(opaque, operation, values, count, output);
+    unrooted |= result != 3 && !context.roots().contains(*output);
+    return result;
+}
+
 // Wrong shape remains a mismatch; a reached ownership/allocation fault must terminate selection.
 std::uint8_t injected_inspect(void *opaque, std::uint8_t operation, Word value, std::size_t index,
                               Word *output) noexcept {
@@ -286,8 +306,8 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
-        for (const auto name :
-             {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard", "float_body"}) {
+        for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard",
+                                "float_body", "map_guard", "map_body", "map_pattern"}) {
             failures(context, "service_answer", name);
         }
         heap_lifetimes(context);

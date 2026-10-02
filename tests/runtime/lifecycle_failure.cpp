@@ -292,6 +292,35 @@ void check_integer_construction() {
 }
 
 // Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
+void check_map_construction() {
+    using namespace erlang_aot::runtime;
+    const auto key = Term::from_word(encode_integer(42).value()).value();
+    const auto value = Term::from_word(encode_integer(7).value()).value();
+    const std::array entries{std::pair{key, value}, std::pair{value, key}};
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            TermFactory factory(context);
+            remaining = ordinal;
+            const auto result = factory.map(entries);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = result.has_value();
+            if (!succeeded) {
+                require(result.error() == TermError::out_of_memory, "map allocation status lost");
+                require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
+                        "failed map left published storage");
+                require(factory.map(entries)->map_size() == 2, "map retry lost entries");
+            }
+        }
+        require(live_allocations == baseline, "map allocation sweep leaked");
+    }
+    require(succeeded, "map allocation sweep never succeeded");
+}
+
+// Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
 void check_float_construction() {
     using namespace erlang_aot::runtime;
     bool succeeded = false;
@@ -463,6 +492,7 @@ int main() {
         check_container_construction(true);
         check_integer_construction();
         check_float_construction();
+        check_map_construction();
         check_integer_arithmetic();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
