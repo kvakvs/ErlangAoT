@@ -1,9 +1,9 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–19 are
-complete; added step 15a is complete; step 20 remains incomplete. Completion evidence is linked under each
-finished step.
+prerequisites are included below in implementation order. Steps 1–20 and added step 15a are complete. Completion evidence is linked
+under each finished step; the [final scoped validation](../docs/patternmatch-step20-validation.md)
+records delivered contexts, remaining owners and unavailable native runners.
 
 Each completed step should end with a commit, commit title will be "[compiler]
 <step name>"
@@ -16,8 +16,12 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Bitstrings and their checked queries are implemented. Ordinary record construction, access, patterns and tests are implemented; the remaining guard audit and final verification await their planned steps. The steps below replace these gaps in one sequence; there is no
-separate prerequisite plan.
+Completed steps execute patterns, rooted construction/access, exact structural
+comparisons and grouped/boolean guards over every admitted representation in
+ordered-clause functions and body matches/sequences. The guard catalog, conservative
+binding facts, optimization proof audit and final validation are complete. This
+plan includes only the necessary runtime prerequisites; no separate prerequisite
+plan is needed.
 
 Other source contexts and runtime features remain in the backlog: case/if,
 catch/try, funs, receive, process/port/reference services, recursion,
@@ -33,7 +37,7 @@ Per user-added step 15a, routine tests use project-owned pregenerated goldens.
 OTP extraction/execution below happens only during explicit regeneration or
 opt-in upstream audits; neither OTP nor its checkout is a build/test prerequisite.
 
-The official maint-29 head was checked on 2026-10-02 and matched the checkout
+The official maint-29 head was re-fetched on 2026-10-03 and matched the checkout
 and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. The originally untracked
 `lib/stdlib/src/1.ir` was removed by the user during step 4. At implementation
 start, recheck upstream and follow
@@ -964,31 +968,31 @@ observations pass; both widths handle type/IR inspection. The fresh gate passes
 
 ### 20. Finish validation and publish the scoped contract
 
-- [ ] Run the provenance-checked OTP helper corpus, bounded seeded regressions
+- [x] Run the provenance-checked OTP helper corpus, bounded seeded regressions
   and fresh combined build/CTest/Lizard/clang-tidy gate. Exercise deep/wide
   inputs, many alternatives, work/IR limits, allocation failures and cleanup.
-  - [ ] Reconcile fixture provenance, adaptations, hashes and expected outcomes;
+  - [x] Reconcile fixture provenance, adaptations, hashes and expected outcomes;
     map each in-scope matrix row to executable evidence and resolve coverage
     gaps.
-  - [ ] Run positional/project and local/remote workflows across all four
+  - [x] Run positional/project and local/remote workflows across all four
     policies, including failed publication, ABI rejection, recovery and bounded
     stress cases.
-  - [ ] Format changed code, freshly configure compiler/runtime with testing
+  - [x] Format changed code, freshly configure compiler/runtime with testing
     enabled, build, run CTest and run `check-quality`; retain logs without
     relaxed checks.
-  - [ ] Execute available native platform workflows and record missing runners;
+  - [x] Execute available native platform workflows and record missing runners;
     keep parser-only, foreign-object and layout evidence separate from native
     results.
-- [ ] Update affected semantic/compiler/runtime/ABI contracts, examples,
+- [x] Update affected semantic/compiler/runtime/ABI contracts, examples,
   capability coverage, .agents/arch.md, .agents/files.md, aimemory.md and
   delivered backlog slices. Preserve historical evidence and explicitly record
   native platform gaps.
-  - [ ] Describe final binding, matching, guard-error, representation and
+  - [x] Describe final binding, matching, guard-error, representation and
     ownership contracts; align capability diagnostics and run the documented
     examples.
-  - [ ] Update compact architecture/file maps and memory, and close only the
+  - [x] Update compact architecture/file maps and memory, and close only the
     delivered F13/F14 and prerequisite backlog slices with links to validation.
-  - [ ] Publish the final validation record with exact source/oracle/tool
+  - [x] Publish the final validation record with exact source/oracle/tool
     versions, supported contexts, remaining dependencies and platform limits;
     retain older records.
 
@@ -1002,6 +1006,14 @@ specialization on/off, comparing values and error class/reason with OTP. Include
 failed publication, ABI mismatch, post-failure recovery and documented examples.
 Execute available native Windows, Linux and Apple Silicon workflows; label
 foreign-object checks separately.
+
+Completion: [step-20 validation](../docs/patternmatch-step20-validation.md),
+[final evidence](../docs/patternmatch-step20-evidence.json) and
+[scoped semantic matrix](../docs/patternmatch-matrix.md). All 19 corpora reproduce
+against OTP; 67,634 native outcomes run in all eight driver/policy combinations.
+The seeded closure corpus, examples, fault/limit/publication/recovery workflows
+pass. Fresh Windows x64 Debug: 124/124 CTests, all 258 quality units, no weakened
+checks. Other native hosts and new sanitizer coverage remain explicit gaps.
 
 ## Implementation locations
 

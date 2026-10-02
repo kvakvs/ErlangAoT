@@ -5,7 +5,9 @@ ownership before any heap access; host handles retain backing and deny access
 after context expiration. See [generated roots](generated-roots.md) and the
 [numeric](integer-matching.md), [float](float-matching.md), [map](map-matching.md)
 and [bitstring](bitstring-matching.md) contracts. Identity/callable/native-record
-families and cross-process graph copying remain deferred.
+families and cross-process graph copying remain deferred. The
+[completed scoped contract](patternmatch-step20-validation.md) records native,
+failure, ownership and platform evidence for this admitted domain.
 
 # Runtime immediate-term boundary
 

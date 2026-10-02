@@ -23,26 +23,28 @@ continue to derive widths/alignment from the target layout. Runtime stays LLVM-f
 
 | Outcome | Transport | Consumer action |
 | --- | --- | --- |
-| Successful expression/call | Checked immediate return word; empty channel | Consume the value |
+| Successful expression/call | Checked target-word term; empty channel and owned result handoff | Consume the value |
 | Pattern mismatch | Matcher continuation (steps 6/9) | Try next candidate; no diagnostic/channel mutation |
 | Guard rejection | Guard continuation (steps 7/8) | Try next candidate; no diagnostic/channel mutation |
 | Exhausted function clauses | `CallError::erlang_exception`, reason `function_clause` | Stop caller; host receives failure |
 | Body match failure | Same error class, reason `badmatch`, owned offending `Term` | Stop caller; host receives failure |
 | Ordinary record access failure | Same error class, reason `badrecord`, owned offending `Term` (step 17) | Stop caller; guard context instead rejects silently |
 | Body service argument failure | Same error class, reason `badarg` (step 7) | Stop caller; guard context instead rejects silently |
+| Body arithmetic failure | Same error class, reason `badarith` | Stop caller; guard context instead rejects silently |
+| Body map access/update failure | Same error class, reason `badmap` or `badkey`, owned offending value/key | Stop caller; guard context instead rejects silently |
 | Invalid lazy body left operand | Same error class, typed `badarg_value` and owned payload representing `{badarg, Value}` (step 8) | Stop caller; guard context rejects the enclosing alternative |
 | Infrastructure failure | `CallError::runtime_failure` with exact `Status`, or existing native `CallError` | Stop caller; never treat as guard rejection |
 
 Every admitted Erlang exception currently has class `error`. Reasons are typed IDs,
-not runtime atom IDs. `erlang_aot_raise_v2` validates badmatch and structured badarg payloads using actual
-host Term admission: small integers, canonical empty tuple/list and atoms owned by
-the context's runtime. Invalid, heap, foreign atom and identity words reject without
-dereferencing them. Atom Terms pin their spelling, so errors survive invocation
-cleanup, independent retries and runtime teardown.
-[Generated root scopes](generated-roots.md) are implemented in step 11. Compound
-payload ownership remains a step-12 acceptance obligation before heap admission.
-Full `catch`/`try`, stack traces, `throw`/`exit`, ordered clause dispatch/body matching,
-and `badarith` remain assigned to their later steps.
+not runtime atom IDs. Payload admission covers arbitrary integers, finite floats,
+owned atoms, canonical empty values, tuples, proper/improper lists, maps and
+bitstrings. Exact-start heap indices and runtime ownership are checked before
+access; malformed, foreign and unavailable identity words reject. Owned Terms
+retain atom spelling or heap backing across invocation cleanup and retries;
+expired context handles deny further heap access.
+[Generated root scopes](generated-roots.md) transfer result/error ownership before
+cleanup. Ordered clauses, body matches and numeric/map/record errors are executable.
+Full `catch`/`try`, stack traces and source `throw`/`exit` remain with F20.
 
 `GeneratedInvocation` owns a synchronous host scope on `ProcessContext`.
 Registration's host adapter opens the scope, checks any pending failure before
@@ -68,8 +70,8 @@ serialized and synchronous; suspension/continuation state is outside this slice.
 
 This channel gives later F20 handlers a place to inspect/move an owned exception
 before resuming at an explicit handler. The current whole-invocation scope does
-not implement handler consumption or asynchronous propagation. Step 11 must extend
-payload/root ownership before adding heap values; no raw heap word may be admitted.
+not implement handler consumption or asynchronous propagation. All admitted heap
+payloads follow the rooted ownership contract; raw unvalidated heap words are rejected.
 
 ## Compatibility
 
@@ -92,10 +94,12 @@ transport evidence, not executable source pattern/guard support.
 
 The retained graph includes a private local call, remote nesting, a subsequent
 argument and a consuming outer call. Cases cover heap service/diagnostic failures,
-function_clause, immediate badmatch, rejected heap payloads, builtin exceptions,
+function_clause, badmatch, rejected invalid/foreign payloads, builtin exceptions,
 structured builtin errors, reentrant generated calls, and exceptions thrown from
 native entries both with and without an already-recorded Erlang failure. Each failed invocation
 skips later work, preserves the first failure, cleans its channel/accounting, and
 is followed by successful retry on the same context. Error payloads survive retry.
 Existing public CLI native/oracle tests supply unmodified success baselines, wrong
 ABI/width rejection, failed-batch publication and all four optimization policies.
+[Final validation](patternmatch-step20-validation.md) records the complete admitted
+source corpus in both CLI drivers and keeps these injected seams separately labeled.

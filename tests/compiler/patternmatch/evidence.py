@@ -113,13 +113,15 @@ def baseline(otp, work):
 
 def native(tool, cmake, source, work, settings, config, suffix):
     """Run the existing separately linked consumer with four optimization/specialization policies."""
+    (work / "native-project.toml").write_bytes(b'schema_version=1\n[[targets]]\nname="native"\nsources=["answer.erl","client.erl"]\n')
     for level, extra, name in [("O0", "", "O0"), ("O0", "--no-type-specialization", "O0-off"),
                                ("O2", "", "O2"), ("O2", "--no-type-specialization", "O2-off")]:
-        run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",
-             f"-DSOURCE_ROOT={source.as_posix()}", f"-DTEST_DIR={(work / name).as_posix()}",
-             f"-DINPUT_ROOT={work.as_posix()}", f"-DHOST_SETTINGS={settings}",
-             f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
-             "-P", str(source / "tests/compiler/codegen/native.cmake")])
+        for project in [False, True]:
+            run([cmake, f"-DTOOL={tool}", f"-DPROJECT_MODE={project}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",
+                 f"-DSOURCE_ROOT={source.as_posix()}", f"-DTEST_DIR={(work / name).as_posix()}",
+                 f"-DINPUT_ROOT={work.as_posix()}", f"-DHOST_SETTINGS={settings}",
+                 f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
+                 "-P", str(source / "tests/compiler/codegen/native.cmake")])
 
 
 def audit_main():

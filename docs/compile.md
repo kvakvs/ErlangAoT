@@ -1,4 +1,11 @@
-Current executable slice (pattern/guard steps 1–17): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md), [bitstrings](bitstring-matching.md) and [records](record-matching.md). Remaining guard catalog work is step 18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+The completed [pattern/guard plan](patternmatch-step20-validation.md) supports
+ordered function clauses and body matches/sequences over atoms, arbitrary integers,
+finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records.
+Shared rooted services provide construction, extraction, structural comparisons,
+arithmetic, computed-key matching and grouped guards. See [guard services](guard-services.md)
+and [binding facts](binding-facts.md) for the admitted catalog and conservative
+inference contract. Other source contexts and runtime owners remain deferred.
+Routine tests use project-owned OTP goldens and require no OTP installation.
 
 
 # LLVM compilation contract
@@ -15,10 +22,12 @@ registers modules explicitly and executes decoded values at O0/O2. See the
 [runnable example](#run-the-compiled-module-example) and
 [current validation inventory](compile-validation.md).
 
-The supported subset is named modules/exports, ordered clauses with immediate literal, repeated-variable, alias
-or wildcard parameters, and body sequences containing matches, tagged-small integers, atom/boolean/empty literals,
-binding reads, or resolved local/literal remote calls within the compilation
-batch. Negative literals, nested calls and the immediate services/comparisons are supported; comma/semicolon guards and strict/lazy boolean expressions are executable, with canonical-true guard boundaries. Remote calls
+The supported subset is named modules/exports, ordered clauses with scalar/container
+patterns, repeated variables, aliases and wildcards, and body sequences containing
+matches, literals, checked construction/access, binding reads and resolved
+local/literal remote calls within the compilation batch. Numeric and structural
+services, comma/semicolon guards and strict/lazy boolean expressions are executable,
+with canonical-true guard boundaries. Remote calls
 require exports; recursive call graphs fail. Unsupported syntax is rejected even
 in unused functions. Syntax-only checking supports the wider OTP grammar.
 
@@ -33,8 +42,9 @@ policy. Current service results stay conservative; specs do not remove their che
 ABI revision 4 uses target-word tagged terms, a live process context and an argument array.
 All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
 checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
-The runtime implements lifecycle, immediate Terms, frozen generic registries,
-module registration and service failures. Allocation/GC, scheduling workers,
+The runtime implements lifecycle, stable process heaps, rooted scalar/container
+Terms, frozen generic registries, module registration and checked services.
+Garbage collection, cross-process graph copying, scheduling workers,
 message delivery, further BIF implementations and dynamic loading remain
 future work. A production Erlang launcher/linker is not implemented; explicit
 `--output` fails with `[executable linking] notimpl`.
@@ -57,12 +67,15 @@ cmake --build build/example-native
 ./build/example-native/bin/Debug/compiled_modules.exe
 ```
 
-The program prints `42` and `-7`, one per line. Repeat emission with `-O2` and
-rebuild the consumer to check speed policy. The example CMake project builds the
+The program prints `42`, `-7`, `record`, `map`, `binary`, `list`, `integer`,
+and `other`, one per line. The remote demo constructs and classifies six values
+through ordered patterns and an inclusive integer-range guard. Repeat emission
+with `-O2` and with `--no-type-specialization`, rebuilding the consumer each time;
+CTest executes all four policies. The example CMake project builds the
 matching runtime with compiler/tests disabled and links exactly one
 `ErlangAoT::generated_program` dependency. No LLVM libraries enter the executable.
 It uses explicit module registration, real context ownership and ABI integer
-decoding; the C++ harness is an example host, not a production Erlang entry point.
+and atom decoding; the C++ harness is an example host, not a production Erlang entry point.
 
 On a compatible Unix host, use `build/debug/bin/erlangaot`, `clang++` in place of
 `clang-cl`, `-DGENERATED_DIR="$PWD/build/example-aot"`, and run

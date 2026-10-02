@@ -157,3 +157,15 @@ historical evidence retains the original matrix bytes. Explicit OTP 29.1.1 / ERT
 17.1 regeneration adds the 81-row guard catalog corpus and refreshes only current
 range-BIF capability expectations in the services/pattern manifests. Routine tests
 remain independent of OTP. See [guard services](guard-services.md).
+
+## Pattern/guard step 20 check (2026-10-03)
+
+Re-fetched official maint-29; upstream, clean checkout and pin remain
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar, source and corpus identities
+remain synchronized. The installed oracle is OTP 29.1.1 / ERTS 17.1. Explicit
+`regenerate.py --corpus all --check` reproduced all nineteen owned corpora,
+including the seeded closure corpus, without rewriting historical manifests.
+Normal fresh configuration/build/CTest uses deliberately absent OTP paths and
+live audits OFF. [Final validation](patternmatch-step20-validation.md) distinguishes
+native execution, semantic acceptance, suite parsing and foreign layout evidence.
+Historical records retain their original revisions and outcomes.

@@ -73,12 +73,13 @@ def main():
     for level in ["O0", "O2"]:
         for disabled in [False, True]:
             name = level + ("-off" if disabled else "-on")
-            run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}",
-                 "-DEXTRA_OPTIONS=" + ("--no-type-specialization" if disabled else ""),
-                 f"-DPROJECT_MODE={'ON' if disabled else 'OFF'}", f"-DSOURCE_ROOT={source.as_posix()}",
-                 f"-DTEST_DIR={(work / name).as_posix()}", f"-DINPUT_ROOT={work.as_posix()}",
-                 f"-DHOST_SETTINGS={settings}", f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
-                 "-P", str(source / "tests/compiler/codegen/atoms.cmake")])
+            for project in [False, True]:
+                run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}",
+                     "-DEXTRA_OPTIONS=" + ("--no-type-specialization" if disabled else ""),
+                     f"-DPROJECT_MODE={project}", f"-DSOURCE_ROOT={source.as_posix()}",
+                     f"-DTEST_DIR={(work / name).as_posix()}", f"-DINPUT_ROOT={work.as_posix()}",
+                     f"-DHOST_SETTINGS={settings}", f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
+                     "-P", str(source / "tests/compiler/codegen/atoms.cmake")])
     print("OTP atom spellings/booleans match all four native policies; ownership, limits, rollback and retry pass.")
 
 

@@ -1,4 +1,11 @@
-Current executable slice (pattern/guard steps 1–17): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md), [bitstrings](bitstring-matching.md) and [records](record-matching.md). Remaining guard catalog work is step 18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+The completed [pattern/guard plan](patternmatch-step20-validation.md) supports
+ordered function clauses and body matches/sequences over atoms, arbitrary integers,
+finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records.
+Shared rooted services provide construction, extraction, structural comparisons,
+arithmetic, computed-key matching and grouped guards. See [guard services](guard-services.md)
+and [binding facts](binding-facts.md) for the admitted catalog and conservative
+inference contract. Other source contexts and runtime owners remain deferred.
+Routine tests use project-owned OTP goldens and require no OTP installation.
 
 
 # Semantic compilation analysis

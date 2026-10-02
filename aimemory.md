@@ -1,31 +1,56 @@
-# Active task — 2026-10-03
+# Project memory — 2026-10-03
 
-Continue .agents/10-patternmatch.md through step 20, separately validated commits. No subagents authorized. Steps 1–17 and 15a complete; 18–20 remain. Step16 ba70af8; Step17 committed 7d83b99 after its successful gate.
+User task .agents/10-patternmatch.md COMPLETE through steps 1–20 and added15a.
+No subagents authorized or used. Separate current commits: step17 7d83b99,
+step18 684af35, step19 428c388; final step20 is this commit (read HEAD for identity).
+Each implementation commit followed fresh combined Debug build/fullCTest/Lizard/tidy.
 
-Step17 ordinary records implemented via semantic/{records,match_plan_records}, codegen/{lowering_records,lowering_record_tests}. Borrowed immutable declaration layouts, O(logn) field indices, token-origin source ordering, bounded per-use default expansion, closed namedvariable defaults. Tuple matcher tag/arity + explicit/wildcard constraints; omittedpattern fields unconstrained. Rooted tuple construction re-evaluates repeateddefault/wild ASTids perfield in declarationorder, captures completed values. Checked access body owned badrecord8, guard mismatch rejection. is_record2 literaldeclarity/dynamicbodytag anyarity; is_record3 smallintegeroratom nativeidentity, bignumbadarg. Native/qualified/inferred records, updates, record_info deferred. Guard/patternupdates illegal. No separate record runtime representation.
+Current admitted scope: acyclic local/exported remote functions, ordered heads,
+body matches/sequences, grouped/strict/lazy guards, rooted checked construction/
+access/comparison/numeric services for owned atoms, arbitrary integers, finite
+floats, tuple/list/string/map/bitstring/ordinary tuple records. Descriptor ABI4,
+checked failure channel2; ownership checked before extraction, handoff before pop.
+Guards reject reached semantic errors; infrastructure failures halt. Specs grant
+no representation authority. Clause candidates isolate SSA, facts index successful
+whole-value assignments; extracted/unproved values stay top. Specialization/work/
+IR caps unchanged; generic fallback verifies.
 
-Step17 gate PASSED: fresh compiler/runtime/testing ON, OTP audits OFF, deliberately absent OTP paths;121/121 CTests no skips333.06s;257 productionunits Lizard CCN10/clang-tidy unchanged pass. Logs build/patternmatch-step17/{gate,tests,quality}.log. Only short intentcomments subsequentlychanged; clang-format -i and alldelta dryrun + gitdiffcheck pass. All1025OTPrecord outcomes4policies/bothCLImodes;29semanticcases, worklimit/includeorigin, servicefaults/roots/retainedbadrecordpayload/retry pass. Explicit records regeneration + --check reproduced, originals record_SUITE/data parse with realheaders (syntaxonly), foreign2modules i686Win/x64Win/aarch64Linux headers,width,symbols noexecution. docs/{record-matching,patternmatch-step17-validation}.md andevidenceJSON,currentcontracts/maps/plan/backlog updated.16nativecorpora59,810values +106semanticexpectedrows.
+Final evidence docs/patternmatch-step20-{validation.md,evidence.json}, matrix and
+guard-services.md. Nineteen owned corpora: 67,634 native expected outcomes +106
+semantic rows, eight driver/policy combinations, two executions =>1,082,144
+comparisons. Seeded closure1969, seed0x29A07, depth64,width255,128alternatives;
+allmanifest hashes and81catalog mappings reconciled. 77signatures admitted-domain,
+fourdependency gates:self0,node0/1,nativeis_record1. Positive pid/port/ref/fun
+representations not admitted. All19 explicit OTP regeneration --check pass.
+Updated example42,-7,record,map,binary,list,integer,other passes four policies.
 
-OTP maint29 checkout/pin/upstream21776803ecd11f5fa948732c0ec66b8f325dedfc clean, fetchedat17start2026-10-02. Recheckupstreamat18start(currentdate3), followdocsotp-reference, preservehistory. InstalledOTP29.1.1/ERTS17.1; defaultlauncherbrokenmissing erl.ini. Workspacefixed build/patternmatch-step16/otp-launch/{erl,escript}.exe +erl.ini pointinginstalled17.1; noinstalledchanges. Literalhugearityrecordguard passeslintbutOTPloaderfails i_is_tagged_tuple badtag14; documented, notexecutableoracleclaim. Dynamichugearitybody BIF badargworkinggoldens.
+Step20 final fresh gate124/124 no skips,167.43s,258production quality units,
+LizardCCN10/tidy cognition10 unchanged. Logs build/patternmatch-step20/{gate,tests,
+quality,all-regeneration}.log. Initial123/124 failed testserialization256 around
+wrapped255-celllist; boundedtesttransport512 fixes; no production ceiling changes.
+Historical records preserved. Native Windowsx64 only; Linux/AppleSilicon/native32
+and new frontend sanitizer unavailable. Foreignobjects/32-64IR/suiteparsing separate.
 
-Tools VS18x64, LLVM23.1.2,Ninja,Boost1.90,toml3.4,/MT iterator0. build/patternmatch-step16/build.cmd freshcombinedconfigurebuild, rebuild.cmd incremental. step17/gate.cmd runsfreshbuild/fullCTest/fullquality underVSenv. Step17 exec25287 consumedexit0; no live sessions. Quality ~6min buffered; no sourceeditingduringgate. .venv-quality Lizard1.24 clang-tidy22.1.8. Sandboxescalationneeded SDKandprotected.agents/gitwrites; userplanexplicitlyauthorizescommits, noautoreviewrejection. Use require_escalated,noextraquestion. All-generatedfixtures -text requirewrite_bytes UTF8LF. python tests/compiler/patternmatch/regenerate.py --otp references/otp --escript build/patternmatch-step16/otp-launch/escript.exe --corpus NAME [--check]. --corpusrepeatlastwins. Normaltests stored.load ownedfixtures noOTP.
+Official maint-29 fetched at each OTP-dependent step; last2026-10-03 unchanged
+21776803ecd11f5fa948732c0ec66b8f325dedfc upstream/pin/cleancheckout. Follow
+docs/otp-reference.md to refresh future work, synchronize hashes/grammar/docs and
+preserve historical revisions. Oracle29.1.1/ERTS17.1. Installed escript broken
+erl.ini; workspace shim build/patternmatch-step16/otp-launch/escript.exe points
+installedruntime via privateerl.ini, no installedfilesmodified. Regenerate
+python tests/compiler/patternmatch/regenerate.py --otp references/otp --escript
+build/patternmatch-step16/otp-launch/escript.exe --corpus all --check.
+Normalbuild/test OTP-free; liveaudits opt-in. Fixtures writebytes UTF8LF (-text).
 
-Step18:81catalogrows alloperationsexceptis_integer3 andgatednativeis_record1/self0/node0/1. erl_bif_guard.c rangeBIF: LB/UB integerfirst,badargevenXwrong; thennonintegerXfalse; inclusivearbitraryintegerbounds,reversedfalse. Compilercompound CFG existingchecked predicates/comparison, sharedcanonicaljoin (SSAUpdater asrecordtests preventsLLVMinlineanalyzerfindings). Extractcomplete guard_SUITE is_integer_3_guard_1..8 plus4_id/5_id/8_id. Generic is_function_arity positivebignumfalse/negativebadargalreadycorrect. Needfullcatalogcoverage validwrongboundary,qualified/legacy/sourceops/constructorsmapupdates/unreachablegates; guards.tsvcurrentowner/rejectionoutdated, fixtures.tsvhashsynchronizeandnewconcreteevidenceaudit. guard-resolution.json integer3 capabilitymustclear, regenerate servicesresolutionmanifest.
+Toolchain LLVM23.1.2/SDK, VS18x64SDK10.0.26100,/MT iterator0, Ninja, Boost1.90,
+toml3.4,Lizard1.24,tidy22.1.8. VSdevshell required for native consumers; SDKdependent
+gate and protected .agents/.git writes require escalation. No auto-review rejection.
+Gatecmd build/patternmatch-step20/gate.cmd uses --fresh combined Debug. Keep intent
+comments/clangformat and low complexity; no quality suppressions/threshold increases.
 
-Step18 ignoredreconnaissance build/patternmatch-step18/{probe,legacy_probe}.py; OTP logs. Unqualifiedquotedoperators illegal (don’t broaden). Legacyrecord2 ignoreslocalrecord/noauto_importrecord, butmodernis_recordlocalshadow rejects obsolete_guard_overridden; currentguard_identity specialbranchmissescheck. Othersoldnames local/import/suppress rejected, modernlocalshadow rejected, modernsuppression accepted. Modernunrelatedimports OTPcompilercrashescore_to_ssa afterlint; projectclosedauthorizationrejectordinaryimports, documentlimitation. Currentlegacy scalarchecksold+modernlocals butmissesmodernimports. erl_lint.erl sourceauthority.
-
-Step19 conservativefact/extraction/joins/specdominance audit andpairedwrong-spec kernels/types/IR/all4policies/budgets; existingbinding-basedfacts alreadyimplemented steps4–16, don'tduplicatewithoutmeaningful newcases. Step20 provenanceclosure+seededstress/limits/faults/all4positional/project/localremote/examples/finalscopedcontracts/backlog. Needfreshcombinedfullgatebefore eachimplementationcommit. NativeWindowsx64available only;foreignobjects notnative32bit/Linux/AppleSiliconproof, nonewsanitizerclaim.
-
-Step18 IMPLEMENTED uncommitted: is_integer_range compilerselector, compoundlower_integer_range inlowering_record_tests (sharedjoinhelper) validatesbotharbitraryboundsfirstthenclassifiesXbeforecomparisons. Legacy modernowner auditfix inpattern_calls,recordaliasmodernshadowfix. Full81rowowned guard_catalog5033values22semantic/gatecases, unchanged rangehelperbodies, selectedminmax/maphelpers, labeledtruncadaptations, nestedguardconstructors/mapupdates. Normalservices/patternsresolutionmetadata clearedrangegates/manifestshashesregenerated; later_guardnegative nowselfcapability,semanticcases rangeaccepted. Native rangeguard/body seamfaultsadded existing4servicepolicies. Freshfinalgate21850running:122/122CTests pass119.01s,Lizardpass257units,clangtidyawait. Initialgateonlyfailedoldlater_guardunavailableexpectation(nowupdated), logarchivedinitial*. NoCPPchangesduringfinalgate. Needfinishvalidation/evidence/plan/maps17nativecorpora64,843values,commit18then19/20. Formatdryrunpass. Explicitguard_catalog --checkreproduced. Allpin/upstreamclean unchangedchecked2026-10-03. Docs18guard-services,referencecurrentmatrixcontracts written.
-
-Step19 DESIGN ONLY ignoredscratch build/patternmatch-step19/{inference_bindings.hpp,cpp,facts.py}. Whole-body match aliases canpropagate RHS factsandargrelations into indexedclause-localbindingtable; extracted/unprovedremainunknown,globalinferencebudgetchargesbindingindicesandaliaswalks. Integrateintoinference evaluate afterRHS,onlynewdefinitionevents,guardcannotdefine; joinskeeponlycommonargrelations. Needcopyafter18committed,wireCMake,newfacts corpuspairedwrong-specallrepresentations+OTPforce_succ_regshelper. Scratchfactscheckeractualserviceoutputslot/outcome==0successedgedominatesload, CFGdominatoranalysis, nointtoptr. CouldneedregexadjustagainstactualIR. Addreal-formsinferencebudget/IRbytecapteststocodegenlimits/specialization(privatebudgetscopejustified), keepbudgetsandgenericfallbackunchanged. Freshfullgate258units/123testsnext.
-
-Step18 fullclangtidyfound call_value cognition12; fixedbyflattening!serviceend earlyreturn(no suppressions). Focused4units pass. Freshre-gate58459RUNNING122CTestpass117.71s Lizardpass257fulltidyawait. Preserveinitial-quality.log. All17corporaexplicitregeneration--checkpass(all-regeneration.log). Onlydocs/memory andignored19/20drafts editedduringgate. Step18finalize.pypreparedprotectedupdatesassertgreen257marker.
-
-Step19 ignored apply.py readyafter18commit: newinference_bindings owner, propagatewholebodyfacts/projectionaliasesafterRHS success, addfunctionreadindex maptoLoweringstate andlower_clauses, semanticsvariablesauseperclausevalues unchanged. Itinsertsreadsfieldbeforeclause andupdatesstateaggregates(only2sites). Draftfacts822OTPoraclepassed, scratchchecked_load CFGdom test usesactualroot.slot/outcome/success; mayneedIRregexadapt. Neednewfact_budget.erl fixture andextendrealprivatebudgettests;format+focusedtidythenfresh123tests258units. Draft20closure.pyseed0x29A07 nestedtermsdepth64width255alternatives128;nextoracleprobeignored. Needapplyactualonlyafter19commit. Finalexamplecouldextendexamples/compile withclassify/demo0 alladmittedtuple-record/map/binary/list/integer/otherlabels, clientremote demo, hosttuple_elementsprintedlabels, examples.cmake4policies updatedeightlines output;currentdemo42/-7 alonetested. BacklogF13/F14splitdeliveredfunctions/body slicechecked,receive/othercontextsunchecked;F26checkedcompiler-boundaryguardcatalogslicefullbridgeownerremainsunchecked.
-
-Step18 finalfreshgatePASS122/122CTest/all257qualityunitsCCN10unchanged. Docsvalidation/evidence andplan/mapscompleted18;17corpora64,843nativevalues. Commit18nextthenapply19scratch.
-
-Step18 committed684af35 afterfresh122/122117.71s/all257quality. Step19IMPLEMENTEDuncommitted fromscratch nowactual: semantic/types/inference_bindings budgetedclauseindex+wholevaluematchfactpublish, inference.cpp bindingreads conservative, lowering readindexonceperfunction scopedSSAunchanged. Newfacts822goldenspairedwrong-spec13functions allreps. CFGproofchecker passes976observations(712serviceoutputloads,192shapeextractions,72cursorloads);32/64IRall4policies/bothmodes andWinx64native4policies/bothdrivers. Privatefact_budget fixtureextends limits/specializationbudget fallback;4focusedCTestsPASS31.03s,4focusedproductiontidyPASS. Fullfreshgate20150RUNNING123tests+258units(build/tests/qualitylogs). NoCPPeditduringgate. Docsbinding-facts/currentsemantic/compile/scopedupdated. Needfinalevidence/validation/plan/mapscommit19aftergate,then20draftclosure1969OTPoutcomesalreadyprobedignored.
-
-Step19 FULLGATEPASSED123/123tests121.19s/all258qualityCCN10unchanged. Completevalidated19committingnext;18nativecorpora65,665 values. Onlydocsupdatedafterpass, noCPPchanges. Apply20scratchaftercommit, thenexamples. FinalnativeworkflowsneedbothdriversPERpolicy:20applyextendsimmediate/evidence/atoms/differential loops to8, CMake match/atoms/native useunique positional-objects/project-objects butreuse4cachedconsumerbuilds(no redundantruntimebuilds). Baseline/bindings/differential createephemeralnative-project.toml(twoownedmodules). Closure1969values ->19corpora67,634native values+106semanticrecords.
+Remaining owners: F01launcher/linking,F04GC,F05graphcopy,F07identities,F16other
+control,F17updates/record_info/native-qualified-inferred,F18closures,F19dynamiccalls,
+F20handlers/raise/traces,F21recursion/tailcalls,F22-25processworkers/messages/receive,
+F26genericproductionbuiltinregistration,V01nativematrix,V02sanitizers. Backlog closes
+only delivered function/body/guard and prerequisite representation/root/service slices.
+OTP loader huge literalrecordguard and core_to_ssa legacy-modernimport crashes
+remain documented17/18; do not claim those contexts as executed OTPgoldens.

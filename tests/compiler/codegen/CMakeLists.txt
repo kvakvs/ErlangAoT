@@ -303,6 +303,12 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "${CMAKE_CURRENT_BINARY_DIR}/facts/$<CONFIG>"
         "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_facts PROPERTIES TIMEOUT 300)
+    add_test(NAME patternmatch_closure COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/closure.py"
+        "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/closure/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
+    set_tests_properties(patternmatch_closure PROPERTIES TIMEOUT 300)
     add_test(NAME codegen_measurements COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/measurements.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"
         "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/measurements/$<CONFIG>"

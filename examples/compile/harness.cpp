@@ -16,6 +16,16 @@ template <class Result> auto checked(Result result) {
     return std::move(*result);
 }
 
+// Execute each supported pattern family through the separately compiled remote demo.
+void demonstrate(erlang_aot::runtime::ProcessContext &context) {
+    const auto entry = checked(context.code_server().resolve({"client", "demo", 0}));
+    const auto labels = checked(checked(entry.call(context, {})).tuple_elements());
+    for (const auto &label : labels) {
+        const auto text = checked(label.atom_spelling());
+        std::printf("%.*s\n", static_cast<int>(text.size()), text.data());
+    }
+}
+
 // Initialize one real runtime, register separate objects, decode results and shut down explicitly.
 int execute() {
     using namespace erlang_aot::runtime;
@@ -31,6 +41,7 @@ int execute() {
     const auto copied = checked(identity.call(*context, arguments));
     std::printf("%lld\n%lld\n", static_cast<long long>(checked(value.integer_value())),
                 static_cast<long long>(checked(copied.integer_value())));
+    demonstrate(*context);
     if (runtime->destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
         runtime->shutdown() != erlang_aot::abi::v1::Status::ok) {
         return 2;

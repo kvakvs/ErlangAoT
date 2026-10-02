@@ -87,11 +87,12 @@ def native(tool, cmake, source, work, settings, config, suffix):
     """Use the separate real CLI object consumer, covering positional/project publication."""
     for level, extra, mode in [("O0", "", "O0"), ("O0", "--no-type-specialization", "O0-off"),
                                ("O2", "", "O2"), ("O2", "--no-type-specialization", "O2-off")]:
-        run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",
-             f"-DPROJECT_MODE={'off' in mode}", f"-DSOURCE_ROOT={source.as_posix()}",
-             f"-DTEST_DIR={(work / mode).as_posix()}", f"-DINPUT_ROOT={work.as_posix()}",
-             f"-DHOST_SETTINGS={settings}", f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
-             "-P", str(source / "tests/compiler/codegen/match.cmake")])
+        for project in [False, True]:
+            run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",
+                 f"-DPROJECT_MODE={project}", f"-DSOURCE_ROOT={source.as_posix()}",
+                 f"-DTEST_DIR={(work / mode).as_posix()}", f"-DINPUT_ROOT={work.as_posix()}",
+                 f"-DHOST_SETTINGS={settings}", f"-DHOST_CONFIG={config}", f"-DHOST_SUFFIX={suffix}",
+                 "-P", str(source / "tests/compiler/codegen/match.cmake")])
 
 
 def widths(tool, work):

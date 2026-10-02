@@ -1,4 +1,4 @@
-# Pattern and guard semantic contract (plan step 1)
+# Pattern and guard semantic contract (completed steps 1–20)
 
 This is the acceptance and implementation boundary for
 [steps 1–20](../.agents/10-patternmatch.md). Step numbers below refer to that plan.
@@ -35,15 +35,15 @@ Every row names an implementation step or an explicit backlog dependency owner.
 **Capability** means legal Erlang requiring an unavailable feature, with an
 explicit compiler capability diagnostic until its owner implements it.
 **Semantic** means invalid Erlang, diagnosed regardless of reachability.
-These are the target distinctions for steps 4/5/7; step 1 does not retrofit
-diagnostics into the current compiler. **Mismatch** means runtime selection
+Semantic legality and executable availability are checked separately, including
+unreachable source. **Mismatch** means runtime selection
 failure, not a compiler error. Resource/ownership/internal failures must stay
 distinct from ordinary mismatch or a reached guard argument error (steps 2/11).
 
 | Context | Binding and execution rule | Owner | Rejection expectation |
 | --- | --- | --- | --- |
-| Function clause heads plus their guards | Try heads in source order; candidate bindings feed only its guard/body; failed candidates discard them | 4–9 | Capability until implemented; exhaustion becomes `error:function_clause` (2/6/9) |
-| Body match expressions and sequences | Evaluate RHS once, right-to-left chained matches; commit bindings on success; match returns RHS | 4/5/6/10 | Implemented for immediates by step 10; mismatch raises `error:{badmatch,RHS}`. Heap payload roots extend this in 11–12 |
+| Function clause heads plus their guards | Try heads in source order; candidate bindings feed only its guard/body; failed candidates discard them | 4–9 | Implemented for every admitted representation; exhaustion becomes `error:function_clause` |
+| Body match expressions and sequences | Evaluate RHS once, right-to-left chained matches; commit bindings on success; match returns RHS | 4/5/6/10 | Implemented for every admitted representation; mismatch raises `error:{badmatch,RHS}` with owned payload and clean retry |
 | `case`/`if`/`maybe`, comprehensions | Additional pattern/guard contexts are outside this plan | F16 | Capability; no execution claim from parsing |
 | `catch`/`try`, catch patterns/guards | Structured exception handling beyond propagation is outside this plan | F20 | Capability |
 | Anonymous/named fun clauses | Function values and captured environments are outside this plan | F18 | Capability |
@@ -58,7 +58,7 @@ distinct from ordinary mismatch or a reached guard argument error (steps 2/11).
 | Parentheses, `P1 = P2` compound patterns | Both operands constrain the same value; neither supplies new key/size bindings to its sibling | 5/6, extended 12–17 | Illegal sibling dependency is semantic; valid but incompatible aliases mismatch |
 | Atoms, booleans | Spelling-based runtime identity; no compiler-assigned atom IDs | 3/6 | Implemented in heads; different literal mismatches |
 | Integer/character literals, unary signs and constant arithmetic | Accept only legal, evaluable constant pattern expressions; chars are integers | 5/6/13 | Invalid/nonconstant expressions semantic; different value mismatches |
-| Floats, arbitrary integers | Exact pattern equality, target-width-independent values; signed-zero details follow OTP | 13/14 | Capability until representation exists; different value mismatches |
+| Floats, arbitrary integers | Exact pattern equality, target-width-independent values; signed-zero details follow OTP | 13/14 | Implemented; different value mismatches |
 | Empty list/tuple | Canonical admitted immediates | 6 | Implemented in heads; wrong shape mismatches |
 | Tuples, lists, improper tails, strings | Exact tuple arity; cons/nil shape; strings are lists; nested patterns | 11/12 | Implemented construction/access/equality in heads and body matches; wrong shape mismatches |
 | String/list-literal `++` pattern prefix | Lint permits a literal string or integer/character cons prefix, including empty prefix; arbitrary variable prefix is illegal | 5/12 | Nonliteral/invalid prefix semantic; nonmatching prefix mismatch |
@@ -89,77 +89,72 @@ The following rows cover syntax/control-flow rules that are not BIF signatures.
 | Comma and semicolon | Comma is conjunction; semicolon starts a fresh alternative after false or a reached argument error | 8/9 | Implemented by step 8; all alternatives fail means clause mismatch |
 | `andalso/2`, `orelse/2` syntax | Lazy RHS, term-valued intermediate results; reached error fails the enclosing guard, not a recoverable false operand | 8 | Semantic operand error rejects reached guard; invalid syntax/calls still diagnosed in skipped branches |
 | Strict `not/1`, `and/2`, `or/2`, `xor/2` | Boolean operands, eager evaluation; no substitution of lazy semantics | 8 | Wrong types reject guard |
-| Equality/order operators `==`, `/=`, `=:=`, `=/=`, `<`, `=<`, `>`, `>=` (all /2) | Exact versus numeric equality; structural order over the admitted domain | 7/12–16/18 | Capability until admitted representation supported; no raw boxed-word equality |
-| Unary `+`, `-`, `bnot`; binary `+`, `-`, `*`, `/`, `div`, `rem`, `band`, `bor`, `bxor`, `bsl`, `bsr` | Exact arities in catalog; numeric semantics and overflow/promotion follow OTP | 13/14/18 | Capability until services exist; bad arguments reject reached guard |
+| Equality/order operators `==`, `/=`, `=:=`, `=/=`, `<`, `=<`, `>`, `>=` (all /2) | Exact versus numeric equality; structural order over the admitted domain | 7/12–16/18 | Implemented over the admitted domain; no raw boxed-word equality |
+| Unary `+`, `-`, `bnot`; binary `+`, `-`, `*`, `/`, `div`, `rem`, `band`, `bor`, `bxor`, `bsl`, `bsr` | Exact arities in catalog; numeric semantics and overflow/promotion follow OTP | 13/14/18 | Implemented checked services; bad arguments reject reached guard |
 | Auto-imported BIF calls | Exact signature plus local/import/no_auto_import resolution determines legality | 7/18 | Wrong arity, shadowed/imported ordinary function or suppressed auto-import semantic |
 | `erlang:Bif(...)` and `erlang:'Op'(...)` | Explicit qualification bypasses auto-import shadowing; only guard BIFs or admitted guard operators legal | 7/8/18 | Unknown/wrong signature semantic; qualification does not legalize arbitrary functions |
 | Legacy top-level tests | `integer/1`, `float/1`, `number/1`, `atom/1`, `list/1`, `tuple/1`, `pid/1`, `reference/1`, `port/1`, `binary/1`, `record/2`, `function/1` | 7/8/17/18 | Legacy-only names nested or qualified are semantic errors; clashes checked |
 | `float/1` ambiguity | Top-level unqualified legacy test means `is_float`; nested or explicit `erlang:float/1` is legal numeric conversion, not the legacy predicate | 7/8/14/18 | Legacy predicate implemented by step 7; conversion implemented by step 14; bad conversion rejects guard |
 | Tuple/list/map/binary/record construction; map update | Legal guard expressions when all children are legal; checked allocation/access; map update uses incoming bindings | 11/12/15/16/17/18 | Implemented; record updates are illegal in guards; reached semantic failures reject guard |
 | Record field/index expressions; `is_record/2,3` | Declaration/field validation; lint restrictions on literal tag/arity, including OTP native-record distinctions | 7/17/18; native forms F17 | Bad declarations/argument forms semantic; wrong value shape rejects guard |
-| `is_integer/3` | OTP 29 inclusive range predicate; exact signature is legal | 7/13/18 | Capability until service exists; OTP cases include both endpoints and wrong type |
+| `is_integer/3` | OTP 29 inclusive range predicate; exact signature is legal | 7/13/18 | Implemented; validate integer bounds first, then test inclusive endpoints; bad bounds reject reached guard |
 | Identity/function predicates | `is_pid/1`, `is_port/1`, `is_reference/1`, `is_function/1,2` can classify admitted terms; positive identity/fun values require their owners | 7/18; F07/F18 | No forged identity admission; capability for missing representations, invalid function arity argument follows OTP |
 | `self/0`, `node/0,1` | Legal signatures but process/distribution services are outside this plan | F07/F22/F26 | Explicit unavailable-service capability diagnostic |
 | `is_record/1` | Source catalog includes native-record classification; expanded tuples are not native records | F17 (native representation) | Explicit capability diagnostic until owner provides representation/service |
 | Assignment, arbitrary local/remote/dynamic calls, list `++/2`, `--/2`, send `!/2`, funs/comprehensions/control flow in guards | Not in the guard expression grammar/semantic allowlist | 7 | Semantic error, including unreachable operands; builtin registration cannot authorize it |
 
-Step 18 reconciles every in-scope signature over the complete admitted value domain;
-step 19 checks specialization without trusting specs; step 20 publishes the
-scoped contract. Passing the immediate-only baseline does not discharge any of
-these later obligations or prove heap lifetime, native records, scheduling or GC.
+Steps 18–20 complete the admitted-domain catalog and proof audit. Four signatures
+remain dependency-blocked: `self/0`, `node/0,1` and native `is_record/1`. Function,
+pid, port and reference predicates have negative evidence on admitted values;
+positive representations still require F07/F18. Stable storage and roots are
+implemented; GC, copying, scheduling and additional source contexts retain their
+separate owners. [The final validation record](patternmatch-step20-validation.md)
+links the complete scoped evidence.
 
 ## Reproducible evidence
 
-`patternmatch_evidence` is a CTest workflow enabled with compiler, runtime and
-`BUILD_TESTING=ON`. It requires the pinned checkout and a working installed OTP;
-missing dependencies fail, rather than count as passed coverage. It:
+Normal compiler/runtime CTests use nineteen project-owned corpora. Hash checking
+precedes copying or compilation; neither OTP nor its checkout is required.
+Each native corpus runs local/remote calls through both positional and project
+drivers in all four O0/O2, specialization-on/off combinations. Separate native
+consumers compare decoded values and stable error reasons twice per combination.
+O0 already bypasses specialization; its explicit disabled flag is still exercised.
 
-1. Verifies revision, tracked-source cleanliness, manifests and the guard catalog,
-   then deliberately changes a manifest hash in memory and requires rejection
-   before parsing or extracting any source.
-2. Preprocesses/parses original `guard_SUITE.erl`, `match_SUITE.erl` and
-   `trycatch_SUITE.erl` through the public CLI. It maps real compiler, stdlib,
-   kernel, common_test and syntax_tools include locations, enables `maybe_expr`
-   and disables `compr_assign`. This is syntax coverage only.
-3. Runs authored `.erl` seeds through OTP `epp:parse_file` (including embedded
-   error forms), then `compile:forms` separately. `acceptance.term` states syntax,
-   semantic and diagnostic expectations; `cases.term` states results and stable
-   error class/reason. Clause selection is observable through distinct results.
-   Negative cases include wrong arity, unreachable calls, assignment, legacy
-   nesting, wildcard reads, invalid patterns, sibling scopes and BIF shadowing.
-4. Extracts the entire unchanged `bif_SUITE:first/2` and `guard_SUITE:id/1` clauses
-   after source hash verification. It retains upstream license notices and records
-   source path/function, source/clause/generated hashes, declarations and all
-   wrapper changes. New `answer`/`client` module/export declarations fit the
-   existing consumer; the authored `answer:identity/1` forwards to `client:id/1`.
-   No helper body is weakened. OTP checks integers, empty list and empty tuple.
-5. Emits both modules through the public CLI at O0/O2, each with default/disabled
-   specialization policy, and executes them twice through the existing separate native
-   runtime consumer. It retains that consumer's immediate endpoints, cross-module
-   call, ABI rejection, missing-runtime link failure, deferred-allocation recovery
-   and teardown checks. This is the executable baseline, not execution of suites
-   or the new pattern/guard seeds.
+| Obligation | Executable or diagnostic evidence |
+| --- | --- |
+| Scoped definitions, unsafe/unbound/wildcard reads, RHS-first matching | `patternmatch_bindings`, `patternmatch_patterns`, `patternmatch_sequences` |
+| Literal/alias/repeated/container matching and candidate isolation | `patternmatch_immediate`, `patternmatch_clauses`, `patternmatch_containers` |
+| Checked numeric, map, bitstring and ordinary record services | `patternmatch_integers`, `patternmatch_floats`, `patternmatch_maps`, `patternmatch_bits`, `patternmatch_records` |
+| Grouping, lazy/strict booleans, resolution and failure rules | `patternmatch_services`, `patternmatch_booleans`, `patternmatch_guard_catalog` |
+| All 81 exact source catalog rows | `generated/guard_catalog/manifest.json`: 77 concrete function/service mappings, four dependency gates |
+| Conservative facts, wrong specs, check dominance and budgets | `patternmatch_facts`, `codegen_limits`, `codegen_specialization`, `codegen_measurements` |
+| Nested/deep/wide terms and many alternatives | `patternmatch_closure`: seed `0x29A07`, depth 64, width 255, 128 alternatives, 1,969 OTP outcomes |
+| Fault cleanup, owned error payloads, ABI rejection and retry | `codegen_service_*`, `codegen_failure_*`, `codegen_registration_*`, native corpus consumers |
+| Failed artifact publication and recovery | `codegen_write_failure`, `codegen_artifacts`, `codegen_resource_cli`, `codegen_positional`, `codegen_project` |
+| Documented runnable example | `codegen_examples`: remote classification of records, maps, binaries, lists and integers in four policies |
 
-O0 bypasses specialization internally; both CLI flag policies are exercised.
-The unchanged projection helpers also remain generic at O2 because they offer no
-removable checks. This baseline does not claim source-driven specialized matching.
+`patternmatch_closure` reconciles every corpus's fixture hashes and all signature
+mappings. [Final evidence](patternmatch-step20-evidence.json) retains manifest
+identities, source revisions, expected counts, catalog mappings and gate results.
+Complete upstream helpers, selected clauses, adapted kernels and authored extensions
+are labeled in their manifests; these tests do not execute Common Test suites.
+The 106 stored pattern acceptance rows are semantic evidence, separate from the
+67,634 native expected values.
 
-Build-local `provenance.json`, `suites.json`, `helpers.json` and `oracle.txt` record
-the actual run. [The step-1 validation record](patternmatch-step1-validation.md)
-preserves the exact versions and measured outcomes. Authored fixture and catalog
-hashes in [fixtures.tsv](../tests/fixtures/patternmatch/fixtures.tsv) are reviewed
-expectations; tests never regenerate them. Existing corpus/grammar tests remain
-part of the full gate. Later steps extend executable coverage while retaining this
-distinction between legal source, accepted syntax and emitted behavior.
-
-Step 18 links every signature to the owned guard_catalog manifest, including its
-resolver, lowering and runtime owner. Four signatures remain dependency-blocked:
-self/0, node/0,1 and native is_record/1. Positive function/pid/port/reference
-representations are outside the admitted domain. Qualified BIF/operator calls,
-legacy aliases, constructor/map-update failures and unavailable skipped operands
-have explicit executable or diagnostic evidence.
+`ERLANG_AOT_OTP_AUDITS=ON` explicitly enables live `patternmatch_upstream` and
+grammar audits. They require the pinned clean checkout and installed OTP, audit
+exact signature sets/source hashes, parse original suites as syntax evidence,
+and check semantic acceptance and fixture drift. Explicit
+`regenerate.py --corpus all --check` reproduced all nineteen corpora on 2026-10-03.
+No configure/test silently refreshes the reference or rewrites goldens. See
+[fixture regeneration](../tests/fixtures/patternmatch/generated/README.md).
 
 [Step 19](binding-facts.md) propagates only justified whole-value binding facts.
 Extracted and unproved values remain conservative; checked service-success and
 shape continuations dominate dependent output loads/extractions. Misleading specs
 and failed candidates have paired native evidence under all four policies.
+
+Windows x64 is the available native runner. Linux, Apple Silicon and native
+32-bit execution remain unverified here. Foreign objects and 32/64-bit IR checks
+are labeled separately; historical macOS/runtime-ASan records keep their original
+dates, revisions and claims.

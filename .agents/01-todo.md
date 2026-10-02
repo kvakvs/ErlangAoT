@@ -6,7 +6,8 @@ remaining work into features for separately chosen detailed plans.
 
 **Feature IDs are references, not priority or implementation order.** Choose the
 order of detailed planning yourself; resolve the noted dependencies in each plan.
-All checkboxes describe future work. Creating this backlog does not start coding.
+Checked items identify delivered scoped slices; unchecked items remain future work.
+Creating this backlog does not start coding.
 
 Extend the existing parser, type analysis, LLVM pipeline, runtime ownership and
 registration services. Parsed syntax, API sketches and reporting placeholders do
@@ -45,34 +46,30 @@ requiring the separately written C++ harness used today.
 
 ### F02 — Roots, safepoints and generated-code ABI evolution
 
-Patternmatch step 2 delivered revision-2 checked call failure propagation and owned
-immediate error payloads; see [the contract](../docs/generated-call-failures.md).
-Step 11 adds [revision-4 generated roots and stable backing](../docs/generated-roots.md).
-Compound host/error ownership remains step 12; relocation, continuation/mailbox roots
-and suspension remain open below.
+Delivered stable-heap roots and owned results/errors for the admitted domain;
+see [generated roots](../docs/generated-roots.md) and [final validation](../docs/patternmatch-step20-validation.md).
+Relocation, continuation/mailbox roots and suspension remain open.
 
-Meaning: keep live values visible and valid when allocation, collection, calls,
-exceptions or suspension can change where values are stored.
-
-- [ ] Define roots for host Terms, generated temporaries, continuations, mailbox
-  candidates and messages in transit, including registration and lifetime rules.
-- [ ] Choose safepoint/relocation contracts before admitting movable terms; assess
-  LLVM facilities while retaining project ownership of collector policy.
-- [x] Version affected descriptors/call boundaries and implement compiler/runtime
-  root handling for stable storage with target-derived widths and contained C++ exceptions.
-- [ ] Verify live-value preservation across calls/allocation, then GC and suspension
-  as implemented; reject incompatible consumers.
+- [x] Define and implement host/generated/registration roots and lifetime rules
+  for admitted stable terms; preserve live values across calls/allocation and cleanup.
+- [x] Version descriptors/call boundaries, retain target-derived widths, reject
+  incompatible consumers and contain native exceptions.
+- [ ] Define continuation, mailbox and transit roots with their concrete owners.
+- [ ] Choose safepoint/relocation contracts and implement GC/suspension integration.
 
 ### F03 — Process heaps and TermFactory construction
 
-Meaning: allocate actual process-owned storage and construct non-immediate terms;
-stable backing/reservations now exist; concrete compound constructors remain below.
+Meaning: allocate process-owned storage and construct validated values. Stable
+backing and the admitted scalar/container layouts are delivered; future layouts
+and collector integration remain separate. See [final validation](../docs/patternmatch-step20-validation.md).
 
-- [x] Implement checked backing allocation, accounting, growth and resource limits (patternmatch step 11).
-- [ ] Implement validated construction/destruction for selected term layouts,
-  respecting C++ resources that cannot be moved as raw bytes.
-- [ ] Connect constructors and host Terms to F02 ownership/root rules; enable each
-  representation incrementally with rollback, allocation-failure and teardown checks.
+- [x] Implement checked backing allocation, accounting, growth and resource limits.
+- [x] Construct/destroy admitted integer/float/tuple/list/map/bitstring layouts,
+  respecting explicit C++ resource ownership and transactional publication.
+- [x] Connect host Terms and constructors to stable roots; verify rollback,
+  allocation failures, retained values/errors and teardown.
+- [ ] Extend validated construction/rooting for future identity/callable/native
+  record layouts and integrate collection with F04.
 
 ### F04 — Process garbage collection
 
@@ -124,14 +121,16 @@ recognition alone does not prove that a referenced entity exists.
 
 ### F08 — Lists, tuples, maps and strings
 
-Meaning: construct and access ordinary compound Erlang data. Strings use list
-semantics; parsed aggregate syntax currently does not execute.
+Admitted construction, access, tuple/map updates and matching are delivered;
+strings use proper lists. See [containers](../docs/container-matching.md),
+[maps](../docs/map-matching.md) and [final validation](../docs/patternmatch-step20-validation.md).
 
-- [ ] Finalize layouts and ownership with F02/F03, covering improper lists and map
-  key identity as well as ordinary containers.
-- [ ] Implement constructors, access and updates; lower source construction and
-  connect host Terms, graph copying, GC and later pattern access.
-- [ ] Compare nested/empty values, invalid access and shared-value behavior with OTP.
+- [x] Define owned layouts, improper lists and exact map key identity.
+- [x] Implement checked constructors/access/tuple-map updates and source lowering;
+  reuse rooted host Terms, patterns and guard services.
+- [x] Compare nested/empty values, invalid access, exact keys and retained values with OTP.
+- [ ] Integrate graph copying and GC with F04/F05; additional list operations
+  remain selected builtin-family work under F26.
 
 ### F09 — Binaries and bitstrings
 
@@ -153,89 +152,91 @@ copying and GC remain open with F04/F05; this does not close the whole F09 owner
 
 ### F10 — Arbitrary integers and integer arithmetic
 
-Meaning: preserve Erlang integer results outside the small-integer range instead
-of silently using machine overflow or wrapping.
+Delivered exact integers and checked arithmetic over the admitted domain;
+see [integer contract](../docs/integer-matching.md) and [final validation](../docs/patternmatch-step20-validation.md).
 
-- [ ] Implement owned bignum representation and literal construction using runtime
-  arithmetic support, not compiler-side LLVM APInt at runtime.
-- [ ] Implement arithmetic/bitwise operations, checked small-integer fast paths,
-  promotion/demotion, division/shift behavior and Erlang failure outcomes.
-- [ ] Lower operations with safe runtime fallbacks; compare large/negative/boundary
-  inputs at O0/O2 and both widths, including resource and allocation failures.
+- [x] Implement owned bignums and literals using bounded runtime multiprecision.
+- [x] Implement arithmetic/bitwise operations, small-integer fast paths,
+  promotion/demotion, division/shift behavior and Erlang failures.
+- [x] Lower with checked fallbacks; compare large/negative/boundary cases at O0/O2,
+  allocation/resource failures and both-width IR/object layouts. Native 32-bit is V01.
+- [ ] Integrate graph copying and GC tracing with F04/F05.
 
 ### F11 — Floating-point values and arithmetic
 
-Meaning: execute floats, conversions and mixed numeric operations with the chosen
-Erlang behavior rather than merely preserving parsed float literals.
+Delivered finite binary64 values, numeric operations/conversions and mixed comparisons;
+see [float contract](../docs/float-matching.md) and [final validation](../docs/patternmatch-step20-validation.md).
 
-- [ ] Define representation, construction and the supported operation/conversion set.
-- [ ] Implement runtime support and lowering with explicit errors and no LLVM
-  assumptions that change numeric behavior; integrate tracing/copying and F12.
-- [ ] Compare boundary, rounding, mixed integer/float and error cases with OTP.
+- [x] Define finite representation, construction and admitted operation/conversion set.
+- [x] Implement checked runtime/lowering without unsafe LLVM numeric assumptions;
+  share exact/mixed comparison rules with F12.
+- [x] Compare boundaries, rounding, mixed integer/float inputs, signed zero and errors with OTP.
+- [ ] Integrate tracing/copying with F04/F05; broader numeric additions need a selected scope.
 
 ## Executable language semantics
 
 ### F12 — Equality, comparisons and term ordering
 
-Meaning: share correct exact/numeric equality and ordering across expressions,
-map keys, patterns and guards as new representations become executable.
+Delivered structural comparison for every admitted representation. See
+[final validation](../docs/patternmatch-step20-validation.md); future identity,
+callable/native-record representations still require their owners.
 
-- [ ] Specify comparisons for each enabled representation, mixed numbers and nested
-  terms; distinguish exact identity from numeric equality.
-- [ ] Implement runtime comparison and lower operators with safe fast paths;
-  reuse the appropriate rules in maps, patterns and guards.
-- [ ] Verify cross-type, nested, numeric-boundary and equal-looking-but-distinct values.
+- [x] Specify exact/numeric equality and ordering, including mixed numbers and nested terms.
+- [x] Implement checked runtime/lowering and reuse rules in maps, patterns and guards.
+- [x] Verify cross-type, numeric boundaries and equal-looking-but-distinct keys/values.
+- [ ] Extend comparison only as future representations become admitted.
 
 ### F13 — Pattern matching and bindings
 
-Steps 4–6 provide scoped bindings, bounded normalization and executable immediate head matching, including sibling key/size legality. Later representations and dispatch remain pending.
-See [step-5 validation](../docs/patternmatch-step5-validation.md).
+Delivered function-head and body-match semantics for the admitted scalar/container/
+ordinary-record domain; see [scoped matrix](../docs/patternmatch-matrix.md) and
+[final validation](../docs/patternmatch-step20-validation.md).
 
-Meaning: destructure values and bind/check variables beyond the distinct variable
-or wildcard parameters currently accepted.
-
-- [ ] Define scopes, repeated-variable equality, wildcards and mismatch outcomes
-  for supported pattern forms.
-- [ ] Implement checked matching/access for available representations and lower it
-  while preserving existing bindings and rooted values on every path.
-- [ ] Reuse matching in clauses and receive; verify nested patterns, binding
-  visibility and mismatches through real source.
+- [x] Define scopes, aliases, exact repeated-variable equality, wildcards and
+  mismatch outcomes, including map-key and binary-size binding rules.
+- [x] Implement rooted checked matching/access with isolated candidate bindings
+  and successful body publication over every admitted representation.
+- [x] Reuse matching in ordered function clauses/body matches; verify nested
+  patterns, visibility, failures and same-context retry through real source.
+- [ ] Add case/if/maybe/comprehension, fun/catch and receive contexts with
+  F16/F18/F20/F25; admit future representations through their owners.
 
 ### F14 — Guards
 
-Delivered steps 7–8: legal call resolution, immediate predicates/comparisons/queries, comma/semicolon guards and strict/lazy boolean control flow with semantic/infrastructure failure separation and structured badarg payloads; see docs/guard-control-flow.md. Ordered dispatch, other guard contexts and later representations remain open.
+Delivered the audited admitted-domain guard catalog and function-clause guard
+control flow; see [guard services](../docs/guard-services.md) and
+[final validation](../docs/patternmatch-step20-validation.md).
 
-Meaning: decide whether clauses apply using restricted guard expressions and
-their special failure rules.
-
-- [ ] Validate allowed operations and grouping independently of parser acceptance.
-- [ ] Implement guard BIFs/checks and short-circuit/failure control flow; require
-  dominating representation proofs rather than trusting type annotations.
-- [ ] Compare alternatives, runtime guard failures and invalid guard operations with OTP.
+- [x] Validate operations/grouping, exact signatures, shadowing/imports and
+  unreachable operands separately from availability and parsing.
+- [x] Implement canonical-true, grouped/strict/lazy control flow and checked
+  services; representation proofs dominate access, specs grant no authority.
+- [x] Compare alternatives, reached semantic rejection, infrastructure failure
+  propagation and invalid operations with OTP and native fault evidence.
+- [ ] Enable self/0, node/0,1 and native is_record/1 only with F07/F17/F22/F26.
+- [ ] Add guard contexts outside function clauses with F16/F18/F20/F25 and
+  positive identity/function classifications with F07/F18.
 
 ### F15 — Multiple function clauses
 
-Meaning: select the first matching function clause instead of requiring exactly
-one clause. Depends on matching and guards as supported by F13/F14.
+Delivered ordered selection for the full admitted domain; see
+[final validation](../docs/patternmatch-step20-validation.md). Recursion remains F21.
 
-- [x] Analyze clause-local bindings and ordered alternatives; merge inference conservatively.
-- [x] Lower clause dispatch and the correct no-clause-match outcome.
-- [x] Execute overlapping, fallback and failing clauses through local and remote calls.
-
-Delivered for the admitted immediate domain by [patternmatch step 9](../docs/patternmatch-step9-validation.md). Later representation owners extend the shared matcher; recursion remains F21.
+- [x] Analyze clause-local bindings and ordered alternatives; join inference conservatively.
+- [x] Lower checked dispatch and the correct function_clause outcome.
+- [x] Execute overlapping, fallback and failing clauses through local/remote calls.
 
 ### F16 — Expression sequences and control flow
 
-Meaning: execute several expressions and source branching rather than one
-literal, parameter reference or direct call per function body.
+Delivered body sequences/matches over every admitted representation, including
+RHS-first chains, exact rebinding, owned badmatch and rooted construction;
+see [final validation](../docs/patternmatch-step20-validation.md).
 
-- [x] Immediate body sequences and matches, including chained RHS-first semantics, exact rebinding checks and owned badmatch payloads: [patternmatch step 10](../docs/patternmatch-step10-validation.md). Other control contexts remain open.
-- [ ] Inventory parsed constructs and select slices: sequences, matches, blocks,
-  case/if, boolean control flow, then any chosen maybe/comprehension forms.
-- [ ] Define scope, evaluation order and failure per slice; implement semantic
-  analysis, inference joins and LLVM control flow using F13/F14/F20 as needed.
-- [ ] Compare branch selection, visible bindings, nested evaluation and failures;
-  keep unselected constructs rejected until separately completed.
+- [x] Implement sequences/matches and strict/lazy boolean expression evaluation,
+  preserving order, bindings and failures through real source/native workflows.
+- [ ] Select remaining blocks, case/if and maybe/comprehension slices.
+- [ ] Define scope/evaluation/failure, inference joins and LLVM control flow using
+  F13/F14/F20; compare branch selection, visibility and errors with OTP.
 
 ### F17 — Record expansion and execution
 
@@ -273,8 +274,8 @@ names instead of resolving every call within the compilation batch.
 ### F20 — Erlang exceptions
 
 Patternmatch step 2 delivered checked nested-call transport for class error,
-function_clause/badmatch reasons and immediate payloads, with clean retry and
-infrastructure failures kept separate. Source raising and handlers remain open.
+function_clause and admitted service reasons with owned scalar/container payloads,
+clean retry and separate infrastructure failures. Source raising and handlers remain open.
 
 Meaning: implement error/exit/throw and source catch/try behavior without native
 C++ exceptions escaping generated entry boundaries.
@@ -345,15 +346,17 @@ without losing arrivals. Depends on F13–F15 and F22–F24 as applicable.
 
 ### F26 — Production builtin functions
 
-Meaning: implement actual Erlang builtin behavior behind the existing generic
-registry rather than only registered/unknown/unavailable dispatch boundaries.
+Meaning: implement actual builtin behavior behind the generic registry. The compiler
+guard-service slice is delivered, while generic production registration remains open.
 
-- [ ] Inventory needed builtin families and select deliverable sets with explicit
-  dependencies on terms, arithmetic, processes, messaging or modules.
-- [ ] Implement argument validation, values and Erlang failures through the generic
-  bridge; register implementations and enable source/guard use only where legal.
-- [ ] Compare valid/invalid inputs and error classes with OTP, retaining unavailable
-  reporting for signatures not yet implemented.
+- [x] Audit all 81 source catalog rows; implement 77 on admitted values with checked
+  validation/results/failures, executable mappings and explicit gates for four owners.
+  See [guard services](../docs/guard-services.md) and [final validation](../docs/patternmatch-step20-validation.md).
+- [ ] Select additional builtin families and their concrete runtime dependencies.
+- [ ] Implement/register production families through the generic bridge and enable
+  source use only where legal; compiler-authorized services do not close this work.
+- [ ] Compare generic bridge valid/invalid calls and errors with OTP while retaining
+  unavailable diagnostics for missing services.
 
 ### F27 — Typed/native callables and conversions
 

@@ -111,7 +111,8 @@
   Lowering borrows one read index but retains isolated candidate SSA maps.
   Specialization uses actual profiles and guarded generic fallback: 3 variants per
   function, 32/module, 128/target and at most 2x measured generic IR. Current source
-  offers no profitable removable checks; complete-domain optimization remains later work.
+  offers no profitable removable checks; the admitted-domain proof audit passes
+  without adding speculative check removal.
 
 - LLVM lowering uses target-derived layouts, collision-free symbols and checked
   runtime services. Standard O0/O2 PassBuilder pipelines verify fresh batches on
@@ -123,16 +124,17 @@
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–19 are complete; step 15a is complete; step 20 remains.
-  The current request is completion of the entire plan.
+  Patternmatch steps 1–20 and step 15a are complete within function-clause/body-match scope.
+  Final evidence is docs/patternmatch-step20-{validation.md,evidence.json}.
 
 - Tests prioritize real CLI/project sources and separate native runtime consumers.
-  Project-owned fixtures retain OTP inputs/results; 18 corpora preserve 65,665
-  native expected values. Live OTP/source audits are explicit opt-ins, while
+  Project-owned fixtures retain OTP inputs/results; 19 corpora preserve 67,634
+  native expected values in all eight driver/policy combinations, plus 106 semantic
+  rows. The seeded closure corpus reconciles every manifest/catalog mapping. Live OTP/source audits are explicit opt-ins, while
   normal configure/build/test requires neither OTP nor its checkout. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 123 OTP-free CTests and all 258 production quality units;
+  Windows x64 Debug passes 124 OTP-free CTests and all 258 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

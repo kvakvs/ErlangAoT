@@ -75,7 +75,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
 | `docs/` | Contracts: `compile.md`, `semantic.md`, `projects.md`, `runtime-*.md`, pattern/guard docs; evidence: `*-validation.md`, `patternmatch-step*-evidence.json`; `test-migration.md`: disposition ledger |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
-| `examples/` | `compile/`: native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
+| `examples/` | `compile/`: remote scalar/container/record classification and native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
 | Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies; `.venv-quality/`: tools; editor state stays local |
 
 ## Tests / fixtures
@@ -88,7 +88,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `preprocessor`, `parser` | CLI/OTP/grammar/corpus; parser `pinned.cmake`, `corpus.cmake`, `coverage.*`, `historical.cmake`; shared `tests/compiler/{frontend_cases,printing_roundtrip}.cmake`, `tests/cli.cmake` |
 | `project` | `cli.cmake`, `workflow.cmake`, `*_cases.cmake`; injected `limits.cpp`, `creation_failure.cpp` |
 | `semantic` | `cases.cmake`: CLI diagnostics; binding/pattern/type/symbol invariants; source fixtures stay in the relevant existing area |
-| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`; native value transport: `codegen/match_wire.hpp`; extend for remaining pattern/guard plan |
+| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`, `closure.py`: conservative proofs and seeded/provenance closure; native bounded value transport: `codegen/match_wire.hpp` |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |
@@ -134,4 +134,4 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | D06 C/FFI | **+** `R/interop`, **+** `runtime/include/erlang_aot/interop/`; concrete external use only |
 | D07 project extensions | `C/project`: schema/profiles/graphs/packages/watch/cache/scheduling; `C/driver`, `C/artifacts`; project tests/fixtures/examples; `docs/projects.md` |
 
-Golden fixtures: `tests/fixtures/patternmatch/generated/` owns source, calls, expected results and manifests. `tests/compiler/patternmatch/{stored,regenerate,regenerate_cases,upstream}.py` load, explicitly refresh and optionally audit them. `ERLANG_AOT_OTP_AUDITS` gates live audits; normal tests are OTP-free.
+Golden fixtures: `tests/fixtures/patternmatch/generated/` owns source, calls, expected results and manifests. `tests/compiler/patternmatch/{stored,regenerate,regenerate_cases,upstream}.py` load, explicitly refresh and optionally audit them. `ERLANG_AOT_OTP_AUDITS` gates live audits; normal tests are OTP-free. Nineteen corpus manifests retain 67,634 native values and 106 semantic rows; final reconciliation: `docs/patternmatch-step20-{validation.md,evidence.json}`.

@@ -73,3 +73,12 @@ OTP-free combined build: 120/120 CTests and all 253 production quality units pas
 Five suite parses and three target object checks are separate from execution.
 Other native hosts/32-bit and new sanitizer runs remain unclaimed. See
 [step-16 validation](patternmatch-step16-validation.md).
+
+Pattern/guard steps 17–20 complete ordinary tuple records, the admitted guard
+catalog, conservative binding/proof inference and final seeded/provenance closure.
+Fresh Windows x64 Debug: 124/124 OTP-free tests and all 258 quality units pass.
+Nineteen owned corpora retain 67,634 native outcomes in all eight driver/policy
+combinations, plus 106 separate semantic rows. The documented remote classification
+example passes all four policies. [Final validation](patternmatch-step20-validation.md)
+records source/tool identities, scoped backlog closures and remaining platform gaps;
+historical native/sanitizer records retain their original scope.

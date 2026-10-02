@@ -13,7 +13,10 @@ consumer selects its calls directly. Float results retain exact IEEE binary64 bi
 arbitrary integers retain their mathematical values. Original OTP license
 notices and helper/adaptation provenance are preserved.
 
-The fifteen corpora retain 58,785 native expected results plus semantic records.
+The nineteen corpora retain 67,634 native expected results plus 106 semantic
+acceptance rows. All native corpora exercise both CLI drivers in all four policies.
+The closure corpus adds deterministic nested stress and checks every manifest and
+all 81 guard catalog mappings; see [final validation](../../../../docs/patternmatch-step20-validation.md).
 Bitstring transport preserves the exact bit count and packed MSB-first bytes,
 with zero unused low bits in the final byte; it never serializes buffer identity.
 

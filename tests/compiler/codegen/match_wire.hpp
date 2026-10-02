@@ -11,6 +11,9 @@
 namespace wire {
 using namespace erlang_aot::runtime;
 
+// Leave room for generated result wrappers around the corpus's 255-cell lists while bounding test recursion.
+inline constexpr unsigned transport_depth_limit = 512;
+
 // Stable textual test transport contains values only; native words and heap addresses never cross it.
 inline void check(bool condition) {
     if (!condition) {
@@ -30,7 +33,7 @@ inline std::string unhex(std::string_view input) {
 
 // Keep the recursively defined test grammar bounded independently of runtime traversal limits.
 inline Term read(ProcessContext &context, std::string_view &input, unsigned depth = 0) {
-    check(!input.empty() && depth < 256);
+    check(!input.empty() && depth < transport_depth_limit);
     if (input.starts_with("t(") || input.starts_with("c(") || input.starts_with("m(")) {
         const bool tuple = input.front() == 't';
         const bool map = input.front() == 'm';
@@ -92,7 +95,7 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
 
 // Render nested containers by value, including arbitrary improper tails and retained error payloads.
 inline void write(const Term &value, std::ostream &out = std::cout, unsigned depth = 0) {
-    check(depth < 256);
+    check(depth < transport_depth_limit);
     if (value.kind() == TermKind::empty_list) {
         out << "nil";
     } else if (value.kind() == TermKind::empty_tuple) {
