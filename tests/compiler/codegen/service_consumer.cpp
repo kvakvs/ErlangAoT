@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdio>
+#include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/immediate_services.hpp>
@@ -22,6 +23,8 @@ extern std::uint8_t injected_inspect(void *, std::uint8_t, Word, std::size_t, Wo
 
 extern std::uint8_t injected_map(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept asm("step15_map");
 
+extern std::uint8_t injected_bits(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept asm("step16_bits");
+
 namespace {
 // Select faults after source-generated code has entered the real invocation scope.
 abi::v1::Status fault = abi::v1::Status::ok;
@@ -32,6 +35,8 @@ bool predicate_only = false;
 unsigned predicate_calls = 0;
 // Verify real container services retain every live input/output in the generated root frame.
 bool unrooted = false;
+// Select extraction faults after successful binary construction and type checking.
+bool extraction_only = false;
 // Exhaust the real root budget at selected generated entry depths before any source service executes.
 std::size_t root_fault_depth = std::numeric_limits<std::size_t>::max();
 
@@ -212,6 +217,24 @@ void integer_budget(ProcessContext &context) {
     require(entry.call(context, std::array{TermFactory(context).integer(1).value()}).has_value(),
             "integer ceiling poisoned retry");
 }
+
+// A reached extraction failure cannot become badmatch or fallback; retained large tails survive caller cleanup.
+void bit_extractions(ProcessContext &context) {
+    const auto source = TermFactory(context).binary(std::vector(80, std::byte{42})).value();
+    const auto entry = context.code_server().resolve({"service_answer", "bits_extract", 1}).value();
+    extraction_only = true;
+    for (const auto status : {abi::v1::Status::out_of_memory, abi::v1::Status::resource_limit}) {
+        fault = status;
+        const auto result = entry.call(context, std::array{source});
+        require(!result && result.error().status == status, "extraction fault became pattern mismatch");
+        require(context.roots().depth() == 0 && !context.generated_calls().failure(), "extraction fault leaked state");
+        fault = abi::v1::Status::ok;
+        const auto recovered = entry.call(context, std::array{source});
+        require(recovered && recovered->tuple_element(1)->bit_size() == 632,
+                "extraction fault poisoned retained-tail retry");
+    }
+    extraction_only = false;
+}
 } // namespace
 
 // Inject infrastructure errors before allocation, preserving generated cleanup and fallback behavior.
@@ -228,6 +251,24 @@ std::uint8_t injected_construct(void *opaque, std::uint8_t operation, const Word
     }
     const auto result = erlang_aot_construct_v1(opaque, operation, values, count, output);
     unrooted |= result == 0 && !context.roots().contains(*output);
+    return result;
+}
+
+// Verify source-generated binary argument/output roots while injecting selected construction or extraction faults.
+std::uint8_t injected_bits(void *opaque, std::uint8_t operation, const Word *values, std::size_t count,
+                           Word *output) noexcept {
+    auto &context = *static_cast<ProcessContext *>(opaque);
+    ++calls;
+    for (const auto value : std::span(values, count)) {
+        unrooted |= !context.roots().contains(value);
+    }
+    const bool selected = !extraction_only || operation == static_cast<std::uint8_t>(abi::v1::BitOperation::extract);
+    if (fault != abi::v1::Status::ok && selected) {
+        context.generated_calls().fail_service(fault);
+        return 2;
+    }
+    const auto result = erlang_aot_bits_v1(opaque, operation, values, count, output);
+    unrooted |= result == 0 && (!context.roots().contains(output[0]) || !context.roots().contains(output[1]));
     return result;
 }
 
@@ -307,9 +348,10 @@ int main() {
         checked_arguments(context);
         root_failures(context);
         for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard",
-                                "float_body", "map_guard", "map_body", "map_pattern"}) {
+                                "float_body", "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body"}) {
             failures(context, "service_answer", name);
         }
+        bit_extractions(context);
         heap_lifetimes(context);
         heap_budget(*runtime);
         integer_budget(context);

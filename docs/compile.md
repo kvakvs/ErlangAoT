@@ -1,4 +1,5 @@
-Current executable slice (pattern/guard steps 6–10): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). [Ordered clauses](ordered-clauses.md) select candidates in source order; [body matches and sequences](body-matches.md) execute on immediates; nonempty containers remain deferred.
+Current executable slice (pattern/guard steps 1–16): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md) and [bitstrings](bitstring-matching.md). Expanded records and remaining guard catalog work are assigned to steps 17–18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+
 
 # LLVM compilation contract
 
@@ -177,9 +178,11 @@ remain pending.
 ## Frozen executable subset
 
 Accept ordinary named modules with exports and ordered function clauses. Parameters
-are variables, wildcards, aliases or small-integer/atom/empty-value constraints. Repeated names require exact equality; exhausted matching raises function_clause. Each body is a sequence with immediate matches and expressions made
-from small signed integer/atom/boolean literals, named parameter references and direct local or
-literal remote calls within the same compilation batch, with nested arguments.
+are variables, wildcards, aliases, scalar literals or tuple/list/map/bitstring
+constraints. Repeated names require exact equality; exhausted matching raises
+function_clause. Bodies contain source-ordered sequences and matches, constructors,
+checked arithmetic/query/comparison operations and direct local or literal remote
+calls within the same compilation batch, with nested arguments.
 Calls evaluate arguments in source order. Remote calls require exported functions;
 the entire call graph must be acyclic. Reject unsupported code even if unexported.
 
@@ -191,9 +194,10 @@ identity(X) -> X.
 ```
 
 A second module may call `answer:identity(answer:value())`; it must compile in the
-same batch to a separate object. Negative literal syntax does not enable unary
-arithmetic. Atom/boolean literals use runtime-owned bindings. Exclude bignums, arithmetic, heap-term construction,
-nonempty-container patterns, unavailable guard services, closures, dynamic calls, recursion,
+same batch to a separate object. Atom/boolean literals use runtime-owned bindings.
+Arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings are
+implemented through rooted checked services. Exclude expanded/native records,
+unavailable guard services, closures, dynamic calls, recursion,
 exceptions, receive, concurrency and code loading. Handle file/module/export and
 all existing type/spec AST forms explicitly. The initial inert metadata allowlist
 is `author`, `vsn`, `doc` and `moduledoc`; reject other attributes, including

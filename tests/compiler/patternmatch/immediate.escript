@@ -17,6 +17,9 @@ main([Root]) ->
     end, Calls).
 
 %% Serialize the admitted domain using stable spellings and mathematical integers.
+token(Value) when is_bitstring(Value) ->
+    Pad = (8 - bit_size(Value) rem 8) rem 8,
+    "b" ++ integer_to_list(bit_size(Value)) ++ ":" ++ binary_to_list(binary:encode_hex(<<Value/bitstring,0:Pad>>, lowercase));
 token(Value) when is_float(Value) -> "f" ++ binary_to_list(binary:encode_hex(<<Value:64/float>>, lowercase));
 token(Value) when is_integer(Value) -> "i" ++ integer_to_list(Value);
 token(Value) when is_map(Value) -> "m(" ++ lists:join(",", lists:map(fun token/1, ordered(Value))) ++ ")";

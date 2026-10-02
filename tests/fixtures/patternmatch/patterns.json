@@ -77,7 +77,7 @@
     "body": "f(X, Y, M) -> #{element(X,Y) := <<Sz:16,Bin:Sz/binary>>} = M, Bin.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_remote",
@@ -93,7 +93,7 @@
     "body": "f(Int,M) -> #{{tag,<<Int:42>>} := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "heap expressions"
+    "capability": ""
   },
   {
     "name": "pat_key_map",
@@ -133,7 +133,7 @@
     "body": "f(<<Sz:32,Tail:(4*Sz-4)/binary>>) -> Tail.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_incoming",
@@ -141,7 +141,7 @@
     "body": "f(N,B) -> <<X:(N+1)>> = B, X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_call",
@@ -149,7 +149,7 @@
     "body": "f(T,B) -> <<X:(tuple_size(T))>> = B, X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_alias",
@@ -157,7 +157,7 @@
     "body": "f(<<N:8,X:N>> = Whole) -> {Whole,X}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_string",
@@ -165,7 +165,7 @@
     "body": "f(<<\"abc\",X/utf8>>) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_utf_string",
@@ -173,7 +173,7 @@
     "body": "f(<<\"abc\"/utf16>>) -> ok.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_noninteger_size",
@@ -181,7 +181,7 @@
     "body": "f(<<X:atom>>) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_negative_size",
@@ -189,7 +189,7 @@
     "body": "f(<<X:(-1)>>) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_size_container",
@@ -197,7 +197,7 @@
     "body": "f(<<X:{1,2}>>) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_bin_size_badarith",
@@ -205,7 +205,7 @@
     "body": "f(<<X:(1 div 0)>>) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_record",
@@ -725,7 +725,7 @@
     "body": "f(#{<<\"a\":16>> := X}) -> X.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "heap expressions"
+    "capability": ""
   },
   {
     "name": "pat_size_bad_modifier",
@@ -734,5 +734,93 @@
     "diagnostic": "invalid binary pattern modifier",
     "otp_diagnostic": "undefined_bittype",
     "capability": "pattern matching"
+  },
+  {
+    "name": "bit_construct_unknown",
+    "arity": 1,
+    "body": "f(X) -> <<X:8/magic>>.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_conflict",
+    "arity": 1,
+    "body": "f(X) -> <<X:8/integer-float>>.",
+    "diagnostic": "conflicting binary pattern modifiers",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_unit_high",
+    "arity": 1,
+    "body": "f(X) -> <<X:1/unit:257>>.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_unit_default",
+    "arity": 1,
+    "body": "f(X) -> <<X/unit:2>>.",
+    "diagnostic": "binary pattern unit requires an explicit size",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_utf_size",
+    "arity": 1,
+    "body": "f(X) -> <<X:1/utf8>>.",
+    "diagnostic": "UTF binary pattern segment cannot have size or unit",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_all_integer",
+    "arity": 1,
+    "body": "f(X) -> <<X:all/integer>>.",
+    "diagnostic": "invalid binary size",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_guard_unknown",
+    "arity": 1,
+    "body": "f(X) when false andalso bit_size(<<X:8/magic>>) > 0 -> X; f(_) -> no.",
+    "diagnostic": "invalid binary pattern modifier",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_unit256",
+    "arity": 1,
+    "body": "f(X) -> <<X:1/unit:256>>.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_pattern_unit256",
+    "arity": 1,
+    "body": "f(<<X:1/unit:256>>) -> X.",
+    "diagnostic": "",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_construct_utf_undefined",
+    "arity": 1,
+    "body": "f(X) -> <<X:undefined/utf8>>.",
+    "diagnostic": "UTF binary pattern segment cannot have size or unit",
+    "otp_diagnostic": "",
+    "capability": ""
+  },
+  {
+    "name": "bit_pattern_utf_undefined",
+    "arity": 1,
+    "body": "f(<<X:undefined/utf8>>) -> X.",
+    "diagnostic": "UTF binary pattern segment cannot have size or unit",
+    "otp_diagnostic": "",
+    "capability": ""
   }
 ]

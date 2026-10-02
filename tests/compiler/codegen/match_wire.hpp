@@ -69,6 +69,13 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
         return Term::from_word(scalar == "nil" ? erlang_aot::abi::v1::empty_list : erlang_aot::abi::v1::empty_tuple)
             .value();
     }
+    if (scalar.starts_with('b')) {
+        const auto colon = scalar.find(':');
+        check(colon != std::string_view::npos);
+        const auto count = static_cast<std::size_t>(std::stoull(std::string(scalar.substr(1, colon - 1))));
+        const auto bytes = unhex(scalar.substr(colon + 1));
+        return TermFactory(context).bitstring(std::as_bytes(std::span(bytes)), count).value();
+    }
     if (scalar.starts_with('a')) {
         return context.atom_storage().intern(unhex(scalar.substr(1))).value();
     }
@@ -126,6 +133,13 @@ inline void write(const Term &value, std::ostream &out = std::cout, unsigned dep
             out << ')';
         }
         out << ')';
+    } else if (value.is_bitstring()) {
+        static constexpr std::string_view digits = "0123456789abcdef";
+        out << 'b' << value.bit_size().value() << ':';
+        for (const auto byte : value.bitstring_bytes().value()) {
+            const auto number = std::to_integer<unsigned>(byte);
+            out << digits[number >> 4] << digits[number & 15];
+        }
     } else if (value.is_float()) {
         const auto flags = out.flags();
         const auto fill = out.fill();

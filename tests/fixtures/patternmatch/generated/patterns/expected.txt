@@ -91,5 +91,16 @@ pat_type_alias_conflict rejected bittype_mismatch
 pat_key_bad_modifier rejected undefined_bittype
 pat_key_binary_string_size accepted none
 pat_size_bad_modifier rejected undefined_bittype
+bit_construct_unknown rejected none
+bit_construct_conflict rejected none
+bit_construct_unit_high rejected none
+bit_construct_unit_default rejected none
+bit_construct_utf_size rejected none
+bit_construct_all_integer rejected none
+bit_guard_unknown rejected none
+bit_construct_unit256 accepted none
+bit_pattern_unit256 accepted none
+bit_construct_utf_undefined rejected none
+bit_pattern_utf_undefined rejected none
 bindings_otp accepted none
 patterns_binary accepted none

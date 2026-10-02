@@ -1,6 +1,7 @@
 #include "terms.hpp"
 #include <cstdio>
 #include <cstdlib>
+#include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/modules.hpp>
@@ -346,6 +347,48 @@ void check_float_construction() {
     require(succeeded, "float allocation sweep never succeeded");
 }
 
+// Sweep inline/shared binary publication and checked tail extraction without adding production failpoint hooks.
+void check_bitstrings(bool extraction, bool large) {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            TermFactory factory(context);
+            const auto bytes = std::vector(large ? 100U : 2U, std::byte{0xab});
+            const auto original = extraction ? factory.binary(bytes).value() : factory.integer(42).value();
+            const std::array input{original.word(), factory.integer(3)->word(), factory.integer(256 + 2)->word(),
+                                   factory.integer(static_cast<std::int64_t>(bytes.size() * 8 - 3))->word(),
+                                   factory.integer(0)->word()};
+            const auto used = context.heap().used_words();
+            const auto capacity = context.heap().capacity_words();
+            std::array<Word, 2> output{123, 456};
+            {
+                GeneratedInvocation call(context.generated_calls());
+                remaining = ordinal;
+                const auto result =
+                    extraction
+                        ? erlang_aot_bits_v1(&context, 1, input.data(), input.size(), output.data())
+                        : factory.binary(bytes).transform([](const Term &) { return std::uint8_t{0}; }).value_or(2);
+                remaining = std::numeric_limits<std::size_t>::max();
+                succeeded = result == 0;
+                if (!succeeded) {
+                    require(context.heap().used_words() == used && context.heap().capacity_words() == capacity,
+                            "failed bit publication retained backing");
+                    require(output == std::array<Word, 2>{123, 456}, "failed extraction published an output");
+                    require(!extraction || context.generated_calls().failure()->status == Status::out_of_memory,
+                            "extraction allocation became mismatch");
+                }
+            }
+            require(factory.binary(bytes).has_value(), "bit allocation rejection poisoned retry");
+        }
+        require(live_allocations == baseline, "bit construction/extraction sweep leaked");
+    }
+    require(succeeded, "bit allocation sweep never reached success");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 void check_root_allocation() {
     using namespace erlang_aot::runtime;
@@ -494,6 +537,10 @@ int main() {
         check_float_construction();
         check_map_construction();
         check_integer_arithmetic();
+        for (const bool large : {false, true}) {
+            check_bitstrings(false, large);
+            check_bitstrings(true, large);
+        }
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::fprintf(stderr, "%s\n", error.what());

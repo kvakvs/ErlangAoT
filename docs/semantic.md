@@ -1,4 +1,5 @@
-Current executable slice (pattern/guard steps 6–10): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). [Ordered clauses](ordered-clauses.md) select candidates in source order; [body matches and sequences](body-matches.md) execute on immediates; nonempty containers remain deferred.
+Current executable slice (pattern/guard steps 1–16): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md) and [bitstrings](bitstring-matching.md). Expanded records and remaining guard catalog work are assigned to steps 17–18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+
 
 # Semantic compilation analysis
 
@@ -25,12 +26,12 @@ unsigned decimal. Separators cannot occur in encoded names, so encoding is rever
 and independent of compiler-host hashing, locale and table order.
 
 Compilation checks every function, including unused definitions. The current subset
-accepts ordered clauses with immediate patterns/aliases/repeated variables and body sequences of ABI-small integers, atom/boolean/empty literals, binding reads, immediate matches and syntactically direct local/literal remote calls.
-Nested call arguments, immediate services/comparisons and grouped guard/boolean expressions are checked. Explicit negative integers are supported.
-General arithmetic, heap values, nonempty-container matching, exceptions, concurrency, dynamic
-calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
-is symbolic and does not enable executable syntax. Current CLI bounds are native;
-the analysis API accepts explicit 32/64-bit target bounds for later target setup.
+accepts ordered clauses with scalar/container patterns, aliases and repeated variables,
+body sequences/matches, rooted constructors, checked numeric/container services and
+syntactically direct local/literal remote calls. Source children evaluate in order.
+Records, exceptions, concurrency, dynamic calls, closures and behavior-changing
+attributes remain diagnosed. Type/spec metadata does not authorize runtime loads.
+Executable layouts and integer bounds derive from the requested LLVM target.
 
 Executable named parameters may repeat or form aliases. The semantic binder
 assigns clause-local identities to definitions, reads and exact-equality checks.

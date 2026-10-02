@@ -14,6 +14,8 @@ def token(value):
         return "t(" + ",".join(map(token, value)) + ")" if value else "tuple"
     if isinstance(value, list):
         return "c(" + token(value[0]) + "," + token(value[1:]) + ")" if value else "nil"
+    if isinstance(value, dict) and "bits" in value:
+        return "b" + str(value["length"]) + ":" + value["bits"]
     if isinstance(value, dict) and "map" in value:
         return "m(" + ",".join(token(tuple(entry)) for entry in value["map"]) + ")"
     if isinstance(value, dict):
@@ -31,6 +33,14 @@ def erl(value):
         return "{" + ",".join(map(erl, value)) + "}"
     if isinstance(value, list):
         return "[" + ",".join(map(erl, value)) + "]"
+    if isinstance(value, dict) and "bits" in value:
+        data = bytes.fromhex(value['bits'])
+        count = value['length']
+        full = count // 8
+        parts = list(map(str,data[:full]))
+        if count % 8:
+            parts.append(str(data[full] >> (8-count%8)) + ':' + str(count%8))
+        return '<<' + ','.join(parts) + '>>'
     if isinstance(value, dict) and "map" in value:
         return "#{" + ",".join(erl(k) + "=>" + erl(v) for k,v in value["map"]) + "}"
     if isinstance(value, dict):

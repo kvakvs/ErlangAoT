@@ -33,7 +33,7 @@ def cases(source, otp, work):
     clause = re.search(r"^do_basic_1\(.*?^    no_match\.", binary_source, re.M | re.S).group()
     wrapped = binary_source.split("-module(")[0] + "-module(patterns_binary).\n-export([do_basic_1/1]).\n" + clause + "\n"
     (work / "patterns_binary.erl").write_text(wrapped, encoding="utf-8")
-    rows.append(dict(name="patterns_binary", diagnostic="", capability="pattern matching"))
+    rows.append(dict(name="patterns_binary", diagnostic="", capability=""))
     terms.append("{patterns_binary, accepted, none}.")
     (work / "patterns.term").write_text("\n".join(terms) + "\n", encoding="utf-8")
     return rows, {"match": helper_record, "binary": {"source": str(binary_path.relative_to(otp)),

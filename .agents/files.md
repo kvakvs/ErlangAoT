@@ -10,7 +10,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 | --- | --- |
 | Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it |
 | Runtime API | `runtime/include/erlang_aot/runtime/` |
-| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `immediate_services`, `features`, `feature_diagnostic` |
+| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `features`, `feature_diagnostic` |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
 | Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
 | New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
@@ -34,11 +34,11 @@ Keys in the last column are relative to the directory column.
 | `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
 | `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls, executable admission | `declarations`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
-| `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers` |
+| `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options` |
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
-| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,guards,walk}` |
+| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,guards,walk}` |
 | `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
@@ -57,6 +57,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `terms/` | Canonical arbitrary integers, exact operations and checked transport | `integers`, `integer_{access,values,decimal,words,sum,factory,operations,service,literal}` |
 | `terms/` | Finite binary64 construction/conversions, mixed arithmetic/order | `floats`, `float_{factory,literal,operations}`, `numeric_{conversions,order,service}` |
 | `terms/` | Immutable exact-key maps, staged updates, checked service transport | `maps`, `map_{access,factory,services}`; compiler `semantic/{pattern_reads,match_plan_maps}`, `codegen/lowering_maps` |
+| `terms/` | Immutable packed bitstrings, shared views, numeric/UTF segments and checked cursors | `bitstrings`, `bit_{access,factory,numeric,float,utf,services}`; compiler `semantic/{binary_options,match_plan_bits}`, `codegen/lowering_bits` |
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
 | `builtins/` | Generic registry, checked invocation/ABI bridge | `registry`, `invocation`, `bridge`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |

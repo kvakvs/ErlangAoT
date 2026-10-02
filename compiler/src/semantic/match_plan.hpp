@@ -1,4 +1,5 @@
 #pragma once
+#include "binary_options.hpp"
 #include "declarations.hpp"
 
 namespace erlang_aot::semantic {
@@ -13,6 +14,9 @@ enum class MatchOperation : std::uint8_t {
     cons_tail,
     map_shape,
     map_lookup,
+    binary_start,
+    binary_extract,
+    binary_finish,
     success,
     mismatch
 };
@@ -34,6 +38,9 @@ struct MatchNode {
     std::size_t index = 0;
     // Embedded map keys retain their analyzed incoming read bindings and failure continuation.
     std::optional<ast::ExprId> key = {};
+    // Binary extraction retains canonical modifiers and an explicit next-cursor candidate slot.
+    std::optional<BinaryOptions> bits = {};
+    std::size_t cursor_output = 0;
 };
 
 struct MatchPlan {

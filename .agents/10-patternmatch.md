@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–15 are
-complete; added step 15a is complete; steps 16–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–16 are
+complete; added step 15a is complete; steps 17–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Bitstrings and their checked queries are implemented. Records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -33,7 +33,7 @@ Per user-added step 15a, routine tests use project-owned pregenerated goldens.
 OTP extraction/execution below happens only during explicit regeneration or
 opt-in upstream audits; neither OTP nor its checkout is a build/test prerequisite.
 
-The official maint-29 head was checked on 2026-10-01 and matched the checkout
+The official maint-29 head was checked on 2026-10-02 and matched the checkout
 and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. The originally untracked
 `lib/stdlib/src/1.ir` was removed by the user during step 4. At implementation
 start, recheck upstream and follow
@@ -758,47 +758,47 @@ explicit OTP regeneration reproduces all retained inputs/results. Separate commi
 
 ### 16. Implement bitstring construction, extraction and matching (F09)
 
-- [ ] Implement rooted small/shared immutable storage, exact bit lengths/tail
+- [x] Implement rooted small/shared immutable storage, exact bit lengths/tail
   rules and checked integer/float/UTF construction. Extend equality/order and
   size/part services before enabling their pattern/guard uses.
-  - [ ] Define owned backing buffers and bit-offset/length views with checked
+  - [x] Define owned backing buffers and bit-offset/length views with checked
     size arithmetic; distinguish byte-aligned binaries from general bitstrings.
-  - [ ] Add staged segment builders using integer/float services and UTF
+  - [x] Add staged segment builders using integer/float services and UTF
     validation; publish only complete values and clean up partial buffers after
     failure.
-  - [ ] Implement bit-accurate equality/order and the required checked queries;
+  - [x] Implement bit-accurate equality/order and the required checked queries;
     test partial final bytes and independent buffers holding equal bit
     sequences.
-- [ ] Use checked extraction/ownership and numeric services. Validate segment
+- [x] Use checked extraction/ownership and numeric services. Validate segment
   types, defaults, units, signedness, endianness, UTF forms and tail rules.
-  - [ ] Consume step 5's normalized segment metadata and source anchors; gate
+  - [x] Consume step 5's normalized segment metadata and source anchors; gate
     runtime support by implemented segment form without duplicating legality
     rules.
-  - [ ] Add extraction services for admitted integer/float/binary/UTF segments;
+  - [x] Add extraction services for admitted integer/float/binary/UTF segments;
     classify truncation/invalid encoding separately from resource or ownership
     faults.
-- [ ] Track an explicit bit cursor; check type, size arithmetic and remaining
+- [x] Track an explicit bit cursor; check type, size arithmetic and remaining
   bits before every read. Apply OTP rules for earlier segment bindings and size
   scopes, separately from sibling compound-pattern restrictions.
-  - [ ] Carry candidate length and cursor through the match plan; compute
+  - [x] Carry candidate length and cursor through the match plan; compute
     segment width with overflow checks and advance only after successful checked
     extraction.
-  - [ ] Evaluate size expressions with incoming and permitted earlier-segment
+  - [x] Evaluate size expressions with incoming and permitted earlier-segment
     bindings; preserve separate sibling scopes and candidate rollback on
     failure.
-  - [ ] Exercise zero/truncated/invalid sizes, dependent lengths, repeated
+  - [x] Exercise zero/truncated/invalid sizes, dependent lengths, repeated
     variables and tail constraints through source-generated function and body
     matches.
-- [ ] Retain backing storage for extracted tails and root allocations. Share
+- [x] Retain backing storage for extracted tails and root allocations. Share
   representation/extraction services with F09; use target semantics for native
   endianness rather than the compiler host's endianness.
-  - [ ] Give tail views retained backing ownership and transfer roots on
+  - [x] Give tail views retained backing ownership and transfer roots on
     successful extraction; release failed-candidate views without invalidating
     returned tails.
-  - [ ] Derive native-endian lowering from target data and compare explicit
+  - [x] Derive native-endian lowering from target data and compare explicit
     endian variants; label cross-target object inspection separately from
     executed checks.
-  - [ ] Retain extracted tails across later allocations, caller return and
+  - [x] Retain extracted tails across later allocations, caller return and
     candidate cleanup; inject construction/extraction allocation failures and
     verify recovery.
 
@@ -812,6 +812,16 @@ bs_bit_binaries_SUITE and bs_utf_SUITE. Compile selected/adapted helpers for
 strings/1, bad_size/1, zero_width/1, bin_tail/1, shared_sub_bins/1 and UTF
 literals/1. Cover truncation, dependent sizes, endianness, UTF failures and
 retained-tail lifetime.
+
+Completion: [step-16 validation](../docs/patternmatch-step16-validation.md),
+[retained evidence](../docs/patternmatch-step16-evidence.json) and
+[bitstring contract](../docs/bitstring-matching.md). Fresh Windows x64 OTP-free
+combined build: 120/120 CTests, 8,826 golden calls per policy in four native
+policies, both CLI modes, 11 added semantic cases and all 253 quality units pass.
+Five suites parse; three target families have separate object-header/symbol
+inspection. Rooted small/shared construction, numeric/UTF extraction, explicit
+cursors, retained tails, size/part queries and bit-accurate comparison are delivered.
+Records, remaining guards, optimization and finalization remain steps 17–20.
 
 ### 17. Expand records into tuple patterns and guard operations (F17 slice)
 

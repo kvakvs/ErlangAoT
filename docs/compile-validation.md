@@ -64,3 +64,12 @@ Small-ceiling and partial-write injections remain intentional test exceptions; t
 Pattern/guard step 7 adds immediate service/guard execution, 1,689 differential calls, 31 resolution cases and four injected-service workflows. Fresh combined Windows x64 Debug: 119/119 tests and full Lizard/clang-tidy over 205 units. See [step-7 validation](patternmatch-step7-validation.md); other native hosts and new sanitizer runs remain unclaimed.
 
 Pattern/guard step 8 adds comma/semicolon guards and strict/lazy boolean execution, with 2,075 differential calls, structured badarg payloads, word joins, both-width objects and four strengthened fault workflows. Fresh combined Windows x64 Debug: 120/120 tests and full Lizard/clang-tidy over 207 units. See [step-8 validation](patternmatch-step8-validation.md). Ordered clauses and other native runners remain pending.
+
+Pattern/guard step 16 adds rooted immutable bitstrings, numeric/UTF segments,
+checked matching cursors, retained tails, queries and structural comparison.
+Project-owned goldens retain 8,826 expected calls per native policy; eleven added
+semantic cases validate construction and modifier boundaries. Fresh Windows x64
+OTP-free combined build: 120/120 CTests and all 253 production quality units pass.
+Five suite parses and three target object checks are separate from execution.
+Other native hosts/32-bit and new sanitizer runs remain unclaimed. See
+[step-16 validation](patternmatch-step16-validation.md).

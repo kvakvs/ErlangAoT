@@ -138,9 +138,15 @@ semantics; parsed aggregate syntax currently does not execute.
 Meaning: execute packed byte/bit data with correct segment interpretation,
 tail bits and shared immutable storage lifetime.
 
-- [ ] Finalize small/large storage, valid tail-bit rules, limits and shared ownership
+Pattern/guard step 16 implements small/shared storage, checked numeric/UTF
+construction and cursor extraction, retained tails, queries and comparisons.
+See [the contract](../docs/bitstring-matching.md) and
+[validation](../docs/patternmatch-step16-validation.md). Tracing, cross-process
+copying and GC remain open with F04/F05; this does not close the whole F09 owner.
+
+- [x] Finalize small/large storage, valid tail-bit rules, limits and shared ownership
   from the existing design; implement checked construction and release.
-- [ ] Lower segment construction and required conversions without host-endianness
+- [x] Lower segment construction and required conversions without host-endianness
   assumptions; add extraction/matching with F13.
 - [ ] Integrate tracing/copying and verify partial bytes, segment errors, large
   storage and last-owner release through real workflows.

@@ -31,7 +31,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::List &) const { return {}; }
 
-    std::string_view operator()(const ast::Bitstring &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::Bitstring &) const { return {}; }
 
     std::string_view operator()(const ast::MatchExpression &) const { return {}; }
 

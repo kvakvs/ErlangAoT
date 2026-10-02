@@ -1,4 +1,5 @@
 #include "binding_state.hpp"
+#include "pattern_state.hpp"
 #include <cstdint>
 
 namespace erlang_aot::semantic {
@@ -92,6 +93,9 @@ void match(BindingAnalysis &state, const ast::ExprId &id, const ast::MatchExpres
 void expression(BindingAnalysis &state, const ast::ExprId &id, BindingEnvironment &environment,
                 const BindingContext context, std::vector<Visit> &pending) {
     const auto &value = state.module.syntax->expression(id).value;
+    if (const auto *binary = std::get_if<ast::Bitstring>(&value)) {
+        pattern_binary(state, id, *binary, false);
+    }
     if (const auto *assignment = std::get_if<ast::MatchExpression>(&value)) {
         match(state, id, *assignment, context, pending);
         return;

@@ -64,6 +64,8 @@ enum class TermKind : std::uint8_t {
     floating,
     // Resolve a canonical immutable exact-key table through the owning heap index.
     map,
+    // Resolve immutable packed bits and retained slice views through the owning heap index.
+    bitstring,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

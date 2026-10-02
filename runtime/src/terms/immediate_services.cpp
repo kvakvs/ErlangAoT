@@ -39,8 +39,8 @@ bool predicate(Op operation, const Term &value) {
                                 value.is_boolean(),
                                 value.is_tuple(),
                                 value.is_list(),
-                                false,
-                                false,
+                                value.is_binary(),
+                                value.is_bitstring(),
                                 value.is_float(),
                                 value.is_map(),
                                 false,
@@ -111,8 +111,11 @@ Result container_query(const Term &left, Op operation, const Term &right) {
     case Op::length:
         return checked(left.list_length().and_then(count));
     case Op::tuple_size:
-    case Op::size:
         return checked(left.tuple_size().and_then(count));
+    case Op::size:
+        return checked((left.is_bitstring() ? left.bit_size().transform([](std::size_t size) { return size / 8; })
+                                            : left.tuple_size())
+                           .and_then(count));
     default:
         return std::unexpected(Fault{Outcome::bad_argument});
     }
@@ -120,6 +123,11 @@ Result container_query(const Term &left, Op operation, const Term &right) {
 
 // An absent function representation still validates its arity argument before returning false.
 Result query(const Term &left, Op operation, const Term &right) {
+    if (operation == Op::bit_size || operation == Op::byte_size) {
+        return checked(left.bit_size().and_then([&](std::size_t bits) {
+            return encode_integer(static_cast<std::int64_t>(operation == Op::bit_size ? bits : (bits + 7) / 8));
+        }));
+    }
     if (operation == Op::is_function_arity) {
         const auto arity = integer_read(right);
         if (!arity) {
@@ -165,6 +173,9 @@ Result logical(ProcessContext &context, Op operation, const Term &left, const Te
 
 // Dispatch only semantically authorized opcodes; later representation services extend this boundary.
 Result evaluate(ProcessContext &context, Op operation, const Term &left, const Term &right) {
+    if (operation >= Op::bit_size) {
+        return query(left, operation, right);
+    }
     if (operation >= Op::add) {
         return checked(
             numeric_service(context, operation, left, right).transform([](const Term &value) { return value.word(); }));
@@ -214,7 +225,7 @@ std::uint8_t immediate_service(ProcessContext &context, std::uint8_t operation, 
     if (!state.active() || state.failure()) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (!output || operation > static_cast<std::uint8_t>(Op::ceil)) {
+    if (!output || operation > static_cast<std::uint8_t>(Op::byte_size)) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }

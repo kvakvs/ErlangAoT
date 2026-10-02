@@ -13,6 +13,10 @@ consumer selects its calls directly. Float results retain exact IEEE binary64 bi
 arbitrary integers retain their mathematical values. Original OTP license
 notices and helper/adaptation provenance are preserved.
 
+The fifteen corpora retain 58,785 native expected results plus semantic records.
+Bitstring transport preserves the exact bit count and packed MSB-first bytes,
+with zero unused low bits in the final byte; it never serializes buffer identity.
+
 Regeneration is an explicit maintainer action, from the repository root:
 
 ```powershell

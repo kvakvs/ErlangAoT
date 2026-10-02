@@ -50,7 +50,7 @@ add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cp
     src/codegen/specialization.cpp src/codegen/specialization_analysis.cpp src/codegen/integer_guards.cpp
     src/codegen/specialization_cloning.cpp src/codegen/specialization_dispatch.cpp src/codegen/specialization_lowering.cpp
     src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
-    src/codegen/target_backends.cpp src/codegen/verification.cpp src/codegen/emission.cpp src/codegen/optimization.cpp src/codegen/serialization.cpp src/codegen/progress.cpp src/codegen/specialization_trace.cpp src/codegen/term_abi.cpp src/codegen/features.cpp src/codegen/lowering_boundaries.cpp src/codegen/lowering.cpp src/codegen/lowering_expressions.cpp src/codegen/lowering_containers.cpp src/codegen/lowering_integers.cpp src/codegen/lowering_floats.cpp src/codegen/lowering_maps.cpp src/codegen/lowering_roots.cpp src/codegen/lowering_clauses.cpp src/codegen/lowering_body_match.cpp src/codegen/lowering_calls.cpp
+    src/codegen/target_backends.cpp src/codegen/verification.cpp src/codegen/emission.cpp src/codegen/optimization.cpp src/codegen/serialization.cpp src/codegen/progress.cpp src/codegen/specialization_trace.cpp src/codegen/term_abi.cpp src/codegen/features.cpp src/codegen/lowering_boundaries.cpp src/codegen/lowering.cpp src/codegen/lowering_expressions.cpp src/codegen/lowering_containers.cpp src/codegen/lowering_integers.cpp src/codegen/lowering_floats.cpp src/codegen/lowering_bits.cpp src/codegen/lowering_maps.cpp src/codegen/lowering_roots.cpp src/codegen/lowering_clauses.cpp src/codegen/lowering_body_match.cpp src/codegen/lowering_calls.cpp
     src/codegen/limits.cpp src/codegen/bounded_stream.cpp src/codegen/source_annotations.cpp src/codegen/source_locations.cpp)
 erlang_aot_project_options(erlang_codegen)
 target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk erlang_frontend erlang_aot_abi)
@@ -63,7 +63,7 @@ target_link_libraries(erlang_aot PRIVATE erlang_codegen)
 # Semantic analysis owns language identities without depending on LLVM representations.
 add_library(erlang_semantic STATIC
     src/semantic/declarations.cpp src/semantic/symbols.cpp
-    src/semantic/bindings.cpp src/semantic/calls.cpp src/semantic/match_plan.cpp src/semantic/match_plan_containers.cpp src/semantic/match_plan_maps.cpp src/semantic/pattern_reads.cpp
+    src/semantic/bindings.cpp src/semantic/calls.cpp src/semantic/match_plan.cpp src/semantic/match_plan_containers.cpp src/semantic/match_plan_bits.cpp src/semantic/binary_options.cpp src/semantic/match_plan_maps.cpp src/semantic/pattern_reads.cpp
     src/semantic/binding_patterns.cpp src/semantic/binding_expressions.cpp
     src/semantic/pattern_analysis.cpp src/semantic/pattern_constants.cpp
     src/semantic/pattern_expressions.cpp src/semantic/pattern_binary.cpp

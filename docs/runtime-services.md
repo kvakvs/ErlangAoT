@@ -6,7 +6,7 @@ nor LLVM. Calls require host serialization, as do the existing runtime owners.
 
 | Boundary | Catalog feature | Result on a valid deferred request |
 | --- | --- | --- |
-| `TermFactory` constructors except atom/boolean | term services | `TermError::not_implemented` |
+| `TermFactory` identity/callable/native-record constructors | term services | `TermError::not_implemented` |
 | `ProcessHeap::collect` | garbage collection | `HeapError::not_implemented` |
 | `ProcessContext::send` | message passing | `ProcessError::not_implemented` |
 | `SchedulerService::run` | scheduling | `SchedulerError::not_implemented` |
@@ -45,15 +45,15 @@ the mailbox. Signal ordering, admission and receive remain future work.
 a weak context-lifetime token, a borrowed sink and a table pointer guarded by the token. Construction, moves and
 destruction do not allocate or register roots. Operations on expired bindings return
 `expired_context` before reporting. Atom/boolean factories now use the runtime atom
-table without a deferred-service report. Other factory constructors remain deferred,
-even `integer`, `nil` and empty containers. Existing supported immediate construction
-uses `encode_integer` and `Term::from_word`. Heap ownership remains outside
+table without a deferred-service report. Numeric, tuple/list/map and binary/bitstring
+factories are also implemented. Owned host Terms use the checked process heap;
+identity/callable/native-record constructors retain the unavailable boundary. Heap
+ownership is provided separately from
 these placeholders; [atom ownership](runtime-atoms.md) is implemented separately. Operations taking opaque identity
 or descriptor types remain inaccessible until those types have concrete definitions.
 
 Raw term classifiers and `Term::from_word` remain silent validation utilities; rejecting
-an unbound identity does not attempt a term service. Other semantic `Term` accessors
-remain declarations except atom/boolean inspection. Atom storage and revision-3
+an unbound identity does not attempt a term service. Numeric/container/bitstring accessors are implemented; other families retain their owner gates. Atom storage and revision-3
 generated bindings are implemented; atom collection and file loading remain deferred.
 Native `CodeServer::load` continues to publish linked registries successfully.
 

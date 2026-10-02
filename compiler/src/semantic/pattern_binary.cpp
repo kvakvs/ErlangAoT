@@ -1,5 +1,6 @@
 #include "capabilities.hpp"
 #include "pattern_state.hpp"
+#include <charconv>
 #include <map>
 
 namespace erlang_aot::semantic {
@@ -27,8 +28,10 @@ bool unit(const ast::BinaryModifier &modifier) {
     if (!modifier.parameter || modifier.parameter->decimal.size() > 3) {
         return false;
     }
-    const auto number = arity(*modifier.parameter);
-    return number && *number >= 1 && *number <= 256;
+    const auto &text = modifier.parameter->decimal;
+    unsigned number = 0;
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), number);
+    return parsed.ec == std::errc{} && parsed.ptr == text.data() + text.size() && number >= 1 && number <= 256;
 }
 
 // Merge explicit and alias-implied fields with identical duplicate semantics.
@@ -96,11 +99,23 @@ bool size_type(BindingAnalysis &state, const ast::BinarySegment &value, Types &t
     return utf;
 }
 
-// Size/type constraints are semantic even while binary extraction and runtime construction remain deferred.
+// Explicit all is legal syntax only for binary segments, even though it remains a failing runtime size.
+void all_size(BindingAnalysis &state, const ast::BinarySegment &value, Types &types) {
+    if (!value.size || types.categories["type"] == U"binary") {
+        return;
+    }
+    const auto &size = state.module.syntax->expression(ungroup(*state.module.syntax, *value.size)).value;
+    if (const auto *atom = std::get_if<ast::Atom>(&size); atom && atom->name == U"all") {
+        pattern_error(state, value.value, "invalid binary size: 'all' requires a binary type");
+    }
+}
+
+// Validate shared size/type constraints before construction or pattern extraction.
 void segment(BindingAnalysis &state, const ast::BinarySegment &value, bool last, bool pattern) {
     Types types;
     segment_types(state, value, types);
     const bool utf = size_type(state, value, types);
+    all_size(state, value, types);
     if (!pattern) {
         return;
     }

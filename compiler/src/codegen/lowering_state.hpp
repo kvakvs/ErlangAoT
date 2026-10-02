@@ -75,6 +75,19 @@ struct ServiceOutput {
 
 // Consume a checked success-only output after separating infrastructure failure from semantic rejection.
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection);
+
+struct BitLowering {
+    // Success-only words retain both extracted ownership and the following logical bit cursor.
+    llvm::Value *value;
+    llvm::Value *cursor;
+};
+
+// Construct complete bitstrings and checked byte parts through shared rooted services.
+llvm::Value *lower_bits(ExpressionLowering &state, const ast::Bitstring &binary);
+llvm::Value *lower_binary_part(ExpressionLowering &state, std::span<llvm::Value *const> values);
+// Reject malformed/truncated segments without publishing tentative bindings or advancing their cursor.
+BitLowering lower_bit_pattern(ExpressionLowering &state, const semantic::MatchNode &node,
+                              std::span<llvm::Value *> values, llvm::BasicBlock *mismatch);
 // Stage source-ordered map construction/update through rooted checked services.
 llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map);
 // Resolve map BIFs separately from the two-operand numeric service; return null for other operations.

@@ -1,0 +1,224 @@
+{
+  "date": "2026-10-02",
+  "reference": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "oracle": {
+    "OTP": "29.1.1",
+    "ERTS": "17.1",
+    "usage": "explicit regeneration only"
+  },
+  "native": {
+    "platform": "Windows x64",
+    "calls_per_policy": 8826,
+    "policies": [
+      "O0 specialization on",
+      "O0 specialization off",
+      "O2 specialization on",
+      "O2 specialization off"
+    ],
+    "CLI_modes": [
+      "positional",
+      "project"
+    ],
+    "fixture_source": "tests/fixtures/patternmatch/generated/bits/manifest.json",
+    "fixture_files": {
+      "answer.erl": "a3e6a17913cf937254336fc43ea88f4e641309f502b9061641ce54de35030960",
+      "calls.term": "5fefbb1e9e7d730d464619fa7c9b279fb423162d9684b8251f0fd98950c04eec",
+      "calls.txt": "f2f3527a88a173fc465711aab91118f4d36c84f4ab0afe385359a053e590690b",
+      "client.erl": "4eab7b8e0361069e3d0df234f91ba5dc7115b2197db90cf73b9b442acddfbc50",
+      "expected.txt": "d85a6baa227acbbdfda50855f7fa63b056ee7e4890d5dfaa0d40c7f81b1ddfb6",
+      "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
+    },
+    "provenance": {
+      "calls": 8826,
+      "sources": {
+        "lib/compiler/test/bs_construct_SUITE.erl": "87444a615a4f44ba084ab613ac7b7ff9c29c78795b38cc5b6ba4f3deebbc4445",
+        "lib/compiler/test/bs_match_SUITE.erl": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+        "lib/compiler/test/bs_size_expr_SUITE.erl": "8b92df0db6ea8bffe6db1a6feea42c22ca3b63a2d5f0cb65f2b4d6c8a91f9217",
+        "lib/compiler/test/bs_bit_binaries_SUITE.erl": "4faaacd157a7c6463162191dc660cd9e4b4610ab91b58e902a10aa9783886f04",
+        "lib/compiler/test/bs_utf_SUITE.erl": "07b2c5694292af32b0250ae2c192229fee3a3c4be75c138fd790c561ec395547"
+      },
+      "helpers": [
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "source_sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+          "function": "bin_tail_c/2",
+          "body": "bin_tail_c(Bin, Offset) ->\n    Res = bin_tail_c_dead(Bin, Offset),\n    <<_:Offset/binary,_,Tail/binary>> = Bin,\n    {Res,Tail} = bin_tail_c_var(Bin, Offset),\n    Res.",
+          "adaptations": "none"
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "source_sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+          "function": "bin_tail_c_dead/2",
+          "body": "bin_tail_c_dead(Bin, Offset) ->\n    <<_:Offset/binary,C,_/binary>> = Bin,\n    C.",
+          "adaptations": "none"
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "source_sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+          "function": "bin_tail_c_var/2",
+          "body": "bin_tail_c_var(Bin, Offset) ->\n    <<_:Offset/binary,C,Tail/binary>> = Bin,\n    {C,Tail}.",
+          "adaptations": "none"
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "source_sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+          "function": "bin_tail_d_dead/2",
+          "body": "bin_tail_d_dead(Bin, BitOffset) ->\n    <<_:BitOffset,C,_/binary>> = Bin,\n    C.",
+          "adaptations": "none"
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "source_sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+          "function": "bin_tail_d_var/2",
+          "body": "bin_tail_d_var(Bin, BitOffset) ->\n    <<_:BitOffset,C,Tail/binary>> = Bin,\n    {C,Tail}.",
+          "adaptations": "none"
+        }
+      ],
+      "adaptation_records": [
+        {
+          "source": "lib/compiler/test/bs_construct_SUITE.erl",
+          "function": "strings/1",
+          "kernels": [
+            "strings/1",
+            "literal/0",
+            "empty_string/1"
+          ],
+          "changes": "Parameterize segment inputs; preserve scalar/string construction and errors."
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "function": "bad_size/1",
+          "kernels": [
+            "read/2",
+            "size_failure/1"
+          ],
+          "changes": "Parameterize sizes and retain head/body rejection outcomes; omit Common Test catch harness."
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "function": "zero_width/1",
+          "kernels": [
+            "zero/1",
+            "read_float/2",
+            "float_be/2"
+          ],
+          "changes": "Parameterize zero-size fields and preserve integer/float construction versus extraction behavior."
+        },
+        {
+          "source": "lib/compiler/test/bs_match_SUITE.erl",
+          "function": "shared_sub_bins/1",
+          "kernels": [
+            "shared/1",
+            "client:retain/1"
+          ],
+          "changes": "Use two sequential tail extractions and remote retention; recursive traversal remains F21."
+        },
+        {
+          "source": "lib/compiler/test/bs_utf_SUITE.erl",
+          "function": "literals/1",
+          "kernels": [
+            "utf_literal/1",
+            "utf8/1",
+            "utf16/1",
+            "utf16le/1",
+            "utf32/1"
+          ],
+          "changes": "Parameterize scalar/UTF literal inputs; omit unrelated comprehension and Common Test harness."
+        }
+      ],
+      "adaptations": "strings/1, zero_width/1, bad_size/1 and UTF literals become parameterized complete kernels; shared_sub_bins retained-tail behavior uses two sequential extractions, with recursive traversal deferred to F21; no tested segment operation was removed",
+      "wrapper_sha256": "a3e6a17913cf937254336fc43ea88f4e641309f502b9061641ce54de35030960",
+      "client_sha256": "4eab7b8e0361069e3d0df234f91ba5dc7115b2197db90cf73b9b442acddfbc50",
+      "targets": [
+        {
+          "triple": "i686-pc-windows-msvc",
+          "execution": "not attempted",
+          "header_and_symbols": "checked"
+        },
+        {
+          "triple": "x86_64-pc-windows-msvc",
+          "execution": "not attempted",
+          "header_and_symbols": "checked"
+        },
+        {
+          "triple": "aarch64-unknown-linux-gnu",
+          "execution": "not attempted",
+          "header_and_symbols": "checked"
+        }
+      ]
+    }
+  },
+  "parser_only": [
+    {
+      "source": "lib\\compiler\\test\\bs_construct_SUITE.erl",
+      "sha256": "87444a615a4f44ba084ab613ac7b7ff9c29c78795b38cc5b6ba4f3deebbc4445",
+      "result": "parse-check passed; syntax evidence only"
+    },
+    {
+      "source": "lib\\compiler\\test\\bs_match_SUITE.erl",
+      "sha256": "11ea1b2362c0f36be413be223f923cd46f5e86af97c4b437653603a0253cb84c",
+      "result": "parse-check passed; syntax evidence only"
+    },
+    {
+      "source": "lib\\compiler\\test\\bs_size_expr_SUITE.erl",
+      "sha256": "8b92df0db6ea8bffe6db1a6feea42c22ca3b63a2d5f0cb65f2b4d6c8a91f9217",
+      "result": "parse-check passed; syntax evidence only"
+    },
+    {
+      "source": "lib\\compiler\\test\\bs_bit_binaries_SUITE.erl",
+      "sha256": "4faaacd157a7c6463162191dc660cd9e4b4610ab91b58e902a10aa9783886f04",
+      "result": "parse-check passed; syntax evidence only"
+    },
+    {
+      "source": "lib\\compiler\\test\\bs_utf_SUITE.erl",
+      "sha256": "07b2c5694292af32b0250ae2c192229fee3a3c4be75c138fd790c561ec395547",
+      "result": "parse-check passed; syntax evidence only"
+    }
+  ],
+  "fresh_gate": {
+    "CTest": "120/120 passed; zero skips",
+    "CTest_seconds": 113.81,
+    "Lizard": "passed; CCN limit 10 unchanged",
+    "clang_tidy": "passed; all 253 production units",
+    "logs": [
+      "build/patternmatch-step16/gate-final.log",
+      "build/patternmatch-step16/tests.log",
+      "build/patternmatch-step16/quality.log"
+    ],
+    "formatting": "clang-format dry run and git diff --check passed"
+  },
+  "focused_invariants": [
+    "foreign/interior/expired admission",
+    "inline padding and shared nonaligned views",
+    "retained tails across growth and remote return",
+    "heap backing budgets and nonpublication",
+    "allocation-ordinal construction/extraction sweeps",
+    "rooted two-output service transport and infrastructure failure recovery"
+  ],
+  "regeneration_check": "inputs and expected results reproduced byte for byte",
+  "platform_limits": [
+    "Linux and Apple Silicon native execution unavailable",
+    "32-bit native execution unavailable",
+    "no new sanitizer run"
+  ],
+  "deferred": [
+    "records (step 17)",
+    "remaining guards (step 18)",
+    "optimization audit (step 19)",
+    "finalization (step 20)",
+    "GC, graph copying, recursion and scheduling"
+  ],
+  "semantic_cases": {
+    "total_records": 106,
+    "new_records": 11,
+    "source": "tests/fixtures/patternmatch/generated/patterns/manifest.json",
+    "coverage": "construction modifiers and skipped guards reject semantically; unit 256 admitted in construction and patterns; explicit UTF sizes reject"
+  }
+}

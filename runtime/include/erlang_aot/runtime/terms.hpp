@@ -84,6 +84,7 @@ namespace detail {
 class HeapStorage;
 struct HeapObject;
 struct TermAccess;
+struct BitAccess;
 } // namespace detail
 
 // Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.

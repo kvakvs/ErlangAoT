@@ -87,9 +87,30 @@ bool extracted(semantic::MatchOperation operation) {
            operation == Op::map_lookup;
 }
 
+// Binary services carry both a checked extracted value and a distinct following bit cursor.
+bool binary_extraction(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
+                       const std::vector<llvm::BasicBlock *> &blocks) {
+    if (node.operation >= semantic::MatchOperation::binary_start &&
+        node.operation <= semantic::MatchOperation::binary_finish) {
+        const auto result = lower_bit_pattern(state, node, values, blocks.at(node.mismatch));
+        if (node.operation != semantic::MatchOperation::binary_finish) {
+            values[node.cursor_output] = result.cursor;
+        }
+        if (node.operation == semantic::MatchOperation::binary_extract) {
+            values[node.output] = result.value;
+        }
+        state.builder.CreateBr(blocks.at(node.success));
+        return true;
+    }
+    return false;
+}
+
 // Keep runtime shape/lookup emission independent from scalar binding and exact-equality constraints.
 bool extraction(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
                 const std::vector<llvm::BasicBlock *> &blocks) {
+    if (binary_extraction(state, node, values, blocks)) {
+        return true;
+    }
     llvm::Value *result = nullptr;
     if (const auto operation = inspection(node.operation)) {
         result = lower_inspection(state, *operation, values[node.input], node.index, blocks.at(node.mismatch));

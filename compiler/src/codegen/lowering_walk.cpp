@@ -29,6 +29,21 @@ const ast::BinaryExpression *lazy(const ast::ExprValue &value) {
                : nullptr;
 }
 
+// Literal binary strings expand directly to segment scalars; only their size expression needs evaluation.
+std::vector<ast::ExprId> binary_children(const ast::Module &syntax, const ast::Bitstring &binary) {
+    std::vector<ast::ExprId> children;
+    for (const auto &segment : binary.segments) {
+        const auto &value = syntax.expression(semantic::ungroup(syntax, segment.value)).value;
+        if (!std::holds_alternative<ast::StringLiteral>(value)) {
+            children.push_back(segment.value);
+        }
+        if (segment.size) {
+            children.push_back(*segment.size);
+        }
+    }
+    return children;
+}
+
 // Reverse-push eager children to preserve source order; schedule only the left operand for lazy syntax.
 void enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(id);
@@ -41,7 +56,9 @@ void enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> 
     if (semantic::integer_literal(*state.module.syntax, id, state.word->getBitWidth())) {
         return;
     }
-    const auto children = semantic::expression_children(expression);
+    const auto *binary = std::get_if<ast::Bitstring>(&expression.value);
+    const auto children =
+        binary ? binary_children(*state.module.syntax, *binary) : semantic::expression_children(expression);
     for (auto child = children.rbegin(); child != children.rend(); ++child) {
         pending.push_back({*child});
     }

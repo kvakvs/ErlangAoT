@@ -1,5 +1,6 @@
 #include "structural_order.hpp"
 #include "../memory/heap_object.hpp"
+#include "bitstrings.hpp"
 #include "floats.hpp"
 #include "maps.hpp"
 #include <algorithm>
@@ -32,6 +33,8 @@ TermResult<unsigned> rank(const Term &term) {
         return 4;
     case TermKind::list:
         return 5;
+    case TermKind::bitstring:
+        return 6;
     default:
         return std::unexpected(TermError::invalid_encoding);
     }
@@ -126,6 +129,9 @@ TermResult<int> step(const Pair &values, std::vector<Pair> &pending, std::size_t
     }
     if (values.left.is_map()) {
         return maps(values, pending, remaining);
+    }
+    if (values.left.is_bitstring()) {
+        return bit_order(values.left, values.right, remaining);
     }
     return scalar(values);
 }

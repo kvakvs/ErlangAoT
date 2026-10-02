@@ -45,6 +45,9 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
     }
+    if (const auto *binary = std::get_if<ast::Bitstring>(&value)) {
+        return lower_bits(state, *binary);
+    }
     if (const auto *map = std::get_if<ast::MapExpression>(&value)) {
         return lower_map(state, *map);
     }
@@ -66,6 +69,14 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto service = state.function.services.find(&expression);
     if (service != state.function.services.end()) {
+        if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
+            std::vector<llvm::Value *> arguments;
+            arguments.reserve(call.arguments.size());
+            for (const auto &id : call.arguments) {
+                arguments.push_back(state.values.at(&state.module.syntax->expression(id)));
+            }
+            return lower_binary_part(state, arguments);
+        }
         auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
         auto *right =
             call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;

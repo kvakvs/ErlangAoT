@@ -24,12 +24,6 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
 
-TermResult<Term> TermFactory::binary(std::span<const std::byte>) { return unavailable("TermFactory::binary"); }
-
-TermResult<Term> TermFactory::bitstring(std::span<const std::byte>, std::size_t) {
-    return unavailable("TermFactory::bitstring");
-}
-
 TermResult<Term> TermFactory::pid(const ProcessIdentity &) { return unavailable("TermFactory::pid"); }
 
 TermResult<Term> TermFactory::port(const PortIdentity &) { return unavailable("TermFactory::port"); }

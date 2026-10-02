@@ -12,6 +12,12 @@ repeated variables, aliases, wildcards and canonical empty values. Step 7 adds [
 
 Step 13 adds [arbitrary integers, exact arithmetic and integer guards](docs/integer-matching.md), with checked promotion and demotion across target payload boundaries.
 
+Steps 14–16 add [finite floats and conversions](docs/float-matching.md),
+[exact-key maps and computed-key patterns](docs/map-matching.md), and
+[bitstring construction, extraction and matching](docs/bitstring-matching.md).
+Routine tests use project-owned OTP goldens and require no OTP installation or
+checkout. Expanded records and the remaining guard catalog are later steps.
+
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a scalar/container/pattern/guard/direct-call subset to LLVM IR,
 bitcode and native objects. Generated code executes through test-owned native

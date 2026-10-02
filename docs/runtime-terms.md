@@ -1,3 +1,11 @@
+Current host Terms and factories support owned atoms, arbitrary integers, finite
+floats, tuples, lists, maps and exact-length bitstrings. Context admission proves
+ownership before any heap access; host handles retain backing and deny access
+after context expiration. See [generated roots](generated-roots.md) and the
+[numeric](integer-matching.md), [float](float-matching.md), [map](map-matching.md)
+and [bitstring](bitstring-matching.md) contracts. Identity/callable/native-record
+families and cross-process graph copying remain deferred.
+
 # Runtime immediate-term boundary
 
 Compilation step 10 implements allocation-free word services in
@@ -39,8 +47,7 @@ if (encoded) {
 Host `Term` supports checked integer/empty-container values plus owned atoms.
 `Term::from_word(word)` admits owner-independent immediates; its context overload
 also checks atom membership in that runtime. Atom/boolean accessors and
-`TermFactory::atom/boolean` are implemented; other factory constructors and heap
-operations remain deferred. Host Terms pin immutable spelling records while ABI
+`TermFactory::atom/boolean` are implemented; heap constructors use the rooted contracts linked above. Host Terms pin immutable spelling records while ABI
 words and private heap slots remain one word. See [runtime atoms](runtime-atoms.md)
 and [generic dispatch](runtime-builtins.md) for ownership and failure contracts.
 Heap prefixes remain private in
@@ -62,5 +69,4 @@ This proves word agreement; execution of LLVM-generated Erlang functions remains
 step 40, and native foreign-platform runtime validation remains pending.
 
 Step 12 adds allocation-free `Term::copy_to` / `ProcessHeap::add` for the same
-checked immediates and, after pattern/guard step 3, same-runtime atoms; see [process memory ownership](runtime-memory.md). Heap-valued
-Terms, graph copies and roots remain unavailable.
+checked immediates and, after pattern/guard step 3, same-runtime atoms; see [process memory ownership](runtime-memory.md). Heap-valued Terms and roots were added in pattern/guard steps 11–16; graph copies remain unavailable.

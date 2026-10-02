@@ -63,7 +63,10 @@ enum class ImmediateOperation : std::uint8_t {
     ceil,
     map_size,
     map_get,
-    is_map_key
+    is_map_key,
+    bit_size,
+    byte_size,
+    binary_part
 };
 } // namespace erlang_aot::abi::v1
 
