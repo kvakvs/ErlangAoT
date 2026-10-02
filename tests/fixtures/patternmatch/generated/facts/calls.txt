@@ -1,0 +1,822 @@
+answer identity_plain 1 i-1267650600228229401496703205376
+answer identity_plain 1 i-1
+answer identity_plain 1 i0
+answer identity_plain 1 i1
+answer identity_plain 1 i1267650600228229401496703205376
+answer identity_plain 1 f3ff0000000000000
+answer identity_plain 1 a61
+answer identity_plain 1 a74727565
+answer identity_plain 1 a66616c7365
+answer identity_plain 1 nil
+answer identity_plain 1 t(a72,i1)
+answer identity_plain 1 c(i1,nil)
+answer identity_plain 1 c(i1,a61)
+answer identity_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer identity_plain 1 b16:0102
+answer identity_plain 1 b3:a0
+answer identity_plain 1 t(a72,t(i1),i1)
+answer identity_plain 1 t(a72,t(i1),i2)
+answer identity_plain 1 t(i1,t(i0,b3:a0))
+answer identity_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer identity_plain 1 t(a74727565)
+answer identity_plain 1 m(t(a6f6b,a74727565))
+answer identity_plain 1 t(c(i1,nil),i1)
+answer identity_plain 1 t(tuple,i1)
+answer identity_plain 1 t(t(i1),i1)
+answer identity_plain 1 t(t(a66616c7365),i1)
+answer identity_plain 1 b9:0380
+answer identity_spec 1 i-1267650600228229401496703205376
+answer identity_spec 1 i-1
+answer identity_spec 1 i0
+answer identity_spec 1 i1
+answer identity_spec 1 i1267650600228229401496703205376
+answer identity_spec 1 f3ff0000000000000
+answer identity_spec 1 a61
+answer identity_spec 1 a74727565
+answer identity_spec 1 a66616c7365
+answer identity_spec 1 nil
+answer identity_spec 1 t(a72,i1)
+answer identity_spec 1 c(i1,nil)
+answer identity_spec 1 c(i1,a61)
+answer identity_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer identity_spec 1 b16:0102
+answer identity_spec 1 b3:a0
+answer identity_spec 1 t(a72,t(i1),i1)
+answer identity_spec 1 t(a72,t(i1),i2)
+answer identity_spec 1 t(i1,t(i0,b3:a0))
+answer identity_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer identity_spec 1 t(a74727565)
+answer identity_spec 1 m(t(a6f6b,a74727565))
+answer identity_spec 1 t(c(i1,nil),i1)
+answer identity_spec 1 t(tuple,i1)
+answer identity_spec 1 t(t(i1),i1)
+answer identity_spec 1 t(t(a66616c7365),i1)
+answer identity_spec 1 b9:0380
+answer constant_plain 0
+answer constant_spec 0
+answer alias_plain 1 i-1267650600228229401496703205376
+answer alias_plain 1 i-1
+answer alias_plain 1 i0
+answer alias_plain 1 i1
+answer alias_plain 1 i1267650600228229401496703205376
+answer alias_plain 1 f3ff0000000000000
+answer alias_plain 1 a61
+answer alias_plain 1 a74727565
+answer alias_plain 1 a66616c7365
+answer alias_plain 1 nil
+answer alias_plain 1 t(a72,i1)
+answer alias_plain 1 c(i1,nil)
+answer alias_plain 1 c(i1,a61)
+answer alias_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer alias_plain 1 b16:0102
+answer alias_plain 1 b3:a0
+answer alias_plain 1 t(a72,t(i1),i1)
+answer alias_plain 1 t(a72,t(i1),i2)
+answer alias_plain 1 t(i1,t(i0,b3:a0))
+answer alias_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer alias_plain 1 t(a74727565)
+answer alias_plain 1 m(t(a6f6b,a74727565))
+answer alias_plain 1 t(c(i1,nil),i1)
+answer alias_plain 1 t(tuple,i1)
+answer alias_plain 1 t(t(i1),i1)
+answer alias_plain 1 t(t(a66616c7365),i1)
+answer alias_plain 1 b9:0380
+answer alias_spec 1 i-1267650600228229401496703205376
+answer alias_spec 1 i-1
+answer alias_spec 1 i0
+answer alias_spec 1 i1
+answer alias_spec 1 i1267650600228229401496703205376
+answer alias_spec 1 f3ff0000000000000
+answer alias_spec 1 a61
+answer alias_spec 1 a74727565
+answer alias_spec 1 a66616c7365
+answer alias_spec 1 nil
+answer alias_spec 1 t(a72,i1)
+answer alias_spec 1 c(i1,nil)
+answer alias_spec 1 c(i1,a61)
+answer alias_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer alias_spec 1 b16:0102
+answer alias_spec 1 b3:a0
+answer alias_spec 1 t(a72,t(i1),i1)
+answer alias_spec 1 t(a72,t(i1),i2)
+answer alias_spec 1 t(i1,t(i0,b3:a0))
+answer alias_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer alias_spec 1 t(a74727565)
+answer alias_spec 1 m(t(a6f6b,a74727565))
+answer alias_spec 1 t(c(i1,nil),i1)
+answer alias_spec 1 t(tuple,i1)
+answer alias_spec 1 t(t(i1),i1)
+answer alias_spec 1 t(t(a66616c7365),i1)
+answer alias_spec 1 b9:0380
+answer projected_plain 2 i-1267650600228229401496703205376 i-1267650600228229401496703205376
+answer projected_plain 2 i-1267650600228229401496703205376 i-1
+answer projected_plain 2 i-1267650600228229401496703205376 i0
+answer projected_plain 2 i-1267650600228229401496703205376 i1
+answer projected_plain 2 i-1267650600228229401496703205376 i1267650600228229401496703205376
+answer projected_plain 2 i-1267650600228229401496703205376 f3ff0000000000000
+answer projected_plain 2 i-1267650600228229401496703205376 a61
+answer projected_plain 2 i-1267650600228229401496703205376 a74727565
+answer projected_plain 2 i-1 i-1267650600228229401496703205376
+answer projected_plain 2 i-1 i-1
+answer projected_plain 2 i-1 i0
+answer projected_plain 2 i-1 i1
+answer projected_plain 2 i-1 i1267650600228229401496703205376
+answer projected_plain 2 i-1 f3ff0000000000000
+answer projected_plain 2 i-1 a61
+answer projected_plain 2 i-1 a74727565
+answer projected_plain 2 i0 i-1267650600228229401496703205376
+answer projected_plain 2 i0 i-1
+answer projected_plain 2 i0 i0
+answer projected_plain 2 i0 i1
+answer projected_plain 2 i0 i1267650600228229401496703205376
+answer projected_plain 2 i0 f3ff0000000000000
+answer projected_plain 2 i0 a61
+answer projected_plain 2 i0 a74727565
+answer projected_plain 2 i1 i-1267650600228229401496703205376
+answer projected_plain 2 i1 i-1
+answer projected_plain 2 i1 i0
+answer projected_plain 2 i1 i1
+answer projected_plain 2 i1 i1267650600228229401496703205376
+answer projected_plain 2 i1 f3ff0000000000000
+answer projected_plain 2 i1 a61
+answer projected_plain 2 i1 a74727565
+answer projected_plain 2 i1267650600228229401496703205376 i-1267650600228229401496703205376
+answer projected_plain 2 i1267650600228229401496703205376 i-1
+answer projected_plain 2 i1267650600228229401496703205376 i0
+answer projected_plain 2 i1267650600228229401496703205376 i1
+answer projected_plain 2 i1267650600228229401496703205376 i1267650600228229401496703205376
+answer projected_plain 2 i1267650600228229401496703205376 f3ff0000000000000
+answer projected_plain 2 i1267650600228229401496703205376 a61
+answer projected_plain 2 i1267650600228229401496703205376 a74727565
+answer projected_plain 2 f3ff0000000000000 i-1267650600228229401496703205376
+answer projected_plain 2 f3ff0000000000000 i-1
+answer projected_plain 2 f3ff0000000000000 i0
+answer projected_plain 2 f3ff0000000000000 i1
+answer projected_plain 2 f3ff0000000000000 i1267650600228229401496703205376
+answer projected_plain 2 f3ff0000000000000 f3ff0000000000000
+answer projected_plain 2 f3ff0000000000000 a61
+answer projected_plain 2 f3ff0000000000000 a74727565
+answer projected_plain 2 a61 i-1267650600228229401496703205376
+answer projected_plain 2 a61 i-1
+answer projected_plain 2 a61 i0
+answer projected_plain 2 a61 i1
+answer projected_plain 2 a61 i1267650600228229401496703205376
+answer projected_plain 2 a61 f3ff0000000000000
+answer projected_plain 2 a61 a61
+answer projected_plain 2 a61 a74727565
+answer projected_plain 2 a74727565 i-1267650600228229401496703205376
+answer projected_plain 2 a74727565 i-1
+answer projected_plain 2 a74727565 i0
+answer projected_plain 2 a74727565 i1
+answer projected_plain 2 a74727565 i1267650600228229401496703205376
+answer projected_plain 2 a74727565 f3ff0000000000000
+answer projected_plain 2 a74727565 a61
+answer projected_plain 2 a74727565 a74727565
+answer projected_spec 2 i-1267650600228229401496703205376 i-1267650600228229401496703205376
+answer projected_spec 2 i-1267650600228229401496703205376 i-1
+answer projected_spec 2 i-1267650600228229401496703205376 i0
+answer projected_spec 2 i-1267650600228229401496703205376 i1
+answer projected_spec 2 i-1267650600228229401496703205376 i1267650600228229401496703205376
+answer projected_spec 2 i-1267650600228229401496703205376 f3ff0000000000000
+answer projected_spec 2 i-1267650600228229401496703205376 a61
+answer projected_spec 2 i-1267650600228229401496703205376 a74727565
+answer projected_spec 2 i-1 i-1267650600228229401496703205376
+answer projected_spec 2 i-1 i-1
+answer projected_spec 2 i-1 i0
+answer projected_spec 2 i-1 i1
+answer projected_spec 2 i-1 i1267650600228229401496703205376
+answer projected_spec 2 i-1 f3ff0000000000000
+answer projected_spec 2 i-1 a61
+answer projected_spec 2 i-1 a74727565
+answer projected_spec 2 i0 i-1267650600228229401496703205376
+answer projected_spec 2 i0 i-1
+answer projected_spec 2 i0 i0
+answer projected_spec 2 i0 i1
+answer projected_spec 2 i0 i1267650600228229401496703205376
+answer projected_spec 2 i0 f3ff0000000000000
+answer projected_spec 2 i0 a61
+answer projected_spec 2 i0 a74727565
+answer projected_spec 2 i1 i-1267650600228229401496703205376
+answer projected_spec 2 i1 i-1
+answer projected_spec 2 i1 i0
+answer projected_spec 2 i1 i1
+answer projected_spec 2 i1 i1267650600228229401496703205376
+answer projected_spec 2 i1 f3ff0000000000000
+answer projected_spec 2 i1 a61
+answer projected_spec 2 i1 a74727565
+answer projected_spec 2 i1267650600228229401496703205376 i-1267650600228229401496703205376
+answer projected_spec 2 i1267650600228229401496703205376 i-1
+answer projected_spec 2 i1267650600228229401496703205376 i0
+answer projected_spec 2 i1267650600228229401496703205376 i1
+answer projected_spec 2 i1267650600228229401496703205376 i1267650600228229401496703205376
+answer projected_spec 2 i1267650600228229401496703205376 f3ff0000000000000
+answer projected_spec 2 i1267650600228229401496703205376 a61
+answer projected_spec 2 i1267650600228229401496703205376 a74727565
+answer projected_spec 2 f3ff0000000000000 i-1267650600228229401496703205376
+answer projected_spec 2 f3ff0000000000000 i-1
+answer projected_spec 2 f3ff0000000000000 i0
+answer projected_spec 2 f3ff0000000000000 i1
+answer projected_spec 2 f3ff0000000000000 i1267650600228229401496703205376
+answer projected_spec 2 f3ff0000000000000 f3ff0000000000000
+answer projected_spec 2 f3ff0000000000000 a61
+answer projected_spec 2 f3ff0000000000000 a74727565
+answer projected_spec 2 a61 i-1267650600228229401496703205376
+answer projected_spec 2 a61 i-1
+answer projected_spec 2 a61 i0
+answer projected_spec 2 a61 i1
+answer projected_spec 2 a61 i1267650600228229401496703205376
+answer projected_spec 2 a61 f3ff0000000000000
+answer projected_spec 2 a61 a61
+answer projected_spec 2 a61 a74727565
+answer projected_spec 2 a74727565 i-1267650600228229401496703205376
+answer projected_spec 2 a74727565 i-1
+answer projected_spec 2 a74727565 i0
+answer projected_spec 2 a74727565 i1
+answer projected_spec 2 a74727565 i1267650600228229401496703205376
+answer projected_spec 2 a74727565 f3ff0000000000000
+answer projected_spec 2 a74727565 a61
+answer projected_spec 2 a74727565 a74727565
+answer extracted_plain 1 i-1267650600228229401496703205376
+answer extracted_plain 1 i-1
+answer extracted_plain 1 i0
+answer extracted_plain 1 i1
+answer extracted_plain 1 i1267650600228229401496703205376
+answer extracted_plain 1 f3ff0000000000000
+answer extracted_plain 1 a61
+answer extracted_plain 1 a74727565
+answer extracted_plain 1 a66616c7365
+answer extracted_plain 1 nil
+answer extracted_plain 1 t(a72,i1)
+answer extracted_plain 1 c(i1,nil)
+answer extracted_plain 1 c(i1,a61)
+answer extracted_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer extracted_plain 1 b16:0102
+answer extracted_plain 1 b3:a0
+answer extracted_plain 1 t(a72,t(i1),i1)
+answer extracted_plain 1 t(a72,t(i1),i2)
+answer extracted_plain 1 t(i1,t(i0,b3:a0))
+answer extracted_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer extracted_plain 1 t(a74727565)
+answer extracted_plain 1 m(t(a6f6b,a74727565))
+answer extracted_plain 1 t(c(i1,nil),i1)
+answer extracted_plain 1 t(tuple,i1)
+answer extracted_plain 1 t(t(i1),i1)
+answer extracted_plain 1 t(t(a66616c7365),i1)
+answer extracted_plain 1 b9:0380
+answer extracted_spec 1 i-1267650600228229401496703205376
+answer extracted_spec 1 i-1
+answer extracted_spec 1 i0
+answer extracted_spec 1 i1
+answer extracted_spec 1 i1267650600228229401496703205376
+answer extracted_spec 1 f3ff0000000000000
+answer extracted_spec 1 a61
+answer extracted_spec 1 a74727565
+answer extracted_spec 1 a66616c7365
+answer extracted_spec 1 nil
+answer extracted_spec 1 t(a72,i1)
+answer extracted_spec 1 c(i1,nil)
+answer extracted_spec 1 c(i1,a61)
+answer extracted_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer extracted_spec 1 b16:0102
+answer extracted_spec 1 b3:a0
+answer extracted_spec 1 t(a72,t(i1),i1)
+answer extracted_spec 1 t(a72,t(i1),i2)
+answer extracted_spec 1 t(i1,t(i0,b3:a0))
+answer extracted_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer extracted_spec 1 t(a74727565)
+answer extracted_spec 1 m(t(a6f6b,a74727565))
+answer extracted_spec 1 t(c(i1,nil),i1)
+answer extracted_spec 1 t(tuple,i1)
+answer extracted_spec 1 t(t(i1),i1)
+answer extracted_spec 1 t(t(a66616c7365),i1)
+answer extracted_spec 1 b9:0380
+answer joined_plain 1 i-1267650600228229401496703205376
+answer joined_plain 1 i-1
+answer joined_plain 1 i0
+answer joined_plain 1 i1
+answer joined_plain 1 i1267650600228229401496703205376
+answer joined_plain 1 f3ff0000000000000
+answer joined_plain 1 a61
+answer joined_plain 1 a74727565
+answer joined_plain 1 a66616c7365
+answer joined_plain 1 nil
+answer joined_plain 1 t(a72,i1)
+answer joined_plain 1 c(i1,nil)
+answer joined_plain 1 c(i1,a61)
+answer joined_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer joined_plain 1 b16:0102
+answer joined_plain 1 b3:a0
+answer joined_plain 1 t(a72,t(i1),i1)
+answer joined_plain 1 t(a72,t(i1),i2)
+answer joined_plain 1 t(i1,t(i0,b3:a0))
+answer joined_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer joined_plain 1 t(a74727565)
+answer joined_plain 1 m(t(a6f6b,a74727565))
+answer joined_plain 1 t(c(i1,nil),i1)
+answer joined_plain 1 t(tuple,i1)
+answer joined_plain 1 t(t(i1),i1)
+answer joined_plain 1 t(t(a66616c7365),i1)
+answer joined_plain 1 b9:0380
+answer joined_spec 1 i-1267650600228229401496703205376
+answer joined_spec 1 i-1
+answer joined_spec 1 i0
+answer joined_spec 1 i1
+answer joined_spec 1 i1267650600228229401496703205376
+answer joined_spec 1 f3ff0000000000000
+answer joined_spec 1 a61
+answer joined_spec 1 a74727565
+answer joined_spec 1 a66616c7365
+answer joined_spec 1 nil
+answer joined_spec 1 t(a72,i1)
+answer joined_spec 1 c(i1,nil)
+answer joined_spec 1 c(i1,a61)
+answer joined_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer joined_spec 1 b16:0102
+answer joined_spec 1 b3:a0
+answer joined_spec 1 t(a72,t(i1),i1)
+answer joined_spec 1 t(a72,t(i1),i2)
+answer joined_spec 1 t(i1,t(i0,b3:a0))
+answer joined_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer joined_spec 1 t(a74727565)
+answer joined_spec 1 m(t(a6f6b,a74727565))
+answer joined_spec 1 t(c(i1,nil),i1)
+answer joined_spec 1 t(tuple,i1)
+answer joined_spec 1 t(t(i1),i1)
+answer joined_spec 1 t(t(a66616c7365),i1)
+answer joined_spec 1 b9:0380
+answer map_plain 2 a61 m(t(a61,i1),t(i1,a74727565))
+answer map_plain 2 a61 m()
+answer map_plain 2 a61 a61
+answer map_plain 2 i1 m(t(a61,i1),t(i1,a74727565))
+answer map_plain 2 i1 m()
+answer map_plain 2 i1 a61
+answer map_plain 2 f3ff0000000000000 m(t(a61,i1),t(i1,a74727565))
+answer map_plain 2 f3ff0000000000000 m()
+answer map_plain 2 f3ff0000000000000 a61
+answer map_plain 2 a6d697373696e67 m(t(a61,i1),t(i1,a74727565))
+answer map_plain 2 a6d697373696e67 m()
+answer map_plain 2 a6d697373696e67 a61
+answer map_spec 2 a61 m(t(a61,i1),t(i1,a74727565))
+answer map_spec 2 a61 m()
+answer map_spec 2 a61 a61
+answer map_spec 2 i1 m(t(a61,i1),t(i1,a74727565))
+answer map_spec 2 i1 m()
+answer map_spec 2 i1 a61
+answer map_spec 2 f3ff0000000000000 m(t(a61,i1),t(i1,a74727565))
+answer map_spec 2 f3ff0000000000000 m()
+answer map_spec 2 f3ff0000000000000 a61
+answer map_spec 2 a6d697373696e67 m(t(a61,i1),t(i1,a74727565))
+answer map_spec 2 a6d697373696e67 m()
+answer map_spec 2 a6d697373696e67 a61
+answer bits_plain 1 i-1267650600228229401496703205376
+answer bits_plain 1 i-1
+answer bits_plain 1 i0
+answer bits_plain 1 i1
+answer bits_plain 1 i1267650600228229401496703205376
+answer bits_plain 1 f3ff0000000000000
+answer bits_plain 1 a61
+answer bits_plain 1 a74727565
+answer bits_plain 1 a66616c7365
+answer bits_plain 1 nil
+answer bits_plain 1 t(a72,i1)
+answer bits_plain 1 c(i1,nil)
+answer bits_plain 1 c(i1,a61)
+answer bits_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer bits_plain 1 b16:0102
+answer bits_plain 1 b3:a0
+answer bits_plain 1 t(a72,t(i1),i1)
+answer bits_plain 1 t(a72,t(i1),i2)
+answer bits_plain 1 t(i1,t(i0,b3:a0))
+answer bits_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer bits_plain 1 t(a74727565)
+answer bits_plain 1 m(t(a6f6b,a74727565))
+answer bits_plain 1 t(c(i1,nil),i1)
+answer bits_plain 1 t(tuple,i1)
+answer bits_plain 1 t(t(i1),i1)
+answer bits_plain 1 t(t(a66616c7365),i1)
+answer bits_plain 1 b9:0380
+answer bits_spec 1 i-1267650600228229401496703205376
+answer bits_spec 1 i-1
+answer bits_spec 1 i0
+answer bits_spec 1 i1
+answer bits_spec 1 i1267650600228229401496703205376
+answer bits_spec 1 f3ff0000000000000
+answer bits_spec 1 a61
+answer bits_spec 1 a74727565
+answer bits_spec 1 a66616c7365
+answer bits_spec 1 nil
+answer bits_spec 1 t(a72,i1)
+answer bits_spec 1 c(i1,nil)
+answer bits_spec 1 c(i1,a61)
+answer bits_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer bits_spec 1 b16:0102
+answer bits_spec 1 b3:a0
+answer bits_spec 1 t(a72,t(i1),i1)
+answer bits_spec 1 t(a72,t(i1),i2)
+answer bits_spec 1 t(i1,t(i0,b3:a0))
+answer bits_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer bits_spec 1 t(a74727565)
+answer bits_spec 1 m(t(a6f6b,a74727565))
+answer bits_spec 1 t(c(i1,nil),i1)
+answer bits_spec 1 t(tuple,i1)
+answer bits_spec 1 t(t(i1),i1)
+answer bits_spec 1 t(t(a66616c7365),i1)
+answer bits_spec 1 b9:0380
+answer record_plain 1 i-1267650600228229401496703205376
+answer record_plain 1 i-1
+answer record_plain 1 i0
+answer record_plain 1 i1
+answer record_plain 1 i1267650600228229401496703205376
+answer record_plain 1 f3ff0000000000000
+answer record_plain 1 a61
+answer record_plain 1 a74727565
+answer record_plain 1 a66616c7365
+answer record_plain 1 nil
+answer record_plain 1 t(a72,i1)
+answer record_plain 1 c(i1,nil)
+answer record_plain 1 c(i1,a61)
+answer record_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer record_plain 1 b16:0102
+answer record_plain 1 b3:a0
+answer record_plain 1 t(a72,t(i1),i1)
+answer record_plain 1 t(a72,t(i1),i2)
+answer record_plain 1 t(i1,t(i0,b3:a0))
+answer record_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer record_plain 1 t(a74727565)
+answer record_plain 1 m(t(a6f6b,a74727565))
+answer record_plain 1 t(c(i1,nil),i1)
+answer record_plain 1 t(tuple,i1)
+answer record_plain 1 t(t(i1),i1)
+answer record_plain 1 t(t(a66616c7365),i1)
+answer record_plain 1 b9:0380
+answer record_spec 1 i-1267650600228229401496703205376
+answer record_spec 1 i-1
+answer record_spec 1 i0
+answer record_spec 1 i1
+answer record_spec 1 i1267650600228229401496703205376
+answer record_spec 1 f3ff0000000000000
+answer record_spec 1 a61
+answer record_spec 1 a74727565
+answer record_spec 1 a66616c7365
+answer record_spec 1 nil
+answer record_spec 1 t(a72,i1)
+answer record_spec 1 c(i1,nil)
+answer record_spec 1 c(i1,a61)
+answer record_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer record_spec 1 b16:0102
+answer record_spec 1 b3:a0
+answer record_spec 1 t(a72,t(i1),i1)
+answer record_spec 1 t(a72,t(i1),i2)
+answer record_spec 1 t(i1,t(i0,b3:a0))
+answer record_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer record_spec 1 t(a74727565)
+answer record_spec 1 m(t(a6f6b,a74727565))
+answer record_spec 1 t(c(i1,nil),i1)
+answer record_spec 1 t(tuple,i1)
+answer record_spec 1 t(t(i1),i1)
+answer record_spec 1 t(t(a66616c7365),i1)
+answer record_spec 1 b9:0380
+answer allocation_plain 1 i-1267650600228229401496703205376
+answer allocation_plain 1 i-1
+answer allocation_plain 1 i0
+answer allocation_plain 1 i1
+answer allocation_plain 1 i1267650600228229401496703205376
+answer allocation_plain 1 f3ff0000000000000
+answer allocation_plain 1 a61
+answer allocation_plain 1 a74727565
+answer allocation_plain 1 a66616c7365
+answer allocation_plain 1 nil
+answer allocation_plain 1 t(a72,i1)
+answer allocation_plain 1 c(i1,nil)
+answer allocation_plain 1 c(i1,a61)
+answer allocation_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer allocation_plain 1 b16:0102
+answer allocation_plain 1 b3:a0
+answer allocation_plain 1 t(a72,t(i1),i1)
+answer allocation_plain 1 t(a72,t(i1),i2)
+answer allocation_plain 1 t(i1,t(i0,b3:a0))
+answer allocation_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer allocation_plain 1 t(a74727565)
+answer allocation_plain 1 m(t(a6f6b,a74727565))
+answer allocation_plain 1 t(c(i1,nil),i1)
+answer allocation_plain 1 t(tuple,i1)
+answer allocation_plain 1 t(t(i1),i1)
+answer allocation_plain 1 t(t(a66616c7365),i1)
+answer allocation_plain 1 b9:0380
+answer allocation_spec 1 i-1267650600228229401496703205376
+answer allocation_spec 1 i-1
+answer allocation_spec 1 i0
+answer allocation_spec 1 i1
+answer allocation_spec 1 i1267650600228229401496703205376
+answer allocation_spec 1 f3ff0000000000000
+answer allocation_spec 1 a61
+answer allocation_spec 1 a74727565
+answer allocation_spec 1 a66616c7365
+answer allocation_spec 1 nil
+answer allocation_spec 1 t(a72,i1)
+answer allocation_spec 1 c(i1,nil)
+answer allocation_spec 1 c(i1,a61)
+answer allocation_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer allocation_spec 1 b16:0102
+answer allocation_spec 1 b3:a0
+answer allocation_spec 1 t(a72,t(i1),i1)
+answer allocation_spec 1 t(a72,t(i1),i2)
+answer allocation_spec 1 t(i1,t(i0,b3:a0))
+answer allocation_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer allocation_spec 1 t(a74727565)
+answer allocation_spec 1 m(t(a6f6b,a74727565))
+answer allocation_spec 1 t(c(i1,nil),i1)
+answer allocation_spec 1 t(tuple,i1)
+answer allocation_spec 1 t(t(i1),i1)
+answer allocation_spec 1 t(t(a66616c7365),i1)
+answer allocation_spec 1 b9:0380
+answer candidate_plain 1 i-1267650600228229401496703205376
+answer candidate_plain 1 i-1
+answer candidate_plain 1 i0
+answer candidate_plain 1 i1
+answer candidate_plain 1 i1267650600228229401496703205376
+answer candidate_plain 1 f3ff0000000000000
+answer candidate_plain 1 a61
+answer candidate_plain 1 a74727565
+answer candidate_plain 1 a66616c7365
+answer candidate_plain 1 nil
+answer candidate_plain 1 t(a72,i1)
+answer candidate_plain 1 c(i1,nil)
+answer candidate_plain 1 c(i1,a61)
+answer candidate_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer candidate_plain 1 b16:0102
+answer candidate_plain 1 b3:a0
+answer candidate_plain 1 t(a72,t(i1),i1)
+answer candidate_plain 1 t(a72,t(i1),i2)
+answer candidate_plain 1 t(i1,t(i0,b3:a0))
+answer candidate_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer candidate_plain 1 t(a74727565)
+answer candidate_plain 1 m(t(a6f6b,a74727565))
+answer candidate_plain 1 t(c(i1,nil),i1)
+answer candidate_plain 1 t(tuple,i1)
+answer candidate_plain 1 t(t(i1),i1)
+answer candidate_plain 1 t(t(a66616c7365),i1)
+answer candidate_plain 1 b9:0380
+answer candidate_spec 1 i-1267650600228229401496703205376
+answer candidate_spec 1 i-1
+answer candidate_spec 1 i0
+answer candidate_spec 1 i1
+answer candidate_spec 1 i1267650600228229401496703205376
+answer candidate_spec 1 f3ff0000000000000
+answer candidate_spec 1 a61
+answer candidate_spec 1 a74727565
+answer candidate_spec 1 a66616c7365
+answer candidate_spec 1 nil
+answer candidate_spec 1 t(a72,i1)
+answer candidate_spec 1 c(i1,nil)
+answer candidate_spec 1 c(i1,a61)
+answer candidate_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer candidate_spec 1 b16:0102
+answer candidate_spec 1 b3:a0
+answer candidate_spec 1 t(a72,t(i1),i1)
+answer candidate_spec 1 t(a72,t(i1),i2)
+answer candidate_spec 1 t(i1,t(i0,b3:a0))
+answer candidate_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer candidate_spec 1 t(a74727565)
+answer candidate_spec 1 m(t(a6f6b,a74727565))
+answer candidate_spec 1 t(c(i1,nil),i1)
+answer candidate_spec 1 t(tuple,i1)
+answer candidate_spec 1 t(t(i1),i1)
+answer candidate_spec 1 t(t(a66616c7365),i1)
+answer candidate_spec 1 b9:0380
+answer guards_plain 1 i-1267650600228229401496703205376
+answer guards_plain 1 i-1
+answer guards_plain 1 i0
+answer guards_plain 1 i1
+answer guards_plain 1 i1267650600228229401496703205376
+answer guards_plain 1 f3ff0000000000000
+answer guards_plain 1 a61
+answer guards_plain 1 a74727565
+answer guards_plain 1 a66616c7365
+answer guards_plain 1 nil
+answer guards_plain 1 t(a72,i1)
+answer guards_plain 1 c(i1,nil)
+answer guards_plain 1 c(i1,a61)
+answer guards_plain 1 m(t(a61,i1),t(i1,a74727565))
+answer guards_plain 1 b16:0102
+answer guards_plain 1 b3:a0
+answer guards_plain 1 t(a72,t(i1),i1)
+answer guards_plain 1 t(a72,t(i1),i2)
+answer guards_plain 1 t(i1,t(i0,b3:a0))
+answer guards_plain 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer guards_plain 1 t(a74727565)
+answer guards_plain 1 m(t(a6f6b,a74727565))
+answer guards_plain 1 t(c(i1,nil),i1)
+answer guards_plain 1 t(tuple,i1)
+answer guards_plain 1 t(t(i1),i1)
+answer guards_plain 1 t(t(a66616c7365),i1)
+answer guards_plain 1 b9:0380
+answer guards_spec 1 i-1267650600228229401496703205376
+answer guards_spec 1 i-1
+answer guards_spec 1 i0
+answer guards_spec 1 i1
+answer guards_spec 1 i1267650600228229401496703205376
+answer guards_spec 1 f3ff0000000000000
+answer guards_spec 1 a61
+answer guards_spec 1 a74727565
+answer guards_spec 1 a66616c7365
+answer guards_spec 1 nil
+answer guards_spec 1 t(a72,i1)
+answer guards_spec 1 c(i1,nil)
+answer guards_spec 1 c(i1,a61)
+answer guards_spec 1 m(t(a61,i1),t(i1,a74727565))
+answer guards_spec 1 b16:0102
+answer guards_spec 1 b3:a0
+answer guards_spec 1 t(a72,t(i1),i1)
+answer guards_spec 1 t(a72,t(i1),i2)
+answer guards_spec 1 t(i1,t(i0,b3:a0))
+answer guards_spec 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+answer guards_spec 1 t(a74727565)
+answer guards_spec 1 m(t(a6f6b,a74727565))
+answer guards_spec 1 t(c(i1,nil),i1)
+answer guards_spec 1 t(tuple,i1)
+answer guards_spec 1 t(t(i1),i1)
+answer guards_spec 1 t(t(a66616c7365),i1)
+answer guards_spec 1 b9:0380
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 i-1
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 i0
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 i1
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 f3ff0000000000000
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 a61
+answer force_succ_regs_plain 2 i-1267650600228229401496703205376 a74727565
+answer force_succ_regs_plain 2 i-1 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 i-1 i-1
+answer force_succ_regs_plain 2 i-1 i0
+answer force_succ_regs_plain 2 i-1 i1
+answer force_succ_regs_plain 2 i-1 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 i-1 f3ff0000000000000
+answer force_succ_regs_plain 2 i-1 a61
+answer force_succ_regs_plain 2 i-1 a74727565
+answer force_succ_regs_plain 2 i0 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 i0 i-1
+answer force_succ_regs_plain 2 i0 i0
+answer force_succ_regs_plain 2 i0 i1
+answer force_succ_regs_plain 2 i0 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 i0 f3ff0000000000000
+answer force_succ_regs_plain 2 i0 a61
+answer force_succ_regs_plain 2 i0 a74727565
+answer force_succ_regs_plain 2 i1 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 i1 i-1
+answer force_succ_regs_plain 2 i1 i0
+answer force_succ_regs_plain 2 i1 i1
+answer force_succ_regs_plain 2 i1 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 i1 f3ff0000000000000
+answer force_succ_regs_plain 2 i1 a61
+answer force_succ_regs_plain 2 i1 a74727565
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 i-1
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 i0
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 i1
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 f3ff0000000000000
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 a61
+answer force_succ_regs_plain 2 i1267650600228229401496703205376 a74727565
+answer force_succ_regs_plain 2 f3ff0000000000000 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 f3ff0000000000000 i-1
+answer force_succ_regs_plain 2 f3ff0000000000000 i0
+answer force_succ_regs_plain 2 f3ff0000000000000 i1
+answer force_succ_regs_plain 2 f3ff0000000000000 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 f3ff0000000000000 f3ff0000000000000
+answer force_succ_regs_plain 2 f3ff0000000000000 a61
+answer force_succ_regs_plain 2 f3ff0000000000000 a74727565
+answer force_succ_regs_plain 2 a61 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 a61 i-1
+answer force_succ_regs_plain 2 a61 i0
+answer force_succ_regs_plain 2 a61 i1
+answer force_succ_regs_plain 2 a61 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 a61 f3ff0000000000000
+answer force_succ_regs_plain 2 a61 a61
+answer force_succ_regs_plain 2 a61 a74727565
+answer force_succ_regs_plain 2 a74727565 i-1267650600228229401496703205376
+answer force_succ_regs_plain 2 a74727565 i-1
+answer force_succ_regs_plain 2 a74727565 i0
+answer force_succ_regs_plain 2 a74727565 i1
+answer force_succ_regs_plain 2 a74727565 i1267650600228229401496703205376
+answer force_succ_regs_plain 2 a74727565 f3ff0000000000000
+answer force_succ_regs_plain 2 a74727565 a61
+answer force_succ_regs_plain 2 a74727565 a74727565
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 i-1
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 i0
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 i1
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 f3ff0000000000000
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 a61
+answer force_succ_regs_spec 2 i-1267650600228229401496703205376 a74727565
+answer force_succ_regs_spec 2 i-1 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 i-1 i-1
+answer force_succ_regs_spec 2 i-1 i0
+answer force_succ_regs_spec 2 i-1 i1
+answer force_succ_regs_spec 2 i-1 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 i-1 f3ff0000000000000
+answer force_succ_regs_spec 2 i-1 a61
+answer force_succ_regs_spec 2 i-1 a74727565
+answer force_succ_regs_spec 2 i0 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 i0 i-1
+answer force_succ_regs_spec 2 i0 i0
+answer force_succ_regs_spec 2 i0 i1
+answer force_succ_regs_spec 2 i0 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 i0 f3ff0000000000000
+answer force_succ_regs_spec 2 i0 a61
+answer force_succ_regs_spec 2 i0 a74727565
+answer force_succ_regs_spec 2 i1 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 i1 i-1
+answer force_succ_regs_spec 2 i1 i0
+answer force_succ_regs_spec 2 i1 i1
+answer force_succ_regs_spec 2 i1 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 i1 f3ff0000000000000
+answer force_succ_regs_spec 2 i1 a61
+answer force_succ_regs_spec 2 i1 a74727565
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 i-1
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 i0
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 i1
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 f3ff0000000000000
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 a61
+answer force_succ_regs_spec 2 i1267650600228229401496703205376 a74727565
+answer force_succ_regs_spec 2 f3ff0000000000000 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 f3ff0000000000000 i-1
+answer force_succ_regs_spec 2 f3ff0000000000000 i0
+answer force_succ_regs_spec 2 f3ff0000000000000 i1
+answer force_succ_regs_spec 2 f3ff0000000000000 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 f3ff0000000000000 f3ff0000000000000
+answer force_succ_regs_spec 2 f3ff0000000000000 a61
+answer force_succ_regs_spec 2 f3ff0000000000000 a74727565
+answer force_succ_regs_spec 2 a61 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 a61 i-1
+answer force_succ_regs_spec 2 a61 i0
+answer force_succ_regs_spec 2 a61 i1
+answer force_succ_regs_spec 2 a61 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 a61 f3ff0000000000000
+answer force_succ_regs_spec 2 a61 a61
+answer force_succ_regs_spec 2 a61 a74727565
+answer force_succ_regs_spec 2 a74727565 i-1267650600228229401496703205376
+answer force_succ_regs_spec 2 a74727565 i-1
+answer force_succ_regs_spec 2 a74727565 i0
+answer force_succ_regs_spec 2 a74727565 i1
+answer force_succ_regs_spec 2 a74727565 i1267650600228229401496703205376
+answer force_succ_regs_spec 2 a74727565 f3ff0000000000000
+answer force_succ_regs_spec 2 a74727565 a61
+answer force_succ_regs_spec 2 a74727565 a74727565
+client run 1 i-1267650600228229401496703205376
+client run 1 i-1
+client run 1 i0
+client run 1 i1
+client run 1 i1267650600228229401496703205376
+client run 1 f3ff0000000000000
+client run 1 a61
+client run 1 a74727565
+client run 1 a66616c7365
+client run 1 nil
+client run 1 t(a72,i1)
+client run 1 c(i1,nil)
+client run 1 c(i1,a61)
+client run 1 m(t(a61,i1),t(i1,a74727565))
+client run 1 b16:0102
+client run 1 b3:a0
+client run 1 t(a72,t(i1),i1)
+client run 1 t(a72,t(i1),i2)
+client run 1 t(i1,t(i0,b3:a0))
+client run 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+client run 1 t(a74727565)
+client run 1 m(t(a6f6b,a74727565))
+client run 1 t(c(i1,nil),i1)
+client run 1 t(tuple,i1)
+client run 1 t(t(i1),i1)
+client run 1 t(t(a66616c7365),i1)
+client run 1 b9:0380
+client retry 1 i-1267650600228229401496703205376
+client retry 1 i-1
+client retry 1 i0
+client retry 1 i1
+client retry 1 i1267650600228229401496703205376
+client retry 1 f3ff0000000000000
+client retry 1 a61
+client retry 1 a74727565
+client retry 1 a66616c7365
+client retry 1 nil
+client retry 1 t(a72,i1)
+client retry 1 c(i1,nil)
+client retry 1 c(i1,a61)
+client retry 1 m(t(a61,i1),t(i1,a74727565))
+client retry 1 b16:0102
+client retry 1 b3:a0
+client retry 1 t(a72,t(i1),i1)
+client retry 1 t(a72,t(i1),i2)
+client retry 1 t(i1,t(i0,b3:a0))
+client retry 1 t(i1,t(i11,m(t(a61,i1),t(i1,a74727565))))
+client retry 1 t(a74727565)
+client retry 1 m(t(a6f6b,a74727565))
+client retry 1 t(c(i1,nil),i1)
+client retry 1 t(tuple,i1)
+client retry 1 t(t(i1),i1)
+client retry 1 t(t(a66616c7365),i1)
+client retry 1 b9:0380

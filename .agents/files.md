@@ -36,7 +36,7 @@ Keys in the last column are relative to the directory column.
 | `semantic/` | Symbols, calls, executable admission | `declarations`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
 | `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
-| `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `contracts`, `membership`, `trace` |
+| `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `inference_bindings`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
 | `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
 | `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
@@ -88,7 +88,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `preprocessor`, `parser` | CLI/OTP/grammar/corpus; parser `pinned.cmake`, `corpus.cmake`, `coverage.*`, `historical.cmake`; shared `tests/compiler/{frontend_cases,printing_roundtrip}.cmake`, `tests/cli.cmake` |
 | `project` | `cli.cmake`, `workflow.cmake`, `*_cases.cmake`; injected `limits.cpp`, `creation_failure.cpp` |
 | `semantic` | `cases.cmake`: CLI diagnostics; binding/pattern/type/symbol invariants; source fixtures stay in the relevant existing area |
-| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`; native value transport: `codegen/match_wire.hpp`; extend for remaining pattern/guard plan |
+| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`; native value transport: `codegen/match_wire.hpp`; extend for remaining pattern/guard plan |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |

@@ -8,7 +8,7 @@ import tempfile
 from evidence import digest, provenance, run
 
 CORPORA = ['atoms', 'immediate', 'services', 'booleans', 'clauses', 'sequences', 'containers',
-           'integers', 'floats', 'maps', 'bits', 'records', 'guard_catalog', 'bindings', 'patterns', 'baseline', 'differential']
+           'integers', 'floats', 'maps', 'bits', 'records', 'guard_catalog', 'facts', 'bindings', 'patterns', 'baseline', 'differential']
 
 
 def contents(path):

@@ -38,7 +38,8 @@ assigns clause-local identities to definitions, reads and exact-equality checks.
 `_` creates no binding; `_Name` is ordinary. Tentative head bindings are readable
 by guards and publish to the successful body path. Body matches use RHS-first
 scopes; unbound, unsafe and wildcard reads retain original locations. Whole
-argument reads retain projection provenance; new/extracted values stay unknown.
+argument reads retain projection provenance; whole-value body assignments preserve
+justified RHS facts, while extracted/unproved values stay unknown.
 Repeated parameters now execute exact equality through the shared runtime service.
 See [scoped bindings](scoped-bindings.md) for the step-4 boundary.
 
@@ -124,3 +125,7 @@ semantic errors stop the affected batch before reporting or LLVM construction.
 The [admitted guard catalog](guard-services.md) includes checked
 `is_integer/3`, qualified calls and top-level legacy tests; process/node and native
 record identities retain explicit capability diagnostics.
+
+[Binding facts](binding-facts.md) describes successful body assignment/alias
+propagation, conservative extraction facts, checked-load dominance and the shared
+inference/specialization budget fallback. Specs remain separate from these proofs.

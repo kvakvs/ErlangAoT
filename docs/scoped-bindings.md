@@ -48,7 +48,8 @@ also clears those tables after ordinary semantic errors. Ordinary unbound, unsaf
 and wildcard reads use the original AST anchor, including macro/include origins.
 
 Only whole original arguments retain projection provenance through grouping or
-aliases. Extracted values and new body definitions have unknown facts. Inference
+aliases. Extracted values remain unknown. [Step 19](binding-facts.md) now propagates
+justified RHS facts through whole-value body definitions and aliases. Inference
 resolves reads through identities and never treats definitions or equality checks
 as parameter reads. Specifications cannot narrow these facts. Lowering requires
 an available candidate SSA value and rejects unavailable bindings. Public

@@ -7,6 +7,8 @@
 #include <map>
 
 namespace erlang_aot::codegen {
+using BindingReads = std::map<const ast::Expression *, semantic::BindingId>;
+
 struct ExpressionLowering {
     // Borrow the current generic entry, immutable source/analysis and target-word builder.
     llvm::IRBuilder<> &builder;
@@ -17,6 +19,8 @@ struct ExpressionLowering {
     llvm::IntegerType *word;
     // Keep source-node results for iterative, left-to-right argument evaluation.
     std::map<const ast::Expression *, llvm::Value *> values;
+    // Borrow the function-wide read index; SSA values still belong to each isolated candidate.
+    const BindingReads *reads = nullptr;
     // Select the source candidate without allowing bindings from another clause to enter its environment.
     std::size_t clause = 0;
     // Share argument roots and bounded temporary slots across all candidates of the generated function.

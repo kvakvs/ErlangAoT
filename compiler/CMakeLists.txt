@@ -75,7 +75,7 @@ add_library(erlang_semantic STATIC
     src/semantic/types/declarations.cpp src/semantic/types/collect.cpp
     src/semantic/types/resolver.cpp src/semantic/types/traversal.cpp
     src/semantic/types/constants.cpp src/semantic/types/expansion.cpp
-    src/semantic/types/inference.cpp src/semantic/types/contracts.cpp
+    src/semantic/types/inference.cpp src/semantic/types/inference_bindings.cpp src/semantic/types/contracts.cpp
     src/semantic/types/membership.cpp src/semantic/types/trace.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_include_directories(erlang_semantic PRIVATE src)

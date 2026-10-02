@@ -1,17 +1,18 @@
 #include "inference.hpp"
 #include "../bindings.hpp"
 #include "../capabilities.hpp"
+#include "inference_bindings.hpp"
 #include <algorithm>
 
 namespace erlang_aot::semantic::types {
 namespace {
 // Infer only implementation syntax; specifications never narrow an input or result.
-Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &id) {
+Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &id, const BindingFacts &bindings) {
     auto &graph = inference.graph;
     if (const auto value = integer_literal(*function.module->syntax, id, 64)) {
         return {graph.intern({Kind::integer, std::to_string(*value)})};
     }
-    return {graph.top(), binding_argument(*function.function, id)};
+    return bindings.read(id);
 }
 
 struct Visit {
@@ -33,7 +34,8 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
 }
 
 // Evaluate a postorder node only after all source-order argument facts are available.
-Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id) {
+Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
+              std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
@@ -46,9 +48,11 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
         return inference.expressions.at(&syntax.expression(group->expression));
     }
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
-        return inference.expressions.at(&syntax.expression(match->right));
+        const auto fact = inference.expressions.at(&syntax.expression(match->right));
+        bindings.publish(match->left, fact, work);
+        return fact;
     }
-    return leaf(inference, function, id);
+    return leaf(inference, function, id, bindings);
 }
 
 // Only relations common to every successful candidate survive the function summary.
@@ -68,6 +72,7 @@ Fact joined_result(Inference &inference, const ast::Module &syntax, const ast::F
 Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
+    BindingFacts bindings(function, inference, work);
     const auto roots = function_roots(definition);
     std::vector<Visit> pending;
     for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
@@ -82,7 +87,7 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
         pending.pop_back();
         const auto &expression = syntax.expression(visit.expression);
         if (visit.ready) {
-            inference.expressions.emplace(&expression, evaluate(inference, function, visit.expression));
+            inference.expressions.emplace(&expression, evaluate(inference, function, visit.expression, bindings, work));
         } else {
             pending.push_back({visit.expression, true});
             const auto children = expression_children(*function.module, expression);

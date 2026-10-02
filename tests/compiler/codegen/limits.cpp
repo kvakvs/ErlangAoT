@@ -4,7 +4,7 @@
 
 // Inject small ceilings through the real fixture pipeline without allocating enormous hostile inputs.
 void syntax_limits() {
-    auto compilation = fixtures({"answer.erl", "client.erl"});
+    auto compilation = fixtures({"fact_budget.erl", "answer.erl", "client.erl"});
     for (const auto limits : {cg::CompilationLimits{.modules = 1}, cg::CompilationLimits{.module_nodes = 1},
                               cg::CompilationLimits{.batch_nodes = 1}}) {
         bool rejected = false;
@@ -19,7 +19,7 @@ void syntax_limits() {
 
 // Byte ceilings must stop LLVM writes and invalidate earlier outputs for all three artifact kinds.
 void artifact_limits(cg::OutputKind kind, bool batch) {
-    auto compilation = fixtures({"answer.erl", "client.erl"});
+    auto compilation = fixtures({"fact_budget.erl", "answer.erl", "client.erl"});
     require(analyze_and_lower(compilation), "limit fixture lowering failed");
     auto &limits = cg::detail::state(compilation).request.limits;
     auto emit = [&] {
@@ -40,7 +40,7 @@ void artifact_limits(cg::OutputKind kind, bool batch) {
 
 // Inspection uses the same writer ceiling and cannot retain earlier successful snapshots after failure.
 void snapshot_limit(bool tiny) {
-    auto compilation = fixture("answer.erl");
+    auto compilation = fixture("fact_budget.erl");
     cg::detail::state(compilation).request.annotate_source = true;
     require(analyze_and_lower(compilation), "snapshot fixture lowering failed");
     const auto baseline = cg::snapshot_ir(compilation);

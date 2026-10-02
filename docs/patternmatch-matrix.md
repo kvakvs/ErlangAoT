@@ -158,3 +158,8 @@ self/0, node/0,1 and native is_record/1. Positive function/pid/port/reference
 representations are outside the admitted domain. Qualified BIF/operator calls,
 legacy aliases, constructor/map-update failures and unavailable skipped operands
 have explicit executable or diagnostic evidence.
+
+[Step 19](binding-facts.md) propagates only justified whole-value binding facts.
+Extracted and unproved values remain conservative; checked service-success and
+shape continuations dominate dependent output loads/extractions. Misleading specs
+and failed candidates have paired native evidence under all four policies.

@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–18 are
-complete; added step 15a is complete; steps 19–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–19 are
+complete; added step 15a is complete; step 20 remains incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -914,34 +914,34 @@ pass; the fresh gate passes 122 tests and all 257 quality units.
 
 ### 19. Verify inference and optimization across supported forms
 
-- [ ] Replace argument-index-only assumptions in `semantic/types/inference.*`
+- [x] Replace argument-index-only assumptions in `semantic/types/inference.*`
   and `codegen/lowering_expressions.*`. Track bound/extracted values
   conservatively; join alternative results without leaking candidate-only facts.
-  - [ ] Audit fact lookups for clause-local, body-created and extracted
+  - [x] Audit fact lookups for clause-local, body-created and extracted
     bindings; make missing/unproven information yield conservative facts rather
     than crashes.
-  - [ ] Track facts at successful match/guard edges and joins, dropping facts
+  - [x] Track facts at successful match/guard edges and joins, dropping facts
     from failed candidates; preserve original-argument provenance only where
     justified.
-  - [ ] Exercise `--print-types` and both IR modes for every admitted
+  - [x] Exercise `--print-types` and both IR modes for every admitted
     representation, including multiple clauses, sequences and nested
     extractions.
-- [ ] Keep implementation facts separate from specifications. Representation
+- [x] Keep implementation facts separate from specifications. Representation
   tests must dominate each dependent load/unbox; joins retain only common proven
   facts.
-  - [ ] Audit optimization consumers so declared specs cannot authorize
+  - [x] Audit optimization consumers so declared specs cannot authorize
     unchecked operations; derive removable checks from actual control-flow
     proofs.
-  - [ ] Add focused IR checks for tag/shape/check dominance and pair them with
+  - [x] Add focused IR checks for tag/shape/check dominance and pair them with
     adversarial wrong-spec native inputs and failed-candidate regression
     fixtures.
-- [ ] Reuse the existing specialization budgets and generic fallback. Extend
+- [x] Reuse the existing specialization budgets and generic fallback. Extend
   `integer_guards.*` only for checks whose removal is justified by dominating
   proof.
-  - [ ] Charge new match/guard paths against existing variant/work/IR budgets;
+  - [x] Charge new match/guard paths against existing variant/work/IR budgets;
     retain a semantically equivalent generic path when specialization is
     declined.
-  - [ ] Run annotated/unannotated kernels in all four policies, verify LLVM
+  - [x] Run annotated/unannotated kernels in all four policies, verify LLVM
     before and after optimization, and exercise budget fallback without partial
     publication.
 
@@ -955,6 +955,12 @@ ordering.
 inputs, nested allocation/calls and failed candidates. Compare
 optimization/specialization modes, inspect required check dominance, exercise
 budgets and run type/IR CLI modes.
+
+Completion: [step-19 validation](../docs/patternmatch-step19-validation.md),
+[proof evidence](../docs/patternmatch-step19-evidence.json) and
+[binding facts](../docs/binding-facts.md). 822 paired native outcomes and 976 CFG
+observations pass; both widths handle type/IR inspection. The fresh gate passes
+123 tests and all 258 quality units; budgets and generic fallback are unchanged.
 
 ### 20. Finish validation and publish the scoped contract
 

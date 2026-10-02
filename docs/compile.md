@@ -23,7 +23,7 @@ require exports; recursive call graphs fail. Unsupported syntax is rejected even
 in unused functions. Syntax-only checking supports the wider OTP grammar.
 
 Declared types/specs remain separate from bounded implementation inference.
-Unknown inputs stay generic, identity/projection relations propagate through calls,
+Unknown inputs stay generic, identity/projection relations propagate through calls and whole-value body assignments,
 and wrong contracts warn without changing code semantics. `--print-types` stops
 before LLVM. O0 disables compiler specialization and uses LLVM O0; O2 enables the
 bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compiler
@@ -662,3 +662,7 @@ Step 46 (2026-09-29): Published and executed the two-module native example at O0
 The [admitted guard catalog](guard-services.md) includes checked
 `is_integer/3`, qualified calls and top-level legacy tests; process/node and native
 record identities retain explicit capability diagnostics.
+
+[Binding facts and proofs](binding-facts.md) documents conservative extracted
+values, clause joins and generic fallback when inference or specialization is
+budget-limited. Both IR inspection modes retain LLVM verification.

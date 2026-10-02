@@ -3,6 +3,17 @@
 
 namespace erlang_aot::codegen {
 namespace {
+// Index validated reads once without transferring bindings between candidate environments.
+BindingReads read_bindings(const semantic::Module &module, const semantic::Function &function) {
+    BindingReads result;
+    for (const auto &binding : function.bindings) {
+        if (binding.use == semantic::BindingUse::read) {
+            result.emplace(&module.syntax->expression(binding.expression), binding.identity);
+        }
+    }
+    return result;
+}
+
 // Each candidate owns fresh SSA maps; its failed head/guard can only enter the next candidate.
 void candidate(ExpressionLowering &state, const ast::FunctionClause &clause, llvm::BasicBlock *mismatch) {
     const bool unconditional = lower_unconditional_head(state);
@@ -34,7 +45,9 @@ void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const sem
                     const semantic::Function &function, llvm::IntegerType *word,
                     const semantic::types::Inference &inferred) {
     const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
+    const auto reads = read_bindings(module, function);
     ExpressionLowering initial{builder, entry, module, function, inferred, word, {}};
+    initial.reads = &reads;
     auto roots = begin_roots(initial);
     initial.roots = &roots;
     root_arguments(initial);
@@ -43,7 +56,7 @@ void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const sem
     for (std::size_t index = 0; index < clauses.size(); ++index) {
         auto *next = index + 1 == clauses.size() ? exhausted
                                                  : llvm::BasicBlock::Create(entry.getContext(), "clause.next", &entry);
-        ExpressionLowering state{builder, entry, module, function, inferred, word, {}, index};
+        ExpressionLowering state{builder, entry, module, function, inferred, word, {}, &reads, index};
         state.roots = &roots;
         state.failure = failure;
         reset_candidate_roots(state);

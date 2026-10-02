@@ -1,4 +1,6 @@
 #include "codegen/specialization.hpp"
+#include "codegen/optimization.hpp"
+#include "codegen/verification.hpp"
 #include "lowering_support.hpp"
 
 using R = cg::Representation;
@@ -72,9 +74,11 @@ void real_sources() {
     const auto &plan = cg::detail::state(compilation).specializations;
     require(plan.candidates.empty() && plan.decisions.contains(cg::SpecializationReason::no_benefit),
             "identity/constant cloned without benefit");
-    auto exhausted = fixtures({"client.erl", "answer.erl"}, "", cg::OptimizationLevel::speed);
-    require(analyze_and_lower(exhausted, {.syntax_work = 0}), "exhausted inference rejected generic compilation");
+    auto exhausted = fixtures({"fact_budget.erl", "client.erl", "answer.erl"}, "", cg::OptimizationLevel::speed);
+    require(analyze_and_lower(exhausted, {.syntax_work = 3}), "exhausted inference rejected generic compilation");
     require(cg::detail::state(exhausted).specializations.candidates.empty(), "missing facts became proofs");
+    require(cg::verify_ir(exhausted) && cg::optimize(exhausted) && cg::emit_objects(exhausted),
+            "inference budget fallback failed to verify or emit supported representations");
 }
 
 // Observe acceptance and each bounded rejection reason without enabling unsupported source guards.

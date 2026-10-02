@@ -25,12 +25,11 @@ llvm::Value *literal(ExpressionLowering &state, const ast::ExprId &expression) {
 
 // Resolve one validated read without relying on original-argument projection facts.
 llvm::Value *binding(ExpressionLowering &state, const ast::ExprId &expression) {
-    for (const auto &binding : state.function.bindings) {
-        if (binding.expression == expression && binding.use == semantic::BindingUse::read) {
-            return state.bindings.at(binding.identity);
-        }
+    if (!state.reads) {
+        throw std::invalid_argument("lowering: binding read index is unavailable");
     }
-    throw std::invalid_argument("lowering: binding has no available value");
+    const auto identity = state.reads->at(&state.module.syntax->expression(expression));
+    return state.bindings.at(identity);
 }
 
 // Resolve leaves through existing parameter bindings, preserving every input term unchanged.
