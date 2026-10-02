@@ -48,7 +48,7 @@ static_assert(offsetof(ModuleDescriptor, exports) == 8 + 2 * sizeof(TermWord));
 
 // Generated service boundary uses native C++ linkage with a fixed, documented linker spelling.
 // Borrow a Runtime and ModuleDescriptor; contain all exceptions and return a v1::Status byte.
-std::uint8_t erlang_aot_register_module_v3(void *runtime, const void *descriptor) noexcept;
+std::uint8_t erlang_aot_register_module_v4(void *runtime, const void *descriptor) noexcept;
 
 // Load an initialized module slot for this context's runtime; failures enter the checked error channel.
 erlang_aot::abi::v1::TermWord erlang_aot_atom_v3(void *context, std::size_t slot, const void *descriptor) noexcept;

@@ -1,25 +1,68 @@
-#include "process_heap.hpp"
+#include "heap_storage.hpp"
 #include <erlang_aot/runtime/process_context.hpp>
-#include <limits>
+#include <new>
+#include <stdexcept>
 
 namespace erlang_aot::runtime {
-ProcessHeap::ProcessHeap(ProcessContext &owner, HeapOptions options) : options_(options), owner_(owner) {}
+namespace {
+// Preserve exact infrastructure statuses; these failures never become Erlang guard rejection.
+abi::v1::Status status(HeapError error) {
+    using enum HeapError;
+    switch (error) {
+    case invalid_size:
+        return abi::v1::Status::invalid_argument;
+    case limit_exceeded:
+        return abi::v1::Status::resource_limit;
+    case out_of_memory:
+        return abi::v1::Status::out_of_memory;
+    case unsafe_point:
+        return abi::v1::Status::busy;
+    case expired_context:
+        return abi::v1::Status::stopped;
+    case not_implemented:
+        return abi::v1::Status::not_implemented;
+    case diagnostic_failure:
+        return abi::v1::Status::diagnostic_failure;
+    }
+    return abi::v1::Status::internal_error;
+}
+} // namespace
 
-std::expected<std::span<std::byte>, HeapError> ProcessHeap::allocate(std::size_t words, DiagnosticSink sink) noexcept {
-    if (words == 0 || words > std::numeric_limits<std::size_t>::max() / sizeof(Word)) {
-        owner_.generated_calls().fail_service(abi::v1::Status::invalid_argument);
-        return std::unexpected(HeapError::invalid_size);
+ProcessHeap::ProcessHeap(ProcessContext &owner, HeapOptions options)
+    : owner_(owner), storage_(std::make_shared<detail::HeapStorage>(options, owner.lifetime())) {}
+
+ProcessHeap::~ProcessHeap() = default;
+
+std::expected<HeapReservation, HeapError> ProcessHeap::reserve(std::size_t words, std::size_t alignment) noexcept {
+    auto failure = HeapError::out_of_memory;
+    try {
+        const auto mark = storage_->mark();
+        const auto bytes = storage_->reserve(words, alignment);
+        if (bytes) {
+            return HeapReservation(storage_, *bytes, mark);
+        }
+        failure = bytes.error();
+    } catch (const std::bad_alloc &) {
+        failure = HeapError::out_of_memory;
+    } catch (const std::length_error &) {
+        failure = HeapError::limit_exceeded;
     }
-    if (words > options_.limit_bytes / sizeof(Word)) {
-        owner_.generated_calls().fail_service(abi::v1::Status::resource_limit);
-        return std::unexpected(HeapError::limit_exceeded);
+    owner_.generated_calls().fail_service(status(failure));
+    return std::unexpected(failure);
+}
+
+std::expected<std::span<std::byte>, HeapError> ProcessHeap::allocate(std::size_t words, DiagnosticSink) noexcept {
+    auto reservation = reserve(words);
+    if (!reservation) {
+        return std::unexpected(reservation.error());
     }
-    const auto failure = deferred_service<HeapError>(abi::v1::FeatureId::allocation, "ProcessHeap::allocate", sink);
-    owner_.generated_calls().fail_service(failure.error() == HeapError::not_implemented
-                                              ? abi::v1::Status::not_implemented
-                                              : abi::v1::Status::diagnostic_failure,
-                                          true);
-    return failure;
+    const auto bytes = reservation->bytes();
+    const auto committed = reservation->commit();
+    if (!committed) {
+        owner_.generated_calls().fail_service(status(committed.error()));
+        return std::unexpected(committed.error());
+    }
+    return bytes;
 }
 
 std::expected<CollectionStats, HeapError> ProcessHeap::collect(DiagnosticSink sink) noexcept {
@@ -32,7 +75,7 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(DiagnosticSink si
     return failure;
 }
 
-std::size_t ProcessHeap::used_words() const noexcept { return used_words_; }
+std::size_t ProcessHeap::used_words() const noexcept { return storage_->used_words; }
 
-std::size_t ProcessHeap::capacity_words() const noexcept { return capacity_words_; }
+std::size_t ProcessHeap::capacity_words() const noexcept { return storage_->capacity_words; }
 } // namespace erlang_aot::runtime

@@ -16,12 +16,12 @@ bool rejects_incompatible(Runtime &runtime) {
     erlang_aot::abi::v1::ModuleDescriptor bad{};
     bad.abi_version = erlang_aot::abi::v1::version + 1;
     bad.term_bits = sizeof(Word) * 8;
-    if (erlang_aot_register_module_v3(&runtime, &bad) == 0) {
+    if (erlang_aot_register_module_v4(&runtime, &bad) == 0) {
         return false;
     }
     bad.abi_version = erlang_aot::abi::v1::version;
     bad.term_bits = sizeof(Word) == 8 ? 32 : 64;
-    return erlang_aot_register_module_v3(&runtime, &bad) != 0;
+    return erlang_aot_register_module_v4(&runtime, &bad) != 0;
 }
 
 // Exercise identity with every supported immediate family and native integer endpoints.
@@ -72,7 +72,7 @@ bool calls(Runtime &runtime, ProcessContext &context) {
 // Preserve generated calls and explicit teardown even when a reached service returns deferred failure.
 int execute(Runtime &runtime, bool deferred) {
     auto *context = runtime.create_context().value();
-    if (deferred && (context->heap().allocate(1) != std::unexpected(HeapError::not_implemented) ||
+    if (deferred && (context->heap().collect() != std::unexpected(HeapError::not_implemented) ||
                      context->heap().used_words() != 0 || context->heap().capacity_words() != 0)) {
         return 4;
     }
@@ -92,5 +92,5 @@ int main(int argc, char **argv) {
     if (!rejects_incompatible(*runtime) || register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;
     }
-    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-allocation");
+    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-collection");
 }

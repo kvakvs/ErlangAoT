@@ -4,7 +4,7 @@ Current executable slice (pattern/guard steps 6–10): immediate heads, grouped 
 
 Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
 module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+uses ABI revision 4; the revision-2 checked call channel is unchanged. See
 [runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
 
 The implemented milestone compiles an acyclic Erlang/OTP 29 subset through the
@@ -29,7 +29,7 @@ bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compi
 policy. Current service results stay conservative; specs do not remove their checks. See
 [specialization budgets and measurements](specialization.md).
 
-ABI revision 3 uses target-word tagged terms, a live process context and an argument array.
+ABI revision 4 uses target-word tagged terms, a live process context and an argument array.
 All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
 checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
 The runtime implements lifecycle, immediate Terms, frozen generic registries,
@@ -207,7 +207,7 @@ O2 may add proven/guarded variants with generic fallback: at most 3/function,
 32/module and 128/target, with pre-LLVM IR growth at most 2x per function/module,
 including dispatch. Generate no Cartesian products or clones without a benefit.
 
-## Private generated-code ABI revision 3
+## Private generated-code ABI revision 4
 
 [v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) defines the versioned C++ term/context/function
 types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
@@ -233,11 +233,12 @@ can be added later if needed.
   runtime-owned, propagated unchanged through direct calls. Callers supply valid
   ABI terms. A return word is usable only after checking the context error channel.
   [Generated-call failures](generated-call-failures.md) defines structured errors and
-  host scope cleanup. This subset allocates no term storage.
+  host scope cleanup. [Revision-4 roots](generated-roots.md) protect arguments and
+  temporaries; stable heap storage is available for later compound admission.
 - Symbol names use `eav1_<hex-module-UTF8>_<hex-function-UTF8>_<decimal-arity>`:
   lowercase byte hex, no normalization, canonical decimal without leading zeroes.
   Module registration and descriptors use `eav1_<hex-module-UTF8>__0.register`
-  and `.descriptor`; this symbol encoding remains unchanged in ABI revision 3.
+  and `.descriptor`; this symbol encoding remains unchanged in ABI revision 4.
   Exported entries/registration are externally visible; other functions are internal.
   These names specify project-owned LLVM symbols before platform decoration; future
   project registration binds their addresses to the C++ generated-function type.

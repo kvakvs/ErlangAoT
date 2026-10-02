@@ -2,6 +2,7 @@
 #include "generated_calls.hpp"
 #include "mailbox.hpp"
 #include "process_heap.hpp"
+#include "roots.hpp"
 #include <erlang_aot/abi/v1.hpp>
 
 namespace erlang_aot::runtime {
@@ -92,6 +93,9 @@ class ProcessContext final {
     // Share failure state across a synchronous generated invocation and its runtime services.
     GeneratedCallState &generated_calls() noexcept { return generated_calls_; }
 
+    // Retain generated live words and transfer results before releasing nested call scopes.
+    GeneratedRoots &roots() noexcept { return roots_; }
+
   private:
     friend class Scheduler;
     friend class SchedulerService;
@@ -111,6 +115,8 @@ class ProcessContext final {
     bool scheduler_registered_once_ = false;
     // Destroy pending immediate payloads with the context; host invocation scopes normally clear them first.
     GeneratedCallState generated_calls_;
+    // Root buffers are released before pending payloads and heap storage during context teardown.
+    GeneratedRoots roots_;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options);
 };

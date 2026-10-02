@@ -7,7 +7,6 @@ nor LLVM. Calls require host serialization, as do the existing runtime owners.
 | Boundary | Catalog feature | Result on a valid deferred request |
 | --- | --- | --- |
 | `TermFactory` constructors except atom/boolean | term services | `TermError::not_implemented` |
-| `ProcessHeap::allocate` | allocation | `HeapError::not_implemented` |
 | `ProcessHeap::collect` | garbage collection | `HeapError::not_implemented` |
 | `ProcessContext::send` | message passing | `ProcessError::not_implemented` |
 | `SchedulerService::run` | scheduling | `SchedulerError::not_implemented` |
@@ -33,8 +32,8 @@ unhandled failure and tear down normally; the subprocess tests exercise this pat
 
 ## Validation and state preservation
 
-Heap allocation still validates nonzero word count, overflow and configured limits
-before attempting deferred work. Unload rejects an unknown module with
+Heap allocation now uses [stable backing and reservations](runtime-memory.md)
+without a deferred report. Unload rejects an unknown module with
 `module_not_found`. Execution checks shutdown, runtime ownership, registration and
 runnable/non-suspended state. Ordinary validation failures remain silent. Deferred
 execution never calls `begin_dispatch`, changes state, invokes `ProcessCode`, starts

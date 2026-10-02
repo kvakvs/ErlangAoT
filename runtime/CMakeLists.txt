@@ -1,8 +1,8 @@
 include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
 add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
-    src/process/generated_calls.cpp src/process/services.cpp src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
-    src/memory/heap.cpp src/memory/copy.cpp
+    src/process/generated_calls.cpp src/process/roots.cpp src/process/services.cpp src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
+    src/memory/heap.cpp src/memory/heap_storage.cpp src/memory/heap_reservation.cpp src/memory/copy.cpp
     src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp
     src/terms/atoms.cpp src/terms/atom_spelling.cpp src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp src/terms/equality.cpp src/terms/immediate_order.cpp src/terms/immediate_services.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp

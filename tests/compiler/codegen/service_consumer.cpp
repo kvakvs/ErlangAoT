@@ -4,6 +4,7 @@
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/modules.hpp>
+#include <limits>
 #include <stdexcept>
 
 using namespace erlang_aot;
@@ -11,6 +12,7 @@ using namespace erlang_aot::runtime;
 extern abi::v1::GeneratedRegistration register_answer asm("eav1_736572766963655f616e73776572__0.register");
 extern abi::v1::GeneratedRegistration register_client asm("eav1_736572766963655f636c69656e74__0.register");
 extern std::uint8_t injected(void *, std::uint8_t, Word, Word, Word *) noexcept asm("step7_service");
+extern Word *injected_roots(void *, std::size_t) noexcept asm("step11_roots");
 
 namespace {
 // Select faults after source-generated code has entered the real invocation scope.
@@ -20,6 +22,8 @@ unsigned calls = 0;
 // Target only the reached predicate when proving that lazy branches skip faults and strict branches do not.
 bool predicate_only = false;
 unsigned predicate_calls = 0;
+// Exhaust the real root budget at selected generated entry depths before any source service executes.
+std::size_t root_fault_depth = std::numeric_limits<std::size_t>::max();
 
 // Keep ownership, status and recovery assertions enabled in optimized consumers.
 void require(bool condition, const char *message) {
@@ -41,6 +45,7 @@ void failures(ProcessContext &context, std::string_view module, std::string_view
         require(!result && result.error().code == CallError::runtime_failure && result.error().status == status,
                 "service failure became semantic rejection or success");
         require(calls == 1 && !context.generated_calls().failure(), "service did not run or stale channel");
+        require(context.roots().depth() == 0 && context.roots().words() == 0, "service failure leaked roots");
         fault = abi::v1::Status::ok;
         require(entry.call(context, arguments).has_value(), "service failure poisoned retry");
     }
@@ -130,12 +135,41 @@ void checked_arguments(ProcessContext &context) {
             "semantic badarg lost");
     require(output == 123 && !context.generated_calls().failure(), "semantic rejection polluted channel");
 }
+
+// Entry rejection at both the outer and nested generated boundary cleans every frame and skips the body.
+void root_failures(ProcessContext &context) {
+    const auto entry = context.code_server().resolve({"service_client", "nested", 1}).value();
+    const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
+    for (const auto depth : {0U, 1U}) {
+        root_fault_depth = depth;
+        calls = 0;
+        const auto failed = entry.call(context, arguments);
+        require(!failed && failed.error().status == abi::v1::Status::resource_limit, "root entry status lost");
+        require(calls == 0 && context.roots().depth() == 0 && context.roots().words() == 0,
+                "root rejection ran a body or leaked frames");
+        root_fault_depth = std::numeric_limits<std::size_t>::max();
+        require(entry.call(context, arguments).has_value(), "root failure poisoned retry");
+    }
+}
 } // namespace
+
+// Use the production entry service for both success and budget rejection; only its requested count changes.
+Word *injected_roots(void *context, std::size_t count) noexcept {
+    if (static_cast<ProcessContext *>(context)->roots().depth() == root_fault_depth) {
+        count = std::numeric_limits<std::size_t>::max();
+    }
+    return erlang_aot_roots_enter_v4(context, count);
+}
 
 // This native seam changes only the service outcome and deliberately leaves success output untouched on faults.
 std::uint8_t injected(void *context, std::uint8_t operation, Word left, Word right, Word *output) noexcept {
     ++calls;
     const bool predicate = operation == static_cast<std::uint8_t>(abi::v1::ImmediateOperation::is_integer);
+    auto &roots = static_cast<ProcessContext *>(context)->roots();
+    if (roots.depth() == 0 || (predicate && !roots.contains(left))) {
+        static_cast<ProcessContext *>(context)->generated_calls().fail_service(abi::v1::Status::internal_error);
+        return 2;
+    }
     predicate_calls += predicate;
     if (fault != abi::v1::Status::ok && (!predicate_only || predicate)) {
         static_cast<ProcessContext *>(context)->generated_calls().fail_service(fault);
@@ -159,6 +193,7 @@ int main() {
         boolean_failures(context);
         body_matches(context);
         checked_arguments(context);
+        root_failures(context);
         return 0;
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());

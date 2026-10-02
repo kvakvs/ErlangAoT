@@ -2,7 +2,7 @@
 
 Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
 module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+uses ABI revision 4; the revision-2 checked call channel is unchanged. See
 [runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
 
 Step 2 of the pattern/guard plan implements the F20/F02 transport slice. Generated
@@ -38,7 +38,8 @@ host Term admission: small integers, canonical empty tuple/list and atoms owned 
 the context's runtime. Invalid, heap, foreign atom and identity words reject without
 dereferencing them. Atom Terms pin their spelling, so errors survive invocation
 cleanup, independent retries and runtime teardown.
-Heap payloads and roots are explicitly deferred to step 11 before heap admission.
+[Generated root scopes](generated-roots.md) are implemented in step 11. Compound
+payload ownership remains a step-12 acceptance obligation before heap admission.
 Full `catch`/`try`, stack traces, `throw`/`exit`, ordered clause dispatch/body matching,
 and `badarith` remain assigned to their later steps.
 
@@ -71,13 +72,14 @@ payload/root ownership before adding heap values; no raw heap word may be admitt
 
 ## Compatibility
 
-Descriptor/runtime `abi::v1::version` is now **3**. The namespace and `eav1_` symbol
-encoding retain the existing term/symbol representation. Revision-1/2 descriptors
+Descriptor/runtime `abi::v1::version` is now **4**. The namespace and `eav1_` symbol
+encoding retain the existing term/symbol representation. Revision-1/2/3 descriptors
 and runtime options reject before metadata use. Startup references
-`erlang_aot_register_module_v3`, so old runtime linking fails. Revision 3 appends
+`erlang_aot_register_module_v4`, so old runtime linking fails. Revision 3 appends
 atom spellings/count to descriptors; generic signatures and the revision-2 checked
 channel services are unchanged. All generated objects and native consumers must
-be rebuilt.
+be rebuilt. Revision 4 additionally requires [generated roots](generated-roots.md)
+before allocating calls and return/error handoff before scope cleanup.
 
 ## Validation boundary
 

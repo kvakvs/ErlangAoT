@@ -1,6 +1,7 @@
 #pragma once
 #include "../semantic/match_plan.hpp"
 #include "lowering_expressions.hpp"
+#include "lowering_roots.hpp"
 #include <erlang_aot/abi/calls.hpp>
 #include <map>
 
@@ -17,6 +18,8 @@ struct ExpressionLowering {
     std::map<const ast::Expression *, llvm::Value *> values;
     // Select the source candidate without allowing bindings from another clause to enter its environment.
     std::size_t clause = 0;
+    // Share argument roots and bounded temporary slots across all candidates of the generated function.
+    FunctionRoots *roots = nullptr;
     // Match definitions retain the original candidate SSA word; repeated names read this same identity.
     std::map<semantic::BindingId, llvm::Value *> bindings = {};
     // Share a terminal failure exit across calls instead of duplicating return blocks per expression.

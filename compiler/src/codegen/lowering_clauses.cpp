@@ -34,13 +34,19 @@ void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const sem
                     const semantic::Function &function, llvm::IntegerType *word,
                     const semantic::types::Inference &inferred) {
     const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
+    ExpressionLowering initial{builder, entry, module, function, inferred, word, {}};
+    auto roots = begin_roots(initial);
+    initial.roots = &roots;
+    root_arguments(initial);
     auto *exhausted = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
-    llvm::BasicBlock *failure = nullptr;
+    llvm::BasicBlock *failure = initial.failure;
     for (std::size_t index = 0; index < clauses.size(); ++index) {
         auto *next = index + 1 == clauses.size() ? exhausted
                                                  : llvm::BasicBlock::Create(entry.getContext(), "clause.next", &entry);
         ExpressionLowering state{builder, entry, module, function, inferred, word, {}, index};
+        state.roots = &roots;
         state.failure = failure;
+        reset_candidate_roots(state);
         candidate(state, clauses[index], next);
         failure = state.failure;
         builder.SetInsertPoint(next);
@@ -48,9 +54,9 @@ void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const sem
     if (exhausted->use_empty()) {
         builder.ClearInsertionPoint();
         exhausted->eraseFromParent();
-        return;
+    } else {
+        raise_function_clause(initial);
     }
-    ExpressionLowering state{builder, entry, module, function, inferred, word, {}};
-    raise_function_clause(state);
+    finish_roots(initial);
 }
 } // namespace erlang_aot::codegen

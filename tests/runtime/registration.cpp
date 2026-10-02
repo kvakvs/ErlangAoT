@@ -21,8 +21,10 @@ abi::v1::TermWord context_entry(ProcessContext *context, const abi::v1::TermWord
 
 // Reject incompatible and malformed drafts without publishing partial modules.
 void rejection(Runtime &runtime, abi::v1::ModuleDescriptor descriptor) {
-    descriptor.abi_version = 1;
-    require(register_module(runtime, descriptor).error() == CodeError::abi_mismatch, "version accepted");
+    for (const auto version : {1U, 2U, 3U}) {
+        descriptor.abi_version = version;
+        require(register_module(runtime, descriptor).error() == CodeError::abi_mismatch, "old version accepted");
+    }
     descriptor.abi_version = abi::v1::version;
     descriptor.term_bits = sizeof(Word) == 8 ? 32 : 64;
     require(register_module(runtime, descriptor).error() == CodeError::abi_mismatch, "width accepted");
@@ -59,7 +61,7 @@ void publication() {
 // Validate the service boundary and real module publication without exposing registry implementation details.
 int main() {
     try {
-        require(erlang_aot_register_module_v3(nullptr, nullptr) ==
+        require(erlang_aot_register_module_v4(nullptr, nullptr) ==
                     static_cast<std::uint8_t>(abi::v1::Status::invalid_argument),
                 "null service input accepted");
         publication();

@@ -102,9 +102,12 @@ struct Walk {
         case Action::enter:
             enter(state, visit.id, pending);
             break;
-        case Action::value:
-            state.values.emplace(&expression, lower_value(state, visit.id));
+        case Action::value: {
+            auto *value = lower_value(state, visit.id);
+            state.values.emplace(&expression, value);
+            root_value(state, value);
             break;
+        }
         case Action::lazy_left: {
             const auto &binary = std::get<ast::BinaryExpression>(expression.value);
             joins.emplace(&expression, left(state, expression, binary));
@@ -112,10 +115,13 @@ struct Walk {
             pending.push_back({binary.right});
             break;
         }
-        case Action::lazy_right:
-            state.values.emplace(&expression, right(state, expression, joins.at(&expression)));
+        case Action::lazy_right: {
+            auto *value = right(state, expression, joins.at(&expression));
+            state.values.emplace(&expression, value);
+            root_value(state, value);
             joins.erase(&expression);
             break;
+        }
         }
     }
 };

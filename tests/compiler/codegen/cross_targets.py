@@ -39,7 +39,8 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             assert f"AddressSize: {bits}bit" in headers, headers
             imports = run([nm, "--undefined-only", str(path)]).stdout
             exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
-            assert "erlang_aot_register_module_v3" in imports, imports
+            assert "erlang_aot_register_module_v4" in imports, imports
+            assert "erlang_aot_roots_enter_v4" in imports and "erlang_aot_roots_leave_v4" in imports, imports
             assert ".register" in exports and "eav1_" in exports, exports
             reports.append(headers + imports + exports)
             if "616e73776572" in path.name:
@@ -49,9 +50,9 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
                 assert "eav1_616e73776572_6964656e74697479_1" in imports, imports
         (root / "inspection.txt").write_text("\n".join(reports), encoding="utf-8")
         ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
-        assert f"ret i{bits} {minimum * 16 + 15}" in ir, ir
-        assert f"ret i{bits} {maximum * 16 + 15}" in ir, ir
-        assert f"i32 3, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert f"store i{bits} {minimum * 16 + 15}" in ir, ir
+        assert f"store i{bits} {maximum * 16 + 15}" in ir, ir
+        assert f"i32 4, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
     rejected(tool, answer, work / triple / "overflow", triple,
              "representable integer literal" if bits == 32 else "bignum expressions")

@@ -1,5 +1,18 @@
 #include "lowering_support.hpp"
 
+// Find the successful source return while retaining the checked infrastructure-failure exit.
+const llvm::ReturnInst *source_return(const llvm::Function &function) {
+    for (const auto &block : function) {
+        if (const auto *ret = llvm::dyn_cast<llvm::ReturnInst>(block.getTerminator())) {
+            const auto *constant = llvm::dyn_cast<llvm::ConstantInt>(ret->getReturnValue());
+            if (!constant || !constant->isZero()) {
+                return ret;
+            }
+        }
+    }
+    throw std::runtime_error("no source return");
+}
+
 // Verify emitted bytes are a native object containing executable code.
 void inspect_object(cg::Compilation &compilation) {
     require(cg::emit_objects(compilation), "real-source object emission failed");
@@ -27,7 +40,7 @@ void constants(const char *name, const std::string &triple, unsigned bits) {
         if (!semantic::decode_symbol(function.getName().str())) {
             continue;
         }
-        const auto *ret = llvm::cast<llvm::ReturnInst>(function.getEntryBlock().getTerminator());
+        const auto *ret = source_return(function);
         const auto &value = llvm::cast<llvm::ConstantInt>(ret->getReturnValue())->getValue();
         require(value.getBitWidth() == bits, "literal uses host width");
         require((value.getZExtValue() & 15U) == 15U, "literal lost its integer tag");
@@ -56,12 +69,9 @@ void parameters(const std::string &triple = {}, unsigned bits = sizeof(void *) *
         if (!semantic::decode_symbol(function.getName().str())) {
             continue;
         }
-        auto instruction = function.getEntryBlock().begin();
-        const auto *slot = llvm::cast<llvm::GetElementPtrInst>(&*instruction++);
-        const auto *load = llvm::cast<llvm::LoadInst>(&*instruction++);
-        const auto *ret = llvm::cast<llvm::ReturnInst>(&*instruction);
-        require(slot->hasOneUse() && *slot->user_begin() == load && ret->getReturnValue() == load,
-                "projection changed the term");
+        const auto *ret = source_return(function);
+        const auto *load = llvm::cast<llvm::LoadInst>(ret->getReturnValue());
+        const auto *slot = llvm::cast<llvm::GetElementPtrInst>(load->getPointerOperand());
         require(slot->getPointerOperand() == function.getArg(1), "parameter lost argument array");
         require(!slot->isInBounds(), "parameter adds an unjustified pointer promise");
         const auto offset = llvm::cast<llvm::ConstantInt>(slot->getOperand(1))->getZExtValue();
@@ -111,11 +121,17 @@ void local_calls() {
             "nested calls changed source evaluation order");
     auto *equal = module.getFunction(semantic::encode_symbol({"calls", "equal", 0}));
     std::size_t stores = 0;
-    for (const auto &instruction : equal->getEntryBlock()) {
-        if (const auto *store = llvm::dyn_cast<llvm::StoreInst>(&instruction)) {
-            const auto *value = llvm::cast<llvm::ConstantInt>(store->getValueOperand());
-            require(value->getValue().ashr(4).getSExtValue() == 7, "identical call argument changed");
-            ++stores;
+    for (const auto &block : *equal) {
+        for (const auto &instruction : block) {
+            if (const auto *store = llvm::dyn_cast<llvm::StoreInst>(&instruction)) {
+                const auto *slot = llvm::dyn_cast<llvm::GetElementPtrInst>(store->getPointerOperand());
+                if (!slot || !llvm::isa<llvm::AllocaInst>(slot->getPointerOperand())) {
+                    continue;
+                }
+                const auto *value = llvm::cast<llvm::ConstantInt>(store->getValueOperand());
+                require(value->getValue().ashr(4).getSExtValue() == 7, "identical call argument changed");
+                ++stores;
+            }
         }
     }
     require(stores == 3, "identical arguments lost their distinct positions");

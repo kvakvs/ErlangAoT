@@ -43,8 +43,8 @@ table and rejects moved-from or expired factory bindings.
 ## Module initialization and failure
 
 ABI revision 3 extends descriptors with `(UTF-8 pointer, size)` entries and a
-target-sized count. Registration uses `erlang_aot_register_module_v3`; revision-1
-and revision-2 descriptors reject before reading the new fields. Term tags and the
+target-sized count. Current registration uses `erlang_aot_register_module_v4`;
+revision-1/2/3 descriptors reject before reading dependent fields. Term tags and the
 revision-2 checked failure channel remain unchanged.
 
 The compiler assigns deterministic spelling slots, never atom IDs. Registration

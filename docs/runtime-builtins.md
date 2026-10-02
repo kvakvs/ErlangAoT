@@ -2,7 +2,7 @@
 
 Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
 module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+uses ABI revision 4; the revision-2 checked call channel is unchanged. See
 [runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
 
 Compilation step 11 implements native registration and checked synchronous calls

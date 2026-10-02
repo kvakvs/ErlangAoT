@@ -85,15 +85,14 @@ void check_memory(ProcessContext &context) {
     auto &heap = context.heap();
     require(heap.allocate(0, sink) == std::unexpected(HeapError::invalid_size), "invalid allocation misclassified");
     require(reports.count == 0, "validation reached placeholder");
-    require(heap.allocate(1, sink) == std::unexpected(HeapError::not_implemented), "allocation fabricated");
-    require(reports.count == 1 && reports.last.starts_with("[allocation] notimpl"), "allocation report wrong");
+    require(heap.allocate(1, sink).has_value(), "allocation failed");
+    require(reports.count == 0, "successful allocation reported deferred work");
     require(heap.collect(sink) == std::unexpected(HeapError::not_implemented), "collection fabricated");
-    require(reports.count == 2 && reports.last.starts_with("[garbage collection] notimpl"), "GC report wrong");
-    require(heap.allocate(1, {nullptr, reject}) == std::unexpected(HeapError::diagnostic_failure),
-            "allocation sink failure lost");
+    require(reports.count == 1 && reports.last.starts_with("[garbage collection] notimpl"), "GC report wrong");
+    require(heap.allocate(1, {nullptr, reject}).has_value(), "allocation incorrectly consulted deferred sink");
     require(heap.collect({nullptr, throwing}) == std::unexpected(HeapError::diagnostic_failure),
             "collection sink exception escaped");
-    require(heap.used_words() == 0 && heap.capacity_words() == 0, "placeholder changed accounting");
+    require(heap.used_words() == 2 && heap.capacity_words() >= 2, "collection changed allocation accounting");
 }
 
 // Execution hooks must not consume admission, change state, or fabricate a cooperative return.
@@ -201,7 +200,7 @@ bool report_storage(std::string_view mode, ProcessContext &context) {
     if (mode == "term") {
         require(TermFactory(context).nil() == std::unexpected(TermError::not_implemented), "term status wrong");
     } else if (mode == "allocate") {
-        require(context.heap().allocate(1) == std::unexpected(HeapError::not_implemented), "allocation status wrong");
+        require(context.heap().allocate(1).has_value(), "allocation status wrong");
     } else if (mode == "collect") {
         require(context.heap().collect() == std::unexpected(HeapError::not_implemented), "collection status wrong");
     } else {
@@ -273,7 +272,7 @@ int main(int argc, char **argv) {
         image = std::unexpected(CodeError::module_not_found);
         require(runtime->destroy_context(context) == Status::ok, "placeholder prevented context cleanup");
         require(runtime->shutdown() == Status::ok && weak.expired(), "placeholder retained runtime resources");
-        return argc == 2 && std::string_view(argv[1]) != "quiet" ? 1 : 0;
+        return argc == 2 && std::string_view(argv[1]) != "quiet" && std::string_view(argv[1]) != "allocate" ? 1 : 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

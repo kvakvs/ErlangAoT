@@ -47,7 +47,9 @@ requiring the separately written C++ harness used today.
 
 Patternmatch step 2 delivered revision-2 checked call failure propagation and owned
 immediate error payloads; see [the contract](../docs/generated-call-failures.md).
-Heap roots, relocation and suspension remain open below.
+Step 11 adds [revision-4 generated roots and stable backing](../docs/generated-roots.md).
+Compound host/error ownership remains step 12; relocation, continuation/mailbox roots
+and suspension remain open below.
 
 Meaning: keep live values visible and valid when allocation, collection, calls,
 exceptions or suspension can change where values are stored.
@@ -56,17 +58,17 @@ exceptions or suspension can change where values are stored.
   candidates and messages in transit, including registration and lifetime rules.
 - [ ] Choose safepoint/relocation contracts before admitting movable terms; assess
   LLVM facilities while retaining project ownership of collector policy.
-- [ ] Version affected descriptors/call boundaries and implement compiler/runtime
-  root handling with target-derived widths and contained C++ exceptions.
+- [x] Version affected descriptors/call boundaries and implement compiler/runtime
+  root handling for stable storage with target-derived widths and contained C++ exceptions.
 - [ ] Verify live-value preservation across calls/allocation, then GC and suspension
   as implemented; reject incompatible consumers.
 
 ### F03 — Process heaps and TermFactory construction
 
 Meaning: allocate actual process-owned storage and construct non-immediate terms;
-today's heap budgets and constructor failures are only service boundaries.
+stable backing/reservations now exist; concrete compound constructors remain below.
 
-- [ ] Implement checked backing allocation, accounting, growth and resource limits.
+- [x] Implement checked backing allocation, accounting, growth and resource limits (patternmatch step 11).
 - [ ] Implement validated construction/destruction for selected term layouts,
   respecting C++ resources that cannot be moved as raw bytes.
 - [ ] Connect constructors and host Terms to F02 ownership/root rules; enable each

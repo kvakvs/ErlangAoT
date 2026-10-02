@@ -26,10 +26,11 @@ void check_requests(ProcessHeap &heap) {
     require(heap.allocate(max_words + 1) == std::unexpected(HeapError::invalid_size), "byte overflow accepted");
     require(heap.allocate(max_words) == std::unexpected(HeapError::limit_exceeded), "large request missed limit");
     require(heap.allocate(5) == std::unexpected(HeapError::limit_exceeded), "word budget ignored");
-    require(heap.allocate(4) == std::unexpected(HeapError::not_implemented), "boundary allocation fabricated");
-    require(heap.allocate(1) == std::unexpected(HeapError::not_implemented), "small allocation fabricated");
+    const auto allocated = heap.allocate(4);
+    require(allocated && allocated->size() == 4 * sizeof(Word), "boundary allocation failed");
+    require(heap.allocate(1) == std::unexpected(HeapError::limit_exceeded), "exhausted budget ignored");
     require(heap.collect() == std::unexpected(HeapError::not_implemented), "collector fabricated statistics");
-    require(heap.used_words() == 0 && heap.capacity_words() == 0, "rejection changed accounting");
+    require(heap.used_words() == 4 && heap.capacity_words() == 4, "rejection changed accounting");
 }
 
 // Check byte policy independently of requests, including target-word edges and a maximum valid budget.
@@ -44,16 +45,66 @@ void check_options(Runtime &runtime) {
     auto context = runtime.create_context({sizeof(Word), max_bytes});
     require(context.has_value(), "lazy maximum budget failed");
     auto &heap = (*context)->heap();
-    require(heap.allocate(max_bytes / sizeof(Word)) == std::unexpected(HeapError::not_implemented),
-            "maximum byte budget overflowed");
+    require(heap.allocate(max_bytes / sizeof(Word)) == std::unexpected(HeapError::out_of_memory),
+            "impossible backing allocation did not fail safely");
     require(heap.capacity_words() == 0, "budget allocated backing storage");
     require(runtime.destroy_context(*context) == Status::ok, "budget context cleanup failed");
+}
+
+struct Resource {
+    // Observe proper C++ destruction while the stable storage owner still exists.
+    unsigned &destroyed;
+
+    ~Resource() { ++destroyed; }
+};
+
+// Transfer resource teardown to committed storage without storing ownership cycles in cells.
+void destroy_resource(std::byte *bytes) noexcept { std::destroy_at(reinterpret_cast<Resource *>(bytes)); }
+
+// Growth and aborted construction preserve earlier addresses and restore exact capacity/word accounting.
+void check_reservations(Runtime &runtime) {
+    auto *context = runtime.create_context({2 * sizeof(Word), 32 * sizeof(Word)}).value();
+    auto &heap = context->heap();
+    auto first = heap.allocate(1).value();
+    first.front() = std::byte{42};
+    {
+        auto reservation = heap.reserve(8).value();
+        require(reservation.bytes().size() == 8 * sizeof(Word), "wrong reservation size");
+        require(heap.reserve(1) == std::unexpected(HeapError::unsafe_point), "overlapping reservation accepted");
+        auto moved = std::move(reservation);
+        require(reservation.bytes().empty(), "moved reservation kept access");
+    }
+    require(heap.used_words() == 1 && heap.capacity_words() == 2, "rollback kept backing or accounting");
+    require(heap.reserve(1, 3) == std::unexpected(HeapError::invalid_size), "non-power alignment accepted");
+    {
+        auto aligned = heap.reserve(2, alignof(std::max_align_t)).value();
+        require(reinterpret_cast<std::uintptr_t>(aligned.bytes().data()) % alignof(std::max_align_t) == 0,
+                "reservation is misaligned");
+        require(aligned.commit().has_value(), "aligned commit failed");
+    }
+    require(first.front() == std::byte{42}, "growth moved or damaged committed data");
+    unsigned destroyed = 0;
+    {
+        auto resource = heap.reserve((sizeof(Resource) + sizeof(Word) - 1) / sizeof(Word)).value();
+        std::construct_at(reinterpret_cast<Resource *>(resource.bytes().data()), destroyed);
+        require(resource.commit(destroy_resource).has_value(), "resource commit failed");
+        require(resource.bytes().empty(), "committed reservation kept mutation access");
+    }
+    {
+        auto expired = heap.reserve(1).value();
+        require(runtime.destroy_context(context) == Status::ok, "context teardown failed");
+        require(expired.bytes().empty() && expired.commit() == std::unexpected(HeapError::expired_context),
+                "reservation used expired context");
+        require(destroyed == 0, "reservation did not pin backing for safe rollback");
+    }
+    require(destroyed == 1, "resource was not destroyed exactly once");
 }
 
 // Invalid host values cannot arise from valid Erlang or the linked consumer's successful copies.
 void check_boundaries() {
     auto runtime = Runtime::start().value();
     check_options(*runtime);
+    check_reservations(*runtime);
     auto *context = runtime->create_context({sizeof(Word), 4 * sizeof(Word)}).value();
     auto *other = runtime->create_context({sizeof(Word), sizeof(Word)}).value();
     check_requests(context->heap());

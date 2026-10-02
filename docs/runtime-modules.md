@@ -1,6 +1,6 @@
 # Generated module registration
 
-ABI revision 3 `modules.hpp` describes immutable module/export metadata using fixed version
+ABI revision 4 `modules.hpp` describes immutable module/export metadata using fixed version
 and word-width fields, target-sized counts, borrowed UTF-8 bytes and generic entry
 pointers. LLVM constructs layouts from the target word type; native compile-time
 layout assertions and a separately Clang-linked consumer check agreement.
@@ -15,7 +15,7 @@ Descriptor spelling bytes are copied during registration. The immutable descript
 address remains the atom-binding key and its image must stay pinned for the loaded
 module lifetime; native code must remain executable for that lifetime.
 
-Generated entries call the native C++ function `erlang_aot_register_module_v3`.
+Generated entries call the native C++ function `erlang_aot_register_module_v4`.
 The backend emits its Itanium or Microsoft C++ linker spelling for the target;
 this is a project ABI contract, not a C wrapper. LLVM `llvm.used` retains startup
 and descriptor symbols, whose references retain the service dependency. A linked

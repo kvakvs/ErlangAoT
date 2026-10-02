@@ -36,7 +36,7 @@
   bindings, immediate services, boolean operators or acyclic local/exported batch
   calls. Flat match plans carry explicit success/mismatch continuations and tentative
   SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
-  raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain compact projection IR.
+  raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain direct argument projections inside their root scope.
 
 - Guard authorization uses the pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
@@ -55,10 +55,16 @@
 - Runtime Terms currently admit small integers, owned atoms, canonical empty tuple
   and nil. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
   Globally non-recycled words reject foreign ownership; immutable pins retain
-  host/error spellings after teardown. Revision-3 module descriptors initialize
+  host/error spellings after teardown. Revision-4 module descriptors initialize
   deterministic atom slots before registry publication. Generated reads/booleans
   never intern on evaluation. Ordering uses decoded integers and atom spelling.
   Failed registration may retain valid atoms, but publishes no module/slots.
+
+- Stable heap chunks support bounded word allocation, aligned reservations, rollback
+  and explicit resource destruction. No GC or graph copying runs. Revision-4
+  generated scopes register arguments/temporaries, clear failed candidates, transfer
+  result ownership before pop and restore entry depth after native exceptions.
+  Host compound admission remains step12, with retained result/error obligations.
 
 - Generated ABI entries retain target-word terms, context and argument arrays.
   Revision-2 first-error channels separate structured Erlang errors from exact
@@ -82,17 +88,17 @@
   encoded paths/aliases, stages exclusive writes and replaces complete files;
   multi-file publication is not atomic. Production executable linking stays deferred.
 
-- Runtime lifecycle/context ownership, generic registration and reporting boundaries
-  are implemented. Heap construction/GC/roots, workers, messaging, process identities,
-  dynamic loading and further builtin families remain deferred. Ordered clauses,
-  body matches/sequences, heap representations and records remain with steps 9–20
-  of .agents/10-patternmatch.md; steps 6–8 are complete and work stops after step 8.
+- Runtime lifecycle/context ownership, generic registration, stable backing and roots
+  are implemented. Compound admission, GC, workers, messaging, process identities,
+  dynamic loading and further builtin families remain with their named owners.
+  Patternmatch steps 1–11 are complete; steps 12–20 remain.
+  The current request is completion of the entire plan.
 
 - Tests prioritize real CLI/project sources, separate native runtime consumers and
   pinned OTP comparisons. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 120 CTests and all 207 production Lizard/clang-tidy units;
+  Windows x64 Debug passes 123 CTests and all 213 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

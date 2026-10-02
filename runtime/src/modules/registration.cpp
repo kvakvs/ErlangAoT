@@ -34,6 +34,7 @@ CallResult<Word> invoke_entry(abi::v1::GeneratedFunction *entry, ProcessContext 
 CallResult<Term> invoke(abi::v1::GeneratedFunction *entry, ProcessContext &context, std::span<const Term> arguments) {
     auto &state = context.generated_calls();
     GeneratedInvocation invocation(state);
+    RootInvocation roots(context.roots());
     if (state.failure()) {
         return std::unexpected(*state.failure());
     }
@@ -106,7 +107,7 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
 }
 } // namespace erlang_aot::runtime
 
-std::uint8_t erlang_aot_register_module_v3(void *runtime, const void *descriptor) noexcept {
+std::uint8_t erlang_aot_register_module_v4(void *runtime, const void *descriptor) noexcept {
     using namespace erlang_aot;
     using abi::v1::Status;
     if (!runtime || !descriptor) {

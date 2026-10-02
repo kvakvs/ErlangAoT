@@ -1,7 +1,6 @@
 #pragma once
 
-// Lazy ownership, checked allocation rejection and immediate copying are implemented; no allocator or GC.
-// See docs/runtime-memory.md and runtime/design/processes.md for future roots and collection.
+// Stable bounded backing storage supports transactional construction; collection remains deferred.
 #include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 
@@ -18,7 +17,8 @@ enum class HeapError : std::uint8_t {
     out_of_memory,
     unsafe_point,
     not_implemented,
-    diagnostic_failure
+    diagnostic_failure,
+    expired_context
 };
 
 // Report actual collector work; the initial collector stub returns not_implemented instead.
@@ -37,25 +37,69 @@ struct HeapOptions final {
     std::size_t limit_bytes = std::size_t{64} * 1024 * 1024;
 };
 
+namespace detail {
+class HeapStorage;
+}
+
+struct HeapMark {
+    // Restore both retained backing and consumed words when unpublished construction fails.
+    std::size_t chunks;
+    std::size_t tail_words;
+    std::size_t used_words;
+    std::size_t capacity_words;
+};
+
+// Transfer destruction only after a resource has been constructed in its reserved storage.
+using HeapDestructor = void (*)(std::byte *) noexcept;
+
+class HeapReservation final {
+  public:
+    // Move the sole rollback obligation while preserving the backing address.
+    HeapReservation(HeapReservation &&other) noexcept;
+    HeapReservation(const HeapReservation &) = delete;
+    HeapReservation &operator=(const HeapReservation &) = delete;
+    HeapReservation &operator=(HeapReservation &&) = delete;
+    // Roll back unpublished words and newly retained chunks.
+    ~HeapReservation();
+    // Borrow aligned, zero-initialized storage until commit or rollback.
+    std::span<std::byte> bytes() const noexcept;
+    // Commit initialized bytes; on failure destroy the supplied resource before rolling back.
+    std::expected<void, HeapError> commit(HeapDestructor destroy = nullptr) noexcept;
+
+  private:
+    friend class ProcessHeap;
+    // Hold storage through rollback even if the context is removed before this reservation dies.
+    HeapReservation(std::shared_ptr<detail::HeapStorage> storage, std::span<std::byte> bytes, HeapMark mark) noexcept;
+    // Restore accounting exactly once; committed allocations are retained until storage teardown.
+    void rollback() noexcept;
+    std::shared_ptr<detail::HeapStorage> storage_;
+    std::span<std::byte> bytes_;
+    HeapMark mark_;
+    bool active_ = true;
+};
+
 // Reserve one process's term storage; future growth preserves addresses until an explicit GC safe point.
 // Allocation/accounting use target words, while configuration budgets remain exact byte multiples.
 class ProcessHeap final {
   public:
-    // The lazy boundary owns no backing storage; future chunk/resource owners must clean up on exit.
-    ~ProcessHeap() = default;
+    // Release this process's storage owner; reservations and future host pins retain their own ownership.
+    ~ProcessHeap();
     // Keep heap identity and all borrowed allocation addresses fixed.
     ProcessHeap(const ProcessHeap &) = delete;
     ProcessHeap &operator=(const ProcessHeap &) = delete;
     ProcessHeap(ProcessHeap &&) = delete;
     ProcessHeap &operator=(ProcessHeap &&) = delete;
 
-    // Validate nonzero word count, byte overflow and budget; valid requests return not_implemented.
+    // Commit raw stable words; constructors use reserve so their initialization failures can roll back.
     std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words, DiagnosticSink sink = {}) noexcept;
+    // Reserve one unpublished allocation; another allocation requires commit/rollback of the current one.
+    std::expected<HeapReservation, HeapError> reserve(std::size_t words,
+                                                      std::size_t alignment = alignof(Word)) noexcept;
     // Copy checked owner-independent immediates; rooted graph addition remains deferred.
     TermResult<Term> add(const Term &value) noexcept;
     // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
     std::expected<CollectionStats, HeapError> collect(DiagnosticSink sink = {}) noexcept;
-    // Report allocated and retained capacity in words; both stay zero until allocation is implemented.
+    // Report consumed words (including alignment) and exact retained backing capacity.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
 
@@ -65,14 +109,9 @@ class ProcessHeap final {
     friend class Term;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
-    // Keep allocation policy independent of term layout or scheduler priority.
-    HeapOptions options_;
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
     ProcessContext &owner_;
-    // Future storage must own stable chunks and destroy C++ resources before freeing their backing memory.
-    // Host, continuation, mailbox and cursor roots require a separate registry before heap Terms are admitted.
-    // Track checked allocation/capacity totals without rescanning chunks.
-    std::size_t used_words_ = 0;
-    std::size_t capacity_words_ = 0;
+    // Pin stable backing independently of the context address; liveness still controls admission.
+    std::shared_ptr<detail::HeapStorage> storage_;
 };
 } // namespace erlang_aot::runtime

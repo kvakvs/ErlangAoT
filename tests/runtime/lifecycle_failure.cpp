@@ -83,7 +83,7 @@ void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
     const auto copied = Term::from_word(*encode_integer(7))->copy_to(heap);
     const auto invalid = heap.add(Term{});
     remaining = std::numeric_limits<std::size_t>::max();
-    require(allocation == std::unexpected(HeapError::diagnostic_failure), "allocation diagnostic OOM lost");
+    require(allocation == std::unexpected(HeapError::out_of_memory), "allocation OOM lost");
     require(collection == std::unexpected(HeapError::diagnostic_failure), "collection diagnostic OOM lost");
     require(copied && copied->integer_value() == 7, "immediate copy allocated bookkeeping");
     require(invalid == std::unexpected(TermError::invalid_encoding), "invalid copy changed under OOM");
@@ -256,6 +256,66 @@ void check_atom_registration() {
 }
 
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
+void check_root_allocation() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            GeneratedInvocation invocation(context.generated_calls());
+            const auto retained = live_allocations;
+            remaining = ordinal;
+            auto *frame = context.roots().enter(4);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = frame != nullptr;
+            if (!succeeded) {
+                require(context.generated_calls().failure()->status == Status::out_of_memory, "root OOM lost");
+                require(context.roots().depth() == 0 && context.roots().words() == 0, "failed root entry published");
+                require(live_allocations == retained, "partial root buffer leaked");
+            }
+            context.roots().restore(0);
+        }
+        require(live_allocations == baseline, "root teardown leaked");
+    }
+    require(succeeded, "root allocation sweep never succeeded");
+}
+
+// A resource destructor must run once whether its index allocation fails or storage is later torn down.
+void count_destruction(std::byte *bytes) noexcept { ++**reinterpret_cast<unsigned **>(bytes); }
+
+// Sweep backing, chunk-index and resource-index allocations before publishing stable constructed values.
+void check_heap_construction() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        unsigned destroyed = 0;
+        bool constructed = false;
+        {
+            auto runtime = Runtime::start().value();
+            auto &heap = runtime->create_context().value()->heap();
+            remaining = ordinal;
+            auto reserved = heap.reserve(1);
+            if (reserved) {
+                std::construct_at(reinterpret_cast<unsigned **>(reserved->bytes().data()), &destroyed);
+                constructed = true;
+                succeeded = reserved->commit(count_destruction).has_value();
+            }
+            remaining = std::numeric_limits<std::size_t>::max();
+            if (!succeeded) {
+                require(heap.used_words() == 0 && heap.capacity_words() == 0, "failed construction kept backing");
+                require(heap.allocate(1).has_value(), "failed construction poisoned retry");
+            }
+        }
+        require(destroyed == static_cast<unsigned>(constructed), "resource destroyed incorrectly");
+        require(live_allocations == baseline, "heap construction leaked");
+    }
+    require(succeeded, "heap construction sweep never succeeded");
+}
+
+// An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
         check_startup();
@@ -265,6 +325,8 @@ int main() {
         check_scheduler_registration();
         check_atom_interning();
         check_atom_registration();
+        check_heap_construction();
+        check_root_allocation();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::fprintf(stderr, "%s\n", error.what());

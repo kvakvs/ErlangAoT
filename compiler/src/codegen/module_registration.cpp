@@ -12,10 +12,10 @@ namespace {
 // Match the native C++ service declaration without introducing a C interoperability layer.
 std::string service_symbol(const llvm::Triple &triple) {
     if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_register_module_v3@@YAEPEAXPEBX@Z"
-                                    : "?erlang_aot_register_module_v3@@YAEPAXPBX@Z";
+        return triple.isArch64Bit() ? "?erlang_aot_register_module_v4@@YAEPEAXPEBX@Z"
+                                    : "?erlang_aot_register_module_v4@@YAEPAXPBX@Z";
     }
-    return "_Z29erlang_aot_register_module_v3PvPKv";
+    return "_Z29erlang_aot_register_module_v4PvPKv";
 }
 
 // Retain exact UTF-8 bytes, including embedded NULs, using explicit lengths in every descriptor.

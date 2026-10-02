@@ -4,7 +4,8 @@ Status: immediate services and owned host atoms are implemented. Pattern/guard
 step 3 adds runtime-owned atom storage, module bindings, atom/boolean factories and
 immutable spelling pins. See [runtime atoms](../../docs/runtime-atoms.md) and
 [runtime builtin dispatch](../../docs/runtime-builtins.md). Heap/rooting contracts
-below remain proposals; backing allocation, graph copying and collection are absent.
+below remain proposals. Stable backing/reservations and generated roots are implemented;
+see [the memory contract](../../docs/runtime-memory.md). Graph copying and collection remain absent.
 
 [Runtime word services](../../docs/runtime-terms.md) document checked classification
 and integer encoding/decoding. Host [Term](../include/erlang_aot/runtime/terms.hpp)

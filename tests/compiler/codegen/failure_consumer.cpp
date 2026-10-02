@@ -91,6 +91,7 @@ void failure_case(ProcessContext &context, const ResolvedFunction &entry, unsign
     const auto result = entry.call(context, {});
     require(!result && later_calls == 0 && take_calls == 0, "failure ran a later argument or caller body");
     require(!context.generated_calls().failure(), "outer boundary retained failure state");
+    require(context.roots().depth() == 0 && context.roots().words() == 0, "failed native call retained roots");
     require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
             "failure changed heap accounting");
     check_failure(result.error(), selected);
@@ -111,7 +112,7 @@ Word leaf(ProcessContext *context, const Word *) {
         throw std::runtime_error("injected generated-entry exception");
     }
     if (mode == 1 || mode == 5) {
-        (void)context->heap().allocate(1, {nullptr, report});
+        (void)context->heap().collect({nullptr, report});
     } else if (mode >= 2 && mode <= 4) {
         const auto reason = mode == 2 ? abi::v1::ErrorReason::function_clause : abi::v1::ErrorReason::badmatch;
         (void)erlang_aot_raise_v2(context, reason, mode == 4 ? Word{1} : integer(-42));

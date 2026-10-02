@@ -2,7 +2,7 @@
 
 Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
 module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 3; the revision-2 checked call channel is unchanged. See
+uses ABI revision 4; the revision-2 checked call channel is unchanged. See
 [runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
 
 The LLVM-free C++23 `erlang_runtime` library implements startup, context ownership
@@ -113,7 +113,8 @@ a process. Generated handles reject a context from another loaded module instanc
 The [process sketch](../runtime/include/process.hpp) retains future signal-inbox and
 continuation ownership. Once admission/execution exists, exit must discard pending
 signals, resolve replies and release continuation/receive roots before heap teardown.
-Those paths, backing allocation, GC and scheduling remain future work.
+Those paths, GC and scheduling remain future work. Stable backing and generated
+roots are implemented; see [process memory](runtime-memory.md).
 
 Native macOS arm64 tests cover independent/repeated lifetimes, ownership errors,
 limits, invalidation, shutdown ordering, silence and allocation-failure rollback.

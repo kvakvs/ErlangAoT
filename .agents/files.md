@@ -38,20 +38,20 @@ Keys in the last column are relative to the directory column.
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
-| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,match,body_match,immediates,guards,walk}` |
+| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,guards,walk}` |
 | `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
 
 ## Runtime — R
 
-Keys are relative to the directory column. Lifecycle/service boundaries do not imply heap/worker/message execution is implemented.
+Keys are relative to the directory column. Stable backing and roots are implemented; compound admission, GC, workers and messages have separate owners.
 
 | Directory | Owns | File keys |
 | --- | --- | --- |
 | `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
-| `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `services` |
-| `memory/` | Heap budgets/allocation boundary, copying | `heap`, `heap_policy`, `copy` |
+| `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `roots`, `services` |
+| `memory/` | Stable backing, budgets, rollback/resource teardown; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `copy` |
 | `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `term_layout`, `atoms`, `atom_spelling` |
 | `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `immediate_services` |
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |

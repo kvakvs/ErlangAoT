@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–10 are
-complete; steps 11–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–11 are
+complete; steps 12–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -485,32 +485,32 @@ later failing call is not reached after an earlier failed match.
 
 ### 11. Implement rooted, bounded heap construction (F02/F03 slice)
 
-- [ ] Implement backing allocation, exact accounting, bounded growth, rollback
+- [x] Implement backing allocation, exact accounting, bounded growth, rollback
   and teardown. Connect TermFactory and host Terms to explicit
   lifetime/ownership.
-  - [ ] Specify allocation units, alignment, capacity limits and ownership
+  - [x] Specify allocation units, alignment, capacity limits and ownership
     handles; check size arithmetic before reserving stable backing storage.
-  - [ ] Publish a constructed value only after initialization succeeds; roll
+  - [x] Publish a constructed value only after initialization succeeds; roll
     back partial reservations and accounting on every failure path.
-  - [ ] Connect factory/host admission to the owning runtime and lifetime
+  - [x] Connect factory/host admission to the owning runtime and lifetime
     checks; verify teardown, foreign ownership rejection and expired-handle
     behavior.
-- [ ] Register roots for generated arguments/temporaries, results and error
+- [x] Register roots for generated arguments/temporaries, results and error
   payloads across allocating calls; implement cleanup and a documented safepoint
   contract. Version affected ABI layouts using target-derived widths.
-  - [ ] Define root registration, update and release operations plus allocation
+  - [x] Define root registration, update and release operations plus allocation
     boundaries; document which caller/callee owns each live-value root.
-  - [ ] Emit root scopes for arguments and live temporaries, transfer
+  - [x] Emit root scopes for arguments and live temporaries, transfer
     result/error ownership before cleanup, and release scopes on success and
     failure exits.
-  - [ ] Update descriptors/consumers for changed layouts and reject incompatible
+  - [x] Update descriptors/consumers for changed layouts and reject incompatible
     versions; exercise target widths and injected root/allocation failures.
-- [ ] Use stable storage in this slice; garbage collection and graph copying
+- [x] Use stable storage in this slice; garbage collection and graph copying
   stay outside this plan. Never relocate C++ resource objects as raw bytes or
   claim moving-GC survival without implementing and testing it.
-  - [ ] Choose storage growth that preserves published addresses and uses proper
+  - [x] Choose storage growth that preserves published addresses and uses proper
     C++ construction/destruction for resource-owning objects.
-  - [ ] Document no-collection limits and keep retained compound results/error
+  - [x] Document no-collection limits and keep retained compound results/error
     payloads as explicit step-12 acceptance obligations before container
     admission.
 
@@ -523,6 +523,17 @@ allocation-failure injection. In step 12, pass constructed heap values through
 unchanged OTP first/2 and id/1 while retaining earlier results across
 allocations and failed matches. Immediate-only execution alone cannot prove heap
 lifetime correctness.
+
+**Completed 2026-10-02:** [Stable storage and generated roots](../docs/generated-roots.md)
+provide bounded aligned backing, transactional reservations/accounting, explicit
+resource destruction and lifetime checks. Revision-4 generated scopes retain
+arguments/temporaries, clear rejected candidates, transfer results before release,
+and restore nested depth after native exceptions. Resource/root allocation sweeps,
+outer/nested entry faults, old-ABI rejection and recovery pass. Fresh Windows x64
+Debug: 123/123 CTests, zero skips, full 213-unit Lizard/clang-tidy and formatting.
+See [validation](../docs/patternmatch-step11-validation.md). Compound admission and
+retained compound results/error payloads remain explicit step-12 obligations;
+collection, graph copying and suspension remain outside this plan.
 
 ### 12. Construct, compare and match tuples/lists/strings (F08/F12)
 

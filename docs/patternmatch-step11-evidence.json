@@ -1,0 +1,16 @@
+{
+  "step": 11,
+  "date": "2026-10-02",
+  "otp_revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+  "oracle": "OTP 29.1.1 / ERTS 17.1",
+  "native": "Windows x64",
+  "ctests": 123,
+  "skips": 0,
+  "ctest_seconds": 150.81,
+  "quality_units": 213,
+  "quality": "Full Lizard and clang-tidy pass; first silent process failure on unchanged ast/control.cpp passed in isolation and full unchanged retry",
+  "abi_revision": 4,
+  "foreign_object_targets": 7,
+  "compound_admission": "Deferred to step 12 concrete retained-result/error/lifetime evidence",
+  "logs": "build/patternmatch-step11"
+}
