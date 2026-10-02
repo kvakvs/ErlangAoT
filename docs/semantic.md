@@ -1,4 +1,4 @@
-Current executable slice (pattern/guard steps 6–8): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). Body matches, ordered clauses and nonempty containers remain deferred.
+Current executable slice (pattern/guard steps 6–9): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). [Ordered clauses](ordered-clauses.md) select candidates in source order; body matches and nonempty containers remain deferred.
 
 # Semantic compilation analysis
 
@@ -25,10 +25,10 @@ unsigned decimal. Separators cannot occur in encoded names, so encoding is rever
 and independent of compiler-host hashing, locale and table order.
 
 Compilation checks every function, including unused definitions. The current subset
-accepts one clause with immediate patterns/aliases/repeated variables and one expression: an ABI-small
+accepts ordered clauses with immediate patterns/aliases/repeated variables and one expression: an ABI-small
 integer, atom/boolean literal, parameter reference, or syntactically direct local/literal remote call.
 Nested call arguments, immediate services/comparisons and grouped guard/boolean expressions are checked. Explicit negative integers are supported.
-General arithmetic, heap values, body/container matching, ordered clauses, exceptions, concurrency, dynamic
+General arithmetic, heap values, body/container matching, exceptions, concurrency, dynamic
 calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.

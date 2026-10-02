@@ -31,11 +31,11 @@
   only a binary's own preceding segments extend its size scope. Bounded flat
   normalization owns constants/source anchors; semantic failure clears partial tables.
 
-- Current execution: one clause, immediate variable/wildcard/literal/repeated/alias
+- Current execution: ordered clauses, immediate variable/wildcard/literal/repeated/alias
   heads, grouped guards, and one body expression using integer/atom/empty literals,
   bindings, immediate services, boolean operators or acyclic local/exported batch
   calls. Flat match plans carry explicit success/mismatch continuations and tentative
-  SSA values. Checked equality is representation-aware; single-clause exhaustion
+  SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
   raises function_clause. Unconditional heads retain compact projection IR.
 
 - Guard authorization uses the pinned legal name/arity/operator catalog, separately

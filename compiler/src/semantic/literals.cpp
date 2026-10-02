@@ -77,4 +77,17 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     }
     return {};
 }
+
+std::vector<ast::ExprId> function_roots(const ast::Function &function) {
+    std::vector<ast::ExprId> result;
+    for (const auto &clause : function.clauses) {
+        if (clause.guard) {
+            for (const auto &alternative : clause.guard->alternatives) {
+                result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
+            }
+        }
+        result.insert(result.end(), clause.body.begin(), clause.body.end());
+    }
+    return result;
+}
 } // namespace erlang_aot::semantic

@@ -210,9 +210,11 @@ their special failure rules.
 Meaning: select the first matching function clause instead of requiring exactly
 one clause. Depends on matching and guards as supported by F13/F14.
 
-- [ ] Analyze clause-local bindings and ordered alternatives; merge inference conservatively.
-- [ ] Lower clause dispatch and the correct no-clause-match outcome.
-- [ ] Execute overlapping, fallback and failing clauses through local and remote calls.
+- [x] Analyze clause-local bindings and ordered alternatives; merge inference conservatively.
+- [x] Lower clause dispatch and the correct no-clause-match outcome.
+- [x] Execute overlapping, fallback and failing clauses through local and remote calls.
+
+Delivered for the admitted immediate domain by [patternmatch step 9](../docs/patternmatch-step9-validation.md). Later representation owners extend the shared matcher; recursion remains F21.
 
 ### F16 — Expression sequences and control flow
 

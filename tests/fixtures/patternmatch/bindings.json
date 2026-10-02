@@ -19,7 +19,7 @@
     "name": "clauses",
     "arity": 1,
     "body": "f(X) -> X; f(X) -> X.",
-    "capability": "multiple clauses",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -91,7 +91,7 @@
     "name": "clause_leak",
     "arity": 2,
     "body": "f(X, _) -> X; f(_, _) -> X.",
-    "capability": "multiple clauses",
+    "capability": "",
     "diagnostic": "unbound variable X",
     "otp_diagnostic": "unbound_var"
   },

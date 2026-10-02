@@ -15,7 +15,7 @@ does not define a name; `_Name` does. Reusing a name records exact equality agai
 the original identity. Discarding or invalidating a candidate does not publish its
 names. The guard reads the completed tentative head. The body is analyzed on the
 successful candidate path. These are semantic environments, not executable
-selection: runtime guard rejection and failed-candidate rollback await step 9.
+selection: [step 9](ordered-clauses.md) now executes runtime guard rejection and failed-candidate rollback.
 
 Body sequences publish successful match bindings to following expressions.
 A match visits its RHS before its LHS pattern, including right-associated chains.

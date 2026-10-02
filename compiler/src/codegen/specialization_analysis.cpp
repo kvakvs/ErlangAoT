@@ -3,6 +3,7 @@
 #include "integer_guards.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
+#include <algorithm>
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
 
@@ -42,7 +43,8 @@ void observe(const semantic::Module &module, const semantic::Function &function,
              unsigned bits) {
     const auto &syntax = *module.syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
-    std::vector<ast::ExprId> pending{definition.clauses.front().body.front()};
+    auto pending = semantic::function_roots(definition);
+    std::ranges::reverse(pending);
     auto work = inputs.at(function.symbol).baseline * 2;
     while (!pending.empty() && work != 0) {
         --work;

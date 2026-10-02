@@ -90,12 +90,9 @@ void head(const Module &module, const Function &function, std::size_t index, con
     }
 }
 
-// Check all clauses even when the clause count itself exceeds the milestone.
-void function(const Module &module, const Function &function, const ast::Function &value, const ast::NodeSource &source,
-              const Reporter &out, const unsigned bits) {
-    if (value.clauses.size() != 1) {
-        unsupported(module, source, "multiple clauses", out);
-    }
+// Validate every candidate, including unreachable or unexported bodies.
+void function(const Module &module, const Function &function, const ast::Function &value, const Reporter &out,
+              const unsigned bits) {
     for (std::size_t i = 0; i < value.clauses.size(); ++i) {
         const auto &clause = value.clauses[i];
         head(module, function, i, clause, out, bits);
@@ -113,7 +110,7 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
         }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {
             const auto key = FunctionKey{value->name.name, value->clauses.at(0).arguments.size()};
-            function(module, module.functions.at(module.lookup.at(key)), *value, form.source, out, word_bits);
+            function(module, module.functions.at(module.lookup.at(key)), *value, out, word_bits);
         }
     }
 }

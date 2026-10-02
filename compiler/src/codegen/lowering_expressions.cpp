@@ -89,30 +89,4 @@ llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
     return leaf(state, id);
 }
 
-llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
-                              const semantic::Function &function, const ast::ExprId &expression,
-                              llvm::IntegerType *word, const semantic::types::Inference &inferred) {
-    ExpressionLowering state{builder, entry, module, function, inferred, word, {}};
-    const auto &clause = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(0);
-    const bool unconditional = lower_unconditional_head(state);
-    if (unconditional && !clause.guard) {
-        return lower_body(state, expression);
-    }
-    auto *success = llvm::BasicBlock::Create(entry.getContext(), "match.success", &entry);
-    auto *mismatch = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
-    auto *guard = clause.guard ? llvm::BasicBlock::Create(entry.getContext(), "guard.entry", &entry) : success;
-    if (unconditional) {
-        builder.CreateBr(guard);
-    } else {
-        lower_head(state, guard, mismatch);
-    }
-    builder.SetInsertPoint(mismatch);
-    raise_function_clause(state);
-    if (clause.guard) {
-        builder.SetInsertPoint(guard);
-        lower_guard(state, *clause.guard, {.success = success, .rejection = mismatch});
-    }
-    builder.SetInsertPoint(success);
-    return lower_body(state, expression);
-}
 } // namespace erlang_aot::codegen

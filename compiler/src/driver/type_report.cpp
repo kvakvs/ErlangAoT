@@ -55,7 +55,8 @@ std::string binding_text(const semantic::Function &function, const ast::ExprId &
 void expressions(const semantic::Module &module, const semantic::Function &function, const types::Inference &inferred) {
     const auto &syntax = *module.syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
-    std::vector<ast::ExprId> pending{definition.clauses.front().body.front()};
+    auto pending = semantic::function_roots(definition);
+    std::ranges::reverse(pending);
     while (!pending.empty()) {
         const auto id = pending.back();
         pending.pop_back();

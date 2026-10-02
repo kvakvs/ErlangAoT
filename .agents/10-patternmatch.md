@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–8 are
-complete; steps 9–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–9 are
+complete; steps 10–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in one-clause/one-expression functions. The parser retains broader syntax; ordered clauses, heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in ordered-clause/one-expression functions. The parser retains broader syntax; heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -404,30 +404,30 @@ cases after step 9.
 
 ### 9. Integrate ordered function clauses (F15 slice)
 
-- [ ] Extend capability analysis, binding analysis, call graph traversal,
+- [x] Extend capability analysis, binding analysis, call graph traversal,
   inference and lowering beyond their current first-clause assumptions. Inspect
   every body.
-  - [ ] Audit first-clause indexing and single-body assumptions in each
+  - [x] Audit first-clause indexing and single-body assumptions in each
     consumer; iterate clauses in source order using their existing stable
     binding identities.
-  - [ ] Gather calls and capability diagnostics from every head, guard and body;
+  - [x] Gather calls and capability diagnostics from every head, guard and body;
     conservatively join summaries and diagnose unsupported later/unused clauses.
-- [ ] Try clauses in source order: pattern, guard, then body. Carry original
+- [x] Try clauses in source order: pattern, guard, then body. Carry original
   arguments into each attempt and discard tentative values on candidate failure.
-  - [ ] Build one entry per candidate and route head/guard rejection to the
+  - [x] Build one entry per candidate and route head/guard rejection to the
     next; start each attempt from original arguments and an independent
     environment.
-  - [ ] Expose candidate bindings to its guard and commit them only on body
+  - [x] Expose candidate bindings to its guard and commit them only on body
     entry; ensure no failed-candidate SSA value becomes an input to another
     clause.
-  - [ ] Execute overlapping heads, same-name clause bindings and guard fallback,
+  - [x] Execute overlapping heads, same-name clause bindings and guard fallback,
     closing the deferred execution checks from steps 4 and 8.
-- [ ] Route exhaustion to `function_clause`; preserve export and call resolution
+- [x] Route exhaustion to `function_clause`; preserve export and call resolution
   rules and conservative summaries. Keep recursion under its existing F21 gate.
-  - [ ] Use one final exhaustion block per function and the existing checked
+  - [x] Use one final exhaustion block per function and the existing checked
     failure channel; leave export lookup and local/remote call identity
     unchanged.
-  - [ ] Exercise successful selection and exhaustion through local/remote
+  - [x] Exercise successful selection and exhaustion through local/remote
     callers; verify recovery on a later invocation and continued recursion
     diagnostics.
 
@@ -441,6 +441,8 @@ F15.
 mismatch and exhaustion from selected `match_SUITE`/`guard_SUITE` helpers
 through local and remote calls. Complete the execution obligations from steps 4
 and 8.
+
+**Completed 2026-10-02:** [Ordered clauses](../docs/ordered-clauses.md) use independent candidate SSA bindings, original arguments, head/guard fallback and one exhaustion exit. Every clause feeds capability/call/inference/atom/inspection analysis. Complete guard_SUITE fallback helpers and immediate match adaptations compare 1,020 calls with OTP in four policies and both CLI modes; later/unused diagnostics, recursive-call rejection, wrong specs, conservative result joins, 129 candidates and infrastructure-failure bypass/retry pass. Fresh Windows x64 Debug: 121/121 CTests, zero skips, full 208-unit Lizard/clang-tidy. See [validation](../docs/patternmatch-step9-validation.md). Steps 4/8 clause-isolation/fallback execution obligations are closed; steps 10–20 remain open.
 
 ### 10. Integrate body matches and sequences (F16 slice)
 

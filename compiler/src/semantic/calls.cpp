@@ -51,7 +51,8 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
 // Walk all accepted bodies iteratively; source-order dependencies remain deterministic.
 void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, const Reporter &out) {
     const auto &syntax = *caller.module->syntax;
-    auto pending = std::get<ast::Function>(syntax.form(caller.function->form).value).clauses.front().body;
+    auto pending = function_roots(std::get<ast::Function>(syntax.form(caller.function->form).value));
+    std::ranges::reverse(pending);
     while (!pending.empty()) {
         const auto id = pending.back();
         pending.pop_back();

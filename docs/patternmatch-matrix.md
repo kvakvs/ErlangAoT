@@ -2,10 +2,10 @@
 
 This is the acceptance and implementation boundary for
 [steps 1–20](../.agents/10-patternmatch.md). Step numbers below refer to that plan.
-The executable slice supports one clause with immediate literal, repeated-variable,
+The executable slice supports ordered clauses with immediate literal, repeated-variable,
 alias or wildcard patterns and a single small-integer/atom/empty literal,
 binding-read or direct-call body expression. [Step 6](immediate-matching.md)
-implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. Ordered clauses and later representations remain pending.
+implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; later representations remain pending.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors.

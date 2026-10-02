@@ -135,6 +135,7 @@ int main() {
                 "service registration failed");
         auto &context = *runtime->create_context().value();
         failures(context, "service_answer", "head");
+        failures(context, "service_answer", "fallback");
         failures(context, "service_answer", "body");
         failures(context, "service_client", "nested");
         head_mismatch(context);

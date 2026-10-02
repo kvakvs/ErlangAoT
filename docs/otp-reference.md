@@ -114,3 +114,7 @@ The step-6 task-start fetch still matches upstream, clean checkout and pin `2177
 ## Pattern/guard step 8 check (2026-10-02)
 
 The step-6 task-start fetch still matches upstream, clean checkout and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus hashes remain unchanged; andor_SUITE is additionally pinned. Installed oracle remains OTP 29.1.1 / ERTS 17.1. [Step-8 validation](patternmatch-step8-validation.md) records 2,075 native/OTP calls, grouped/boolean guard control flow, structured badarg payloads, both-width objects, four fault policies and the 120-test/full-quality gate. Historical evidence is preserved.
+
+## Pattern/guard step 9 check (2026-10-02)
+
+Re-fetched official maint-29; upstream, clean checkout and pin remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/source hashes are unchanged; installed oracle remains OTP 29.1.1 / ERTS 17.1. [Step-9 validation](patternmatch-step9-validation.md) records complete guard fallback helpers, 1,020 native/OTP calls, ordered dispatch/isolation, all-clause inference and diagnostics, 121/121 Windows Debug tests and full 208-unit Lizard/clang-tidy. Historical evidence is preserved.

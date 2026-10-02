@@ -48,12 +48,28 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     return leaf(inference, function, id);
 }
 
+// Only relations common to every successful candidate survive the function summary.
+Fact joined_result(Inference &inference, const ast::Module &syntax, const ast::Function &definition) {
+    auto result = inference.expressions.at(&syntax.expression(definition.clauses.front().body.back()));
+    for (const auto &clause : definition.clauses) {
+        const auto fact = inference.expressions.at(&syntax.expression(clause.body.back()));
+        result.type = inference.graph.widen(result.type, fact.type);
+        if (result.argument != fact.argument) {
+            result.argument.reset();
+        }
+    }
+    return result;
+}
+
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
 Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
-    const auto root = definition.clauses.front().body.front();
-    std::vector<Visit> pending{{root}};
+    const auto roots = function_roots(definition);
+    std::vector<Visit> pending;
+    for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
+        pending.push_back({*root});
+    }
     while (!pending.empty()) {
         if (work >= inference.graph.limits().syntax_work) {
             return {inference.graph.exhausted()};
@@ -72,7 +88,7 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
             }
         }
     }
-    return inference.expressions.at(&syntax.expression(root));
+    return joined_result(inference, syntax, definition);
 }
 } // namespace
 

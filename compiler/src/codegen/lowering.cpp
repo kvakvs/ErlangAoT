@@ -45,13 +45,8 @@ void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerT
             const semantic::types::Inference &inferred) {
     for (const auto &function : module.functions) {
         auto *entry = output.getFunction(function.symbol);
-        const auto &syntax = *module.syntax;
-        const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
-        const auto root = definition.clauses.at(0).body.at(0);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-        auto *result = lower_expression(builder, *entry, module, function, root, word, inferred);
-        locate_source(builder, syntax, syntax.expression(root).source);
-        builder.CreateRet(result);
+        lower_function(builder, *entry, module, function, word, inferred);
     }
 }
 

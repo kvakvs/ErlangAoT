@@ -3,6 +3,7 @@
 #include "../semantic/services.hpp"
 #include "../semantic/symbols.hpp"
 #include "lowering_state.hpp"
+#include <algorithm>
 #include <llvm/TargetParser/Triple.h>
 #include <set>
 
@@ -26,16 +27,13 @@ void pattern_atoms(const semantic::Function &function, std::set<std::string> &re
 // Guard roots and service outputs require preinitialized true/false slots alongside body literals.
 void roots(const semantic::Module &module, const semantic::Function &function, std::vector<ast::ExprId> &pending,
            std::set<std::string> &result) {
-    const auto &clause = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(0);
-    pending.push_back(clause.body.at(0));
-    if (clause.guard || !function.services.empty()) {
+    const auto &definition = std::get<ast::Function>(module.syntax->form(function.form).value);
+    const auto expressions = semantic::function_roots(definition);
+    pending.insert(pending.end(), expressions.begin(), expressions.end());
+    if (!function.services.empty() ||
+        std::ranges::any_of(definition.clauses, [](const auto &clause) { return clause.guard.has_value(); })) {
         result.insert("true");
         result.insert("false");
-    }
-    if (clause.guard) {
-        for (const auto &alternative : clause.guard->alternatives) {
-            pending.insert(pending.end(), alternative.tests.begin(), alternative.tests.end());
-        }
     }
     pattern_atoms(function, result);
 }

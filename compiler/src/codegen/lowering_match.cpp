@@ -64,7 +64,7 @@ void node(ExpressionLowering &state, const semantic::MatchNode &node, const std:
 bool lower_unconditional_head(ExpressionLowering &state) {
     const auto plan = semantic::make_match_plan(state.module, state.function,
                                                 [](const Diagnostic &d) { throw std::invalid_argument(render(d)); },
-                                                {.word_bits = state.word->getBitWidth()});
+                                                {.clause = state.clause, .word_bits = state.word->getBitWidth()});
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }
@@ -82,7 +82,8 @@ bool lower_unconditional_head(ExpressionLowering &state) {
         }
     }
     for (const auto &use : state.function.bindings) {
-        if (use.use != semantic::BindingUse::read || state.bindings.contains(use.identity)) {
+        if (use.use != semantic::BindingUse::read || !definitions.contains(use.identity) ||
+            state.bindings.contains(use.identity)) {
             continue;
         }
         const auto input = definitions.at(use.identity);
@@ -112,7 +113,7 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
     const auto plan =
         semantic::make_match_plan(state.module, state.function,
                                   [](const Diagnostic &diagnostic) { throw std::invalid_argument(render(diagnostic)); },
-                                  {.word_bits = state.word->getBitWidth()});
+                                  {.clause = state.clause, .word_bits = state.word->getBitWidth()});
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }

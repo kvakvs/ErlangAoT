@@ -1,8 +1,8 @@
 # Guard grouping and boolean control flow
 
 Pattern/guard step 8 executes guard grouping and boolean operators in the current
-single-clause, single-body-expression subset. Step 7 still authorizes every operand
-before lowering, including skipped operands. Ordered clauses remain step 9.
+single-body-expression subset. Step 7 still authorizes every operand
+before lowering, including skipped operands. [Step 9](ordered-clauses.md) adds ordered clause fallback.
 
 Commas conjoin tests in source order. Each test must return canonical `true`; false
 or another term rejects that complete alternative. Semicolons start independent

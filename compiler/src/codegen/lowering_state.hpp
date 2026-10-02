@@ -14,6 +14,8 @@ struct ExpressionLowering {
     llvm::IntegerType *word;
     // Keep source-node results for iterative, left-to-right argument evaluation.
     std::map<const ast::Expression *, llvm::Value *> values;
+    // Select the source candidate without allowing bindings from another clause to enter its environment.
+    std::size_t clause = 0;
     // Match definitions retain the original candidate SSA word; repeated names read this same identity.
     std::map<semantic::BindingId, llvm::Value *> bindings = {};
     // Share a terminal failure exit across calls instead of duplicating return blocks per expression.

@@ -39,6 +39,6 @@ module registration; expression evaluation never interns them.
 
 Guards run after a successful immediate head and accept canonical `true` only.
 [Step 8](guard-control-flow.md) implements comma/semicolon grouping and strict/lazy
-boolean operators; ordered function clauses remain step 9. Ordinary bodies use the same predicates,
+boolean operators; [step 9](ordered-clauses.md) adds ordered function clauses. Ordinary bodies use the same predicates,
 comparisons and queries. Specs never authorize unchecked representations; inference
 and specialization retain conservative facts for service results.

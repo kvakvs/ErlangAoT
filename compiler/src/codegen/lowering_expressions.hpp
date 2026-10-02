@@ -3,8 +3,8 @@
 #include <llvm/IR/IRBuilder.h>
 
 namespace erlang_aot::codegen {
-// Return a generic term without narrowing its type from a source specification.
-llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
-                              const semantic::Function &function, const ast::ExprId &expression,
-                              llvm::IntegerType *word, const semantic::types::Inference &inferred);
+// Emit source-ordered candidates and a single exhaustion exit without trusting specifications.
+void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
+                    const semantic::Function &function, llvm::IntegerType *word,
+                    const semantic::types::Inference &inferred);
 } // namespace erlang_aot::codegen
