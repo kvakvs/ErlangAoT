@@ -9,7 +9,8 @@ main([Root]) ->
     lists:foreach(fun({Module, Function, Arguments}) ->
         try apply(Module, Function, Arguments) of
             Value -> io:format("~s~n", [token(Value)])
-        catch error:Reason -> io:format("error:~p~n", [Reason]) end
+        catch error:{badarg,Value} -> io:format("error:badarg_value:~s~n", [token(Value)]);
+              error:Reason -> io:format("error:~p~n", [Reason]) end
     end, Calls).
 
 %% Serialize the admitted domain using stable spellings and mathematical integers.

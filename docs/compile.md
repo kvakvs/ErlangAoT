@@ -1,4 +1,4 @@
-Current executable matching and services (pattern/guard step 7): immediate heads, a single guard test, predicates, comparisons and queries use [checked matching](immediate-matching.md) and [immediate guard services](immediate-guards.md). Guard grouping/boolean operators, body matches, ordered clauses and nonempty containers remain deferred.
+Current executable slice (pattern/guard steps 6–8): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). Body matches, ordered clauses and nonempty containers remain deferred.
 
 # LLVM compilation contract
 
@@ -17,7 +17,7 @@ registers modules explicitly and executes decoded values at O0/O2. See the
 The supported subset is named modules/exports, one clause with immediate literal, repeated-variable, alias
 or wildcard parameters, and one expression containing a tagged-small integer, atom/boolean/empty literal,
 parameter reference, or resolved local/literal remote call within the compilation
-batch. Negative literals, nested calls and the immediate services/comparisons are supported; one canonical-true guard test may constrain the head. Remote calls
+batch. Negative literals, nested calls and the immediate services/comparisons are supported; comma/semicolon guards and strict/lazy boolean expressions are executable, with canonical-true guard boundaries. Remote calls
 require exports; recursive call graphs fail. Unsupported syntax is rejected even
 in unused functions. Syntax-only checking supports the wider OTP grammar.
 

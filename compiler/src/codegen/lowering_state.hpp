@@ -37,12 +37,23 @@ bool lower_unconditional_head(ExpressionLowering &state);
 // Raise single-clause exhaustion using the existing checked generated-call contract.
 void raise_function_clause(ExpressionLowering &state);
 // Raise a typed Erlang error; payload ownership remains with the existing checked service.
-void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason);
+void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload = nullptr);
 // Evaluate only authorized immediate service operations with success-only outputs.
 llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right = nullptr);
 // Evaluate the existing bounded body walk using the candidate's tentative bindings.
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root);
+// Emit an already visited ordinary value node; lazy operands are scheduled by the iterative walker.
+llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id);
+
+struct GuardEdges {
+    // Named candidate continuations prevent accidental interchange of acceptance and rejection blocks.
+    llvm::BasicBlock *success;
+    llvm::BasicBlock *rejection;
+};
+
+// Preserve comma conjunctions and semicolon alternatives using canonical-true boundaries.
+void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, GuardEdges edges);
 
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);

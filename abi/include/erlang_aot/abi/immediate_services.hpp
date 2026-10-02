@@ -35,7 +35,12 @@ enum class ImmediateOperation : std::uint8_t {
     hd,
     tl,
     minimum,
-    maximum
+    maximum,
+    logical_not,
+    logical_and,
+    logical_or,
+    logical_xor,
+    boolean_check
 };
 } // namespace erlang_aot::abi::v1
 

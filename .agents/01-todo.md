@@ -195,7 +195,7 @@ or wildcard parameters currently accepted.
 
 ### F14 — Guards
 
-Delivered step-7 slice: legal call resolution, immediate predicates/comparisons/queries and single-test guards with semantic/infrastructure failure separation; see docs/immediate-guards.md. Grouping, ordered dispatch and later representations remain open.
+Delivered steps 7–8: legal call resolution, immediate predicates/comparisons/queries, comma/semicolon guards and strict/lazy boolean control flow with semantic/infrastructure failure separation and structured badarg payloads; see docs/guard-control-flow.md. Ordered dispatch, other guard contexts and later representations remain open.
 
 Meaning: decide whether clauses apply using restricted guard expressions and
 their special failure rules.

@@ -29,10 +29,11 @@ continue to derive widths/alignment from the target layout. Runtime stays LLVM-f
 | Exhausted function clauses | `CallError::erlang_exception`, reason `function_clause` | Stop caller; host receives failure |
 | Body match failure | Same error class, reason `badmatch`, owned offending `Term` | Stop caller; host receives failure |
 | Body service argument failure | Same error class, reason `badarg` (step 7) | Stop caller; guard context instead rejects silently |
+| Invalid lazy body left operand | Same error class, typed `badarg_value` and owned payload representing `{badarg, Value}` (step 8) | Stop caller; guard context rejects the enclosing alternative |
 | Infrastructure failure | `CallError::runtime_failure` with exact `Status`, or existing native `CallError` | Stop caller; never treat as guard rejection |
 
 Every admitted Erlang exception currently has class `error`. Reasons are typed IDs,
-not runtime atom IDs. `erlang_aot_raise_v2` validates badmatch payloads using actual
+not runtime atom IDs. `erlang_aot_raise_v2` validates badmatch and structured badarg payloads using actual
 host Term admission: small integers, canonical empty tuple/list and atoms owned by
 the context's runtime. Invalid, heap, foreign atom and identity words reject without
 dereferencing them. Atom Terms pin their spelling, so errors survive invocation

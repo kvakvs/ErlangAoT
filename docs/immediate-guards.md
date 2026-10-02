@@ -37,8 +37,8 @@ ownership and internal failures preserve their exact infrastructure status and
 cannot select a successful result. Canonical boolean slots are initialized during
 module registration; expression evaluation never interns them.
 
-Single-test guards run after a successful immediate head and accept canonical
-`true` only. Comma/semicolon grouping and boolean operators belong to step 8;
-ordered function clauses remain step 9. Ordinary bodies use the same predicates,
+Guards run after a successful immediate head and accept canonical `true` only.
+[Step 8](guard-control-flow.md) implements comma/semicolon grouping and strict/lazy
+boolean operators; ordered function clauses remain step 9. Ordinary bodies use the same predicates,
 comparisons and queries. Specs never authorize unchecked representations; inference
 and specialization retain conservative facts for service results.

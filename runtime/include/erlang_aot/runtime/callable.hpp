@@ -34,7 +34,7 @@ struct CallFailure final {
     std::optional<abi::v1::Status> status = {};
     // All admitted Erlang exceptions have class error; catch/try and stacks remain deferred.
     std::optional<abi::v1::ErrorReason> reason = {};
-    // Own an admitted immediate badmatch value; heap payload roots arrive with heap admission.
+    // Own an admitted badmatch or {badarg,Value} payload; heap roots arrive with heap admission.
     std::optional<Term> value = {};
 };
 

@@ -1,0 +1,53 @@
+{
+  "calls": 2075,
+  "sources": {
+    "lib\\compiler\\test\\guard_SUITE.erl": "061fa7f4de021931b5751d85876bcf5252ba1d6e725c3b6df10c47cbb1c8894f",
+    "lib\\compiler\\test\\andor_SUITE.erl": "d62c9ad812817810abe86aa44f7250d32d11f014fda735b418bcfad63a7e1354"
+  },
+  "functions": [
+    {
+      "function": "csemi4_orelse_a/4",
+      "clause_sha256": "9278f981715a2d691313e8b275262b34d7032f773fccfbb1d41671a19ca827f8",
+      "adaptation": "complete first guard/body retained; fallback removed until step 9"
+    },
+    {
+      "function": "csemi4_orelse_b/4",
+      "clause_sha256": "5ce194278855e4f33237da7596e87fd38414b965424131f870256f82f66b5f35",
+      "adaptation": "complete first guard/body retained; fallback removed until step 9"
+    },
+    {
+      "function": "csemi4_orelse_c/4",
+      "clause_sha256": "4ef64298f766be29350c40e079b02fe0a0808a07a453cd18c6da8874c9601cd7",
+      "adaptation": "complete first guard/body retained; fallback removed until step 9"
+    },
+    {
+      "function": "csemi4_orelse_d/4",
+      "clause_sha256": "4e3a28fd223ea23431e4e788f8e0ad046cd002bbe883649e7f04607c97acabe5",
+      "adaptation": "complete first guard/body retained; fallback removed until step 9"
+    }
+  ],
+  "other_functions": "guard_SUITE:semicolon/1,comma/1; andor_SUITE:t_andalso/1,t_orelse/1",
+  "adaptations": "if/comprehension/Common Test wrappers replaced by complete single-clause functions; retain variable, nonboolean, strict/lazy and reached-error behavior; exhaustion observed as function_clause; failing exit operand uses admitted hd([]) or real generated-clause failure; float/heap/assignment-dependent branches excluded explicitly",
+  "declarations": "semicolon/2,comma/2,mixed/3,alias/2,head_first/1,term_join/2,nested/2,nested_semi/2,bad_or/1,bad_semi/1,bad_rhs_or/1,bad_rhs_semi/1,bad_comma/1,skip_hd_or/1,skip_hd_and/1,reach_hd_and/1,strict_hd_or/1,strict_hd_and/1,strict_hd_xor/1,strict_semi/1,not_bad/1,not_semi/1,skip_bad_not/1,skip_bad_not_or/1,body_bad_or/1,body_strict_or/1,body_strict_and/1,not_and/2,not_or/2,qualified_and/2,qualified_not/1,required_zero/1,local_skip/1,local_reach/1,wrong_spec/2,csemi4_orelse_a/4,csemi4_orelse_b/4,csemi4_orelse_c/4,csemi4_orelse_d/4,lazy_and/2,guard_lazy_and/2,lazy_or/2,guard_lazy_or/2,strict_and/2,guard_strict_and/2,strict_or/2,guard_strict_or/2,strict_xor/2,guard_strict_xor/2,not_value/1,guard_not/1,wide_semi/1,wide_comma/1,deep_lazy/1",
+  "fixture_sha256": "ffb940fc39f08a6e8ecbf9ae9d81f32db53f48c0593b6e33ef07351129f40465",
+  "wrapper_sha256": "fccba9ccdd21e081c5c07c3cabeb5d34a1c148db9dff9d5f9254b66323ece5f7",
+  "client_sha256": "1f7053c0afe54a4d96a90c447d4cf76c5cf77f4f6ac6e94ff27e90dffafb450f",
+  "widths": [
+    {
+      "bits": 32,
+      "triple": "i686-pc-windows-msvc",
+      "objects_and_verified_ir": "passed",
+      "execution": "not attempted"
+    },
+    {
+      "bits": 64,
+      "triple": "x86_64-pc-windows-msvc",
+      "objects_and_verified_ir": "passed",
+      "execution": "not attempted"
+    }
+  ],
+  "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+  "oracle": "OTP 29.1.1 / ERTS 17.1",
+  "native": "Windows x64; O0/O2; specialization on/off; positional/project CLI",
+  "fault_workflows": "four policies; exact statuses; semicolon/nested orelse stop; strict reaches/skipped RHS does not"
+}

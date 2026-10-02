@@ -62,3 +62,5 @@ Small-ceiling and partial-write injections remain intentional test exceptions; t
 [migration ledger](test-migration.md) explains why public source cannot replace them.
 
 Pattern/guard step 7 adds immediate service/guard execution, 1,689 differential calls, 31 resolution cases and four injected-service workflows. Fresh combined Windows x64 Debug: 119/119 tests and full Lizard/clang-tidy over 205 units. See [step-7 validation](patternmatch-step7-validation.md); other native hosts and new sanitizer runs remain unclaimed.
+
+Pattern/guard step 8 adds comma/semicolon guards and strict/lazy boolean execution, with 2,075 differential calls, structured badarg payloads, word joins, both-width objects and four strengthened fault workflows. Fresh combined Windows x64 Debug: 120/120 tests and full Lizard/clang-tidy over 207 units. See [step-8 validation](patternmatch-step8-validation.md). Ordered clauses and other native runners remain pending.

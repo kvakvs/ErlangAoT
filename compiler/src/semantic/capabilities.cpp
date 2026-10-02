@@ -81,9 +81,6 @@ void body(const Module &module, const Function &function, const ast::FunctionCla
 void head(const Module &module, const Function &function, std::size_t index, const ast::FunctionClause &clause,
           const Reporter &out, unsigned bits) {
     if (clause.guard) {
-        if (clause.guard->alternatives.size() != 1 || clause.guard->alternatives.front().tests.size() != 1) {
-            unsupported(module, clause.guard->source, "guards", out);
-        }
         for (const auto &alternative : clause.guard->alternatives) {
             expressions(module, function, alternative.tests, out, bits);
         }

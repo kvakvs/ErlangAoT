@@ -13,7 +13,10 @@ std::optional<Op> immediate_operator(ast::BinaryOperator operation) {
         {ast::BinaryOperator::less, Op::less},
         {ast::BinaryOperator::less_equal, Op::less_equal},
         {ast::BinaryOperator::greater, Op::greater},
-        {ast::BinaryOperator::greater_equal, Op::greater_equal}};
+        {ast::BinaryOperator::greater_equal, Op::greater_equal},
+        {ast::BinaryOperator::logical_and, Op::logical_and},
+        {ast::BinaryOperator::logical_or, Op::logical_or},
+        {ast::BinaryOperator::logical_xor, Op::logical_xor}};
     const auto found = operators.find(operation);
     return found == operators.end() ? std::nullopt : std::optional{found->second};
 }
@@ -49,7 +52,11 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"<", 2}, Op::less},
                                                       {{U"=<", 2}, Op::less_equal},
                                                       {{U">", 2}, Op::greater},
-                                                      {{U">=", 2}, Op::greater_equal}};
+                                                      {{U">=", 2}, Op::greater_equal},
+                                                      {{U"not", 1}, Op::logical_not},
+                                                      {{U"and", 2}, Op::logical_and},
+                                                      {{U"or", 2}, Op::logical_or},
+                                                      {{U"xor", 2}, Op::logical_xor}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
 }

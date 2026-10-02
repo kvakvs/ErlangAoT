@@ -11,6 +11,9 @@ std::string_view ExpressionCapability::operator()(const ast::CharacterLiteral &)
 }
 
 std::string_view ExpressionCapability::operator()(const ast::UnaryExpression &value) const {
+    if (value.operation == ast::UnaryOperator::logical_not) {
+        return {};
+    }
     const auto &operand = syntax.expression(ungroup(syntax, value.operand)).value;
     if (value.operation != ast::UnaryOperator::negative || !std::holds_alternative<ast::IntegerLiteral>(operand)) {
         return "arithmetic";
@@ -39,7 +42,7 @@ std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &v
         return {};
     }
     if (value.operation == ast::BinaryOperator::and_also || value.operation == ast::BinaryOperator::or_else) {
-        return "guards";
+        return {};
     }
     return value.operation == ast::BinaryOperator::send ? "send expressions" : "arithmetic";
 }

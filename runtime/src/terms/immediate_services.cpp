@@ -93,8 +93,31 @@ Result select(Op operation, const Term &left, const Term &right) {
     return lhs ? left.word() : right.word();
 }
 
+// Boolean operators validate admitted terms; lazy lowering checks only the reached left operand here.
+Result logical(ProcessContext &context, Op operation, const Term &left, const Term &right) {
+    if (!left.is_boolean()) {
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+    if (operation == Op::boolean_check) {
+        return left.word();
+    }
+    const bool lhs = left.atom_spelling() == "true";
+    if (operation == Op::logical_not) {
+        return boolean(context, !lhs);
+    }
+    if (!right.is_boolean()) {
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+    const bool rhs = right.atom_spelling() == "true";
+    const std::array results{lhs && rhs, lhs || rhs, lhs != rhs};
+    return boolean(context, results.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::logical_and)));
+}
+
 // Dispatch only semantically authorized opcodes; later representation services extend this boundary.
 Result evaluate(ProcessContext &context, Op operation, const Term &left, const Term &right) {
+    if (operation >= Op::logical_not) {
+        return logical(context, operation, left, right);
+    }
     if (operation <= Op::greater_equal) {
         return comparison(context, operation, left, right);
     }
@@ -114,7 +137,8 @@ Result evaluate(ProcessContext &context, Op operation, const Term &left, const T
 // A unary service never tries to admit its unused placeholder operand.
 bool binary(Op operation) {
     return operation <= Op::greater_equal || operation == Op::is_function_arity || operation == Op::element ||
-           operation == Op::minimum || operation == Op::maximum;
+           operation == Op::minimum || operation == Op::maximum ||
+           (operation >= Op::logical_and && operation <= Op::logical_xor);
 }
 
 // Ownership/encoding failures precede semantic argument classification and cannot reject a guard silently.
@@ -135,7 +159,7 @@ std::uint8_t immediate_service(ProcessContext &context, std::uint8_t operation, 
     if (!state.active() || state.failure()) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (!output || operation > static_cast<std::uint8_t>(Op::maximum)) {
+    if (!output || operation > static_cast<std::uint8_t>(Op::boolean_check)) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }

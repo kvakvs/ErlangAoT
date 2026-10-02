@@ -17,6 +17,9 @@ namespace {
 abi::v1::Status fault = abi::v1::Status::ok;
 // Count service entry to prove the fault happened in generated code rather than host admission.
 unsigned calls = 0;
+// Target only the reached predicate when proving that lazy branches skip faults and strict branches do not.
+bool predicate_only = false;
+unsigned predicate_calls = 0;
 
 // Keep ownership, status and recovery assertions enabled in optimized consumers.
 void require(bool condition, const char *message) {
@@ -58,11 +61,11 @@ void head_mismatch(ProcessContext &context) {
 // Generic builtin registrations cannot replace a guard identity authorized by the compiler.
 void registration(ProcessContext &context) {
     auto registry = std::make_unique<ModuleRegistry>();
-    unsigned entries = 0;
+    auto entries = std::make_shared<unsigned>(0);
     require(registry
                 ->add("is_integer", 1,
-                      [&entries](ProcessContext &, std::span<const Term> arguments) {
-                          ++entries;
+                      [entries](ProcessContext &, std::span<const Term> arguments) {
+                          ++*entries;
                           return CallResult<Term>(arguments.front());
                       })
                 .has_value(),
@@ -71,7 +74,24 @@ void registration(ProcessContext &context) {
             "builtin seam publication failed");
     const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
     const auto result = context.code_server().resolve({"service_answer", "head", 1}).value().call(context, arguments);
-    require(result.has_value() && entries == 0, "registered builtin replaced guard service");
+    require(result.has_value() && *entries == 0, "registered builtin replaced guard service");
+}
+
+// Infrastructure failure cannot take nested orelse or semicolon recovery, and skipped predicates never run.
+void boolean_failures(ProcessContext &context) {
+    predicate_only = true;
+    const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
+    for (const auto name : {"reached", "strict"}) {
+        failures(context, "service_answer", name);
+    }
+    fault = abi::v1::Status::out_of_memory;
+    predicate_calls = 0;
+    const auto result =
+        context.code_server().resolve({"service_answer", "skipped", 1}).value().call(context, arguments);
+    require(result && result->atom_spelling() == "true" && predicate_calls == 0,
+            "skipped right predicate ran or did not preserve term result");
+    fault = abi::v1::Status::ok;
+    predicate_only = false;
 }
 
 // Guard argument errors are channel-free; malformed/foreign service words are infrastructure failures.
@@ -99,7 +119,9 @@ void checked_arguments(ProcessContext &context) {
 // This native seam changes only the service outcome and deliberately leaves success output untouched on faults.
 std::uint8_t injected(void *context, std::uint8_t operation, Word left, Word right, Word *output) noexcept {
     ++calls;
-    if (fault != abi::v1::Status::ok) {
+    const bool predicate = operation == static_cast<std::uint8_t>(abi::v1::ImmediateOperation::is_integer);
+    predicate_calls += predicate;
+    if (fault != abi::v1::Status::ok && (!predicate_only || predicate)) {
         static_cast<ProcessContext *>(context)->generated_calls().fail_service(fault);
         return 2;
     }
@@ -117,6 +139,7 @@ int main() {
         failures(context, "service_client", "nested");
         head_mismatch(context);
         registration(context);
+        boolean_failures(context);
         checked_arguments(context);
         return 0;
     } catch (const std::exception &error) {

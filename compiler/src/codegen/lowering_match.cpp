@@ -134,7 +134,7 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
     }
 }
 
-void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason) {
+void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload) {
     auto &output = *state.entry.getParent();
     const auto &triple = output.getTargetTriple();
     const auto symbol =
@@ -147,7 +147,7 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason) {
         symbol, llvm::FunctionType::get(state.builder.getInt8Ty(),
                                         {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));
     state.builder.CreateCall(service, {state.entry.getArg(0), state.builder.getInt8(static_cast<std::uint8_t>(reason)),
-                                       llvm::ConstantInt::get(state.word, 0)});
+                                       payload ? payload : llvm::ConstantInt::get(state.word, 0)});
     state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
 }
 

@@ -57,8 +57,9 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
     return *value;
 }
 
-// Each parent is emitted only after its child values, including grouping and nested calls.
-llvm::Value *evaluate(ExpressionLowering &state, const ast::ExprId &id) {
+} // namespace
+
+llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
     locate_source(state.builder, *state.module.syntax, expression.source);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
@@ -80,38 +81,12 @@ llvm::Value *evaluate(ExpressionLowering &state, const ast::ExprId &id) {
     if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
         return state.values.at(&state.module.syntax->expression(group->expression));
     }
-    return leaf(state, id);
-}
-
-struct Visit {
-    // Explicit enter/exit frames keep deeply nested calls off the C++ stack.
-    ast::ExprId expression;
-    bool ready = false;
-};
-
-// Reverse-push children so argument effects and calls remain in Erlang source order.
-} // namespace
-
-llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
-    std::vector<Visit> pending{{root}};
-    while (!pending.empty()) {
-        const auto visit = pending.back();
-        pending.pop_back();
-        const auto &expression = state.module.syntax->expression(visit.expression);
-        if (visit.ready) {
-            state.values.emplace(&expression, evaluate(state, visit.expression));
-        } else {
-            pending.push_back({visit.expression, true});
-            if (semantic::integer_literal(*state.module.syntax, visit.expression, state.word->getBitWidth())) {
-                continue;
-            }
-            const auto children = semantic::expression_children(expression);
-            for (auto child = children.rbegin(); child != children.rend(); ++child) {
-                pending.push_back({*child});
-            }
-        }
+    if (const auto *unary = std::get_if<ast::UnaryExpression>(&expression.value);
+        unary && unary->operation == ast::UnaryOperator::logical_not) {
+        return lower_immediate(state, abi::v1::ImmediateOperation::logical_not,
+                               state.values.at(&state.module.syntax->expression(unary->operand)));
     }
-    return state.values.at(&state.module.syntax->expression(root));
+    return leaf(state, id);
 }
 
 llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
@@ -135,11 +110,7 @@ llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry,
     raise_function_clause(state);
     if (clause.guard) {
         builder.SetInsertPoint(guard);
-        state.rejection = mismatch;
-        auto *test = lower_body(state, clause.guard->alternatives.at(0).tests.at(0));
-        auto *truth = lower_atom(state, ast::Atom{U"true"});
-        builder.CreateCondBr(lower_exact(state, test, truth), success, mismatch);
-        state.rejection = nullptr;
+        lower_guard(state, *clause.guard, {.success = success, .rejection = mismatch});
     }
     builder.SetInsertPoint(success);
     return lower_body(state, expression);

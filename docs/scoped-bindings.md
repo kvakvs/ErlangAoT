@@ -55,7 +55,7 @@ an available candidate SSA value and rejects unavailable bindings. Public
 `--print-types` expression lines include `binding=clause[N].local[M]` for reads.
 
 Step 6 executes repeated parameters, aliases and immediate patterns through
-[checked matching](immediate-matching.md). Step 7 admits single-test guards/services. Grouped guards, multiple clauses, body matches,
+[checked matching](immediate-matching.md). Steps 7–8 admit immediate services and grouped/boolean guards. Multiple clauses, body matches,
 sequences and later containers remain capability-gated. Identity/projection,
 atoms and direct-call execution keep their existing behavior.
 

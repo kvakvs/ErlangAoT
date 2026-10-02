@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–7 are
-complete; steps 8–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–8 are
+complete; steps 9–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps currently execute immediate patterns and single-test guards with checked predicates, comparisons and queries in one-clause/one-expression functions. The parser retains broader syntax; grouped guards, heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in one-clause/one-expression functions. The parser retains broader syntax; ordered clauses, heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -359,33 +359,33 @@ qualified-call diagnostics.
 
 ### 8. Lower guard grouping and short-circuit behavior
 
-- [ ] Preserve comma conjunctions and semicolon alternatives as separate control
+- [x] Preserve comma conjunctions and semicolon alternatives as separate control
   flow. Success requires Erlang `true`; false or non-boolean final values reject
   the relevant guard. Failed alternatives may continue at the next semicolon.
-  - [ ] Lower each comma sequence with a shared rejection edge and route that
+  - [x] Lower each comma sequence with a shared rejection edge and route that
     edge to the next semicolon alternative, or the candidate mismatch
     continuation.
-  - [ ] Require canonical `true` at each guard-test boundary; preserve tentative
+  - [x] Require canonical `true` at each guard-test boundary; preserve tentative
     pattern bindings for alternative reads without allowing guard definitions.
-- [ ] Implement `andalso`/`orelse` with lazy right operands, separately from
+- [x] Implement `andalso`/`orelse` with lazy right operands, separately from
   strict `and`/`or`/`xor` and `not`. Preserve term-valued intermediate results
   and validate operands where OTP requires booleans; do not flatten all forms
   into LLVM `i1`.
-  - [ ] Give lazy operators separate right-operand blocks and term-valued joins;
+  - [x] Give lazy operators separate right-operand blocks and term-valued joins;
     apply operand checks at the boundaries established by the semantic matrix.
-  - [ ] Lower strict boolean operators with the required operand evaluation and
+  - [x] Lower strict boolean operators with the required operand evaluation and
     validation; share canonical atom conversion without reusing lazy control
     flow.
-  - [ ] Exercise skipped failing operands and non-boolean right-hand results in
+  - [x] Exercise skipped failing operands and non-boolean right-hand results in
     nested expressions, distinguishing intermediate terms from final guard
     tests.
-- [ ] Route a reached guard error to the enclosing guard failure continuation,
+- [x] Route a reached guard error to the enclosing guard failure continuation,
   including inside nested boolean expressions. It is not a replacement `false`
   operand that `orelse` may recover from. Use the atom values implemented in
   step 3.
-  - [ ] Thread the enclosing rejection continuation through nested lowering and
+  - [x] Thread the enclosing rejection continuation through nested lowering and
     keep semantic rejection separate from the generated-call failure exit.
-  - [ ] Pair reached-error `orelse` cases with semicolon recovery cases; first
+  - [x] Pair reached-error `orelse` cases with semicolon recovery cases; first
     use single-clause exhaustion, then rerun with ordered fallback clauses in
     step 9.
 
@@ -399,6 +399,8 @@ pattern.
 `andor_SUITE.erl` that distinguish semicolon alternatives from orelse, skipped
 failing operands, reached bad arguments and non-booleans. Rerun fallback-clause
 cases after step 9.
+
+**Completed 2026-10-02:** [Guard control flow](../docs/guard-control-flow.md) preserves comma rejection and semicolon alternatives, canonical-true boundaries, eager strict operators, lazy RHS blocks and target-word SSA joins. Reached semantic errors reject the enclosing alternative; exact infrastructure failures stop all recovery. Body lazy-left errors retain OTP `{badarg, Value}` payloads. All 2,075 OTP/native calls, both CLI modes/four policies, 32/64-bit objects/IR, source stress and strengthened fault/retry/head-first workflows pass. Fresh Windows x64 Debug: 120/120 CTests and full 207-unit Lizard/clang-tidy. See [validation](../docs/patternmatch-step8-validation.md). Work stops after this separately committed step; ordered fallback and its reruns remain step 9.
 
 ### 9. Integrate ordered function clauses (F15 slice)
 

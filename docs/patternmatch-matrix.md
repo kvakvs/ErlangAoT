@@ -5,7 +5,7 @@ This is the acceptance and implementation boundary for
 The executable slice supports one clause with immediate literal, repeated-variable,
 alias or wildcard patterns and a single small-integer/atom/empty literal,
 binding-read or direct-call body expression. [Step 6](immediate-matching.md)
-implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries and single-test guards. Grouping and later representations remain pending.
+implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. Ordered clauses and later representations remain pending.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors.
@@ -86,7 +86,7 @@ The following rows cover syntax/control-flow rules that are not BIF signatures.
 | Form | Required rule | Owner | Rejection expectation |
 | --- | --- | --- | --- |
 | Variables/literals | Only established bindings readable; final success requires atom `true` | 3/4/7/8 | Unbound reads semantic; any other final value rejects guard |
-| Comma and semicolon | Comma is conjunction; semicolon starts a fresh alternative after false or a reached argument error | 8/9 | Capability until step 8; all alternatives fail means clause mismatch |
+| Comma and semicolon | Comma is conjunction; semicolon starts a fresh alternative after false or a reached argument error | 8/9 | Implemented by step 8; all alternatives fail means clause mismatch |
 | `andalso/2`, `orelse/2` syntax | Lazy RHS, term-valued intermediate results; reached error fails the enclosing guard, not a recoverable false operand | 8 | Semantic operand error rejects reached guard; invalid syntax/calls still diagnosed in skipped branches |
 | Strict `not/1`, `and/2`, `or/2`, `xor/2` | Boolean operands, eager evaluation; no substitution of lazy semantics | 8 | Wrong types reject guard |
 | Equality/order operators `==`, `/=`, `=:=`, `=/=`, `<`, `=<`, `>`, `>=` (all /2) | Exact versus numeric equality; structural order over the admitted domain | 7/12–16/18 | Capability until admitted representation supported; no raw boxed-word equality |
@@ -94,7 +94,7 @@ The following rows cover syntax/control-flow rules that are not BIF signatures.
 | Auto-imported BIF calls | Exact signature plus local/import/no_auto_import resolution determines legality | 7/18 | Wrong arity, shadowed/imported ordinary function or suppressed auto-import semantic |
 | `erlang:Bif(...)` and `erlang:'Op'(...)` | Explicit qualification bypasses auto-import shadowing; only guard BIFs or admitted guard operators legal | 7/8/18 | Unknown/wrong signature semantic; qualification does not legalize arbitrary functions |
 | Legacy top-level tests | `integer/1`, `float/1`, `number/1`, `atom/1`, `list/1`, `tuple/1`, `pid/1`, `reference/1`, `port/1`, `binary/1`, `record/2`, `function/1` | 7/8/17/18 | Legacy-only names nested or qualified are semantic errors; clashes checked |
-| `float/1` ambiguity | Top-level unqualified legacy test means `is_float`; nested or explicit `erlang:float/1` is legal numeric conversion, not the legacy predicate | 7/8/14/18 | Capability until implemented; bad conversion rejects guard |
+| `float/1` ambiguity | Top-level unqualified legacy test means `is_float`; nested or explicit `erlang:float/1` is legal numeric conversion, not the legacy predicate | 7/8/14/18 | Legacy predicate implemented by step 7; conversion remains deferred; bad conversion rejects guard |
 | Tuple/list/map/binary/record construction; map update | Legal guard expressions when all children are legal; checked allocation/access; map update uses incoming bindings | 11/12/15/16/17/18 | Capability until owned representations; reached semantic failures reject guard |
 | Record field/index expressions; `is_record/2,3` | Declaration/field validation; lint restrictions on literal tag/arity, including OTP native-record distinctions | 7/17/18; native forms F17 | Bad declarations/argument forms semantic; wrong value shape rejects guard |
 | `is_integer/3` | OTP 29 inclusive range predicate; exact signature is legal | 7/13/18 | Capability until service exists; OTP cases include both endpoints and wrong type |

@@ -5,9 +5,17 @@
 namespace erlang_aot::codegen {
 namespace {
 // Semantic rejection targets the entire enclosing guard; ordinary bodies use one shared badarg exit.
-llvm::BasicBlock *bad_argument(ExpressionLowering &state) {
+llvm::BasicBlock *bad_argument(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left) {
     if (state.rejection) {
         return state.rejection;
+    }
+    if (operation == abi::v1::ImmediateOperation::boolean_check) {
+        auto *saved = state.builder.GetInsertBlock();
+        auto *failure = llvm::BasicBlock::Create(state.entry.getContext(), "body.boolean.badarg", &state.entry);
+        state.builder.SetInsertPoint(failure);
+        raise_reason(state, abi::v1::ErrorReason::badarg_value, left);
+        state.builder.SetInsertPoint(saved);
+        return failure;
     }
     if (!state.bad_argument) {
         auto *saved = state.builder.GetInsertBlock();
@@ -49,7 +57,7 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
     auto *success = llvm::BasicBlock::Create(state.entry.getContext(), "service.success", &state.entry);
     auto *test = builder.Insert(
         llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ, outcome, builder.getInt8(0)));
-    builder.CreateCondBr(test, success, bad_argument(state));
+    builder.CreateCondBr(test, success, bad_argument(state, operation, left));
     builder.SetInsertPoint(success);
     return builder.CreateAlignedLoad(state.word, slot, alignment, "service.value");
 }

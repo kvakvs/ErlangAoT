@@ -40,6 +40,17 @@ void roots(const semantic::Module &module, const semantic::Function &function, s
     pattern_atoms(function, result);
 }
 
+// Boolean syntax needs both canonical slots even when all source operands are incoming variables.
+bool booleans(const ast::ExprValue &value) {
+    if (const auto *unary = std::get_if<ast::UnaryExpression>(&value)) {
+        return unary->operation == ast::UnaryOperator::logical_not;
+    }
+    const auto *binary = std::get_if<ast::BinaryExpression>(&value);
+    return binary &&
+           (semantic::immediate_operator(binary->operation) || binary->operation == ast::BinaryOperator::and_also ||
+            binary->operation == ast::BinaryOperator::or_else);
+}
+
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
     std::set<std::string> result;
@@ -51,8 +62,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
-        if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value);
-            binary && semantic::immediate_operator(binary->operation)) {
+        if (booleans(expression.value)) {
             result.insert("true");
             result.insert("false");
         }

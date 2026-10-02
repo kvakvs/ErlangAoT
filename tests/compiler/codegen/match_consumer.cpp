@@ -40,19 +40,8 @@ Term term(ProcessContext &context, const std::string &token) {
     return Term::from_word(encode_integer(std::stoll(token.substr(1))).value()).value();
 }
 
-// Compare OTP-visible values and error reasons, never unstable raw IDs or stacks.
-void print(const CallResult<Term> &result) {
-    if (!result) {
-        require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
-        const auto reason = result.error().reason;
-        require(reason == erlang_aot::abi::v1::ErrorReason::function_clause ||
-                    reason == erlang_aot::abi::v1::ErrorReason::badarg,
-                "unexpected Erlang reason");
-        std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badarg ? "error:badarg\n"
-                                                                         : "error:function_clause\n");
-        return;
-    }
-    const auto &value = *result;
+// Render immediate values and retained error payloads with stable spellings rather than raw IDs.
+void print_value(const Term &value) {
     if (value.is_atom()) {
         static constexpr std::string_view digits = "0123456789abcdef";
         std::cout << 'a';
@@ -67,6 +56,26 @@ void print(const CallResult<Term> &result) {
         std::cout << 'i' << value.integer_value().value();
     }
     std::cout << '\n';
+}
+
+// Compare OTP-visible values and structured error reasons without depending on stack formatting.
+void print(const CallResult<Term> &result) {
+    if (result) {
+        print_value(*result);
+        return;
+    }
+    require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
+    const auto reason = result.error().reason;
+    if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value) {
+        require(result.error().value.has_value(), "missing badarg payload");
+        std::cout << "error:badarg_value:";
+        print_value(*result.error().value);
+        return;
+    }
+    require(reason == erlang_aot::abi::v1::ErrorReason::function_clause ||
+                reason == erlang_aot::abi::v1::ErrorReason::badarg,
+            "unexpected Erlang reason");
+    std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badarg ? "error:badarg\n" : "error:function_clause\n");
 }
 
 // Runtime-only invalid word/foreign ownership checks cannot be expressed as legal Erlang source.
