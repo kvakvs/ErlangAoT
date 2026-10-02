@@ -147,3 +147,13 @@ parse with real includes; three target families have separate object inspection.
 The fresh OTP-free combined gate passes 121 tests and all 257 quality units.
 Installed OTP 29.1.1's huge-literal-record-guard loader limitation is recorded
 separately. See [step-17 validation](patternmatch-step17-validation.md).
+
+## Pattern/guard step 18 reference check (2026-10-03)
+
+Fetched the official maint-29 branch; upstream, clean checkout and pin remain
+`21776803ecd11f5fa948732c0ec66b8f325dedfc`. Existing source/grammar identities
+remain unchanged. The current signature matrix records implementation availability;
+historical evidence retains the original matrix bytes. Explicit OTP 29.1.1 / ERTS
+17.1 regeneration adds the 81-row guard catalog corpus and refreshes only current
+range-BIF capability expectations in the services/pattern manifests. Routine tests
+remain independent of OTP. See [guard services](guard-services.md).

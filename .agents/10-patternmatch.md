@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–17 are
-complete; added step 15a is complete; steps 18–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–18 are
+complete; added step 15a is complete; steps 19–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -865,33 +865,33 @@ in four policies. Native/qualified records, updates and record_info remain gated
 
 ### 18. Complete guard services for admitted representations (F26 slice)
 
-- [ ] Reconcile step 1's catalog with predicates, comparisons, numeric
+- [x] Reconcile step 1's catalog with predicates, comparisons, numeric
   conversions, min/max, tuple/list/map/binary queries and record tests. Include
   is_integer/3.
-  - [ ] Audit every catalog signature against its semantic resolver, runtime
+  - [x] Audit every catalog signature against its semantic resolver, runtime
     owner, lowering entry point and existing fixture; list concrete gaps by
     representation.
-  - [ ] Update the matrix with implemented versus dependency-blocked signatures,
+  - [x] Update the matrix with implemented versus dependency-blocked signatures,
     keeping legacy aliases, qualified forms and arity-specific cases
     identifiable.
-- [ ] Implement missing in-scope signatures and guard construction/map-update
+- [x] Implement missing in-scope signatures and guard construction/map-update
   forms through existing checked services, with bounded traversal/allocation and
   roots.
-  - [ ] Fill catalog gaps using shared numeric/container services; avoid
+  - [x] Fill catalog gaps using shared numeric/container services; avoid
     separate guard-only representations or unchecked access paths.
-  - [ ] Lower admitted constructors and map updates in guards with rooted
+  - [x] Lower admitted constructors and map updates in guards with rooted
     temporaries and semantic-rejection continuations around each fallible
     operation.
-  - [ ] Add valid, wrong-type and boundary cases per missing signature,
+  - [x] Add valid, wrong-type and boundary cases per missing signature,
     including is_integer/3, then exercise nested allocation and reached failures
     in alternatives.
-- [ ] Keep services requiring unavailable functions/identities/processes
+- [x] Keep services requiring unavailable functions/identities/processes
   explicitly gated. Do not broaden this plan to implement their owners or admit
   forged terms.
-  - [ ] Link each deferred signature to its backlog dependency and keep
+  - [x] Link each deferred signature to its backlog dependency and keep
     legal-but- unavailable diagnostics distinct from illegal call or arity
     diagnostics.
-  - [ ] Test gates through qualified/unqualified and unreachable guard
+  - [x] Test gates through qualified/unqualified and unreachable guard
     expressions; keep host inputs limited to values that the runtime can
     actually construct/admit.
 
@@ -905,6 +905,12 @@ min_max/1, map_SUITE:t_guard_bifs/1 and guard_SUITE:is_integer_3_guard/1,
 retaining original guarded helper bodies where supported. Test constructors/map
 updates, legacy tests, qualified calls and explicit unavailable-service
 diagnostics.
+
+Completion: [step-18 validation](../docs/patternmatch-step18-validation.md),
+[catalog evidence](../docs/patternmatch-step18-evidence.json) and
+[guard contract](../docs/guard-services.md). All 81 rows are audited; four
+signatures retain explicit owners. 5,033 native outcomes and 22 semantic cases
+pass; the fresh gate passes 122 tests and all 257 quality units.
 
 ### 19. Verify inference and optimization across supported forms
 

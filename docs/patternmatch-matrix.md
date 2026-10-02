@@ -5,7 +5,7 @@ This is the acceptance and implementation boundary for
 The executable slice supports ordered clauses and body sequences with exact integer,
 atom, tuple/list/string patterns, checked construction/access, aliases, repeated
 variables, binding reads and direct calls. [Step 6](immediate-matching.md)
-implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; [Step 12](container-matching.md) adds tuples/lists/strings; [Step 13](integer-matching.md) adds exact arbitrary integers and checked integer arithmetic; [Step 14](float-matching.md) adds finite floats, conversions and exact mixed numeric comparisons; [Step 15](map-matching.md) adds maps and computed-key matching; [Step 16](bitstring-matching.md) adds bitstrings and their queries. [Step 17](record-matching.md) adds ordinary tuple records, access and record tests.
+implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; [Step 12](container-matching.md) adds tuples/lists/strings; [Step 13](integer-matching.md) adds exact arbitrary integers and checked integer arithmetic; [Step 14](float-matching.md) adds finite floats, conversions and exact mixed numeric comparisons; [Step 15](map-matching.md) adds maps and computed-key matching; [Step 16](bitstring-matching.md) adds bitstrings and their queries. [Step 17](record-matching.md) adds ordinary tuple records, access and record tests. [Step 18](guard-services.md) completes admitted-domain signatures, including is_integer/3, and audits every catalog row.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
 facts, including located unbound/unsafe/wildcard errors.
@@ -14,7 +14,7 @@ legality and sibling scope checks independently of runtime availability.
 
 Evidence is pinned to official `maint-29` revision
 `21776803ecd11f5fa948732c0ec66b8f325dedfc`, re-fetched and unchanged on
-2026-10-02. The separate installed oracle is OTP **29.1.1**, ERTS **17.1**.
+2026-10-03. The separate installed oracle is OTP **29.1.1**, ERTS **17.1**.
 [otp.tsv](../tests/fixtures/patternmatch/otp.tsv) records SHA-256 identities for
 the reference manual, grammar, lint rules, BIF catalog, suites and actual headers.
 Hashes use source bytes with CRLF normalized to LF; no other whitespace or source
@@ -151,3 +151,10 @@ hashes in [fixtures.tsv](../tests/fixtures/patternmatch/fixtures.tsv) are review
 expectations; tests never regenerate them. Existing corpus/grammar tests remain
 part of the full gate. Later steps extend executable coverage while retaining this
 distinction between legal source, accepted syntax and emitted behavior.
+
+Step 18 links every signature to the owned guard_catalog manifest, including its
+resolver, lowering and runtime owner. Four signatures remain dependency-blocked:
+self/0, node/0,1 and native is_record/1. Positive function/pid/port/reference
+representations are outside the admitted domain. Qualified BIF/operator calls,
+legacy aliases, constructor/map-update failures and unavailable skipped operands
+have explicit executable or diagnostic evidence.

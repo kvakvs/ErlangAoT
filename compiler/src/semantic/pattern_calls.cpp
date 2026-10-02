@@ -152,6 +152,18 @@ bool pattern_call(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
 }
 
 namespace {
+// Legacy aliases ignore modern auto-import suppression but cannot authorize an unrelated explicit owner.
+bool legacy_owner(BindingAnalysis &state, const ast::ExprId &site, const FunctionKey &key) {
+    ImportState result;
+    for (const auto &id : state.module.syntax->forms()) {
+        if (!state.spend(site)) {
+            return false;
+        }
+        import_form(state, site, state.module.syntax->form(id).value, key, result);
+    }
+    return !state.module.lookup.contains(key) && result.explicit_import.value_or(true);
+}
+
 // Legacy tests resolve separately from expression calls and cannot be recovered through suppression metadata.
 bool legacy_name(const ast::Atom *name, std::size_t count) {
     static const std::set<std::u32string> legacy{U"integer", U"float",     U"number", U"atom",   U"list",    U"tuple",
@@ -163,7 +175,7 @@ bool legacy_name(const ast::Atom *name, std::size_t count) {
 std::optional<FunctionKey> legacy(BindingAnalysis &state, const ast::ExprId &id, const ast::Atom &name) {
     const FunctionKey old{name.name, 1};
     FunctionKey modern{U"is_" + name.name, 1};
-    if (state.module.lookup.contains(old) || state.module.lookup.contains(modern) || !auto_import(state, id, old)) {
+    if (state.module.lookup.contains(old) || !legacy_owner(state, id, modern) || !auto_import(state, id, old)) {
         return {};
     }
     return modern;
@@ -179,7 +191,8 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
         return legacy(state, id, *name);
     }
     if (top_test && name && name->name == U"record" && call.arguments.size() == 2) {
-        return FunctionKey{U"is_record", 2};
+        const FunctionKey modern{U"is_record", 2};
+        return legacy_owner(state, id, modern) ? std::optional{modern} : std::nullopt;
     }
     if (!pattern_call(state, id, call)) {
         return {};

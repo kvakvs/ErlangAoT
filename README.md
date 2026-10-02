@@ -358,3 +358,7 @@ apply last, and duplicate macro definitions remain errors.
 See [project format and workflows](docs/projects.md) and
 [project validation evidence](docs/project-validation.md). Projects support all
 four frontend modes; executable generation remains unimplemented.
+
+The [admitted guard catalog](docs/guard-services.md) includes checked
+`is_integer/3`, qualified calls and top-level legacy tests; process/node and native
+record identities retain explicit capability diagnostics.

@@ -125,7 +125,7 @@
     "body": "f(Int,M) -> #{is_integer(Int,1,2) := V} = M, V.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "guards"
+    "capability": ""
   },
   {
     "name": "pat_bin_sequential",

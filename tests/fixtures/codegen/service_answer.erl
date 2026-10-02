@@ -2,7 +2,7 @@
 -export([head/1, body/1, head_mismatch/1, skipped/1, reached/1, strict/1, fallback/1, match_once/1, match_stop/1,
          construct/1, inspect/1, heap_guard/1, extracted/1, heap_error/1, id/1, first/2,
          integer_guard/1, integer_body/1, integer_budget/1, float_guard/1, float_body/1, float_literal/1, map_guard/1, map_body/1, map_pattern/1, bits_guard/1, bits_body/1, bits_extract/1,
-         record_guard/1, record_body/1, record_inspect/1, record_error/1]).
+         record_guard/1, record_body/1, record_inspect/1, record_error/1, range_guard/1, range_body/1]).
 -record(fault_record,{a}).
 head(X) when is_integer(X); true -> ok.
 body(X) -> is_integer(X).
@@ -39,3 +39,5 @@ record_guard(X) when is_record(#fault_record{a=X},fault_record); true -> ok; rec
 record_body(X) -> #fault_record{a=X}.
 record_inspect(X) -> X#fault_record.a.
 record_error(X) -> ({other,X})#fault_record.a.
+range_guard(X) when is_integer(X,0,100); true -> ok; range_guard(_) -> recovered.
+range_body(X) -> is_integer(X,0,100).

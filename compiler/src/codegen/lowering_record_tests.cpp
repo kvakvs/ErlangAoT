@@ -106,4 +106,31 @@ llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression 
     state.builder.SetInsertPoint(merge);
     return joined(state, {equal, yes_path, falsehood, no});
 }
+
+llvm::Value *lower_integer_range(ExpressionLowering &state, const ast::CallExpression &call) {
+    auto *value = state.values.at(&state.module.syntax->expression(call.arguments[0]));
+    auto *lower = state.values.at(&state.module.syntax->expression(call.arguments[1]));
+    auto *upper = state.values.at(&state.module.syntax->expression(call.arguments[2]));
+    auto *truth = lower_atom(state, ast::Atom{U"true"});
+    auto *falsehood = lower_atom(state, ast::Atom{U"false"});
+    auto &context = state.entry.getContext();
+    auto *valid = llvm::BasicBlock::Create(context, "range.valid.bounds", &state.entry);
+    auto *lower_type = lower_immediate(state, Op::is_integer, lower);
+    auto *upper_type = lower_immediate(state, Op::is_integer, upper);
+    auto *bounds = lower_immediate(state, Op::logical_and, lower_type, upper_type);
+    branch(state, bounds, truth, {valid, bad_argument_exit(state)});
+    auto *no = llvm::BasicBlock::Create(context, "range.false", &state.entry);
+    auto *integer = llvm::BasicBlock::Create(context, "range.integer", &state.entry);
+    auto *merge = llvm::BasicBlock::Create(context, "range.result", &state.entry);
+    branch(state, lower_immediate(state, Op::is_integer, value), truth, {integer, no});
+    auto *above = lower_immediate(state, Op::greater_equal, value, lower);
+    auto *below = lower_immediate(state, Op::less_equal, value, upper);
+    auto *result = lower_immediate(state, Op::logical_and, above, below);
+    auto *yes_path = state.builder.GetInsertBlock();
+    state.builder.CreateBr(merge);
+    state.builder.SetInsertPoint(no);
+    state.builder.CreateBr(merge);
+    state.builder.SetInsertPoint(merge);
+    return joined(state, {result, yes_path, falsehood, no});
+}
 } // namespace erlang_aot::codegen

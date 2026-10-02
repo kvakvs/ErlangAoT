@@ -8,7 +8,7 @@ import tempfile
 from evidence import digest, provenance, run
 
 CORPORA = ['atoms', 'immediate', 'services', 'booleans', 'clauses', 'sequences', 'containers',
-           'integers', 'floats', 'maps', 'bits', 'records', 'bindings', 'patterns', 'baseline', 'differential']
+           'integers', 'floats', 'maps', 'bits', 'records', 'guard_catalog', 'bindings', 'patterns', 'baseline', 'differential']
 
 
 def contents(path):
@@ -49,7 +49,7 @@ def generate(source, otp, escript, name, work):
         evidence = module.kernels(source, otp, work)
     else:
         evidence = module.kernels(otp, work)
-    if name == 'records':
+    if name in ['records', 'guard_catalog']:
         evidence['semantic_oracle'] = run([escript, str(source / 'tests/compiler/patternmatch/patterns.escript'), str(work)])
     oracle = 'atoms.escript' if name == 'atoms' else 'immediate.escript'
     output = run([escript, str(source / 'tests/compiler/patternmatch' / oracle), str(work)])

@@ -71,24 +71,27 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto service = state.function.services.find(&expression);
-    if (service != state.function.services.end()) {
-        if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
-            return lower_record_test(state, expression, call);
-        }
-        if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
-            std::vector<llvm::Value *> arguments;
-            arguments.reserve(call.arguments.size());
-            for (const auto &id : call.arguments) {
-                arguments.push_back(state.values.at(&state.module.syntax->expression(id)));
-            }
-            return lower_binary_part(state, arguments);
-        }
-        auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
-        auto *right =
-            call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
-        return lower_operation(state, operation(service->second.operation), left, right);
+    if (service == state.function.services.end()) {
+        return lower_call(state, expression, call);
     }
-    return lower_call(state, expression, call);
+    if (service->second.operation == abi::v1::ImmediateOperation::is_integer_range) {
+        return lower_integer_range(state, call);
+    }
+    if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
+        return lower_record_test(state, expression, call);
+    }
+    if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
+        std::vector<llvm::Value *> arguments;
+        arguments.reserve(call.arguments.size());
+        for (const auto &id : call.arguments) {
+            arguments.push_back(state.values.at(&state.module.syntax->expression(id)));
+        }
+        return lower_binary_part(state, arguments);
+    }
+    auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
+    auto *right =
+        call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
+    return lower_operation(state, operation(service->second.operation), left, right);
 }
 
 } // namespace

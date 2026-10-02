@@ -107,6 +107,8 @@ llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
 // Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.
 llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression &expression,
                                const ast::CallExpression &call);
+// Validate both arbitrary-integer bounds first, then test the candidate on a separate successful edge.
+llvm::Value *lower_integer_range(ExpressionLowering &state, const ast::CallExpression &call);
 // Check candidate ownership/shape before extracting a rooted child; mismatch belongs to the pattern caller.
 llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspection operation, llvm::Value *value,
                               std::size_t index, llvm::BasicBlock *mismatch);

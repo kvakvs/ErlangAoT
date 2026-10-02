@@ -68,7 +68,9 @@ enum class ImmediateOperation : std::uint8_t {
     byte_size,
     binary_part,
     // Compound compiler lowering composes checked tuple/numeric services for record tests.
-    is_record
+    is_record,
+    // Compound compiler lowering validates integer bounds before comparing the candidate.
+    is_integer_range
 };
 } // namespace erlang_aot::abi::v1
 

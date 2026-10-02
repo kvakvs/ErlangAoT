@@ -11,10 +11,10 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+    "fixtures_manifest_sha256": "6994b6c262a4e9894afcc2cd163fba4dbc49bca107365e660f61879d377493ee"
   },
   "generator_sha256": {
-    "regenerate.py": "d9b5ba82148b90c24cea8ab8b11c72f7ff3a8e5fc97ddee1c5f0278ec7f50422",
+    "regenerate.py": "5185292bbb5602c876b3d7e5a01a5b348c428fa7751d31fb4ea4781557e3b34c",
     "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
     "patterns.py": "216e519a7cc4f89ce583355db95ef55b4190cf4ea5c4c93a9e9b5bcdea09c1ce",
     "immediate.py": "ad60f1b5605d46e7b370e0d08bb79859359e7b26fa6b0697c32d2a5f56edb930",
@@ -277,7 +277,7 @@
         "body": "f(Int,M) -> #{is_integer(Int,1,2) := V} = M, V.",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "capability": "guards",
+        "capability": "",
         "sha256": "03db149dc5651ec83b87f89500a71a2d098597072e045903262112fe690cd644"
       },
       {

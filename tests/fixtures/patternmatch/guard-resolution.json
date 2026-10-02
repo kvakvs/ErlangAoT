@@ -161,7 +161,7 @@
     "name": "integer3",
     "body": "f(X) when is_integer(X,0,10) -> X.",
     "diagnostic": "",
-    "capability": "guards"
+    "capability": ""
   },
   {
     "name": "operator_qualified",

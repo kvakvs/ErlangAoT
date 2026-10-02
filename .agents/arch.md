@@ -42,11 +42,11 @@
   access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
   Updates and native/qualified/inferred records retain separate capability owners.
 
-- Guard authorization uses the pinned legal name/arity/operator catalog, separately
+- Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
   and top-level legacy tests are resolved before every operand is traversed, including
   skipped operands. Grouped comma tests require canonical true; semicolon rejection
-  continues at the next alternative. Guards cannot create bindings.
+  continues at the next alternative. Guards cannot create bindings. Compound range tests validate arbitrary-integer bounds before candidate comparison. Only self/node and native is_record/1 signatures remain dependency-blocked.
 
 - Iterative eager/lazy lowering preserves source order without host recursion.
   Strict and/or/xor/not validate booleans; andalso/orelse validate the reached left
@@ -121,16 +121,16 @@
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–17 are complete; step 15a is complete; steps 18–20 remain.
+  Patternmatch steps 1–18 are complete; step 15a is complete; steps 19–20 remain.
   The current request is completion of the entire plan.
 
 - Tests prioritize real CLI/project sources and separate native runtime consumers.
-  Project-owned fixtures retain OTP inputs/results; 16 corpora preserve 59,810
+  Project-owned fixtures retain OTP inputs/results; 17 corpora preserve 64,843
   native expected values. Live OTP/source audits are explicit opt-ins, while
   normal configure/build/test requires neither OTP nor its checkout. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 121 OTP-free CTests and all 257 production quality units;
+  Windows x64 Debug passes 122 OTP-free CTests and all 257 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

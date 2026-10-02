@@ -71,7 +71,7 @@ def rejection(tool, work):
     (directory / "client.erl").write_bytes(b"-module(client). -export([id/1]). id(X) -> X.\n")
     cases = [("later_heap", "f(X) -> X; f(_) -> [X || X <- []].", "heap expressions"),
              ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> [X || X <- []].", "heap expressions"),
-             ("later_guard", "f(X) -> X; f(X) when is_integer(X,0,1) -> X.", "guards"),
+             ("later_guard", "f(X) -> X; f(X) when self() =:= X -> X.", "guards"),
              ("later_call", "f(X) -> X; f(_) -> missing().", "undefined function"),
              ("later_remote", "f(X) -> X; f(_) -> absent:f().", "unknown module"),
              ("later_cycle", "f(0) -> 0; f(X) -> g(X). g(X) -> f(X).", "recursive calls"),

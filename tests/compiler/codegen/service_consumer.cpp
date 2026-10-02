@@ -380,9 +380,9 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
-        for (const auto name :
-             {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard", "float_body",
-              "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body", "record_guard", "record_body"}) {
+        for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard",
+                                "float_body", "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body",
+                                "record_guard", "record_body", "range_guard", "range_body"}) {
             failures(context, "service_answer", name);
         }
         bit_extractions(context);
