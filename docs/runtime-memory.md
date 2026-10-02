@@ -12,6 +12,10 @@ overlapping reservations and exhausted capacity before publishing bytes. Alignme
 must be a power of two between word alignment and `alignof(max_align_t)`.
 Default budgets are 64 KiB chunks and 64 MiB total backing per process.
 
+Arbitrary integers use the same publication and ownership contract; their immutable
+cells contain sign/magnitude words. Temporary multiprecision operands never borrow
+mutable process storage. See [integer limits and semantics](integer-matching.md).
+
 Chunks never move. Growth accounts for unused tails and alignment padding, caps
 total capacity, and allocates a larger chunk when a single request needs one.
 `used_words` includes consumed padding; `capacity_words` counts retained backing.

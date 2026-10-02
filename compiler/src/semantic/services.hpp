@@ -6,6 +6,8 @@ namespace erlang_aot::semantic {
 bool guard_signature(const FunctionKey &key);
 // Classify supported immediate operators without widening guard legality or numeric representation support.
 std::optional<abi::v1::ImmediateOperation> immediate_operator(ast::BinaryOperator operation);
+// Map every authorized unary operator to the shared checked numeric/boolean service boundary.
+std::optional<abi::v1::ImmediateOperation> immediate_unary(ast::UnaryOperator operation);
 // Map only resolved erlang name/arity identities to executable service operations.
 std::optional<abi::v1::ImmediateOperation> immediate_service(const FunctionKey &key);
 // Resolve legal guard calls using the same imports/suppression rules as embedded pattern expressions.

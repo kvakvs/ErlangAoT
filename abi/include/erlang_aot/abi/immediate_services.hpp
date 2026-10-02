@@ -40,7 +40,21 @@ enum class ImmediateOperation : std::uint8_t {
     logical_and,
     logical_or,
     logical_xor,
-    boolean_check
+    boolean_check,
+    add,
+    subtract,
+    multiply,
+    integer_divide,
+    remainder,
+    bit_and,
+    bit_or,
+    bit_xor,
+    shift_left,
+    shift_right,
+    positive,
+    negative,
+    bit_not,
+    absolute
 };
 } // namespace erlang_aot::abi::v1
 

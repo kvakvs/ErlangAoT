@@ -28,6 +28,8 @@ struct ExpressionLowering {
     // Semantic service errors reject the enclosing guard, while body errors raise badarg.
     llvm::BasicBlock *rejection = nullptr;
     llvm::BasicBlock *bad_argument = nullptr;
+    // Arithmetic operand failures share a body error exit while guards retain their rejection edge.
+    llvm::BasicBlock *bad_arithmetic = nullptr;
 };
 
 // Branch to the shared failure exit before consuming a fallible service result.
@@ -55,6 +57,13 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
                              llvm::Value *right = nullptr);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
+// Arithmetic errors reject guards and raise badarith in ordinary bodies.
+llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state);
+// Materialize arbitrary decimal literals with target-specific small encodings or rooted runtime storage.
+llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal);
+// Use checked small arithmetic where safe, retaining the common runtime fallback for all other values.
+llvm::Value *lower_operation(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
+                             llvm::Value *right = nullptr);
 
 struct ServiceOutput {
     // Pair the status byte with its success-only rooted word slot, without interchangeable positional pointers.

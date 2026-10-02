@@ -2,23 +2,14 @@
 #include "services.hpp"
 
 namespace erlang_aot::semantic {
-std::string_view ExpressionCapability::operator()(const ast::IntegerLiteral &) const {
-    return integer_literal(syntax, id, word_bits) ? "" : "bignum expressions";
-}
+std::string_view ExpressionCapability::operator()(const ast::IntegerLiteral &) const { return {}; }
 
 std::string_view ExpressionCapability::operator()(const ast::CharacterLiteral &) const {
     return integer_literal(syntax, id, word_bits) ? "" : "bignum expressions";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::UnaryExpression &value) const {
-    if (value.operation == ast::UnaryOperator::logical_not) {
-        return {};
-    }
-    const auto &operand = syntax.expression(ungroup(syntax, value.operand)).value;
-    if (value.operation != ast::UnaryOperator::negative || !std::holds_alternative<ast::IntegerLiteral>(operand)) {
-        return "arithmetic";
-    }
-    return integer_literal(syntax, id, word_bits) ? "" : "bignum expressions";
+    return immediate_unary(value.operation) ? "" : "arithmetic";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::CallExpression &value) const {

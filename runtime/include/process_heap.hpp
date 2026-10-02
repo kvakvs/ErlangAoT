@@ -39,7 +39,8 @@ struct HeapOptions final {
 
 namespace detail {
 class HeapStorage;
-}
+struct IntegerAccess;
+} // namespace detail
 
 struct HeapMark {
     // Restore both retained backing and consumed words when unpublished construction fails.
@@ -107,6 +108,7 @@ class ProcessHeap final {
     friend class ProcessContext;
     friend class TermFactory;
     friend class Term;
+    friend struct detail::IntegerAccess;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.

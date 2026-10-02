@@ -51,12 +51,11 @@ void constants(const char *name, const std::string &triple, unsigned bits) {
     inspect_object(compilation);
 }
 
-// A host-valid literal must still be rejected when compiling for a narrower target.
+// A literal outside the selected target payload is constructed through the rooted integer service.
 void target_overflow() {
     auto compilation = fixture("constants64.erl", "i686-unknown-linux-gnu");
-    require(!analyze_and_lower(compilation), "target overflow accepted");
-    require(compilation.result().status() == cg::CompilationStatus::failed, "lowering did not latch failure");
-    require(!cg::emit_objects(compilation) && compilation.result().outputs().empty(), "failed batch emitted output");
+    require(analyze_and_lower(compilation), "target integer promotion rejected");
+    require(cg::emit_objects(compilation) && !compilation.result().outputs().empty(), "promoted literal did not emit");
 }
 
 // Project source positions directly; equal argument values cannot collapse distinct slots.

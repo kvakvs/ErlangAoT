@@ -51,9 +51,11 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
                                        {state.entry.getArg(0), builder.getInt8(static_cast<std::uint8_t>(operation)),
                                         left, right ? right : llvm::ConstantInt::get(state.word, 0), slot},
                                        "service.outcome");
-    return checked_value(
-        state, {outcome, slot},
-        bad_argument_exit(state, operation == abi::v1::ImmediateOperation::boolean_check ? left : nullptr));
+    auto *rejection =
+        operation >= abi::v1::ImmediateOperation::add && operation != abi::v1::ImmediateOperation::absolute
+            ? bad_arithmetic_exit(state)
+            : bad_argument_exit(state, operation == abi::v1::ImmediateOperation::boolean_check ? left : nullptr);
+    return checked_value(state, {outcome, slot}, rejection);
 }
 
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection) {

@@ -11,10 +11,12 @@
 namespace erlang_aot::codegen {
 namespace {
 // Checked canonical decimal parsing rejects arbitrary-size values before LLVM sees them.
-llvm::ConstantInt *literal(const ast::Module &syntax, const ast::ExprId &expression, llvm::IntegerType *word) {
+llvm::Value *literal(ExpressionLowering &state, const ast::ExprId &expression) {
+    const auto &syntax = *state.module.syntax;
+    auto *word = state.word;
     const auto value = semantic::integer_literal(syntax, expression, word->getBitWidth());
     if (!value) {
-        throw std::invalid_argument("lowering: expected a representable integer literal");
+        return lower_integer(state, std::get<ast::IntegerLiteral>(syntax.expression(expression).value).value.decimal);
     }
     const auto encoded = word->getBitWidth() == 32 ? *abi::v1::IntegerEncoding<32>::encode(*value)
                                                    : *abi::v1::IntegerEncoding<64>::encode(*value);
@@ -43,7 +45,7 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (auto *container = lower_container(state, value)) {
         return container;
     }
-    return literal(*state.module.syntax, expression, state.word);
+    return literal(state, expression);
 }
 
 // Missing capability authorization is a phase-contract failure, never an unchecked optional access.
@@ -61,7 +63,7 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
         auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
         auto *right =
             call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
-        return lower_immediate(state, operation(service->second.operation), left, right);
+        return lower_operation(state, operation(service->second.operation), left, right);
     }
     return lower_call(state, expression, call);
 }
@@ -71,6 +73,9 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
 llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
     locate_source(state.builder, *state.module.syntax, expression.source);
+    if (semantic::integer_literal(*state.module.syntax, id, state.word->getBitWidth())) {
+        return literal(state, id);
+    }
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
         return call_value(state, expression, *call);
     }
@@ -78,16 +83,15 @@ llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
         return lower_body_match(state, *match);
     }
     if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
-        return lower_immediate(state, operation(semantic::immediate_operator(binary->operation)),
+        return lower_operation(state, operation(semantic::immediate_operator(binary->operation)),
                                state.values.at(&state.module.syntax->expression(binary->left)),
                                state.values.at(&state.module.syntax->expression(binary->right)));
     }
     if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
         return state.values.at(&state.module.syntax->expression(group->expression));
     }
-    if (const auto *unary = std::get_if<ast::UnaryExpression>(&expression.value);
-        unary && unary->operation == ast::UnaryOperator::logical_not) {
-        return lower_immediate(state, abi::v1::ImmediateOperation::logical_not,
+    if (const auto *unary = std::get_if<ast::UnaryExpression>(&expression.value)) {
+        return lower_operation(state, operation(semantic::immediate_unary(unary->operation)),
                                state.values.at(&state.module.syntax->expression(unary->operand)));
     }
     return leaf(state, id);

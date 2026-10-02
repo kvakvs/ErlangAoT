@@ -54,8 +54,10 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
         assert f"store i{bits} {maximum * 16 + 15}" in ir, ir
         assert f"i32 4, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
-    rejected(tool, answer, work / triple / "overflow", triple,
-             "representable integer literal" if bits == 32 else "bignum expressions")
+    promoted = work / triple / "promoted"
+    run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(promoted), str(answer)])
+    imports = run([nm, "--undefined-only", str(next(promoted.iterdir()))]).stdout
+    assert "erlang_aot_integer_v1" in imports, imports
 
 
 def main():

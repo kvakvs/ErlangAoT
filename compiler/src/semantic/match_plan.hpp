@@ -15,7 +15,7 @@ enum class MatchOperation : std::uint8_t {
     mismatch
 };
 enum class EmptyValue : std::uint8_t { tuple, list };
-using MatchLiteral = std::variant<std::int64_t, ast::Atom, EmptyValue>;
+using MatchLiteral = std::variant<std::int64_t, ast::Atom, EmptyValue, ast::IntegerLiteral>;
 
 struct MatchNode {
     // Retain source and candidate input slot, with identities independent of spelling.

@@ -58,6 +58,8 @@ enum class TermKind : std::uint8_t {
     invalid,
     // Resolve an admitted nonempty tuple through the owner's published object index.
     tuple,
+    // Resolve a canonical sign/magnitude integer stored as private target-word limbs.
+    bignum,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

@@ -49,8 +49,13 @@ void print(const CallResult<Term> &result) {
         return;
     }
     require(reason == erlang_aot::abi::v1::ErrorReason::function_clause ||
-                reason == erlang_aot::abi::v1::ErrorReason::badarg,
+                reason == erlang_aot::abi::v1::ErrorReason::badarg ||
+                reason == erlang_aot::abi::v1::ErrorReason::badarith,
             "unexpected Erlang reason");
+    if (reason == erlang_aot::abi::v1::ErrorReason::badarith) {
+        std::cout << "error:badarith\n";
+        return;
+    }
     std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badarg ? "error:badarg\n" : "error:function_clause\n");
 }
 

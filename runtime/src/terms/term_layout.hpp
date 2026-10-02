@@ -23,12 +23,12 @@ struct alignas(Word) BoxHeader final {
     Word value_;
 };
 
-// Future runtime-owned C++ bignum storage requires explicit construction/destruction, not raw copying.
-struct BignumCell final {
-    // Identify an untraced multiprecision object; its limbs are owned by the C++ value.
+// Canonical magnitude limbs follow this private prefix in least-significant-word order.
+struct alignas(Word) BignumCell final {
+    // Identify the untraced sign word and following immutable native-word limbs.
     BoxHeader header_;
-    // Respect the multiprecision backend's stronger native alignment; padding is not a traced slot.
-    Bignum value_;
+    // Zero denotes positive and one denotes negative; zero itself always uses a small integer.
+    Word negative_;
 };
 
 struct alignas(Word) FloatCell final {
@@ -124,6 +124,6 @@ static_assert(sizeof(BignumCell) % sizeof(Word) == 0);
 static_assert(alignof(BignumCell) >= alignof(Word));
 static_assert(sizeof(RefcBinaryCell) % sizeof(Word) == 0);
 static_assert(!std::is_trivially_copyable_v<RefcBinaryCell>);
-static_assert(!std::is_trivially_copyable_v<BignumCell>);
+static_assert(std::is_trivially_copyable_v<BignumCell>);
 static_assert(sizeof(ClosureCell) % sizeof(Word) == 0);
 } // namespace erlang_aot::runtime::detail::layout

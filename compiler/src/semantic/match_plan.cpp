@@ -14,11 +14,11 @@ std::optional<MatchLiteral> integer(const ast::IntegerLiteral &integer, unsigned
     const auto &text = integer.value.decimal;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), number);
     if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
-        return {};
+        return integer;
     }
     const bool fits = bits == 32 ? abi::v1::IntegerEncoding<32>::encode(number).has_value()
                                  : bits == 64 && abi::v1::IntegerEncoding<64>::encode(number).has_value();
-    return fits ? std::optional<MatchLiteral>{number} : std::nullopt;
+    return fits ? MatchLiteral{number} : MatchLiteral{integer};
 }
 
 // Canonical empty literals share immediate encodings with the checked container services.
@@ -36,7 +36,7 @@ std::optional<MatchLiteral> empty(const NormalizedPattern &pattern) {
     return {};
 }
 
-// Folded pattern integers must fit the selected layout before a plan literal can be encoded.
+// Folded integers use immediates where possible and preserve decimal text for rooted bignum construction.
 std::optional<MatchLiteral> literal(const NormalizedPattern &pattern, unsigned bits) {
     if (const auto value = empty(pattern)) {
         return value;
@@ -71,6 +71,14 @@ void MatchPlanner::variable(const NormalizedPattern &pattern, std::size_t input)
 }
 
 bool MatchPlanner::node(const NormalizedPattern &pattern, std::size_t input) {
+    if (pattern.literal) {
+        const auto *integer = std::get_if<ast::IntegerLiteral>(&*pattern.literal);
+        if (integer && integer->value.decimal.size() > 10'000) {
+            report(module, &module.syntax->expression(pattern.origin).source, "integer literal digit limit exceeded",
+                   out);
+            return false;
+        }
+    }
     if (pattern.kind == PatternKind::wildcard || pattern.kind == PatternKind::alias) {
         return true;
     }

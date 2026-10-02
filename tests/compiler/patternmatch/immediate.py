@@ -72,7 +72,7 @@ def native(tool, cmake, source, work, settings, config, suffix):
 
 
 def widths(tool, work):
-    """Both-width literal endpoints and out-of-range rejection are object/IR evidence, not foreign execution."""
+    """Both-width immediate endpoints and promoted literals are object/IR evidence, not foreign execution."""
     records = []
     for bits, triple, bound in [(32, "i686-pc-windows-msvc", 1 << 27), (64, "x86_64-pc-windows-msvc", 1 << 59)]:
         path = work / "width.erl"
@@ -81,12 +81,10 @@ def widths(tool, work):
         assert f"i{bits}" in ir and "exact.outcome" in ir and "match.mismatch" in ir
         run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(work / f"width{bits}"), str(path)])
         path.write_text(f"-module(width).\nf({bound}) -> ok.\n", encoding="utf-8")
-        import subprocess
-        result = subprocess.run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(work / "invalid"), str(path)],
-                                capture_output=True, text=True, encoding="utf-8", timeout=30)
-        assert result.returncode == 1 and "pattern matching" in result.stderr, result.stderr
-        assert not (work / "invalid").exists()
-        records.append({"bits": bits, "triple": triple, "execution": "not attempted", "endpoints": "accepted", "overflow": "rejected"})
+        ir = run([tool, "--target-triple", triple, "--print-ir", str(path)])
+        assert "integer.outcome" in ir
+        run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(work / f"promoted{bits}"), str(path)])
+        records.append({"bits": bits, "triple": triple, "execution": "not attempted", "endpoints": "accepted", "overflow": "promoted"})
     return records
 
 

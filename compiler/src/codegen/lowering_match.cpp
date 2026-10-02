@@ -21,6 +21,9 @@ std::string_view exact_symbol(const llvm::Triple &triple) {
 
 // Load canonical target-width literals; atom words always come from runtime module bindings.
 llvm::Value *literal(ExpressionLowering &state, const semantic::MatchLiteral &literal) {
+    if (const auto *integer = std::get_if<ast::IntegerLiteral>(&literal)) {
+        return lower_integer(state, integer->value.decimal);
+    }
     if (const auto *atom = std::get_if<ast::Atom>(&literal)) {
         return lower_atom(state, *atom);
     }

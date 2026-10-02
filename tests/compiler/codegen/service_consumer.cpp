@@ -197,6 +197,18 @@ void heap_budget(Runtime &runtime) {
             "heap failure poisoned nonallocating retry");
     require(runtime.destroy_context(&context) == abi::v1::Status::ok, "bounded context teardown failed");
 }
+
+// Excessive exact-integer work bypasses all guard alternatives and leaves a later invocation usable.
+void integer_budget(ProcessContext &context) {
+    const auto entry = context.code_server().resolve({"service_answer", "integer_budget", 1}).value();
+    const auto excessive = TermFactory(context).integer(1000001).value();
+    const auto failed = entry.call(context, std::array{excessive});
+    require(!failed && failed.error().status == abi::v1::Status::resource_limit,
+            "integer work ceiling became guard rejection");
+    require(context.roots().depth() == 0 && !context.generated_calls().failure(), "integer ceiling leaked state");
+    require(entry.call(context, std::array{TermFactory(context).integer(1).value()}).has_value(),
+            "integer ceiling poisoned retry");
+}
 } // namespace
 
 // Inject infrastructure errors before allocation, preserving generated cleanup and fallback behavior.
@@ -253,7 +265,9 @@ std::uint8_t injected(void *context, std::uint8_t operation, Word left, Word rig
         static_cast<ProcessContext *>(context)->generated_calls().fail_service(fault);
         return 2;
     }
-    return erlang_aot_immediate_v1(context, operation, left, right, output);
+    const auto result = erlang_aot_immediate_v1(context, operation, left, right, output);
+    unrooted |= result == 0 && !roots.contains(*output);
+    return result;
 }
 
 int main() {
@@ -272,11 +286,12 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
-        for (const auto name : {"construct", "inspect", "heap_guard"}) {
+        for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body"}) {
             failures(context, "service_answer", name);
         }
         heap_lifetimes(context);
         heap_budget(*runtime);
+        integer_budget(context);
         require(!unrooted, "container input/output was not rooted at a reached service");
         return 0;
     } catch (const std::exception &error) {

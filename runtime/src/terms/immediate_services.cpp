@@ -1,4 +1,5 @@
 #include "immediate_order.hpp"
+#include "integers.hpp"
 #include "service_errors.hpp"
 #include <array>
 #include <erlang_aot/abi/immediate_services.hpp>
@@ -31,10 +32,9 @@ Result boolean(ProcessContext &context, bool value) {
 
 // Predicates classify admitted representations; unavailable identities and later scalar families remain false.
 bool predicate(Op operation, const Term &value) {
-    const auto kind = value.kind();
     const std::array predicates{value.is_atom(),
-                                kind == TermKind::smallint,
-                                kind == TermKind::smallint,
+                                value.is_integer(),
+                                value.is_number(),
                                 value.is_boolean(),
                                 value.is_tuple(),
                                 value.is_list(),
@@ -73,7 +73,8 @@ Result checked(TermResult<Word> result) {
         return *result;
     }
     const auto error = result.error();
-    if (error == TermError::wrong_type || error == TermError::out_of_range || error == TermError::improper_list) {
+    if (error == TermError::wrong_type || error == TermError::out_of_range || error == TermError::improper_list ||
+        error == TermError::invalid_argument) {
         return std::unexpected(Fault{Outcome::bad_argument});
     }
     return std::unexpected(Fault{Outcome::failure, term_status(error)});
@@ -81,11 +82,14 @@ Result checked(TermResult<Word> result) {
 
 // Erlang element indices are positive and one-based; host access uses zero-based checked indices.
 TermResult<std::size_t> element_index(const Term &index) {
-    const auto number = index.integer_value();
-    if (!number || *number <= 0) {
+    const auto number = integer_read(index);
+    if (!number) {
+        return std::unexpected(number.error());
+    }
+    if (*number <= 0 || *number > std::numeric_limits<std::size_t>::max()) {
         return std::unexpected(TermError::wrong_type);
     }
-    return static_cast<std::size_t>(*number - 1);
+    return number->convert_to<std::size_t>() - 1;
 }
 
 // Share size and field services with host accessors rather than teaching generated code object layouts.
@@ -114,8 +118,11 @@ Result container_query(const Term &left, Op operation, const Term &right) {
 // An absent function representation still validates its arity argument before returning false.
 Result query(const Term &left, Op operation, const Term &right) {
     if (operation == Op::is_function_arity) {
-        const auto arity = right.integer_value();
-        if (!arity || *arity < 0) {
+        const auto arity = integer_read(right);
+        if (!arity) {
+            return checked(std::unexpected(arity.error()));
+        }
+        if (*arity < 0) {
             return std::unexpected(Fault{Outcome::bad_argument});
         }
         return Word{0};
@@ -155,6 +162,10 @@ Result logical(ProcessContext &context, Op operation, const Term &left, const Te
 
 // Dispatch only semantically authorized opcodes; later representation services extend this boundary.
 Result evaluate(ProcessContext &context, Op operation, const Term &left, const Term &right) {
+    if (operation >= Op::add) {
+        return checked(
+            integer_service(context, operation, left, right).transform([](const Term &value) { return value.word(); }));
+    }
     if (operation >= Op::logical_not) {
         return logical(context, operation, left, right);
     }
@@ -178,7 +189,8 @@ Result evaluate(ProcessContext &context, Op operation, const Term &left, const T
 bool binary(Op operation) {
     return operation <= Op::greater_equal || operation == Op::is_function_arity || operation == Op::element ||
            operation == Op::minimum || operation == Op::maximum ||
-           (operation >= Op::logical_and && operation <= Op::logical_xor);
+           (operation >= Op::logical_and && operation <= Op::logical_xor) ||
+           (operation >= Op::add && operation < Op::positive);
 }
 
 // Ownership/encoding failures precede semantic argument classification and cannot reject a guard silently.
@@ -199,7 +211,7 @@ std::uint8_t immediate_service(ProcessContext &context, std::uint8_t operation, 
     if (!state.active() || state.failure()) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (!output || operation > static_cast<std::uint8_t>(Op::boolean_check)) {
+    if (!output || operation > static_cast<std::uint8_t>(Op::absolute)) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }

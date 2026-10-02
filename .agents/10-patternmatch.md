@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–12 are
-complete; steps 13–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–13 are
+complete; steps 14–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Larger numbers, maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Floats, maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -591,30 +591,30 @@ checks passed. No GC or cross-heap graph copying is claimed.
 
 ### 13. Implement arbitrary integers and integer guards (F10/F12)
 
-- [ ] Implement owned bignums/literals and small-integer promotion/demotion.
-  - [ ] Define canonical sign/magnitude storage and rooted factory services;
+- [x] Implement owned bignums/literals and small-integer promotion/demotion.
+  - [x] Define canonical sign/magnitude storage and rooted factory services;
     normalize zero and values that fit the target's small-integer payload.
-  - [ ] Materialize normalized integer literals without host-width truncation;
+  - [x] Materialize normalized integer literals without host-width truncation;
     check literal/allocation limits and exercise both target payload boundaries.
-- [ ] Lower arithmetic, division/remainder, bitwise and shift operations with
+- [x] Lower arithmetic, division/remainder, bitwise and shift operations with
   checked fast paths and runtime fallbacks; never wrap machine overflow.
-  - [ ] Emit checked small-integer paths and promote overflow to exact runtime
+  - [x] Emit checked small-integer paths and promote overflow to exact runtime
     operations, preserving operand evaluation order and generated failure
     checks.
-  - [ ] Implement signed division/remainder, bitwise and shift semantics from
+  - [x] Implement signed division/remainder, bitwise and shift semantics from
     the recorded evidence; check zero divisors, invalid operands and excessive
     work.
-  - [ ] Execute boundary-crossing and promotion/demotion chains in all four
+  - [x] Execute boundary-crossing and promotion/demotion chains in all four
     modes; verify exact results and rollback when fallback allocation fails.
-- [ ] Extend literal/repeated-variable matching, exact/numeric comparison and
+- [x] Extend literal/repeated-variable matching, exact/numeric comparison and
   guard operations. Define resource ceilings separately from Erlang failures.
-  - [ ] Extend shared numeric dispatch across small and large integers,
+  - [x] Extend shared numeric dispatch across small and large integers,
     including equality between independent allocations and nested container
     elements.
-  - [ ] Route arithmetic semantic errors according to body/guard context;
+  - [x] Route arithmetic semantic errors according to body/guard context;
     propagate budget and allocation failures without converting them into guard
     rejection.
-  - [ ] Run arithmetic helpers and guarded wrappers for large literals, repeated
+  - [x] Run arithmetic helpers and guarded wrappers for large literals, repeated
     variables, negative operands and zero divisors against the OTP oracle.
 
 **Success criteria:** Results are exact across signed 28/60-bit payload
@@ -627,6 +627,16 @@ arithmetic kernels from `beam_bounds_SUITE` without private BEAM helpers;
 compare negative division/remainder, shifts, promotion/demotion, large
 repeated-variable patterns, zero divisors and allocation failure. Guarded
 wrappers verify failure handling.
+
+Completion: [step-13 validation](../docs/patternmatch-step13-validation.md),
+[retained evidence](../docs/patternmatch-step13-evidence.json) and
+[integer contract](../docs/integer-matching.md). Fresh Windows x64: 127/127
+CTests, 16,065 OTP/native calls in four policies, seven foreign object targets,
+full 231-unit quality checks and formatting passed. Canonical sign/magnitude
+integers, checked double-width fast paths, promotion/demotion, exact comparisons,
+rooted failure propagation and construction/arithmetic rollback are implemented.
+Resource ceilings remain explicit infrastructure outcomes; no foreign native
+execution or new sanitizer run is claimed. Steps 14–20 remain open.
 
 ### 14. Implement floats, mixed comparisons and numeric guards (F11/F12)
 

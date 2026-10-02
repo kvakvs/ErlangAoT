@@ -42,9 +42,7 @@ void check_factory(ProcessContext &context) {
     Reports reports;
     TermFactory factory(context, {&reports, record});
     const auto term = *Term::from_word(*encode_integer(3));
-    const std::array results{factory.integer(3),
-                             factory.integer_decimal("123"),
-                             factory.floating(1.5),
+    const std::array results{factory.floating(1.5),
                              factory.map({}),
                              factory.binary({}),
                              factory.bitstring({}, 0),

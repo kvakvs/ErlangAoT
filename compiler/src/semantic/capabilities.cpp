@@ -44,6 +44,35 @@ void unsupported(const Module &module, const ast::NodeSource &source, std::strin
     reject_capability(module, source, reason, out);
 }
 
+// Literal limits precede admission and lowering even when the enclosing expression could be folded.
+bool literal_limit(const Module &module, const ast::Expression &expression, const Reporter &out) {
+    const auto *integer = std::get_if<ast::IntegerLiteral>(&expression.value);
+    if (integer && integer->value.decimal.size() > 10'000) {
+        report(module, &expression.source, "integer literal digit limit exceeded", out);
+        return true;
+    }
+    return false;
+}
+
+// Resolve local capability and service limits before scheduling an expression's children.
+bool available(const Module &module, const Function &function, const ast::ExprId &id, const Reporter &out,
+               unsigned bits) {
+    const auto &expression = module.syntax->expression(id);
+    if (literal_limit(module, expression, out)) {
+        return false;
+    }
+    const auto service = function.services.find(&expression);
+    if (service != function.services.end() && !service->second.operation) {
+        unsupported(module, expression.source, "guards", out);
+    }
+    const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits}, expression.value);
+    if (!reason.empty()) {
+        unsupported(module, expression.source, reason, out);
+        return false;
+    }
+    return true;
+}
+
 // Inspect every executable child iteratively, including unused functions and nested call arguments.
 void expressions(const Module &module, const Function &function, std::vector<ast::ExprId> pending, const Reporter &out,
                  const unsigned bits) {
@@ -51,13 +80,7 @@ void expressions(const Module &module, const Function &function, std::vector<ast
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
-        const auto service = function.services.find(&expression);
-        if (service != function.services.end() && !service->second.operation) {
-            unsupported(module, expression.source, "guards", out);
-        }
-        const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits}, expression.value);
-        if (!reason.empty()) {
-            unsupported(module, expression.source, reason, out);
+        if (!available(module, function, id, out, bits)) {
             continue;
         }
         if (integer_literal(*module.syntax, id, bits)) {

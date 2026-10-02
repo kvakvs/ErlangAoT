@@ -6,6 +6,16 @@ using Op = abi::v1::ImmediateOperation;
 
 std::optional<Op> immediate_operator(ast::BinaryOperator operation) {
     static const std::map<ast::BinaryOperator, Op> operators{
+        {ast::BinaryOperator::add, Op::add},
+        {ast::BinaryOperator::subtract, Op::subtract},
+        {ast::BinaryOperator::multiply, Op::multiply},
+        {ast::BinaryOperator::integer_divide, Op::integer_divide},
+        {ast::BinaryOperator::remainder, Op::remainder},
+        {ast::BinaryOperator::bit_and, Op::bit_and},
+        {ast::BinaryOperator::bit_or, Op::bit_or},
+        {ast::BinaryOperator::bit_xor, Op::bit_xor},
+        {ast::BinaryOperator::shift_left, Op::shift_left},
+        {ast::BinaryOperator::shift_right, Op::shift_right},
         {ast::BinaryOperator::exact_equal, Op::exact_equal},
         {ast::BinaryOperator::exact_not_equal, Op::exact_not_equal},
         {ast::BinaryOperator::equal, Op::equal},
@@ -23,6 +33,20 @@ std::optional<Op> immediate_operator(ast::BinaryOperator operation) {
 
 std::optional<Op> immediate_service(const FunctionKey &key) {
     static const std::map<FunctionKey, Op> signatures{{{U"is_atom", 1}, Op::is_atom},
+                                                      {{U"+", 2}, Op::add},
+                                                      {{U"-", 2}, Op::subtract},
+                                                      {{U"*", 2}, Op::multiply},
+                                                      {{U"div", 2}, Op::integer_divide},
+                                                      {{U"rem", 2}, Op::remainder},
+                                                      {{U"band", 2}, Op::bit_and},
+                                                      {{U"bor", 2}, Op::bit_or},
+                                                      {{U"bxor", 2}, Op::bit_xor},
+                                                      {{U"bsl", 2}, Op::shift_left},
+                                                      {{U"bsr", 2}, Op::shift_right},
+                                                      {{U"+", 1}, Op::positive},
+                                                      {{U"-", 1}, Op::negative},
+                                                      {{U"bnot", 1}, Op::bit_not},
+                                                      {{U"abs", 1}, Op::absolute},
                                                       {{U"is_integer", 1}, Op::is_integer},
                                                       {{U"is_number", 1}, Op::is_number},
                                                       {{U"is_boolean", 1}, Op::is_boolean},
@@ -59,5 +83,14 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"xor", 2}, Op::logical_xor}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
+}
+
+std::optional<Op> immediate_unary(ast::UnaryOperator operation) {
+    static const std::map<ast::UnaryOperator, Op> operators{{ast::UnaryOperator::positive, Op::positive},
+                                                            {ast::UnaryOperator::negative, Op::negative},
+                                                            {ast::UnaryOperator::bit_not, Op::bit_not},
+                                                            {ast::UnaryOperator::logical_not, Op::logical_not}};
+    const auto found = operators.find(operation);
+    return found == operators.end() ? std::nullopt : std::optional{found->second};
 }
 } // namespace erlang_aot::semantic

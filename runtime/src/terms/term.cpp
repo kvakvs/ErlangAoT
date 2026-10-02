@@ -71,5 +71,4 @@ TermKind Term::kind() const {
     return TermTag{value_}.get_kind();
 }
 
-TermResult<std::int64_t> Term::integer_value() const { return decode_integer(value_); }
 } // namespace erlang_aot::runtime

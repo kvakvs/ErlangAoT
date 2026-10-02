@@ -1,5 +1,6 @@
 #include "structural_order.hpp"
 #include "../memory/heap_object.hpp"
+#include "integers.hpp"
 #include <algorithm>
 #include <new>
 #include <stdexcept>
@@ -13,6 +14,7 @@ constexpr std::size_t work_limit = 1'000'000;
 TermResult<unsigned> rank(const Term &term) {
     switch (term.kind()) {
     case TermKind::smallint:
+    case TermKind::bignum:
         return 0;
     case TermKind::atom:
         return 1;
@@ -43,9 +45,9 @@ TermResult<int> scalar(const Term &left, const Term &right, bool exact) {
     if (left.is_atom()) {
         return atoms(left, right, exact);
     }
-    if (left.kind() == TermKind::smallint) {
-        const auto lhs = left.integer_value().value();
-        const auto rhs = right.integer_value().value();
+    if (left.is_integer()) {
+        const auto lhs = integer_read(left).value();
+        const auto rhs = integer_read(right).value();
         return lhs < rhs ? -1 : static_cast<int>(lhs > rhs);
     }
     return 0;

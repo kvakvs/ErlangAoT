@@ -1,6 +1,7 @@
 #include "terms.hpp"
 #include <cstdio>
 #include <cstdlib>
+#include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <limits>
 #include <new>
+#include <sstream>
 #include <stdexcept>
 
 using erlang_aot::abi::v1::Status;
@@ -256,6 +258,39 @@ void check_atom_registration() {
     require(succeeded, "atom registration sweep never succeeded");
 }
 
+// Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
+void check_integer_construction() {
+    using namespace erlang_aot::runtime;
+    // MSVC initializes two process-wide stream locale facets on first use; exclude those caches from heap accounting.
+    {
+        std::ostringstream warmup;
+        warmup << "";
+    }
+    const std::string digits(400, '9');
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            TermFactory factory(context);
+            remaining = ordinal;
+            const auto result = factory.integer_decimal(digits);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = result.has_value();
+            if (!succeeded) {
+                require(result.error() == TermError::out_of_memory, "integer allocation status lost");
+                require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
+                        "failed integer left published storage");
+                require(factory.integer_decimal(digits)->integer_decimal() == digits,
+                        "integer retry corrupted magnitude");
+            }
+        }
+        require(live_allocations == baseline, "integer allocation sweep leaked");
+    }
+    require(succeeded, "integer allocation sweep never succeeded");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 void check_root_allocation() {
     using namespace erlang_aot::runtime;
@@ -345,6 +380,47 @@ void check_container_construction(bool list) {
     require(succeeded, "compound allocation sweep never reached success");
 }
 
+// Sweep temporary arithmetic limbs and final publication through the real checked fallback boundary.
+void check_integer_arithmetic() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            const auto value = TermFactory(context).integer_decimal(std::string(400, '9')).value();
+            const auto used = context.heap().used_words();
+            const auto capacity = context.heap().capacity_words();
+            Word output = 123;
+            {
+                GeneratedInvocation call(context.generated_calls());
+                remaining = ordinal;
+                const auto result = erlang_aot_immediate_v1(
+                    &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ImmediateOperation::multiply),
+                    value.word(), value.word(), &output);
+                remaining = std::numeric_limits<std::size_t>::max();
+                succeeded = result == 0;
+                if (!succeeded) {
+                    require(result == 2 && context.generated_calls().failure()->status == Status::out_of_memory,
+                            "arithmetic allocation became badarith");
+                    require(output == 123 && context.heap().used_words() == used &&
+                                context.heap().capacity_words() == capacity,
+                            "failed arithmetic published or retained a partial integer");
+                }
+            }
+            GeneratedInvocation retry(context.generated_calls());
+            require(erlang_aot_immediate_v1(
+                        &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ImmediateOperation::subtract),
+                        value.word(), value.word(), &output) == 0 &&
+                        output == encode_integer(0).value(),
+                    "arithmetic allocation failure poisoned exact retry");
+        }
+        require(live_allocations == baseline, "integer arithmetic sweep leaked");
+    }
+    require(succeeded, "integer arithmetic allocation sweep never succeeded");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
@@ -359,6 +435,8 @@ int main() {
         check_root_allocation();
         check_container_construction(false);
         check_container_construction(true);
+        check_integer_construction();
+        check_integer_arithmetic();
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::fprintf(stderr, "%s\n", error.what());

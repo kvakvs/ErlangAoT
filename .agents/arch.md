@@ -51,12 +51,18 @@
   for an invalid lazy left operand. Join instructions retain operator provenance.
   See docs/{immediate-matching,immediate-guards,guard-control-flow}.md.
 
-- Runtime Terms admit small integers, owned atoms, tuples and proper/improper lists. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
+- Runtime Terms admit exact arbitrary integers, owned atoms, tuples and proper/improper lists. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
   Globally non-recycled words reject foreign ownership; immutable pins retain
   host/error spellings after teardown. Revision-4 module descriptors initialize
   deterministic atom slots before registry publication. Generated reads/booleans
   never intern on evaluation. Iterative structural order uses decoded integers, atom spelling, tuple arity/fields and cons heads/tails, with bounded work.
   Failed registration may retain valid atoms, but publishes no module/slots.
+
+- Integers normalize target-sized values to immediates and store larger immutable
+  sign/magnitude words in the indexed heap. Owned bounded multiprecision temporaries,
+  explicit word codecs/carry/borrow and double-width LLVM fast paths preserve exact
+  promotion/demotion. Numeric semantic errors reject guards; badarith/abs badarg
+  and infrastructure failures retain their separate body/channel outcomes.
 
 - Stable heap chunks support bounded word allocation, aligned reservations, rollback
   and explicit resource destruction. No GC or graph copying runs. Revision-4

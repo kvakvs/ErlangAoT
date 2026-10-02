@@ -62,7 +62,7 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
         return context.atom_storage().intern(unhex(scalar.substr(1))).value();
     }
     check(scalar.starts_with('i'));
-    return Term::from_word(encode_integer(std::stoll(std::string(scalar.substr(1)))).value()).value();
+    return TermFactory(context).integer_decimal(scalar.substr(1)).value();
 }
 
 // Render nested containers by value, including arbitrary improper tails and retained error payloads.
@@ -94,7 +94,7 @@ inline void write(const Term &value, std::ostream &out = std::cout, unsigned dep
             out << digits[byte >> 4] << digits[byte & 15];
         }
     } else {
-        out << 'i' << value.integer_value().value();
+        out << 'i' << value.integer_decimal().value();
     }
 }
 } // namespace wire
