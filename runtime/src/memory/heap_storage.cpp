@@ -8,8 +8,8 @@
 namespace erlang_aot::runtime::detail {
 void ChunkDelete::operator()(std::byte *bytes) const noexcept { ::operator delete(bytes); }
 
-HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime)
-    : options(options), lifetime(std::move(lifetime)) {}
+HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms)
+    : options(options), lifetime(std::move(lifetime)), atoms(&atoms) {}
 
 HeapStorage::~HeapStorage() {
     for (auto resource = resources.rbegin(); resource != resources.rend(); ++resource) {

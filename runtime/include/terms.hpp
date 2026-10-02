@@ -1,7 +1,7 @@
 #pragma once
 
-// TermFactory constructs atoms/booleans; other constructors expose reporting placeholders.
-// See runtime/design/terms.md for proposed ownership, immutable updates and the private ABI boundary.
+// TermFactory constructs atoms/booleans and immutable tuple/list graphs with checked ownership.
+// Later numeric/map/binary/identity constructors remain explicit reporting placeholders.
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -19,7 +19,7 @@
 namespace erlang_aot::runtime {
 class ContextLifetime;
 
-// Reserve process-owned constructors; atoms/booleans use the checked runtime-owned spelling table.
+// Bind process-owned constructors; atoms/booleans use the checked runtime-owned spelling table.
 // Raw small integers and empty containers remain available through Term::from_word.
 class TermFactory final {
   public:
@@ -47,6 +47,8 @@ class TermFactory final {
     TermResult<Term> nil();
     TermResult<Term> cons(const Term &head, const Term &tail);
     TermResult<Term> list(std::span<const Term> elements);
+    // Construct a proper or improper spine with an explicit final tail in one transaction.
+    TermResult<Term> list(std::span<const Term> elements, const Term &tail);
     // Construct a tuple, including the zero-element tuple.
     TermResult<Term> tuple(std::span<const Term> elements);
     // Construct a map; the last input entry wins for an exactly equal key.
@@ -73,11 +75,17 @@ class TermFactory final {
   private:
     // Reject expired or moved-from bindings before reporting an unavailable constructor.
     TermResult<Term> unavailable(std::string_view operation) const noexcept;
+    // Check the weak lifetime before dereferencing the borrowed construction owner.
+    TermResult<ProcessHeap *> heap() const noexcept;
+    // Construct one proper or improper immutable spine in a single transaction.
+    TermResult<Term> list_tail(std::span<const Term> elements, const Term &tail);
     // Inspect context liveness without retaining or dereferencing process storage.
     std::weak_ptr<const ContextLifetime> lifetime_;
     // Borrow diagnostic delivery state for this factory's lifetime; null selects stderr.
     DiagnosticSink sink_;
     // Borrow the runtime table only while the context lifetime token is alive.
     AtomStorage *atoms_;
+    // Borrow stable backing only while the process token is alive; moves leave source tokens empty.
+    ProcessHeap *heap_;
 };
 } // namespace erlang_aot::runtime

@@ -170,9 +170,9 @@ check_cli(default_pp_error 1 "^$" "error:.*stop" error.erl)
 check_cli(default_parse_error 1 "^$" "error:.*parse-error.erl" parse-error.erl)
 check_cli(default_failure_latches 1 "^$" "parse-error.erl.*warning:.*notice" parse-error.erl warning.erl)
 check_cli(default_isolation 0 "^$" "^$" first.erl second.erl)
-check_cli(default_expansion 1 "^$" "heap expressions"
+check_cli(default_expansion 0 "^$" "^$"
     -I "first include" "-Isecond include" -DFLAG -DVALUE=42 printing.erl)
-check_cli(default_options 1 "^$" "heap expressions" --app-dir demo=app
+check_cli(default_options 0 "^$" "^$" --app-dir demo=app
     --enable-feature compr_assign --disable-feature maybe_expr parse-options.erl)
 
 # Verbose traces describe only ingested files and never become printed source or AST.

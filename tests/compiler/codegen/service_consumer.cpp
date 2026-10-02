@@ -1,11 +1,13 @@
 #include <array>
 #include <cstdio>
+#include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <limits>
 #include <stdexcept>
+#include <terms.hpp>
 
 using namespace erlang_aot;
 using namespace erlang_aot::runtime;
@@ -13,6 +15,9 @@ extern abi::v1::GeneratedRegistration register_answer asm("eav1_736572766963655f
 extern abi::v1::GeneratedRegistration register_client asm("eav1_736572766963655f636c69656e74__0.register");
 extern std::uint8_t injected(void *, std::uint8_t, Word, Word, Word *) noexcept asm("step7_service");
 extern Word *injected_roots(void *, std::size_t) noexcept asm("step11_roots");
+extern std::uint8_t injected_construct(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept
+    asm("step12_construct");
+extern std::uint8_t injected_inspect(void *, std::uint8_t, Word, std::size_t, Word *) noexcept asm("step12_inspect");
 
 namespace {
 // Select faults after source-generated code has entered the real invocation scope.
@@ -22,6 +27,8 @@ unsigned calls = 0;
 // Target only the reached predicate when proving that lazy branches skip faults and strict branches do not.
 bool predicate_only = false;
 unsigned predicate_calls = 0;
+// Verify real container services retain every live input/output in the generated root frame.
+bool unrooted = false;
 // Exhaust the real root budget at selected generated entry depths before any source service executes.
 std::size_t root_fault_depth = std::numeric_limits<std::size_t>::max();
 
@@ -151,7 +158,78 @@ void root_failures(ProcessContext &context) {
         require(entry.call(context, arguments).has_value(), "root failure poisoned retry");
     }
 }
+
+// Returned extracted graphs and badmatch payloads stay valid after nested allocations and channel cleanup.
+void heap_lifetimes(ProcessContext &context) {
+    TermFactory factory(context);
+    const auto number = Term::from_word(encode_integer(42).value()).value();
+    const auto child = factory.tuple(std::array{number}).value();
+    const auto list = factory.list(std::array{child, child}).value();
+    const auto input = factory.tuple(std::array{number, list}).value();
+    const auto extracted = context.code_server().resolve({"service_answer", "extracted", 1}).value();
+    const auto output = extracted.call(context, std::array{input}).value();
+    require(output.tuple_element(0)->word() == child.word(), "extracted child was reconstructed");
+    const auto failed =
+        context.code_server().resolve({"service_answer", "heap_error", 1}).value().call(context, std::array{input});
+    require(!failed && failed.error().value && !context.generated_calls().failure(),
+            "constructed badmatch lost ownership");
+    for (unsigned i = 0; i < 100; ++i) {
+        require(extracted.call(context, std::array{input}).has_value(), "later nested allocation failed");
+    }
+    require(output.tuple_element(0)->exactly_equal(child) == true, "returned extraction damaged by growth");
+    require(failed.error().value->tuple_element(0)->exactly_equal(input) == true, "retained badmatch graph damaged");
+    require(context.roots().depth() == 0 && context.roots().words() == 0, "heap calls leaked roots");
+}
+
+// A real backing ceiling reached inside generated construction terminates guards and cleans frames.
+void heap_budget(Runtime &runtime) {
+    auto &context = *runtime.create_context({16 * sizeof(Word), 32 * sizeof(Word)}).value();
+    const auto entry = context.code_server().resolve({"service_answer", "heap_guard", 1}).value();
+    const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
+    for (unsigned i = 0; i < 16; ++i) {
+        require(entry.call(context, arguments).has_value(), "premature heap ceiling");
+    }
+    const auto result = entry.call(context, arguments);
+    require(!result && result.error().status == abi::v1::Status::resource_limit, "heap ceiling became false guard");
+    require(context.roots().depth() == 0 && context.roots().words() == 0 && !context.generated_calls().failure(),
+            "heap ceiling leaked call state");
+    require(context.code_server().resolve({"service_answer", "id", 1}).value().call(context, arguments).has_value(),
+            "heap failure poisoned nonallocating retry");
+    require(runtime.destroy_context(&context) == abi::v1::Status::ok, "bounded context teardown failed");
+}
 } // namespace
+
+// Inject infrastructure errors before allocation, preserving generated cleanup and fallback behavior.
+std::uint8_t injected_construct(void *opaque, std::uint8_t operation, const Word *values, std::size_t count,
+                                Word *output) noexcept {
+    auto &context = *static_cast<ProcessContext *>(opaque);
+    ++calls;
+    for (const auto value : std::span(values, count)) {
+        unrooted |= !context.roots().contains(value);
+    }
+    if (fault != abi::v1::Status::ok) {
+        context.generated_calls().fail_service(fault);
+        return 2;
+    }
+    const auto result = erlang_aot_construct_v1(opaque, operation, values, count, output);
+    unrooted |= result == 0 && !context.roots().contains(*output);
+    return result;
+}
+
+// Wrong shape remains a mismatch; a reached ownership/allocation fault must terminate selection.
+std::uint8_t injected_inspect(void *opaque, std::uint8_t operation, Word value, std::size_t index,
+                              Word *output) noexcept {
+    auto &context = *static_cast<ProcessContext *>(opaque);
+    ++calls;
+    unrooted |= !context.roots().contains(value);
+    if (fault != abi::v1::Status::ok) {
+        context.generated_calls().fail_service(fault);
+        return 2;
+    }
+    const auto result = erlang_aot_inspect_v1(opaque, operation, value, index, output);
+    unrooted |= result == 0 && !context.roots().contains(*output);
+    return result;
+}
 
 // Use the production entry service for both success and budget rejection; only its requested count changes.
 Word *injected_roots(void *context, std::size_t count) noexcept {
@@ -194,6 +272,12 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
+        for (const auto name : {"construct", "inspect", "heap_guard"}) {
+            failures(context, "service_answer", name);
+        }
+        heap_lifetimes(context);
+        heap_budget(*runtime);
+        require(!unrooted, "container input/output was not rooted at a reached service");
         return 0;
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());

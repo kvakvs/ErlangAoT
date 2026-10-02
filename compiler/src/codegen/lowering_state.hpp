@@ -3,6 +3,7 @@
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
 #include <erlang_aot/abi/calls.hpp>
+#include <erlang_aot/abi/containers.hpp>
 #include <map>
 
 namespace erlang_aot::codegen {
@@ -52,6 +53,22 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
 // Evaluate only authorized immediate service operations with success-only outputs.
 llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right = nullptr);
+// Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
+llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
+
+struct ServiceOutput {
+    // Pair the status byte with its success-only rooted word slot, without interchangeable positional pointers.
+    llvm::Value *outcome;
+    llvm::Value *slot;
+};
+
+// Consume a checked success-only output after separating infrastructure failure from semantic rejection.
+llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection);
+// Construct tuple/list/string expression values after their source-ordered children have completed.
+llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value);
+// Check candidate ownership/shape before extracting a rooted child; mismatch belongs to the pattern caller.
+llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspection operation, llvm::Value *value,
+                              std::size_t index, llvm::BasicBlock *mismatch);
 // Evaluate the existing bounded body walk using the candidate's tentative bindings.
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root);
 // Emit an already visited ordinary value node; lazy operands are scheduled by the iterative walker.

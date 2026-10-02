@@ -31,12 +31,13 @@ Specialized clones retain scopes; dispatchers forward without heap allocation.
 These rules do not implement tracing, moving GC, suspension or graph copying.
 Host access is serialized. Raw words and allocation spans remain private borrows.
 
-Current admission remains small integers, owned atoms, nil and the canonical empty
-tuple. Factories check their weak context lifetime; atoms retain immutable spelling
-pins and reject foreign-runtime words. Reservations retain backing for safe rollback
-after context teardown, while expired handles deny further access. Concrete compound
-Terms, extracted values and compound badmatch payloads must prove retained ownership
-in step 12 before admission is enabled; immediate execution is not that proof.
+Current admission includes small integers, owned atoms, tuples and proper/improper
+lists. Factories check their weak context lifetime; atoms retain immutable spelling
+pins and reject foreign-runtime words. Reservations and compound Terms retain backing
+for safe cleanup after context teardown, while expired handles deny further access.
+Extracted values and compound badmatch payloads retain ownership across caller return,
+channel cleanup and later allocations; [step-12 validation](patternmatch-step12-validation.md)
+records the concrete compound lifetime, root and fault tests.
 
 See [process memory](runtime-memory.md) for accounting and rollback and
 [step-11 validation](patternmatch-step11-validation.md) for fault/native/width evidence.

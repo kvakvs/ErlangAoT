@@ -1,3 +1,4 @@
+#include "../memory/heap_storage.hpp"
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 
@@ -16,10 +17,7 @@ TermResult<Term> Term::from_word(Word value) noexcept {
 }
 
 TermResult<Term> Term::from_word(Word value, ProcessContext &context) noexcept {
-    if (TermTag{value}.get_kind() == TermKind::atom) {
-        return context.atom_storage().lookup(value);
-    }
-    return from_word(value);
+    return detail::TermAccess::admit(value, context.heap().storage_);
 }
 
 bool Term::is_atom() const { return static_cast<bool>(atom_); }
@@ -66,7 +64,12 @@ TermResult<std::string_view> Term::atom_spelling() const noexcept {
 
 Word Term::word() const noexcept { return value_; }
 
-TermKind Term::kind() const { return TermTag{value_}.get_kind(); }
+TermKind Term::kind() const {
+    if (heap_ && object_) {
+        return heap_->alive() ? object_->kind : TermKind::invalid;
+    }
+    return TermTag{value_}.get_kind();
+}
 
 TermResult<std::int64_t> Term::integer_value() const { return decode_integer(value_); }
 } // namespace erlang_aot::runtime

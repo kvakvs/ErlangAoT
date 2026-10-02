@@ -63,10 +63,13 @@ def rejection(tool, work):
     """Later or unused bodies still resolve calls, check scopes and reject unsupported syntax."""
     directory = work / "negative"
     (directory / "out").mkdir(parents=True, exist_ok=True)
+    for file in (directory / "out").iterdir():
+        if file.is_file():
+            file.unlink()
     (directory / "out/sentinel").write_bytes(b"preserve")
     (directory / "client.erl").write_bytes(b"-module(client). -export([id/1]). id(X) -> X.\n")
-    cases = [("later_heap", "f(X) -> X; f(_) -> {1}.", "heap expressions"),
-             ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> {1}.", "heap expressions"),
+    cases = [("later_heap", "f(X) -> X; f(_) -> [X || X <- []].", "heap expressions"),
+             ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> [X || X <- []].", "heap expressions"),
              ("later_guard", "f(X) -> X; f(X) when is_integer(X,0,1) -> X.", "guards"),
              ("later_call", "f(X) -> X; f(_) -> missing().", "undefined function"),
              ("later_remote", "f(X) -> X; f(_) -> absent:f().", "unknown module"),

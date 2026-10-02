@@ -125,7 +125,7 @@ def main():
     terms.extend(["{answer, accepted, none}.", "{client, accepted, none}."])
     (work / "bindings.term").write_bytes(("\n".join(terms) + "\n").encode())
     oracle = run([escript, str(source / "tests/compiler/patternmatch/bindings.escript"), str(work)])
-    rows.append({"name": "bindings_otp", "diagnostic": "", "capability": "pattern matching"})
+    rows.append({"name": "bindings_otp", "diagnostic": "", "capability": ""})
     cli(tool, work, rows)
     locations(tool, work)
     native(tool, cmake, source, work, settings, config, suffix)

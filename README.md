@@ -8,10 +8,10 @@ uses ABI revision 4; the revision-2 checked call channel is unchanged. See
 Pattern/guard step 5 adds [bounded pattern validation and normalization](docs/pattern-semantics.md),
 including map-key and binary-size binding scopes. Step 6 adds
 [immediate function-head matching](docs/immediate-matching.md): literals,
-repeated variables, aliases, wildcards and canonical empty values. Step 7 adds [immediate guard services](docs/immediate-guards.md), comparisons and guard tests. Step 8 adds [comma/semicolon guards and strict/lazy boolean expressions](docs/guard-control-flow.md). Step 9 adds [ordered function clauses](docs/ordered-clauses.md). Step 10 adds [body matches and sequences](docs/body-matches.md). Step 11 adds [stable heap storage and generated root scopes](docs/generated-roots.md). Compound representations remain deferred.
+repeated variables, aliases, wildcards and canonical empty values. Step 7 adds [immediate guard services](docs/immediate-guards.md), comparisons and guard tests. Step 8 adds [comma/semicolon guards and strict/lazy boolean expressions](docs/guard-control-flow.md). Step 9 adds [ordered function clauses](docs/ordered-clauses.md). Step 10 adds [body matches and sequences](docs/body-matches.md). Step 11 adds [stable heap storage and generated root scopes](docs/generated-roots.md). Step 12 adds [tuple/list/string construction, comparison and matching](docs/container-matching.md).
 
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
-analyzes and compiles an immediate-value/pattern/guard/direct-call subset to LLVM IR,
+analyzes and compiles a scalar/container/pattern/guard/direct-call subset to LLVM IR,
 bitcode and native objects. Generated code executes through test-owned native
 harnesses and the runtime; a production executable launcher remains unimplemented.
 

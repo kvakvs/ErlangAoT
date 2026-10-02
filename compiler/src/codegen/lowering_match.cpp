@@ -34,7 +34,7 @@ llvm::Value *literal(ExpressionLowering &state, const semantic::MatchLiteral &li
     return llvm::ConstantInt::get(state.word, encoded);
 }
 
-// Inputs remain unchanged and are loaded once; no representation-dependent extraction is admitted yet.
+// Original candidate arguments are loaded once; checked extractions populate separate SSA slots.
 std::vector<llvm::Value *> inputs(ExpressionLowering &state, const semantic::MatchPlan &plan) {
     std::vector<llvm::Value *> values;
     for (std::size_t i = 0; i < plan.inputs; ++i) {
@@ -45,14 +45,52 @@ std::vector<llvm::Value *> inputs(ExpressionLowering &state, const semantic::Mat
     return values;
 }
 
+// Map plan extraction operations to the shared ownership-checking runtime service.
+std::optional<abi::v1::ContainerInspection> inspection(semantic::MatchOperation operation) {
+    using Operation = semantic::MatchOperation;
+    using Inspect = abi::v1::ContainerInspection;
+    switch (operation) {
+    case Operation::tuple_shape:
+        return Inspect::tuple_shape;
+    case Operation::tuple_element:
+        return Inspect::tuple_element;
+    case Operation::cons_shape:
+        return Inspect::cons_shape;
+    case Operation::cons_head:
+        return Inspect::cons_head;
+    case Operation::cons_tail:
+        return Inspect::cons_tail;
+    default:
+        return {};
+    }
+}
+
+// The projection shortcut is valid only when no shape, extraction or equality operation can reject.
+bool constrained(const semantic::MatchPlan &plan) {
+    return std::ranges::any_of(plan.nodes, [](const auto &node) {
+        return node.operation != semantic::MatchOperation::bind &&
+               node.operation != semantic::MatchOperation::success &&
+               node.operation != semantic::MatchOperation::mismatch;
+    });
+}
+
 // Binding values are tentative SSA definitions; every exact test has explicit caller-owned mismatch edges.
-void node(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *const> values,
+void node(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
           const std::vector<llvm::BasicBlock *> &blocks) {
     locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(node.source).source);
     if (node.input >= values.size()) {
         throw std::invalid_argument("lowering: match input is out of range");
     }
     auto *input = values[node.input];
+    if (const auto operation = inspection(node.operation)) {
+        auto *result = lower_inspection(state, *operation, input, node.index, blocks.at(node.mismatch));
+        if (node.operation != semantic::MatchOperation::tuple_shape &&
+            node.operation != semantic::MatchOperation::cons_shape) {
+            values[node.output] = result;
+        }
+        state.builder.CreateBr(blocks.at(node.success));
+        return;
+    }
     if (node.operation == semantic::MatchOperation::bind) {
         state.bindings.emplace(*node.binding, input);
         state.builder.CreateBr(blocks.at(node.success));
@@ -71,11 +109,7 @@ bool lower_unconditional_head(ExpressionLowering &state) {
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }
-    const auto tests = std::ranges::any_of(plan->nodes, [](const auto &node) {
-        return node.operation == semantic::MatchOperation::exact_binding ||
-               node.operation == semantic::MatchOperation::exact_literal;
-    });
-    if (tests) {
+    if (constrained(*plan)) {
         return false;
     }
     std::map<semantic::BindingId, std::size_t> definitions;
@@ -125,6 +159,8 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
 
 void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan, std::span<llvm::Value *const> values,
                       llvm::BasicBlock *success, llvm::BasicBlock *mismatch) {
+    std::vector<llvm::Value *> candidates(plan.values);
+    std::ranges::copy(values, candidates.begin());
     std::vector<llvm::BasicBlock *> blocks;
     for (const auto &node : plan.nodes) {
         if (node.operation == semantic::MatchOperation::success) {
@@ -138,7 +174,7 @@ void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan
     state.builder.CreateBr(blocks.front());
     for (std::size_t i = 0; i + 2 < plan.nodes.size(); ++i) {
         state.builder.SetInsertPoint(blocks[i]);
-        node(state, plan.nodes[i], values, blocks);
+        node(state, plan.nodes[i], candidates, blocks);
     }
 }
 

@@ -45,10 +45,6 @@ void check_factory(ProcessContext &context) {
     const std::array results{factory.integer(3),
                              factory.integer_decimal("123"),
                              factory.floating(1.5),
-                             factory.nil(),
-                             factory.cons(term, term),
-                             factory.list({}),
-                             factory.tuple({}),
                              factory.map({}),
                              factory.binary({}),
                              factory.bitstring({}, 0),
@@ -61,7 +57,7 @@ void check_factory(ProcessContext &context) {
     require(reports.count == results.size() && reports.last.starts_with("[term services] notimpl"),
             "factory report count/feature wrong");
     TermFactory failed(context, {nullptr, reject});
-    require(failed.nil() == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
+    require(failed.floating(1.5) == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
 }
 
 // Moving/expiring a factory must not retain or dereference destroyed context storage.
@@ -198,7 +194,7 @@ void report_nested(ProcessContext &context) {
 // Term/memory subprocess modes reach only one report owner.
 bool report_storage(std::string_view mode, ProcessContext &context) {
     if (mode == "term") {
-        require(TermFactory(context).nil() == std::unexpected(TermError::not_implemented), "term status wrong");
+        require(TermFactory(context).floating(1.5) == std::unexpected(TermError::not_implemented), "term status wrong");
     } else if (mode == "allocate") {
         require(context.heap().allocate(1).has_value(), "allocation status wrong");
     } else if (mode == "collect") {

@@ -21,7 +21,7 @@
     "body": "f(({A,B} = {B,A}) = Whole) -> {Whole,A,B}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_groups",
@@ -37,7 +37,7 @@
     "body": "f(\"abc\" ++ [65,$b] ++ Tail) -> Tail.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_prefix_empty",
@@ -45,7 +45,7 @@
     "body": "f([] ++ Tail) -> Tail.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_body_compound",
@@ -53,7 +53,7 @@
     "body": "f(V) -> ({A,B} = {B,A}) = V, {A,B}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_body_rhs",
@@ -229,7 +229,7 @@
     "body": "f(V) -> X = Y = V, {X,Y}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "heap expressions"
+    "capability": ""
   },
   {
     "name": "pat_nested_call",
@@ -621,7 +621,7 @@
     "body": "f(([1|[2|[]]]) ++ T) -> T.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_prefix_group",
@@ -629,7 +629,7 @@
     "body": "f([(1),($a)] ++ T) -> T.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_key_operator_call",

@@ -1,6 +1,8 @@
 #pragma once
+#include "heap_object.hpp"
 #include "process_heap.hpp"
 #include <erlang_aot/runtime/process_context.hpp>
+#include <map>
 
 namespace erlang_aot::runtime::detail {
 struct ChunkDelete {
@@ -24,7 +26,7 @@ struct HeapResource {
 class HeapStorage final {
   public:
     // Bind validated budgets and a liveness token without allocating backing chunks.
-    HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime);
+    HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms);
     // Execute C++ destructors in reverse construction order while all backing bytes still exist.
     ~HeapStorage();
     HeapStorage(const HeapStorage &) = delete;
@@ -46,5 +48,13 @@ class HeapStorage final {
     std::size_t used_words = 0;
     std::size_t capacity_words = 0;
     bool pending = false;
+    // Own exact published starts; object entries remain stable while host Terms pin this storage.
+    std::map<Word, HeapObject> objects;
+    // Borrow the runtime atom table only while the process lifetime token remains alive.
+    AtomStorage *atoms;
 };
+
+// Publish a fully initialized object batch atomically; constructor-owned reservations roll back on failure.
+TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReservation &reservation,
+                         std::span<const HeapObject> objects, HeapDestructor destroy = nullptr) noexcept;
 } // namespace erlang_aot::runtime::detail

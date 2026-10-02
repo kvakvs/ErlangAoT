@@ -1,3 +1,4 @@
+#include "terms.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <erlang_aot/runtime/code_server.hpp>
@@ -315,6 +316,35 @@ void check_heap_construction() {
     require(succeeded, "heap construction sweep never succeeded");
 }
 
+// Every failed tuple/list publication restores its entire reservation and index before a successful retry.
+void check_container_construction(bool list) {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &context = *runtime->create_context().value();
+            TermFactory factory(context);
+            const auto number = Term::from_word(encode_integer(42).value()).value();
+            const std::array elements{number, number, number, number, number, number, number, number};
+            remaining = ordinal;
+            const auto result = list ? factory.list(elements) : factory.tuple(elements);
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = result.has_value();
+            if (!succeeded) {
+                require(result.error() == TermError::out_of_memory, "compound allocation status lost");
+                require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
+                        "partial compound allocation survived rollback");
+                require((list ? factory.list(elements) : factory.tuple(elements)).has_value(),
+                        "failed object index poisoned retry");
+            }
+        }
+        require(live_allocations == baseline, "compound allocation sweep leaked");
+    }
+    require(succeeded, "compound allocation sweep never reached success");
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 int main() {
     try {
@@ -327,6 +357,8 @@ int main() {
         check_atom_registration();
         check_heap_construction();
         check_root_allocation();
+        check_container_construction(false);
+        check_container_construction(true);
     } catch (const std::exception &error) {
         remaining = std::numeric_limits<std::size_t>::max();
         std::fprintf(stderr, "%s\n", error.what());

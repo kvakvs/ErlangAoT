@@ -43,7 +43,7 @@
     "name": "chain",
     "arity": 0,
     "body": "f() -> X = Y = 1, {X, Y}.",
-    "capability": "heap expressions",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -59,7 +59,7 @@
     "name": "sibling_checks",
     "arity": 0,
     "body": "f() -> {X = 4, _ = X = 3}, X.",
-    "capability": "heap expressions",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -67,7 +67,7 @@
     "name": "sibling_local",
     "arity": 0,
     "body": "f() -> {begin X = 1, X end, X = 2}, X.",
-    "capability": "heap expressions",
+    "capability": "pattern matching",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -83,7 +83,7 @@
     "name": "compound",
     "arity": 1,
     "body": "f({X, X, _, _Name}) -> {_Name, X}.",
-    "capability": "pattern matching",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },

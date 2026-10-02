@@ -31,9 +31,10 @@ accounting; its allocation failures are contained and tested.
 Storage ownership is independent of a context's address. Context teardown invalidates
 its lifetime token first. An outstanding reservation pins storage for safe cleanup,
 but denies byte access and commit after expiration. Factories already retain weak
-lifetime tokens. Compound host admission remains gated pending step-12 lifetime
-tests; existing host/error atoms retain immutable spelling pins. Immediate copies and
-same-runtime atoms remain supported; foreign atoms reject instead of remapping.
+lifetime tokens. Published tuple/cons handles pin backing and exact object metadata;
+access after context expiration is rejected. Host/error atoms retain immutable
+spelling pins. Immediate copies, same-runtime atoms and same-heap compound handoffs
+remain supported; foreign values reject instead of silently remapping/copying.
 
 Generated arguments, temporaries and result handoffs use
 [revision-4 root scopes](generated-roots.md). `collect()` still reports
@@ -46,5 +47,6 @@ borrowed and cannot be used after their owner exits.
 resource destruction and expired reservations. `runtime_lifecycle_failure` sweeps
 backing/chunk/resource/root allocations and checks cleanup and retry. Native
 generated-call fault workflows test root scopes on success, errors and exceptions.
-See [step-11 validation](patternmatch-step11-validation.md). Other native hosts and
+See [step-11 validation](patternmatch-step11-validation.md) and
+[container lifetime validation](patternmatch-step12-validation.md). Other native hosts and
 moving-GC survival are not established by these tests.

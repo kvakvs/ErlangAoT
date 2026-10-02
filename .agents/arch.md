@@ -31,10 +31,9 @@
   only a binary's own preceding segments extend its size scope. Bounded flat
   normalization owns constants/source anchors; semantic failure clears partial tables.
 
-- Current execution: ordered clauses, immediate variable/wildcard/literal/repeated/alias
-  heads, grouped guards, and body matches/sequences using integer/atom/empty literals,
-  bindings, immediate services, boolean operators or acyclic local/exported batch
-  calls. Flat match plans carry explicit success/mismatch continuations and tentative
+- Current execution: ordered clauses, scalar/tuple/list/string patterns, grouped
+  guards and body matches/sequences, constructors, checked access/comparison, boolean
+  operators and acyclic local/exported batch calls. Flat match plans carry explicit success/mismatch continuations and tentative
   SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
   raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain direct argument projections inside their root scope.
 
@@ -52,19 +51,22 @@
   for an invalid lazy left operand. Join instructions retain operator provenance.
   See docs/{immediate-matching,immediate-guards,guard-control-flow}.md.
 
-- Runtime Terms currently admit small integers, owned atoms, canonical empty tuple
-  and nil. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
+- Runtime Terms admit small integers, owned atoms, tuples and proper/improper lists. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
   Globally non-recycled words reject foreign ownership; immutable pins retain
   host/error spellings after teardown. Revision-4 module descriptors initialize
   deterministic atom slots before registry publication. Generated reads/booleans
-  never intern on evaluation. Ordering uses decoded integers and atom spelling.
+  never intern on evaluation. Iterative structural order uses decoded integers, atom spelling, tuple arity/fields and cons heads/tails, with bounded work.
   Failed registration may retain valid atoms, but publishes no module/slots.
 
 - Stable heap chunks support bounded word allocation, aligned reservations, rollback
   and explicit resource destruction. No GC or graph copying runs. Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
-  Host compound admission remains step12, with retained result/error obligations.
+  Exact-start object indices prove ownership before extraction. Compound host handles
+  pin backing, deny expired access and retain returned children/error payloads across
+  growth. Constructors publish initialized tuples/cons spines transactionally;
+  metadata/backing allocation failure rolls back. Rooted runtime scratch buffers
+  keep wide source constructors off the native stack.
 
 - Generated ABI entries retain target-word terms, context and argument arrays.
   Revision-2 first-error channels separate structured Erlang errors from exact
@@ -89,9 +91,9 @@
   multi-file publication is not atomic. Production executable linking stays deferred.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
-  are implemented. Compound admission, GC, workers, messaging, process identities,
+  are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–11 are complete; steps 12–20 remain.
+  Patternmatch steps 1–12 are complete; steps 13–20 remain.
   The current request is completion of the entire plan.
 
 - Tests prioritize real CLI/project sources, separate native runtime consumers and

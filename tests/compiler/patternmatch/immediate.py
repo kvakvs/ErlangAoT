@@ -7,7 +7,13 @@ from evidence import digest, provenance, run
 
 
 def token(value):
-    """Encode only runtime-admitted mathematical integers, atoms and canonical empty containers."""
+    """Encode runtime-admitted values independently of native representation and allocation identity."""
+    if isinstance(value, tuple):
+        return "t(" + ",".join(map(token, value)) + ")" if value else "tuple"
+    if isinstance(value, list):
+        return "c(" + token(value[0]) + "," + token(value[1:]) + ")" if value else "nil"
+    if isinstance(value, dict):
+        return "c(" + ",".join(map(token, value['cons'])) + ")"
     if isinstance(value, int):
         return f"i{value}"
     return value if value in ["nil", "tuple"] else "a" + value.encode().hex()
@@ -15,6 +21,12 @@ def token(value):
 
 def erl(value):
     """Supply independent Erlang terms to the OTP execution oracle."""
+    if isinstance(value, tuple):
+        return "{" + ",".join(map(erl, value)) + "}"
+    if isinstance(value, list):
+        return "[" + ",".join(map(erl, value)) + "]"
+    if isinstance(value, dict):
+        return "[" + "|".join(map(erl, value['cons'])) + "]"
     if isinstance(value, int):
         return str(value)
     return {"nil": "[]", "tuple": "{}"}.get(value, "'" + value + "'")

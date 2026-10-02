@@ -1,27 +1,24 @@
-# Runtime term API — immediate services and heap sketch
+# Runtime term API — implemented containers and future families
 
-Status: immediate services and owned host atoms are implemented. Pattern/guard
-step 3 adds runtime-owned atom storage, module bindings, atom/boolean factories and
-immutable spelling pins. See [runtime atoms](../../docs/runtime-atoms.md) and
-[runtime builtin dispatch](../../docs/runtime-builtins.md). Heap/rooting contracts
-below remain proposals. Stable backing/reservations and generated roots are implemented;
-see [the memory contract](../../docs/runtime-memory.md). Graph copying and collection remain absent.
+Status: small integers, atoms/booleans, tuples and proper/improper lists are
+implemented with checked contextual admission and retained host ownership.
+See [containers](../../docs/container-matching.md), [runtime atoms](../../docs/runtime-atoms.md),
+[process memory](../../docs/runtime-memory.md), and [generated roots](../../docs/generated-roots.md).
+The table below also reserves future numeric/map/binary/identity APIs; a declaration
+alone does not establish implementation. Graph copying and collection remain absent.
 
-[Runtime word services](../../docs/runtime-terms.md) document checked classification
-and integer encoding/decoding. Host [Term](../include/erlang_aot/runtime/terms.hpp)
-contains an ABI word plus an optional atom pin; it is not a generated or heap layout.
-[term_layout.hpp](../src/terms/term_layout.hpp) stores Word slots in private prefixes.
-[AtomStorage](../include/erlang_aot/runtime/atoms.hpp) supplies one runtime-owned table;
-compiled literals use spellings/slots initialized before module publication.
+Host [Term](../include/erlang_aot/runtime/terms.hpp) contains an ABI word and optional
+atom/heap ownership pins. It is not a generated or heap layout. Private layouts use
+target Word slots; exact published starts and extents are indexed before admission.
 
 ## Class boundary and immediate ABI
 
 `Term` is a final host value API with private storage and process-bound
-`TermFactory` construction. Its Word is an admitted immediate; immutable atom
+`TermFactory` construction. Its Word is an admitted value; immutable atom
 records add spelling lifetime independently of processes and runtime teardown.
-The default zero word is an invalid slot. Heap ownership/root tracking and explicit
-safepoints must be implemented before heap lowering; atom pins do not establish
-future heap or moving-GC correctness.
+Compound handles pin stable backing but deny access after context expiration.
+The default zero word is invalid. Root scopes preserve allocating call lifetimes;
+moving GC remains future work.
 
 The implemented term representation retains [v1 names](../../abi/include/erlang_aot/abi/v1.hpp)
 with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
@@ -43,7 +40,7 @@ Tertiary bits 4–5 reserve atom=0, catch=1, empty tuple=2 and nil=3. Small inte
 encoding is `(unsigned(value) << 4) | 0xf`, after checking the exact
 signed range `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Negative decoding explicitly
 reconstructs the signed payload without implementation-defined unsigned-to-signed
-conversion or signed right shift. No heap pointer encoder is provided yet.
+conversion or signed right shift. Only private constructors encode published heap starts.
 
 Both 32-bit and 64-bit codecs are tested on every host. Cross compilation takes
 width/alignment from the LLVM target layout, never host `sizeof(Word)`. The native
@@ -53,10 +50,10 @@ Other native runtime toolchains still need their own full layout validation.
 ## Explicit process-heap layout
 
 `Word` is the runtime target's unsigned pointer-width type, aligned to 4 or 8 bytes.
-`Term`, `TermTag` and `BoxHeader` are each one word. The private header reserves low
+`TermTag` and `BoxHeader` are each one word; host `Term` includes ownership pins. The private header reserves low
 two bits 00, five kind bits at bits 2–6, and a content-word count starting at bit 7.
 That count excludes the header and includes all remaining prefix, trailing payload
-and allocation padding. Checked header construction remains future heap work.
+and allocation padding. Tuple construction initializes its header before publication; other boxed families below remain reserved.
 Cons cells have no header; they contain exactly a head term and a tail term.
 
 | Private prefix | Fixed size | Trailing storage / future tracing |
@@ -122,13 +119,10 @@ Distribution and serialization, including imports of remote identities, are defe
 
 ## Values, ownership and errors
 
-The following are proposed host-handle contracts. Step 10 implements raw word
-services only; these neither construct host handles nor register process roots.
-Step 9 supplies `ProcessContext::lifetime()`: host binding/root metadata will lock or
-retain its `ContextLifetime` token and check liveness before touching the context.
-Destruction clears liveness before mailbox/heap release; retaining the token does
-not retain that storage. Atom Terms now own spelling pins; process-heap Terms still
-need a separate root/owner protocol.
+The following contracts apply to admitted atoms and containers; future categories
+must satisfy equivalent ownership rules before admission. Context teardown clears
+liveness before releasing its storage pin. Compound Terms retain that backing for
+safe destruction and return `expired_context` from checked accessors thereafter.
 
 - Factories bind to one process context. Every returned term is a rooted host
   handle; copying retains the value, assigning rebinds only that C++ handle.
@@ -139,8 +133,9 @@ need a separate root/owner protocol.
   returns owned text/bytes, copied opaque identities or rooted child handles.
   No borrowed view survives heap movement or collection.
 - Composite construction and updates accept terms from the same process context.
-  Cross-context inputs return `wrong_owner`, even for immediates, to keep one
-  predictable contract. `copy_to`/`ProcessHeap::add` are explicit cross-heap operations;
+  Foreign compound inputs return `wrong_owner`; immediates are owner-independent
+  and atoms are shared within one runtime. `copy_to`/`ProcessHeap::add` currently
+  retain same-heap values and reject foreign graphs;
   ordinary C++ handle copies never transfer process ownership.
   Runtime-issued identities/descriptors must belong to the same runtime instance.
 - Scheduler-mediated process exit invalidates term/factory lifetime tokens before
@@ -158,11 +153,16 @@ need a separate root/owner protocol.
   no general `noexcept` promise is made. The future ABI adapter must catch and
   translate host exceptions. Term errors are not automatically Erlang exceptions;
   the BIF/compiler boundary chooses the appropriate Erlang failure behavior.
-- `exactly_equal` compares Erlang values, including arbitrary integers and identity
-  terms. Map keys use exact equality (integer `1` and float `1.0` are distinct).
+- `exactly_equal` compares admitted values structurally within explicit work limits.
+  Later numeric and identity families must extend that shared dispatch. Map keys use exact equality (integer `1` and float `1.0` are distinct).
   There is no pointer-based equality operator or exposed hashing policy.
 
 ## Heap ownership, copying and collection
+
+Current `add`/`copy_to` validate and retain same-heap compound handles, preserving
+identity. Owner-independent values and same-runtime atoms already transfer safely.
+The remaining paragraphs in this section describe **future graph copying and GC**,
+not current behavior; no collector or cross-heap copy is invoked by construction.
 
 `ProcessContext` owns one `ProcessHeap` as an explicit member, and `TermFactory`
 allocates and registers roots there. The heap's `add(value)` and

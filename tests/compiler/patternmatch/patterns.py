@@ -25,7 +25,7 @@ def cases(source, otp, work):
         expected = "rejected" if row["diagnostic"] else "accepted"
         terms.append(f'{{{name}, {expected}, {row["otp_diagnostic"] or "none"}}}.')
     helper_record = helpers(otp, work)
-    rows.append(dict(name="bindings_otp", diagnostic="", capability="pattern matching"))
+    rows.append(dict(name="bindings_otp", diagnostic="", capability=""))
     terms.append("{bindings_otp, accepted, none}.")
     binary_path = otp / "lib/compiler/test/bs_size_expr_SUITE.erl"
     binary_source = binary_path.read_text(encoding="utf-8")

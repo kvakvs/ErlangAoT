@@ -18,4 +18,6 @@ main([Root]) ->
 token(Value) when is_integer(Value) -> "i" ++ integer_to_list(Value);
 token(Value) when is_atom(Value) -> "a" ++ binary_to_list(binary:encode_hex(atom_to_binary(Value, utf8), lowercase));
 token([]) -> "nil";
-token({}) -> "tuple".
+token({}) -> "tuple";
+token(Value) when is_tuple(Value) -> "t(" ++ lists:join(",", lists:map(fun token/1, tuple_to_list(Value))) ++ ")";
+token([Head|Tail]) -> "c(" ++ token(Head) ++ "," ++ token(Tail) ++ ")".

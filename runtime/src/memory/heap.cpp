@@ -29,7 +29,7 @@ abi::v1::Status status(HeapError error) {
 } // namespace
 
 ProcessHeap::ProcessHeap(ProcessContext &owner, HeapOptions options)
-    : owner_(owner), storage_(std::make_shared<detail::HeapStorage>(options, owner.lifetime())) {}
+    : owner_(owner), storage_(std::make_shared<detail::HeapStorage>(options, owner.lifetime(), owner.atom_storage())) {}
 
 ProcessHeap::~ProcessHeap() = default;
 

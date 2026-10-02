@@ -1,7 +1,9 @@
+#include "match_wire.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
@@ -17,44 +19,17 @@ void require(bool condition, const char *message) {
     }
 }
 
-// Decode stable hex spellings without admitting fabricated atom IDs.
-std::string unhex(std::string_view input) {
-    std::string output;
-    require(input.size() % 2 == 0, "invalid hex spelling");
-    for (std::size_t i = 0; i < input.size(); i += 2) {
-        output.push_back(static_cast<char>(std::stoul(std::string(input.substr(i, 2)), nullptr, 16)));
-    }
-    return output;
-}
-
-// Construct every argument through real runtime admission/atom ownership.
+// Decode owned terms through the bounded value transport and reject trailing input.
 Term term(ProcessContext &context, const std::string &token) {
-    if (token == "nil" || token == "tuple") {
-        return Term::from_word(token == "nil" ? erlang_aot::abi::v1::empty_list : erlang_aot::abi::v1::empty_tuple)
-            .value();
-    }
-    if (token.starts_with('a')) {
-        return context.atom_storage().intern(unhex(std::string_view(token).substr(1))).value();
-    }
-    require(token.starts_with('i'), "unknown argument token");
-    return Term::from_word(encode_integer(std::stoll(token.substr(1))).value()).value();
+    std::string_view input(token);
+    const auto result = wire::read(context, input);
+    require(input.empty(), "trailing argument input");
+    return result;
 }
 
-// Render immediate values and retained error payloads with stable spellings rather than raw IDs.
+// End each successful or retained-error result with exactly one transport newline.
 void print_value(const Term &value) {
-    if (value.is_atom()) {
-        static constexpr std::string_view digits = "0123456789abcdef";
-        std::cout << 'a';
-        for (unsigned char byte : value.atom_utf8().value()) {
-            std::cout << digits[byte >> 4] << digits[byte & 15];
-        }
-    } else if (value.kind() == TermKind::empty_list) {
-        std::cout << "nil";
-    } else if (value.kind() == TermKind::empty_tuple) {
-        std::cout << "tuple";
-    } else {
-        std::cout << 'i' << value.integer_value().value();
-    }
+    wire::write(value);
     std::cout << '\n';
 }
 
@@ -96,6 +71,7 @@ void equality_failures(ProcessContext &context) {
 
 // Invoke each complete source helper through its registered generated ABI entry.
 void calls(ProcessContext &context) {
+    std::vector<std::pair<Term, std::string>> retained;
     std::string module;
     std::string function;
     std::size_t arity = 0;
@@ -107,10 +83,26 @@ void calls(ProcessContext &context) {
             require(static_cast<bool>(std::cin >> token), "missing argument");
             arguments.push_back(term(context, token));
         }
-        print(context.code_server().resolve({module, function, arity}).value().call(context, arguments));
+        const auto result = context.code_server().resolve({module, function, arity}).value().call(context, arguments);
+        print(result);
+        if (result && (function == "first" || function == "id")) {
+            require(result->word() == arguments.front().word(), "projection reconstructed a matched term");
+        }
+        const auto value = result ? std::optional<Term>{*result} : result.error().value;
+        if (value && retained.size() < 128 && (value->is_cons() || value->kind() == TermKind::tuple)) {
+            std::ostringstream text;
+            wire::write(*value, text);
+            retained.emplace_back(*value, text.str());
+        }
         require(!context.generated_calls().failure(), "stale failure after invocation");
+        require(context.roots().depth() == 0 && context.roots().words() == 0, "generated call leaked root frames");
     }
     require(std::cin.eof(), "invalid calls stream");
+    for (const auto &[value, expected] : retained) {
+        std::ostringstream text;
+        wire::write(value, text);
+        require(text.str() == expected, "later calls changed retained result/error graph");
+    }
 }
 } // namespace
 

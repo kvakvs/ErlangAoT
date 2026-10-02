@@ -19,11 +19,11 @@ Patterns are validated as patterns; their folded constants are not re-evaluated
 as ordinary body expressions.
 
 A failed body match raises `error:{badmatch, RHS}` through the existing checked
-call channel, retaining the immediate payload's ownership. It does not continue
+call channel, retaining the payload's ownership. It does not continue
 the sequence or retry a later function clause. Nested callers preserve the first
-failure. Heap payload admission and roots remain assigned to steps 11–12.
+failure. Steps 11–12 add rooted compound payloads and retained extraction lifetimes.
 
 The admitted match domain remains variables, wildcards, aliases, small integers,
-atoms and canonical empty lists/tuples. This delivers the sequence/match slice of
+atoms, tuples, proper/improper lists and string prefixes. This delivers the sequence/match slice of
 F16. Blocks, case/if, exceptions and other source control contexts retain their
 separate capability gates. See [step 10 validation](patternmatch-step10-validation.md).

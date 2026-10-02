@@ -1,6 +1,6 @@
-#include "match_plan.hpp"
 #include "capabilities.hpp"
 #include "features.hpp"
+#include "match_plan_internal.hpp"
 #include <array>
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
@@ -21,7 +21,7 @@ std::optional<MatchLiteral> integer(const ast::IntegerLiteral &integer, unsigned
     return fits ? std::optional<MatchLiteral>{number} : std::nullopt;
 }
 
-// Canonical empty patterns need no extraction; later nonempty containers stay capability-gated.
+// Canonical empty literals share immediate encodings with the checked container services.
 std::optional<MatchLiteral> empty(const NormalizedPattern &pattern) {
     if (pattern.kind == PatternKind::tuple && pattern.children.empty()) {
         return EmptyValue::tuple;
@@ -51,54 +51,43 @@ std::optional<MatchLiteral> literal(const NormalizedPattern &pattern, unsigned b
     return integer ? semantic::integer(*integer, bits) : std::nullopt;
 }
 
-struct Planner {
-    // Index immutable normalized nodes/events once, avoiding repeated scans for wide patterns.
-    const Module &module;
-    const Reporter &out;
-    unsigned bits;
-    std::map<const ast::Expression *, const NormalizedPattern *> patterns;
-    std::map<const ast::Expression *, const Binding *> bindings;
-    MatchPlan plan;
-    std::size_t work = 0;
-    std::size_t limit;
+} // namespace
 
-    // No partially built plan escapes resource exhaustion.
-    bool spend(const ast::ExprId &site) {
-        if (work++ >= limit) {
-            report(module, &module.syntax->expression(site).source, "match plan work limit exceeded", out);
-            return false;
-        }
-        return true;
-    }
-
-    // First definitions publish a tentative slot; repeated occurrences test exactly that slot.
-    void variable(const NormalizedPattern &pattern, std::size_t input) {
-        const auto &binding = *bindings.at(&module.syntax->expression(pattern.expression));
-        const auto operation =
-            binding.use == BindingUse::definition ? MatchOperation::bind : MatchOperation::exact_binding;
-        plan.nodes.push_back({pattern.origin, operation, input, binding.identity});
-        if (operation == MatchOperation::bind) {
-            plan.outputs.push_back(binding.identity);
-        }
-    }
-
-    // Aliases are scheduled by the caller on the same input, never evaluated as assignments.
-    bool node(const NormalizedPattern &pattern, std::size_t input) {
-        if (pattern.kind == PatternKind::wildcard || pattern.kind == PatternKind::alias) {
-            return true;
-        }
-        if (pattern.kind == PatternKind::variable) {
-            variable(pattern, input);
-            return true;
-        }
-        if (const auto value = literal(pattern, bits)) {
-            plan.nodes.push_back({pattern.origin, MatchOperation::exact_literal, input, {}, value});
-            return true;
-        }
-        reject_capability(module, module.syntax->expression(pattern.origin).source, "pattern matching", out);
+bool MatchPlanner::spend(const ast::ExprId &site) {
+    if (work++ >= limit) {
+        report(module, &module.syntax->expression(site).source, "match plan work limit exceeded", out);
         return false;
     }
-};
+    return true;
+}
+
+void MatchPlanner::variable(const NormalizedPattern &pattern, std::size_t input) {
+    const auto &binding = *bindings.at(&module.syntax->expression(pattern.expression));
+    const auto operation = binding.use == BindingUse::definition ? MatchOperation::bind : MatchOperation::exact_binding;
+    plan.nodes.push_back({pattern.origin, operation, input, binding.identity});
+    if (operation == MatchOperation::bind) {
+        plan.outputs.push_back(binding.identity);
+    }
+}
+
+bool MatchPlanner::node(const NormalizedPattern &pattern, std::size_t input) {
+    if (pattern.kind == PatternKind::wildcard || pattern.kind == PatternKind::alias) {
+        return true;
+    }
+    if (pattern.kind == PatternKind::variable) {
+        variable(pattern, input);
+        return true;
+    }
+    if (const auto value = literal(pattern, bits)) {
+        plan.nodes.push_back({pattern.origin, MatchOperation::exact_literal, input, {}, value});
+        return true;
+    }
+    reject_capability(module, module.syntax->expression(pattern.origin).source, "pattern matching", out);
+    return false;
+}
+
+namespace {
+using Planner = MatchPlanner;
 
 // Indexing is budgeted too; no unchecked syntax walk or lookup precedes normalized pattern analysis.
 bool index(Planner &state, const Function &function, const ast::ExprId &site) {
@@ -118,21 +107,43 @@ bool index(Planner &state, const Function &function, const ast::ExprId &site) {
     return true;
 }
 
-// Expand compound patterns iteratively, sharing one candidate input across every alias operand.
+// Containers schedule checked extraction before their children; aliases reuse their original input.
+bool visit_pattern(Planner &state, const PatternVisit &visit, std::vector<MatchTask> &pending) {
+    if (!state.spend(visit.id)) {
+        return false;
+    }
+    const auto &pattern = *state.patterns.at(&state.module.syntax->expression(visit.id));
+    if (container_pattern(pattern)) {
+        return expand_container(state, visit, pattern, pending);
+    }
+    if (!state.node(pattern, visit.input)) {
+        return false;
+    }
+    if (pattern.kind == PatternKind::alias) {
+        for (auto child = pattern.children.rbegin(); child != pattern.children.rend(); ++child) {
+            pending.emplace_back(PatternVisit{*child, visit.input});
+        }
+    }
+    return true;
+}
+
+// Planned operations and source visits share a bounded explicit stack.
+bool task(Planner &state, const MatchTask &task, std::vector<MatchTask> &pending) {
+    if (const auto *node = std::get_if<MatchNode>(&task)) {
+        state.plan.nodes.push_back(*node);
+        return true;
+    }
+    return visit_pattern(state, std::get<PatternVisit>(task), pending);
+}
+
+// Expand nested patterns without consuming the native C++ call stack.
 bool argument(Planner &state, const ast::ExprId &root, std::size_t input) {
-    std::vector<ast::ExprId> pending{root};
+    std::vector<MatchTask> pending{PatternVisit{root, input}};
     while (!pending.empty()) {
-        const auto id = pending.back();
+        auto next = std::move(pending.back());
         pending.pop_back();
-        if (!state.spend(id)) {
+        if (!task(state, next, pending)) {
             return false;
-        }
-        const auto &pattern = *state.patterns.at(&state.module.syntax->expression(id));
-        if (!state.node(pattern, input)) {
-            return false;
-        }
-        if (pattern.kind == PatternKind::alias) {
-            pending.insert(pending.end(), pattern.children.rbegin(), pattern.children.rend());
         }
     }
     return true;
@@ -154,7 +165,7 @@ void finish(MatchPlan &plan, const ast::ExprId &site) {
 std::optional<MatchPlan> build_plan(const Module &module, const Function &function, std::span<const ast::ExprId> roots,
                                     const ast::ExprId &site, const Reporter &out, MatchOptions options) {
     const auto limit = options.work_limit;
-    Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}}, 0, limit};
+    Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}, roots.size()}, 0, limit};
     if (!index(state, function, site)) {
         return {};
     }

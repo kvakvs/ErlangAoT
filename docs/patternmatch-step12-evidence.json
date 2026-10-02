@@ -1,0 +1,178 @@
+{
+  "calls": 4801,
+  "helpers": [
+    {
+      "suite": "match_SUITE",
+      "function": "str_alias_1/1",
+      "source": "str_alias_1([$a,$b,$c]=\"abc\"=\"a\"++[$b,$c]=[97,98,99]) -> ok;\nstr_alias_1([$d|\"ef\"]=\"def\") -> ok;\nstr_alias_1([$g|\"hi\"]=\"g\"++\"hi\"=\"gh\"++\"i\"=\"ghi\"++\"\") -> ok;\nstr_alias_1(\"k\"++\"lm\"=[$k|\"lm\"]) -> ok;\nstr_alias_1([113,114,115]=\"qrs\"=[$q,$r,$s]=\"q\"++\"r\"++\"s\") -> ok;\nstr_alias_1([$x,$y]=\"xy\") -> ok;\nstr_alias_1(\"\"=[]) -> ok;\nstr_alias_1(_) -> error.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "tuple_alias_a/1",
+      "source": "tuple_alias_a({A,B,C} = {X,Y,Z}) ->\n    {A,B,C,X,Y,Z};\ntuple_alias_a({A,B} = {C,D} = {E,F}) ->\n    {A,B,C,D,E,F}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "tuple_alias_b/1",
+      "source": "tuple_alias_b({_,_,_}=Expr) ->\n    {A,B,C} = {X,Y,Z} = Expr,\n    {A,B,C,X,Y,Z};\ntuple_alias_b({_,_}=Expr) ->\n    {A,B} = {C,D} = {E,F} = Expr,\n    {A,B,C,D,E,F}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_in_tuple_a/1",
+      "source": "list_in_tuple_a({container, [_,_,_] = [A,B,C], D}) ->\n    {A,B,C,D}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_in_tuple_b/1",
+      "source": "list_in_tuple_b(E) ->\n    {container, [_,_,_] = [A,B,C], D} = E,\n    {A,B,C,D}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "tuple_in_tuple_a/1",
+      "source": "tuple_in_tuple_a({x, {y,A} = {B,C}, D} = {E, F, G}) ->\n    {A,B,C,D,E,F,G}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "tuple_in_tuple_b/1",
+      "source": "tuple_in_tuple_b(Expr) ->\n    {x, {y,A} = {B,C}, D} = {E, F, G} = Expr,\n    {A,B,C,D,E,F,G}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_1a/1",
+      "source": "multiple_aliases_1a((A=B) = (C=D)) ->\n    {A,B,C,D}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_1b/1",
+      "source": "multiple_aliases_1b(Expr) ->\n    (A=B) = (C=D) = Expr,\n    {A,B,C,D}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_2/1",
+      "source": "multiple_aliases_2((A=B) = (A=C)) ->\n    {A,B,C}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_3a/1",
+      "source": "multiple_aliases_3a((A={_,_}=B)={_,_}=C) ->\n    {A,B,C}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_3b/1",
+      "source": "multiple_aliases_3b(Expr) ->\n    (A={_,_}=B) = {_,_} = C = Expr,\n    {A,B,C}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_4a/1",
+      "source": "multiple_aliases_4a((A=[_,_,_]=B) = [_,_,_] = C) ->\n    {A,B,C}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "multiple_aliases_4b/1",
+      "source": "multiple_aliases_4b(Expr) ->\n    (A=[_,_,_]=B) = [_,_,_] = C = Expr,\n    {A,B,C}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias1a/1",
+      "source": "list_alias1a([a,b]=[X,Y]) ->\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias1b/1",
+      "source": "list_alias1b(Expr) ->\n    [a,b] = [X,Y] = Expr,\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias2a/1",
+      "source": "list_alias2a([X,Y]=[a,b]) ->\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias2b/1",
+      "source": "list_alias2b(Expr) ->\n    [X,Y] = [a,b] = Expr,\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias3a/1",
+      "source": "list_alias3a([X,b]=[a,Y]) ->\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "list_alias3b/1",
+      "source": "list_alias3b(Expr) ->\n    [X,b] = [a,Y]= Expr,\n    {X,Y}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "bif_SUITE",
+      "function": "first/2",
+      "source": "first(Fst, _Snd) -> Fst.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "match_SUITE",
+      "function": "id/1",
+      "source": "id(I) -> I.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "beam_type_SUITE",
+      "function": "do_tuple/0",
+      "source": "do_tuple() ->\n    {0, _} = {necessary}.",
+      "adaptations": "none"
+    },
+    {
+      "suite": "beam_type_SUITE",
+      "function": "do_literal_tuple_1/1",
+      "source": "do_literal_tuple_1(X) ->\n    element(X, {1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1}).",
+      "adaptations": "none"
+    },
+    {
+      "suite": "beam_type_SUITE",
+      "function": "do_literal_tuple_2/1",
+      "source": "do_literal_tuple_2(X) ->\n    element(X, {2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2}).",
+      "adaptations": "none"
+    }
+  ],
+  "declarations": "str_alias_1/1,tuple_alias_a/1,tuple_alias_b/1,list_in_tuple_a/1,list_in_tuple_b/1,tuple_in_tuple_a/1,tuple_in_tuple_b/1,multiple_aliases_1a/1,multiple_aliases_1b/1,multiple_aliases_2/1,multiple_aliases_3a/1,multiple_aliases_3b/1,multiple_aliases_4a/1,multiple_aliases_4b/1,list_alias1a/1,list_alias1b/1,list_alias2a/1,list_alias2b/1,list_alias3a/1,list_alias3b/1,first/2,id/1,do_tuple/0,do_literal_tuple_1/1,do_literal_tuple_2/1,make/1,head_tail/1,prefix/1,nested_prefix/1,empty_prefix/1,repeat/2,independent/1,extract/1,body/1,fallthrough/1,badmatch/1,order/2,queries/1,guard/1,guard_construct/1,head/1,tail/1,length_value/1,size_value/1,element_value/2,wrong_spec/1,source_order/1,failure_order/1,wide/1",
+  "adaptations": "head_tail/1 retains hd/tl assertions with id/1; case-dispatch helpers are covered by equivalent ordered guard clauses in guard/1; remaining authored kernels retain all indicated behavior",
+  "sources": {
+    "lib/compiler/test/match_SUITE.erl": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4",
+    "lib/compiler/test/bif_SUITE.erl": "30d666aa4ca19eda9ca56a76a702ba0bcdf06588e6893682eda37a5680c26058",
+    "lib/compiler/test/beam_type_SUITE.erl": "bf3d90d2c560320db20dc2c2c184ce0719cf6bc1ad8ffd935641a989d7801ced"
+  },
+  "wrapper_sha256": "a276c03bd53b0a16720e13e0697454e185963262d110fc263fd5324dd832658f",
+  "client_sha256": "9c66a85f0638a19b5be309147aeec277ffeed7e71bd8492e19e5e2110c9f27f6",
+  "step": 12,
+  "date": "2026-10-02",
+  "otp_revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+  "oracle": "OTP 29.1.1 / ERTS 17.1",
+  "native": "Windows x64",
+  "ctests": 125,
+  "skips": 0,
+  "ctest_seconds": 115.61,
+  "quality_units": 221,
+  "quality": "Full Lizard and clang-tidy pass; initial complexity finding refactored without suppressions",
+  "abi_revision": 4,
+  "foreign_object_targets": 7,
+  "foreign_execution": "Not attempted",
+  "logs": "build/patternmatch-step12"
+}

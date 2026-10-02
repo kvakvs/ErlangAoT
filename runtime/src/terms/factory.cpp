@@ -4,7 +4,7 @@
 
 namespace erlang_aot::runtime {
 TermFactory::TermFactory(ProcessContext &context, DiagnosticSink sink) noexcept
-    : lifetime_(context.lifetime()), sink_(sink), atoms_(&context.atom_storage()) {}
+    : lifetime_(context.lifetime()), sink_(sink), atoms_(&context.atom_storage()), heap_(&context.heap()) {}
 
 TermResult<Term> TermFactory::unavailable(std::string_view operation) const noexcept {
     const auto lifetime = lifetime_.lock();
@@ -29,14 +29,6 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 }
 
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
-
-TermResult<Term> TermFactory::nil() { return unavailable("TermFactory::nil"); }
-
-TermResult<Term> TermFactory::cons(const Term &, const Term &) { return unavailable("TermFactory::cons"); }
-
-TermResult<Term> TermFactory::list(std::span<const Term>) { return unavailable("TermFactory::list"); }
-
-TermResult<Term> TermFactory::tuple(std::span<const Term>) { return unavailable("TermFactory::tuple"); }
 
 TermResult<Term> TermFactory::map(std::span<const std::pair<Term, Term>>) { return unavailable("TermFactory::map"); }
 

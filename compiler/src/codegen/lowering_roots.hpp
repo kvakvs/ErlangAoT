@@ -20,6 +20,8 @@ FunctionRoots begin_roots(ExpressionLowering &state);
 void root_arguments(ExpressionLowering &state);
 // Publish a produced term after its fallible operation succeeds and before another allocation.
 void root_value(ExpressionLowering &state, llvm::Value *value);
+// Reserve a zero-initialized runtime slot for a service's success-only output or constructor argument.
+llvm::Value *root_slot(ExpressionLowering &state);
 // Drop rejected-candidate temporaries while retaining the original argument roots.
 void reset_candidate_roots(ExpressionLowering &state);
 // Fix the maximum buffer extent and transfer return/error ownership at every generated exit.

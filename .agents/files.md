@@ -10,7 +10,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 | --- | --- |
 | Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it |
 | Runtime API | `runtime/include/erlang_aot/runtime/` |
-| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `immediate_services`, `features`, `feature_diagnostic` |
+| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `immediate_services`, `features`, `feature_diagnostic` |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
 | Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
 | New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
@@ -34,11 +34,11 @@ Keys in the last column are relative to the directory column.
 | `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
 | `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls, executable admission | `declarations`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
-| `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan` |
+| `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers` |
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
-| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,guards,walk}` |
+| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,guards,walk}` |
 | `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
@@ -51,9 +51,9 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | --- | --- | --- |
 | `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
 | `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `roots`, `services` |
-| `memory/` | Stable backing, budgets, rollback/resource teardown; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `copy` |
-| `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `term_layout`, `atoms`, `atom_spelling` |
-| `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `immediate_services` |
+| `memory/` | Stable backing, budgets, rollback/resource teardown; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `copy` |
+| `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `container_factory`, `container_access`, `term_layout`, `atoms`, `atom_spelling` |
+| `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `structural_order`, `immediate_services`, `container_services`, `service_errors` |
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
 | `builtins/` | Generic registry, checked invocation/ABI bridge | `registry`, `invocation`, `bridge`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
@@ -84,7 +84,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `preprocessor`, `parser` | CLI/OTP/grammar/corpus; parser `pinned.cmake`, `corpus.cmake`, `coverage.*`, `historical.cmake`; shared `tests/compiler/{frontend_cases,printing_roundtrip}.cmake`, `tests/cli.cmake` |
 | `project` | `cli.cmake`, `workflow.cmake`, `*_cases.cmake`; injected `limits.cpp`, `creation_failure.cpp` |
 | `semantic` | `cases.cmake`: CLI diagnostics; binding/pattern/type/symbol invariants; source fixtures stay in the relevant existing area |
-| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`; extend for remaining pattern/guard plan |
+| `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`; native value transport: `codegen/match_wire.hpp`; extend for remaining pattern/guard plan |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |

@@ -56,6 +56,8 @@ enum class TermKind : std::uint8_t {
     catch_object,
     // Mark an invalid or unresolved tag category.
     invalid,
+    // Resolve an admitted nonempty tuple through the owner's published object index.
+    tuple,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

@@ -25,17 +25,11 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::FloatLiteral &) const { return "heap expressions"; }
 
-    std::string_view operator()(const ast::StringLiteral &value) const {
-        return value.value.empty() ? "" : "heap expressions";
-    }
+    std::string_view operator()(const ast::StringLiteral &) const { return {}; }
 
-    std::string_view operator()(const ast::Tuple &value) const {
-        return value.elements.empty() ? "" : "heap expressions";
-    }
+    std::string_view operator()(const ast::Tuple &) const { return {}; }
 
-    std::string_view operator()(const ast::List &value) const {
-        return value.elements.empty() && !value.tail ? "" : "heap expressions";
-    }
+    std::string_view operator()(const ast::List &) const { return {}; }
 
     std::string_view operator()(const ast::Bitstring &) const { return "heap expressions"; }
 

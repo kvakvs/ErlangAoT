@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–11 are
-complete; steps 12–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–12 are
+complete; steps 13–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in ordered-clause functions with body matches/sequences. The parser retains broader syntax; heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Larger numbers, maps, binaries, records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -537,37 +537,37 @@ collection, graph copying and suspension remain outside this plan.
 
 ### 12. Construct, compare and match tuples/lists/strings (F08/F12)
 
-- [ ] Implement immutable tuple/cons constructors, source construction and
+- [x] Implement immutable tuple/cons constructors, source construction and
   checked access BIFs. Extend structural equality/order with bounded traversal;
   independent equal allocations must compare by value.
-  - [ ] Define tuple/cons layouts and checked construction services over step
+  - [x] Define tuple/cons layouts and checked construction services over step
     11; evaluate source elements in order and publish only fully initialized
     containers.
-  - [ ] Implement the accessors needed by the selected kernels with separate
+  - [x] Implement the accessors needed by the selected kernels with separate
     wrong-type/index failures and infrastructure failures.
-  - [ ] Add iterative equality/order worklists with explicit budgets and nested
+  - [x] Add iterative equality/order worklists with explicit budgets and nested
     term dispatch; compare separately allocated equal containers through source.
-- [ ] Use step 11 ownership and roots. Add checked tuple tag/arity tests and
+- [x] Use step 11 ownership and roots. Add checked tuple tag/arity tests and
   list cons/nil traversal, with no dereference before proof.
-  - [ ] Extend match-plan operations for tuple shape/field extraction and cons
+  - [x] Extend match-plan operations for tuple shape/field extraction and cons
     head/tail extraction, routing wrong shapes and exhausted lists to mismatch.
-  - [ ] Lower loads only after dominating tag, arity and ownership checks;
+  - [x] Lower loads only after dominating tag, arity and ownership checks;
     inspect representative IR and execute wrong-shape inputs through the native
     consumer.
-- [ ] Normalize strings and legal string-prefix patterns into list matching.
+- [x] Normalize strings and legal string-prefix patterns into list matching.
   Cover proper/improper lists, exact tuple arity, nested aliases and repeated
   variables.
-  - [ ] Reuse normalized character values to build list patterns/construction;
+  - [x] Reuse normalized character values to build list patterns/construction;
     preserve source anchors and avoid a separate string runtime representation.
-  - [ ] Add empty/short/prefix/improper-list cases and nested tuple/list
+  - [x] Add empty/short/prefix/improper-list cases and nested tuple/list
     aliases; use structural exact equality for repeated names containing heap
     values.
-- [ ] Root the candidate and extracted values across allocating
+- [x] Root the candidate and extracted values across allocating
   calls/safepoints; commit bindings without reconstructing matched containers.
-  - [ ] Retain extracted heap values in binding/root slots and transfer roots at
+  - [x] Retain extracted heap values in binding/root slots and transfer roots at
     successful body entry; release tentative roots on mismatch or runtime
     failure.
-  - [ ] Complete step 11's retained-result/error tests with real constructed
+  - [x] Complete step 11's retained-result/error tests with real constructed
     values, unchanged first/2 and id/1, heap growth, nested calls and injected
     failure cleanup.
 
@@ -581,6 +581,13 @@ across heap growth and failed calls; collection remains outside this plan.
 short and improper lists, exact arities, equal separate allocations and
 allocation failure. Complete step 11 retained-value and rooted-error-payload
 tests.
+
+Completion: [step-12 validation](../docs/patternmatch-step12-validation.md),
+[retained evidence](../docs/patternmatch-step12-evidence.json) and
+[container contract](../docs/container-matching.md). Windows x64: fresh combined
+125/125 CTests, 4,801 OTP/native calls in four policies, retained results/errors,
+root/fault/budget cleanup, seven foreign object targets, and full 221-unit quality
+checks passed. No GC or cross-heap graph copying is claimed.
 
 ### 13. Implement arbitrary integers and integer guards (F10/F12)
 

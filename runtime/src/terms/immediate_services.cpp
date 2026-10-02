@@ -1,4 +1,5 @@
 #include "immediate_order.hpp"
+#include "service_errors.hpp"
 #include <array>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
@@ -28,15 +29,15 @@ Result boolean(ProcessContext &context, bool value) {
     return term->word();
 }
 
-// Only four real representations are admitted; absent identity/container/numeric families classify false.
+// Predicates classify admitted representations; unavailable identities and later scalar families remain false.
 bool predicate(Op operation, const Term &value) {
     const auto kind = value.kind();
     const std::array predicates{value.is_atom(),
                                 kind == TermKind::smallint,
                                 kind == TermKind::smallint,
                                 value.is_boolean(),
-                                kind == TermKind::empty_tuple,
-                                kind == TermKind::empty_list,
+                                value.is_tuple(),
+                                value.is_list(),
                                 false,
                                 false,
                                 false,
@@ -53,20 +54,64 @@ Result comparison(ProcessContext &context, Op operation, const Term &left, const
     if (operation <= Op::not_equal) {
         const auto result = left.exactly_equal(right);
         if (!result) {
-            return std::unexpected(Fault{Outcome::failure, abi::v1::Status::internal_error});
+            return std::unexpected(Fault{Outcome::failure, term_status(result.error())});
         }
         const bool inverse = operation == Op::exact_not_equal || operation == Op::not_equal;
         return boolean(context, *result != inverse);
     }
     const auto order = immediate_order(left, right);
     if (!order) {
-        return std::unexpected(Fault{Outcome::failure, abi::v1::Status::not_implemented});
+        return std::unexpected(Fault{Outcome::failure, term_status(order.error())});
     }
     const std::array results{*order < 0, *order <= 0, *order > 0, *order >= 0};
     return boolean(context, results.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::less)));
 }
 
-// Empty-container queries return exact zero; wrong types and unavailable empty extractions are semantic badarg.
+// Structural argument errors reject guards; resource and ownership errors remain infrastructure failures.
+Result checked(TermResult<Word> result) {
+    if (result) {
+        return *result;
+    }
+    const auto error = result.error();
+    if (error == TermError::wrong_type || error == TermError::out_of_range || error == TermError::improper_list) {
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+    return std::unexpected(Fault{Outcome::failure, term_status(error)});
+}
+
+// Erlang element indices are positive and one-based; host access uses zero-based checked indices.
+TermResult<std::size_t> element_index(const Term &index) {
+    const auto number = index.integer_value();
+    if (!number || *number <= 0) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    return static_cast<std::size_t>(*number - 1);
+}
+
+// Share size and field services with host accessors rather than teaching generated code object layouts.
+Result container_query(const Term &left, Op operation, const Term &right) {
+    const auto word = [](const Term &value) { return value.word(); };
+    const auto count = [](std::size_t value) { return encode_integer(static_cast<std::int64_t>(value)); };
+    switch (operation) {
+    case Op::hd:
+        return checked(left.head().transform(word));
+    case Op::tl:
+        return checked(left.tail().transform(word));
+    case Op::element:
+        return checked(element_index(left)
+                           .and_then([&right](std::size_t index) { return right.tuple_element(index); })
+                           .transform(word));
+    case Op::length:
+        return checked(left.list_length().and_then(count));
+    case Op::tuple_size:
+    case Op::size:
+        return checked(left.tuple_size().and_then(count));
+    default:
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+}
+
+// An absent function representation still validates its arity argument before returning false.
 Result query(const Term &left, Op operation, const Term &right) {
     if (operation == Op::is_function_arity) {
         const auto arity = right.integer_value();
@@ -75,19 +120,14 @@ Result query(const Term &left, Op operation, const Term &right) {
         }
         return Word{0};
     }
-    const bool list = operation == Op::length && left.kind() == TermKind::empty_list;
-    const bool tuple = (operation == Op::tuple_size || operation == Op::size) && left.kind() == TermKind::empty_tuple;
-    if (list || tuple) {
-        return encode_integer(0).value();
-    }
-    return std::unexpected(Fault{Outcome::bad_argument});
+    return container_query(left, operation, right);
 }
 
 // Min/max return an original admitted word, with spelling-based order and left selection on equal values.
 Result select(Op operation, const Term &left, const Term &right) {
     const auto order = immediate_order(left, right);
     if (!order) {
-        return std::unexpected(Fault{Outcome::failure, abi::v1::Status::not_implemented});
+        return std::unexpected(Fault{Outcome::failure, term_status(order.error())});
     }
     const bool lhs = operation == Op::minimum ? *order <= 0 : *order >= 0;
     return lhs ? left.word() : right.word();

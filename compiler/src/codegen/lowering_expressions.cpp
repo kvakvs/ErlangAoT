@@ -40,11 +40,8 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
     }
-    if (std::holds_alternative<ast::Tuple>(value)) {
-        return llvm::ConstantInt::get(state.word, abi::v1::empty_tuple);
-    }
-    if (std::holds_alternative<ast::List>(value) || std::holds_alternative<ast::StringLiteral>(value)) {
-        return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
+    if (auto *container = lower_container(state, value)) {
+        return container;
     }
     return literal(*state.module.syntax, expression, state.word);
 }

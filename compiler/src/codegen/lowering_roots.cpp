@@ -35,12 +35,17 @@ FunctionRoots begin_roots(ExpressionLowering &state) {
     return {buffer, state.word, state.function.key.arity};
 }
 
-void root_value(ExpressionLowering &state, llvm::Value *value) {
+llvm::Value *root_slot(ExpressionLowering &state) {
     auto &roots = *state.roots;
     auto *slot = state.builder.CreateGEP(roots.word, roots.buffer, llvm::ConstantInt::get(roots.word, roots.next++),
                                          "root.slot");
-    state.builder.CreateAlignedStore(value, slot, llvm::Align(roots.word->getBitWidth() / 8));
     roots.capacity = std::max(roots.capacity, roots.next);
+    return slot;
+}
+
+void root_value(ExpressionLowering &state, llvm::Value *value) {
+    auto *slot = root_slot(state);
+    state.builder.CreateAlignedStore(value, slot, llvm::Align(state.word->getBitWidth() / 8));
 }
 
 void root_arguments(ExpressionLowering &state) {

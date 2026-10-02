@@ -1,24 +1,11 @@
+#include "service_errors.hpp"
+#include "structural_order.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 
 namespace erlang_aot::runtime {
 TermResult<bool> Term::exactly_equal(const Term &other) const {
-    // Only validated immediates are admitted today; boxed equality must dispatch by representation.
-    if (kind() != other.kind()) {
-        return false;
-    }
-    if (kind() == TermKind::atom) {
-        if (!is_atom() || !other.is_atom()) {
-            return std::unexpected(TermError::invalid_encoding);
-        }
-        return atom_id() == other.atom_id();
-    }
-    const auto left = from_word(word());
-    const auto right = from_word(other.word());
-    if (!left || !right) {
-        return std::unexpected(TermError::invalid_encoding);
-    }
-    return word() == other.word();
+    return detail::structural_order(*this, other, true).transform([](int order) { return order == 0; });
 }
 } // namespace erlang_aot::runtime
 
@@ -41,7 +28,7 @@ std::uint8_t erlang_aot_exact_v1(void *context, erlang_aot::abi::v1::TermWord le
     }
     const auto equal = lhs->exactly_equal(*rhs);
     if (!equal) {
-        state.fail_service(abi::v1::Status::internal_error);
+        state.fail_service(runtime::detail::term_status(equal.error()));
         return static_cast<std::uint8_t>(abi::v1::Equality::failure);
     }
     return static_cast<std::uint8_t>(*equal ? abi::v1::Equality::equal : abi::v1::Equality::unequal);

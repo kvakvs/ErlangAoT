@@ -47,7 +47,7 @@ string(FIND "${trace}" "module=\"line\\x0abreak\"" escaped)
 if(escaped LESS 0)
     message(FATAL_ERROR "Control characters injected trace lines: ${trace}")
 endif()
-file(WRITE "${TEST_DIR}/bad.erl" "-module(bad). value() -> [1].\n")
+file(WRITE "${TEST_DIR}/bad.erl" "-module(bad). value() -> [X || X <- []].\n")
 execute_process(COMMAND "${TOOL}" --verbose bad.erl WORKING_DIRECTORY "${TEST_DIR}"
     RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err ENCODING UTF-8)
 if(result EQUAL 0 OR NOT out STREQUAL "" OR err MATCHES "phase=(inference|lowering|optimization|emission)")

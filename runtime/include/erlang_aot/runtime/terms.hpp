@@ -24,6 +24,7 @@ enum class TermError : std::uint8_t {
     wrong_owner,
     expired_context,
     resource_limit,
+    out_of_memory,
     not_implemented,
     diagnostic_failure
 };
@@ -79,33 +80,39 @@ class ClosureDescriptor;
 class NativeRecordDescriptor;
 class TermFactory;
 
+namespace detail {
+class HeapStorage;
+struct HeapObject;
+struct TermAccess;
+} // namespace detail
+
 // Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.
 using AtomId = std::uintptr_t;
 
-// Host value with an optional atom pin; generated code and heap cells still use one-word representations.
-// Heap/identity operations below remain reserved until roots and runtime ownership exist.
+// Host value pins immutable atoms or process-owned heap backing; generated code and cells remain one word.
+// Heap access checks context lifetime, while future identity/numeric/container families remain reserved.
 class Term final {
   public:
     // Reserve zero as an invalid slot until checked immediate construction supplies a value.
     Term() : value_(0) {}
 
-    // Copy/move the immediate value; admitting heap values first requires external roots and lifetime checks.
+    // Copy/move a checked handle and its ownership pin without rebuilding the underlying value.
     Term(const Term &other) = default;
     Term(Term &&other) noexcept = default;
     // Rebind only this host handle, leaving every other alias unchanged.
     Term &operator=(const Term &other) = default;
     Term &operator=(Term &&other) noexcept = default;
-    // Release any immutable atom pin; no process heap storage is retained.
+    // Release this handle's atom or heap storage pin.
     ~Term() = default;
 
     // Admit only small integers and canonical empty containers; identities/heap values remain unavailable.
     static TermResult<Term> from_word(Word value) noexcept;
-    // Admit atoms only with proof that the supplied context belongs to their runtime.
+    // Admit atoms and published compound starts only with proof of runtime/process ownership.
     static TermResult<Term> from_word(Word value, ProcessContext &context) noexcept;
-    // Expose the immediate representation for the generated service bridge.
+    // Expose the one-word representation for the generated service bridge.
     Word word() const noexcept;
 
-    // Copy immediates and same-runtime atoms; foreign atoms reject rather than silently remapping.
+    // Retain immediates, same-runtime atoms and same-heap compounds; cross-heap graph copying is deferred.
     TermResult<Term> copy_to(ProcessHeap &destination) const noexcept;
 
     // Remaining semantic/heap operations below are reserved unless documented as implemented.
@@ -213,11 +220,16 @@ class Term final {
   private:
     friend class TermFactory;
     friend class AtomStorage;
+    friend struct detail::TermAccess;
 
     // Store the ABI word; atom_ supplies spelling lifetime while destination admission checks membership.
     Word value_;
     // Pin immutable atom spelling independently of process, module and runtime lifetimes.
     std::shared_ptr<const AtomValue> atom_;
+    // Retain stable backing and its immutable object index independently of the context address.
+    std::shared_ptr<detail::HeapStorage> heap_;
+    // Borrow one stable index entry only while heap_ owns it; moved-from handles must not dereference this.
+    const detail::HeapObject *object_ = nullptr;
 };
 
 } // namespace erlang_aot::runtime
