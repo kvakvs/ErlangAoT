@@ -51,12 +51,13 @@ Only whole original arguments retain projection provenance through grouping or
 aliases. Extracted values and new body definitions have unknown facts. Inference
 resolves reads through identities and never treats definitions or equality checks
 as parameter reads. Specifications cannot narrow these facts. Lowering requires
-an available original argument value and rejects unavailable bindings. Public
+an available candidate SSA value and rejects unavailable bindings. Public
 `--print-types` expression lines include `binding=clause[N].local[M]` for reads.
 
-The executable capability pass still rejects repeated parameters, nontrivial
-patterns, guards, multiple clauses, matches and sequences. Identity/projection,
-atoms, immediate literals and direct-call execution keep their existing behavior.
+Step 6 executes repeated parameters, aliases and immediate patterns through
+[checked matching](immediate-matching.md). Guards, multiple clauses, body matches,
+sequences and later containers remain capability-gated. Identity/projection,
+atoms and direct-call execution keep their existing behavior.
 
 Evidence comes from pinned `maint-29` expressions documentation, `erl_lint.erl`
 (`exprs/3`, `expr_list/3`, `vtmerge_pat/3`, variable/guard checks), and complete

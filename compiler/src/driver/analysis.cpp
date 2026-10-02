@@ -12,8 +12,8 @@ void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis
     for (const auto &input : request.inputs) {
         codegen::progress(request, "analysis", input.source_path);
         auto module = semantic::index(input.syntax, project::path_text(input.source_path), report);
-        semantic::check_capabilities(*module, report);
         semantic::bind_parameters(*module, report);
+        semantic::check_capabilities(*module, report);
         analysis.modules.push_back(std::move(module));
     }
 }

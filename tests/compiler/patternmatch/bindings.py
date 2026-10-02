@@ -75,7 +75,7 @@ def compile_case(tool, work, row, policy, project):
         assert re.search(rf'{name}\.erl:3:\d+:.*{re.escape(row["diagnostic"])}', result.stderr), result.stderr
     else:
         assert not re.search(BINDING_ERRORS, result.stderr), result.stderr
-    if row["capability"]:
+    if row["capability"] and not row["diagnostic"]:
         assert row["capability"] in result.stderr, result.stderr
     if rejected:
         assert sorted(p.name for p in (work / "out").iterdir()) == ["sentinel"], list((work / "out").iterdir())

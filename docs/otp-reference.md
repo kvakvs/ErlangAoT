@@ -102,3 +102,7 @@ legality cases, unchanged/adapted suite helpers, both CLI modes/four policies,
 bounded normalization/rollback, 113/113 combined Windows Debug tests and full
 Lizard/clang-tidy over 196 production units. Matching/guard execution remains
 pending. Historical records retain their original revisions and outcomes.
+
+## Pattern/guard step 6 check (2026-10-02)
+
+Fetched official maint-29; upstream, clean checkout and pin remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/source hashes are unchanged; installed oracle remains OTP 29.1.1 / ERTS 17.1. [Step-6 validation](patternmatch-step6-validation.md) records immediate source matching, shared checked equality, 34 OTP/native calls in four policies, both-width endpoint objects, 114/114 Windows Debug tests and full Lizard/clang-tidy. Historical evidence is preserved.

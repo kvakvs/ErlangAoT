@@ -1,0 +1,28 @@
+{
+  "functions": [
+    "repeat(X, X) -> X.",
+    "aliases((A=B) = (A=C)) -> C.",
+    "literal(118=$v) -> ok.",
+    "atom(ok = X) -> X.",
+    "nil(\"\"=[]) -> [].",
+    "tuple({}=X) -> X.",
+    "wildcard(_Name, _) -> _Name.",
+    "constant(1+2*3) -> 7.",
+    "low32(-134217728) -> low.",
+    "high32(134217727) -> high.",
+    "low64(-576460752303423488) -> low.",
+    "high64(576460752303423487) -> high.",
+    "-spec wrong_spec(integer(), integer()) -> integer().\nwrong_spec(X,X) -> X."
+  ],
+  "calls": [
+    ["repeat", [17,17]], ["repeat", [17,18]], ["repeat", ["ok","ok"]], ["repeat", ["ok","no"]],
+    ["repeat", ["nil","nil"]], ["repeat", ["tuple","tuple"]], ["repeat", ["nil","tuple"]],
+    ["aliases", ["ok"]], ["aliases", [-7]], ["literal", [118]], ["literal", [119]], ["literal", ["ok"]],
+    ["atom", ["ok"]], ["atom", ["no"]], ["nil", ["nil"]], ["nil", ["tuple"]],
+    ["tuple", ["tuple"]], ["tuple", [0]], ["wildcard", ["no",13]], ["constant", [7]], ["constant", [8]],
+    ["low32", [-134217728]], ["low32", [-134217727]], ["high32", [134217727]], ["high32", [134217726]],
+    ["low64", [-576460752303423488]], ["low64", [-576460752303423487]],
+    ["high64", [576460752303423487]], ["high64", [576460752303423486]],
+    ["wrong_spec", ["ok","ok"]], ["wrong_spec", ["ok","no"]]
+  ]
+}

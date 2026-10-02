@@ -1,5 +1,6 @@
 #include "ast/builder.hpp"
 #include "semantic/binding_state.hpp"
+#include "semantic/match_plan.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <erlang_aot/compiler/parser.hpp>
@@ -8,6 +9,26 @@
 
 using namespace erlang_aot;
 using namespace erlang_aot::semantic;
+
+// Source cannot reach private plan ceilings cheaply; verify transaction failure with a deliberately tiny budget.
+void match_budget() {
+    SourceManager sources;
+    PreprocessorSession pp(sources.add("match.erl", "-module(match). f(A=B,A) -> B."));
+    auto parsed = parse_module(pp);
+    auto module = index(parsed.module, "match.erl", [](const Diagnostic &) { throw std::runtime_error("index"); });
+    bind_parameters(*module, [](const Diagnostic &) { throw std::runtime_error("bindings"); });
+    std::vector<Diagnostic> errors;
+    const auto reporter = [&](const Diagnostic &d) { errors.push_back(d); };
+    const auto &function = module->functions.front();
+    if (make_match_plan(*module, function, reporter, {.work_limit = 2}) || errors.size() != 1) {
+        throw std::runtime_error("partial plan escaped budget");
+    }
+    errors.clear();
+    const auto plan = make_match_plan(*module, function, reporter);
+    if (!plan || !errors.empty() || plan->outputs.size() != 2 || plan->nodes.size() != 5) {
+        throw std::runtime_error("plan retry failed");
+    }
+}
 
 // Flat normalization and transactional side tables are not observable through matching until step 6.
 void require(bool condition, const std::source_location site = std::source_location::current()) {
@@ -111,6 +132,7 @@ void rollback() {
 
 int main() {
     try {
+        match_budget();
         normalization();
         rollback();
         for (const bool permissive : {false, true}) {

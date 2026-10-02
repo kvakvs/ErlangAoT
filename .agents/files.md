@@ -1,5 +1,7 @@
 # File map
 
+- `semantic/match_plan.{hpp,cpp}`: bounded normalized input/binding/literal plans and explicit continuations. `codegen/lowering_match.cpp`: tentative SSA, checked equality and function_clause; `abi/equality.hpp`, `runtime/src/terms/equality.cpp`: shared ownership-aware immediate exact service. `patternmatch/immediate.{py,escript}`, `codegen/match{.cmake,_consumer.cpp}`, `fixtures/patternmatch/immediate.json`: licensed source/OTP/native matching and both-width evidence. `docs/immediate-matching.md`, `patternmatch-step6-{validation.md,evidence.json}`: contract/evidence.
+
 - `compiler/src/semantic/patterns.hpp`: flat normalized kinds, original/ungrouped IDs
   and owned literals; `pattern_state.hpp`: private analysis helpers.
   `pattern_analysis.cpp`: both pattern categories, grouping/aliases/containers,

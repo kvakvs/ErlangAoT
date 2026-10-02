@@ -37,7 +37,7 @@ the context's runtime. Invalid, heap, foreign atom and identity words reject wit
 dereferencing them. Atom Terms pin their spelling, so errors survive invocation
 cleanup, independent retries and runtime teardown.
 Heap payloads and roots are explicitly deferred to step 11 before heap admission.
-Full `catch`/`try`, stack traces, `throw`/`exit`, source clause dispatch/body matching,
+Full `catch`/`try`, stack traces, `throw`/`exit`, ordered clause dispatch/body matching,
 and `badarith` remain assigned to their later steps.
 
 `GeneratedInvocation` owns a synchronous host scope on `ProcessContext`.

@@ -1,24 +1,25 @@
 # Pattern and guard semantic contract (plan step 1)
 
 This is the acceptance and implementation boundary for
-[steps 1–20](../.agents/10-patternmatch.md), not a claim that patterns or guards
-execute today. Step numbers below refer to that plan. The existing executable
-slice remains one clause, distinct variable/wildcard parameters, and a single
-small-integer, atom/boolean literal, parameter-read or direct-call body expression.
-[Step 3](runtime-atoms.md) adds owned atoms; matching and guards remain pending.
+[steps 1–20](../.agents/10-patternmatch.md). Step numbers below refer to that plan.
+The executable slice supports one clause with immediate literal, repeated-variable,
+alias or wildcard patterns and a single small-integer/atom/empty literal,
+binding-read or direct-call body expression. [Step 6](immediate-matching.md)
+implements immediate head matching; guards and later representations remain pending.
+[Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
-facts, including located unbound/unsafe/wildcard errors. Execution admission is unchanged.
+facts, including located unbound/unsafe/wildcard errors.
 [Step 5](pattern-semantics.md) adds bounded pattern normalization, embedded key/size
-legality and sibling scope checks; the runtime matching gates remain closed.
+legality and sibling scope checks independently of runtime availability.
 
 Evidence is pinned to official `maint-29` revision
 `21776803ecd11f5fa948732c0ec66b8f325dedfc`, re-fetched and unchanged on
-2026-10-01. The separate installed oracle is OTP **29.1.1**, ERTS **17.1**.
+2026-10-02. The separate installed oracle is OTP **29.1.1**, ERTS **17.1**.
 [otp.tsv](../tests/fixtures/patternmatch/otp.tsv) records SHA-256 identities for
 the reference manual, grammar, lint rules, BIF catalog, suites and actual headers.
 Hashes use source bytes with CRLF normalized to LF; no other whitespace or source
 changes are permitted. This accommodates the existing Windows checkout without
-rewriting it. The checkout's untracked `lib/stdlib/src/1.ir` is preserved.
+rewriting it. The checkout is clean; the user removed the old untracked `1.ir` during step 4.
 
 The principal evidence is `expressions.md` (match/compound operators, maps,
 bit syntax and guard sections), `erl_lint.erl:pattern/4`, `pattern_map/4`,
@@ -55,10 +56,10 @@ distinct from ordinary mismatch or a reached guard argument error (steps 2/11).
 | `_` | Never creates a readable binding; occurrences independent | 4/6 | Reading `_` is semantic error |
 | `Name`, `_Name`, repeated names | Clause-local single assignment; `_Name` is ordinary; repetitions impose exact equality, including integer versus float distinction | 4/6/12–16 | Unbound/unsafe read is semantic; unequal repetition is mismatch |
 | Parentheses, `P1 = P2` compound patterns | Both operands constrain the same value; neither supplies new key/size bindings to its sibling | 5/6, extended 12–17 | Illegal sibling dependency is semantic; valid but incompatible aliases mismatch |
-| Atoms, booleans | Spelling-based runtime identity; no compiler-assigned atom IDs | 3/6 | Capability pending atom storage; different literal mismatches |
+| Atoms, booleans | Spelling-based runtime identity; no compiler-assigned atom IDs | 3/6 | Implemented in heads; different literal mismatches |
 | Integer/character literals, unary signs and constant arithmetic | Accept only legal, evaluable constant pattern expressions; chars are integers | 5/6/13 | Invalid/nonconstant expressions semantic; different value mismatches |
 | Floats, arbitrary integers | Exact pattern equality, target-width-independent values; signed-zero details follow OTP | 13/14 | Capability until representation exists; different value mismatches |
-| Empty list/tuple | Canonical admitted immediates | 6 | Capability for matching until step 6; wrong shape mismatches |
+| Empty list/tuple | Canonical admitted immediates | 6 | Implemented in heads; wrong shape mismatches |
 | Tuples, lists, improper tails, strings | Exact tuple arity; cons/nil shape; strings are lists; nested patterns | 11/12 | Capability pending owned construction/access; wrong shape mismatches |
 | String/list-literal `++` pattern prefix | Lint permits a literal string or integer/character cons prefix, including empty prefix; arbitrary variable prefix is illegal | 5/12 | Nonliteral/invalid prefix semantic; nonmatching prefix mismatch |
 | Maps `#{Key := Pattern}` | Partial matching, including empty-map type check; keys are legal guard expressions over incoming bindings; exact key identity | 5/15 | `=>`, unbound keys or illegal key calls semantic; missing key/wrong type mismatch |

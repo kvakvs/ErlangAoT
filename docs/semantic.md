@@ -1,3 +1,5 @@
+Current executable matching (pattern/guard step 6): single-clause heads support small-integer/atom/empty-value literals, repeated variables and aliases through [checked immediate matching](immediate-matching.md). Guards, body matches, ordered clauses and nonempty containers remain deferred.
+
 # Semantic compilation analysis
 
 Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
@@ -23,21 +25,21 @@ unsigned decimal. Separators cannot occur in encoded names, so encoding is rever
 and independent of compiler-host hashing, locale and table order.
 
 Compilation checks every function, including unused definitions. The current subset
-accepts one clause with variable/wildcard arguments and one expression: an ABI-small
+accepts one clause with immediate patterns/aliases/repeated variables and one expression: an ABI-small
 integer, atom/boolean literal, parameter reference, or syntactically direct local/literal remote call.
 Nested call arguments are checked. Explicit negative integers are supported;
-arithmetic, heap values, matching, guards, exceptions, concurrency, dynamic
+arithmetic, heap values, body/container matching, guards, exceptions, concurrency, dynamic
 calls, closures and behavior-changing attributes are diagnosed. Type/spec metadata
 is symbolic and does not enable executable syntax. Current CLI bounds are native;
 the analysis API accepts explicit 32/64-bit target bounds for later target setup.
 
-Executable named parameters must still be distinct. The semantic binder now
+Executable named parameters may repeat or form aliases. The semantic binder
 assigns clause-local identities to definitions, reads and exact-equality checks.
 `_` creates no binding; `_Name` is ordinary. Tentative head bindings are readable
 by guards and publish to the successful body path. Body matches use RHS-first
 scopes; unbound, unsafe and wildcard reads retain original locations. Whole
 argument reads retain projection provenance; new/extracted values stay unknown.
-Repeated parameters remain capability-gated until matching is implemented.
+Repeated parameters now execute exact equality through the shared runtime service.
 See [scoped bindings](scoped-bindings.md) for the step-4 boundary.
 
 Positional inputs form one compilation batch. Each selected project target forms

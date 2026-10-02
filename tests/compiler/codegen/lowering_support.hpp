@@ -54,8 +54,8 @@ bool analyze_and_lower(cg::Compilation &compilation, semantic::types::Limits inf
     std::vector<std::unique_ptr<semantic::Module>> modules;
     for (const auto &input : compilation.request().inputs) {
         auto module = semantic::index(input.syntax, "fixture.erl", report);
-        semantic::check_capabilities(*module, report, 64);
         semantic::bind_parameters(*module, report);
+        semantic::check_capabilities(*module, report, 64);
         modules.push_back(std::move(module));
     }
     const auto calls = semantic::resolve_calls(modules, report);

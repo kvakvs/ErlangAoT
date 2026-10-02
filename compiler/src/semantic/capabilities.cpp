@@ -1,5 +1,6 @@
 #include "expression_capability.hpp"
 #include "features.hpp"
+#include "match_plan.hpp"
 #include <algorithm>
 #include <array>
 #include <set>
@@ -63,30 +64,25 @@ void body(const Module &module, const ast::FunctionClause &clause, const Reporte
 }
 
 // Parameter patterns and guards remain separate from expression capability decisions.
-void head(const Module &module, const ast::FunctionClause &clause, const Reporter &out) {
+void head(const Module &module, const Function &function, std::size_t index, const ast::FunctionClause &clause,
+          const Reporter &out, unsigned bits) {
     if (clause.guard) {
         unsupported(module, clause.guard->source, "guards", out);
     }
-    std::set<std::u32string> names;
-    for (const auto &id : clause.arguments) {
-        const auto &pattern = module.syntax->pattern(id);
-        const auto expression = std::visit([](const auto &value) { return value.expression; }, pattern.value);
-        const auto *variable =
-            std::get_if<ast::Variable>(&module.syntax->expression(ungroup(*module.syntax, expression)).value);
-        if (!variable || (variable->name != U"_" && !names.insert(variable->name).second)) {
-            unsupported(module, pattern.source, "pattern matching", out);
-        }
+    if (!function.clause_bindings.empty()) {
+        (void)make_match_plan(module, function, out, {.clause = index, .word_bits = bits});
     }
 }
 
 // Check all clauses even when the clause count itself exceeds the milestone.
-void function(const Module &module, const ast::Function &value, const ast::NodeSource &source, const Reporter &out,
-              const unsigned bits) {
+void function(const Module &module, const Function &function, const ast::Function &value, const ast::NodeSource &source,
+              const Reporter &out, const unsigned bits) {
     if (value.clauses.size() != 1) {
         unsupported(module, source, "multiple clauses", out);
     }
-    for (const auto &clause : value.clauses) {
-        head(module, clause, out);
+    for (std::size_t i = 0; i < value.clauses.size(); ++i) {
+        const auto &clause = value.clauses[i];
+        head(module, function, i, clause, out, bits);
         body(module, clause, out, bits);
     }
 }
@@ -100,7 +96,8 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
             unsupported(module, form.source, reason, out);
         }
         if (const auto *value = std::get_if<ast::Function>(&form.value)) {
-            function(module, *value, form.source, out, word_bits);
+            const auto key = FunctionKey{value->name.name, value->clauses.at(0).arguments.size()};
+            function(module, module.functions.at(module.lookup.at(key)), *value, form.source, out, word_bits);
         }
     }
 }

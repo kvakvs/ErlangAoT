@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–5 are
-complete; steps 6–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–6 are
+complete; steps 7–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -264,36 +264,36 @@ been started.
 
 ### 6. Implement immediate equality and matching (F12 slice)
 
-- [ ] Introduce a private match plan with explicit test, extraction, binding,
+- [x] Introduce a private match plan with explicit test, extraction, binding,
   success and mismatch edges. Start with variables, wildcards, small-integer and
   atom and canonical empty-list/empty-tuple patterns, repeated names and
   aliases.
-  - [ ] Consume step 5's normalized patterns and step 4's binding identities;
+  - [x] Consume step 5's normalized patterns and step 4's binding identities;
     retain source anchors and bound plan-node/work counts during construction.
-  - [ ] Define small plan operations and explicit candidate inputs/outputs;
+  - [x] Define small plan operations and explicit candidate inputs/outputs;
     separate first bindings from repeated-name checks and share the input for
     aliases.
-  - [ ] Admit only the listed executable forms in capability analysis; keep
+  - [x] Admit only the listed executable forms in capability analysis; keep
     later containers and numeric representations recognized but gated by their
     owners.
-- [ ] Implement the F12 exact-equality slice for admitted immediate values. Make
+- [x] Implement the F12 exact-equality slice for admitted immediate values. Make
   its extension point shared by patterns and exact guard comparisons; do not
   generalize raw-word equality to future boxed terms.
-  - [ ] Define a checked equality contract for integers, owned atoms and
+  - [x] Define a checked equality contract for integers, owned atoms and
     canonical empty values, with separate unequal and runtime-failure outcomes.
-  - [ ] Derive integer tags/ranges from the target layout and compare atoms
+  - [x] Derive integer tags/ranges from the target layout and compare atoms
     using the runtime bindings from step 3; reserve dispatch for later boxed
     values.
-- [ ] Lower the plan into LLVM blocks with tentative SSA values and explicit
+- [x] Lower the plan into LLVM blocks with tentative SSA values and explicit
   continuations. Never perform an unchecked extraction or treat mismatch as an
   error inside the reusable matcher.
-  - [ ] Map plan inputs and bindings to SSA values; pass success/mismatch blocks
+  - [x] Map plan inputs and bindings to SSA values; pass success/mismatch blocks
     from the caller and make each access depend on its preceding representation
     test.
-  - [ ] Connect single-clause mismatch to the generated `function_clause`
+  - [x] Connect single-clause mismatch to the generated `function_clause`
     failure path, while retaining the matcher continuation for later
     clauses/body matches.
-  - [ ] Run the listed immediate kernels through the CLI/native consumer in all
+  - [x] Run the listed immediate kernels through the CLI/native consumer in all
     four policies; verify LLVM blocks and retain direct-call/projection
     regressions.
 
@@ -307,6 +307,8 @@ argument identity behavior remain intact.
 variables, aliases, wildcards and literal mismatch. Compare results/reasons with
 OTP; cover both-width integer endpoints, owned atoms and nested generated-call
 failures.
+
+**Completed 2026-10-02:** [Immediate matching](../docs/immediate-matching.md) uses bounded normalized plans, tentative SSA bindings and checked shared runtime equality. Single-clause literal/repeated/alias/empty-value mismatch raises `function_clause`; unconditional heads retain compact projection IR. Thirty-four OTP/native calls pass all four policies and both CLI modes; 32/64-bit endpoint objects/IR, ownership, nested failures, plan limits and retry pass. Fresh Windows x64 Debug: 114/114 CTests, zero skips, full Lizard/clang-tidy over 199 production units. See [validation](../docs/patternmatch-step6-validation.md). Steps 7–20 remain pending.
 
 ### 7. Resolve guard calls and implement immediate services (F12/F26 slice)
 

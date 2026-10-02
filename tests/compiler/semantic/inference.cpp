@@ -36,8 +36,8 @@ unknown(X) -> id(X).
     std::vector<std::unique_ptr<Module>> modules;
     modules.push_back(index(parsed.module, "facts.erl", report));
     auto &module = *modules.front();
-    check_capabilities(module, report);
     bind_parameters(module, report);
+    check_capabilities(module, report);
     const auto calls = resolve_calls(modules, report);
     const auto declared = t::resolve_declarations(modules, report);
     const auto inferred = t::infer(calls);

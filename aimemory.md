@@ -1,3 +1,5 @@
+Patternmatch step 6 (2026-10-02): maint-29 refetched unchanged/clean at 21776803. Bounded match plans, checked runtime immediate equality and source function_clause execute aliases/repeated/literal/empty heads. 34 OTP/native calls, both CLI modes/four policies, 32/64-bit endpoint objects/IR, ownership/limits/retry. Keep unconditional heads compact for existing projection and IR size tests. Fresh combined gate: 114 CTests and 199 production units. Step 7 follows under current user request; stop after step 8.
+
 # Working memory — 2026-10-02
 
 - Patternmatch step 5 complete (2026-10-02): flat Function::patterns preserves

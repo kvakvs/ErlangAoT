@@ -11,7 +11,7 @@
     "name": "repeat",
     "arity": 2,
     "body": "f(X, X) -> X.",
-    "capability": "pattern matching",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -75,7 +75,7 @@
     "name": "alias",
     "arity": 1,
     "body": "f(A = B) -> B.",
-    "capability": "pattern matching",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },

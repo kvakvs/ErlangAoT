@@ -3,6 +3,7 @@
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
+#include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <stdexcept>
 
@@ -19,24 +20,30 @@ llvm::ConstantInt *literal(const ast::Module &syntax, const ast::ExprId &express
     return llvm::ConstantInt::get(word, encoded);
 }
 
-// Use the binding's original argument index, with target-word alignment and no inbounds promise.
-llvm::Value *parameter(llvm::IRBuilder<> &builder, llvm::Function &entry, llvm::IntegerType *word,
-                       const std::size_t argument) {
-    auto *slot = builder.CreateGEP(word, entry.getArg(1), llvm::ConstantInt::get(word, argument), "argument.slot");
-    return builder.CreateAlignedLoad(word, slot, llvm::Align(word->getBitWidth() / 8), "argument");
+// Resolve one validated read without relying on original-argument projection facts.
+llvm::Value *binding(ExpressionLowering &state, const ast::ExprId &expression) {
+    for (const auto &binding : state.function.bindings) {
+        if (binding.expression == expression && binding.use == semantic::BindingUse::read) {
+            return state.bindings.at(binding.identity);
+        }
+    }
+    throw std::invalid_argument("lowering: binding has no available value");
 }
 
 // Resolve leaves through existing parameter bindings, preserving every input term unchanged.
 llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
-    if (const auto argument = semantic::binding_argument(state.function, expression)) {
-        return parameter(state.builder, state.entry, state.word, *argument);
-    }
     const auto &value = state.module.syntax->expression(expression).value;
     if (std::holds_alternative<ast::Variable>(value)) {
-        throw std::invalid_argument("lowering: binding has no available value");
+        return binding(state, expression);
     }
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         return lower_atom(state, *atom);
+    }
+    if (std::holds_alternative<ast::Tuple>(value)) {
+        return llvm::ConstantInt::get(state.word, abi::v1::empty_tuple);
+    }
+    if (std::holds_alternative<ast::List>(value) || std::holds_alternative<ast::StringLiteral>(value)) {
+        return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
     }
     return literal(*state.module.syntax, expression, state.word);
 }
@@ -61,7 +68,9 @@ struct Visit {
 };
 
 // Reverse-push children so argument effects and calls remain in Erlang source order.
-llvm::Value *body(ExpressionLowering &state, const ast::ExprId &root) {
+} // namespace
+
+llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
     std::vector<Visit> pending{{root}};
     while (!pending.empty()) {
         const auto visit = pending.back();
@@ -79,12 +88,20 @@ llvm::Value *body(ExpressionLowering &state, const ast::ExprId &root) {
     }
     return state.values.at(&state.module.syntax->expression(root));
 }
-} // namespace
 
 llvm::Value *lower_expression(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
                               const semantic::Function &function, const ast::ExprId &expression,
                               llvm::IntegerType *word, const semantic::types::Inference &inferred) {
     ExpressionLowering state{builder, entry, module, function, inferred, word, {}};
-    return body(state, expression);
+    if (lower_unconditional_head(state)) {
+        return lower_body(state, expression);
+    }
+    auto *success = llvm::BasicBlock::Create(entry.getContext(), "match.success", &entry);
+    auto *mismatch = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
+    lower_head(state, success, mismatch);
+    builder.SetInsertPoint(mismatch);
+    raise_function_clause(state);
+    builder.SetInsertPoint(success);
+    return lower_body(state, expression);
 }
 } // namespace erlang_aot::codegen

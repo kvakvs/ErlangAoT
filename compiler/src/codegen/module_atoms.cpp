@@ -10,6 +10,18 @@ namespace {
 // Reuse the collision-free symbol encoding for private literal-slot metadata.
 std::string slot_name(const std::string &spelling) { return "atom.slot." + semantic::encode_symbol({spelling, "", 0}); }
 
+// Normalized patterns can contain atoms folded from grouped syntax; collect their runtime spellings too.
+void pattern_atoms(const semantic::Function &function, std::set<std::string> &result) {
+    for (const auto &pattern : function.patterns) {
+        if (!pattern.literal) {
+            continue;
+        }
+        if (const auto *atom = std::get_if<ast::Atom>(&*pattern.literal)) {
+            result.insert(utf8(atom->name));
+        }
+    }
+}
+
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
     std::set<std::string> result;
@@ -17,6 +29,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
     for (const auto &function : module.functions) {
         const auto &syntax = std::get<ast::Function>(module.syntax->form(function.form).value);
         pending.push_back(syntax.clauses.at(0).body.at(0));
+        pattern_atoms(function, result);
     }
     while (!pending.empty()) {
         const auto id = pending.back();
