@@ -1,0 +1,34 @@
+answer repeat 2 i17 i17
+answer repeat 2 i17 i18
+answer repeat 2 a6f6b a6f6b
+answer repeat 2 a6f6b a6e6f
+answer repeat 2 nil nil
+answer repeat 2 tuple tuple
+answer repeat 2 nil tuple
+answer aliases 1 a6f6b
+answer aliases 1 i-7
+answer literal 1 i118
+answer literal 1 i119
+answer literal 1 a6f6b
+answer atom 1 a6f6b
+answer atom 1 a6e6f
+answer nil 1 nil
+answer nil 1 tuple
+answer tuple 1 tuple
+answer tuple 1 i0
+answer wildcard 2 a6e6f i13
+answer constant 1 i7
+answer constant 1 i8
+answer low32 1 i-134217728
+answer low32 1 i-134217727
+answer high32 1 i134217727
+answer high32 1 i134217726
+answer low64 1 i-576460752303423488
+answer low64 1 i-576460752303423487
+answer high64 1 i576460752303423487
+answer high64 1 i576460752303423486
+answer wrong_spec 2 a6f6b a6f6b
+answer wrong_spec 2 a6f6b a6e6f
+client nested 1 i119
+client nested 1 i118
+client retry 1 a6f6b

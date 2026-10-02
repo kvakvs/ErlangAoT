@@ -4,6 +4,7 @@ import struct
 import pathlib
 import re
 import sys
+from stored import load
 from evidence import digest, provenance, run
 
 
@@ -101,13 +102,10 @@ def widths(tool, work):
 
 
 def main():
-    tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
-    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    provenance(source, otp, source / "tests/fixtures/patternmatch", work)
-    records = prepare(source, otp, work)
-    expected = run([escript, str(source / "tests/compiler/patternmatch/immediate.escript"), str(work)])
-    (work / "expected.txt").write_bytes(expected.replace("\r\n", "\n").encode())
+    records = load(source, "immediate", work)
     native(tool, cmake, source, work, settings, config, suffix)
     records["widths"] = widths(tool, work)
     (work / "evidence.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")

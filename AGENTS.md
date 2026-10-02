@@ -52,6 +52,7 @@ Completed foundations, frontend/project/compiler implementation, runtime skeleto
 
 ## Testing Strategy
 
+- When testing against golden master, make sure the project owns the fixtures used in testing as gold master and that they're generated once from Erlang/OTP, but Erlang/OTP should not be required for building  and testing ErlangAoT.
 - Minimize unit testing and maximize meaningful black-box and end-to-end coverage. Prefer real Erlang source files and project fixtures exercised through the compiler CLI, checking exit status, diagnostics, generated artifacts, and executable behavior as those features become available.
 - Exercise real compiler stages and runtime integrations together; compare observable behavior with Erlang/OTP where appropriate. Avoid mocks and assertions tied to private implementation details when a real workflow can cover the behavior.
 - Add focused unit tests only for important edge cases or invariants that cannot be covered reliably or practically through black-box or end-to-end tests. Avoid duplicating coverage across layers; preserve existing useful tests unless equivalent behavioral coverage replaces them.

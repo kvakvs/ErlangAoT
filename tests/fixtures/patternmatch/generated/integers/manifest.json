@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "corpus": "integers",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "integers.py": "e8d04022e4b98a314d8ad51795ff4490dc122698723da4bad297297d7f75a805",
+    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "immediate.escript": "e71d8c6a99bc3d71ec3183fb7858f54895c4f04ab4360e3d2f2bf8e5326cd805",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "823b62d811f648a27baad11525fe25fa5088aa10ff66017b99d0b503dd824933",
+    "calls.term": "b2b9c3e5c51f0455943e2fd0e426989ce5fde60e68f83cc3d67da9f1b4aabc69",
+    "calls.txt": "3c14def780bbc89b84ee63e24fc49b2386e4c7a7bdcbe61bf2dd9fef48179927",
+    "client.erl": "dde9a889d880369d9d6096b382fd6f441058aa6b93b8861542d1e8f0390c77b6",
+    "expected.txt": "8805d66a15fed4db73d715eabbe738a6f656b32e262427ccf6b3ba33d0d89cb5",
+    "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
+  },
+  "evidence": {
+    "calls": 16065,
+    "sources": {
+      "lib\\compiler\\test\\trycatch_SUITE.erl": "ffa1e94ff2543a23caea6f24453aede2e9ad3c0d43f907ea22cc5d0d5c7e4d7a",
+      "lib\\compiler\\test\\beam_bounds_SUITE.erl": "fdb37c39bac0511b5da1acb402dcc86f860c2d489ee8da5a7158a2b85569eb9c"
+    },
+    "helpers": [
+      {
+        "function": "my_div/2",
+        "body": "my_div(A, B) ->\n    A div B.",
+        "adaptations": "none"
+      },
+      {
+        "function": "my_add/2",
+        "body": "my_add(A, B) ->\n    A + B.",
+        "adaptations": "none"
+      },
+      {
+        "function": "bnot_bounds_2_coverage/1",
+        "body": "bnot_bounds_2_coverage(N) -> bnot N.",
+        "adaptations": "none"
+      }
+    ],
+    "declarations": "my_div/2,my_add/2,bnot_bounds_2_coverage/1,add/2,guard_add/2,subtract/2,guard_subtract/2,multiply/2,guard_multiply/2,divide/2,guard_divide/2,remainder/2,guard_remainder/2,bit_and/2,guard_bit_and/2,bit_or/2,guard_bit_or/2,bit_xor/2,guard_bit_xor/2,left/2,guard_left/2,right/2,guard_right/2,positive/1,negative/1,complement/1,absolute/1,classify/1,arity/1,element_index/1,legacy/1,qualified/2,roundtrip/1,literal/1,negative_literal/1,constant/0,body/1,repeat/2,independent/1,compare/2,wrong_spec/2,error_order/2,id/1",
+    "wrapper_sha256": "823b62d811f648a27baad11525fe25fa5088aa10ff66017b99d0b503dd824933",
+    "client_sha256": "dde9a889d880369d9d6096b382fd6f441058aa6b93b8861542d1e8f0390c77b6",
+    "adaptations": "beam_bounds arithmetic/bitwise/shift kernels use direct complete wrappers instead of higher-order private bounds harnesses; authored boundary, promotion, independent allocation, comparison, failure and guard kernels preserve their tested operations"
+  }
+}

@@ -161,8 +161,9 @@ Milestone tools from the SDK include `llvm-config`, `clang`/`clang++`,
 The historical macOS installation also provides `FileCheck`; it is absent from the
 current Windows SDK, where SDK round trips and explicit artifact checks are used.
 CMake >=3.28, a C++23
-compiler, a native linker/platform SDK, Boost >=1.90, toml++ and the existing OTP/quality
-tools remain project prerequisites; see [README](../README.md). Installed headers and
+compiler, a native linker/platform SDK, Boost >=1.90, toml++ and quality
+tools remain project prerequisites. OTP is only needed for explicitly enabled
+live audits or fixture regeneration; see [README](../README.md). Installed headers and
 CMake configuration are authoritative for this release. References:
 [LLVM CMake integration](https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project),
 [LLVM license](https://llvm.org/LICENSE.txt).

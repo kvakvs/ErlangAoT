@@ -132,3 +132,5 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | D05 stage readers | **+** `C/stage_readers/{preprocessed,abstract,ir}` — directory reservations only |
 | D06 C/FFI | **+** `R/interop`, **+** `runtime/include/erlang_aot/interop/`; concrete external use only |
 | D07 project extensions | `C/project`: schema/profiles/graphs/packages/watch/cache/scheduling; `C/driver`, `C/artifacts`; project tests/fixtures/examples; `docs/projects.md` |
+
+Golden fixtures: `tests/fixtures/patternmatch/generated/` owns source, calls, expected results and manifests. `tests/compiler/patternmatch/{stored,regenerate,regenerate_cases,upstream}.py` load, explicitly refresh and optionally audit them. `ERLANG_AOT_OTP_AUDITS` gates live audits; normal tests are OTP-free.

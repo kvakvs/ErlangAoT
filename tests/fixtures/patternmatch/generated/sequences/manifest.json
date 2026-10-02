@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "corpus": "sequences",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "sequences.py": "16e95350075272d0c0e4a073db6df7b57735db04f84813b9f0d2ceee1ecdf976",
+    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "immediate.escript": "e71d8c6a99bc3d71ec3183fb7858f54895c4f04ab4360e3d2f2bf8e5326cd805",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "9492c944d752d95d2b8d35f9ce3dedd55834816d6f8d3c71344213f0fff38972",
+    "calls.term": "368142c9505b693c6ec771c1b34f34d9ea54ea82a82515738b793e6b60fa6146",
+    "calls.txt": "274209a9dda905fbec5d1f4b30de538342ffc4d5f601e52170c4c61493563aad",
+    "client.erl": "fd8b280795c84cbbda104beff6882edefec85bb5ca46a3a737e3d9c99caff7f5",
+    "expected.txt": "1d3970ce251223e6591edee673a5cf9f95bc1227460fd8103312105a8a09cf70",
+    "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
+  },
+  "evidence": {
+    "calls": 1666,
+    "source": "lib\\compiler\\test\\match_SUITE.erl",
+    "sha256": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4",
+    "function": "mutable_variables_1/0; match_in_call/1 and mac_c/1 adaptations; id/1",
+    "original_mutable_helper": "mutable_variables_1() ->\n    Zero = 0,\n    One = 1,\n    Result = One = Zero,\n    {Result,One,Zero}.",
+    "adaptations": "mutable_variables_1 retains all assignments and guaranteed failure before replacing the unreachable tuple with Result; in_call adapts mac_c chain binding inside id calls using immediate X in place of constructed tuples; authored kernels test chains, aliases, equality constraints, RHS-created bindings, errors and sequences without removing tested matching behavior; id/1 unchanged",
+    "declarations": "mutable_variables_1/0,id/1,bind/1,check_only/1,self/1,rebind/2,chain/1,chain_check/2,compound/1,compound_check/2,rhs_binding/1,rhs_old/1,wild/1,literal/1,constant/1,empty_list/1,empty_tuple/1,stop/1,body_failure/1,later_call/1,in_call/1,sibling/2,first/2,chained_failure/0,early_call_error/1,wrong_spec/1,wide/1,deep/1",
+    "wrapper_sha256": "9492c944d752d95d2b8d35f9ce3dedd55834816d6f8d3c71344213f0fff38972",
+    "client_sha256": "fd8b280795c84cbbda104beff6882edefec85bb5ca46a3a737e3d9c99caff7f5"
+  }
+}

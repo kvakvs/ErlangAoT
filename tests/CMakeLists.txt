@@ -1,6 +1,12 @@
-include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
+option(ERLANG_AOT_OTP_AUDITS "Enable optional live OTP/reference audits (not required for normal tests)" OFF)
+set(oracle_modes golden)
+if(ERLANG_AOT_OTP_AUDITS)
+    include(${PROJECT_SOURCE_DIR}/cmake/ErlangDependencies.cmake)
+    list(APPEND oracle_modes oracle)
+endif()
 set(ERLANG_AOT_OTP_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/references/otp" CACHE PATH
     "Optional pinned OTP maint-29 source checkout for parser reduction and real-source tests")
+if(ERLANG_AOT_OTP_AUDITS)
 foreach(name IN ITEMS coverage corpus)
     add_test(NAME parser_${name} COMMAND "${CMAKE_COMMAND}"
         "-DOTP_ROOT=${ERLANG_AOT_OTP_SOURCE_ROOT}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
@@ -10,7 +16,8 @@ foreach(name IN ITEMS coverage corpus)
     set_tests_properties(parser_${name} PROPERTIES TIMEOUT 120
         SKIP_REGULAR_EXPRESSION "SKIP: pinned OTP source checkout unavailable")
 endforeach()
-foreach(mode IN ITEMS golden oracle)
+endif()
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -105,7 +112,7 @@ add_test(NAME parser_comprehensions COMMAND parser_comprehensions)
 set_tests_properties(parser_comprehensions PROPERTIES TIMEOUT 20)
 set_tests_properties(parser_exceptions PROPERTIES TIMEOUT 20)
 set_tests_properties(parser_control PROPERTIES TIMEOUT 20)
-foreach(mode IN ITEMS golden oracle)
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -122,24 +129,30 @@ foreach(mode IN ITEMS golden oracle)
         "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
         "-DLIVE=${live}" -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
 endforeach()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(parser_phase4_oracle PROPERTIES TIMEOUT 180)
+endif()
 
+if(ERLANG_AOT_OTP_AUDITS)
 add_test(NAME otp_oracle COMMAND "${CMAKE_COMMAND}"
     "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.escript"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
     "-DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/oracle"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/oracle.cmake")
+endif()
 
 add_executable(lexer_dump compiler/lexer_dump.cpp)
 erlang_aot_project_options(lexer_dump)
 target_link_libraries(lexer_dump PRIVATE erlang_frontend)
+if(ERLANG_AOT_OTP_AUDITS)
 add_test(NAME scanner_oracle COMMAND "${CMAKE_COMMAND}"
     "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/scan.escript"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
     "-DDUMP=$<TARGET_FILE:lexer_dump>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/scan.cmake")
+endif()
 add_test(NAME lexer_golden COMMAND "${CMAKE_COMMAND}"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/preprocessor"
     "-DDUMP=$<TARGET_FILE:lexer_dump>"
@@ -160,7 +173,7 @@ set_tests_properties(preprocessor_semantics PROPERTIES TIMEOUT 20)
 add_executable(preprocessor_dump compiler/preprocessor/dump.cpp)
 erlang_aot_project_options(preprocessor_dump)
 target_link_libraries(preprocessor_dump PRIVATE erlang_frontend)
-foreach(mode IN ITEMS golden oracle)
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -174,18 +187,24 @@ foreach(mode IN ITEMS golden oracle)
         "-DLIVE=${live}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/preprocessor/semantic.cmake")
 endforeach()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(preprocessor_oracle PROPERTIES TIMEOUT 60)
+endif()
 
 add_test(NAME parser_reference COMMAND "${CMAKE_COMMAND}"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
     "-DDUMP=$<TARGET_FILE:lexer_dump>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/reference.cmake")
+if(ERLANG_AOT_OTP_AUDITS)
 add_test(NAME parser_oracle COMMAND "${CMAKE_COMMAND}"
     "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
     "-DESCRIPT=${ERLANG_AOT_ESCRIPT}"
     "-DHARNESS=${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.escript"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/oracle.cmake")
+endif()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(parser_oracle PROPERTIES TIMEOUT 180)
+endif()
 
 add_executable(parser_tokens compiler/parser/tokens.cpp)
 erlang_aot_project_options(parser_tokens)
@@ -208,7 +227,7 @@ set_tests_properties(parser_forms PROPERTIES TIMEOUT 20)
 add_executable(parser_dump compiler/parser/dump.cpp)
 erlang_aot_project_options(parser_dump)
 target_link_libraries(parser_dump PRIVATE erlang_frontend)
-foreach(mode IN ITEMS golden oracle)
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -222,9 +241,11 @@ foreach(mode IN ITEMS golden oracle)
         "-DLIVE=${live}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase1.cmake")
 endforeach()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(parser_phase1_oracle PROPERTIES TIMEOUT 60)
+endif()
 
-foreach(mode IN ITEMS golden oracle)
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -238,7 +259,9 @@ foreach(mode IN ITEMS golden oracle)
         "-DLIVE=${live}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
 endforeach()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(parser_phase2_oracle PROPERTIES TIMEOUT 180)
+endif()
 
 add_executable(parser_expressions compiler/parser/expressions.cpp)
 erlang_aot_project_options(parser_expressions)
@@ -253,7 +276,7 @@ target_link_libraries(parser_clauses PRIVATE erlang_frontend)
 add_test(NAME parser_clauses COMMAND parser_clauses)
 set_tests_properties(parser_clauses PROPERTIES TIMEOUT 20)
 
-foreach(mode IN ITEMS golden oracle)
+foreach(mode IN LISTS oracle_modes)
     if(mode STREQUAL "oracle")
         set(live TRUE)
     else()
@@ -268,7 +291,9 @@ foreach(mode IN ITEMS golden oracle)
         "-DLIVE=${live}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/phase2.cmake")
 endforeach()
+if(ERLANG_AOT_OTP_AUDITS)
 set_tests_properties(parser_phase3_oracle PROPERTIES TIMEOUT 180)
+endif()
 
 add_executable(parser_structural compiler/parser/structural.cpp)
 erlang_aot_project_options(parser_structural)

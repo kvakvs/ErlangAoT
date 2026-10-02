@@ -6,6 +6,7 @@ import subprocess
 import sys
 from bindings import compile_case, helpers
 from evidence import digest, provenance, run, verify_manifest
+from stored import load
 
 ERRORS = r"illegal pattern|illegal expression in pattern|unbound variable|unsafe variable|invalid binary|conflicting binary|UTF binary|literal string pattern|unsized binary|map pattern requires"
 
@@ -108,25 +109,21 @@ def catalog(source, otp):
 
 
 def main():
-    tool, root, otp_root, directory, escript = sys.argv[1:]
-    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    tool, root, directory = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    provenance(source, otp, source / "tests/fixtures/patternmatch", work)
     fixtures = source / "tests/fixtures/patternmatch"
-    verify_manifest(otp, (fixtures / "pattern-otp.tsv").read_text(encoding="utf-8"))
     verify_manifest(fixtures, (fixtures / "pattern-fixtures.tsv").read_text(encoding="utf-8"))
-    catalog(source, otp)
-    rows, records = cases(source, otp, work)
-    oracle = run([escript, str(source / "tests/compiler/patternmatch/patterns.escript"), str(work)])
+    retained = load(source, 'patterns', work)
+    rows, records, oracle = retained['cases'], retained['helpers'], retained['oracle']
     cli(tool, work, rows)
     limits(tool, work)
-    suites(tool, otp)
-    (work / "evidence.json").write_text(json.dumps({"reference": json.loads((work / "provenance.json").read_text(encoding="utf-8")),
+    (work / "evidence.json").write_text(json.dumps({"reference": 'project-owned generated/patterns/manifest.json',
         "pattern_manifests": {name: digest(fixtures / name) for name in ["pattern-otp.tsv", "pattern-fixtures.tsv"]},
         "cases": rows, "helpers": records, "oracle": oracle,
         "policies": "O0/O2; specialization on/off; positional/project; nonpublication/recovery",
         "execution": "deferred; existing native identity/projection workflows remain required"}, indent=2) + "\n", encoding="utf-8")
-    print(oracle + "Pattern legality, source limits, original-suite parsing and batch nonpublication passed.")
+    print(oracle + "Retained pattern legality, source limits and batch nonpublication passed.")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "corpus": "clauses",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "clauses.py": "2ca3ee245d17735ad7eb1c50bdf9ef42a2c7ffc6963d96d7a3c7fa1a67fa4f33",
+    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "immediate.escript": "e71d8c6a99bc3d71ec3183fb7858f54895c4f04ab4360e3d2f2bf8e5326cd805",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "11f239ccf382069fa603c31da2fe12f7224f3ad57635f8692b4a544225028ebd",
+    "calls.term": "91c10a1524c8664baa36469633c587ee5cc78d224574c21599aa88626b6066c6",
+    "calls.txt": "8c27ea1f44cc93669aeb1efe0787344d88fe763ce4e6bcfe246e4d34bcd41f61",
+    "client.erl": "4ba64cf27dc53d74163321c31e8b0d57b4d20b0c8921dd8f8e86e7af8fb03f60",
+    "expected.txt": "8f3a0e521c091dbdc8a4af112f2c69ae4affa3d1f597d86e0146b4d7eda558b6",
+    "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
+  },
+  "evidence": {
+    "calls": 1020,
+    "sources": {
+      "lib\\compiler\\test\\guard_SUITE.erl": "061fa7f4de021931b5751d85876bcf5252ba1d6e725c3b6df10c47cbb1c8894f",
+      "lib\\compiler\\test\\match_SUITE.erl": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4"
+    },
+    "helpers": [
+      {
+        "function": "bool/1",
+        "adaptations": "none; complete helper",
+        "source": "bool(X) when is_boolean(X) -> ok;\nbool(_) -> error."
+      },
+      {
+        "function": "csemi4_orelse_a/4",
+        "adaptations": "none; complete helper",
+        "source": "csemi4_orelse_a(A, X, B, Y) when (tuple_size(A) > 1) orelse (X > 1);\n\t\t\t (tuple_size(B) > 1) orelse (Y > 1) -> ok;\ncsemi4_orelse_a(_, _, _, _) -> error."
+      },
+      {
+        "function": "csemi4_orelse_b/4",
+        "adaptations": "none; complete helper",
+        "source": "csemi4_orelse_b(A, X, B, Y) when (X > 1) orelse (tuple_size(A) > 1);\n\t\t\t (tuple_size(B) > 1) orelse (Y > 1) -> ok;\ncsemi4_orelse_b(_, _, _, _) -> error."
+      },
+      {
+        "function": "csemi4_orelse_c/4",
+        "adaptations": "none; complete helper",
+        "source": "csemi4_orelse_c(A, X, B, Y) when (tuple_size(A) > 1) orelse (X > 1);\n                           (Y > 1) orelse (tuple_size(B) > 1) -> ok;\ncsemi4_orelse_c(_, _, _, _) -> error."
+      },
+      {
+        "function": "csemi4_orelse_d/4",
+        "adaptations": "none; complete helper",
+        "source": "csemi4_orelse_d(A, X, B, Y) when (X > 1) or (tuple_size(A) > 1);\n\t\t\t (Y > 1) or (tuple_size(B) > 1) -> ok;\ncsemi4_orelse_d(_, _, _, _) -> error."
+      },
+      {
+        "function": "char_alias_1/1",
+        "adaptations": "float clause omitted until step 14; integer aliases and fallback unchanged",
+        "source": "char_alias_1(118=$v) -> ok;\nchar_alias_1($w=119) -> ok;\nchar_alias_1(42=42) -> ok;\nchar_alias_1(3.0=3.0) -> ok;\nchar_alias_1(_) -> error."
+      }
+    ],
+    "declarations": "bool/1,csemi4_orelse_a/4,csemi4_orelse_b/4,csemi4_orelse_c/4,csemi4_orelse_d/4,char_alias_1/1,overlap/2,rollback/2,failed_head/2,alias/2,errors/1,exhaust/1,body_failure/1,local/1,later/1,common/1,join/1,wrong_spec/2,wide/1",
+    "wrapper_sha256": "11f239ccf382069fa603c31da2fe12f7224f3ad57635f8692b4a544225028ebd",
+    "client_sha256": "4ba64cf27dc53d74163321c31e8b0d57b4d20b0c8921dd8f8e86e7af8fb03f60"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "corpus": "maps",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "maps.py": "3dd947b2f1f42f196ff10e0397647f72b9d8a080a87b95c8fbc068b541bfa670",
+    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "immediate.escript": "e71d8c6a99bc3d71ec3183fb7858f54895c4f04ab4360e3d2f2bf8e5326cd805",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "ee33ecc8878887bb92ea9ae4ca3c1cdd929341d42fcd60b0e2ed7e0cc23de8a3",
+    "calls.term": "ba6b08b21ab5c2efdaff53947818b0d2f2376201e1b4eed55e4a1e55a1d7d8cf",
+    "calls.txt": "0b6270485d21b39623f23bd523f9f5f3f113d4e5c7a1854d90cdc556bda895b5",
+    "client.erl": "d7ccf12070c632111a49dbb44756946f630ecc983edba789bf2ef0f356e0fdb2",
+    "expected.txt": "e00d28d3b665c60639ff93097387bf275093d7d574a1ca628b3dcd100a5d19f7",
+    "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
+  },
+  "evidence": {
+    "calls": 8010,
+    "source": "lib\\compiler\\test\\map_SUITE.erl",
+    "source_sha256": "c2a33af83830a5fa708415a7bccba4b83f16605768d7a79013b8fa9948bfe21a",
+    "helpers": [
+      {
+        "function": "map_is_size/2",
+        "body": "map_is_size(M,N) when map_size(M) =:= N -> true;\nmap_is_size(_,_) -> false.",
+        "adaptations": "none"
+      },
+      {
+        "function": "check_map_value/3",
+        "body": "check_map_value(Map, Key, Value) when map_get(Key, Map) =:= Value -> true;\ncheck_map_value(_, _, _) -> false.",
+        "adaptations": "none"
+      },
+      {
+        "function": "map_get_head/1",
+        "body": "map_get_head(M) when map_get(a, M) =:= 1 -> true;\nmap_get_head(_) -> false.",
+        "adaptations": "none"
+      }
+    ],
+    "adaptations": "t_update_exact operations use complete parameterized wrappers; t_key_expressions compound/call/division keys use body matches and retain failure; binary/case/fun/message portions remain with their owners; t_duplicate_keys repeated map tests become ordered clauses, supplemented by duplicate/equal key constraints",
+    "wrapper_sha256": "ee33ecc8878887bb92ea9ae4ca3c1cdd929341d42fcd60b0e2ed7e0cc23de8a3",
+    "client_sha256": "d7ccf12070c632111a49dbb44756946f630ecc983edba789bf2ef0f356e0fdb2"
+  }
+}

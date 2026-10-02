@@ -2,7 +2,7 @@
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
 prerequisites are included below in implementation order. Steps 1–15 are
-complete; added step 15a and steps 16–20 remain incomplete. Completion evidence is linked under each
+complete; added step 15a is complete; steps 16–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -28,6 +28,10 @@ admitted value domain. Do not claim complete Erlang guard coverage or all
 F13/F14 source contexts.
 
 ## Validation rules
+
+Per user-added step 15a, routine tests use project-owned pregenerated goldens.
+OTP extraction/execution below happens only during explicit regeneration or
+opt-in upstream audits; neither OTP nor its checkout is a build/test prerequisite.
 
 The official maint-29 head was checked on 2026-10-01 and matched the checkout
 and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. The originally untracked
@@ -739,12 +743,18 @@ source-ordered updates, computed-key patterns and error payloads are implemented
 
 ### 15a. Retain project-owned OTP golden fixtures (added by user)
 
-- [ ] Pregenerate source modules, inputs and expected values/errors using OTP;
+- [x] Pregenerate source modules, inputs and expected values/errors using OTP;
   retain license notices, reference/oracle versions, hashes and adaptations.
-- [ ] Make routine building/testing independent of an OTP installation/checkout.
+- [x] Make routine building/testing independent of an OTP installation/checkout.
   Keep explicit regeneration and optional upstream audits separate from tests.
-- [ ] Validate stored expectations through real native workflows, run the fresh
+- [x] Validate stored expectations through real native workflows, run the fresh
   combined build/CTest/quality gate, and commit this step separately from 14/15.
+
+Completion: [step-15a validation](../docs/patternmatch-step15a-validation.md)
+and [evidence](../docs/patternmatch-step15a-evidence.json). Fourteen project-owned
+corpora retain 49,959 expected native results plus semantic records. Fresh combined
+OTP-free build: 118/118 tests, full 244-unit quality gate. Live audits are opt-in;
+explicit OTP regeneration reproduces all retained inputs/results. Separate commit.
 
 ### 16. Implement bitstring construction, extraction and matching (F09)
 

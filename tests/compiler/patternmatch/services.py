@@ -4,6 +4,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from stored import load
 from evidence import digest, provenance, run
 from immediate import native, token, erl
 from bindings import compile_case
@@ -76,7 +77,7 @@ def write_calls(work, calls):
     (work / "project.toml").write_bytes(b'schema_version=1\n[[targets]]\nname="services"\nsources=["answer.erl","client.erl"]\n')
 
 
-def resolution(tool, source, work, escript):
+def resolution(tool, source, work, recorded):
     """Compare located legal/illegal/deferred calls with OTP, including skipped illegal operands."""
     cases = work / "resolution"
     (cases / "out").mkdir(parents=True, exist_ok=True)
@@ -98,21 +99,19 @@ def resolution(tool, source, work, escript):
             run([tool, str(cases / (row["name"] + ".erl"))])
         row["sha256"] = digest(cases / (row["name"] + ".erl"))
     (cases / "patterns.term").write_bytes(("\n".join(terms) + "\n").encode())
-    oracle = run([escript, str(source / "tests/compiler/patternmatch/patterns.escript"), str(cases)])
+    assert digest(source / "tests/fixtures/patternmatch/guard-resolution.json") == recorded['fixture_sha256']
+    oracle = recorded['oracle']
     assert (cases / "out/sentinel").read_bytes() == b"preserve"
     return {"cases": rows, "oracle": oracle}
 
 
 def main():
-    tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
-    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    provenance(source, otp, source / "tests/fixtures/patternmatch", work)
-    records = kernels(otp, work)
-    expected = run([escript, str(source / "tests/compiler/patternmatch/immediate.escript"), str(work)])
-    (work / "expected.txt").write_bytes(expected.replace("\r\n", "\n").encode())
+    records = load(source, "services", work)
     native(tool, cmake, source, work, settings, config, suffix)
-    records["resolution"] = resolution(tool, source, work, escript)
+    records["resolution"] = resolution(tool, source, work, records['resolution_oracle'])
     for mode in ["--print-ir", "--print-optimized-ir", "--print-types"]:
         options = [] if mode == "--print-types" else ["-O2"]
         run([tool, *options, mode, str(work / "answer.erl"), str(work / "client.erl")])

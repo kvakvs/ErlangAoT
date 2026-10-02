@@ -1,0 +1,1689 @@
+answer body_is_atom 1 i-576460752303423488
+answer guard_is_atom 1 i-576460752303423488
+answer body_is_atom 1 i-1
+answer guard_is_atom 1 i-1
+answer body_is_atom 1 i0
+answer guard_is_atom 1 i0
+answer body_is_atom 1 i576460752303423487
+answer guard_is_atom 1 i576460752303423487
+answer body_is_atom 1 a7a
+answer guard_is_atom 1 a7a
+answer body_is_atom 1 a61
+answer guard_is_atom 1 a61
+answer body_is_atom 1 a74727565
+answer guard_is_atom 1 a74727565
+answer body_is_atom 1 a66616c7365
+answer guard_is_atom 1 a66616c7365
+answer body_is_atom 1 acea9
+answer guard_is_atom 1 acea9
+answer body_is_atom 1 nil
+answer guard_is_atom 1 nil
+answer body_is_atom 1 tuple
+answer guard_is_atom 1 tuple
+answer body_is_integer 1 i-576460752303423488
+answer guard_is_integer 1 i-576460752303423488
+answer body_is_integer 1 i-1
+answer guard_is_integer 1 i-1
+answer body_is_integer 1 i0
+answer guard_is_integer 1 i0
+answer body_is_integer 1 i576460752303423487
+answer guard_is_integer 1 i576460752303423487
+answer body_is_integer 1 a7a
+answer guard_is_integer 1 a7a
+answer body_is_integer 1 a61
+answer guard_is_integer 1 a61
+answer body_is_integer 1 a74727565
+answer guard_is_integer 1 a74727565
+answer body_is_integer 1 a66616c7365
+answer guard_is_integer 1 a66616c7365
+answer body_is_integer 1 acea9
+answer guard_is_integer 1 acea9
+answer body_is_integer 1 nil
+answer guard_is_integer 1 nil
+answer body_is_integer 1 tuple
+answer guard_is_integer 1 tuple
+answer body_is_number 1 i-576460752303423488
+answer guard_is_number 1 i-576460752303423488
+answer body_is_number 1 i-1
+answer guard_is_number 1 i-1
+answer body_is_number 1 i0
+answer guard_is_number 1 i0
+answer body_is_number 1 i576460752303423487
+answer guard_is_number 1 i576460752303423487
+answer body_is_number 1 a7a
+answer guard_is_number 1 a7a
+answer body_is_number 1 a61
+answer guard_is_number 1 a61
+answer body_is_number 1 a74727565
+answer guard_is_number 1 a74727565
+answer body_is_number 1 a66616c7365
+answer guard_is_number 1 a66616c7365
+answer body_is_number 1 acea9
+answer guard_is_number 1 acea9
+answer body_is_number 1 nil
+answer guard_is_number 1 nil
+answer body_is_number 1 tuple
+answer guard_is_number 1 tuple
+answer body_is_boolean 1 i-576460752303423488
+answer guard_is_boolean 1 i-576460752303423488
+answer body_is_boolean 1 i-1
+answer guard_is_boolean 1 i-1
+answer body_is_boolean 1 i0
+answer guard_is_boolean 1 i0
+answer body_is_boolean 1 i576460752303423487
+answer guard_is_boolean 1 i576460752303423487
+answer body_is_boolean 1 a7a
+answer guard_is_boolean 1 a7a
+answer body_is_boolean 1 a61
+answer guard_is_boolean 1 a61
+answer body_is_boolean 1 a74727565
+answer guard_is_boolean 1 a74727565
+answer body_is_boolean 1 a66616c7365
+answer guard_is_boolean 1 a66616c7365
+answer body_is_boolean 1 acea9
+answer guard_is_boolean 1 acea9
+answer body_is_boolean 1 nil
+answer guard_is_boolean 1 nil
+answer body_is_boolean 1 tuple
+answer guard_is_boolean 1 tuple
+answer body_is_tuple 1 i-576460752303423488
+answer guard_is_tuple 1 i-576460752303423488
+answer body_is_tuple 1 i-1
+answer guard_is_tuple 1 i-1
+answer body_is_tuple 1 i0
+answer guard_is_tuple 1 i0
+answer body_is_tuple 1 i576460752303423487
+answer guard_is_tuple 1 i576460752303423487
+answer body_is_tuple 1 a7a
+answer guard_is_tuple 1 a7a
+answer body_is_tuple 1 a61
+answer guard_is_tuple 1 a61
+answer body_is_tuple 1 a74727565
+answer guard_is_tuple 1 a74727565
+answer body_is_tuple 1 a66616c7365
+answer guard_is_tuple 1 a66616c7365
+answer body_is_tuple 1 acea9
+answer guard_is_tuple 1 acea9
+answer body_is_tuple 1 nil
+answer guard_is_tuple 1 nil
+answer body_is_tuple 1 tuple
+answer guard_is_tuple 1 tuple
+answer body_is_list 1 i-576460752303423488
+answer guard_is_list 1 i-576460752303423488
+answer body_is_list 1 i-1
+answer guard_is_list 1 i-1
+answer body_is_list 1 i0
+answer guard_is_list 1 i0
+answer body_is_list 1 i576460752303423487
+answer guard_is_list 1 i576460752303423487
+answer body_is_list 1 a7a
+answer guard_is_list 1 a7a
+answer body_is_list 1 a61
+answer guard_is_list 1 a61
+answer body_is_list 1 a74727565
+answer guard_is_list 1 a74727565
+answer body_is_list 1 a66616c7365
+answer guard_is_list 1 a66616c7365
+answer body_is_list 1 acea9
+answer guard_is_list 1 acea9
+answer body_is_list 1 nil
+answer guard_is_list 1 nil
+answer body_is_list 1 tuple
+answer guard_is_list 1 tuple
+answer body_is_binary 1 i-576460752303423488
+answer guard_is_binary 1 i-576460752303423488
+answer body_is_binary 1 i-1
+answer guard_is_binary 1 i-1
+answer body_is_binary 1 i0
+answer guard_is_binary 1 i0
+answer body_is_binary 1 i576460752303423487
+answer guard_is_binary 1 i576460752303423487
+answer body_is_binary 1 a7a
+answer guard_is_binary 1 a7a
+answer body_is_binary 1 a61
+answer guard_is_binary 1 a61
+answer body_is_binary 1 a74727565
+answer guard_is_binary 1 a74727565
+answer body_is_binary 1 a66616c7365
+answer guard_is_binary 1 a66616c7365
+answer body_is_binary 1 acea9
+answer guard_is_binary 1 acea9
+answer body_is_binary 1 nil
+answer guard_is_binary 1 nil
+answer body_is_binary 1 tuple
+answer guard_is_binary 1 tuple
+answer body_is_bitstring 1 i-576460752303423488
+answer guard_is_bitstring 1 i-576460752303423488
+answer body_is_bitstring 1 i-1
+answer guard_is_bitstring 1 i-1
+answer body_is_bitstring 1 i0
+answer guard_is_bitstring 1 i0
+answer body_is_bitstring 1 i576460752303423487
+answer guard_is_bitstring 1 i576460752303423487
+answer body_is_bitstring 1 a7a
+answer guard_is_bitstring 1 a7a
+answer body_is_bitstring 1 a61
+answer guard_is_bitstring 1 a61
+answer body_is_bitstring 1 a74727565
+answer guard_is_bitstring 1 a74727565
+answer body_is_bitstring 1 a66616c7365
+answer guard_is_bitstring 1 a66616c7365
+answer body_is_bitstring 1 acea9
+answer guard_is_bitstring 1 acea9
+answer body_is_bitstring 1 nil
+answer guard_is_bitstring 1 nil
+answer body_is_bitstring 1 tuple
+answer guard_is_bitstring 1 tuple
+answer body_is_float 1 i-576460752303423488
+answer guard_is_float 1 i-576460752303423488
+answer body_is_float 1 i-1
+answer guard_is_float 1 i-1
+answer body_is_float 1 i0
+answer guard_is_float 1 i0
+answer body_is_float 1 i576460752303423487
+answer guard_is_float 1 i576460752303423487
+answer body_is_float 1 a7a
+answer guard_is_float 1 a7a
+answer body_is_float 1 a61
+answer guard_is_float 1 a61
+answer body_is_float 1 a74727565
+answer guard_is_float 1 a74727565
+answer body_is_float 1 a66616c7365
+answer guard_is_float 1 a66616c7365
+answer body_is_float 1 acea9
+answer guard_is_float 1 acea9
+answer body_is_float 1 nil
+answer guard_is_float 1 nil
+answer body_is_float 1 tuple
+answer guard_is_float 1 tuple
+answer body_is_map 1 i-576460752303423488
+answer guard_is_map 1 i-576460752303423488
+answer body_is_map 1 i-1
+answer guard_is_map 1 i-1
+answer body_is_map 1 i0
+answer guard_is_map 1 i0
+answer body_is_map 1 i576460752303423487
+answer guard_is_map 1 i576460752303423487
+answer body_is_map 1 a7a
+answer guard_is_map 1 a7a
+answer body_is_map 1 a61
+answer guard_is_map 1 a61
+answer body_is_map 1 a74727565
+answer guard_is_map 1 a74727565
+answer body_is_map 1 a66616c7365
+answer guard_is_map 1 a66616c7365
+answer body_is_map 1 acea9
+answer guard_is_map 1 acea9
+answer body_is_map 1 nil
+answer guard_is_map 1 nil
+answer body_is_map 1 tuple
+answer guard_is_map 1 tuple
+answer body_is_pid 1 i-576460752303423488
+answer guard_is_pid 1 i-576460752303423488
+answer body_is_pid 1 i-1
+answer guard_is_pid 1 i-1
+answer body_is_pid 1 i0
+answer guard_is_pid 1 i0
+answer body_is_pid 1 i576460752303423487
+answer guard_is_pid 1 i576460752303423487
+answer body_is_pid 1 a7a
+answer guard_is_pid 1 a7a
+answer body_is_pid 1 a61
+answer guard_is_pid 1 a61
+answer body_is_pid 1 a74727565
+answer guard_is_pid 1 a74727565
+answer body_is_pid 1 a66616c7365
+answer guard_is_pid 1 a66616c7365
+answer body_is_pid 1 acea9
+answer guard_is_pid 1 acea9
+answer body_is_pid 1 nil
+answer guard_is_pid 1 nil
+answer body_is_pid 1 tuple
+answer guard_is_pid 1 tuple
+answer body_is_port 1 i-576460752303423488
+answer guard_is_port 1 i-576460752303423488
+answer body_is_port 1 i-1
+answer guard_is_port 1 i-1
+answer body_is_port 1 i0
+answer guard_is_port 1 i0
+answer body_is_port 1 i576460752303423487
+answer guard_is_port 1 i576460752303423487
+answer body_is_port 1 a7a
+answer guard_is_port 1 a7a
+answer body_is_port 1 a61
+answer guard_is_port 1 a61
+answer body_is_port 1 a74727565
+answer guard_is_port 1 a74727565
+answer body_is_port 1 a66616c7365
+answer guard_is_port 1 a66616c7365
+answer body_is_port 1 acea9
+answer guard_is_port 1 acea9
+answer body_is_port 1 nil
+answer guard_is_port 1 nil
+answer body_is_port 1 tuple
+answer guard_is_port 1 tuple
+answer body_is_reference 1 i-576460752303423488
+answer guard_is_reference 1 i-576460752303423488
+answer body_is_reference 1 i-1
+answer guard_is_reference 1 i-1
+answer body_is_reference 1 i0
+answer guard_is_reference 1 i0
+answer body_is_reference 1 i576460752303423487
+answer guard_is_reference 1 i576460752303423487
+answer body_is_reference 1 a7a
+answer guard_is_reference 1 a7a
+answer body_is_reference 1 a61
+answer guard_is_reference 1 a61
+answer body_is_reference 1 a74727565
+answer guard_is_reference 1 a74727565
+answer body_is_reference 1 a66616c7365
+answer guard_is_reference 1 a66616c7365
+answer body_is_reference 1 acea9
+answer guard_is_reference 1 acea9
+answer body_is_reference 1 nil
+answer guard_is_reference 1 nil
+answer body_is_reference 1 tuple
+answer guard_is_reference 1 tuple
+answer body_is_function 1 i-576460752303423488
+answer guard_is_function 1 i-576460752303423488
+answer body_is_function 1 i-1
+answer guard_is_function 1 i-1
+answer body_is_function 1 i0
+answer guard_is_function 1 i0
+answer body_is_function 1 i576460752303423487
+answer guard_is_function 1 i576460752303423487
+answer body_is_function 1 a7a
+answer guard_is_function 1 a7a
+answer body_is_function 1 a61
+answer guard_is_function 1 a61
+answer body_is_function 1 a74727565
+answer guard_is_function 1 a74727565
+answer body_is_function 1 a66616c7365
+answer guard_is_function 1 a66616c7365
+answer body_is_function 1 acea9
+answer guard_is_function 1 acea9
+answer body_is_function 1 nil
+answer guard_is_function 1 nil
+answer body_is_function 1 tuple
+answer guard_is_function 1 tuple
+answer exact 2 i-576460752303423488 i-576460752303423488
+answer exact 2 i-576460752303423488 i-1
+answer exact 2 i-576460752303423488 i0
+answer exact 2 i-576460752303423488 i576460752303423487
+answer exact 2 i-576460752303423488 a7a
+answer exact 2 i-576460752303423488 a61
+answer exact 2 i-576460752303423488 a74727565
+answer exact 2 i-576460752303423488 a66616c7365
+answer exact 2 i-576460752303423488 acea9
+answer exact 2 i-576460752303423488 nil
+answer exact 2 i-576460752303423488 tuple
+answer exact 2 i-1 i-576460752303423488
+answer exact 2 i-1 i-1
+answer exact 2 i-1 i0
+answer exact 2 i-1 i576460752303423487
+answer exact 2 i-1 a7a
+answer exact 2 i-1 a61
+answer exact 2 i-1 a74727565
+answer exact 2 i-1 a66616c7365
+answer exact 2 i-1 acea9
+answer exact 2 i-1 nil
+answer exact 2 i-1 tuple
+answer exact 2 i0 i-576460752303423488
+answer exact 2 i0 i-1
+answer exact 2 i0 i0
+answer exact 2 i0 i576460752303423487
+answer exact 2 i0 a7a
+answer exact 2 i0 a61
+answer exact 2 i0 a74727565
+answer exact 2 i0 a66616c7365
+answer exact 2 i0 acea9
+answer exact 2 i0 nil
+answer exact 2 i0 tuple
+answer exact 2 i576460752303423487 i-576460752303423488
+answer exact 2 i576460752303423487 i-1
+answer exact 2 i576460752303423487 i0
+answer exact 2 i576460752303423487 i576460752303423487
+answer exact 2 i576460752303423487 a7a
+answer exact 2 i576460752303423487 a61
+answer exact 2 i576460752303423487 a74727565
+answer exact 2 i576460752303423487 a66616c7365
+answer exact 2 i576460752303423487 acea9
+answer exact 2 i576460752303423487 nil
+answer exact 2 i576460752303423487 tuple
+answer exact 2 a7a i-576460752303423488
+answer exact 2 a7a i-1
+answer exact 2 a7a i0
+answer exact 2 a7a i576460752303423487
+answer exact 2 a7a a7a
+answer exact 2 a7a a61
+answer exact 2 a7a a74727565
+answer exact 2 a7a a66616c7365
+answer exact 2 a7a acea9
+answer exact 2 a7a nil
+answer exact 2 a7a tuple
+answer exact 2 a61 i-576460752303423488
+answer exact 2 a61 i-1
+answer exact 2 a61 i0
+answer exact 2 a61 i576460752303423487
+answer exact 2 a61 a7a
+answer exact 2 a61 a61
+answer exact 2 a61 a74727565
+answer exact 2 a61 a66616c7365
+answer exact 2 a61 acea9
+answer exact 2 a61 nil
+answer exact 2 a61 tuple
+answer exact 2 a74727565 i-576460752303423488
+answer exact 2 a74727565 i-1
+answer exact 2 a74727565 i0
+answer exact 2 a74727565 i576460752303423487
+answer exact 2 a74727565 a7a
+answer exact 2 a74727565 a61
+answer exact 2 a74727565 a74727565
+answer exact 2 a74727565 a66616c7365
+answer exact 2 a74727565 acea9
+answer exact 2 a74727565 nil
+answer exact 2 a74727565 tuple
+answer exact 2 a66616c7365 i-576460752303423488
+answer exact 2 a66616c7365 i-1
+answer exact 2 a66616c7365 i0
+answer exact 2 a66616c7365 i576460752303423487
+answer exact 2 a66616c7365 a7a
+answer exact 2 a66616c7365 a61
+answer exact 2 a66616c7365 a74727565
+answer exact 2 a66616c7365 a66616c7365
+answer exact 2 a66616c7365 acea9
+answer exact 2 a66616c7365 nil
+answer exact 2 a66616c7365 tuple
+answer exact 2 acea9 i-576460752303423488
+answer exact 2 acea9 i-1
+answer exact 2 acea9 i0
+answer exact 2 acea9 i576460752303423487
+answer exact 2 acea9 a7a
+answer exact 2 acea9 a61
+answer exact 2 acea9 a74727565
+answer exact 2 acea9 a66616c7365
+answer exact 2 acea9 acea9
+answer exact 2 acea9 nil
+answer exact 2 acea9 tuple
+answer exact 2 nil i-576460752303423488
+answer exact 2 nil i-1
+answer exact 2 nil i0
+answer exact 2 nil i576460752303423487
+answer exact 2 nil a7a
+answer exact 2 nil a61
+answer exact 2 nil a74727565
+answer exact 2 nil a66616c7365
+answer exact 2 nil acea9
+answer exact 2 nil nil
+answer exact 2 nil tuple
+answer exact 2 tuple i-576460752303423488
+answer exact 2 tuple i-1
+answer exact 2 tuple i0
+answer exact 2 tuple i576460752303423487
+answer exact 2 tuple a7a
+answer exact 2 tuple a61
+answer exact 2 tuple a74727565
+answer exact 2 tuple a66616c7365
+answer exact 2 tuple acea9
+answer exact 2 tuple nil
+answer exact 2 tuple tuple
+answer exact_ne 2 i-576460752303423488 i-576460752303423488
+answer exact_ne 2 i-576460752303423488 i-1
+answer exact_ne 2 i-576460752303423488 i0
+answer exact_ne 2 i-576460752303423488 i576460752303423487
+answer exact_ne 2 i-576460752303423488 a7a
+answer exact_ne 2 i-576460752303423488 a61
+answer exact_ne 2 i-576460752303423488 a74727565
+answer exact_ne 2 i-576460752303423488 a66616c7365
+answer exact_ne 2 i-576460752303423488 acea9
+answer exact_ne 2 i-576460752303423488 nil
+answer exact_ne 2 i-576460752303423488 tuple
+answer exact_ne 2 i-1 i-576460752303423488
+answer exact_ne 2 i-1 i-1
+answer exact_ne 2 i-1 i0
+answer exact_ne 2 i-1 i576460752303423487
+answer exact_ne 2 i-1 a7a
+answer exact_ne 2 i-1 a61
+answer exact_ne 2 i-1 a74727565
+answer exact_ne 2 i-1 a66616c7365
+answer exact_ne 2 i-1 acea9
+answer exact_ne 2 i-1 nil
+answer exact_ne 2 i-1 tuple
+answer exact_ne 2 i0 i-576460752303423488
+answer exact_ne 2 i0 i-1
+answer exact_ne 2 i0 i0
+answer exact_ne 2 i0 i576460752303423487
+answer exact_ne 2 i0 a7a
+answer exact_ne 2 i0 a61
+answer exact_ne 2 i0 a74727565
+answer exact_ne 2 i0 a66616c7365
+answer exact_ne 2 i0 acea9
+answer exact_ne 2 i0 nil
+answer exact_ne 2 i0 tuple
+answer exact_ne 2 i576460752303423487 i-576460752303423488
+answer exact_ne 2 i576460752303423487 i-1
+answer exact_ne 2 i576460752303423487 i0
+answer exact_ne 2 i576460752303423487 i576460752303423487
+answer exact_ne 2 i576460752303423487 a7a
+answer exact_ne 2 i576460752303423487 a61
+answer exact_ne 2 i576460752303423487 a74727565
+answer exact_ne 2 i576460752303423487 a66616c7365
+answer exact_ne 2 i576460752303423487 acea9
+answer exact_ne 2 i576460752303423487 nil
+answer exact_ne 2 i576460752303423487 tuple
+answer exact_ne 2 a7a i-576460752303423488
+answer exact_ne 2 a7a i-1
+answer exact_ne 2 a7a i0
+answer exact_ne 2 a7a i576460752303423487
+answer exact_ne 2 a7a a7a
+answer exact_ne 2 a7a a61
+answer exact_ne 2 a7a a74727565
+answer exact_ne 2 a7a a66616c7365
+answer exact_ne 2 a7a acea9
+answer exact_ne 2 a7a nil
+answer exact_ne 2 a7a tuple
+answer exact_ne 2 a61 i-576460752303423488
+answer exact_ne 2 a61 i-1
+answer exact_ne 2 a61 i0
+answer exact_ne 2 a61 i576460752303423487
+answer exact_ne 2 a61 a7a
+answer exact_ne 2 a61 a61
+answer exact_ne 2 a61 a74727565
+answer exact_ne 2 a61 a66616c7365
+answer exact_ne 2 a61 acea9
+answer exact_ne 2 a61 nil
+answer exact_ne 2 a61 tuple
+answer exact_ne 2 a74727565 i-576460752303423488
+answer exact_ne 2 a74727565 i-1
+answer exact_ne 2 a74727565 i0
+answer exact_ne 2 a74727565 i576460752303423487
+answer exact_ne 2 a74727565 a7a
+answer exact_ne 2 a74727565 a61
+answer exact_ne 2 a74727565 a74727565
+answer exact_ne 2 a74727565 a66616c7365
+answer exact_ne 2 a74727565 acea9
+answer exact_ne 2 a74727565 nil
+answer exact_ne 2 a74727565 tuple
+answer exact_ne 2 a66616c7365 i-576460752303423488
+answer exact_ne 2 a66616c7365 i-1
+answer exact_ne 2 a66616c7365 i0
+answer exact_ne 2 a66616c7365 i576460752303423487
+answer exact_ne 2 a66616c7365 a7a
+answer exact_ne 2 a66616c7365 a61
+answer exact_ne 2 a66616c7365 a74727565
+answer exact_ne 2 a66616c7365 a66616c7365
+answer exact_ne 2 a66616c7365 acea9
+answer exact_ne 2 a66616c7365 nil
+answer exact_ne 2 a66616c7365 tuple
+answer exact_ne 2 acea9 i-576460752303423488
+answer exact_ne 2 acea9 i-1
+answer exact_ne 2 acea9 i0
+answer exact_ne 2 acea9 i576460752303423487
+answer exact_ne 2 acea9 a7a
+answer exact_ne 2 acea9 a61
+answer exact_ne 2 acea9 a74727565
+answer exact_ne 2 acea9 a66616c7365
+answer exact_ne 2 acea9 acea9
+answer exact_ne 2 acea9 nil
+answer exact_ne 2 acea9 tuple
+answer exact_ne 2 nil i-576460752303423488
+answer exact_ne 2 nil i-1
+answer exact_ne 2 nil i0
+answer exact_ne 2 nil i576460752303423487
+answer exact_ne 2 nil a7a
+answer exact_ne 2 nil a61
+answer exact_ne 2 nil a74727565
+answer exact_ne 2 nil a66616c7365
+answer exact_ne 2 nil acea9
+answer exact_ne 2 nil nil
+answer exact_ne 2 nil tuple
+answer exact_ne 2 tuple i-576460752303423488
+answer exact_ne 2 tuple i-1
+answer exact_ne 2 tuple i0
+answer exact_ne 2 tuple i576460752303423487
+answer exact_ne 2 tuple a7a
+answer exact_ne 2 tuple a61
+answer exact_ne 2 tuple a74727565
+answer exact_ne 2 tuple a66616c7365
+answer exact_ne 2 tuple acea9
+answer exact_ne 2 tuple nil
+answer exact_ne 2 tuple tuple
+answer equal 2 i-576460752303423488 i-576460752303423488
+answer equal 2 i-576460752303423488 i-1
+answer equal 2 i-576460752303423488 i0
+answer equal 2 i-576460752303423488 i576460752303423487
+answer equal 2 i-576460752303423488 a7a
+answer equal 2 i-576460752303423488 a61
+answer equal 2 i-576460752303423488 a74727565
+answer equal 2 i-576460752303423488 a66616c7365
+answer equal 2 i-576460752303423488 acea9
+answer equal 2 i-576460752303423488 nil
+answer equal 2 i-576460752303423488 tuple
+answer equal 2 i-1 i-576460752303423488
+answer equal 2 i-1 i-1
+answer equal 2 i-1 i0
+answer equal 2 i-1 i576460752303423487
+answer equal 2 i-1 a7a
+answer equal 2 i-1 a61
+answer equal 2 i-1 a74727565
+answer equal 2 i-1 a66616c7365
+answer equal 2 i-1 acea9
+answer equal 2 i-1 nil
+answer equal 2 i-1 tuple
+answer equal 2 i0 i-576460752303423488
+answer equal 2 i0 i-1
+answer equal 2 i0 i0
+answer equal 2 i0 i576460752303423487
+answer equal 2 i0 a7a
+answer equal 2 i0 a61
+answer equal 2 i0 a74727565
+answer equal 2 i0 a66616c7365
+answer equal 2 i0 acea9
+answer equal 2 i0 nil
+answer equal 2 i0 tuple
+answer equal 2 i576460752303423487 i-576460752303423488
+answer equal 2 i576460752303423487 i-1
+answer equal 2 i576460752303423487 i0
+answer equal 2 i576460752303423487 i576460752303423487
+answer equal 2 i576460752303423487 a7a
+answer equal 2 i576460752303423487 a61
+answer equal 2 i576460752303423487 a74727565
+answer equal 2 i576460752303423487 a66616c7365
+answer equal 2 i576460752303423487 acea9
+answer equal 2 i576460752303423487 nil
+answer equal 2 i576460752303423487 tuple
+answer equal 2 a7a i-576460752303423488
+answer equal 2 a7a i-1
+answer equal 2 a7a i0
+answer equal 2 a7a i576460752303423487
+answer equal 2 a7a a7a
+answer equal 2 a7a a61
+answer equal 2 a7a a74727565
+answer equal 2 a7a a66616c7365
+answer equal 2 a7a acea9
+answer equal 2 a7a nil
+answer equal 2 a7a tuple
+answer equal 2 a61 i-576460752303423488
+answer equal 2 a61 i-1
+answer equal 2 a61 i0
+answer equal 2 a61 i576460752303423487
+answer equal 2 a61 a7a
+answer equal 2 a61 a61
+answer equal 2 a61 a74727565
+answer equal 2 a61 a66616c7365
+answer equal 2 a61 acea9
+answer equal 2 a61 nil
+answer equal 2 a61 tuple
+answer equal 2 a74727565 i-576460752303423488
+answer equal 2 a74727565 i-1
+answer equal 2 a74727565 i0
+answer equal 2 a74727565 i576460752303423487
+answer equal 2 a74727565 a7a
+answer equal 2 a74727565 a61
+answer equal 2 a74727565 a74727565
+answer equal 2 a74727565 a66616c7365
+answer equal 2 a74727565 acea9
+answer equal 2 a74727565 nil
+answer equal 2 a74727565 tuple
+answer equal 2 a66616c7365 i-576460752303423488
+answer equal 2 a66616c7365 i-1
+answer equal 2 a66616c7365 i0
+answer equal 2 a66616c7365 i576460752303423487
+answer equal 2 a66616c7365 a7a
+answer equal 2 a66616c7365 a61
+answer equal 2 a66616c7365 a74727565
+answer equal 2 a66616c7365 a66616c7365
+answer equal 2 a66616c7365 acea9
+answer equal 2 a66616c7365 nil
+answer equal 2 a66616c7365 tuple
+answer equal 2 acea9 i-576460752303423488
+answer equal 2 acea9 i-1
+answer equal 2 acea9 i0
+answer equal 2 acea9 i576460752303423487
+answer equal 2 acea9 a7a
+answer equal 2 acea9 a61
+answer equal 2 acea9 a74727565
+answer equal 2 acea9 a66616c7365
+answer equal 2 acea9 acea9
+answer equal 2 acea9 nil
+answer equal 2 acea9 tuple
+answer equal 2 nil i-576460752303423488
+answer equal 2 nil i-1
+answer equal 2 nil i0
+answer equal 2 nil i576460752303423487
+answer equal 2 nil a7a
+answer equal 2 nil a61
+answer equal 2 nil a74727565
+answer equal 2 nil a66616c7365
+answer equal 2 nil acea9
+answer equal 2 nil nil
+answer equal 2 nil tuple
+answer equal 2 tuple i-576460752303423488
+answer equal 2 tuple i-1
+answer equal 2 tuple i0
+answer equal 2 tuple i576460752303423487
+answer equal 2 tuple a7a
+answer equal 2 tuple a61
+answer equal 2 tuple a74727565
+answer equal 2 tuple a66616c7365
+answer equal 2 tuple acea9
+answer equal 2 tuple nil
+answer equal 2 tuple tuple
+answer unequal 2 i-576460752303423488 i-576460752303423488
+answer unequal 2 i-576460752303423488 i-1
+answer unequal 2 i-576460752303423488 i0
+answer unequal 2 i-576460752303423488 i576460752303423487
+answer unequal 2 i-576460752303423488 a7a
+answer unequal 2 i-576460752303423488 a61
+answer unequal 2 i-576460752303423488 a74727565
+answer unequal 2 i-576460752303423488 a66616c7365
+answer unequal 2 i-576460752303423488 acea9
+answer unequal 2 i-576460752303423488 nil
+answer unequal 2 i-576460752303423488 tuple
+answer unequal 2 i-1 i-576460752303423488
+answer unequal 2 i-1 i-1
+answer unequal 2 i-1 i0
+answer unequal 2 i-1 i576460752303423487
+answer unequal 2 i-1 a7a
+answer unequal 2 i-1 a61
+answer unequal 2 i-1 a74727565
+answer unequal 2 i-1 a66616c7365
+answer unequal 2 i-1 acea9
+answer unequal 2 i-1 nil
+answer unequal 2 i-1 tuple
+answer unequal 2 i0 i-576460752303423488
+answer unequal 2 i0 i-1
+answer unequal 2 i0 i0
+answer unequal 2 i0 i576460752303423487
+answer unequal 2 i0 a7a
+answer unequal 2 i0 a61
+answer unequal 2 i0 a74727565
+answer unequal 2 i0 a66616c7365
+answer unequal 2 i0 acea9
+answer unequal 2 i0 nil
+answer unequal 2 i0 tuple
+answer unequal 2 i576460752303423487 i-576460752303423488
+answer unequal 2 i576460752303423487 i-1
+answer unequal 2 i576460752303423487 i0
+answer unequal 2 i576460752303423487 i576460752303423487
+answer unequal 2 i576460752303423487 a7a
+answer unequal 2 i576460752303423487 a61
+answer unequal 2 i576460752303423487 a74727565
+answer unequal 2 i576460752303423487 a66616c7365
+answer unequal 2 i576460752303423487 acea9
+answer unequal 2 i576460752303423487 nil
+answer unequal 2 i576460752303423487 tuple
+answer unequal 2 a7a i-576460752303423488
+answer unequal 2 a7a i-1
+answer unequal 2 a7a i0
+answer unequal 2 a7a i576460752303423487
+answer unequal 2 a7a a7a
+answer unequal 2 a7a a61
+answer unequal 2 a7a a74727565
+answer unequal 2 a7a a66616c7365
+answer unequal 2 a7a acea9
+answer unequal 2 a7a nil
+answer unequal 2 a7a tuple
+answer unequal 2 a61 i-576460752303423488
+answer unequal 2 a61 i-1
+answer unequal 2 a61 i0
+answer unequal 2 a61 i576460752303423487
+answer unequal 2 a61 a7a
+answer unequal 2 a61 a61
+answer unequal 2 a61 a74727565
+answer unequal 2 a61 a66616c7365
+answer unequal 2 a61 acea9
+answer unequal 2 a61 nil
+answer unequal 2 a61 tuple
+answer unequal 2 a74727565 i-576460752303423488
+answer unequal 2 a74727565 i-1
+answer unequal 2 a74727565 i0
+answer unequal 2 a74727565 i576460752303423487
+answer unequal 2 a74727565 a7a
+answer unequal 2 a74727565 a61
+answer unequal 2 a74727565 a74727565
+answer unequal 2 a74727565 a66616c7365
+answer unequal 2 a74727565 acea9
+answer unequal 2 a74727565 nil
+answer unequal 2 a74727565 tuple
+answer unequal 2 a66616c7365 i-576460752303423488
+answer unequal 2 a66616c7365 i-1
+answer unequal 2 a66616c7365 i0
+answer unequal 2 a66616c7365 i576460752303423487
+answer unequal 2 a66616c7365 a7a
+answer unequal 2 a66616c7365 a61
+answer unequal 2 a66616c7365 a74727565
+answer unequal 2 a66616c7365 a66616c7365
+answer unequal 2 a66616c7365 acea9
+answer unequal 2 a66616c7365 nil
+answer unequal 2 a66616c7365 tuple
+answer unequal 2 acea9 i-576460752303423488
+answer unequal 2 acea9 i-1
+answer unequal 2 acea9 i0
+answer unequal 2 acea9 i576460752303423487
+answer unequal 2 acea9 a7a
+answer unequal 2 acea9 a61
+answer unequal 2 acea9 a74727565
+answer unequal 2 acea9 a66616c7365
+answer unequal 2 acea9 acea9
+answer unequal 2 acea9 nil
+answer unequal 2 acea9 tuple
+answer unequal 2 nil i-576460752303423488
+answer unequal 2 nil i-1
+answer unequal 2 nil i0
+answer unequal 2 nil i576460752303423487
+answer unequal 2 nil a7a
+answer unequal 2 nil a61
+answer unequal 2 nil a74727565
+answer unequal 2 nil a66616c7365
+answer unequal 2 nil acea9
+answer unequal 2 nil nil
+answer unequal 2 nil tuple
+answer unequal 2 tuple i-576460752303423488
+answer unequal 2 tuple i-1
+answer unequal 2 tuple i0
+answer unequal 2 tuple i576460752303423487
+answer unequal 2 tuple a7a
+answer unequal 2 tuple a61
+answer unequal 2 tuple a74727565
+answer unequal 2 tuple a66616c7365
+answer unequal 2 tuple acea9
+answer unequal 2 tuple nil
+answer unequal 2 tuple tuple
+answer less 2 i-576460752303423488 i-576460752303423488
+answer less 2 i-576460752303423488 i-1
+answer less 2 i-576460752303423488 i0
+answer less 2 i-576460752303423488 i576460752303423487
+answer less 2 i-576460752303423488 a7a
+answer less 2 i-576460752303423488 a61
+answer less 2 i-576460752303423488 a74727565
+answer less 2 i-576460752303423488 a66616c7365
+answer less 2 i-576460752303423488 acea9
+answer less 2 i-576460752303423488 nil
+answer less 2 i-576460752303423488 tuple
+answer less 2 i-1 i-576460752303423488
+answer less 2 i-1 i-1
+answer less 2 i-1 i0
+answer less 2 i-1 i576460752303423487
+answer less 2 i-1 a7a
+answer less 2 i-1 a61
+answer less 2 i-1 a74727565
+answer less 2 i-1 a66616c7365
+answer less 2 i-1 acea9
+answer less 2 i-1 nil
+answer less 2 i-1 tuple
+answer less 2 i0 i-576460752303423488
+answer less 2 i0 i-1
+answer less 2 i0 i0
+answer less 2 i0 i576460752303423487
+answer less 2 i0 a7a
+answer less 2 i0 a61
+answer less 2 i0 a74727565
+answer less 2 i0 a66616c7365
+answer less 2 i0 acea9
+answer less 2 i0 nil
+answer less 2 i0 tuple
+answer less 2 i576460752303423487 i-576460752303423488
+answer less 2 i576460752303423487 i-1
+answer less 2 i576460752303423487 i0
+answer less 2 i576460752303423487 i576460752303423487
+answer less 2 i576460752303423487 a7a
+answer less 2 i576460752303423487 a61
+answer less 2 i576460752303423487 a74727565
+answer less 2 i576460752303423487 a66616c7365
+answer less 2 i576460752303423487 acea9
+answer less 2 i576460752303423487 nil
+answer less 2 i576460752303423487 tuple
+answer less 2 a7a i-576460752303423488
+answer less 2 a7a i-1
+answer less 2 a7a i0
+answer less 2 a7a i576460752303423487
+answer less 2 a7a a7a
+answer less 2 a7a a61
+answer less 2 a7a a74727565
+answer less 2 a7a a66616c7365
+answer less 2 a7a acea9
+answer less 2 a7a nil
+answer less 2 a7a tuple
+answer less 2 a61 i-576460752303423488
+answer less 2 a61 i-1
+answer less 2 a61 i0
+answer less 2 a61 i576460752303423487
+answer less 2 a61 a7a
+answer less 2 a61 a61
+answer less 2 a61 a74727565
+answer less 2 a61 a66616c7365
+answer less 2 a61 acea9
+answer less 2 a61 nil
+answer less 2 a61 tuple
+answer less 2 a74727565 i-576460752303423488
+answer less 2 a74727565 i-1
+answer less 2 a74727565 i0
+answer less 2 a74727565 i576460752303423487
+answer less 2 a74727565 a7a
+answer less 2 a74727565 a61
+answer less 2 a74727565 a74727565
+answer less 2 a74727565 a66616c7365
+answer less 2 a74727565 acea9
+answer less 2 a74727565 nil
+answer less 2 a74727565 tuple
+answer less 2 a66616c7365 i-576460752303423488
+answer less 2 a66616c7365 i-1
+answer less 2 a66616c7365 i0
+answer less 2 a66616c7365 i576460752303423487
+answer less 2 a66616c7365 a7a
+answer less 2 a66616c7365 a61
+answer less 2 a66616c7365 a74727565
+answer less 2 a66616c7365 a66616c7365
+answer less 2 a66616c7365 acea9
+answer less 2 a66616c7365 nil
+answer less 2 a66616c7365 tuple
+answer less 2 acea9 i-576460752303423488
+answer less 2 acea9 i-1
+answer less 2 acea9 i0
+answer less 2 acea9 i576460752303423487
+answer less 2 acea9 a7a
+answer less 2 acea9 a61
+answer less 2 acea9 a74727565
+answer less 2 acea9 a66616c7365
+answer less 2 acea9 acea9
+answer less 2 acea9 nil
+answer less 2 acea9 tuple
+answer less 2 nil i-576460752303423488
+answer less 2 nil i-1
+answer less 2 nil i0
+answer less 2 nil i576460752303423487
+answer less 2 nil a7a
+answer less 2 nil a61
+answer less 2 nil a74727565
+answer less 2 nil a66616c7365
+answer less 2 nil acea9
+answer less 2 nil nil
+answer less 2 nil tuple
+answer less 2 tuple i-576460752303423488
+answer less 2 tuple i-1
+answer less 2 tuple i0
+answer less 2 tuple i576460752303423487
+answer less 2 tuple a7a
+answer less 2 tuple a61
+answer less 2 tuple a74727565
+answer less 2 tuple a66616c7365
+answer less 2 tuple acea9
+answer less 2 tuple nil
+answer less 2 tuple tuple
+answer leq 2 i-576460752303423488 i-576460752303423488
+answer leq 2 i-576460752303423488 i-1
+answer leq 2 i-576460752303423488 i0
+answer leq 2 i-576460752303423488 i576460752303423487
+answer leq 2 i-576460752303423488 a7a
+answer leq 2 i-576460752303423488 a61
+answer leq 2 i-576460752303423488 a74727565
+answer leq 2 i-576460752303423488 a66616c7365
+answer leq 2 i-576460752303423488 acea9
+answer leq 2 i-576460752303423488 nil
+answer leq 2 i-576460752303423488 tuple
+answer leq 2 i-1 i-576460752303423488
+answer leq 2 i-1 i-1
+answer leq 2 i-1 i0
+answer leq 2 i-1 i576460752303423487
+answer leq 2 i-1 a7a
+answer leq 2 i-1 a61
+answer leq 2 i-1 a74727565
+answer leq 2 i-1 a66616c7365
+answer leq 2 i-1 acea9
+answer leq 2 i-1 nil
+answer leq 2 i-1 tuple
+answer leq 2 i0 i-576460752303423488
+answer leq 2 i0 i-1
+answer leq 2 i0 i0
+answer leq 2 i0 i576460752303423487
+answer leq 2 i0 a7a
+answer leq 2 i0 a61
+answer leq 2 i0 a74727565
+answer leq 2 i0 a66616c7365
+answer leq 2 i0 acea9
+answer leq 2 i0 nil
+answer leq 2 i0 tuple
+answer leq 2 i576460752303423487 i-576460752303423488
+answer leq 2 i576460752303423487 i-1
+answer leq 2 i576460752303423487 i0
+answer leq 2 i576460752303423487 i576460752303423487
+answer leq 2 i576460752303423487 a7a
+answer leq 2 i576460752303423487 a61
+answer leq 2 i576460752303423487 a74727565
+answer leq 2 i576460752303423487 a66616c7365
+answer leq 2 i576460752303423487 acea9
+answer leq 2 i576460752303423487 nil
+answer leq 2 i576460752303423487 tuple
+answer leq 2 a7a i-576460752303423488
+answer leq 2 a7a i-1
+answer leq 2 a7a i0
+answer leq 2 a7a i576460752303423487
+answer leq 2 a7a a7a
+answer leq 2 a7a a61
+answer leq 2 a7a a74727565
+answer leq 2 a7a a66616c7365
+answer leq 2 a7a acea9
+answer leq 2 a7a nil
+answer leq 2 a7a tuple
+answer leq 2 a61 i-576460752303423488
+answer leq 2 a61 i-1
+answer leq 2 a61 i0
+answer leq 2 a61 i576460752303423487
+answer leq 2 a61 a7a
+answer leq 2 a61 a61
+answer leq 2 a61 a74727565
+answer leq 2 a61 a66616c7365
+answer leq 2 a61 acea9
+answer leq 2 a61 nil
+answer leq 2 a61 tuple
+answer leq 2 a74727565 i-576460752303423488
+answer leq 2 a74727565 i-1
+answer leq 2 a74727565 i0
+answer leq 2 a74727565 i576460752303423487
+answer leq 2 a74727565 a7a
+answer leq 2 a74727565 a61
+answer leq 2 a74727565 a74727565
+answer leq 2 a74727565 a66616c7365
+answer leq 2 a74727565 acea9
+answer leq 2 a74727565 nil
+answer leq 2 a74727565 tuple
+answer leq 2 a66616c7365 i-576460752303423488
+answer leq 2 a66616c7365 i-1
+answer leq 2 a66616c7365 i0
+answer leq 2 a66616c7365 i576460752303423487
+answer leq 2 a66616c7365 a7a
+answer leq 2 a66616c7365 a61
+answer leq 2 a66616c7365 a74727565
+answer leq 2 a66616c7365 a66616c7365
+answer leq 2 a66616c7365 acea9
+answer leq 2 a66616c7365 nil
+answer leq 2 a66616c7365 tuple
+answer leq 2 acea9 i-576460752303423488
+answer leq 2 acea9 i-1
+answer leq 2 acea9 i0
+answer leq 2 acea9 i576460752303423487
+answer leq 2 acea9 a7a
+answer leq 2 acea9 a61
+answer leq 2 acea9 a74727565
+answer leq 2 acea9 a66616c7365
+answer leq 2 acea9 acea9
+answer leq 2 acea9 nil
+answer leq 2 acea9 tuple
+answer leq 2 nil i-576460752303423488
+answer leq 2 nil i-1
+answer leq 2 nil i0
+answer leq 2 nil i576460752303423487
+answer leq 2 nil a7a
+answer leq 2 nil a61
+answer leq 2 nil a74727565
+answer leq 2 nil a66616c7365
+answer leq 2 nil acea9
+answer leq 2 nil nil
+answer leq 2 nil tuple
+answer leq 2 tuple i-576460752303423488
+answer leq 2 tuple i-1
+answer leq 2 tuple i0
+answer leq 2 tuple i576460752303423487
+answer leq 2 tuple a7a
+answer leq 2 tuple a61
+answer leq 2 tuple a74727565
+answer leq 2 tuple a66616c7365
+answer leq 2 tuple acea9
+answer leq 2 tuple nil
+answer leq 2 tuple tuple
+answer greater 2 i-576460752303423488 i-576460752303423488
+answer greater 2 i-576460752303423488 i-1
+answer greater 2 i-576460752303423488 i0
+answer greater 2 i-576460752303423488 i576460752303423487
+answer greater 2 i-576460752303423488 a7a
+answer greater 2 i-576460752303423488 a61
+answer greater 2 i-576460752303423488 a74727565
+answer greater 2 i-576460752303423488 a66616c7365
+answer greater 2 i-576460752303423488 acea9
+answer greater 2 i-576460752303423488 nil
+answer greater 2 i-576460752303423488 tuple
+answer greater 2 i-1 i-576460752303423488
+answer greater 2 i-1 i-1
+answer greater 2 i-1 i0
+answer greater 2 i-1 i576460752303423487
+answer greater 2 i-1 a7a
+answer greater 2 i-1 a61
+answer greater 2 i-1 a74727565
+answer greater 2 i-1 a66616c7365
+answer greater 2 i-1 acea9
+answer greater 2 i-1 nil
+answer greater 2 i-1 tuple
+answer greater 2 i0 i-576460752303423488
+answer greater 2 i0 i-1
+answer greater 2 i0 i0
+answer greater 2 i0 i576460752303423487
+answer greater 2 i0 a7a
+answer greater 2 i0 a61
+answer greater 2 i0 a74727565
+answer greater 2 i0 a66616c7365
+answer greater 2 i0 acea9
+answer greater 2 i0 nil
+answer greater 2 i0 tuple
+answer greater 2 i576460752303423487 i-576460752303423488
+answer greater 2 i576460752303423487 i-1
+answer greater 2 i576460752303423487 i0
+answer greater 2 i576460752303423487 i576460752303423487
+answer greater 2 i576460752303423487 a7a
+answer greater 2 i576460752303423487 a61
+answer greater 2 i576460752303423487 a74727565
+answer greater 2 i576460752303423487 a66616c7365
+answer greater 2 i576460752303423487 acea9
+answer greater 2 i576460752303423487 nil
+answer greater 2 i576460752303423487 tuple
+answer greater 2 a7a i-576460752303423488
+answer greater 2 a7a i-1
+answer greater 2 a7a i0
+answer greater 2 a7a i576460752303423487
+answer greater 2 a7a a7a
+answer greater 2 a7a a61
+answer greater 2 a7a a74727565
+answer greater 2 a7a a66616c7365
+answer greater 2 a7a acea9
+answer greater 2 a7a nil
+answer greater 2 a7a tuple
+answer greater 2 a61 i-576460752303423488
+answer greater 2 a61 i-1
+answer greater 2 a61 i0
+answer greater 2 a61 i576460752303423487
+answer greater 2 a61 a7a
+answer greater 2 a61 a61
+answer greater 2 a61 a74727565
+answer greater 2 a61 a66616c7365
+answer greater 2 a61 acea9
+answer greater 2 a61 nil
+answer greater 2 a61 tuple
+answer greater 2 a74727565 i-576460752303423488
+answer greater 2 a74727565 i-1
+answer greater 2 a74727565 i0
+answer greater 2 a74727565 i576460752303423487
+answer greater 2 a74727565 a7a
+answer greater 2 a74727565 a61
+answer greater 2 a74727565 a74727565
+answer greater 2 a74727565 a66616c7365
+answer greater 2 a74727565 acea9
+answer greater 2 a74727565 nil
+answer greater 2 a74727565 tuple
+answer greater 2 a66616c7365 i-576460752303423488
+answer greater 2 a66616c7365 i-1
+answer greater 2 a66616c7365 i0
+answer greater 2 a66616c7365 i576460752303423487
+answer greater 2 a66616c7365 a7a
+answer greater 2 a66616c7365 a61
+answer greater 2 a66616c7365 a74727565
+answer greater 2 a66616c7365 a66616c7365
+answer greater 2 a66616c7365 acea9
+answer greater 2 a66616c7365 nil
+answer greater 2 a66616c7365 tuple
+answer greater 2 acea9 i-576460752303423488
+answer greater 2 acea9 i-1
+answer greater 2 acea9 i0
+answer greater 2 acea9 i576460752303423487
+answer greater 2 acea9 a7a
+answer greater 2 acea9 a61
+answer greater 2 acea9 a74727565
+answer greater 2 acea9 a66616c7365
+answer greater 2 acea9 acea9
+answer greater 2 acea9 nil
+answer greater 2 acea9 tuple
+answer greater 2 nil i-576460752303423488
+answer greater 2 nil i-1
+answer greater 2 nil i0
+answer greater 2 nil i576460752303423487
+answer greater 2 nil a7a
+answer greater 2 nil a61
+answer greater 2 nil a74727565
+answer greater 2 nil a66616c7365
+answer greater 2 nil acea9
+answer greater 2 nil nil
+answer greater 2 nil tuple
+answer greater 2 tuple i-576460752303423488
+answer greater 2 tuple i-1
+answer greater 2 tuple i0
+answer greater 2 tuple i576460752303423487
+answer greater 2 tuple a7a
+answer greater 2 tuple a61
+answer greater 2 tuple a74727565
+answer greater 2 tuple a66616c7365
+answer greater 2 tuple acea9
+answer greater 2 tuple nil
+answer greater 2 tuple tuple
+answer geq 2 i-576460752303423488 i-576460752303423488
+answer geq 2 i-576460752303423488 i-1
+answer geq 2 i-576460752303423488 i0
+answer geq 2 i-576460752303423488 i576460752303423487
+answer geq 2 i-576460752303423488 a7a
+answer geq 2 i-576460752303423488 a61
+answer geq 2 i-576460752303423488 a74727565
+answer geq 2 i-576460752303423488 a66616c7365
+answer geq 2 i-576460752303423488 acea9
+answer geq 2 i-576460752303423488 nil
+answer geq 2 i-576460752303423488 tuple
+answer geq 2 i-1 i-576460752303423488
+answer geq 2 i-1 i-1
+answer geq 2 i-1 i0
+answer geq 2 i-1 i576460752303423487
+answer geq 2 i-1 a7a
+answer geq 2 i-1 a61
+answer geq 2 i-1 a74727565
+answer geq 2 i-1 a66616c7365
+answer geq 2 i-1 acea9
+answer geq 2 i-1 nil
+answer geq 2 i-1 tuple
+answer geq 2 i0 i-576460752303423488
+answer geq 2 i0 i-1
+answer geq 2 i0 i0
+answer geq 2 i0 i576460752303423487
+answer geq 2 i0 a7a
+answer geq 2 i0 a61
+answer geq 2 i0 a74727565
+answer geq 2 i0 a66616c7365
+answer geq 2 i0 acea9
+answer geq 2 i0 nil
+answer geq 2 i0 tuple
+answer geq 2 i576460752303423487 i-576460752303423488
+answer geq 2 i576460752303423487 i-1
+answer geq 2 i576460752303423487 i0
+answer geq 2 i576460752303423487 i576460752303423487
+answer geq 2 i576460752303423487 a7a
+answer geq 2 i576460752303423487 a61
+answer geq 2 i576460752303423487 a74727565
+answer geq 2 i576460752303423487 a66616c7365
+answer geq 2 i576460752303423487 acea9
+answer geq 2 i576460752303423487 nil
+answer geq 2 i576460752303423487 tuple
+answer geq 2 a7a i-576460752303423488
+answer geq 2 a7a i-1
+answer geq 2 a7a i0
+answer geq 2 a7a i576460752303423487
+answer geq 2 a7a a7a
+answer geq 2 a7a a61
+answer geq 2 a7a a74727565
+answer geq 2 a7a a66616c7365
+answer geq 2 a7a acea9
+answer geq 2 a7a nil
+answer geq 2 a7a tuple
+answer geq 2 a61 i-576460752303423488
+answer geq 2 a61 i-1
+answer geq 2 a61 i0
+answer geq 2 a61 i576460752303423487
+answer geq 2 a61 a7a
+answer geq 2 a61 a61
+answer geq 2 a61 a74727565
+answer geq 2 a61 a66616c7365
+answer geq 2 a61 acea9
+answer geq 2 a61 nil
+answer geq 2 a61 tuple
+answer geq 2 a74727565 i-576460752303423488
+answer geq 2 a74727565 i-1
+answer geq 2 a74727565 i0
+answer geq 2 a74727565 i576460752303423487
+answer geq 2 a74727565 a7a
+answer geq 2 a74727565 a61
+answer geq 2 a74727565 a74727565
+answer geq 2 a74727565 a66616c7365
+answer geq 2 a74727565 acea9
+answer geq 2 a74727565 nil
+answer geq 2 a74727565 tuple
+answer geq 2 a66616c7365 i-576460752303423488
+answer geq 2 a66616c7365 i-1
+answer geq 2 a66616c7365 i0
+answer geq 2 a66616c7365 i576460752303423487
+answer geq 2 a66616c7365 a7a
+answer geq 2 a66616c7365 a61
+answer geq 2 a66616c7365 a74727565
+answer geq 2 a66616c7365 a66616c7365
+answer geq 2 a66616c7365 acea9
+answer geq 2 a66616c7365 nil
+answer geq 2 a66616c7365 tuple
+answer geq 2 acea9 i-576460752303423488
+answer geq 2 acea9 i-1
+answer geq 2 acea9 i0
+answer geq 2 acea9 i576460752303423487
+answer geq 2 acea9 a7a
+answer geq 2 acea9 a61
+answer geq 2 acea9 a74727565
+answer geq 2 acea9 a66616c7365
+answer geq 2 acea9 acea9
+answer geq 2 acea9 nil
+answer geq 2 acea9 tuple
+answer geq 2 nil i-576460752303423488
+answer geq 2 nil i-1
+answer geq 2 nil i0
+answer geq 2 nil i576460752303423487
+answer geq 2 nil a7a
+answer geq 2 nil a61
+answer geq 2 nil a74727565
+answer geq 2 nil a66616c7365
+answer geq 2 nil acea9
+answer geq 2 nil nil
+answer geq 2 nil tuple
+answer geq 2 tuple i-576460752303423488
+answer geq 2 tuple i-1
+answer geq 2 tuple i0
+answer geq 2 tuple i576460752303423487
+answer geq 2 tuple a7a
+answer geq 2 tuple a61
+answer geq 2 tuple a74727565
+answer geq 2 tuple a66616c7365
+answer geq 2 tuple acea9
+answer geq 2 tuple nil
+answer geq 2 tuple tuple
+answer bool 1 i-576460752303423488
+answer bool 1 i-1
+answer bool 1 i0
+answer bool 1 i576460752303423487
+answer bool 1 a7a
+answer bool 1 a61
+answer bool 1 a74727565
+answer bool 1 a66616c7365
+answer bool 1 acea9
+answer bool 1 nil
+answer bool 1 tuple
+answer legacy_integer 1 i-576460752303423488
+answer legacy_integer 1 i-1
+answer legacy_integer 1 i0
+answer legacy_integer 1 i576460752303423487
+answer legacy_integer 1 a7a
+answer legacy_integer 1 a61
+answer legacy_integer 1 a74727565
+answer legacy_integer 1 a66616c7365
+answer legacy_integer 1 acea9
+answer legacy_integer 1 nil
+answer legacy_integer 1 tuple
+answer legacy_float 1 i-576460752303423488
+answer legacy_float 1 i-1
+answer legacy_float 1 i0
+answer legacy_float 1 i576460752303423487
+answer legacy_float 1 a7a
+answer legacy_float 1 a61
+answer legacy_float 1 a74727565
+answer legacy_float 1 a66616c7365
+answer legacy_float 1 acea9
+answer legacy_float 1 nil
+answer legacy_float 1 tuple
+answer tuple_size_value 1 i-576460752303423488
+answer tuple_size_value 1 i-1
+answer tuple_size_value 1 i0
+answer tuple_size_value 1 i576460752303423487
+answer tuple_size_value 1 a7a
+answer tuple_size_value 1 a61
+answer tuple_size_value 1 a74727565
+answer tuple_size_value 1 a66616c7365
+answer tuple_size_value 1 acea9
+answer tuple_size_value 1 nil
+answer tuple_size_value 1 tuple
+answer length_value 1 i-576460752303423488
+answer length_value 1 i-1
+answer length_value 1 i0
+answer length_value 1 i576460752303423487
+answer length_value 1 a7a
+answer length_value 1 a61
+answer length_value 1 a74727565
+answer length_value 1 a66616c7365
+answer length_value 1 acea9
+answer length_value 1 nil
+answer length_value 1 tuple
+answer size_value 1 i-576460752303423488
+answer size_value 1 i-1
+answer size_value 1 i0
+answer size_value 1 i576460752303423487
+answer size_value 1 a7a
+answer size_value 1 a61
+answer size_value 1 a74727565
+answer size_value 1 a66616c7365
+answer size_value 1 acea9
+answer size_value 1 nil
+answer size_value 1 tuple
+answer head_value 1 i-576460752303423488
+answer head_value 1 i-1
+answer head_value 1 i0
+answer head_value 1 i576460752303423487
+answer head_value 1 a7a
+answer head_value 1 a61
+answer head_value 1 a74727565
+answer head_value 1 a66616c7365
+answer head_value 1 acea9
+answer head_value 1 nil
+answer head_value 1 tuple
+answer tail_value 1 i-576460752303423488
+answer tail_value 1 i-1
+answer tail_value 1 i0
+answer tail_value 1 i576460752303423487
+answer tail_value 1 a7a
+answer tail_value 1 a61
+answer tail_value 1 a74727565
+answer tail_value 1 a66616c7365
+answer tail_value 1 acea9
+answer tail_value 1 nil
+answer tail_value 1 tuple
+answer wrong_spec 1 i-576460752303423488
+answer wrong_spec 1 i-1
+answer wrong_spec 1 i0
+answer wrong_spec 1 i576460752303423487
+answer wrong_spec 1 a7a
+answer wrong_spec 1 a61
+answer wrong_spec 1 a74727565
+answer wrong_spec 1 a66616c7365
+answer wrong_spec 1 acea9
+answer wrong_spec 1 nil
+answer wrong_spec 1 tuple
+answer head_first 1 i-576460752303423488
+answer head_first 1 i-1
+answer head_first 1 i0
+answer head_first 1 i576460752303423487
+answer head_first 1 a7a
+answer head_first 1 a61
+answer head_first 1 a74727565
+answer head_first 1 a66616c7365
+answer head_first 1 acea9
+answer head_first 1 nil
+answer head_first 1 tuple
+answer qualified 1 i-576460752303423488
+answer qualified 1 i-1
+answer qualified 1 i0
+answer qualified 1 i576460752303423487
+answer qualified 1 a7a
+answer qualified 1 a61
+answer qualified 1 a74727565
+answer qualified 1 a66616c7365
+answer qualified 1 acea9
+answer qualified 1 nil
+answer qualified 1 tuple
+answer function_arity 2 i0 i-1
+answer function_arity 2 i0 i0
+answer function_arity 2 i0 i1
+answer function_arity 2 i0 a6f6b
+answer function_arity 2 a6f6b i-1
+answer function_arity 2 a6f6b i0
+answer function_arity 2 a6f6b i1
+answer function_arity 2 a6f6b a6f6b
+answer function_arity 2 tuple i-1
+answer function_arity 2 tuple i0
+answer function_arity 2 tuple i1
+answer function_arity 2 tuple a6f6b
+answer guard_arity 2 i0 i-1
+answer guard_arity 2 i0 i0
+answer guard_arity 2 i0 i1
+answer guard_arity 2 i0 a6f6b
+answer guard_arity 2 a6f6b i-1
+answer guard_arity 2 a6f6b i0
+answer guard_arity 2 a6f6b i1
+answer guard_arity 2 a6f6b a6f6b
+answer guard_arity 2 tuple i-1
+answer guard_arity 2 tuple i0
+answer guard_arity 2 tuple i1
+answer guard_arity 2 tuple a6f6b
+answer element_value 2 i0 i-1
+answer element_value 2 i0 i0
+answer element_value 2 i0 i1
+answer element_value 2 i0 a6f6b
+answer element_value 2 a6f6b i-1
+answer element_value 2 a6f6b i0
+answer element_value 2 a6f6b i1
+answer element_value 2 a6f6b a6f6b
+answer element_value 2 tuple i-1
+answer element_value 2 tuple i0
+answer element_value 2 tuple i1
+answer element_value 2 tuple a6f6b
+answer guard_element 2 i0 i-1
+answer guard_element 2 i0 i0
+answer guard_element 2 i0 i1
+answer guard_element 2 i0 a6f6b
+answer guard_element 2 a6f6b i-1
+answer guard_element 2 a6f6b i0
+answer guard_element 2 a6f6b i1
+answer guard_element 2 a6f6b a6f6b
+answer guard_element 2 tuple i-1
+answer guard_element 2 tuple i0
+answer guard_element 2 tuple i1
+answer guard_element 2 tuple a6f6b
+answer min_value 2 i-576460752303423488 i-576460752303423488
+answer min_value 2 i-576460752303423488 i-1
+answer min_value 2 i-576460752303423488 i0
+answer min_value 2 i-576460752303423488 i576460752303423487
+answer min_value 2 i-576460752303423488 a7a
+answer min_value 2 i-576460752303423488 a61
+answer min_value 2 i-576460752303423488 a74727565
+answer min_value 2 i-576460752303423488 a66616c7365
+answer min_value 2 i-576460752303423488 acea9
+answer min_value 2 i-576460752303423488 nil
+answer min_value 2 i-576460752303423488 tuple
+answer min_value 2 i-1 i-576460752303423488
+answer min_value 2 i-1 i-1
+answer min_value 2 i-1 i0
+answer min_value 2 i-1 i576460752303423487
+answer min_value 2 i-1 a7a
+answer min_value 2 i-1 a61
+answer min_value 2 i-1 a74727565
+answer min_value 2 i-1 a66616c7365
+answer min_value 2 i-1 acea9
+answer min_value 2 i-1 nil
+answer min_value 2 i-1 tuple
+answer min_value 2 i0 i-576460752303423488
+answer min_value 2 i0 i-1
+answer min_value 2 i0 i0
+answer min_value 2 i0 i576460752303423487
+answer min_value 2 i0 a7a
+answer min_value 2 i0 a61
+answer min_value 2 i0 a74727565
+answer min_value 2 i0 a66616c7365
+answer min_value 2 i0 acea9
+answer min_value 2 i0 nil
+answer min_value 2 i0 tuple
+answer min_value 2 i576460752303423487 i-576460752303423488
+answer min_value 2 i576460752303423487 i-1
+answer min_value 2 i576460752303423487 i0
+answer min_value 2 i576460752303423487 i576460752303423487
+answer min_value 2 i576460752303423487 a7a
+answer min_value 2 i576460752303423487 a61
+answer min_value 2 i576460752303423487 a74727565
+answer min_value 2 i576460752303423487 a66616c7365
+answer min_value 2 i576460752303423487 acea9
+answer min_value 2 i576460752303423487 nil
+answer min_value 2 i576460752303423487 tuple
+answer min_value 2 a7a i-576460752303423488
+answer min_value 2 a7a i-1
+answer min_value 2 a7a i0
+answer min_value 2 a7a i576460752303423487
+answer min_value 2 a7a a7a
+answer min_value 2 a7a a61
+answer min_value 2 a7a a74727565
+answer min_value 2 a7a a66616c7365
+answer min_value 2 a7a acea9
+answer min_value 2 a7a nil
+answer min_value 2 a7a tuple
+answer min_value 2 a61 i-576460752303423488
+answer min_value 2 a61 i-1
+answer min_value 2 a61 i0
+answer min_value 2 a61 i576460752303423487
+answer min_value 2 a61 a7a
+answer min_value 2 a61 a61
+answer min_value 2 a61 a74727565
+answer min_value 2 a61 a66616c7365
+answer min_value 2 a61 acea9
+answer min_value 2 a61 nil
+answer min_value 2 a61 tuple
+answer min_value 2 a74727565 i-576460752303423488
+answer min_value 2 a74727565 i-1
+answer min_value 2 a74727565 i0
+answer min_value 2 a74727565 i576460752303423487
+answer min_value 2 a74727565 a7a
+answer min_value 2 a74727565 a61
+answer min_value 2 a74727565 a74727565
+answer min_value 2 a74727565 a66616c7365
+answer min_value 2 a74727565 acea9
+answer min_value 2 a74727565 nil
+answer min_value 2 a74727565 tuple
+answer min_value 2 a66616c7365 i-576460752303423488
+answer min_value 2 a66616c7365 i-1
+answer min_value 2 a66616c7365 i0
+answer min_value 2 a66616c7365 i576460752303423487
+answer min_value 2 a66616c7365 a7a
+answer min_value 2 a66616c7365 a61
+answer min_value 2 a66616c7365 a74727565
+answer min_value 2 a66616c7365 a66616c7365
+answer min_value 2 a66616c7365 acea9
+answer min_value 2 a66616c7365 nil
+answer min_value 2 a66616c7365 tuple
+answer min_value 2 acea9 i-576460752303423488
+answer min_value 2 acea9 i-1
+answer min_value 2 acea9 i0
+answer min_value 2 acea9 i576460752303423487
+answer min_value 2 acea9 a7a
+answer min_value 2 acea9 a61
+answer min_value 2 acea9 a74727565
+answer min_value 2 acea9 a66616c7365
+answer min_value 2 acea9 acea9
+answer min_value 2 acea9 nil
+answer min_value 2 acea9 tuple
+answer min_value 2 nil i-576460752303423488
+answer min_value 2 nil i-1
+answer min_value 2 nil i0
+answer min_value 2 nil i576460752303423487
+answer min_value 2 nil a7a
+answer min_value 2 nil a61
+answer min_value 2 nil a74727565
+answer min_value 2 nil a66616c7365
+answer min_value 2 nil acea9
+answer min_value 2 nil nil
+answer min_value 2 nil tuple
+answer min_value 2 tuple i-576460752303423488
+answer min_value 2 tuple i-1
+answer min_value 2 tuple i0
+answer min_value 2 tuple i576460752303423487
+answer min_value 2 tuple a7a
+answer min_value 2 tuple a61
+answer min_value 2 tuple a74727565
+answer min_value 2 tuple a66616c7365
+answer min_value 2 tuple acea9
+answer min_value 2 tuple nil
+answer min_value 2 tuple tuple
+answer max_value 2 i-576460752303423488 i-576460752303423488
+answer max_value 2 i-576460752303423488 i-1
+answer max_value 2 i-576460752303423488 i0
+answer max_value 2 i-576460752303423488 i576460752303423487
+answer max_value 2 i-576460752303423488 a7a
+answer max_value 2 i-576460752303423488 a61
+answer max_value 2 i-576460752303423488 a74727565
+answer max_value 2 i-576460752303423488 a66616c7365
+answer max_value 2 i-576460752303423488 acea9
+answer max_value 2 i-576460752303423488 nil
+answer max_value 2 i-576460752303423488 tuple
+answer max_value 2 i-1 i-576460752303423488
+answer max_value 2 i-1 i-1
+answer max_value 2 i-1 i0
+answer max_value 2 i-1 i576460752303423487
+answer max_value 2 i-1 a7a
+answer max_value 2 i-1 a61
+answer max_value 2 i-1 a74727565
+answer max_value 2 i-1 a66616c7365
+answer max_value 2 i-1 acea9
+answer max_value 2 i-1 nil
+answer max_value 2 i-1 tuple
+answer max_value 2 i0 i-576460752303423488
+answer max_value 2 i0 i-1
+answer max_value 2 i0 i0
+answer max_value 2 i0 i576460752303423487
+answer max_value 2 i0 a7a
+answer max_value 2 i0 a61
+answer max_value 2 i0 a74727565
+answer max_value 2 i0 a66616c7365
+answer max_value 2 i0 acea9
+answer max_value 2 i0 nil
+answer max_value 2 i0 tuple
+answer max_value 2 i576460752303423487 i-576460752303423488
+answer max_value 2 i576460752303423487 i-1
+answer max_value 2 i576460752303423487 i0
+answer max_value 2 i576460752303423487 i576460752303423487
+answer max_value 2 i576460752303423487 a7a
+answer max_value 2 i576460752303423487 a61
+answer max_value 2 i576460752303423487 a74727565
+answer max_value 2 i576460752303423487 a66616c7365
+answer max_value 2 i576460752303423487 acea9
+answer max_value 2 i576460752303423487 nil
+answer max_value 2 i576460752303423487 tuple
+answer max_value 2 a7a i-576460752303423488
+answer max_value 2 a7a i-1
+answer max_value 2 a7a i0
+answer max_value 2 a7a i576460752303423487
+answer max_value 2 a7a a7a
+answer max_value 2 a7a a61
+answer max_value 2 a7a a74727565
+answer max_value 2 a7a a66616c7365
+answer max_value 2 a7a acea9
+answer max_value 2 a7a nil
+answer max_value 2 a7a tuple
+answer max_value 2 a61 i-576460752303423488
+answer max_value 2 a61 i-1
+answer max_value 2 a61 i0
+answer max_value 2 a61 i576460752303423487
+answer max_value 2 a61 a7a
+answer max_value 2 a61 a61
+answer max_value 2 a61 a74727565
+answer max_value 2 a61 a66616c7365
+answer max_value 2 a61 acea9
+answer max_value 2 a61 nil
+answer max_value 2 a61 tuple
+answer max_value 2 a74727565 i-576460752303423488
+answer max_value 2 a74727565 i-1
+answer max_value 2 a74727565 i0
+answer max_value 2 a74727565 i576460752303423487
+answer max_value 2 a74727565 a7a
+answer max_value 2 a74727565 a61
+answer max_value 2 a74727565 a74727565
+answer max_value 2 a74727565 a66616c7365
+answer max_value 2 a74727565 acea9
+answer max_value 2 a74727565 nil
+answer max_value 2 a74727565 tuple
+answer max_value 2 a66616c7365 i-576460752303423488
+answer max_value 2 a66616c7365 i-1
+answer max_value 2 a66616c7365 i0
+answer max_value 2 a66616c7365 i576460752303423487
+answer max_value 2 a66616c7365 a7a
+answer max_value 2 a66616c7365 a61
+answer max_value 2 a66616c7365 a74727565
+answer max_value 2 a66616c7365 a66616c7365
+answer max_value 2 a66616c7365 acea9
+answer max_value 2 a66616c7365 nil
+answer max_value 2 a66616c7365 tuple
+answer max_value 2 acea9 i-576460752303423488
+answer max_value 2 acea9 i-1
+answer max_value 2 acea9 i0
+answer max_value 2 acea9 i576460752303423487
+answer max_value 2 acea9 a7a
+answer max_value 2 acea9 a61
+answer max_value 2 acea9 a74727565
+answer max_value 2 acea9 a66616c7365
+answer max_value 2 acea9 acea9
+answer max_value 2 acea9 nil
+answer max_value 2 acea9 tuple
+answer max_value 2 nil i-576460752303423488
+answer max_value 2 nil i-1
+answer max_value 2 nil i0
+answer max_value 2 nil i576460752303423487
+answer max_value 2 nil a7a
+answer max_value 2 nil a61
+answer max_value 2 nil a74727565
+answer max_value 2 nil a66616c7365
+answer max_value 2 nil acea9
+answer max_value 2 nil nil
+answer max_value 2 nil tuple
+answer max_value 2 tuple i-576460752303423488
+answer max_value 2 tuple i-1
+answer max_value 2 tuple i0
+answer max_value 2 tuple i576460752303423487
+answer max_value 2 tuple a7a
+answer max_value 2 tuple a61
+answer max_value 2 tuple a74727565
+answer max_value 2 tuple a66616c7365
+answer max_value 2 tuple acea9
+answer max_value 2 tuple nil
+answer max_value 2 tuple tuple
+client nested 1 nil
+client retry 1 a6f6b

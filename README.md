@@ -59,8 +59,9 @@ Requirements:
 - Boost 1.90+ with Boost.Multiprecision for compiler and runtime; the compiler also
   requires Boost.Parser. Multiprecision is header-only and needs no Boost binary library.
 - toml++ 3.4.0 for project manifests; see [dependency setup](docs/projects.md#build-dependency).
-- Erlang/OTP 29+ when tests are enabled with `-DBUILD_TESTING=ON`.
-  Ordinary builds omit tests and do not require Erlang.
+- Normal builds and tests do not require Erlang/OTP. Tests use
+  [project-owned golden fixtures](tests/fixtures/patternmatch/generated/README.md).
+  Optional live audits and explicit fixture regeneration require Erlang/OTP 29+.
 
 On macOS:
 
@@ -185,7 +186,8 @@ Pass these options when configuring to override defaults:
 |---------------------------------------------|---------------------------------------------------------------|
 | `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
 | `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
-| `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select an Erlang installation; versions below 29 are rejected |
+| `-DERLANG_AOT_OTP_AUDITS=ON` | Enable optional live OTP/reference audits; default is OFF |
+| `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select OTP 29+ for optional audits; unused by normal tests |
 | `-DERLANG_AOT_CLANG_EXECUTABLE=C:/path/to/clang.exe` | Select an installed Windows Clang executable |
 | `-DLLVM_DIR=/prefix/lib/cmake/llvm` | Select an existing LLVM 23.1.x SDK (invalid explicit paths fail) |
 | `-DERLANG_AOT_DOWNLOAD_LLVM=OFF` | Require an installed SDK; disable automatic LLVM downloads |

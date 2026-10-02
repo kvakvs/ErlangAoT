@@ -122,7 +122,7 @@ def native(tool, cmake, source, work, settings, config, suffix):
              "-P", str(source / "tests/compiler/codegen/native.cmake")])
 
 
-def main():
+def audit_main():
     """Publish auditable evidence under the build directory without updating tracked expectations."""
     tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
     source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
@@ -138,5 +138,19 @@ def main():
     print(oracle + "Three original suites parsed; stale hash rejected; unchanged helpers executed in four native modes.")
 
 
+def main():
+    """Execute project-owned baseline fixtures without an OTP installation or checkout."""
+    from stored import load
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
+    load(source, 'baseline', work)
+    native(tool, cmake, source, work, settings, config, suffix)
+    print('Stored OTP projection baseline passed in four native policies.')
+
+
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:2] == ['--audit']:
+        del sys.argv[1]
+        audit_main()
+    else:
+        main()

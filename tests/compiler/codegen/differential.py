@@ -60,16 +60,14 @@ def generate(source, work):
 
 
 def main():
-    """Run the oracle once and repeat each native mode through the shared harness."""
-    tool, cmake, root, directory, settings, config, suffix, escript = sys.argv[1:]
+    """Compare retained OTP results in each native mode through the shared harness."""
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
     source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    expected = generate(source, work)
-    oracle = run([escript, str(source / "tests/compiler/codegen/execution_oracle.escript"), str(work)])
-    assert oracle.stdout == expected, f"OTP/generator disagreement:\n{oracle.stdout}\nExpected:\n{expected}"
-    repeated = run([escript, str(source / "tests/compiler/codegen/execution_oracle.escript"), str(work)])
-    assert repeated.stdout == expected, "OTP behavior was not repeatable"
-    (work / "expected.txt").write_text(expected, encoding="utf-8")
+    sys.path.insert(0, str(source / 'tests/compiler/patternmatch'))
+    from stored import load
+    load(source, 'differential', work)
+    expected = (work / 'expected.txt').read_text(encoding='utf8')
     for mode, level, extra in [("O0", "O0", ""), ("O0-disabled", "O0", "--no-type-specialization"),
                                ("O2-disabled", "O2", "--no-type-specialization"), ("O2", "O2", "")]:
         run([cmake, f"-DTOOL={tool}", f"-DOPTIMIZATION={level}", f"-DEXTRA_OPTIONS={extra}",

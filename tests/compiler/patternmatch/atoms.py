@@ -5,6 +5,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from stored import load
 from evidence import digest, run, verify_manifest
 
 
@@ -59,14 +60,11 @@ def failed_batch(tool, work):
 
 
 def main():
-    """Compare all four optimization/specialization modes and both source entry paths with live OTP."""
-    tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
-    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    """Compare all four optimization/specialization modes and both source entry paths with stored OTP results."""
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    fixtures(source, otp, work)
-    expected = run([escript, str(source / "tests/compiler/patternmatch/atoms.escript"), str(work)])
-    assert expected == "74727565\n66616c7365\n6f6b\ncebbf09f9880\n\n610062\n74727565\n", expected
-    (work / "expected.txt").write_bytes(expected.encode())
+    load(source, "atoms", work)
     # Make repeated CTest runs deterministic without deleting unrelated build artifacts.
     failed = work / "failed"
     for path in failed.glob("eav1_*"):

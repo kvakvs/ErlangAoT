@@ -6,6 +6,7 @@ import pathlib
 import random
 import re
 import sys
+from stored import load
 from evidence import digest, provenance, run
 from immediate import native
 from services import write_calls
@@ -68,13 +69,10 @@ def kernels(otp, work):
 
 
 def main():
-    tool,cmake,root,otp_root,directory,settings,config,suffix,escript = sys.argv[1:]
-    source,otp,work = pathlib.Path(root),pathlib.Path(otp_root),pathlib.Path(directory)
+    tool,cmake,root,directory,settings,config,suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True,exist_ok=True)
-    provenance(source,otp,source/'tests/fixtures/patternmatch',work)
-    records = kernels(otp,work)
-    expected = run([escript,str(source/'tests/compiler/patternmatch/immediate.escript'),str(work)])
-    (work/'expected.txt').write_bytes(expected.replace('\r\n','\n').encode())
+    records = load(source, "floats", work)
     native(tool,cmake,source,work,settings,config,suffix)
     ir = run([tool,'--print-ir',str(work/'answer.erl'),str(work/'client.erl')])
     assert 'float.outcome' in ir

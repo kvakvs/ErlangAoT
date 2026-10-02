@@ -1,4 +1,4 @@
-# Native compiler tests use the installed host Erlang, not the reference checkout.
+# Explicit live audits use host Erlang; normal builds/tests consume retained project fixtures.
 set(erlang_hints)
 if(APPLE)
     find_program(ERLANG_AOT_BREW_EXECUTABLE brew HINTS /opt/homebrew/bin /usr/local/bin)
@@ -12,7 +12,7 @@ if(APPLE)
     endif()
 endif()
 find_program(ERLANG_AOT_ESCRIPT escript HINTS ${erlang_hints}
-    DOC "Host Erlang/OTP 29 or newer escript for compiler tests" REQUIRED)
+    DOC "Host Erlang/OTP 29 or newer escript for optional live audits" REQUIRED)
 execute_process(COMMAND "${ERLANG_AOT_ESCRIPT}" "${CMAKE_CURRENT_LIST_DIR}/ErlangVersion.escript"
     OUTPUT_VARIABLE erlang_version_output OUTPUT_STRIP_TRAILING_WHITESPACE
     ERROR_VARIABLE erlang_version_error RESULT_VARIABLE erlang_version_result TIMEOUT 15)

@@ -200,84 +200,84 @@ if(ERLANG_AOT_BUILD_RUNTIME)
     add_test(NAME codegen_differential COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/differential.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"
         "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/differential/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(codegen_differential PROPERTIES TIMEOUT 240)
     add_test(NAME codegen_atoms COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/atoms.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/atoms/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/atoms/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(codegen_atoms PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_evidence COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/evidence.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/patternmatch/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/patternmatch/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_evidence PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_bindings COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/bindings.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/bindings/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/bindings/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_bindings PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_patterns COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/patterns.py"
-        "$<TARGET_FILE:erlang_aot>" "${PROJECT_SOURCE_DIR}" "${ERLANG_AOT_OTP_SOURCE_ROOT}"
-        "${CMAKE_CURRENT_BINARY_DIR}/patterns/$<CONFIG>" "${ERLANG_AOT_ESCRIPT}")
+        "$<TARGET_FILE:erlang_aot>" "${PROJECT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}/patterns/$<CONFIG>")
     set_tests_properties(patternmatch_patterns PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_immediate COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/immediate.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/immediate/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/immediate/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_immediate PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_services COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/services.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/services/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/services/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_services PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_booleans COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/booleans.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/booleans/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/booleans/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_booleans PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_clauses COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/clauses.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/clauses/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/clauses/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_clauses PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_sequences COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/sequences.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/sequences/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/sequences/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_sequences PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_containers COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/containers.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/containers/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/containers/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_containers PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_integers COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/integers.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/integers/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/integers/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_integers PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_floats COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/floats.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/floats/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/floats/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_floats PROPERTIES TIMEOUT 300)
     add_test(NAME patternmatch_maps COMMAND "${Python3_EXECUTABLE}"
         "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/maps.py"
         "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}" "${PROJECT_SOURCE_DIR}"
-        "${ERLANG_AOT_OTP_SOURCE_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}/maps/$<CONFIG>"
-        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}" "${ERLANG_AOT_ESCRIPT}")
+        "${CMAKE_CURRENT_BINARY_DIR}/maps/$<CONFIG>"
+        "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(patternmatch_maps PROPERTIES TIMEOUT 300)
     add_test(NAME codegen_measurements COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/measurements.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"
@@ -291,4 +291,12 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/examples.cmake")
     set_tests_properties(codegen_examples PROPERTIES TIMEOUT 180)
+endif()
+
+if(ERLANG_AOT_BUILD_RUNTIME AND ERLANG_AOT_OTP_AUDITS)
+    add_test(NAME patternmatch_upstream COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/upstream.py"
+        "$<TARGET_FILE:erlang_aot>" "${PROJECT_SOURCE_DIR}" "${ERLANG_AOT_OTP_SOURCE_ROOT}"
+        "${CMAKE_CURRENT_BINARY_DIR}/upstream/$<CONFIG>" "${ERLANG_AOT_ESCRIPT}")
+    set_tests_properties(patternmatch_upstream PROPERTIES TIMEOUT 300 LABELS "otp-audit")
 endif()

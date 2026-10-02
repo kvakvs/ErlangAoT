@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "corpus": "atoms",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "atoms.py": "a978bdb7dbbcf1918a391c23d4da4c9a7c0ec5b76b1ede74885c58a6ef7fa018",
+    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "atoms.escript": "7f5b8a7bd9c71b71c106fb638227335f2fe701b2afcf4e79281656a57c079065",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "6c694b02db3a812b47b3312a4562e0b2d3d3a0b89eb60e6d9414a986b66f4e48",
+    "client.erl": "e05cd8860af1d0fcbc1d1a26ea67d2c7bdc2c2fb0b88c10051079eb6bec3ac7a",
+    "expected.txt": "36c7f747578dd9fdf68e5d8e7424b590edbbf403c5ee725284290d747c5dcdd4",
+    "project.toml": "382b41f836b0a4a8d6c87022e1addffe8acb616d43361be2777c6779401c32c3"
+  },
+  "evidence": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "source": "lib/compiler/test/guard_SUITE.erl",
+    "source_sha256": "061fa7f4de021931b5751d85876bcf5252ba1d6e725c3b6df10c47cbb1c8894f",
+    "functions": [
+      "rb/3",
+      "csemi2/2"
+    ],
+    "selected_clauses": [
+      "rb(Size, ToRead, SoFar) when SoFar + Size < 81920; ToRead == [] -> true;",
+      "rb(_, _, _) -> false.",
+      "csemi2(A, B) when tuple_size(A) > 1; tuple_size(B) > 2 -> ok;"
+    ],
+    "clause_sha256": "9e4eaf9d8fe280f87317de7a5920342f51d32a090b13fc9dcdda2bae45a94152",
+    "adaptation": "Extract only true/false/ok return leaves into truth/0, falsity/0, ok_value/0. No rb/csemi2 guard or dispatch behavior is claimed. Add authored Unicode, empty, NUL, identity, grouping and cross-module calls, plus a deliberately wrong integer spec.",
+    "declarations": {
+      "answer": [
+        "-module(answer).",
+        "-export([id/1,truth/0,falsity/0,ok_value/0,unicode/0,empty/0,nul/0,projected/0]).",
+        "-spec truth() -> integer()."
+      ],
+      "client": [
+        "-module(client).",
+        "-export([same/0,truth/0,falsity/0,ok_value/0,unicode/0,empty/0,nul/0,projected/0])."
+      ]
+    },
+    "generated_sha256": {
+      "answer": "6c694b02db3a812b47b3312a4562e0b2d3d3a0b89eb60e6d9414a986b66f4e48",
+      "client": "e05cd8860af1d0fcbc1d1a26ea67d2c7bdc2c2fb0b88c10051079eb6bec3ac7a"
+    }
+  }
+}

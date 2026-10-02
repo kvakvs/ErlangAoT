@@ -108,14 +108,16 @@
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–15 are complete; added step 15a and steps 16–20 remain.
+  Patternmatch steps 1–15 are complete; step 15a is complete; steps 16–20 remain.
   The current request is completion of the entire plan.
 
-- Tests prioritize real CLI/project sources, separate native runtime consumers and
-  pinned OTP comparisons. Grammar coverage observes 344 ordinary productions;
+- Tests prioritize real CLI/project sources and separate native runtime consumers.
+  Project-owned fixtures retain OTP inputs/results; 14 corpora preserve 49,959
+  native expected values. Live OTP/source audits are explicit opt-ins, while
+  normal configure/build/test requires neither OTP nor its checkout. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 131 CTests and all 244 production quality units;
+  Windows x64 Debug passes 118 OTP-free CTests and all 244 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

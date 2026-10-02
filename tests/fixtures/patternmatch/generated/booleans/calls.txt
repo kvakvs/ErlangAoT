@@ -1,0 +1,2075 @@
+answer lazy_and 2 a74727565 a74727565
+answer guard_lazy_and 2 a74727565 a74727565
+answer lazy_and 2 a74727565 a66616c7365
+answer guard_lazy_and 2 a74727565 a66616c7365
+answer lazy_and 2 a74727565 a676c757266
+answer guard_lazy_and 2 a74727565 a676c757266
+answer lazy_and 2 a74727565 i0
+answer guard_lazy_and 2 a74727565 i0
+answer lazy_and 2 a74727565 i7
+answer guard_lazy_and 2 a74727565 i7
+answer lazy_and 2 a74727565 nil
+answer guard_lazy_and 2 a74727565 nil
+answer lazy_and 2 a74727565 tuple
+answer guard_lazy_and 2 a74727565 tuple
+answer lazy_and 2 a74727565 acea9
+answer guard_lazy_and 2 a74727565 acea9
+answer lazy_and 2 a66616c7365 a74727565
+answer guard_lazy_and 2 a66616c7365 a74727565
+answer lazy_and 2 a66616c7365 a66616c7365
+answer guard_lazy_and 2 a66616c7365 a66616c7365
+answer lazy_and 2 a66616c7365 a676c757266
+answer guard_lazy_and 2 a66616c7365 a676c757266
+answer lazy_and 2 a66616c7365 i0
+answer guard_lazy_and 2 a66616c7365 i0
+answer lazy_and 2 a66616c7365 i7
+answer guard_lazy_and 2 a66616c7365 i7
+answer lazy_and 2 a66616c7365 nil
+answer guard_lazy_and 2 a66616c7365 nil
+answer lazy_and 2 a66616c7365 tuple
+answer guard_lazy_and 2 a66616c7365 tuple
+answer lazy_and 2 a66616c7365 acea9
+answer guard_lazy_and 2 a66616c7365 acea9
+answer lazy_and 2 a676c757266 a74727565
+answer guard_lazy_and 2 a676c757266 a74727565
+answer lazy_and 2 a676c757266 a66616c7365
+answer guard_lazy_and 2 a676c757266 a66616c7365
+answer lazy_and 2 a676c757266 a676c757266
+answer guard_lazy_and 2 a676c757266 a676c757266
+answer lazy_and 2 a676c757266 i0
+answer guard_lazy_and 2 a676c757266 i0
+answer lazy_and 2 a676c757266 i7
+answer guard_lazy_and 2 a676c757266 i7
+answer lazy_and 2 a676c757266 nil
+answer guard_lazy_and 2 a676c757266 nil
+answer lazy_and 2 a676c757266 tuple
+answer guard_lazy_and 2 a676c757266 tuple
+answer lazy_and 2 a676c757266 acea9
+answer guard_lazy_and 2 a676c757266 acea9
+answer lazy_and 2 i0 a74727565
+answer guard_lazy_and 2 i0 a74727565
+answer lazy_and 2 i0 a66616c7365
+answer guard_lazy_and 2 i0 a66616c7365
+answer lazy_and 2 i0 a676c757266
+answer guard_lazy_and 2 i0 a676c757266
+answer lazy_and 2 i0 i0
+answer guard_lazy_and 2 i0 i0
+answer lazy_and 2 i0 i7
+answer guard_lazy_and 2 i0 i7
+answer lazy_and 2 i0 nil
+answer guard_lazy_and 2 i0 nil
+answer lazy_and 2 i0 tuple
+answer guard_lazy_and 2 i0 tuple
+answer lazy_and 2 i0 acea9
+answer guard_lazy_and 2 i0 acea9
+answer lazy_and 2 i7 a74727565
+answer guard_lazy_and 2 i7 a74727565
+answer lazy_and 2 i7 a66616c7365
+answer guard_lazy_and 2 i7 a66616c7365
+answer lazy_and 2 i7 a676c757266
+answer guard_lazy_and 2 i7 a676c757266
+answer lazy_and 2 i7 i0
+answer guard_lazy_and 2 i7 i0
+answer lazy_and 2 i7 i7
+answer guard_lazy_and 2 i7 i7
+answer lazy_and 2 i7 nil
+answer guard_lazy_and 2 i7 nil
+answer lazy_and 2 i7 tuple
+answer guard_lazy_and 2 i7 tuple
+answer lazy_and 2 i7 acea9
+answer guard_lazy_and 2 i7 acea9
+answer lazy_and 2 nil a74727565
+answer guard_lazy_and 2 nil a74727565
+answer lazy_and 2 nil a66616c7365
+answer guard_lazy_and 2 nil a66616c7365
+answer lazy_and 2 nil a676c757266
+answer guard_lazy_and 2 nil a676c757266
+answer lazy_and 2 nil i0
+answer guard_lazy_and 2 nil i0
+answer lazy_and 2 nil i7
+answer guard_lazy_and 2 nil i7
+answer lazy_and 2 nil nil
+answer guard_lazy_and 2 nil nil
+answer lazy_and 2 nil tuple
+answer guard_lazy_and 2 nil tuple
+answer lazy_and 2 nil acea9
+answer guard_lazy_and 2 nil acea9
+answer lazy_and 2 tuple a74727565
+answer guard_lazy_and 2 tuple a74727565
+answer lazy_and 2 tuple a66616c7365
+answer guard_lazy_and 2 tuple a66616c7365
+answer lazy_and 2 tuple a676c757266
+answer guard_lazy_and 2 tuple a676c757266
+answer lazy_and 2 tuple i0
+answer guard_lazy_and 2 tuple i0
+answer lazy_and 2 tuple i7
+answer guard_lazy_and 2 tuple i7
+answer lazy_and 2 tuple nil
+answer guard_lazy_and 2 tuple nil
+answer lazy_and 2 tuple tuple
+answer guard_lazy_and 2 tuple tuple
+answer lazy_and 2 tuple acea9
+answer guard_lazy_and 2 tuple acea9
+answer lazy_and 2 acea9 a74727565
+answer guard_lazy_and 2 acea9 a74727565
+answer lazy_and 2 acea9 a66616c7365
+answer guard_lazy_and 2 acea9 a66616c7365
+answer lazy_and 2 acea9 a676c757266
+answer guard_lazy_and 2 acea9 a676c757266
+answer lazy_and 2 acea9 i0
+answer guard_lazy_and 2 acea9 i0
+answer lazy_and 2 acea9 i7
+answer guard_lazy_and 2 acea9 i7
+answer lazy_and 2 acea9 nil
+answer guard_lazy_and 2 acea9 nil
+answer lazy_and 2 acea9 tuple
+answer guard_lazy_and 2 acea9 tuple
+answer lazy_and 2 acea9 acea9
+answer guard_lazy_and 2 acea9 acea9
+answer lazy_or 2 a74727565 a74727565
+answer guard_lazy_or 2 a74727565 a74727565
+answer lazy_or 2 a74727565 a66616c7365
+answer guard_lazy_or 2 a74727565 a66616c7365
+answer lazy_or 2 a74727565 a676c757266
+answer guard_lazy_or 2 a74727565 a676c757266
+answer lazy_or 2 a74727565 i0
+answer guard_lazy_or 2 a74727565 i0
+answer lazy_or 2 a74727565 i7
+answer guard_lazy_or 2 a74727565 i7
+answer lazy_or 2 a74727565 nil
+answer guard_lazy_or 2 a74727565 nil
+answer lazy_or 2 a74727565 tuple
+answer guard_lazy_or 2 a74727565 tuple
+answer lazy_or 2 a74727565 acea9
+answer guard_lazy_or 2 a74727565 acea9
+answer lazy_or 2 a66616c7365 a74727565
+answer guard_lazy_or 2 a66616c7365 a74727565
+answer lazy_or 2 a66616c7365 a66616c7365
+answer guard_lazy_or 2 a66616c7365 a66616c7365
+answer lazy_or 2 a66616c7365 a676c757266
+answer guard_lazy_or 2 a66616c7365 a676c757266
+answer lazy_or 2 a66616c7365 i0
+answer guard_lazy_or 2 a66616c7365 i0
+answer lazy_or 2 a66616c7365 i7
+answer guard_lazy_or 2 a66616c7365 i7
+answer lazy_or 2 a66616c7365 nil
+answer guard_lazy_or 2 a66616c7365 nil
+answer lazy_or 2 a66616c7365 tuple
+answer guard_lazy_or 2 a66616c7365 tuple
+answer lazy_or 2 a66616c7365 acea9
+answer guard_lazy_or 2 a66616c7365 acea9
+answer lazy_or 2 a676c757266 a74727565
+answer guard_lazy_or 2 a676c757266 a74727565
+answer lazy_or 2 a676c757266 a66616c7365
+answer guard_lazy_or 2 a676c757266 a66616c7365
+answer lazy_or 2 a676c757266 a676c757266
+answer guard_lazy_or 2 a676c757266 a676c757266
+answer lazy_or 2 a676c757266 i0
+answer guard_lazy_or 2 a676c757266 i0
+answer lazy_or 2 a676c757266 i7
+answer guard_lazy_or 2 a676c757266 i7
+answer lazy_or 2 a676c757266 nil
+answer guard_lazy_or 2 a676c757266 nil
+answer lazy_or 2 a676c757266 tuple
+answer guard_lazy_or 2 a676c757266 tuple
+answer lazy_or 2 a676c757266 acea9
+answer guard_lazy_or 2 a676c757266 acea9
+answer lazy_or 2 i0 a74727565
+answer guard_lazy_or 2 i0 a74727565
+answer lazy_or 2 i0 a66616c7365
+answer guard_lazy_or 2 i0 a66616c7365
+answer lazy_or 2 i0 a676c757266
+answer guard_lazy_or 2 i0 a676c757266
+answer lazy_or 2 i0 i0
+answer guard_lazy_or 2 i0 i0
+answer lazy_or 2 i0 i7
+answer guard_lazy_or 2 i0 i7
+answer lazy_or 2 i0 nil
+answer guard_lazy_or 2 i0 nil
+answer lazy_or 2 i0 tuple
+answer guard_lazy_or 2 i0 tuple
+answer lazy_or 2 i0 acea9
+answer guard_lazy_or 2 i0 acea9
+answer lazy_or 2 i7 a74727565
+answer guard_lazy_or 2 i7 a74727565
+answer lazy_or 2 i7 a66616c7365
+answer guard_lazy_or 2 i7 a66616c7365
+answer lazy_or 2 i7 a676c757266
+answer guard_lazy_or 2 i7 a676c757266
+answer lazy_or 2 i7 i0
+answer guard_lazy_or 2 i7 i0
+answer lazy_or 2 i7 i7
+answer guard_lazy_or 2 i7 i7
+answer lazy_or 2 i7 nil
+answer guard_lazy_or 2 i7 nil
+answer lazy_or 2 i7 tuple
+answer guard_lazy_or 2 i7 tuple
+answer lazy_or 2 i7 acea9
+answer guard_lazy_or 2 i7 acea9
+answer lazy_or 2 nil a74727565
+answer guard_lazy_or 2 nil a74727565
+answer lazy_or 2 nil a66616c7365
+answer guard_lazy_or 2 nil a66616c7365
+answer lazy_or 2 nil a676c757266
+answer guard_lazy_or 2 nil a676c757266
+answer lazy_or 2 nil i0
+answer guard_lazy_or 2 nil i0
+answer lazy_or 2 nil i7
+answer guard_lazy_or 2 nil i7
+answer lazy_or 2 nil nil
+answer guard_lazy_or 2 nil nil
+answer lazy_or 2 nil tuple
+answer guard_lazy_or 2 nil tuple
+answer lazy_or 2 nil acea9
+answer guard_lazy_or 2 nil acea9
+answer lazy_or 2 tuple a74727565
+answer guard_lazy_or 2 tuple a74727565
+answer lazy_or 2 tuple a66616c7365
+answer guard_lazy_or 2 tuple a66616c7365
+answer lazy_or 2 tuple a676c757266
+answer guard_lazy_or 2 tuple a676c757266
+answer lazy_or 2 tuple i0
+answer guard_lazy_or 2 tuple i0
+answer lazy_or 2 tuple i7
+answer guard_lazy_or 2 tuple i7
+answer lazy_or 2 tuple nil
+answer guard_lazy_or 2 tuple nil
+answer lazy_or 2 tuple tuple
+answer guard_lazy_or 2 tuple tuple
+answer lazy_or 2 tuple acea9
+answer guard_lazy_or 2 tuple acea9
+answer lazy_or 2 acea9 a74727565
+answer guard_lazy_or 2 acea9 a74727565
+answer lazy_or 2 acea9 a66616c7365
+answer guard_lazy_or 2 acea9 a66616c7365
+answer lazy_or 2 acea9 a676c757266
+answer guard_lazy_or 2 acea9 a676c757266
+answer lazy_or 2 acea9 i0
+answer guard_lazy_or 2 acea9 i0
+answer lazy_or 2 acea9 i7
+answer guard_lazy_or 2 acea9 i7
+answer lazy_or 2 acea9 nil
+answer guard_lazy_or 2 acea9 nil
+answer lazy_or 2 acea9 tuple
+answer guard_lazy_or 2 acea9 tuple
+answer lazy_or 2 acea9 acea9
+answer guard_lazy_or 2 acea9 acea9
+answer strict_and 2 a74727565 a74727565
+answer guard_strict_and 2 a74727565 a74727565
+answer strict_and 2 a74727565 a66616c7365
+answer guard_strict_and 2 a74727565 a66616c7365
+answer strict_and 2 a74727565 a676c757266
+answer guard_strict_and 2 a74727565 a676c757266
+answer strict_and 2 a74727565 i0
+answer guard_strict_and 2 a74727565 i0
+answer strict_and 2 a74727565 i7
+answer guard_strict_and 2 a74727565 i7
+answer strict_and 2 a74727565 nil
+answer guard_strict_and 2 a74727565 nil
+answer strict_and 2 a74727565 tuple
+answer guard_strict_and 2 a74727565 tuple
+answer strict_and 2 a74727565 acea9
+answer guard_strict_and 2 a74727565 acea9
+answer strict_and 2 a66616c7365 a74727565
+answer guard_strict_and 2 a66616c7365 a74727565
+answer strict_and 2 a66616c7365 a66616c7365
+answer guard_strict_and 2 a66616c7365 a66616c7365
+answer strict_and 2 a66616c7365 a676c757266
+answer guard_strict_and 2 a66616c7365 a676c757266
+answer strict_and 2 a66616c7365 i0
+answer guard_strict_and 2 a66616c7365 i0
+answer strict_and 2 a66616c7365 i7
+answer guard_strict_and 2 a66616c7365 i7
+answer strict_and 2 a66616c7365 nil
+answer guard_strict_and 2 a66616c7365 nil
+answer strict_and 2 a66616c7365 tuple
+answer guard_strict_and 2 a66616c7365 tuple
+answer strict_and 2 a66616c7365 acea9
+answer guard_strict_and 2 a66616c7365 acea9
+answer strict_and 2 a676c757266 a74727565
+answer guard_strict_and 2 a676c757266 a74727565
+answer strict_and 2 a676c757266 a66616c7365
+answer guard_strict_and 2 a676c757266 a66616c7365
+answer strict_and 2 a676c757266 a676c757266
+answer guard_strict_and 2 a676c757266 a676c757266
+answer strict_and 2 a676c757266 i0
+answer guard_strict_and 2 a676c757266 i0
+answer strict_and 2 a676c757266 i7
+answer guard_strict_and 2 a676c757266 i7
+answer strict_and 2 a676c757266 nil
+answer guard_strict_and 2 a676c757266 nil
+answer strict_and 2 a676c757266 tuple
+answer guard_strict_and 2 a676c757266 tuple
+answer strict_and 2 a676c757266 acea9
+answer guard_strict_and 2 a676c757266 acea9
+answer strict_and 2 i0 a74727565
+answer guard_strict_and 2 i0 a74727565
+answer strict_and 2 i0 a66616c7365
+answer guard_strict_and 2 i0 a66616c7365
+answer strict_and 2 i0 a676c757266
+answer guard_strict_and 2 i0 a676c757266
+answer strict_and 2 i0 i0
+answer guard_strict_and 2 i0 i0
+answer strict_and 2 i0 i7
+answer guard_strict_and 2 i0 i7
+answer strict_and 2 i0 nil
+answer guard_strict_and 2 i0 nil
+answer strict_and 2 i0 tuple
+answer guard_strict_and 2 i0 tuple
+answer strict_and 2 i0 acea9
+answer guard_strict_and 2 i0 acea9
+answer strict_and 2 i7 a74727565
+answer guard_strict_and 2 i7 a74727565
+answer strict_and 2 i7 a66616c7365
+answer guard_strict_and 2 i7 a66616c7365
+answer strict_and 2 i7 a676c757266
+answer guard_strict_and 2 i7 a676c757266
+answer strict_and 2 i7 i0
+answer guard_strict_and 2 i7 i0
+answer strict_and 2 i7 i7
+answer guard_strict_and 2 i7 i7
+answer strict_and 2 i7 nil
+answer guard_strict_and 2 i7 nil
+answer strict_and 2 i7 tuple
+answer guard_strict_and 2 i7 tuple
+answer strict_and 2 i7 acea9
+answer guard_strict_and 2 i7 acea9
+answer strict_and 2 nil a74727565
+answer guard_strict_and 2 nil a74727565
+answer strict_and 2 nil a66616c7365
+answer guard_strict_and 2 nil a66616c7365
+answer strict_and 2 nil a676c757266
+answer guard_strict_and 2 nil a676c757266
+answer strict_and 2 nil i0
+answer guard_strict_and 2 nil i0
+answer strict_and 2 nil i7
+answer guard_strict_and 2 nil i7
+answer strict_and 2 nil nil
+answer guard_strict_and 2 nil nil
+answer strict_and 2 nil tuple
+answer guard_strict_and 2 nil tuple
+answer strict_and 2 nil acea9
+answer guard_strict_and 2 nil acea9
+answer strict_and 2 tuple a74727565
+answer guard_strict_and 2 tuple a74727565
+answer strict_and 2 tuple a66616c7365
+answer guard_strict_and 2 tuple a66616c7365
+answer strict_and 2 tuple a676c757266
+answer guard_strict_and 2 tuple a676c757266
+answer strict_and 2 tuple i0
+answer guard_strict_and 2 tuple i0
+answer strict_and 2 tuple i7
+answer guard_strict_and 2 tuple i7
+answer strict_and 2 tuple nil
+answer guard_strict_and 2 tuple nil
+answer strict_and 2 tuple tuple
+answer guard_strict_and 2 tuple tuple
+answer strict_and 2 tuple acea9
+answer guard_strict_and 2 tuple acea9
+answer strict_and 2 acea9 a74727565
+answer guard_strict_and 2 acea9 a74727565
+answer strict_and 2 acea9 a66616c7365
+answer guard_strict_and 2 acea9 a66616c7365
+answer strict_and 2 acea9 a676c757266
+answer guard_strict_and 2 acea9 a676c757266
+answer strict_and 2 acea9 i0
+answer guard_strict_and 2 acea9 i0
+answer strict_and 2 acea9 i7
+answer guard_strict_and 2 acea9 i7
+answer strict_and 2 acea9 nil
+answer guard_strict_and 2 acea9 nil
+answer strict_and 2 acea9 tuple
+answer guard_strict_and 2 acea9 tuple
+answer strict_and 2 acea9 acea9
+answer guard_strict_and 2 acea9 acea9
+answer strict_or 2 a74727565 a74727565
+answer guard_strict_or 2 a74727565 a74727565
+answer strict_or 2 a74727565 a66616c7365
+answer guard_strict_or 2 a74727565 a66616c7365
+answer strict_or 2 a74727565 a676c757266
+answer guard_strict_or 2 a74727565 a676c757266
+answer strict_or 2 a74727565 i0
+answer guard_strict_or 2 a74727565 i0
+answer strict_or 2 a74727565 i7
+answer guard_strict_or 2 a74727565 i7
+answer strict_or 2 a74727565 nil
+answer guard_strict_or 2 a74727565 nil
+answer strict_or 2 a74727565 tuple
+answer guard_strict_or 2 a74727565 tuple
+answer strict_or 2 a74727565 acea9
+answer guard_strict_or 2 a74727565 acea9
+answer strict_or 2 a66616c7365 a74727565
+answer guard_strict_or 2 a66616c7365 a74727565
+answer strict_or 2 a66616c7365 a66616c7365
+answer guard_strict_or 2 a66616c7365 a66616c7365
+answer strict_or 2 a66616c7365 a676c757266
+answer guard_strict_or 2 a66616c7365 a676c757266
+answer strict_or 2 a66616c7365 i0
+answer guard_strict_or 2 a66616c7365 i0
+answer strict_or 2 a66616c7365 i7
+answer guard_strict_or 2 a66616c7365 i7
+answer strict_or 2 a66616c7365 nil
+answer guard_strict_or 2 a66616c7365 nil
+answer strict_or 2 a66616c7365 tuple
+answer guard_strict_or 2 a66616c7365 tuple
+answer strict_or 2 a66616c7365 acea9
+answer guard_strict_or 2 a66616c7365 acea9
+answer strict_or 2 a676c757266 a74727565
+answer guard_strict_or 2 a676c757266 a74727565
+answer strict_or 2 a676c757266 a66616c7365
+answer guard_strict_or 2 a676c757266 a66616c7365
+answer strict_or 2 a676c757266 a676c757266
+answer guard_strict_or 2 a676c757266 a676c757266
+answer strict_or 2 a676c757266 i0
+answer guard_strict_or 2 a676c757266 i0
+answer strict_or 2 a676c757266 i7
+answer guard_strict_or 2 a676c757266 i7
+answer strict_or 2 a676c757266 nil
+answer guard_strict_or 2 a676c757266 nil
+answer strict_or 2 a676c757266 tuple
+answer guard_strict_or 2 a676c757266 tuple
+answer strict_or 2 a676c757266 acea9
+answer guard_strict_or 2 a676c757266 acea9
+answer strict_or 2 i0 a74727565
+answer guard_strict_or 2 i0 a74727565
+answer strict_or 2 i0 a66616c7365
+answer guard_strict_or 2 i0 a66616c7365
+answer strict_or 2 i0 a676c757266
+answer guard_strict_or 2 i0 a676c757266
+answer strict_or 2 i0 i0
+answer guard_strict_or 2 i0 i0
+answer strict_or 2 i0 i7
+answer guard_strict_or 2 i0 i7
+answer strict_or 2 i0 nil
+answer guard_strict_or 2 i0 nil
+answer strict_or 2 i0 tuple
+answer guard_strict_or 2 i0 tuple
+answer strict_or 2 i0 acea9
+answer guard_strict_or 2 i0 acea9
+answer strict_or 2 i7 a74727565
+answer guard_strict_or 2 i7 a74727565
+answer strict_or 2 i7 a66616c7365
+answer guard_strict_or 2 i7 a66616c7365
+answer strict_or 2 i7 a676c757266
+answer guard_strict_or 2 i7 a676c757266
+answer strict_or 2 i7 i0
+answer guard_strict_or 2 i7 i0
+answer strict_or 2 i7 i7
+answer guard_strict_or 2 i7 i7
+answer strict_or 2 i7 nil
+answer guard_strict_or 2 i7 nil
+answer strict_or 2 i7 tuple
+answer guard_strict_or 2 i7 tuple
+answer strict_or 2 i7 acea9
+answer guard_strict_or 2 i7 acea9
+answer strict_or 2 nil a74727565
+answer guard_strict_or 2 nil a74727565
+answer strict_or 2 nil a66616c7365
+answer guard_strict_or 2 nil a66616c7365
+answer strict_or 2 nil a676c757266
+answer guard_strict_or 2 nil a676c757266
+answer strict_or 2 nil i0
+answer guard_strict_or 2 nil i0
+answer strict_or 2 nil i7
+answer guard_strict_or 2 nil i7
+answer strict_or 2 nil nil
+answer guard_strict_or 2 nil nil
+answer strict_or 2 nil tuple
+answer guard_strict_or 2 nil tuple
+answer strict_or 2 nil acea9
+answer guard_strict_or 2 nil acea9
+answer strict_or 2 tuple a74727565
+answer guard_strict_or 2 tuple a74727565
+answer strict_or 2 tuple a66616c7365
+answer guard_strict_or 2 tuple a66616c7365
+answer strict_or 2 tuple a676c757266
+answer guard_strict_or 2 tuple a676c757266
+answer strict_or 2 tuple i0
+answer guard_strict_or 2 tuple i0
+answer strict_or 2 tuple i7
+answer guard_strict_or 2 tuple i7
+answer strict_or 2 tuple nil
+answer guard_strict_or 2 tuple nil
+answer strict_or 2 tuple tuple
+answer guard_strict_or 2 tuple tuple
+answer strict_or 2 tuple acea9
+answer guard_strict_or 2 tuple acea9
+answer strict_or 2 acea9 a74727565
+answer guard_strict_or 2 acea9 a74727565
+answer strict_or 2 acea9 a66616c7365
+answer guard_strict_or 2 acea9 a66616c7365
+answer strict_or 2 acea9 a676c757266
+answer guard_strict_or 2 acea9 a676c757266
+answer strict_or 2 acea9 i0
+answer guard_strict_or 2 acea9 i0
+answer strict_or 2 acea9 i7
+answer guard_strict_or 2 acea9 i7
+answer strict_or 2 acea9 nil
+answer guard_strict_or 2 acea9 nil
+answer strict_or 2 acea9 tuple
+answer guard_strict_or 2 acea9 tuple
+answer strict_or 2 acea9 acea9
+answer guard_strict_or 2 acea9 acea9
+answer strict_xor 2 a74727565 a74727565
+answer guard_strict_xor 2 a74727565 a74727565
+answer strict_xor 2 a74727565 a66616c7365
+answer guard_strict_xor 2 a74727565 a66616c7365
+answer strict_xor 2 a74727565 a676c757266
+answer guard_strict_xor 2 a74727565 a676c757266
+answer strict_xor 2 a74727565 i0
+answer guard_strict_xor 2 a74727565 i0
+answer strict_xor 2 a74727565 i7
+answer guard_strict_xor 2 a74727565 i7
+answer strict_xor 2 a74727565 nil
+answer guard_strict_xor 2 a74727565 nil
+answer strict_xor 2 a74727565 tuple
+answer guard_strict_xor 2 a74727565 tuple
+answer strict_xor 2 a74727565 acea9
+answer guard_strict_xor 2 a74727565 acea9
+answer strict_xor 2 a66616c7365 a74727565
+answer guard_strict_xor 2 a66616c7365 a74727565
+answer strict_xor 2 a66616c7365 a66616c7365
+answer guard_strict_xor 2 a66616c7365 a66616c7365
+answer strict_xor 2 a66616c7365 a676c757266
+answer guard_strict_xor 2 a66616c7365 a676c757266
+answer strict_xor 2 a66616c7365 i0
+answer guard_strict_xor 2 a66616c7365 i0
+answer strict_xor 2 a66616c7365 i7
+answer guard_strict_xor 2 a66616c7365 i7
+answer strict_xor 2 a66616c7365 nil
+answer guard_strict_xor 2 a66616c7365 nil
+answer strict_xor 2 a66616c7365 tuple
+answer guard_strict_xor 2 a66616c7365 tuple
+answer strict_xor 2 a66616c7365 acea9
+answer guard_strict_xor 2 a66616c7365 acea9
+answer strict_xor 2 a676c757266 a74727565
+answer guard_strict_xor 2 a676c757266 a74727565
+answer strict_xor 2 a676c757266 a66616c7365
+answer guard_strict_xor 2 a676c757266 a66616c7365
+answer strict_xor 2 a676c757266 a676c757266
+answer guard_strict_xor 2 a676c757266 a676c757266
+answer strict_xor 2 a676c757266 i0
+answer guard_strict_xor 2 a676c757266 i0
+answer strict_xor 2 a676c757266 i7
+answer guard_strict_xor 2 a676c757266 i7
+answer strict_xor 2 a676c757266 nil
+answer guard_strict_xor 2 a676c757266 nil
+answer strict_xor 2 a676c757266 tuple
+answer guard_strict_xor 2 a676c757266 tuple
+answer strict_xor 2 a676c757266 acea9
+answer guard_strict_xor 2 a676c757266 acea9
+answer strict_xor 2 i0 a74727565
+answer guard_strict_xor 2 i0 a74727565
+answer strict_xor 2 i0 a66616c7365
+answer guard_strict_xor 2 i0 a66616c7365
+answer strict_xor 2 i0 a676c757266
+answer guard_strict_xor 2 i0 a676c757266
+answer strict_xor 2 i0 i0
+answer guard_strict_xor 2 i0 i0
+answer strict_xor 2 i0 i7
+answer guard_strict_xor 2 i0 i7
+answer strict_xor 2 i0 nil
+answer guard_strict_xor 2 i0 nil
+answer strict_xor 2 i0 tuple
+answer guard_strict_xor 2 i0 tuple
+answer strict_xor 2 i0 acea9
+answer guard_strict_xor 2 i0 acea9
+answer strict_xor 2 i7 a74727565
+answer guard_strict_xor 2 i7 a74727565
+answer strict_xor 2 i7 a66616c7365
+answer guard_strict_xor 2 i7 a66616c7365
+answer strict_xor 2 i7 a676c757266
+answer guard_strict_xor 2 i7 a676c757266
+answer strict_xor 2 i7 i0
+answer guard_strict_xor 2 i7 i0
+answer strict_xor 2 i7 i7
+answer guard_strict_xor 2 i7 i7
+answer strict_xor 2 i7 nil
+answer guard_strict_xor 2 i7 nil
+answer strict_xor 2 i7 tuple
+answer guard_strict_xor 2 i7 tuple
+answer strict_xor 2 i7 acea9
+answer guard_strict_xor 2 i7 acea9
+answer strict_xor 2 nil a74727565
+answer guard_strict_xor 2 nil a74727565
+answer strict_xor 2 nil a66616c7365
+answer guard_strict_xor 2 nil a66616c7365
+answer strict_xor 2 nil a676c757266
+answer guard_strict_xor 2 nil a676c757266
+answer strict_xor 2 nil i0
+answer guard_strict_xor 2 nil i0
+answer strict_xor 2 nil i7
+answer guard_strict_xor 2 nil i7
+answer strict_xor 2 nil nil
+answer guard_strict_xor 2 nil nil
+answer strict_xor 2 nil tuple
+answer guard_strict_xor 2 nil tuple
+answer strict_xor 2 nil acea9
+answer guard_strict_xor 2 nil acea9
+answer strict_xor 2 tuple a74727565
+answer guard_strict_xor 2 tuple a74727565
+answer strict_xor 2 tuple a66616c7365
+answer guard_strict_xor 2 tuple a66616c7365
+answer strict_xor 2 tuple a676c757266
+answer guard_strict_xor 2 tuple a676c757266
+answer strict_xor 2 tuple i0
+answer guard_strict_xor 2 tuple i0
+answer strict_xor 2 tuple i7
+answer guard_strict_xor 2 tuple i7
+answer strict_xor 2 tuple nil
+answer guard_strict_xor 2 tuple nil
+answer strict_xor 2 tuple tuple
+answer guard_strict_xor 2 tuple tuple
+answer strict_xor 2 tuple acea9
+answer guard_strict_xor 2 tuple acea9
+answer strict_xor 2 acea9 a74727565
+answer guard_strict_xor 2 acea9 a74727565
+answer strict_xor 2 acea9 a66616c7365
+answer guard_strict_xor 2 acea9 a66616c7365
+answer strict_xor 2 acea9 a676c757266
+answer guard_strict_xor 2 acea9 a676c757266
+answer strict_xor 2 acea9 i0
+answer guard_strict_xor 2 acea9 i0
+answer strict_xor 2 acea9 i7
+answer guard_strict_xor 2 acea9 i7
+answer strict_xor 2 acea9 nil
+answer guard_strict_xor 2 acea9 nil
+answer strict_xor 2 acea9 tuple
+answer guard_strict_xor 2 acea9 tuple
+answer strict_xor 2 acea9 acea9
+answer guard_strict_xor 2 acea9 acea9
+answer semicolon 2 a74727565 a74727565
+answer semicolon 2 a74727565 a66616c7365
+answer semicolon 2 a74727565 a676c757266
+answer semicolon 2 a74727565 i0
+answer semicolon 2 a74727565 i7
+answer semicolon 2 a74727565 nil
+answer semicolon 2 a74727565 tuple
+answer semicolon 2 a74727565 acea9
+answer semicolon 2 a66616c7365 a74727565
+answer semicolon 2 a66616c7365 a66616c7365
+answer semicolon 2 a66616c7365 a676c757266
+answer semicolon 2 a66616c7365 i0
+answer semicolon 2 a66616c7365 i7
+answer semicolon 2 a66616c7365 nil
+answer semicolon 2 a66616c7365 tuple
+answer semicolon 2 a66616c7365 acea9
+answer semicolon 2 a676c757266 a74727565
+answer semicolon 2 a676c757266 a66616c7365
+answer semicolon 2 a676c757266 a676c757266
+answer semicolon 2 a676c757266 i0
+answer semicolon 2 a676c757266 i7
+answer semicolon 2 a676c757266 nil
+answer semicolon 2 a676c757266 tuple
+answer semicolon 2 a676c757266 acea9
+answer semicolon 2 i0 a74727565
+answer semicolon 2 i0 a66616c7365
+answer semicolon 2 i0 a676c757266
+answer semicolon 2 i0 i0
+answer semicolon 2 i0 i7
+answer semicolon 2 i0 nil
+answer semicolon 2 i0 tuple
+answer semicolon 2 i0 acea9
+answer semicolon 2 i7 a74727565
+answer semicolon 2 i7 a66616c7365
+answer semicolon 2 i7 a676c757266
+answer semicolon 2 i7 i0
+answer semicolon 2 i7 i7
+answer semicolon 2 i7 nil
+answer semicolon 2 i7 tuple
+answer semicolon 2 i7 acea9
+answer semicolon 2 nil a74727565
+answer semicolon 2 nil a66616c7365
+answer semicolon 2 nil a676c757266
+answer semicolon 2 nil i0
+answer semicolon 2 nil i7
+answer semicolon 2 nil nil
+answer semicolon 2 nil tuple
+answer semicolon 2 nil acea9
+answer semicolon 2 tuple a74727565
+answer semicolon 2 tuple a66616c7365
+answer semicolon 2 tuple a676c757266
+answer semicolon 2 tuple i0
+answer semicolon 2 tuple i7
+answer semicolon 2 tuple nil
+answer semicolon 2 tuple tuple
+answer semicolon 2 tuple acea9
+answer semicolon 2 acea9 a74727565
+answer semicolon 2 acea9 a66616c7365
+answer semicolon 2 acea9 a676c757266
+answer semicolon 2 acea9 i0
+answer semicolon 2 acea9 i7
+answer semicolon 2 acea9 nil
+answer semicolon 2 acea9 tuple
+answer semicolon 2 acea9 acea9
+answer comma 2 a74727565 a74727565
+answer comma 2 a74727565 a66616c7365
+answer comma 2 a74727565 a676c757266
+answer comma 2 a74727565 i0
+answer comma 2 a74727565 i7
+answer comma 2 a74727565 nil
+answer comma 2 a74727565 tuple
+answer comma 2 a74727565 acea9
+answer comma 2 a66616c7365 a74727565
+answer comma 2 a66616c7365 a66616c7365
+answer comma 2 a66616c7365 a676c757266
+answer comma 2 a66616c7365 i0
+answer comma 2 a66616c7365 i7
+answer comma 2 a66616c7365 nil
+answer comma 2 a66616c7365 tuple
+answer comma 2 a66616c7365 acea9
+answer comma 2 a676c757266 a74727565
+answer comma 2 a676c757266 a66616c7365
+answer comma 2 a676c757266 a676c757266
+answer comma 2 a676c757266 i0
+answer comma 2 a676c757266 i7
+answer comma 2 a676c757266 nil
+answer comma 2 a676c757266 tuple
+answer comma 2 a676c757266 acea9
+answer comma 2 i0 a74727565
+answer comma 2 i0 a66616c7365
+answer comma 2 i0 a676c757266
+answer comma 2 i0 i0
+answer comma 2 i0 i7
+answer comma 2 i0 nil
+answer comma 2 i0 tuple
+answer comma 2 i0 acea9
+answer comma 2 i7 a74727565
+answer comma 2 i7 a66616c7365
+answer comma 2 i7 a676c757266
+answer comma 2 i7 i0
+answer comma 2 i7 i7
+answer comma 2 i7 nil
+answer comma 2 i7 tuple
+answer comma 2 i7 acea9
+answer comma 2 nil a74727565
+answer comma 2 nil a66616c7365
+answer comma 2 nil a676c757266
+answer comma 2 nil i0
+answer comma 2 nil i7
+answer comma 2 nil nil
+answer comma 2 nil tuple
+answer comma 2 nil acea9
+answer comma 2 tuple a74727565
+answer comma 2 tuple a66616c7365
+answer comma 2 tuple a676c757266
+answer comma 2 tuple i0
+answer comma 2 tuple i7
+answer comma 2 tuple nil
+answer comma 2 tuple tuple
+answer comma 2 tuple acea9
+answer comma 2 acea9 a74727565
+answer comma 2 acea9 a66616c7365
+answer comma 2 acea9 a676c757266
+answer comma 2 acea9 i0
+answer comma 2 acea9 i7
+answer comma 2 acea9 nil
+answer comma 2 acea9 tuple
+answer comma 2 acea9 acea9
+answer alias 2 a74727565 a74727565
+answer alias 2 a74727565 a66616c7365
+answer alias 2 a74727565 a676c757266
+answer alias 2 a74727565 i0
+answer alias 2 a74727565 i7
+answer alias 2 a74727565 nil
+answer alias 2 a74727565 tuple
+answer alias 2 a74727565 acea9
+answer alias 2 a66616c7365 a74727565
+answer alias 2 a66616c7365 a66616c7365
+answer alias 2 a66616c7365 a676c757266
+answer alias 2 a66616c7365 i0
+answer alias 2 a66616c7365 i7
+answer alias 2 a66616c7365 nil
+answer alias 2 a66616c7365 tuple
+answer alias 2 a66616c7365 acea9
+answer alias 2 a676c757266 a74727565
+answer alias 2 a676c757266 a66616c7365
+answer alias 2 a676c757266 a676c757266
+answer alias 2 a676c757266 i0
+answer alias 2 a676c757266 i7
+answer alias 2 a676c757266 nil
+answer alias 2 a676c757266 tuple
+answer alias 2 a676c757266 acea9
+answer alias 2 i0 a74727565
+answer alias 2 i0 a66616c7365
+answer alias 2 i0 a676c757266
+answer alias 2 i0 i0
+answer alias 2 i0 i7
+answer alias 2 i0 nil
+answer alias 2 i0 tuple
+answer alias 2 i0 acea9
+answer alias 2 i7 a74727565
+answer alias 2 i7 a66616c7365
+answer alias 2 i7 a676c757266
+answer alias 2 i7 i0
+answer alias 2 i7 i7
+answer alias 2 i7 nil
+answer alias 2 i7 tuple
+answer alias 2 i7 acea9
+answer alias 2 nil a74727565
+answer alias 2 nil a66616c7365
+answer alias 2 nil a676c757266
+answer alias 2 nil i0
+answer alias 2 nil i7
+answer alias 2 nil nil
+answer alias 2 nil tuple
+answer alias 2 nil acea9
+answer alias 2 tuple a74727565
+answer alias 2 tuple a66616c7365
+answer alias 2 tuple a676c757266
+answer alias 2 tuple i0
+answer alias 2 tuple i7
+answer alias 2 tuple nil
+answer alias 2 tuple tuple
+answer alias 2 tuple acea9
+answer alias 2 acea9 a74727565
+answer alias 2 acea9 a66616c7365
+answer alias 2 acea9 a676c757266
+answer alias 2 acea9 i0
+answer alias 2 acea9 i7
+answer alias 2 acea9 nil
+answer alias 2 acea9 tuple
+answer alias 2 acea9 acea9
+answer term_join 2 a74727565 a74727565
+answer term_join 2 a74727565 a66616c7365
+answer term_join 2 a74727565 a676c757266
+answer term_join 2 a74727565 i0
+answer term_join 2 a74727565 i7
+answer term_join 2 a74727565 nil
+answer term_join 2 a74727565 tuple
+answer term_join 2 a74727565 acea9
+answer term_join 2 a66616c7365 a74727565
+answer term_join 2 a66616c7365 a66616c7365
+answer term_join 2 a66616c7365 a676c757266
+answer term_join 2 a66616c7365 i0
+answer term_join 2 a66616c7365 i7
+answer term_join 2 a66616c7365 nil
+answer term_join 2 a66616c7365 tuple
+answer term_join 2 a66616c7365 acea9
+answer term_join 2 a676c757266 a74727565
+answer term_join 2 a676c757266 a66616c7365
+answer term_join 2 a676c757266 a676c757266
+answer term_join 2 a676c757266 i0
+answer term_join 2 a676c757266 i7
+answer term_join 2 a676c757266 nil
+answer term_join 2 a676c757266 tuple
+answer term_join 2 a676c757266 acea9
+answer term_join 2 i0 a74727565
+answer term_join 2 i0 a66616c7365
+answer term_join 2 i0 a676c757266
+answer term_join 2 i0 i0
+answer term_join 2 i0 i7
+answer term_join 2 i0 nil
+answer term_join 2 i0 tuple
+answer term_join 2 i0 acea9
+answer term_join 2 i7 a74727565
+answer term_join 2 i7 a66616c7365
+answer term_join 2 i7 a676c757266
+answer term_join 2 i7 i0
+answer term_join 2 i7 i7
+answer term_join 2 i7 nil
+answer term_join 2 i7 tuple
+answer term_join 2 i7 acea9
+answer term_join 2 nil a74727565
+answer term_join 2 nil a66616c7365
+answer term_join 2 nil a676c757266
+answer term_join 2 nil i0
+answer term_join 2 nil i7
+answer term_join 2 nil nil
+answer term_join 2 nil tuple
+answer term_join 2 nil acea9
+answer term_join 2 tuple a74727565
+answer term_join 2 tuple a66616c7365
+answer term_join 2 tuple a676c757266
+answer term_join 2 tuple i0
+answer term_join 2 tuple i7
+answer term_join 2 tuple nil
+answer term_join 2 tuple tuple
+answer term_join 2 tuple acea9
+answer term_join 2 acea9 a74727565
+answer term_join 2 acea9 a66616c7365
+answer term_join 2 acea9 a676c757266
+answer term_join 2 acea9 i0
+answer term_join 2 acea9 i7
+answer term_join 2 acea9 nil
+answer term_join 2 acea9 tuple
+answer term_join 2 acea9 acea9
+answer nested 2 a74727565 a74727565
+answer nested 2 a74727565 a66616c7365
+answer nested 2 a74727565 a676c757266
+answer nested 2 a74727565 i0
+answer nested 2 a74727565 i7
+answer nested 2 a74727565 nil
+answer nested 2 a74727565 tuple
+answer nested 2 a74727565 acea9
+answer nested 2 a66616c7365 a74727565
+answer nested 2 a66616c7365 a66616c7365
+answer nested 2 a66616c7365 a676c757266
+answer nested 2 a66616c7365 i0
+answer nested 2 a66616c7365 i7
+answer nested 2 a66616c7365 nil
+answer nested 2 a66616c7365 tuple
+answer nested 2 a66616c7365 acea9
+answer nested 2 a676c757266 a74727565
+answer nested 2 a676c757266 a66616c7365
+answer nested 2 a676c757266 a676c757266
+answer nested 2 a676c757266 i0
+answer nested 2 a676c757266 i7
+answer nested 2 a676c757266 nil
+answer nested 2 a676c757266 tuple
+answer nested 2 a676c757266 acea9
+answer nested 2 i0 a74727565
+answer nested 2 i0 a66616c7365
+answer nested 2 i0 a676c757266
+answer nested 2 i0 i0
+answer nested 2 i0 i7
+answer nested 2 i0 nil
+answer nested 2 i0 tuple
+answer nested 2 i0 acea9
+answer nested 2 i7 a74727565
+answer nested 2 i7 a66616c7365
+answer nested 2 i7 a676c757266
+answer nested 2 i7 i0
+answer nested 2 i7 i7
+answer nested 2 i7 nil
+answer nested 2 i7 tuple
+answer nested 2 i7 acea9
+answer nested 2 nil a74727565
+answer nested 2 nil a66616c7365
+answer nested 2 nil a676c757266
+answer nested 2 nil i0
+answer nested 2 nil i7
+answer nested 2 nil nil
+answer nested 2 nil tuple
+answer nested 2 nil acea9
+answer nested 2 tuple a74727565
+answer nested 2 tuple a66616c7365
+answer nested 2 tuple a676c757266
+answer nested 2 tuple i0
+answer nested 2 tuple i7
+answer nested 2 tuple nil
+answer nested 2 tuple tuple
+answer nested 2 tuple acea9
+answer nested 2 acea9 a74727565
+answer nested 2 acea9 a66616c7365
+answer nested 2 acea9 a676c757266
+answer nested 2 acea9 i0
+answer nested 2 acea9 i7
+answer nested 2 acea9 nil
+answer nested 2 acea9 tuple
+answer nested 2 acea9 acea9
+answer nested_semi 2 a74727565 a74727565
+answer nested_semi 2 a74727565 a66616c7365
+answer nested_semi 2 a74727565 a676c757266
+answer nested_semi 2 a74727565 i0
+answer nested_semi 2 a74727565 i7
+answer nested_semi 2 a74727565 nil
+answer nested_semi 2 a74727565 tuple
+answer nested_semi 2 a74727565 acea9
+answer nested_semi 2 a66616c7365 a74727565
+answer nested_semi 2 a66616c7365 a66616c7365
+answer nested_semi 2 a66616c7365 a676c757266
+answer nested_semi 2 a66616c7365 i0
+answer nested_semi 2 a66616c7365 i7
+answer nested_semi 2 a66616c7365 nil
+answer nested_semi 2 a66616c7365 tuple
+answer nested_semi 2 a66616c7365 acea9
+answer nested_semi 2 a676c757266 a74727565
+answer nested_semi 2 a676c757266 a66616c7365
+answer nested_semi 2 a676c757266 a676c757266
+answer nested_semi 2 a676c757266 i0
+answer nested_semi 2 a676c757266 i7
+answer nested_semi 2 a676c757266 nil
+answer nested_semi 2 a676c757266 tuple
+answer nested_semi 2 a676c757266 acea9
+answer nested_semi 2 i0 a74727565
+answer nested_semi 2 i0 a66616c7365
+answer nested_semi 2 i0 a676c757266
+answer nested_semi 2 i0 i0
+answer nested_semi 2 i0 i7
+answer nested_semi 2 i0 nil
+answer nested_semi 2 i0 tuple
+answer nested_semi 2 i0 acea9
+answer nested_semi 2 i7 a74727565
+answer nested_semi 2 i7 a66616c7365
+answer nested_semi 2 i7 a676c757266
+answer nested_semi 2 i7 i0
+answer nested_semi 2 i7 i7
+answer nested_semi 2 i7 nil
+answer nested_semi 2 i7 tuple
+answer nested_semi 2 i7 acea9
+answer nested_semi 2 nil a74727565
+answer nested_semi 2 nil a66616c7365
+answer nested_semi 2 nil a676c757266
+answer nested_semi 2 nil i0
+answer nested_semi 2 nil i7
+answer nested_semi 2 nil nil
+answer nested_semi 2 nil tuple
+answer nested_semi 2 nil acea9
+answer nested_semi 2 tuple a74727565
+answer nested_semi 2 tuple a66616c7365
+answer nested_semi 2 tuple a676c757266
+answer nested_semi 2 tuple i0
+answer nested_semi 2 tuple i7
+answer nested_semi 2 tuple nil
+answer nested_semi 2 tuple tuple
+answer nested_semi 2 tuple acea9
+answer nested_semi 2 acea9 a74727565
+answer nested_semi 2 acea9 a66616c7365
+answer nested_semi 2 acea9 a676c757266
+answer nested_semi 2 acea9 i0
+answer nested_semi 2 acea9 i7
+answer nested_semi 2 acea9 nil
+answer nested_semi 2 acea9 tuple
+answer nested_semi 2 acea9 acea9
+answer not_and 2 a74727565 a74727565
+answer not_and 2 a74727565 a66616c7365
+answer not_and 2 a74727565 a676c757266
+answer not_and 2 a74727565 i0
+answer not_and 2 a74727565 i7
+answer not_and 2 a74727565 nil
+answer not_and 2 a74727565 tuple
+answer not_and 2 a74727565 acea9
+answer not_and 2 a66616c7365 a74727565
+answer not_and 2 a66616c7365 a66616c7365
+answer not_and 2 a66616c7365 a676c757266
+answer not_and 2 a66616c7365 i0
+answer not_and 2 a66616c7365 i7
+answer not_and 2 a66616c7365 nil
+answer not_and 2 a66616c7365 tuple
+answer not_and 2 a66616c7365 acea9
+answer not_and 2 a676c757266 a74727565
+answer not_and 2 a676c757266 a66616c7365
+answer not_and 2 a676c757266 a676c757266
+answer not_and 2 a676c757266 i0
+answer not_and 2 a676c757266 i7
+answer not_and 2 a676c757266 nil
+answer not_and 2 a676c757266 tuple
+answer not_and 2 a676c757266 acea9
+answer not_and 2 i0 a74727565
+answer not_and 2 i0 a66616c7365
+answer not_and 2 i0 a676c757266
+answer not_and 2 i0 i0
+answer not_and 2 i0 i7
+answer not_and 2 i0 nil
+answer not_and 2 i0 tuple
+answer not_and 2 i0 acea9
+answer not_and 2 i7 a74727565
+answer not_and 2 i7 a66616c7365
+answer not_and 2 i7 a676c757266
+answer not_and 2 i7 i0
+answer not_and 2 i7 i7
+answer not_and 2 i7 nil
+answer not_and 2 i7 tuple
+answer not_and 2 i7 acea9
+answer not_and 2 nil a74727565
+answer not_and 2 nil a66616c7365
+answer not_and 2 nil a676c757266
+answer not_and 2 nil i0
+answer not_and 2 nil i7
+answer not_and 2 nil nil
+answer not_and 2 nil tuple
+answer not_and 2 nil acea9
+answer not_and 2 tuple a74727565
+answer not_and 2 tuple a66616c7365
+answer not_and 2 tuple a676c757266
+answer not_and 2 tuple i0
+answer not_and 2 tuple i7
+answer not_and 2 tuple nil
+answer not_and 2 tuple tuple
+answer not_and 2 tuple acea9
+answer not_and 2 acea9 a74727565
+answer not_and 2 acea9 a66616c7365
+answer not_and 2 acea9 a676c757266
+answer not_and 2 acea9 i0
+answer not_and 2 acea9 i7
+answer not_and 2 acea9 nil
+answer not_and 2 acea9 tuple
+answer not_and 2 acea9 acea9
+answer not_or 2 a74727565 a74727565
+answer not_or 2 a74727565 a66616c7365
+answer not_or 2 a74727565 a676c757266
+answer not_or 2 a74727565 i0
+answer not_or 2 a74727565 i7
+answer not_or 2 a74727565 nil
+answer not_or 2 a74727565 tuple
+answer not_or 2 a74727565 acea9
+answer not_or 2 a66616c7365 a74727565
+answer not_or 2 a66616c7365 a66616c7365
+answer not_or 2 a66616c7365 a676c757266
+answer not_or 2 a66616c7365 i0
+answer not_or 2 a66616c7365 i7
+answer not_or 2 a66616c7365 nil
+answer not_or 2 a66616c7365 tuple
+answer not_or 2 a66616c7365 acea9
+answer not_or 2 a676c757266 a74727565
+answer not_or 2 a676c757266 a66616c7365
+answer not_or 2 a676c757266 a676c757266
+answer not_or 2 a676c757266 i0
+answer not_or 2 a676c757266 i7
+answer not_or 2 a676c757266 nil
+answer not_or 2 a676c757266 tuple
+answer not_or 2 a676c757266 acea9
+answer not_or 2 i0 a74727565
+answer not_or 2 i0 a66616c7365
+answer not_or 2 i0 a676c757266
+answer not_or 2 i0 i0
+answer not_or 2 i0 i7
+answer not_or 2 i0 nil
+answer not_or 2 i0 tuple
+answer not_or 2 i0 acea9
+answer not_or 2 i7 a74727565
+answer not_or 2 i7 a66616c7365
+answer not_or 2 i7 a676c757266
+answer not_or 2 i7 i0
+answer not_or 2 i7 i7
+answer not_or 2 i7 nil
+answer not_or 2 i7 tuple
+answer not_or 2 i7 acea9
+answer not_or 2 nil a74727565
+answer not_or 2 nil a66616c7365
+answer not_or 2 nil a676c757266
+answer not_or 2 nil i0
+answer not_or 2 nil i7
+answer not_or 2 nil nil
+answer not_or 2 nil tuple
+answer not_or 2 nil acea9
+answer not_or 2 tuple a74727565
+answer not_or 2 tuple a66616c7365
+answer not_or 2 tuple a676c757266
+answer not_or 2 tuple i0
+answer not_or 2 tuple i7
+answer not_or 2 tuple nil
+answer not_or 2 tuple tuple
+answer not_or 2 tuple acea9
+answer not_or 2 acea9 a74727565
+answer not_or 2 acea9 a66616c7365
+answer not_or 2 acea9 a676c757266
+answer not_or 2 acea9 i0
+answer not_or 2 acea9 i7
+answer not_or 2 acea9 nil
+answer not_or 2 acea9 tuple
+answer not_or 2 acea9 acea9
+answer qualified_and 2 a74727565 a74727565
+answer qualified_and 2 a74727565 a66616c7365
+answer qualified_and 2 a74727565 a676c757266
+answer qualified_and 2 a74727565 i0
+answer qualified_and 2 a74727565 i7
+answer qualified_and 2 a74727565 nil
+answer qualified_and 2 a74727565 tuple
+answer qualified_and 2 a74727565 acea9
+answer qualified_and 2 a66616c7365 a74727565
+answer qualified_and 2 a66616c7365 a66616c7365
+answer qualified_and 2 a66616c7365 a676c757266
+answer qualified_and 2 a66616c7365 i0
+answer qualified_and 2 a66616c7365 i7
+answer qualified_and 2 a66616c7365 nil
+answer qualified_and 2 a66616c7365 tuple
+answer qualified_and 2 a66616c7365 acea9
+answer qualified_and 2 a676c757266 a74727565
+answer qualified_and 2 a676c757266 a66616c7365
+answer qualified_and 2 a676c757266 a676c757266
+answer qualified_and 2 a676c757266 i0
+answer qualified_and 2 a676c757266 i7
+answer qualified_and 2 a676c757266 nil
+answer qualified_and 2 a676c757266 tuple
+answer qualified_and 2 a676c757266 acea9
+answer qualified_and 2 i0 a74727565
+answer qualified_and 2 i0 a66616c7365
+answer qualified_and 2 i0 a676c757266
+answer qualified_and 2 i0 i0
+answer qualified_and 2 i0 i7
+answer qualified_and 2 i0 nil
+answer qualified_and 2 i0 tuple
+answer qualified_and 2 i0 acea9
+answer qualified_and 2 i7 a74727565
+answer qualified_and 2 i7 a66616c7365
+answer qualified_and 2 i7 a676c757266
+answer qualified_and 2 i7 i0
+answer qualified_and 2 i7 i7
+answer qualified_and 2 i7 nil
+answer qualified_and 2 i7 tuple
+answer qualified_and 2 i7 acea9
+answer qualified_and 2 nil a74727565
+answer qualified_and 2 nil a66616c7365
+answer qualified_and 2 nil a676c757266
+answer qualified_and 2 nil i0
+answer qualified_and 2 nil i7
+answer qualified_and 2 nil nil
+answer qualified_and 2 nil tuple
+answer qualified_and 2 nil acea9
+answer qualified_and 2 tuple a74727565
+answer qualified_and 2 tuple a66616c7365
+answer qualified_and 2 tuple a676c757266
+answer qualified_and 2 tuple i0
+answer qualified_and 2 tuple i7
+answer qualified_and 2 tuple nil
+answer qualified_and 2 tuple tuple
+answer qualified_and 2 tuple acea9
+answer qualified_and 2 acea9 a74727565
+answer qualified_and 2 acea9 a66616c7365
+answer qualified_and 2 acea9 a676c757266
+answer qualified_and 2 acea9 i0
+answer qualified_and 2 acea9 i7
+answer qualified_and 2 acea9 nil
+answer qualified_and 2 acea9 tuple
+answer qualified_and 2 acea9 acea9
+answer wrong_spec 2 a74727565 a74727565
+answer wrong_spec 2 a74727565 a66616c7365
+answer wrong_spec 2 a74727565 a676c757266
+answer wrong_spec 2 a74727565 i0
+answer wrong_spec 2 a74727565 i7
+answer wrong_spec 2 a74727565 nil
+answer wrong_spec 2 a74727565 tuple
+answer wrong_spec 2 a74727565 acea9
+answer wrong_spec 2 a66616c7365 a74727565
+answer wrong_spec 2 a66616c7365 a66616c7365
+answer wrong_spec 2 a66616c7365 a676c757266
+answer wrong_spec 2 a66616c7365 i0
+answer wrong_spec 2 a66616c7365 i7
+answer wrong_spec 2 a66616c7365 nil
+answer wrong_spec 2 a66616c7365 tuple
+answer wrong_spec 2 a66616c7365 acea9
+answer wrong_spec 2 a676c757266 a74727565
+answer wrong_spec 2 a676c757266 a66616c7365
+answer wrong_spec 2 a676c757266 a676c757266
+answer wrong_spec 2 a676c757266 i0
+answer wrong_spec 2 a676c757266 i7
+answer wrong_spec 2 a676c757266 nil
+answer wrong_spec 2 a676c757266 tuple
+answer wrong_spec 2 a676c757266 acea9
+answer wrong_spec 2 i0 a74727565
+answer wrong_spec 2 i0 a66616c7365
+answer wrong_spec 2 i0 a676c757266
+answer wrong_spec 2 i0 i0
+answer wrong_spec 2 i0 i7
+answer wrong_spec 2 i0 nil
+answer wrong_spec 2 i0 tuple
+answer wrong_spec 2 i0 acea9
+answer wrong_spec 2 i7 a74727565
+answer wrong_spec 2 i7 a66616c7365
+answer wrong_spec 2 i7 a676c757266
+answer wrong_spec 2 i7 i0
+answer wrong_spec 2 i7 i7
+answer wrong_spec 2 i7 nil
+answer wrong_spec 2 i7 tuple
+answer wrong_spec 2 i7 acea9
+answer wrong_spec 2 nil a74727565
+answer wrong_spec 2 nil a66616c7365
+answer wrong_spec 2 nil a676c757266
+answer wrong_spec 2 nil i0
+answer wrong_spec 2 nil i7
+answer wrong_spec 2 nil nil
+answer wrong_spec 2 nil tuple
+answer wrong_spec 2 nil acea9
+answer wrong_spec 2 tuple a74727565
+answer wrong_spec 2 tuple a66616c7365
+answer wrong_spec 2 tuple a676c757266
+answer wrong_spec 2 tuple i0
+answer wrong_spec 2 tuple i7
+answer wrong_spec 2 tuple nil
+answer wrong_spec 2 tuple tuple
+answer wrong_spec 2 tuple acea9
+answer wrong_spec 2 acea9 a74727565
+answer wrong_spec 2 acea9 a66616c7365
+answer wrong_spec 2 acea9 a676c757266
+answer wrong_spec 2 acea9 i0
+answer wrong_spec 2 acea9 i7
+answer wrong_spec 2 acea9 nil
+answer wrong_spec 2 acea9 tuple
+answer wrong_spec 2 acea9 acea9
+answer mixed 3 a74727565 a74727565 a74727565
+answer mixed 3 a74727565 a74727565 a66616c7365
+answer mixed 3 a74727565 a74727565 a676c757266
+answer mixed 3 a74727565 a74727565 i0
+answer mixed 3 a74727565 a74727565 i7
+answer mixed 3 a74727565 a74727565 nil
+answer mixed 3 a74727565 a74727565 tuple
+answer mixed 3 a74727565 a74727565 acea9
+answer mixed 3 a74727565 a66616c7365 a74727565
+answer mixed 3 a74727565 a66616c7365 a66616c7365
+answer mixed 3 a74727565 a66616c7365 a676c757266
+answer mixed 3 a74727565 a66616c7365 i0
+answer mixed 3 a74727565 a66616c7365 i7
+answer mixed 3 a74727565 a66616c7365 nil
+answer mixed 3 a74727565 a66616c7365 tuple
+answer mixed 3 a74727565 a66616c7365 acea9
+answer mixed 3 a74727565 a676c757266 a74727565
+answer mixed 3 a74727565 a676c757266 a66616c7365
+answer mixed 3 a74727565 a676c757266 a676c757266
+answer mixed 3 a74727565 a676c757266 i0
+answer mixed 3 a74727565 a676c757266 i7
+answer mixed 3 a74727565 a676c757266 nil
+answer mixed 3 a74727565 a676c757266 tuple
+answer mixed 3 a74727565 a676c757266 acea9
+answer mixed 3 a74727565 i0 a74727565
+answer mixed 3 a74727565 i0 a66616c7365
+answer mixed 3 a74727565 i0 a676c757266
+answer mixed 3 a74727565 i0 i0
+answer mixed 3 a74727565 i0 i7
+answer mixed 3 a74727565 i0 nil
+answer mixed 3 a74727565 i0 tuple
+answer mixed 3 a74727565 i0 acea9
+answer mixed 3 a74727565 i7 a74727565
+answer mixed 3 a74727565 i7 a66616c7365
+answer mixed 3 a74727565 i7 a676c757266
+answer mixed 3 a74727565 i7 i0
+answer mixed 3 a74727565 i7 i7
+answer mixed 3 a74727565 i7 nil
+answer mixed 3 a74727565 i7 tuple
+answer mixed 3 a74727565 i7 acea9
+answer mixed 3 a74727565 nil a74727565
+answer mixed 3 a74727565 nil a66616c7365
+answer mixed 3 a74727565 nil a676c757266
+answer mixed 3 a74727565 nil i0
+answer mixed 3 a74727565 nil i7
+answer mixed 3 a74727565 nil nil
+answer mixed 3 a74727565 nil tuple
+answer mixed 3 a74727565 nil acea9
+answer mixed 3 a74727565 tuple a74727565
+answer mixed 3 a74727565 tuple a66616c7365
+answer mixed 3 a74727565 tuple a676c757266
+answer mixed 3 a74727565 tuple i0
+answer mixed 3 a74727565 tuple i7
+answer mixed 3 a74727565 tuple nil
+answer mixed 3 a74727565 tuple tuple
+answer mixed 3 a74727565 tuple acea9
+answer mixed 3 a74727565 acea9 a74727565
+answer mixed 3 a74727565 acea9 a66616c7365
+answer mixed 3 a74727565 acea9 a676c757266
+answer mixed 3 a74727565 acea9 i0
+answer mixed 3 a74727565 acea9 i7
+answer mixed 3 a74727565 acea9 nil
+answer mixed 3 a74727565 acea9 tuple
+answer mixed 3 a74727565 acea9 acea9
+answer mixed 3 a66616c7365 a74727565 a74727565
+answer mixed 3 a66616c7365 a74727565 a66616c7365
+answer mixed 3 a66616c7365 a74727565 a676c757266
+answer mixed 3 a66616c7365 a74727565 i0
+answer mixed 3 a66616c7365 a74727565 i7
+answer mixed 3 a66616c7365 a74727565 nil
+answer mixed 3 a66616c7365 a74727565 tuple
+answer mixed 3 a66616c7365 a74727565 acea9
+answer mixed 3 a66616c7365 a66616c7365 a74727565
+answer mixed 3 a66616c7365 a66616c7365 a66616c7365
+answer mixed 3 a66616c7365 a66616c7365 a676c757266
+answer mixed 3 a66616c7365 a66616c7365 i0
+answer mixed 3 a66616c7365 a66616c7365 i7
+answer mixed 3 a66616c7365 a66616c7365 nil
+answer mixed 3 a66616c7365 a66616c7365 tuple
+answer mixed 3 a66616c7365 a66616c7365 acea9
+answer mixed 3 a66616c7365 a676c757266 a74727565
+answer mixed 3 a66616c7365 a676c757266 a66616c7365
+answer mixed 3 a66616c7365 a676c757266 a676c757266
+answer mixed 3 a66616c7365 a676c757266 i0
+answer mixed 3 a66616c7365 a676c757266 i7
+answer mixed 3 a66616c7365 a676c757266 nil
+answer mixed 3 a66616c7365 a676c757266 tuple
+answer mixed 3 a66616c7365 a676c757266 acea9
+answer mixed 3 a66616c7365 i0 a74727565
+answer mixed 3 a66616c7365 i0 a66616c7365
+answer mixed 3 a66616c7365 i0 a676c757266
+answer mixed 3 a66616c7365 i0 i0
+answer mixed 3 a66616c7365 i0 i7
+answer mixed 3 a66616c7365 i0 nil
+answer mixed 3 a66616c7365 i0 tuple
+answer mixed 3 a66616c7365 i0 acea9
+answer mixed 3 a66616c7365 i7 a74727565
+answer mixed 3 a66616c7365 i7 a66616c7365
+answer mixed 3 a66616c7365 i7 a676c757266
+answer mixed 3 a66616c7365 i7 i0
+answer mixed 3 a66616c7365 i7 i7
+answer mixed 3 a66616c7365 i7 nil
+answer mixed 3 a66616c7365 i7 tuple
+answer mixed 3 a66616c7365 i7 acea9
+answer mixed 3 a66616c7365 nil a74727565
+answer mixed 3 a66616c7365 nil a66616c7365
+answer mixed 3 a66616c7365 nil a676c757266
+answer mixed 3 a66616c7365 nil i0
+answer mixed 3 a66616c7365 nil i7
+answer mixed 3 a66616c7365 nil nil
+answer mixed 3 a66616c7365 nil tuple
+answer mixed 3 a66616c7365 nil acea9
+answer mixed 3 a66616c7365 tuple a74727565
+answer mixed 3 a66616c7365 tuple a66616c7365
+answer mixed 3 a66616c7365 tuple a676c757266
+answer mixed 3 a66616c7365 tuple i0
+answer mixed 3 a66616c7365 tuple i7
+answer mixed 3 a66616c7365 tuple nil
+answer mixed 3 a66616c7365 tuple tuple
+answer mixed 3 a66616c7365 tuple acea9
+answer mixed 3 a66616c7365 acea9 a74727565
+answer mixed 3 a66616c7365 acea9 a66616c7365
+answer mixed 3 a66616c7365 acea9 a676c757266
+answer mixed 3 a66616c7365 acea9 i0
+answer mixed 3 a66616c7365 acea9 i7
+answer mixed 3 a66616c7365 acea9 nil
+answer mixed 3 a66616c7365 acea9 tuple
+answer mixed 3 a66616c7365 acea9 acea9
+answer mixed 3 a676c757266 a74727565 a74727565
+answer mixed 3 a676c757266 a74727565 a66616c7365
+answer mixed 3 a676c757266 a74727565 a676c757266
+answer mixed 3 a676c757266 a74727565 i0
+answer mixed 3 a676c757266 a74727565 i7
+answer mixed 3 a676c757266 a74727565 nil
+answer mixed 3 a676c757266 a74727565 tuple
+answer mixed 3 a676c757266 a74727565 acea9
+answer mixed 3 a676c757266 a66616c7365 a74727565
+answer mixed 3 a676c757266 a66616c7365 a66616c7365
+answer mixed 3 a676c757266 a66616c7365 a676c757266
+answer mixed 3 a676c757266 a66616c7365 i0
+answer mixed 3 a676c757266 a66616c7365 i7
+answer mixed 3 a676c757266 a66616c7365 nil
+answer mixed 3 a676c757266 a66616c7365 tuple
+answer mixed 3 a676c757266 a66616c7365 acea9
+answer mixed 3 a676c757266 a676c757266 a74727565
+answer mixed 3 a676c757266 a676c757266 a66616c7365
+answer mixed 3 a676c757266 a676c757266 a676c757266
+answer mixed 3 a676c757266 a676c757266 i0
+answer mixed 3 a676c757266 a676c757266 i7
+answer mixed 3 a676c757266 a676c757266 nil
+answer mixed 3 a676c757266 a676c757266 tuple
+answer mixed 3 a676c757266 a676c757266 acea9
+answer mixed 3 a676c757266 i0 a74727565
+answer mixed 3 a676c757266 i0 a66616c7365
+answer mixed 3 a676c757266 i0 a676c757266
+answer mixed 3 a676c757266 i0 i0
+answer mixed 3 a676c757266 i0 i7
+answer mixed 3 a676c757266 i0 nil
+answer mixed 3 a676c757266 i0 tuple
+answer mixed 3 a676c757266 i0 acea9
+answer mixed 3 a676c757266 i7 a74727565
+answer mixed 3 a676c757266 i7 a66616c7365
+answer mixed 3 a676c757266 i7 a676c757266
+answer mixed 3 a676c757266 i7 i0
+answer mixed 3 a676c757266 i7 i7
+answer mixed 3 a676c757266 i7 nil
+answer mixed 3 a676c757266 i7 tuple
+answer mixed 3 a676c757266 i7 acea9
+answer mixed 3 a676c757266 nil a74727565
+answer mixed 3 a676c757266 nil a66616c7365
+answer mixed 3 a676c757266 nil a676c757266
+answer mixed 3 a676c757266 nil i0
+answer mixed 3 a676c757266 nil i7
+answer mixed 3 a676c757266 nil nil
+answer mixed 3 a676c757266 nil tuple
+answer mixed 3 a676c757266 nil acea9
+answer mixed 3 a676c757266 tuple a74727565
+answer mixed 3 a676c757266 tuple a66616c7365
+answer mixed 3 a676c757266 tuple a676c757266
+answer mixed 3 a676c757266 tuple i0
+answer mixed 3 a676c757266 tuple i7
+answer mixed 3 a676c757266 tuple nil
+answer mixed 3 a676c757266 tuple tuple
+answer mixed 3 a676c757266 tuple acea9
+answer mixed 3 a676c757266 acea9 a74727565
+answer mixed 3 a676c757266 acea9 a66616c7365
+answer mixed 3 a676c757266 acea9 a676c757266
+answer mixed 3 a676c757266 acea9 i0
+answer mixed 3 a676c757266 acea9 i7
+answer mixed 3 a676c757266 acea9 nil
+answer mixed 3 a676c757266 acea9 tuple
+answer mixed 3 a676c757266 acea9 acea9
+answer mixed 3 i0 a74727565 a74727565
+answer mixed 3 i0 a74727565 a66616c7365
+answer mixed 3 i0 a74727565 a676c757266
+answer mixed 3 i0 a74727565 i0
+answer mixed 3 i0 a74727565 i7
+answer mixed 3 i0 a74727565 nil
+answer mixed 3 i0 a74727565 tuple
+answer mixed 3 i0 a74727565 acea9
+answer mixed 3 i0 a66616c7365 a74727565
+answer mixed 3 i0 a66616c7365 a66616c7365
+answer mixed 3 i0 a66616c7365 a676c757266
+answer mixed 3 i0 a66616c7365 i0
+answer mixed 3 i0 a66616c7365 i7
+answer mixed 3 i0 a66616c7365 nil
+answer mixed 3 i0 a66616c7365 tuple
+answer mixed 3 i0 a66616c7365 acea9
+answer mixed 3 i0 a676c757266 a74727565
+answer mixed 3 i0 a676c757266 a66616c7365
+answer mixed 3 i0 a676c757266 a676c757266
+answer mixed 3 i0 a676c757266 i0
+answer mixed 3 i0 a676c757266 i7
+answer mixed 3 i0 a676c757266 nil
+answer mixed 3 i0 a676c757266 tuple
+answer mixed 3 i0 a676c757266 acea9
+answer mixed 3 i0 i0 a74727565
+answer mixed 3 i0 i0 a66616c7365
+answer mixed 3 i0 i0 a676c757266
+answer mixed 3 i0 i0 i0
+answer mixed 3 i0 i0 i7
+answer mixed 3 i0 i0 nil
+answer mixed 3 i0 i0 tuple
+answer mixed 3 i0 i0 acea9
+answer mixed 3 i0 i7 a74727565
+answer mixed 3 i0 i7 a66616c7365
+answer mixed 3 i0 i7 a676c757266
+answer mixed 3 i0 i7 i0
+answer mixed 3 i0 i7 i7
+answer mixed 3 i0 i7 nil
+answer mixed 3 i0 i7 tuple
+answer mixed 3 i0 i7 acea9
+answer mixed 3 i0 nil a74727565
+answer mixed 3 i0 nil a66616c7365
+answer mixed 3 i0 nil a676c757266
+answer mixed 3 i0 nil i0
+answer mixed 3 i0 nil i7
+answer mixed 3 i0 nil nil
+answer mixed 3 i0 nil tuple
+answer mixed 3 i0 nil acea9
+answer mixed 3 i0 tuple a74727565
+answer mixed 3 i0 tuple a66616c7365
+answer mixed 3 i0 tuple a676c757266
+answer mixed 3 i0 tuple i0
+answer mixed 3 i0 tuple i7
+answer mixed 3 i0 tuple nil
+answer mixed 3 i0 tuple tuple
+answer mixed 3 i0 tuple acea9
+answer mixed 3 i0 acea9 a74727565
+answer mixed 3 i0 acea9 a66616c7365
+answer mixed 3 i0 acea9 a676c757266
+answer mixed 3 i0 acea9 i0
+answer mixed 3 i0 acea9 i7
+answer mixed 3 i0 acea9 nil
+answer mixed 3 i0 acea9 tuple
+answer mixed 3 i0 acea9 acea9
+answer mixed 3 i7 a74727565 a74727565
+answer mixed 3 i7 a74727565 a66616c7365
+answer mixed 3 i7 a74727565 a676c757266
+answer mixed 3 i7 a74727565 i0
+answer mixed 3 i7 a74727565 i7
+answer mixed 3 i7 a74727565 nil
+answer mixed 3 i7 a74727565 tuple
+answer mixed 3 i7 a74727565 acea9
+answer mixed 3 i7 a66616c7365 a74727565
+answer mixed 3 i7 a66616c7365 a66616c7365
+answer mixed 3 i7 a66616c7365 a676c757266
+answer mixed 3 i7 a66616c7365 i0
+answer mixed 3 i7 a66616c7365 i7
+answer mixed 3 i7 a66616c7365 nil
+answer mixed 3 i7 a66616c7365 tuple
+answer mixed 3 i7 a66616c7365 acea9
+answer mixed 3 i7 a676c757266 a74727565
+answer mixed 3 i7 a676c757266 a66616c7365
+answer mixed 3 i7 a676c757266 a676c757266
+answer mixed 3 i7 a676c757266 i0
+answer mixed 3 i7 a676c757266 i7
+answer mixed 3 i7 a676c757266 nil
+answer mixed 3 i7 a676c757266 tuple
+answer mixed 3 i7 a676c757266 acea9
+answer mixed 3 i7 i0 a74727565
+answer mixed 3 i7 i0 a66616c7365
+answer mixed 3 i7 i0 a676c757266
+answer mixed 3 i7 i0 i0
+answer mixed 3 i7 i0 i7
+answer mixed 3 i7 i0 nil
+answer mixed 3 i7 i0 tuple
+answer mixed 3 i7 i0 acea9
+answer mixed 3 i7 i7 a74727565
+answer mixed 3 i7 i7 a66616c7365
+answer mixed 3 i7 i7 a676c757266
+answer mixed 3 i7 i7 i0
+answer mixed 3 i7 i7 i7
+answer mixed 3 i7 i7 nil
+answer mixed 3 i7 i7 tuple
+answer mixed 3 i7 i7 acea9
+answer mixed 3 i7 nil a74727565
+answer mixed 3 i7 nil a66616c7365
+answer mixed 3 i7 nil a676c757266
+answer mixed 3 i7 nil i0
+answer mixed 3 i7 nil i7
+answer mixed 3 i7 nil nil
+answer mixed 3 i7 nil tuple
+answer mixed 3 i7 nil acea9
+answer mixed 3 i7 tuple a74727565
+answer mixed 3 i7 tuple a66616c7365
+answer mixed 3 i7 tuple a676c757266
+answer mixed 3 i7 tuple i0
+answer mixed 3 i7 tuple i7
+answer mixed 3 i7 tuple nil
+answer mixed 3 i7 tuple tuple
+answer mixed 3 i7 tuple acea9
+answer mixed 3 i7 acea9 a74727565
+answer mixed 3 i7 acea9 a66616c7365
+answer mixed 3 i7 acea9 a676c757266
+answer mixed 3 i7 acea9 i0
+answer mixed 3 i7 acea9 i7
+answer mixed 3 i7 acea9 nil
+answer mixed 3 i7 acea9 tuple
+answer mixed 3 i7 acea9 acea9
+answer mixed 3 nil a74727565 a74727565
+answer mixed 3 nil a74727565 a66616c7365
+answer mixed 3 nil a74727565 a676c757266
+answer mixed 3 nil a74727565 i0
+answer mixed 3 nil a74727565 i7
+answer mixed 3 nil a74727565 nil
+answer mixed 3 nil a74727565 tuple
+answer mixed 3 nil a74727565 acea9
+answer mixed 3 nil a66616c7365 a74727565
+answer mixed 3 nil a66616c7365 a66616c7365
+answer mixed 3 nil a66616c7365 a676c757266
+answer mixed 3 nil a66616c7365 i0
+answer mixed 3 nil a66616c7365 i7
+answer mixed 3 nil a66616c7365 nil
+answer mixed 3 nil a66616c7365 tuple
+answer mixed 3 nil a66616c7365 acea9
+answer mixed 3 nil a676c757266 a74727565
+answer mixed 3 nil a676c757266 a66616c7365
+answer mixed 3 nil a676c757266 a676c757266
+answer mixed 3 nil a676c757266 i0
+answer mixed 3 nil a676c757266 i7
+answer mixed 3 nil a676c757266 nil
+answer mixed 3 nil a676c757266 tuple
+answer mixed 3 nil a676c757266 acea9
+answer mixed 3 nil i0 a74727565
+answer mixed 3 nil i0 a66616c7365
+answer mixed 3 nil i0 a676c757266
+answer mixed 3 nil i0 i0
+answer mixed 3 nil i0 i7
+answer mixed 3 nil i0 nil
+answer mixed 3 nil i0 tuple
+answer mixed 3 nil i0 acea9
+answer mixed 3 nil i7 a74727565
+answer mixed 3 nil i7 a66616c7365
+answer mixed 3 nil i7 a676c757266
+answer mixed 3 nil i7 i0
+answer mixed 3 nil i7 i7
+answer mixed 3 nil i7 nil
+answer mixed 3 nil i7 tuple
+answer mixed 3 nil i7 acea9
+answer mixed 3 nil nil a74727565
+answer mixed 3 nil nil a66616c7365
+answer mixed 3 nil nil a676c757266
+answer mixed 3 nil nil i0
+answer mixed 3 nil nil i7
+answer mixed 3 nil nil nil
+answer mixed 3 nil nil tuple
+answer mixed 3 nil nil acea9
+answer mixed 3 nil tuple a74727565
+answer mixed 3 nil tuple a66616c7365
+answer mixed 3 nil tuple a676c757266
+answer mixed 3 nil tuple i0
+answer mixed 3 nil tuple i7
+answer mixed 3 nil tuple nil
+answer mixed 3 nil tuple tuple
+answer mixed 3 nil tuple acea9
+answer mixed 3 nil acea9 a74727565
+answer mixed 3 nil acea9 a66616c7365
+answer mixed 3 nil acea9 a676c757266
+answer mixed 3 nil acea9 i0
+answer mixed 3 nil acea9 i7
+answer mixed 3 nil acea9 nil
+answer mixed 3 nil acea9 tuple
+answer mixed 3 nil acea9 acea9
+answer mixed 3 tuple a74727565 a74727565
+answer mixed 3 tuple a74727565 a66616c7365
+answer mixed 3 tuple a74727565 a676c757266
+answer mixed 3 tuple a74727565 i0
+answer mixed 3 tuple a74727565 i7
+answer mixed 3 tuple a74727565 nil
+answer mixed 3 tuple a74727565 tuple
+answer mixed 3 tuple a74727565 acea9
+answer mixed 3 tuple a66616c7365 a74727565
+answer mixed 3 tuple a66616c7365 a66616c7365
+answer mixed 3 tuple a66616c7365 a676c757266
+answer mixed 3 tuple a66616c7365 i0
+answer mixed 3 tuple a66616c7365 i7
+answer mixed 3 tuple a66616c7365 nil
+answer mixed 3 tuple a66616c7365 tuple
+answer mixed 3 tuple a66616c7365 acea9
+answer mixed 3 tuple a676c757266 a74727565
+answer mixed 3 tuple a676c757266 a66616c7365
+answer mixed 3 tuple a676c757266 a676c757266
+answer mixed 3 tuple a676c757266 i0
+answer mixed 3 tuple a676c757266 i7
+answer mixed 3 tuple a676c757266 nil
+answer mixed 3 tuple a676c757266 tuple
+answer mixed 3 tuple a676c757266 acea9
+answer mixed 3 tuple i0 a74727565
+answer mixed 3 tuple i0 a66616c7365
+answer mixed 3 tuple i0 a676c757266
+answer mixed 3 tuple i0 i0
+answer mixed 3 tuple i0 i7
+answer mixed 3 tuple i0 nil
+answer mixed 3 tuple i0 tuple
+answer mixed 3 tuple i0 acea9
+answer mixed 3 tuple i7 a74727565
+answer mixed 3 tuple i7 a66616c7365
+answer mixed 3 tuple i7 a676c757266
+answer mixed 3 tuple i7 i0
+answer mixed 3 tuple i7 i7
+answer mixed 3 tuple i7 nil
+answer mixed 3 tuple i7 tuple
+answer mixed 3 tuple i7 acea9
+answer mixed 3 tuple nil a74727565
+answer mixed 3 tuple nil a66616c7365
+answer mixed 3 tuple nil a676c757266
+answer mixed 3 tuple nil i0
+answer mixed 3 tuple nil i7
+answer mixed 3 tuple nil nil
+answer mixed 3 tuple nil tuple
+answer mixed 3 tuple nil acea9
+answer mixed 3 tuple tuple a74727565
+answer mixed 3 tuple tuple a66616c7365
+answer mixed 3 tuple tuple a676c757266
+answer mixed 3 tuple tuple i0
+answer mixed 3 tuple tuple i7
+answer mixed 3 tuple tuple nil
+answer mixed 3 tuple tuple tuple
+answer mixed 3 tuple tuple acea9
+answer mixed 3 tuple acea9 a74727565
+answer mixed 3 tuple acea9 a66616c7365
+answer mixed 3 tuple acea9 a676c757266
+answer mixed 3 tuple acea9 i0
+answer mixed 3 tuple acea9 i7
+answer mixed 3 tuple acea9 nil
+answer mixed 3 tuple acea9 tuple
+answer mixed 3 tuple acea9 acea9
+answer mixed 3 acea9 a74727565 a74727565
+answer mixed 3 acea9 a74727565 a66616c7365
+answer mixed 3 acea9 a74727565 a676c757266
+answer mixed 3 acea9 a74727565 i0
+answer mixed 3 acea9 a74727565 i7
+answer mixed 3 acea9 a74727565 nil
+answer mixed 3 acea9 a74727565 tuple
+answer mixed 3 acea9 a74727565 acea9
+answer mixed 3 acea9 a66616c7365 a74727565
+answer mixed 3 acea9 a66616c7365 a66616c7365
+answer mixed 3 acea9 a66616c7365 a676c757266
+answer mixed 3 acea9 a66616c7365 i0
+answer mixed 3 acea9 a66616c7365 i7
+answer mixed 3 acea9 a66616c7365 nil
+answer mixed 3 acea9 a66616c7365 tuple
+answer mixed 3 acea9 a66616c7365 acea9
+answer mixed 3 acea9 a676c757266 a74727565
+answer mixed 3 acea9 a676c757266 a66616c7365
+answer mixed 3 acea9 a676c757266 a676c757266
+answer mixed 3 acea9 a676c757266 i0
+answer mixed 3 acea9 a676c757266 i7
+answer mixed 3 acea9 a676c757266 nil
+answer mixed 3 acea9 a676c757266 tuple
+answer mixed 3 acea9 a676c757266 acea9
+answer mixed 3 acea9 i0 a74727565
+answer mixed 3 acea9 i0 a66616c7365
+answer mixed 3 acea9 i0 a676c757266
+answer mixed 3 acea9 i0 i0
+answer mixed 3 acea9 i0 i7
+answer mixed 3 acea9 i0 nil
+answer mixed 3 acea9 i0 tuple
+answer mixed 3 acea9 i0 acea9
+answer mixed 3 acea9 i7 a74727565
+answer mixed 3 acea9 i7 a66616c7365
+answer mixed 3 acea9 i7 a676c757266
+answer mixed 3 acea9 i7 i0
+answer mixed 3 acea9 i7 i7
+answer mixed 3 acea9 i7 nil
+answer mixed 3 acea9 i7 tuple
+answer mixed 3 acea9 i7 acea9
+answer mixed 3 acea9 nil a74727565
+answer mixed 3 acea9 nil a66616c7365
+answer mixed 3 acea9 nil a676c757266
+answer mixed 3 acea9 nil i0
+answer mixed 3 acea9 nil i7
+answer mixed 3 acea9 nil nil
+answer mixed 3 acea9 nil tuple
+answer mixed 3 acea9 nil acea9
+answer mixed 3 acea9 tuple a74727565
+answer mixed 3 acea9 tuple a66616c7365
+answer mixed 3 acea9 tuple a676c757266
+answer mixed 3 acea9 tuple i0
+answer mixed 3 acea9 tuple i7
+answer mixed 3 acea9 tuple nil
+answer mixed 3 acea9 tuple tuple
+answer mixed 3 acea9 tuple acea9
+answer mixed 3 acea9 acea9 a74727565
+answer mixed 3 acea9 acea9 a66616c7365
+answer mixed 3 acea9 acea9 a676c757266
+answer mixed 3 acea9 acea9 i0
+answer mixed 3 acea9 acea9 i7
+answer mixed 3 acea9 acea9 nil
+answer mixed 3 acea9 acea9 tuple
+answer mixed 3 acea9 acea9 acea9
+answer head_first 1 a74727565
+answer head_first 1 a66616c7365
+answer head_first 1 a676c757266
+answer head_first 1 i0
+answer head_first 1 i7
+answer head_first 1 nil
+answer head_first 1 tuple
+answer head_first 1 acea9
+answer not_value 1 a74727565
+answer not_value 1 a66616c7365
+answer not_value 1 a676c757266
+answer not_value 1 i0
+answer not_value 1 i7
+answer not_value 1 nil
+answer not_value 1 tuple
+answer not_value 1 acea9
+answer guard_not 1 a74727565
+answer guard_not 1 a66616c7365
+answer guard_not 1 a676c757266
+answer guard_not 1 i0
+answer guard_not 1 i7
+answer guard_not 1 nil
+answer guard_not 1 tuple
+answer guard_not 1 acea9
+answer qualified_not 1 a74727565
+answer qualified_not 1 a66616c7365
+answer qualified_not 1 a676c757266
+answer qualified_not 1 i0
+answer qualified_not 1 i7
+answer qualified_not 1 nil
+answer qualified_not 1 tuple
+answer qualified_not 1 acea9
+answer required_zero 1 a74727565
+answer required_zero 1 a66616c7365
+answer required_zero 1 a676c757266
+answer required_zero 1 i0
+answer required_zero 1 i7
+answer required_zero 1 nil
+answer required_zero 1 tuple
+answer required_zero 1 acea9
+answer local_skip 1 a74727565
+answer local_skip 1 a66616c7365
+answer local_skip 1 a676c757266
+answer local_skip 1 i0
+answer local_skip 1 i7
+answer local_skip 1 nil
+answer local_skip 1 tuple
+answer local_skip 1 acea9
+answer local_reach 1 a74727565
+answer local_reach 1 a66616c7365
+answer local_reach 1 a676c757266
+answer local_reach 1 i0
+answer local_reach 1 i7
+answer local_reach 1 nil
+answer local_reach 1 tuple
+answer local_reach 1 acea9
+answer wide_semi 1 a74727565
+answer wide_semi 1 a66616c7365
+answer wide_semi 1 a676c757266
+answer wide_semi 1 i0
+answer wide_semi 1 i7
+answer wide_semi 1 nil
+answer wide_semi 1 tuple
+answer wide_semi 1 acea9
+answer wide_comma 1 a74727565
+answer wide_comma 1 a66616c7365
+answer wide_comma 1 a676c757266
+answer wide_comma 1 i0
+answer wide_comma 1 i7
+answer wide_comma 1 nil
+answer wide_comma 1 tuple
+answer wide_comma 1 acea9
+answer deep_lazy 1 a74727565
+answer deep_lazy 1 a66616c7365
+answer deep_lazy 1 a676c757266
+answer deep_lazy 1 i0
+answer deep_lazy 1 i7
+answer deep_lazy 1 nil
+answer deep_lazy 1 tuple
+answer deep_lazy 1 acea9
+answer bad_or 1 i0
+answer bad_semi 1 i0
+answer bad_rhs_or 1 i0
+answer bad_rhs_semi 1 i0
+answer bad_comma 1 i0
+answer skip_hd_or 1 i0
+answer skip_hd_and 1 i0
+answer reach_hd_and 1 i0
+answer strict_hd_or 1 i0
+answer strict_hd_and 1 i0
+answer strict_hd_xor 1 i0
+answer strict_semi 1 i0
+answer not_bad 1 i0
+answer not_semi 1 i0
+answer skip_bad_not 1 i0
+answer skip_bad_not_or 1 i0
+answer body_bad_or 1 i0
+answer body_strict_or 1 i0
+answer body_strict_and 1 i0
+answer csemi4_orelse_a 4 nil i0 nil i0
+answer csemi4_orelse_a 4 nil i0 nil i2
+answer csemi4_orelse_a 4 nil i0 tuple i0
+answer csemi4_orelse_a 4 nil i0 tuple i2
+answer csemi4_orelse_a 4 nil i0 a676c757266 i0
+answer csemi4_orelse_a 4 nil i0 a676c757266 i2
+answer csemi4_orelse_a 4 nil i2 nil i0
+answer csemi4_orelse_a 4 nil i2 nil i2
+answer csemi4_orelse_a 4 nil i2 tuple i0
+answer csemi4_orelse_a 4 nil i2 tuple i2
+answer csemi4_orelse_a 4 nil i2 a676c757266 i0
+answer csemi4_orelse_a 4 nil i2 a676c757266 i2
+answer csemi4_orelse_a 4 tuple i0 nil i0
+answer csemi4_orelse_a 4 tuple i0 nil i2
+answer csemi4_orelse_a 4 tuple i0 tuple i0
+answer csemi4_orelse_a 4 tuple i0 tuple i2
+answer csemi4_orelse_a 4 tuple i0 a676c757266 i0
+answer csemi4_orelse_a 4 tuple i0 a676c757266 i2
+answer csemi4_orelse_a 4 tuple i2 nil i0
+answer csemi4_orelse_a 4 tuple i2 nil i2
+answer csemi4_orelse_a 4 tuple i2 tuple i0
+answer csemi4_orelse_a 4 tuple i2 tuple i2
+answer csemi4_orelse_a 4 tuple i2 a676c757266 i0
+answer csemi4_orelse_a 4 tuple i2 a676c757266 i2
+answer csemi4_orelse_a 4 a676c757266 i0 nil i0
+answer csemi4_orelse_a 4 a676c757266 i0 nil i2
+answer csemi4_orelse_a 4 a676c757266 i0 tuple i0
+answer csemi4_orelse_a 4 a676c757266 i0 tuple i2
+answer csemi4_orelse_a 4 a676c757266 i0 a676c757266 i0
+answer csemi4_orelse_a 4 a676c757266 i0 a676c757266 i2
+answer csemi4_orelse_a 4 a676c757266 i2 nil i0
+answer csemi4_orelse_a 4 a676c757266 i2 nil i2
+answer csemi4_orelse_a 4 a676c757266 i2 tuple i0
+answer csemi4_orelse_a 4 a676c757266 i2 tuple i2
+answer csemi4_orelse_a 4 a676c757266 i2 a676c757266 i0
+answer csemi4_orelse_a 4 a676c757266 i2 a676c757266 i2
+answer csemi4_orelse_b 4 nil i0 nil i0
+answer csemi4_orelse_b 4 nil i0 nil i2
+answer csemi4_orelse_b 4 nil i0 tuple i0
+answer csemi4_orelse_b 4 nil i0 tuple i2
+answer csemi4_orelse_b 4 nil i0 a676c757266 i0
+answer csemi4_orelse_b 4 nil i0 a676c757266 i2
+answer csemi4_orelse_b 4 nil i2 nil i0
+answer csemi4_orelse_b 4 nil i2 nil i2
+answer csemi4_orelse_b 4 nil i2 tuple i0
+answer csemi4_orelse_b 4 nil i2 tuple i2
+answer csemi4_orelse_b 4 nil i2 a676c757266 i0
+answer csemi4_orelse_b 4 nil i2 a676c757266 i2
+answer csemi4_orelse_b 4 tuple i0 nil i0
+answer csemi4_orelse_b 4 tuple i0 nil i2
+answer csemi4_orelse_b 4 tuple i0 tuple i0
+answer csemi4_orelse_b 4 tuple i0 tuple i2
+answer csemi4_orelse_b 4 tuple i0 a676c757266 i0
+answer csemi4_orelse_b 4 tuple i0 a676c757266 i2
+answer csemi4_orelse_b 4 tuple i2 nil i0
+answer csemi4_orelse_b 4 tuple i2 nil i2
+answer csemi4_orelse_b 4 tuple i2 tuple i0
+answer csemi4_orelse_b 4 tuple i2 tuple i2
+answer csemi4_orelse_b 4 tuple i2 a676c757266 i0
+answer csemi4_orelse_b 4 tuple i2 a676c757266 i2
+answer csemi4_orelse_b 4 a676c757266 i0 nil i0
+answer csemi4_orelse_b 4 a676c757266 i0 nil i2
+answer csemi4_orelse_b 4 a676c757266 i0 tuple i0
+answer csemi4_orelse_b 4 a676c757266 i0 tuple i2
+answer csemi4_orelse_b 4 a676c757266 i0 a676c757266 i0
+answer csemi4_orelse_b 4 a676c757266 i0 a676c757266 i2
+answer csemi4_orelse_b 4 a676c757266 i2 nil i0
+answer csemi4_orelse_b 4 a676c757266 i2 nil i2
+answer csemi4_orelse_b 4 a676c757266 i2 tuple i0
+answer csemi4_orelse_b 4 a676c757266 i2 tuple i2
+answer csemi4_orelse_b 4 a676c757266 i2 a676c757266 i0
+answer csemi4_orelse_b 4 a676c757266 i2 a676c757266 i2
+answer csemi4_orelse_c 4 nil i0 nil i0
+answer csemi4_orelse_c 4 nil i0 nil i2
+answer csemi4_orelse_c 4 nil i0 tuple i0
+answer csemi4_orelse_c 4 nil i0 tuple i2
+answer csemi4_orelse_c 4 nil i0 a676c757266 i0
+answer csemi4_orelse_c 4 nil i0 a676c757266 i2
+answer csemi4_orelse_c 4 nil i2 nil i0
+answer csemi4_orelse_c 4 nil i2 nil i2
+answer csemi4_orelse_c 4 nil i2 tuple i0
+answer csemi4_orelse_c 4 nil i2 tuple i2
+answer csemi4_orelse_c 4 nil i2 a676c757266 i0
+answer csemi4_orelse_c 4 nil i2 a676c757266 i2
+answer csemi4_orelse_c 4 tuple i0 nil i0
+answer csemi4_orelse_c 4 tuple i0 nil i2
+answer csemi4_orelse_c 4 tuple i0 tuple i0
+answer csemi4_orelse_c 4 tuple i0 tuple i2
+answer csemi4_orelse_c 4 tuple i0 a676c757266 i0
+answer csemi4_orelse_c 4 tuple i0 a676c757266 i2
+answer csemi4_orelse_c 4 tuple i2 nil i0
+answer csemi4_orelse_c 4 tuple i2 nil i2
+answer csemi4_orelse_c 4 tuple i2 tuple i0
+answer csemi4_orelse_c 4 tuple i2 tuple i2
+answer csemi4_orelse_c 4 tuple i2 a676c757266 i0
+answer csemi4_orelse_c 4 tuple i2 a676c757266 i2
+answer csemi4_orelse_c 4 a676c757266 i0 nil i0
+answer csemi4_orelse_c 4 a676c757266 i0 nil i2
+answer csemi4_orelse_c 4 a676c757266 i0 tuple i0
+answer csemi4_orelse_c 4 a676c757266 i0 tuple i2
+answer csemi4_orelse_c 4 a676c757266 i0 a676c757266 i0
+answer csemi4_orelse_c 4 a676c757266 i0 a676c757266 i2
+answer csemi4_orelse_c 4 a676c757266 i2 nil i0
+answer csemi4_orelse_c 4 a676c757266 i2 nil i2
+answer csemi4_orelse_c 4 a676c757266 i2 tuple i0
+answer csemi4_orelse_c 4 a676c757266 i2 tuple i2
+answer csemi4_orelse_c 4 a676c757266 i2 a676c757266 i0
+answer csemi4_orelse_c 4 a676c757266 i2 a676c757266 i2
+answer csemi4_orelse_d 4 nil i0 nil i0
+answer csemi4_orelse_d 4 nil i0 nil i2
+answer csemi4_orelse_d 4 nil i0 tuple i0
+answer csemi4_orelse_d 4 nil i0 tuple i2
+answer csemi4_orelse_d 4 nil i0 a676c757266 i0
+answer csemi4_orelse_d 4 nil i0 a676c757266 i2
+answer csemi4_orelse_d 4 nil i2 nil i0
+answer csemi4_orelse_d 4 nil i2 nil i2
+answer csemi4_orelse_d 4 nil i2 tuple i0
+answer csemi4_orelse_d 4 nil i2 tuple i2
+answer csemi4_orelse_d 4 nil i2 a676c757266 i0
+answer csemi4_orelse_d 4 nil i2 a676c757266 i2
+answer csemi4_orelse_d 4 tuple i0 nil i0
+answer csemi4_orelse_d 4 tuple i0 nil i2
+answer csemi4_orelse_d 4 tuple i0 tuple i0
+answer csemi4_orelse_d 4 tuple i0 tuple i2
+answer csemi4_orelse_d 4 tuple i0 a676c757266 i0
+answer csemi4_orelse_d 4 tuple i0 a676c757266 i2
+answer csemi4_orelse_d 4 tuple i2 nil i0
+answer csemi4_orelse_d 4 tuple i2 nil i2
+answer csemi4_orelse_d 4 tuple i2 tuple i0
+answer csemi4_orelse_d 4 tuple i2 tuple i2
+answer csemi4_orelse_d 4 tuple i2 a676c757266 i0
+answer csemi4_orelse_d 4 tuple i2 a676c757266 i2
+answer csemi4_orelse_d 4 a676c757266 i0 nil i0
+answer csemi4_orelse_d 4 a676c757266 i0 nil i2
+answer csemi4_orelse_d 4 a676c757266 i0 tuple i0
+answer csemi4_orelse_d 4 a676c757266 i0 tuple i2
+answer csemi4_orelse_d 4 a676c757266 i0 a676c757266 i0
+answer csemi4_orelse_d 4 a676c757266 i0 a676c757266 i2
+answer csemi4_orelse_d 4 a676c757266 i2 nil i0
+answer csemi4_orelse_d 4 a676c757266 i2 nil i2
+answer csemi4_orelse_d 4 a676c757266 i2 tuple i0
+answer csemi4_orelse_d 4 a676c757266 i2 tuple i2
+answer csemi4_orelse_d 4 a676c757266 i2 a676c757266 i0
+answer csemi4_orelse_d 4 a676c757266 i2 a676c757266 i2
+client nested_skip 1 a74727565
+client nested_skip 1 a66616c7365
+client nested_skip 1 a676c757266
+client nested_skip 1 i0
+client nested_skip 1 i7
+client nested_skip 1 nil
+client nested_skip 1 tuple
+client nested_skip 1 acea9
+client nested_reach 1 a74727565
+client nested_reach 1 a66616c7365
+client nested_reach 1 a676c757266
+client nested_reach 1 i0
+client nested_reach 1 i7
+client nested_reach 1 nil
+client nested_reach 1 tuple
+client nested_reach 1 acea9
+client strict 1 a74727565
+client strict 1 a66616c7365
+client strict 1 a676c757266
+client strict 1 i0
+client strict 1 i7
+client strict 1 nil
+client strict 1 tuple
+client strict 1 acea9
+client local_shadow 1 a74727565
+client local_shadow 1 a66616c7365
+client local_shadow 1 a676c757266
+client local_shadow 1 i0
+client local_shadow 1 i7
+client local_shadow 1 nil
+client local_shadow 1 tuple
+client local_shadow 1 acea9
+client qualified 1 a74727565
+client qualified 1 a66616c7365
+client qualified 1 a676c757266
+client qualified 1 i0
+client qualified 1 i7
+client qualified 1 nil
+client qualified 1 tuple
+client qualified 1 acea9

@@ -1,0 +1,84 @@
+{
+  "reference_revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+  "oracle": "OTP 29.1.1 / ERTS 17.1",
+  "native_platform": "Windows x64",
+  "normal_tests": 118,
+  "normal_tests_seconds": 98.86,
+  "production_quality_units": 244,
+  "normal_config": {
+    "ERLANG_AOT_OTP_AUDITS": false,
+    "ERLANG_AOT_ESCRIPT": "nonexistent path",
+    "ERLANG_AOT_OTP_SOURCE_ROOT": "nonexistent path"
+  },
+  "native_expected_results": 49959,
+  "pattern_acceptance_records": 95,
+  "corpora": {
+    "atoms": {
+      "files": 4,
+      "manifest_sha256": "60cafba96efaef41f197fc588510a44bd5a13204211d2e5524e151c84babfba8"
+    },
+    "baseline": {
+      "files": 4,
+      "manifest_sha256": "dc9c780d986ed0dc139e4fe5284eae5f1ad9ddeb640bb902a931614efa25f3c4"
+    },
+    "bindings": {
+      "files": 32,
+      "manifest_sha256": "10616257ed150622b1e8ae61d5fd3a6e9c76fd2181547a0ebe3ee8f31e56af69"
+    },
+    "booleans": {
+      "files": 6,
+      "manifest_sha256": "b583e3e46f1f87a2aac148e8b7c3c7ab37fc6baf479704d7b61aec936db48577"
+    },
+    "clauses": {
+      "files": 6,
+      "manifest_sha256": "a32386f89d1a14f219c8c596a6da72bd2af2b1349b4852dceb275f918a7ebc83"
+    },
+    "containers": {
+      "files": 6,
+      "manifest_sha256": "4d5506b03771f8818d7db3877a41e133b8e70f080fbb9f79407fd95f473549d5"
+    },
+    "differential": {
+      "files": 4,
+      "manifest_sha256": "093b1daae6705963a06dc8b10558346bd330c6cad7dc8b702cb225e40bf2f325"
+    },
+    "floats": {
+      "files": 6,
+      "manifest_sha256": "6d141c9a33a26e8254ca725249e559a86b7da34c17966e74800b27e495548cda"
+    },
+    "immediate": {
+      "files": 6,
+      "manifest_sha256": "922160df64d007553a45242303f489ba6f72229002a2f7bf303cb9ba8a563099"
+    },
+    "integers": {
+      "files": 6,
+      "manifest_sha256": "7358e5cb45acee2cbf554096279e2693329ee0765af036ace7e22cc66ba04b6d"
+    },
+    "maps": {
+      "files": 6,
+      "manifest_sha256": "255cc0f5cd0649307fcccdd25e857f1365b3a23238fc5f61db8e07a2bb0260bd"
+    },
+    "patterns": {
+      "files": 99,
+      "manifest_sha256": "2dc32dc135b1e52aa305c6d4c8319d38fb36306b56c79c2e3ee450b24f319435"
+    },
+    "sequences": {
+      "files": 6,
+      "manifest_sha256": "f55da092a734a3c941c87621bf3b805a900a1650bcbf4f18c1252301cb53f782"
+    },
+    "services": {
+      "files": 6,
+      "manifest_sha256": "b545fe66708bf0cf72e8bda5329d2f1a2d39c4ca5c651dcb257b8e963dcf7134"
+    }
+  },
+  "upstream_regeneration_check": "all 14 corpora match committed inputs/results",
+  "optional_audit_inventory": 132,
+  "corrupt_expected_result": "rejected before copying",
+  "other_native_platforms": "not executed",
+  "final_transport_verification": {
+    "normal_tests": 118,
+    "normal_seconds": 99.74,
+    "affected_corpora": 5,
+    "affected_seconds": 6.77,
+    "expected_values": "unchanged"
+  }
+}

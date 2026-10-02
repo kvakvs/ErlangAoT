@@ -8,7 +8,10 @@ in [`references/otp-pin.cmake`](../references/otp-pin.cmake).
 Before future OTP-dependent work, fetch `maint-29` and refresh the pin if its head
 has advanced. Each refresh records an exact commit so offline validation stays
 reproducible. Configuration and tests never fetch or advance the reference.
-The installed OTP used for live oracle tests is a separate dependency.
+Normal builds and tests use project-owned golden fixtures and require neither
+this checkout nor installed OTP. Live audits are an explicit opt-in with
+`-DERLANG_AOT_OTP_AUDITS=ON`; the installed OTP used for those audits is a separate
+dependency. See [fixture regeneration](../tests/fixtures/patternmatch/generated/README.md).
 
 1. Check `git -C references/otp status --short` and preserve any local work. Fetch
    the official branch with
@@ -29,7 +32,7 @@ The installed OTP used for live oracle tests is a separate dependency.
    changes, review `tests/fixtures/parser/grammar.tsv`, its authored fixtures and
    `phase6/coverage.tsv`; every ordinary production still needs a measured witness.
    Historical oracle records keep their original provenance.
-5. Configure with `ERLANG_AOT_OTP_SOURCE_ROOT` pointing to the refreshed checkout.
+5. Configure with `ERLANG_AOT_OTP_AUDITS=ON` and `ERLANG_AOT_OTP_SOURCE_ROOT` pointing to the refreshed checkout.
    Run `parser_coverage`, `parser_corpus`, parser historical/integrity tests and the
    affected frontend/oracle tests. Update current reference documentation and
    record the exact revision, outcomes and any remaining failures.

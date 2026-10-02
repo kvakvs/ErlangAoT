@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 from evidence import digest, native, provenance, run
+from stored import load
 
 BINDING_ERRORS = r"unbound variable|unsafe variable|wildcard '_' cannot be read|guards cannot bind variables"
 
@@ -115,17 +116,11 @@ def locations(tool, work):
 
 def main():
     """Separate legality, private binding invariants and executable projection evidence."""
-    tool, cmake, root, otp_root, directory, settings, config, suffix, escript = sys.argv[1:]
-    source, otp, work = pathlib.Path(root), pathlib.Path(otp_root), pathlib.Path(directory)
+    tool, cmake, root, directory, settings, config, suffix = sys.argv[1:]
+    source, work = pathlib.Path(root), pathlib.Path(directory)
     work.mkdir(parents=True, exist_ok=True)
-    provenance(source, otp, source / "tests/fixtures/patternmatch", work)
-    rows, terms = source_cases(source, work)
-    helper_record = helpers(otp, work)
-    terms.append("{bindings_otp, accepted, none}.")
-    terms.extend(["{answer, accepted, none}.", "{client, accepted, none}."])
-    (work / "bindings.term").write_bytes(("\n".join(terms) + "\n").encode())
-    oracle = run([escript, str(source / "tests/compiler/patternmatch/bindings.escript"), str(work)])
-    rows.append({"name": "bindings_otp", "diagnostic": "", "capability": ""})
+    records = load(source, 'bindings', work)
+    rows, helper_record, oracle = records['cases'], records['helpers'], records['oracle']
     cli(tool, work, rows)
     locations(tool, work)
     native(tool, cmake, source, work, settings, config, suffix)
