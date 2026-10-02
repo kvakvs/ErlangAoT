@@ -1,6 +1,7 @@
 #include "capabilities.hpp"
 #include "features.hpp"
 #include "match_plan_internal.hpp"
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
@@ -66,7 +67,9 @@ bool MatchPlanner::spend(const ast::ExprId &site) {
 
 void MatchPlanner::variable(const NormalizedPattern &pattern, std::size_t input) {
     const auto &binding = *bindings.at(&module.syntax->expression(pattern.expression));
-    const auto operation = binding.use == BindingUse::definition ? MatchOperation::bind : MatchOperation::exact_binding;
+    const auto operation = binding.use == BindingUse::definition && definitions.insert(binding.identity).second
+                               ? MatchOperation::bind
+                               : MatchOperation::exact_binding;
     plan.nodes.push_back({pattern.origin, operation, input, binding.identity});
     if (operation == MatchOperation::bind) {
         plan.outputs.push_back(binding.identity);

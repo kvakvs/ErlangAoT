@@ -1,16 +1,20 @@
 #include "../semantic/capabilities.hpp"
+#include "../semantic/records.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 
 namespace erlang_aot::codegen {
 namespace {
-enum class Action : std::uint8_t { enter, value, lazy_left, lazy_right };
+enum class Action : std::uint8_t { enter, value, lazy_left, lazy_right, record_field };
 
 struct Visit {
     // Explicit actions keep ordinary and conditionally reached operands off the host stack.
     ast::ExprId id;
     Action action = Action::enter;
+    // Record-field actions capture one completed evaluation before a reused initializer can run again.
+    std::size_t field = 0;
+    std::optional<ast::ExprId> child = {};
 };
 
 struct LazyJoin {
@@ -45,6 +49,25 @@ std::vector<ast::ExprId> binary_children(const ast::Module &syntax, const ast::B
 }
 
 // Reverse-push eager children to preserve source order; schedule only the left operand for lazy syntax.
+bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
+    const auto &expression = state.module.syntax->expression(id);
+    const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
+    if (!record) {
+        return false;
+    }
+    const auto fields = semantic::record_values(state.module, *record, false);
+    state.record_values.insert_or_assign(&expression, std::vector<llvm::Value *>(fields.size()));
+    pending.push_back({id, Action::value});
+    for (std::size_t i = fields.size(); i != 0; --i) {
+        pending.push_back({id, Action::record_field, i - 1, fields[i - 1]});
+        if (fields[i - 1]) {
+            pending.push_back({*fields[i - 1]});
+        }
+    }
+    return true;
+}
+
+// Reverse-push eager children to preserve source order; schedule only the left operand for lazy syntax.
 void enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(id);
     if (const auto *binary = lazy(expression.value)) {
@@ -52,13 +75,16 @@ void enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> 
         pending.push_back({binary->left});
         return;
     }
+    if (record_enter(state, id, pending)) {
+        return;
+    }
     pending.push_back({id, Action::value});
     if (semantic::integer_literal(*state.module.syntax, id, state.word->getBitWidth())) {
         return;
     }
     const auto *binary = std::get_if<ast::Bitstring>(&expression.value);
-    const auto children =
-        binary ? binary_children(*state.module.syntax, *binary) : semantic::expression_children(expression);
+    const auto children = binary ? binary_children(*state.module.syntax, *binary)
+                                 : semantic::expression_children(state.module, expression);
     for (auto child = children.rbegin(); child != children.rend(); ++child) {
         pending.push_back({*child});
     }
@@ -121,7 +147,7 @@ struct Walk {
             break;
         case Action::value: {
             auto *value = lower_value(state, visit.id);
-            state.values.emplace(&expression, value);
+            state.values.insert_or_assign(&expression, value);
             root_value(state, value);
             break;
         }
@@ -134,11 +160,16 @@ struct Walk {
         }
         case Action::lazy_right: {
             auto *value = right(state, expression, joins.at(&expression));
-            state.values.emplace(&expression, value);
+            state.values.insert_or_assign(&expression, value);
             root_value(state, value);
             joins.erase(&expression);
             break;
         }
+        case Action::record_field:
+            state.record_values.at(&expression).at(visit.field) =
+                visit.child ? state.values.at(&state.module.syntax->expression(*visit.child))
+                            : lower_atom(state, ast::Atom{U"undefined"});
+            break;
         }
     }
 };

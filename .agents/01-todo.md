@@ -240,13 +240,14 @@ literal, parameter reference or direct call per function body.
 ### F17 — Record expansion and execution
 
 Meaning: turn preserved record declarations/operations into their executable
-data representation and field behavior.
+representation and field behavior.
 
-- [ ] Resolve declarations, fields, defaults and errors after preprocessing.
-- [ ] Implement construction, access, update and matching using the tuple
-  representation, with correct evaluation order and failure semantics.
-- [ ] Integrate binding/type analysis and verify included declarations, defaults,
-  invalid fields and wrong-shaped values.
+- [x] Resolve ordinary declarations, fields, defaults and errors after preprocessing.
+- [x] Implement ordinary construction, access and matching through tuples, preserving
+  evaluation order and failure semantics; integrate binding/type traversal.
+  See [step 17](../docs/patternmatch-step17-validation.md).
+- [ ] Implement record updates, record_info, and native/qualified/inferred records.
+- [ ] Complete their additional declaration, binding/type and execution rules.
 
 ### F18 — Closures and function values
 

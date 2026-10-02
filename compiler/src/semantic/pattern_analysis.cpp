@@ -1,4 +1,5 @@
 #include "pattern_state.hpp"
+#include "records.hpp"
 
 namespace erlang_aot::semantic {
 namespace {
@@ -90,13 +91,32 @@ struct Walk {
         children(PatternKind::alias, {value.left, value.right}, true);
     }
 
-    void operator()(const ast::RecordIndex &) { node(PatternKind::record_index); }
+    void operator()(const ast::RecordIndex &value) {
+        const auto *layout =
+            record_layout(state.module, value.record, state.module.syntax->expression(expression).source);
+        const auto field = layout ? record_field(*layout, value.field) : std::nullopt;
+        node(PatternKind::record_index, {},
+             field ? std::optional<PatternLiteral>{ast::IntegerLiteral{Integer{std::to_string(*field + 2)}}}
+                   : std::nullopt);
+    }
 
     void operator()(const ast::RecordExpression &value) {
+        if (!record_budget(state, expression)) {
+            return;
+        }
         if (value.base) {
             pattern_error(state, expression, "record update is illegal in a pattern");
         }
-        children(PatternKind::record, binding_children(value));
+        std::vector<ast::ExprId> ids;
+        for (const auto &field : record_values(state.module, value, true)) {
+            if (field) {
+                ids.push_back(*field);
+            }
+        }
+        children(PatternKind::record, ids);
+        if (const auto *layout = record_layout(state.module, value.identity); layout && state.work <= state.limit) {
+            state.function.patterns.back().literal = layout->name;
+        }
     }
 
     void operator()(const ast::MapExpression &value) {
@@ -224,7 +244,9 @@ void read(Walk &walk) {
 
 // Dispatch bounded tasks without recursively visiting either patterns or their embedded expressions.
 void execute(Walk &walk) {
-    const auto &value = walk.state.module.syntax->expression(walk.expression).value;
+    const auto &expression = walk.state.module.syntax->expression(walk.expression);
+    validate_record(walk.state.module, expression, walk.state.out);
+    const auto &value = expression.value;
     switch (walk.visit.action) {
     case Action::read:
         read(walk);

@@ -213,7 +213,7 @@
     "body": "-record(r,{x,y}). f(#r{x=A,y=B}) -> {A,B}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_record_index",
@@ -221,7 +221,7 @@
     "body": "-record(r,{x}). f(#r.x) -> ok.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": ""
   },
   {
     "name": "pat_body_chain",

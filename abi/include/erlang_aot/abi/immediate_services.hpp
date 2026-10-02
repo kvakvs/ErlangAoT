@@ -66,7 +66,9 @@ enum class ImmediateOperation : std::uint8_t {
     is_map_key,
     bit_size,
     byte_size,
-    binary_part
+    binary_part,
+    // Compound compiler lowering composes checked tuple/numeric services for record tests.
+    is_record
 };
 } // namespace erlang_aot::abi::v1
 

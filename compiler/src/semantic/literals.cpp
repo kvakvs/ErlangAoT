@@ -1,5 +1,6 @@
 #include "binding_state.hpp"
 #include "capabilities.hpp"
+#include "records.hpp"
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
 #include <limits>
@@ -71,6 +72,20 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
         return {match->right};
     }
     return binding_children(expression.value);
+}
+
+std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression) {
+    const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
+    if (!record || record->base) {
+        return expression_children(expression);
+    }
+    std::vector<ast::ExprId> result;
+    for (const auto &field : record_values(module, *record, false)) {
+        if (field) {
+            result.push_back(*field);
+        }
+    }
+    return result;
 }
 
 std::vector<ast::ExprId> function_roots(const ast::Function &function) {

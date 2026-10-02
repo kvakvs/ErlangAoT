@@ -63,7 +63,7 @@ void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, co
                 graph.calls.push_back({id, caller, *resolved});
             }
         }
-        const auto children = expression_children(expression);
+        const auto children = expression_children(*caller.module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }
 }

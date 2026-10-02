@@ -66,7 +66,7 @@ void expressions(const semantic::Module &module, const semantic::Function &funct
             std::cout << "    expression " << location(syntax, expression.source)
                       << " inferred=" << fact_text(inferred, found->second) << binding_text(function, id) << '\n';
         }
-        const auto children = semantic::expression_children(expression);
+        const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }
 }

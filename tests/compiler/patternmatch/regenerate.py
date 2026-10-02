@@ -8,7 +8,7 @@ import tempfile
 from evidence import digest, provenance, run
 
 CORPORA = ['atoms', 'immediate', 'services', 'booleans', 'clauses', 'sequences', 'containers',
-           'integers', 'floats', 'maps', 'bits', 'bindings', 'patterns', 'baseline', 'differential']
+           'integers', 'floats', 'maps', 'bits', 'records', 'bindings', 'patterns', 'baseline', 'differential']
 
 
 def contents(path):
@@ -49,6 +49,8 @@ def generate(source, otp, escript, name, work):
         evidence = module.kernels(source, otp, work)
     else:
         evidence = module.kernels(otp, work)
+    if name == 'records':
+        evidence['semantic_oracle'] = run([escript, str(source / 'tests/compiler/patternmatch/patterns.escript'), str(work)])
     oracle = 'atoms.escript' if name == 'atoms' else 'immediate.escript'
     output = run([escript, str(source / 'tests/compiler/patternmatch' / oracle), str(work)])
     (work / 'expected.txt').write_bytes(output.replace('\r\n', '\n').encode())
@@ -63,7 +65,7 @@ def publish(source, name, work, evidence, oracle, version, check):
     """Publish normalized text plus source, oracle, generator and fixture hashes for review."""
     target = source / 'tests/fixtures/patternmatch/generated' / name
     filenames = sorted(path.name for path in work.iterdir()
-                       if path.suffix in ['.erl', '.txt', '.term', '.toml'])
+                       if path.suffix in ['.erl', '.hrl', '.txt', '.term', '.toml'])
     if check:
         manifest = json.loads((target / 'manifest.json').read_text(encoding='utf8'))
         assert set(filenames) == set(manifest['files']), f'Changed fixture inventory: {name}'

@@ -1,7 +1,23 @@
 #include "expression_capability.hpp"
+#include "records.hpp"
 #include "services.hpp"
 
 namespace erlang_aot::semantic {
+std::string_view ExpressionCapability::operator()(const ast::RecordExpression &value) const {
+    const auto *layout = record_layout(module, value.identity);
+    return !value.base && layout && !layout->native ? "" : "heap expressions";
+}
+
+std::string_view ExpressionCapability::operator()(const ast::RecordAccess &value) const {
+    const auto *layout = record_layout(module, value.identity);
+    return layout && !layout->native ? "" : "heap expressions";
+}
+
+std::string_view ExpressionCapability::operator()(const ast::RecordIndex &value) const {
+    const auto *layout = record_layout(module, value.record, syntax.expression(id).source);
+    return layout && !layout->native ? "" : "heap expressions";
+}
+
 std::string_view ExpressionCapability::operator()(const ast::IntegerLiteral &) const { return {}; }
 
 std::string_view ExpressionCapability::operator()(const ast::CharacterLiteral &) const {

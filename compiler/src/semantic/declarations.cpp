@@ -1,4 +1,5 @@
 #include "declarations.hpp"
+#include "records.hpp"
 #include "symbols.hpp"
 #include <charconv>
 #include <erlang_aot/compiler/source.hpp>
@@ -128,6 +129,7 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
     index_name(*module, out);
     index_functions(*module, out);
     index_exports(*module, out);
+    index_records(*module, out);
     return module;
 }
 } // namespace erlang_aot::semantic

@@ -51,6 +51,9 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *map = std::get_if<ast::MapExpression>(&value)) {
         return lower_map(state, *map);
     }
+    if (auto *record = lower_record(state, expression)) {
+        return record;
+    }
     if (auto *container = lower_container(state, value)) {
         return container;
     }
@@ -69,6 +72,9 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto service = state.function.services.find(&expression);
     if (service != state.function.services.end()) {
+        if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
+            return lower_record_test(state, expression, call);
+        }
         if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
             std::vector<llvm::Value *> arguments;
             arguments.reserve(call.arguments.size());

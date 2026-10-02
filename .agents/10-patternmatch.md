@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–16 are
-complete; added step 15a is complete; steps 17–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–17 are
+complete; added step 15a is complete; steps 18–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Bitstrings and their checked queries are implemented. Records and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps execute scalar/tuple/list/string patterns, rooted construction, structural comparisons and grouped/boolean guards in ordered-clause functions with body matches/sequences. Arbitrary integers and checked integer arithmetic are implemented. Finite floats, numeric conversions and mixed comparisons are implemented. Maps, exact-key matching and checked map services are implemented. Bitstrings and their checked queries are implemented. Ordinary record construction, access, patterns and tests are implemented; the remaining guard audit and final verification await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -825,24 +825,24 @@ Records, remaining guards, optimization and finalization remain steps 17–20.
 
 ### 17. Expand records into tuple patterns and guard operations (F17 slice)
 
-- [ ] Resolve included declarations, fields/defaults and record operations
+- [x] Resolve included declarations, fields/defaults and record operations
   admitted in patterns/guards. Reuse tuple construction/access and record
   tag/arity checks.
-  - [ ] Build record layouts from preprocessed declarations with field
+  - [x] Build record layouts from preprocessed declarations with field
     positions, defaults and source locations; diagnose duplicate/unknown
     declarations or fields.
-  - [ ] Resolve admitted access/test operations to the shared tuple services
+  - [x] Resolve admitted access/test operations to the shared tuple services
     with tag/arity checks and context-appropriate failure outcomes.
-- [ ] Normalize record patterns, including wildcard fields, preserving locations
+- [x] Normalize record patterns, including wildcard fields, preserving locations
   and OTP evaluation rules. Implement construction needed to exercise them;
   other record features remain capability-gated.
-  - [ ] Expand record heads into tag-plus-field tuple constraints; distinguish
+  - [x] Expand record heads into tag-plus-field tuple constraints; distinguish
     omitted pattern fields and wildcard-field expansion from construction
     defaults.
-  - [ ] Lower supported construction with the recorded default/evaluation rules;
+  - [x] Lower supported construction with the recorded default/evaluation rules;
     preserve single evaluation and locations for explicit fields and nested
     access.
-  - [ ] Execute included-declaration, wrong-tag/arity, default and nested-access
+  - [x] Execute included-declaration, wrong-tag/arity, default and nested-access
     fixtures through tuple matching; retain diagnostics for unsupported record
     forms.
 
@@ -856,6 +856,12 @@ record_SUITE_data/record_access_in_guards.erl. Compile adapted record helpers
 from errors/1, eval_once/1 and nested_access/1 using supported operations; test
 included declarations, tags/arities and default evaluation. The full data module
 needs funs/comprehensions: do not claim full native coverage.
+
+Completion: [step-17 validation](../docs/patternmatch-step17-validation.md),
+[evidence](../docs/patternmatch-step17-evidence.json) and
+[record contract](../docs/record-matching.md). Native Windows x64 passed
+121 CTests and all 257 production quality units; 1,025 owned OTP outcomes run
+in four policies. Native/qualified records, updates and record_info remain gated.
 
 ### 18. Complete guard services for admitted representations (F26 slice)
 

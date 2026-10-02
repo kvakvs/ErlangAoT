@@ -34,6 +34,8 @@ std::optional<Op> immediate_operator(ast::BinaryOperator operation) {
 
 std::optional<Op> immediate_service(const FunctionKey &key) {
     static const std::map<FunctionKey, Op> signatures{{{U"is_atom", 1}, Op::is_atom},
+                                                      {{U"is_record", 2}, Op::is_record},
+                                                      {{U"is_record", 3}, Op::is_record},
                                                       {{U"+", 2}, Op::add},
                                                       {{U"-", 2}, Op::subtract},
                                                       {{U"*", 2}, Op::multiply},

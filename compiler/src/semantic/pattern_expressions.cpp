@@ -31,7 +31,7 @@ struct ReadExpression {
 
     bool operator()(const ast::UnaryExpression &) const { return true; }
 
-    bool operator()(const ast::RecordExpression &) const { return true; }
+    bool operator()(const ast::RecordExpression &value) const { return !value.base; }
 
     bool operator()(const ast::RecordAccess &) const { return true; }
 
@@ -69,6 +69,6 @@ std::vector<ast::ExprId> pattern_expression(BindingAnalysis &state, const ast::E
     if (const auto *call = std::get_if<ast::CallExpression>(&value)) {
         return call->arguments;
     }
-    return binding_children(value);
+    return expression_children(state.module, state.module.syntax->expression(id));
 }
 } // namespace erlang_aot::semantic

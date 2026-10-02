@@ -31,11 +31,16 @@
   only a binary's own preceding segments extend its size scope. Bounded flat
   normalization owns constants/source anchors; semantic failure clears partial tables.
 
-- Current execution: ordered clauses, scalar/tuple/list/string/map/bitstring patterns, grouped
+- Current execution: ordered clauses, scalar/tuple/list/string/map/bitstring/expanded-record patterns, grouped
   guards and body matches/sequences, constructors, checked access/comparison, boolean
   operators and acyclic local/exported batch calls. Flat match plans carry explicit success/mismatch continuations and tentative
   SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
   raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain direct argument projections inside their root scope.
+
+- Ordinary record layouts retain declaration order, defaults and source provenance.
+  Bounded per-use expansion reuses tuple matching and rooted construction. Checked
+  access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
+  Updates and native/qualified/inferred records retain separate capability owners.
 
 - Guard authorization uses the pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
@@ -116,16 +121,16 @@
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
-  Patternmatch steps 1–16 are complete; step 15a is complete; steps 17–20 remain.
+  Patternmatch steps 1–17 are complete; step 15a is complete; steps 18–20 remain.
   The current request is completion of the entire plan.
 
 - Tests prioritize real CLI/project sources and separate native runtime consumers.
-  Project-owned fixtures retain OTP inputs/results; 15 corpora preserve 58,785
+  Project-owned fixtures retain OTP inputs/results; 16 corpora preserve 59,810
   native expected values. Live OTP/source audits are explicit opt-ins, while
   normal configure/build/test requires neither OTP nor its checkout. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 120 OTP-free CTests and all 253 production quality units;
+  Windows x64 Debug passes 121 OTP-free CTests and all 257 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

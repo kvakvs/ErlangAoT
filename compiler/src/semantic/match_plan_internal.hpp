@@ -1,5 +1,6 @@
 #pragma once
 #include "match_plan.hpp"
+#include <set>
 
 namespace erlang_aot::semantic {
 struct PatternVisit {
@@ -21,6 +22,8 @@ struct MatchPlanner {
     MatchPlan plan;
     std::size_t work = 0;
     std::size_t limit;
+    // Reused wildcard source nodes still publish each binding identity exactly once per plan.
+    std::set<BindingId> definitions = {};
 
     // Charge indexing, scheduling and emission before publishing any partial plan.
     bool spend(const ast::ExprId &site);
@@ -30,6 +33,9 @@ struct MatchPlanner {
     bool node(const NormalizedPattern &pattern, std::size_t input);
 };
 
+// Expand record tags and supplied fields through the existing tuple shape/extraction operations.
+bool expand_record(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
+                   std::vector<MatchTask> &pending);
 // Schedule each required map key independently, preserving duplicate value constraints.
 bool expand_map(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
                 std::vector<MatchTask> &pending);

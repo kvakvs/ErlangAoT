@@ -10,7 +10,8 @@ enum class ErrorReason : std::uint8_t {
     badarg_value = 4,
     badarith = 5,
     badmap = 6,
-    badkey = 7
+    badkey = 7,
+    badrecord = 8
 };
 } // namespace erlang_aot::abi::v1
 

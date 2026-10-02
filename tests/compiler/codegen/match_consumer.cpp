@@ -44,13 +44,14 @@ void print(const CallResult<Term> &result) {
     const auto reason = result.error().reason;
     if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value ||
         reason == erlang_aot::abi::v1::ErrorReason::badmatch || reason == erlang_aot::abi::v1::ErrorReason::badmap ||
-        reason == erlang_aot::abi::v1::ErrorReason::badkey) {
+        reason == erlang_aot::abi::v1::ErrorReason::badkey || reason == erlang_aot::abi::v1::ErrorReason::badrecord) {
         require(result.error().value.has_value(), "missing error payload");
         const std::map<erlang_aot::abi::v1::ErrorReason, std::string_view> names{
             {erlang_aot::abi::v1::ErrorReason::badmatch, "badmatch"},
             {erlang_aot::abi::v1::ErrorReason::badarg_value, "badarg_value"},
             {erlang_aot::abi::v1::ErrorReason::badmap, "badmap"},
-            {erlang_aot::abi::v1::ErrorReason::badkey, "badkey"}};
+            {erlang_aot::abi::v1::ErrorReason::badkey, "badkey"},
+            {erlang_aot::abi::v1::ErrorReason::badrecord, "badrecord"}};
         std::cout << "error:" << names.at(*reason) << ':';
         print_value(*result.error().value);
         return;

@@ -16,7 +16,8 @@ Steps 14–16 add [finite floats and conversions](docs/float-matching.md),
 [exact-key maps and computed-key patterns](docs/map-matching.md), and
 [bitstring construction, extraction and matching](docs/bitstring-matching.md).
 Routine tests use project-owned OTP goldens and require no OTP installation or
-checkout. Expanded records and the remaining guard catalog are later steps.
+checkout. Step 17 adds [tuple record construction, access and matching](docs/record-matching.md).
+The remaining guard catalog and optimization audit are later steps.
 
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a scalar/container/pattern/guard/direct-call subset to LLVM IR,

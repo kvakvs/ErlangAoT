@@ -1,0 +1,309 @@
+{
+  "schema": 1,
+  "corpus": "records",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "provenance": {
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc",
+    "branch": "maint-29",
+    "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
+    "stale_hash": "rejected",
+    "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
+    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+  },
+  "generator_sha256": {
+    "regenerate.py": "d9b5ba82148b90c24cea8ab8b11c72f7ff3a8e5fc97ddee1c5f0278ec7f50422",
+    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
+    "records.py": "8701f80358555db71c89f290c3fe816c8d75e1fe47beba13f9bb6d3378ec1c3e",
+    "immediate.py": "ad60f1b5605d46e7b370e0d08bb79859359e7b26fa6b0697c32d2a5f56edb930",
+    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "immediate.escript": "90aaa5641f6d0316295466ff4505f8915acf8294c94f763b8ed739638a45d6b7",
+    "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
+    "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
+  },
+  "files": {
+    "answer.erl": "fbde5831f38bfbbb8ac752b785247ca72e93d58de60fede0b005dff0b243872c",
+    "calls.term": "88b55e617becf96ca77143161390116a8026e138c81ac12d48eb161628d92e13",
+    "calls.txt": "c4dbf20a2c4307186d18988ce9f2f9a58fda514948a11d51ecd944f13c6753a2",
+    "client.erl": "339ff4d06fa1620fc57ddf1a88264df9bd9882685f763e0c77c5cfbddf4424d5",
+    "expected.txt": "bf5b98cb329330ba1da4310b24e785be2f82c51f352a94fc921a1d8bb0f579ab",
+    "patterns.term": "84647b90f33e0ecc86bf39048b32d7cc2e64bdb8edc94dc70bb03350c9cc4089",
+    "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727",
+    "rec_body_dynamic.erl": "69b2157344a2332718ce0f475a37b6e2bb570ffc5da4cb506d22ec87e0102afa",
+    "rec_decl_duplicate.erl": "214501e3b67343db07b1ee24878aa415e43a4584f4d52a80f59759fa682f1a9d",
+    "rec_default_binding.erl": "b3727d489015fa9087a0494c03fe9665afec7c4bfadbe00827892d23ba7ee85f",
+    "rec_default_capture.erl": "e314164065efb062760a66554557707bdff85753f38276f0113b2144d8bd6b50",
+    "rec_default_forward.erl": "b7b3911aed96921bb1f8fa459ac6da9e30ae26234dff80cd045a6ede9ec5f2bc",
+    "rec_default_self.erl": "cc673c2ab14d39c0d332ba74eff7a133fd2a148e1a2babffa9e74cef085c6d6b",
+    "rec_default_underscore.erl": "f8756b1e841f17fc22d9c088178534bd033508c203d54b6375562cf061e799ce",
+    "rec_duplicate.erl": "d35506ffb9f4c3e767ac48bccf2e6b46899008f79f7f896d00f4b12019b1841b",
+    "rec_field.erl": "60f7acbce2838d7374d692ca0223d9e32cdcdcb1ebd9d4eb7088c6da763f5691",
+    "rec_field_duplicate.erl": "669457ceef287d9b00417b0169e40cb1bfbde938c3931be1f4d0b25bb3e05b03",
+    "rec_forward.erl": "273f617d27b0add8298fda1ece05e7f30ec5b1e07be699f376488bca354842ac",
+    "rec_fun_default_gate.erl": "2ce6d5f214932c50dab3f148a586d764601ea4de831c1a5a1b9741df8054887c",
+    "rec_guard_bignum.erl": "f34c0a3643c04f299fe5c164c25a9efc3f08513a342459a6951f1d45dc3372f4",
+    "rec_guard_native_tag.erl": "6034718d7257ef9aa15e1c112069711f62b706b5b10cd416625b4a1bfeed2105",
+    "rec_guard_size.erl": "f71a21ba2de716b189fa60383bb0a46a51d138f8eb71a54a1c1b10cb57738581",
+    "rec_guard_size_expr.erl": "f35cde8e2e41e416e6ef6eb9267bbe250887cc00a86500a50f92255ae3f370a5",
+    "rec_guard_size_negative.erl": "0d9ae67e666c5d729f18ebf2670c7b353721b8d02d7d39e01298e16400a7401c",
+    "rec_guard_tag.erl": "61cbd6f027a86e980c9225a5bb7e2466c669c5547781d45f1db1b4a03aa6a2a4",
+    "rec_guard_update.erl": "8a5c8fdd65f285bea9c076881abf269d7695dd741cce51c1cf6f7c21953a7e3d",
+    "rec_index_arithmetic.erl": "638403391ce9db08cf9b4103d8f6f778ecc09f882488eedd3f3833f9cf07ce9f",
+    "rec_key_update.erl": "fc75e585f931570ed17f1f97072c19965661cf3a1c436551dcec8daa1282ce53",
+    "rec_pattern_update.erl": "017a3784cf2e6c3bd3588d27d38714b4641dc4cdcf028dd042b46d8a7e78018b",
+    "rec_test_unknown.erl": "d3c75f344c68d8a2bacd7b53e9118ddfb1ee9679d05ec9a2190e850f5d89249e",
+    "rec_unknown.erl": "2ad8432d297e7fe356b73f96d04f6fed52e2f14f90af9f3c5e3fa2ebd73409a6",
+    "rec_update_gate.erl": "98ac225cf387093479067055bc009af11d2993716d0168753de0bb7b95c44df1",
+    "rec_wild_match.erl": "69493245db68f56c884f89da36cb658dd5431685f873e40d2e3dc09d05564d95",
+    "rec_wild_name.erl": "90f41094964644479efb1eb56bbb026e6f610ef7a1c0b581a3cee4ba02f941a5",
+    "rec_wild_twice.erl": "8d71a53dde0357735c19c5ab630c427ad6f8eb3868a0e8f6cb597b2fb75036f5",
+    "rec_wild_unused.erl": "d54a3e12bd3f7d01a186260ab001719d797114ce0753ed43f43324141c4e9bd7",
+    "records.hrl": "32ea5914941b8ba19f5a2297e0b6e3fb85701ca1ad77a1b448b6edcd33ef9019"
+  },
+  "evidence": {
+    "calls": 1025,
+    "cases": [
+      {
+        "name": "rec_unknown",
+        "body": "f(X) -> X#missing.a.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "2ad8432d297e7fe356b73f96d04f6fed52e2f14f90af9f3c5e3fa2ebd73409a6"
+      },
+      {
+        "name": "rec_field",
+        "body": "-record(r,{a}). f(X) -> X#r.missing.",
+        "diagnostic": "undefined record field",
+        "capability": "",
+        "sha256": "60f7acbce2838d7374d692ca0223d9e32cdcdcb1ebd9d4eb7088c6da763f5691"
+      },
+      {
+        "name": "rec_duplicate",
+        "body": "-record(r,{a}). f() -> #r{a=1,a=2}.",
+        "diagnostic": "duplicate record initializer",
+        "capability": "",
+        "sha256": "d35506ffb9f4c3e767ac48bccf2e6b46899008f79f7f896d00f4b12019b1841b"
+      },
+      {
+        "name": "rec_decl_duplicate",
+        "body": "-record(r,{a}). -record(r,{b}). f() -> ok.",
+        "diagnostic": "duplicate record declaration",
+        "capability": "",
+        "sha256": "214501e3b67343db07b1ee24878aa415e43a4584f4d52a80f59759fa682f1a9d"
+      },
+      {
+        "name": "rec_field_duplicate",
+        "body": "-record(r,{a,a}). f() -> ok.",
+        "diagnostic": "duplicate record field",
+        "capability": "",
+        "sha256": "669457ceef287d9b00417b0169e40cb1bfbde938c3931be1f4d0b25bb3e05b03"
+      },
+      {
+        "name": "rec_forward",
+        "body": "f() -> #r{}. -record(r,{a}).",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "273f617d27b0add8298fda1ece05e7f30ec5b1e07be699f376488bca354842ac"
+      },
+      {
+        "name": "rec_default_forward",
+        "body": "-record(r,{a=#s{}}). -record(s,{b}). f() -> #r{}.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "b7b3911aed96921bb1f8fa459ac6da9e30ae26234dff80cd045a6ede9ec5f2bc"
+      },
+      {
+        "name": "rec_default_self",
+        "body": "-record(r,{a=#r{}}). f() -> #r{}.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "cc673c2ab14d39c0d332ba74eff7a133fd2a148e1a2babffa9e74cef085c6d6b"
+      },
+      {
+        "name": "rec_default_binding",
+        "body": "-record(r,{a=(X=1)}). f() -> #r{}.",
+        "diagnostic": "named variable is illegal",
+        "capability": "",
+        "sha256": "b3727d489015fa9087a0494c03fe9665afec7c4bfadbe00827892d23ba7ee85f"
+      },
+      {
+        "name": "rec_default_capture",
+        "body": "-record(r,{a=X}). f(X) -> #r{}.",
+        "diagnostic": "named variable is illegal",
+        "capability": "",
+        "sha256": "e314164065efb062760a66554557707bdff85753f38276f0113b2144d8bd6b50"
+      },
+      {
+        "name": "rec_default_underscore",
+        "body": "-record(r,{a=(_=1)}). f() -> #r{}.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "f8756b1e841f17fc22d9c088178534bd033508c203d54b6375562cf061e799ce"
+      },
+      {
+        "name": "rec_wild_unused",
+        "body": "-record(r,{a,b}). f(#r{a=1,b=2,_=X}) -> X.",
+        "diagnostic": "record wildcard requires",
+        "capability": "",
+        "sha256": "d54a3e12bd3f7d01a186260ab001719d797114ce0753ed43f43324141c4e9bd7"
+      },
+      {
+        "name": "rec_wild_twice",
+        "body": "-record(r,{a,b}). f() -> #r{_=1,_=2}.",
+        "diagnostic": "duplicate record wildcard",
+        "capability": "",
+        "sha256": "8d71a53dde0357735c19c5ab630c427ad6f8eb3868a0e8f6cb597b2fb75036f5"
+      },
+      {
+        "name": "rec_wild_name",
+        "body": "-record(r,{a,b}). f() -> #r{X=1}.",
+        "diagnostic": "record wildcard field must be '_'",
+        "capability": "",
+        "sha256": "90f41094964644479efb1eb56bbb026e6f610ef7a1c0b581a3cee4ba02f941a5"
+      },
+      {
+        "name": "rec_wild_match",
+        "body": "-record(r,{a,b}). f(#r{_=X}) -> X.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "69493245db68f56c884f89da36cb658dd5431685f873e40d2e3dc09d05564d95"
+      },
+      {
+        "name": "rec_pattern_update",
+        "body": "-record(r,{a}). f(X) -> X#r{a=1} = X.",
+        "diagnostic": "record update is illegal in a pattern",
+        "capability": "",
+        "sha256": "017a3784cf2e6c3bd3588d27d38714b4641dc4cdcf028dd042b46d8a7e78018b"
+      },
+      {
+        "name": "rec_test_unknown",
+        "body": "f(X) -> is_record(X,unknown).",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "d3c75f344c68d8a2bacd7b53e9118ddfb1ee9679d05ec9a2190e850f5d89249e"
+      },
+      {
+        "name": "rec_guard_tag",
+        "body": "-record(r,{a}). f(X) when is_record(X,X) -> ok.",
+        "diagnostic": "record guard tag must",
+        "capability": "",
+        "sha256": "61cbd6f027a86e980c9225a5bb7e2466c669c5547781d45f1db1b4a03aa6a2a4"
+      },
+      {
+        "name": "rec_guard_size",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,X) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "f71a21ba2de716b189fa60383bb0a46a51d138f8eb71a54a1c1b10cb57738581"
+      },
+      {
+        "name": "rec_guard_size_expr",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,1+2) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "f35cde8e2e41e416e6ef6eb9267bbe250887cc00a86500a50f92255ae3f370a5"
+      },
+      {
+        "name": "rec_guard_update",
+        "body": "-record(r,{a}). f(X) when X#r{a=1} == X -> ok.",
+        "diagnostic": "illegal guard expression",
+        "capability": "",
+        "sha256": "8a5c8fdd65f285bea9c076881abf269d7695dd741cce51c1cf6f7c21953a7e3d"
+      },
+      {
+        "name": "rec_key_update",
+        "body": "-record(r,{a}). f(X) -> #{(X#r{a=1}) := V} = #{}, V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "capability": "",
+        "sha256": "fc75e585f931570ed17f1f97072c19965661cf3a1c436551dcec8daa1282ce53"
+      },
+      {
+        "name": "rec_guard_size_negative",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,-1) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "0d9ae67e666c5d729f18ebf2670c7b353721b8d02d7d39e01298e16400a7401c"
+      },
+      {
+        "name": "rec_index_arithmetic",
+        "body": "-record(r,{a}). f(#r.a+1) -> ok.",
+        "diagnostic": "illegal pattern",
+        "capability": "",
+        "sha256": "638403391ce9db08cf9b4103d8f6f778ecc09f882488eedd3f3833f9cf07ce9f"
+      },
+      {
+        "name": "rec_guard_native_tag",
+        "body": "f(X) when erlang:is_record(X,r,atom) -> ok; f(_) -> no.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "6034718d7257ef9aa15e1c112069711f62b706b5b10cd416625b4a1bfeed2105"
+      },
+      {
+        "name": "rec_guard_bignum",
+        "body": "f(X) when is_record(X,r,1267650600228229401496703205376) -> ok; f(_) -> no.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "f34c0a3643c04f299fe5c164c25a9efc3f08513a342459a6951f1d45dc3372f4"
+      },
+      {
+        "name": "rec_body_dynamic",
+        "body": "f(X) -> is_record(X,X,X).",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "69b2157344a2332718ce0f475a37b6e2bb570ffc5da4cb506d22ec87e0102afa"
+      },
+      {
+        "name": "rec_update_gate",
+        "body": "-record(r,{a}). f(X) -> X#r{a=1}.",
+        "diagnostic": "",
+        "capability": "heap expressions",
+        "sha256": "98ac225cf387093479067055bc009af11d2993716d0168753de0bb7b95c44df1"
+      },
+      {
+        "name": "rec_fun_default_gate",
+        "body": "-record(r,{a=fun(X)->X end}). f() -> #r{}.",
+        "diagnostic": "",
+        "capability": "closures",
+        "sha256": "2ce6d5f214932c50dab3f148a586d764601ea4de831c1a5a1b9741df8054887c"
+      }
+    ],
+    "sources": {
+      "lib/compiler/test/record_SUITE.erl": "62c0c97bbc689c80d4da44e377fb005f5673f3f6df627730250e53a98c903a7e",
+      "lib/compiler/test/record_SUITE_data/record_access_in_guards.erl": "fa3c8980b0dcd14d6e3e317e01112c8aa6794d44690b3a8482628b42366675f8"
+    },
+    "adaptations": [
+      {
+        "function": "errors/1",
+        "kernels": [
+          "access/1",
+          "body/1",
+          "guard_access/1"
+        ],
+        "changes": "Expose wrong-tag/arity and badrecord payload through access; update operation remains gated. Remove Common Test catch harness."
+      },
+      {
+        "function": "eval_once/1",
+        "kernels": [
+          "eval_once/1",
+          "default_calls/0",
+          "wild_alloc/1"
+        ],
+        "changes": "Replace closure/process-dictionary counter with acyclic id/1 calls and IR call counts; preserve evaluation once per accessed operand and once per expanded initializer."
+      },
+      {
+        "function": "nested_access/1",
+        "kernels": [
+          "nested/1",
+          "nested_defaults/0"
+        ],
+        "changes": "Retain chained ordinary record accesses and nested defaults; omit the separate update portion, which remains gated."
+      }
+    ],
+    "declarations": "default/0,empty/0,construct/2,wild/1,wild_alloc/1,ordered/0,ordered_bind/0,default_calls/0,make_default/0,head/1,repeat/1,head_order/1,alias/1,body/1,access/1,guard_access/1,guard_alternative/1,guard_construct/1,test/1,dynamic2/2,dynamic3/3,guard_test/1,legacy/1,guard3/1,guard_zero/1,guard_big/1,index/1,key/1,eval_once/1,nested/1,nested_defaults/0,retained/1,wrong_spec/1,id/1",
+    "wrapper_sha256": "fbde5831f38bfbbb8ac752b785247ca72e93d58de60fede0b005dff0b243872c",
+    "include_sha256": "32ea5914941b8ba19f5a2297e0b6e3fb85701ca1ad77a1b448b6edcd33ef9019",
+    "semantic_oracle": "otp=29.1.1 erts=17.1\nrec_unknown rejected none\nrec_field rejected none\nrec_duplicate rejected none\nrec_decl_duplicate rejected none\nrec_field_duplicate rejected none\nrec_forward rejected none\nrec_default_forward rejected none\nrec_default_self rejected none\nrec_default_binding rejected none\nrec_default_capture rejected none\nrec_default_underscore accepted none\nrec_wild_unused rejected none\nrec_wild_twice rejected none\nrec_wild_name rejected none\nrec_wild_match accepted none\nrec_pattern_update rejected none\nrec_test_unknown rejected none\nrec_guard_tag rejected none\nrec_guard_size rejected none\nrec_guard_size_expr rejected none\nrec_guard_update rejected none\nrec_key_update rejected none\nrec_guard_size_negative rejected none\nrec_index_arithmetic rejected none\nrec_guard_native_tag accepted none\nrec_guard_bignum accepted none\nrec_body_dynamic accepted none\nrec_update_gate accepted none\nrec_fun_default_gate accepted none\n"
+  }
+}

@@ -190,6 +190,39 @@ void heap_lifetimes(ProcessContext &context) {
 }
 
 // A real backing ceiling reached inside generated construction terminates guards and cleans frames.
+void record_failures(ProcessContext &context) {
+    TermFactory factory(context);
+    const auto number = factory.integer(42).value();
+    const auto child = factory.tuple(std::array{number}).value();
+    const auto record = factory.tuple(std::array{context.atom_storage().intern("fault_record").value(), child}).value();
+    const auto entry = context.code_server().resolve({"service_answer", "record_inspect", 1}).value();
+    for (const auto status : {abi::v1::Status::out_of_memory, abi::v1::Status::wrong_owner,
+                              abi::v1::Status::resource_limit, abi::v1::Status::internal_error}) {
+        fault = status;
+        calls = 0;
+        const auto result = entry.call(context, std::array{record});
+        require(!result && result.error().status == status && calls == 1, "record access fault became badrecord");
+        require(context.roots().depth() == 0 && !context.generated_calls().failure(), "record access leaked state");
+        fault = abi::v1::Status::ok;
+        require(entry.call(context, std::array{record})->word() == child.word(), "record access retry failed");
+    }
+    const auto error =
+        context.code_server().resolve({"service_answer", "record_error", 1}).value().call(context, std::array{child});
+    require(!error && error.error().reason == abi::v1::ErrorReason::badrecord && error.error().value,
+            "record access lost its owned payload");
+    for (unsigned i = 0; i < 32; ++i) {
+        require(context.code_server()
+                    .resolve({"service_answer", "record_body", 1})
+                    .value()
+                    .call(context, std::array{record})
+                    .has_value(),
+                "record allocation after error failed");
+    }
+    require(error.error().value->tuple_element(1)->exactly_equal(child) == true, "badrecord payload expired");
+    require(context.roots().depth() == 0 && !context.generated_calls().failure(), "badrecord leaked state");
+}
+
+// A real backing ceiling reached inside generated construction terminates guards and cleans frames.
 void heap_budget(Runtime &runtime) {
     auto &context = *runtime.create_context({16 * sizeof(Word), 32 * sizeof(Word)}).value();
     const auto entry = context.code_server().resolve({"service_answer", "heap_guard", 1}).value();
@@ -347,11 +380,13 @@ int main() {
         body_matches(context);
         checked_arguments(context);
         root_failures(context);
-        for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard",
-                                "float_body", "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body"}) {
+        for (const auto name :
+             {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard", "float_body",
+              "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body", "record_guard", "record_body"}) {
             failures(context, "service_answer", name);
         }
         bit_extractions(context);
+        record_failures(context);
         heap_lifetimes(context);
         heap_budget(*runtime);
         integer_budget(context);

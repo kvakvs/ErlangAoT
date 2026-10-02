@@ -71,6 +71,19 @@ struct Function {
     std::map<const ast::Expression *, ServiceResolution> services = {};
 };
 
+struct RecordLayout {
+    // Preserve the source tag independently of runtime atom identities.
+    const ast::Atom &name;
+    // Distinguish future native representations from ordinary tuple records.
+    bool native;
+    // Borrow declaration order, source locations and owned default syntax.
+    const std::vector<ast::RecordDeclarationField> &fields;
+    // Resolve field names without repeatedly scanning wide declarations.
+    std::map<std::u32string, std::size_t> positions;
+    // Build positions once; duplicate declarations/fields are diagnosed by the module indexer.
+    explicit RecordLayout(const ast::RecordDeclaration &declaration);
+};
+
 struct Module {
     // Borrow the batch-owned immutable AST for the duration of semantic analysis.
     const ast::Module *syntax = nullptr;
@@ -82,6 +95,11 @@ struct Module {
     // Source-ordered declarations and deterministic lookup live outside syntax.
     std::vector<Function> functions;
     std::map<FunctionKey, std::size_t> lookup;
+    // Borrow source-ordered tuple record declarations and their owned default syntax.
+    std::map<std::u32string, RecordLayout> records = {};
+    // Origin-table identity preserves declaration-before-use across macro and include boundaries.
+    std::map<const ast::TokenOrigin *, std::size_t> source_order = {};
+    std::map<std::u32string, std::size_t> record_order = {};
 };
 
 using Reporter = std::function<void(const Diagnostic &)>;

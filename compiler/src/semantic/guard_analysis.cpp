@@ -1,4 +1,5 @@
 #include "capabilities.hpp"
+#include "records.hpp"
 #include "services.hpp"
 #include <algorithm>
 #include <limits>
@@ -29,7 +30,7 @@ struct GuardSyntax {
 
     bool operator()(const ast::Bitstring &) const { return true; }
 
-    bool operator()(const ast::RecordExpression &) const { return true; }
+    bool operator()(const ast::RecordExpression &value) const { return !value.base; }
 
     bool operator()(const ast::RecordAccess &) const { return true; }
 
@@ -63,6 +64,9 @@ void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpressi
     const auto &target = state.module.syntax->expression(ungroup(*state.module.syntax, call.target)).value;
     const auto *name = std::get_if<ast::Atom>(&target);
     const bool legacy = guard && top && name && name->name != resolved->name;
+    if (resolved->name == U"is_record" && resolved->arity >= 2) {
+        validate_record_test(state.module, expression, call, guard, state.out);
+    }
     state.function.services.emplace(&expression,
                                     ServiceResolution{*resolved, true, legacy, immediate_service(*resolved)});
 }
@@ -81,9 +85,7 @@ void visit(BindingAnalysis &state, const Visit &visit, bool guard, std::vector<V
     } else if (guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }
-    const auto children = std::holds_alternative<ast::CallExpression>(expression.value)
-                              ? std::get<ast::CallExpression>(expression.value).arguments
-                              : binding_children(expression.value);
+    const auto children = expression_children(state.module, expression);
     const bool top = visit.top && std::holds_alternative<ast::Group>(expression.value);
     for (const auto &child : children) {
         pending.push_back({child, top});

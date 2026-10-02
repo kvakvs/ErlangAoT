@@ -136,3 +136,14 @@ explicit adaptations and 8,826 expected calls, generated with OTP 29.1.1 / ERTS
 regeneration. Routine combined builds/tests remain OTP-free. See
 [step-16 validation](patternmatch-step16-validation.md) for the 120-test and
 253-unit quality gate; historical records retain their original revisions.
+
+## Pattern/guard step 17 check (2026-10-03)
+
+The official maint-29 fetch at step start on 2026-10-02 matched the clean checkout
+and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus identities
+remain unchanged. The record corpus retains 1,025 outcomes, 29 semantic cases,
+source/default-expansion/BIF hashes and explicit adaptations. Both record sources
+parse with real includes; three target families have separate object inspection.
+The fresh OTP-free combined gate passes 121 tests and all 257 quality units.
+Installed OTP 29.1.1's huge-literal-record-guard loader limitation is recorded
+separately. See [step-17 validation](patternmatch-step17-validation.md).

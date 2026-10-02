@@ -30,7 +30,9 @@ struct FormCapability {
 
     std::string_view operator()(const ast::ImportRecordAttribute &) const { return "behavior-changing attributes"; }
 
-    std::string_view operator()(const ast::RecordDeclaration &) const { return {}; }
+    std::string_view operator()(const ast::RecordDeclaration &value) const {
+        return value.native ? "heap expressions" : "";
+    }
 
     std::string_view operator()(const ast::GenericAttribute &value) const {
         constexpr std::array<std::u32string_view, 6> allowed{U"author",     U"vsn",         U"copyright",
@@ -71,7 +73,7 @@ bool available(const Module &module, const Function &function, const ast::ExprId
     if (service != function.services.end() && !service->second.operation) {
         unsupported(module, expression.source, "guards", out);
     }
-    const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits}, expression.value);
+    const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits, module}, expression.value);
     if (!reason.empty()) {
         unsupported(module, expression.source, reason, out);
         return false;
@@ -95,7 +97,7 @@ void expressions(const Module &module, const Function &function, std::vector<ast
         if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
             (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
         }
-        const auto children = expression_children(expression);
+        const auto children = expression_children(module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }
 }

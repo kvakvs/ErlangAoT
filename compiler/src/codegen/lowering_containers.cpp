@@ -73,6 +73,10 @@ llvm::Value *string(ExpressionLowering &state, const ast::StringLiteral &literal
 }
 } // namespace
 
+llvm::Value *lower_tuple(ExpressionLowering &state, std::span<llvm::Value *const> values) {
+    return construct(state, abi::v1::ContainerConstruction::tuple, values);
+}
+
 llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value) {
     if (const auto *tuple = std::get_if<ast::Tuple>(&value)) {
         if (tuple->elements.empty()) {

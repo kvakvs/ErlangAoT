@@ -1,4 +1,5 @@
 #include "binding_state.hpp"
+#include "records.hpp"
 #include <algorithm>
 #include <limits>
 
@@ -32,6 +33,10 @@ bool BindingAnalysis::spend(const ast::ExprId &id, const std::size_t amount) {
 
 void BindingAnalysis::read(const ast::ExprId &id, BindingCandidate &scope, const BindingContext context) {
     const auto &expression = module.syntax->expression(id);
+    if (!record_budget(*this, id)) {
+        return;
+    }
+    validate_record(module, expression, out);
     const auto *variable = std::get_if<ast::Variable>(&expression.value);
     if (!variable) {
         return;

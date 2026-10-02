@@ -85,7 +85,7 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
             inference.expressions.emplace(&expression, evaluate(inference, function, visit.expression));
         } else {
             pending.push_back({visit.expression, true});
-            const auto children = expression_children(expression);
+            const auto children = expression_children(*function.module, expression);
             for (auto child = children.rbegin(); child != children.rend(); ++child) {
                 pending.push_back({*child});
             }

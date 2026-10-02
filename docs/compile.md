@@ -1,4 +1,4 @@
-Current executable slice (pattern/guard steps 1–16): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md) and [bitstrings](bitstring-matching.md). Expanded records and remaining guard catalog work are assigned to steps 17–18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+Current executable slice (pattern/guard steps 1–17): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md), [bitstrings](bitstring-matching.md) and [records](record-matching.md). Remaining guard catalog work is step 18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
 
 
 # LLVM compilation contract
@@ -178,7 +178,7 @@ remain pending.
 ## Frozen executable subset
 
 Accept ordinary named modules with exports and ordered function clauses. Parameters
-are variables, wildcards, aliases, scalar literals or tuple/list/map/bitstring
+are variables, wildcards, aliases, scalar literals or tuple/list/map/bitstring/record
 constraints. Repeated names require exact equality; exhausted matching raises
 function_clause. Bodies contain source-ordered sequences and matches, constructors,
 checked arithmetic/query/comparison operations and direct local or literal remote
@@ -196,7 +196,8 @@ identity(X) -> X.
 A second module may call `answer:identity(answer:value())`; it must compile in the
 same batch to a separate object. Atom/boolean literals use runtime-owned bindings.
 Arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings are
-implemented through rooted checked services. Exclude expanded/native records,
+implemented through rooted checked services. Ordinary records expand through those
+tuple services. Exclude record updates/native forms,
 unavailable guard services, closures, dynamic calls, recursion,
 exceptions, receive, concurrency and code loading. Handle file/module/export and
 all existing type/spec AST forms explicitly. The initial inert metadata allowlist

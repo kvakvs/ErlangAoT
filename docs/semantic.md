@@ -1,4 +1,4 @@
-Current executable slice (pattern/guard steps 1–16): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md) and [bitstrings](bitstring-matching.md). Expanded records and remaining guard catalog work are assigned to steps 17–18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
+Current executable slice (pattern/guard steps 1–17): ordered function clauses and body matches/sequences support atoms, arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records. Shared rooted services provide construction, extraction, structural comparisons, arithmetic, computed-key matching and grouped guards. See [containers](container-matching.md), [integers](integer-matching.md), [floats](float-matching.md), [maps](map-matching.md), [bitstrings](bitstring-matching.md) and [records](record-matching.md). Remaining guard catalog work is step 18; other source contexts and runtime owners remain deferred. Routine tests use project-owned OTP goldens.
 
 
 # Semantic compilation analysis
@@ -29,7 +29,7 @@ Compilation checks every function, including unused definitions. The current sub
 accepts ordered clauses with scalar/container patterns, aliases and repeated variables,
 body sequences/matches, rooted constructors, checked numeric/container services and
 syntactically direct local/literal remote calls. Source children evaluate in order.
-Records, exceptions, concurrency, dynamic calls, closures and behavior-changing
+Record updates/native forms, exceptions, concurrency, dynamic calls, closures and behavior-changing
 attributes remain diagnosed. Type/spec metadata does not authorize runtime loads.
 Executable layouts and integer bounds derive from the requested LLVM target.
 
@@ -69,7 +69,8 @@ The registry indexes all `-type`, `-opaque`, `-nominal`, `-export_type`, `-spec`
 `-callback` and `-optional_callbacks` metadata before resolving bodies. Local aliases
 may shadow builtin names. Exact integer arithmetic resolves singleton/range/bitstring
 bounds without narrowing to a host word. Record declarations supply symbolic field
-contracts; their defaults remain unevaluated and executable records remain unsupported.
+contracts. Ordinary executable record defaults are selected by the separate
+[record expansion](record-matching.md) pass; type metadata never evaluates them.
 
 Remote references to batch types require exports. Missing local/batch types,
 duplicate declarations/exports, malformed metadata, singleton type variables,

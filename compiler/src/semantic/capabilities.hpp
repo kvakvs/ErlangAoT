@@ -6,6 +6,8 @@ namespace erlang_aot::semantic {
 void check_capabilities(const Module &module, const Reporter &out, unsigned word_bits = sizeof(void *) * 8);
 // Iterate accepted expression children without visiting literal call-target atoms as values.
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression);
+// Include selected record defaults in the same bounded executable walks as explicit operands.
+std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression);
 // Return guard/body roots in source order across every candidate; heads use normalized pattern plans.
 std::vector<ast::ExprId> function_roots(const ast::Function &function);
 // Enumerate analyzed map key expressions independently of value-pattern definitions.

@@ -60,7 +60,7 @@ void observe(const semantic::Module &module, const semantic::Function &function,
             work -= call->arguments.size();
             inputs.at(callee.function->symbol).profiles.push_back(call_profile(syntax, *call, inferred, bits));
         }
-        const auto children = semantic::expression_children(expression);
+        const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }
 }

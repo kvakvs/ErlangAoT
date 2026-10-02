@@ -3,6 +3,7 @@ import pathlib
 import sys
 import evidence
 import patterns
+import records
 from stored import load
 
 
@@ -18,6 +19,7 @@ def main():
     evidence.suites(tool, otp, work)
     patterns.catalog(source, otp)
     patterns.suites(tool, otp)
+    records.suites(tool, otp)
     load(source, 'baseline', work)
     print(evidence.run([escript, str(source / 'tests/compiler/patternmatch/oracle.escript'),
                        str(fixtures), str(work)]))

@@ -1,4 +1,6 @@
+#include "features.hpp"
 #include "match_plan_internal.hpp"
+#include "records.hpp"
 
 namespace erlang_aot::semantic {
 namespace {
@@ -95,14 +97,17 @@ bool chain(MatchPlanner &state, const PatternVisit &visit, const NormalizedPatte
 } // namespace
 
 bool container_pattern(const NormalizedPattern &pattern) {
-    return pattern.kind == PatternKind::bitstring || pattern.kind == PatternKind::map ||
-           pattern.kind == PatternKind::tuple || pattern.kind == PatternKind::list ||
-           pattern.kind == PatternKind::prefix ||
+    return pattern.kind == PatternKind::record || pattern.kind == PatternKind::bitstring ||
+           pattern.kind == PatternKind::map || pattern.kind == PatternKind::tuple ||
+           pattern.kind == PatternKind::list || pattern.kind == PatternKind::prefix ||
            (pattern.literal && std::holds_alternative<ast::StringLiteral>(*pattern.literal));
 }
 
 bool expand_container(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
                       std::vector<MatchTask> &pending) {
+    if (pattern.kind == PatternKind::record) {
+        return expand_record(state, visit, pattern, pending);
+    }
     if (pattern.kind == PatternKind::bitstring) {
         return expand_bits(state, visit, pattern, pending);
     }

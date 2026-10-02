@@ -1,5 +1,6 @@
 Current host Terms and factories support owned atoms, arbitrary integers, finite
-floats, tuples, lists, maps and exact-length bitstrings. Context admission proves
+floats, tuples, lists, maps and exact-length bitstrings. Ordinary records use tuples
+with a checked tag and arity; see [record expansion](record-matching.md). Context admission proves
 ownership before any heap access; host handles retain backing and deny access
 after context expiration. See [generated roots](generated-roots.md) and the
 [numeric](integer-matching.md), [float](float-matching.md), [map](map-matching.md)

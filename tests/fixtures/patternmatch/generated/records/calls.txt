@@ -1,0 +1,1025 @@
+answer wild 1 tuple
+answer wild 1 t(a72)
+answer wild 1 t(a72,i1,i2,i3)
+answer wild 1 t(a72,i1,i1,i1)
+answer wild 1 t(a72,i2,i2,i2)
+answer wild 1 t(a72,i1,i2)
+answer wild 1 t(a6f74686572,i1,i2,i3)
+answer wild 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer wild 1 t(a656d707479)
+answer wild 1 t(a656d707479,i1)
+answer wild 1 i0
+answer wild 1 f3ff0000000000000
+answer wild 1 a61
+answer wild 1 nil
+answer wild 1 c(i1,nil)
+answer wild 1 m(t(i3,i42))
+answer wild 1 b1:80
+answer wild 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer wild_alloc 1 tuple
+answer wild_alloc 1 t(a72)
+answer wild_alloc 1 t(a72,i1,i2,i3)
+answer wild_alloc 1 t(a72,i1,i1,i1)
+answer wild_alloc 1 t(a72,i2,i2,i2)
+answer wild_alloc 1 t(a72,i1,i2)
+answer wild_alloc 1 t(a6f74686572,i1,i2,i3)
+answer wild_alloc 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer wild_alloc 1 t(a656d707479)
+answer wild_alloc 1 t(a656d707479,i1)
+answer wild_alloc 1 i0
+answer wild_alloc 1 f3ff0000000000000
+answer wild_alloc 1 a61
+answer wild_alloc 1 nil
+answer wild_alloc 1 c(i1,nil)
+answer wild_alloc 1 m(t(i3,i42))
+answer wild_alloc 1 b1:80
+answer wild_alloc 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer head 1 tuple
+answer head 1 t(a72)
+answer head 1 t(a72,i1,i2,i3)
+answer head 1 t(a72,i1,i1,i1)
+answer head 1 t(a72,i2,i2,i2)
+answer head 1 t(a72,i1,i2)
+answer head 1 t(a6f74686572,i1,i2,i3)
+answer head 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer head 1 t(a656d707479)
+answer head 1 t(a656d707479,i1)
+answer head 1 i0
+answer head 1 f3ff0000000000000
+answer head 1 a61
+answer head 1 nil
+answer head 1 c(i1,nil)
+answer head 1 m(t(i3,i42))
+answer head 1 b1:80
+answer head 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer repeat 1 tuple
+answer repeat 1 t(a72)
+answer repeat 1 t(a72,i1,i2,i3)
+answer repeat 1 t(a72,i1,i1,i1)
+answer repeat 1 t(a72,i2,i2,i2)
+answer repeat 1 t(a72,i1,i2)
+answer repeat 1 t(a6f74686572,i1,i2,i3)
+answer repeat 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer repeat 1 t(a656d707479)
+answer repeat 1 t(a656d707479,i1)
+answer repeat 1 i0
+answer repeat 1 f3ff0000000000000
+answer repeat 1 a61
+answer repeat 1 nil
+answer repeat 1 c(i1,nil)
+answer repeat 1 m(t(i3,i42))
+answer repeat 1 b1:80
+answer repeat 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer head_order 1 tuple
+answer head_order 1 t(a72)
+answer head_order 1 t(a72,i1,i2,i3)
+answer head_order 1 t(a72,i1,i1,i1)
+answer head_order 1 t(a72,i2,i2,i2)
+answer head_order 1 t(a72,i1,i2)
+answer head_order 1 t(a6f74686572,i1,i2,i3)
+answer head_order 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer head_order 1 t(a656d707479)
+answer head_order 1 t(a656d707479,i1)
+answer head_order 1 i0
+answer head_order 1 f3ff0000000000000
+answer head_order 1 a61
+answer head_order 1 nil
+answer head_order 1 c(i1,nil)
+answer head_order 1 m(t(i3,i42))
+answer head_order 1 b1:80
+answer head_order 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer alias 1 tuple
+answer alias 1 t(a72)
+answer alias 1 t(a72,i1,i2,i3)
+answer alias 1 t(a72,i1,i1,i1)
+answer alias 1 t(a72,i2,i2,i2)
+answer alias 1 t(a72,i1,i2)
+answer alias 1 t(a6f74686572,i1,i2,i3)
+answer alias 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer alias 1 t(a656d707479)
+answer alias 1 t(a656d707479,i1)
+answer alias 1 i0
+answer alias 1 f3ff0000000000000
+answer alias 1 a61
+answer alias 1 nil
+answer alias 1 c(i1,nil)
+answer alias 1 m(t(i3,i42))
+answer alias 1 b1:80
+answer alias 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer body 1 tuple
+answer body 1 t(a72)
+answer body 1 t(a72,i1,i2,i3)
+answer body 1 t(a72,i1,i1,i1)
+answer body 1 t(a72,i2,i2,i2)
+answer body 1 t(a72,i1,i2)
+answer body 1 t(a6f74686572,i1,i2,i3)
+answer body 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer body 1 t(a656d707479)
+answer body 1 t(a656d707479,i1)
+answer body 1 i0
+answer body 1 f3ff0000000000000
+answer body 1 a61
+answer body 1 nil
+answer body 1 c(i1,nil)
+answer body 1 m(t(i3,i42))
+answer body 1 b1:80
+answer body 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer access 1 tuple
+answer access 1 t(a72)
+answer access 1 t(a72,i1,i2,i3)
+answer access 1 t(a72,i1,i1,i1)
+answer access 1 t(a72,i2,i2,i2)
+answer access 1 t(a72,i1,i2)
+answer access 1 t(a6f74686572,i1,i2,i3)
+answer access 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer access 1 t(a656d707479)
+answer access 1 t(a656d707479,i1)
+answer access 1 i0
+answer access 1 f3ff0000000000000
+answer access 1 a61
+answer access 1 nil
+answer access 1 c(i1,nil)
+answer access 1 m(t(i3,i42))
+answer access 1 b1:80
+answer access 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_access 1 tuple
+answer guard_access 1 t(a72)
+answer guard_access 1 t(a72,i1,i2,i3)
+answer guard_access 1 t(a72,i1,i1,i1)
+answer guard_access 1 t(a72,i2,i2,i2)
+answer guard_access 1 t(a72,i1,i2)
+answer guard_access 1 t(a6f74686572,i1,i2,i3)
+answer guard_access 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_access 1 t(a656d707479)
+answer guard_access 1 t(a656d707479,i1)
+answer guard_access 1 i0
+answer guard_access 1 f3ff0000000000000
+answer guard_access 1 a61
+answer guard_access 1 nil
+answer guard_access 1 c(i1,nil)
+answer guard_access 1 m(t(i3,i42))
+answer guard_access 1 b1:80
+answer guard_access 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_alternative 1 tuple
+answer guard_alternative 1 t(a72)
+answer guard_alternative 1 t(a72,i1,i2,i3)
+answer guard_alternative 1 t(a72,i1,i1,i1)
+answer guard_alternative 1 t(a72,i2,i2,i2)
+answer guard_alternative 1 t(a72,i1,i2)
+answer guard_alternative 1 t(a6f74686572,i1,i2,i3)
+answer guard_alternative 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_alternative 1 t(a656d707479)
+answer guard_alternative 1 t(a656d707479,i1)
+answer guard_alternative 1 i0
+answer guard_alternative 1 f3ff0000000000000
+answer guard_alternative 1 a61
+answer guard_alternative 1 nil
+answer guard_alternative 1 c(i1,nil)
+answer guard_alternative 1 m(t(i3,i42))
+answer guard_alternative 1 b1:80
+answer guard_alternative 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_construct 1 tuple
+answer guard_construct 1 t(a72)
+answer guard_construct 1 t(a72,i1,i2,i3)
+answer guard_construct 1 t(a72,i1,i1,i1)
+answer guard_construct 1 t(a72,i2,i2,i2)
+answer guard_construct 1 t(a72,i1,i2)
+answer guard_construct 1 t(a6f74686572,i1,i2,i3)
+answer guard_construct 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_construct 1 t(a656d707479)
+answer guard_construct 1 t(a656d707479,i1)
+answer guard_construct 1 i0
+answer guard_construct 1 f3ff0000000000000
+answer guard_construct 1 a61
+answer guard_construct 1 nil
+answer guard_construct 1 c(i1,nil)
+answer guard_construct 1 m(t(i3,i42))
+answer guard_construct 1 b1:80
+answer guard_construct 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer test 1 tuple
+answer test 1 t(a72)
+answer test 1 t(a72,i1,i2,i3)
+answer test 1 t(a72,i1,i1,i1)
+answer test 1 t(a72,i2,i2,i2)
+answer test 1 t(a72,i1,i2)
+answer test 1 t(a6f74686572,i1,i2,i3)
+answer test 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer test 1 t(a656d707479)
+answer test 1 t(a656d707479,i1)
+answer test 1 i0
+answer test 1 f3ff0000000000000
+answer test 1 a61
+answer test 1 nil
+answer test 1 c(i1,nil)
+answer test 1 m(t(i3,i42))
+answer test 1 b1:80
+answer test 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_test 1 tuple
+answer guard_test 1 t(a72)
+answer guard_test 1 t(a72,i1,i2,i3)
+answer guard_test 1 t(a72,i1,i1,i1)
+answer guard_test 1 t(a72,i2,i2,i2)
+answer guard_test 1 t(a72,i1,i2)
+answer guard_test 1 t(a6f74686572,i1,i2,i3)
+answer guard_test 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_test 1 t(a656d707479)
+answer guard_test 1 t(a656d707479,i1)
+answer guard_test 1 i0
+answer guard_test 1 f3ff0000000000000
+answer guard_test 1 a61
+answer guard_test 1 nil
+answer guard_test 1 c(i1,nil)
+answer guard_test 1 m(t(i3,i42))
+answer guard_test 1 b1:80
+answer guard_test 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer legacy 1 tuple
+answer legacy 1 t(a72)
+answer legacy 1 t(a72,i1,i2,i3)
+answer legacy 1 t(a72,i1,i1,i1)
+answer legacy 1 t(a72,i2,i2,i2)
+answer legacy 1 t(a72,i1,i2)
+answer legacy 1 t(a6f74686572,i1,i2,i3)
+answer legacy 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer legacy 1 t(a656d707479)
+answer legacy 1 t(a656d707479,i1)
+answer legacy 1 i0
+answer legacy 1 f3ff0000000000000
+answer legacy 1 a61
+answer legacy 1 nil
+answer legacy 1 c(i1,nil)
+answer legacy 1 m(t(i3,i42))
+answer legacy 1 b1:80
+answer legacy 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard3 1 tuple
+answer guard3 1 t(a72)
+answer guard3 1 t(a72,i1,i2,i3)
+answer guard3 1 t(a72,i1,i1,i1)
+answer guard3 1 t(a72,i2,i2,i2)
+answer guard3 1 t(a72,i1,i2)
+answer guard3 1 t(a6f74686572,i1,i2,i3)
+answer guard3 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard3 1 t(a656d707479)
+answer guard3 1 t(a656d707479,i1)
+answer guard3 1 i0
+answer guard3 1 f3ff0000000000000
+answer guard3 1 a61
+answer guard3 1 nil
+answer guard3 1 c(i1,nil)
+answer guard3 1 m(t(i3,i42))
+answer guard3 1 b1:80
+answer guard3 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_zero 1 tuple
+answer guard_zero 1 t(a72)
+answer guard_zero 1 t(a72,i1,i2,i3)
+answer guard_zero 1 t(a72,i1,i1,i1)
+answer guard_zero 1 t(a72,i2,i2,i2)
+answer guard_zero 1 t(a72,i1,i2)
+answer guard_zero 1 t(a6f74686572,i1,i2,i3)
+answer guard_zero 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_zero 1 t(a656d707479)
+answer guard_zero 1 t(a656d707479,i1)
+answer guard_zero 1 i0
+answer guard_zero 1 f3ff0000000000000
+answer guard_zero 1 a61
+answer guard_zero 1 nil
+answer guard_zero 1 c(i1,nil)
+answer guard_zero 1 m(t(i3,i42))
+answer guard_zero 1 b1:80
+answer guard_zero 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer guard_big 1 tuple
+answer guard_big 1 t(a72)
+answer guard_big 1 t(a72,i1,i2,i3)
+answer guard_big 1 t(a72,i1,i1,i1)
+answer guard_big 1 t(a72,i2,i2,i2)
+answer guard_big 1 t(a72,i1,i2)
+answer guard_big 1 t(a6f74686572,i1,i2,i3)
+answer guard_big 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer guard_big 1 t(a656d707479)
+answer guard_big 1 t(a656d707479,i1)
+answer guard_big 1 i0
+answer guard_big 1 f3ff0000000000000
+answer guard_big 1 a61
+answer guard_big 1 nil
+answer guard_big 1 c(i1,nil)
+answer guard_big 1 m(t(i3,i42))
+answer guard_big 1 b1:80
+answer guard_big 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer index 1 tuple
+answer index 1 t(a72)
+answer index 1 t(a72,i1,i2,i3)
+answer index 1 t(a72,i1,i1,i1)
+answer index 1 t(a72,i2,i2,i2)
+answer index 1 t(a72,i1,i2)
+answer index 1 t(a6f74686572,i1,i2,i3)
+answer index 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer index 1 t(a656d707479)
+answer index 1 t(a656d707479,i1)
+answer index 1 i0
+answer index 1 f3ff0000000000000
+answer index 1 a61
+answer index 1 nil
+answer index 1 c(i1,nil)
+answer index 1 m(t(i3,i42))
+answer index 1 b1:80
+answer index 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer key 1 tuple
+answer key 1 t(a72)
+answer key 1 t(a72,i1,i2,i3)
+answer key 1 t(a72,i1,i1,i1)
+answer key 1 t(a72,i2,i2,i2)
+answer key 1 t(a72,i1,i2)
+answer key 1 t(a6f74686572,i1,i2,i3)
+answer key 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer key 1 t(a656d707479)
+answer key 1 t(a656d707479,i1)
+answer key 1 i0
+answer key 1 f3ff0000000000000
+answer key 1 a61
+answer key 1 nil
+answer key 1 c(i1,nil)
+answer key 1 m(t(i3,i42))
+answer key 1 b1:80
+answer key 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer eval_once 1 tuple
+answer eval_once 1 t(a72)
+answer eval_once 1 t(a72,i1,i2,i3)
+answer eval_once 1 t(a72,i1,i1,i1)
+answer eval_once 1 t(a72,i2,i2,i2)
+answer eval_once 1 t(a72,i1,i2)
+answer eval_once 1 t(a6f74686572,i1,i2,i3)
+answer eval_once 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer eval_once 1 t(a656d707479)
+answer eval_once 1 t(a656d707479,i1)
+answer eval_once 1 i0
+answer eval_once 1 f3ff0000000000000
+answer eval_once 1 a61
+answer eval_once 1 nil
+answer eval_once 1 c(i1,nil)
+answer eval_once 1 m(t(i3,i42))
+answer eval_once 1 b1:80
+answer eval_once 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer nested 1 tuple
+answer nested 1 t(a72)
+answer nested 1 t(a72,i1,i2,i3)
+answer nested 1 t(a72,i1,i1,i1)
+answer nested 1 t(a72,i2,i2,i2)
+answer nested 1 t(a72,i1,i2)
+answer nested 1 t(a6f74686572,i1,i2,i3)
+answer nested 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer nested 1 t(a656d707479)
+answer nested 1 t(a656d707479,i1)
+answer nested 1 i0
+answer nested 1 f3ff0000000000000
+answer nested 1 a61
+answer nested 1 nil
+answer nested 1 c(i1,nil)
+answer nested 1 m(t(i3,i42))
+answer nested 1 b1:80
+answer nested 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer retained 1 tuple
+answer retained 1 t(a72)
+answer retained 1 t(a72,i1,i2,i3)
+answer retained 1 t(a72,i1,i1,i1)
+answer retained 1 t(a72,i2,i2,i2)
+answer retained 1 t(a72,i1,i2)
+answer retained 1 t(a6f74686572,i1,i2,i3)
+answer retained 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer retained 1 t(a656d707479)
+answer retained 1 t(a656d707479,i1)
+answer retained 1 i0
+answer retained 1 f3ff0000000000000
+answer retained 1 a61
+answer retained 1 nil
+answer retained 1 c(i1,nil)
+answer retained 1 m(t(i3,i42))
+answer retained 1 b1:80
+answer retained 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer wrong_spec 1 tuple
+answer wrong_spec 1 t(a72)
+answer wrong_spec 1 t(a72,i1,i2,i3)
+answer wrong_spec 1 t(a72,i1,i1,i1)
+answer wrong_spec 1 t(a72,i2,i2,i2)
+answer wrong_spec 1 t(a72,i1,i2)
+answer wrong_spec 1 t(a6f74686572,i1,i2,i3)
+answer wrong_spec 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer wrong_spec 1 t(a656d707479)
+answer wrong_spec 1 t(a656d707479,i1)
+answer wrong_spec 1 i0
+answer wrong_spec 1 f3ff0000000000000
+answer wrong_spec 1 a61
+answer wrong_spec 1 nil
+answer wrong_spec 1 c(i1,nil)
+answer wrong_spec 1 m(t(i3,i42))
+answer wrong_spec 1 b1:80
+answer wrong_spec 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer id 1 tuple
+answer id 1 t(a72)
+answer id 1 t(a72,i1,i2,i3)
+answer id 1 t(a72,i1,i1,i1)
+answer id 1 t(a72,i2,i2,i2)
+answer id 1 t(a72,i1,i2)
+answer id 1 t(a6f74686572,i1,i2,i3)
+answer id 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer id 1 t(a656d707479)
+answer id 1 t(a656d707479,i1)
+answer id 1 i0
+answer id 1 f3ff0000000000000
+answer id 1 a61
+answer id 1 nil
+answer id 1 c(i1,nil)
+answer id 1 m(t(i3,i42))
+answer id 1 b1:80
+answer id 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+answer default 0
+answer empty 0
+answer ordered 0
+answer ordered_bind 0
+answer default_calls 0
+answer make_default 0
+answer nested_defaults 0
+answer construct 2 tuple tuple
+answer construct 2 tuple t(a72)
+answer construct 2 tuple t(a72,i1,i2,i3)
+answer construct 2 tuple t(a72,i1,i1,i1)
+answer construct 2 tuple t(a72,i2,i2,i2)
+answer construct 2 tuple t(a72,i1,i2)
+answer construct 2 tuple t(a6f74686572,i1,i2,i3)
+answer construct 2 tuple t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72) tuple
+answer construct 2 t(a72) t(a72)
+answer construct 2 t(a72) t(a72,i1,i2,i3)
+answer construct 2 t(a72) t(a72,i1,i1,i1)
+answer construct 2 t(a72) t(a72,i2,i2,i2)
+answer construct 2 t(a72) t(a72,i1,i2)
+answer construct 2 t(a72) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72,i1,i2,i3) tuple
+answer construct 2 t(a72,i1,i2,i3) t(a72)
+answer construct 2 t(a72,i1,i2,i3) t(a72,i1,i2,i3)
+answer construct 2 t(a72,i1,i2,i3) t(a72,i1,i1,i1)
+answer construct 2 t(a72,i1,i2,i3) t(a72,i2,i2,i2)
+answer construct 2 t(a72,i1,i2,i3) t(a72,i1,i2)
+answer construct 2 t(a72,i1,i2,i3) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72,i1,i2,i3) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72,i1,i1,i1) tuple
+answer construct 2 t(a72,i1,i1,i1) t(a72)
+answer construct 2 t(a72,i1,i1,i1) t(a72,i1,i2,i3)
+answer construct 2 t(a72,i1,i1,i1) t(a72,i1,i1,i1)
+answer construct 2 t(a72,i1,i1,i1) t(a72,i2,i2,i2)
+answer construct 2 t(a72,i1,i1,i1) t(a72,i1,i2)
+answer construct 2 t(a72,i1,i1,i1) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72,i1,i1,i1) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72,i2,i2,i2) tuple
+answer construct 2 t(a72,i2,i2,i2) t(a72)
+answer construct 2 t(a72,i2,i2,i2) t(a72,i1,i2,i3)
+answer construct 2 t(a72,i2,i2,i2) t(a72,i1,i1,i1)
+answer construct 2 t(a72,i2,i2,i2) t(a72,i2,i2,i2)
+answer construct 2 t(a72,i2,i2,i2) t(a72,i1,i2)
+answer construct 2 t(a72,i2,i2,i2) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72,i2,i2,i2) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72,i1,i2) tuple
+answer construct 2 t(a72,i1,i2) t(a72)
+answer construct 2 t(a72,i1,i2) t(a72,i1,i2,i3)
+answer construct 2 t(a72,i1,i2) t(a72,i1,i1,i1)
+answer construct 2 t(a72,i1,i2) t(a72,i2,i2,i2)
+answer construct 2 t(a72,i1,i2) t(a72,i1,i2)
+answer construct 2 t(a72,i1,i2) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72,i1,i2) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a6f74686572,i1,i2,i3) tuple
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72,i1,i2,i3)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72,i1,i1,i1)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72,i2,i2,i2)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72,i1,i2)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a6f74686572,i1,i2,i3) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) tuple
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72,i1,i2,i3)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72,i1,i1,i1)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72,i2,i2,i2)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72,i1,i2)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a6f74686572,i1,i2,i3)
+answer construct 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+answer dynamic2 2 tuple a72
+answer dynamic2 2 tuple a656d707479
+answer dynamic2 2 tuple a61
+answer dynamic2 2 tuple i1
+answer dynamic2 2 tuple f3ff0000000000000
+answer dynamic2 2 tuple tuple
+answer dynamic2 2 tuple m()
+answer dynamic2 2 t(a72) a72
+answer dynamic2 2 t(a72) a656d707479
+answer dynamic2 2 t(a72) a61
+answer dynamic2 2 t(a72) i1
+answer dynamic2 2 t(a72) f3ff0000000000000
+answer dynamic2 2 t(a72) tuple
+answer dynamic2 2 t(a72) m()
+answer dynamic2 2 t(a72,i1,i2,i3) a72
+answer dynamic2 2 t(a72,i1,i2,i3) a656d707479
+answer dynamic2 2 t(a72,i1,i2,i3) a61
+answer dynamic2 2 t(a72,i1,i2,i3) i1
+answer dynamic2 2 t(a72,i1,i2,i3) f3ff0000000000000
+answer dynamic2 2 t(a72,i1,i2,i3) tuple
+answer dynamic2 2 t(a72,i1,i2,i3) m()
+answer dynamic2 2 t(a72,i1,i1,i1) a72
+answer dynamic2 2 t(a72,i1,i1,i1) a656d707479
+answer dynamic2 2 t(a72,i1,i1,i1) a61
+answer dynamic2 2 t(a72,i1,i1,i1) i1
+answer dynamic2 2 t(a72,i1,i1,i1) f3ff0000000000000
+answer dynamic2 2 t(a72,i1,i1,i1) tuple
+answer dynamic2 2 t(a72,i1,i1,i1) m()
+answer dynamic2 2 t(a72,i2,i2,i2) a72
+answer dynamic2 2 t(a72,i2,i2,i2) a656d707479
+answer dynamic2 2 t(a72,i2,i2,i2) a61
+answer dynamic2 2 t(a72,i2,i2,i2) i1
+answer dynamic2 2 t(a72,i2,i2,i2) f3ff0000000000000
+answer dynamic2 2 t(a72,i2,i2,i2) tuple
+answer dynamic2 2 t(a72,i2,i2,i2) m()
+answer dynamic2 2 t(a72,i1,i2) a72
+answer dynamic2 2 t(a72,i1,i2) a656d707479
+answer dynamic2 2 t(a72,i1,i2) a61
+answer dynamic2 2 t(a72,i1,i2) i1
+answer dynamic2 2 t(a72,i1,i2) f3ff0000000000000
+answer dynamic2 2 t(a72,i1,i2) tuple
+answer dynamic2 2 t(a72,i1,i2) m()
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) a72
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) a656d707479
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) a61
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) i1
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) f3ff0000000000000
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) tuple
+answer dynamic2 2 t(a6f74686572,i1,i2,i3) m()
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a656d707479
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a61
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) f3ff0000000000000
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) tuple
+answer dynamic2 2 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) m()
+answer dynamic2 2 t(a656d707479) a72
+answer dynamic2 2 t(a656d707479) a656d707479
+answer dynamic2 2 t(a656d707479) a61
+answer dynamic2 2 t(a656d707479) i1
+answer dynamic2 2 t(a656d707479) f3ff0000000000000
+answer dynamic2 2 t(a656d707479) tuple
+answer dynamic2 2 t(a656d707479) m()
+answer dynamic2 2 t(a656d707479,i1) a72
+answer dynamic2 2 t(a656d707479,i1) a656d707479
+answer dynamic2 2 t(a656d707479,i1) a61
+answer dynamic2 2 t(a656d707479,i1) i1
+answer dynamic2 2 t(a656d707479,i1) f3ff0000000000000
+answer dynamic2 2 t(a656d707479,i1) tuple
+answer dynamic2 2 t(a656d707479,i1) m()
+answer dynamic2 2 i0 a72
+answer dynamic2 2 i0 a656d707479
+answer dynamic2 2 i0 a61
+answer dynamic2 2 i0 i1
+answer dynamic2 2 i0 f3ff0000000000000
+answer dynamic2 2 i0 tuple
+answer dynamic2 2 i0 m()
+answer dynamic2 2 f3ff0000000000000 a72
+answer dynamic2 2 f3ff0000000000000 a656d707479
+answer dynamic2 2 f3ff0000000000000 a61
+answer dynamic2 2 f3ff0000000000000 i1
+answer dynamic2 2 f3ff0000000000000 f3ff0000000000000
+answer dynamic2 2 f3ff0000000000000 tuple
+answer dynamic2 2 f3ff0000000000000 m()
+answer dynamic2 2 a61 a72
+answer dynamic2 2 a61 a656d707479
+answer dynamic2 2 a61 a61
+answer dynamic2 2 a61 i1
+answer dynamic2 2 a61 f3ff0000000000000
+answer dynamic2 2 a61 tuple
+answer dynamic2 2 a61 m()
+answer dynamic2 2 nil a72
+answer dynamic2 2 nil a656d707479
+answer dynamic2 2 nil a61
+answer dynamic2 2 nil i1
+answer dynamic2 2 nil f3ff0000000000000
+answer dynamic2 2 nil tuple
+answer dynamic2 2 nil m()
+answer dynamic2 2 c(i1,nil) a72
+answer dynamic2 2 c(i1,nil) a656d707479
+answer dynamic2 2 c(i1,nil) a61
+answer dynamic2 2 c(i1,nil) i1
+answer dynamic2 2 c(i1,nil) f3ff0000000000000
+answer dynamic2 2 c(i1,nil) tuple
+answer dynamic2 2 c(i1,nil) m()
+answer dynamic2 2 m(t(i3,i42)) a72
+answer dynamic2 2 m(t(i3,i42)) a656d707479
+answer dynamic2 2 m(t(i3,i42)) a61
+answer dynamic2 2 m(t(i3,i42)) i1
+answer dynamic2 2 m(t(i3,i42)) f3ff0000000000000
+answer dynamic2 2 m(t(i3,i42)) tuple
+answer dynamic2 2 m(t(i3,i42)) m()
+answer dynamic2 2 b1:80 a72
+answer dynamic2 2 b1:80 a656d707479
+answer dynamic2 2 b1:80 a61
+answer dynamic2 2 b1:80 i1
+answer dynamic2 2 b1:80 f3ff0000000000000
+answer dynamic2 2 b1:80 tuple
+answer dynamic2 2 b1:80 m()
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a656d707479
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a61
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) f3ff0000000000000
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) tuple
+answer dynamic2 2 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) m()
+answer dynamic3 3 tuple a72 i-1
+answer dynamic3 3 tuple a72 i0
+answer dynamic3 3 tuple a72 i1
+answer dynamic3 3 tuple a72 i3
+answer dynamic3 3 tuple a72 i4
+answer dynamic3 3 tuple a72 i5
+answer dynamic3 3 tuple a72 f3ff0000000000000
+answer dynamic3 3 tuple a72 a6e6174697665
+answer dynamic3 3 tuple a72 i1267650600228229401496703205376
+answer dynamic3 3 tuple a72 i576460752303423487
+answer dynamic3 3 tuple i1 i-1
+answer dynamic3 3 tuple i1 i0
+answer dynamic3 3 tuple i1 i1
+answer dynamic3 3 tuple i1 i3
+answer dynamic3 3 tuple i1 i4
+answer dynamic3 3 tuple i1 i5
+answer dynamic3 3 tuple i1 f3ff0000000000000
+answer dynamic3 3 tuple i1 a6e6174697665
+answer dynamic3 3 tuple i1 i1267650600228229401496703205376
+answer dynamic3 3 tuple i1 i576460752303423487
+answer dynamic3 3 t(a72) a72 i-1
+answer dynamic3 3 t(a72) a72 i0
+answer dynamic3 3 t(a72) a72 i1
+answer dynamic3 3 t(a72) a72 i3
+answer dynamic3 3 t(a72) a72 i4
+answer dynamic3 3 t(a72) a72 i5
+answer dynamic3 3 t(a72) a72 f3ff0000000000000
+answer dynamic3 3 t(a72) a72 a6e6174697665
+answer dynamic3 3 t(a72) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72) a72 i576460752303423487
+answer dynamic3 3 t(a72) i1 i-1
+answer dynamic3 3 t(a72) i1 i0
+answer dynamic3 3 t(a72) i1 i1
+answer dynamic3 3 t(a72) i1 i3
+answer dynamic3 3 t(a72) i1 i4
+answer dynamic3 3 t(a72) i1 i5
+answer dynamic3 3 t(a72) i1 f3ff0000000000000
+answer dynamic3 3 t(a72) i1 a6e6174697665
+answer dynamic3 3 t(a72) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72) i1 i576460752303423487
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i-1
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i0
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i1
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i3
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i4
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i5
+answer dynamic3 3 t(a72,i1,i2,i3) a72 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i2,i3) a72 a6e6174697665
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i2,i3) a72 i576460752303423487
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i-1
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i0
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i1
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i3
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i4
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i5
+answer dynamic3 3 t(a72,i1,i2,i3) i1 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i2,i3) i1 a6e6174697665
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i2,i3) i1 i576460752303423487
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i-1
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i0
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i1
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i3
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i4
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i5
+answer dynamic3 3 t(a72,i1,i1,i1) a72 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i1,i1) a72 a6e6174697665
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i1,i1) a72 i576460752303423487
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i-1
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i0
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i1
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i3
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i4
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i5
+answer dynamic3 3 t(a72,i1,i1,i1) i1 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i1,i1) i1 a6e6174697665
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i1,i1) i1 i576460752303423487
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i-1
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i0
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i1
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i3
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i4
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i5
+answer dynamic3 3 t(a72,i2,i2,i2) a72 f3ff0000000000000
+answer dynamic3 3 t(a72,i2,i2,i2) a72 a6e6174697665
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i2,i2,i2) a72 i576460752303423487
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i-1
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i0
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i1
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i3
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i4
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i5
+answer dynamic3 3 t(a72,i2,i2,i2) i1 f3ff0000000000000
+answer dynamic3 3 t(a72,i2,i2,i2) i1 a6e6174697665
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i2,i2,i2) i1 i576460752303423487
+answer dynamic3 3 t(a72,i1,i2) a72 i-1
+answer dynamic3 3 t(a72,i1,i2) a72 i0
+answer dynamic3 3 t(a72,i1,i2) a72 i1
+answer dynamic3 3 t(a72,i1,i2) a72 i3
+answer dynamic3 3 t(a72,i1,i2) a72 i4
+answer dynamic3 3 t(a72,i1,i2) a72 i5
+answer dynamic3 3 t(a72,i1,i2) a72 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i2) a72 a6e6174697665
+answer dynamic3 3 t(a72,i1,i2) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i2) a72 i576460752303423487
+answer dynamic3 3 t(a72,i1,i2) i1 i-1
+answer dynamic3 3 t(a72,i1,i2) i1 i0
+answer dynamic3 3 t(a72,i1,i2) i1 i1
+answer dynamic3 3 t(a72,i1,i2) i1 i3
+answer dynamic3 3 t(a72,i1,i2) i1 i4
+answer dynamic3 3 t(a72,i1,i2) i1 i5
+answer dynamic3 3 t(a72,i1,i2) i1 f3ff0000000000000
+answer dynamic3 3 t(a72,i1,i2) i1 a6e6174697665
+answer dynamic3 3 t(a72,i1,i2) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,i1,i2) i1 i576460752303423487
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i-1
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i0
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i1
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i3
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i4
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i5
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 f3ff0000000000000
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 a6e6174697665
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) a72 i576460752303423487
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i-1
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i0
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i1
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i3
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i4
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i5
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 f3ff0000000000000
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 a6e6174697665
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a6f74686572,i1,i2,i3) i1 i576460752303423487
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i-1
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i0
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i1
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i3
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i4
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i5
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 f3ff0000000000000
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 a6e6174697665
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) a72 i576460752303423487
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i-1
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i0
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i1
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i3
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i4
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i5
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 f3ff0000000000000
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 a6e6174697665
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1))) i1 i576460752303423487
+answer dynamic3 3 t(a656d707479) a72 i-1
+answer dynamic3 3 t(a656d707479) a72 i0
+answer dynamic3 3 t(a656d707479) a72 i1
+answer dynamic3 3 t(a656d707479) a72 i3
+answer dynamic3 3 t(a656d707479) a72 i4
+answer dynamic3 3 t(a656d707479) a72 i5
+answer dynamic3 3 t(a656d707479) a72 f3ff0000000000000
+answer dynamic3 3 t(a656d707479) a72 a6e6174697665
+answer dynamic3 3 t(a656d707479) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a656d707479) a72 i576460752303423487
+answer dynamic3 3 t(a656d707479) i1 i-1
+answer dynamic3 3 t(a656d707479) i1 i0
+answer dynamic3 3 t(a656d707479) i1 i1
+answer dynamic3 3 t(a656d707479) i1 i3
+answer dynamic3 3 t(a656d707479) i1 i4
+answer dynamic3 3 t(a656d707479) i1 i5
+answer dynamic3 3 t(a656d707479) i1 f3ff0000000000000
+answer dynamic3 3 t(a656d707479) i1 a6e6174697665
+answer dynamic3 3 t(a656d707479) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a656d707479) i1 i576460752303423487
+answer dynamic3 3 t(a656d707479,i1) a72 i-1
+answer dynamic3 3 t(a656d707479,i1) a72 i0
+answer dynamic3 3 t(a656d707479,i1) a72 i1
+answer dynamic3 3 t(a656d707479,i1) a72 i3
+answer dynamic3 3 t(a656d707479,i1) a72 i4
+answer dynamic3 3 t(a656d707479,i1) a72 i5
+answer dynamic3 3 t(a656d707479,i1) a72 f3ff0000000000000
+answer dynamic3 3 t(a656d707479,i1) a72 a6e6174697665
+answer dynamic3 3 t(a656d707479,i1) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a656d707479,i1) a72 i576460752303423487
+answer dynamic3 3 t(a656d707479,i1) i1 i-1
+answer dynamic3 3 t(a656d707479,i1) i1 i0
+answer dynamic3 3 t(a656d707479,i1) i1 i1
+answer dynamic3 3 t(a656d707479,i1) i1 i3
+answer dynamic3 3 t(a656d707479,i1) i1 i4
+answer dynamic3 3 t(a656d707479,i1) i1 i5
+answer dynamic3 3 t(a656d707479,i1) i1 f3ff0000000000000
+answer dynamic3 3 t(a656d707479,i1) i1 a6e6174697665
+answer dynamic3 3 t(a656d707479,i1) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a656d707479,i1) i1 i576460752303423487
+answer dynamic3 3 i0 a72 i-1
+answer dynamic3 3 i0 a72 i0
+answer dynamic3 3 i0 a72 i1
+answer dynamic3 3 i0 a72 i3
+answer dynamic3 3 i0 a72 i4
+answer dynamic3 3 i0 a72 i5
+answer dynamic3 3 i0 a72 f3ff0000000000000
+answer dynamic3 3 i0 a72 a6e6174697665
+answer dynamic3 3 i0 a72 i1267650600228229401496703205376
+answer dynamic3 3 i0 a72 i576460752303423487
+answer dynamic3 3 i0 i1 i-1
+answer dynamic3 3 i0 i1 i0
+answer dynamic3 3 i0 i1 i1
+answer dynamic3 3 i0 i1 i3
+answer dynamic3 3 i0 i1 i4
+answer dynamic3 3 i0 i1 i5
+answer dynamic3 3 i0 i1 f3ff0000000000000
+answer dynamic3 3 i0 i1 a6e6174697665
+answer dynamic3 3 i0 i1 i1267650600228229401496703205376
+answer dynamic3 3 i0 i1 i576460752303423487
+answer dynamic3 3 f3ff0000000000000 a72 i-1
+answer dynamic3 3 f3ff0000000000000 a72 i0
+answer dynamic3 3 f3ff0000000000000 a72 i1
+answer dynamic3 3 f3ff0000000000000 a72 i3
+answer dynamic3 3 f3ff0000000000000 a72 i4
+answer dynamic3 3 f3ff0000000000000 a72 i5
+answer dynamic3 3 f3ff0000000000000 a72 f3ff0000000000000
+answer dynamic3 3 f3ff0000000000000 a72 a6e6174697665
+answer dynamic3 3 f3ff0000000000000 a72 i1267650600228229401496703205376
+answer dynamic3 3 f3ff0000000000000 a72 i576460752303423487
+answer dynamic3 3 f3ff0000000000000 i1 i-1
+answer dynamic3 3 f3ff0000000000000 i1 i0
+answer dynamic3 3 f3ff0000000000000 i1 i1
+answer dynamic3 3 f3ff0000000000000 i1 i3
+answer dynamic3 3 f3ff0000000000000 i1 i4
+answer dynamic3 3 f3ff0000000000000 i1 i5
+answer dynamic3 3 f3ff0000000000000 i1 f3ff0000000000000
+answer dynamic3 3 f3ff0000000000000 i1 a6e6174697665
+answer dynamic3 3 f3ff0000000000000 i1 i1267650600228229401496703205376
+answer dynamic3 3 f3ff0000000000000 i1 i576460752303423487
+answer dynamic3 3 a61 a72 i-1
+answer dynamic3 3 a61 a72 i0
+answer dynamic3 3 a61 a72 i1
+answer dynamic3 3 a61 a72 i3
+answer dynamic3 3 a61 a72 i4
+answer dynamic3 3 a61 a72 i5
+answer dynamic3 3 a61 a72 f3ff0000000000000
+answer dynamic3 3 a61 a72 a6e6174697665
+answer dynamic3 3 a61 a72 i1267650600228229401496703205376
+answer dynamic3 3 a61 a72 i576460752303423487
+answer dynamic3 3 a61 i1 i-1
+answer dynamic3 3 a61 i1 i0
+answer dynamic3 3 a61 i1 i1
+answer dynamic3 3 a61 i1 i3
+answer dynamic3 3 a61 i1 i4
+answer dynamic3 3 a61 i1 i5
+answer dynamic3 3 a61 i1 f3ff0000000000000
+answer dynamic3 3 a61 i1 a6e6174697665
+answer dynamic3 3 a61 i1 i1267650600228229401496703205376
+answer dynamic3 3 a61 i1 i576460752303423487
+answer dynamic3 3 nil a72 i-1
+answer dynamic3 3 nil a72 i0
+answer dynamic3 3 nil a72 i1
+answer dynamic3 3 nil a72 i3
+answer dynamic3 3 nil a72 i4
+answer dynamic3 3 nil a72 i5
+answer dynamic3 3 nil a72 f3ff0000000000000
+answer dynamic3 3 nil a72 a6e6174697665
+answer dynamic3 3 nil a72 i1267650600228229401496703205376
+answer dynamic3 3 nil a72 i576460752303423487
+answer dynamic3 3 nil i1 i-1
+answer dynamic3 3 nil i1 i0
+answer dynamic3 3 nil i1 i1
+answer dynamic3 3 nil i1 i3
+answer dynamic3 3 nil i1 i4
+answer dynamic3 3 nil i1 i5
+answer dynamic3 3 nil i1 f3ff0000000000000
+answer dynamic3 3 nil i1 a6e6174697665
+answer dynamic3 3 nil i1 i1267650600228229401496703205376
+answer dynamic3 3 nil i1 i576460752303423487
+answer dynamic3 3 c(i1,nil) a72 i-1
+answer dynamic3 3 c(i1,nil) a72 i0
+answer dynamic3 3 c(i1,nil) a72 i1
+answer dynamic3 3 c(i1,nil) a72 i3
+answer dynamic3 3 c(i1,nil) a72 i4
+answer dynamic3 3 c(i1,nil) a72 i5
+answer dynamic3 3 c(i1,nil) a72 f3ff0000000000000
+answer dynamic3 3 c(i1,nil) a72 a6e6174697665
+answer dynamic3 3 c(i1,nil) a72 i1267650600228229401496703205376
+answer dynamic3 3 c(i1,nil) a72 i576460752303423487
+answer dynamic3 3 c(i1,nil) i1 i-1
+answer dynamic3 3 c(i1,nil) i1 i0
+answer dynamic3 3 c(i1,nil) i1 i1
+answer dynamic3 3 c(i1,nil) i1 i3
+answer dynamic3 3 c(i1,nil) i1 i4
+answer dynamic3 3 c(i1,nil) i1 i5
+answer dynamic3 3 c(i1,nil) i1 f3ff0000000000000
+answer dynamic3 3 c(i1,nil) i1 a6e6174697665
+answer dynamic3 3 c(i1,nil) i1 i1267650600228229401496703205376
+answer dynamic3 3 c(i1,nil) i1 i576460752303423487
+answer dynamic3 3 m(t(i3,i42)) a72 i-1
+answer dynamic3 3 m(t(i3,i42)) a72 i0
+answer dynamic3 3 m(t(i3,i42)) a72 i1
+answer dynamic3 3 m(t(i3,i42)) a72 i3
+answer dynamic3 3 m(t(i3,i42)) a72 i4
+answer dynamic3 3 m(t(i3,i42)) a72 i5
+answer dynamic3 3 m(t(i3,i42)) a72 f3ff0000000000000
+answer dynamic3 3 m(t(i3,i42)) a72 a6e6174697665
+answer dynamic3 3 m(t(i3,i42)) a72 i1267650600228229401496703205376
+answer dynamic3 3 m(t(i3,i42)) a72 i576460752303423487
+answer dynamic3 3 m(t(i3,i42)) i1 i-1
+answer dynamic3 3 m(t(i3,i42)) i1 i0
+answer dynamic3 3 m(t(i3,i42)) i1 i1
+answer dynamic3 3 m(t(i3,i42)) i1 i3
+answer dynamic3 3 m(t(i3,i42)) i1 i4
+answer dynamic3 3 m(t(i3,i42)) i1 i5
+answer dynamic3 3 m(t(i3,i42)) i1 f3ff0000000000000
+answer dynamic3 3 m(t(i3,i42)) i1 a6e6174697665
+answer dynamic3 3 m(t(i3,i42)) i1 i1267650600228229401496703205376
+answer dynamic3 3 m(t(i3,i42)) i1 i576460752303423487
+answer dynamic3 3 b1:80 a72 i-1
+answer dynamic3 3 b1:80 a72 i0
+answer dynamic3 3 b1:80 a72 i1
+answer dynamic3 3 b1:80 a72 i3
+answer dynamic3 3 b1:80 a72 i4
+answer dynamic3 3 b1:80 a72 i5
+answer dynamic3 3 b1:80 a72 f3ff0000000000000
+answer dynamic3 3 b1:80 a72 a6e6174697665
+answer dynamic3 3 b1:80 a72 i1267650600228229401496703205376
+answer dynamic3 3 b1:80 a72 i576460752303423487
+answer dynamic3 3 b1:80 i1 i-1
+answer dynamic3 3 b1:80 i1 i0
+answer dynamic3 3 b1:80 i1 i1
+answer dynamic3 3 b1:80 i1 i3
+answer dynamic3 3 b1:80 i1 i4
+answer dynamic3 3 b1:80 i1 i5
+answer dynamic3 3 b1:80 i1 f3ff0000000000000
+answer dynamic3 3 b1:80 i1 a6e6174697665
+answer dynamic3 3 b1:80 i1 i1267650600228229401496703205376
+answer dynamic3 3 b1:80 i1 i576460752303423487
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i-1
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i0
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i1
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i3
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i4
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i5
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 f3ff0000000000000
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 a6e6174697665
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i1267650600228229401496703205376
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) a72 i576460752303423487
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i-1
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i0
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i1
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i3
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i4
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i5
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 f3ff0000000000000
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 a6e6174697665
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i1267650600228229401496703205376
+answer dynamic3 3 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30))) i1 i576460752303423487
+client retain 1 tuple
+client retain 1 t(a72)
+client retain 1 t(a72,i1,i2,i3)
+client retain 1 t(a72,i1,i1,i1)
+client retain 1 t(a72,i2,i2,i2)
+client retain 1 t(a72,i1,i2)
+client retain 1 t(a6f74686572,i1,i2,i3)
+client retain 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+client retain 1 t(a656d707479)
+client retain 1 t(a656d707479,i1)
+client retain 1 i0
+client retain 1 f3ff0000000000000
+client retain 1 a61
+client retain 1 nil
+client retain 1 c(i1,nil)
+client retain 1 m(t(i3,i42))
+client retain 1 b1:80
+client retain 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))
+client nested 1 tuple
+client nested 1 t(a72)
+client nested 1 t(a72,i1,i2,i3)
+client nested 1 t(a72,i1,i1,i1)
+client nested 1 t(a72,i2,i2,i2)
+client nested 1 t(a72,i1,i2)
+client nested 1 t(a6f74686572,i1,i2,i3)
+client nested 1 t(a72,a61,c(i1,c(i2,nil)),m(t(a61,i1)))
+client nested 1 t(a656d707479)
+client nested 1 t(a656d707479,i1)
+client nested 1 i0
+client nested 1 f3ff0000000000000
+client nested 1 a61
+client nested 1 nil
+client nested 1 c(i1,nil)
+client nested 1 m(t(i3,i42))
+client nested 1 b1:80
+client nested 1 t(a6e72656332,a6e32,t(a6e72656331,a6e31,t(a6e72656330,a6e30)))

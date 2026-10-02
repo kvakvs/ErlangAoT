@@ -1,5 +1,6 @@
 #include "module_atoms.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/records.hpp"
 #include "../semantic/services.hpp"
 #include "../semantic/symbols.hpp"
 #include "lowering_state.hpp"
@@ -52,6 +53,20 @@ bool booleans(const ast::ExprValue &value) {
 }
 
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
+void record_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
+    const ast::RecordIdentity *identity = nullptr;
+    if (const auto *record = std::get_if<ast::RecordExpression>(&value)) {
+        identity = &record->identity;
+        result.insert("undefined");
+    } else if (const auto *access = std::get_if<ast::RecordAccess>(&value)) {
+        identity = &access->identity;
+    }
+    if (identity) {
+        result.insert(utf8(semantic::record_layout(module, *identity)->name.name));
+    }
+}
+
+// Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
     std::set<std::string> result;
     std::vector<ast::ExprId> pending;
@@ -62,6 +77,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
+        record_atoms(module, expression.value, result);
         if (booleans(expression.value)) {
             result.insert("true");
             result.insert("false");
@@ -69,7 +85,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
         if (const auto *atom = std::get_if<ast::Atom>(&expression.value)) {
             result.insert(utf8(atom->name));
         }
-        const auto children = semantic::expression_children(expression);
+        const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.begin(), children.end());
     }
     return result;

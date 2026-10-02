@@ -9,6 +9,8 @@ struct ExpressionCapability {
     // Retain the expression identity and target width for checked literal decoding.
     ast::ExprId id;
     unsigned word_bits;
+    // Record declarations determine whether ordinary tuple lowering is authorized.
+    const Module &module;
 
     // Empty reasons denote supported syntax; nonempty reasons identify deferred families.
     std::string_view operator()(const ast::Variable &) const { return {}; }
@@ -41,11 +43,11 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::MapExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::RecordExpression &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::RecordExpression &) const;
 
-    std::string_view operator()(const ast::RecordAccess &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::RecordAccess &) const;
 
-    std::string_view operator()(const ast::RecordIndex &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::RecordIndex &) const;
 
     std::string_view operator()(const ast::BlockExpression &) const { return "pattern matching"; }
 

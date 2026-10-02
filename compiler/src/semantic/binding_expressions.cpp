@@ -1,4 +1,5 @@
 #include "binding_state.hpp"
+#include "capabilities.hpp"
 #include "pattern_state.hpp"
 #include <cstdint>
 
@@ -35,8 +36,11 @@ void finish_sibling(BindingEnvironment &environment, SiblingScope &scope) {
 }
 
 // Sequence nodes export immediately; ordinary sibling operands export together after all are analyzed.
-void schedule_children(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
-    const auto children = binding_children(value);
+void schedule_children(const Module &module, const ast::ExprId &id, const ast::ExprValue &value,
+                       std::vector<Visit> &pending) {
+    const auto children = std::holds_alternative<ast::RecordExpression>(value)
+                              ? expression_children(module, module.syntax->expression(id))
+                              : binding_children(value);
     const bool siblings = children.size() > 1 && !std::holds_alternative<ast::BlockExpression>(value);
     if (siblings) {
         pending.push_back({id, Action::siblings_exit});
@@ -105,7 +109,9 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, BindingEnvironmen
     }
     BindingCandidate scope{environment, {}};
     state.read(id, scope, context);
-    schedule_children(id, value, pending);
+    if (state.work <= state.limit) {
+        schedule_children(state.module, id, value, pending);
+    }
 }
 
 // Charge copied scope entries as well as nodes so wide nested scopes cannot evade the shared budget.

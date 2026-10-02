@@ -12,6 +12,7 @@ main([Root]) ->
         catch error:{badmatch,Value} -> io:format("error:badmatch:~s~n", [token(Value)]);
               error:{badarg,Value} -> io:format("error:badarg_value:~s~n", [token(Value)]);
               error:{badmap,Value} -> io:format("error:badmap:~s~n", [token(Value)]);
+              error:{badrecord,Value} -> io:format("error:badrecord:~s~n", [token(Value)]);
               error:{badkey,Value} -> io:format("error:badkey:~s~n", [token(Value)]);
               error:Reason -> io:format("error:~p~n", [Reason]) end
     end, Calls).

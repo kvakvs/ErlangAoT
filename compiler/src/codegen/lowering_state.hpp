@@ -30,6 +30,8 @@ struct ExpressionLowering {
     llvm::BasicBlock *bad_argument = nullptr;
     // Arithmetic operand failures share a body error exit while guards retain their rejection edge.
     llvm::BasicBlock *bad_arithmetic = nullptr;
+    // Capture each evaluated record field immediately, including repeated wildcard/default source nodes.
+    std::map<const ast::Expression *, std::vector<llvm::Value *>> record_values = {};
 };
 
 // Branch to the shared failure exit before consuming a fallible service result.
@@ -98,6 +100,13 @@ llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchN
                                llvm::BasicBlock *mismatch);
 // Construct tuple/list/string expression values after their source-ordered children have completed.
 llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value);
+// Share rooted tuple construction with ordinary record expansion.
+llvm::Value *lower_tuple(ExpressionLowering &state, std::span<llvm::Value *const> values);
+// Lower record values/access/indices using tuple shape and checked element services.
+llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
+// Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.
+llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression &expression,
+                               const ast::CallExpression &call);
 // Check candidate ownership/shape before extracting a rooted child; mismatch belongs to the pattern caller.
 llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspection operation, llvm::Value *value,
                               std::size_t index, llvm::BasicBlock *mismatch);
