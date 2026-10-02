@@ -69,6 +69,9 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
         return call->arguments;
     }
+    if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
+        return {match->right};
+    }
     if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
         return {binary->left, binary->right};
     }

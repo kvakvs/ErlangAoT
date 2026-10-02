@@ -21,8 +21,11 @@ void candidate(ExpressionLowering &state, const ast::FunctionClause &clause, llv
         }
         state.builder.SetInsertPoint(success);
     }
-    auto *result = lower_body(state, clause.body.at(0));
-    locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(clause.body.at(0)).source);
+    llvm::Value *result = nullptr;
+    for (const auto &expression : clause.body) {
+        result = lower_body(state, expression);
+    }
+    locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(clause.body.back()).source);
     state.builder.CreateRet(result);
 }
 } // namespace

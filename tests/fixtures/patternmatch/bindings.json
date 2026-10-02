@@ -35,7 +35,7 @@
     "name": "body_match",
     "arity": 1,
     "body": "f(X) -> Y = X, Y.",
-    "capability": "pattern matching",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -43,7 +43,7 @@
     "name": "chain",
     "arity": 0,
     "body": "f() -> X = Y = 1, {X, Y}.",
-    "capability": "pattern matching",
+    "capability": "heap expressions",
     "diagnostic": "",
     "otp_diagnostic": ""
   },
@@ -51,7 +51,7 @@
     "name": "rebind",
     "arity": 1,
     "body": "f(X) -> X = 1, X.",
-    "capability": "pattern matching",
+    "capability": "",
     "diagnostic": "",
     "otp_diagnostic": ""
   },

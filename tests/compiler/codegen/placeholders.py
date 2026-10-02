@@ -17,7 +17,6 @@ CASES = {
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
     "send expressions": "f(X) -> X ! 1.",
-    "expression sequences": "f() -> 1, 2.",
 }
 
 

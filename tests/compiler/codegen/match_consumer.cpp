@@ -66,9 +66,10 @@ void print(const CallResult<Term> &result) {
     }
     require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
     const auto reason = result.error().reason;
-    if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value) {
-        require(result.error().value.has_value(), "missing badarg payload");
-        std::cout << "error:badarg_value:";
+    if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value ||
+        reason == erlang_aot::abi::v1::ErrorReason::badmatch) {
+        require(result.error().value.has_value(), "missing error payload");
+        std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badmatch ? "error:badmatch:" : "error:badarg_value:");
         print_value(*result.error().value);
         return;
     }

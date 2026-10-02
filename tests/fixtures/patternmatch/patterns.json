@@ -229,7 +229,7 @@
     "body": "f(V) -> X = Y = V, {X,Y}.",
     "diagnostic": "",
     "otp_diagnostic": "",
-    "capability": "pattern matching"
+    "capability": "heap expressions"
   },
   {
     "name": "pat_nested_call",

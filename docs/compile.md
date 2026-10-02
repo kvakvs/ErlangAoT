@@ -1,4 +1,4 @@
-Current executable slice (pattern/guard steps 6–9): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). [Ordered clauses](ordered-clauses.md) select candidates in source order; body matches and nonempty containers remain deferred.
+Current executable slice (pattern/guard steps 6–10): immediate heads, grouped guards, predicates/comparisons/queries and strict/lazy boolean expressions use [checked matching](immediate-matching.md), [immediate services](immediate-guards.md) and [guard control flow](guard-control-flow.md). [Ordered clauses](ordered-clauses.md) select candidates in source order; [body matches and sequences](body-matches.md) execute on immediates; nonempty containers remain deferred.
 
 # LLVM compilation contract
 
@@ -15,8 +15,8 @@ registers modules explicitly and executes decoded values at O0/O2. See the
 [current validation inventory](compile-validation.md).
 
 The supported subset is named modules/exports, ordered clauses with immediate literal, repeated-variable, alias
-or wildcard parameters, and one expression containing a tagged-small integer, atom/boolean/empty literal,
-parameter reference, or resolved local/literal remote call within the compilation
+or wildcard parameters, and body sequences containing matches, tagged-small integers, atom/boolean/empty literals,
+binding reads, or resolved local/literal remote calls within the compilation
 batch. Negative literals, nested calls and the immediate services/comparisons are supported; comma/semicolon guards and strict/lazy boolean expressions are executable, with canonical-true guard boundaries. Remote calls
 require exports; recursive call graphs fail. Unsupported syntax is rejected even
 in unused functions. Syntax-only checking supports the wider OTP grammar.
@@ -176,7 +176,7 @@ remain pending.
 ## Frozen executable subset
 
 Accept ordinary named modules with exports and ordered function clauses. Parameters
-are variables, wildcards, aliases or small-integer/atom/empty-value constraints. Repeated names require exact equality; exhausted matching raises function_clause. Each body is one expression made
+are variables, wildcards, aliases or small-integer/atom/empty-value constraints. Repeated names require exact equality; exhausted matching raises function_clause. Each body is a sequence with immediate matches and expressions made
 from small signed integer/atom/boolean literals, named parameter references and direct local or
 literal remote calls within the same compilation batch, with nested arguments.
 Calls evaluate arguments in source order. Remote calls require exported functions;
@@ -192,7 +192,7 @@ identity(X) -> X.
 A second module may call `answer:identity(answer:value())`; it must compile in the
 same batch to a separate object. Negative literal syntax does not enable unary
 arithmetic. Atom/boolean literals use runtime-owned bindings. Exclude bignums, arithmetic, heap-term construction,
-nonempty-container/body patterns, unavailable guard services, closures, dynamic calls, recursion,
+nonempty-container patterns, unavailable guard services, closures, dynamic calls, recursion,
 exceptions, receive, concurrency and code loading. Handle file/module/export and
 all existing type/spec AST forms explicitly. The initial inert metadata allowlist
 is `author`, `vsn`, `doc` and `moduledoc`; reject other attributes, including

@@ -1,4 +1,5 @@
 #pragma once
+#include "../semantic/match_plan.hpp"
 #include "lowering_expressions.hpp"
 #include <erlang_aot/abi/calls.hpp>
 #include <map>
@@ -36,7 +37,12 @@ llvm::Value *lower_exact(ExpressionLowering &state, llvm::Value *left, llvm::Val
 void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::BasicBlock *mismatch);
 // Preserve compact projection/direct-call IR when the normalized plan has no rejection tests.
 bool lower_unconditional_head(ExpressionLowering &state);
-// Raise single-clause exhaustion using the existing checked generated-call contract.
+// Lower the reusable matcher against caller-supplied values and selection continuations.
+void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan, std::span<llvm::Value *const> values,
+                      llvm::BasicBlock *success, llvm::BasicBlock *mismatch);
+// Match an already evaluated RHS, publishing new bindings only along the successful continuation.
+llvm::Value *lower_body_match(ExpressionLowering &state, const ast::MatchExpression &match);
+// Raise clause exhaustion using the existing checked generated-call contract.
 void raise_function_clause(ExpressionLowering &state);
 // Raise a typed Erlang error; payload ownership remains with the existing checked service.
 void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload = nullptr);

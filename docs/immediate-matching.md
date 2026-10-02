@@ -30,4 +30,4 @@ execution and 32/64-bit object/IR checks are recorded separately in
 [step-6 validation](patternmatch-step6-validation.md). Unconditional variable
 heads keep compact projection/direct-call IR without extra matching blocks.
 
-[Steps 7–8](guard-control-flow.md) now execute immediate guard services and grouped/boolean guards after a successful head. [Step 9](ordered-clauses.md) adds ordered clause selection. Body matches remain deferred.
+[Steps 7–8](guard-control-flow.md) now execute immediate guard services and grouped/boolean guards after a successful head. [Step 9](ordered-clauses.md) adds ordered clause selection. [Step 10](body-matches.md) adds immediate body matches and sequences.

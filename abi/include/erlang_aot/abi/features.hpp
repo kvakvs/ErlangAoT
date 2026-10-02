@@ -225,9 +225,9 @@ inline constexpr std::array feature_catalog{
                 .name = "expression sequences",
                 .owner = FeatureOwner::compiler,
                 .boundary = "sequence lowering",
-                .status = FeatureStatus::deferred,
-                .plan_step = 17,
-                .failure_test = "frontend_cli"},
+                .status = FeatureStatus::implemented,
+                .plan_step = 10,
+                .failure_test = "patternmatch_sequences"},
 
 };
 

@@ -118,3 +118,7 @@ The step-6 task-start fetch still matches upstream, clean checkout and pin `2177
 ## Pattern/guard step 9 check (2026-10-02)
 
 Re-fetched official maint-29; upstream, clean checkout and pin remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/source hashes are unchanged; installed oracle remains OTP 29.1.1 / ERTS 17.1. [Step-9 validation](patternmatch-step9-validation.md) records complete guard fallback helpers, 1,020 native/OTP calls, ordered dispatch/isolation, all-clause inference and diagnostics, 121/121 Windows Debug tests and full 208-unit Lizard/clang-tidy. Historical evidence is preserved.
+
+## Pattern/guard step 10 check (2026-10-02)
+
+The task-start maint-29 fetch still matches upstream, clean checkout and pin `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/source hashes remain unchanged; installed oracle is OTP 29.1.1 / ERTS 17.1. [Step-10 validation](patternmatch-step10-validation.md) records 1,666 native/OTP sequence/match calls, structured badmatch payloads, single-evaluation/fault/cleanup tests, 122/122 Windows Debug tests and full 209-unit Lizard/clang-tidy. Pattern fixture capability expectations and their manifest were reviewed for the newly admitted immediate body matches; historical evidence is unchanged.

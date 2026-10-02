@@ -9,7 +9,8 @@ main([Root]) ->
     lists:foreach(fun({Module, Function, Arguments}) ->
         try apply(Module, Function, Arguments) of
             Value -> io:format("~s~n", [token(Value)])
-        catch error:{badarg,Value} -> io:format("error:badarg_value:~s~n", [token(Value)]);
+        catch error:{badmatch,Value} -> io:format("error:badmatch:~s~n", [token(Value)]);
+              error:{badarg,Value} -> io:format("error:badarg_value:~s~n", [token(Value)]);
               error:Reason -> io:format("error:~p~n", [Reason]) end
     end, Calls).
 

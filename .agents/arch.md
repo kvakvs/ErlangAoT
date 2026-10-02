@@ -32,11 +32,11 @@
   normalization owns constants/source anchors; semantic failure clears partial tables.
 
 - Current execution: ordered clauses, immediate variable/wildcard/literal/repeated/alias
-  heads, grouped guards, and one body expression using integer/atom/empty literals,
+  heads, grouped guards, and body matches/sequences using integer/atom/empty literals,
   bindings, immediate services, boolean operators or acyclic local/exported batch
   calls. Flat match plans carry explicit success/mismatch continuations and tentative
   SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
-  raises function_clause. Unconditional heads retain compact projection IR.
+  raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain compact projection IR.
 
 - Guard authorization uses the pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

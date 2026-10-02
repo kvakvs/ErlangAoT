@@ -221,6 +221,7 @@ Delivered for the admitted immediate domain by [patternmatch step 9](../docs/pat
 Meaning: execute several expressions and source branching rather than one
 literal, parameter reference or direct call per function body.
 
+- [x] Immediate body sequences and matches, including chained RHS-first semantics, exact rebinding checks and owned badmatch payloads: [patternmatch step 10](../docs/patternmatch-step10-validation.md). Other control contexts remain open.
 - [ ] Inventory parsed constructs and select slices: sequences, matches, blocks,
   case/if, boolean control flow, then any chosen maybe/comprehension forms.
 - [ ] Define scope, evaluation order and failure per slice; implement semantic

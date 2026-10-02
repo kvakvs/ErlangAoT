@@ -45,6 +45,9 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     if (const auto *group = std::get_if<ast::Group>(&syntax.expression(id).value)) {
         return inference.expressions.at(&syntax.expression(group->expression));
     }
+    if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
+        return inference.expressions.at(&syntax.expression(match->right));
+    }
     return leaf(inference, function, id);
 }
 

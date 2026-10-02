@@ -63,17 +63,17 @@ void expressions(const Module &module, const Function &function, std::vector<ast
         if (integer_literal(*module.syntax, id, bits)) {
             continue;
         }
+        if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
+            (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
+        }
         const auto children = expression_children(expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }
 }
 
-// Sequences remain deferred; every body child still gets located capability analysis.
+// Every ordered body expression gets located capability analysis before any publication.
 void body(const Module &module, const Function &function, const ast::FunctionClause &clause, const Reporter &out,
           const unsigned bits) {
-    if (clause.body.size() != 1) {
-        unsupported(module, clause.source, "expression sequences", out);
-    }
     expressions(module, function, clause.body, out, bits);
 }
 

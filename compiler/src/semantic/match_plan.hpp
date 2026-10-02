@@ -33,6 +33,9 @@ struct MatchOptions {
     std::size_t work_limit = 100'000;
 };
 
+// Build a one-input body pattern with existing bindings preserved as exact constraints.
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const ast::ExprId &pattern,
+                                         const Reporter &out, MatchOptions options = {});
 // Consume normalized semantics and binding events within explicit node/work ceilings.
 std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
                                          MatchOptions options = {});

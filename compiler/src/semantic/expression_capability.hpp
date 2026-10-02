@@ -39,7 +39,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::Bitstring &) const { return "heap expressions"; }
 
-    std::string_view operator()(const ast::MatchExpression &) const { return "pattern matching"; }
+    std::string_view operator()(const ast::MatchExpression &) const { return {}; }
 
     std::string_view operator()(const ast::CatchExpression &) const { return "exceptions"; }
 

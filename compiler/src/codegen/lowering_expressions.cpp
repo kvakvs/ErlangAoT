@@ -57,21 +57,28 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
     return *value;
 }
 
+// Keep resolved runtime services and generated calls on their existing checked boundaries.
+llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
+    const auto service = state.function.services.find(&expression);
+    if (service != state.function.services.end()) {
+        auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
+        auto *right =
+            call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
+        return lower_immediate(state, operation(service->second.operation), left, right);
+    }
+    return lower_call(state, expression, call);
+}
+
 } // namespace
 
 llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
     locate_source(state.builder, *state.module.syntax, expression.source);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
-        const auto service = state.function.services.find(&expression);
-        if (service != state.function.services.end()) {
-            auto *left = state.values.at(&state.module.syntax->expression(call->arguments.at(0)));
-            auto *right = call->arguments.size() == 2
-                              ? state.values.at(&state.module.syntax->expression(call->arguments[1]))
-                              : nullptr;
-            return lower_immediate(state, operation(service->second.operation), left, right);
-        }
-        return lower_call(state, expression, *call);
+        return call_value(state, expression, *call);
+    }
+    if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
+        return lower_body_match(state, *match);
     }
     if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
         return lower_immediate(state, operation(semantic::immediate_operator(binary->operation)),

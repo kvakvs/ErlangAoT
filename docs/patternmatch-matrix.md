@@ -3,8 +3,8 @@
 This is the acceptance and implementation boundary for
 [steps 1–20](../.agents/10-patternmatch.md). Step numbers below refer to that plan.
 The executable slice supports ordered clauses with immediate literal, repeated-variable,
-alias or wildcard patterns and a single small-integer/atom/empty literal,
-binding-read or direct-call body expression. [Step 6](immediate-matching.md)
+alias or wildcard patterns and sequences of small-integer/atom/empty literals,
+binding reads, matches or direct calls. [Step 6](immediate-matching.md)
 implements immediate head matching; [step 7](immediate-guards.md) adds immediate predicates/comparisons/queries; [step 8](guard-control-flow.md) adds grouped guards and strict/lazy operators. [Step 9](ordered-clauses.md) adds ordered function clauses; later representations remain pending.
 [Step 3](runtime-atoms.md) adds owned atoms.
 [Step 4](scoped-bindings.md) adds clause-local binding analysis and conservative
@@ -43,7 +43,7 @@ distinct from ordinary mismatch or a reached guard argument error (steps 2/11).
 | Context | Binding and execution rule | Owner | Rejection expectation |
 | --- | --- | --- | --- |
 | Function clause heads plus their guards | Try heads in source order; candidate bindings feed only its guard/body; failed candidates discard them | 4–9 | Capability until implemented; exhaustion becomes `error:function_clause` (2/6/9) |
-| Body match expressions and sequences | Evaluate RHS once, right-to-left chained matches; commit bindings on success; match returns RHS | 4/5/6/10 | Capability until implemented; mismatch becomes `error:{badmatch,RHS}` (2/10/11) |
+| Body match expressions and sequences | Evaluate RHS once, right-to-left chained matches; commit bindings on success; match returns RHS | 4/5/6/10 | Implemented for immediates by step 10; mismatch raises `error:{badmatch,RHS}`. Heap payload roots extend this in 11–12 |
 | `case`/`if`/`maybe`, comprehensions | Additional pattern/guard contexts are outside this plan | F16 | Capability; no execution claim from parsing |
 | `catch`/`try`, catch patterns/guards | Structured exception handling beyond propagation is outside this plan | F20 | Capability |
 | Anonymous/named fun clauses | Function values and captured environments are outside this plan | F18 | Capability |

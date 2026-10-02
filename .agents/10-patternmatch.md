@@ -1,8 +1,8 @@
 # F13 Pattern matching and F14 Guards — implementation plan
 
 Created 2026-10-01 from [the feature backlog](01-todo.md). Necessary
-prerequisites are included below in implementation order. Steps 1–9 are
-complete; steps 10–20 remain incomplete. Completion evidence is linked under each
+prerequisites are included below in implementation order. Steps 1–10 are
+complete; steps 11–20 remain incomplete. Completion evidence is linked under each
 finished step.
 
 Each completed step should end with a commit, commit title will be "[compiler]
@@ -16,7 +16,7 @@ records. Include only the runtime construction, checked access, comparison,
 ownership and failure services these forms need. Ordered function clauses and
 body sequences/matches are the required F15/F16 slices.
 
-Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in ordered-clause/one-expression functions. The parser retains broader syntax; heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
+Completed steps currently execute immediate patterns and grouped/boolean guards with checked predicates, comparisons and queries in ordered-clause functions with body matches/sequences. The parser retains broader syntax; heap construction, general equality and later BIF families await their planned steps. The steps below replace these gaps in one sequence; there is no
 separate prerequisite plan.
 
 Other source contexts and runtime features remain in the backlog: case/if,
@@ -446,29 +446,29 @@ and 8.
 
 ### 10. Integrate body matches and sequences (F16 slice)
 
-- [ ] Add ordered body sequences and expression matches using the same matcher.
+- [x] Add ordered body sequences and expression matches using the same matcher.
   Evaluate the RHS once; matching returns that value and commits successful new
   bindings. Existing bindings are equality constraints, never assignments.
-  - [ ] Lower sequence expressions in order, checking fallible operations before
+  - [x] Lower sequence expressions in order, checking fallible operations before
     advancing; return the final expression's value and carry successful
     bindings.
-  - [ ] Save the RHS value once, invoke the match plan with the current
+  - [x] Save the RHS value once, invoke the match plan with the current
     environment, and publish only new bindings on success while returning the
     saved value.
-- [ ] Preserve right-to-left chained match semantics and distinguish
+- [x] Preserve right-to-left chained match semantics and distinguish
   parenthesized compound patterns. Propagate bindings made by the RHS according
   to OTP scope.
-  - [ ] Follow normalized expression/pattern categories for chained and compound
+  - [x] Follow normalized expression/pattern categories for chained and compound
     matches; lower inner RHS matches before their enclosing expression match.
-  - [ ] Add paired source fixtures for chains and aliases, including RHS-created
+  - [x] Add paired source fixtures for chains and aliases, including RHS-created
     bindings and conflicts with already-bound names; compare legality and
     execution.
-- [ ] Route body mismatch to `badmatch` with the RHS value; stop subsequent
+- [x] Route body mismatch to `badmatch` with the RHS value; stop subsequent
   expressions and propagate failure through generated callers.
-  - [ ] Supply a body-specific mismatch continuation that records the saved RHS
+  - [x] Supply a body-specific mismatch continuation that records the saved RHS
     in step 2's error contract; keep heap payload admission deferred until roots
     exist.
-  - [ ] Place a distinguishable failing call after a failed match and verify the
+  - [x] Place a distinguishable failing call after a failed match and verify the
     original `badmatch` survives nested callers; also test success and later
     retry.
 
@@ -480,6 +480,8 @@ lifetime. Record sequences/matches as the specific F16 contribution.
 **Tests:** Compile selected/adapted `match_SUITE.erl` helpers for `Y = X, Y`,
 rebinding, chained matches and mismatch. Compare values/reasons and show that a
 later failing call is not reached after an earlier failed match.
+
+**Completed 2026-10-02:** [Body matches and sequences](../docs/body-matches.md) reuse normalized matching with one saved RHS, exact existing-name constraints and success-only bindings. Chained RHS matches precede outer patterns; body mismatch retains the RHS in badmatch and stops later work/nested callers. 1,666 OTP/native calls in four policies and both CLI modes cover aliases, rebinding, RHS scopes, 128-match sequences/chains, wrong specs and first-failure recovery; real service counts prove single evaluation and skipped later work. Fresh Windows x64 Debug: 122/122 CTests, zero skips, full 209-unit Lizard/clang-tidy. See [validation](../docs/patternmatch-step10-validation.md). Heap roots and compound payloads remain steps 11–12; steps 11–20 remain open.
 
 ### 11. Implement rooted, bounded heap construction (F02/F03 slice)
 

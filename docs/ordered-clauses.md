@@ -20,6 +20,5 @@ candidate returns that same original argument. Source specifications never
 narrow these facts, and unreachable bodies are still validated and included in
 the conservative summary.
 
-This delivers F15 for the admitted immediate pattern/guard domain. Body sequences,
-nonempty containers and recursive execution keep their separately owned gates.
+This delivers F15 for the admitted immediate pattern/guard domain. [Body sequences and matches](body-matches.md) are delivered by step 10; nonempty containers and recursive execution retain their separately owned gates.
 Executable evidence is recorded in [step 9 validation](patternmatch-step9-validation.md).

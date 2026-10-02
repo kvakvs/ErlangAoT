@@ -1,8 +1,10 @@
 #include "match_plan.hpp"
 #include "capabilities.hpp"
 #include "features.hpp"
+#include <array>
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
+#include <span>
 
 namespace erlang_aot::semantic {
 namespace {
@@ -147,21 +149,17 @@ void finish(MatchPlan &plan, const ast::ExprId &site) {
     plan.nodes.push_back({site, MatchOperation::success, 0});
     plan.nodes.push_back({site, MatchOperation::mismatch, 0});
 }
-} // namespace
 
-std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
-                                         MatchOptions options) {
-    const auto &syntax = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(options.clause);
-    const auto site = syntax.body.at(0);
+// Share bounded normalization consumption between function heads and body matches.
+std::optional<MatchPlan> build_plan(const Module &module, const Function &function, std::span<const ast::ExprId> roots,
+                                    const ast::ExprId &site, const Reporter &out, MatchOptions options) {
     const auto limit = options.work_limit;
-    Planner state{module, out, options.word_bits, {}, {}, {syntax.arguments.size(), {}, {}}, 0, limit};
+    Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}}, 0, limit};
     if (!index(state, function, site)) {
         return {};
     }
-    for (std::size_t input = 0; input < syntax.arguments.size(); ++input) {
-        const auto root = std::visit([](const auto &p) { return p.expression; },
-                                     module.syntax->pattern(syntax.arguments[input]).value);
-        if (!argument(state, root, input)) {
+    for (std::size_t input = 0; input < roots.size(); ++input) {
+        if (!argument(state, roots[input], input)) {
             return {};
         }
     }
@@ -171,5 +169,22 @@ std::optional<MatchPlan> make_match_plan(const Module &module, const Function &f
     }
     finish(state.plan, site);
     return std::move(state.plan);
+}
+} // namespace
+
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
+                                         MatchOptions options) {
+    const auto &syntax = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(options.clause);
+    std::vector<ast::ExprId> roots;
+    roots.reserve(syntax.arguments.size());
+    for (const auto &argument : syntax.arguments) {
+        roots.push_back(std::visit([](const auto &p) { return p.expression; }, module.syntax->pattern(argument).value));
+    }
+    return build_plan(module, function, roots, syntax.body.at(0), out, options);
+}
+
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const ast::ExprId &pattern,
+                                         const Reporter &out, MatchOptions options) {
+    return build_plan(module, function, std::array{pattern}, pattern, out, options);
 }
 } // namespace erlang_aot::semantic

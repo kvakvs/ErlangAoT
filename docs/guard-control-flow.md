@@ -1,7 +1,7 @@
 # Guard grouping and boolean control flow
 
 Pattern/guard step 8 executes guard grouping and boolean operators in the current
-single-body-expression subset. Step 7 still authorizes every operand
+immediate expression subset. [Step 10](body-matches.md) adds body matches and sequences. Step 7 still authorizes every operand
 before lowering, including skipped operands. [Step 9](ordered-clauses.md) adds ordered clause fallback.
 
 Commas conjoin tests in source order. Each test must return canonical `true`; false

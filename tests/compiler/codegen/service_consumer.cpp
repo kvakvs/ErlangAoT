@@ -94,6 +94,22 @@ void boolean_failures(ProcessContext &context) {
     predicate_only = false;
 }
 
+// Count real services to prove a matched RHS runs once and a failed match skips later body work.
+void body_matches(ProcessContext &context) {
+    const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
+    calls = 0;
+    const auto once =
+        context.code_server().resolve({"service_answer", "match_once", 1}).value().call(context, arguments);
+    require(once && once->atom_spelling() == "true" && calls == 1, "matched RHS was not evaluated exactly once");
+    calls = 0;
+    const auto failed =
+        context.code_server().resolve({"service_answer", "match_stop", 1}).value().call(context, arguments);
+    require(!failed && failed.error().reason == abi::v1::ErrorReason::badmatch && calls == 1,
+            "body mismatch ran later services or lost its reason");
+    require(failed.error().value && failed.error().value->atom_spelling() == "true", "badmatch lost the RHS atom");
+    failures(context, "service_answer", "match_once");
+}
+
 // Guard argument errors are channel-free; malformed/foreign service words are infrastructure failures.
 void checked_arguments(ProcessContext &context) {
     auto other = Runtime::start().value();
@@ -141,6 +157,7 @@ int main() {
         head_mismatch(context);
         registration(context);
         boolean_failures(context);
+        body_matches(context);
         checked_arguments(context);
         return 0;
     } catch (const std::exception &error) {
