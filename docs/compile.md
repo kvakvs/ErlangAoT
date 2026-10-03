@@ -24,6 +24,8 @@ ordinary `record`, type/spec forms, `doc`/`moduledoc`, `author`, `vsn`,
 `copyright`, `deprecated`, `-compile({no_auto_import, ...})` and `-import` of
 `erlang` guard BIFs. Other attributes (`on_load`, parse transforms, other
 `compile` options, parameterized modules) are rejected.
+Sources starting with `#!` follow [escript rules](executables.md#escripts)
+(implicit module and `main/1` export, `-mode` accepted).
 Type/spec forms are analyzed but never change generated code. Syntax-only modes
 (`--parse-check`, `--print-ast`, ...) accept the full grammar.
 

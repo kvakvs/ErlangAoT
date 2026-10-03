@@ -24,6 +24,8 @@ struct CompilationInput {
     ~CompilationInput() = default;
     // Preserve the original native filename for diagnostics and future artifact planning.
     std::filesystem::path source_path;
+    // Mark sources that began with a "#!" escript header (implicit main/1 export, escript exit codes).
+    bool escript = false;
     // Retain immutable syntax and its source provenance beyond the parsing session.
     ast::Module syntax;
 };

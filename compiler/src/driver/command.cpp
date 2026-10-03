@@ -41,6 +41,7 @@ Only --emit writes module artifacts (default root: build/aot); native executable
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output reports [executable linking] notimpl.
 Without --entry, --output uses the only module exporting main/1; the entry receives argv strings.
+A source whose first line starts with #! is an escript: implicit -module and main/1 export.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.
 Type inspection accepts preprocessing/project/verbosity options; it rejects other actions and backend policy.
 Type reports describe conservative analysis and are not an intermediate stage input format.

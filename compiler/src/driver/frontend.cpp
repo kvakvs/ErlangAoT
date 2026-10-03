@@ -2,6 +2,7 @@
 #include "../codegen/limits.hpp"
 #include "../codegen/request.hpp"
 #include "backend.hpp"
+#include "escript.hpp"
 #include "options.hpp"
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
@@ -84,16 +85,38 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     return false;
 }
 
+// Read a source, rewriting a "#!" escript header and warning about ignored emulator arguments.
+SourcePtr read_source(SourceManager &sources, const std::filesystem::path &path, const DiagnosticSink &sink,
+                      bool &escript) {
+    auto source = sources.read(path);
+    const auto rewritten = escript_source(path, source->bytes);
+    escript = rewritten.has_value();
+    if (!rewritten) {
+        return source;
+    }
+    if (rewritten->emulator_arguments) {
+        sink("warning: " + filename(path) + ":" + std::to_string(*rewritten->emulator_arguments) +
+             ":1: escript emulator arguments (%%!) are ignored by compiled executables");
+    }
+    return sources.add(source->name, rewritten->bytes);
+}
+
 // Keep source ownership and all mutable frontend state local to one file.
 bool process_module(const std::filesystem::path &path, const FrontendRequest &request, const DiagnosticSink &sink,
                     Inputs &inputs) {
     SourceManager sources;
-    const auto source = sources.read(path);
+    bool escript = false;
+    const auto source = read_source(sources, path, sink, escript);
     trace_ingestion(request.verbose, "pp", path);
     PreprocessorSession session(source, preprocessing_options(request));
     if (request.parse_check || request.print_ast || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
-        return parse_and_print(session, request, sink, path, inputs);
+        const auto before = inputs.size();
+        const bool failed = parse_and_print(session, request, sink, path, inputs);
+        if (inputs.size() > before) {
+            inputs.back().escript = escript;
+        }
+        return failed;
     }
     while (const auto event = session.next()) {
         if (const auto *diagnostic = std::get_if<Diagnostic>(&*event)) {

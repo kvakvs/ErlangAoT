@@ -1,4 +1,5 @@
 #include "entry.hpp"
+#include <algorithm>
 #include <erlang_aot/compiler/source.hpp>
 
 namespace erlang_aot::cli {
@@ -66,22 +67,28 @@ std::optional<ResolvedEntry> check_selected(Modules modules, const project::Sele
     if (!check_function(*modules[*index], selected.name, report)) {
         return std::nullopt;
     }
-    return ResolvedEntry{*index, {selected.name.function, 1}};
+    return ResolvedEntry{*index, {selected.name.function, 1}, modules[*index]->escript};
 }
 
-// Pick the only module exporting main/1 when no entry was selected.
+// Report whether a module can serve as the default entry: escripts first, then main/1 exporters.
+bool candidate(const semantic::Module &module, const bool escripts) {
+    const auto found = module.lookup.find({U"main", 1});
+    return module.escript == escripts && found != module.lookup.end() && module.functions[found->second].exported;
+}
+
+// Pick the only escript, else the only module exporting main/1, when no entry was selected.
 std::optional<ResolvedEntry> detect(Modules modules, const DiagnosticSink &sink) {
+    const bool escripts = std::ranges::any_of(modules, [](const auto &module) { return module->escript; });
     std::vector<std::size_t> candidates;
     std::string names;
     for (std::size_t index = 0; index < modules.size(); ++index) {
-        const auto found = modules[index]->lookup.find({U"main", 1});
-        if (found != modules[index]->lookup.end() && modules[index]->functions[found->second].exported) {
+        if (candidate(*modules[index], escripts)) {
             names += (candidates.empty() ? "" : ", ") + utf8(modules[index]->name);
             candidates.push_back(index);
         }
     }
     if (candidates.size() == 1) {
-        return ResolvedEntry{candidates.front(), {U"main", 1}};
+        return ResolvedEntry{candidates.front(), {U"main", 1}, escripts};
     }
     sink(candidates.empty()
              ? "error: no entry point: no module exports main/1" + std::string(selection_hint)

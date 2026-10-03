@@ -12,7 +12,7 @@ The entry is an exported function of arity 1 that receives the argument list.
 | --- | --- | --- |
 | CLI | `--entry MODULE[:FUNCTION]` | Positional batch, or the single selected project target |
 | Manifest | `entry = "MODULE[:FUNCTION]"` in a `[[targets]]` table | That target |
-| Default | Only module exporting `main/1` | Only when an executable is requested |
+| Default | Only escript, else only module exporting `main/1` | Only when an executable is requested |
 
 - `FUNCTION` defaults to `main`. Names are unquoted atom text: 1–255 Unicode
   scalars, valid UTF-8, no control characters and no `:`. Other spellings are
@@ -71,10 +71,36 @@ further, as with OTP's `halt/1` after `escript` returns.
   later followed by stack frames (step 15). Its exact text is not a stable
   interface; tests match it by pattern.
 
+## Escripts
+
+A source file whose first line starts with `#!` is compiled as an escript, in
+any mode and with any file name (positional inputs or project `.erl` files).
+Rules follow OTP 29 `escript` for source scripts:
+
+- The `#!` line is ignored. An optional comment on line 2 and a `%%!` emulator
+  line (line 2, or line 3 after the comment) are comments; `%%!` arguments
+  cannot apply to compiled code and produce a warning.
+- If the first form is not `-module(...)`, the module is
+  `<file name with '.' replaced by '_'>__escript` (`?MODULE` included). OTP adds
+  a timestamp/unique suffix; ErlangAoT keeps the name deterministic. The
+  synthesized declaration occupies line 1, so later line numbers are unchanged.
+- `main/1` is required (`escript does not define main/1`) and implicitly
+  exported; other functions follow normal export rules.
+- `-mode(compile | interpret | debug | native)` is accepted and ignored; other
+  values are errors. Outside escripts `-mode` stays unsupported.
+- Entry: without `--entry`, the only escript in the batch is the entry (it wins
+  over modules exporting `main/1`); several escripts are ambiguous.
+- Exit status as OTP `escript`: an exception escaping the escript entry exits
+  127 with `escript: exception <class>: <reason>` on stderr; other rows of the
+  exit-status table apply unchanged.
+- Files without `#!` are ordinary modules. (OTP `escript file.erl` would skip
+  their first line; ErlangAoT does not.) Precompiled beam and archive escripts
+  are not supported.
+
 ## OTP comparison
 
 Goldens for [program fixtures](../tests/fixtures/programs/README.md) run the
 entry under OTP with the same rules
 ([oracle](../tests/compiler/programs/oracle.escript)). Differences from
-`escript` itself: uncaught exceptions exit 1 instead of 127, and `main/1` must be
-exported.
+`escript` for ordinary modules: uncaught exceptions exit 1 instead of 127, and
+`main/1` must be exported. Escript sources keep OTP's rules (see above).

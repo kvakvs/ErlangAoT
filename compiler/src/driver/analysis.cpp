@@ -12,7 +12,7 @@ namespace {
 void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis, const semantic::Reporter &report) {
     for (const auto &input : request.inputs) {
         codegen::progress(request, "analysis", input.source_path);
-        auto module = semantic::index(input.syntax, project::path_text(input.source_path), report);
+        auto module = semantic::index(input.syntax, project::path_text(input.source_path), report, input.escript);
         semantic::bind_parameters(*module, report);
         semantic::resolve_services(*module, report);
         semantic::check_capabilities(*module, report);

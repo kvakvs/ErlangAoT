@@ -17,6 +17,8 @@ struct ResolvedEntry {
     // Batch index of the entry module and the arity-1 function the startup code will call.
     std::size_t module = 0;
     semantic::FunctionKey function;
+    // Escript entries exit with status 127 on uncaught exceptions, like OTP escript.
+    bool escript = false;
 };
 
 // Resolve the entry against indexed modules, reporting located errors; returns true on failure.
