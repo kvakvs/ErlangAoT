@@ -1,7 +1,7 @@
 # Pattern matching step 20 validation
 
 Completed 2026-10-03 on Windows x64. All steps 1–20 and added step 15a of
-[the pattern/guard plan](../.agents/10-patternmatch.md) are complete within its
+[the pattern/guard plan](../.agents/11-plan.md#completed-patternmatch) are complete within its
 function-clause and body-match scope. [Final evidence](patternmatch-step20-evidence.json)
 records concrete corpus identities, all 81 guard rows, individual test results and log hashes.
 

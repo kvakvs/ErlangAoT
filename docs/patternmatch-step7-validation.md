@@ -1,7 +1,7 @@
 # Pattern/guard step 7 validation — 2026-10-02
 
 Implements **Resolve guard calls and implement immediate services (F12/F26 slice)**
-from [the plan](../.agents/10-patternmatch.md); see [the service contract](immediate-guards.md).
+from [the plan](../.agents/11-plan.md#completed-patternmatch); see [the service contract](immediate-guards.md).
 Official maint-29 was fetched at the start of steps 6–8. Upstream, clean checkout
 and pin remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus hashes
 are unchanged; the evidence manifest additionally pins `beam_type_SUITE.erl`.

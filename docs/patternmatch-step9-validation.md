@@ -1,7 +1,7 @@
 # Pattern/guard step 9 validation — 2026-10-02
 
 Implements **Integrate ordered function clauses (F15 slice)** from
-[the plan](../.agents/10-patternmatch.md); see [the contract](ordered-clauses.md).
+[the plan](../.agents/11-plan.md#completed-patternmatch); see [the contract](ordered-clauses.md).
 Official maint-29 was fetched at task start; upstream, clean checkout and pin
 remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus and source hashes
 remain unchanged. Installed oracle: OTP 29.1.1 / ERTS 17.1. Native runner:

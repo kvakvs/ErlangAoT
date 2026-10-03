@@ -1,7 +1,7 @@
 # Pattern/guard step 1 validation — 2026-10-01
 
 Completed **Fix the semantic matrix and OTP evidence** from
-[the patternmatch plan](../.agents/10-patternmatch.md). Steps 2–20 remain pending;
+[the patternmatch plan](../.agents/11-plan.md#completed-patternmatch). Steps 2–20 remain pending;
 this change does not enable executable patterns/guards or alter the runtime ABI.
 The [semantic matrix](patternmatch-matrix.md) and
 [retained evidence](patternmatch-step1-evidence.json) define the measured boundary.

@@ -1,7 +1,7 @@
 # Pattern/guard step 4 validation — 2026-10-01
 
 Implements **Introduce scoped bindings and conservative value facts** from
-[the plan](../.agents/10-patternmatch.md). The [binding contract](scoped-bindings.md)
+[the plan](../.agents/11-plan.md#completed-patternmatch). The [binding contract](scoped-bindings.md)
 describes identities, tentative publication, body scopes, budgets and conservative
 facts. Steps 5–20 remain pending.
 

@@ -1,7 +1,7 @@
 # Pattern/guard step 5 validation — 2026-10-02
 
 Implements **Validate and normalize pattern semantics** from
-[the plan](../.agents/10-patternmatch.md). The
+[the plan](../.agents/11-plan.md#completed-patternmatch). The
 [semantic contract](pattern-semantics.md) documents normalized structure,
 scope rules, embedded-expression legality, resource budgets and deferred owners.
 Steps 6–20 remain pending.

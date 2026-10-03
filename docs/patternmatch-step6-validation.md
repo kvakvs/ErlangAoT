@@ -1,7 +1,7 @@
 # Pattern/guard step 6 validation — 2026-10-02
 
 Implements **Implement immediate equality and matching (F12 slice)** from
-[the plan](../.agents/10-patternmatch.md); see [the contract](immediate-matching.md).
+[the plan](../.agents/11-plan.md#completed-patternmatch); see [the contract](immediate-matching.md).
 Official `maint-29` was fetched on 2026-10-02; upstream, clean checkout and pin
 remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/evidence hashes
 are unchanged. Installed oracle: OTP 29.1.1 / ERTS 17.1. Native runner: Windows

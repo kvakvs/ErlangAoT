@@ -1,7 +1,7 @@
 # Pattern/guard step 8 validation — 2026-10-02
 
 Implements **Lower guard grouping and short-circuit behavior** from
-[the plan](../.agents/10-patternmatch.md); see [the contract](guard-control-flow.md).
+[the plan](../.agents/11-plan.md#completed-patternmatch); see [the contract](guard-control-flow.md).
 Official maint-29 was fetched at the start of steps 6–8; upstream, clean checkout
 and pin remain `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus hashes
 are unchanged; `andor_SUITE.erl` is additionally pinned. Installed oracle:

@@ -1,7 +1,7 @@
 # Pattern/guard step 2 validation — 2026-10-01
 
 Implements **generated-call failure propagation (F20/F02 slice)** from
-[the plan](../.agents/10-patternmatch.md). The [contract](generated-call-failures.md)
+[the plan](../.agents/11-plan.md#completed-patternmatch). The [contract](generated-call-failures.md)
 uses a checked context channel and descriptor/runtime revision 2. The executable
 source subset is unchanged. Steps 3–20 remain pending.
 

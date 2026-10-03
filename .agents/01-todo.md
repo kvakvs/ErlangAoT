@@ -2,7 +2,8 @@
 
 Created 2026-09-30 from [00-finished.md](00-finished.md#outstanding-work-to-finish).
 The 46-step immediate-term compiler milestone is complete. This backlog breaks
-remaining work into features for separately chosen detailed plans.
+remaining work into stable feature owners. [Plan 11](11-plan.md) expands
+their remaining work into ordered actions, success criteria and tests.
 
 **Feature IDs are references, not priority or implementation order.** Choose the
 order of detailed planning yourself; resolve the noted dependencies in each plan.
@@ -34,6 +35,8 @@ records. This backlog preserves the existing evidence; it does not refresh that 
 
 ### F01 — Production executable startup and linking
 
+Expanded plan: [28](11-plan.md#step-28), [29](11-plan.md#step-29), [30](11-plan.md#step-30).
+
 Meaning: produce a runnable Erlang program with runtime startup, rather than
 requiring the separately written C++ harness used today.
 
@@ -45,6 +48,8 @@ requiring the separately written C++ harness used today.
 - [ ] Run emitted executables and verify missing-runtime, ABI, startup and link failures.
 
 ### F02 — Roots, safepoints and generated-code ABI evolution
+
+Expanded plan: [2](11-plan.md#step-2), [3](11-plan.md#step-3), [4](11-plan.md#step-4), [6](11-plan.md#step-6), [8](11-plan.md#step-8), [19](11-plan.md#step-19), [23](11-plan.md#step-23), [24](11-plan.md#step-24), [26](11-plan.md#step-26).
 
 Delivered stable-heap roots and owned results/errors for the admitted domain;
 see [generated roots](../docs/generated-roots.md) and [final validation](../docs/patternmatch-step20-validation.md).
@@ -58,6 +63,8 @@ Relocation, continuation/mailbox roots and suspension remain open.
 - [ ] Choose safepoint/relocation contracts and implement GC/suspension integration.
 
 ### F03 — Process heaps and TermFactory construction
+
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [12](11-plan.md#step-12), [13](11-plan.md#step-13), [15](11-plan.md#step-15), [16](11-plan.md#step-16), [26](11-plan.md#step-26).
 
 Meaning: allocate process-owned storage and construct validated values. Stable
 backing and the admitted scalar/container layouts are delivered; future layouts
@@ -73,6 +80,8 @@ and collector integration remain separate. See [final validation](../docs/patter
 
 ### F04 — Process garbage collection
 
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [26](11-plan.md#step-26).
+
 Meaning: reclaim unreachable process data while retaining live terms and their
 references to shared or runtime-owned resources. Depends on F02/F03.
 
@@ -83,6 +92,8 @@ references to shared or runtime-owned resources. Depends on F02/F03.
   verify cleanup and explicit C++ resource destruction.
 
 ### F05 — Graph copying and process isolation
+
+Expanded plan: [5](11-plan.md#step-5), [23](11-plan.md#step-23), [26](11-plan.md#step-26).
 
 Meaning: copy compound values between isolated heaps; existing immediate copies
 do not establish safe copying of owned graphs.
@@ -95,6 +106,8 @@ do not establish safe copying of owned graphs.
   message delivery without copying runtime-local IDs blindly.
 
 ### F06 — Atom storage and atom expressions
+
+Expanded plan: [21](11-plan.md#step-21).
 
 Meaning: execute named values such as `ok` and `true` through stable runtime-owned
 identities, rather than only recognizing a tagged word's shape.
@@ -109,6 +122,8 @@ identities, rather than only recognizing a tagged word's shape.
 
 ### F07 — Process, port and reference identities
 
+Expanded plan: [15](11-plan.md#step-15), [16](11-plan.md#step-16), [20](11-plan.md#step-20), [27](11-plan.md#step-27).
+
 Meaning: validate real owned identities and their lifetimes; structural tag
 recognition alone does not prove that a referenced entity exists.
 
@@ -120,6 +135,8 @@ recognition alone does not prove that a referenced entity exists.
   explicitly unsupported rather than accepting arbitrary tagged words.
 
 ### F08 — Lists, tuples, maps and strings
+
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [5](11-plan.md#step-5), [17](11-plan.md#step-17), [26](11-plan.md#step-26).
 
 Admitted construction, access, tuple/map updates and matching are delivered;
 strings use proper lists. See [containers](../docs/container-matching.md),
@@ -133,6 +150,8 @@ strings use proper lists. See [containers](../docs/container-matching.md),
   remain selected builtin-family work under F26.
 
 ### F09 — Binaries and bitstrings
+
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [5](11-plan.md#step-5), [26](11-plan.md#step-26).
 
 Meaning: execute packed byte/bit data with correct segment interpretation,
 tail bits and shared immutable storage lifetime.
@@ -152,6 +171,8 @@ copying and GC remain open with F04/F05; this does not close the whole F09 owner
 
 ### F10 — Arbitrary integers and integer arithmetic
 
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [5](11-plan.md#step-5), [26](11-plan.md#step-26).
+
 Delivered exact integers and checked arithmetic over the admitted domain;
 see [integer contract](../docs/integer-matching.md) and [final validation](../docs/patternmatch-step20-validation.md).
 
@@ -163,6 +184,8 @@ see [integer contract](../docs/integer-matching.md) and [final validation](../do
 - [ ] Integrate graph copying and GC tracing with F04/F05.
 
 ### F11 — Floating-point values and arithmetic
+
+Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4), [5](11-plan.md#step-5), [17](11-plan.md#step-17), [26](11-plan.md#step-26).
 
 Delivered finite binary64 values, numeric operations/conversions and mixed comparisons;
 see [float contract](../docs/float-matching.md) and [final validation](../docs/patternmatch-step20-validation.md).
@@ -177,6 +200,8 @@ see [float contract](../docs/float-matching.md) and [final validation](../docs/p
 
 ### F12 — Equality, comparisons and term ordering
 
+Expanded plan: [12](11-plan.md#step-12), [13](11-plan.md#step-13), [15](11-plan.md#step-15), [16](11-plan.md#step-16).
+
 Delivered structural comparison for every admitted representation. See
 [final validation](../docs/patternmatch-step20-validation.md); future identity,
 callable/native-record representations still require their owners.
@@ -187,6 +212,8 @@ callable/native-record representations still require their owners.
 - [ ] Extend comparison only as future representations become admitted.
 
 ### F13 — Pattern matching and bindings
+
+Expanded plan: [7](11-plan.md#step-7), [8](11-plan.md#step-8), [9](11-plan.md#step-9), [10](11-plan.md#step-10), [12](11-plan.md#step-12), [13](11-plan.md#step-13), [24](11-plan.md#step-24), [30](11-plan.md#step-30).
 
 Delivered function-head and body-match semantics for the admitted scalar/container/
 ordinary-record domain; see [scoped matrix](../docs/patternmatch-matrix.md) and
@@ -202,6 +229,8 @@ ordinary-record domain; see [scoped matrix](../docs/patternmatch-matrix.md) and
   F16/F18/F20/F25; admit future representations through their owners.
 
 ### F14 — Guards
+
+Expanded plan: [7](11-plan.md#step-7), [8](11-plan.md#step-8), [9](11-plan.md#step-9), [10](11-plan.md#step-10), [12](11-plan.md#step-12), [13](11-plan.md#step-13), [24](11-plan.md#step-24), [27](11-plan.md#step-27), [30](11-plan.md#step-30).
 
 Delivered the audited admitted-domain guard catalog and function-clause guard
 control flow; see [guard services](../docs/guard-services.md) and
@@ -228,6 +257,8 @@ Delivered ordered selection for the full admitted domain; see
 
 ### F16 — Expression sequences and control flow
 
+Expanded plan: [7](11-plan.md#step-7), [9](11-plan.md#step-9), [10](11-plan.md#step-10), [30](11-plan.md#step-30).
+
 Delivered body sequences/matches over every admitted representation, including
 RHS-first chains, exact rebinding, owned badmatch and rooted construction;
 see [final validation](../docs/patternmatch-step20-validation.md).
@@ -239,6 +270,8 @@ see [final validation](../docs/patternmatch-step20-validation.md).
   F13/F14/F20; compare branch selection, visibility and errors with OTP.
 
 ### F17 — Record expansion and execution
+
+Expanded plan: [11](11-plan.md#step-11), [12](11-plan.md#step-12), [27](11-plan.md#step-27), [30](11-plan.md#step-30).
 
 Meaning: turn preserved record declarations/operations into their executable
 representation and field behavior.
@@ -252,6 +285,8 @@ representation and field behavior.
 
 ### F18 — Closures and function values
 
+Expanded plan: [13](11-plan.md#step-13), [26](11-plan.md#step-26), [27](11-plan.md#step-27), [30](11-plan.md#step-30).
+
 Meaning: create callable values that retain captured variables and code lifetime,
 including the selected anonymous and named function forms.
 
@@ -263,6 +298,8 @@ including the selected anonymous and named function forms.
 
 ### F19 — Dynamic calls
 
+Expanded plan: [14](11-plan.md#step-14), [30](11-plan.md#step-30).
+
 Meaning: select functions at runtime through function values or module/function
 names instead of resolving every call within the compilation batch.
 
@@ -272,6 +309,8 @@ names instead of resolving every call within the compilation batch.
 - [ ] Verify successful calls, bad targets, missing exports and arity failures.
 
 ### F20 — Erlang exceptions
+
+Expanded plan: [2](11-plan.md#step-2), [8](11-plan.md#step-8), [26](11-plan.md#step-26), [30](11-plan.md#step-30).
 
 Patternmatch step 2 delivered checked nested-call transport for class error,
 function_clause and admitted service reasons with owned scalar/container payloads,
@@ -288,6 +327,8 @@ C++ exceptions escaping generated entry boundaries.
 
 ### F21 — Recursion and proper tail calls
 
+Expanded plan: [2](11-plan.md#step-2), [6](11-plan.md#step-6), [30](11-plan.md#step-30).
+
 Meaning: allow recursive functions and long-running tail-recursive loops without
 unbounded native stack growth.
 
@@ -301,6 +342,8 @@ unbounded native stack growth.
 
 ### F22 — Cooperative process execution
 
+Expanded plan: [2](11-plan.md#step-2), [19](11-plan.md#step-19), [20](11-plan.md#step-20), [26](11-plan.md#step-26), [30](11-plan.md#step-30).
+
 Meaning: run generated code as resumable isolated processes; existing contexts
 and scheduler records currently provide lifecycle bookkeeping only.
 
@@ -313,6 +356,8 @@ and scheduler records currently provide lifecycle bookkeeping only.
 
 ### F23 — Scheduler workers and wakeups
 
+Expanded plan: [22](11-plan.md#step-22), [25](11-plan.md#step-25).
+
 Meaning: actually service multiple processes through workers and queues.
 Scheduling policies in design sketches still need review.
 
@@ -323,6 +368,8 @@ Scheduling policies in design sketches still need review.
   suspension; verify fairness, lost-wakeup races and concurrent teardown.
 
 ### F24 — Signals and message sending
+
+Expanded plan: [23](11-plan.md#step-23).
 
 Meaning: transfer isolated values through ordered signals, including self-send,
 instead of returning the current unavailable-send failure.
@@ -336,6 +383,8 @@ instead of returning the current unavailable-send failure.
 
 ### F25 — Selective receive and timeouts
 
+Expanded plan: [24](11-plan.md#step-24), [25](11-plan.md#step-25), [26](11-plan.md#step-26), [30](11-plan.md#step-30).
+
 Meaning: find a matching message, retain unmatched messages and wait or time out
 without losing arrivals. Depends on F13–F15 and F22–F24 as applicable.
 
@@ -345,6 +394,8 @@ without losing arrivals. Depends on F13–F15 and F22–F24 as applicable.
   repeated scans, unmatched queues and arrival-versus-timeout races with OTP.
 
 ### F26 — Production builtin functions
+
+Expanded plan: [17](11-plan.md#step-17), [20](11-plan.md#step-20), [27](11-plan.md#step-27), [30](11-plan.md#step-30).
 
 Meaning: implement actual builtin behavior behind the generic registry. The compiler
 guard-service slice is delivered, while generic production registration remains open.
@@ -360,6 +411,8 @@ guard-service slice is delivered, while generic production registration remains 
 
 ### F27 — Typed/native callables and conversions
 
+Expanded plan: [18](11-plan.md#step-18).
+
 Meaning: make selected typed C++ calls safe while preserving generic Term calls;
 current typed templates are unverified proposals.
 
@@ -370,6 +423,8 @@ current typed templates are unverified proposals.
   types, expired lifetimes, callback failures and generic equivalence.
 
 ### F28 — Concurrent code-server access
+
+Expanded plan: [21](11-plan.md#step-21).
 
 Meaning: safely publish/resolve modules while workers run pinned calls; current
 operations require host serialization.
@@ -385,6 +440,8 @@ operations require host serialization.
 
 ### F29 — Useful source-driven specialization
 
+Expanded plan: [31](11-plan.md#step-31).
+
 Meaning: extend existing bounded variants to remove real checks from newly
 implemented source operations; today's subset has no removable checks.
 
@@ -396,6 +453,8 @@ implemented source operations; today's subset has no removable checks.
 
 ### F30 — Debug information
 
+Expanded plan: [32](11-plan.md#step-32).
+
 Meaning: relate native instructions/frames to Erlang source and inspectable values.
 
 - [ ] Define initial debugger support and source provenance across macros/includes.
@@ -406,6 +465,8 @@ Meaning: relate native instructions/frames to Erlang source and inspectable valu
 
 ### F31 — Profiling
 
+Expanded plan: [33](11-plan.md#step-33).
+
 Meaning: explain generated-function and runtime/process costs; existing test
 timing records are not a user-facing profiling facility.
 
@@ -415,6 +476,8 @@ timing records are not a user-facing profiling facility.
 - [ ] Verify attribution and disabled mode; document overhead and interpretation limits.
 
 ### F32 — Link-time optimization
+
+Expanded plan: [34](11-plan.md#step-34).
 
 Meaning: optimize across module boundaries during native linking, beyond existing
 per-module LLVM pipelines. Integrates with F01.
@@ -432,6 +495,8 @@ historical host/toolchain results with their original scope and revisions.
 
 ### V01 — Native platform matrix
 
+Expanded plan: [35](11-plan.md#step-35), [36](11-plan.md#step-36).
+
 Meaning: prove execution on required hosts; foreign object inspection is not a run.
 
 - [ ] Prepare matching toolchains for Linux x86/x64/ARM/AArch64, macOS Apple Silicon
@@ -442,6 +507,8 @@ Meaning: prove execution on required hosts; foreign object inspection is not a r
   retaining unavailable hosts as pending.
 
 ### V02 — Compiler/frontend sanitizers
+
+Expanded plan: [37](11-plan.md#step-37).
 
 Meaning: close memory/lifetime and undefined-behavior coverage gaps beyond the
 existing runtime-only ASan results.
@@ -455,6 +522,8 @@ existing runtime-only ASan results.
 
 ### V03 — Broader OTP compatibility evidence
 
+Expanded plan: [1](11-plan.md#step-1), [30](11-plan.md#step-30), [38](11-plan.md#step-38).
+
 Meaning: broaden focused differential checks and upstream suite evidence using a
 matching reference without confusing syntax acceptance with executable compatibility.
 
@@ -466,6 +535,8 @@ matching reference without confusing syntax acceptance with executable compatibi
   upstream failures, commands and the exact compatibility scope established.
 
 ### V04 — Remaining test migration
+
+Expanded plan: [1](11-plan.md#step-1), [39](11-plan.md#step-39).
 
 Meaning: replace implementation-coupled success tests only after equivalent public
 behavior is covered, retaining cases public interfaces cannot reproduce.
@@ -484,6 +555,8 @@ capabilities, not requirements for the already completed immediate-term mileston
 
 ### D01 — Dynamic modules and code upgrades
 
+Expanded plan: [40](11-plan.md#step-40).
+
 Meaning: change executable modules at runtime. The project allows this to be
 omitted or provided through separate native dynamic libraries.
 
@@ -494,6 +567,8 @@ omitted or provided through separate native dynamic libraries.
   deliberate omission and the static-only failure boundary.
 
 ### D02 — Atom collection
+
+Expanded plan: [41](11-plan.md#step-41).
 
 Meaning: reclaim unused atom storage; this is currently a reserved boundary without
 an implemented table owner or selected collection policy.
@@ -506,6 +581,8 @@ an implemented table owner or selected collection policy.
 
 ### D03 — Behavior-changing attributes and transforms
 
+Expanded plan: [42](11-plan.md#step-42).
+
 Meaning: support selected compilation/execution attributes beyond the inert
 metadata and type declarations already accepted.
 
@@ -517,6 +594,8 @@ metadata and type declarations already accepted.
 
 ### D04 — Public stage interchange
 
+Expanded plan: [43](11-plan.md#step-43).
+
 Meaning: provide stable external intermediate-data formats beyond internal owned
 objects and diagnostic inspection output.
 
@@ -526,6 +605,8 @@ objects and diagnostic inspection output.
   dumps a stable input ABI by accident.
 
 ### D05 — Intermediate-stage readers
+
+Expanded plan: [44](11-plan.md#step-44).
 
 Meaning: start compilation from saved preprocessed, abstract or IR data; today
 only directory locations are reserved.
@@ -537,6 +618,8 @@ only directory locations are reserved.
 
 ### D06 — C/FFI interoperability
 
+Expanded plan: [45](11-plan.md#step-45).
+
 Meaning: expose selected services outside internal C++23 interfaces; the earlier
 C wrapper was intentionally removed and needs a concrete use case to return.
 
@@ -545,6 +628,8 @@ C wrapper was intentionally removed and needs a concrete use case to return.
 - [ ] Test independent consumers and calling conventions while keeping compiler internals private.
 
 ### D07 — Project schema and build-workflow extensions
+
+Expanded plan: [46](11-plan.md#step-46), [47](11-plan.md#step-47), [48](11-plan.md#step-48), [49](11-plan.md#step-49), [50](11-plan.md#step-50).
 
 Meaning: extend version-1 manifests beyond explicit independent targets. Each
 selected capability below can receive its own detailed plan.

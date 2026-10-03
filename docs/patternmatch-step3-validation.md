@@ -1,7 +1,7 @@
 # Pattern/guard step 3 validation — 2026-10-01
 
 Implements **atoms and boolean values (F06)** from
-[the plan](../.agents/10-patternmatch.md). [Runtime atoms](runtime-atoms.md)
+[the plan](../.agents/11-plan.md#completed-patternmatch). [Runtime atoms](runtime-atoms.md)
 defines storage, ownership, ABI revision 3 and failed-registration policy.
 Steps 4–20 remain pending; no matching or guard execution is claimed.
 

@@ -1,6 +1,7 @@
 # Completed implementation work
 
-Compact implementation record, consolidated 2026-09-30. This archive preserves
+Compact implementation record, consolidated 2026-09-30; pattern/guard work
+added 2026-10-03. This archive preserves
 completed work, compatibility decisions, historical evidence and open obligations.
 Current behavior lives in the linked documentation; current architecture and file
 ownership are in [arch.md](arch.md) and [files.md](files.md).
@@ -12,11 +13,12 @@ ownership are in [arch.md](arch.md) and [files.md](files.md).
 | Parser | Steps 1–17 complete; step 18 implementation and macOS validation, 2026-09-19 | Required platform matrix is not fully closed. |
 | Projects | Steps 1–22 complete, 2026-09-20 | Historical host evidence and later Windows evidence remain distinct. |
 | Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program workflows delivered; frontend sanitizers remain pending. |
-| Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Immediate-only subset and runtime skeleton; full Erlang execution remains unfinished. |
+| Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Historical immediate-only subset and runtime skeleton; later pattern/guard delivery is recorded below. |
+| Pattern matching and guards | Steps 1–20 and added step 15a complete, 2026-10-01–03 | Function clauses and body matches over the admitted domain; other source contexts, GC/process owners and native platform gaps remain open. |
 
-**Still unfinished:** production executable startup/linking, heap terms and GC,
-process execution/messaging, broader Erlang lowering, and native platform/sanitizer
-closure. See the [explicit completion checklist](#outstanding-work-to-finish).
+**Still unfinished:** production executable startup/linking, GC and graph copying,
+process execution/messaging, additional Erlang source contexts and representations,
+and native platform/sanitizer closure. See the [explicit completion checklist](#outstanding-work-to-finish).
 
 ## Foundations
 
@@ -536,25 +538,116 @@ Neither limitation was suppressed or counted as passing coverage. Logs/scripts
 remain under ignored `build/compile-steps/`; the tracked [103-test inventory](../docs/compile-tests.txt)
 and matrix preserve reproducible scope.
 
+<a id="completed-patternmatch"></a>
+
+## Pattern matching and guards: steps 1–20 (2026-10-01–03, Windows x64)
+
+[The retained completed-plan context](11-plan.md#completed-patternmatch) includes added step 15a and the necessary
+F02/F03/F06/F08–F17/F20/F26 slices. Execution is scoped to ordered function
+clauses, their guards, body matches/sequences and acyclic local/exported remote
+calls. Admitted values are owned atoms, arbitrary integers, finite floats,
+tuples, proper/improper lists, strings, maps, bitstrings and ordinary tuple records.
+[The semantic matrix](../docs/patternmatch-matrix.md) and linked contracts define
+current behavior; older milestones above retain their original revisions and scope.
+
+Every implementation step passed its fresh combined Debug build, CTest, Lizard
+and clang-tidy gate before its separate commit. The table preserves each checkpoint's
+test count; the decrease at step 15a reflects moving live OTP audits behind an
+explicit opt-in, rather than dropping golden native coverage.
+
+| Step and validation | Delivered and validated | Full CTests | Production quality units, where recorded |
+| --- | --- | ---: | ---: |
+| [1](../docs/patternmatch-step1-validation.md) | Pinned semantic matrix and 81 exact source signatures; acceptance/oracle evidence, suite syntax and unchanged native helper baseline. | 104 | — |
+| [2](../docs/patternmatch-step2-validation.md) | Revision-2 checked generated-call failure channel, owned first failure, nested/reentrant cleanup, ABI rejection and retry. | 108 | — |
+| [3](../docs/patternmatch-step3-validation.md) | Bounded runtime-owned atoms/booleans, spelling pins, foreign-word rejection and revision-3 transactional module bindings. | 109 | 189 |
+| [4](../docs/patternmatch-step4-validation.md) | Clause-local definitions/reads/exact checks, tentative scopes, RHS-first binding, located unsafe reads and bounded conservative facts. | 111 | 191 |
+| [5](../docs/patternmatch-step5-validation.md) | Flat bounded pattern normalization, constant arithmetic, aliases, incoming map keys and preceding-segment binary-size scopes. | 113 | 196 |
+| [6](../docs/patternmatch-step6-validation.md) | Immediate literal/repeated/alias/wildcard matching and checked shared equality; mismatch, nested failures, 34 OTP/native calls and both-width objects/IR. | 114 | 199 |
+| [7](../docs/patternmatch-step7-validation.md) | Guard resolution, immediate predicates/comparisons/queries, legacy and qualified calls, semantic/infrastructure failure separation; 1,689 outcomes. | 119 | 205 |
+| [8](../docs/patternmatch-step8-validation.md) | Comma/semicolon alternatives, canonical true, strict/lazy boolean control flow and owned body badarg payloads; 2,075 outcomes. | 120 | 207 |
+| [9](../docs/patternmatch-step9-validation.md) | Ordered candidate isolation/fallback, whole-function analysis, conservative joins and function_clause exhaustion; 1,020 outcomes. | 121 | 208 |
+| [10](../docs/patternmatch-step10-validation.md) | Single-evaluation RHS-first body matches/chains, success-only bindings, sequences and owned badmatch/retry; 1,666 outcomes. | 122 | 209 |
+| [11](../docs/patternmatch-step11-validation.md) | Bounded stable heaps/reservations, explicit resource destruction and revision-4 generated roots/result handoff; allocation/root faults and old-ABI rejection. | 123 | 213 |
+| [12](../docs/patternmatch-step12-validation.md) | Rooted tuple/list/string construction, structural comparison and matching; retained compound results/errors, fault cleanup and 4,801 outcomes. | 125 | 221 |
+| [13](../docs/patternmatch-step13-validation.md) | Owned arbitrary integers, exact arithmetic/bitwise operations, promotion/demotion, checked fast paths and integer guards; 16,065 outcomes. | 127 | 231 |
+| [14](../docs/patternmatch-step14-validation.md) | Finite binary64 arithmetic/conversions, exact mixed comparisons, signed zero and rooted failures; 14,436 outcomes. | 129 | 238 |
+| [15](../docs/patternmatch-step15-validation.md) | Immutable exact-key maps, source-ordered construction/updates, computed-key matching and owned map errors; 8,010 outcomes. | 131 | 244 |
+| [15a](../docs/patternmatch-step15a-validation.md) | Project-owned source/call/result goldens and provenance manifests; OTP-free normal builds/tests, explicit regeneration and opt-in live audits. | 118 | 244 |
+| [16](../docs/patternmatch-step16-validation.md) | Small/shared bitstrings, checked numeric/UTF segments and cursors, retained tails, queries/parts and bit-accurate matching/comparison; 8,826 outcomes. | 120 | 253 |
+| [17](../docs/patternmatch-step17-validation.md) | Ordinary record declarations/defaults, tuple construction/access/matching and record tests; owned badrecord, declaration order and 1,025 outcomes. | 121 | 257 |
+| [18](../docs/patternmatch-step18-validation.md) | Admitted-domain guard catalog, inclusive is_integer/3 and legacy resolution audit; 77 implemented rows, four dependency gates and 5,033 outcomes. | 122 | 257 |
+| [19](../docs/patternmatch-step19-validation.md) | Budgeted whole-value binding facts, conservative extraction/joins, wrong-spec equivalence, verified generic fallback and 976 CFG proof observations; 822 paired outcomes. | 123 | 258 |
+| [20](../docs/patternmatch-step20-validation.md) | Provenance/coverage reconciliation, seeded deep/wide stress, all eight driver/policy combinations, fault/limit/publication recovery and updated runnable example. | 124 | 258 |
+
+Current generated descriptors use **ABI revision 4**; the revision-2 checked
+failure channel remains unchanged. Candidate bindings publish only on match/guard
+success; body matches evaluate their RHS once. Every fallible service checks before
+output use, and representation/shape proofs dominate extraction. Specs do not
+authorize runtime access. Reached semantic guard errors reject the enclosing
+alternative; resource/ownership/internal failures stop execution. Returned terms
+and offending error values retain ownership before root cleanup; expired context
+handles deny access. Stable backing does not implement GC or graph copying.
+
+Official maint-29 was re-fetched through 2026-10-03; pin, clean checkout and
+upstream remained `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Oracle OTP 29.1.1 /
+ERTS 17.1; host/SDK LLVM 23.1.2, Lizard 1.24.0 and clang-tidy 22.1.8.
+Explicit regeneration reproduced all **19 owned corpora**: **67,634 native
+expected values/error reasons**, plus **106 separate semantic acceptance rows**.
+Normal tests require neither OTP nor its checkout and never refresh goldens or
+the reference silently. Manifests retain licenses, hashes, revisions and exact
+helper/adaptation provenance; suite parsing is syntax evidence, not Common Test
+execution.
+
+The final native corpus runs both positional/project drivers at O0/O2 with
+specialization enabled/disabled, local/remote calls and two executions per
+combination: **1,082,144 golden comparisons**. Seed `0x29A07` adds 1,969 outcomes,
+depth 64, width 255 and 128 ordered alternatives. The documented two-module demo
+prints `42`, `-7`, `record`, `map`, `binary`, `list`, `integer`, `other` and passes
+all four policies. Fault seams and inaccessible work/IR/allocation ceilings remain
+separate from source execution evidence.
+
+Final fresh Windows x64 Debug: **124/124 CTests**, zero skips, **167.43 s**, and
+all **258 production quality units** pass at unchanged CCN/cognitive-complexity
+thresholds of 10. [Final validation](../docs/patternmatch-step20-validation.md)
+and [evidence](../docs/patternmatch-step20-evidence.json) retain concrete corpus/
+catalog/test identities and log hashes. The initial closure run exposed the test
+transport's depth-256 limit around a returned 255-cell list; its bounded test-only
+allowance became 512 before the passing fresh run. Production and quality limits
+were unchanged; initial logs and all historical validation records are preserved.
+
+Four catalog signatures remain explicitly unavailable: `self/0`, `node/0,1` and
+native `is_record/1`. Positive pid/port/reference/function values, record updates/
+record_info/native forms, other control/guard contexts, handlers, recursion and
+process execution retain their backlog owners. Native Linux, Apple Silicon and
+32-bit execution and new compiler/frontend sanitizer runs remain unavailable;
+foreign objects, 32/64-bit IR/layout checks and historical macOS/runtime-ASan
+evidence retain their separate scope. Completing this plan closes only its
+delivered function/body/guard and prerequisite representation/service slices.
+
 ## Outstanding work to finish
 
 The [feature backlog](01-todo.md) expands these gaps into explanations and
 implementation checklists for separately chosen detailed plans.
 
 **These are unfinished features or validation obligations, not completed compiler
-steps.** The 46-step immediate-term milestone is complete; the overall Erlang-to-native
-goal still requires the following work.
+steps.** The 46-step immediate-term milestone and scoped pattern/guard plan
+(steps 1–20 plus 15a) are complete; the overall Erlang-to-native goal still requires
+the following work.
 
 - [ ] **Production executables:** startup/entrypoint policy and native linking with
   the matching runtime; replace explicit executable-output failure.
-- [ ] **Executable Erlang semantics:** arithmetic with correct bignum fallback,
-  float/heap values, patterns, guards, multiple clauses, branching/sequences,
-  records, closures/dynamic calls, exceptions and recursion/proper bounded-stack
-  tail calls. Parsing/type metadata support does not implement their execution.
-- [ ] **Terms, allocation and GC:** remaining TermFactory constructors, backing heaps,
-  bignums/binaries/containers, rooted graph copying and collection. Validate roots/
-  safepoints before movable terms; include host, continuation, mailbox/cursor and
-  in-transit roots with explicit C++ cell resource construction/destruction.
+- [x] **Scoped executable matching and guards:** ordered function clauses, body
+  matches/sequences, exact bindings, grouped/strict/lazy guards and the admitted
+  checked service catalog; see [the completed-plan context](11-plan.md#completed-patternmatch).
+- [x] **Admitted terms and stable allocation:** rooted arbitrary integers, finite
+  floats, tuples/lists/strings, maps, bitstrings and ordinary tuple records; checked
+  construction/access/comparison/arithmetic, owned results/errors and fault cleanup.
+- [ ] **Additional Erlang semantics:** case/if/maybe/comprehension and receive/fun/
+  catch guard contexts, record updates/record_info/native forms, closures/dynamic
+  calls, source exception handling and recursion/proper bounded-stack tail calls.
+- [ ] **GC and graph copying:** rooted cross-process transfer and collection,
+  relocation/safepoints and continuation/mailbox/cursor/in-transit roots with their
+  concrete owners; extend validated layouts for future representations.
 - [x] **Atoms:** stable bounded storage, generated spelling/slot bindings, atom/boolean
   literals and retained host/error ownership; see [step 3](../docs/patternmatch-step3-validation.md).
 - [ ] **Identities and atom GC:** owned pid/port/reference services, atom collection
@@ -564,8 +657,10 @@ goal still requires the following work.
   order; all messages, including self-send, enter the signal inbox before owner-side
   copying/mailbox insertion. Compare continuations with LLVM coroutines before
   suspension; current scheduler records do not run processes.
-- [ ] **Runtime services:** production BIFs, typed/native callable integration and
-  conversions, concurrent module publication/lookup and cooperative generated calls.
+- [ ] **Runtime services:** generic production BIF registration and additional
+  families, typed/native callable integration/conversions, concurrent module
+  publication/lookup and cooperative generated calls. Compiler-authorized admitted
+  guard services are delivered; they do not close the generic production bridge.
   Dynamic loading/unload/code upgrades remain deferred and may be omitted under the
   project scope; resolve that choice explicitly before promising support.
 - [ ] **Later code generation tooling:** useful source-driven specialization as the

@@ -1,8 +1,9 @@
 # Project memory — 2026-10-03
 
-User task .agents/10-patternmatch.md COMPLETE through steps 1–20 and added15a.
+Completed pattern/guard steps 1–20 and added15a are archived in .agents/00-finished.md.
+The retired checklist was removed by user request; durable context is .agents/11-plan.md#completed-patternmatch.
 No subagents authorized or used. Separate current commits: step17 7d83b99,
-step18 684af35, step19 428c388; final step20 is this commit (read HEAD for identity).
+step18 684af35, step19 428c388; final step20 commit 2be9626.
 Each implementation commit followed fresh combined Debug build/fullCTest/Lizard/tidy.
 
 Current admitted scope: acyclic local/exported remote functions, ordered heads,
@@ -54,3 +55,10 @@ F26genericproductionbuiltinregistration,V01nativematrix,V02sanitizers. Backlog c
 only delivered function/body/guard and prerequisite representation/root/service slices.
 OTP loader huge literalrecordguard and core_to_ssa legacy-modernimport crashes
 remain documented17/18; do not claim those contexts as executed OTPgoldens.
+
+Planning update2026-10-03: .agents/11-plan.md expands all42 remaining feature
+owners into51 ordered steps with dependency links and nested actions/success/tests.
+Mandatory1–39+51; optionalD40–50 conditional, D05directoryreservationsonly perAGENTS.
+No new implementation started. .agents/01-todo.md links each remaining owner to
+steps. Previous archive edits preserved; oldplanlinks redirected to retainedcontext,
+historical evidence facts unchanged. Do not confuse newstepnumbers with old1–20.

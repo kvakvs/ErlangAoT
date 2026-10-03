@@ -1,7 +1,7 @@
 # Pattern and guard semantic contract (completed steps 1–20)
 
 This is the acceptance and implementation boundary for
-[steps 1–20](../.agents/10-patternmatch.md). Step numbers below refer to that plan.
+[steps 1–20](../.agents/11-plan.md#completed-patternmatch). Step numbers below refer to that plan.
 The executable slice supports ordered clauses and body sequences with exact integer,
 atom, tuple/list/string patterns, checked construction/access, aliases, repeated
 variables, binding reads and direct calls. [Step 6](immediate-matching.md)

@@ -1,7 +1,7 @@
 # Pattern/guard step 10 validation — 2026-10-02
 
 Implements **Integrate body matches and sequences (F16 slice)** from
-[the plan](../.agents/10-patternmatch.md); see [the contract](body-matches.md).
+[the plan](../.agents/11-plan.md#completed-patternmatch); see [the contract](body-matches.md).
 The task-start official maint-29 fetch matches the clean checkout and pin
 `21776803ecd11f5fa948732c0ec66b8f325dedfc`. Grammar/corpus/source hashes are
 unchanged. Installed oracle: OTP 29.1.1 / ERTS 17.1. Native runner: Windows x64,
