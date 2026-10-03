@@ -1,0 +1,16 @@
+ring of 1000 processes, 12 rounds
+round 1: 500500 hops
+round 2: 500500 hops
+round 3: 500500 hops
+round 4: 500500 hops
+round 5: 500500 hops
+round 6: 500500 hops
+round 7: 500500 hops
+round 8: 500500 hops
+round 9: 500500 hops
+round 10: 500500 hops
+round 11: 500500 hops
+round 12: 500500 hops
+1000 of 1000 processes saw every token
+first counts: [12,12,12,12,12]
+1000 exited normally

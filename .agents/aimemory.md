@@ -107,3 +107,13 @@ validation (baseline, gate, provenance, test design, platform gaps, condensed hi
 Old step validation md/json, compile-tests.txt and per-topic pattern/runtime docs deleted;
 originals in Git at 2777c98. README intro rewritten; all repo links repointed. Keep docs
 current-state only; step logs go to .agents, not docs.
+
+Plan11 step2 2026-10-03: six original fixtures tests/fixtures/programs/{textstats,frames,avltree,
+ring,kvstore,supervise} (project.toml, src, fixture.json entry+argv, expected/{stdout.txt,golden.json},
+compile.txt exact stderr with <fixture> paths). README = feature map (fixture -> steps). Oracle
+tests/compiler/programs/oracle.escript runs main/1 in spawn_monitor, logger -> stderr, halt 0/1;
+use erts-17.1/bin/escript.exe directly (bin/escript.exe segfaults; old otp-launch shim gone).
+regenerate.py [--check]; programs.py <tool> <work> [--update-diagnostics] = CTest programs_compile;
+programs_oracle opt-in. --check reproduced 3x. erlfmt CLI lacks getopt: format via escript calling
+erlfmt:format_file/2 with code path thirdparty/tools/erlfmt/_build/local (compiled erlfmt_cli there).
+`++`/`--` were ownerless ([arithmetic] notimpl) -> added to step 37. Logs build/plan11-step2.

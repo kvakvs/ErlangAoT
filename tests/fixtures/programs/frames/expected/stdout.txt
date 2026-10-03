@@ -1,0 +1,17 @@
+encoded 5 messages into 65 bytes
+stream: <<80,1,0,5,104,101,108,108,111,171,2,0,20,0,0,0,1,255,255,255,254,0,1,17,112,128,0,0,0,127,255,255,255,3,3,0,10,7,114,101,116,114,105,101,115,1,2,237,1,0,9,99,97,102,195,169,32,228,184,150,221,2,0,0,0>>
+valid: header {2,1}
+  {text,<<104,101,108,108,111>>,5}
+  {ints,[1,-2,70000,-2147483648,2147483647]}
+  {pair,retries,513}
+  {text,<<99,97,102,195,169,32,228,184,150>>,6}
+  {ints,[]}
+corrupted: error {checksum,0,171,84}
+truncated: error {truncated,1,10}
+unknown: error {bad_payload,9,1}
+bad_utf8: error bad_utf8
+empty: error empty
+round trip equal: true
+header bits: <<2:3>> (3 bits)
+nibbles: <<16,5:4>> (12 bits)
+parity: <<169>>

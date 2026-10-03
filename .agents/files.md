@@ -81,7 +81,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 ## Tests / fixtures
 
 Compiler runners: `tests/compiler/<area>/`; source/expected data: `tests/fixtures/<area>/`.
-Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime}`.
+Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime,programs}`.
 
 | Area | Lookup / placement |
 | --- | --- |
@@ -90,6 +90,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `semantic` | `cases.cmake`: CLI diagnostics; binding/pattern/type/symbol invariants; source fixtures stay in the relevant existing area |
 | `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`, `closure.py`: conservative proofs and seeded/provenance closure; native bounded value transport: `codegen/match_wire.hpp` |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
+| `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |

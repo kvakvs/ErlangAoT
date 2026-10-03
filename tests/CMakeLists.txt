@@ -314,6 +314,8 @@ add_subdirectory(compiler/project)
 
 add_subdirectory(compiler/codegen)
 
+add_subdirectory(compiler/programs)
+
 # Symbol round trips have no observable emitted-object replacement until lowering exists.
 add_executable(semantic_symbols compiler/semantic/symbols.cpp)
 erlang_aot_project_options(semantic_symbols)

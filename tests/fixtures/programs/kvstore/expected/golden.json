@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "fixture": "kvstore",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "contract": "main/1 argv strings; return exits 0; halt/1 sets status; uncaught exception exits 1",
+  "generator_sha256": {
+    "regenerate.py": "a6bfb4f663cabc77a5457b917a45b4afbfb1c59146ab0155caa260f8d4de6a04",
+    "fixtures.py": "bc86ab450864270885faaeadbb7b644b8baa4f2fcc796f39bdc8db7165521f14",
+    "oracle.escript": "ba9fbee3baad46db6d78f977ec4af55c4967c5e9f9c658e0a356f077c81d0357"
+  },
+  "inputs": {
+    "project.toml": "5cb374cd9b396e016fb3e6864f507696118b3b5bf677be8852c260546af4b268",
+    "fixture.json": "611312b9ccbe207f8f7bf4dcf02d71cbb03a1566e3902dcd6057822ab49cfaee",
+    "src/kv_server.erl": "094887bff1db16bce1b1bddd8078fdbb80173b2cc43fec16c18fb76bda8df88b",
+    "src/kvstore.erl": "13cca55ae0568c388e630b49f9d9d23806e50547eecec49c1a860ccc5f897958"
+  },
+  "exit_status": 0,
+  "stdout_sha256": "29d1598a89d70971eed5b1f6ac77d4cd1537976a4ec59af740e932a7cc2c9216"
+}
