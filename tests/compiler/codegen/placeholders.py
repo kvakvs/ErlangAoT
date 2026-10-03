@@ -50,7 +50,7 @@ def main():
     assert {name for name, owner, status in entries if owner == "compiler" and status == "deferred"} == set(CASES)
     (work / "project.toml").write_text("schema_version=1\n[[targets]]\nname='audit'\nsources=['sample.erl']\n",
                                         encoding="utf-8")
-    for feature, body in [*CASES.items(), ("executable linking", "f() -> 42.")]:
+    for feature, body in [*CASES.items(), ("executable linking", "-export([main/1]). main(_) -> 42.")]:
         (work / "sample.erl").write_text("-module(sample).\n" + body + "\n", encoding="utf-8")
         for level in ["-O0", "-O2"]:
             options = [level, "--emit", "obj", "--artifact-dir", str(work / "output")]

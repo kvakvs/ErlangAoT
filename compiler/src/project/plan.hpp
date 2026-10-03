@@ -1,5 +1,6 @@
 #pragma once
 #include "discovery.hpp"
+#include "entry.hpp"
 #include "options.hpp"
 
 namespace erlang_aot::project {
@@ -9,6 +10,8 @@ struct PlanOptions {
     std::filesystem::path working_directory;
     PreprocessorOptions preprocessing;
     std::optional<std::filesystem::path> output;
+    // CLI --entry replaces the manifest entry of the single selected target.
+    std::optional<EntryName> entry;
     // Frontend requests ignore manifest output paths and never plan executable writes.
     bool frontend = false;
     DiscoveryLimits discovery;
@@ -21,6 +24,8 @@ struct PlannedTarget {
     PreprocessorOptions preprocessing;
     // Keep future output destinations absent for check/print requests.
     std::optional<std::filesystem::path> output;
+    // Explicit entry selection (CLI or manifest); absent means auto-detection when an executable is requested.
+    std::optional<SelectedEntry> entry;
 };
 
 struct Invocation {

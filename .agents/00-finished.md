@@ -15,7 +15,7 @@ documentation; current architecture and file ownership are in
 | Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program workflows delivered; frontend sanitizers remain pending. |
 | Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Historical immediate-only subset and runtime skeleton; later pattern/guard delivery is recorded below. |
 | Pattern matching and guards | Steps 1–20 and added step 15a complete, 2026-10-01–03 | Function clauses and body matches over the admitted domain; other source contexts, GC/process owners and native platform gaps remain open. |
-| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [validation](../docs/validation.md#current-baseline). Steps 1A (fast/full tests), 1B (changed-file quality) and 1C (docs consolidated from 81 files to 15) done. Step 2: six target program fixtures with OTP goldens and a feature map. |
+| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [validation](../docs/validation.md#current-baseline). Steps 1A (fast/full tests), 1B (changed-file quality) and 1C (docs consolidated from 81 files to 15) done. Step 2: six target program fixtures with OTP goldens and a feature map. Step 3: entry/argv/exit contract (`docs/executables.md`) with validated `--entry` and manifest `entry`. |
 
 **Still unfinished:** production executable startup/linking, GC and graph
 copying, process execution/messaging, additional Erlang source contexts and

@@ -51,6 +51,7 @@ int run_project(const Options &options) {
     if (options.output_explicit) {
         settings.output = options.output;
     }
+    settings.entry = options.entry;
     std::vector<Publication> pending;
     const project::TargetExecutor execute = [&](const project::Invocation &invocation,
                                                 const project::PlannedTarget &target,
@@ -65,6 +66,7 @@ int run_project(const Options &options) {
                                 target_options(options, invocation, target)};
         request.project_target = target.name;
         request.executable_requested = options.output_explicit;
+        request.entry = target.entry;
         request.multiple_targets = invocation.targets.size() > 1;
         request.protected_inputs = protected_inputs(invocation);
         request.pending_publications = &pending;

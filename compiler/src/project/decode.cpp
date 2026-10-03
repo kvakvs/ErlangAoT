@@ -1,5 +1,6 @@
 #include "decode.hpp"
 #include "decode_options.hpp"
+#include "entry.hpp"
 #include "schema.hpp"
 #include <algorithm>
 #include <set>
@@ -15,10 +16,23 @@ bool initial(char value) {
 // Allow dots and hyphens only after the initial target-name character.
 bool continuation(char value) { return initial(value) || value == '.' || value == '-'; }
 
+// Decode the optional entry key, rejecting spellings that cannot name an Erlang function.
+std::optional<Text> entry(const toml::table &values, const schema::Context &context) {
+    const auto *node = values.get("entry");
+    if (!node) {
+        return std::nullopt;
+    }
+    auto result = schema::text(*node, context, "entry");
+    if (!parse_entry(result.value)) {
+        fail(result.site, "invalid entry; expected MODULE or MODULE:FUNCTION");
+    }
+    return result;
+}
+
 // Decode one target's source declarations; options are decoded in their own module.
 Target target(const toml::node &node, schema::Context context) {
     const auto &values = schema::table(node, context, "targets");
-    schema::keys(values, {"name", "sources", "source_dirs", "output", "options"}, context);
+    schema::keys(values, {"name", "sources", "source_dirs", "output", "entry", "options"}, context);
     const auto *name = values.get("name");
     if (!name) {
         fail(schema::site(node, context, "name"), "missing target name");
@@ -38,6 +52,7 @@ Target target(const toml::node &node, schema::Context context) {
     if (const auto *output = values.get("output")) {
         result.output = schema::text(*output, context, "output");
     }
+    result.entry = entry(values, context);
     if (const auto *options = values.get("options")) {
         result.options = decode_options(*options, context);
     }

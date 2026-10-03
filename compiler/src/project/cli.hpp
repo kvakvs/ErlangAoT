@@ -21,6 +21,7 @@ struct Usage {
     bool output = false;
     bool frontend = false;
     bool frontend_options = false;
+    bool entry = false;
 };
 
 // Identify only the project-owned option spellings supported by this version.

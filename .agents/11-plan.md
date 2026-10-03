@@ -223,15 +223,30 @@ exception prints a report to stderr and exits 1. Choose CLI (`--entry M:F`) and
 project-manifest spelling, including whether the manifest key extends schema 1.
 
 - Success criteria
-  - [ ] `docs/executables.md` defines entry selection, argv encoding, exit
+  - [x] `docs/executables.md` defines entry selection, argv encoding, exit
     codes, stdout/stderr use and failures for missing or unexported entries.
-  - [ ] The compiler validates the entry selection (exists, exported, arity)
+  - [x] The compiler validates the entry selection (exists, exported, arity)
     and reports located errors, without linking yet.
 - Tests
-  - [ ] CLI cases for valid entry, missing module, missing function, wrong
+  - [x] CLI cases for valid entry, missing module, missing function, wrong
     arity and unexported entry, checking exit status and diagnostics.
-  - [ ] Project manifest cases for the new entry key, including unknown/invalid
+  - [x] Project manifest cases for the new entry key, including unknown/invalid
     values.
+
+Done 2026-10-03. Chosen: `--entry MODULE[:FUNCTION]` and optional schema-1 target key
+`entry`; function default `main`, arity always 1 (argv strings). Without a selection, `-o`
+uses the only module exporting `main/1`. Exit 0 on return/`halt()`, `halt(N)` sets N, any
+escaping exception (including `exit(normal)`) or killing signal exits 1, runtime failure 70.
+`driver/entry.cpp` resolves after indexing so entry and capability errors report together;
+CTest `linking_entry` covers CLI, manifest and detection cases. Fresh gate: 124 fast tests,
+260 quality units.
+
+### 3A. Add escript compile mode
+
+Consider a new option (or better auto detect situations) when user wants to 
+compile a escript file/compile file into a escript executable. Those have slightly
+different start routine name and arguments. Consult with Erlang/OTP documentation
+how escript file main functions are to be defined.
 
 <a id="step-4"></a>
 

@@ -1,20 +1,22 @@
 #include "diagnostics.hpp"
 
 namespace erlang_aot::project {
-std::string render(const Error &error) {
-    const auto bytes = error.site.file.generic_u8string();
+std::string where(const Site &site) {
+    const auto bytes = site.file.generic_u8string();
     std::string result(bytes.begin(), bytes.end());
-    if (error.site.line != 0) {
-        result += ":" + std::to_string(error.site.line) + ":" + std::to_string(error.site.column);
+    if (site.line != 0) {
+        result += ":" + std::to_string(site.line) + ":" + std::to_string(site.column);
     }
-    if (!error.site.target.empty()) {
-        result += " [target " + error.site.target + "]";
+    if (!site.target.empty()) {
+        result += " [target " + site.target + "]";
     }
-    if (!error.site.key.empty()) {
-        result += " (" + error.site.key + ")";
+    if (!site.key.empty()) {
+        result += " (" + site.key + ")";
     }
-    return result + ": " + error.message;
+    return result;
 }
+
+std::string render(const Error &error) { return where(error.site) + ": " + error.message; }
 
 Failure::Failure(Error error) : std::runtime_error(render(error)), detail(std::move(error)) {}
 

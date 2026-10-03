@@ -2,7 +2,8 @@
 
 `erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
 or native objects. Linking executables is not implemented yet: explicit
-`-o/--output` fails with `[executable linking] notimpl`. Generated objects run
+`-o/--output` validates the [entry](executables.md) and then fails with
+`[executable linking] notimpl`. Generated objects run
 today through a C++ harness linked with the runtime (see the example below).
 
 ## Accepted source subset
@@ -59,6 +60,7 @@ Other actions on the same sources:
 |---|---|
 | `--emit obj\|llvm-ir\|llvm-bc` | Publish one artifact per module |
 | `--artifact-dir DIR` | Artifact root (requires `--emit`) |
+| `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode ([executables](executables.md)) |
 | `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
 | `-O0` / `-O2` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 |
 | `--no-type-specialization` | Disable variants regardless of option order |

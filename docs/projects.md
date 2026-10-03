@@ -14,6 +14,7 @@ name = "app"
 sources = ["main.erl", "src/workers/*.erl", "shared/**/*.erl"]
 source_dirs = ["src/support"]
 output = "build/app"
+entry = "main:main"
 
 [targets.options]
 source_search_paths = ["src", "generated"]
@@ -37,6 +38,9 @@ my_dependency = "vendor/my_dependency"
 - `options` fields are optional typed frontend options. `defines` use
   `NAME` (= `true`) or `NAME=ERLANG_LITERAL_TERM`; duplicates are errors. A
   feature cannot appear in both feature lists.
+- `entry` (optional) selects the executable entry `MODULE[:FUNCTION]`; see
+  [executables](executables.md#entry-selection). CLI `--entry` overrides it for
+  a single selected target.
 - `output` is the reserved executable destination, default
   `<manifest-dir>/build/<target>` (`.exe` on Windows). Check/print modes ignore it.
 - Not supported yet: root defaults, inheritance, target dependencies, imports,
@@ -121,6 +125,7 @@ banners; context and diagnostics go to stderr.
 | `applications` | Manifest map; CLI entries replace matching names |
 | Feature lists | Manifest settings, then ordered CLI changes; CLI wins |
 | `output` | Per target; CLI `-o` overrides for a single selected target |
+| `entry` | Per target; CLI `--entry` overrides for a single selected target |
 
 ## Build dependency
 

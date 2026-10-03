@@ -141,6 +141,9 @@
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in Git history; summary in docs/validation.md.
 
+- Executable entry: `--entry`/manifest `entry` or the sole `main/1` exporter, resolved in
+  `driver/entry` right after semantic indexing; contract in `docs/executables.md`.
+
 - Six end-goal program fixtures (`tests/fixtures/programs/`) carry OTP stdout/exit
   goldens and today's exact compile diagnostics; later steps update `compile.txt`
   until step 58 runs them as executables.

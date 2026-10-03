@@ -43,6 +43,8 @@ struct Target {
     std::vector<Text> source_dirs;
     // Distinguish omitted output from an explicitly requested future destination.
     std::optional<Text> output;
+    // Optional MODULE[:FUNCTION] entry selection; validated spelling, resolved during compilation.
+    std::optional<Text> entry;
     TargetOptions options;
 };
 

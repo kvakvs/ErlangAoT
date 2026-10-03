@@ -92,7 +92,7 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
              const DiagnosticSink &sink) {
     auto request = backend_request(std::move(inputs), frontend);
     Analysis analysis;
-    if (!analyze(request, analysis, sink)) {
+    if (!analyze(request, {frontend.entry, frontend.executable_requested}, analysis, sink)) {
         return true;
     }
     if (frontend.executable_requested) {
