@@ -1,0 +1,18 @@
+registered: true
+fetch_apple: {ok,3}
+fetch_plum: {ok,7.5}
+fetch_fig: error
+incr_apple: {ok,13}
+incr_pear: {error,not_integer}
+incr_new: {ok,-4}
+keys: [42,apple,counter,plum,<<112,101,97,114>>]
+remove_plum: ok
+keys: [42,apple,counter,<<112,101,97,114>>]
+stats: {4,13}
+slow call timed out
+late reply: late
+unmatched mail: [{note,first},{note,second}]
+stop: {stopped,4,15}
+server exit: normal
+whereis after stop: undefined
+call_after_stop: badarg

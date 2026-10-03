@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "fixture": "supervise",
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "contract": "main/1 argv strings; return exits 0; halt/1 sets status; uncaught exception exits 1",
+  "generator_sha256": {
+    "regenerate.py": "a6bfb4f663cabc77a5457b917a45b4afbfb1c59146ab0155caa260f8d4de6a04",
+    "fixtures.py": "bc86ab450864270885faaeadbb7b644b8baa4f2fcc796f39bdc8db7165521f14",
+    "oracle.escript": "ba9fbee3baad46db6d78f977ec4af55c4967c5e9f9c658e0a356f077c81d0357"
+  },
+  "inputs": {
+    "project.toml": "becfb00200520aedb93b0f68525b6293298163ada34f1445bba0359c4440e59c",
+    "fixture.json": "bb481e92715dc252245d6387a583365dea1945fa053697c63c23d7f9b120b2eb",
+    "src/sup_tree.erl": "17364402bb80e3e7d605f2bac04332664148be6536266a41fb46da02bf1b7a00",
+    "src/supervise.erl": "b4d2dc20441f7280c2a82c3b49b888facc3ee3dfaf2084a961cd12cecbf39f8e",
+    "src/worker.erl": "1d3b3ed5e2ad624e17ec077dfeadcf0c7700902ac14cbec84bf062123c369868"
+  },
+  "exit_status": 0,
+  "stdout_sha256": "19666c50c334527d02ca6bd5154df274d1aeeb3fb0dd2f47daf067fb6ac28e52"
+}

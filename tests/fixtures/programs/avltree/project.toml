@@ -1,0 +1,5 @@
+schema_version = 1
+
+[[targets]]
+name = "avltree"
+source_dirs = ["src"]

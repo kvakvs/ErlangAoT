@@ -97,8 +97,8 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate: 125
-CTests and 258 production quality units.
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate: 126
+CTests (123 fast) and 258 production quality units.
 
 ## Step overview
 
@@ -193,13 +193,20 @@ structure library, process ring, key-value server loop, supervisor-style
 restart). Record which language features and builtins each needs.
 
 - Success criteria
-  - [ ] Each fixture is original code with a project manifest, entrypoint,
+  - [x] Each fixture is original code with a project manifest, entrypoint,
     expected stdout and exit status generated once from OTP.
-  - [ ] A table maps every fixture to the plan steps it depends on.
+  - [x] A table maps every fixture to the plan steps it depends on.
 - Tests
-  - [ ] Explicit regeneration reproduces each golden under OTP.
-  - [ ] A normal CTest compiles each fixture and checks today's expected
+  - [x] Explicit regeneration reproduces each golden under OTP.
+  - [x] A normal CTest compiles each fixture and checks today's expected
     unsupported-feature diagnostics (updated as later steps land).
+
+Done 2026-10-03. Six fixtures in `tests/fixtures/programs/` (`textstats`, `frames`, `avltree`,
+`ring`, `kvstore`, `supervise`) with the feature map in its README. Goldens come from OTP 29.1.1
+through `tests/compiler/programs/oracle.escript` under the proposed step-3 contract;
+`regenerate.py --check` reproduced all six three times. CTest `programs_compile` verifies hashes
+and exact `compile.txt` diagnostics; opt-in `programs_oracle` reruns OTP. The fixtures showed
+`++`/`--` had no owner, so step 37 now lists them.
 
 ## B. Production executables
 
@@ -774,7 +781,8 @@ Backlog: F26. Depends on: [36](#step-36).
 
 `element/2`, `setelement/3`, `tuple_size/1`, `make_tuple/2,3`,
 `tuple_to_list/1`, `list_to_tuple/1`, `hd/1`, `tl/1`, `length/1`, `map_get/2`,
-`map_size/1` and `is_map_key/2` in body context.
+`map_size/1` and `is_map_key/2` in body context, plus the list operators
+`++`/`--` (`erlang:'++'/2`, `erlang:'--'/2`).
 
 - Success criteria
   - [ ] Results and `badarg` errors match OTP.

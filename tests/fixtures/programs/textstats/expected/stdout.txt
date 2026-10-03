@@ -1,0 +1,14 @@
+words: 16 total, 12 distinct
+  the x4
+  fox x2
+  brown x1
+  day x1
+longest: quick (5 letters)
+numbers: [42,-17,1000000007,8,99999999999,0]
+sum 101000000039, min -17, max 99999999999, mean 16833333339.83
+signs: [positive,negative,positive,positive,positive,zero]
+hex: 2A, -11, 3B9ACA07, 8, 174876E7FF, 0
+even squares: [1764,64,0]
+nonzero product: -571200003992687999960016
+invalid: 12abc
+invalid: -

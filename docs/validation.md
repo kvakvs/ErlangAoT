@@ -51,6 +51,11 @@ cmake --build build/debug --target check-quality-all  # whole tree
   A 2026-10-03 audit removed all copied OTP files; 60-token window comparison
   against 4,150 OTP Erlang and 1,190 C/C++ files found no remaining overlap
   besides a generated integer tuple. `fixture_sources` enforces isolation.
+- Six end-goal program fixtures (`tests/fixtures/programs/`, plan 11 step 2)
+  hold OTP stdout/exit-status goldens and today's compile diagnostics;
+  `programs_compile` checks them OTP-free and
+  `tests/compiler/programs/regenerate.py --check` reproduces them under OTP
+  ([fixture map](../tests/fixtures/programs/README.md)).
 - Regeneration and live audits are explicit:
   `-DERLANG_AOT_OTP_AUDITS=ON` and `tests/compiler/patternmatch/regenerate.py`
   ([instructions](../tests/fixtures/patternmatch/generated/README.md)).
@@ -126,5 +131,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-03 | PG20 closure | 124 | 258 | 19 corpora, 67,634 values, 1,969 seeded outcomes |
 | 2026-10-03 | OTP source audit | 125 | 258 | Copied OTP files replaced by local fragments |
 | 2026-10-03 | Plan 11 step 1 baseline | 125 | 258 | See current baseline |
+| 2026-10-03 | Plan 11 step 2 program fixtures | 126 | 258 | Six OTP goldens; fast mode 123 tests; full `-j 16` 83 s |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

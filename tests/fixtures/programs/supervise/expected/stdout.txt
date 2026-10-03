@@ -1,0 +1,21 @@
+started [counter,echo]
+counter pong 1
+counter pong 2
+echo pong 1
+counter restarted after {crashed,1} (restarts 1)
+counter pong 1
+echo restarted after killed (restarts 2)
+echo pong 1
+children: [counter,echo]
+counter exited after normal (restarts 2)
+whereis counter: undefined
+echo restarted after overload (restarts 3)
+echo gave_up after overload (restarts 3)
+stopped children: []
+supervisor exit: shutdown
+whereis echo: undefined
+trapped (was false): {done,7}
+linked kill: killed
+monitor dead pid: noproc
+demonitor flush: false
+mailbox empty: true

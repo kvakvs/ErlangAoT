@@ -141,6 +141,10 @@
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in Git history; summary in docs/validation.md.
 
-- Remaining work is expanded in [plan 11](11-plan.md) as 78 small steps; it is planning only.
+- Six end-goal program fixtures (`tests/fixtures/programs/`) carry OTP stdout/exit
+  goldens and today's exact compile diagnostics; later steps update `compile.txt`
+  until step 58 runs them as executables.
+
+- Remaining work is expanded in [plan 11](11-plan.md) as 78 small steps.
   The completed pattern/guard checklist is retired; its contracts/evidence remain
   in that plan and [the archive](00-finished.md#completed-patternmatch).

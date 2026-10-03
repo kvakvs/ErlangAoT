@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "entry": "textstats",
+  "args": [
+    "The quick brown fox jumps over the lazy dog.",
+    "42",
+    "-17",
+    "It's the dog's day; the fox naps!",
+    "12abc",
+    "1000000007",
+    "8",
+    "-",
+    "99999999999",
+    "0"
+  ]
+}

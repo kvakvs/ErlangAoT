@@ -1,0 +1,5 @@
+schema_version = 1
+
+[[targets]]
+name = "supervise"
+source_dirs = ["src"]
