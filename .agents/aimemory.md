@@ -145,3 +145,14 @@ Step4 gate: fresh fast 128/128 (first run after runtime source changes timed out
 native sub-builds recompiled the runtime; rerun clean, 55 s). check-quality tidy with 2 jobs crashed
 clang-tidy (0xC0000005/0xC0000409) on random unchanged units 3x; same official script with
 -DQUALITY_JOBS=1 passed all 265 units (build/plan11-step4/tidy1.cmd). Runtime CMake edits select all units.
+Plan11 step5 2026-10-04: startup object. abi/startup.hpp StartupDescriptor{abi,bits,modules**,count,
+entry module/function bytes,flags(escript=1)}; erlang_aot_main_v1(int,char**,const void*) +
+erlang_aot_halt_v1(ctx,word) (runtime/src/startup/{startup,arguments,halt}.cpp). Codegen
+codegen/startup.cpp appends llvm module "startup" AFTER inputs (serialize/emission/progress treat
+index>=inputs as startup; OutputBuffer.startup -> artifact eav1_start). Set from Analysis.entry in
+driver/backend.cpp (explicit entry only; -o still notimpl until step 6). Windows argv via
+_configure_wide_argv(_crt_argv_unexpanded_arguments)+__wargv (no shell32). halt -> CallFailure
+{code=halted, halt_status, value=slogan}; body_builtin erlang:halt/0,1 qualified only. Mangling
+verified with clang --target for 7 triples (decl file build/plan11-step5/mangle). CMake ARGN drops
+empty args: test "" via direct execute_process. Consumer exe from objects only needs LINKER_LANGUAGE CXX.
+Manual link: clang-cl /MT obj\*.obj build\debug\lib\erlang_runtime.lib (vcvars). Logs build/plan11-step5.

@@ -5,6 +5,7 @@
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,6 +29,15 @@ struct CompilationInput {
     bool escript = false;
     // Retain immutable syntax and its source provenance beyond the parsing session.
     ast::Module syntax;
+};
+
+struct StartupRequest {
+    // Batch index of the entry module; its descriptor and spelling identify the entry at run time.
+    std::size_t module = 0;
+    // Exact UTF-8 entry function name; the entry arity is always 1 (the argument list).
+    std::string function;
+    // Escript entries exit with status 127 on uncaught exceptions.
+    bool escript = false;
 };
 
 struct CompilationProgress {
@@ -79,5 +89,7 @@ struct CompilationRequest {
     bool annotate_source = false;
     // Select future in-memory serialization; filesystem publication belongs to the driver.
     OutputKind output_kind = OutputKind::object;
+    // Add a startup module with a native `main` after the batch's modules when an entry is selected.
+    std::optional<StartupRequest> startup;
 };
 } // namespace erlang_aot::codegen

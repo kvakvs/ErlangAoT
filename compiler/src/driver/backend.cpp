@@ -10,6 +10,7 @@
 #include "publication.hpp"
 #include "type_report.hpp"
 #include <erlang_aot/abi/feature_diagnostic.hpp>
+#include <erlang_aot/compiler/source.hpp>
 
 namespace erlang_aot::cli {
 namespace {
@@ -103,6 +104,10 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
     if (frontend.backend.print_types) {
         print_types(analysis, request);
         return false;
+    }
+    if (analysis.entry) {
+        const auto &entry = *analysis.entry;
+        request.startup = codegen::StartupRequest{entry.module, utf8(entry.function.name), entry.escript};
     }
     codegen::Compilation compilation(std::move(request));
     const bool succeeded = generate(compilation, analysis, frontend);

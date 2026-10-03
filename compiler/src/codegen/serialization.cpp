@@ -14,17 +14,23 @@
 namespace erlang_aot::codegen {
 namespace {
 // Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
-OutputBuffer serialize(const llvm::Module &module, const ast::Module &syntax, const SourceScopes &sources,
+// A null `syntax` marks the startup module, which has no Erlang source to annotate.
+OutputBuffer serialize(const llvm::Module &module, const ast::Module *syntax, const SourceScopes &sources,
                        OutputKind kind, std::size_t capacity) {
     BoundedStream stream(capacity);
-    if (kind == OutputKind::llvm_ir) {
-        SourceAnnotations annotations(module, syntax, sources, capacity);
+    if (kind == OutputKind::llvm_ir && syntax) {
+        SourceAnnotations annotations(module, *syntax, sources, capacity);
         annotations.print_sources(stream);
         module.print(stream, &annotations);
+    } else if (kind == OutputKind::llvm_ir) {
+        module.print(stream, nullptr);
     } else {
         llvm::WriteBitcodeToFile(module, stream);
     }
-    return {.module_name = module.getModuleIdentifier(), .kind = kind, .bytes = stream.take_bytes()};
+    return {.module_name = module.getModuleIdentifier(),
+            .kind = kind,
+            .bytes = stream.take_bytes(),
+            .startup = syntax == nullptr};
 }
 
 // Verify all modules before capturing any snapshot; failures discard earlier staged artifacts.
@@ -39,8 +45,9 @@ std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, Outpu
             if (artifact) {
                 progress_module(compilation, index, "emission");
             }
-            outputs.push_back(serialize(*module, compilation.request().inputs.at(index).syntax,
-                                        detail::state(compilation).source_scopes, kind,
+            const auto &inputs = compilation.request().inputs;
+            const auto *syntax = index < inputs.size() ? &inputs[index].syntax : nullptr;
+            outputs.push_back(serialize(*module, syntax, detail::state(compilation).source_scopes, kind,
                                         output_capacity(compilation.request().limits, outputs)));
             ++index;
         }

@@ -72,7 +72,9 @@ enum class ImmediateOperation : std::uint8_t {
     // Compound compiler lowering validates integer bounds before comparing the candidate.
     is_integer_range,
     // Body-only erlang:display/1 lowers to erlang_aot_display_v1, never to the immediate service.
-    display
+    display,
+    // Body-only erlang:halt/0,1 lowers to erlang_aot_halt_v1 and never returns.
+    halt
 };
 } // namespace erlang_aot::abi::v1
 

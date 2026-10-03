@@ -65,6 +65,10 @@ int main() {
                               "_Z17erlang_aot_map_v1PvhPKmmPm", "_Z17erlang_aot_map_v1PvhPKjjPj"});
         check<services::Display>({"?erlang_aot_display_v1@@YAEPEAX_KPEA_K@Z", "?erlang_aot_display_v1@@YAEPAXIPAI@Z",
                                   "_Z21erlang_aot_display_v1PvmPm", "_Z21erlang_aot_display_v1PvjPj"});
+        check<services::Halt>({"?erlang_aot_halt_v1@@YAEPEAX_K@Z", "?erlang_aot_halt_v1@@YAEPAXI@Z",
+                               "_Z18erlang_aot_halt_v1Pvm", "_Z18erlang_aot_halt_v1Pvj"});
+        check<services::Main>({"?erlang_aot_main_v1@@YAHHPEAPEADPEBX@Z", "?erlang_aot_main_v1@@YAHHPAPADPBX@Z",
+                               "_Z18erlang_aot_main_v1iPPcPKv", "_Z18erlang_aot_main_v1iPPcPKv"});
         check<services::Exact>({"?erlang_aot_exact_v1@@YAEPEAX_K1@Z", "?erlang_aot_exact_v1@@YAEPAXII@Z",
                                 "_Z19erlang_aot_exact_v1Pvmm", "_Z19erlang_aot_exact_v1Pvjj"});
         check<services::CallFailed>({"?erlang_aot_call_failed_v2@@YAEPEAX@Z", "?erlang_aot_call_failed_v2@@YAEPAX@Z",

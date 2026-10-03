@@ -15,8 +15,10 @@ void progress_module(const Compilation &compilation, std::size_t index, std::str
         return;
     }
     const auto &state = detail::state(compilation);
-    progress(state.request, phase, state.request.inputs.at(index).source_path,
-             state.modules.at(index)->getModuleIdentifier(), message);
+    // The startup module follows the batch's inputs and has no source file.
+    const auto &inputs = state.request.inputs;
+    const auto source = index < inputs.size() ? inputs[index].source_path : std::filesystem::path{};
+    progress(state.request, phase, source, state.modules.at(index)->getModuleIdentifier(), message);
 }
 
 void progress_modules(const Compilation &compilation, std::string_view phase, std::string_view message) {

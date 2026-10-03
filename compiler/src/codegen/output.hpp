@@ -14,5 +14,7 @@ struct OutputBuffer {
     OutputKind kind = OutputKind::object;
     // Retain serialized bytes after LLVM modules and their contexts have been destroyed.
     std::vector<std::byte> bytes;
+    // Mark the batch's startup object, published as `eav1_start` instead of a module name.
+    bool startup = false;
 };
 } // namespace erlang_aot::codegen

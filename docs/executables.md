@@ -1,8 +1,9 @@
 # Executables
 
-Contract for programs built by `erlangaot -o`. Entry selection is validated
-today; startup and linking arrive with plan 11 steps 5–7, so `-o` still ends
-with `[executable linking] notimpl` after a valid entry is found.
+Contract for programs built by `erlangaot -o`. Entry selection and the startup
+object exist; linking arrives with plan 11 steps 6–7, so `-o` still ends with
+`[executable linking] notimpl` after a valid entry is found. Until then a
+[startup object](#startup-object) is linked with the runtime by hand.
 
 ## Entry selection
 
@@ -41,7 +42,8 @@ excluding the program name, unchanged and in order, like `escript`.
 
 - POSIX: each argument's bytes are decoded as UTF-8; a byte that does not start
   a valid sequence becomes the code point of that byte (Latin-1 fallback).
-- Windows: wide (UTF-16) arguments; an unpaired surrogate becomes U+FFFD.
+- Windows: the CRT's wide (UTF-16) argument vector, split by the same rules as
+  `argv`; an unpaired surrogate becomes U+FFFD.
 - No option parsing, globbing or environment expansion happens in the runtime.
 
 ## Exit status
@@ -61,6 +63,13 @@ Invalid `halt/1` arguments raise `badarg` in the caller. When the entry
 finishes, the program exits: other processes are stopped without running
 further, as with OTP's `halt/1` after `escript` returns.
 
+`erlang:halt/0,1` is callable with an explicit `erlang:` prefix (unqualified
+auto-imported calls and `halt/2` arrive with the builtin bridge, step 36).
+`halt(N)` keeps the low 31 bits of any non-negative integer, as OTP does. A
+slogan is a proper list of at most 1,023 Unicode code points. A halt unwinds the
+entry through the checked error channel like an error, so it stops the program
+only after generated cleanup.
+
 ## Output streams
 
 - stdout: `standard_io` output (`io:format/1,2`, `io:put_chars/1`,
@@ -70,6 +79,38 @@ further, as with OTP's `halt/1` after `escript` returns.
 - The report is one line `uncaught exception <class>: <reason in ~w form>`,
   later followed by stack frames (step 15). Its exact text is not a stable
   interface; tests match it by pattern.
+
+## Startup object
+
+Compiling with an explicit entry (`--entry` or manifest `entry`) adds a startup
+module after the batch's modules. With `--emit` it is published
+as `eav1_start.{obj,o,ll,bc}` next to the module artifacts (the name cannot
+collide with a module artifact). It contains a constant
+`abi::v1::StartupDescriptor` ([startup.hpp](../abi/include/erlang_aot/abi/startup.hpp)):
+ABI revision, term width, every module descriptor in source order, the entry
+module/function spellings and an escript flag. Its `int main(int, char **)`
+calls the runtime's `erlang_aot_main_v1`, which:
+
+1. Checks the startup and every module descriptor for ABI revision and width
+   before anything is registered; a mismatch exits 70.
+2. Starts the runtime and registers all modules; any failure stops before the
+   entry and discards the runtime (exit 70), so no Erlang code runs against a
+   partial batch.
+3. Creates the entry process, builds argv and calls `M:F/1`.
+4. Maps the outcome to the exit status above, printing reports after flushing
+   stdout, then destroys the process and shuts the runtime down on every path
+   (except `halt(abort)`).
+
+Manual linking (the [native harness recipe](compile.md#run-the-compiled-module-example)
+without a harness source):
+
+```powershell
+& $tool --emit obj --entry app --artifact-dir build/app app.erl helper.erl
+clang-cl /MT build/app/*.obj build/debug/lib/erlang_runtime.lib /Fe:app.exe
+```
+
+Any Clang-compatible link of the objects with `ErlangAoT::generated_program`
+works the same way (see `tests/compiler/linking/startup.cmake`).
 
 ## Escripts
 

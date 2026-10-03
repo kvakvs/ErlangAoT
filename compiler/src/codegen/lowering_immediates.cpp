@@ -1,5 +1,6 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
+#include <erlang_aot/abi/equality.hpp>
 #include <llvm/IR/Module.h>
 
 namespace erlang_aot::codegen {
@@ -59,6 +60,20 @@ llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value) {
     // Display has no semantic rejection: every failure is already in the checked channel.
     propagate_failure(state);
     return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "display.value");
+}
+
+llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Halt>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy(), state.word}, false));
+    // halt/0 is halt(0): pass the small-integer encoding of zero.
+    auto *code = status ? status : llvm::ConstantInt::get(state.word, abi::v1::small_integer_tag);
+    builder.CreateCall(service, {state.entry.getArg(0), code}, "halt.outcome");
+    // The service always records a halt, badarg or infrastructure failure, so this check always unwinds.
+    propagate_failure(state);
+    return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
 }
 
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection) {

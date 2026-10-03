@@ -58,7 +58,9 @@ std::vector<Destination> plan(std::span<const codegen::OutputBuffer> outputs, co
     std::set<std::filesystem::path> names;
     const auto base = project::absolute_path(std::filesystem::current_path(), root);
     for (const auto &output : outputs) {
-        const auto path = base / (encoded_name(output.module_name) + extension(output.kind, object_extension));
+        // "eav1_start" never decodes as a module symbol, so it cannot collide with module artifacts.
+        const auto name = output.startup ? std::string("eav1_start") : encoded_name(output.module_name);
+        const auto path = base / (name + extension(output.kind, object_extension));
         if (!names.insert(path).second) {
             throw std::runtime_error("duplicate artifact destination: " + project::path_text(path));
         }

@@ -67,6 +67,21 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
     return *value;
 }
 
+// Lower body-only erlang builtins (display/1, halt/0,1); null for every other service.
+llvm::Value *body_builtin_value(ExpressionLowering &state, const std::optional<abi::v1::ImmediateOperation> &operation,
+                                const ast::CallExpression &call) {
+    const auto argument = [&](std::size_t index) {
+        return state.values.at(&state.module.syntax->expression(call.arguments.at(index)));
+    };
+    if (operation == abi::v1::ImmediateOperation::display) {
+        return lower_display(state, argument(0));
+    }
+    if (operation == abi::v1::ImmediateOperation::halt) {
+        return lower_halt(state, call.arguments.empty() ? nullptr : argument(0));
+    }
+    return nullptr;
+}
+
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto service = state.function.services.find(&expression);
@@ -79,8 +94,8 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
         return lower_record_test(state, expression, call);
     }
-    if (service->second.operation == abi::v1::ImmediateOperation::display) {
-        return lower_display(state, state.values.at(&state.module.syntax->expression(call.arguments.at(0))));
+    if (auto *value = body_builtin_value(state, service->second.operation, call)) {
+        return value;
     }
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
         std::vector<llvm::Value *> arguments;

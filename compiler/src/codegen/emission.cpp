@@ -23,7 +23,7 @@ bool reject(detail::CompilationState &state, const llvm::Module &module, const s
 }
 
 // Run LLVM's machine-code pipeline on a clone so repeated emission preserves the original IR.
-bool emit_module(detail::CompilationState &state, const llvm::Module &module) {
+bool emit_module(detail::CompilationState &state, const llvm::Module &module, bool startup) {
     const auto working = llvm::CloneModule(module);
     BoundedStream stream(output_capacity(state.request.limits, state.result.outputs()));
     llvm::legacy::PassManager passes;
@@ -38,8 +38,10 @@ bool emit_module(detail::CompilationState &state, const llvm::Module &module) {
     if (bytes.empty()) {
         return reject(state, module, "target produced an empty object");
     }
-    OutputBuffer output{
-        .module_name = module.getModuleIdentifier(), .kind = OutputKind::object, .bytes = std::move(bytes)};
+    OutputBuffer output{.module_name = module.getModuleIdentifier(),
+                        .kind = OutputKind::object,
+                        .bytes = std::move(bytes),
+                        .startup = startup};
     return state.result.add_output(std::move(output));
 }
 } // namespace
@@ -52,9 +54,11 @@ bool emit_objects(Compilation &compilation) {
     state.result.discard_outputs();
     std::size_t index = 0;
     for (const auto &module : state.modules) {
+        // The startup module, when present, follows the batch's inputs.
+        const bool startup = index >= state.request.inputs.size();
         progress_module(compilation, index++, "emission");
         try {
-            if (!emit_module(state, *module)) {
+            if (!emit_module(state, *module, startup)) {
                 return false;
             }
         } catch (const std::exception &error) {

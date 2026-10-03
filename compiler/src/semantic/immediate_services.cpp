@@ -99,7 +99,9 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"and", 2}, Op::logical_and},
                                                       {{U"or", 2}, Op::logical_or},
                                                       {{U"xor", 2}, Op::logical_xor},
-                                                      {{U"display", 1}, Op::display}};
+                                                      {{U"display", 1}, Op::display},
+                                                      {{U"halt", 0}, Op::halt},
+                                                      {{U"halt", 1}, Op::halt}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
 }
@@ -111,10 +113,12 @@ std::optional<FunctionKey> body_builtin(const ast::Module &syntax, const ast::Ca
     }
     const auto *owner = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->module)).value);
     const auto *name = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->function)).value);
-    if (!owner || !name || owner->name != U"erlang" || name->name != U"display" || call.arguments.size() != 1) {
+    if (!owner || !name || owner->name != U"erlang") {
         return {};
     }
-    return FunctionKey{name->name, 1};
+    const FunctionKey key{name->name, call.arguments.size()};
+    const bool builtin = key == FunctionKey{U"display", 1} || (key.name == U"halt" && key.arity <= 1);
+    return builtin ? std::optional{key} : std::nullopt;
 }
 
 std::optional<Op> immediate_unary(ast::UnaryOperator operation) {

@@ -3,8 +3,9 @@
 `erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
 or native objects. Linking executables is not implemented yet: explicit
 `-o/--output` validates the [entry](executables.md) and then fails with
-`[executable linking] notimpl`. Generated objects run
-today through a C++ harness linked with the runtime (see the example below).
+`[executable linking] notimpl`. Generated objects run today through a C++
+harness linked with the runtime (see the example below), or, with `--entry`,
+through the emitted [startup object](executables.md#startup-object).
 
 ## Accepted source subset
 
@@ -12,8 +13,9 @@ Named modules with exports and ordered function clauses. Heads and body matches
 accept variables, `_`, aliases, repeated names and patterns over atoms,
 arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and
 ordinary tuple records. Bodies are sequences of matches, constructors, checked
-operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)) and
-direct local or literal remote calls within the batch.
+operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
+`erlang:halt/0,1` ([exit status](executables.md#exit-status)) and direct local
+or literal remote calls within the batch.
 Guards support the full admitted catalog. See [patterns](patterns.md),
 [guards](guards.md) and [terms](terms.md).
 
@@ -63,7 +65,7 @@ Other actions on the same sources:
 |---|---|
 | `--emit obj\|llvm-ir\|llvm-bc` | Publish one artifact per module |
 | `--artifact-dir DIR` | Artifact root (requires `--emit`) |
-| `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode ([executables](executables.md)) |
+| `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode and adds the `eav1_start` startup artifact ([executables](executables.md#startup-object)) |
 | `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
 | `-O0` / `-O2` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 |
 | `--no-type-specialization` | Disable variants regardless of option order |
@@ -77,7 +79,7 @@ Other actions on the same sources:
 - Artifact roots: `build/aot` (positional) or `build/aot/<hex-target>` under the
   manifest directory. Explicit roots are invocation-relative.
 - Names are reversible hex: `answer` → `eav1_616e73776572__0.obj` (`.o` for
-  ELF/Mach-O, `.ll`, `.bc`).
+  ELF/Mach-O, `.ll`, `.bc`); the startup object is `eav1_start.obj`.
 - All batches compile and stage before publication. Failures publish nothing
   and keep earlier outputs; replacement is atomic per file, not per batch.
 - `--emit` conflicts with `-o`; compilation switches conflict with frontend-only

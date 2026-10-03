@@ -7,7 +7,8 @@ from the same build; older descriptor revisions are rejected before use.
 Headers: [v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) (term/context/function
 types), [term.hpp](../abi/include/erlang_aot/abi/term.hpp) (immediate integer
 codec), [status.hpp](../abi/include/erlang_aot/abi/status.hpp),
-[builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp).
+[builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp),
+[startup.hpp](../abi/include/erlang_aot/abi/startup.hpp) (program startup).
 
 ## Terms
 
@@ -55,6 +56,10 @@ publishes nothing (already interned atoms stay in the bounded table).
 - The descriptor address is the atom-binding key; its image must stay mapped for
   the module lifetime. Each runtime has its own bindings for the same image.
 - Atom expressions read slots via `erlang_aot_atom_v3`; they never intern.
+- A startup object (`eav1_start`) lists every descriptor in a
+  `StartupDescriptor` and its native `main` calls
+  `erlang_aot_main_v1(argc, argv, descriptor)`, which registers all modules
+  and runs the entry ([executables](executables.md#startup-object)).
 
 ## Failure channel (revision 2)
 
@@ -70,6 +75,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
+| `erlang:halt/0,1` | `CallError::halted` with `halt_status` (and slogan) |
 
 All Erlang errors currently have class `error`; reasons are typed IDs and
 `erlang_aot_raise_v2` records them. First failure wins; nested invocations share
@@ -103,6 +109,8 @@ equality), `erlang_aot_immediate_v1` (immediate predicates/queries),
 success, semantic error (`badarg`/`badarith`/...) or infrastructure failure and
 writes output only on success. `erlang_aot_display_v1` ([output.hpp](../abi/include/erlang_aot/abi/output.hpp))
 prints one `erlang:display/1` line and yields `true`; it has no semantic error.
+`erlang_aot_halt_v1` never succeeds: it records a halt request
+(`CallError::halted` with the exit status) or `badarg`, so the caller unwinds.
 Linker spellings follow the target's Itanium or Microsoft C++ mangling.
 
 `abi::v1::dispatch_builtin` calls host-registered builtins by module/function

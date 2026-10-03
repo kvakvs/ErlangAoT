@@ -296,14 +296,25 @@ Emit a native `main` that creates the runtime, registers every module of the
 batch, builds argv, calls the entry and maps the outcome to the exit status.
 
 - Success criteria
-  - [ ] Startup registers modules transactionally and shuts the runtime down in
+  - [x] Startup registers modules transactionally and shuts the runtime down in
     order on every exit path.
-  - [ ] Uncaught errors print the step-3 report; ABI mismatch fails before
+  - [x] Uncaught errors print the step-3 report; ABI mismatch fails before
     entry.
 - Tests
-  - [ ] Link startup plus modules manually with the existing harness recipe and
+  - [x] Link startup plus modules manually with the existing harness recipe and
     check normal return, `halt/1`, uncaught error and argv passing.
-  - [ ] IR inspection of the startup object at O0/O2 on both word widths.
+  - [x] IR inspection of the startup object at O0/O2 on both word widths.
+
+Done 2026-10-04. An explicit entry adds a startup module (`codegen/startup`, artifact `eav1_start`)
+whose `main` passes an `abi::v1::StartupDescriptor` to the runtime's `erlang_aot_main_v1`
+(`runtime/src/startup/`): all descriptors are ABI-checked before the first registration, a failed
+registration discards the runtime before entry (exit 70), argv is decoded per platform (CRT wide args
+on Windows), reports follow a stdout flush and teardown is ordered on every path. `erlang:halt/0,1`
+became a body builtin (`erlang_aot_halt_v1`, `CallError::halted`) so the exit paths are testable.
+CTests `linking_startup` (O0 positional, O2 project and escript objects linked by CMake without a
+harness; argv, return, halt, slogan, badarg, badmatch, function_clause, escript 127; startup IR for
+x64/x86 MSVC, x64 Linux, ARMv7 at O0/O2) and `runtime_startup` (ABI/flag mismatch, duplicate module,
+missing entry never run the entry).
 
 <a id="step-6"></a>
 

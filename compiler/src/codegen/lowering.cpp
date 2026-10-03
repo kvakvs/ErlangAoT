@@ -6,6 +6,7 @@
 #include "source_locations.hpp"
 #include "specialization_analysis.hpp"
 #include "specialization_lowering.hpp"
+#include "startup.hpp"
 #include "target.hpp"
 #include "term_abi.hpp"
 #include "verification.hpp"
@@ -96,6 +97,9 @@ bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::M
         progress_modules(compilation, "specialization",
                          "batch installed=" + std::to_string(plan.lowered_variants) +
                              " skipped-measured-growth=" + std::to_string(plan.rejected_variants));
+        if (compilation.request().startup) {
+            emit_startup(compilation, modules, word);
+        }
         return verify_ir(compilation);
     } catch (const std::exception &error) {
         compilation.result().report(

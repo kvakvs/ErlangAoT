@@ -119,7 +119,7 @@
   both sides. Text/bitcode/object serialization owns bytes; source-scoped line
   metadata and bounded comments annotate textual IR. Artifact publication checks
   encoded paths/aliases, stages exclusive writes and replaces complete files;
-  multi-file publication is not atomic. Production executable linking stays deferred.
+  multi-file publication is not atomic. Startup objects exist; executable linking stays deferred.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
@@ -144,6 +144,12 @@
 - Executable entry: `--entry`/manifest `entry` or the sole `main/1` exporter, resolved in
   `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
   the header, `semantic/escript` exports `main/1`; entry detection prefers them.
+- Startup: a resolved entry sets `CompilationRequest::startup`; `codegen/startup` appends a
+  module (after the inputs, no syntax; artifact `eav1_start`) whose `main` hands a
+  `StartupDescriptor` to runtime `erlang_aot_main_v1`. The runtime ABI-checks all descriptors,
+  registers every module before entry, builds argv, runs the entry in one context and maps
+  return/halt/exception/infrastructure outcomes to exit 0/N/1|127/70. `erlang:halt/0,1` records
+  `CallError::halted` in the checked channel, so halts unwind like errors.
 
 - Term printing: runtime `format_term` renders `~w` or emulator display text iteratively under a
   byte cap (maps in map-key order); `erlang:display/1` is a body-only service writing to

@@ -112,6 +112,17 @@ writes the text and a newline in one write and returns `true`. Rendering limits
 and rejected writes become infrastructure statuses (`resource_limit`,
 `output_failure`, ...) in the checked channel, never Erlang exceptions.
 
+## Program startup
+
+`erlang_aot_main_v1` ([startup.hpp](../abi/include/erlang_aot/abi/startup.hpp),
+`runtime/src/startup/`) runs a whole program for the generated `main`: it
+checks every descriptor's ABI, starts a default runtime, registers all modules
+before any entry code, builds argv in the entry context, calls the entry and
+maps the result to the exit status of [executables](executables.md#exit-status).
+Reports go to stderr after stdout is flushed; the context and runtime are torn
+down in order on every path. `erlang_aot_halt_v1` implements `erlang:halt/0,1`
+(`abort` calls `std::abort`).
+
 ## Deferred services
 
 These report one `[feature] notimpl` line ([features](features.md)) and change no

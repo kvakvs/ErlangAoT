@@ -10,7 +10,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 | --- | --- |
 | Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it; `mangling`: compile-time Itanium/MSVC symbols for runtime services |
 | Runtime API | `runtime/include/erlang_aot/runtime/` |
-| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `output`, `features`, `feature_diagnostic` |
+| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `output`, `startup`, `features`, `feature_diagnostic` |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
 | Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
 | New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
@@ -39,7 +39,7 @@ Keys in the last column are relative to the directory column.
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `inference_bindings`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics, runtime-service symbols | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi`, `runtime_symbols` |
 | `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
-| `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
+| `codegen/` | Atom slots / registration; startup module (`main` → `erlang_aot_main_v1`); guarded variants | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
 
@@ -62,6 +62,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
 | `builtins/` | Generic registry, checked invocation/ABI bridge; standard output and `erlang_aot_display_v1` | `registry`, `invocation`, `bridge`, `output`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
+| `startup/` | Program startup `erlang_aot_main_v1` (ABI checks, registration, entry, exit status), argv decoding, `erlang_aot_halt_v1` | `startup` (+ private `startup.hpp`), `arguments`, `halt` |
 | `diagnostics/` | Runtime feature reporting | `features` |
 
 ## Build, support, evidence
@@ -94,7 +95,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
 | `printing` | `values.py` (authored values, corpus collection, wire parse, order rule), `regenerate.py` + `oracle.escript` (explicit OTP goldens), `display.py` CTest `printing_display` (compiled display calls via `codegen/match.cmake`); runtime goldens `tests/runtime/printing.cpp` |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
-| `linking` | F01 entry selection and escripts (`entry.cmake`, `escript.cmake`, fixtures `tests/fixtures/linking/{entry,escript}/`); later startup/link workflows (F32/D01) join here |
+| `linking` | F01 entry selection, escripts and startup objects (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; fixtures `tests/fixtures/linking/{entry,escript,startup}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
 
@@ -107,7 +108,7 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 
 | Feature(s) | Main / additional destinations |
 | --- | --- |
-| F01 executable startup; F32 LTO | **+** `C/linking`; `C/codegen`; F01 bootstrap: **+** `R/startup`, using `R/runtime.cpp` lifecycle |
+| F01 executable startup; F32 LTO | **+** `C/linking`; `C/codegen/startup`; F01 bootstrap: `R/startup`, using `R/runtime.cpp` lifecycle |
 | F02 roots/safepoints | `C/codegen`, `R/memory`, `R/process`, shared ABI |
 | F03 heaps; F04 GC; F05 graph copying | `R/memory`: allocation/tracing/copying; `R/terms`: constructors/layout traversal/destruction |
 | F06 atoms | `R/terms`: synchronization; `R/modules`: bindings; `C/codegen/module_atoms` |

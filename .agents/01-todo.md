@@ -49,10 +49,12 @@ Expanded plan: [3](11-plan.md#step-3), [4](11-plan.md#step-4),
 Meaning: produce a runnable Erlang program with runtime startup, rather than
 requiring the separately written C++ harness used today.
 
-- [ ] Define entrypoint selection, arguments, exit status and runtime startup
-  options.
+- [x] Define entrypoint selection, arguments, exit status and runtime startup
+  options (steps 3, 3A, 5: `docs/executables.md`).
 - [ ] Generate startup/module registration, initial execution and orderly
   shutdown; connect cooperative process execution when F22 becomes available.
+  (Step 5 delivered the startup object and single-context execution; F22
+  connection remains.)
 - [ ] Drive Clang/platform linking with one matching target runtime and safe
   CLI/ project output publication; replace the supported executable-output
   placeholder.

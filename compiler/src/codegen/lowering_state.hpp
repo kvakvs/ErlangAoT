@@ -63,6 +63,8 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
                              llvm::Value *right = nullptr);
 // Print one term through erlang:display/1; the rooted result is the atom true after the channel check.
 llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value);
+// Stop the program through erlang:halt/0,1 (null `status` means halt/0); the dead continuation yields [].
+llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.
