@@ -30,6 +30,7 @@ using Construct = Function<"erlang_aot_construct_v1", UInt8, Context, UInt8, Wor
 using Inspect = Function<"erlang_aot_inspect_v1", UInt8, Context, UInt8, Size, Size, Slot>;
 using Bits = Function<"erlang_aot_bits_v1", UInt8, Context, UInt8, Words, Size, Slot>;
 using Map = Function<"erlang_aot_map_v1", UInt8, Context, UInt8, Words, Size, Slot>;
+using Display = Function<"erlang_aot_display_v1", UInt8, Context, Size, Slot>;
 using Exact = Function<"erlang_aot_exact_v1", UInt8, Context, Size, Size>;
 using CallFailed = Function<"erlang_aot_call_failed_v2", UInt8, Context>;
 using Raise = Function<"erlang_aot_raise_v2", UInt8, Context, Reason, Size>;

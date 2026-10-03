@@ -9,6 +9,7 @@ namespace erlang_aot::runtime {
 class Runtime;
 class CodeServer;
 class AtomStorage;
+struct OutputSink;
 
 // Keep control/creation failures separate from Erlang exceptions and exit reasons.
 enum class ProcessError : std::uint8_t {
@@ -87,6 +88,8 @@ class ProcessContext final {
     CodeServer &code_server() noexcept;
     // Share one runtime-owned atom identity/name table across every scheduler and process.
     AtomStorage &atom_storage() noexcept;
+    // Borrow the runtime's standard output sink for erlang:display/1 and later io services.
+    OutputSink standard_output() const noexcept;
     // Reserve signal sending; currently report message_passing without claiming acceptance or delivery.
     ProcessResult<void> send(ProcessIdentity recipient, const Term &value, DiagnosticSink sink = {}) noexcept;
 

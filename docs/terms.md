@@ -116,3 +116,28 @@ Iterative, bounded to one million pending pairs; exhaustion is `resource_limit`,
 never "unequal". Order: numbers < atoms < tuples < maps < nil < lists <
 bitstrings. Atoms compare by UTF-8 spelling (code-point order); tuples by arity
 then fields; maps by size, then keys, then values; bitstrings by logical bits.
+
+## Printing
+
+`format_term` ([output.hpp](../runtime/include/erlang_aot/runtime/output.hpp))
+renders any admitted term in one of two OTP styles. Integers, tuples (records
+are tuples) and nesting look the same in both.
+
+| | `~w` (`TermStyle::write`) | `erlang:display/1` (`TermStyle::display`) |
+| --- | --- | --- |
+| Atoms | Quoted unless a Latin-1 lowercase letter starts it and name characters (with `@`) follow; reserved words and `maybe`/`else` are quoted; beyond Latin-1 escapes as `\x{H}` | Quoted unless a Latin-1 lowercase letter starts it and alphanumerics or `_` follow; reserved words and `@` get no special rule; UTF-8 kept |
+| Floats | Shortest round trip in OTP layout: `0.1`, `100.0`, `1.0e16`, `1.5e-7` | C `%.6e`: `1.500000e+00` |
+| Lists | Elements: `[104,105]`, `[1,2\|3]` | A flat list of printable Latin-1 bytes prints as `"hi"` (raw bytes; only `\n` and `"` escaped) |
+| Bitstrings | `<<1,2,5:3>>` | A printable ASCII binary prints as `<<"hi">>`, others as `~w` |
+| Maps | `#{k => v,k2 => v2}` | `#{k=>v,k2=>v2}` |
+
+- Maps print in map-key order (`maps:iterator(M, ordered)`, as OTP `~kw`). OTP's
+  default `~w` and `erlang:display/1` follow its internal layout instead:
+  atom-table order for atom keys of small maps (it varies between VM runs) and
+  hash order above 32 keys. ErlangAoT does not reproduce that order.
+- Rendering is iterative, so depth is limited only by the term. Text is capped
+  at 64 MiB by default; exceeding it (for example a widely shared subterm) fails
+  with `resource_limit` and returns no partial text.
+- Goldens: `runtime_printing` compares both styles with OTP for 9,542 values (all
+  corpus results plus authored edge cases); display rows whose OTP map order is
+  internal are skipped ([fixtures](../tests/fixtures/printing/README.md)).

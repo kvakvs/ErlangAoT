@@ -266,15 +266,25 @@ Implement `~w`-style text output for every admitted term in the runtime, used
 for program output, uncaught-error reports and later `io` support.
 
 - Success criteria
-  - [ ] Atoms (with quoting), integers, floats (OTP shortest round-trip form),
+  - [x] Atoms (with quoting), integers, floats (OTP shortest round-trip form),
     tuples, lists, improper lists, maps (OTP key order), bitstrings and records
     print exactly as OTP `~w`.
-  - [ ] `erlang:display/1` is callable from source and writes one line.
+  - [x] `erlang:display/1` is callable from source and writes one line.
 - Tests
-  - [ ] Golden comparison of printed output against OTP for the existing owned
+  - [x] Golden comparison of printed output against OTP for the existing owned
     corpora values (reuse their expected results as inputs).
-  - [ ] Deep and wide terms print within bounded work; output write failure is
+  - [x] Deep and wide terms print within bounded work; output write failure is
     reported.
+
+Done 2026-10-03. `format_term` (`runtime/src/terms/term_text*.cpp`) renders `~w` and the
+emulator's `erlang:display/1` text iteratively under a 64 MiB cap; `RuntimeOptions::standard_output`
+(default stdout) receives display lines. `erlang:display/1` is a body-only service lowered to
+`erlang_aot_display_v1` (new status `output_failure`). Maps print in map-key order (OTP `~kw`):
+OTP's default order follows atom-table indices (varying between VM runs) or hashing, so it is not
+reproduced and display goldens skip such values. `tests/fixtures/printing/` holds 9,542 values
+(corpus results plus authored edge cases; `regenerate.py --check` reproduced 3x); CTests
+`runtime_printing` (goldens, 100k-deep, 1M-wide, shared-subterm cap, sink failure) and
+`printing_display` (154 compiled display calls against real OTP stdout, all policies).
 
 <a id="step-5"></a>
 

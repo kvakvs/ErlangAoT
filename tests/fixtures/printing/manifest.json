@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "generator_sha256": {
+    "values.py": "9a6d13f49ccbd3130a5a4bc0ff4238e24171625a67df8f63a91c39c0b30aa8e0",
+    "regenerate.py": "1f71f7302cff4724170a2f664c1c327be0a9bff258c524fe7d5f34357cccd6f2",
+    "oracle.escript": "2af822830faf01a1deedf29382d6cef114cb1623a98184f0032946bcffba5cb1"
+  },
+  "counts": {
+    "values": 9542,
+    "authored": 179,
+    "calls": 154,
+    "display_unordered": 1067
+  },
+  "files_sha256": {
+    "values.txt": "595c325664a73ee3b3740ed1eb2dbc0207bc7f42ec2d7947ff5c8cb00668bef2",
+    "write.txt": "e61eebc2d8da68677c6b980e3d6a0060a52848118173d3aabf3826295a19a5c7",
+    "display.txt": "7071bd2793a5ffa1c13321a76851b1b541f33fc7c7821135fbb05aa7745dd791",
+    "display/answer.erl": "34bc63d6faae635422ac2a736f27f0c2ea4b4024fc84140a26bfaffbf868dd8f",
+    "display/client.erl": "23e632fd30008784a2aa57c6b2127a0db56ffb810f28e5a62607ebc0346537a0",
+    "display/project.toml": "8b5f7f0655d9dec52e36e7f3e13bb27cf18cb0d2d4f6ae5c497defc98b08a40f",
+    "display/calls.txt": "98e1bc68cfc8fb117b68a21e32b2207831e237fde6d94b6ba02b25e5308b5751",
+    "display/expected.txt": "9ab6009c721ef11dc2bfdfd727a3834a961e4c14e5bdf2623113f61c8e90be9b"
+  }
+}

@@ -45,6 +45,16 @@ add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_builtin_bridge>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/builtin_output.cmake")
 
+# OTP-generated ~w/erlang:display/1 goldens over every corpus result value, plus bounded-work checks.
+add_executable(runtime_printing printing.cpp)
+erlang_aot_project_options(runtime_printing)
+target_link_libraries(runtime_printing PRIVATE ErlangAoT::generated_program)
+add_test(NAME runtime_printing COMMAND runtime_printing
+    "${PROJECT_SOURCE_DIR}/tests/fixtures/printing/values.txt"
+    "${PROJECT_SOURCE_DIR}/tests/fixtures/printing/write.txt"
+    "${PROJECT_SOURCE_DIR}/tests/fixtures/printing/display.txt")
+set_tests_properties(runtime_printing PROPERTIES TIMEOUT 120)
+
 add_executable(runtime_services services.cpp)
 erlang_aot_project_options(runtime_services)
 target_link_libraries(runtime_services PRIVATE ErlangAoT::generated_program)

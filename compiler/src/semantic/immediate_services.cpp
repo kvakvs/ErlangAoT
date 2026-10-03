@@ -1,3 +1,4 @@
+#include "capabilities.hpp"
 #include "services.hpp"
 #include <array>
 
@@ -97,9 +98,23 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"not", 1}, Op::logical_not},
                                                       {{U"and", 2}, Op::logical_and},
                                                       {{U"or", 2}, Op::logical_or},
-                                                      {{U"xor", 2}, Op::logical_xor}};
+                                                      {{U"xor", 2}, Op::logical_xor},
+                                                      {{U"display", 1}, Op::display}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
+}
+
+std::optional<FunctionKey> body_builtin(const ast::Module &syntax, const ast::CallExpression &call) {
+    const auto *remote = std::get_if<ast::RemoteExpression>(&syntax.expression(ungroup(syntax, call.target)).value);
+    if (!remote) {
+        return {};
+    }
+    const auto *owner = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->module)).value);
+    const auto *name = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->function)).value);
+    if (!owner || !name || owner->name != U"erlang" || name->name != U"display" || call.arguments.size() != 1) {
+        return {};
+    }
+    return FunctionKey{name->name, 1};
 }
 
 std::optional<Op> immediate_unary(ast::UnaryOperator operation) {

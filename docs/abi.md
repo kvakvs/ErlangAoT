@@ -101,8 +101,9 @@ equality), `erlang_aot_immediate_v1` (immediate predicates/queries),
 `erlang_aot_construct_v1`, `erlang_aot_inspect_v1`, `erlang_aot_integer_v1`,
 `erlang_aot_float_v1`, `erlang_aot_map_v1`, `erlang_aot_bits_v1`. Each returns
 success, semantic error (`badarg`/`badarith`/...) or infrastructure failure and
-writes output only on success. Linker spellings follow the target's Itanium or
-Microsoft C++ mangling.
+writes output only on success. `erlang_aot_display_v1` ([output.hpp](../abi/include/erlang_aot/abi/output.hpp))
+prints one `erlang:display/1` line and yields `true`; it has no semantic error.
+Linker spellings follow the target's Itanium or Microsoft C++ mangling.
 
 `abi::v1::dispatch_builtin` calls host-registered builtins by module/function
 bytes, argument array and arity, returning a `Status`; output is written only on
@@ -123,6 +124,7 @@ success.
 | `internal_error` | 10 | Unexpected failure contained |
 | `unknown_builtin` | 11 | Signature not registered or catalogued |
 | `erlang_error` | 12 | Structured Erlang error recorded |
+| `output_failure` | 13 | Standard output rejected a write |
 
 ## Revisions
 

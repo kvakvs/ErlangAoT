@@ -66,5 +66,7 @@ AtomStorage *Runtime::atom_storage() noexcept { return impl_ ? &impl_->atom_stor
 
 SchedulerService *Runtime::scheduler() noexcept { return impl_ ? &impl_->scheduler : nullptr; }
 
+OutputSink Runtime::standard_output() const noexcept { return impl_ ? impl_->options.standard_output : OutputSink{}; }
+
 std::size_t Runtime::context_count() const noexcept { return impl_ ? impl_->contexts.size() : 0; }
 } // namespace erlang_aot::runtime
