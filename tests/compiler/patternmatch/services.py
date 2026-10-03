@@ -2,6 +2,7 @@
 import json
 import pathlib
 import sys
+from matrix import option_lists
 from stored import load
 from evidence import digest, run
 from immediate import native, token, erl
@@ -38,9 +39,8 @@ def resolution(tool, source, work, recorded):
         (cases / (row["name"] + ".erl")).write_bytes(text.encode())
         terms.append(f'{{{row["name"]},{"rejected" if row["diagnostic"] else "accepted"},none}}.')
         if row["diagnostic"] or row["capability"]:
-            for options in [["-O0"], ["-O2"], ["-O0", "--no-type-specialization"], ["-O2", "--no-type-specialization"]]:
-                for project in [False, True]:
-                    compile_case(tool, cases, row, options, project)
+            for options, project in option_lists():
+                compile_case(tool, cases, row, options, project)
         else:
             run([tool, str(cases / (row["name"] + ".erl"))])
         row["sha256"] = digest(cases / (row["name"] + ".erl"))

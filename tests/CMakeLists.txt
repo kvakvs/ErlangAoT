@@ -48,7 +48,8 @@ add_test(NAME parser_consumer COMMAND "${CMAKE_COMMAND}"
     "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake" "-DHOST_CONFIG=$<CONFIG>"
     "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/consumer.cmake")
-set_tests_properties(parser_consumer PROPERTIES TIMEOUT 180)
+# Separate CMake consumer projects and timing measurements run only in full mode (label full_only).
+set_tests_properties(parser_consumer PROPERTIES TIMEOUT 180 LABELS full_only)
 add_test(NAME parser_mutations COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
     "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-mutations"

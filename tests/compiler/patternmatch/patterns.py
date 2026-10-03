@@ -4,6 +4,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from matrix import option_lists
 from bindings import compile_case
 from evidence import digest, run, verify_manifest
 from stored import load
@@ -14,10 +15,9 @@ ERRORS = r"illegal pattern|illegal expression in pattern|unbound variable|unsafe
 def policies(tool, work, rows):
     """Repeat semantic/capability rejection through both batch modes and all optimization policies."""
     rejected = [row for row in rows if row["diagnostic"] or row["capability"]]
-    for policy in [["-O0"], ["-O0", "--no-type-specialization"], ["-O2"], ["-O2", "--no-type-specialization"]]:
-        for project in [False, True]:
-            for row in rejected:
-                compile_case(tool, work, row, policy, project)
+    for policy, project in option_lists():
+        for row in rejected:
+            compile_case(tool, work, row, policy, project)
 
 
 def accepted(tool, work, rows):

@@ -23,8 +23,9 @@ draft with smaller, single-commit steps.
 ## Common gate and rules (apply to every step)
 
 - **Gate:** freshly configure `build/debug` with compiler, runtime and
-  `BUILD_TESTING=ON`; build; run full CTest; run
-  `cmake --build build/debug --target check-quality`. Lizard and clang-tidy pass
+  `BUILD_TESTING=ON`; build; run fast-mode CTest (`ctest --preset debug-fast`);
+  run `cmake --build build/debug --target check-quality`. Run full-mode CTest
+  (`ctest --preset debug -j <N>`) when a phase or major feature completes. Lizard and clang-tidy pass
   without raised thresholds or suppressions. Code is clang-formatted; new and
   changed `.erl`/terms files pass erlfmt.
 - **Code:** project-internal C++23; document field and function intent in 1–2
@@ -146,6 +147,12 @@ The test running is taking too much time, can we split tests into fast and full?
 - Use fast during development
 - Use full test mode once per major feature completion.
 - Success criteria: Test runs while development is ongoing take 1-2 min instead of 700 seconds now.
+
+Done 2026-10-03. `ERLANG_AOT_TEST_MODE=fast` (presets `debug-fast`/`windows-debug-fast`,
+`make test`, `make-test.bat`) runs 122 tests in parallel in about 60 s: golden corpora use
+O0 positional plus O2-off project (`tests/compiler/patternmatch/matrix.py`), mutations run
+once, and `full_only` tests are excluded. Full mode (default when unset) passes 125/125 in
+85 s with `-j 16`, versus 729 s serially.
 
 ### 1B. Quality check checks too much
 
