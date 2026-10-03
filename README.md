@@ -1,44 +1,16 @@
 # ErlangAoT
 
-Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
-module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 4; the revision-2 checked call channel is unchanged. See
-[runtime atoms](docs/runtime-atoms.md) for ownership, limits and registration policy.
-
-Pattern/guard step 5 adds [bounded pattern validation and normalization](docs/pattern-semantics.md),
-including map-key and binary-size binding scopes. Step 6 adds
-[immediate function-head matching](docs/immediate-matching.md): literals,
-repeated variables, aliases, wildcards and canonical empty values. Step 7 adds [immediate guard services](docs/immediate-guards.md), comparisons and guard tests. Step 8 adds [comma/semicolon guards and strict/lazy boolean expressions](docs/guard-control-flow.md). Step 9 adds [ordered function clauses](docs/ordered-clauses.md). Step 10 adds [body matches and sequences](docs/body-matches.md). Step 11 adds [stable heap storage and generated root scopes](docs/generated-roots.md). Step 12 adds [tuple/list/string construction, comparison and matching](docs/container-matching.md).
-
-Step 13 adds [arbitrary integers, exact arithmetic and integer guards](docs/integer-matching.md), with checked promotion and demotion across target payload boundaries.
-
-Steps 14–16 add [finite floats and conversions](docs/float-matching.md),
-[exact-key maps and computed-key patterns](docs/map-matching.md), and
-[bitstring construction, extraction and matching](docs/bitstring-matching.md).
-Routine tests use project-owned OTP goldens and require no OTP installation or
-checkout. Step 17 adds [tuple record construction, access and matching](docs/record-matching.md).
-Steps 18–20 complete [admitted guard services](docs/guard-services.md),
-[conservative binding facts](docs/binding-facts.md), and the
-[scoped pattern/guard contract and validation](docs/patternmatch-step20-validation.md).
-Function heads and body matches support these representations; additional source
-contexts and process, identity, native-record and function-value owners remain deferred.
-
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
-analyzes and compiles a scalar/container/pattern/guard/direct-call subset to LLVM IR,
-bitcode and native objects. Generated code executes through test-owned native
-harnesses and the runtime; a production executable launcher remains unimplemented.
+analyzes and compiles a subset of Erlang to LLVM IR, bitcode and native objects:
+ordered function clauses with guards, body matches and acyclic local/remote
+calls over atoms, arbitrary integers, floats, tuples, lists, maps, bitstrings and
+tuple records. Generated code runs through native harnesses linked with the
+separate runtime; a production executable launcher is not implemented yet.
 
-The compilation contract is described in [docs/compile.md](docs/compile.md),
-including its LLVM SDK requirements and provisional ABI.
-The separate runtime now supports [startup, context ownership and shutdown](docs/runtime-lifecycle.md),
-with a reusable CMake target for linking native consumers.
-All APIs are project-internal C++23; C compatibility is deferred until needed.
-
-Current generated-code validation is Windows x64: native O0/O2 execution,
-OTP differential comparisons, runtime ASan and the full compiler/runtime quality
-gate. ELF/Mach-O/COFF objects are inspected for seven targets; other native hosts
-remain pending. Earlier macOS evidence covers the foundational/runtime work.
-See the [validation inventory and limitations](docs/compile-validation.md).
+All APIs are project-internal C++23. Native generated-code execution is
+validated on Windows x64; objects are inspected for seven targets. See the
+[documentation index](docs/README.md), in particular [compilation](docs/compile.md),
+[runtime](docs/runtime.md) and [validation status](docs/validation.md).
 
 The [compiled-module example](examples/compile/) contains two Erlang modules,
 a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
@@ -356,7 +328,7 @@ modes do not create output files and reject `-o`/`--output`. Default compilation
 also writes no executable yet.
 
 See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
-[validation status](docs/parser-validation.md) for further details.
+[validation status](docs/validation.md) for further details.
 
 ## Projects
 
@@ -390,10 +362,9 @@ Source search paths only locate explicitly listed files. CLI include paths take
 precedence, CLI application roots replace matching names, CLI feature settings
 apply last, and duplicate macro definitions remain errors.
 
-See [project format and workflows](docs/projects.md) and
-[project validation evidence](docs/project-validation.md). Projects support all
-four frontend modes; executable generation remains unimplemented.
+See [project format and workflows](docs/projects.md). Projects support every
+CLI action; executable generation remains unimplemented.
 
-The [admitted guard catalog](docs/guard-services.md) includes checked
+The [admitted guard catalog](docs/guards.md) includes checked
 `is_integer/3`, qualified calls and top-level legacy tests; process/node and native
 record identities retain explicit capability diagnostics.

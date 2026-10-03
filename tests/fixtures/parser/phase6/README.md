@@ -42,4 +42,4 @@ Tree hashes are local determinism evidence, not a stable interchange format.
 Set `ERLANG_AOT_OTP_SOURCE_ROOT` to the pinned checkout. Without it only the two
 source-dependent tests explicitly skip; authored fixtures, integrity checks and
 installed-OTP oracle comparisons still run. No source-dependent skips occurred
-in the recorded macOS validation. See `docs/parser-validation.md` for the matrix.
+in the recorded macOS validation. See `docs/validation.md` for platform status.

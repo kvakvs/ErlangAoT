@@ -1,81 +1,39 @@
-# Bounded type specialization
+# Type specialization
 
-The private backend plans representation variants only in speed mode. O0 and
-`disable_type_specialization` produce no candidates. The CLI selects these policies
-with `-O0`, `-O2` and `--no-type-specialization`.
+Speed mode (`-O2`) may clone a function into representation variants guarded by
+runtime tag checks. `-O0` and `--no-type-specialization` produce generic code only.
 
-Observed call-site implementation facts supply profiles of generic or small-integer
-arguments. Only exact, target-representable inferred integer singletons establish
-the latter proof today. Specifications, broad `integer()` categories, unknowns and
-unions remain generic. Literal values are discarded; no union products are expanded.
-Source traversal and profile processing have finite budgets tied to generic IR size.
-Missing expression facts after inference work exhaustion also stay generic; losing
-analysis precision never rejects otherwise supported compilation.
+## Policy
 
-The benefit recognizer accepts exact low-tag comparisons of ABI argument loads in
-the entry block before any side effects. Profiles drop constraints for arguments
-with no removable check. Equal resulting profiles are deduplicated. Selection is
-ordered by module, function symbol and profile, independent of host addresses.
-Limits are three variants per function, 32 per module and 128 per compilation target.
-Generic bodies are always retained. Estimated extra instructions include the clone,
-all tag guards, branch/call/return dispatch and a generic fallback; both function
-and module growth must remain within their original generic instruction counts
-(at most 2x total). Budget exhaustion skips variants without rejecting the program.
+- Profiles come from inferred call-site facts. Today only exact,
+  target-representable integer singletons prove a small-integer argument.
+  Specs, broad `integer()`, unions and unknowns stay generic.
+- A variant is justified only if it removes an implemented check: an exact
+  low-tag comparison on an argument load in the entry block, before side effects.
+- Limits: 3 variants per function, 32 per module, 128 per target. Estimated and
+  then actual growth (clone + guards + dispatch + fallback) must stay within 2x
+  the generic instruction count per function and module.
+- Generic bodies are always kept. Over-budget drafts are discarded silently;
+  the program never fails because of specialization.
+- Selection is deterministic (module, symbol, profile order).
 
-The current executable source subset has no removable representation checks.
-Constants, identity/projection and resolved direct calls therefore receive no
-variants even at O2. This is deliberate: specializing a tagged identity would
-increase code size without removing a dynamic operation. Policy tests use measured
-check-count inputs to exercise limits that current source syntax cannot reach.
-Real-source tests verify that inference does not invent a benefit.
+## Lowering
 
-The guarded lowering stage clones only proposed profiles with matching implemented
-checks. LLVM cloning and simplification utilities replace those checks under the
-profile proof; no unchecked unboxing, source-spec assumptions or arithmetic flags
-are added. Public entries retain the same context/argument-array/tagged-result ABI.
-A bounded dispatcher checks every constrained low tag and forwards both pointers
-unchanged to a variant or the original generic body. Current selection always uses
-guards; no call bypasses them on a declared type alone.
+LLVM cloning/simplification replaces proven checks inside the clone. A bounded
+dispatcher tests every constrained tag and forwards context and arguments to a
+variant or the generic body; the public symbol and ABI do not change. No
+unchecked unboxing, spec assumptions or fast-math flags are introduced.
 
-Each function's draft is measured before publication. Actual clone instructions
-plus all dispatch/fallback instructions must fit the original function and remaining
-module growth budgets. Excess drafts are erased; the program and its generic body
-remain valid. Installed wrappers preserve the external symbol and descriptor
-references; original bodies and variants become internal functions. The plan keeps
-separate counts for estimated candidates, installed variants and discarded drafts.
+## Current effect
 
-Focused LLVM fixtures are necessary because source guards are still unsupported.
-They run after genuine parsing, semantic analysis and registration emission, then
-replace selected test bodies with repeated, exact tag checks. Native Clang-linked
-runtime consumers compare guarded execution with untouched generic bodies over
-small-integer endpoints, negative/zero values and empty tuple/list inputs, including
-mixed argument pairs. A deliberately stale estimate proves actual-growth rollback;
-the rejected function is also executed through its normal registered entry.
-Cross-width checks verify 32-bit IR/objects; native execution is validated separately.
-These fixtures do not claim new Erlang source support. All three policies now run
-the standard selected LLVM pipeline before native execution.
+The current source subset has no removable representation checks, so real
+Erlang source receives zero variants even at O2; specializing an identity would
+only grow code. Focused LLVM fixtures inject repeated tag checks to exercise
+hits, fallbacks and growth rollback with native execution.
 
-`codegen_measurements` writes `measurements/<configuration>/measurements.json` in
-the codegen test build directory. It records compiler wall time, IR/object bytes,
-installed source variants and native process time (including startup and text I/O).
-Times are evidence, never pass/fail thresholds. The seeded source workload includes
-150 calls plus a 255-argument projection whose contract uses a 64-member union.
-O2 with specialization enabled/disabled must produce identical bytes for this
-guard-free workload, zero variants and bounded artifact sizes.
-
-The separate synthetic guard workload records pre-optimization instruction counts,
-installed/rejected variants, object bytes and total build/check time at O0, O2
-disabled and O2 enabled. Its native consumer executes integer hits and non-integer
-fallbacks in every mode. The planner stress test retains the hard 3/32/128 caps,
-5000 observed profiles, 255-argument unknown profiles and deterministic ordering.
-Together these checks retain the benefit rule: only removable implemented checks
-justify variants; narrower declared types alone never justify cloning.
-
-Windows x64 / LLVM 23.1.2 measurement on 2026-09-29: this workload produced
-232,876 IR bytes / 40,498 object bytes at O0 and 204,408 / 35,886 at both O2
-policies. All source modes installed zero variants. The synthetic function had
-55 baseline instructions and added 30 for one accepted variant; one oversized
-draft was rejected. Both O2 policies emitted 2,252 synthetic object bytes (O0:
-3,486), so this fixture establishes bounded correctness, not a final-code speedup.
-The recorded source compiler times were roughly 0.05–0.09 seconds and native
-process times 0.007–0.009 seconds; startup/I/O dominate this small experiment.
+`codegen_measurements` writes `measurements/<config>/measurements.json` in the
+codegen test build directory (compile time, IR/object bytes, variants, native
+time). Times are descriptive, never thresholds. Windows x64 / LLVM 23.1.2 sample
+(2026-09-29): source workload 232,876 IR / 40,498 object bytes at O0 and
+204,408 / 35,886 at both O2 policies, zero variants; the synthetic fixture added
+30 instructions to a 55-instruction function for one accepted variant.

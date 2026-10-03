@@ -54,7 +54,7 @@
   errors reject the enclosing guard alternative; resource/ownership/internal
   failures stop all recovery. Body errors raise badarg or owned {badarg,Value}
   for an invalid lazy left operand. Join instructions retain operator provenance.
-  See docs/{immediate-matching,immediate-guards,guard-control-flow}.md.
+  See docs/{patterns,guards}.md.
 
 - Runtime Terms admit exact arbitrary integers, owned atoms, tuples and proper/improper lists. Atom storage validates UTF-8, deduplicates spelling and enforces limits.
   Globally non-recycled words reject foreign ownership; immutable pins retain
@@ -125,7 +125,7 @@
   are implemented. GC, workers, messaging, process identities,
   dynamic loading and further builtin families remain with their named owners.
   Patternmatch steps 1–20 and step 15a are complete within function-clause/body-match scope.
-  Final evidence is docs/patternmatch-step20-{validation.md,evidence.json}.
+  History is condensed in docs/validation.md#history.
 
 - Tests prioritize real CLI/project sources and separate native runtime consumers.
   Local source fragments are separate from retained OTP observations; 19 corpora preserve 67,634
@@ -139,7 +139,7 @@
   Windows x64 Debug passes 125 OTP-free CTests and all 258 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
-  in its original validation records. See docs/compile-validation.md and step records.
+  in Git history; summary in docs/validation.md.
 
 - Remaining work is expanded in [plan 11](11-plan.md) as 78 small steps; it is planning only.
   The completed pattern/guard checklist is retired; its contracts/evidence remain

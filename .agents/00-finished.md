@@ -15,7 +15,7 @@ documentation; current architecture and file ownership are in
 | Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program workflows delivered; frontend sanitizers remain pending. |
 | Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Historical immediate-only subset and runtime skeleton; later pattern/guard delivery is recorded below. |
 | Pattern matching and guards | Steps 1–20 and added step 15a complete, 2026-10-01–03 | Function clauses and body matches over the admitted domain; other source contexts, GC/process owners and native platform gaps remain open. |
-| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [compile validation](../docs/compile-validation.md#current-baseline-plan-11-step-1-2026-10-03); steps 1A onward remain. |
+| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [validation](../docs/validation.md#current-baseline). Steps 1A (fast/full tests), 1B (changed-file quality) and 1C (docs consolidated from 81 files to 15) done. |
 
 **Still unfinished:** production executable startup/linking, GC and graph
 copying, process execution/messaging, additional Erlang source contexts and
@@ -146,7 +146,7 @@ requires a matching built OTP and its documented Common Test hooks; bare
 ## Parser
 
 Contracts and historical evidence: [parser.md](../docs/parser.md) and
-[parser-validation.md](../docs/parser-validation.md). The parser consumes
+[parser evidence](../docs/parser.md#compatibility-evidence). The parser consumes
 existing expanded ordinary-form tokens directly: no printing/relexing or second
 lexer. Small cursor/delimiter/operator mechanisms are shared; the preprocessor's
 restricted evaluator is not generalized into the full parser.
@@ -202,7 +202,7 @@ upstream Common Test run.
 
 All 22 steps delivered TOML projects, target selection and safe manifest
 creation. Current usage/schema: [projects.md](../docs/projects.md); historical
-matrix: [project-validation.md](../docs/project-validation.md); example:
+matrix: [validation](../docs/validation.md); example:
 [project.toml](../examples/project/project.toml). Private project code owns
 toml++ 3.4.0 discovery, model/loading/schema, paths/globs/discovery,
 selection/options, planning/execution, CLI and creation; driver hooks share the
@@ -270,7 +270,7 @@ remain outside schema version 1.
 
 ## Testing strategy and migration
 
-The [case-level migration ledger](../docs/test-migration.md) is authoritative
+The [case-level migration ledger](../docs/validation.md#test-design) is authoritative
 for suite dispositions, replacements, justified exceptions and failure evidence.
 Prefer production CLI workflows, real Erlang files, exact artifacts/diagnostics,
 separately built runtime consumers and OTP comparisons. Test count is inventory,
@@ -348,7 +348,7 @@ compiler gates.
 [compilation](../docs/compile.md), [semantics](../docs/semantic.md),
 [specialization](../docs/specialization.md),
 [feature reporting](../docs/features.md). Current validation:
-[compiler matrix](../docs/compile-validation.md). The numbered plan is
+[compiler matrix](../docs/validation.md). The numbered plan is
 consolidated here; earlier stopping instructions are obsolete.
 
 | Steps | Delivered behavior |
@@ -429,10 +429,10 @@ pin module/code lifetime. Publication/lookup remain host-serialized. Service
 bridges separate status from output and contain exceptions without fabricating
 success.
 
-Runtime contracts: [lifecycle](../docs/runtime-lifecycle.md),
-[terms](../docs/runtime-terms.md), [builtins](../docs/runtime-builtins.md),
-[memory](../docs/runtime-memory.md), [scheduler](../docs/runtime-scheduler.md)
-and [services](../docs/runtime-services.md). Proposals in `runtime/include/` and
+Runtime contracts: [lifecycle](../docs/runtime.md#lifecycle),
+[terms](../docs/terms.md), [builtins](../docs/runtime.md#code-server-and-builtins),
+[memory](../docs/runtime.md#process-memory), [scheduler](../docs/runtime.md#scheduler-bookkeeping)
+and [services](../docs/runtime.md#deferred-services). Proposals in `runtime/include/` and
 `runtime/include/unverified/` are not completed APIs merely because headers
 exist. Carry forward ownership contracts from
 [terms](../runtime/design/terms.md),
@@ -447,7 +447,7 @@ Lizard/clang-tidy gate before its individual commit, with formatting/whitespace
 checks. Historical counts/revisions below are evidence, not current suite
 targets. Cross-object inspection never establishes native execution. Current
 inventory, commands and limits:
-[compile-validation.md](../docs/compile-validation.md).
+[validation](../docs/validation.md).
 
 ### SDK and ABI: steps 1–8 (2026-09-24, macOS arm64)
 
@@ -576,7 +576,7 @@ Full compiler ASan was unavailable due to the SDK's MSVC STL annotation ABI
 (`annotate_string` 1 versus 0); earlier attempts hit rpmalloc/CRT duplicate
 symbols. Neither limitation was suppressed or counted as passing coverage.
 Logs/scripts remain under ignored `build/compile-steps/`; the tracked
-[103-test inventory](../docs/compile-tests.txt) and matrix preserve reproducible
+103-test inventory (Git history) and matrix preserve reproducible
 scope.
 
 <a id="completed-patternmatch"></a>
@@ -589,7 +589,7 @@ Execution is scoped to ordered function clauses, their guards, body
 matches/sequences and acyclic local/exported remote calls. Admitted values are
 owned atoms, arbitrary integers, finite floats, tuples, proper/improper lists,
 strings, maps, bitstrings and ordinary tuple records.
-[The semantic matrix](../docs/patternmatch-matrix.md) and linked contracts
+[The semantic matrix](../docs/patterns.md) and linked contracts
 define current behavior; older milestones above retain their original revisions
 and scope.
 
@@ -600,27 +600,27 @@ audits behind an explicit opt-in, rather than dropping golden native coverage.
 
 | Step and validation | Delivered and validated | Full CTests | Production quality units, where recorded |
 | --- | --- | ---: | ---: |
-| [1](../docs/patternmatch-step1-validation.md) | Pinned semantic matrix and 81 exact source signatures; acceptance/oracle evidence, suite syntax and unchanged native helper baseline. | 104 | — |
-| [2](../docs/patternmatch-step2-validation.md) | Revision-2 checked generated-call failure channel, owned first failure, nested/reentrant cleanup, ABI rejection and retry. | 108 | — |
-| [3](../docs/patternmatch-step3-validation.md) | Bounded runtime-owned atoms/booleans, spelling pins, foreign-word rejection and revision-3 transactional module bindings. | 109 | 189 |
-| [4](../docs/patternmatch-step4-validation.md) | Clause-local definitions/reads/exact checks, tentative scopes, RHS-first binding, located unsafe reads and bounded conservative facts. | 111 | 191 |
-| [5](../docs/patternmatch-step5-validation.md) | Flat bounded pattern normalization, constant arithmetic, aliases, incoming map keys and preceding-segment binary-size scopes. | 113 | 196 |
-| [6](../docs/patternmatch-step6-validation.md) | Immediate literal/repeated/alias/wildcard matching and checked shared equality; mismatch, nested failures, 34 OTP/native calls and both-width objects/IR. | 114 | 199 |
-| [7](../docs/patternmatch-step7-validation.md) | Guard resolution, immediate predicates/comparisons/queries, legacy and qualified calls, semantic/infrastructure failure separation; 1,689 outcomes. | 119 | 205 |
-| [8](../docs/patternmatch-step8-validation.md) | Comma/semicolon alternatives, canonical true, strict/lazy boolean control flow and owned body badarg payloads; 2,075 outcomes. | 120 | 207 |
-| [9](../docs/patternmatch-step9-validation.md) | Ordered candidate isolation/fallback, whole-function analysis, conservative joins and function_clause exhaustion; 1,020 outcomes. | 121 | 208 |
-| [10](../docs/patternmatch-step10-validation.md) | Single-evaluation RHS-first body matches/chains, success-only bindings, sequences and owned badmatch/retry; 1,666 outcomes. | 122 | 209 |
-| [11](../docs/patternmatch-step11-validation.md) | Bounded stable heaps/reservations, explicit resource destruction and revision-4 generated roots/result handoff; allocation/root faults and old-ABI rejection. | 123 | 213 |
-| [12](../docs/patternmatch-step12-validation.md) | Rooted tuple/list/string construction, structural comparison and matching; retained compound results/errors, fault cleanup and 4,801 outcomes. | 125 | 221 |
-| [13](../docs/patternmatch-step13-validation.md) | Owned arbitrary integers, exact arithmetic/bitwise operations, promotion/demotion, checked fast paths and integer guards; 16,065 outcomes. | 127 | 231 |
-| [14](../docs/patternmatch-step14-validation.md) | Finite binary64 arithmetic/conversions, exact mixed comparisons, signed zero and rooted failures; 14,436 outcomes. | 129 | 238 |
-| [15](../docs/patternmatch-step15-validation.md) | Immutable exact-key maps, source-ordered construction/updates, computed-key matching and owned map errors; 8,010 outcomes. | 131 | 244 |
-| [15a](../docs/patternmatch-step15a-validation.md) | Project-owned source/call/result goldens and provenance manifests; OTP-free normal builds/tests, explicit regeneration and opt-in live audits. | 118 | 244 |
-| [16](../docs/patternmatch-step16-validation.md) | Small/shared bitstrings, checked numeric/UTF segments and cursors, retained tails, queries/parts and bit-accurate matching/comparison; 8,826 outcomes. | 120 | 253 |
-| [17](../docs/patternmatch-step17-validation.md) | Ordinary record declarations/defaults, tuple construction/access/matching and record tests; owned badrecord, declaration order and 1,025 outcomes. | 121 | 257 |
-| [18](../docs/patternmatch-step18-validation.md) | Admitted-domain guard catalog, inclusive is_integer/3 and legacy resolution audit; 77 implemented rows, four dependency gates and 5,033 outcomes. | 122 | 257 |
-| [19](../docs/patternmatch-step19-validation.md) | Budgeted whole-value binding facts, conservative extraction/joins, wrong-spec equivalence, verified generic fallback and 976 CFG proof observations; 822 paired outcomes. | 123 | 258 |
-| [20](../docs/patternmatch-step20-validation.md) | Provenance/coverage reconciliation, seeded deep/wide stress, all eight driver/policy combinations, fault/limit/publication recovery and updated runnable example. | 124 | 258 |
+| [1](../docs/validation.md#history) | Pinned semantic matrix and 81 exact source signatures; acceptance/oracle evidence, suite syntax and unchanged native helper baseline. | 104 | — |
+| [2](../docs/validation.md#history) | Revision-2 checked generated-call failure channel, owned first failure, nested/reentrant cleanup, ABI rejection and retry. | 108 | — |
+| [3](../docs/validation.md#history) | Bounded runtime-owned atoms/booleans, spelling pins, foreign-word rejection and revision-3 transactional module bindings. | 109 | 189 |
+| [4](../docs/validation.md#history) | Clause-local definitions/reads/exact checks, tentative scopes, RHS-first binding, located unsafe reads and bounded conservative facts. | 111 | 191 |
+| [5](../docs/validation.md#history) | Flat bounded pattern normalization, constant arithmetic, aliases, incoming map keys and preceding-segment binary-size scopes. | 113 | 196 |
+| [6](../docs/validation.md#history) | Immediate literal/repeated/alias/wildcard matching and checked shared equality; mismatch, nested failures, 34 OTP/native calls and both-width objects/IR. | 114 | 199 |
+| [7](../docs/validation.md#history) | Guard resolution, immediate predicates/comparisons/queries, legacy and qualified calls, semantic/infrastructure failure separation; 1,689 outcomes. | 119 | 205 |
+| [8](../docs/validation.md#history) | Comma/semicolon alternatives, canonical true, strict/lazy boolean control flow and owned body badarg payloads; 2,075 outcomes. | 120 | 207 |
+| [9](../docs/validation.md#history) | Ordered candidate isolation/fallback, whole-function analysis, conservative joins and function_clause exhaustion; 1,020 outcomes. | 121 | 208 |
+| [10](../docs/validation.md#history) | Single-evaluation RHS-first body matches/chains, success-only bindings, sequences and owned badmatch/retry; 1,666 outcomes. | 122 | 209 |
+| [11](../docs/validation.md#history) | Bounded stable heaps/reservations, explicit resource destruction and revision-4 generated roots/result handoff; allocation/root faults and old-ABI rejection. | 123 | 213 |
+| [12](../docs/validation.md#history) | Rooted tuple/list/string construction, structural comparison and matching; retained compound results/errors, fault cleanup and 4,801 outcomes. | 125 | 221 |
+| [13](../docs/validation.md#history) | Owned arbitrary integers, exact arithmetic/bitwise operations, promotion/demotion, checked fast paths and integer guards; 16,065 outcomes. | 127 | 231 |
+| [14](../docs/validation.md#history) | Finite binary64 arithmetic/conversions, exact mixed comparisons, signed zero and rooted failures; 14,436 outcomes. | 129 | 238 |
+| [15](../docs/validation.md#history) | Immutable exact-key maps, source-ordered construction/updates, computed-key matching and owned map errors; 8,010 outcomes. | 131 | 244 |
+| [15a](../docs/validation.md#history) | Project-owned source/call/result goldens and provenance manifests; OTP-free normal builds/tests, explicit regeneration and opt-in live audits. | 118 | 244 |
+| [16](../docs/validation.md#history) | Small/shared bitstrings, checked numeric/UTF segments and cursors, retained tails, queries/parts and bit-accurate matching/comparison; 8,826 outcomes. | 120 | 253 |
+| [17](../docs/validation.md#history) | Ordinary record declarations/defaults, tuple construction/access/matching and record tests; owned badrecord, declaration order and 1,025 outcomes. | 121 | 257 |
+| [18](../docs/validation.md#history) | Admitted-domain guard catalog, inclusive is_integer/3 and legacy resolution audit; 77 implemented rows, four dependency gates and 5,033 outcomes. | 122 | 257 |
+| [19](../docs/validation.md#history) | Budgeted whole-value binding facts, conservative extraction/joins, wrong-spec equivalence, verified generic fallback and 976 CFG proof observations; 822 paired outcomes. | 123 | 258 |
+| [20](../docs/validation.md#history) | Provenance/coverage reconciliation, seeded deep/wide stress, all eight driver/policy combinations, fault/limit/publication recovery and updated runnable example. | 124 | 258 |
 
 Current generated descriptors use **ABI revision 4**; the revision-2 checked
 failure channel remains unchanged. Candidate bindings publish only on
@@ -652,8 +652,8 @@ work/IR/allocation ceilings remain separate from source execution evidence.
 
 Final fresh Windows x64 Debug: **124/124 CTests**, zero skips, **167.43 s**, and
 all **258 production quality units** pass at unchanged CCN/cognitive-complexity
-thresholds of 10. [Final validation](../docs/patternmatch-step20-validation.md)
-and [evidence](../docs/patternmatch-step20-evidence.json) retain concrete
+thresholds of 10. [Final validation](../docs/validation.md#history)
+and [evidence](../docs/validation.md#history) retain concrete
 corpus/ catalog/test identities and log hashes. The initial closure run exposed
 the test transport's depth-256 limit around a returned 255-cell list; its
 bounded test-only allowance became 512 before the passing fresh run. Production
@@ -699,7 +699,7 @@ requires the following work.
   their concrete owners; extend validated layouts for future representations.
 - [x] **Atoms:** stable bounded storage, generated spelling/slot bindings,
   atom/boolean literals and retained host/error ownership; see
-  [step 3](../docs/patternmatch-step3-validation.md).
+  [step 3](../docs/validation.md#history).
 - [ ] **Identities and atom GC:** owned pid/port/reference services, atom
   collection and synchronized access before worker integration remain deferred.
 - [ ] **Processes and scheduling:** cooperative generated execution, reductions,

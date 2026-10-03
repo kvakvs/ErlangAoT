@@ -16,8 +16,8 @@ no representation authority. Clause candidates isolate SSA, facts index successf
 whole-value assignments; extracted/unproved values stay top. Specialization/work/
 IR caps unchanged; generic fallback verifies.
 
-Final evidence docs/patternmatch-step20-{validation.md,evidence.json}, matrix and
-guard-services.md. Nineteen owned corpora: 67,634 native expected outcomes +106
+Evidence summary docs/validation.md (history), patterns.md and
+guards.md; old step records/evidence JSON removed in plan11 step 1C (Git history). Nineteen owned corpora: 67,634 native expected outcomes +106
 semantic rows, eight driver/policy combinations, two executions =>1,082,144
 comparisons. Seeded closure1969, seed0x29A07, depth64,width255,128alternatives;
 allmanifest hashes and81catalog mappings reconciled. 77signatures admitted-domain,
@@ -70,7 +70,7 @@ committed per explicit user answer; OTP source/generated headers/audits transien
 erlfmt installed+moved to ignored thirdparty/tools/erlfmt per user instruction;
 valid source/header and changed term files formatted. Preserve user's AGENTS edits.
 Fresh combined gate125/125+258unit Lizard/tidy, all19 --check, upstream audit,
-grammar/corpus pass; maint29+pin unchanged21776803. Audit docs/otp-source-audit.md;
+grammar/corpus pass; maint29+pin unchanged21776803. Audit summary docs/validation.md;
 logs build/otp-cleanup*. Existing dated validation evidence not rewritten.
 
 MSVC cl (non-clang-cl) 2026-10-03: /external:W0 misses codegen C4702 (Boost.Parser) and STL pair
@@ -99,3 +99,11 @@ ERLANG_AOT_QUALITY_BASE overrides HEAD. make format/make-format.bat changed by d
 format-all / FORMAT_SCOPE=all. First tidy run exited 1 with no diagnostics (silent analyzer
 crash, known flake); unchanged rerun passed. mutations.cmake per-call TIMEOUT 5->30 (load stall).
 cmd /c needs full path to repo .bat files on this host.
+
+Plan11 step1C 2026-10-03: docs/ consolidated 81 files (5,370 lines + ~500 KB evidence JSON)
+into 15 brief notes indexed by docs/README.md: preprocessor, parser, projects, compile,
+semantic, specialization, abi, features, patterns, guards, terms, runtime, otp-reference,
+validation (baseline, gate, provenance, test design, platform gaps, condensed history table).
+Old step validation md/json, compile-tests.txt and per-topic pattern/runtime docs deleted;
+originals in Git at 2777c98. README intro rewritten; all repo links repointed. Keep docs
+current-state only; step logs go to .agents, not docs.

@@ -10,7 +10,7 @@ draft with smaller, single-commit steps.
 - Steps run in numbered order by default. Each lists its backlog owners and
   dependencies; an independent step may move earlier once its dependencies
   pass.
-- One step is one focused commit titled `[plan11] <full step title with step number>`. A step that
+- Each single step ends with one focused commit titled `[plan11] <full step title with step number>`. A step that
   grows beyond one reviewable change is split into lettered sub-steps (`12a`,
   `12b`) before coding, not widened silently.
 - **Decision** steps publish a short contract in `docs/` (plus a prototype where
@@ -59,8 +59,8 @@ draft with smaller, single-commit steps.
 
 Old plan 10 steps 1–20 and added 15a finished on 2026-10-03; their numbers are
 historical and unrelated to the steps below. Per-step records are in
-[the archive](00-finished.md#completed-patternmatch) and
-`docs/patternmatch-step{1..20,15a}-validation.md`.
+[the archive](00-finished.md#completed-patternmatch) and condensed in
+[validation history](../docs/validation.md#history).
 
 Executable baseline: ordered function clauses with guards, body
 matches/sequences, acyclic local and exported remote calls. Admitted terms:
@@ -89,12 +89,12 @@ Invariants that later steps must keep:
 
 | Retained contract | Documents |
 | --- | --- |
-| Matrix and guard catalog | [Semantic matrix](../docs/patternmatch-matrix.md), [guard services](../docs/guard-services.md) |
-| Bindings, patterns, facts | [Scopes](../docs/scoped-bindings.md), [patterns](../docs/pattern-semantics.md), [facts](../docs/binding-facts.md) |
-| Matching and control | [Immediate matching](../docs/immediate-matching.md), [guard control](../docs/guard-control-flow.md), [clauses](../docs/ordered-clauses.md), [body matches](../docs/body-matches.md) |
-| Failures, atoms, roots | [Failure channel](../docs/generated-call-failures.md), [atoms](../docs/runtime-atoms.md), [generated roots](../docs/generated-roots.md) |
-| Representations | [Containers](../docs/container-matching.md), [integers](../docs/integer-matching.md), [floats](../docs/float-matching.md), [maps](../docs/map-matching.md), [bits](../docs/bitstring-matching.md), [records](../docs/record-matching.md) |
-| Owned fixtures | [Step 15a](../docs/patternmatch-step15a-validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md), [source audit](../docs/otp-source-audit.md) |
+| Patterns, clauses, body matches | [Patterns](../docs/patterns.md) |
+| Guards and catalog | [Guards](../docs/guards.md) |
+| Bindings, types, inference facts | [Semantic analysis](../docs/semantic.md) |
+| Failure channel, atoms, roots, registration | [ABI](../docs/abi.md), [terms](../docs/terms.md#atoms) |
+| Representations | [Terms](../docs/terms.md), [runtime memory](../docs/runtime.md#process-memory) |
+| Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
 oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate: 125
@@ -136,7 +136,7 @@ gate as the starting point for this plan.
   - [x] Pin, checkout, corpus hashes and grammar evidence agree with upstream,
     or the unchanged revision is recorded with the fetch date.
   - [x] The full gate passes and its test/quality-unit counts are recorded in
-    `docs/compile-validation.md`.
+    `docs/validation.md`.
 - Tests
   - [x] Full gate on a fresh build.
   - [x] Opt-in grammar, corpus and source audits pass against the pin; any
@@ -171,6 +171,15 @@ timeout under parallel fast CTest (the case takes 16 ms alone).
 ### 1C. Run the available documentation check
 
 The documentation in /doc/ was never createad intentionally rather as byproduct of implementation passes. Clean it up and drop duplicated, bloated text, keep only brief informational pieces which may later help build good documentation.
+
+Done 2026-10-03. 81 files (5,370 lines plus about 500 KB of evidence JSON) became 15 brief
+notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler
+(`compile`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`,
+`terms`), `runtime`, `otp-reference` and `validation`. Per-step validation records, evidence
+JSON and step logs were removed; [validation history](../docs/validation.md#history) keeps
+dates, revisions and counts, and originals remain in Git at `2777c98`. Stale claims (configure
+requiring OTP, revision-2 descriptors, placeholder compilation) were corrected; every
+repository link was repointed and checked.
 
 <a id="step-2"></a>
 
@@ -1150,7 +1159,7 @@ Backlog: V01. Depends on: [58](#step-58).
 
 - Success criteria
   - [ ] Fresh build, full gate and executable goldens pass; versions and counts
-    published in `docs/compile-validation.md`.
+    published in `docs/validation.md`.
 - Tests
   - [ ] Full gate plus fixture projects at O0/O2.
 

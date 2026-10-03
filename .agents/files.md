@@ -73,7 +73,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `cmake/` checks | `Check{Complexity,ClangTidy}.cmake` (changed or all scope via `QualityScope.cmake` + `quality_scope.py`), `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
 | `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `.agents/aimemory.md`: AI notes |
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
-| `docs/` | Contracts: `compile.md`, `semantic.md`, `projects.md`, `runtime-*.md`, pattern/guard docs; evidence: `*-validation.md`, `patternmatch-step*-evidence.json`; `test-migration.md`: disposition ledger |
+| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`), `runtime.md`, `otp-reference.md`, `validation.md` (baseline, test design, history) |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout and generated OTP headers; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
 | `examples/` | `compile/`: remote scalar/container/record classification and native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
 | Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies and `tools/erlfmt/` formatter; `.venv-quality/`: quality tools; editor state stays local |
@@ -125,7 +125,7 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | F31 profiling | `C/codegen`: instrumentation; **+** `R/profiling`: collection/attribution/export |
 | V01 native matrix; V02 sanitizers | `cmake/`, `CMakePresets.json`, root runners, owning tests, `docs/` evidence |
 | V03 OTP evidence | `references/`, parser/patternmatch/codegen runners + fixtures, `docs/otp-reference.md` |
-| V04 test migration | Owning tests/CMake registrations; `docs/test-migration.md` |
+| V04 test migration | Owning tests/CMake registrations; `docs/validation.md#test-design` |
 | D01 dynamic modules/upgrades | `R/modules`, **+** `C/linking`, shared ABI |
 | D02 atom collection | `R/terms`; roots/resources: `R/{memory,modules,process}` |
 | D03 attributes/transforms | `C/semantic`; **+** `C/transforms`; invocation: `C/{driver,project}`; on-load: `R/modules` |
@@ -134,4 +134,4 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | D06 C/FFI | **+** `R/interop`, **+** `runtime/include/erlang_aot/interop/`; concrete external use only |
 | D07 project extensions | `C/project`: schema/profiles/graphs/packages/watch/cache/scheduling; `C/driver`, `C/artifacts`; project tests/fixtures/examples; `docs/projects.md` |
 
-Local source: `tests/fixtures/patternmatch/fragments/` owns Erlang modules/includes and `corpus.json` input inventories. Golden observations: `tests/fixtures/patternmatch/generated/` owns calls, expected results and manifests. `tests/compiler/patternmatch/{authored,stored,regenerate,regenerate_cases,upstream}.py` stage, load, explicitly refresh and optionally audit them; `matrix.py` selects fast/full policy/driver combinations (`ERLANG_AOT_TEST_MODE`; label `full_only` marks full-mode-only tests); `fixture_sources.py` checks source isolation without OTP. `ERLANG_AOT_OTP_AUDITS` gates live audits; normal tests are OTP-free. Nineteen corpus manifests retain 67,634 native values and 106 semantic rows. Current source audit: `docs/otp-source-audit.md`; historical final reconciliation: `docs/patternmatch-step20-{validation.md,evidence.json}`.
+Local source: `tests/fixtures/patternmatch/fragments/` owns Erlang modules/includes and `corpus.json` input inventories. Golden observations: `tests/fixtures/patternmatch/generated/` owns calls, expected results and manifests. `tests/compiler/patternmatch/{authored,stored,regenerate,regenerate_cases,upstream}.py` stage, load, explicitly refresh and optionally audit them; `matrix.py` selects fast/full policy/driver combinations (`ERLANG_AOT_TEST_MODE`; label `full_only` marks full-mode-only tests); `fixture_sources.py` checks source isolation without OTP. `ERLANG_AOT_OTP_AUDITS` gates live audits; normal tests are OTP-free. Nineteen corpus manifests retain 67,634 native values and 106 semantic rows. Source audit, provenance and step history: `docs/validation.md`.

@@ -2,7 +2,7 @@
 
 Pattern/guard step 3 implements runtime-owned storage, validated UTF-8 spellings,
 limits, deduplication, host ownership and module bindings. The authoritative contract
-is [runtime atoms](../../docs/runtime-atoms.md); the public project API is
+is [runtime atoms](../../docs/terms.md#atoms); the public project API is
 [atoms.hpp](../include/erlang_aot/runtime/atoms.hpp).
 
 This supersedes the 2026-09-20 review sketch. In particular, IDs use a process-wide
@@ -35,4 +35,4 @@ with warnings as errors, option/API type assertions, clang-format, repository
 clang-tidy, Lizard and local documentation links passed on macOS arm64. Lizard had
 no function bodies to measure. That draft claimed no runtime behavior, full-build
 gate, other-platform validation or commit. Current implementation evidence is
-[the step-3 record](../../docs/patternmatch-step3-validation.md).
+[the step-3 record](../../docs/validation.md#history).

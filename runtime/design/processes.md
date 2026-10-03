@@ -1,8 +1,8 @@
 # Processes and scheduler — manual review skeleton
 
 Status: context lifecycle is implemented (step 9), and step 13 adds
-[scheduler lifecycle bookkeeping](../../docs/runtime-scheduler.md), 2026-09-25.
-Worker execution and scheduling remain proposed. [Runtime/context ownership](../../docs/runtime-lifecycle.md) now
+[scheduler lifecycle bookkeeping](../../docs/runtime.md#scheduler-bookkeeping), 2026-09-25.
+Worker execution and scheduling remain proposed. [Runtime/context ownership](../../docs/runtime.md#lifecycle) now
 provides startup, lazy heap/empty mailbox owners, lifetime invalidation and shutdown.
 No workers, allocator, continuation or signal delivery are implemented. The remaining
 C++23 declarations are review sketches, not a claim of OTP scheduling compatibility.
@@ -181,7 +181,7 @@ sketch; accepted commands must still complete their promises during failure clea
 
 Each implemented `ProcessContext` owns a lazy `ProcessHeap`, empty mailbox and
 lifetime token. Step 12 implements checked allocation rejection, explicit collection
-unavailability and immediate-only copies; see [process memory](../../docs/runtime-memory.md).
+unavailability and immediate-only copies; see [process memory](../../docs/runtime.md#process-memory).
 Root registration and `TermFactory` binding remain future work.
 Explicit runtime shutdown requires contexts to be destroyed first; C++ RAII cleanup
 invalidates remaining contexts before releasing reserved runtime-wide services.

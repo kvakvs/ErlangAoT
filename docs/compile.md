@@ -1,59 +1,30 @@
-The completed [pattern/guard plan](patternmatch-step20-validation.md) supports
-ordered function clauses and body matches/sequences over atoms, arbitrary integers,
-finite floats, tuples, lists/strings, maps, bitstrings and ordinary tuple records.
-Shared rooted services provide construction, extraction, structural comparisons,
-arithmetic, computed-key matching and grouped guards. See [guard services](guard-services.md)
-and [binding facts](binding-facts.md) for the admitted catalog and conservative
-inference contract. Other source contexts and runtime owners remain deferred.
-Routine tests use project-owned OTP goldens and require no OTP installation.
+# Compilation
 
+`erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
+or native objects. Linking executables is not implemented yet: explicit
+`-o/--output` fails with `[executable linking] notimpl`. Generated objects run
+today through a C++ harness linked with the runtime (see the example below).
 
-# LLVM compilation contract
+## Accepted source subset
 
-Current atom support (pattern/guard step 3): literal atoms and booleans, runtime-owned
-module bindings and owned host/error atoms are implemented. The module descriptor
-uses ABI revision 4; the revision-2 checked call channel is unchanged. See
-[runtime atoms](runtime-atoms.md) for ownership, limits and registration policy.
+Named modules with exports and ordered function clauses. Heads and body matches
+accept variables, `_`, aliases, repeated names and patterns over atoms,
+arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and
+ordinary tuple records. Bodies are sequences of matches, constructors, checked
+operators/guard BIFs and direct local or literal remote calls within the batch.
+Guards support the full admitted catalog. See [patterns](patterns.md),
+[guards](guards.md) and [terms](terms.md).
 
-The implemented milestone compiles an acyclic Erlang/OTP 29 subset through the
-public positional/project CLI to verified LLVM IR, bitcode and native objects.
-A separately configured Clang C++ harness links those objects with the real runtime,
-registers modules explicitly and executes decoded values at O0/O2. See the
-[runnable example](#run-the-compiled-module-example) and
-[current validation inventory](compile-validation.md).
-
-The supported subset is named modules/exports, ordered clauses with scalar/container
-patterns, repeated variables, aliases and wildcards, and body sequences containing
-matches, literals, checked construction/access, binding reads and resolved
-local/literal remote calls within the compilation batch. Numeric and structural
-services, comma/semicolon guards and strict/lazy boolean expressions are executable,
-with canonical-true guard boundaries. Remote calls
-require exports; recursive call graphs fail. Unsupported syntax is rejected even
-in unused functions. Syntax-only checking supports the wider OTP grammar.
-
-Declared types/specs remain separate from bounded implementation inference.
-Unknown inputs stay generic, identity/projection relations propagate through calls and whole-value body assignments,
-and wrong contracts warn without changing code semantics. `--print-types` stops
-before LLVM. O0 disables compiler specialization and uses LLVM O0; O2 enables the
-bounded speed policy and LLVM O2. `--no-type-specialization` overrides the compiler
-policy. Current service results stay conservative; specs do not remove their checks. See
-[specialization budgets and measurements](specialization.md).
-
-ABI revision 4 uses target-word tagged terms, a live process context and an argument array.
-All host APIs are project-internal C++23. Generated descriptors preserve ABI/width
-checks and mandatory runtime references; they are not a BEAM or general FFI ABI.
-The runtime implements lifecycle, stable process heaps, rooted scalar/container
-Terms, frozen generic registries, module registration and checked services.
-Garbage collection, cross-process graph copying, scheduling workers,
-message delivery, further BIF implementations and dynamic loading remain
-future work. A production Erlang launcher/linker is not implemented; explicit
-`--output` fails with `[executable linking] notimpl`.
-
-LLVM owns standard optimization and machine emission. Verification is fresh before
-and after transformation, does not establish Erlang correctness, and invalidates
-failed output batches. Reached deferred semantics fail explicitly; supported
-no-benefit/budget fallback remains generic and silent. See the
-[deferred-feature inventory and reporting convention](features.md).
+Rejected with diagnostics even in unused functions: recursion (the call graph
+must be acyclic), `case`/`if`/`maybe`/`receive`, `try`/`catch`, funs and
+closures, dynamic calls, comprehensions, record updates and native records,
+processes and messaging. Accepted attributes: `module`, `export`, `file`,
+ordinary `record`, type/spec forms, `doc`/`moduledoc`, `author`, `vsn`,
+`copyright`, `deprecated`, `-compile({no_auto_import, ...})` and `-import` of
+`erlang` guard BIFs. Other attributes (`on_load`, parse transforms, other
+`compile` options, parameterized modules) are rejected.
+Type/spec forms are analyzed but never change generated code. Syntax-only modes
+(`--parse-check`, `--print-ast`, ...) accept the full grammar.
 
 ## Run the compiled-module example
 
@@ -67,615 +38,87 @@ cmake --build build/example-native
 ./build/example-native/bin/Debug/compiled_modules.exe
 ```
 
-The program prints `42`, `-7`, `record`, `map`, `binary`, `list`, `integer`,
-and `other`, one per line. The remote demo constructs and classifies six values
-through ordered patterns and an inclusive integer-range guard. Repeat emission
-with `-O2` and with `--no-type-specialization`, rebuilding the consumer each time;
-CTest executes all four policies. The example CMake project builds the
-matching runtime with compiler/tests disabled and links exactly one
-`ErlangAoT::generated_program` dependency. No LLVM libraries enter the executable.
-It uses explicit module registration, real context ownership and ABI integer
-and atom decoding; the C++ harness is an example host, not a production Erlang entry point.
+It prints `42`, `-7`, `record`, `map`, `binary`, `list`, `integer`, `other`, one
+per line. The harness registers modules explicitly, creates a context and
+decodes results; it is an example host, not a production entry point. On Unix
+use `build/debug/bin/erlangaot`, `clang++` and `-DGENERATED_DIR="$PWD/build/example-aot"`
+(native runs there are not yet validated).
 
-On a compatible Unix host, use `build/debug/bin/erlangaot`, `clang++` in place of
-`clang-cl`, `-DGENERATED_DIR="$PWD/build/example-aot"`, and run
-`build/example-native/bin/Debug/compiled_modules`. These native runs remain pending
-on Linux and current Apple Silicon; object inspection alone does not validate them.
-
-The following commands use the same two sources and are also exercised by CTest:
+Other actions on the same sources:
 
 ```powershell
 & $tool -O2 --emit llvm-ir --artifact-dir build/example-ir examples/compile/answer.erl examples/compile/client.erl
-& $tool -O2 --emit llvm-bc --artifact-dir build/example-bc examples/compile/answer.erl examples/compile/client.erl
 & $tool --print-types --verbose examples/compile/answer.erl examples/compile/client.erl
-& $tool --print-ir --verbose examples/compile/answer.erl examples/compile/client.erl
-& $tool --print-optimized-ir --verbose examples/compile/answer.erl examples/compile/client.erl
-& $tool --print-ir --print-optimized-ir --verbose examples/compile/answer.erl examples/compile/client.erl
+& $tool --print-ir --print-optimized-ir examples/compile/answer.erl examples/compile/client.erl
 & $tool -O2 --no-type-specialization --verbose examples/compile/answer.erl examples/compile/client.erl
 ```
 
-Artifacts use reversible module names: `eav1_616e73776572__0` for `answer` and
-`eav1_636c69656e74__0` for `client`, followed by `.obj` on Windows, `.o` on
-ELF/Mach-O targets, `.ll` for text IR or `.bc` for bitcode. Inspection writes only
-stdout, with escaped LLVM-comment headers between snapshots. Combined IR inspection
-shows before/after snapshots per module. Use separate emitted `.ll` files as SDK
-tool input. `[comp]` phase/decision events go to stderr; `--print-types` emits no
-LLVM phases. A no-benefit or disabled specialization decision is supported fallback,
-not a `notimpl` error. Resource-limit and deferred-feature failures publish nothing.
+## Options
 
-## SDK prerequisite
-
-Support stable LLVM **23.1.x**, minimum **23.1.1**. Current milestone validation:
-
-| Component | Windows x64 installation used on 2026-09-29 |
+| Option | Behavior |
 |---|---|
-| Host Clang / clang-cl | `C:/Program Files/LLVM/bin`, 23.1.2 |
-| Existing SDK | `F:/Projects/ErlangAoT/thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc` |
-| LLVM_DIR | SDK prefix plus `/lib/cmake/llvm` |
-| Native environment | Visual Studio 18 Community x64 tools, Windows SDK 10.0.26100.0, Ninja |
-| Project SDK ABI | `/MT`, `_ITERATOR_DEBUG_LEVEL=0`, C++23, project exceptions/RTTI enabled |
-| OTP oracle / source | Installed OTP 29.1.1; official `maint-29` pin `21776803ecd11f5fa948732c0ec66b8f325dedfc` |
-| Quality tools | Lizard 1.24.0; clang-tidy 22.1.8, full original compilation flags |
-
-The SDK above already existed before these steps; this milestone did not download,
-build or install another LLVM SDK. Set `ERLANG_AOT_DOWNLOAD_LLVM=OFF` and an explicit
-existing `LLVM_DIR` for reproducible validation without fallback network access.
-The official `maint-29` fetch on 2026-09-29 found the pin unchanged; source corpus
-hashes/grammar evidence remain synchronized. Historical validation retains its pin.
-
-Historical initial macOS SDK evidence follows. Its reference SDK is
-Homebrew `llvm` **23.1.1_1** (alias `llvm@23`), a `homebrew/core` stable arm64 bottle:
-
-| Property | Validated installation |
-|---|---|
-| Global prefix | `/opt/homebrew/opt/llvm` |
-| Resolved prefix | `/opt/homebrew/Cellar/llvm/23.1.1_1` |
-| CMake package | `/opt/homebrew/opt/llvm/lib/cmake/llvm/LLVMConfig.cmake` |
-| Headers / libraries / tools | `include/`, `lib/`, `bin/` beneath that prefix |
-| SDK build | Release, assertions OFF, RTTI ON, exceptions OFF, libc++ |
-| SDK linkage | Shared `libLLVM.23.1.dylib`; imported component libraries also available |
-| Host / reference triple | macOS 26.6.2 arm64 / `arm64-apple-darwin25.6.0` |
-| Project compiler | AppleClang 21.0.0 (`clang-2100.1.1.101`), C++23, system libc++ |
-| SDK Clang | Homebrew Clang 23.1.1 |
-| Package provenance | `INSTALL_RECEIPT.json` under the resolved prefix; built on macOS 26.6 with Xcode 27.0 |
-| License | Apache-2.0 WITH LLVM-exception; packaged `LICENSE.TXT` |
-
-LLVM is a host dependency: its architecture, C++ standard library and Windows CRT
-must match the compiler tool, independently of the emitted target. Keep exceptions
-and RTTI enabled in project code; no project exception may unwind through LLVM.
-Use imported SDK components and target-local system includes/definitions, not global
-`llvm-config --cxxflags`. A compile/link smoke check must establish compatibility.
-The runtime remains a separate LLVM-free C++23 library.
-
-Configuration prefers an installed SDK from standard system/package-manager prefixes
-(including Homebrew). If none is found, CMake downloads the official **23.1.2** SDK
-into `thirdparty/`, verifies its pinned SHA-256 checksum, and retains the archive
-and extracted installation for reuse across build directories and offline reloads.
-`LLVM_DIR` explicitly selects any existing installed SDK; invalid selections fail
-without falling back. LLVM build trees are still rejected. Set
-`ERLANG_AOT_DOWNLOAD_LLVM=OFF` to require an installed SDK without downloads.
-
-Pinned binary archives cover Windows x64/ARM64, Linux x64/ARM64, and macOS ARM64.
-They are selected for the compiler executable's architecture, independently of
-Erlang output targets. Other hosts and cross-builds need a matching explicit SDK;
-LLVM is not built from source automatically. System link dependencies and native
-SDKs must still be installed. Runtime-only builds never discover or download LLVM.
-
-Inspect this reference installation without changing it:
-
-```sh
-/opt/homebrew/opt/llvm/bin/llvm-config --version --prefix --cmakedir
-/opt/homebrew/opt/llvm/bin/llvm-config --host-target --targets-built
-/opt/homebrew/opt/llvm/bin/llvm-config --build-mode --assertion-mode --has-rtti --shared-mode
-/opt/homebrew/opt/llvm/bin/clang --version
-```
-
-Milestone tools from the SDK include `llvm-config`, `clang`/`clang++`,
-`llvm-as`, `llvm-dis`, `llvm-readobj`, `llvm-nm`, `opt` and `llc`.
-The historical macOS installation also provides `FileCheck`; it is absent from the
-current Windows SDK, where SDK round trips and explicit artifact checks are used.
-CMake >=3.28, a C++23
-compiler, a native linker/platform SDK, Boost >=1.90, toml++ and quality
-tools remain project prerequisites. OTP is only needed for explicitly enabled
-live audits or fixture regeneration; see [README](../README.md). Installed headers and
-CMake configuration are authoritative for this release. References:
-[LLVM CMake integration](https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project),
-[LLVM license](https://llvm.org/LICENSE.txt).
-
-The SDK includes X86, ARM and AArch64 for the project's intended targets. Current
-native execution covers Windows x64. Object inspection covers Linux
-x86/x86-64/ARM/AArch64 ELF, Windows x86/x86-64 COFF and Apple Silicon Mach-O.
-Available backends do not establish native runtime support. Other native platforms
-remain pending.
-
-## Frozen executable subset
-
-Accept ordinary named modules with exports and ordered function clauses. Parameters
-are variables, wildcards, aliases, scalar literals or tuple/list/map/bitstring/record
-constraints. Repeated names require exact equality; exhausted matching raises
-function_clause. Bodies contain source-ordered sequences and matches, constructors,
-checked arithmetic/query/comparison operations and direct local or literal remote
-calls within the same compilation batch, with nested arguments.
-Calls evaluate arguments in source order. Remote calls require exported functions;
-the entire call graph must be acyclic. Reject unsupported code even if unexported.
-
-```erlang
--module(answer).
--export([value/0, identity/1]).
-value() -> 42.
-identity(X) -> X.
-```
-
-A second module may call `answer:identity(answer:value())`; it must compile in the
-same batch to a separate object. Atom/boolean literals use runtime-owned bindings.
-Arbitrary integers, finite floats, tuples, lists/strings, maps and bitstrings are
-implemented through rooted checked services. Ordinary records expand through those
-tuple services. Exclude record updates/native forms,
-unavailable guard services, closures, dynamic calls, recursion,
-exceptions, receive, concurrency and code loading. Handle file/module/export and
-all existing type/spec AST forms explicitly. The initial inert metadata allowlist
-is `author`, `vsn`, `doc` and `moduledoc`; reject other attributes, including
-`compile`, `on_load`, parse transforms and parameterized modules. Syntax-only
-checking retains its existing broader coverage.
-
-Keep semantic/type results beside the immutable AST. Infer literals, parameter/result
-relations and direct calls conservatively; exported inputs are arbitrary valid terms.
-Specs are contracts, never runtime guards or unboxing proofs. Warn on provable spec
-contradictions without changing dynamic semantics. O0 uses generic tagged bodies.
-O2 may add proven/guarded variants with generic fallback: at most 3/function,
-32/module and 128/target, with pre-LLVM IR growth at most 2x per function/module,
-including dispatch. Generate no Cartesian products or clones without a benefit.
-
-## Private generated-code ABI revision 4
-
-[v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) defines the versioned C++ term/context/function
-types; [term.hpp](../abi/include/erlang_aot/abi/term.hpp) implements checked immediate
-integer encoding for explicit 32/64-bit targets. Runtime lifecycle is implemented;
-atom services are implemented and heap services remain later work. This contract
-does not match BEAM. ABI words and heap slots have target-word layouts; host `Term`
-additionally owns an atom spelling pin. Heap prefixes remain reservations.
-`codegen::term_type` and `generated_function_type` derive LLVM types from the configured
-target, rejecting unsupported widths/alignment. LLVM `CallingConv::C` denotes the
-native free-function machine convention used here; it does not require C headers
-or C linkage. All APIs are C++23 and private to this project. External C compatibility
-can be added later if needed.
-
-- A term is an unsigned target-pointer-width integer (32 or 64 bits), aligned to
-  the target word. Immediate small integers have low four bits `0xf`, matching the
-  sketch's primary/secondary small-integer tags. Payload width is `word_bits - 4`;
-  the signed range is `[-2^(word_bits-5), 2^(word_bits-5)-1]`. Range-check exact
-  source values before encoding with unsigned shift/OR; decode sign explicitly.
-- Generated native-convention entries conceptually have signature
-  `TermWord function(ProcessContext*, const TermWord* arguments)`. Arity is part of the
-  resolved identity. Arguments are a borrowed, word-aligned array in source order,
-  valid for the call; zero-arity calls may pass null. The context is live and
-  runtime-owned, propagated unchanged through direct calls. Callers supply valid
-  ABI terms. A return word is usable only after checking the context error channel.
-  [Generated-call failures](generated-call-failures.md) defines structured errors and
-  host scope cleanup. [Revision-4 roots](generated-roots.md) protect arguments and
-  temporaries; stable heap storage is available for later compound admission.
-- Symbol names use `eav1_<hex-module-UTF8>_<hex-function-UTF8>_<decimal-arity>`:
-  lowercase byte hex, no normalization, canonical decimal without leading zeroes.
-  Module registration and descriptors use `eav1_<hex-module-UTF8>__0.register`
-  and `.descriptor`; this symbol encoding remains unchanged in ABI revision 4.
-  Exported entries/registration are externally visible; other functions are internal.
-  These names specify project-owned LLVM symbols before platform decoration; future
-  project registration binds their addresses to the C++ generated-function type.
-- Descriptors declare ABI version and term width; runtime registration validates them
-  before invocation. Runtime services use ordinary C++ APIs, scoped status enums,
-  `std::expected` and RAII ownership. Generated entries retain simple word/pointer
-  signatures; no STL values, RTTI protocol or C++ exceptions cross those entries.
-- Every runnable link includes the matching target runtime once. The harness explicitly
-  initializes runtime state, registers modules, obtains a context and tears down
-  contexts before global services. Cross-target programs need a target-built runtime.
-  GC, exceptions and suspension may revise this ABI; stack-based calls do not promise
-  bounded-stack tail recursion. There is no general FFI or production launcher yet.
-
-## Frozen command and artifact contract
-
-The following compilation and inspection switches are implemented:
-
-| Option | Milestone behavior |
-|---|---|
-| `--emit obj\|llvm-ir\|llvm-bc` | Persist one selected artifact per module |
-| `--artifact-dir DIR` | Override the artifact root |
-| `--target-triple TRIPLE` | Select machine/OS/ABI; `--target` retains project selection |
-| `-O0` / `-O2` | Default generic O0 / bounded specialization plus LLVM O2 |
-| `--no-type-specialization` | Disable variants independently of option order |
-| `--print-ir` / `--print-optimized-ir` | Verified snapshots with original Erlang lines beside mapped instructions, before/after LLVM optimization |
-| `--print-types` | Declared/inferred/unknown type summaries before LLVM lowering |
-
-Default compilation verifies object buffers in memory without output files.
-Positional inputs form one batch; project targets form separate batches. Default
-artifact roots are invocation-relative `build/aot` or manifest-relative
-`build/aot/<encoded-target>`. Explicit roots are invocation-relative, with distinct
-project-target subdirectories. Encode module/target names as lowercase UTF-8 byte hex.
-Use target-selected `.o` (ELF/Mach-O), `.obj` (COFF), `.ll` or `.bc` suffixes.
-Validate and stage all requested batches before publishing complete files; preserve
-inputs/outputs on compile failure without promising multi-file publication atomicity.
-
-`-o/--output` and TOML `output` remain reserved executable destinations. Reject
-explicit `--emit` with explicit `-o`. Frontend-only modes and `--new-project` reject
-compilation switches; informational precedence stays unchanged. IR inspection allows
-both snapshots together, target/optimization/preprocessing/project/verbosity options,
-and rejects emission/output/frontend/new-project actions. It emits no files or
-machine code. Single snapshots are valid LLVM assembly; concatenated snapshots have
-escaped LLVM-comment headers and are separate modules, not one parseable module.
-Print only verified snapshots and return failure if later work fails.
-
-Type inspection permits preprocessing/project/verbosity only and rejects other
-actions, output destinations, target-triple and optimization/specialization options.
-`--verbose` keeps `[pp]`/`[parse]` and adds `[comp]` events on stderr only as phases
-begin, including source/module/target and specialization decisions. Future-feature
-failures report `[feature name] notimpl` once with context on stderr, independently
-of verbosity, and propagate explicit failure without fake results or artifacts.
-
-Implementation debugging is separate from ordinary tracing. `--impldebug <n[,n...]>`
-option selects signed 32-bit decimal step IDs (repeatable, deduplicated, no spaces).
-`ImplementationDebug::enabled(step)` is available in frontend/backend requests;
-step-specific diagnostics use stderr and this selection instead of ordinary
-verbosity. Step 23 reports inferred function inputs/results and parameter relations
-with an `[impldebug 23]` prefix. Debugging changes neither inferred facts nor warning
-policy and never runs inference in frontend-only check/print modes.
-
-The completed milestone, ownership boundaries and unfinished work are summarized
-in the [implementation archive](../.agents/00-finished.md#compiler-and-runtime-milestone).
-All 46 numbered steps recorded their own full gate and commit. Native generated-code
-execution is validated on Windows x64; additional native host platforms remain pending. Cross-target object checks do not prove execution.
-
-## SDK integration validation (step 2)
-
-Compiler-enabled configuration now requires the SDK and creates private
-`erlang_codegen`/`erlang_llvm_sdk` targets; no new CLI actions are enabled.
-LLVM headers/definitions do not propagate to frontend or runtime compilation.
-C is enabled for LLVM package dependency probes; project implementations stay C++23.
-A configure-time C++23 link probe checks LLVM context/module ABI compatibility,
-with RTTI and exceptions retained in project code. The `codegen_dependency` consumer also executes
-that boundary in CTest.
-
-Automatic discovery searches `/usr`, `/usr/local`, `/opt/homebrew`, `/opt/local`,
-`/opt/llvm`, `/home/linuxbrew/.linuxbrew` and `/Library/Developer/Toolchains` on Unix,
-and LLVM under Program Files on Windows. Versioned distro and Homebrew layouts
-are included. The pinned `thirdparty/` SDK is the fallback when that search fails.
-Canonical paths reject CMake build trees.
-`LLVM_DIR` explicitly selects an installed package; invalid selections
-fail without falling back. Compiler configuration reports searched locations,
-selected version/prefix, host triple and available backends. Runtime-only
-configuration does not load the dependency module.
-
-```sh
-CXXFLAGS= cmake --preset debug --fresh -DBUILD_TESTING=ON
-cmake --build --preset debug
-ctest --test-dir build/debug -R '^codegen_' --output-on-failure
-# Optional selection of the existing global reference installation:
-CXXFLAGS= cmake --preset debug --fresh -DBUILD_TESTING=ON -DLLVM_DIR=/opt/homebrew/opt/llvm/lib/cmake/llvm
-```
-
-Dependency tests use fresh configurations for automatic/explicit selection,
-missing SDKs with downloads disabled, ignored private prefixes, rejected build
-trees, incompatible release metadata and runtime-only builds. Automatic selection
-reuses the SDK already acquired during the parent configuration.
-Only one distinct LLVM installation is available on the reference host; explicit
-selection is tested through its canonical Cellar path. A second independent global
-installation and native Windows/Linux SDK compatibility remain unvalidated.
-
-## Compilation ownership (step 3)
-
-Private types under `compiler/src/codegen/` own one ordered compilation batch.
-`CompilationRequest` transfers input ASTs, native source paths and options into a
-move-only `Compilation`. Each instance has an independent LLVM context and one
-empty IR module per input; module identifiers initially contain source paths,
-not resolved Erlang module identities. Moves retain stable context/module/callback
-addresses. Modules are destroyed before their context, and diagnostic storage
-outlives both. Consuming the owner transfers results after LLVM teardown.
-
-`CompilationResult` owns diagnostic text/optional logical locations and binary
-output buffers, independent of the request, AST and LLVM. It starts incomplete;
-ownership operations do not claim successful compilation. Pipeline callers may
-stage output and explicitly mark completion. An error latches failure, discards
-all batch outputs and prevents later completion/output staging. LLVM notes/remarks,
-warnings and errors are copied through a context-local callback without printing;
-callback formatting/allocation failure sets an observable failure flag without
-unwinding through LLVM. LLVM fatal errors are not made recoverable by this handler.
-
-The `codegen_results` consumer compiles without LLVM include paths. The internal
-`codegen_ownership` tests cover retained AST/source data, multiple modules,
-move construction/assignment and reuse, independent contexts, real SDK diagnostic
-callbacks, failure propagation and result lifetime after compiler destruction.
-Focused ASan/UBSan runs instrument the backend and these tests, using the existing
-frontend archive and installed LLVM. Leak detection is unavailable on this macOS
-sanitizer runtime and is not claimed.
-
-Ownership construction does not select a target or lower syntax. Target setup is
-an explicit next phase; the CLI still stops after semantic analysis.
-
-## Target machine (step 4)
-
-The private `configure_target` phase constructs one LLVM target machine per batch
-and applies its normalized triple and data layout to every owned module. Empty
-target requests use LLVM's running-process triple and detected host CPU/features.
-An explicit matching native triple uses the same CPU policy. Foreign triples use
-the generic CPU baseline with no host feature overrides. Host features are sorted
-for stable configuration strings; no CPU/feature switches are exposed yet.
-
-CMake selects the installed SDK's intersection with X86, ARM and AArch64. Only
-these backends' target information, code generation and MC layers initialize,
-once across compilation instances. Shared LLVM and component-library linkage use
-the same selection. An unknown architecture or unavailable backend produces one
-owned error diagnostic including the triple, invalidates staged output and leaves
-modules unconfigured. Target lookup never falls back to the host.
-
-Relocation defaults to PIC to accommodate future shared modules; the code model
-is Small. Machine optimization follows the request: O0 maps to LLVM None and O2
-to Default. Other target options retain SDK defaults. The target data layout,
-including pointer width, comes exclusively from the machine. Configuring a target
-keeps the batch incomplete, emits no artifacts and reuses the machine on repeated
-calls. Moves preserve it; teardown releases modules before the machine and context.
-
-`codegen_target` checks native pointer size/CPU/features, per-module propagation,
-machine moves/reuse, normalized triples, unknown architectures and an unconfigured
-RISC-V backend. Available cross backends are checked for Linux x86/x86-64/ARM/AArch64
-ELF and Windows x86/x86-64 COFF layouts, including 32-bit widths on the 64-bit host.
-These are target-construction tests, not object-emission or native-platform ABI
-validation. Later implemented phases add verification, lowering, object emission
-and explicit CLI artifact publication.
-
-## Source lowering (step 24)
-
-The private `codegen::lower` phase consumes batch-owned syntax and semantic/type
-side tables. It creates generic native-convention declarations before constant
-bodies and verifies the complete LLVM batch. Literals are checked against the
-configured target width before encoding; specifications add no LLVM assumptions.
-Exported entries have external linkage; private entries have internal linkage.
-
-`codegen_lowering` parses real Erlang fixtures, runs analysis, inspects tagged
-returns and emits native objects. It checks 32/64-bit endpoints and rejects host-valid
-literals that overflow a 32-bit target. This is a stage adapter, not CLI artifact
-publication or generated-program execution. `--impldebug 24` prints the analyzed
-input facts on stderr. Normal CLI compilation still ends after analysis.
-
-### Step 25
-
-Parameter lowering borrows the binding table and emits a target-word-aligned
-load from the original argument position. Grouped identity and three-argument
-projections with unused wildcards retain tagged terms unchanged, without type
-assumptions or inbounds promises. Native and 32-bit object/IR checks pass.
-Debug25 exposes inferred input/result relations.
-
-Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
-full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
-later work. Cross-target object checks do not claim native execution on those hosts.
-
-### Step 26
-
-Direct local calls consume resolved identities and inferred summaries. An
-iterative postorder walk evaluates nested arguments in source order, builds
-aligned argument arrays and forwards the original process context. Zero-arity
-calls pass an unused null argument pointer. Forward/private calls, nested calls
-and identical argument positions are covered; CLI wrong-arity/missing/cycle
-regressions remain active. Debug26 prints inferred lowering inputs.
-
-Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
-full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
-later work. Cross-target object checks do not claim native execution on those hosts.
-
-### Step 27
-
-Batch-resolved remote calls import exported generic declarations into separate
-LLVM modules. Matching definition/import symbols are checked in emitted objects
-for the answer/client example, including reversed source order; no native
-linking occurs. Private/missing callees, duplicate modules and cross-module
-recursion remain diagnosed by the existing semantic phase. Debug27 prints
-inferred inputs. Generated-module runtime registration begins at step 28.
-
-Validation on Windows x64: fresh Debug compiler/runtime build, 80/80 CTests and
-full Lizard/clang-tidy pass. CLI artifact publication and native execution remain
-later work. Cross-target object checks do not claim native execution on those hosts.
-
-### Step 28
-
-Generated modules now carry immutable ABI/word-width descriptors, export tables
-and explicit registration entries. Runtime publication validates the descriptor,
-freezes one unique generic registry and retains executable image ownership through
-resolved handles. See [module registration](runtime-modules.md) for symbol and
-lifetime contracts. A separate Clang consumer executes the real answer/client
-objects with the mandatory runtime; linking those objects without it must fail.
-Atom initialization remains reserved; this step adds no atom-valued expressions.
-
-Validation: fresh Windows x64 Debug compiler/runtime build; 82/82 CTests,
-Lizard and clang-tidy pass (156 production commands). Additional native hosts
-and full frontend sanitizer validation remain pending.
-
-### Step 29
-
-The private backend plans bounded speed-mode variants from proven implementation
-profiles, with deterministic deduplication, hard function/module/target caps and
-dispatch-inclusive growth estimates. O0 and the explicit disable override retain
-generic code. The current source subset has no removable representation checks,
-so constants/identity/direct calls receive no variants. See [specialization](specialization.md).
-
-Validation: fresh Windows x64 Debug compiler/runtime build; 83/83 CTests and
-full Lizard/clang-tidy pass (159 production commands). A clang-tidy crash in
-unchanged tree_attributes.cpp passed on an unchanged complete quality retry.
-
-### Step 30
-
-Private guarded lowering uses LLVM cloning/simplification utilities and retains
-the generic tagged ABI. Dispatch tests only implemented small-integer tags and
-forwards context and arguments unchanged. Actual clone-plus-dispatch IR growth
-is checked transactionally against function/module budgets; excess variants
-are discarded without rejecting the program. See [specialization](specialization.md).
-Native LLVM fixtures cover guarded equivalence and executed generic fallback
-after growth rejection. The accepted Erlang source subset still has no profitable
-representation checks, so speed-mode source compilation correctly remains generic.
-
-Validation: fresh Windows x64 Debug compiler/runtime build; 84/84 CTests,
-Lizard, full clang-tidy (162 production commands), formatting and whitespace pass.
-A final analyzer crash in unchanged preprocessor/integer.cpp passed on a complete
-unchanged quality retry. At that checkpoint work stopped after step 30; the
-following records describe the subsequent optimization and driver/artifact work.
-
-Step 31 adds target-aware LLVM PassBuilder O0/O2 pipelines, with verification
-before and after optimization and local analysis-manager lifetimes. Public entries
-and runtime registration remain externally retained. The separate native consumer
-runs the answer/client and identity checks at both optimization levels.
-
-Step 32 uses LLVM assembly and bitcode writers on freshly verified modules.
-Text snapshots own their bytes without altering staged artifacts; failed verification
-discards the batch. SDK assembly/bitcode readers and structural ABI checks validate
-round trips at O0/O2. FileCheck is absent from this installed Windows SDK.
-
-Step 33 plans module artifacts with the reversible `eav1_<hex-module>__0` basename.
-Text uses `.ll`, bitcode `.bc`, and objects use the target-selected extension. Native
-paths preserve Unicode; links, input aliases and duplicate destinations are rejected.
-The publisher writes and closes a whole batch in a private directory before replacing
-files. Windows uses MoveFileExW replacement; POSIX uses rename. A publication failure
-can leave earlier complete files replaced: this is not a multi-file transaction.
-
-Step 34 parses the compilation command options. `--emit` accepts `obj`, `llvm-ir`,
-and `llvm-bc`; `--artifact-dir` requires emission. Value options and optimization
-levels may appear only once. O0 is the default; O2 selects speed policy, with
-`--no-type-specialization` overriding it in either order. Compilation switches
-conflict with frontend actions and project creation; explicit emission conflicts
-with executable `--output`. The following integration steps consume this policy.
-
-Step 35 connects positional source batches to the real backend. Default commands
-lower, specialize under the selected policy, optimize, verify and emit native objects
-in memory. `--emit obj|llvm-ir|llvm-bc` publishes the whole successful batch under
-`build/aot` or `--artifact-dir`. Parse/semantic/target failures publish nothing.
-LLVM diagnostic callbacks respect opt-in remark filters; warnings/errors remain visible.
-For example: `erlangaot -O2 --emit llvm-ir answer.erl client.erl`.
-
-Step 36 uses the same backend for independent selected project targets. Default
-artifact roots are manifest-relative `build/aot/<encoded-target>`; explicit roots
-are invocation-relative and append the same target component. TOML executable
-outputs do not redirect artifacts. All selected targets must compile successfully
-before publication begins, and source/manifest aliases are protected across targets.
-
-Step 37 extends `--verbose` with `[comp]` events on stderr. Events retain original
-source paths, known module names, project targets and phase order; controls and
-delimiters are escaped. Analysis/inference, lowering, specialization decisions,
-verification, optimization and emission are reported only when started. Profile
-displays are bounded, and disabled/no-benefit/work/growth/variant-limit decisions
-are explicit. Frontend-only and informational actions do not produce backend traces.
-
-Step 38 implements `--print-ir` (after compiler specialization, before LLVM passes)
-and `--print-optimized-ir` (after the selected verified pipeline). Neither action
-emits machine code or files. Both flags print adjacent before/after snapshots per
-module, in input/selected-target order. A single snapshot is LLVM assembly; multiple
-snapshots have escaped LLVM-comment headers and must be separated before assembly.
-Use `--emit llvm-ir` for individual machine-consumable files. Preprocessing, target,
-optimization and specialization options are allowed; frontend actions, project
-creation and all emission/output destinations conflict. Traces remain on stderr.
-
-Both IR views and `--emit llvm-ir` place the original Erlang source line beside
-the corresponding LLVM instructions, for example:
-
-```llvm
-; Erlang source files:
-; "answer.erl"
-; ...
-  ret i64 687, !dbg !6 ; value() -> 42.
-```
-
-Instruction comments contain only source code, with original indentation and
-unexpanded macro invocations. Consecutive instructions with the same source
-location share one comment within each basic block. Physical filenames appear
-once in a header at the start of each snapshot. Comments use the immutable
-source buffers retained during parsing.
-Included files retain their own locations; `-file` attributes do not redirect the
-source-text lookup. Latin-1 input is displayed as UTF-8, and embedded controls are
-escaped. LLVM line metadata carries locations and inlining chains through
-optimization, so surviving instructions still show their source. Removed
-instructions have no output, and instructions without a retained location receive
-no source comment.
-The annotated text remains valid LLVM assembly. Object and bitcode compilation
-do not enable this source-annotation metadata.
-
-Step 39 implements `--print-types` through the shared semantic pipeline, stopping
-before LLVM state, target setup or lowering. Reports follow input module and
-selected-target order; functions and expressions retain logical source locations.
-Declared aliases, opaque/nominal identities, callbacks, specs and record metadata
-stay separate from inferred inputs/results and exact parameter relations. Unknown
-implementation facts are explicit `term() [unknown]`; declared specs never narrow
-them. Graph widening and bounded display truncation are visible. Recursive aliases
-remain symbolic references. Diagnostics and optional traces stay on stderr;
-reports go to stdout and are not a public stage-input serialization format.
-
-```sh
-erlangaot --print-types answer.erl client.erl
-erlangaot --print-types --project project.toml --target demo --verbose
-```
-
-Validation through step 39 (2026-09-29): fresh Windows x64 Debug compiler/runtime
-build, 93/93 CTests with zero skips, full Lizard and clang-tidy over 180 production
-translation units, formatting and whitespace checks pass. Native execution evidence
-remains Windows x64; other native hosts and full frontend sanitizer coverage remain
-pending. That checkpoint preceded the steps 40–46 records below.
-
-Step 40 (2026-09-29): Public CLI objects execute in a separately configured Clang harness through the mandatory runtime link target at O0/O2; integer/immediate boundaries, projection and nested calls, ABI rejection, missing-runtime failure and explicit teardown pass. Fresh Windows x64 Debug compiler/runtime build: 95/95 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-Step 41 (2026-09-29): 150 seeded/fixed calls agree with OTP and an independent evaluator across four optimization/specialization modes, repeated twice; annotated/unannotated pairs and incorrect specs preserve behavior. CRLF and CMake native-path issues in the new test were fixed before the passing gate. Fresh Windows x64 Debug compiler/runtime build: 96/96 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-Step 42 (2026-09-29): Cost records cover source and synthetic guards at O0/O2 with specialization disabled/enabled. High-arity wide-union inputs remain generic, O2 outputs match byte-for-byte, 3/32/128 caps and 2x growth hold, and native guard/fallback results agree. Timings are descriptive only. Fresh Windows x64 Debug compiler/runtime build: 97/97 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-The `codegen_cross_targets` test emits through the CLI and invokes the selected
-SDK's `llvm-readobj --file-headers --symbols` and `llvm-nm` on every object.
-Its O0/O2 matrix covers Linux i686/x86_64/armv7/aarch64, Windows i686/x86_64,
-and arm64 Apple macOS. It checks target formats, architectures, term widths,
-encoded small-integer endpoints, descriptor ABI revision 2, registration symbols and
-cross-module/runtime imports. Target overflow, unknown architectures and
-unavailable backends fail without artifacts. SDKs lacking a supported backend
-must report that absence rather than substitute a host target.
-
-These are object/IR inspection results. Current native generated-code execution
-is Windows x64 only; native Linux, Apple Silicon and 32-bit runtime/ABI execution
-remain pending. Historical macOS runtime skeleton results are not evidence for
-the current CLI-generated native harness.
-
-Step 43 (2026-09-29): CLI-emitted objects pass SDK readobj/nm inspection for seven ELF, Mach-O and COFF targets at O0/O2, including architecture, exports/imports, runtime references, ABI widths/tags, exact integer endpoints and failure without publication. Foreign native execution remains pending. Fresh Windows x64 Debug compiler/runtime build: 98/98 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-Step 44 (2026-09-29): All compiler catalog families are audited through both CLI modes at O0/O2 with verbosity on/off. Explicit executable output now fails instead of silently succeeding. Native allocation rejection preserves generated calls, heap accounting and clean teardown; atom collection is documented as a reservation without an owner. Fresh Windows x64 Debug compiler/runtime build: 99/99 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-Compilation budgets are per target: 1,024 modules, 250,000 owned AST nodes per
-module and 1,000,000 per batch. Counts include forms, expressions, patterns, literal
-terms and declared types. The frontend checks counts while retaining inputs;
-semantic/backend admission checks them again for internal callers. Defaults are
-internal policy, not new CLI switches. Rejection is an ordinary resource diagnostic.
-
-LLVM text, bitcode, objects and inspection snapshots retain at most 64 MiB per
-module and 256 MiB per batch. A checked stream latches overflow, discards subsequent
-bytes and reports failure after LLVM returns; it does not throw resource-limit
-exceptions through the SDK. Buffer allocation failure is contained at the same
-boundary. These are serialized-output budgets, not a promise to recover from LLVM
-internal bugs or to cap all SDK allocator usage. Failed batches publish nothing.
-Existing artifact replacement is complete-file atomic, not a whole-batch transaction.
-Injected partial-write, close and interrupted-write exceptions verify owned staging
-cleanup and destination preservation. Abrupt process termination can leave a private
-staging directory; it cannot publish that partial file as the destination.
-
-Runtime-only Debug validation additionally found MSVC iterator proxies allocating
-inside noexcept default container constructors/string moves. Explicit catchable
-empty-container construction and publication key/name copies preserve the existing
-allocation-failure status/rollback contracts without disabling iterator debugging.
-
-Windows sanitizer setup uses Release probes, `/EHsc /fsanitize=address`, `/MT`, the
-installed Clang ASan import library and whole-archive static runtime thunk, with its
-DLL directory on PATH. Nested consumers inherit probe configuration and link flags.
-See [Clang sanitizer setup](https://clang.llvm.org/docs/AddressSanitizer.html).
-The current prebuilt LLVM SDK rejects full compiler ASan linkage because its MSVC
-STL `annotate_string=0` conflicts with instrumented code's value 1. No annotation
-checks were disabled to bypass that incompatibility; full compiler/frontend ASan,
-UBSan and LeakSanitizer remain pending. Runtime-only ASan is validated independently.
-
-Step 45 (2026-09-29): Batch/AST and bounded writer byte ceilings reject without publication; injected partial/close/interrupted writes preserve destinations and clean staging. Debug STL OOM termination paths were repaired without suppressing iterator checks. Compiler-only 80/80, runtime-only Debug 16/16 and runtime ASan 16/16 pass; full compiler ASan remains blocked by the installed SDK annotation ABI. Full quality covers 182 production commands. Fresh Windows x64 Debug compiler/runtime build: 102/102 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-Step 46 (2026-09-29): Published and executed the two-module native example at O0/O2, all artifact kinds, type/IR inspections and specialization override. Exact SDK setup, accepted semantics, ABI/runtime recipe, deferred features and 103-test inventory are documented. The example also passes focused Lizard/clang-tidy; full production quality preserves 182 commands. Fresh Windows x64 Debug compiler/runtime build: 103/103 CTests, zero skips; full Lizard/clang-tidy and whitespace checks pass. Other native hosts remain pending.
-
-The [admitted guard catalog](guard-services.md) includes checked
-`is_integer/3`, qualified calls and top-level legacy tests; process/node and native
-record identities retain explicit capability diagnostics.
-
-[Binding facts and proofs](binding-facts.md) documents conservative extracted
-values, clause joins and generic fallback when inference or specialization is
-budget-limited. Both IR inspection modes retain LLVM verification.
+| `--emit obj\|llvm-ir\|llvm-bc` | Publish one artifact per module |
+| `--artifact-dir DIR` | Artifact root (requires `--emit`) |
+| `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
+| `-O0` / `-O2` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 |
+| `--no-type-specialization` | Disable variants regardless of option order |
+| `--print-ir` / `--print-optimized-ir` | Verified IR before/after LLVM passes, with Erlang source lines as comments |
+| `--print-types` | Declared and inferred type report; stops before LLVM |
+| `--verbose` | `[pp]`, `[parse]` and `[comp]` phase events on stderr |
+| `--impldebug n[,n...]` | Implementation-step debug output on stderr (e.g. `23`: inference summaries) |
+
+- Without `--emit`, compilation verifies objects in memory and writes nothing.
+- Positional inputs form one batch; each project target is its own batch.
+- Artifact roots: `build/aot` (positional) or `build/aot/<hex-target>` under the
+  manifest directory. Explicit roots are invocation-relative.
+- Names are reversible hex: `answer` → `eav1_616e73776572__0.obj` (`.o` for
+  ELF/Mach-O, `.ll`, `.bc`).
+- All batches compile and stage before publication. Failures publish nothing
+  and keep earlier outputs; replacement is atomic per file, not per batch.
+- `--emit` conflicts with `-o`; compilation switches conflict with frontend-only
+  actions and `--new-project`. `--print-types` rejects target/optimization options.
+- IR snapshots are LLVM assembly; multiple snapshots are separated by escaped
+  comment headers and are not one parseable module. Use `--emit llvm-ir` for
+  tool input. Source-line comments show original text (unexpanded macros) and
+  survive optimization through debug locations.
+
+## Backend
+
+- One LLVM context and target machine per batch. Host triple uses host CPU and
+  features; foreign triples use the generic CPU. PIC, small code model.
+- Backends: X86, ARM, AArch64 (intersection with the SDK). Unknown or missing
+  backends fail; there is no host fallback.
+- Verification runs before and after optimization; it checks IR validity, not
+  Erlang correctness.
+- Budgets per target: 1,024 modules, 250,000 AST nodes per module, 1,000,000 per
+  batch. Serialized output: 64 MiB per module, 256 MiB per batch. Exceeding a
+  budget is an ordinary resource diagnostic.
+
+## LLVM SDK
+
+Stable LLVM **23.1.x**, minimum 23.1.1. LLVM is a host dependency: architecture,
+C++ standard library and Windows CRT must match the compiler tool. Project code
+keeps exceptions/RTTI; no exception may unwind through LLVM. The runtime never
+uses LLVM.
+
+- Discovery searches standard prefixes (`/usr`, `/usr/local`, `/opt/homebrew`,
+  `/opt/local`, `/opt/llvm`, Linuxbrew, `/Library/Developer/Toolchains`,
+  Program Files on Windows), including versioned layouts. Build trees are rejected.
+- `LLVM_DIR` selects an SDK explicitly; invalid selections fail without fallback.
+- If none is found, CMake downloads the pinned **23.1.2** archive (SHA-256
+  checked) into `thirdparty/` for Windows x64/ARM64, Linux x64/ARM64 or macOS
+  ARM64. `ERLANG_AOT_DOWNLOAD_LLVM=OFF` disables downloads.
+- A configure-time link probe checks ABI compatibility.
+
+Reference Windows x64 setup (2026-09-29): host clang-cl 23.1.2 in
+`C:/Program Files/LLVM/bin`, SDK `thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc`,
+Visual Studio 18 x64 tools, Windows SDK 10.0.26100.0, Ninja, `/MT`,
+`_ITERATOR_DEBUG_LEVEL=0`. Automatic selection applies the `/MT` and iterator
+settings; an explicit `LLVM_DIR` does not, and the link probe then fails.
+
+Historical macOS reference: Homebrew `llvm` 23.1.1_1 (arm64, shared
+`libLLVM.23.1.dylib`, assertions off) with AppleClang 21.
+
+Other prerequisites: CMake ≥ 3.28, a C++23 compiler, Boost ≥ 1.90, toml++
+3.4.0 and the quality tools. OTP is needed only for opt-in audits and fixture
+regeneration.
