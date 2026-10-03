@@ -1,21 +1,10 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <array>
 #include <bit>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 
 namespace erlang_aot::codegen {
-namespace {
-// Select native C++ service linkage using target platform and width.
-std::string_view symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_float_v1@@YAEPEAXPEBD_KPEA_K@Z"
-                                    : "?erlang_aot_float_v1@@YAEPAXPBDIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z19erlang_aot_float_v1PvPKcmPm" : "_Z19erlang_aot_float_v1PvPKcjPj";
-}
-} // namespace
-
 llvm::Value *lower_float(ExpressionLowering &state, double value) {
     const auto bits = std::bit_cast<std::uint64_t>(value);
     std::array<char, 8> encoded{};
@@ -30,7 +19,7 @@ llvm::Value *lower_float(ExpressionLowering &state, double value) {
                                           "float.literal");
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
-        symbol(output.getTargetTriple()),
+        services::symbol<services::Float>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(),
                                 {builder.getPtrTy(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
     auto *outcome = builder.CreateCall(

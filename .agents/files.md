@@ -8,7 +8,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 
 | Kind | Home |
 | --- | --- |
-| Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it |
+| Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it; `mangling`: compile-time Itanium/MSVC symbols for runtime services |
 | Runtime API | `runtime/include/erlang_aot/runtime/` |
 | Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `features`, `feature_diagnostic` |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
@@ -37,7 +37,7 @@ Keys in the last column are relative to the directory column.
 | `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `inference_bindings`, `contracts`, `membership`, `trace` |
-| `codegen/` | LLVM ownership, target/ABI, diagnostics | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi` |
+| `codegen/` | LLVM ownership, target/ABI, diagnostics, runtime-service symbols | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi`, `runtime_symbols` |
 | `codegen/` | Bodies/calls, matching, guards, eager/lazy flow | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
 | `codegen/` | Atom slots / registration; guarded variants | `module_{atoms,registration}`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |

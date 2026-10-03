@@ -1,6 +1,6 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
 
 namespace erlang_aot::codegen {
@@ -21,11 +21,7 @@ llvm::BasicBlock *failure_exit(ExpressionLowering &state) {
 void propagate_failure(ExpressionLowering &state) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
-    const auto &triple = output.getTargetTriple();
-    const auto symbol =
-        triple.isWindowsMSVCEnvironment()
-            ? (triple.isArch64Bit() ? "?erlang_aot_call_failed_v2@@YAEPEAX@Z" : "?erlang_aot_call_failed_v2@@YAEPAX@Z")
-            : "_Z25erlang_aot_call_failed_v2Pv";
+    const auto symbol = services::symbol<services::CallFailed>(output.getTargetTriple());
     auto service =
         output.getOrInsertFunction(symbol, llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy()}, false));
     auto *failed = builder.CreateCall(service, {state.entry.getArg(0)}, "call.failed");

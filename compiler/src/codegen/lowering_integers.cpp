@@ -1,7 +1,7 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 
 namespace erlang_aot::codegen {
@@ -76,15 +76,6 @@ llvm::Value *joined(ExpressionLowering &state, llvm::BasicBlock *fast, llvm::Val
     boundary->eraseFromParent();
     return value;
 }
-
-// Derive the platform-native declaration for immutable decimal bytes and a target-width output slot.
-std::string_view symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_integer_v1@@YAEPEAXPEBD_KPEA_K@Z"
-                                    : "?erlang_aot_integer_v1@@YAEPAXPBDIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z21erlang_aot_integer_v1PvPKcmPm" : "_Z21erlang_aot_integer_v1PvPKcjPj";
-}
 } // namespace
 
 llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state) {
@@ -109,7 +100,7 @@ llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal) 
                                           "integer.literal");
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
-        symbol(output.getTargetTriple()),
+        services::symbol<services::Integer>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(),
                                 {builder.getPtrTy(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
     auto *outcome = builder.CreateCall(

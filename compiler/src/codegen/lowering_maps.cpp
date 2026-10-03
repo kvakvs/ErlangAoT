@@ -1,24 +1,15 @@
 #include "../semantic/match_plan.hpp"
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <array>
 #include <erlang_aot/abi/maps.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 #include <utility>
 
 namespace erlang_aot::codegen {
 namespace {
 using Op = abi::v1::MapOperation;
-
-// Select the target-native C++ spelling for rooted word-array input and a checked output slot.
-std::string_view symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_map_v1@@YAEPEAXEPEB_K_KPEA_K@Z"
-                                    : "?erlang_aot_map_v1@@YAEPAXEPBIIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z17erlang_aot_map_v1PvhPKmmPm" : "_Z17erlang_aot_map_v1PvhPKjjPj";
-}
 
 // Semantic map errors carry their checked offending term; root cleanup follows the shared error transport.
 llvm::BasicBlock *rejection(ExpressionLowering &state, ServiceOutput result) {
@@ -56,7 +47,7 @@ llvm::Value *service(ExpressionLowering &state, Op operation, std::span<llvm::Va
     }
     auto *slot = root_slot(state);
     auto callee = output.getOrInsertFunction(
-        symbol(output.getTargetTriple()),
+        services::symbol<services::Map>(output.getTargetTriple()),
         llvm::FunctionType::get(
             builder.getInt8Ty(),
             {builder.getPtrTy(), builder.getInt8Ty(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));

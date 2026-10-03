@@ -1,6 +1,6 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 
 namespace erlang_aot::codegen {
 // Semantic rejection targets the entire enclosing guard; ordinary bodies use one shared badarg exit.
@@ -26,24 +26,13 @@ llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payl
     return state.bad_argument;
 }
 
-namespace {
-// Derive native C++ linker spelling from the emitted platform and word width.
-std::string_view symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_immediate_v1@@YAEPEAXE_K1PEA_K@Z"
-                                    : "?erlang_aot_immediate_v1@@YAEPAXEIIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z23erlang_aot_immediate_v1PvhmmPm" : "_Z23erlang_aot_immediate_v1PvhjjPj";
-}
-} // namespace
-
 llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
-        symbol(output.getTargetTriple()),
+        services::symbol<services::Immediate>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(),
                                 {builder.getPtrTy(), builder.getInt8Ty(), state.word, state.word, builder.getPtrTy()},
                                 false));

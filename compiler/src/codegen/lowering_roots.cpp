@@ -1,34 +1,14 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <algorithm>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 
 namespace erlang_aot::codegen {
-namespace {
-// These native C++ spellings are checked against emitted target declarations, without C linkage wrappers.
-std::string_view enter_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_roots_enter_v4@@YAPEA_KPEAX_K@Z"
-                                    : "?erlang_aot_roots_enter_v4@@YAPAIPAXI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z25erlang_aot_roots_enter_v4Pvm" : "_Z25erlang_aot_roots_enter_v4Pvj";
-}
-
-// Results transfer before releasing the callee's buffer; failures already own their payload in the channel.
-std::string_view leave_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_roots_leave_v4@@YAEPEAXPEA_K_K@Z"
-                                    : "?erlang_aot_roots_leave_v4@@YAEPAXPAII@Z";
-    }
-    return triple.isArch64Bit() ? "_Z25erlang_aot_roots_leave_v4PvPmm" : "_Z25erlang_aot_roots_leave_v4PvPjj";
-}
-} // namespace
-
 FunctionRoots begin_roots(ExpressionLowering &state) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto service = output.getOrInsertFunction(
-        enter_symbol(output.getTargetTriple()),
+        services::symbol<services::RootsEnter>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy(), state.word}, false));
     auto *buffer = builder.CreateCall(service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, 1)}, "roots");
     propagate_failure(state);
@@ -73,7 +53,7 @@ void finish_roots(ExpressionLowering &state) {
     roots.buffer->setArgOperand(1, llvm::ConstantInt::get(roots.word, std::max(roots.capacity, std::size_t{1})));
     auto &output = *state.entry.getParent();
     auto service = output.getOrInsertFunction(
-        leave_symbol(output.getTargetTriple()),
+        services::symbol<services::RootsLeave>(output.getTargetTriple()),
         llvm::FunctionType::get(state.builder.getInt8Ty(),
                                 {state.builder.getPtrTy(), state.builder.getPtrTy(), roots.word}, false));
     for (auto &block : state.entry) {

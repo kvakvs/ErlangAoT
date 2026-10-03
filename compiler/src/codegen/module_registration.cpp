@@ -1,23 +1,14 @@
 #include "module_registration.hpp"
 #include "../semantic/symbols.hpp"
 #include "module_atoms.hpp"
+#include "runtime_symbols.hpp"
 #include <erlang_aot/abi/v1.hpp>
 #include <erlang_aot/compiler/source.hpp>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/TargetParser/Triple.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 
 namespace erlang_aot::codegen {
 namespace {
-// Match the native C++ service declaration without introducing a C interoperability layer.
-std::string service_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_register_module_v4@@YAEPEAXPEBX@Z"
-                                    : "?erlang_aot_register_module_v4@@YAEPAXPBX@Z";
-    }
-    return "_Z29erlang_aot_register_module_v4PvPKv";
-}
-
 // Retain exact UTF-8 bytes, including embedded NULs, using explicit lengths in every descriptor.
 llvm::Constant *spelling(llvm::Module &output, const std::string &name) {
     auto *bytes = llvm::ConstantDataArray::getString(output.getContext(), name, false);
@@ -66,7 +57,7 @@ void emit_registration(llvm::Module &output, const semantic::Module &module, llv
     auto *entry = llvm::Function::Create(llvm::FunctionType::get(builder.getInt8Ty(), {ptr}, false),
                                          llvm::GlobalValue::ExternalLinkage, prefix + ".register", output);
     builder.SetInsertPoint(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-    auto service = output.getOrInsertFunction(service_symbol(output.getTargetTriple()),
+    auto service = output.getOrInsertFunction(services::symbol<services::RegisterModule>(output.getTargetTriple()),
                                               llvm::FunctionType::get(builder.getInt8Ty(), {ptr, ptr}, false));
     builder.CreateRet(builder.CreateCall(service, {entry->getArg(0), descriptor}));
     llvm::appendToUsed(output, {entry, descriptor});

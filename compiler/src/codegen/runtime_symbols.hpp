@@ -1,0 +1,51 @@
+#pragma once
+#include <erlang_aot/compiler/mangling.hpp>
+#include <llvm/TargetParser/Triple.h>
+#include <string_view>
+
+// Native C++ declarations of runtime services called by generated code; mirrors abi/include/erlang_aot/abi.
+namespace erlang_aot::codegen::services {
+using mangling::Char;
+using mangling::Const;
+using mangling::Enum;
+using mangling::Function;
+using mangling::Pointer;
+using mangling::Size;
+using mangling::UInt8;
+using mangling::Void;
+
+// Opaque runtime/process context passed first to every service.
+using Context = Pointer<Void>;
+// Target-width term word (abi::v1::TermWord) inputs and output slots.
+using Words = Pointer<Const<Size>>;
+using Slot = Pointer<Size>;
+using Bytes = Pointer<Const<Char>>;
+using Descriptor = Pointer<Const<Void>>;
+using Reason = Enum<"erlang_aot::abi::v1::ErrorReason">;
+
+using Integer = Function<"erlang_aot_integer_v1", UInt8, Context, Bytes, Size, Slot>;
+using Float = Function<"erlang_aot_float_v1", UInt8, Context, Bytes, Size, Slot>;
+using Immediate = Function<"erlang_aot_immediate_v1", UInt8, Context, UInt8, Size, Size, Slot>;
+using Construct = Function<"erlang_aot_construct_v1", UInt8, Context, UInt8, Words, Size, Slot>;
+using Inspect = Function<"erlang_aot_inspect_v1", UInt8, Context, UInt8, Size, Size, Slot>;
+using Bits = Function<"erlang_aot_bits_v1", UInt8, Context, UInt8, Words, Size, Slot>;
+using Map = Function<"erlang_aot_map_v1", UInt8, Context, UInt8, Words, Size, Slot>;
+using Exact = Function<"erlang_aot_exact_v1", UInt8, Context, Size, Size>;
+using CallFailed = Function<"erlang_aot_call_failed_v2", UInt8, Context>;
+using Raise = Function<"erlang_aot_raise_v2", UInt8, Context, Reason, Size>;
+using RootsEnter = Function<"erlang_aot_roots_enter_v4", Slot, Context, Size>;
+using RootsLeave = Function<"erlang_aot_roots_leave_v4", UInt8, Context, Slot, Size>;
+using RegisterModule = Function<"erlang_aot_register_module_v4", UInt8, Context, Descriptor>;
+using Atom = Function<"erlang_aot_atom_v3", Size, Context, Size, Descriptor>;
+
+// Mangling family and pointer width of the emitted target, independent of the compiler host.
+inline mangling::Target target(const llvm::Triple &triple) {
+    return {triple.isWindowsMSVCEnvironment() ? mangling::Scheme::microsoft : mangling::Scheme::itanium,
+            triple.isArch64Bit()};
+}
+
+// Linker spelling of `Service` for the emitted target.
+template <typename Service> std::string_view symbol(const llvm::Triple &triple) {
+    return Service::symbol(target(triple));
+}
+} // namespace erlang_aot::codegen::services

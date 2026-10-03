@@ -4,8 +4,8 @@
 #include "../semantic/services.hpp"
 #include "../semantic/symbols.hpp"
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <algorithm>
-#include <llvm/TargetParser/Triple.h>
 #include <set>
 
 namespace erlang_aot::codegen {
@@ -119,11 +119,7 @@ llvm::Value *lower_atom(ExpressionLowering &state, const ast::Atom &atom) {
     auto *slot = output.getNamedGlobal(slot_name(utf8(atom.name)))->getInitializer();
     const auto prefix = semantic::encode_symbol({utf8(state.module.name), "", 0});
     auto *descriptor = output.getNamedGlobal(prefix + ".descriptor");
-    const auto &triple = output.getTargetTriple();
-    const auto symbol =
-        triple.isWindowsMSVCEnvironment()
-            ? (triple.isArch64Bit() ? "?erlang_aot_atom_v3@@YA_KPEAX_KPEBX@Z" : "?erlang_aot_atom_v3@@YAIPAXIPBX@Z")
-            : (triple.isArch64Bit() ? "_Z18erlang_aot_atom_v3PvmPKv" : "_Z18erlang_aot_atom_v3PvjPKv");
+    const auto symbol = services::symbol<services::Atom>(output.getTargetTriple());
     auto service = output.getOrInsertFunction(
         symbol, llvm::FunctionType::get(state.word, {builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
     auto *value = builder.CreateCall(service, {state.entry.getArg(0), slot, descriptor}, "atom.value");
