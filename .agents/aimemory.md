@@ -77,3 +77,9 @@ MSVC cl (non-clang-cl) 2026-10-03: /external:W0 misses codegen C4702 (Boost.Pars
 narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_dependency and
 erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
 (float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).
+
+Plan11 step1 done 2026-10-03 (uncommitted): maint29 unchanged 21776803; fresh clang-cl Debug
+125/125 serial 729s, check-quality 258 units pass (tidy 22.1.8 from .venv-quality), 14 audit-only
+tests pass (build/plan11-audits), regenerate --check all 19 match. Gate cmd: vcvars64 + PATH
+"C:\Program Files\LLVM\bin"; DON'T pass LLVM_DIR (skips /MT+IDL0 -> probe mismatch). Logs
+build/plan11-step1. User added plan steps 1A (fast/full test split) and 1B (changed-file quality).

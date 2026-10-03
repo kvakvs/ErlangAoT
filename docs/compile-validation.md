@@ -12,6 +12,23 @@ settings are in the [compilation contract](compile.md#sdk-prerequisite).
 | Runtime-only Debug | 16 | 0 | 0 | Default Debug CRT/iterator checks, including allocation-failure sweeps |
 | Runtime-only ASan Release | 16 | 0 | 0 | Lifecycle, memory, dispatch, registration and separate consumer |
 | Full Lizard / clang-tidy | pass | 0 | 0 | All 182 original production compilation commands; existing thresholds |
+
+## Current baseline (plan 11 step 1, 2026-10-03)
+
+Starting point for [plan 11](../.agents/11-plan.md#step-1), at commit `b1a471f`
+on Windows x64 with clang-cl 23.1.2, the reused verified LLVM SDK 23.1.2
+(`/MT`, `_ITERATOR_DEBUG_LEVEL=0`), Lizard 1.24.0 and clang-tidy 22.1.8.
+
+| Configuration / check | Passing | Failing | Skipped | Notes |
+|---|---:|---:|---:|---|
+| Fresh combined Debug CTest | 125 | 0 | 0 | Serial run, 729.16 s; slowest single test 36 s |
+| `check-quality` | pass | 0 | 0 | Lizard CCN 10; clang-tidy over 258 production units |
+| Opt-in OTP audit tests | 14 | 0 | 0 | Grammar coverage, corpus, parser/preprocessor/scanner oracles, upstream source |
+| `regenerate.py --corpus all --check` | 19 | 0 | — | All owned corpora reproduce under OTP 29.1.1 / ERTS 17.1 |
+
+Upstream `maint-29` was unchanged at the pin (see
+[OTP reference](otp-reference.md#plan-11-step-1-check-2026-10-03)). Logs are in
+ignored `build/plan11-step1/`.
 | Foreign O0/O2 objects | 7 targets | 0 | 0 | Linux x86/x64/ARM/AArch64, Windows x86/x64, Apple Silicon |
 
 The [complete CTest name inventory](compile-tests.txt) contains 103 tests: 35 parser,
@@ -20,11 +37,14 @@ and one each for CLI, frontend, printing, OTP, scanner and lexer. Native generat
 code has current Windows x64 evidence only. Linux, Apple Silicon and native 32-bit
 runtime/harness execution remain pending. No foreign object is executed by inspection.
 
-Reproduce the combined gate in an x64 Visual Studio developer shell with the
-existing SDK selected (adjust the installed prefix for another machine):
+Reproduce the combined gate in an x64 Visual Studio developer shell with
+`C:\Program Files\LLVM\bin` on `PATH`. Automatic selection reuses the verified
+SDK under `thirdparty/` without downloading it again and applies its `/MT` and
+`_ITERATOR_DEBUG_LEVEL=0` requirements. An explicit `LLVM_DIR` skips those
+settings, and the SDK link probe then fails with an iterator-level mismatch:
 
 ```powershell
-cmake --preset debug --fresh -DBUILD_TESTING=ON -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DLLVM_DIR=F:/Projects/ErlangAoT/thirdparty/clang+llvm-23.1.2-x86_64-pc-windows-msvc/lib/cmake/llvm -DERLANG_AOT_DOWNLOAD_LLVM=OFF
+cmake --preset debug --fresh -DBUILD_TESTING=ON -G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
 cmake --build build/debug
 ctest --test-dir build/debug --output-on-failure
 cmake --build build/debug --target check-quality

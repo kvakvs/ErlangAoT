@@ -10,7 +10,7 @@ draft with smaller, single-commit steps.
 - Steps run in numbered order by default. Each lists its backlog owners and
   dependencies; an independent step may move earlier once its dependencies
   pass.
-- One step is one focused commit titled `[compiler] <step title>`. A step that
+- One step is one focused commit titled `[plan11] <full step title with step number>`. A step that
   grows beyond one reviewable change is split into lettered sub-steps (`12a`,
   `12b`) before coding, not widened silently.
 - **Decision** steps publish a short contract in `docs/` (plus a prototype where
@@ -131,14 +131,30 @@ Check upstream `maint-29` per the reference procedure and capture the current
 gate as the starting point for this plan.
 
 - Success criteria
-  - [ ] Pin, checkout, corpus hashes and grammar evidence agree with upstream,
+  - [x] Pin, checkout, corpus hashes and grammar evidence agree with upstream,
     or the unchanged revision is recorded with the fetch date.
-  - [ ] The full gate passes and its test/quality-unit counts are recorded in
+  - [x] The full gate passes and its test/quality-unit counts are recorded in
     `docs/compile-validation.md`.
 - Tests
-  - [ ] Full gate on a fresh build.
-  - [ ] Opt-in grammar, corpus and source audits pass against the pin; any
+  - [x] Full gate on a fresh build.
+  - [x] Opt-in grammar, corpus and source audits pass against the pin; any
     drift is reported, not hidden by regeneration.
+
+### 1A. Tests run time too long
+
+The test running is taking too much time, can we split tests into fast and full?
+- Use fast during development
+- Use full test mode once per major feature completion.
+- Success criteria: Test runs while development is ongoing take 1-2 min instead of 700 seconds now.
+
+### 1B. Quality check checks too much
+
+Quality checking should only check the files changed in the working tree, no need to hit same clean files repeatedly, unless they depend on changed files.
+- Success criteria: Scope of static checks and formatting is reduced for each change, instead of doing entire source every time.
+
+### 1C. Run the available documentation check
+
+The documentation in /doc/ was never createad intentionally rather as byproduct of implementation passes. Clean it up and drop duplicated, bloated text, keep only brief informational pieces which may later help build good documentation.
 
 <a id="step-2"></a>
 

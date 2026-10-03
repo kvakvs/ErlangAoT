@@ -175,3 +175,14 @@ Normal fresh configuration/build/CTest uses deliberately absent OTP paths and
 live audits OFF. [Final validation](patternmatch-step20-validation.md) distinguishes
 native execution, semantic acceptance, suite parsing and foreign layout evidence.
 Historical records retain their original revisions and outcomes.
+
+## Plan 11 step 1 check (2026-10-03)
+
+Fetched official `maint-29` on 2026-10-03; upstream, clean checkout and pin remain
+`21776803ecd11f5fa948732c0ec66b8f325dedfc` (upstream commit dated 2026-09-22).
+No files were refreshed. With `ERLANG_AOT_OTP_AUDITS=ON`, all 14 audit tests pass
+without skips, including `parser_coverage`, `parser_corpus` and
+`patternmatch_upstream`. `regenerate.py --corpus all --check` reproduces all
+nineteen owned corpora unchanged with the installed oracle OTP 29.1.1 / ERTS 17.1.
+The fresh combined gate is recorded in
+[compile validation](compile-validation.md#current-baseline-plan-11-step-1-2026-10-03).
