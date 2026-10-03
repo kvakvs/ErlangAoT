@@ -56,12 +56,10 @@ only delivered function/body/guard and prerequisite representation/root/service 
 OTP loader huge literalrecordguard and core_to_ssa legacy-modernimport crashes
 remain documented17/18; do not claim those contexts as executed OTPgoldens.
 
-Planning update2026-10-03: .agents/11-plan.md expands all42 remaining feature
-owners into51 ordered steps with dependency links and nested actions/success/tests.
-Mandatory1–39+51; optionalD40–50 conditional, D05directoryreservationsonly perAGENTS.
-No new implementation started. .agents/01-todo.md links each remaining owner to
-steps. Previous archive edits preserved; oldplanlinks redirected to retainedcontext,
-historical evidence facts unchanged. Do not confuse newstepnumbers with old1–20.
+Planning update2026-10-03 (rewrite): user deleted 51-step draft; .agents/11-plan.md now
+78 small single-commit steps, phases A-N, each with success criteria+tests. Exes early
+(3-8) so later steps test via executable golden runner (step8). Decisions: 3 entry,17 frame
+model,24 GC policy,53 ports,71-77 D-items. Mandatory1-70+78. 01-todo links remapped.
 
 OTP source cleanup2026-10-03: replaced130 notice-bearing fixture source files and
 removed copied assertion/file headers+license. Local source fixtures now under

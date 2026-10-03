@@ -141,6 +141,6 @@
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.
 
-- Remaining work is expanded in [plan 11](11-plan.md); it is planning only.
+- Remaining work is expanded in [plan 11](11-plan.md) as 78 small steps; it is planning only.
   The completed pattern/guard checklist is retired; its contracts/evidence remain
   in that plan and [the archive](00-finished.md#completed-patternmatch).
