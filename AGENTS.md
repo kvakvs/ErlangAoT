@@ -100,4 +100,6 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
   be covered reliably or practically through black-box or end-to-end tests.
   Avoid duplicating coverage across layers; preserve existing useful tests
   unless equivalent behavioral coverage replaces them.
-
+- IMPORTANT: OTP source and copied files from OTP source remain transient and
+  never join the ErlangAoT git, if necessary, save observations/oracle data/gold
+  master data in ErlangAoT git, but not the license-protected files.
