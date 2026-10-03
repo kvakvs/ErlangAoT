@@ -176,6 +176,18 @@ Studio developer shell with CMake and Clang available. Build defaults are
 matching `make test` and propagating configuration, build, or test failures.
 Clean removes repository-local `build/` and `cmake-build*/` directories.
 
+Quality checks and formatting default to changed files: everything differing from `HEAD`
+in the working tree, plus untracked files.
+
+- `cmake --build build/debug --target check-quality` runs Lizard on changed production
+  C++ files and clang-tidy on changed translation units plus those including a changed
+  header (from Ninja's recorded dependencies). Changes to `.clang-tidy`, `cmake/` or
+  production `CMakeLists.txt`, or missing dependency data, check every translation unit.
+  Set `ERLANG_AOT_QUALITY_BASE` (for example `origin/master`) to compare with another base.
+- `check-quality-all` (and `check-complexity-all`, `check-clang-tidy-all`) check every file.
+- `make format` / `make-format.bat` format changed C++ files; `make format-all` or
+  `FORMAT_SCOPE=all make-format.bat` formats everything.
+
 `erlangaot.bat --help` builds first, then forwards all arguments to the selected
 configuration's executable. Build failures stop execution; compiler input paths
 remain relative to the caller's working directory, and its exit code is preserved.

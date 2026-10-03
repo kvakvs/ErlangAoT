@@ -12,7 +12,7 @@ TEST_MODE ?= fast
 TEST_JOBS ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT ?= $(shell command -v clang-format 2>/dev/null || xcrun --find clang-format 2>/dev/null)
 
-.PHONY: build build_test test test-full format fmt clean
+.PHONY: build build_test test test-full format fmt format-all clean
 
 # Reconfigure each time; let CMake control jobs independently of outer make flags.
 # Build only the compiler executable and its dependencies for manual runs.
@@ -38,8 +38,15 @@ test: build_test
 test-full:
 	+$(MAKE) test TEST_MODE=full
 
-# Format project C++ files, excluding generated and vendored build trees.
+# Format project C++ files changed since HEAD (including untracked files).
 format fmt:
+	@test -n "$(CLANG_FORMAT)" || { echo "clang-format is required" >&2; exit 1; }
+	@{ git diff --name-only HEAD --; git ls-files --others --exclude-standard; } | sort -u | \
+		grep -E '^(compiler|runtime|abi|tests)/.*\.(cpp|cc|cxx|hpp|h|hh|hxx)$$' | \
+		while IFS= read -r file; do [ ! -f "$$file" ] || "$(CLANG_FORMAT)" -i --style=file "$$file" || exit 1; done
+
+# Format every project C++ file, excluding generated and vendored build trees.
+format-all:
 	@test -n "$(CLANG_FORMAT)" || { echo "clang-format is required" >&2; exit 1; }
 	@find compiler runtime abi tests -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o -name '*.hpp' -o -name '*.h' -o -name '*.hh' -o -name '*.hxx' \) -print0 | xargs -0 "$(CLANG_FORMAT)" -i --style=file
 
