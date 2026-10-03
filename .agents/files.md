@@ -10,7 +10,7 @@ Repo-relative paths. File keys omit `.cpp`/`.hpp`; `{a,b}` groups siblings, `*` 
 | --- | --- |
 | Compiler API / AST | `compiler/include/erlang_aot/compiler/`, `ast/` beneath it; `mangling`: compile-time Itanium/MSVC symbols for runtime services |
 | Runtime API | `runtime/include/erlang_aot/runtime/` |
-| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `features`, `feature_diagnostic` |
+| Shared generated-code ABI | `abi/include/erlang_aot/abi/`: `v1`, `term`, `status`, `calls`, `modules`, `builtins`, `equality`, `containers`, `integers`, `floats`, `maps`, `bits`, `immediate_services`, `output`, `features`, `feature_diagnostic` |
 | Private headers | Beside owning source; project-internal C++23; runtime stays LLVM-free |
 | Sketches / proposals | `runtime/include/*.hpp` (also legacy forwarders), `runtime/include/unverified/`; production APIs go in the canonical tree |
 | New sources / tests | Register in owning `CMakeLists.txt`; behavior tests through CLI/native workflows, private tests for inaccessible invariants |
@@ -54,12 +54,13 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `memory/` | Stable backing, budgets, rollback/resource teardown; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `copy` |
 | `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `container_factory`, `container_access`, `term_layout`, `atoms`, `atom_spelling` |
 | `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `structural_order`, `immediate_services`, `container_services`, `service_errors` |
+| `terms/` | `~w`/display text: traversal, scalar rules | `term_text` (frames, `TextOutput`), `term_text_scalars` (atoms, floats, bits, display strings); API `output.hpp` |
 | `terms/` | Canonical arbitrary integers, exact operations and checked transport | `integers`, `integer_{access,values,decimal,words,sum,factory,operations,service,literal}` |
 | `terms/` | Finite binary64 construction/conversions, mixed arithmetic/order | `floats`, `float_{factory,literal,operations}`, `numeric_{conversions,order,service}` |
 | `terms/` | Immutable exact-key maps, staged updates, checked service transport | `maps`, `map_{access,factory,services}`; compiler `semantic/{pattern_reads,match_plan_maps}`, `codegen/lowering_maps` |
 | `terms/` | Immutable packed bitstrings, shared views, numeric/UTF segments and checked cursors | `bitstrings`, `bit_{access,factory,numeric,float,utf,services}`; compiler `semantic/{binary_options,match_plan_bits}`, `codegen/lowering_bits` |
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
-| `builtins/` | Generic registry, checked invocation/ABI bridge | `registry`, `invocation`, `bridge`; known-BIF catalog: canonical API `builtins.hpp` |
+| `builtins/` | Generic registry, checked invocation/ABI bridge; standard output and `erlang_aot_display_v1` | `registry`, `invocation`, `bridge`, `output`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
 | `diagnostics/` | Runtime feature reporting | `features` |
 
@@ -81,7 +82,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 ## Tests / fixtures
 
 Compiler runners: `tests/compiler/<area>/`; source/expected data: `tests/fixtures/<area>/`.
-Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime,programs}`.
+Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime,programs,printing}`.
 
 | Area | Lookup / placement |
 | --- | --- |
@@ -91,6 +92,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`, `closure.py`: conservative proofs and seeded/provenance closure; native bounded value transport: `codegen/match_wire.hpp` |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
+| `printing` | `values.py` (authored values, corpus collection, wire parse, order rule), `regenerate.py` + `oracle.escript` (explicit OTP goldens), `display.py` CTest `printing_display` (compiled display calls via `codegen/match.cmake`); runtime goldens `tests/runtime/printing.cpp` |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | `linking` | F01 entry selection and escripts (`entry.cmake`, `escript.cmake`, fixtures `tests/fixtures/linking/{entry,escript}/`); later startup/link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |

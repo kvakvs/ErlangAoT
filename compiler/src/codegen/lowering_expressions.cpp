@@ -79,6 +79,9 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
         return lower_record_test(state, expression, call);
     }
+    if (service->second.operation == abi::v1::ImmediateOperation::display) {
+        return lower_display(state, state.values.at(&state.module.syntax->expression(call.arguments.at(0))));
+    }
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
         std::vector<llvm::Value *> arguments;
         arguments.reserve(call.arguments.size());

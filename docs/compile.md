@@ -12,7 +12,8 @@ Named modules with exports and ordered function clauses. Heads and body matches
 accept variables, `_`, aliases, repeated names and patterns over atoms,
 arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and
 ordinary tuple records. Bodies are sequences of matches, constructors, checked
-operators/guard BIFs and direct local or literal remote calls within the batch.
+operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)) and
+direct local or literal remote calls within the batch.
 Guards support the full admitted catalog. See [patterns](patterns.md),
 [guards](guards.md) and [terms](terms.md).
 

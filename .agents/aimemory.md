@@ -131,3 +131,17 @@ escript_source rewrites line1 -> `-module('<basename .->_>__escript').` unless f
 escript) -> semantic/escript index_escript (main/1 required+exported, -mode validated);
 capabilities allow -mode only in escripts. ResolvedEntry.escript -> exit 127 later (step 5).
 Name clash: ADL picked std::quoted for local `quoted` -> renamed atom_literal.
+Plan11 step4 2026-10-03: term printing. runtime output.hpp (TermStyle write|display, format_term,
+OutputSink, write_output); terms/term_text{,_scalars}.cpp; builtins/output.cpp erlang_aot_display_v1
+(abi/output.hpp, Status::output_failure=13). Compiler: body_builtin() erlang:display/1 only (qualified),
+ImmediateOperation::display marker -> lower_display. OTP display = C printer erl_printf_term.c (%.6e
+floats, printable latin1 lists as strings, <<"ascii">>, no '@'/reserved quoting), NOT ~w. OTP 26+ map
+internal order: atom keys by atom INDEX (varies per VM run!), >32 keys hash order -> we print map-key
+order (=~kw ordered); display goldens skip by structural rule (values.stable_order). Goldens
+tests/fixtures/printing (regenerate.py --escript erts-17.1/bin/escript.exe [--check]); match_wire.hpp
+reused. AtomStorage::boolean needs "true" pre-interned (registration does it). Python write_text on
+Windows writes CRLF: use write_bytes/newline=''. erlfmt: build/plan11-step4/fmt.escript (format_file(F,[])).
+Step4 gate: fresh fast 128/128 (first run after runtime source changes timed out 9 tests while ~10
+native sub-builds recompiled the runtime; rerun clean, 55 s). check-quality tidy with 2 jobs crashed
+clang-tidy (0xC0000005/0xC0000409) on random unchanged units 3x; same official script with
+-DQUALITY_JOBS=1 passed all 265 units (build/plan11-step4/tidy1.cmd). Runtime CMake edits select all units.

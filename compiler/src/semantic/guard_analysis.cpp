@@ -58,6 +58,9 @@ void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpressi
         if (guard) {
             report(state.module, &expression.source, "illegal guard call (not an authorized erlang guard signature)",
                    state.out);
+        } else if (const auto builtin = body_builtin(*state.module.syntax, call)) {
+            state.function.services.emplace(&expression,
+                                            ServiceResolution{*builtin, false, false, immediate_service(*builtin)});
         }
         return;
     }

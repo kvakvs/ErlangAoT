@@ -145,6 +145,10 @@
   `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
   the header, `semantic/escript` exports `main/1`; entry detection prefers them.
 
+- Term printing: runtime `format_term` renders `~w` or emulator display text iteratively under a
+  byte cap (maps in map-key order); `erlang:display/1` is a body-only service writing to
+  `RuntimeOptions::standard_output`. Goldens in `tests/fixtures/printing/`.
+
 - Six end-goal program fixtures (`tests/fixtures/programs/`) carry OTP stdout/exit
   goldens and today's exact compile diagnostics; later steps update `compile.txt`
   until step 58 runs them as executables.

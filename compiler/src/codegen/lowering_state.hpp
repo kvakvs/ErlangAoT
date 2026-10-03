@@ -61,6 +61,8 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
 // Evaluate only authorized immediate service operations with success-only outputs.
 llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right = nullptr);
+// Print one term through erlang:display/1; the rooted result is the atom true after the channel check.
+llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.

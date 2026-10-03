@@ -1,5 +1,6 @@
 #pragma once
 #include "atoms.hpp"
+#include "output.hpp"
 #include "process_context.hpp"
 #include <erlang_aot/abi/status.hpp>
 #include <expected>
@@ -16,6 +17,8 @@ struct RuntimeOptions {
     std::uint32_t abi_version = abi::v1::version;
     // Keep the native runtime term width explicit for project compatibility checks.
     std::uint32_t term_bits = sizeof(abi::v1::TermWord) * 8;
+    // Receive erlang:display/1 and future standard_io bytes; the default writes to process stdout.
+    OutputSink standard_output = {};
 };
 
 // Own stable process contexts and reserved runtime-wide services; calls require host-side serialization.
@@ -44,6 +47,8 @@ class Runtime final {
     AtomStorage *atom_storage() noexcept;
     // Borrow lifecycle bookkeeping while active; no scheduler workers are started and stopped runtimes return null.
     SchedulerService *scheduler() noexcept;
+    // Copy the configured standard output sink; stopped runtimes report the stdout default.
+    OutputSink standard_output() const noexcept;
 
   private:
     // Retain contexts and service reservations independently of the public C++/generated ABI layout.

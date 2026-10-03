@@ -56,6 +56,10 @@ cmake --build build/debug --target check-quality-all  # whole tree
   `programs_compile` checks them OTP-free and
   `tests/compiler/programs/regenerate.py --check` reproduces them under OTP
   ([fixture map](../tests/fixtures/programs/README.md)).
+- Term printing goldens (`tests/fixtures/printing/`, plan 11 step 4) hold OTP
+  `~w` and `erlang:display/1` text for 9,542 values plus OTP stdout of compiled
+  display calls; `tests/compiler/printing/regenerate.py --check` reproduces them
+  ([fixture notes](../tests/fixtures/printing/README.md)).
 - Regeneration and live audits are explicit:
   `-DERLANG_AOT_OTP_AUDITS=ON` and `tests/compiler/patternmatch/regenerate.py`
   ([instructions](../tests/fixtures/patternmatch/generated/README.md)).
@@ -132,5 +136,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-03 | OTP source audit | 125 | 258 | Copied OTP files replaced by local fragments |
 | 2026-10-03 | Plan 11 step 1 baseline | 125 | 258 | See current baseline |
 | 2026-10-03 | Plan 11 step 2 program fixtures | 126 | 258 | Six OTP goldens; fast mode 123 tests; full `-j 16` 83 s |
+| 2026-10-03 | Plan 11 step 4 term printing | 128 fast | 265 | 9,542 `~w`/display goldens; 154 compiled display calls in all policies; clang-tidy run with one job (concurrent runs crashed the tool on unchanged units) |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

@@ -48,6 +48,19 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
     return checked_value(state, {outcome, slot}, rejection);
 }
 
+llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto *slot = root_slot(state);
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Display>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
+    builder.CreateCall(service, {state.entry.getArg(0), value, slot}, "display.outcome");
+    // Display has no semantic rejection: every failure is already in the checked channel.
+    propagate_failure(state);
+    return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "display.value");
+}
+
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection) {
     auto &builder = state.builder;
     propagate_failure(state);

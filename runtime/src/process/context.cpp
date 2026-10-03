@@ -31,6 +31,8 @@ CodeServer &ProcessContext::code_server() noexcept { return *impl_->runtime.code
 
 AtomStorage &ProcessContext::atom_storage() noexcept { return *impl_->runtime.atom_storage(); }
 
+OutputSink ProcessContext::standard_output() const noexcept { return impl_->runtime.standard_output(); }
+
 Mailbox &ProcessContext::mailbox() noexcept { return mailbox_; }
 
 std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept { return impl_->lifetime; }

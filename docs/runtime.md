@@ -100,6 +100,18 @@ Key intent: messages, including self-sends, enter the receiver's signal inbox
 and are copied into its heap only when the owner handles signals; reductions
 bound each resume.
 
+## Standard output
+
+`RuntimeOptions::standard_output` ([output.hpp](../runtime/include/erlang_aot/runtime/output.hpp))
+receives `erlang:display/1` and later `standard_io` bytes. The default writes to
+process `stdout` through C stdio (buffered); a host sink returns `false` to
+report a failed write.
+
+`erlang:display/1` renders its argument in [display style](terms.md#printing),
+writes the text and a newline in one write and returns `true`. Rendering limits
+and rejected writes become infrastructure statuses (`resource_limit`,
+`output_failure`, ...) in the checked channel, never Erlang exceptions.
+
 ## Deferred services
 
 These report one `[feature] notimpl` line ([features](features.md)) and change no
