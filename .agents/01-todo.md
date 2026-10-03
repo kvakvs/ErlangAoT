@@ -65,8 +65,8 @@ Expanded plan: [17](11-plan.md#step-17), [23](11-plan.md#step-23),
 [26](11-plan.md#step-26), [51](11-plan.md#step-51).
 
 Delivered stable-heap roots and owned results/errors for the admitted domain;
-see [generated roots](../docs/generated-roots.md) and
-[final validation](../docs/patternmatch-step20-validation.md). Relocation,
+see [generated roots](../docs/abi.md#root-scopes) and
+[final validation](../docs/validation.md#history). Relocation,
 continuation/mailbox roots and suspension remain open.
 
 - [x] Define and implement host/generated/registration roots and lifetime rules
@@ -87,7 +87,7 @@ Expanded plan: [23](11-plan.md#step-23), [25](11-plan.md#step-25),
 Meaning: allocate process-owned storage and construct validated values. Stable
 backing and the admitted scalar/container layouts are delivered; future layouts
 and collector integration remain separate. See
-[final validation](../docs/patternmatch-step20-validation.md).
+[final validation](../docs/validation.md#history).
 
 - [x] Implement checked backing allocation, accounting, growth and resource
   limits.
@@ -143,7 +143,7 @@ runtime-owned identities, rather than only recognizing a tagged word's shape.
   retain needed roots; never emit compiler-assigned atom IDs.
 - [x] Implement atom/boolean constructors and source lowering; verify
   deduplication, capacity failures and runtime isolation. See
-  [step-3 validation](../docs/patternmatch-step3-validation.md).
+  [step-3 validation](../docs/validation.md#history).
 - [ ] Add synchronized concurrent access before workers; current calls require
   host serialization.
 
@@ -168,9 +168,9 @@ Expanded plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28),
 [39](11-plan.md#step-39).
 
 Admitted construction, access, tuple/map updates and matching are delivered;
-strings use proper lists. See [containers](../docs/container-matching.md),
-[maps](../docs/map-matching.md) and
-[final validation](../docs/patternmatch-step20-validation.md).
+strings use proper lists. See [containers](../docs/terms.md#tuples-lists-strings),
+[maps](../docs/terms.md#maps) and
+[final validation](../docs/validation.md#history).
 
 - [x] Define owned layouts, improper lists and exact map key identity.
 - [x] Implement checked constructors/access/tuple-map updates and source
@@ -189,8 +189,8 @@ bits and shared immutable storage lifetime.
 
 Pattern/guard step 16 implements small/shared storage, checked numeric/UTF
 construction and cursor extraction, retained tails, queries and comparisons. See
-[the contract](../docs/bitstring-matching.md) and
-[validation](../docs/patternmatch-step16-validation.md). Tracing, cross-process
+[the contract](../docs/terms.md#bitstrings) and
+[validation](../docs/validation.md#history). Tracing, cross-process
 copying and GC remain open with F04/F05; this does not close the whole F09
 owner.
 
@@ -207,8 +207,8 @@ owner.
 Expanded plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28).
 
 Delivered exact integers and checked arithmetic over the admitted domain; see
-[integer contract](../docs/integer-matching.md) and
-[final validation](../docs/patternmatch-step20-validation.md).
+[integer contract](../docs/terms.md#integers) and
+[final validation](../docs/validation.md#history).
 
 - [x] Implement owned bignums and literals using bounded runtime multiprecision.
 - [x] Implement arithmetic/bitwise operations, small-integer fast paths,
@@ -224,8 +224,8 @@ Expanded plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28),
 [38](11-plan.md#step-38).
 
 Delivered finite binary64 values, numeric operations/conversions and mixed
-comparisons; see [float contract](../docs/float-matching.md) and
-[final validation](../docs/patternmatch-step20-validation.md).
+comparisons; see [float contract](../docs/terms.md#floats) and
+[final validation](../docs/validation.md#history).
 
 - [x] Define finite representation, construction and admitted
   operation/conversion set.
@@ -244,7 +244,7 @@ Expanded plan: [31](11-plan.md#step-31), [32](11-plan.md#step-32),
 [42](11-plan.md#step-42).
 
 Delivered structural comparison for every admitted representation. See
-[final validation](../docs/patternmatch-step20-validation.md); future identity,
+[final validation](../docs/validation.md#history); future identity,
 callable/native-record representations still require their owners.
 
 - [x] Specify exact/numeric equality and ordering, including mixed numbers and
@@ -263,8 +263,8 @@ Expanded plan: [9](11-plan.md#step-9), [13](11-plan.md#step-13),
 
 Delivered function-head and body-match semantics for the admitted
 scalar/container/ ordinary-record domain; see
-[scoped matrix](../docs/patternmatch-matrix.md) and
-[final validation](../docs/patternmatch-step20-validation.md).
+[scoped matrix](../docs/patterns.md) and
+[final validation](../docs/validation.md#history).
 
 - [x] Define scopes, aliases, exact repeated-variable equality, wildcards and
   mismatch outcomes, including map-key and binary-size binding rules.
@@ -281,8 +281,8 @@ Expanded plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10),
 [52](11-plan.md#step-52).
 
 Delivered the audited admitted-domain guard catalog and function-clause guard
-control flow; see [guard services](../docs/guard-services.md) and
-[final validation](../docs/patternmatch-step20-validation.md).
+control flow; see [guard services](../docs/guards.md) and
+[final validation](../docs/validation.md#history).
 
 - [x] Validate operations/grouping, exact signatures, shadowing/imports and
   unreachable operands separately from availability and parsing.
@@ -297,7 +297,7 @@ control flow; see [guard services](../docs/guard-services.md) and
 ### F15 — Multiple function clauses
 
 Delivered ordered selection for the full admitted domain; see
-[final validation](../docs/patternmatch-step20-validation.md). Recursion remains
+[final validation](../docs/validation.md#history). Recursion remains
 F21.
 
 - [x] Analyze clause-local bindings and ordered alternatives; join inference
@@ -313,7 +313,7 @@ Expanded plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10),
 
 Delivered body sequences/matches over every admitted representation, including
 RHS-first chains, exact rebinding, owned badmatch and rooted construction; see
-[final validation](../docs/patternmatch-step20-validation.md).
+[final validation](../docs/validation.md#history).
 
 - [x] Implement sequences/matches and strict/lazy boolean expression evaluation,
   preserving order, bindings and failures through real source/native workflows.
@@ -333,7 +333,7 @@ representation and field behavior.
   preprocessing.
 - [x] Implement ordinary construction, access and matching through tuples,
   preserving evaluation order and failure semantics; integrate binding/type
-  traversal. See [step 17](../docs/patternmatch-step17-validation.md).
+  traversal. See [step 17](../docs/validation.md#history).
 - [ ] Implement record updates, record_info, and native/qualified/inferred
   records.
 - [ ] Complete their additional declaration, binding/type and execution rules.
@@ -478,8 +478,8 @@ remains open.
 
 - [x] Audit all 81 source catalog rows; implement 77 on admitted values with
   checked validation/results/failures, executable mappings and explicit gates
-  for four owners. See [guard services](../docs/guard-services.md) and
-  [final validation](../docs/patternmatch-step20-validation.md).
+  for four owners. See [guard services](../docs/guards.md) and
+  [final validation](../docs/validation.md#history).
 - [ ] Select additional builtin families and their concrete runtime
   dependencies.
 - [ ] Implement/register production families through the generic bridge and
@@ -633,7 +633,7 @@ Expanded plan: [8](11-plan.md#step-8), [70](11-plan.md#step-70).
 Meaning: replace implementation-coupled success tests only after equivalent
 public behavior is covered, retaining cases public interfaces cannot reproduce.
 
-- [ ] Audit the [case-level ledger](../docs/test-migration.md) against current
+- [ ] Audit the [case-level ledger](../docs/validation.md#test-design) against current
   CLI, native runtime and generated-program workflows; add missing equivalent
   coverage.
 - [ ] Retire covered adapters/registrations/sources/helpers together; retain
@@ -755,13 +755,13 @@ selected capability below can receive its own detailed plan.
 
 - [Completed-work archive](00-finished.md), [architecture](arch.md),
   [file map](files.md), [compilation contract](../docs/compile.md),
-  [validation](../docs/compile-validation.md).
+  [validation](../docs/validation.md).
 - [Term design](../runtime/design/terms.md),
   [process design](../runtime/design/processes.md),
   [atom design](../runtime/design/atom_storage.md),
   [code-server design](../runtime/design/code_server.md).
-- [Runtime lifecycle](../docs/runtime-lifecycle.md),
-  [memory](../docs/runtime-memory.md), [services](../docs/runtime-services.md),
+- [Runtime lifecycle](../docs/runtime.md#lifecycle),
+  [memory](../docs/runtime.md#process-memory), [services](../docs/runtime.md#deferred-services),
   [feature reporting](../docs/features.md).
 
 Link each future detailed plan beside its stable feature ID. Check steps only

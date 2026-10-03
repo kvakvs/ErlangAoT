@@ -2,8 +2,8 @@
 
 Status: small integers, atoms/booleans, tuples and proper/improper lists are
 implemented with checked contextual admission and retained host ownership.
-See [containers](../../docs/container-matching.md), [runtime atoms](../../docs/runtime-atoms.md),
-[process memory](../../docs/runtime-memory.md), and [generated roots](../../docs/generated-roots.md).
+See [containers](../../docs/terms.md#tuples-lists-strings), [runtime atoms](../../docs/terms.md#atoms),
+[process memory](../../docs/runtime.md#process-memory), and [generated roots](../../docs/abi.md#root-scopes).
 The table below also reserves future numeric/map/binary/identity APIs; a declaration
 alone does not establish implementation. Graph copying and collection remain absent.
 
@@ -26,12 +26,12 @@ A generated function uses the native free-function calling convention and return
 an unsigned pointer-width term, accepting a forward-declared live project context
 and a borrowed term-array pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
 The context propagates unchanged through direct calls. Call contract revision 2
-requires [checked failure propagation](../../docs/generated-call-failures.md) before
+requires [checked failure propagation](../../docs/abi.md#failure-channel-revision-2) before
 using a returned word. C++ `Term`, STL values,
 `std::expected` and exceptions never cross that generated-function boundary. Host
 services use C++ APIs; no C linkage or C-compatible header surface is maintained.
 There is no BEAM/FFI compatibility promise or public heap ABI. Step 9 implements
-[runtime lifecycle](../../docs/runtime-lifecycle.md) independently of term services.
+[runtime lifecycle](../../docs/runtime.md#lifecycle) independently of term services.
 
 Tags are numerical low bits, decoded with masks/shifts rather than C++ bitfields
 or inactive union members. Primary bits 0–1 reserve header=0, list=1, boxed=2 and

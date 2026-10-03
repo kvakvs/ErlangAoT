@@ -17,7 +17,7 @@ source separately from OTP observations; no copied OTP source is committed.
 The nineteen corpora retain 67,634 native expected results plus 106 semantic
 acceptance rows. All native corpora exercise both CLI drivers in all four policies.
 The closure corpus adds deterministic nested stress and checks every manifest and
-all 81 guard catalog mappings; see [final validation](../../../../docs/patternmatch-step20-validation.md).
+all 81 guard catalog mappings; see [final validation](../../../../docs/validation.md#history).
 Bitstring transport preserves the exact bit count and packed MSB-first bytes,
 with zero unused low bits in the final byte; it never serializes buffer identity.
 

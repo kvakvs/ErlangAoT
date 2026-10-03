@@ -18,5 +18,5 @@ Then explicitly [refresh observations](../generated/README.md). OTP supplies
 observations only. Original OTP source, generated OTP headers and audit outputs
 must stay under ignored `references/` or `build/` directories.
 
-See the [source audit](../../../../docs/otp-source-audit.md) for the migration and
+See the [source audit](../../../../docs/validation.md#fixtures-and-provenance) for the migration and
 the distinction between local source, observations and historical evidence.

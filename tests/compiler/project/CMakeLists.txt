@@ -1,4 +1,4 @@
-# Normal project behavior is covered through real CLI processes; see docs/test-migration.md.
+# Normal project behavior is covered through real CLI processes; see docs/validation.md (test design).
 # Keep only deterministic faults and resource limits unavailable through the CLI.
 foreach(suite IN ITEMS limits creation_failure)
     add_executable(project_${suite} ${suite}.cpp)

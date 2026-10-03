@@ -1,30 +1,18 @@
-# Parser implementation and validation
+# Parser
 
-Current source baseline: OTP `maint-29` (`21776803ecd11f5fa948732c0ec66b8f325dedfc`).
-See [reference refresh policy](otp-reference.md); historical records retain their original revisions.
+Parses the full OTP 29 grammar from preprocessed tokens into an owned AST.
 
-Current native test builds discover installed OTP 29+ at CMake configure time and
-fail for missing/older installations. Live suites run on that selected version;
-the source-dependent reduction audit separately verifies the pinned grammar.
+## CLI
 
-Implementation history and remaining validation are in the
-[completed-work archive](../.agents/00-finished.md#parser).
+`erlangaot --parse-check -I include -DDEBUG module.erl` preprocesses and parses,
+writing diagnostics to stderr and nothing to stdout on success. All
+preprocessing options apply. `--print-pp` and `--print-ast` print expanded
+source or the tree from the same pass. Output-path options are usage errors in
+check/print modes. Inputs are isolated; any failure keeps a failing exit. `--`
+allows paths starting with `-`. Exit codes: 0 success (warnings allowed),
+1 source/filesystem failure, 2 usage error.
 
-## Using the parser
-
-`erlangaot --parse-check -I include -DDEBUG module.erl` runs preprocessing and
-syntax parsing with diagnostics on stderr and no stdout on success. All existing
-preprocessing options apply, including application paths and feature selection.
-Combining it with `--preprocess-check` still parses; `--print-pp` and `--print-ast`
-request source/tree output from that same preprocessing pass. Output-path options
-are usage errors in any check/print mode. Multiple inputs have isolated state and
-retain a failing exit status when an earlier input fails. `--` permits paths that
-start with a dash. Exit codes are 0 for success (including warnings), 1 for source/
-filesystem failures, and 2 for usage errors. Check modes do not write output files.
-
-AST output uses parenthesized objects, two spaces per nesting level and
-`name=value` fields. Child roles retain their ordered indices; leaves stay on one
-line and a parent's closing parenthesis aligns with its opening line:
+AST text uses parenthesized objects, two-space indent and `name=value` fields:
 
 ```lisp
 (Function name=i arity=0 clauses=1
@@ -34,13 +22,12 @@ line and a parent's closing parenthesis aligns with its opening line:
 )
 ```
 
-The printer traverses iteratively. Beyond 64 levels it caps indentation and adds
-`[depth=N]` labels to bound output growth, including on closing lines. AST text is
-for inspection and testing; no AST text reader is implemented. Compiler stages
-exchange the owned AST directly.
+The printer is iterative; past 64 levels it caps indentation and adds `[depth=N]`
+labels. AST text is for inspection only; there is no reader.
 
-The public entry point is `erlang_aot/compiler/parser.hpp`, linked through the
-`erlang_frontend` CMake target:
+## API
+
+Header `erlang_aot/compiler/parser.hpp`, CMake target `erlang_frontend`:
 
 ```cpp
 erlang_aot::ParseResult load(const std::filesystem::path &path) {
@@ -48,94 +35,54 @@ erlang_aot::ParseResult load(const std::filesystem::path &path) {
     erlang_aot::PreprocessorSession pp(sources.read(path));
     return erlang_aot::parse_module(pp);
 }
-auto result = load("module.erl"); // Sources and preprocessing session are gone.
+auto result = load("module.erl"); // Sources and session are gone; AST owns its data.
 for (const auto &id : result.module.forms()) {
-    const auto &form = result.module.form(id);
-    const auto &origin = result.module.anchor(form.source);
-    // origin.location is logical; origin.spelling and related retain physical sources.
+    const auto &origin = result.module.anchor(result.module.form(id).source);
 }
 ```
 
-`ast::Module` is move-only and owns completed forms, flat node arenas, source
-buffers and immutable feature snapshots. Moving it preserves handles. Distinct
-`ExprId`, `PatternSyntaxId`, `TermId`, `TypeId` and `FormId` types prevent mixing
-categories; owner/generation checks reject foreign or stale handles. Node references
-are valid for the lifetime of the finished owner. `module.visit(id, visitor)`
-dispatches a category's closed variant; exhaustive visitors must handle each
-alternative. Consumers should use explicit stacks for arbitrarily deep flat trees.
-`tests/compiler/parser/consumer.cpp` is a compiled post-session ownership example.
+- `ast::Module` is move-only and owns forms, flat node arenas, source buffers and
+  feature snapshots. Moves preserve handles.
+- Distinct `ExprId`, `PatternSyntaxId`, `TermId`, `TypeId`, `FormId` handles;
+  owner/generation checks reject foreign or stale handles.
+- `module.visit(id, visitor)` dispatches a closed variant. Traverse deep trees
+  with explicit stacks.
+- `NodeSource` is an expanded-token range plus anchor; use `extent()`/`anchor()`
+  rather than assuming contiguous physical spelling.
+- Streaming: `ParserSession::consume(event)`, `parse_form(tokens, eof, features)`,
+  then `std::move(session).finish(features)`. Always check
+  `ParseResult::failed`; recovered forms do not imply success.
+- `tests/compiler/parser/consumer.cpp` is a compiled ownership example.
 
-`NodeSource` is a half-open expanded-token range and anchor within an owned
-per-form origin table. Use `extent(source)` and `anchor(source)`, never assume
-a node's macro-expanded spelling is contiguous in one physical file. Per-form
-`features(id)` captures the state at emission; `features()` captures final state
-at EOF, or state at resource exhaustion if parsing stopped early.
+Grammar coverage: attributes and literal terms, tuple/native records,
+type/opaque/nominal declarations, specs/callbacks, all expressions, patterns,
+guards, clauses, binaries, fun/try/maybe/receive, and list/map/binary
+comprehensions with OTP 29 strict generators and zip groups. SSA test
+annotations are excluded. Syntax success implies nothing about lint, binding or
+code generation.
 
-The implemented grammar includes ordinary attributes and normalized literal terms,
-tuple/native records, type/opaque/nominal declarations, specs/callbacks, all ordinary
-expressions, restricted and candidate patterns, guards, clauses, binary syntax,
-fun/try/maybe/control flow, and list/map/binary comprehensions with OTP 29 templates,
-strict arrows and zip groups. SSA test annotations are outside ordinary source
-grammar. Binding, guard legality, record/type resolution, lint, parse transforms,
-documentation-file ingestion by the parser, LLVM lowering and execution are later
-stages. Syntax success does not promise any of them. Feature context is retained
-for those later stages rather than inferred from printed source.
+## Recovery and limits
 
-For streaming consumers, `ParserSession::consume(event)` accepts expanded forms
-and diagnostics; an unexpected directive or missing semantic feature context is
-a contract diagnostic. `parse_form(tokens, eof, features)` is the lower-level raw
-token API. `std::move(session).finish(features)` transfers ownership exactly once.
-Always inspect `ParseResult::failed`: recovered forms do not imply module success.
+Failed forms roll back arenas and origins; later forms remain available but
+failure is sticky. Diagnostics carry category, logical coordinates, macro/include
+trace, nearest unmatched opener and `Diagnostic::expected` terminals.
 
-Step 17 validation: all 40 Debug CTests passed, including the expanded CLI checks
-and post-session consumer. Those two tests also passed under ASan/UBSan. All 14
-successful historical parser fixtures matched the live OTP 29.0.5 structural
-projection. Five real pinned OTP modules (`lists`, `maps`, `sets`, `erl_scan`,
-`beam_ssa`) passed the new CLI using explicit include/application paths.
-Fresh full Debug configuration, formatting, Lizard and clang-tidy passed on macOS arm64.
-
-## Phase VI step 16 — Recovery and resource contracts
-
-Syntax diagnostics retain a stable category, logical invocation coordinates,
-physical macro/include traces and, where available, the nearest unmatched opener.
-Expected terminals/categories are also available in `Diagnostic::expected`.
-Raw expanded-token callers supply an explicit EOF token, including its provenance.
-Delimiter recognition is shared with macro argument splitting.
-
-Each failed form rolls back all arenas and origins. Subsequent complete forms
-remain available, but failure is sticky. Resource exhaustion stops the session.
-Defaults are 1,000,000 tokens/form, 4,000,000 tokens/module, 1,000,000 nodes across
-all arenas, 1,000 diagnostics plus one exhaustion message, recursive depth 256 (hard ceiling 512), and 16,000,000 work
-units. Work accounts for input tokens,
-grammar entries, node creation, normalized literal contents and map insertion/
-metadata sorting. These are accounting limits, not wall-clock guarantees or a
-claim of linear runtime; decoded source sizes and shared binary literal limits
-also affect cost. Preprocessing has its own independently configurable limits.
-
-The public tree printer uses an iterative work queue, caps displayed indentation,
-and defaults to 4,000,000 visited objects. Its optional third argument changes
-that budget; exhaustion throws `std::length_error`. Flat arena destruction
-does not recurse through child IDs. Consumers should also traverse iteratively
-when following long flat operator chains.
-
-`parser_stress` exercises real CLI source files with a 12,000-operator
-parse/print/normalization regression, wide lists/qualifiers and recursive syntax.
-`parser_hardening` retains injected budgets, explicit expanded EOF and the raised
-API nesting ceiling. `parser_mutations` replays 900 fixed-seed mutations as real
-source twice, verifies exact AST/diagnostic repeatability and requires the next
-valid form to survive. Each subprocess and suite has a termination bound. See
-[test migration](test-migration.md) for current sanitizer evidence and retained
-ownership checks; historical validation below predates this migration.
-
-Step 16 validation: all 39 Debug tests passed across the full run and corrected
-hardening rerun; the three ASan/UBSan hardening/mutation/printing tests passed.
-Fresh full Debug configuration, formatting, Lizard and clang-tidy passed on
-macOS arm64 with installed OTP 29.0.5. The 12,000-operator regression took about
-0.7 seconds in Debug; this is one host observation, not a scaling guarantee.
+Defaults: 1,000,000 tokens/form, 4,000,000 tokens/module, 1,000,000 nodes,
+1,000 diagnostics (+1 exhaustion message), nesting 256 (API hard ceiling 512),
+16,000,000 work units. The tree printer defaults to 4,000,000 visited objects
+and throws `std::length_error` on exhaustion. These are accounting limits, not
+wall-clock guarantees. Resource exhaustion stops the session.
 
 ## Compatibility evidence
 
-See [the current validation matrix](parser-validation.md) for measured grammar
-coverage, the pinned real-source corpus, reproducible commands and pending hosts.
-Earlier phase-by-phase implementation records remain in Git history. The original
-reference files remain protected by their existing checksums.
+- All 344 ordinary `erl_parse.yrl` productions have measured fixture witnesses;
+  79 SSA annotation productions are excluded (`tests/fixtures/parser/phase6/`).
+- 43 positive fixtures compare structurally with OTP; 183 rejection fixtures,
+  three OTP builder-exception fixtures (`record_helper`, `record_extra`,
+  `any_first`) and `bad.erl` cover errors.
+- Real-source corpus (opt-in audit): stdlib `lists`, `maps`, `sets`, `erl_scan`;
+  compiler `beam_ssa`, `beam_asm` and four headers, using `-I`/`--app-dir`
+  mappings, `maybe_expr` on, `compr_assign` off and
+  `-DCOMPILER_VSN='"parser-compatibility"'`.
+- `parser_stress` (12,000-operator chain), `parser_mutations` (900 seeded
+  mutations, seed `0x29a016`, run twice) and `parser_hardening` bound behavior.

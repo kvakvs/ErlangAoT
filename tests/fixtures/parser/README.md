@@ -65,4 +65,4 @@ dots followed by LF, space, comment, and CRLF. Include return-file line values a
 compared exactly. Phase VI adds native/OTP structural comparisons for all original
 successful seeds, measured witnesses for all ordinary grammar rows, and a pinned
 real-source corpus. See [phase6/README.md](phase6/README.md) for exact scope and
-[the host matrix](../../../docs/parser-validation.md) for outstanding validation.
+[platform status](../../../docs/validation.md#platform-and-sanitizer-status) for outstanding validation.

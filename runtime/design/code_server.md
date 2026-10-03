@@ -1,7 +1,7 @@
 # Code server and module function registry — manual review sketch
 
 Status: generic native skeleton implemented in compilation step 11, 2026-09-25.
-See [runtime builtin dispatch](../../docs/runtime-builtins.md) for the implemented
+See [runtime builtin dispatch](../../docs/runtime.md#code-server-and-builtins) for the implemented
 boundary. The remaining sections describe the wider proposed contract: typed
 registrations, atom names/bindings, concurrent publication, export listings and
 unload are not implemented. Native typed sketches are retained under
