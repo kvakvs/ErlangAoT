@@ -38,8 +38,9 @@ foreach(case RANGE 0 ${last})
     endforeach()
     file(WRITE "${WORK}/mutation.erl" "${source}\nrecovered() -> ok.\n")
     foreach(pass RANGE 1 ${passes})
+        # Each parse takes milliseconds; the generous hang guard tolerates fully loaded parallel CTest runs.
         execute_process(COMMAND "${TOOL}" --print-ast mutation.erl WORKING_DIRECTORY "${WORK}"
-            RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 5 ENCODING UTF-8)
+            RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 30 ENCODING UTF-8)
         if(NOT status MATCHES "^[01]$" OR NOT output MATCHES "Function name=recovered arity=0 clauses=1")
             message(FATAL_ERROR "Mutation ${case} (seed ${seed}, token ${index}, op ${operation}): ${status}: ${error}")
         endif()

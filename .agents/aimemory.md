@@ -91,3 +91,11 @@ codegen_dependency, codegen_measurements. Presets debug-fast/windows-debug-fast 
 make test (fast, TEST_JOBS=nproc), make test-full, make-test.bat TEST_MODE/TEST_JOBS.
 Fast 122 tests ~60s wall (-j16 53s); full -j16 125/125 85s. Plan gate now fast per step,
 full per phase. No make on this host; gmake at C:/Strawberry/c/bin/gmake.exe for dry runs.
+
+Plan11 step1B 2026-10-03: changed-scope quality. cmake/quality_scope.py (+QualityScope.cmake)
+selects lizard files and tidy units (ninja -t deps for header dependents; cmake/,.clang-tidy,
+production CMakeLists -> all). Targets check-quality (changed) / check-quality-all;
+ERLANG_AOT_QUALITY_BASE overrides HEAD. make format/make-format.bat changed by default,
+format-all / FORMAT_SCOPE=all. First tidy run exited 1 with no diagnostics (silent analyzer
+crash, known flake); unchanged rerun passed. mutations.cmake per-call TIMEOUT 5->30 (load stall).
+cmd /c needs full path to repo .bat files on this host.

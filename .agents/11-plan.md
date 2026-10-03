@@ -24,8 +24,9 @@ draft with smaller, single-commit steps.
 
 - **Gate:** freshly configure `build/debug` with compiler, runtime and
   `BUILD_TESTING=ON`; build; run fast-mode CTest (`ctest --preset debug-fast`);
-  run `cmake --build build/debug --target check-quality`. Run full-mode CTest
-  (`ctest --preset debug -j <N>`) when a phase or major feature completes. Lizard and clang-tidy pass
+  run `cmake --build build/debug --target check-quality` (changed files and
+  header dependents). Run full-mode CTest (`ctest --preset debug -j <N>`) and
+  `check-quality-all` when a phase or major feature completes. Lizard and clang-tidy pass
   without raised thresholds or suppressions. Code is clang-formatted; new and
   changed `.erl`/terms files pass erlfmt.
 - **Code:** project-internal C++23; document field and function intent in 1–2
@@ -158,6 +159,14 @@ once, and `full_only` tests are excluded. Full mode (default when unset) passes 
 
 Quality checking should only check the files changed in the working tree, no need to hit same clean files repeatedly, unless they depend on changed files.
 - Success criteria: Scope of static checks and formatting is reduced for each change, instead of doing entire source every time.
+
+Done 2026-10-03. `check-quality`, `make format` and `make-format.bat` default to files changed
+since `HEAD` (plus untracked); `check-quality-all`, `make format-all` and `FORMAT_SCOPE=all`
+keep full scans. `cmake/quality_scope.py` selects Lizard files and clang-tidy units, adding
+units that include a changed header via Ninja deps; `.clang-tidy`, `cmake/` or production
+CMake changes (or missing deps) select every unit. Full formatting fixed two pre-existing
+unformatted declarations; the mutation hang guard rose from 5 s to 30 s after a load-only
+timeout under parallel fast CTest (the case takes 16 ms alone).
 
 ### 1C. Run the available documentation check
 
