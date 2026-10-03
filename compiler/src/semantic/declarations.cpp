@@ -1,4 +1,5 @@
 #include "declarations.hpp"
+#include "escript.hpp"
 #include "records.hpp"
 #include "symbols.hpp"
 #include <charconv>
@@ -122,7 +123,7 @@ void index_exports(Module &module, const Reporter &out) {
 }
 } // namespace
 
-std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &out) {
+std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &out, const bool escript) {
     auto module = std::make_unique<Module>();
     module->syntax = &syntax;
     module->file = std::move(file);
@@ -130,6 +131,9 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
     index_functions(*module, out);
     index_exports(*module, out);
     index_records(*module, out);
+    if (escript) {
+        index_escript(*module, out);
+    }
     return module;
 }
 } // namespace erlang_aot::semantic

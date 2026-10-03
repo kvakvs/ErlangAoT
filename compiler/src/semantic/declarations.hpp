@@ -100,6 +100,8 @@ struct Module {
     // Origin-table identity preserves declaration-before-use across macro and include boundaries.
     std::map<const ast::TokenOrigin *, std::size_t> source_order = {};
     std::map<std::u32string, std::size_t> record_order = {};
+    // Escript sources implicitly export main/1, accept -mode and use escript exit semantics.
+    bool escript = false;
 };
 
 using Reporter = std::function<void(const Diagnostic &)>;
@@ -107,7 +109,8 @@ using Reporter = std::function<void(const Diagnostic &)>;
 void report(const Module &module, const ast::NodeSource *source, std::string message, const Reporter &reporter,
             Severity severity = Severity::error);
 // Index declarations and validate the whole module before any lowering occurs.
-std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &reporter);
+std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const Reporter &reporter,
+                              bool escript = false);
 // Parse an Erlang declaration arity without narrowing arbitrary precision integers.
 std::optional<std::size_t> arity(const Integer &value);
 } // namespace erlang_aot::semantic

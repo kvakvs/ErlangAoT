@@ -125,3 +125,9 @@ index_inputs in analyze (EntryRequest{selected, required=-o}); Analysis.entry ke
 Exit: return/halt()=0, halt(N)=N, escaping exception incl exit(normal)=1, runtime failure=70.
 Bash tool mangles non-ASCII and `\n` in heredoc python; use Edit/Write for such text.
 CMake execute_process needs ENCODING UTF-8 for UTF-8 stderr matching on Windows.
+Plan11 step3A 2026-10-03: escript auto-detect by "#!" line 1 (no CLI flag). driver/escript
+escript_source rewrites line1 -> `-module('<basename .->_>__escript').` unless first form is
+-module (lexical scan), %%! line 2/3 -> warning. CompilationInput.escript -> semantic::index(...,
+escript) -> semantic/escript index_escript (main/1 required+exported, -mode validated);
+capabilities allow -mode only in escripts. ResolvedEntry.escript -> exit 127 later (step 5).
+Name clash: ADL picked std::quoted for local `quoted` -> renamed atom_literal.

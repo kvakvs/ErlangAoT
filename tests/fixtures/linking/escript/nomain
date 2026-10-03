@@ -1,0 +1,3 @@
+#!/usr/bin/env escript
+%% Escript missing the required main/1.
+run(_Args) -> ok.

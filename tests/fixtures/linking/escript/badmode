@@ -1,0 +1,5 @@
+#!/usr/bin/env escript
+%% Escript with a mode escript does not accept.
+-mode(fast).
+
+main(_Args) -> ok.

@@ -248,6 +248,14 @@ compile a escript file/compile file into a escript executable. Those have slight
 different start routine name and arguments. Consult with Erlang/OTP documentation
 how escript file main functions are to be defined.
 
+Done 2026-10-03. Auto-detected, no option: a first line starting with `#!` selects escript rules
+from OTP's `escript` docs and `escript.erl` (`docs/executables.md#escripts`). `driver/escript`
+rewrites the header (shebang replaced by `-module('<file>__escript').` when the first form is
+not `-module`, line numbers kept; `%%!` warns), `semantic/escript` requires and exports `main/1`
+and validates `-mode`, and entry detection prefers the batch's only escript, whose uncaught
+exceptions will exit 127. CTest `linking_escript`; acceptance matched OTP 29 `escript` once. Fresh gate:
+125 fast tests, 262 quality units.
+
 <a id="step-4"></a>
 
 ### 4. Add runtime term printing and `erlang:display/1`

@@ -142,7 +142,8 @@
   in Git history; summary in docs/validation.md.
 
 - Executable entry: `--entry`/manifest `entry` or the sole `main/1` exporter, resolved in
-  `driver/entry` right after semantic indexing; contract in `docs/executables.md`.
+  `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
+  the header, `semantic/escript` exports `main/1`; entry detection prefers them.
 
 - Six end-goal program fixtures (`tests/fixtures/programs/`) carry OTP stdout/exit
   goldens and today's exact compile diagnostics; later steps update `compile.txt`

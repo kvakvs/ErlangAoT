@@ -1,0 +1,7 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -noshell +A 2
+%% Escript without -module or -export: both come from the escript rules.
+-mode(compile).
+
+main(_Args) -> ?MODULE.
