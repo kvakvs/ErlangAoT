@@ -72,3 +72,8 @@ valid source/header and changed term files formatted. Preserve user's AGENTS edi
 Fresh combined gate125/125+258unit Lizard/tidy, all19 --check, upstream audit,
 grammar/corpus pass; maint29+pin unchanged21776803. Audit docs/otp-source-audit.md;
 logs build/otp-cleanup*. Existing dated validation evidence not rewritten.
+
+MSVC cl (non-clang-cl) 2026-10-03: /external:W0 misses codegen C4702 (Boost.Parser) and STL pair
+narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_dependency and
+erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
+(float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).

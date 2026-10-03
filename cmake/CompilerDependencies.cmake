@@ -30,3 +30,7 @@ add_library(erlang_aot_parser_dependency INTERFACE)
 target_include_directories(erlang_aot_parser_dependency SYSTEM INTERFACE
     "${ERLANG_AOT_BOOST_PARSER_INCLUDE}")
 target_link_libraries(erlang_aot_parser_dependency INTERFACE erlang_aot_multiprecision_dependency)
+# cl emits C4702 from Boost.Parser templates at code generation, bypassing /external:W0.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(erlang_aot_parser_dependency INTERFACE /wd4702)
+endif()

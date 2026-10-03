@@ -71,7 +71,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | Component CMake files | `compiler/`: frontend, semantic/backend, `erlang_aot` → `erlangaot`; `runtime/`: `erlang_runtime`, `ErlangAoT::generated_program`; `abi/`: headers; `tests/`: opt-in CTest |
 | `cmake/` | `ProjectOptions.cmake`; `{Boost,Compiler,Erlang,LLVM,Zlib,Zstd}Dependencies.cmake`; `LLVM{Policy,Downloads}.cmake`; `Windows{Toolchain,Host,DependencyBuild}.cmake`; `ThirdPartyDependencies.cmake`; `ErlangVersion.escript` |
 | `cmake/` checks | `Check{Complexity,ClangTidy}.cmake`, `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
-| `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `aimemory.md`: AI notes |
+| `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `.agents/aimemory.md`: AI notes |
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
 | `docs/` | Contracts: `compile.md`, `semantic.md`, `projects.md`, `runtime-*.md`, pattern/guard docs; evidence: `*-validation.md`, `patternmatch-step*-evidence.json`; `test-migration.md`: disposition ledger |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout and generated OTP headers; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |

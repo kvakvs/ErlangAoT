@@ -50,7 +50,7 @@ separate dynamic SO/DLL modules, or dropped.
   `examples/`, and `docs/`; see `.agents/files.md` for component locations.
   Intermediate stage readers have reserved directory locations only.
 
-Use `aimemory.md` for AI notes and memory, this file will not be read by humans.
+Use `.agents/aimemory.md` for AI notes and memory, this file will not be read by humans.
 
 ## Artifacts Produced
 
