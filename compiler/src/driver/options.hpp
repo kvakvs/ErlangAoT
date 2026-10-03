@@ -2,6 +2,7 @@
 #include "../implementation_debug.hpp"
 #include "backend_options.hpp"
 #include "project/cli.hpp"
+#include "project/entry.hpp"
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <span>
 
@@ -18,6 +19,8 @@ struct Options {
     std::filesystem::path output = "a.out";
     // Distinguish explicit output overrides from the positional-mode default.
     bool output_explicit = false;
+    // Explicit --entry MODULE[:FUNCTION] selection; validated by compilation against the batch.
+    std::optional<project::EntryName> entry;
     // Distinguish explicit frontend settings from defaults for standalone commands.
     bool frontend_options_explicit = false;
     // Retain backend policy independently of frontend and project selection.

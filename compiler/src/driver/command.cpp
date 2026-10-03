@@ -15,6 +15,7 @@ Options:
       --verbose        Trace inputs and compilation phases to stderr with [pp]/[parse]/[comp].
       --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
   -o, --output <path>  Set the future executable output path (default: a.out).
+      --entry <module[:function]>  Select the executable entry function/1 (default function: main).
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
       --artifact-dir <dir>  Override artifact root; requires --emit.
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
@@ -39,6 +40,7 @@ With no check/print action, source batches compile to verified objects in memory
 Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
 Compilation switches conflict with frontend check/print actions and --new-project.
 --emit conflicts with explicit --output; --output reports [executable linking] notimpl.
+Without --entry, --output uses the only module exporting main/1; the entry receives argv strings.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.
 Type inspection accepts preprocessing/project/verbosity options; it rejects other actions and backend policy.
 Type reports describe conservative analysis and are not an intermediate stage input format.

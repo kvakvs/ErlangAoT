@@ -30,6 +30,17 @@ std::optional<std::filesystem::path> output_path(const Target &target, const Pla
     return absolute_path(base, path);
 }
 
+// Prefer the CLI override, then the manifest key; both were validated before planning.
+std::optional<SelectedEntry> entry_selection(const Target &target, const PlanOptions &options) {
+    if (options.entry) {
+        return SelectedEntry{*options.entry, "--entry"};
+    }
+    if (target.entry) {
+        return SelectedEntry{*parse_entry(target.entry->value), where(target.entry->site)};
+    }
+    return std::nullopt;
+}
+
 // Identify existing aliases and normalize unresolved paths without writing directories.
 std::string output_identity(const std::filesystem::path &path, const Site &site) {
     std::error_code error;
@@ -68,6 +79,9 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
         fail({manifest.file, "output", {}, 0, 0},
              "--output requires exactly one compilation target and no check/print mode", 2);
     }
+    if (options.entry && selected.size() != 1) {
+        fail({manifest.file, "entry", {}, 0, 0}, "--entry requires exactly one selected target", 2);
+    }
     const auto file = absolute_path(options.working_directory, manifest.file);
     const auto base = file.parent_path();
     Invocation result{file, {}, options.frontend};
@@ -75,7 +89,7 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
         const auto &target = manifest.targets[index];
         result.targets.push_back({target.name.value, target_sources(base, target, options.discovery),
                                   compose_options(target, base, options.working_directory, options.preprocessing),
-                                  output_path(target, options, base)});
+                                  output_path(target, options, base), entry_selection(target, options)});
     }
     outputs(result);
     return result;

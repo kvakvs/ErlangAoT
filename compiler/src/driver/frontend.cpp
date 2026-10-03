@@ -143,6 +143,9 @@ int process_inputs(const Options &options) {
     FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
                             options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
     request.executable_requested = options.output_explicit;
+    if (options.entry) {
+        request.entry = project::SelectedEntry{*options.entry, "--entry"};
+    }
     const DiagnosticSink sink = [](const std::string_view message) { std::cerr << message << '\n'; };
     return process_files(options.inputs, request, sink) ? 1 : 0;
 }

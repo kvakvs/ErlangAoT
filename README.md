@@ -288,7 +288,9 @@ through verified native object buffers in memory. Positional inputs form one bat
 each project target forms its own batch. `--emit` writes artifacts under `build/aot`
 or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
 default root. Filenames encode module identity. No production executable is linked;
-`--output` explicitly fails with `[executable linking] notimpl`; TOML `output` remains reserved metadata.
+`--output` validates the entry (`--entry MODULE[:FUNCTION]`, manifest `entry`, or the only module exporting
+`main/1`) and then fails with `[executable linking] notimpl`; TOML `output` remains reserved metadata.
+See [executables](docs/executables.md) for the entry, argument and exit-status contract.
 
 ```sh
 erlangaot -O2 --emit obj answer.erl client.erl

@@ -7,7 +7,7 @@ namespace {
 // Keep standalone creation conflict policy out of generic driver validation.
 bool creation_conflict(const Request &request, const Usage &usage) {
     return request.file || !request.targets.empty() || usage.positional_inputs || usage.output || usage.frontend ||
-           usage.frontend_options;
+           usage.frontend_options || usage.entry;
 }
 
 // Check repetition before consuming a second project filename operand.
@@ -41,8 +41,8 @@ std::optional<std::string> parse_option(std::string_view argument, std::span<cha
 
 std::optional<std::string> validate(const Request &request, const Usage &usage) {
     if (request.create && creation_conflict(request, usage)) {
-        return "--new-project cannot be combined with source inputs, --project, --target, --output, or frontend "
-               "options";
+        return "--new-project cannot be combined with source inputs, --project, --target, --output, --entry, or "
+               "frontend options";
     }
     if (request.create && !valid_creation_filename(*request.create)) {
         return "--new-project requires a filename";

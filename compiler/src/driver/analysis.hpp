@@ -1,6 +1,7 @@
 #pragma once
 #include "../codegen/request.hpp"
 #include "../semantic/types/contracts.hpp"
+#include "entry.hpp"
 
 namespace erlang_aot::cli {
 struct Analysis {
@@ -9,8 +10,11 @@ struct Analysis {
     semantic::CallGraph calls;
     std::unique_ptr<semantic::types::Registry> declared;
     std::unique_ptr<semantic::types::Inference> inferred;
+    // Validated entry function, present when selected explicitly or required for an executable.
+    std::optional<ResolvedEntry> entry;
 };
 
 // Run declaration, binding, call, declared-type and inference phases without creating LLVM state.
-bool analyze(const codegen::CompilationRequest &request, Analysis &analysis, const DiagnosticSink &sink);
+bool analyze(const codegen::CompilationRequest &request, const EntryRequest &entry, Analysis &analysis,
+             const DiagnosticSink &sink);
 } // namespace erlang_aot::cli

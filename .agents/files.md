@@ -30,9 +30,9 @@ Keys in the last column are relative to the directory column.
 | `parser/` | Erlang grammar, recovery, budgets | `parser`, `forms`, `diagnostics`; `expressions`, `clauses`, `literals`, `aggregates`, `maps`, `records`, `structural`, `binaries`, `control`, `funs`, `exceptions`, `comprehensions` |
 | `parser/` | Attributes, records, literal terms, types/specs | `attributes`, `declarations`, `documentation`, `attribute_*`, `term_*`, `types`, `type_*`, `specifications` |
 | `printing/` | Source/token/AST output | `source`, `token_text`, `printable`, `tree*` |
-| `driver/` | CLI, frontend, analysis/backend, publication | `command`, `options`, `frontend`, `analysis`, `backend*`, `project_backend`, `publication`; `C/main.cpp`: entry/failure boundary |
+| `driver/` | CLI, frontend, analysis/backend, entry resolution, publication | `command`, `options`, `frontend`, `analysis`, `entry`, `backend*`, `project_backend`, `publication`; `C/main.cpp`: entry/failure boundary |
 | `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
-| `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
+| `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `entry` (MODULE[:FUNCTION] spelling), `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls, executable admission | `declarations`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
 | `semantic/` | Scoped bindings, normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
 | `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
@@ -73,7 +73,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `cmake/` checks | `Check{Complexity,ClangTidy}.cmake` (changed or all scope via `QualityScope.cmake` + `quality_scope.py`), `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
 | `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `.agents/aimemory.md`: AI notes |
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
-| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`), `runtime.md`, `otp-reference.md`, `validation.md` (baseline, test design, history) |
+| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `executables`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`), `runtime.md`, `otp-reference.md`, `validation.md` (baseline, test design, history) |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout and generated OTP headers; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
 | `examples/` | `compile/`: remote scalar/container/record classification and native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
 | Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies and `tools/erlfmt/` formatter; `.venv-quality/`: quality tools; editor state stays local |
@@ -92,7 +92,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
-| **+** `linking` | F01/F32/D01 native link workflows; runners/fixtures follow area convention |
+| `linking` | F01 entry selection (`entry.cmake`, fixtures `tests/fixtures/linking/entry/`); later startup/link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
 

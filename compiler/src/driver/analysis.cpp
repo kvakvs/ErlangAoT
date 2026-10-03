@@ -37,7 +37,8 @@ void debug_inference(const Analysis &analysis, const ImplementationDebug &debug,
 }
 } // namespace
 
-bool analyze(const codegen::CompilationRequest &request, Analysis &analysis, const DiagnosticSink &sink) {
+bool analyze(const codegen::CompilationRequest &request, const EntryRequest &entry, Analysis &analysis,
+             const DiagnosticSink &sink) {
     codegen::validate_input_limits(request.inputs, request.limits);
     bool failed = false;
     const semantic::Reporter report = [&](const Diagnostic &diagnostic) {
@@ -46,7 +47,8 @@ bool analyze(const codegen::CompilationRequest &request, Analysis &analysis, con
         sink(prefix + render(diagnostic));
     };
     index_inputs(request, analysis, report);
-    if (failed) {
+    const bool entry_failed = resolve_entry(analysis.modules, entry, report, sink, analysis.entry);
+    if (failed || entry_failed) {
         return false;
     }
     trace_analysis("calls", request, analysis);

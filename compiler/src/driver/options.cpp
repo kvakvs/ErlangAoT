@@ -72,6 +72,22 @@ static std::optional<std::string> parse_output(const std::string_view option, st
     return std::nullopt;
 }
 
+// Consume an entry operand, rejecting repetition and spellings that cannot name a function.
+static std::optional<std::string> parse_entry_option(std::span<char *> &remaining, Options &options) {
+    if (options.entry) {
+        return "entry specified more than once";
+    }
+    if (remaining.empty() || std::string_view(remaining.front()).empty()) {
+        return "expected MODULE or MODULE:FUNCTION after --entry";
+    }
+    options.entry = project::parse_entry(remaining.front());
+    remaining = remaining.subspan(1);
+    if (!options.entry) {
+        return "--entry expects MODULE or MODULE:FUNCTION with 1..255-character names";
+    }
+    return std::nullopt;
+}
+
 namespace {
 struct Flag {
     // Map a flag to its destination and whether it requests frontend processing.
@@ -108,6 +124,9 @@ static std::optional<std::string> parse_option(const std::string_view argument, 
     if (argument == "-o" || argument == "--output") {
         return parse_output(argument, remaining, options);
     }
+    if (argument == "--entry") {
+        return parse_entry_option(remaining, options);
+    }
     if (is_backend_option(argument)) {
         return parse_backend_option(argument, remaining, options.backend);
     }
@@ -124,14 +143,14 @@ static std::optional<std::string> validate_options(const Options &options) {
     }
     if (const auto error =
             project::validate(options.project, {!options.inputs.empty(), options.output_explicit, options.preprocess,
-                                                options.frontend_options_explicit})) {
+                                                options.frontend_options_explicit, options.entry.has_value()})) {
         return error;
     }
     if (!options.show_help && !options.show_version && options.inputs.empty() && !project::active(options.project)) {
         return "no input files";
     }
-    if (options.preprocess && options.output_explicit) {
-        return "--output cannot be used with --preprocess-check, --parse-check, --print-pp, or --print-ast";
+    if (options.preprocess && (options.output_explicit || options.entry)) {
+        return "--output and --entry cannot be used with --preprocess-check, --parse-check, --print-pp, or --print-ast";
     }
     return std::nullopt;
 }

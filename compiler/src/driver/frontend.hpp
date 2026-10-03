@@ -1,6 +1,7 @@
 #pragma once
 #include "../implementation_debug.hpp"
 #include "backend_options.hpp"
+#include "project/entry.hpp"
 #include <erlang_aot/compiler/diagnostic.hpp>
 #include <erlang_aot/compiler/preprocessor.hpp>
 #include <functional>
@@ -33,6 +34,8 @@ struct FrontendRequest {
     bool multiple_targets = false;
     // Distinguish an explicit executable request from default in-memory compilation.
     bool executable_requested = false;
+    // Explicit entry selection (CLI or manifest) validated during analysis.
+    std::optional<project::SelectedEntry> entry = {};
 };
 
 // Process one isolated batch; project targets never share declaration tables.

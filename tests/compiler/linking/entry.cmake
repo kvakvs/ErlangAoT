@@ -1,0 +1,74 @@
+# Entry selection contract (docs/executables.md): CLI --entry and manifest entry keys are
+# validated against the compiled batch, with located diagnostics, before linking exists.
+file(REMOVE_RECURSE "${WORK}")
+file(COPY "${FIXTURES}/" DESTINATION "${WORK}")
+
+# Run the compiler and require an exact exit status plus stderr pattern; no output file may appear.
+function(check name code stderr)
+    execute_process(COMMAND "${TOOL}" ${ARGN} WORKING_DIRECTORY "${WORK}"
+        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err TIMEOUT 30 ENCODING UTF-8)
+    if(NOT "${result}" STREQUAL "${code}" OR NOT out STREQUAL "" OR NOT err MATCHES "${stderr}")
+        message(FATAL_ERROR "${name}: exit=${result} stdout=[${out}] stderr=[${err}]")
+    endif()
+    if(EXISTS "${WORK}/out" OR EXISTS "${WORK}/out.exe")
+        message(FATAL_ERROR "${name}: created an executable output")
+    endif()
+endfunction()
+
+set(not_defined "entry function helper:main/1 is not defined")
+set(wrong_arity "helper.erl:5:1: entry function helper:run/1 is not defined; found run/0, but the entry receives one argument")
+set(unexported "helper.erl:9:1: entry function helper:hidden/1 is not exported")
+set(missing "entry module nope is not among the compiled modules")
+
+# Positional inputs: explicit entries validate in every compiling mode.
+check(valid_default_function 0 "^$" --entry app app.erl helper.erl)
+check(valid_named_function 0 "^$" --entry helper:start helper.erl)
+check(valid_emit_ir 0 "^$" --entry app --emit llvm-ir --artifact-dir ir app.erl)
+check(missing_module 1 "^error: --entry: ${missing}\n$" --entry nope app.erl)
+check(missing_function 1 "helper.erl:2:1: ${not_defined}\n$" --entry helper app.erl helper.erl)
+check(wrong_arity 1 "${wrong_arity}" --entry helper:run helper.erl)
+check(unexported 1 "${unexported}\n$" --entry helper:hidden helper.erl)
+check(unicode_module 1 "entry module möd is not among" --entry "möd" app.erl)
+
+# Executable requests detect the only module exporting main/1.
+check(detected 1 "^error: \\[executable linking\\] notimpl" -o out app.erl helper.erl)
+check(selected_over_detection 1 "executable linking" -o out --entry other app.erl other.erl)
+check(none_exported 1 "no entry point: no module exports main/1; select one with --entry" -o out helper.erl)
+check(ambiguous 1 "ambiguous entry point: main/1 is exported by app, other" -o out app.erl other.erl)
+check(selected_invalid_with_output 1 "${unexported}" -o out --entry helper:hidden helper.erl)
+
+# Usage errors stop before reading sources.
+foreach(spelling IN ITEMS "a:b:c" ":main" "app:" "bad\tname")
+    check(invalid_spelling 2 "--entry expects MODULE or MODULE:FUNCTION" --entry "${spelling}" app.erl)
+endforeach()
+string(REPEAT "x" 256 long)
+check(name_too_long 2 "--entry expects" --entry "${long}" app.erl)
+check(repeated 2 "entry specified more than once" --entry app --entry app app.erl)
+check(check_mode 2 "cannot be used with" --entry app --parse-check app.erl)
+check(print_mode 2 "cannot be used with" --entry app --print-ast app.erl)
+check(new_project 2 "cannot be combined" --entry app --new-project created)
+
+# Manifest entry keys: valid, custom function, private, unknown module, detection and CLI override.
+check(manifest_valid 0 "^$" --project project.toml --target app)
+check(manifest_custom 0 "^$" --project project.toml --target custom)
+check(manifest_private 1 "\\[target private\\]: error: [^\n]*${unexported}" --project project.toml --target private)
+check(manifest_absent 1 "project.toml:21:9 \\[target absent\\] \\(entry\\): ${missing}" --project project.toml --target absent)
+check(manifest_detect 1 "\\[target detect\\]: error: \\[executable linking\\] notimpl" --project project.toml --target detect -o out)
+check(manifest_ambiguous 1 "main/1 is exported by app, other" --project project.toml --target ambiguous -o out)
+check(manifest_check_ignores_entry 0 "^$" --project project.toml --parse-check)
+check(cli_overrides_manifest 0 "^$" --project project.toml --target private --entry helper:start)
+check(cli_override_one_target 2 "--entry requires exactly one selected target" --project project.toml --entry app)
+check(cli_override_duplicate_selector 0 "^$" --project project.toml --target app --target app --entry app)
+
+# Invalid manifest values fail while decoding, even for unselected targets.
+foreach(value IN ITEMS "'a:b:c'" "':main'" "'app:'" "\"mod\\u0001\"")
+    file(WRITE "${WORK}/invalid.toml" "schema_version = 1\n[[targets]]\nname = 'x'\nsources = ['app.erl']\n[[targets]]\nname = 'y'\nsources = ['app.erl']\nentry = ${value}\n")
+    check(manifest_invalid 1 "invalid.toml:8:9 \\[target y\\] \\(entry\\): invalid entry; expected MODULE or MODULE:FUNCTION"
+        --project invalid.toml --target x)
+endforeach()
+foreach(value IN ITEMS "''" "3" "['app']")
+    file(WRITE "${WORK}/invalid.toml" "schema_version = 1\n[[targets]]\nname = 'x'\nsources = ['app.erl']\nentry = ${value}\n")
+    check(manifest_wrong_type 1 "\\(entry\\): expected a nonempty string" --project invalid.toml)
+endforeach()
+file(WRITE "${WORK}/invalid.toml" "schema_version = 1\n[[targets]]\nname = 'x'\nsources = ['app.erl']\nentry_point = 'app'\n")
+check(manifest_unknown_key 1 "\\(entry_point\\): unknown key" --project invalid.toml)

@@ -117,3 +117,11 @@ regenerate.py [--check]; programs.py <tool> <work> [--update-diagnostics] = CTes
 programs_oracle opt-in. --check reproduced 3x. erlfmt CLI lacks getopt: format via escript calling
 erlfmt:format_file/2 with code path thirdparty/tools/erlfmt/_build/local (compiled erlfmt_cli there).
 `++`/`--` were ownerless ([arithmetic] notimpl) -> added to step 37. Logs build/plan11-step2.
+
+Plan11 step3 2026-10-03: entry contract docs/executables.md. project/entry parse_entry (u32 names,
+1..255, no ctrl/':'), SelectedEntry{name, origin}; manifest `entry` key (decode.cpp entry()),
+plan entry_selection (CLI overrides, single target else exit 2). driver/entry resolve_entry after
+index_inputs in analyze (EntryRequest{selected, required=-o}); Analysis.entry kept for step5.
+Exit: return/halt()=0, halt(N)=N, escaping exception incl exit(normal)=1, runtime failure=70.
+Bash tool mangles non-ASCII and `\n` in heredoc python; use Edit/Write for such text.
+CMake execute_process needs ENCODING UTF-8 for UTF-8 stderr matching on Windows.

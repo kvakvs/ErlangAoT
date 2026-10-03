@@ -3,6 +3,8 @@
 #include <stdexcept>
 
 namespace erlang_aot::project {
+// Format a manifest location as file:line:column [target name] (key).
+std::string where(const Site &site);
 // Format project errors without writing to a global output stream.
 std::string render(const Error &error);
 

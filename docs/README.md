@@ -9,6 +9,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Parsing, AST ownership, syntax limits | [parser.md](parser.md) |
 | TOML projects and target selection | [projects.md](projects.md) |
 | Compiler CLI, artifacts, LLVM SDK, example | [compile.md](compile.md) |
+| Executable entry, arguments, exit status, output streams | [executables.md](executables.md) |
 | Semantic analysis, types, inference, bindings | [semantic.md](semantic.md) |
 | Type specialization policy | [specialization.md](specialization.md) |
 | Generated-code ABI: terms, symbols, registration, failures, roots | [abi.md](abi.md) |
