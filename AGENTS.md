@@ -66,6 +66,14 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
 
 - Keep APIs project-internal C++23. C-compatible headers, linkage wrappers and
   external interoperability are deferred until there is a concrete need.
+- Never hardcode mangled C++ symbols (`?name@@...`, `_Z...`). Declare each
+  runtime service called from generated code once in
+  `compiler/src/codegen/runtime_symbols.hpp` as a `mangling::Function<...>`
+  alias mirroring its `abi/include` declaration, and emit it via
+  `services::symbol<services::X>(triple)`. Extend
+  `compiler/include/erlang_aot/compiler/mangling.hpp` when a new signature
+  shape is needed, and add the expected spellings, checked against Clang for
+  every target ABI and width, to `tests/compiler/codegen/mangling.cpp`.
 - IMPORTANT: Document class fields creation intent, what will they be doing.
   Document function creation intent. Keep comments down to 1-2 lines.
 - The code will be read by humans, keep it readable.

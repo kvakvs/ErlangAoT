@@ -1,24 +1,16 @@
 #include "../semantic/match_plan.hpp"
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
 
 namespace erlang_aot::codegen {
 namespace {
-// Native C++ service linkage uses the emitted target's convention and integer width.
-std::string_view exact_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_exact_v1@@YAEPEAX_K1@Z" : "?erlang_aot_exact_v1@@YAEPAXII@Z";
-    }
-    return triple.isArch64Bit() ? "_Z19erlang_aot_exact_v1Pvmm" : "_Z19erlang_aot_exact_v1Pvjj";
-}
-
 // Load canonical target-width literals; atom words always come from runtime module bindings.
 llvm::Value *literal(ExpressionLowering &state, const semantic::MatchLiteral &literal) {
     if (const auto *real = std::get_if<ast::FloatLiteral>(&literal)) {
@@ -185,7 +177,7 @@ bool lower_unconditional_head(ExpressionLowering &state) {
 llvm::Value *lower_exact(ExpressionLowering &state, llvm::Value *left, llvm::Value *right) {
     auto &output = *state.entry.getParent();
     auto service = output.getOrInsertFunction(
-        exact_symbol(output.getTargetTriple()),
+        services::symbol<services::Exact>(output.getTargetTriple()),
         llvm::FunctionType::get(state.builder.getInt8Ty(), {state.builder.getPtrTy(), state.word, state.word}, false));
     auto *result = state.builder.CreateCall(service, {state.entry.getArg(0), left, right}, "exact.outcome");
     propagate_failure(state);
@@ -228,13 +220,7 @@ void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan
 
 void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload) {
     auto &output = *state.entry.getParent();
-    const auto &triple = output.getTargetTriple();
-    const auto symbol =
-        triple.isWindowsMSVCEnvironment()
-            ? (triple.isArch64Bit() ? "?erlang_aot_raise_v2@@YAEPEAXW4ErrorReason@v1@abi@erlang_aot@@_K@Z"
-                                    : "?erlang_aot_raise_v2@@YAEPAXW4ErrorReason@v1@abi@erlang_aot@@I@Z")
-            : (triple.isArch64Bit() ? "_Z19erlang_aot_raise_v2PvN10erlang_aot3abi2v111ErrorReasonEm"
-                                    : "_Z19erlang_aot_raise_v2PvN10erlang_aot3abi2v111ErrorReasonEj");
+    const auto symbol = services::symbol<services::Raise>(output.getTargetTriple());
     auto service = output.getOrInsertFunction(
         symbol, llvm::FunctionType::get(state.builder.getInt8Ty(),
                                         {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));

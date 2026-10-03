@@ -1,29 +1,11 @@
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 
 namespace erlang_aot::codegen {
 namespace {
-// These target-native spellings are verified against Clang declarations at both supported word widths.
-std::string_view construct_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_construct_v1@@YAEPEAXEPEB_K_KPEA_K@Z"
-                                    : "?erlang_aot_construct_v1@@YAEPAXEPBIIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z23erlang_aot_construct_v1PvhPKmmPm" : "_Z23erlang_aot_construct_v1PvhPKjjPj";
-}
-
-// Ownership/shape access remains runtime-private; emitted IR contains no raw heap layout loads.
-std::string_view inspect_symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_inspect_v1@@YAEPEAXE_K1PEA_K@Z"
-                                    : "?erlang_aot_inspect_v1@@YAEPAXEIIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z21erlang_aot_inspect_v1PvhmmPm" : "_Z21erlang_aot_inspect_v1PvhjjPj";
-}
-
 // Large constructors use bounded runtime scratch roots, keeping source width off the native stack.
 llvm::Value *construct(ExpressionLowering &state, abi::v1::ContainerConstruction operation,
                        std::span<llvm::Value *const> values) {
@@ -36,7 +18,7 @@ llvm::Value *construct(ExpressionLowering &state, abi::v1::ContainerConstruction
     }
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
-        construct_symbol(output.getTargetTriple()),
+        services::symbol<services::Construct>(output.getTargetTriple()),
         llvm::FunctionType::get(
             builder.getInt8Ty(),
             {builder.getPtrTy(), builder.getInt8Ty(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
@@ -105,7 +87,7 @@ llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspe
     auto &output = *state.entry.getParent();
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
-        inspect_symbol(output.getTargetTriple()),
+        services::symbol<services::Inspect>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(),
                                 {builder.getPtrTy(), builder.getInt8Ty(), state.word, state.word, builder.getPtrTy()},
                                 false));

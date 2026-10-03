@@ -1,24 +1,15 @@
 #include "../semantic/binary_options.hpp"
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
-#include <llvm/TargetParser/Triple.h>
 #include <utility>
 
 namespace erlang_aot::codegen {
 namespace {
 using Op = abi::v1::BitOperation;
-
-// Derive native C++ linkage from emitted target width and ABI, independently of the compiler host.
-std::string_view symbol(const llvm::Triple &triple) {
-    if (triple.isWindowsMSVCEnvironment()) {
-        return triple.isArch64Bit() ? "?erlang_aot_bits_v1@@YAEPEAXEPEB_K_KPEA_K@Z"
-                                    : "?erlang_aot_bits_v1@@YAEPAXEPBIIPAI@Z";
-    }
-    return triple.isArch64Bit() ? "_Z18erlang_aot_bits_v1PvhPKmmPm" : "_Z18erlang_aot_bits_v1PvhPKjjPj";
-}
 
 // Metadata and cursors fit both target small-integer ranges; no raw host term words enter IR.
 llvm::Value *integer(ExpressionLowering &state, unsigned value) {
@@ -45,7 +36,7 @@ BitLowering service(ExpressionLowering &state, Op operation, std::span<llvm::Val
     auto *slot = root_slot(state);
     auto *next = root_slot(state);
     auto callee = module.getOrInsertFunction(
-        symbol(module.getTargetTriple()),
+        services::symbol<services::Bits>(module.getTargetTriple()),
         llvm::FunctionType::get(
             builder.getInt8Ty(),
             {builder.getPtrTy(), builder.getInt8Ty(), builder.getPtrTy(), state.word, builder.getPtrTy()}, false));

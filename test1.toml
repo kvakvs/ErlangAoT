@@ -13,8 +13,9 @@ name = "erlangaot_test1"
 sources = [
   # "references/otp/lib/compiler/src/*.erl",
   # "references/otp/lib/compiler/src/beam_a.erl"
-  "references/otp/lib/stdlib/src/dict.erl"
+  # "references/otp/lib/stdlib/src/dict.erl"
   # "build/debug/tests/compiler/codegen/measurements/Debug/answer.erl"
+  "tests/fixtures/linking/escript/plain.erl"
 ]
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
