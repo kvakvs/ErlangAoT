@@ -3,6 +3,7 @@ import json
 import pathlib
 import re
 import sys
+from matrix import option_lists
 from evidence import run
 from immediate import native
 from stored import load
@@ -97,7 +98,7 @@ def main():
         assert 'argument[' not in line,line
     checks=[]
     for triple in ['x86_64-pc-windows-msvc','i686-pc-windows-msvc']:
-        for flags in [['-O0'],['-O2'],['-O0','--no-type-specialization'],['-O2','--no-type-specialization']]:
+        for flags in dict.fromkeys(tuple(flags) for flags,_ in option_lists()):
             for mode in ['--print-ir','--print-optimized-ir']:
                 ir=run([tool,*flags,mode,'--target-triple',triple,str(work/'answer.erl'),str(work/'client.erl')])
                 assert 'define i'+('64' if triple.startswith('x86_64') else '32') in ir

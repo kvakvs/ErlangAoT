@@ -4,6 +4,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from matrix import option_lists
 from evidence import native, run
 from stored import load
 
@@ -44,10 +45,9 @@ def cli(tool, work, rows):
             child.unlink()
     (out / "sentinel").write_bytes(b"preserve")
     rejected = [row for row in rows if row["diagnostic"] or row["capability"]]
-    for policy in [["-O0"], ["-O0", "--no-type-specialization"], ["-O2"], ["-O2", "--no-type-specialization"]]:
-        for project in [False, True]:
-            for row in rejected:
-                compile_case(tool, work, row, policy, project)
+    for policy, project in option_lists():
+        for row in rejected:
+            compile_case(tool, work, row, policy, project)
     assert (out / "sentinel").read_bytes() == b"preserve"
     compile_case(tool, work, rows[0], ["-O2"], False)
     report = run([tool, "--print-types", str(work / "identity.erl")])

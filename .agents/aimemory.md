@@ -83,3 +83,11 @@ Plan11 step1 done 2026-10-03 (uncommitted): maint29 unchanged 21776803; fresh cl
 tests pass (build/plan11-audits), regenerate --check all 19 match. Gate cmd: vcvars64 + PATH
 "C:\Program Files\LLVM\bin"; DON'T pass LLVM_DIR (skips /MT+IDL0 -> probe mismatch). Logs
 build/plan11-step1. User added plan steps 1A (fast/full test split) and 1B (changed-file quality).
+
+Plan11 step1A done 2026-10-03 (uncommitted): ERLANG_AOT_TEST_MODE fast|full (unset=full).
+tests/compiler/patternmatch/matrix.py combinations()/option_lists(): fast = O0 positional +
+O2-off project. mutations.cmake fast=1 pass. LABELS full_only: parser_consumer,
+codegen_dependency, codegen_measurements. Presets debug-fast/windows-debug-fast (jobs 0),
+make test (fast, TEST_JOBS=nproc), make test-full, make-test.bat TEST_MODE/TEST_JOBS.
+Fast 122 tests ~60s wall (-j16 53s); full -j16 125/125 85s. Plan gate now fast per step,
+full per phase. No make on this host; gmake at C:/Strawberry/c/bin/gmake.exe for dry runs.

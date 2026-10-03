@@ -5,6 +5,12 @@ if not defined CMAKE set "CMAKE=cmake"
 if not defined CTEST set "CTEST=ctest"
 if not defined BUILD_DIR set "BUILD_DIR=build/debug"
 if not defined BUILD_TYPE set "BUILD_TYPE=Debug"
+rem Development tests default to fast mode; set TEST_MODE=full to run every combination.
+if not defined TEST_MODE set "TEST_MODE=fast"
+if not defined TEST_JOBS set "TEST_JOBS=%NUMBER_OF_PROCESSORS%"
+set "TEST_FILTER="
+if /i "%TEST_MODE%"=="fast" set "TEST_FILTER=-LE full_only"
+set "ERLANG_AOT_TEST_MODE=%TEST_MODE%"
 rem An omitted count requests the native build tool's default parallelism.
 set "PARALLEL_JOBS="
 if defined JOBS set PARALLEL_JOBS="%JOBS%"
@@ -14,7 +20,7 @@ if errorlevel 1 goto finish
 set "MAKEFLAGS="
 call "%CMAKE%" --build "%BUILD_DIR%" --config "%BUILD_TYPE%" --parallel %PARALLEL_JOBS%
 if errorlevel 1 goto finish
-call "%CTEST%" --test-dir "%BUILD_DIR%" -C "%BUILD_TYPE%" --output-on-failure --no-tests=error
+call "%CTEST%" --test-dir "%BUILD_DIR%" -C "%BUILD_TYPE%" --output-on-failure --no-tests=error --parallel %TEST_JOBS% %TEST_FILTER%
 :finish
 set "result=%errorlevel%"
 popd

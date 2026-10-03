@@ -7,7 +7,7 @@ add_test(NAME codegen_dependency COMMAND "${CMAKE_COMMAND}"
     "-DHOST_CONFIG=$<CONFIG>"
     "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/dependency.cmake")
-set_tests_properties(codegen_dependency PROPERTIES TIMEOUT 120)
+set_tests_properties(codegen_dependency PROPERTIES TIMEOUT 120 LABELS full_only)
 
 foreach(suite IN ITEMS results ownership target verification emission term_abi features)
     add_executable(codegen_${suite} ${suite}.cpp)
@@ -318,7 +318,7 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/measurements/$<CONFIG>"
         "${PROJECT_BINARY_DIR}/TestHost.cmake" "$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}"
         "$<TARGET_FILE:codegen_specialization_emit>")
-    set_tests_properties(codegen_measurements PROPERTIES TIMEOUT 240)
+    set_tests_properties(codegen_measurements PROPERTIES TIMEOUT 240 LABELS full_only)
     add_test(NAME codegen_examples COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:erlang_aot>"
         "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/examples/$<CONFIG>"
         "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"

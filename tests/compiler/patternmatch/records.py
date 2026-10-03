@@ -4,6 +4,7 @@ import pathlib
 import re
 import subprocess
 import sys
+from matrix import option_lists
 from bindings import compile_case
 from evidence import run
 from immediate import native
@@ -14,11 +15,10 @@ def semantic(tool,work,rows):
     """Exercise source legality, capability separation and failed-batch nonpublication in both CLI modes."""
     (work/'out').mkdir(exist_ok=True)
     (work/'out/sentinel').write_bytes(b'preserve')
-    for policy in [['-O0'],['-O0','--no-type-specialization'],['-O2'],['-O2','--no-type-specialization']]:
-        for project in [False,True]:
-            for row in rows:
-                if row['diagnostic'] or row['capability']:
-                    compile_case(tool,work,row,policy,project)
+    for policy,project in option_lists():
+        for row in rows:
+            if row['diagnostic'] or row['capability']:
+                compile_case(tool,work,row,policy,project)
     for row in rows:
         if not row['diagnostic'] and not row['capability']:
             run([tool,'--print-types',str(work/(row['name']+'.erl'))])

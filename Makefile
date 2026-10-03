@@ -6,9 +6,13 @@ BUILD_TYPE ?= Debug
 # An empty count requests the native build tool's default parallelism.
 JOBS ?=
 CMAKE_ARGS ?=
+# Development tests default to fast mode; TEST_MODE=full (or make test-full) runs every combination.
+TEST_MODE ?= fast
+# CTest runs this many tests concurrently; the default uses every logical CPU.
+TEST_JOBS ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT ?= $(shell command -v clang-format 2>/dev/null || xcrun --find clang-format 2>/dev/null)
 
-.PHONY: build build_test test format fmt clean
+.PHONY: build build_test test test-full format fmt clean
 
 # Reconfigure each time; let CMake control jobs independently of outer make flags.
 # Build only the compiler executable and its dependencies for manual runs.
@@ -27,7 +31,12 @@ build_test:
 
 # Build first, propagate failures, and show diagnostics for failing tests.
 test: build_test
-	$(CTEST) --test-dir "$(BUILD_DIR)" -C "$(BUILD_TYPE)" --output-on-failure --no-tests=error
+	ERLANG_AOT_TEST_MODE="$(TEST_MODE)" $(CTEST) --test-dir "$(BUILD_DIR)" -C "$(BUILD_TYPE)" \
+		--output-on-failure --no-tests=error --parallel "$(TEST_JOBS)" $(if $(filter fast,$(TEST_MODE)),-LE full_only)
+
+# Run every policy/driver combination and full-only tests, e.g. at feature completion.
+test-full:
+	+$(MAKE) test TEST_MODE=full
 
 # Format project C++ files, excluding generated and vendored build trees.
 format fmt:

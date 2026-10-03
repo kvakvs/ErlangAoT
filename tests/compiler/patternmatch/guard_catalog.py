@@ -3,6 +3,7 @@ import itertools
 import json
 import pathlib
 import sys
+from matrix import option_lists
 from evidence import digest, run
 from immediate import native
 from stored import load
@@ -56,9 +57,8 @@ def main():
     (work/'out/sentinel').write_bytes(b'preserve')
     for row in evidence['cases']:
         if row['diagnostic'] or row['capability']:
-            for policy in [['-O0'],['-O2'],['-O0','--no-type-specialization'],['-O2','--no-type-specialization']]:
-                for project in [False,True]:
-                    compile_case(tool,work,row,policy,project)
+            for policy,project in option_lists():
+                compile_case(tool,work,row,policy,project)
         else:
             run([tool,'--print-types',str(work/(row['name']+'.erl'))])
     assert list((work/'out').iterdir()) == [work/'out/sentinel']

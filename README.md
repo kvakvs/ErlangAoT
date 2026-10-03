@@ -143,6 +143,25 @@ cmake --build --preset windows-release
 ctest --preset windows-release --no-tests=error
 ```
 
+Tests have two modes, selected by `ERLANG_AOT_TEST_MODE`:
+
+- `fast` for development: golden corpora run two policy/driver combinations
+  (O0 positional and O2 without specialization through a project) instead of all
+  eight, mutation cases run once, and tests labelled `full_only` (separate CMake
+  consumer projects and timing measurements) are excluded.
+- `full` (the default when unset) runs every combination and every test; use it
+  when a major feature is complete.
+
+```sh
+ctest --preset debug-fast            # or windows-debug-fast; runs on all CPUs
+ctest --preset debug -j 16           # full mode
+make test                            # fast; make test-full or TEST_MODE=full for full
+```
+
+`make-test.bat` follows the same `TEST_MODE` (default `fast`) and `TEST_JOBS` (default
+all logical CPUs) settings. On a 32-thread Windows x64 host, fast mode takes about
+one minute and full mode about 85 seconds with 16 jobs (729 seconds serially).
+
 For a build directory without a preset, pass `-DBUILD_TESTING=ON` to `cmake -S . -B <dir>`
 for testing. CMake caches this setting; pass `-DBUILD_TESTING=OFF` when reusing that
 directory for ordinary builds. The normal presets and build wrappers set it to `OFF`.

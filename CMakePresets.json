@@ -60,6 +60,20 @@
       "configurePreset": "windows",
       "configuration": "Release",
       "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "debug-fast",
+      "inherits": "debug",
+      "environment": { "ERLANG_AOT_TEST_MODE": "fast" },
+      "filter": { "exclude": { "label": "full_only" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "windows-debug-fast",
+      "inherits": "windows-debug",
+      "environment": { "ERLANG_AOT_TEST_MODE": "fast" },
+      "filter": { "exclude": { "label": "full_only" } },
+      "execution": { "jobs": 0 }
     }
   ]
 }
