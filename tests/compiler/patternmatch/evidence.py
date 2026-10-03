@@ -22,7 +22,7 @@ def digest(path):
 
 
 def verify_manifest(root, manifest):
-    """Refuse any changed source before extraction, parsing or execution."""
+    """Refuse any changed evidence before parsing or execution."""
     for row in csv.DictReader(manifest.splitlines(), delimiter="\t"):
         actual = digest(root / row["path"])
         if actual != row["sha256"]:
@@ -82,35 +82,6 @@ def suites(tool, otp, work):
     (work / "suites.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 
 
-def baseline(otp, work):
-    """Extract complete unmodified clauses, retaining upstream licenses and wrapper provenance."""
-    records = []
-    for suite, function, clause, module, extra in [
-        ("bif_SUITE", "first/2", "first(Fst, _Snd) -> Fst.", "answer",
-         "-export([identity/1]).\nidentity(X) -> client:id(X).\n"),
-        ("guard_SUITE", "id/1", "id(I) -> I.", "client", "")]:
-        path = otp / "lib/compiler/test" / (suite + ".erl")
-        text = path.read_text(encoding="utf-8")
-        assert len(re.findall("^" + re.escape(clause) + "$", text, re.M)) == 1, f"Upstream helper changed: {suite}:{function}"
-        license_text = text[:text.index("-module(")]
-        wrapped = license_text + f"-module({module}).\n-export([{function}]).\n"
-        # Erlang declarations must precede all functions.
-        if extra:
-            declaration, body = extra.split("\n", 1)
-            wrapped += declaration + "\n" + clause + "\n" + body
-        else:
-            wrapped += clause + "\n"
-        (work / (module + ".erl")).write_bytes(wrapped.encode("utf-8"))
-        records.append({"source": str(path.relative_to(otp)), "function": function,
-                        "source_sha256": digest(path), "clause_sha256": hashlib.sha256(clause.encode()).hexdigest(),
-                        "declarations": f"module={module}; export={function}",
-                        "adaptations": "unchanged complete clause; new module/export; " + extra.strip(),
-                        "generated_sha256": digest(work / (module + ".erl"))})
-    (work / "helpers.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
-    (work / "calls.txt").write_bytes(b"answer first 2 -134217728 134217727\nclient id 1 134217727\nanswer identity 1 -7\n")
-    (work / "expected.txt").write_bytes(b"-134217728\n134217727\n-7\n")
-
-
 def native(tool, cmake, source, work, settings, config, suffix):
     """Run the existing separately linked consumer with four optimization/specialization policies."""
     (work / "native-project.toml").write_bytes(b'schema_version=1\n[[targets]]\nname="native"\nsources=["answer.erl","client.erl"]\n')
@@ -133,11 +104,12 @@ def audit_main():
     provenance(source, otp, fixtures, work)
     catalog(otp, fixtures)
     suites(tool, otp, work)
-    baseline(otp, work)
+    from authored import stage
+    stage(source, 'baseline', work)
     oracle = run([escript, str(source / "tests/compiler/patternmatch/oracle.escript"), str(fixtures), str(work)])
     (work / "oracle.txt").write_text(oracle, encoding="utf-8")
     native(tool, cmake, source, work, settings, config, suffix)
-    print(oracle + "Three original suites parsed; stale hash rejected; unchanged helpers executed in four native modes.")
+    print(oracle + "Three original suites parsed; stale hash rejected; local helpers executed in four native modes.")
 
 
 def main():

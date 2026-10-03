@@ -11,188 +11,31 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
   },
   "generator_sha256": {
-    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
-    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
-    "containers.py": "6e6913f28fb54669caf6a2e8ed4e7621acd4a8aa181d0ec60f52afc53922bac8",
-    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
-    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
-    "immediate.escript": "e71d8c6a99bc3d71ec3183fb7858f54895c4f04ab4360e3d2f2bf8e5326cd805",
+    "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
+    "regenerate_cases.py": "53ce982d1864b4546f80d9c1fbfa63ee9e82a2d208b62efe532b05adcea1b96e",
+    "authored.py": "ed76f0faff37e8cd44fa3bd8493bbc4ad7073bd3e839ff191877dd21e7b369ae",
+    "immediate.escript": "90aaa5641f6d0316295466ff4505f8915acf8294c94f763b8ed739638a45d6b7",
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
+  "input_manifest_sha256": "0910b7a4f90312a434e9ee1f0d4881b99f67a54e98caf8839f5095eea9e44a3e",
   "files": {
-    "answer.erl": "a276c03bd53b0a16720e13e0697454e185963262d110fc263fd5324dd832658f",
+    "answer.erl": "e91ad9723bde464063d0e611b762263e03f137a9440218bf4a3af667ab8a2f13",
     "calls.term": "9fbeb91e1b951ca9e59103fbf8d099cabcf3d3cadf6d1621904acdddb29913e1",
     "calls.txt": "1f9010c7227cb40549eccd8b4a20516d6e2017cef9fb267da393788fe704e2ab",
-    "client.erl": "9c66a85f0638a19b5be309147aeec277ffeed7e71bd8492e19e5e2110c9f27f6",
-    "expected.txt": "e9b93e603ef108638a2ebb7e97cc500d01159f952492b4be78a7b5c15adecffd",
+    "client.erl": "39fc4d9a76cc2cd1c169ec4d5138c6bd295b25d62a1366b3b0414e1369454445",
+    "expected.txt": "4fad6c4b5b04524aec843288363dfe8ccaec7df9fa7569f6e81f11d8241462e1",
     "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
   },
   "evidence": {
     "calls": 4801,
-    "helpers": [
-      {
-        "suite": "match_SUITE",
-        "function": "str_alias_1/1",
-        "source": "str_alias_1([$a,$b,$c]=\"abc\"=\"a\"++[$b,$c]=[97,98,99]) -> ok;\nstr_alias_1([$d|\"ef\"]=\"def\") -> ok;\nstr_alias_1([$g|\"hi\"]=\"g\"++\"hi\"=\"gh\"++\"i\"=\"ghi\"++\"\") -> ok;\nstr_alias_1(\"k\"++\"lm\"=[$k|\"lm\"]) -> ok;\nstr_alias_1([113,114,115]=\"qrs\"=[$q,$r,$s]=\"q\"++\"r\"++\"s\") -> ok;\nstr_alias_1([$x,$y]=\"xy\") -> ok;\nstr_alias_1(\"\"=[]) -> ok;\nstr_alias_1(_) -> error.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "tuple_alias_a/1",
-        "source": "tuple_alias_a({A,B,C} = {X,Y,Z}) ->\n    {A,B,C,X,Y,Z};\ntuple_alias_a({A,B} = {C,D} = {E,F}) ->\n    {A,B,C,D,E,F}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "tuple_alias_b/1",
-        "source": "tuple_alias_b({_,_,_}=Expr) ->\n    {A,B,C} = {X,Y,Z} = Expr,\n    {A,B,C,X,Y,Z};\ntuple_alias_b({_,_}=Expr) ->\n    {A,B} = {C,D} = {E,F} = Expr,\n    {A,B,C,D,E,F}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_in_tuple_a/1",
-        "source": "list_in_tuple_a({container, [_,_,_] = [A,B,C], D}) ->\n    {A,B,C,D}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_in_tuple_b/1",
-        "source": "list_in_tuple_b(E) ->\n    {container, [_,_,_] = [A,B,C], D} = E,\n    {A,B,C,D}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "tuple_in_tuple_a/1",
-        "source": "tuple_in_tuple_a({x, {y,A} = {B,C}, D} = {E, F, G}) ->\n    {A,B,C,D,E,F,G}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "tuple_in_tuple_b/1",
-        "source": "tuple_in_tuple_b(Expr) ->\n    {x, {y,A} = {B,C}, D} = {E, F, G} = Expr,\n    {A,B,C,D,E,F,G}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_1a/1",
-        "source": "multiple_aliases_1a((A=B) = (C=D)) ->\n    {A,B,C,D}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_1b/1",
-        "source": "multiple_aliases_1b(Expr) ->\n    (A=B) = (C=D) = Expr,\n    {A,B,C,D}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_2/1",
-        "source": "multiple_aliases_2((A=B) = (A=C)) ->\n    {A,B,C}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_3a/1",
-        "source": "multiple_aliases_3a((A={_,_}=B)={_,_}=C) ->\n    {A,B,C}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_3b/1",
-        "source": "multiple_aliases_3b(Expr) ->\n    (A={_,_}=B) = {_,_} = C = Expr,\n    {A,B,C}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_4a/1",
-        "source": "multiple_aliases_4a((A=[_,_,_]=B) = [_,_,_] = C) ->\n    {A,B,C}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "multiple_aliases_4b/1",
-        "source": "multiple_aliases_4b(Expr) ->\n    (A=[_,_,_]=B) = [_,_,_] = C = Expr,\n    {A,B,C}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias1a/1",
-        "source": "list_alias1a([a,b]=[X,Y]) ->\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias1b/1",
-        "source": "list_alias1b(Expr) ->\n    [a,b] = [X,Y] = Expr,\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias2a/1",
-        "source": "list_alias2a([X,Y]=[a,b]) ->\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias2b/1",
-        "source": "list_alias2b(Expr) ->\n    [X,Y] = [a,b] = Expr,\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias3a/1",
-        "source": "list_alias3a([X,b]=[a,Y]) ->\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "list_alias3b/1",
-        "source": "list_alias3b(Expr) ->\n    [X,b] = [a,Y]= Expr,\n    {X,Y}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "bif_SUITE",
-        "function": "first/2",
-        "source": "first(Fst, _Snd) -> Fst.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "match_SUITE",
-        "function": "id/1",
-        "source": "id(I) -> I.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "beam_type_SUITE",
-        "function": "do_tuple/0",
-        "source": "do_tuple() ->\n    {0, _} = {necessary}.",
-        "adaptations": "none"
-      },
-      {
-        "suite": "beam_type_SUITE",
-        "function": "do_literal_tuple_1/1",
-        "source": "do_literal_tuple_1(X) ->\n    element(X, {1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1}).",
-        "adaptations": "none"
-      },
-      {
-        "suite": "beam_type_SUITE",
-        "function": "do_literal_tuple_2/1",
-        "source": "do_literal_tuple_2(X) ->\n    element(X, {2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2}).",
-        "adaptations": "none"
-      }
-    ],
-    "declarations": "str_alias_1/1,tuple_alias_a/1,tuple_alias_b/1,list_in_tuple_a/1,list_in_tuple_b/1,tuple_in_tuple_a/1,tuple_in_tuple_b/1,multiple_aliases_1a/1,multiple_aliases_1b/1,multiple_aliases_2/1,multiple_aliases_3a/1,multiple_aliases_3b/1,multiple_aliases_4a/1,multiple_aliases_4b/1,list_alias1a/1,list_alias1b/1,list_alias2a/1,list_alias2b/1,list_alias3a/1,list_alias3b/1,first/2,id/1,do_tuple/0,do_literal_tuple_1/1,do_literal_tuple_2/1,make/1,head_tail/1,prefix/1,nested_prefix/1,empty_prefix/1,repeat/2,independent/1,extract/1,body/1,fallthrough/1,badmatch/1,order/2,queries/1,guard/1,guard_construct/1,head/1,tail/1,length_value/1,size_value/1,element_value/2,wrong_spec/1,source_order/1,failure_order/1,wide/1",
-    "adaptations": "head_tail/1 retains hd/tl assertions with id/1; case-dispatch helpers are covered by equivalent ordered guard clauses in guard/1; remaining authored kernels retain all indicated behavior",
-    "sources": {
-      "lib/compiler/test/match_SUITE.erl": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4",
-      "lib/compiler/test/bif_SUITE.erl": "30d666aa4ca19eda9ca56a76a702ba0bcdf06588e6893682eda37a5680c26058",
-      "lib/compiler/test/beam_type_SUITE.erl": "bf3d90d2c560320db20dc2c2c184ce0719cf6bc1ad8ffd935641a989d7801ced"
-    },
-    "wrapper_sha256": "a276c03bd53b0a16720e13e0697454e185963262d110fc263fd5324dd832658f",
-    "client_sha256": "9c66a85f0638a19b5be309147aeec277ffeed7e71bd8492e19e5e2110c9f27f6"
+    "source_origin": "locally authored fragments; OTP supplies observations only",
+    "source_sha256": {
+      "answer.erl": "e91ad9723bde464063d0e611b762263e03f137a9440218bf4a3af667ab8a2f13",
+      "client.erl": "39fc4d9a76cc2cd1c169ec4d5138c6bd295b25d62a1366b3b0414e1369454445"
+    }
   }
 }

@@ -66,7 +66,7 @@
   {
     "name": "pat_key_tuple",
     "arity": 2,
-    "body": "f(Int, M) -> #{{tag,Int+1} := V} = M, V.",
+    "body": "f(Offset, Map) -> #{{ticket, Offset + 3} := Selected} = Map, Selected.",
     "diagnostic": "",
     "otp_diagnostic": "",
     "capability": ""
@@ -74,7 +74,7 @@
   {
     "name": "pat_key_call",
     "arity": 3,
-    "body": "f(X, Y, M) -> #{element(X,Y) := <<Sz:16,Bin:Sz/binary>>} = M, Bin.",
+    "body": "f(Position, Keys, Map) -> #{element(Position, Keys) := <<Count:8, Payload:Count/binary>>} = Map, Payload.",
     "diagnostic": "",
     "otp_diagnostic": "",
     "capability": ""
@@ -90,7 +90,7 @@
   {
     "name": "pat_key_binary",
     "arity": 2,
-    "body": "f(Int,M) -> #{{tag,<<Int:42>>} := V} = M, V.",
+    "body": "f(Number, Map) -> #{{entry, <<Number:24/little>>} := Selected} = Map, Selected.",
     "diagnostic": "",
     "otp_diagnostic": "",
     "capability": ""
@@ -106,7 +106,7 @@
   {
     "name": "pat_key_badarith",
     "arity": 1,
-    "body": "f(#{1 div 0 := V}) -> V.",
+    "body": "f(#{8 div 0 := Selected}) -> Selected.",
     "diagnostic": "",
     "otp_diagnostic": "",
     "capability": ""

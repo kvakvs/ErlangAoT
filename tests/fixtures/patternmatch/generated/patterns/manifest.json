@@ -11,128 +11,127 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "6994b6c262a4e9894afcc2cd163fba4dbc49bca107365e660f61879d377493ee"
+    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
   },
   "generator_sha256": {
-    "regenerate.py": "5185292bbb5602c876b3d7e5a01a5b348c428fa7751d31fb4ea4781557e3b34c",
-    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
-    "patterns.py": "216e519a7cc4f89ce583355db95ef55b4190cf4ea5c4c93a9e9b5bcdea09c1ce",
-    "immediate.py": "ad60f1b5605d46e7b370e0d08bb79859359e7b26fa6b0697c32d2a5f56edb930",
-    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
+    "regenerate_cases.py": "53ce982d1864b4546f80d9c1fbfa63ee9e82a2d208b62efe532b05adcea1b96e",
+    "authored.py": "ed76f0faff37e8cd44fa3bd8493bbc4ad7073bd3e839ff191877dd21e7b369ae",
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
+  "input_manifest_sha256": "bc96f36f4f09f5fd0233581da833aa5a0d1ad9ad16760dbc8edf8877a4672ef8",
   "files": {
-    "answer.erl": "eb08a1f03d7ea203f51707d9a88dd8adfc8f23c912dc094521c66aa72ddfe1cb",
-    "bindings_otp.erl": "cb3dc0da996c6206d53725621873a30afa435b9f761cf9affd2c309c8ceea9fd",
-    "bit_construct_all_integer.erl": "7c6e46b2d82c7f710992da63d192797bca2856b65c386aa920ba74b008723a9d",
-    "bit_construct_conflict.erl": "75f18ec337cd57e9e06a708ea530fd263f95cba44aac03fa552addce4d2bdd2e",
-    "bit_construct_unit256.erl": "d568ae903a6041787b47eaf5feb16326f608987bc31486c3690f352aa2907cdb",
-    "bit_construct_unit_default.erl": "b2e0495134c1ce3ecd047643ef92328c62cb085ef388365254871f96fde2e8ee",
-    "bit_construct_unit_high.erl": "ecf153c40b3f99a2bf69ba221ca19fdc1d8dda4de3cf0324cdea57c3c0985a88",
-    "bit_construct_unknown.erl": "087c34fd655c540f47263e5f184ebbe0ade90e7f441f5cd1deaafd42cd46f943",
-    "bit_construct_utf_size.erl": "78daf532ed83237d451eafaddfc29a72593c94ba860125d4c40be2554a87d66b",
-    "bit_construct_utf_undefined.erl": "7170fadc6d884ad7cdfbeca9de1ebf2f12b62352fc061f8edd929573cf57c10d",
-    "bit_guard_unknown.erl": "ff31ff02a6d295c74c184065930bade04f81e9f45f6f9d9a9b71e8cb32c47027",
-    "bit_pattern_unit256.erl": "eff6a29cf68e02412850ba1746c70a65cb95104551738c1b852cbe6bc6f59487",
-    "bit_pattern_utf_undefined.erl": "8c73443d5967a455def65d535fe474fdbcbadabcb15d5307e4e6640a11cf5660",
+    "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
+    "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
+    "bit_construct_all_integer.erl": "8caf99d411147b112fe55df474a4854de9649c0066d2f25c351d557c8267c737",
+    "bit_construct_conflict.erl": "526626c01188b3a39b6c8f223573c13a843e73a89470db3148644c6c7df84cfb",
+    "bit_construct_unit256.erl": "6fa8afb4278c8ba6da3f9844d4462e077c7c0afcff1448958258f24c308b7880",
+    "bit_construct_unit_default.erl": "0382b41ea16e929f1664faf9e508c0b5a288b98833c6fd50a36cef315f75903d",
+    "bit_construct_unit_high.erl": "1a1fa6e9bcf9a7eb5d066d95040abfe73589a94857319f4df3775e078b779dc5",
+    "bit_construct_unknown.erl": "08db3ce20cfdbfaca8c99106ddc0982c0d5b784ea6a1bcec6732b6fbf5bdcb1a",
+    "bit_construct_utf_size.erl": "3f56d7c4fbf29d2a14cd0beb083155319f25a46a15691f8431e8f25502e56696",
+    "bit_construct_utf_undefined.erl": "6239a6945da39d4563175bbac2f2cb86cbdd48cb1eec880634a9c62e07810078",
+    "bit_guard_unknown.erl": "d63e233d4d6b50bdb2d6d67c49d1f1701ada230a8865e96fb1a6c3c9520c0b28",
+    "bit_pattern_unit256.erl": "0d9cac56ea946830c1d330bd58adbb5103b3cc9f3ea71a8b11d89242c05c6424",
+    "bit_pattern_utf_undefined.erl": "2c3d6cca1265b2fe033a687708cccb2636c92567360c9dd001acac684fca272a",
     "calls.txt": "af8567a0eb405d1afca6589681daeaee74b5d1a2fcf2bc7367834b47e2ad23bf",
-    "client.erl": "20f11c9e4d7f8ebc6ffe45ebde65f9ed01c53effd1260a05908dbbba3f97a9a2",
-    "expected.txt": "dbfbbce5ac16f7a6fb00bf403f03ef16bad3189aa37f22111ca0b598f268a93e",
-    "pat_aliases.erl": "4be716a9bf27adeae4ba88c5caa102067ca9556aa7a5fe9810cbd9e3e37d866b",
-    "pat_arithmetic_type.erl": "e6635de86d5eb8728703518511edcb2918de828a788f311d2fff3dbc766ec362",
-    "pat_arithmetic_var.erl": "02f2f3078ff36de85f8bfde4ead94c5bca1f6c1decade20fa05d7039fc9f96f4",
-    "pat_bin_alias.erl": "dbddd852ed9c8d5894ae9212a7a43065ecc74edd5c9206149873e3c0f6321ff9",
-    "pat_bin_call.erl": "29aac9a4ca02d11c34f134b667481d24864261050600466d573d20f703040066",
-    "pat_bin_incoming.erl": "855178c782ad984c013fac65658078aec518323a9738923bdc96a15da722f68e",
-    "pat_bin_negative_size.erl": "5b5d7b4c21d4e8993ed9240cbdcfb9261eb817cc4c9831f2c4af1123f04c2f58",
-    "pat_bin_noninteger_size.erl": "155a64b6640260f1e17cec93d71bf1e01ede7d9f1a7976bd562f1c322256d02b",
-    "pat_bin_sequential.erl": "5f6eca9878a78c57a08caa8a03095b3be2925170ee5eace596afce76a44e94fc",
-    "pat_bin_size_badarith.erl": "e92cddbdb052fa4db8688f4464f98463b6f5e1ff4e8f1ff7313f2375b8ffa835",
-    "pat_bin_size_container.erl": "8a6421407a5e2f620307d2ee56f698e8d7e781a6647a67d440a611671cd7bf5f",
-    "pat_bin_string.erl": "777e3341247777d80fc7fa02d1db46970a1922a676b17900e3858e574ccf05df",
-    "pat_bin_utf_string.erl": "992322f475589ddd92efbfb0b54044842369aa91cf099d93323e56d47af9b288",
-    "pat_body_chain.erl": "d1b6a01614ce12646627b155dd190c46ea087f8c7bfcf3915a5efa0f26be0358",
-    "pat_body_compound.erl": "c58dd441890db156a873907445d09520a15bc6f56114dd19161fdbc45a0ad37b",
-    "pat_body_rhs.erl": "345764c2bb6b4dca42a97ba24245b76b66258d04c02ca52d7e6f382bcbff0797",
-    "pat_boolean.erl": "0c76851906faf4575a7b545b1c99b779524cb860317abc8054151d6d0d59a390",
-    "pat_comparison.erl": "45ca978e0d29541f4c4f31c73614a73dfde03ad68a137457be7d40b70a8c739f",
-    "pat_constants.erl": "9e884f90d607485fe7d9056a9ade0fbe422f8647ad6a0fbd5ecf87c27433bd13",
-    "pat_containers.erl": "5cb450b449755e73f9c75775460a2b0d17df136161605d336ff53423a4d530f0",
-    "pat_divide_zero.erl": "3e3ef78e1987d3d0b2731e29cb7f2ca60007f7fbdf52ed81d43effd3e287fedd",
-    "pat_groups.erl": "84e6bf0d82d4f2d6c8d30ca2a9fff19cf1ee9a2bde411168d8aa15fb6761264b",
-    "pat_key_alias.erl": "fd11d1c89c2e6b342d750e7f86119e6c0063d4fafc3f5e4b7b824ce08eb3eb53",
-    "pat_key_alias_bound.erl": "79bbd2a4ffd01d40d949b3ef33ad03d1b0d305e026fa1eb48eb038c7c03af7dc",
-    "pat_key_alias_reverse.erl": "c2948a714f8c5082b3a113478c3189c4e9ddeb56de183627b949986bc3e4953d",
-    "pat_key_argument.erl": "93bc492925838389818a87d242198ef3b5612b2d1e6c564a9503c33a547bc5cc",
-    "pat_key_bad_modifier.erl": "1ebd3b0c6eb799fc696c629f4cf5529ea78a479c22ededcd94db42b3a1c1baaf",
-    "pat_key_badarith.erl": "01d9415285dda8131fb08ebef8c81ec12e5a0a6daf760ca7440cfae3bc62e2b4",
-    "pat_key_binary.erl": "bf64cbed8fb62ebebb9df1a8d292a7237394a1a4bba2fc37ae0ced91b7248701",
-    "pat_key_binary_string_size.erl": "b6cc0644d0753be9f7eab4e1b6a86522bd20d47f488db18c697e8e30cd296a11",
-    "pat_key_bool.erl": "612bf1fb485cc9f9ba7952ff8d2695ab5d364db9e82eaf0bb2ad68542ee9cced",
-    "pat_key_call.erl": "f501e2a2a7d7eb853be17a987d2fa02352a7634e34213d96c2d294dbd6a86edc",
-    "pat_key_field.erl": "238024c7af9d9fdf39bb0cdd81001407b70eb255b138e385c33bee2e2df5e5d7",
-    "pat_key_import.erl": "3b96fd570828fd555c2d7879c30c27ddb7d3b67f21da10b6691192f1cfa78dbb",
-    "pat_key_import_erlang.erl": "40c3d8c610265920d8e3f7a0b7500f4b2403d352db9388d3c8356c40cb89349a",
-    "pat_key_legacy.erl": "7b6abe0e4762b0012cb48eb30b70e81aaddffa4de5df87b43a19b5fe62a60d15",
-    "pat_key_local_call.erl": "2358641e53b8996a1e76ab3be69c3b7dd214547d6f19d96dd2a4a45bb87bc098",
-    "pat_key_map.erl": "f900ff6119653bdf60c49ad3318cfcad5bf8d1aa1eb3142be6f7a1222456eced",
-    "pat_key_match.erl": "7875424590d7bd215c06a6988de13e7274472c0a571f1207b49a060be5a88c90",
-    "pat_key_nested_call.erl": "4631f39fca9271f0181158bfad5aca86790b7d9750e542f618b73c2dcfc1c13d",
-    "pat_key_new_bif.erl": "03db149dc5651ec83b87f89500a71a2d098597072e045903262112fe690cd644",
-    "pat_key_no_auto.erl": "2a1aa0e13ae49097452f167d860634ae1df40d2ef18f5639de16b8b7842cf35d",
-    "pat_key_no_auto_one.erl": "6d674da3430ceffe4c51b3aa7042bb005f90a45ef8c5253ee44632662eeccacc",
-    "pat_key_no_auto_other.erl": "393644b6b7b30193b626aceb1a9f99911c59528a97c7bcb917c5a82c45c92480",
-    "pat_key_no_auto_remote.erl": "207c9e9881ad5e67c634b863c0465dc7b1280bb89539f5cd3484adfa4f48838c",
-    "pat_key_operator_call.erl": "361181b32ba1dd2ecbb3075c1e5aa170433d4ba7022d0a156719eb3725a0d413",
-    "pat_key_remote.erl": "ade5abef7fdc2a3c6d7331355d8675670db19fe7ab6510c587d2c13d241917d1",
-    "pat_key_remote_call.erl": "6f83f21cc8f16b992c23cd33cfcd659cf5d9b820c1952ecad97b2397c018ac09",
-    "pat_key_shadow.erl": "191f835f638456949c0f19e8005be56773f5a28de3ee003912a1d31a9224472d",
-    "pat_key_shadow_qualified.erl": "35d0345076cd9433f5fca4665634386f7f9fb19c7b52adf6a741de9ff8029b61",
-    "pat_key_sibling.erl": "3e1cb667f4d3bcfe90187e90e3045b8d2f458cc98aab96a3e92864c0d0fc1d03",
-    "pat_key_tuple.erl": "d00424db5707ce83e00a894997029ba434102cb0112941a33a4799c971dedb5a",
-    "pat_key_unreachable.erl": "b11065c57db80be27de87ce42c26dd996a48919a2a87365f927a4763ed8efbef",
-    "pat_key_wrong_arity.erl": "40386db22e1f90f3ef0a106455081237ec769a88bd121b59c43e57e00bed80e7",
-    "pat_map_assoc.erl": "235be568760ce298f64edc7ee8735ad2f2e0d6968820160f8fe29acf22bad3bf",
-    "pat_modifier.erl": "5a62aa9d3f22a5e727f8e02f90382fde016d098211166347f706c0e943277355",
-    "pat_modifier_conflict.erl": "86c90396b4fc2839304c45465e4839bdbb7de73cda742708126b214c0deda022",
-    "pat_nested_assignment_call.erl": "e789e263bfe21084c6d685ac1e0f87c2aa5b1b0ef47cebd2c42e9e4835b4129e",
-    "pat_nested_block.erl": "d130818a48f5a102c9b5b4f34dbcca85d379c7a5c05d2a7f835aaabdb7efa6c1",
-    "pat_nested_call.erl": "76431ce4751bae667b0d5f1f97be4b440bf3b97211bdfa655de613bf74cd03dc",
-    "pat_nested_case.erl": "4c6cb04c68852d0335fbf592b578f6b612ffe7e8bcd890d1acbecc357b271c9e",
-    "pat_nested_map_call.erl": "2793f0f170d6d01808b84c4ab01b4738954cece22acd12eb31d97d44dee2d251",
-    "pat_prefix.erl": "f5ee4b485c43042e4385e4d3ddb1e417ec2670f3bd7e4aeb377cf95f69a4d940",
-    "pat_prefix_atom.erl": "bd3710b3642a5a0d491f55dea3d78d9c8d42af675fd88fc9ee2c2e75a36e627a",
-    "pat_prefix_empty.erl": "427552f78fd779234e0813c20afaa3d4c6b3f119a3d4867526b0c776aee03512",
-    "pat_prefix_group.erl": "dedb89814f9bceebec0f5b72a2cedcdca443e95ae4de11e9dfe42f13d89b7610",
-    "pat_prefix_tail.erl": "ba4a5b2ae751a57f7b76bf2a0c921dd2975e4be6b56a48ad99093b848c550755",
-    "pat_prefix_variable.erl": "cb821866234e20e2928833531578bd8a0a4d67f1fefbf88ef37fa23e6d62f018",
-    "pat_record.erl": "370392e602b678d468aeca7ecf22eb13fdc9ddb5253f5f19494d9f69f1bda047",
-    "pat_record_index.erl": "7794c22602b0fdbd16bb5019c8834f088efb316409e9be43fd764bcc4b59ca62",
-    "pat_segment_alias.erl": "9c154903583b90d8516102f008f3895375a3069cf037e18a51ccee35866073b3",
-    "pat_segment_expr.erl": "29cf0b9e148a7b913b9c672fd9a9b4b18c06c06de3061d80c0c92491ba3e40a2",
-    "pat_segment_nested.erl": "ec70240b60fcaa6923371ad5cb7c0e274ff4e5c26858269f42005a8ce3b54c03",
-    "pat_segment_tuple.erl": "9c742af0b5fdea65cd175e1e1b25595fb0539fad70a6e887f554e0ea3ab8bef6",
-    "pat_size_alias.erl": "dd3cabff6c11084bf652d5724ea11da95d0172c9c81c47d04eb7d59f1246f839",
-    "pat_size_alias_reverse.erl": "21337d30e28b41b6060a0f28bde1005f907e965e7ea408943b7a29a1b5757027",
-    "pat_size_argument.erl": "e731d973fbb561ec00910953ea3cac7ad0170e090a68cc0850f2087b2e0ba762",
-    "pat_size_bad_modifier.erl": "1948310defc170f637263b028b6ffadcde225d3d20eaeb447df3c8ef61ab5f76",
-    "pat_size_call.erl": "b9084d21e5224ad8bf32c0f70ead74e0ff25607ca3014ba9f60dcb8dd9195fb4",
-    "pat_size_cross_binary.erl": "2593406e9d47a0982ab2789deb7ff8e78a71412c22f476f263cdebb9a11698e8",
-    "pat_size_future.erl": "0217a39f25ca9c33c8c526215f55b4f0b6d6ea2ebd36d4ad3e91cea1820193b0",
-    "pat_size_match.erl": "8bbadc2982b63ae4e15e400d7dac0a5cc36d6ec3c70a910fb7409cf13def4440",
-    "pat_size_same_segment.erl": "93e6a86e390b42aae3890d17cb6576077b9e25a10b68ac7bb1235640ba03f118",
-    "pat_size_sibling.erl": "3baeb55dd85ab5da095d4f3ab9429652a11275245006147208283a8d88f99a50",
-    "pat_size_utf.erl": "aba0df62450f3d5786e4c42b8991b95760285d13b113c4431c81e379f14255e2",
-    "pat_string_size.erl": "765c9f3c82102fc811c1087c4a227bc1fb32413e9c906c2773aa49f2fc8ae0ca",
-    "pat_type_alias_conflict.erl": "0aed2f87aadf4be4f52172170495194f3490994ce9a1ee20b4678f1e07dde656",
-    "pat_unit_alias_conflict.erl": "bd5e6331a359f58bce0e4a89892669af112bffea28a593e9bf8a1396610061d4",
-    "pat_unit_default.erl": "e2506b8e55f1650df8b5c7ca77d7c19dc44bf071b829ce7318bd29d4de8cc951",
-    "pat_unit_utf.erl": "3784161838339da6dfaee56dba75ab5b39f2acc9b96a11db15a868c5e4489a41",
-    "pat_unit_zero.erl": "d01809c190d16007f83376febc8bb05539525f5b5317de7fe6a0c7f520a78e0e",
-    "pat_unsized.erl": "3344e0cae87d09a2658099968089accbdc9b88df97b7e1ad707a2d4a9f335430",
-    "patterns.term": "e78cba83b33738744911df002c08ef45ad88dbdb85db474c0def8e37358b2294",
-    "patterns_binary.erl": "0254a9a4f496ad3235739b56c9d342410e9e80bd9d538ebe42ac0d7a94f07875"
+    "client.erl": "3557ff96875c27877033d7373cfc8a9f793bdeb197013f3b3198e28e95a9ab82",
+    "expected.txt": "05505572085b2bcb982555871b99cf2f2d97c07a94246659da49fe1a5c9a4ff6",
+    "pat_aliases.erl": "6af1fd8b87ff5717bedb7cc1e8cbd9309a9390cd6967fb650e4ef6fb498858fd",
+    "pat_arithmetic_type.erl": "89907dec0847fc14ceba815ba3c2250afafd31b16e86a00e42303b921ff58b56",
+    "pat_arithmetic_var.erl": "9e7704c7c2c32f2509a759294d5713446391af5477a0620895fed352c44c4e6e",
+    "pat_bin_alias.erl": "a98d32874f6c057b1b968083fb54eb9637b9221a91520c15ea71b4bde16f8fab",
+    "pat_bin_call.erl": "ea61c8867c4f437ad809584fbd2345d8375fd41aab50e75f1aa61dd48ddb818f",
+    "pat_bin_incoming.erl": "594497b56d2ec4d520aa84b8e5640ebf6e8e1ef9adc94ac7e183530884db832c",
+    "pat_bin_negative_size.erl": "e35266b33005bfcfcf2d853281a895372d49bca26fe7c7b4ddc50bee2b33a4fb",
+    "pat_bin_noninteger_size.erl": "bcc6cd0d1a1cbef80f2fe3ce9ec5336b3e5158fc98d6d3ecd6a5b7e20210b65a",
+    "pat_bin_sequential.erl": "69a3dbaabe20cd17a5da78aec07b37c0bd2b3ce526c03b0c8e1b7b00bf6fc811",
+    "pat_bin_size_badarith.erl": "699050590c917237966489afb6cb7e9b7dc6d8e4e185c444718aaafc33c1ffbb",
+    "pat_bin_size_container.erl": "d94a008fe0cbc95bcaec7df49f12c3811d0b393c19f1e46afc36a06367a6154c",
+    "pat_bin_string.erl": "c2e629900b09556247b53d78dce3c7d35c47342714d97a6f7a3217085ddfce9b",
+    "pat_bin_utf_string.erl": "cf4e0656b1ff8f248b0b12ad0cda0949621acd69d06e73233997d9fa5e129fc6",
+    "pat_body_chain.erl": "c5cfd76c9a9232ab1d1c233d7daeaca955cd13b2a14b464bd231d51692fb4a3f",
+    "pat_body_compound.erl": "67b6797cdc43f7984052c62922b12cff496926b7816229909f49e13848f41a66",
+    "pat_body_rhs.erl": "8bcc94b2c7810915423e8aaf00f822a9010da572b4c2d4465edab0674d120ce5",
+    "pat_boolean.erl": "5a6c19b5d18d19bcbce227703e76063a0c58eff3552b994bc915147a5fdf7d5c",
+    "pat_comparison.erl": "eeb27e8e307727965bef3eaabad47259af4464b047eeddf9fbe71b99b34bfbbb",
+    "pat_constants.erl": "dce306f5ca70ba08122ccd99bab26904a1a78fbc994d4c5a7f196c584824ed80",
+    "pat_containers.erl": "333e3a8419675bfa014a05da4d3e51e723dea151a278a5185adbd476d65bc703",
+    "pat_divide_zero.erl": "78326f25f220105b74ab1a8eb40cbb989c7c8de3ff73999bef09822962e8b6a0",
+    "pat_groups.erl": "183159f837fc7f74ebffa4d31bdcf02b1a1eed49fe44c7347708632601643944",
+    "pat_key_alias.erl": "a5bce16bda52987a2d07e78ca902c0a25f3bdc81b17a2110b3a35e4f7269a9ff",
+    "pat_key_alias_bound.erl": "36d1c056c58c30005fb3cded59b1bc86add699497db48f8a5036b589c1e89e4d",
+    "pat_key_alias_reverse.erl": "bc9570ceaced044b24f8d721ca0c45273b2dae9d5f95866eb4706981f8d244b5",
+    "pat_key_argument.erl": "e68d937879de8f48470d66e75080b53450b7eb2da80d9b7867c0e2d706936363",
+    "pat_key_bad_modifier.erl": "60e257f447b95f17dd15cfd5d86c83ea3c6d31c65acf1ccf6c208886134310b8",
+    "pat_key_badarith.erl": "941596439d77f32b5f36bf28a347da4f39a73a2e9908af58c07b509eeed0a126",
+    "pat_key_binary.erl": "be0d805348e258a1408c5f888b799c7d893e0d474eac8d84628ad993e162bce2",
+    "pat_key_binary_string_size.erl": "2b9c997a723dda1b61ea839e2c072bc4bff3ed972ab15c6ebe5764a676c58a95",
+    "pat_key_bool.erl": "87d79bc985c9df448827bcca5c18a36a84940633678417e70cb9465a76695b0b",
+    "pat_key_call.erl": "177d536714d83554f3451c4bf91fc9cee938be30f82b173dcd9e33a33ed69db0",
+    "pat_key_field.erl": "9795b6758db47dcf7890d62d73d3aba3d9ad3b72789dde04be4a0ffff2b80f9f",
+    "pat_key_import.erl": "3379ec83fa122eda2e539a8593d220023a7147f2f7a9965d957b401cebde832c",
+    "pat_key_import_erlang.erl": "1150e3c342f668d20b32643a0526bb29eb1471cb521bbd93d2f060f0b64cc5ea",
+    "pat_key_legacy.erl": "4e70754fb3637577ca03f0e08065ce10ef01be6be8d841e2c65cc1c45f27261a",
+    "pat_key_local_call.erl": "8c05911a823b63a066d2e12261a4f37c1d8685a6bbd6944f51196f74ba18e512",
+    "pat_key_map.erl": "521dca3bebb59d05d60b03dce40491aa7443e11533faf9e20de9817f4f239b42",
+    "pat_key_match.erl": "8c6fdbe0ab641454dddb69a216034400cf7d02d75968374642cd08b8de4159b0",
+    "pat_key_nested_call.erl": "5aa341c7d16a5027976af749fe2b915027bf5961af65985084fff812d585a288",
+    "pat_key_new_bif.erl": "f52f980ea346823cc66979957aaee108c85819952d474a8d877b3c261dd07cbe",
+    "pat_key_no_auto.erl": "b9b9898a7a07710d3011dd17ef161c4d8af62aa0a8fd1a9026662311f2ffcb0f",
+    "pat_key_no_auto_one.erl": "983b67c71efb7a9bef9b2bacafa9c2f066a32e5d669c0e26e46c8465738244b0",
+    "pat_key_no_auto_other.erl": "7a8d0ffb084aaa12f80e79c63054435f57b58aa2153bf6ce7bd0b6aec2889d4b",
+    "pat_key_no_auto_remote.erl": "438a30450d4d6037b03f053de24cf13846453aaefa5b2493f5f2a31f55f8a24b",
+    "pat_key_operator_call.erl": "bae5b9730e293762429e7bc86af68365c703ec2eb3a0e98f79a947b1500c5fc2",
+    "pat_key_remote.erl": "d7ccb62b24568d61a4d97b32d43f79468073e5a8d665be85fe6990d67654e442",
+    "pat_key_remote_call.erl": "71a8031b1b3ca6a2e85f1e75173b51e7d41ca98ef25775c68a7088b7def42c23",
+    "pat_key_shadow.erl": "a90be6dfcac6973d751f4bc3edced8ad4800a62f0c9fcaf8818f2040dce6c270",
+    "pat_key_shadow_qualified.erl": "212d6a86e76a83c7eadecf2a6bbc726a8a95da04ba4a1853fd4fc6593a487278",
+    "pat_key_sibling.erl": "d9a060de7f6e568e1c21d5074f0c9e1a030dff32c14f4ac64d4e70ebb68360e9",
+    "pat_key_tuple.erl": "132cdaf8e1f134a79138c144a33bde54cb970e9723821531f446dbeea80d319b",
+    "pat_key_unreachable.erl": "0335c699aaf0fe185b6d2d66c4e4e615d77b1b013dda909b22fde91d67803114",
+    "pat_key_wrong_arity.erl": "00849d6b73ce50e3fa95df4f29b86c10f50c7ee82f527bc13fcd0415e3ff59d7",
+    "pat_map_assoc.erl": "19bbf3a73cf36e6a4c2d0e59165444d74b8be48ab3420ab11e7dcd859f540e7a",
+    "pat_modifier.erl": "43e18e2f55a7bb644868b08c64fdeb01ebcb55887eee8e621eed00de46ec0ce1",
+    "pat_modifier_conflict.erl": "bd89f71c13fdaad0851fe71725c5182b769bfe9d948362cea56dee9be3c9426a",
+    "pat_nested_assignment_call.erl": "b152050128379590cf2b9ab0a874123a008c7075522dcb0b01fd310c0d3265eb",
+    "pat_nested_block.erl": "887f5731966ca60faa292bf6b20b66f043c50459be105ac30bdf37c3bd28f832",
+    "pat_nested_call.erl": "f24caae229b3e33b52af1576e5cd7a9caac5ef8b67a0fbbe5f57f3bbc5fb345e",
+    "pat_nested_case.erl": "49419eebc5db1eb0376911026f9e544f876ebf0a7d19ae5c541534da4a298150",
+    "pat_nested_map_call.erl": "5d6a13bb69a8f0e4de8e00b8047e8c806431f7135ba3ad4ff33d2e0120ccf1cd",
+    "pat_prefix.erl": "89dcb3955b2ff8ee5147853b4e06fef6725a2fb08b4fb89712a244721ce7f257",
+    "pat_prefix_atom.erl": "6185f1f965f63dc66680c0feaed3b8d54ddc1b8b0af00dc3c695e01d58d61863",
+    "pat_prefix_empty.erl": "74ca0d77f95e8027c04dfb193a1645313427581808cfc906b7ae18c3be5e4701",
+    "pat_prefix_group.erl": "83dcc70979e86248d6d6f470a1a785c9f49a6b37df8a1bcbf76e3966483599d0",
+    "pat_prefix_tail.erl": "ece0d473dfdcc3928199386a86cc2d63ac5ec15f7a87d1afc622f4441ca1be36",
+    "pat_prefix_variable.erl": "fb85a76611c371d24ccfcd4c5c673c53ee8e5a71db8a904d5db59df930f99e11",
+    "pat_record.erl": "57e16bae46b2c9403f880c9913014b0b463cfdf2d642c2312b0829e47caae3af",
+    "pat_record_index.erl": "db9470da751a133579bfd8893946578eae06cc90785ffedfc6b997aeb5543b74",
+    "pat_segment_alias.erl": "e19f0a599daed0806d43027a3dd0645257c77380bba74e0fd83af5c440472492",
+    "pat_segment_expr.erl": "4173986adf120d8dceb22af29f840256bd0427461241670b3bfef93c6301af98",
+    "pat_segment_nested.erl": "bffb91803197d5e4cbd7d8282cd81a28ec1ff41a061fc5e41f57abb7359a1515",
+    "pat_segment_tuple.erl": "5a0651a77cb593b2b42ab7ee8465ba8dc627cc0d123fe0de1cd060b2b3c9702a",
+    "pat_size_alias.erl": "b73f8d395b20539ba1e7e95873bd26d714c37afad6a41f88c960c7589b0d0c01",
+    "pat_size_alias_reverse.erl": "e0b6a7c35f9b30b6a1f0629e44addd495bfbcb3cc5a648eefcd0eab778a59e28",
+    "pat_size_argument.erl": "7a960b3e5d1b8c4855cf88d9750bbf94a8078dc4bb9503b687f9193e52c3d2e8",
+    "pat_size_bad_modifier.erl": "8346a0dd83cba7dec63818df786ba77ba9433cce5ad54d9329194d099772b69d",
+    "pat_size_call.erl": "2decc7bf6bd908622c6ff3b8dc9ab735ef11a2a69fd949986e05be62d8cb0516",
+    "pat_size_cross_binary.erl": "378ad3fc728ee020dc7985dbf067d7d74ec036bd2b9eaaf8f9f87877567d7146",
+    "pat_size_future.erl": "b658fb40f33c8b54e8c967d16f7d3d22899e7655f306651f278b95e12d535413",
+    "pat_size_match.erl": "d3db05710703e3adf43f74669392ae7e990af273c7d595ae525b4f0ef17ff5b1",
+    "pat_size_same_segment.erl": "6ae11004c203a4bfdb6c673e1c87611a71d29584f56e6efd3d2ec901be9482d0",
+    "pat_size_sibling.erl": "3a7bd51244144922e7b3d0f3fefe22e716da323174c3d6c70cfa5630ca6ae95f",
+    "pat_size_utf.erl": "becc40ab108dd379e605cbcec4674e09aeeb6e3bafff92b3a435574c32a824ef",
+    "pat_string_size.erl": "dc49dcdce6ba33338f2559dd36cb8ca8c113ae6eca0bae874db458d82e92719c",
+    "pat_type_alias_conflict.erl": "764d2f1af37c2b2b97354296f431982e4e0b4f79051385a4790498b4b841f825",
+    "pat_unit_alias_conflict.erl": "6f74fd1d8a3d01a765085d4f724f4ea39119392b56bf51a21a0dac2c6ed3b56c",
+    "pat_unit_default.erl": "25874add4ec45ac80497f81968670c558ca918d57a3216dbbe99f57cc1c94dff",
+    "pat_unit_utf.erl": "8c9d3ae39297c38218c761d37e54acebd2eb4e020fc93975c493d2f10e6adb0d",
+    "pat_unit_zero.erl": "64447de10f66a1a3385d3e526e5accf1da57a241bf41cea4f8e344e3b2ab6eaa",
+    "pat_unsized.erl": "fbfae20fe39ef01487bab32fea533b6c5b255104ca7ec96463775f2470dbd62b",
+    "patterns.term": "1a30cf05dccf0cccf547c4a36dcd760f840605ae90f61b6d0a2cfbbf9e4dfaa2",
+    "patterns_binary.erl": "4e671bec86388e044f1714100123245fb294ec9ea9a70cc3c3e7d46c0903b5dd"
   },
   "evidence": {
     "cases": [
@@ -143,7 +142,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "9e884f90d607485fe7d9056a9ade0fbe422f8647ad6a0fbd5ecf87c27433bd13"
+        "sha256": "dce306f5ca70ba08122ccd99bab26904a1a78fbc994d4c5a7f196c584824ed80"
       },
       {
         "name": "pat_containers",
@@ -152,7 +151,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "5cb450b449755e73f9c75775460a2b0d17df136161605d336ff53423a4d530f0"
+        "sha256": "333e3a8419675bfa014a05da4d3e51e723dea151a278a5185adbd476d65bc703"
       },
       {
         "name": "pat_aliases",
@@ -161,7 +160,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "4be716a9bf27adeae4ba88c5caa102067ca9556aa7a5fe9810cbd9e3e37d866b"
+        "sha256": "6af1fd8b87ff5717bedb7cc1e8cbd9309a9390cd6967fb650e4ef6fb498858fd"
       },
       {
         "name": "pat_groups",
@@ -170,7 +169,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "84e6bf0d82d4f2d6c8d30ca2a9fff19cf1ee9a2bde411168d8aa15fb6761264b"
+        "sha256": "183159f837fc7f74ebffa4d31bdcf02b1a1eed49fe44c7347708632601643944"
       },
       {
         "name": "pat_prefix",
@@ -179,7 +178,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "f5ee4b485c43042e4385e4d3ddb1e417ec2670f3bd7e4aeb377cf95f69a4d940"
+        "sha256": "89dcb3955b2ff8ee5147853b4e06fef6725a2fb08b4fb89712a244721ce7f257"
       },
       {
         "name": "pat_prefix_empty",
@@ -188,7 +187,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "427552f78fd779234e0813c20afaa3d4c6b3f119a3d4867526b0c776aee03512"
+        "sha256": "74ca0d77f95e8027c04dfb193a1645313427581808cfc906b7ae18c3be5e4701"
       },
       {
         "name": "pat_body_compound",
@@ -197,7 +196,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "c58dd441890db156a873907445d09520a15bc6f56114dd19161fdbc45a0ad37b"
+        "sha256": "67b6797cdc43f7984052c62922b12cff496926b7816229909f49e13848f41a66"
       },
       {
         "name": "pat_body_rhs",
@@ -206,25 +205,25 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "345764c2bb6b4dca42a97ba24245b76b66258d04c02ca52d7e6f382bcbff0797"
+        "sha256": "8bcc94b2c7810915423e8aaf00f822a9010da572b4c2d4465edab0674d120ce5"
       },
       {
         "name": "pat_key_tuple",
         "arity": 2,
-        "body": "f(Int, M) -> #{{tag,Int+1} := V} = M, V.",
+        "body": "f(Offset, Map) -> #{{ticket, Offset + 3} := Selected} = Map, Selected.",
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "d00424db5707ce83e00a894997029ba434102cb0112941a33a4799c971dedb5a"
+        "sha256": "132cdaf8e1f134a79138c144a33bde54cb970e9723821531f446dbeea80d319b"
       },
       {
         "name": "pat_key_call",
         "arity": 3,
-        "body": "f(X, Y, M) -> #{element(X,Y) := <<Sz:16,Bin:Sz/binary>>} = M, Bin.",
+        "body": "f(Position, Keys, Map) -> #{element(Position, Keys) := <<Count:8, Payload:Count/binary>>} = Map, Payload.",
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "f501e2a2a7d7eb853be17a987d2fa02352a7634e34213d96c2d294dbd6a86edc"
+        "sha256": "177d536714d83554f3451c4bf91fc9cee938be30f82b173dcd9e33a33ed69db0"
       },
       {
         "name": "pat_key_remote",
@@ -233,16 +232,16 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "ade5abef7fdc2a3c6d7331355d8675670db19fe7ab6510c587d2c13d241917d1"
+        "sha256": "d7ccb62b24568d61a4d97b32d43f79468073e5a8d665be85fe6990d67654e442"
       },
       {
         "name": "pat_key_binary",
         "arity": 2,
-        "body": "f(Int,M) -> #{{tag,<<Int:42>>} := V} = M, V.",
+        "body": "f(Number, Map) -> #{{entry, <<Number:24/little>>} := Selected} = Map, Selected.",
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "bf64cbed8fb62ebebb9df1a8d292a7237394a1a4bba2fc37ae0ced91b7248701"
+        "sha256": "be0d805348e258a1408c5f888b799c7d893e0d474eac8d84628ad993e162bce2"
       },
       {
         "name": "pat_key_map",
@@ -251,16 +250,16 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "f900ff6119653bdf60c49ad3318cfcad5bf8d1aa1eb3142be6f7a1222456eced"
+        "sha256": "521dca3bebb59d05d60b03dce40491aa7443e11533faf9e20de9817f4f239b42"
       },
       {
         "name": "pat_key_badarith",
         "arity": 1,
-        "body": "f(#{1 div 0 := V}) -> V.",
+        "body": "f(#{8 div 0 := Selected}) -> Selected.",
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "01d9415285dda8131fb08ebef8c81ec12e5a0a6daf760ca7440cfae3bc62e2b4"
+        "sha256": "941596439d77f32b5f36bf28a347da4f39a73a2e9908af58c07b509eeed0a126"
       },
       {
         "name": "pat_key_bool",
@@ -269,7 +268,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "612bf1fb485cc9f9ba7952ff8d2695ab5d364db9e82eaf0bb2ad68542ee9cced"
+        "sha256": "87d79bc985c9df448827bcca5c18a36a84940633678417e70cb9465a76695b0b"
       },
       {
         "name": "pat_key_new_bif",
@@ -278,7 +277,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "03db149dc5651ec83b87f89500a71a2d098597072e045903262112fe690cd644"
+        "sha256": "f52f980ea346823cc66979957aaee108c85819952d474a8d877b3c261dd07cbe"
       },
       {
         "name": "pat_bin_sequential",
@@ -287,7 +286,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "5f6eca9878a78c57a08caa8a03095b3be2925170ee5eace596afce76a44e94fc"
+        "sha256": "69a3dbaabe20cd17a5da78aec07b37c0bd2b3ce526c03b0c8e1b7b00bf6fc811"
       },
       {
         "name": "pat_bin_incoming",
@@ -296,7 +295,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "855178c782ad984c013fac65658078aec518323a9738923bdc96a15da722f68e"
+        "sha256": "594497b56d2ec4d520aa84b8e5640ebf6e8e1ef9adc94ac7e183530884db832c"
       },
       {
         "name": "pat_bin_call",
@@ -305,7 +304,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "29aac9a4ca02d11c34f134b667481d24864261050600466d573d20f703040066"
+        "sha256": "ea61c8867c4f437ad809584fbd2345d8375fd41aab50e75f1aa61dd48ddb818f"
       },
       {
         "name": "pat_bin_alias",
@@ -314,7 +313,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "dbddd852ed9c8d5894ae9212a7a43065ecc74edd5c9206149873e3c0f6321ff9"
+        "sha256": "a98d32874f6c057b1b968083fb54eb9637b9221a91520c15ea71b4bde16f8fab"
       },
       {
         "name": "pat_bin_string",
@@ -323,7 +322,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "777e3341247777d80fc7fa02d1db46970a1922a676b17900e3858e574ccf05df"
+        "sha256": "c2e629900b09556247b53d78dce3c7d35c47342714d97a6f7a3217085ddfce9b"
       },
       {
         "name": "pat_bin_utf_string",
@@ -332,7 +331,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "992322f475589ddd92efbfb0b54044842369aa91cf099d93323e56d47af9b288"
+        "sha256": "cf4e0656b1ff8f248b0b12ad0cda0949621acd69d06e73233997d9fa5e129fc6"
       },
       {
         "name": "pat_bin_noninteger_size",
@@ -341,7 +340,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "155a64b6640260f1e17cec93d71bf1e01ede7d9f1a7976bd562f1c322256d02b"
+        "sha256": "bcc6cd0d1a1cbef80f2fe3ce9ec5336b3e5158fc98d6d3ecd6a5b7e20210b65a"
       },
       {
         "name": "pat_bin_negative_size",
@@ -350,7 +349,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "5b5d7b4c21d4e8993ed9240cbdcfb9261eb817cc4c9831f2c4af1123f04c2f58"
+        "sha256": "e35266b33005bfcfcf2d853281a895372d49bca26fe7c7b4ddc50bee2b33a4fb"
       },
       {
         "name": "pat_bin_size_container",
@@ -359,7 +358,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "8a6421407a5e2f620307d2ee56f698e8d7e781a6647a67d440a611671cd7bf5f"
+        "sha256": "d94a008fe0cbc95bcaec7df49f12c3811d0b393c19f1e46afc36a06367a6154c"
       },
       {
         "name": "pat_bin_size_badarith",
@@ -368,7 +367,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "e92cddbdb052fa4db8688f4464f98463b6f5e1ff4e8f1ff7313f2375b8ffa835"
+        "sha256": "699050590c917237966489afb6cb7e9b7dc6d8e4e185c444718aaafc33c1ffbb"
       },
       {
         "name": "pat_record",
@@ -377,7 +376,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "370392e602b678d468aeca7ecf22eb13fdc9ddb5253f5f19494d9f69f1bda047"
+        "sha256": "57e16bae46b2c9403f880c9913014b0b463cfdf2d642c2312b0829e47caae3af"
       },
       {
         "name": "pat_record_index",
@@ -386,7 +385,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "7794c22602b0fdbd16bb5019c8834f088efb316409e9be43fd764bcc4b59ca62"
+        "sha256": "db9470da751a133579bfd8893946578eae06cc90785ffedfc6b997aeb5543b74"
       },
       {
         "name": "pat_body_chain",
@@ -395,7 +394,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "d1b6a01614ce12646627b155dd190c46ea087f8c7bfcf3915a5efa0f26be0358"
+        "sha256": "c5cfd76c9a9232ab1d1c233d7daeaca955cd13b2a14b464bd231d51692fb4a3f"
       },
       {
         "name": "pat_nested_call",
@@ -404,7 +403,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "76431ce4751bae667b0d5f1f97be4b440bf3b97211bdfa655de613bf74cd03dc"
+        "sha256": "f24caae229b3e33b52af1576e5cd7a9caac5ef8b67a0fbbe5f57f3bbc5fb345e"
       },
       {
         "name": "pat_nested_assignment_call",
@@ -413,7 +412,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "e789e263bfe21084c6d685ac1e0f87c2aa5b1b0ef47cebd2c42e9e4835b4129e"
+        "sha256": "b152050128379590cf2b9ab0a874123a008c7075522dcb0b01fd310c0d3265eb"
       },
       {
         "name": "pat_nested_map_call",
@@ -422,7 +421,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "2793f0f170d6d01808b84c4ab01b4738954cece22acd12eb31d97d44dee2d251"
+        "sha256": "5d6a13bb69a8f0e4de8e00b8047e8c806431f7135ba3ad4ff33d2e0120ccf1cd"
       },
       {
         "name": "pat_nested_block",
@@ -431,7 +430,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "d130818a48f5a102c9b5b4f34dbcca85d379c7a5c05d2a7f835aaabdb7efa6c1"
+        "sha256": "887f5731966ca60faa292bf6b20b66f043c50459be105ac30bdf37c3bd28f832"
       },
       {
         "name": "pat_nested_case",
@@ -440,7 +439,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "4c6cb04c68852d0335fbf592b578f6b612ffe7e8bcd890d1acbecc357b271c9e"
+        "sha256": "49419eebc5db1eb0376911026f9e544f876ebf0a7d19ae5c541534da4a298150"
       },
       {
         "name": "pat_arithmetic_var",
@@ -449,7 +448,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "02f2f3078ff36de85f8bfde4ead94c5bca1f6c1decade20fa05d7039fc9f96f4"
+        "sha256": "9e7704c7c2c32f2509a759294d5713446391af5477a0620895fed352c44c4e6e"
       },
       {
         "name": "pat_arithmetic_type",
@@ -458,7 +457,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "e6635de86d5eb8728703518511edcb2918de828a788f311d2fff3dbc766ec362"
+        "sha256": "89907dec0847fc14ceba815ba3c2250afafd31b16e86a00e42303b921ff58b56"
       },
       {
         "name": "pat_divide_zero",
@@ -467,7 +466,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "3e3ef78e1987d3d0b2731e29cb7f2ca60007f7fbdf52ed81d43effd3e287fedd"
+        "sha256": "78326f25f220105b74ab1a8eb40cbb989c7c8de3ff73999bef09822962e8b6a0"
       },
       {
         "name": "pat_comparison",
@@ -476,7 +475,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "45ca978e0d29541f4c4f31c73614a73dfde03ad68a137457be7d40b70a8c739f"
+        "sha256": "eeb27e8e307727965bef3eaabad47259af4464b047eeddf9fbe71b99b34bfbbb"
       },
       {
         "name": "pat_boolean",
@@ -485,7 +484,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "0c76851906faf4575a7b545b1c99b779524cb860317abc8054151d6d0d59a390"
+        "sha256": "5a6c19b5d18d19bcbce227703e76063a0c58eff3552b994bc915147a5fdf7d5c"
       },
       {
         "name": "pat_prefix_atom",
@@ -494,7 +493,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "bd3710b3642a5a0d491f55dea3d78d9c8d42af675fd88fc9ee2c2e75a36e627a"
+        "sha256": "6185f1f965f63dc66680c0feaed3b8d54ddc1b8b0af00dc3c695e01d58d61863"
       },
       {
         "name": "pat_prefix_variable",
@@ -503,7 +502,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "cb821866234e20e2928833531578bd8a0a4d67f1fefbf88ef37fa23e6d62f018"
+        "sha256": "fb85a76611c371d24ccfcd4c5c673c53ee8e5a71db8a904d5db59df930f99e11"
       },
       {
         "name": "pat_map_assoc",
@@ -512,7 +511,7 @@
         "diagnostic": "map pattern requires ':='",
         "otp_diagnostic": "illegal_map_assoc_in_pattern",
         "capability": "pattern matching",
-        "sha256": "235be568760ce298f64edc7ee8735ad2f2e0d6968820160f8fe29acf22bad3bf"
+        "sha256": "19bbf3a73cf36e6a4c2d0e59165444d74b8be48ab3420ab11e7dcd859f540e7a"
       },
       {
         "name": "pat_key_sibling",
@@ -521,7 +520,7 @@
         "diagnostic": "unbound variable K",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "3e1cb667f4d3bcfe90187e90e3045b8d2f458cc98aab96a3e92864c0d0fc1d03"
+        "sha256": "d9a060de7f6e568e1c21d5074f0c9e1a030dff32c14f4ac64d4e70ebb68360e9"
       },
       {
         "name": "pat_key_argument",
@@ -530,7 +529,7 @@
         "diagnostic": "unbound variable K",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "93bc492925838389818a87d242198ef3b5612b2d1e6c564a9503c33a547bc5cc"
+        "sha256": "e68d937879de8f48470d66e75080b53450b7eb2da80d9b7867c0e2d706936363"
       },
       {
         "name": "pat_key_alias",
@@ -539,7 +538,7 @@
         "diagnostic": "unbound variable K",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "fd11d1c89c2e6b342d750e7f86119e6c0063d4fafc3f5e4b7b824ce08eb3eb53"
+        "sha256": "a5bce16bda52987a2d07e78ca902c0a25f3bdc81b17a2110b3a35e4f7269a9ff"
       },
       {
         "name": "pat_key_alias_reverse",
@@ -548,7 +547,7 @@
         "diagnostic": "unbound variable K",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "c2948a714f8c5082b3a113478c3189c4e9ddeb56de183627b949986bc3e4953d"
+        "sha256": "bc9570ceaced044b24f8d721ca0c45273b2dae9d5f95866eb4706981f8d244b5"
       },
       {
         "name": "pat_key_field",
@@ -557,7 +556,7 @@
         "diagnostic": "unbound variable K",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "238024c7af9d9fdf39bb0cdd81001407b70eb255b138e385c33bee2e2df5e5d7"
+        "sha256": "9795b6758db47dcf7890d62d73d3aba3d9ad3b72789dde04be4a0ffff2b80f9f"
       },
       {
         "name": "pat_key_alias_bound",
@@ -566,7 +565,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "79bbd2a4ffd01d40d949b3ef33ad03d1b0d305e026fa1eb48eb038c7c03af7dc"
+        "sha256": "36d1c056c58c30005fb3cded59b1bc86add699497db48f8a5036b589c1e89e4d"
       },
       {
         "name": "pat_key_match",
@@ -575,7 +574,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "7875424590d7bd215c06a6988de13e7274472c0a571f1207b49a060be5a88c90"
+        "sha256": "8c6fdbe0ab641454dddb69a216034400cf7d02d75968374642cd08b8de4159b0"
       },
       {
         "name": "pat_key_local_call",
@@ -584,7 +583,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_local_call",
         "capability": "pattern matching",
-        "sha256": "2358641e53b8996a1e76ab3be69c3b7dd214547d6f19d96dd2a4a45bb87bc098"
+        "sha256": "8c05911a823b63a066d2e12261a4f37c1d8685a6bbd6944f51196f74ba18e512"
       },
       {
         "name": "pat_key_nested_call",
@@ -593,7 +592,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_local_call",
         "capability": "pattern matching",
-        "sha256": "4631f39fca9271f0181158bfad5aca86790b7d9750e542f618b73c2dcfc1c13d"
+        "sha256": "5aa341c7d16a5027976af749fe2b915027bf5961af65985084fff812d585a288"
       },
       {
         "name": "pat_key_remote_call",
@@ -602,7 +601,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "6f83f21cc8f16b992c23cd33cfcd659cf5d9b820c1952ecad97b2397c018ac09"
+        "sha256": "71a8031b1b3ca6a2e85f1e75173b51e7d41ca98ef25775c68a7088b7def42c23"
       },
       {
         "name": "pat_key_wrong_arity",
@@ -611,7 +610,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "40386db22e1f90f3ef0a106455081237ec769a88bd121b59c43e57e00bed80e7"
+        "sha256": "00849d6b73ce50e3fa95df4f29b86c10f50c7ee82f527bc13fcd0415e3ff59d7"
       },
       {
         "name": "pat_key_shadow",
@@ -620,7 +619,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_local_call",
         "capability": "pattern matching",
-        "sha256": "191f835f638456949c0f19e8005be56773f5a28de3ee003912a1d31a9224472d"
+        "sha256": "a90be6dfcac6973d751f4bc3edced8ad4800a62f0c9fcaf8818f2040dce6c270"
       },
       {
         "name": "pat_key_shadow_qualified",
@@ -629,7 +628,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "35d0345076cd9433f5fca4665634386f7f9fb19c7b52adf6a741de9ff8029b61"
+        "sha256": "212d6a86e76a83c7eadecf2a6bbc726a8a95da04ba4a1853fd4fc6593a487278"
       },
       {
         "name": "pat_key_unreachable",
@@ -638,7 +637,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_local_call",
         "capability": "pattern matching",
-        "sha256": "b11065c57db80be27de87ce42c26dd996a48919a2a87365f927a4763ed8efbef"
+        "sha256": "0335c699aaf0fe185b6d2d66c4e4e615d77b1b013dda909b22fde91d67803114"
       },
       {
         "name": "pat_key_legacy",
@@ -647,7 +646,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "7b6abe0e4762b0012cb48eb30b70e81aaddffa4de5df87b43a19b5fe62a60d15"
+        "sha256": "4e70754fb3637577ca03f0e08065ce10ef01be6be8d841e2c65cc1c45f27261a"
       },
       {
         "name": "pat_size_sibling",
@@ -656,7 +655,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "3baeb55dd85ab5da095d4f3ab9429652a11275245006147208283a8d88f99a50"
+        "sha256": "3a7bd51244144922e7b3d0f3fefe22e716da323174c3d6c70cfa5630ca6ae95f"
       },
       {
         "name": "pat_size_argument",
@@ -665,7 +664,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "e731d973fbb561ec00910953ea3cac7ad0170e090a68cc0850f2087b2e0ba762"
+        "sha256": "7a960b3e5d1b8c4855cf88d9750bbf94a8078dc4bb9503b687f9193e52c3d2e8"
       },
       {
         "name": "pat_size_alias",
@@ -674,7 +673,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "dd3cabff6c11084bf652d5724ea11da95d0172c9c81c47d04eb7d59f1246f839"
+        "sha256": "b73f8d395b20539ba1e7e95873bd26d714c37afad6a41f88c960c7589b0d0c01"
       },
       {
         "name": "pat_size_alias_reverse",
@@ -683,7 +682,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "21337d30e28b41b6060a0f28bde1005f907e965e7ea408943b7a29a1b5757027"
+        "sha256": "e0b6a7c35f9b30b6a1f0629e44addd495bfbcb3cc5a648eefcd0eab778a59e28"
       },
       {
         "name": "pat_size_cross_binary",
@@ -692,7 +691,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "2593406e9d47a0982ab2789deb7ff8e78a71412c22f476f263cdebb9a11698e8"
+        "sha256": "378ad3fc728ee020dc7985dbf067d7d74ec036bd2b9eaaf8f9f87877567d7146"
       },
       {
         "name": "pat_size_same_segment",
@@ -701,7 +700,7 @@
         "diagnostic": "unbound variable X",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "93e6a86e390b42aae3890d17cb6576077b9e25a10b68ac7bb1235640ba03f118"
+        "sha256": "6ae11004c203a4bfdb6c673e1c87611a71d29584f56e6efd3d2ec901be9482d0"
       },
       {
         "name": "pat_size_future",
@@ -710,7 +709,7 @@
         "diagnostic": "unbound variable N",
         "otp_diagnostic": "unbound_var",
         "capability": "pattern matching",
-        "sha256": "0217a39f25ca9c33c8c526215f55b4f0b6d6ea2ebd36d4ad3e91cea1820193b0"
+        "sha256": "b658fb40f33c8b54e8c967d16f7d3d22899e7655f306651f278b95e12d535413"
       },
       {
         "name": "pat_size_match",
@@ -719,7 +718,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_bitsize",
         "capability": "pattern matching",
-        "sha256": "8bbadc2982b63ae4e15e400d7dac0a5cc36d6ec3c70a910fb7409cf13def4440"
+        "sha256": "d3db05710703e3adf43f74669392ae7e990af273c7d595ae525b4f0ef17ff5b1"
       },
       {
         "name": "pat_size_call",
@@ -728,7 +727,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_bitsize_local_call",
         "capability": "pattern matching",
-        "sha256": "b9084d21e5224ad8bf32c0f70ead74e0ff25607ca3014ba9f60dcb8dd9195fb4"
+        "sha256": "2decc7bf6bd908622c6ff3b8dc9ab735ef11a2a69fd949986e05be62d8cb0516"
       },
       {
         "name": "pat_segment_tuple",
@@ -737,7 +736,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "9c742af0b5fdea65cd175e1e1b25595fb0539fad70a6e887f554e0ea3ab8bef6"
+        "sha256": "5a0651a77cb593b2b42ab7ee8465ba8dc627cc0d123fe0de1cd060b2b3c9702a"
       },
       {
         "name": "pat_segment_alias",
@@ -746,7 +745,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "9c154903583b90d8516102f008f3895375a3069cf037e18a51ccee35866073b3"
+        "sha256": "e19f0a599daed0806d43027a3dd0645257c77380bba74e0fd83af5c440472492"
       },
       {
         "name": "pat_segment_nested",
@@ -755,7 +754,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "ec70240b60fcaa6923371ad5cb7c0e274ff4e5c26858269f42005a8ce3b54c03"
+        "sha256": "bffb91803197d5e4cbd7d8282cd81a28ec1ff41a061fc5e41f57abb7359a1515"
       },
       {
         "name": "pat_segment_expr",
@@ -764,7 +763,7 @@
         "diagnostic": "illegal pattern",
         "otp_diagnostic": "illegal_pattern",
         "capability": "pattern matching",
-        "sha256": "29cf0b9e148a7b913b9c672fd9a9b4b18c06c06de3061d80c0c92491ba3e40a2"
+        "sha256": "4173986adf120d8dceb22af29f840256bd0427461241670b3bfef93c6301af98"
       },
       {
         "name": "pat_unsized",
@@ -773,7 +772,7 @@
         "diagnostic": "unsized binary pattern segment must be last",
         "otp_diagnostic": "unsized_binary_not_at_end",
         "capability": "pattern matching",
-        "sha256": "3344e0cae87d09a2658099968089accbdc9b88df97b7e1ad707a2d4a9f335430"
+        "sha256": "fbfae20fe39ef01487bab32fea533b6c5b255104ca7ec96463775f2470dbd62b"
       },
       {
         "name": "pat_modifier",
@@ -782,7 +781,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "undefined_bittype",
         "capability": "pattern matching",
-        "sha256": "5a62aa9d3f22a5e727f8e02f90382fde016d098211166347f706c0e943277355"
+        "sha256": "43e18e2f55a7bb644868b08c64fdeb01ebcb55887eee8e621eed00de46ec0ce1"
       },
       {
         "name": "pat_modifier_conflict",
@@ -791,7 +790,7 @@
         "diagnostic": "conflicting binary pattern modifiers",
         "otp_diagnostic": "bittype_mismatch",
         "capability": "pattern matching",
-        "sha256": "86c90396b4fc2839304c45465e4839bdbb7de73cda742708126b214c0deda022"
+        "sha256": "bd89f71c13fdaad0851fe71725c5182b769bfe9d948362cea56dee9be3c9426a"
       },
       {
         "name": "pat_unit_zero",
@@ -800,7 +799,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "undefined_bittype",
         "capability": "pattern matching",
-        "sha256": "d01809c190d16007f83376febc8bb05539525f5b5317de7fe6a0c7f520a78e0e"
+        "sha256": "64447de10f66a1a3385d3e526e5accf1da57a241bf41cea4f8e344e3b2ab6eaa"
       },
       {
         "name": "pat_unit_utf",
@@ -809,7 +808,7 @@
         "diagnostic": "UTF binary pattern segment cannot have size or unit",
         "otp_diagnostic": "utf_bittype_size_or_unit",
         "capability": "pattern matching",
-        "sha256": "3784161838339da6dfaee56dba75ab5b39f2acc9b96a11db15a868c5e4489a41"
+        "sha256": "8c9d3ae39297c38218c761d37e54acebd2eb4e020fc93975c493d2f10e6adb0d"
       },
       {
         "name": "pat_size_utf",
@@ -818,7 +817,7 @@
         "diagnostic": "UTF binary pattern segment cannot have size or unit",
         "otp_diagnostic": "utf_bittype_size_or_unit",
         "capability": "pattern matching",
-        "sha256": "aba0df62450f3d5786e4c42b8991b95760285d13b113c4431c81e379f14255e2"
+        "sha256": "becc40ab108dd379e605cbcec4674e09aeeb6e3bafff92b3a435574c32a824ef"
       },
       {
         "name": "pat_string_size",
@@ -827,7 +826,7 @@
         "diagnostic": "literal string pattern cannot have this size or type",
         "otp_diagnostic": "typed_literal_string",
         "capability": "pattern matching",
-        "sha256": "765c9f3c82102fc811c1087c4a227bc1fb32413e9c906c2773aa49f2fc8ae0ca"
+        "sha256": "dc49dcdce6ba33338f2559dd36cb8ca8c113ae6eca0bae874db458d82e92719c"
       },
       {
         "name": "pat_prefix_tail",
@@ -836,7 +835,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "ba4a5b2ae751a57f7b76bf2a0c921dd2975e4be6b56a48ad99093b848c550755"
+        "sha256": "ece0d473dfdcc3928199386a86cc2d63ac5ec15f7a87d1afc622f4441ca1be36"
       },
       {
         "name": "pat_prefix_group",
@@ -845,7 +844,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "dedb89814f9bceebec0f5b72a2cedcdca443e95ae4de11e9dfe42f13d89b7610"
+        "sha256": "83dcc70979e86248d6d6f470a1a785c9f49a6b37df8a1bcbf76e3966483599d0"
       },
       {
         "name": "pat_key_operator_call",
@@ -854,7 +853,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "361181b32ba1dd2ecbb3075c1e5aa170433d4ba7022d0a156719eb3725a0d413"
+        "sha256": "bae5b9730e293762429e7bc86af68365c703ec2eb3a0e98f79a947b1500c5fc2"
       },
       {
         "name": "pat_key_no_auto",
@@ -863,7 +862,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "2a1aa0e13ae49097452f167d860634ae1df40d2ef18f5639de16b8b7842cf35d"
+        "sha256": "b9b9898a7a07710d3011dd17ef161c4d8af62aa0a8fd1a9026662311f2ffcb0f"
       },
       {
         "name": "pat_key_no_auto_one",
@@ -872,7 +871,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_expr",
         "capability": "pattern matching",
-        "sha256": "6d674da3430ceffe4c51b3aa7042bb005f90a45ef8c5253ee44632662eeccacc"
+        "sha256": "983b67c71efb7a9bef9b2bacafa9c2f066a32e5d669c0e26e46c8465738244b0"
       },
       {
         "name": "pat_key_no_auto_other",
@@ -881,7 +880,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "393644b6b7b30193b626aceb1a9f99911c59528a97c7bcb917c5a82c45c92480"
+        "sha256": "7a8d0ffb084aaa12f80e79c63054435f57b58aa2153bf6ce7bd0b6aec2889d4b"
       },
       {
         "name": "pat_key_no_auto_remote",
@@ -890,7 +889,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "207c9e9881ad5e67c634b863c0465dc7b1280bb89539f5cd3484adfa4f48838c"
+        "sha256": "438a30450d4d6037b03f053de24cf13846453aaefa5b2493f5f2a31f55f8a24b"
       },
       {
         "name": "pat_key_import",
@@ -899,7 +898,7 @@
         "diagnostic": "illegal expression in pattern key or size",
         "otp_diagnostic": "illegal_guard_local_call",
         "capability": "pattern matching",
-        "sha256": "3b96fd570828fd555c2d7879c30c27ddb7d3b67f21da10b6691192f1cfa78dbb"
+        "sha256": "3379ec83fa122eda2e539a8593d220023a7147f2f7a9965d957b401cebde832c"
       },
       {
         "name": "pat_key_import_erlang",
@@ -908,7 +907,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "40c3d8c610265920d8e3f7a0b7500f4b2403d352db9388d3c8356c40cb89349a"
+        "sha256": "1150e3c342f668d20b32643a0526bb29eb1471cb521bbd93d2f060f0b64cc5ea"
       },
       {
         "name": "pat_unit_default",
@@ -917,7 +916,7 @@
         "diagnostic": "binary pattern unit requires an explicit size",
         "otp_diagnostic": "bittype_unit",
         "capability": "pattern matching",
-        "sha256": "e2506b8e55f1650df8b5c7ca77d7c19dc44bf071b829ce7318bd29d4de8cc951"
+        "sha256": "25874add4ec45ac80497f81968670c558ca918d57a3216dbbe99f57cc1c94dff"
       },
       {
         "name": "pat_unit_alias_conflict",
@@ -926,7 +925,7 @@
         "diagnostic": "conflicting binary pattern modifiers",
         "otp_diagnostic": "bittype_mismatch",
         "capability": "pattern matching",
-        "sha256": "bd5e6331a359f58bce0e4a89892669af112bffea28a593e9bf8a1396610061d4"
+        "sha256": "6f74fd1d8a3d01a765085d4f724f4ea39119392b56bf51a21a0dac2c6ed3b56c"
       },
       {
         "name": "pat_type_alias_conflict",
@@ -935,7 +934,7 @@
         "diagnostic": "conflicting binary pattern modifiers",
         "otp_diagnostic": "bittype_mismatch",
         "capability": "pattern matching",
-        "sha256": "0aed2f87aadf4be4f52172170495194f3490994ce9a1ee20b4678f1e07dde656"
+        "sha256": "764d2f1af37c2b2b97354296f431982e4e0b4f79051385a4790498b4b841f825"
       },
       {
         "name": "pat_key_bad_modifier",
@@ -944,7 +943,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "undefined_bittype",
         "capability": "pattern matching",
-        "sha256": "1ebd3b0c6eb799fc696c629f4cf5529ea78a479c22ededcd94db42b3a1c1baaf"
+        "sha256": "60e257f447b95f17dd15cfd5d86c83ea3c6d31c65acf1ccf6c208886134310b8"
       },
       {
         "name": "pat_key_binary_string_size",
@@ -953,7 +952,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "b6cc0644d0753be9f7eab4e1b6a86522bd20d47f488db18c697e8e30cd296a11"
+        "sha256": "2b9c997a723dda1b61ea839e2c072bc4bff3ed972ab15c6ebe5764a676c58a95"
       },
       {
         "name": "pat_size_bad_modifier",
@@ -962,7 +961,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "undefined_bittype",
         "capability": "pattern matching",
-        "sha256": "1948310defc170f637263b028b6ffadcde225d3d20eaeb447df3c8ef61ab5f76"
+        "sha256": "8346a0dd83cba7dec63818df786ba77ba9433cce5ad54d9329194d099772b69d"
       },
       {
         "name": "bit_construct_unknown",
@@ -971,7 +970,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "087c34fd655c540f47263e5f184ebbe0ade90e7f441f5cd1deaafd42cd46f943"
+        "sha256": "08db3ce20cfdbfaca8c99106ddc0982c0d5b784ea6a1bcec6732b6fbf5bdcb1a"
       },
       {
         "name": "bit_construct_conflict",
@@ -980,7 +979,7 @@
         "diagnostic": "conflicting binary pattern modifiers",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "75f18ec337cd57e9e06a708ea530fd263f95cba44aac03fa552addce4d2bdd2e"
+        "sha256": "526626c01188b3a39b6c8f223573c13a843e73a89470db3148644c6c7df84cfb"
       },
       {
         "name": "bit_construct_unit_high",
@@ -989,7 +988,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "ecf153c40b3f99a2bf69ba221ca19fdc1d8dda4de3cf0324cdea57c3c0985a88"
+        "sha256": "1a1fa6e9bcf9a7eb5d066d95040abfe73589a94857319f4df3775e078b779dc5"
       },
       {
         "name": "bit_construct_unit_default",
@@ -998,7 +997,7 @@
         "diagnostic": "binary pattern unit requires an explicit size",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "b2e0495134c1ce3ecd047643ef92328c62cb085ef388365254871f96fde2e8ee"
+        "sha256": "0382b41ea16e929f1664faf9e508c0b5a288b98833c6fd50a36cef315f75903d"
       },
       {
         "name": "bit_construct_utf_size",
@@ -1007,7 +1006,7 @@
         "diagnostic": "UTF binary pattern segment cannot have size or unit",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "78daf532ed83237d451eafaddfc29a72593c94ba860125d4c40be2554a87d66b"
+        "sha256": "3f56d7c4fbf29d2a14cd0beb083155319f25a46a15691f8431e8f25502e56696"
       },
       {
         "name": "bit_construct_all_integer",
@@ -1016,7 +1015,7 @@
         "diagnostic": "invalid binary size",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "7c6e46b2d82c7f710992da63d192797bca2856b65c386aa920ba74b008723a9d"
+        "sha256": "8caf99d411147b112fe55df474a4854de9649c0066d2f25c351d557c8267c737"
       },
       {
         "name": "bit_guard_unknown",
@@ -1025,7 +1024,7 @@
         "diagnostic": "invalid binary pattern modifier",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "ff31ff02a6d295c74c184065930bade04f81e9f45f6f9d9a9b71e8cb32c47027"
+        "sha256": "d63e233d4d6b50bdb2d6d67c49d1f1701ada230a8865e96fb1a6c3c9520c0b28"
       },
       {
         "name": "bit_construct_unit256",
@@ -1034,7 +1033,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "d568ae903a6041787b47eaf5feb16326f608987bc31486c3690f352aa2907cdb"
+        "sha256": "6fa8afb4278c8ba6da3f9844d4462e077c7c0afcff1448958258f24c308b7880"
       },
       {
         "name": "bit_pattern_unit256",
@@ -1043,7 +1042,7 @@
         "diagnostic": "",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "eff6a29cf68e02412850ba1746c70a65cb95104551738c1b852cbe6bc6f59487"
+        "sha256": "0d9cac56ea946830c1d330bd58adbb5103b3cc9f3ea71a8b11d89242c05c6424"
       },
       {
         "name": "bit_construct_utf_undefined",
@@ -1052,7 +1051,7 @@
         "diagnostic": "UTF binary pattern segment cannot have size or unit",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "7170fadc6d884ad7cdfbeca9de1ebf2f12b62352fc061f8edd929573cf57c10d"
+        "sha256": "6239a6945da39d4563175bbac2f2cb86cbdd48cb1eec880634a9c62e07810078"
       },
       {
         "name": "bit_pattern_utf_undefined",
@@ -1061,67 +1060,135 @@
         "diagnostic": "UTF binary pattern segment cannot have size or unit",
         "otp_diagnostic": "",
         "capability": "",
-        "sha256": "8c73443d5967a455def65d535fe474fdbcbadabcb15d5307e4e6640a11cf5660"
+        "sha256": "2c3d6cca1265b2fe033a687708cccb2636c92567360c9dd001acac684fca272a"
       },
       {
-        "name": "bindings_otp",
+        "name": "bindings_local",
         "diagnostic": "",
-        "capability": ""
+        "capability": "",
+        "sha256": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a"
       },
       {
         "name": "patterns_binary",
         "diagnostic": "",
-        "capability": ""
+        "capability": "",
+        "sha256": "4e671bec86388e044f1714100123245fb294ec9ea9a70cc3c3e7d46c0903b5dd"
       }
     ],
     "helpers": {
-      "match": {
-        "source": "lib\\compiler\\test\\match_SUITE.erl",
-        "source_sha256": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4",
-        "helpers": [
-          {
-            "function": "gh_6516_scope1/0",
-            "clause": "gh_6516_scope1() ->\n    {X = 4, X = 3}."
-          },
-          {
-            "function": "gh_6516_scope2/0",
-            "clause": "gh_6516_scope2() ->\n  {X = 4, _ = X = 3}."
-          },
-          {
-            "function": "mutable_variables_1/0",
-            "clause": "mutable_variables_1() ->\n    Zero = 0,\n    One = 1,\n    Result = One = Zero,\n    {Result,One,Zero}."
-          },
-          {
-            "function": "match_right_tuple_1/1",
-            "clause": "match_right_tuple_1(T) ->\n    {A, _} = T,\n    {_, B} = A,\n    %% The call ensures that A is in {x,0} and B is in {x,1}\n    id(force_succ_regs(A, B))."
-          },
-          {
-            "function": "force_succ_regs/2",
-            "clause": "force_succ_regs(_A, B) -> B."
-          },
-          {
-            "function": "id/1",
-            "clause": "id(I) -> I."
-          }
-        ],
-        "adaptations": "unchanged complete clauses; new modules/exports; retained license; native answer adds identity(X) -> client:id(X) and misleading projection spec",
-        "wrapper_sha256": "cb3dc0da996c6206d53725621873a30afa435b9f761cf9affd2c309c8ceea9fd"
-      },
-      "binary": {
-        "source": "lib\\compiler\\test\\bs_size_expr_SUITE.erl",
-        "source_sha256": "8b92df0db6ea8bffe6db1a6feea42c22ca3b63a2d5f0cb65f2b4d6c8a91f9217",
-        "function": "do_basic_1/1",
-        "clause": "do_basic_1(<<Sz:32,Tail:(4*Sz-4)/binary>>) ->\n    Tail;\ndo_basic_1(<<_/binary>>) ->\n    no_match.",
-        "adaptations": "unchanged complete clauses; new module/export; retained license",
-        "sha256": "0254a9a4f496ad3235739b56c9d342410e9e80bd9d538ebe42ac0d7a94f07875"
-      },
-      "map": {
-        "source": "lib\\compiler\\test\\map_SUITE.erl",
-        "source_sha256": "c2a33af83830a5fa708415a7bccba4b83f16605768d7a79013b8fa9948bfe21a",
-        "function": "t_key_expressions/1",
-        "adaptations": "pat_key_tuple/call/binary/badarith move key patterns to body matches with explicit incoming parameters; retain element/2 plus its dependent binary value pattern; replace other literal value constraints by captures; specialize failing division key to 1 div 0; remove surrounding harness/closures/case dispatch; preserve license"
-      }
+      "origin": "local fragments",
+      "coverage": "binding and computed-size patterns"
     },
-    "oracle": "otp=29.1.1 erts=17.1\npat_constants accepted none\npat_containers accepted none\npat_aliases accepted none\npat_groups accepted none\npat_prefix accepted none\npat_prefix_empty accepted none\npat_body_compound accepted none\npat_body_rhs accepted none\npat_key_tuple accepted none\npat_key_call accepted none\npat_key_remote accepted none\npat_key_binary accepted none\npat_key_map accepted none\npat_key_badarith accepted none\npat_key_bool accepted none\npat_key_new_bif accepted none\npat_bin_sequential accepted none\npat_bin_incoming accepted none\npat_bin_call accepted none\npat_bin_alias accepted none\npat_bin_string accepted none\npat_bin_utf_string accepted none\npat_bin_noninteger_size accepted none\npat_bin_negative_size accepted none\npat_bin_size_container accepted none\npat_bin_size_badarith accepted none\npat_record accepted none\npat_record_index accepted none\npat_body_chain accepted none\npat_nested_call rejected illegal_pattern\npat_nested_assignment_call rejected illegal_pattern\npat_nested_map_call rejected illegal_pattern\npat_nested_block rejected illegal_pattern\npat_nested_case rejected illegal_pattern\npat_arithmetic_var rejected illegal_pattern\npat_arithmetic_type rejected illegal_pattern\npat_divide_zero rejected illegal_pattern\npat_comparison rejected illegal_pattern\npat_boolean rejected illegal_pattern\npat_prefix_atom rejected illegal_pattern\npat_prefix_variable rejected illegal_pattern\npat_map_assoc rejected illegal_map_assoc_in_pattern\npat_key_sibling rejected unbound_var\npat_key_argument rejected unbound_var\npat_key_alias rejected unbound_var\npat_key_alias_reverse rejected unbound_var\npat_key_field rejected unbound_var\npat_key_alias_bound accepted none\npat_key_match rejected illegal_guard_expr\npat_key_local_call rejected illegal_guard_local_call\npat_key_nested_call rejected illegal_guard_local_call\npat_key_remote_call rejected illegal_guard_expr\npat_key_wrong_arity rejected illegal_guard_expr\npat_key_shadow rejected illegal_guard_local_call\npat_key_shadow_qualified accepted none\npat_key_unreachable rejected illegal_guard_local_call\npat_key_legacy rejected illegal_guard_expr\npat_size_sibling rejected unbound_var\npat_size_argument rejected unbound_var\npat_size_alias rejected unbound_var\npat_size_alias_reverse rejected unbound_var\npat_size_cross_binary rejected unbound_var\npat_size_same_segment rejected unbound_var\npat_size_future rejected unbound_var\npat_size_match rejected illegal_bitsize\npat_size_call rejected illegal_bitsize_local_call\npat_segment_tuple rejected illegal_pattern\npat_segment_alias rejected illegal_pattern\npat_segment_nested rejected illegal_pattern\npat_segment_expr rejected illegal_pattern\npat_unsized rejected unsized_binary_not_at_end\npat_modifier rejected undefined_bittype\npat_modifier_conflict rejected bittype_mismatch\npat_unit_zero rejected undefined_bittype\npat_unit_utf rejected utf_bittype_size_or_unit\npat_size_utf rejected utf_bittype_size_or_unit\npat_string_size rejected typed_literal_string\npat_prefix_tail accepted none\npat_prefix_group accepted none\npat_key_operator_call accepted none\npat_key_no_auto rejected illegal_guard_expr\npat_key_no_auto_one rejected illegal_guard_expr\npat_key_no_auto_other accepted none\npat_key_no_auto_remote accepted none\npat_key_import rejected illegal_guard_local_call\npat_key_import_erlang accepted none\npat_unit_default rejected bittype_unit\npat_unit_alias_conflict rejected bittype_mismatch\npat_type_alias_conflict rejected bittype_mismatch\npat_key_bad_modifier rejected undefined_bittype\npat_key_binary_string_size accepted none\npat_size_bad_modifier rejected undefined_bittype\nbit_construct_unknown rejected none\nbit_construct_conflict rejected none\nbit_construct_unit_high rejected none\nbit_construct_unit_default rejected none\nbit_construct_utf_size rejected none\nbit_construct_all_integer rejected none\nbit_guard_unknown rejected none\nbit_construct_unit256 accepted none\nbit_pattern_unit256 accepted none\nbit_construct_utf_undefined rejected none\nbit_pattern_utf_undefined rejected none\nbindings_otp accepted none\npatterns_binary accepted none\n"
+    "source_origin": "locally authored fragments; OTP supplies observations only",
+    "source_sha256": {
+      "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
+      "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
+      "bit_construct_all_integer.erl": "8caf99d411147b112fe55df474a4854de9649c0066d2f25c351d557c8267c737",
+      "bit_construct_conflict.erl": "526626c01188b3a39b6c8f223573c13a843e73a89470db3148644c6c7df84cfb",
+      "bit_construct_unit256.erl": "6fa8afb4278c8ba6da3f9844d4462e077c7c0afcff1448958258f24c308b7880",
+      "bit_construct_unit_default.erl": "0382b41ea16e929f1664faf9e508c0b5a288b98833c6fd50a36cef315f75903d",
+      "bit_construct_unit_high.erl": "1a1fa6e9bcf9a7eb5d066d95040abfe73589a94857319f4df3775e078b779dc5",
+      "bit_construct_unknown.erl": "08db3ce20cfdbfaca8c99106ddc0982c0d5b784ea6a1bcec6732b6fbf5bdcb1a",
+      "bit_construct_utf_size.erl": "3f56d7c4fbf29d2a14cd0beb083155319f25a46a15691f8431e8f25502e56696",
+      "bit_construct_utf_undefined.erl": "6239a6945da39d4563175bbac2f2cb86cbdd48cb1eec880634a9c62e07810078",
+      "bit_guard_unknown.erl": "d63e233d4d6b50bdb2d6d67c49d1f1701ada230a8865e96fb1a6c3c9520c0b28",
+      "bit_pattern_unit256.erl": "0d9cac56ea946830c1d330bd58adbb5103b3cc9f3ea71a8b11d89242c05c6424",
+      "bit_pattern_utf_undefined.erl": "2c3d6cca1265b2fe033a687708cccb2636c92567360c9dd001acac684fca272a",
+      "client.erl": "3557ff96875c27877033d7373cfc8a9f793bdeb197013f3b3198e28e95a9ab82",
+      "pat_aliases.erl": "6af1fd8b87ff5717bedb7cc1e8cbd9309a9390cd6967fb650e4ef6fb498858fd",
+      "pat_arithmetic_type.erl": "89907dec0847fc14ceba815ba3c2250afafd31b16e86a00e42303b921ff58b56",
+      "pat_arithmetic_var.erl": "9e7704c7c2c32f2509a759294d5713446391af5477a0620895fed352c44c4e6e",
+      "pat_bin_alias.erl": "a98d32874f6c057b1b968083fb54eb9637b9221a91520c15ea71b4bde16f8fab",
+      "pat_bin_call.erl": "ea61c8867c4f437ad809584fbd2345d8375fd41aab50e75f1aa61dd48ddb818f",
+      "pat_bin_incoming.erl": "594497b56d2ec4d520aa84b8e5640ebf6e8e1ef9adc94ac7e183530884db832c",
+      "pat_bin_negative_size.erl": "e35266b33005bfcfcf2d853281a895372d49bca26fe7c7b4ddc50bee2b33a4fb",
+      "pat_bin_noninteger_size.erl": "bcc6cd0d1a1cbef80f2fe3ce9ec5336b3e5158fc98d6d3ecd6a5b7e20210b65a",
+      "pat_bin_sequential.erl": "69a3dbaabe20cd17a5da78aec07b37c0bd2b3ce526c03b0c8e1b7b00bf6fc811",
+      "pat_bin_size_badarith.erl": "699050590c917237966489afb6cb7e9b7dc6d8e4e185c444718aaafc33c1ffbb",
+      "pat_bin_size_container.erl": "d94a008fe0cbc95bcaec7df49f12c3811d0b393c19f1e46afc36a06367a6154c",
+      "pat_bin_string.erl": "c2e629900b09556247b53d78dce3c7d35c47342714d97a6f7a3217085ddfce9b",
+      "pat_bin_utf_string.erl": "cf4e0656b1ff8f248b0b12ad0cda0949621acd69d06e73233997d9fa5e129fc6",
+      "pat_body_chain.erl": "c5cfd76c9a9232ab1d1c233d7daeaca955cd13b2a14b464bd231d51692fb4a3f",
+      "pat_body_compound.erl": "67b6797cdc43f7984052c62922b12cff496926b7816229909f49e13848f41a66",
+      "pat_body_rhs.erl": "8bcc94b2c7810915423e8aaf00f822a9010da572b4c2d4465edab0674d120ce5",
+      "pat_boolean.erl": "5a6c19b5d18d19bcbce227703e76063a0c58eff3552b994bc915147a5fdf7d5c",
+      "pat_comparison.erl": "eeb27e8e307727965bef3eaabad47259af4464b047eeddf9fbe71b99b34bfbbb",
+      "pat_constants.erl": "dce306f5ca70ba08122ccd99bab26904a1a78fbc994d4c5a7f196c584824ed80",
+      "pat_containers.erl": "333e3a8419675bfa014a05da4d3e51e723dea151a278a5185adbd476d65bc703",
+      "pat_divide_zero.erl": "78326f25f220105b74ab1a8eb40cbb989c7c8de3ff73999bef09822962e8b6a0",
+      "pat_groups.erl": "183159f837fc7f74ebffa4d31bdcf02b1a1eed49fe44c7347708632601643944",
+      "pat_key_alias.erl": "a5bce16bda52987a2d07e78ca902c0a25f3bdc81b17a2110b3a35e4f7269a9ff",
+      "pat_key_alias_bound.erl": "36d1c056c58c30005fb3cded59b1bc86add699497db48f8a5036b589c1e89e4d",
+      "pat_key_alias_reverse.erl": "bc9570ceaced044b24f8d721ca0c45273b2dae9d5f95866eb4706981f8d244b5",
+      "pat_key_argument.erl": "e68d937879de8f48470d66e75080b53450b7eb2da80d9b7867c0e2d706936363",
+      "pat_key_bad_modifier.erl": "60e257f447b95f17dd15cfd5d86c83ea3c6d31c65acf1ccf6c208886134310b8",
+      "pat_key_badarith.erl": "941596439d77f32b5f36bf28a347da4f39a73a2e9908af58c07b509eeed0a126",
+      "pat_key_binary.erl": "be0d805348e258a1408c5f888b799c7d893e0d474eac8d84628ad993e162bce2",
+      "pat_key_binary_string_size.erl": "2b9c997a723dda1b61ea839e2c072bc4bff3ed972ab15c6ebe5764a676c58a95",
+      "pat_key_bool.erl": "87d79bc985c9df448827bcca5c18a36a84940633678417e70cb9465a76695b0b",
+      "pat_key_call.erl": "177d536714d83554f3451c4bf91fc9cee938be30f82b173dcd9e33a33ed69db0",
+      "pat_key_field.erl": "9795b6758db47dcf7890d62d73d3aba3d9ad3b72789dde04be4a0ffff2b80f9f",
+      "pat_key_import.erl": "3379ec83fa122eda2e539a8593d220023a7147f2f7a9965d957b401cebde832c",
+      "pat_key_import_erlang.erl": "1150e3c342f668d20b32643a0526bb29eb1471cb521bbd93d2f060f0b64cc5ea",
+      "pat_key_legacy.erl": "4e70754fb3637577ca03f0e08065ce10ef01be6be8d841e2c65cc1c45f27261a",
+      "pat_key_local_call.erl": "8c05911a823b63a066d2e12261a4f37c1d8685a6bbd6944f51196f74ba18e512",
+      "pat_key_map.erl": "521dca3bebb59d05d60b03dce40491aa7443e11533faf9e20de9817f4f239b42",
+      "pat_key_match.erl": "8c6fdbe0ab641454dddb69a216034400cf7d02d75968374642cd08b8de4159b0",
+      "pat_key_nested_call.erl": "5aa341c7d16a5027976af749fe2b915027bf5961af65985084fff812d585a288",
+      "pat_key_new_bif.erl": "f52f980ea346823cc66979957aaee108c85819952d474a8d877b3c261dd07cbe",
+      "pat_key_no_auto.erl": "b9b9898a7a07710d3011dd17ef161c4d8af62aa0a8fd1a9026662311f2ffcb0f",
+      "pat_key_no_auto_one.erl": "983b67c71efb7a9bef9b2bacafa9c2f066a32e5d669c0e26e46c8465738244b0",
+      "pat_key_no_auto_other.erl": "7a8d0ffb084aaa12f80e79c63054435f57b58aa2153bf6ce7bd0b6aec2889d4b",
+      "pat_key_no_auto_remote.erl": "438a30450d4d6037b03f053de24cf13846453aaefa5b2493f5f2a31f55f8a24b",
+      "pat_key_operator_call.erl": "bae5b9730e293762429e7bc86af68365c703ec2eb3a0e98f79a947b1500c5fc2",
+      "pat_key_remote.erl": "d7ccb62b24568d61a4d97b32d43f79468073e5a8d665be85fe6990d67654e442",
+      "pat_key_remote_call.erl": "71a8031b1b3ca6a2e85f1e75173b51e7d41ca98ef25775c68a7088b7def42c23",
+      "pat_key_shadow.erl": "a90be6dfcac6973d751f4bc3edced8ad4800a62f0c9fcaf8818f2040dce6c270",
+      "pat_key_shadow_qualified.erl": "212d6a86e76a83c7eadecf2a6bbc726a8a95da04ba4a1853fd4fc6593a487278",
+      "pat_key_sibling.erl": "d9a060de7f6e568e1c21d5074f0c9e1a030dff32c14f4ac64d4e70ebb68360e9",
+      "pat_key_tuple.erl": "132cdaf8e1f134a79138c144a33bde54cb970e9723821531f446dbeea80d319b",
+      "pat_key_unreachable.erl": "0335c699aaf0fe185b6d2d66c4e4e615d77b1b013dda909b22fde91d67803114",
+      "pat_key_wrong_arity.erl": "00849d6b73ce50e3fa95df4f29b86c10f50c7ee82f527bc13fcd0415e3ff59d7",
+      "pat_map_assoc.erl": "19bbf3a73cf36e6a4c2d0e59165444d74b8be48ab3420ab11e7dcd859f540e7a",
+      "pat_modifier.erl": "43e18e2f55a7bb644868b08c64fdeb01ebcb55887eee8e621eed00de46ec0ce1",
+      "pat_modifier_conflict.erl": "bd89f71c13fdaad0851fe71725c5182b769bfe9d948362cea56dee9be3c9426a",
+      "pat_nested_assignment_call.erl": "b152050128379590cf2b9ab0a874123a008c7075522dcb0b01fd310c0d3265eb",
+      "pat_nested_block.erl": "887f5731966ca60faa292bf6b20b66f043c50459be105ac30bdf37c3bd28f832",
+      "pat_nested_call.erl": "f24caae229b3e33b52af1576e5cd7a9caac5ef8b67a0fbbe5f57f3bbc5fb345e",
+      "pat_nested_case.erl": "49419eebc5db1eb0376911026f9e544f876ebf0a7d19ae5c541534da4a298150",
+      "pat_nested_map_call.erl": "5d6a13bb69a8f0e4de8e00b8047e8c806431f7135ba3ad4ff33d2e0120ccf1cd",
+      "pat_prefix.erl": "89dcb3955b2ff8ee5147853b4e06fef6725a2fb08b4fb89712a244721ce7f257",
+      "pat_prefix_atom.erl": "6185f1f965f63dc66680c0feaed3b8d54ddc1b8b0af00dc3c695e01d58d61863",
+      "pat_prefix_empty.erl": "74ca0d77f95e8027c04dfb193a1645313427581808cfc906b7ae18c3be5e4701",
+      "pat_prefix_group.erl": "83dcc70979e86248d6d6f470a1a785c9f49a6b37df8a1bcbf76e3966483599d0",
+      "pat_prefix_tail.erl": "ece0d473dfdcc3928199386a86cc2d63ac5ec15f7a87d1afc622f4441ca1be36",
+      "pat_prefix_variable.erl": "fb85a76611c371d24ccfcd4c5c673c53ee8e5a71db8a904d5db59df930f99e11",
+      "pat_record.erl": "57e16bae46b2c9403f880c9913014b0b463cfdf2d642c2312b0829e47caae3af",
+      "pat_record_index.erl": "db9470da751a133579bfd8893946578eae06cc90785ffedfc6b997aeb5543b74",
+      "pat_segment_alias.erl": "e19f0a599daed0806d43027a3dd0645257c77380bba74e0fd83af5c440472492",
+      "pat_segment_expr.erl": "4173986adf120d8dceb22af29f840256bd0427461241670b3bfef93c6301af98",
+      "pat_segment_nested.erl": "bffb91803197d5e4cbd7d8282cd81a28ec1ff41a061fc5e41f57abb7359a1515",
+      "pat_segment_tuple.erl": "5a0651a77cb593b2b42ab7ee8465ba8dc627cc0d123fe0de1cd060b2b3c9702a",
+      "pat_size_alias.erl": "b73f8d395b20539ba1e7e95873bd26d714c37afad6a41f88c960c7589b0d0c01",
+      "pat_size_alias_reverse.erl": "e0b6a7c35f9b30b6a1f0629e44addd495bfbcb3cc5a648eefcd0eab778a59e28",
+      "pat_size_argument.erl": "7a960b3e5d1b8c4855cf88d9750bbf94a8078dc4bb9503b687f9193e52c3d2e8",
+      "pat_size_bad_modifier.erl": "8346a0dd83cba7dec63818df786ba77ba9433cce5ad54d9329194d099772b69d",
+      "pat_size_call.erl": "2decc7bf6bd908622c6ff3b8dc9ab735ef11a2a69fd949986e05be62d8cb0516",
+      "pat_size_cross_binary.erl": "378ad3fc728ee020dc7985dbf067d7d74ec036bd2b9eaaf8f9f87877567d7146",
+      "pat_size_future.erl": "b658fb40f33c8b54e8c967d16f7d3d22899e7655f306651f278b95e12d535413",
+      "pat_size_match.erl": "d3db05710703e3adf43f74669392ae7e990af273c7d595ae525b4f0ef17ff5b1",
+      "pat_size_same_segment.erl": "6ae11004c203a4bfdb6c673e1c87611a71d29584f56e6efd3d2ec901be9482d0",
+      "pat_size_sibling.erl": "3a7bd51244144922e7b3d0f3fefe22e716da323174c3d6c70cfa5630ca6ae95f",
+      "pat_size_utf.erl": "becc40ab108dd379e605cbcec4674e09aeeb6e3bafff92b3a435574c32a824ef",
+      "pat_string_size.erl": "dc49dcdce6ba33338f2559dd36cb8ca8c113ae6eca0bae874db458d82e92719c",
+      "pat_type_alias_conflict.erl": "764d2f1af37c2b2b97354296f431982e4e0b4f79051385a4790498b4b841f825",
+      "pat_unit_alias_conflict.erl": "6f74fd1d8a3d01a765085d4f724f4ea39119392b56bf51a21a0dac2c6ed3b56c",
+      "pat_unit_default.erl": "25874add4ec45ac80497f81968670c558ca918d57a3216dbbe99f57cc1c94dff",
+      "pat_unit_utf.erl": "8c9d3ae39297c38218c761d37e54acebd2eb4e020fc93975c493d2f10e6adb0d",
+      "pat_unit_zero.erl": "64447de10f66a1a3385d3e526e5accf1da57a241bf41cea4f8e344e3b2ab6eaa",
+      "pat_unsized.erl": "fbfae20fe39ef01487bab32fea533b6c5b255104ca7ec96463775f2470dbd62b",
+      "patterns_binary.erl": "4e671bec86388e044f1714100123245fb294ec9ea9a70cc3c3e7d46c0903b5dd"
+    },
+    "oracle": "otp=29.1.1 erts=17.1\npat_constants accepted none\npat_containers accepted none\npat_aliases accepted none\npat_groups accepted none\npat_prefix accepted none\npat_prefix_empty accepted none\npat_body_compound accepted none\npat_body_rhs accepted none\npat_key_tuple accepted none\npat_key_call accepted none\npat_key_remote accepted none\npat_key_binary accepted none\npat_key_map accepted none\npat_key_badarith accepted none\npat_key_bool accepted none\npat_key_new_bif accepted none\npat_bin_sequential accepted none\npat_bin_incoming accepted none\npat_bin_call accepted none\npat_bin_alias accepted none\npat_bin_string accepted none\npat_bin_utf_string accepted none\npat_bin_noninteger_size accepted none\npat_bin_negative_size accepted none\npat_bin_size_container accepted none\npat_bin_size_badarith accepted none\npat_record accepted none\npat_record_index accepted none\npat_body_chain accepted none\npat_nested_call rejected illegal_pattern\npat_nested_assignment_call rejected illegal_pattern\npat_nested_map_call rejected illegal_pattern\npat_nested_block rejected illegal_pattern\npat_nested_case rejected illegal_pattern\npat_arithmetic_var rejected illegal_pattern\npat_arithmetic_type rejected illegal_pattern\npat_divide_zero rejected illegal_pattern\npat_comparison rejected illegal_pattern\npat_boolean rejected illegal_pattern\npat_prefix_atom rejected illegal_pattern\npat_prefix_variable rejected illegal_pattern\npat_map_assoc rejected illegal_map_assoc_in_pattern\npat_key_sibling rejected unbound_var\npat_key_argument rejected unbound_var\npat_key_alias rejected unbound_var\npat_key_alias_reverse rejected unbound_var\npat_key_field rejected unbound_var\npat_key_alias_bound accepted none\npat_key_match rejected illegal_guard_expr\npat_key_local_call rejected illegal_guard_local_call\npat_key_nested_call rejected illegal_guard_local_call\npat_key_remote_call rejected illegal_guard_expr\npat_key_wrong_arity rejected illegal_guard_expr\npat_key_shadow rejected illegal_guard_local_call\npat_key_shadow_qualified accepted none\npat_key_unreachable rejected illegal_guard_local_call\npat_key_legacy rejected illegal_guard_expr\npat_size_sibling rejected unbound_var\npat_size_argument rejected unbound_var\npat_size_alias rejected unbound_var\npat_size_alias_reverse rejected unbound_var\npat_size_cross_binary rejected unbound_var\npat_size_same_segment rejected unbound_var\npat_size_future rejected unbound_var\npat_size_match rejected illegal_bitsize\npat_size_call rejected illegal_bitsize_local_call\npat_segment_tuple rejected illegal_pattern\npat_segment_alias rejected illegal_pattern\npat_segment_nested rejected illegal_pattern\npat_segment_expr rejected illegal_pattern\npat_unsized rejected unsized_binary_not_at_end\npat_modifier rejected undefined_bittype\npat_modifier_conflict rejected bittype_mismatch\npat_unit_zero rejected undefined_bittype\npat_unit_utf rejected utf_bittype_size_or_unit\npat_size_utf rejected utf_bittype_size_or_unit\npat_string_size rejected typed_literal_string\npat_prefix_tail accepted none\npat_prefix_group accepted none\npat_key_operator_call accepted none\npat_key_no_auto rejected illegal_guard_expr\npat_key_no_auto_one rejected illegal_guard_expr\npat_key_no_auto_other accepted none\npat_key_no_auto_remote accepted none\npat_key_import rejected illegal_guard_local_call\npat_key_import_erlang accepted none\npat_unit_default rejected bittype_unit\npat_unit_alias_conflict rejected bittype_mismatch\npat_type_alias_conflict rejected bittype_mismatch\npat_key_bad_modifier rejected undefined_bittype\npat_key_binary_string_size accepted none\npat_size_bad_modifier rejected undefined_bittype\nbit_construct_unknown rejected none\nbit_construct_conflict rejected none\nbit_construct_unit_high rejected none\nbit_construct_unit_default rejected none\nbit_construct_utf_size rejected none\nbit_construct_all_integer rejected none\nbit_guard_unknown rejected none\nbit_construct_unit256 accepted none\nbit_pattern_unit256 accepted none\nbit_construct_utf_undefined rejected none\nbit_pattern_utf_undefined rejected none\nbindings_local accepted none\npatterns_binary accepted none\n"
   }
 }

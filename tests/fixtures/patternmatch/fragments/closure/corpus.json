@@ -1,0 +1,17 @@
+{
+  "inputs": [
+    "answer.erl",
+    "calls.term",
+    "calls.txt",
+    "client.erl",
+    "project.toml"
+  ],
+  "evidence": {
+    "calls": 1969,
+    "values": 171,
+    "seed": 170503,
+    "max_generated_depth": 64,
+    "wide": 255,
+    "alternatives": 128
+  }
+}

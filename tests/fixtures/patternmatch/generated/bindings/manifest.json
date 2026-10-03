@@ -11,30 +11,29 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
   },
   "generator_sha256": {
-    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
-    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
-    "bindings.py": "cb06c19f0043c3a98060e50087a0cb2002e4217ce993508f30b43227533f1a5c",
-    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
-    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
+    "regenerate_cases.py": "53ce982d1864b4546f80d9c1fbfa63ee9e82a2d208b62efe532b05adcea1b96e",
+    "authored.py": "ed76f0faff37e8cd44fa3bd8493bbc4ad7073bd3e839ff191877dd21e7b369ae",
     "bindings.escript": "ba9f327d3b6cf2d825a83e686f93a0f9b8a341be6551a450eb4a53dc9fd92275",
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
+  "input_manifest_sha256": "e25f478876ac9cb40b3d7e904005db3fae0a3927d92165f507379ba0451411e0",
   "files": {
     "alias.erl": "375c0766478c89fd6b5291fe509762251fdcf4e5bf335d971a4d6d08b02f17fd",
-    "answer.erl": "eb08a1f03d7ea203f51707d9a88dd8adfc8f23c912dc094521c66aa72ddfe1cb",
-    "bindings.term": "849bdc607a4a04bf356beb5d3cd5124b1e81712e5de71b1f4b507a9290215c2b",
-    "bindings_otp.erl": "cb3dc0da996c6206d53725621873a30afa435b9f761cf9affd2c309c8ceea9fd",
-    "body_match.erl": "1166dc2faf0995a242714e688d690e2b7572cbf1b263849df298421ab8115f6f",
-    "call_sibling.erl": "e0c085b2f1bc76c25441f5d0551d6dc002a1d598a373eed541c7c0ab4e103feb",
+    "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
+    "bindings.term": "8f5b0bb1aea977ae79caae566cf3a252c5d6b15c2d1322db3faa38515a3a68dc",
+    "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
+    "body_match.erl": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef",
+    "call_sibling.erl": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260",
     "calls.txt": "af8567a0eb405d1afca6589681daeaee74b5d1a2fcf2bc7367834b47e2ad23bf",
-    "chain.erl": "d596959317a12af9337aaffa897db0f05e9a0a63e6a43910cec8ca1491b11406",
-    "clause_leak.erl": "0a6bd759ebf6eb53d5dc71eace4c5e837a0ced63b3904fc69295ba0f636763bb",
-    "clauses.erl": "f64ec462ef60ef91aead39cc6065eb6680c8d4133e45ea95c5e83373ffc30483",
-    "client.erl": "20f11c9e4d7f8ebc6ffe45ebde65f9ed01c53effd1260a05908dbbba3f97a9a2",
+    "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
+    "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
+    "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
+    "client.erl": "3557ff96875c27877033d7373cfc8a9f793bdeb197013f3b3198e28e95a9ab82",
     "compound.erl": "37833fbce22600b4ba6c628345aeff2e5edfde0839cfc8686ba5beb5be32ce56",
     "expected.txt": "5b5521b83ac56f0b13bf5da46ea0fa70baaeb7136a2f34cf255ea58d7c5e3a4f",
     "guard_assign.erl": "21e6acf5e682c1fca832620c0356f4f9592c116fa92960f8b5a8e032055801fc",
@@ -43,18 +42,18 @@
     "guard_wildcard.erl": "3e6ce4322682970a3e97621a4aae2a26a9efb1cd64b42f6db08bde63534c7703",
     "identity.erl": "f6bfb7a8fad425bf6689615c23c37549a6f3d5a682c5eb3448c47036f18e0bf5",
     "named_missing.erl": "a729fa42f720db0bba0d83fcd79e1327a2831c93f2e99affbc2705b0f4e8f238",
-    "rebind.erl": "ae020a4392688a78ab2833bb48e70484d74a24eeff9be2b91b9313cb1796eadc",
+    "rebind.erl": "aa0e4ab05a23afa3689720e5131684f35f4e1ea79309fc76edde87628b090369",
     "repeat.erl": "32fbd057ccf88704c066e9b2046ef480b15d63673bc33e9b0754c1743dbdb098",
-    "rhs_first.erl": "0cada0a328033cee9250c1a87aa232de13010ee8de7cf394ac408ca88ca6edd7",
-    "sibling_checks.erl": "f152b901df72d3e849f2bf32fe0dee2f2d454e5160c43f57425502ad7a8ef209",
-    "sibling_local.erl": "dfefb5f9fb38ca8b49341f5375435ef1b5230b5d8ee4bea46205fe9bbb8ff22a",
+    "rhs_first.erl": "6d25f9c582dc1848e0963adb1bed65c7f62949f8339a3daed160a5712f7b3b69",
+    "sibling_checks.erl": "0eb9db7c9dc41be0c5e74652ed076868bb8371551a5921d0e8c78e82203a1d75",
+    "sibling_local.erl": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572",
     "sibling_read.erl": "cf3b4ee44cc167ce23f6231d0a08c1b37b3734d8796094ae75cdedfe9c09cedd",
     "unbound.erl": "0f859c6c5b8c2fc272825a5642f9445c4b23db23e5a676f8b4a9112042ae4b8b",
-    "unsafe_and.erl": "3177e4f21e56a8363be9817da48c56fc261ce9f3f7861a6d423218c3c06c27e2",
-    "unsafe_match.erl": "5a21a6874a8fdc3a2b23e84a08ce65c1d772b010b4815ac842f40b8e96ea0c54",
-    "unsafe_merge.erl": "65c0c889cd9f29d35fe47a1f37657acaec6e900c5ac60502b6571832d605a68e",
-    "unsafe_merge_reverse.erl": "b5f96b8a424379a0080fa33c4993b621846e2af29f8554c7c220848ff0be948b",
-    "unsafe_or.erl": "9e3c2fe2c10f22886b07a5f1af6933347d3f56114387819d4a8e3049cc1720a4",
+    "unsafe_and.erl": "6acfd48a436cea6ab79ecd08c757681fc09882f7cf57f0254ed8e5f49b9c5969",
+    "unsafe_match.erl": "285fc9ca7137230648344eaf6fb9c01a3663f5b5efae6d2c8b82f1893a33336a",
+    "unsafe_merge.erl": "f85924bf79c9c350564efb1302585e214717ec6b3bb606ee80bfbe4336a1609d",
+    "unsafe_merge_reverse.erl": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6",
+    "unsafe_or.erl": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b",
     "wildcard.erl": "71a3cb18742be799d0c33d9cb8a81e4f3541701a5b151b17847e46a21fc237c5"
   },
   "evidence": {
@@ -84,7 +83,7 @@
         "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "f64ec462ef60ef91aead39cc6065eb6680c8d4133e45ea95c5e83373ffc30483"
+        "sha256": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124"
       },
       {
         "name": "guard_read",
@@ -102,7 +101,7 @@
         "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "1166dc2faf0995a242714e688d690e2b7572cbf1b263849df298421ab8115f6f"
+        "sha256": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef"
       },
       {
         "name": "chain",
@@ -111,7 +110,7 @@
         "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "d596959317a12af9337aaffa897db0f05e9a0a63e6a43910cec8ca1491b11406"
+        "sha256": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b"
       },
       {
         "name": "rebind",
@@ -120,7 +119,7 @@
         "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "ae020a4392688a78ab2833bb48e70484d74a24eeff9be2b91b9313cb1796eadc"
+        "sha256": "aa0e4ab05a23afa3689720e5131684f35f4e1ea79309fc76edde87628b090369"
       },
       {
         "name": "sibling_checks",
@@ -129,7 +128,7 @@
         "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "f152b901df72d3e849f2bf32fe0dee2f2d454e5160c43f57425502ad7a8ef209"
+        "sha256": "0eb9db7c9dc41be0c5e74652ed076868bb8371551a5921d0e8c78e82203a1d75"
       },
       {
         "name": "sibling_local",
@@ -138,7 +137,7 @@
         "capability": "pattern matching",
         "diagnostic": "",
         "otp_diagnostic": "",
-        "sha256": "dfefb5f9fb38ca8b49341f5375435ef1b5230b5d8ee4bea46205fe9bbb8ff22a"
+        "sha256": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572"
       },
       {
         "name": "alias",
@@ -165,7 +164,7 @@
         "capability": "",
         "diagnostic": "unbound variable X",
         "otp_diagnostic": "unbound_var",
-        "sha256": "0a6bd759ebf6eb53d5dc71eace4c5e837a0ced63b3904fc69295ba0f636763bb"
+        "sha256": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6"
       },
       {
         "name": "guard_assign",
@@ -219,7 +218,7 @@
         "capability": "pattern matching",
         "diagnostic": "unbound variable Y",
         "otp_diagnostic": "unbound_var",
-        "sha256": "0cada0a328033cee9250c1a87aa232de13010ee8de7cf394ac408ca88ca6edd7"
+        "sha256": "6d25f9c582dc1848e0963adb1bed65c7f62949f8339a3daed160a5712f7b3b69"
       },
       {
         "name": "sibling_read",
@@ -237,7 +236,7 @@
         "capability": "",
         "diagnostic": "unbound variable X",
         "otp_diagnostic": "unbound_var",
-        "sha256": "e0c085b2f1bc76c25441f5d0551d6dc002a1d598a373eed541c7c0ab4e103feb"
+        "sha256": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260"
       },
       {
         "name": "unsafe_and",
@@ -246,7 +245,7 @@
         "capability": "arithmetic",
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
-        "sha256": "3177e4f21e56a8363be9817da48c56fc261ce9f3f7861a6d423218c3c06c27e2"
+        "sha256": "6acfd48a436cea6ab79ecd08c757681fc09882f7cf57f0254ed8e5f49b9c5969"
       },
       {
         "name": "unsafe_or",
@@ -255,7 +254,7 @@
         "capability": "arithmetic",
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
-        "sha256": "9e3c2fe2c10f22886b07a5f1af6933347d3f56114387819d4a8e3049cc1720a4"
+        "sha256": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b"
       },
       {
         "name": "unsafe_match",
@@ -264,7 +263,7 @@
         "capability": "arithmetic",
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
-        "sha256": "5a21a6874a8fdc3a2b23e84a08ce65c1d772b010b4815ac842f40b8e96ea0c54"
+        "sha256": "285fc9ca7137230648344eaf6fb9c01a3663f5b5efae6d2c8b82f1893a33336a"
       },
       {
         "name": "guard_wildcard",
@@ -282,7 +281,7 @@
         "capability": "heap expressions",
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
-        "sha256": "65c0c889cd9f29d35fe47a1f37657acaec6e900c5ac60502b6571832d605a68e"
+        "sha256": "f85924bf79c9c350564efb1302585e214717ec6b3bb606ee80bfbe4336a1609d"
       },
       {
         "name": "unsafe_merge_reverse",
@@ -291,46 +290,51 @@
         "capability": "heap expressions",
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
-        "sha256": "b5f96b8a424379a0080fa33c4993b621846e2af29f8554c7c220848ff0be948b"
+        "sha256": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6"
       },
       {
-        "name": "bindings_otp",
+        "name": "bindings_local",
         "diagnostic": "",
-        "capability": ""
+        "capability": "",
+        "sha256": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a"
       }
     ],
     "helpers": {
-      "source": "lib\\compiler\\test\\match_SUITE.erl",
-      "source_sha256": "f9698e7d417a805af7e8b1bcff7afbd57b8e87bdde7cafb48242d8a30e5535d4",
-      "helpers": [
-        {
-          "function": "gh_6516_scope1/0",
-          "clause": "gh_6516_scope1() ->\n    {X = 4, X = 3}."
-        },
-        {
-          "function": "gh_6516_scope2/0",
-          "clause": "gh_6516_scope2() ->\n  {X = 4, _ = X = 3}."
-        },
-        {
-          "function": "mutable_variables_1/0",
-          "clause": "mutable_variables_1() ->\n    Zero = 0,\n    One = 1,\n    Result = One = Zero,\n    {Result,One,Zero}."
-        },
-        {
-          "function": "match_right_tuple_1/1",
-          "clause": "match_right_tuple_1(T) ->\n    {A, _} = T,\n    {_, B} = A,\n    %% The call ensures that A is in {x,0} and B is in {x,1}\n    id(force_succ_regs(A, B))."
-        },
-        {
-          "function": "force_succ_regs/2",
-          "clause": "force_succ_regs(_A, B) -> B."
-        },
-        {
-          "function": "id/1",
-          "clause": "id(I) -> I."
-        }
-      ],
-      "adaptations": "unchanged complete clauses; new modules/exports; retained license; native answer adds identity(X) -> client:id(X) and misleading projection spec",
-      "wrapper_sha256": "cb3dc0da996c6206d53725621873a30afa435b9f761cf9affd2c309c8ceea9fd"
+      "origin": "local fragments",
+      "coverage": "binding and computed-size patterns"
     },
-    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\nbindings_otp accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
+    "source_origin": "locally authored fragments; OTP supplies observations only",
+    "source_sha256": {
+      "alias.erl": "375c0766478c89fd6b5291fe509762251fdcf4e5bf335d971a4d6d08b02f17fd",
+      "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
+      "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
+      "body_match.erl": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef",
+      "call_sibling.erl": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260",
+      "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
+      "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
+      "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
+      "client.erl": "3557ff96875c27877033d7373cfc8a9f793bdeb197013f3b3198e28e95a9ab82",
+      "compound.erl": "37833fbce22600b4ba6c628345aeff2e5edfde0839cfc8686ba5beb5be32ce56",
+      "guard_assign.erl": "21e6acf5e682c1fca832620c0356f4f9592c116fa92960f8b5a8e032055801fc",
+      "guard_leak.erl": "0ae53314d4d43d680de296e8fc17771bf228d64c26d4e27b030697a5a4c52fc7",
+      "guard_read.erl": "0a617bbc60d388c20b67562b1e0ed44fe831a49867fa476d0ef3e7c187abecf5",
+      "guard_wildcard.erl": "3e6ce4322682970a3e97621a4aae2a26a9efb1cd64b42f6db08bde63534c7703",
+      "identity.erl": "f6bfb7a8fad425bf6689615c23c37549a6f3d5a682c5eb3448c47036f18e0bf5",
+      "named_missing.erl": "a729fa42f720db0bba0d83fcd79e1327a2831c93f2e99affbc2705b0f4e8f238",
+      "rebind.erl": "aa0e4ab05a23afa3689720e5131684f35f4e1ea79309fc76edde87628b090369",
+      "repeat.erl": "32fbd057ccf88704c066e9b2046ef480b15d63673bc33e9b0754c1743dbdb098",
+      "rhs_first.erl": "6d25f9c582dc1848e0963adb1bed65c7f62949f8339a3daed160a5712f7b3b69",
+      "sibling_checks.erl": "0eb9db7c9dc41be0c5e74652ed076868bb8371551a5921d0e8c78e82203a1d75",
+      "sibling_local.erl": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572",
+      "sibling_read.erl": "cf3b4ee44cc167ce23f6231d0a08c1b37b3734d8796094ae75cdedfe9c09cedd",
+      "unbound.erl": "0f859c6c5b8c2fc272825a5642f9445c4b23db23e5a676f8b4a9112042ae4b8b",
+      "unsafe_and.erl": "6acfd48a436cea6ab79ecd08c757681fc09882f7cf57f0254ed8e5f49b9c5969",
+      "unsafe_match.erl": "285fc9ca7137230648344eaf6fb9c01a3663f5b5efae6d2c8b82f1893a33336a",
+      "unsafe_merge.erl": "f85924bf79c9c350564efb1302585e214717ec6b3bb606ee80bfbe4336a1609d",
+      "unsafe_merge_reverse.erl": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6",
+      "unsafe_or.erl": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b",
+      "wildcard.erl": "71a3cb18742be799d0c33d9cb8a81e4f3541701a5b151b17847e46a21fc237c5"
+    },
+    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\nbindings_local accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
   }
 }

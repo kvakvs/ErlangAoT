@@ -101,5 +101,5 @@
 {bit_pattern_unit256, accepted, none}.
 {bit_construct_utf_undefined, rejected, none}.
 {bit_pattern_utf_undefined, rejected, none}.
-{bindings_otp, accepted, none}.
+{bindings_local, accepted, none}.
 {patterns_binary, accepted, none}.

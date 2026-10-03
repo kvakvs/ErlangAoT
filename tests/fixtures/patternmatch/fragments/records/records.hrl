@@ -1,0 +1,6 @@
+-record(r, {a = default, b, c = 3}).
+-record(empty, {}).
+-record(nrec0, {name = <<"local-zero">>}).
+-record(nrec1, {name = <<"local-one">>, nrec0 = #nrec0{}}).
+-record(nrec2, {name = <<"local-two">>, nrec1 = #nrec1{}}).
+-record(d, {a = make_default(), b = make_default()}).

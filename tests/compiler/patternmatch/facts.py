@@ -1,61 +1,11 @@
 """Compare paired misleading contracts and conservative binding facts through real native workflows."""
-import itertools
 import json
 import pathlib
 import re
 import sys
-from evidence import digest,run
+from evidence import run
 from immediate import native
-from services import write_calls
 from stored import load
-from guard_catalog import BIG,MAP,BIN,BITS,VALUES
-
-
-def kernels(otp,work):
-    suite=otp/'lib/compiler/test/match_SUITE.erl'
-    text=suite.read_text(encoding='utf8')
-    witness='force_succ_regs('
-    assert witness in text
-    definitions=[
-        ('identity',1,'identity(X) -> Y=X, id(Y).'),
-        ('constant',0,'constant() -> Y=42, Z=Y, id(Z).'),
-        ('alias',1,'alias(X) -> (A=B)=X, {A,B}.'),
-        ('projected',2,'projected(X,Y) -> A=X, B=Y, id(A), B.'),
-        ('extracted',1,'extracted({X,{Y,Z}}) when is_integer(X),is_integer(Y,0,10) -> {X,Y,Z}; extracted([X|Y]) -> {X,Y}; extracted(X) -> {fallback,X}.'),
-        ('joined',1,'joined({_,Z}) -> Z; joined([X|_]) -> X; joined(X) -> X.'),
-        ('map',2,'map(K,M) -> #{K := V}=M, [V,map_get(K,M)].'),
-        ('bits',1,'bits(<<N:8,V:N,T/bitstring>>) -> {N,V,T}; bits(_) -> no.'),
-        ('record',1,'record(#r{a=X,b=Y}) when is_tuple(X) -> {Z}=X, Y=Z, Y; record(_) -> no.'),
-        ('allocation',1,'allocation(X) -> A={X,[X],#{key=>X},<<3:2>>}, {_,[Y],#{key:=Z},<<V:2>>}=A, {Y,Z,V}.'),
-        ('candidate',1,'candidate({X,Y}) when is_tuple(X),element(1,X)==Y -> X; candidate({X,Y}) when is_list(X),hd(X)==Y -> Y; candidate(V) -> V.'),
-        ('guards',1,f'guards(X) when element(1,X)==true; map_get(ok,X)==true; is_integer(X,{-BIG},{BIG}) -> Y=X,Y; guards(X) -> {{fallback,X}}.'),
-    ]
-    selected=re.findall(r'^force_succ_regs\(.*?\.\s*$',text,re.M|re.S)
-    assert len(selected)==1
-    definitions.append(('force_succ_regs',2,selected[0].strip()))
-    values=VALUES+[('r',(1,),1),('r',(1,),2), (1,(0,BITS)),(1,(11,MAP)),('true',),{'map':[('ok','true')]},
-                   ([1],1), ((),1),((1,),1), (('false',),1),{'bits':'0380','length':9}]
-    calls=[]
-    wrapped=[]
-    for name,arity,body in definitions:
-        for annotated in [False,True]:
-            fn=name+('_spec' if annotated else '_plain')
-            copied=re.sub(r'\b'+name+r'\(',fn+'(',body)
-            if annotated:
-                copied=f'-spec {fn}('+','.join(['integer()']*arity)+') -> integer().\n'+copied
-            wrapped.append((fn,arity,copied))
-            args=[[]] if arity==0 else [[v] for v in values] if arity==1 else [[v,w] for v,w in itertools.product(values[:8],repeat=2)]
-            if name=='map': args=[[k,m] for k in ['a',1,1.0,'missing'] for m in [MAP,{'map':[]},'a']]
-            calls += [('answer',fn,a) for a in args]
-    exports=','.join(f'{n}/{a}' for n,a,_ in wrapped)+',id/1'
-    (work/'answer.erl').write_bytes((text.split('-module(')[0]+f'-module(answer).\n-export([{exports}]).\n-record(r,{{a,b}}).\n'+'\n'.join(b for _,_,b in wrapped)+'\nid(X) -> X.\n').encode())
-    (work/'client.erl').write_bytes(b'-module(client).\n-export([run/1,retry/1]).\n-spec run(integer()) -> integer().\nrun(X) -> answer:allocation_spec(answer:identity_spec(X)).\nretry(X) -> answer:joined_plain(X).\n')
-    calls += [('client','run',[v]) for v in values]+[('client','retry',[v]) for v in values]
-    write_calls(work,calls)
-    return dict(calls=len(calls),source=str(suite.relative_to(otp)),source_sha256=digest(suite),
-                helpers=[dict(function='force_succ_regs/2',clause=selected[0].strip())],
-                adaptations='rename complete force_succ_regs helper twice; paired authored body-binding, projection, checked extraction/allocation and failed-candidate kernels extend its success-register obligation; misleading integer specs affect no implementation facts',
-                pairs=[n for n,_,_ in definitions],values=len(values))
 
 
 def dominance(ir):

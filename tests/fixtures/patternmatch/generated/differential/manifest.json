@@ -11,25 +11,29 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "8e6e83d815dddfe757821b12601725a4d58cb552ac2ad1087fe7443e738cc887"
+    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
   },
   "generator_sha256": {
-    "regenerate.py": "34369c88a1666aff08358a0e50394fcc8fde412d1742cc3100072867ee4c2b21",
-    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
-    "../codegen/differential.py": "b7176cb1233561050a34083556557f801cc84effaa9f5ca054b991c0395f33e6",
-    "immediate.py": "f87cc23bdb31f6ffe1801e090182b2657259e1c2723b4808e8d0923345603340",
-    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
+    "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
+    "regenerate_cases.py": "53ce982d1864b4546f80d9c1fbfa63ee9e82a2d208b62efe532b05adcea1b96e",
+    "authored.py": "ed76f0faff37e8cd44fa3bd8493bbc4ad7073bd3e839ff191877dd21e7b369ae",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee",
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb"
   },
+  "input_manifest_sha256": "24bf3411259a889aaf0b855b129e02b753032cfe39030443cbe9f3eddfef27f6",
   "files": {
-    "answer.erl": "2bfb543768a721be1f57d6f6533373203c6a86cbb49d43a7433b7c2ba996dfab",
+    "answer.erl": "7e55e48d13f92c8ca8df50fee694c24c2c59161ed852be5f8e28b3470b14cf7c",
     "calls.txt": "b67d19dcfbd9e386867cf812b0df8bd94090122ca9a71e7db1ae94d2d50ddea4",
-    "client.erl": "e740214ac030981b12c0cad8da09bbd0721cc68041a39235bbd6e63661329e8d",
+    "client.erl": "8bbc7dba47d54adc759ab8ebb2238802521f5084850886667163c47ee1ad122b",
     "expected.txt": "3703dbe013e565198bf586501124078b31fb098e0e59b04531282597c97193ea"
   },
   "evidence": {
     "calls": 150,
-    "seed": 290041
+    "seed": 290041,
+    "source_origin": "locally authored fragments; OTP supplies observations only",
+    "source_sha256": {
+      "answer.erl": "7e55e48d13f92c8ca8df50fee694c24c2c59161ed852be5f8e28b3470b14cf7c",
+      "client.erl": "8bbc7dba47d54adc759ab8ebb2238802521f5084850886667163c47ee1ad122b"
+    }
   }
 }

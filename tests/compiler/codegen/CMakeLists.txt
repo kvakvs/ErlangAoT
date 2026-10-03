@@ -164,6 +164,10 @@ add_test(NAME codegen_progress COMMAND "${CMAKE_COMMAND}" "-DTOOL=$<TARGET_FILE:
     "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/progress/$<CONFIG>" -P "${CMAKE_CURRENT_SOURCE_DIR}/progress.cmake")
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(NAME fixture_sources COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/compiler/patternmatch/fixture_sources.py"
+    "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/fixture-sources")
+set_tests_properties(fixture_sources PROPERTIES TIMEOUT 60)
 add_test(NAME codegen_resource_cli COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/resource_cli.py"
     "$<TARGET_FILE:erlang_aot>" "${CMAKE_CURRENT_BINARY_DIR}/resource-cli/$<CONFIG>")
 get_filename_component(llvm_tools "${sdk_dir}/../../../bin" ABSOLUTE)

@@ -11,36 +11,31 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "6994b6c262a4e9894afcc2cd163fba4dbc49bca107365e660f61879d377493ee"
+    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
   },
   "generator_sha256": {
-    "regenerate.py": "5185292bbb5602c876b3d7e5a01a5b348c428fa7751d31fb4ea4781557e3b34c",
-    "regenerate_cases.py": "be261d4d49b44dbc77ff5525c9483485f35945c23f084ee180e64f4e0b3abd11",
-    "services.py": "33bee612c049892708fa81d4151d4753a2fdc39103cc737c58be694670e241e3",
-    "immediate.py": "ad60f1b5605d46e7b370e0d08bb79859359e7b26fa6b0697c32d2a5f56edb930",
+    "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
+    "regenerate_cases.py": "53ce982d1864b4546f80d9c1fbfa63ee9e82a2d208b62efe532b05adcea1b96e",
+    "authored.py": "ed76f0faff37e8cd44fa3bd8493bbc4ad7073bd3e839ff191877dd21e7b369ae",
     "immediate.escript": "90aaa5641f6d0316295466ff4505f8915acf8294c94f763b8ed739638a45d6b7",
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
+  "input_manifest_sha256": "2b4727bffc4a88dcb20394e7681970212f78c3fc61a62c05e5b5c398d48dc68f",
   "files": {
-    "answer.erl": "6fd8be05bc1d4c527b009fd788f66d2304c0be4cb97b927312112f4ad7870a92",
+    "answer.erl": "f586626a7894db024af7449d867b3b1fcfd9f86f21e3c4d0fd2fc73f138daada",
     "calls.term": "d72671033435c4baad513dac5de41e824b6dfa4a9406d813b6b4fc8192c00da9",
     "calls.txt": "1ac47532008cef560f3d451c117532bab1b8216875c16758c7be6dd399208da7",
-    "client.erl": "e13a705bd8e55c6a9879ff4b46e063038da7930cd27fbe8846a4d32935d6a314",
+    "client.erl": "e95baa8990c9b66b9133c3c851bda9dde7ff291a3282159c7e214c8035ac079a",
     "expected.txt": "747eb544dd95142e802426944957340bfb4ba780b93bf5e6af7943b194635ad1",
     "project.toml": "a6375d9b94df37765652cddb4e0f84a19df34fb40928944623ed8ef690ff7727"
   },
   "evidence": {
     "calls": 1689,
-    "source": "lib\\compiler\\test\\guard_SUITE.erl",
-    "sha256": "061fa7f4de021931b5751d85876bcf5252ba1d6e725c3b6df10c47cbb1c8894f",
-    "function": "bool/1",
-    "adaptations": "retain first guarded bool/1 clause; fallback deferred to step 9; modern predicate and comparison kernels adapt guard_SUITE and beam_type_SUITE:numbers/1 immediate checks without Common Test/list construction; complete authored helpers retain all tested operations",
-    "declarations": "body_is_atom/1,body_is_integer/1,body_is_number/1,body_is_boolean/1,body_is_tuple/1,body_is_list/1,body_is_binary/1,body_is_bitstring/1,body_is_float/1,body_is_map/1,body_is_pid/1,body_is_port/1,body_is_reference/1,body_is_function/1,guard_is_atom/1,guard_is_integer/1,guard_is_number/1,guard_is_boolean/1,guard_is_tuple/1,guard_is_list/1,guard_is_binary/1,guard_is_bitstring/1,guard_is_float/1,guard_is_map/1,guard_is_pid/1,guard_is_port/1,guard_is_reference/1,guard_is_function/1,exact/2,exact_ne/2,equal/2,unequal/2,less/2,leq/2,greater/2,geq/2,bool/1,legacy_integer/1,legacy_float/1,function_arity/2,guard_arity/2,tuple_size_value/1,length_value/1,size_value/1,head_value/1,tail_value/1,element_value/2,guard_element/2,min_value/2,max_value/2,wrong_spec/1,head_first/1,qualified/1",
-    "wrapper_sha256": "6fd8be05bc1d4c527b009fd788f66d2304c0be4cb97b927312112f4ad7870a92",
-    "other_sources": {
-      "beam_type_SUITE": "bf3d90d2c560320db20dc2c2c184ce0719cf6bc1ad8ffd935641a989d7801ced",
-      "overridden_bif_SUITE": "d26553b6b3023d647aeda7408e7e6d80491ab2129e2e34fa9f56c65b4e6a36de"
+    "source_origin": "locally authored fragments; OTP supplies observations only",
+    "source_sha256": {
+      "answer.erl": "f586626a7894db024af7449d867b3b1fcfd9f86f21e3c4d0fd2fc73f138daada",
+      "client.erl": "e95baa8990c9b66b9133c3c851bda9dde7ff291a3282159c7e214c8035ac079a"
     },
     "resolution_oracle": {
       "fixture_sha256": "4a97f3674f48c74dfb9c774ca2134765cd5cccdb648c04a5ee24218f5a1b1f7b",

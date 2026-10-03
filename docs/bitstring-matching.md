@@ -60,7 +60,8 @@ cells and shared buffers. Both successful extraction
 outputs and every borrowed argument occupy the shared generated root frame.
 
 The project-owned [bitstring goldens](../tests/fixtures/patternmatch/generated/bits/manifest.json)
-retain sources, adaptations, oracle versions, calls and expected values/errors.
+retain oracle versions, calls and expected values/errors, with hashes of the
+[locally authored source](../tests/fixtures/patternmatch/fragments/bits/answer.erl).
 Routine tests require no OTP installation or source checkout. See
 [step-16 validation](patternmatch-step16-validation.md) for native, parser,
 foreign-object, ownership and failure evidence. Records and remaining guard

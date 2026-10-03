@@ -1,11 +1,11 @@
 """Explicitly regenerate reviewed, committed native-test inputs and expected results using OTP."""
 import argparse
-import importlib
 import hashlib
 import json
 import pathlib
 import tempfile
 from evidence import digest, provenance, run
+from authored import fixture_path, fragments, stage
 
 CORPORA = ['atoms', 'immediate', 'services', 'booleans', 'clauses', 'sequences', 'containers',
            'integers', 'floats', 'maps', 'bits', 'records', 'guard_catalog', 'facts', 'closure', 'bindings', 'patterns', 'baseline', 'differential']
@@ -34,21 +34,12 @@ def resolution(source, escript, work):
     return {'fixture_sha256': digest(fixture), 'oracle': oracle}
 
 
-def generate(source, otp, escript, name, work):
-    """Preserve complete helpers/adaptation metadata and obtain expected values solely from OTP."""
+def generate(source, escript, name, work):
+    """Observe local fragments with OTP; no OTP source is copied into committed fixtures."""
+    evidence = stage(source, name, work)
     if name in ['bindings', 'patterns', 'baseline', 'differential']:
         from regenerate_cases import generate as generate_cases
-        return generate_cases(source, otp, escript, name, work)
-    module = importlib.import_module(name)
-    if name == 'atoms':
-        module.fixtures(source, otp, work)
-        evidence = json.loads((work / 'helpers.json').read_text(encoding='utf8'))
-    elif name == 'immediate':
-        evidence = module.prepare(source, otp, work)
-    elif name == 'booleans':
-        evidence = module.kernels(source, otp, work)
-    else:
-        evidence = module.kernels(otp, work)
+        return generate_cases(source, escript, name, work, evidence)
     if name in ['records', 'guard_catalog']:
         evidence['semantic_oracle'] = run([escript, str(source / 'tests/compiler/patternmatch/patterns.escript'), str(work)])
     oracle = 'atoms.escript' if name == 'atoms' else 'immediate.escript'
@@ -68,6 +59,7 @@ def publish(source, name, work, evidence, oracle, version, check):
                        if path.suffix in ['.erl', '.hrl', '.txt', '.term', '.toml'])
     if check:
         manifest = json.loads((target / 'manifest.json').read_text(encoding='utf8'))
+        assert digest(fragments(source, name) / 'corpus.json') == manifest['input_manifest_sha256'], name
         assert set(filenames) == set(manifest['files']), f'Changed fixture inventory: {name}'
         for filename in filenames:
             actual = hashlib.sha256(contents(work / filename)).hexdigest()
@@ -77,15 +69,19 @@ def publish(source, name, work, evidence, oracle, version, check):
     target.mkdir(parents=True, exist_ok=True)
     files = {}
     for filename in filenames:
-        (target / filename).write_bytes(contents(work / filename))
-        files[filename] = digest(target / filename)
+        destination = fixture_path(source, name, filename)
+        if destination.suffix in ['.erl', '.hrl']:
+            assert contents(work / filename) == contents(destination), filename
+        else:
+            destination.write_bytes(contents(work / filename))
+        files[filename] = digest(destination)
     scripts = source / 'tests/compiler/patternmatch'
-    generator = {'baseline': 'evidence.py', 'differential': '../codegen/differential.py'}.get(name, name + '.py')
     manifest = {'schema': 1, 'corpus': name, 'oracle_version': version,
         'provenance': json.loads((work / 'provenance.json').read_text(encoding='utf8')),
         'generator_sha256': {file: digest(scripts / file) for file in
-            ['regenerate.py', 'regenerate_cases.py', generator, 'immediate.py', 'services.py', oracle,
+            ['regenerate.py', 'regenerate_cases.py', 'authored.py', oracle,
              'patterns.escript', '../codegen/execution_oracle.escript']},
+        'input_manifest_sha256': digest(fragments(source, name) / 'corpus.json'),
         'files': files, 'evidence': evidence}
     (target / 'manifest.json').write_bytes((json.dumps(manifest, indent=2) + '\n').encode())
     print(f'{name}: retained {len((work / "expected.txt").read_text(encoding="utf8").splitlines())} expected results')
@@ -104,7 +100,7 @@ def main():
     for name in CORPORA if args.corpus == 'all' else [args.corpus]:
         work = pathlib.Path(tempfile.mkdtemp(prefix='oracle-' + name + '-', dir=source / 'build'))
         provenance(source, args.otp.resolve(), source / 'tests/fixtures/patternmatch', work)
-        evidence, oracle = generate(source, args.otp.resolve(), args.escript, name, work)
+        evidence, oracle = generate(source, args.escript, name, work)
         publish(source, name, work, evidence, oracle, version, args.check)
 
 

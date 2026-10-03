@@ -1,0 +1,8 @@
+{
+  "inputs": [
+    "answer.erl",
+    "client.erl",
+    "project.toml"
+  ],
+  "evidence": {}
+}

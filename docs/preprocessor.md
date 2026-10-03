@@ -98,11 +98,10 @@ implicit file attributes are deliberately omitted from this comparison and teste
 through the native API. Important logical locations and provenance are asserted
 separately. Diagnostic wording is not required to equal OTP's text.
 
-`semantic/headers/otp_assert.hrl` and `otp_file.hrl` are copies from the pinned
-OTP release with trailing whitespace normalized and their upstream Apache-2.0
-notices preserved. Their source
-paths are `lib/stdlib/include/assert.hrl` and `lib/kernel/include/file.hrl`. They are
-used by `otp_headers.erl`; all other semantic fixtures were authored for this project.
+`semantic/headers/checks.hrl` and `entry.hrl` are locally authored macro and
+typed-record fragments, exercised by `local_headers.erl`. They replace the former
+copied OTP assertion and file headers. Their token golden is an OTP observation
+of local source. See [source provenance](otp-source-audit.md).
 The full upstream Common Test suites have not been run.
 
 On macOS arm64, run the full C++23 debug suite, ASan/UBSan,

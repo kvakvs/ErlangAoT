@@ -1,43 +1,9 @@
-"""Execute explicitly adapted OTP atom-return leaves through the public CLI and native runtime."""
-import hashlib
-import json
+"""Execute locally authored atom and boolean fragments through the public CLI and native runtime."""
 import pathlib
-import re
 import subprocess
 import sys
 from stored import load
-from evidence import digest, run, verify_manifest
-
-
-def fixtures(source, otp, work):
-    """Retain licensing and exact provenance; only literal leaves are adapted, not guard behavior."""
-    suite = otp / "lib/compiler/test/guard_SUITE.erl"
-    text = suite.read_text(encoding="utf-8")
-    verify_manifest(otp, (source / "tests/fixtures/patternmatch/otp.tsv").read_text(encoding="utf-8"))
-    clauses = ["rb(Size, ToRead, SoFar) when SoFar + Size < 81920; ToRead == [] -> true;",
-               "rb(_, _, _) -> false.", "csemi2(A, B) when tuple_size(A) > 1; tuple_size(B) > 2 -> ok;"]
-    assert all(clause in text for clause in clauses), "OTP leaf provenance changed"
-    license_text = text[:text.index("-module(")]
-    names = ["truth", "falsity", "ok_value", "unicode", "empty", "nul", "projected"]
-    answer = license_text + "-module(answer).\n-export([id/1," + ",".join(n + "/0" for n in names) + "]).\n"
-    answer += "-spec truth() -> integer().\ntruth() -> true.\nfalsity() -> false.\nok_value() -> ok.\n"
-    answer += "unicode() -> '\u03bb\U0001f600'.\nempty() -> ''.\nnul() -> 'a\\x{0}b'.\nid(X) -> X.\nprojected() -> id((true)).\n"
-    client = "-module(client).\n-export([same/0," + ",".join(n + "/0" for n in names) + "]).\nsame() -> true.\n"
-    client += "".join(f"{n}() -> answer:id(answer:{n}()).\n" for n in names)
-    for name, contents in [("answer", answer), ("client", client)]:
-        (work / (name + ".erl")).write_bytes(contents.encode("utf-8"))
-    (work / "project.toml").write_text("schema_version=1\n[[targets]]\nname='atoms'\nsources=['answer.erl','client.erl']\n",
-                                       encoding="utf-8")
-    record = {"revision": run(["git", "-C", str(otp), "rev-parse", "HEAD"]).strip(),
-              "source": suite.relative_to(otp).as_posix(), "source_sha256": digest(suite), "functions": ["rb/3", "csemi2/2"],
-              "selected_clauses": clauses, "clause_sha256": hashlib.sha256("\n".join(clauses).encode()).hexdigest(),
-              "adaptation": "Extract only true/false/ok return leaves into truth/0, falsity/0, ok_value/0. "
-                            "No rb/csemi2 guard or dispatch behavior is claimed. Add authored Unicode, empty, NUL, "
-                            "identity, grouping and cross-module calls, plus a deliberately wrong integer spec.",
-              "declarations": {name: re.findall(r"^-(?:module|export|spec).*", text, re.M)
-                               for name, text in [("answer", answer), ("client", client)]},
-              "generated_sha256": {name: digest(work / (name + ".erl")) for name in ["answer", "client"]}}
-    (work / "helpers.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+from evidence import run
 
 
 def failed_batch(tool, work):

@@ -128,13 +128,15 @@
   Final evidence is docs/patternmatch-step20-{validation.md,evidence.json}.
 
 - Tests prioritize real CLI/project sources and separate native runtime consumers.
-  Project-owned fixtures retain OTP inputs/results; 19 corpora preserve 67,634
+  Local source fragments are separate from retained OTP observations; 19 corpora preserve 67,634
   native expected values in all eight driver/policy combinations, plus 106 semantic
-  rows. The seeded closure corpus reconciles every manifest/catalog mapping. Live OTP/source audits are explicit opt-ins, while
+  rows. `fixture_sources` prevents committing OTP notices/source outputs; regeneration
+  stages local fragments and observes them with OTP. OTP source/generated headers stay
+  in ignored reference/build directories. The seeded closure corpus reconciles every manifest/catalog mapping. Live OTP/source audits are explicit opt-ins, while
   normal configure/build/test requires neither OTP nor its checkout. Grammar coverage observes 344 ordinary productions;
   suite parsing/foreign objects never count as native semantics. Focused private
   tests cover inaccessible budgets, ownership and injected faults. Fresh combined
-  Windows x64 Debug passes 124 OTP-free CTests and all 258 production quality units;
+  Windows x64 Debug passes 125 OTP-free CTests and all 258 production quality units;
   formatting remains mandatory. Other native hosts/32-bit and new frontend sanitizer
   runs remain unavailable. Historical foundational macOS/runtime-ASan evidence stays
   in its original validation records. See docs/compile-validation.md and step records.

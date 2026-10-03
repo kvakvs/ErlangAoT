@@ -1,60 +1,13 @@
-"""Compare scoped binding legality through the CLI and retain pinned OTP helpers."""
+"""Compare local binding fragments and stored acceptance through the CLI."""
 import json
 import pathlib
 import re
 import subprocess
 import sys
-from evidence import digest, native, provenance, run
+from evidence import native, run
 from stored import load
 
 BINDING_ERRORS = r"unbound variable|unsafe variable|wildcard '_' cannot be read|guards cannot bind variables"
-
-
-def source_cases(source, work):
-    """Keep authored scope cases and oracle expectations in an auditable generated manifest."""
-    path = source / "tests/fixtures/patternmatch/bindings.json"
-    rows = json.loads(path.read_text(encoding="utf-8"))
-    terms = []
-    for row in rows:
-        name = row["name"]
-        text = f'-module({name}).\n-export([f/{row["arity"]}]).\n{row["body"]}\n'
-        (work / f"{name}.erl").write_bytes(text.encode())
-        accepted = "rejected" if row["diagnostic"] else "accepted"
-        terms.append(f'{{{name}, {accepted}, {row["otp_diagnostic"] or "none"}}}.')
-        row["sha256"] = digest(work / f"{name}.erl")
-    return rows, terms
-
-
-def helpers(otp, work):
-    """Extract complete match_SUITE clauses unchanged, including their original license."""
-    path = otp / "lib/compiler/test/match_SUITE.erl"
-    text = path.read_text(encoding="utf-8")
-    names = [("gh_6516_scope1", 0), ("gh_6516_scope2", 0), ("mutable_variables_1", 0),
-             ("match_right_tuple_1", 1), ("force_succ_regs", 2), ("id", 1)]
-    records, clauses = [], []
-    for name, arity in names:
-        found = re.findall(rf"^{name}[(][^\n]*?[)] ->.*?\.\s*$", text, re.M | re.S)
-        assert len(found) == 1, (name, found)
-        clause = found[0].strip()
-        clauses.append(clause)
-        records.append({"function": f"{name}/{arity}", "clause": clause})
-    license_text = text[:text.index("-module(")]
-    exports = ",".join(f"{name}/{arity}" for name, arity in names)
-    wrapped = license_text + f"-module(bindings_otp).\n-export([{exports}]).\n" + "\n".join(clauses) + "\n"
-    (work / "bindings_otp.erl").write_bytes(wrapped.encode())
-    for module, clause, export in [("answer", clauses[-2], "force_succ_regs/2"), ("client", clauses[-1], "id/1")]:
-        extra = ""
-        if module == "answer":
-            export += ",identity/1"
-            extra = "-spec force_succ_regs(integer(), atom()) -> atom().\n"
-            clause += "\nidentity(X) -> client:id(X)."
-        wrapper = license_text + f"-module({module}).\n-export([{export}]).\n" + extra + clause + "\n"
-        (work / f"{module}.erl").write_bytes(wrapper.encode())
-    (work / "calls.txt").write_bytes(b"answer force_succ_regs 2 17 -42\nclient id 1 -134217728\nanswer identity 1 -7\n")
-    (work / "expected.txt").write_bytes(b"-42\n-134217728\n-7\n")
-    return {"source": str(path.relative_to(otp)), "source_sha256": digest(path),
-            "helpers": records, "adaptations": "unchanged complete clauses; new modules/exports; retained license; native answer adds identity(X) -> client:id(X) and misleading projection spec",
-            "wrapper_sha256": digest(work / "bindings_otp.erl")}
 
 
 def compile_case(tool, work, row, policy, project):
@@ -73,7 +26,7 @@ def compile_case(tool, work, row, policy, project):
     assert not result.stdout, result.stdout
     if row["diagnostic"]:
         assert row["diagnostic"] in result.stderr, result.stderr
-        assert re.search(rf'{name}\.erl:3:\d+:.*{re.escape(row["diagnostic"])}', result.stderr), result.stderr
+        assert re.search(rf'{name}\.erl:\d+:\d+:.*{re.escape(row["diagnostic"])}', result.stderr), result.stderr
     else:
         assert not re.search(BINDING_ERRORS, result.stderr), result.stderr
     if row["capability"] and not row["diagnostic"]:
@@ -124,8 +77,8 @@ def main():
     cli(tool, work, rows)
     locations(tool, work)
     native(tool, cmake, source, work, settings, config, suffix)
-    (work / "evidence.json").write_text(json.dumps({"cases": rows, "otp_helpers": helper_record,
-        "oracle": oracle, "native": "unchanged force_succ_regs/2 and id/1; four policies",
+    (work / "evidence.json").write_text(json.dumps({"cases": rows, "local_helpers": helper_record,
+        "oracle": oracle, "native": "local projection and identity fragments; four policies",
         "deferred": "step 9 clause isolation and failed-candidate rollback execution"}, indent=2) + "\n", encoding="utf-8")
     print(oracle + "Binding legality and nonpublication passed in both CLI modes; native projections passed four policies.")
 

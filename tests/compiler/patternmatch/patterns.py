@@ -4,43 +4,11 @@ import pathlib
 import re
 import subprocess
 import sys
-from bindings import compile_case, helpers
-from evidence import digest, provenance, run, verify_manifest
+from bindings import compile_case
+from evidence import digest, run, verify_manifest
 from stored import load
 
 ERRORS = r"illegal pattern|illegal expression in pattern|unbound variable|unsafe variable|invalid binary|conflicting binary|UTF binary|literal string pattern|unsized binary|map pattern requires"
-
-
-def cases(source, otp, work):
-    """Label suite adaptations separately from unchanged helpers and hash every generated source."""
-    rows = json.loads((source / "tests/fixtures/patternmatch/patterns.json").read_text(encoding="utf-8"))
-    map_path = otp / "lib/compiler/test/map_SUITE.erl"
-    license_text = map_path.read_text(encoding="utf-8").split("-module(")[0]
-    terms = []
-    for row in rows:
-        name = row["name"]
-        text = f'-module({name}).\n-export([f/{row["arity"]}]).\n{row["body"]}\n'
-        # Put the preserved notice after the function to keep authored diagnostic line checks stable.
-        (work / f"{name}.erl").write_text(text + license_text, encoding="utf-8")
-        row["sha256"] = digest(work / f"{name}.erl")
-        expected = "rejected" if row["diagnostic"] else "accepted"
-        terms.append(f'{{{name}, {expected}, {row["otp_diagnostic"] or "none"}}}.')
-    helper_record = helpers(otp, work)
-    rows.append(dict(name="bindings_otp", diagnostic="", capability=""))
-    terms.append("{bindings_otp, accepted, none}.")
-    binary_path = otp / "lib/compiler/test/bs_size_expr_SUITE.erl"
-    binary_source = binary_path.read_text(encoding="utf-8")
-    clause = re.search(r"^do_basic_1\(.*?^    no_match\.", binary_source, re.M | re.S).group()
-    wrapped = binary_source.split("-module(")[0] + "-module(patterns_binary).\n-export([do_basic_1/1]).\n" + clause + "\n"
-    (work / "patterns_binary.erl").write_text(wrapped, encoding="utf-8")
-    rows.append(dict(name="patterns_binary", diagnostic="", capability=""))
-    terms.append("{patterns_binary, accepted, none}.")
-    (work / "patterns.term").write_text("\n".join(terms) + "\n", encoding="utf-8")
-    return rows, {"match": helper_record, "binary": {"source": str(binary_path.relative_to(otp)),
-        "source_sha256": digest(binary_path), "function": "do_basic_1/1", "clause": clause,
-        "adaptations": "unchanged complete clauses; new module/export; retained license", "sha256": digest(work / "patterns_binary.erl")},
-        "map": {"source": str(map_path.relative_to(otp)), "source_sha256": digest(map_path),
-        "function": "t_key_expressions/1", "adaptations": "pat_key_tuple/call/binary/badarith move key patterns to body matches with explicit incoming parameters; retain element/2 plus its dependent binary value pattern; replace other literal value constraints by captures; specialize failing division key to 1 div 0; remove surrounding harness/closures/case dispatch; preserve license"}}
 
 
 def policies(tool, work, rows):

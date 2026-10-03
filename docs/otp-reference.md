@@ -13,6 +13,12 @@ this checkout nor installed OTP. Live audits are an explicit opt-in with
 `-DERLANG_AOT_OTP_AUDITS=ON`; the installed OTP used for those audits is a separate
 dependency. See [fixture regeneration](../tests/fixtures/patternmatch/generated/README.md).
 
+Committed test sources are now [locally authored fragments](otp-source-audit.md).
+OTP source and OTP-generated headers stay exclusively in ignored reference/build
+directories. Stored observations of local inputs remain committed. The dated
+records below describe their original inputs and are preserved as historical
+evidence, including former copied helpers that have since been replaced.
+
 1. Check `git -C references/otp status --short` and preserve any local work. Fetch
    the official branch with
    `git -C references/otp fetch https://github.com/erlang/otp.git refs/heads/maint-29:refs/remotes/origin/maint-29`.

@@ -1,0 +1,283 @@
+{
+  "inputs": [
+    "alias.erl",
+    "answer.erl",
+    "bindings.term",
+    "bindings_local.erl",
+    "body_match.erl",
+    "call_sibling.erl",
+    "calls.txt",
+    "chain.erl",
+    "clause_leak.erl",
+    "clauses.erl",
+    "client.erl",
+    "compound.erl",
+    "guard_assign.erl",
+    "guard_leak.erl",
+    "guard_read.erl",
+    "guard_wildcard.erl",
+    "identity.erl",
+    "named_missing.erl",
+    "rebind.erl",
+    "repeat.erl",
+    "rhs_first.erl",
+    "sibling_checks.erl",
+    "sibling_local.erl",
+    "sibling_read.erl",
+    "unbound.erl",
+    "unsafe_and.erl",
+    "unsafe_match.erl",
+    "unsafe_merge.erl",
+    "unsafe_merge_reverse.erl",
+    "unsafe_or.erl",
+    "wildcard.erl"
+  ],
+  "evidence": {
+    "cases": [
+      {
+        "name": "identity",
+        "arity": 2,
+        "body": "f(_Name, _) -> _Name.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "f6bfb7a8fad425bf6689615c23c37549a6f3d5a682c5eb3448c47036f18e0bf5"
+      },
+      {
+        "name": "repeat",
+        "arity": 2,
+        "body": "f(X, X) -> X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "32fbd057ccf88704c066e9b2046ef480b15d63673bc33e9b0754c1743dbdb098"
+      },
+      {
+        "name": "clauses",
+        "arity": 1,
+        "body": "f(X) -> X; f(X) -> X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124"
+      },
+      {
+        "name": "guard_read",
+        "arity": 1,
+        "body": "f(X) when X =:= X -> X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "0a617bbc60d388c20b67562b1e0ed44fe831a49867fa476d0ef3e7c187abecf5"
+      },
+      {
+        "name": "body_match",
+        "arity": 1,
+        "body": "f(X) -> Y = X, Y.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef"
+      },
+      {
+        "name": "chain",
+        "arity": 0,
+        "body": "f() -> X = Y = 1, {X, Y}.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b"
+      },
+      {
+        "name": "rebind",
+        "arity": 1,
+        "body": "f(X) -> X = 1, X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "aa0e4ab05a23afa3689720e5131684f35f4e1ea79309fc76edde87628b090369"
+      },
+      {
+        "name": "sibling_checks",
+        "arity": 0,
+        "body": "f() -> {X = 4, _ = X = 3}, X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "0eb9db7c9dc41be0c5e74652ed076868bb8371551a5921d0e8c78e82203a1d75"
+      },
+      {
+        "name": "sibling_local",
+        "arity": 0,
+        "body": "f() -> {begin X = 1, X end, X = 2}, X.",
+        "capability": "pattern matching",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572"
+      },
+      {
+        "name": "alias",
+        "arity": 1,
+        "body": "f(A = B) -> B.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "375c0766478c89fd6b5291fe509762251fdcf4e5bf335d971a4d6d08b02f17fd"
+      },
+      {
+        "name": "compound",
+        "arity": 1,
+        "body": "f({X, X, _, _Name}) -> {_Name, X}.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "37833fbce22600b4ba6c628345aeff2e5edfde0839cfc8686ba5beb5be32ce56"
+      },
+      {
+        "name": "clause_leak",
+        "arity": 2,
+        "body": "f(X, _) -> X; f(_, _) -> X.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6"
+      },
+      {
+        "name": "guard_assign",
+        "arity": 1,
+        "body": "f(X) when Y = X -> X.",
+        "capability": "guards",
+        "diagnostic": "guards cannot bind variables",
+        "otp_diagnostic": "illegal_guard_expr",
+        "sha256": "21e6acf5e682c1fca832620c0356f4f9592c116fa92960f8b5a8e032055801fc"
+      },
+      {
+        "name": "guard_leak",
+        "arity": 1,
+        "body": "f(X) when Y = X -> Y.",
+        "capability": "guards",
+        "diagnostic": "unbound variable Y",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "0ae53314d4d43d680de296e8fc17771bf228d64c26d4e27b030697a5a4c52fc7"
+      },
+      {
+        "name": "unbound",
+        "arity": 0,
+        "body": "f() -> Missing.",
+        "capability": "",
+        "diagnostic": "unbound variable Missing",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "0f859c6c5b8c2fc272825a5642f9445c4b23db23e5a676f8b4a9112042ae4b8b"
+      },
+      {
+        "name": "wildcard",
+        "arity": 1,
+        "body": "f(_) -> _.",
+        "capability": "",
+        "diagnostic": "wildcard '_' cannot be read",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "71a3cb18742be799d0c33d9cb8a81e4f3541701a5b151b17847e46a21fc237c5"
+      },
+      {
+        "name": "named_missing",
+        "arity": 1,
+        "body": "f(_) -> _Name.",
+        "capability": "",
+        "diagnostic": "unbound variable _Name",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "a729fa42f720db0bba0d83fcd79e1327a2831c93f2e99affbc2705b0f4e8f238"
+      },
+      {
+        "name": "rhs_first",
+        "arity": 0,
+        "body": "f() -> X = Y, Y = 1.",
+        "capability": "pattern matching",
+        "diagnostic": "unbound variable Y",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "6d25f9c582dc1848e0963adb1bed65c7f62949f8339a3daed160a5712f7b3b69"
+      },
+      {
+        "name": "sibling_read",
+        "arity": 0,
+        "body": "f() -> {X = 1, X}.",
+        "capability": "heap expressions",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "cf3b4ee44cc167ce23f6231d0a08c1b37b3734d8796094ae75cdedfe9c09cedd"
+      },
+      {
+        "name": "call_sibling",
+        "arity": 0,
+        "body": "f() -> g(X = 1, X). g(A, _) -> A.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260"
+      },
+      {
+        "name": "unsafe_and",
+        "arity": 1,
+        "body": "f(A) -> A andalso (X = 1), X.",
+        "capability": "arithmetic",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "6acfd48a436cea6ab79ecd08c757681fc09882f7cf57f0254ed8e5f49b9c5969"
+      },
+      {
+        "name": "unsafe_or",
+        "arity": 1,
+        "body": "f(A) -> A orelse (X = 1), X.",
+        "capability": "arithmetic",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b"
+      },
+      {
+        "name": "unsafe_match",
+        "arity": 1,
+        "body": "f(A) -> A andalso (X = 1), X = 2.",
+        "capability": "arithmetic",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "285fc9ca7137230648344eaf6fb9c01a3663f5b5efae6d2c8b82f1893a33336a"
+      },
+      {
+        "name": "guard_wildcard",
+        "arity": 1,
+        "body": "f(X) when _ =:= X -> X.",
+        "capability": "guards",
+        "diagnostic": "wildcard '_' cannot be read",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "3e6ce4322682970a3e97621a4aae2a26a9efb1cd64b42f6db08bde63534c7703"
+      },
+      {
+        "name": "unsafe_merge",
+        "arity": 1,
+        "body": "f(A) -> {A andalso (X = 1), X = 2}, X.",
+        "capability": "heap expressions",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "f85924bf79c9c350564efb1302585e214717ec6b3bb606ee80bfbe4336a1609d"
+      },
+      {
+        "name": "unsafe_merge_reverse",
+        "arity": 1,
+        "body": "f(A) -> {X = 2, A orelse (X = 1)}, X.",
+        "capability": "heap expressions",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6"
+      },
+      {
+        "name": "bindings_local",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a"
+      }
+    ],
+    "helpers": {
+      "origin": "local fragments",
+      "coverage": "binding and computed-size patterns"
+    }
+  }
+}

@@ -1,0 +1,1060 @@
+{
+  "inputs": [
+    "answer.erl",
+    "bindings_local.erl",
+    "bit_construct_all_integer.erl",
+    "bit_construct_conflict.erl",
+    "bit_construct_unit256.erl",
+    "bit_construct_unit_default.erl",
+    "bit_construct_unit_high.erl",
+    "bit_construct_unknown.erl",
+    "bit_construct_utf_size.erl",
+    "bit_construct_utf_undefined.erl",
+    "bit_guard_unknown.erl",
+    "bit_pattern_unit256.erl",
+    "bit_pattern_utf_undefined.erl",
+    "calls.txt",
+    "client.erl",
+    "pat_aliases.erl",
+    "pat_arithmetic_type.erl",
+    "pat_arithmetic_var.erl",
+    "pat_bin_alias.erl",
+    "pat_bin_call.erl",
+    "pat_bin_incoming.erl",
+    "pat_bin_negative_size.erl",
+    "pat_bin_noninteger_size.erl",
+    "pat_bin_sequential.erl",
+    "pat_bin_size_badarith.erl",
+    "pat_bin_size_container.erl",
+    "pat_bin_string.erl",
+    "pat_bin_utf_string.erl",
+    "pat_body_chain.erl",
+    "pat_body_compound.erl",
+    "pat_body_rhs.erl",
+    "pat_boolean.erl",
+    "pat_comparison.erl",
+    "pat_constants.erl",
+    "pat_containers.erl",
+    "pat_divide_zero.erl",
+    "pat_groups.erl",
+    "pat_key_alias.erl",
+    "pat_key_alias_bound.erl",
+    "pat_key_alias_reverse.erl",
+    "pat_key_argument.erl",
+    "pat_key_bad_modifier.erl",
+    "pat_key_badarith.erl",
+    "pat_key_binary.erl",
+    "pat_key_binary_string_size.erl",
+    "pat_key_bool.erl",
+    "pat_key_call.erl",
+    "pat_key_field.erl",
+    "pat_key_import.erl",
+    "pat_key_import_erlang.erl",
+    "pat_key_legacy.erl",
+    "pat_key_local_call.erl",
+    "pat_key_map.erl",
+    "pat_key_match.erl",
+    "pat_key_nested_call.erl",
+    "pat_key_new_bif.erl",
+    "pat_key_no_auto.erl",
+    "pat_key_no_auto_one.erl",
+    "pat_key_no_auto_other.erl",
+    "pat_key_no_auto_remote.erl",
+    "pat_key_operator_call.erl",
+    "pat_key_remote.erl",
+    "pat_key_remote_call.erl",
+    "pat_key_shadow.erl",
+    "pat_key_shadow_qualified.erl",
+    "pat_key_sibling.erl",
+    "pat_key_tuple.erl",
+    "pat_key_unreachable.erl",
+    "pat_key_wrong_arity.erl",
+    "pat_map_assoc.erl",
+    "pat_modifier.erl",
+    "pat_modifier_conflict.erl",
+    "pat_nested_assignment_call.erl",
+    "pat_nested_block.erl",
+    "pat_nested_call.erl",
+    "pat_nested_case.erl",
+    "pat_nested_map_call.erl",
+    "pat_prefix.erl",
+    "pat_prefix_atom.erl",
+    "pat_prefix_empty.erl",
+    "pat_prefix_group.erl",
+    "pat_prefix_tail.erl",
+    "pat_prefix_variable.erl",
+    "pat_record.erl",
+    "pat_record_index.erl",
+    "pat_segment_alias.erl",
+    "pat_segment_expr.erl",
+    "pat_segment_nested.erl",
+    "pat_segment_tuple.erl",
+    "pat_size_alias.erl",
+    "pat_size_alias_reverse.erl",
+    "pat_size_argument.erl",
+    "pat_size_bad_modifier.erl",
+    "pat_size_call.erl",
+    "pat_size_cross_binary.erl",
+    "pat_size_future.erl",
+    "pat_size_match.erl",
+    "pat_size_same_segment.erl",
+    "pat_size_sibling.erl",
+    "pat_size_utf.erl",
+    "pat_string_size.erl",
+    "pat_type_alias_conflict.erl",
+    "pat_unit_alias_conflict.erl",
+    "pat_unit_default.erl",
+    "pat_unit_utf.erl",
+    "pat_unit_zero.erl",
+    "pat_unsized.erl",
+    "patterns.term",
+    "patterns_binary.erl"
+  ],
+  "evidence": {
+    "cases": [
+      {
+        "name": "pat_constants",
+        "arity": 1,
+        "body": "f({1+2*3, -(4 div 2), bnot 1, 8 bsr 1, 5 rem 2, 1 bor 2, 3 band 1, 3 bxor 2, 1/2, $a}) -> ok.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "dce306f5ca70ba08122ccd99bab26904a1a78fbc994d4c5a7f196c584824ed80"
+      },
+      {
+        "name": "pat_containers",
+        "arity": 1,
+        "body": "f({[], {}, [A,B|T], \"abc\", #{a := V}}) -> {A,B,T,V}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "333e3a8419675bfa014a05da4d3e51e723dea151a278a5185adbd476d65bc703"
+      },
+      {
+        "name": "pat_aliases",
+        "arity": 1,
+        "body": "f(({A,B} = {B,A}) = Whole) -> {Whole,A,B}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "6af1fd8b87ff5717bedb7cc1e8cbd9309a9390cd6967fb650e4ef6fb498858fd"
+      },
+      {
+        "name": "pat_groups",
+        "arity": 1,
+        "body": "f(((A))) -> A.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "183159f837fc7f74ebffa4d31bdcf02b1a1eed49fe44c7347708632601643944"
+      },
+      {
+        "name": "pat_prefix",
+        "arity": 1,
+        "body": "f(\"abc\" ++ [65,$b] ++ Tail) -> Tail.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "89dcb3955b2ff8ee5147853b4e06fef6725a2fb08b4fb89712a244721ce7f257"
+      },
+      {
+        "name": "pat_prefix_empty",
+        "arity": 1,
+        "body": "f([] ++ Tail) -> Tail.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "74ca0d77f95e8027c04dfb193a1645313427581808cfc906b7ae18c3be5e4701"
+      },
+      {
+        "name": "pat_body_compound",
+        "arity": 1,
+        "body": "f(V) -> ({A,B} = {B,A}) = V, {A,B}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "67b6797cdc43f7984052c62922b12cff496926b7816229909f49e13848f41a66"
+      },
+      {
+        "name": "pat_body_rhs",
+        "arity": 1,
+        "body": "f(V) -> #{K := X} = (K = V), X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "8bcc94b2c7810915423e8aaf00f822a9010da572b4c2d4465edab0674d120ce5"
+      },
+      {
+        "name": "pat_key_tuple",
+        "arity": 2,
+        "body": "f(Offset, Map) -> #{{ticket, Offset + 3} := Selected} = Map, Selected.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "132cdaf8e1f134a79138c144a33bde54cb970e9723821531f446dbeea80d319b"
+      },
+      {
+        "name": "pat_key_call",
+        "arity": 3,
+        "body": "f(Position, Keys, Map) -> #{element(Position, Keys) := <<Count:8, Payload:Count/binary>>} = Map, Payload.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "177d536714d83554f3451c4bf91fc9cee938be30f82b173dcd9e33a33ed69db0"
+      },
+      {
+        "name": "pat_key_remote",
+        "arity": 3,
+        "body": "f(X, Y, M) -> #{erlang:element(X,Y) := V} = M, V.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "d7ccb62b24568d61a4d97b32d43f79468073e5a8d665be85fe6990d67654e442"
+      },
+      {
+        "name": "pat_key_binary",
+        "arity": 2,
+        "body": "f(Number, Map) -> #{{entry, <<Number:24/little>>} := Selected} = Map, Selected.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "be0d805348e258a1408c5f888b799c7d893e0d474eac8d84628ad993e162bce2"
+      },
+      {
+        "name": "pat_key_map",
+        "arity": 1,
+        "body": "f(#{#{a => 1} := V}) -> V.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "521dca3bebb59d05d60b03dce40491aa7443e11533faf9e20de9817f4f239b42"
+      },
+      {
+        "name": "pat_key_badarith",
+        "arity": 1,
+        "body": "f(#{8 div 0 := Selected}) -> Selected.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "941596439d77f32b5f36bf28a347da4f39a73a2e9908af58c07b509eeed0a126"
+      },
+      {
+        "name": "pat_key_bool",
+        "arity": 1,
+        "body": "f(#{true andalso 1 := V}) -> V.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "87d79bc985c9df448827bcca5c18a36a84940633678417e70cb9465a76695b0b"
+      },
+      {
+        "name": "pat_key_new_bif",
+        "arity": 2,
+        "body": "f(Int,M) -> #{is_integer(Int,1,2) := V} = M, V.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "f52f980ea346823cc66979957aaee108c85819952d474a8d877b3c261dd07cbe"
+      },
+      {
+        "name": "pat_bin_sequential",
+        "arity": 1,
+        "body": "f(<<Sz:32,Tail:(4*Sz-4)/binary>>) -> Tail.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "69a3dbaabe20cd17a5da78aec07b37c0bd2b3ce526c03b0c8e1b7b00bf6fc811"
+      },
+      {
+        "name": "pat_bin_incoming",
+        "arity": 2,
+        "body": "f(N,B) -> <<X:(N+1)>> = B, X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "594497b56d2ec4d520aa84b8e5640ebf6e8e1ef9adc94ac7e183530884db832c"
+      },
+      {
+        "name": "pat_bin_call",
+        "arity": 2,
+        "body": "f(T,B) -> <<X:(tuple_size(T))>> = B, X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "ea61c8867c4f437ad809584fbd2345d8375fd41aab50e75f1aa61dd48ddb818f"
+      },
+      {
+        "name": "pat_bin_alias",
+        "arity": 1,
+        "body": "f(<<N:8,X:N>> = Whole) -> {Whole,X}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "a98d32874f6c057b1b968083fb54eb9637b9221a91520c15ea71b4bde16f8fab"
+      },
+      {
+        "name": "pat_bin_string",
+        "arity": 1,
+        "body": "f(<<\"abc\",X/utf8>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "c2e629900b09556247b53d78dce3c7d35c47342714d97a6f7a3217085ddfce9b"
+      },
+      {
+        "name": "pat_bin_utf_string",
+        "arity": 1,
+        "body": "f(<<\"abc\"/utf16>>) -> ok.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "cf4e0656b1ff8f248b0b12ad0cda0949621acd69d06e73233997d9fa5e129fc6"
+      },
+      {
+        "name": "pat_bin_noninteger_size",
+        "arity": 1,
+        "body": "f(<<X:atom>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "bcc6cd0d1a1cbef80f2fe3ce9ec5336b3e5158fc98d6d3ecd6a5b7e20210b65a"
+      },
+      {
+        "name": "pat_bin_negative_size",
+        "arity": 1,
+        "body": "f(<<X:(-1)>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "e35266b33005bfcfcf2d853281a895372d49bca26fe7c7b4ddc50bee2b33a4fb"
+      },
+      {
+        "name": "pat_bin_size_container",
+        "arity": 1,
+        "body": "f(<<X:{1,2}>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "d94a008fe0cbc95bcaec7df49f12c3811d0b393c19f1e46afc36a06367a6154c"
+      },
+      {
+        "name": "pat_bin_size_badarith",
+        "arity": 1,
+        "body": "f(<<X:(1 div 0)>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "699050590c917237966489afb6cb7e9b7dc6d8e4e185c444718aaafc33c1ffbb"
+      },
+      {
+        "name": "pat_record",
+        "arity": 1,
+        "body": "-record(r,{x,y}). f(#r{x=A,y=B}) -> {A,B}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "57e16bae46b2c9403f880c9913014b0b463cfdf2d642c2312b0829e47caae3af"
+      },
+      {
+        "name": "pat_record_index",
+        "arity": 1,
+        "body": "-record(r,{x}). f(#r.x) -> ok.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "db9470da751a133579bfd8893946578eae06cc90785ffedfc6b997aeb5543b74"
+      },
+      {
+        "name": "pat_body_chain",
+        "arity": 1,
+        "body": "f(V) -> X = Y = V, {X,Y}.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "c5cfd76c9a9232ab1d1c233d7daeaca955cd13b2a14b464bd231d51692fb4a3f"
+      },
+      {
+        "name": "pat_nested_call",
+        "arity": 1,
+        "body": "f({length([])}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "f24caae229b3e33b52af1576e5cd7a9caac5ef8b67a0fbbe5f57f3bbc5fb345e"
+      },
+      {
+        "name": "pat_nested_assignment_call",
+        "arity": 1,
+        "body": "f(V) -> {X,length(X)} = V, X.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "b152050128379590cf2b9ab0a874123a008c7075522dcb0b01fd310c0d3265eb"
+      },
+      {
+        "name": "pat_nested_map_call",
+        "arity": 1,
+        "body": "f(#{a := {length([])}}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "5d6a13bb69a8f0e4de8e00b8047e8c806431f7135ba3ad4ff33d2e0120ccf1cd"
+      },
+      {
+        "name": "pat_nested_block",
+        "arity": 1,
+        "body": "f({begin 1 end}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "887f5731966ca60faa292bf6b20b66f043c50459be105ac30bdf37c3bd28f832"
+      },
+      {
+        "name": "pat_nested_case",
+        "arity": 1,
+        "body": "f({case a of a -> 1 end}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "49419eebc5db1eb0376911026f9e544f876ebf0a7d19ae5c541534da4a298150"
+      },
+      {
+        "name": "pat_arithmetic_var",
+        "arity": 1,
+        "body": "f({A,A+1}) -> A.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "9e7704c7c2c32f2509a759294d5713446391af5477a0620895fed352c44c4e6e"
+      },
+      {
+        "name": "pat_arithmetic_type",
+        "arity": 1,
+        "body": "f({1+atom}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "89907dec0847fc14ceba815ba3c2250afafd31b16e86a00e42303b921ff58b56"
+      },
+      {
+        "name": "pat_divide_zero",
+        "arity": 1,
+        "body": "f({1 div 0}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "78326f25f220105b74ab1a8eb40cbb989c7c8de3ff73999bef09822962e8b6a0"
+      },
+      {
+        "name": "pat_comparison",
+        "arity": 1,
+        "body": "f({1 =:= 1}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "eeb27e8e307727965bef3eaabad47259af4464b047eeddf9fbe71b99b34bfbbb"
+      },
+      {
+        "name": "pat_boolean",
+        "arity": 1,
+        "body": "f({not true}) -> ok.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "5a6c19b5d18d19bcbce227703e76063a0c58eff3552b994bc915147a5fdf7d5c"
+      },
+      {
+        "name": "pat_prefix_atom",
+        "arity": 1,
+        "body": "f([a] ++ Tail) -> Tail.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "6185f1f965f63dc66680c0feaed3b8d54ddc1b8b0af00dc3c695e01d58d61863"
+      },
+      {
+        "name": "pat_prefix_variable",
+        "arity": 1,
+        "body": "f({Xs,Xs ++ Tail}) -> Tail.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "fb85a76611c371d24ccfcd4c5c673c53ee8e5a71db8a904d5db59df930f99e11"
+      },
+      {
+        "name": "pat_map_assoc",
+        "arity": 1,
+        "body": "f(#{a => X}) -> X.",
+        "diagnostic": "map pattern requires ':='",
+        "otp_diagnostic": "illegal_map_assoc_in_pattern",
+        "capability": "pattern matching",
+        "sha256": "19bbf3a73cf36e6a4c2d0e59165444d74b8be48ab3420ab11e7dcd859f540e7a"
+      },
+      {
+        "name": "pat_key_sibling",
+        "arity": 1,
+        "body": "f({K,#{K := X}}) -> X.",
+        "diagnostic": "unbound variable K",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "d9a060de7f6e568e1c21d5074f0c9e1a030dff32c14f4ac64d4e70ebb68360e9"
+      },
+      {
+        "name": "pat_key_argument",
+        "arity": 2,
+        "body": "f(K,#{K := X}) -> X.",
+        "diagnostic": "unbound variable K",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "e68d937879de8f48470d66e75080b53450b7eb2da80d9b7867c0e2d706936363"
+      },
+      {
+        "name": "pat_key_alias",
+        "arity": 1,
+        "body": "f({K,_} = #{K := X}) -> X.",
+        "diagnostic": "unbound variable K",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "a5bce16bda52987a2d07e78ca902c0a25f3bdc81b17a2110b3a35e4f7269a9ff"
+      },
+      {
+        "name": "pat_key_alias_reverse",
+        "arity": 1,
+        "body": "f(#{K := X} = {K,_}) -> X.",
+        "diagnostic": "unbound variable K",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "bc9570ceaced044b24f8d721ca0c45273b2dae9d5f95866eb4706981f8d244b5"
+      },
+      {
+        "name": "pat_key_field",
+        "arity": 1,
+        "body": "f(#{a := K,K := X}) -> X.",
+        "diagnostic": "unbound variable K",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "9795b6758db47dcf7890d62d73d3aba3d9ad3b72789dde04be4a0ffff2b80f9f"
+      },
+      {
+        "name": "pat_key_alias_bound",
+        "arity": 2,
+        "body": "f(K,M) -> ({K,_} = #{K := X}) = M, X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "36d1c056c58c30005fb3cded59b1bc86add699497db48f8a5036b589c1e89e4d"
+      },
+      {
+        "name": "pat_key_match",
+        "arity": 1,
+        "body": "f(#{(X=1) := V}) -> V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "8c6fdbe0ab641454dddb69a216034400cf7d02d75968374642cd08b8de4159b0"
+      },
+      {
+        "name": "pat_key_local_call",
+        "arity": 1,
+        "body": "f(#{g() := V}) -> V. g() -> a.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_local_call",
+        "capability": "pattern matching",
+        "sha256": "8c05911a823b63a066d2e12261a4f37c1d8685a6bbd6944f51196f74ba18e512"
+      },
+      {
+        "name": "pat_key_nested_call",
+        "arity": 1,
+        "body": "f(#{[g()] := V}) -> V. g() -> a.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_local_call",
+        "capability": "pattern matching",
+        "sha256": "5aa341c7d16a5027976af749fe2b915027bf5961af65985084fff812d585a288"
+      },
+      {
+        "name": "pat_key_remote_call",
+        "arity": 1,
+        "body": "f(#{other:g() := V}) -> V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "71a8031b1b3ca6a2e85f1e75173b51e7d41ca98ef25775c68a7088b7def42c23"
+      },
+      {
+        "name": "pat_key_wrong_arity",
+        "arity": 1,
+        "body": "f(#{length([],[]) := V}) -> V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "00849d6b73ce50e3fa95df4f29b86c10f50c7ee82f527bc13fcd0415e3ff59d7"
+      },
+      {
+        "name": "pat_key_shadow",
+        "arity": 1,
+        "body": "f(#{length([]) := V}) -> V. length(_) -> 0.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_local_call",
+        "capability": "pattern matching",
+        "sha256": "a90be6dfcac6973d751f4bc3edced8ad4800a62f0c9fcaf8818f2040dce6c270"
+      },
+      {
+        "name": "pat_key_shadow_qualified",
+        "arity": 1,
+        "body": "f(#{erlang:length([]) := V}) -> V. length(_) -> 0.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "212d6a86e76a83c7eadecf2a6bbc726a8a95da04ba4a1853fd4fc6593a487278"
+      },
+      {
+        "name": "pat_key_unreachable",
+        "arity": 1,
+        "body": "f(#{false andalso g() := V}) -> V. g() -> a.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_local_call",
+        "capability": "pattern matching",
+        "sha256": "0335c699aaf0fe185b6d2d66c4e4e615d77b1b013dda909b22fde91d67803114"
+      },
+      {
+        "name": "pat_key_legacy",
+        "arity": 1,
+        "body": "f(#{integer(1) := V}) -> V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "4e70754fb3637577ca03f0e08065ce10ef01be6be8d841e2c65cc1c45f27261a"
+      },
+      {
+        "name": "pat_size_sibling",
+        "arity": 1,
+        "body": "f({N,<<X:N>>}) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "3a7bd51244144922e7b3d0f3fefe22e716da323174c3d6c70cfa5630ca6ae95f"
+      },
+      {
+        "name": "pat_size_argument",
+        "arity": 2,
+        "body": "f(N,<<X:N>>) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "7a960b3e5d1b8c4855cf88d9750bbf94a8078dc4bb9503b687f9193e52c3d2e8"
+      },
+      {
+        "name": "pat_size_alias",
+        "arity": 1,
+        "body": "f(<<N:8>> = <<X:N>>) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "b73f8d395b20539ba1e7e95873bd26d714c37afad6a41f88c960c7589b0d0c01"
+      },
+      {
+        "name": "pat_size_alias_reverse",
+        "arity": 1,
+        "body": "f(<<X:N>> = <<N:8>>) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "e0b6a7c35f9b30b6a1f0629e44addd495bfbcb3cc5a648eefcd0eab778a59e28"
+      },
+      {
+        "name": "pat_size_cross_binary",
+        "arity": 1,
+        "body": "f({<<N:8>>,<<X:N>>}) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "378ad3fc728ee020dc7985dbf067d7d74ec036bd2b9eaaf8f9f87877567d7146"
+      },
+      {
+        "name": "pat_size_same_segment",
+        "arity": 1,
+        "body": "f(<<X:X>>) -> X.",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "6ae11004c203a4bfdb6c673e1c87611a71d29584f56e6efd3d2ec901be9482d0"
+      },
+      {
+        "name": "pat_size_future",
+        "arity": 1,
+        "body": "f(<<X:N,N:8>>) -> X.",
+        "diagnostic": "unbound variable N",
+        "otp_diagnostic": "unbound_var",
+        "capability": "pattern matching",
+        "sha256": "b658fb40f33c8b54e8c967d16f7d3d22899e7655f306651f278b95e12d535413"
+      },
+      {
+        "name": "pat_size_match",
+        "arity": 1,
+        "body": "f(<<X:(N=8)>>) -> X.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_bitsize",
+        "capability": "pattern matching",
+        "sha256": "d3db05710703e3adf43f74669392ae7e990af273c7d595ae525b4f0ef17ff5b1"
+      },
+      {
+        "name": "pat_size_call",
+        "arity": 1,
+        "body": "f(<<X:(g())>>) -> X. g() -> 8.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_bitsize_local_call",
+        "capability": "pattern matching",
+        "sha256": "2decc7bf6bd908622c6ff3b8dc9ab735ef11a2a69fd949986e05be62d8cb0516"
+      },
+      {
+        "name": "pat_segment_tuple",
+        "arity": 1,
+        "body": "f(<<{X}:8>>) -> X.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "5a0651a77cb593b2b42ab7ee8465ba8dc627cc0d123fe0de1cd060b2b3c9702a"
+      },
+      {
+        "name": "pat_segment_alias",
+        "arity": 1,
+        "body": "f(<<(X=Y):8>>) -> {X,Y}.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "e19f0a599daed0806d43027a3dd0645257c77380bba74e0fd83af5c440472492"
+      },
+      {
+        "name": "pat_segment_nested",
+        "arity": 1,
+        "body": "f(<<<<X>>/binary>>) -> X.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "bffb91803197d5e4cbd7d8282cd81a28ec1ff41a061fc5e41f57abb7359a1515"
+      },
+      {
+        "name": "pat_segment_expr",
+        "arity": 1,
+        "body": "f(<<N:8,(N+1):8>>) -> N.",
+        "diagnostic": "illegal pattern",
+        "otp_diagnostic": "illegal_pattern",
+        "capability": "pattern matching",
+        "sha256": "4173986adf120d8dceb22af29f840256bd0427461241670b3bfef93c6301af98"
+      },
+      {
+        "name": "pat_unsized",
+        "arity": 1,
+        "body": "f(<<X/binary,Y>>) -> {X,Y}.",
+        "diagnostic": "unsized binary pattern segment must be last",
+        "otp_diagnostic": "unsized_binary_not_at_end",
+        "capability": "pattern matching",
+        "sha256": "fbfae20fe39ef01487bab32fea533b6c5b255104ca7ec96463775f2470dbd62b"
+      },
+      {
+        "name": "pat_modifier",
+        "arity": 1,
+        "body": "f(<<X/banana>>) -> X.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "undefined_bittype",
+        "capability": "pattern matching",
+        "sha256": "43e18e2f55a7bb644868b08c64fdeb01ebcb55887eee8e621eed00de46ec0ce1"
+      },
+      {
+        "name": "pat_modifier_conflict",
+        "arity": 1,
+        "body": "f(<<X/integer-float>>) -> X.",
+        "diagnostic": "conflicting binary pattern modifiers",
+        "otp_diagnostic": "bittype_mismatch",
+        "capability": "pattern matching",
+        "sha256": "bd89f71c13fdaad0851fe71725c5182b769bfe9d948362cea56dee9be3c9426a"
+      },
+      {
+        "name": "pat_unit_zero",
+        "arity": 1,
+        "body": "f(<<X:8/unit:0>>) -> X.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "undefined_bittype",
+        "capability": "pattern matching",
+        "sha256": "64447de10f66a1a3385d3e526e5accf1da57a241bf41cea4f8e344e3b2ab6eaa"
+      },
+      {
+        "name": "pat_unit_utf",
+        "arity": 1,
+        "body": "f(<<X/utf8-unit:8>>) -> X.",
+        "diagnostic": "UTF binary pattern segment cannot have size or unit",
+        "otp_diagnostic": "utf_bittype_size_or_unit",
+        "capability": "pattern matching",
+        "sha256": "8c9d3ae39297c38218c761d37e54acebd2eb4e020fc93975c493d2f10e6adb0d"
+      },
+      {
+        "name": "pat_size_utf",
+        "arity": 1,
+        "body": "f(<<X:8/utf16>>) -> X.",
+        "diagnostic": "UTF binary pattern segment cannot have size or unit",
+        "otp_diagnostic": "utf_bittype_size_or_unit",
+        "capability": "pattern matching",
+        "sha256": "becc40ab108dd379e605cbcec4674e09aeeb6e3bafff92b3a435574c32a824ef"
+      },
+      {
+        "name": "pat_string_size",
+        "arity": 1,
+        "body": "f(<<\"a\":8>>) -> ok.",
+        "diagnostic": "literal string pattern cannot have this size or type",
+        "otp_diagnostic": "typed_literal_string",
+        "capability": "pattern matching",
+        "sha256": "dc49dcdce6ba33338f2559dd36cb8ca8c113ae6eca0bae874db458d82e92719c"
+      },
+      {
+        "name": "pat_prefix_tail",
+        "arity": 1,
+        "body": "f(([1|[2|[]]]) ++ T) -> T.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "ece0d473dfdcc3928199386a86cc2d63ac5ec15f7a87d1afc622f4441ca1be36"
+      },
+      {
+        "name": "pat_prefix_group",
+        "arity": 1,
+        "body": "f([(1),($a)] ++ T) -> T.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "83dcc70979e86248d6d6f470a1a785c9f49a6b37df8a1bcbf76e3966483599d0"
+      },
+      {
+        "name": "pat_key_operator_call",
+        "arity": 1,
+        "body": "f(#{erlang:'+'(1,2) := X}) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "bae5b9730e293762429e7bc86af68365c703ec2eb3a0e98f79a947b1500c5fc2"
+      },
+      {
+        "name": "pat_key_no_auto",
+        "arity": 1,
+        "body": "-compile(no_auto_import). f(#{length([]) := X}) -> X.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "b9b9898a7a07710d3011dd17ef161c4d8af62aa0a8fd1a9026662311f2ffcb0f"
+      },
+      {
+        "name": "pat_key_no_auto_one",
+        "arity": 1,
+        "body": "-compile({no_auto_import,[length/1]}). f(#{length([]) := X}) -> X.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_expr",
+        "capability": "pattern matching",
+        "sha256": "983b67c71efb7a9bef9b2bacafa9c2f066a32e5d669c0e26e46c8465738244b0"
+      },
+      {
+        "name": "pat_key_no_auto_other",
+        "arity": 1,
+        "body": "-compile({no_auto_import,[length/1]}). f(#{tuple_size({}) := X}) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "7a8d0ffb084aaa12f80e79c63054435f57b58aa2153bf6ce7bd0b6aec2889d4b"
+      },
+      {
+        "name": "pat_key_no_auto_remote",
+        "arity": 1,
+        "body": "-compile(no_auto_import). f(#{erlang:length([]) := X}) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "438a30450d4d6037b03f053de24cf13846453aaefa5b2493f5f2a31f55f8a24b"
+      },
+      {
+        "name": "pat_key_import",
+        "arity": 1,
+        "body": "-compile({no_auto_import,[length/1]}). -import(other,[length/1]). f(#{length([]) := X}) -> X.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "otp_diagnostic": "illegal_guard_local_call",
+        "capability": "pattern matching",
+        "sha256": "3379ec83fa122eda2e539a8593d220023a7147f2f7a9965d957b401cebde832c"
+      },
+      {
+        "name": "pat_key_import_erlang",
+        "arity": 1,
+        "body": "-compile(no_auto_import). -import(erlang,[length/1]). f(#{length([]) := X}) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "1150e3c342f668d20b32643a0526bb29eb1471cb521bbd93d2f060f0b64cc5ea"
+      },
+      {
+        "name": "pat_unit_default",
+        "arity": 1,
+        "body": "f(<<X/unit:8>>) -> X.",
+        "diagnostic": "binary pattern unit requires an explicit size",
+        "otp_diagnostic": "bittype_unit",
+        "capability": "pattern matching",
+        "sha256": "25874add4ec45ac80497f81968670c558ca918d57a3216dbbe99f57cc1c94dff"
+      },
+      {
+        "name": "pat_unit_alias_conflict",
+        "arity": 1,
+        "body": "f(<<X:1/bytes-unit:1>>) -> X.",
+        "diagnostic": "conflicting binary pattern modifiers",
+        "otp_diagnostic": "bittype_mismatch",
+        "capability": "pattern matching",
+        "sha256": "6f74fd1d8a3d01a765085d4f724f4ea39119392b56bf51a21a0dac2c6ed3b56c"
+      },
+      {
+        "name": "pat_type_alias_conflict",
+        "arity": 1,
+        "body": "f(<<X:1/bytes-bits>>) -> X.",
+        "diagnostic": "conflicting binary pattern modifiers",
+        "otp_diagnostic": "bittype_mismatch",
+        "capability": "pattern matching",
+        "sha256": "764d2f1af37c2b2b97354296f431982e4e0b4f79051385a4790498b4b841f825"
+      },
+      {
+        "name": "pat_key_bad_modifier",
+        "arity": 1,
+        "body": "f(#{<<1/banana>> := X}) -> X.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "undefined_bittype",
+        "capability": "pattern matching",
+        "sha256": "60e257f447b95f17dd15cfd5d86c83ea3c6d31c65acf1ccf6c208886134310b8"
+      },
+      {
+        "name": "pat_key_binary_string_size",
+        "arity": 1,
+        "body": "f(#{<<\"a\":16>> := X}) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "2b9c997a723dda1b61ea839e2c072bc4bff3ed972ab15c6ebe5764a676c58a95"
+      },
+      {
+        "name": "pat_size_bad_modifier",
+        "arity": 1,
+        "body": "f(<<X:(bit_size(<<1/banana>>))>>) -> X.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "undefined_bittype",
+        "capability": "pattern matching",
+        "sha256": "8346a0dd83cba7dec63818df786ba77ba9433cce5ad54d9329194d099772b69d"
+      },
+      {
+        "name": "bit_construct_unknown",
+        "arity": 1,
+        "body": "f(X) -> <<X:8/magic>>.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "08db3ce20cfdbfaca8c99106ddc0982c0d5b784ea6a1bcec6732b6fbf5bdcb1a"
+      },
+      {
+        "name": "bit_construct_conflict",
+        "arity": 1,
+        "body": "f(X) -> <<X:8/integer-float>>.",
+        "diagnostic": "conflicting binary pattern modifiers",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "526626c01188b3a39b6c8f223573c13a843e73a89470db3148644c6c7df84cfb"
+      },
+      {
+        "name": "bit_construct_unit_high",
+        "arity": 1,
+        "body": "f(X) -> <<X:1/unit:257>>.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "1a1fa6e9bcf9a7eb5d066d95040abfe73589a94857319f4df3775e078b779dc5"
+      },
+      {
+        "name": "bit_construct_unit_default",
+        "arity": 1,
+        "body": "f(X) -> <<X/unit:2>>.",
+        "diagnostic": "binary pattern unit requires an explicit size",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "0382b41ea16e929f1664faf9e508c0b5a288b98833c6fd50a36cef315f75903d"
+      },
+      {
+        "name": "bit_construct_utf_size",
+        "arity": 1,
+        "body": "f(X) -> <<X:1/utf8>>.",
+        "diagnostic": "UTF binary pattern segment cannot have size or unit",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "3f56d7c4fbf29d2a14cd0beb083155319f25a46a15691f8431e8f25502e56696"
+      },
+      {
+        "name": "bit_construct_all_integer",
+        "arity": 1,
+        "body": "f(X) -> <<X:all/integer>>.",
+        "diagnostic": "invalid binary size",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "8caf99d411147b112fe55df474a4854de9649c0066d2f25c351d557c8267c737"
+      },
+      {
+        "name": "bit_guard_unknown",
+        "arity": 1,
+        "body": "f(X) when false andalso bit_size(<<X:8/magic>>) > 0 -> X; f(_) -> no.",
+        "diagnostic": "invalid binary pattern modifier",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "d63e233d4d6b50bdb2d6d67c49d1f1701ada230a8865e96fb1a6c3c9520c0b28"
+      },
+      {
+        "name": "bit_construct_unit256",
+        "arity": 1,
+        "body": "f(X) -> <<X:1/unit:256>>.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "6fa8afb4278c8ba6da3f9844d4462e077c7c0afcff1448958258f24c308b7880"
+      },
+      {
+        "name": "bit_pattern_unit256",
+        "arity": 1,
+        "body": "f(<<X:1/unit:256>>) -> X.",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "0d9cac56ea946830c1d330bd58adbb5103b3cc9f3ea71a8b11d89242c05c6424"
+      },
+      {
+        "name": "bit_construct_utf_undefined",
+        "arity": 1,
+        "body": "f(X) -> <<X:undefined/utf8>>.",
+        "diagnostic": "UTF binary pattern segment cannot have size or unit",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "6239a6945da39d4563175bbac2f2cb86cbdd48cb1eec880634a9c62e07810078"
+      },
+      {
+        "name": "bit_pattern_utf_undefined",
+        "arity": 1,
+        "body": "f(<<X:undefined/utf8>>) -> X.",
+        "diagnostic": "UTF binary pattern segment cannot have size or unit",
+        "otp_diagnostic": "",
+        "capability": "",
+        "sha256": "2c3d6cca1265b2fe033a687708cccb2636c92567360c9dd001acac684fca272a"
+      },
+      {
+        "name": "bindings_local",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a"
+      },
+      {
+        "name": "patterns_binary",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "4e671bec86388e044f1714100123245fb294ec9ea9a70cc3c3e7d46c0903b5dd"
+      }
+    ],
+    "helpers": {
+      "origin": "local fragments",
+      "coverage": "binding and computed-size patterns"
+    }
+  }
+}

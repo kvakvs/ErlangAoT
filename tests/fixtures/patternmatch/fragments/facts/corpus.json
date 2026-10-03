@@ -1,0 +1,28 @@
+{
+  "inputs": [
+    "answer.erl",
+    "calls.term",
+    "calls.txt",
+    "client.erl",
+    "project.toml"
+  ],
+  "evidence": {
+    "calls": 822,
+    "pairs": [
+      "identity",
+      "constant",
+      "alias",
+      "projected",
+      "extracted",
+      "joined",
+      "map",
+      "bits",
+      "record",
+      "allocation",
+      "candidate",
+      "guards",
+      "force_succ_regs"
+    ],
+    "values": 27
+  }
+}

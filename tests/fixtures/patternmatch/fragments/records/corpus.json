@@ -1,0 +1,248 @@
+{
+  "inputs": [
+    "answer.erl",
+    "calls.term",
+    "calls.txt",
+    "client.erl",
+    "patterns.term",
+    "project.toml",
+    "rec_body_dynamic.erl",
+    "rec_decl_duplicate.erl",
+    "rec_default_binding.erl",
+    "rec_default_capture.erl",
+    "rec_default_forward.erl",
+    "rec_default_self.erl",
+    "rec_default_underscore.erl",
+    "rec_duplicate.erl",
+    "rec_field.erl",
+    "rec_field_duplicate.erl",
+    "rec_forward.erl",
+    "rec_fun_default_gate.erl",
+    "rec_guard_bignum.erl",
+    "rec_guard_native_tag.erl",
+    "rec_guard_size.erl",
+    "rec_guard_size_expr.erl",
+    "rec_guard_size_negative.erl",
+    "rec_guard_tag.erl",
+    "rec_guard_update.erl",
+    "rec_index_arithmetic.erl",
+    "rec_key_update.erl",
+    "rec_pattern_update.erl",
+    "rec_test_unknown.erl",
+    "rec_unknown.erl",
+    "rec_update_gate.erl",
+    "rec_wild_match.erl",
+    "rec_wild_name.erl",
+    "rec_wild_twice.erl",
+    "rec_wild_unused.erl",
+    "records.hrl"
+  ],
+  "evidence": {
+    "calls": 1025,
+    "cases": [
+      {
+        "name": "rec_unknown",
+        "body": "f(X) -> X#missing.a.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "2ad8432d297e7fe356b73f96d04f6fed52e2f14f90af9f3c5e3fa2ebd73409a6"
+      },
+      {
+        "name": "rec_field",
+        "body": "-record(r,{a}). f(X) -> X#r.missing.",
+        "diagnostic": "undefined record field",
+        "capability": "",
+        "sha256": "3c87231b498ce38f45183a77e7366a1d527ff9e544f917b898626838a72482ff"
+      },
+      {
+        "name": "rec_duplicate",
+        "body": "-record(r,{a}). f() -> #r{a=1,a=2}.",
+        "diagnostic": "duplicate record initializer",
+        "capability": "",
+        "sha256": "55e9d24284be5b45e862cbb34531a97e8b713476c280655b0ea7b6d20ac93be8"
+      },
+      {
+        "name": "rec_decl_duplicate",
+        "body": "-record(r,{a}). -record(r,{b}). f() -> ok.",
+        "diagnostic": "duplicate record declaration",
+        "capability": "",
+        "sha256": "8cb8c09f5b7574150234e7e9dea68f5235ea743bf92c5aa965c9cf08b5b235fd"
+      },
+      {
+        "name": "rec_field_duplicate",
+        "body": "-record(r,{a,a}). f() -> ok.",
+        "diagnostic": "duplicate record field",
+        "capability": "",
+        "sha256": "45a67418fe7fc32867152849d940bca6d0f43e4b0e137483b397efdb1aa7be00"
+      },
+      {
+        "name": "rec_forward",
+        "body": "f() -> #r{}. -record(r,{a}).",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "71d0ee07d723e2c0e026f43bd50608b78eddd9c648d664bc540732d1251f6967"
+      },
+      {
+        "name": "rec_default_forward",
+        "body": "-record(r,{a=#s{}}). -record(s,{b}). f() -> #r{}.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "fc038d083075b76c287311c693d47ea6fae2d4d8dde115b32c31f8256d6e3942"
+      },
+      {
+        "name": "rec_default_self",
+        "body": "-record(r,{a=#r{}}). f() -> #r{}.",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "1a9f759c70605f3a44e0ee98eff14076725f1a5d5177df6667d995fdec5d275c"
+      },
+      {
+        "name": "rec_default_binding",
+        "body": "-record(r,{a=(X=1)}). f() -> #r{}.",
+        "diagnostic": "named variable is illegal",
+        "capability": "",
+        "sha256": "3d9f7716846f32818cb6feb77c63191e27e1e33f9f31f3057ec7d099ff9ef961"
+      },
+      {
+        "name": "rec_default_capture",
+        "body": "-record(r,{a=X}). f(X) -> #r{}.",
+        "diagnostic": "named variable is illegal",
+        "capability": "",
+        "sha256": "2a4986fecfa01716edba4d24258b2eb980105549e0a87c9785f645a5061535f0"
+      },
+      {
+        "name": "rec_default_underscore",
+        "body": "-record(r,{a=(_=1)}). f() -> #r{}.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "3dfbee77e3059a794db8c225bb7faf7ede8187e0348c34dc9fbce105a5f1b5ef"
+      },
+      {
+        "name": "rec_wild_unused",
+        "body": "-record(r,{a,b}). f(#r{a=1,b=2,_=X}) -> X.",
+        "diagnostic": "record wildcard requires",
+        "capability": "",
+        "sha256": "e42cc9adff8b3ead7580c73f05469a70bf8599f782918c4c9d3a89dc17b09c4a"
+      },
+      {
+        "name": "rec_wild_twice",
+        "body": "-record(r,{a,b}). f() -> #r{_=1,_=2}.",
+        "diagnostic": "duplicate record wildcard",
+        "capability": "",
+        "sha256": "b6e27495b56d19aaa5741e827a0f9a0bc89d0e9673060e7f0735bb1d19fac34d"
+      },
+      {
+        "name": "rec_wild_name",
+        "body": "-record(r,{a,b}). f() -> #r{X=1}.",
+        "diagnostic": "record wildcard field must be '_'",
+        "capability": "",
+        "sha256": "5f11f509f0c9ba0b63bc43380de4bf55f059bf427779b25383ab219c86358a9c"
+      },
+      {
+        "name": "rec_wild_match",
+        "body": "-record(r,{a,b}). f(#r{_=X}) -> X.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "f5bf3d2f19a8f7be6a59a0678dc52217fd6cfd274cb333861b2d6b9c4bb0f3ba"
+      },
+      {
+        "name": "rec_pattern_update",
+        "body": "-record(r,{a}). f(X) -> X#r{a=1} = X.",
+        "diagnostic": "record update is illegal in a pattern",
+        "capability": "",
+        "sha256": "7921367023b2c7e56c235c8cb5cd3f78e6db0887cff616774d4485f1f1cce322"
+      },
+      {
+        "name": "rec_test_unknown",
+        "body": "f(X) -> is_record(X,unknown).",
+        "diagnostic": "undefined record",
+        "capability": "",
+        "sha256": "a75b17947ecec7e26a47e56786dc7d5cff1b97b3a47cf3d74552a6a375ce9f38"
+      },
+      {
+        "name": "rec_guard_tag",
+        "body": "-record(r,{a}). f(X) when is_record(X,X) -> ok.",
+        "diagnostic": "record guard tag must",
+        "capability": "",
+        "sha256": "2bfd35fb24300567588b718c78f2ebae74c82232ad7c489576956536e70f05e1"
+      },
+      {
+        "name": "rec_guard_size",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,X) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "ff24de4b6fb3d6cc0cc7538a1324413aaaa16e28a65bfe2cd86db5b0c9214326"
+      },
+      {
+        "name": "rec_guard_size_expr",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,1+2) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "f26013f896194b2d7f31e91261fc028be1b328ed4d2dbe813d408cf423c70725"
+      },
+      {
+        "name": "rec_guard_update",
+        "body": "-record(r,{a}). f(X) when X#r{a=1} == X -> ok.",
+        "diagnostic": "illegal guard expression",
+        "capability": "",
+        "sha256": "a1d3b23888dde060a97b1a83b105097f0fd3256921899a18af764ba74da318e3"
+      },
+      {
+        "name": "rec_key_update",
+        "body": "-record(r,{a}). f(X) -> #{(X#r{a=1}) := V} = #{}, V.",
+        "diagnostic": "illegal expression in pattern key or size",
+        "capability": "",
+        "sha256": "1eda5153cb137fefc57c4f9e9f2f158205bdab5328c598990e7b8dcf3bb54304"
+      },
+      {
+        "name": "rec_guard_size_negative",
+        "body": "-record(r,{a}). f(X) when is_record(X,r,-1) -> ok.",
+        "diagnostic": "record guard arity must",
+        "capability": "",
+        "sha256": "a003413b3692199d7546b4824d1587192d2051f361454449d653a24a76dac0ed"
+      },
+      {
+        "name": "rec_index_arithmetic",
+        "body": "-record(r,{a}). f(#r.a+1) -> ok.",
+        "diagnostic": "illegal pattern",
+        "capability": "",
+        "sha256": "443bf1818dbe315c33b0da79920be9c400760355de13d86131d5ba7a63b09a29"
+      },
+      {
+        "name": "rec_guard_native_tag",
+        "body": "f(X) when erlang:is_record(X,r,atom) -> ok; f(_) -> no.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "361d0367f90d09d6ae3f45a3a570c0e46008c49ae7c6abd3ab3cfdf66abee089"
+      },
+      {
+        "name": "rec_guard_bignum",
+        "body": "f(X) when is_record(X,r,1267650600228229401496703205376) -> ok; f(_) -> no.",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "b9c47f24f04ae84809d0efbe92cfcd7e0bee43919be42e2378eb7c435f86d5da"
+      },
+      {
+        "name": "rec_body_dynamic",
+        "body": "f(X) -> is_record(X,X,X).",
+        "diagnostic": "",
+        "capability": "",
+        "sha256": "1f6f31ad5ba9c724705991a81d93eb5f43892bfb40614971f70c5961ed38df01"
+      },
+      {
+        "name": "rec_update_gate",
+        "body": "-record(r,{a}). f(X) -> X#r{a=1}.",
+        "diagnostic": "",
+        "capability": "heap expressions",
+        "sha256": "a6b9eec249dea7c7c8fa5b191296e02315e5afdda426fb9220f3e9decf10ae7f"
+      },
+      {
+        "name": "rec_fun_default_gate",
+        "body": "-record(r,{a=fun(X)->X end}). f() -> #r{}.",
+        "diagnostic": "",
+        "capability": "closures",
+        "sha256": "d6edb3405ded0566ed5ce56718c78897c991d23bbd35a4f4f2fb246ab82a7d80"
+      }
+    ]
+  }
+}

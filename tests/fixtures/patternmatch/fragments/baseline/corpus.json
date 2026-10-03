@@ -1,0 +1,10 @@
+{
+  "inputs": [
+    "answer.erl",
+    "calls.txt",
+    "client.erl"
+  ],
+  "evidence": {
+    "calls": 3
+  }
+}

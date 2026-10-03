@@ -62,3 +62,15 @@ Mandatory1–39+51; optionalD40–50 conditional, D05directoryreservationsonly p
 No new implementation started. .agents/01-todo.md links each remaining owner to
 steps. Previous archive edits preserved; oldplanlinks redirected to retainedcontext,
 historical evidence facts unchanged. Do not confuse newstepnumbers with old1–20.
+
+OTP source cleanup2026-10-03: replaced130 notice-bearing fixture source files and
+removed copied assertion/file headers+license. Local source fixtures now under
+tests/fixtures/patternmatch/fragments (222 Erlang/include files+corpus.json).
+authored.py stages fixed local inputs; stored.py resolves source/observation roots.
+Regeneration observes local code, never extracts OTP source. Keep observations
+committed per explicit user answer; OTP source/generated headers/audits transient.
+erlfmt installed+moved to ignored thirdparty/tools/erlfmt per user instruction;
+valid source/header and changed term files formatted. Preserve user's AGENTS edits.
+Fresh combined gate125/125+258unit Lizard/tidy, all19 --check, upstream audit,
+grammar/corpus pass; maint29+pin unchanged21776803. Audit docs/otp-source-audit.md;
+logs build/otp-cleanup*. Existing dated validation evidence not rewritten.

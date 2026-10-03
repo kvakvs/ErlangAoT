@@ -1614,7 +1614,7 @@ i3
 i3
 i3
 i3
-error:badmatch:i0
+error:badmatch:i-2
 error:badmatch:i3
 error:badmatch:i-576460752303423488
 error:badmatch:i-1

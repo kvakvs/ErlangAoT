@@ -44,11 +44,12 @@ syntax; unary/arithmetic size expressions are illegal. Legacy top-level
 `record/2` follows the ordinary declared-record test.
 
 The retained [record corpus](../tests/fixtures/patternmatch/generated/records/manifest.json)
-contains 1,025 OTP outcomes and 29 semantic cases. It identifies adaptations of
-`record_SUITE:errors/1`, `eval_once/1` and `nested_access/1`, preserving the upstream
-notices and source hashes. The update portions and process-dictionary counter
-remain deferred; supplemental IR call counts check the admitted evaluation
-obligations. Parsing the complete suite and data module is syntax evidence only.
+contains 1,025 OTP observations and 29 semantic cases from
+[local record fragments](../tests/fixtures/patternmatch/fragments/records/answer.erl).
+The local include supplies typed/default/nested record examples without copied
+OTP source. Supplemental IR call counts check evaluation obligations; record
+updates and process-dictionary counters remain deferred. Parsing the original
+suite and data module is separate, transient syntax evidence only.
 The installed OTP 29.1.1 loader rejects bytecode for a guard with a huge literal
 arity, despite lint acceptance; that boundary has semantic evidence and dynamic
 BIF coverage, and is not claimed as successful native-versus-OTP guard execution.
