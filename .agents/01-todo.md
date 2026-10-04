@@ -66,7 +66,8 @@ requiring the separately written C++ harness used today.
 
 ### F02 — Roots, safepoints and generated-code ABI evolution
 
-Expanded plan: [17](11-plan.md#step-17), [23](11-plan.md#step-23),
+Expanded plan: [8E](11-plan.md#step-8e), [8F](11-plan.md#step-8f),
+[17](11-plan.md#step-17), [23](11-plan.md#step-23),
 [26](11-plan.md#step-26), [51](11-plan.md#step-51).
 
 Delivered stable-heap roots and owned results/errors for the admitted domain;
@@ -85,9 +86,9 @@ continuation/mailbox roots and suspension remain open.
 
 ### F03 — Process heaps and TermFactory construction
 
-Expanded plan: [23](11-plan.md#step-23), [25](11-plan.md#step-25),
-[26](11-plan.md#step-26), [31](11-plan.md#step-31), [32](11-plan.md#step-32),
-[33](11-plan.md#step-33), [42](11-plan.md#step-42).
+Expanded plan: [8A](11-plan.md#step-8a)–[8I](11-plan.md#step-8i),
+[23](11-plan.md#step-23), [26](11-plan.md#step-26), [31](11-plan.md#step-31),
+[32](11-plan.md#step-32), [33](11-plan.md#step-33), [42](11-plan.md#step-42).
 
 Meaning: allocate process-owned storage and construct validated values. Stable
 backing and the admitted scalar/container layouts are delivered; future layouts
@@ -105,8 +106,9 @@ and collector integration remain separate. See
 
 ### F04 — Process garbage collection
 
-Expanded plan: [23](11-plan.md#step-23), [24](11-plan.md#step-24),
-[25](11-plan.md#step-25), [26](11-plan.md#step-26), [27](11-plan.md#step-27),
+Expanded plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
+[8H](11-plan.md#step-8h), [8I](11-plan.md#step-8i), [23](11-plan.md#step-23),
+[24](11-plan.md#step-24), [26](11-plan.md#step-26), [27](11-plan.md#step-27),
 [51](11-plan.md#step-51).
 
 Meaning: reclaim unreachable process data while retaining live terms and their
@@ -119,10 +121,13 @@ references to shared or runtime-owned resources. Depends on F02/F03.
   failures.
 - [ ] Stress live graphs, host handles, continuations and mailbox roots as
   available; verify cleanup and explicit C++ resource destruction.
+- [ ] Later, optional: generational old heap with minor collections (deferred
+  by plan 11 phase C, which keeps a single heap).
 
 ### F05 — Graph copying and process isolation
 
-Expanded plan: [28](11-plan.md#step-28), [45](11-plan.md#step-45).
+Expanded plan: [8H](11-plan.md#step-8h), [28](11-plan.md#step-28),
+[45](11-plan.md#step-45).
 
 Meaning: copy compound values between isolated heaps; existing immediate copies
 do not establish safe copying of owned graphs.
@@ -187,7 +192,8 @@ strings use proper lists. See [containers](../docs/terms.md#tuples-lists-strings
 
 ### F09 — Binaries and bitstrings
 
-Expanded plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28).
+Expanded plan: [8B](11-plan.md#step-8b), [23](11-plan.md#step-23),
+[28](11-plan.md#step-28).
 
 Meaning: execute packed byte/bit data with correct segment interpretation, tail
 bits and shared immutable storage lifetime.

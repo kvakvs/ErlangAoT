@@ -19,6 +19,8 @@ draft with smaller, single-commit steps.
   checkboxes for the slice delivered.
 - Optional D-items (steps 71–77) end in a recorded selection, deferral or
   omission. An omitted item is never checked as implemented.
+- Phase C (steps 8A–8I) was inserted on 2026-10-04 after phase B closed; its
+  steps run before step 9 and keep their letter IDs in commit titles.
 
 ## Common gate and rules (apply to every step)
 
@@ -107,18 +109,19 @@ CTests (123 fast) and 258 production quality units.
 | --- | --- | --- |
 | A. Baseline and fixtures | [1](#step-1)–[2](#step-2) | V03 |
 | B. Production executables | [3](#step-3)–[8](#step-8) | F01, F26, V04 |
-| C. Control flow and exceptions | [9](#step-9)–[16](#step-16) | F13, F14, F16, F20 |
-| D. Execution model, recursion, comprehensions | [17](#step-17)–[22](#step-22) | F02, F13, F16, F21, F22 |
-| E. Memory management | [23](#step-23)–[28](#step-28) | F02–F05, F08–F11 |
-| F. Records, function values, dynamic calls | [29](#step-29)–[35](#step-35) | F03, F12, F14, F17–F19, F21 |
-| G. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
-| H. Processes and messaging | [42](#step-42)–[53](#step-53) | F02, F04, F05, F07, F14, F22, F24–F26 |
-| I. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
-| J. End-to-end projects | [58](#step-58) | F01, V03 |
-| K. Optimization and tooling | [59](#step-59)–[62](#step-62) | F29–F32 |
-| L. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
-| M. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
-| N. Final closure | [78](#step-78) | all |
+| C. Classic process heap | [8A](#step-8a)–[8I](#step-8i) | F02–F05, F09 |
+| D. Control flow and exceptions | [9](#step-9)–[16](#step-16) | F13, F14, F16, F20 |
+| E. Execution model, recursion, comprehensions | [17](#step-17)–[22](#step-22) | F02, F13, F16, F21, F22 |
+| F. Memory management | [23](#step-23)–[28](#step-28) | F02–F05, F08–F11 |
+| G. Records, function values, dynamic calls | [29](#step-29)–[35](#step-35) | F03, F12, F14, F17–F19, F21 |
+| H. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
+| I. Processes and messaging | [42](#step-42)–[53](#step-53) | F02, F04, F05, F07, F14, F22, F24–F26 |
+| J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
+| K. End-to-end projects | [58](#step-58) | F01, V03 |
+| L. Optimization and tooling | [59](#step-59)–[62](#step-62) | F29–F32 |
+| M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
+| N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
+| O. Final closure | [78](#step-78) | all |
 
 ---
 
@@ -425,13 +428,252 @@ golden and the early stale-golden failure. `linking_executable` keeps its `-Os` 
 checks. Step 58 adapts the program fixtures' layout to this runner. Phase B closes: fresh fast
 gate 135 tests; full `-j 16` 138/138 in 235 s; `check-quality-all` passes 272 units.
 
-## C. Control flow and exceptions
+## C. Classic process heap
+
+Review of the runtime heap at phase B close (`runtime/src/memory/`,
+`term_layout.hpp`, `roots.hpp`) found a design that cannot evolve into BEAM-style
+collection:
+
+- `HeapStorage` is a list of chunks that never move, so cells cannot be
+  compacted or copied and retained capacity only grows.
+- Each published cell is a node in a per-process `std::map` index
+  (`HeapStorage::objects`); admission and access depend on it, so heap words
+  alone are not parseable.
+- Cells embed C++ objects (`shared_ptr` in `RefcBinaryCell`, `weak_ptr` in
+  `ClosureCell`) behind a destructor registry, so they cannot move by copying
+  words.
+- Host `Term` handles hold `shared_ptr<HeapStorage>` and raw `HeapObject`
+  pointers that no collector could rewrite.
+- Generated root frames are separate heap-allocated buffers rather than one
+  process stack, and there is no overflow area for allocation that must not
+  move the heap.
+
+Target design, following classic ERTS:
+
+- A heap is a flat array of words. A boxed object starts with a header word
+  (primary tag `00`, kind, count of following words); a cons cell is two term
+  words without a header. Untraced payload (bignum limbs, float bytes, binary
+  data) is counted in its header, so a walker parses any heap area left to
+  right and the collector knows every value by its header.
+- Each process has one heap (BEAM `heap`) where all values allocate. A
+  generational old heap with minor collections (BEAM `old_heap`) is deferred;
+  the layout must keep it addable later.
+- Each process has a stack of root frames, kept separate from the heap (BEAM
+  grows it down from the heap end; a separate stable buffer is acceptable).
+- When a value must be allocated but the heap cannot move or grow (critical
+  section, no safe point), it goes into a heap fragment; fragments form a
+  chain owned by the process and are merged into the heap by the next
+  collection.
+- Reference-counted resources (large binaries) live off-heap; heap cells hold
+  plain pointers linked into a per-process off-heap list that is swept after
+  collection.
+
+Steps 8A–8I replace the storage behind the existing services without changing
+generated-code ABI or observable program behavior; every golden must pass
+unchanged after each step. Generated code keeps raw words between runtime
+calls until step 26, so until then a heap moves only at explicit host-requested
+safe points and generated-code allocation overflows into fragments.
+
+<a id="step-8a"></a>
+
+### 8A. Decide the classic process heap contract
+
+Backlog: F03, F04. Depends on: [8](#step-8). **Decision.**
+
+Publish `docs/runtime-heap.md` with the review above and its replacement.
+
+- Success criteria
+  - [ ] Word-level layout: header encoding (tag, kind, word count), cons cells,
+    untraced payload, filler words for padding and rolled-back tails, and a
+    cell table for every admitted kind on 32- and 64-bit words.
+  - [ ] Areas and sizing: heap, stack, fragment chain and off-heap list; minimum heap size, growth sequence and one budget
+    (`limit_bytes`) across all areas, including off-heap binary bytes.
+  - [ ] Admission rule that replaces the object index while still rejecting
+    forged, interior, stale and foreign words.
+  - [ ] Safe points: when the heap may move, when allocation must use a
+    fragment, and how host handles, stack frames and owned error payloads are
+    found and rewritten.
+  - [ ] Scope changes for steps 23–28 and 45 are recorded in this plan.
+- Tests
+  - [ ] Baseline measurement of an allocation-heavy runtime kernel and the
+    per-context footprint, recorded in the document for 8I (not gated).
+
+<a id="step-8b"></a>
+
+### 8B. Make every heap cell relocatable by word copy
+
+Backlog: F03, F09. Depends on: [8A](#step-8a).
+
+Replace C++ objects inside cells with plain words: a large-binary cell holds a
+header, bit size, a raw pointer to an intrusively counted buffer and an
+off-heap link (BEAM ProcBin); the process keeps an off-heap list instead of the
+`HeapDestructor` registry.
+
+- Success criteria
+  - [ ] Every layout in `term_layout.hpp` is trivially copyable
+    (`static_assert`); `HeapDestructor` and `HeapStorage::resources` are gone.
+  - [ ] Shared buffers are released exactly once when the owning heap is torn
+    down; extracted tails keep their buffer alive.
+- Tests
+  - [ ] Bitstring, printing and executable goldens pass unchanged.
+  - [ ] Focused runtime test: buffer counts across tails, rollback after a
+    failed construction, and context teardown.
+
+<a id="step-8c"></a>
+
+### 8C. Make heap areas parseable and add a heap walker
+
+Backlog: F03, F04. Depends on: [8B](#step-8b).
+
+Works on the existing chunks first, so the walker is proven before storage
+changes.
+
+- Success criteria
+  - [ ] Every allocated word belongs to a boxed object with a valid header, a
+    cons pair or filler; untraced payload is never reported as a term.
+  - [ ] `walk(area, visitor)` visits objects in address order and yields their
+    term slots; a debug verifier checks that every boxed/list slot points to an
+    object start owned by the same process.
+- Tests
+  - [ ] Focused runtime test walks heaps built from every admitted layout,
+    nested and shared; 32-bit cell sizes are checked by `static_assert`.
+  - [ ] Allocation failure injected mid-construction leaves a heap the verifier
+    accepts.
+
+<a id="step-8d"></a>
+
+### 8D. Admit heap words by header instead of the object index
+
+Backlog: F03. Depends on: [8C](#step-8c).
+
+Replace `HeapStorage::objects` with a range check against the process's areas,
+a per-area object-start bitmap (one bit per word, set on publish and cleared on
+rollback) and header/tag agreement. Accessors decode kind, count and payload
+from the header.
+
+- Success criteria
+  - [ ] Forged, interior, stale and foreign words are rejected before any load
+    outside the checked range.
+  - [ ] Publication allocates nothing per object; rollback restores the bitmap.
+- Tests
+  - [ ] Existing ownership and forged-word runtime tests and all goldens pass
+    unchanged.
+  - [ ] Focused test with interior pointers into tuples, maps, bignums and
+    binary payload.
+
+<a id="step-8e"></a>
+
+### 8E. Make host `Term` handles relocatable roots
+
+Backlog: F02, F03. Depends on: [8D](#step-8d).
+
+A host `Term` for a heap value refers to a slot in a per-process handle table
+(stable nodes with a free list) that a collector can rewrite; liveness still
+comes from the context lifetime token. `GeneratedRoots` handoffs use the same
+slots.
+
+- Success criteria
+  - [ ] No `Term` stores a raw cell pointer; enumerating the table yields every
+    host-held root.
+  - [ ] Expired-context results and handle destruction after teardown are
+    unchanged.
+- Tests
+  - [ ] Existing host-handle and lifetime tests and all goldens pass unchanged.
+  - [ ] Focused test: many handles copied, moved and destroyed; a reused slot
+    never revives an expired handle.
+
+<a id="step-8f"></a>
+
+### 8F. Move generated root frames onto a process stack
+
+Backlog: F02. Depends on: [8E](#step-8e).
+
+Replace per-frame buffers with one per-process stack, separate from the heap,
+holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
+`erlang_aot_roots_leave_v4` keep their ABI.
+
+- Success criteria
+  - [ ] A live frame's address stays stable (reserved capacity or stable
+    segments, as chosen in 8A); the 1,000,000-word and 4,096-frame limits and
+    LIFO errors are unchanged.
+  - [ ] Stack enumeration yields every generated root slot.
+- Tests
+  - [ ] Existing root, startup and executable goldens pass unchanged.
+  - [ ] Focused tests for limit exhaustion, LIFO violation and restore after a
+    failed call.
+
+<a id="step-8g"></a>
+
+### 8G. Replace chunks with a contiguous heap and heap fragments
+
+Backlog: F03. Depends on: [8F](#step-8f).
+
+The heap is one block `[start, top, end)` sized from a minimum heap size,
+with bump allocation. A request that does not fit while the heap may not move
+allocates a heap fragment sized to fit and chained to the process. Reservation
+rollback resets `top` or drops the newest fragment. The alignment parameter is
+removed (word alignment only).
+
+- Success criteria
+  - [ ] All allocation goes to the heap or a fragment; admission and the
+    walker cover both.
+  - [ ] Heap plus fragments stay within `limit_bytes`; `limit_exceeded`,
+    `out_of_memory` and the one-reservation rule are unchanged.
+- Tests
+  - [ ] All goldens pass unchanged.
+  - [ ] Focused tests: overflow into fragments, rollback across a fragment
+    boundary, exhaustion with fragments, and many contexts with the default
+    small heap.
+
+<a id="step-8h"></a>
+
+### 8H. Collect on explicit host request with a copying collector
+
+Backlog: F03, F04. Depends on: [8G](#step-8g). Absorbs the former step 25.
+
+Full-sweep Cheney copy: roots are handle slots, stack frames and owned error
+payloads; live objects from the heap and fragments move into a new block
+sized by the growth policy, leaving forwarding headers; roots are rewritten;
+the off-heap list is swept and fragments are freed. Allowed only at a safe
+point: until step 26, when the context is not running generated code.
+
+- Success criteria
+  - [ ] Rooted values stay valid and equal, internal sharing is preserved,
+    unreachable cells are reclaimed and last-owner binaries are released once;
+    the heap grows or shrinks per policy.
+  - [ ] A request at an unsafe point returns `unsafe_point` with no change;
+    failure to allocate the new block leaves the heap untouched.
+  - [ ] `ProcessHeap::collect` leaves the deferred-services table; statistics
+    report heap, fragment, stack and off-heap sizes.
+- Tests
+  - [ ] Focused runtime tests: host handles across repeated collections, nested
+    and shared graphs of every layout, binary release counts, verifier after
+    each collection.
+  - [ ] Injected failure of the new-block allocation.
+
+<a id="step-8i"></a>
+
+### 8I. Close the heap rework
+
+Backlog: F03, F04. Depends on: [8H](#step-8h).
+
+- Success criteria
+  - [ ] `docs/runtime.md`, `docs/terms.md`, the ABI root-scope notes,
+    `arch.md` and `files.md` describe the new heap; no reference to the chunk
+    list, object index or cell destructors remains.
+  - [ ] The 8A kernel and footprint are measured again and compared in
+    `docs/runtime-heap.md` (descriptive, not gated).
+- Tests
+  - [ ] Fresh full-mode CTest and `check-quality-all` pass; counts recorded in
+    `docs/validation.md`.
+
+## D. Control flow and exceptions
 
 <a id="step-9"></a>
 
 ### 9. Lower `begin`/`end` blocks and `case` expressions
 
-Backlog: F13, F14, F16. Depends on: [8](#step-8).
+Backlog: F13, F14, F16. Depends on: [8I](#step-8i).
 
 Reuse the clause/guard matcher for `case` clauses; implement branch-variable
 export (bound in every clause) and unsafe-variable diagnostics.
@@ -555,7 +797,7 @@ Backlog: F13, F16. Depends on: [9](#step-9).
   - [ ] Golden programs for success, early exit, `else` selection and
     `else_clause`; feature-disabled source is rejected.
 
-## D. Execution model, recursion, comprehensions
+## E. Execution model, recursion, comprehensions
 
 <a id="step-17"></a>
 
@@ -652,68 +894,65 @@ Backlog: F13, F16. Depends on: [21](#step-21).
   - [ ] Golden programs for each combination of list, binary and map generators
     and producers.
 
-## E. Memory management
+## F. Memory management
 
 <a id="step-23"></a>
 
-### 23. Add layout tracing and a root inventory
+### 23. Extend the root inventory to the execution model
 
-Backlog: F02, F03, F04, F08–F11. Depends on: [17](#step-17).
+Backlog: F02, F03, F04, F08–F11. Depends on: [17](#step-17), [8I](#step-8i).
 
-Give every admitted layout a bounded visitor and list every root owner: host
-handles, generated frames, error payloads, atom/module pins and shared binary
-resources.
+Phase C delivered the layout walker (8C), host handle roots (8E) and stack
+roots (8F). Add the roots the step-17 model introduces: suspended frames or
+continuations, in-flight error payloads and stack traces, and atom/module pins
+held by heap cells.
 
 - Success criteria
-  - [ ] A tracer visits every reachable cell exactly once and never mistakes
-    headers or stale words for terms.
-  - [ ] C++ resource-bearing cells have explicit trace and destroy hooks.
+  - [ ] Every root owner of the step-17 model is enumerated by the collector;
+    nothing outside the handle table, stack and listed owners holds heap words.
 - Tests
-  - [ ] Runtime tests tracing nested/shared graphs of every layout from each
-    root kind.
-  - [ ] Injected faults during partial construction leave a traceable heap.
+  - [ ] Runtime tests collecting while each root kind holds nested and shared
+    graphs, followed by the 8C verifier.
 
 <a id="step-24"></a>
 
-### 24. Decide the collector policy
+### 24. Decide collection triggers and safepoints in generated code
 
 Backlog: F04. Depends on: [23](#step-23). **Decision.**
 
-Choose moving (copying/generational) or non-moving collection, triggers, and
-handling of shared resources and host handles.
+The policy (single-heap copying with fragments) is fixed by 8A. Decide when
+generated code collects: heap full at allocation, off-heap binary pressure,
+`erlang:garbage_collect/0`, and which calls are safepoints versus critical
+sections that keep using fragments.
 
 - Success criteria
-  - [ ] `docs/runtime-gc.md` defines the policy, safepoints, which slots are
-    rewritten if objects move, and failure behavior.
+  - [ ] `docs/runtime-heap.md` defines triggers, safepoint placement, the
+    reload rule for values held in registers, and failure behavior.
 - Tests
-  - [ ] Decision backed by a measured prototype on an allocation-heavy kernel;
-    numbers recorded in the document, not gated.
+  - [ ] IR prototype of one safepoint with reload on both word widths, recorded
+    in the document.
 
 <a id="step-25"></a>
 
 ### 25. Collect on explicit runtime request
 
-Backlog: F03, F04. Depends on: [24](#step-24).
-
-- Success criteria
-  - [ ] A host-triggered collection keeps rooted values valid, reclaims
-    unreachable cells and releases last-owner binary resources once.
-- Tests
-  - [ ] Runtime consumer tests with host handles across repeated collections.
-  - [ ] Collection workspace allocation failure preserves the heap.
+Folded into [8H](#step-8h) on 2026-10-04; no separate commit.
 
 <a id="step-26"></a>
 
 ### 26. Collect from generated code
 
-Backlog: F02, F03, F04. Depends on: [25](#step-25), [20](#step-20).
+Backlog: F02, F03, F04. Depends on: [24](#step-24), [20](#step-20), [8H](#step-8h).
 
-Add safepoints at allocation points, publish live values in frames before
-collection and reload them afterwards; retry the failed allocation.
+Implement the step-24 safepoints: publish live values in stack frames before
+collection, reload them afterwards and retry the failed allocation. Allocation
+at a safepoint collects instead of creating a fragment; fragments remain for
+critical sections and message delivery.
 
 - Success criteria
   - [ ] Allocation-heavy loops run with a bounded heap.
-  - [ ] Values in recursive frames and error payloads survive collection.
+  - [ ] Values in recursive frames and error payloads survive repeated
+    collections.
 - Tests
   - [ ] Golden programs allocating far more than the heap budget while keeping
     a small live set.
@@ -736,10 +975,12 @@ Backlog: F04. Depends on: [26](#step-26).
 
 ### 28. Copy term graphs between heaps
 
-Backlog: F05, F08–F11. Depends on: [25](#step-25).
+Backlog: F05, F08–F11. Depends on: [8H](#step-8h).
 
-Extend `Term::copy_to` to compound terms with preserved internal sharing,
-destination budgets and rollback.
+Extend `Term::copy_to` to compound terms: size the source graph with the 8C
+walker, then copy into a destination heap fragment (BEAM `size_object` and
+`copy_struct`) with preserved internal sharing, destination budgets and
+rollback. Off-heap binaries gain a reference instead of being copied.
 
 - Success criteria
   - [ ] Copies compare equal and survive destruction or collection of the source
@@ -750,7 +991,7 @@ destination budgets and rollback.
     partial-byte bitstrings between contexts.
   - [ ] Destination exhaustion injected mid-copy.
 
-## F. Records, function values, dynamic calls
+## G. Records, function values, dynamic calls
 
 <a id="step-29"></a>
 
@@ -852,7 +1093,7 @@ Support `Fun(Args)`, `Mod:Fun(Args)` with runtime operands, and
 - Tests
   - [ ] Golden programs for each call form and failure.
 
-## G. Builtins and libraries
+## H. Builtins and libraries
 
 <a id="step-36"></a>
 
@@ -954,7 +1195,7 @@ checked argument conversion and generic Term fallback.
   - [ ] Focused tests for conversion failure, expired handles and a throwing
     callback.
 
-## H. Processes and messaging
+## I. Processes and messaging
 
 <a id="step-42"></a>
 
@@ -1009,7 +1250,8 @@ Backlog: F22. Depends on: [43](#step-43).
 Backlog: F05, F24. Depends on: [43](#step-43), [28](#step-28).
 
 `Pid ! Msg` and `erlang:send/2`; every message, including self-send, enters the
-signal inbox and is copied into the receiver's heap by the owner.
+signal inbox and is copied by the step-28 service into a heap fragment of the
+receiver, merged into its heap at the next collection.
 
 - Success criteria
   - [ ] Per-sender order is preserved; sending to a dead process succeeds
@@ -1133,7 +1375,7 @@ Backlog: F07. Depends on: [42](#step-42). **Decision.**
 - Tests
   - [ ] CLI/golden checks for the documented boundary.
 
-## I. Multi-worker scheduling
+## J. Multi-worker scheduling
 
 <a id="step-54"></a>
 
@@ -1187,7 +1429,7 @@ Backlog: F23, F25. Depends on: [56](#step-56).
   - [ ] Repeated stress for arrival-versus-timeout races and concurrent
     teardown (also used under ThreadSanitizer in step 68).
 
-## J. End-to-end projects
+## K. End-to-end projects
 
 <a id="step-58"></a>
 
@@ -1202,7 +1444,7 @@ Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57).
 - Tests
   - [ ] Fixtures run through the step-8 runner in normal CTest.
 
-## K. Optimization and tooling
+## L. Optimization and tooling
 
 <a id="step-59"></a>
 
@@ -1255,7 +1497,7 @@ Backlog: F32. Depends on: [7](#step-7), [58](#step-58).
 - Tests
   - [ ] Fixture goldens pass with LTO; size/build time recorded.
 
-## L. Validation closure
+## M. Validation closure
 
 <a id="step-63"></a>
 
@@ -1356,7 +1598,7 @@ Backlog: V04. Depends on: [58](#step-58).
 - Tests
   - [ ] Full gate after removals; ledger dispositions cite the replacing tests.
 
-## M. Optional scope decisions
+## N. Optional scope decisions
 
 Each step records a decision in its contract document. If an item is selected,
 write its own small implementation plan before coding.
@@ -1443,7 +1685,7 @@ Backlog: D07. Depends on: [58](#step-58). **Decision.**
 - Tests
   - [ ] None beyond the gate unless selected.
 
-## N. Final closure
+## O. Final closure
 
 <a id="step-78"></a>
 
