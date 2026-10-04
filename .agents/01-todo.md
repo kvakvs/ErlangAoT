@@ -65,8 +65,8 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
 
 - [x] Collector policy (full Cheney copy, ERTS sizing) and traced words for
   every admitted layout (8A, 8C).
-- [ ] Copying collector on explicit host request: rewrite roots, sweep off-heap
-  list, merge fragments (8H).
+- [x] Copying collector on explicit host request: rewrite roots, sweep off-heap
+  list, merge fragments, grow/shrink along the ERTS sizes (8H).
 - [ ] Triggers from generated code, allocation retry, heap exhaustion (24–27).
 - [ ] Stress with continuations and mailbox roots as they arrive.
 - [ ] Optional later: generational old heap with minor collections.

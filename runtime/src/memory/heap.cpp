@@ -1,4 +1,5 @@
-#include "heap_storage.hpp"
+#include "heap_collect.hpp"
+#include <algorithm>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
@@ -67,18 +68,57 @@ std::expected<std::span<std::byte>, HeapError> ProcessHeap::allocate(std::size_t
     return bytes;
 }
 
-std::expected<CollectionStats, HeapError> ProcessHeap::collect(DiagnosticSink sink) noexcept {
-    return collect(std::span<Word>{}, sink);
+std::expected<CollectionStats, HeapError> ProcessHeap::collect() noexcept { return collect(std::span<Word>{}); }
+
+std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> roots) noexcept {
+    auto &storage = *storage_;
+    if (!storage.alive()) {
+        return std::unexpected(HeapError::expired_context);
+    }
+    if (storage.pending_ || owner_.generated_calls().active()) {
+        return std::unexpected(HeapError::unsafe_point);
+    }
+    CollectionStats stats{.words_before = storage.used_words_,
+                          .fragment_words = storage.capacity_words_ - storage.heap_.capacity_};
+    if (storage.heap_.capacity_ != 0) {
+        try {
+            copy_live(roots, collected_size(storage.used_words_));
+        } catch (const std::bad_alloc &) {
+            return std::unexpected(HeapError::out_of_memory);
+        }
+        shrink(roots);
+    }
+    stats.live_words = storage.used_words_;
+    stats.heap_words = storage.capacity_words_;
+    stats.stack_words = owner_.roots().capacity();
+    stats.off_heap_words = storage.off_heap_words_;
+    return stats;
 }
 
-std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word>, DiagnosticSink sink) noexcept {
-    const auto failure =
-        deferred_service<HeapError>(abi::v1::FeatureId::garbage_collection, "ProcessHeap::collect", sink);
-    owner_.generated_calls().fail_service(failure.error() == HeapError::not_implemented
-                                              ? abi::v1::Status::not_implemented
-                                              : abi::v1::Status::diagnostic_failure,
-                                          true);
-    return failure;
+std::size_t ProcessHeap::collected_size(std::size_t live_words) const noexcept {
+    const auto &storage = *storage_;
+    const auto wanted =
+        std::max(storage.options_.min_heap_words, detail::heap_size_at_least(live_words + live_words / 3 + 1));
+    return std::min(wanted, storage.options_.limit_bytes / sizeof(Word) - storage.off_heap_words_);
+}
+
+void ProcessHeap::copy_live(std::span<Word> roots, std::size_t capacity) {
+    detail::Copier copier(*storage_, capacity);
+    owner_.visit_roots(roots, [&](Word &word) { word = copier.evacuate(word); });
+    copier.finish();
+}
+
+void ProcessHeap::shrink(std::span<Word> roots) noexcept {
+    const auto live = storage_->used_words_;
+    const auto target = collected_size(live);
+    if (4 * live >= storage_->heap_.capacity_ || target >= storage_->heap_.capacity_) {
+        return;
+    }
+    try {
+        copy_live(roots, target);
+    } catch (const std::bad_alloc &) {
+        return; // The larger block stays; it already holds every live word.
+    }
 }
 
 std::size_t ProcessHeap::used_words() const noexcept { return storage_->used_words_; }

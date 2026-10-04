@@ -19,7 +19,7 @@ void require(bool condition, const char *message) {
     }
 }
 
-// Validate word requests before any byte multiplication, without publishing storage or fake GC results.
+// Validate word requests before any byte multiplication; a collection reclaims unrooted raw words.
 void check_requests(ProcessHeap &heap) {
     require(heap.allocate(0) == std::unexpected(HeapError::invalid_size), "zero allocation accepted");
     constexpr auto max_words = std::numeric_limits<std::size_t>::max() / sizeof(Word);
@@ -29,8 +29,10 @@ void check_requests(ProcessHeap &heap) {
     const auto allocated = heap.allocate(4);
     require(allocated && allocated->size() == 4 * sizeof(Word), "boundary allocation failed");
     require(heap.allocate(1) == std::unexpected(HeapError::limit_exceeded), "exhausted budget ignored");
-    require(heap.collect() == std::unexpected(HeapError::not_implemented), "collector fabricated statistics");
     require(heap.used_words() == 4 && heap.capacity_words() == 4, "rejection changed accounting");
+    const auto collected = heap.collect();
+    require(collected && collected->words_before == 4 && collected->live_words == 0, "unrooted words survived");
+    require(heap.used_words() == 0 && heap.capacity_words() == 4, "new heap block ignored the budget");
 }
 
 // Check byte policy independently of requests, including target-word edges and a maximum valid budget.

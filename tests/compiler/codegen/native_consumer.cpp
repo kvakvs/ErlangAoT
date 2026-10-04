@@ -72,7 +72,8 @@ bool calls(Runtime &runtime, ProcessContext &context) {
 // Preserve generated calls and explicit teardown even when a reached service returns deferred failure.
 int execute(Runtime &runtime, bool deferred) {
     auto *context = runtime.create_context().value();
-    if (deferred && (context->heap().collect() != std::unexpected(HeapError::not_implemented) ||
+    const auto message = Term::from_word(encode_integer(1).value()).value();
+    if (deferred && (context->send(context->identity(), message) != std::unexpected(ProcessError::not_implemented) ||
                      context->heap().used_words() != 0 || context->heap().capacity_words() != 0)) {
         return 4;
     }
@@ -92,5 +93,5 @@ int main(int argc, char **argv) {
     if (!rejects_incompatible(*runtime) || register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;
     }
-    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-collection");
+    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-send");
 }

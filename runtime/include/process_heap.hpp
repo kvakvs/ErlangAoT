@@ -1,6 +1,6 @@
 #pragma once
 
-// One bounded heap block plus heap fragments supports transactional construction; collection remains deferred.
+// One bounded heap block plus heap fragments supports transactional construction and copying collection.
 #include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 
@@ -23,12 +23,18 @@ enum class HeapError : std::uint8_t {
     corrupt_heap
 };
 
-// Report actual collector work; the initial collector stub returns not_implemented instead.
+// Report one collection's work and the process's storage sizes after it, all in words.
 struct CollectionStats final {
-    // Measure allocated live/dead term storage before the collection attempt.
-    std::size_t bytes_before;
-    // Measure retained term storage after tracing/reclamation, excluding unused heap capacity.
-    std::size_t bytes_after;
+    // Used words of the heap block and fragments before, and live words copied into the new block.
+    std::size_t words_before = 0;
+    std::size_t live_words = 0;
+    // Capacity of the new heap block and of the fragments it replaced.
+    std::size_t heap_words = 0;
+    std::size_t fragment_words = 0;
+    // Slot capacity of the root stack segments, which the collection scans but never moves.
+    std::size_t stack_words = 0;
+    // Words of off-heap buffers still charged after dead binary cells were released.
+    std::size_t off_heap_words = 0;
 };
 
 // Summarize a verified heap; counts cover every parsed word of every area.
@@ -98,7 +104,7 @@ class HeapReservation final {
     bool active_ = true;
 };
 
-// Reserve one process's term storage; overflow goes to fragments, so addresses hold until an explicit GC safe point.
+// Reserve one process's term storage; overflow goes to fragments, so addresses hold until a collection at a safe point.
 // Allocation/accounting use target words, while configuration budgets remain exact byte multiples.
 class ProcessHeap final {
   public:
@@ -117,10 +123,12 @@ class ProcessHeap final {
     std::expected<HeapReservation, HeapError> reserve(std::size_t words) noexcept;
     // Copy checked owner-independent immediates; rooted graph addition remains deferred.
     TermResult<Term> add(const Term &value) noexcept;
-    // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
-    std::expected<CollectionStats, HeapError> collect(DiagnosticSink sink = {}) noexcept;
+    // Copy everything reachable from the process roots into a new heap block, sized by the growth policy.
+    // Only a safe point collects: no generated code running and no open reservation, else unsafe_point.
+    // Failing to allocate the new block is out_of_memory with nothing changed; host Terms become stale.
+    std::expected<CollectionStats, HeapError> collect() noexcept;
     // Collect with host-held words as extra roots; the caller reads the rewritten words back afterwards.
-    std::expected<CollectionStats, HeapError> collect(std::span<Word> roots, DiagnosticSink sink = {}) noexcept;
+    std::expected<CollectionStats, HeapError> collect(std::span<Word> roots) noexcept;
     // Report consumed words and exact retained capacity of the heap block and fragments.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
@@ -143,6 +151,12 @@ class ProcessHeap final {
     std::expected<void, HeapError> charge_off_heap(std::size_t bytes) noexcept;
     // Return a charge whose cell was never published.
     void uncharge_off_heap(std::size_t bytes) noexcept;
+    // Size a new heap block so live words stay below 75% of it, at least the minimum heap, within the budget.
+    std::size_t collected_size(std::size_t live_words) const noexcept;
+    // Copy everything reachable from the process roots and the host's roots into a new block of capacity words.
+    void copy_live(std::span<Word> roots, std::size_t capacity);
+    // Copy a block less than 25% live into the policy size; failing to allocate keeps the larger block.
+    void shrink(std::span<Word> roots) noexcept;
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
     ProcessContext &owner_;
     // Pin stable backing independently of the context address; liveness still controls admission.

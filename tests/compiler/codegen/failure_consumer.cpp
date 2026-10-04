@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <erlang_aot/abi/builtins.hpp>
 #include <erlang_aot/runtime/modules.hpp>
+#include <limits>
 #include <stdexcept>
 
 using namespace erlang_aot;
@@ -17,19 +18,12 @@ unsigned mode = 0;
 // Count operations which must not run after an earlier argument fails.
 unsigned later_calls = 0;
 unsigned take_calls = 0;
-unsigned reports = 0;
 
 // Keep checks active in optimized native consumers.
 void require(bool value, const char *message) {
     if (!value) {
         throw std::runtime_error(message);
     }
-}
-
-// Observe the existing heap service failure seam without emitting expected diagnostics to stderr.
-bool report(void *, std::string_view) {
-    ++reports;
-    return mode != 5;
 }
 
 // Produce a known immediate for success and for deliberately misleading failed leaf returns.
@@ -52,11 +46,10 @@ CallResult<Term> builtin(ProcessContext &context, std::span<const Term>) {
                                        .value = Term::from_word(integer(-99)).value()});
 }
 
-// Distinguish infrastructure status and once-only reporting from Erlang reasons.
+// Distinguish infrastructure status from Erlang reasons; heap services report nothing themselves.
 void check_service(const CallFailure &failure, unsigned selected) {
-    require(failure.code == CallError::runtime_failure && failure.reported && reports == 1,
-            "service failure lost once-only reporting");
-    require(failure.status == (selected == 1 ? abi::v1::Status::not_implemented : abi::v1::Status::diagnostic_failure),
+    require(failure.code == CallError::runtime_failure && !failure.reported, "service failure became reported");
+    require(failure.status == (selected == 1 ? abi::v1::Status::resource_limit : abi::v1::Status::busy),
             "service status changed");
 }
 
@@ -87,7 +80,7 @@ void check_payload(const CallFailure &failure, unsigned selected) {
 // Verify propagation, skipped work, owned error payload and clean retry through the same resolved entry.
 void failure_case(ProcessContext &context, const ResolvedFunction &entry, unsigned selected) {
     mode = selected;
-    later_calls = take_calls = reports = 0;
+    later_calls = take_calls = 0;
     const auto result = entry.call(context, {});
     require(!result && later_calls == 0 && take_calls == 0, "failure ran a later argument or caller body");
     require(!context.generated_calls().failure(), "outer boundary retained failure state");
@@ -111,8 +104,12 @@ Word leaf(ProcessContext *context, const Word *) {
         }
         throw std::runtime_error("injected generated-entry exception");
     }
-    if (mode == 1 || mode == 5) {
-        (void)context->heap().collect({nullptr, report});
+    if (mode == 1) {
+        (void)context->heap().allocate(std::numeric_limits<std::size_t>::max() / sizeof(Word));
+    } else if (mode == 5) {
+        // A second allocation while a reservation is open is refused; the reservation then rolls back.
+        const auto open = context->heap().reserve(1);
+        (void)context->heap().allocate(1);
     } else if (mode >= 2 && mode <= 4) {
         const auto reason = mode == 2 ? abi::v1::ErrorReason::function_clause : abi::v1::ErrorReason::badmatch;
         (void)erlang_aot_raise_v2(context, reason, mode == 4 ? Word{1} : integer(-42));

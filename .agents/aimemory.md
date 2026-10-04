@@ -78,7 +78,7 @@ narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_depe
 erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
 (float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).
 
-Plan11 steps 1-8G done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
+Plan11 steps 1-8H done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
 Step facts beyond the plan record:
 - 1/1A/1B: maint29 21776803 unchanged. Fast mode = matrix.py O0 positional + O2-off project, mutations
   once, LABELS full_only excluded. ERLANG_AOT_QUALITY_BASE overrides HEAD for changed-scope quality.
@@ -105,6 +105,11 @@ Step facts beyond the plan record:
 - 8G: HeapArea{words_,capacity_,top_}; HeapOptions positional {words, bytes}; rollback drops a new
   fragment/heap block, so tests expecting capacity 0 after failure hold. Fragment vector grows
   geometrically (reserve(size+1) per push was quadratic). 100k kernel ~3,000 fragments.
+- 8H: Copier ctor allocates to-space then ++collections_ (GeneratedCallState::visit rebinds payload with the
+  new count). First block = policy(used words); shrink = second full copy when <25% live (no offsetting).
+  collect() never touches the generated failure channel; native/failure consumers now use deferred send
+  and heap reservation faults. Term::bit_slice is unimplemented (link error): slice via erlang_aot_bits_v1.
+  Python Path.read_text defaults to cp1252 here: always read_text(encoding="utf-8") or use Edit.
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

@@ -41,7 +41,7 @@ std::expected<bool, WalkError> traced(BoxedKind kind, std::span<const Word> payl
 
 std::expected<HeapCell, WalkError> parse_cell(std::span<const Word> rest) noexcept {
     const auto first = rest.front();
-    if ((first & abi::v1::primary_mask) != static_cast<Word>(TermKindPrimary::header)) {
+    if (!is_header(first)) {
         if (rest.size() < 2) {
             return std::unexpected(WalkError::overrun);
         }

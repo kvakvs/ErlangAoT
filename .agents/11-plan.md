@@ -343,19 +343,25 @@ the off-heap list is swept and fragments are freed. Allowed only at a safe
 point: until step 26, when the context is not running generated code.
 
 - Success criteria
-  - [ ] Rooted values stay valid and equal, internal sharing is preserved,
+  - [x] Rooted values stay valid and equal, internal sharing is preserved,
     unreachable cells are reclaimed and last-owner binaries are released once;
     the heap grows or shrinks per policy. Host `Term`s taken before the
     collection report the stale-term error.
-  - [ ] A request at an unsafe point returns `unsafe_point` with no change;
+  - [x] A request at an unsafe point returns `unsafe_point` with no change;
     failure to allocate the new block leaves the heap untouched.
-  - [ ] `ProcessHeap::collect` leaves the deferred-services table; statistics
+  - [x] `ProcessHeap::collect` leaves the deferred-services table; statistics
     report heap, fragment, stack and off-heap sizes.
 - Tests
-  - [ ] Focused runtime tests: explicit roots across repeated collections, nested
+  - [x] Focused runtime tests: explicit roots across repeated collections, nested
     and shared graphs of every layout, binary release counts, stale host terms,
     verifier after each collection.
-  - [ ] Injected failure of the new-block allocation.
+  - [x] Injected failure of the new-block allocation.
+- Evidence (2026-10-04): `memory/heap_collect` (`Copier`, `heap_size_at_least`),
+  off-heap sweep in `memory/off_heap`; CTest `runtime_collection`, new-block OOM
+  in `runtime_lifecycle_failure`; tests that used `collect` as a deferred
+  service now use deferred send / heap reservation faults. Fresh Windows x64
+  Debug gate: fast CTest 140/140, `check-quality` 276 tidy units plus Lizard
+  pass. Logs `build/plan11-step8h/`.
 
 <a id="step-8i"></a>
 

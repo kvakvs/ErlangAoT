@@ -1,4 +1,5 @@
 #include "terms.hpp"
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <erlang_aot/abi/bits.hpp>
@@ -93,10 +94,30 @@ void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
     const auto invalid = heap.add(Term{});
     remaining = std::numeric_limits<std::size_t>::max();
     require(allocation == std::unexpected(HeapError::out_of_memory), "allocation OOM lost");
-    require(collection == std::unexpected(HeapError::diagnostic_failure), "collection diagnostic OOM lost");
+    require(collection && collection->heap_words == 0, "collecting an empty heap allocated");
     require(copied && copied->integer_value() == 7, "immediate copy allocated bookkeeping");
     require(invalid == std::unexpected(TermError::invalid_encoding), "invalid copy changed under OOM");
     require(live_allocations == baseline, "memory boundary retained allocations");
+}
+
+// A collection whose new heap block cannot be allocated fails with every word, count and host Term intact.
+void check_collection_without_allocation(erlang_aot::runtime::ProcessContext &context) {
+    using namespace erlang_aot::runtime;
+    TermFactory factory(context);
+    const auto value = factory.tuple(std::array{factory.integer(5).value()}).value();
+    std::array roots{value.word()};
+    const auto used = context.heap().used_words();
+    const auto capacity = context.heap().capacity_words();
+    const auto baseline = live_allocations;
+    remaining = 0;
+    const auto collection = context.heap().collect(roots);
+    remaining = std::numeric_limits<std::size_t>::max();
+    require(collection == std::unexpected(HeapError::out_of_memory), "new-block OOM lost");
+    require(live_allocations == baseline && roots[0] == value.word(), "failed collection changed roots or memory");
+    require(context.heap().used_words() == used && context.heap().capacity_words() == capacity,
+            "failed collection changed accounting");
+    require(value.tuple_element(0)->integer_value() == 5, "failed collection made host terms stale");
+    require(context.heap().verify().has_value(), "failed collection damaged the heap");
 }
 
 // Fail each context/mailbox/token/registry allocation; existing contexts must survive every rollback.
@@ -109,6 +130,7 @@ void check_context_creation() {
         auto existing = (*runtime)->create_context();
         require(existing.has_value(), "fixture context failed");
         check_heap_without_allocation((*existing)->heap());
+        check_collection_without_allocation(**existing);
         const auto retained = live_allocations;
         remaining = ordinal;
         auto created = (*runtime)->create_context();

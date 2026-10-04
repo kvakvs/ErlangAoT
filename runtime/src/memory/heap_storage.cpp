@@ -8,12 +8,12 @@
 namespace erlang_aot::runtime::detail {
 std::span<const Word> HeapArea::used() const noexcept { return {words_.get(), top_}; }
 
-std::span<const Word> HeapArea::from(std::uintptr_t address) const noexcept {
+std::span<Word> HeapArea::from(std::uintptr_t address) noexcept {
     const auto begin = reinterpret_cast<std::uintptr_t>(words_.get());
     if (address < begin || (address - begin) % sizeof(Word) != 0 || (address - begin) / sizeof(Word) >= top_) {
         return {};
     }
-    return used().subspan((address - begin) / sizeof(Word));
+    return std::span{words_.get(), top_}.subspan((address - begin) / sizeof(Word));
 }
 
 bool HeapArea::fits(std::size_t words) const noexcept { return words <= capacity_ - top_; }
@@ -74,12 +74,12 @@ std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t 
 }
 } // namespace
 
-std::span<const Word> HeapStorage::owned(std::uintptr_t address) const noexcept {
+std::span<Word> HeapStorage::owned(std::uintptr_t address) noexcept {
     if (const auto found = heap_.from(address); !found.empty()) {
         return found;
     }
     const auto range = std::ranges::upper_bound(ranges_, address, {}, &FragmentRange::begin_);
-    return range == ranges_.begin() ? std::span<const Word>{} : fragments_[std::prev(range)->fragment_].from(address);
+    return range == ranges_.begin() ? std::span<Word>{} : fragments_[std::prev(range)->fragment_].from(address);
 }
 
 std::expected<HeapArea, HeapError> HeapStorage::block(std::size_t words) const {

@@ -18,7 +18,7 @@ struct HeapArea {
     // Borrow the allocated words as a walkable area.
     std::span<const Word> used() const noexcept;
     // Borrow allocated words from a word-aligned address below top; empty for any other address.
-    std::span<const Word> from(std::uintptr_t address) const noexcept;
+    std::span<Word> from(std::uintptr_t address) noexcept;
     // Report whether words more fit above top.
     bool fits(std::size_t words) const noexcept;
     // Advance top by words that fit and zero them, so unused reserved words parse as filler.
@@ -52,7 +52,8 @@ class HeapStorage final {
     std::expected<void, HeapError> charge(std::size_t words) noexcept;
     // Borrow the used words from an address to the end of its area; empty unless the address is
     // word-aligned below the top of the heap or a fragment. Process pointers only name object starts.
-    std::span<const Word> owned(std::uintptr_t address) const noexcept;
+    // The words are writable for the collector, which forwards objects in place.
+    std::span<Word> owned(std::uintptr_t address) noexcept;
 
     // Retain bounded backing independently of future host pins.
     HeapOptions options_;

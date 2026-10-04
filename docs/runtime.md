@@ -2,7 +2,8 @@
 
 `erlang_runtime` is an LLVM-free C++23 library. It owns contexts, process heaps,
 atoms, loaded modules and lifecycle bookkeeping. It does not yet run Erlang
-processes: no scheduler workers, messaging or garbage collection. All APIs are
+processes: no scheduler workers or messaging, and the heap is collected only on
+explicit host request. All APIs are
 project-internal; host calls must be serialized per runtime.
 
 ## Linking
@@ -44,7 +45,8 @@ process.
 
 Each context owns one `ProcessHeap`: a single heap block created by its first
 allocation and sized `max(min_heap_words, request)`, plus a chain of heap
-fragments owned by the same process. Nothing moves while no collector runs.
+fragments owned by the same process. Words move only when the host calls
+`collect()` at a safe point.
 
 This heap is being replaced by the classic ERTS design in
 [runtime-heap.md](runtime-heap.md); the rules below describe the current code.
@@ -72,7 +74,12 @@ This heap is being replaced by the classic ERTS design in
   Raw `allocate()` words must stay zero or hold complete objects.
   `verify()` walks the heap block and every fragment and checks each term slot points at an object
   start of the same process (tests and debugging; `corrupt_heap` otherwise).
-- `collect()` reports `not_implemented`; nothing is reclaimed before teardown.
+- `collect(roots)` copies everything reachable from the process roots and the
+  host's root words into a new heap block, frees the old block and fragments,
+  releases dead off-heap binaries and rewrites the roots
+  ([collection](runtime-heap.md#collection)). It runs only at a safe point (no
+  generated code running, no open reservation), else `unsafe_point`; failure
+  to allocate the new block is `out_of_memory` with nothing changed.
 
 ## Code server and builtins
 
@@ -151,7 +158,6 @@ state:
 | Boundary | Error |
 | --- | --- |
 | `TermFactory` pid/reference/fun/native-record constructors | `TermError::not_implemented` |
-| `ProcessHeap::collect` | `HeapError::not_implemented` |
 | `ProcessContext::send` | `ProcessError::not_implemented` |
 | `SchedulerService::run` / `execute` | `SchedulerError::not_implemented` |
 | `CodeServer::unload` | `CodeError::not_implemented` |

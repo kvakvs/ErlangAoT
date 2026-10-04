@@ -44,6 +44,13 @@ target_link_libraries(runtime_heap_walk PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_heap_walk PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_heap_walk COMMAND runtime_heap_walk)
 
+# Copying collection: rewritten roots, sharing, binary release, size policy and stale host terms.
+add_executable(runtime_collection collection.cpp)
+erlang_aot_project_options(runtime_collection)
+target_link_libraries(runtime_collection PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_collection PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_collection COMMAND runtime_collection)
+
 # Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
 add_executable(runtime_heap_measurements heap_measurements.cpp)
 erlang_aot_project_options(runtime_heap_measurements)

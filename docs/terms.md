@@ -24,7 +24,8 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   `Term::from_word(word, context)` also admits atoms and heap terms of that
   context. Same-heap handoff keeps identity. Cross-process graph copying is not
   implemented: foreign values are rejected, not copied.
-- No garbage collection yet; cells live until heap teardown.
+- Cells live until an explicit collection finds them unreachable, or until
+  heap teardown.
 
 ## Atoms
 

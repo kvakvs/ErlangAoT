@@ -67,7 +67,7 @@ void check_factory_lifetime() {
     require(reports.count == 0 && runtime->shutdown() == Status::ok, "expired factory reported/retained resources");
 }
 
-// Heap validation stays silent; real deferred work reports once and leaves accounting unchanged.
+// Heap validation, allocation and collection are implemented services and never report.
 void check_memory(ProcessContext &context) {
     Reports reports;
     const DiagnosticSink sink{&reports, record};
@@ -75,13 +75,9 @@ void check_memory(ProcessContext &context) {
     require(heap.allocate(0, sink) == std::unexpected(HeapError::invalid_size), "invalid allocation misclassified");
     require(reports.count == 0, "validation reached placeholder");
     require(heap.allocate(1, sink).has_value(), "allocation failed");
-    require(reports.count == 0, "successful allocation reported deferred work");
-    require(heap.collect(sink) == std::unexpected(HeapError::not_implemented), "collection fabricated");
-    require(reports.count == 1 && reports.last.starts_with("[garbage collection] notimpl"), "GC report wrong");
     require(heap.allocate(1, {nullptr, reject}).has_value(), "allocation incorrectly consulted deferred sink");
-    require(heap.collect({nullptr, throwing}) == std::unexpected(HeapError::diagnostic_failure),
-            "collection sink exception escaped");
-    require(heap.used_words() == 2 && heap.capacity_words() >= 2, "collection changed allocation accounting");
+    require(heap.used_words() == 2 && heap.collect().has_value(), "collection failed");
+    require(reports.count == 0 && heap.used_words() == 0, "collection reported or kept unrooted words");
 }
 
 // Execution hooks must not consume admission, change state, or fabricate a cooperative return.
@@ -121,6 +117,9 @@ void check_send(ProcessContext &context) {
     require(context.send(context.identity(), term, {nullptr, reject}) ==
                 std::unexpected(ProcessError::diagnostic_failure),
             "send sink error lost");
+    require(context.send(context.identity(), term, {nullptr, throwing}) ==
+                std::unexpected(ProcessError::diagnostic_failure),
+            "send sink exception escaped");
 }
 
 // Publish a harmless linked module so unload rejection can be checked against real retained ownership.
@@ -165,10 +164,10 @@ void check_builtin_identity(ProcessContext &context) {
 void report_nested(ProcessContext &context) {
     auto registry = std::make_unique<ModuleRegistry>();
     require(registry
-                ->add("collect", 0,
+                ->add("reference", 0,
                       [](ProcessContext &caller, std::span<const Term>) -> CallResult<Term> {
-                          const auto result = caller.heap().collect();
-                          const auto code = result.error() == HeapError::not_implemented
+                          const auto result = TermFactory(caller).make_reference();
+                          const auto code = result.error() == TermError::not_implemented
                                                 ? CallError::not_implemented
                                                 : CallError::diagnostic_failure;
                           return std::unexpected(CallFailure{.code = code, .reported = true});
@@ -178,7 +177,7 @@ void report_nested(ProcessContext &context) {
     require(context.code_server().load({"wrapper", CodeImage::linked(), std::move(registry)}).has_value(),
             "nested service publication failed");
     Word output = 123;
-    require(erlang_aot::abi::v1::dispatch_builtin(&context, "wrapper", 7, "collect", 7, nullptr, 0, &output) ==
+    require(erlang_aot::abi::v1::dispatch_builtin(&context, "wrapper", 7, "reference", 9, nullptr, 0, &output) ==
                 Status::not_implemented,
             "nested service failure lost");
     require(output == 123, "nested service fabricated result");
@@ -192,7 +191,7 @@ bool report_storage(std::string_view mode, ProcessContext &context) {
     } else if (mode == "allocate") {
         require(context.heap().allocate(1).has_value(), "allocation status wrong");
     } else if (mode == "collect") {
-        require(context.heap().collect() == std::unexpected(HeapError::not_implemented), "collection status wrong");
+        require(context.heap().allocate(1).has_value() && context.heap().collect().has_value(), "collection failed");
     } else {
         return false;
     }
@@ -262,7 +261,8 @@ int main(int argc, char **argv) {
         image = std::unexpected(CodeError::module_not_found);
         require(runtime->destroy_context(context) == Status::ok, "placeholder prevented context cleanup");
         require(runtime->shutdown() == Status::ok && weak.expired(), "placeholder retained runtime resources");
-        return argc == 2 && std::string_view(argv[1]) != "quiet" && std::string_view(argv[1]) != "allocate" ? 1 : 0;
+        const std::string_view mode = argc == 2 ? argv[1] : "quiet";
+        return mode == "quiet" || mode == "allocate" || mode == "collect" ? 0 : 1;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

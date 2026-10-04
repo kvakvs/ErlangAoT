@@ -31,6 +31,11 @@ struct HeapCell {
     }
 };
 
+// Report whether a word is an object header; cons heads and collector forwarding words never are.
+inline bool is_header(Word value) noexcept {
+    return (value & abi::v1::primary_mask) == static_cast<Word>(TermKindPrimary::header);
+}
+
 // Parse the object starting at the first word of rest; rest must be nonempty.
 std::expected<HeapCell, WalkError> parse_cell(std::span<const Word> rest) noexcept;
 

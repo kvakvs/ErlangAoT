@@ -1,18 +1,18 @@
 # Every reachable service owner emits exactly one stderr line; lifecycle and tests using sinks stay silent.
 set(modes quiet term allocate collect send run execute unload builtin nested)
 set(features "" "term services" "allocation" "garbage collection" "message passing"
-    "scheduling" "process execution" "dynamic modules" "builtins" "garbage collection")
+    "scheduling" "process execution" "dynamic modules" "builtins" "term services")
 foreach(mode feature IN ZIP_LISTS modes features)
     execute_process(COMMAND "${PROGRAM}" "${mode}" RESULT_VARIABLE result
         OUTPUT_VARIABLE output ERROR_VARIABLE error)
     set(expected 1)
-    if(mode STREQUAL "quiet" OR mode STREQUAL "allocate")
+    if(mode MATCHES "^(quiet|allocate|collect)$")
         set(expected 0)
     endif()
     if(NOT result EQUAL expected OR NOT output STREQUAL "")
         message(FATAL_ERROR "Service ${mode} failed: ${result}: ${output}${error}")
     endif()
-    if(mode STREQUAL "quiet" OR mode STREQUAL "allocate")
+    if(mode MATCHES "^(quiet|allocate|collect)$")
         if(NOT error STREQUAL "")
             message(FATAL_ERROR "Lifecycle called a deferred service: ${error}")
         endif()

@@ -84,8 +84,8 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   sized to fit (at least the minimum heap size) and chained to the process. The
   next collection merges fragments into the new heap block. A reservation
   lives in one area; rollback resets that area's top and drops a fragment (or
-  the heap block) the reservation created. Until 8H the heap never moves, so
-  all overflow becomes fragments.
+  the heap block) the reservation created. Until step 26 allocation never
+  moves the heap, so all overflow becomes fragments until a host collection.
 - **Stack.** Generated root frames (BEAM Y registers) are windows in stack
   segments kept apart from the heap (8F). A segment is one allocation that,
   with the allocator's own header, fits a 4 KiB page (the x86 page size; a
@@ -108,15 +108,19 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
 ## Sizing and budget
 
 - The heap starts at `min_heap_words` (233 words, as ERTS) and grows along the
-  ERTS size sequence (Fibonacci-like up to about one million words, then 20%
-  steps).
-- After a collection the new block is the smallest size that keeps live data
-  below 75% of it; a block less than 25% used shrinks to that size.
+  ERTS size sequence: 12, 38, then each size is the sum of the previous two
+  plus one up to 833,026 words, then 20% steps (`heap_size_at_least`).
+- A collection's new block is the smallest such size that keeps the words it
+  may receive below 75% of it: first all used words, since live data is not
+  known before copying. A result less than 25% live is copied once more into
+  the size its live data needs (8H); failing to allocate that block keeps the
+  larger one. Neither is smaller than `min_heap_words`.
 - One budget, `limit_bytes`, covers the heap block, fragments and the bytes of
   off-heap buffers created by this process. Exceeding it is `limit_exceeded`; a
   failed host allocation is `out_of_memory`. During a collection the old and new
-  blocks coexist; only the new block is checked against the budget. The stack
-  keeps its own root bounds.
+  blocks coexist; only the new block is checked against the budget, capped at
+  the budget left after off-heap buffers. A buffer's charge returns when the
+  process drops its last reference. The stack keeps its own root bounds.
 
 ## Admission
 
@@ -152,18 +156,23 @@ it.
 The heap moves only at a safe point. Until generated code reloads values after
 allocation (plan step 26), the only safe point is an explicit host `collect()`
 while the context runs no generated code and has no pending reservation; any
-other request returns `unsafe_point` and changes nothing. Allocation never moves
-the heap before step 26: a request that does not fit creates a fragment.
+other request returns `unsafe_point` and changes nothing, not even the failure
+channel of a running generated call. Allocation never moves the heap before
+step 26: a request that does not fit creates a fragment.
 
 ## Collection
 
-A full-sweep Cheney copy (8H): allocate the new block first (failure leaves the
-heap untouched), copy objects reachable from roots, then scan the new block and
-copy their children. A moved boxed object's header is replaced by a boxed
-pointer to its copy; a moved cons cell gets a zero head and a tail pointing to
-its copy. Forwarding preserves sharing. Roots are rewritten, the off-heap list
-is swept, and the old block and fragments are freed. Statistics report heap,
-fragment, stack and off-heap sizes.
+A full-sweep Cheney copy (8H, `memory/heap_collect`): allocate the new block
+first (failure is `out_of_memory` and leaves the heap untouched), then mark
+host `Term`s stale, copy the object behind every root word and scan the new
+block left to right, copying the children of each copy. A moved boxed object's
+header is replaced by a boxed pointer to its copy; a moved cons cell gets a zero
+head and a tail pointing to its copy. Forwarding preserves sharing. Roots are
+rewritten in place, the off-heap list is swept (copies relinked in list order,
+dead cells destroyed), and the old block and fragments are freed. A heap that
+was never allocated is not collected. `CollectionStats` reports words before,
+live words, the new heap block, the merged fragments, stack slot capacity and
+off-heap words.
 
 ## Baseline measurements
 

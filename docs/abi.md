@@ -99,7 +99,8 @@ live words and 4,096 frames.
   the frame is released; error payloads are root words of the channel (BEAM
   `fvalue`). LIFO violations are infrastructure errors.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
-  There is no tracing or moving collector yet.
+  Generated code never collects yet; only a host `collect()` outside generated
+  calls moves the heap.
 
 ## Runtime services
 
