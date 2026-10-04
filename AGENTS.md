@@ -90,6 +90,13 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
   missing it should be installed. Always run erlfmt on new and modified .ERL and
   terms files which did not have a syntax error in them planted intentionally.
 
+## Code Style Guide
+
+- Internal fields of classes use trailing underscore. Rename existing fields when they did not have an underscore while you're working on them.
+- Constants and inline constexpr constants prefer ALL_CAPS_SNAKE_CASE
+- Function names and local variables: lower_snake_case
+- Class names and struct names: public use CapitalCase, and private can go any (suggested lower_snake_case)
+
 ## Testing Strategy
 
 - When testing against golden master, make sure the project owns the fixtures
