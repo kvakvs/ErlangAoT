@@ -326,14 +326,40 @@ Drive Clang to link module objects, startup and the matching runtime library;
 replace the explicit executable-output "not implemented" failure.
 
 - Success criteria
-  - [ ] `erlangaot -o app[.exe] a.erl b.erl` produces a runnable program.
-  - [ ] Missing runtime, missing linker, link errors and target mismatch fail
+  - [x] `erlangaot -o app[.exe] a.erl b.erl` produces a runnable program.
+  - [x] Missing runtime, missing linker, link errors and target mismatch fail
     with clear diagnostics and publish no partial executable.
 - Tests
-  - [ ] Build and run the two-module example at O0/O2; compare stdout and exit
+  - [x] Build and run the two-module example at O0/O2; compare stdout and exit
     status.
-  - [ ] Failure cases: absent runtime library, wrong target triple, unwritable
+  - [x] Failure cases: absent runtime library, wrong target triple, unwritable
     output path, existing output preserved on failure.
+
+Done 2026-10-04. New `compiler/src/linking/` (`erlang_linking`, LLVM-private): positional `-o` keeps
+objects in memory, stages them in a private `.erlangaot-link-*` directory beside the output and runs
+`<clang> --driver-mode=g++ --target=<triple>` with the runtime archive, then replaces the output (`.exe`
+added for Windows targets without an extension). Options `--linker` (else `clang++`/`clang` on PATH, then
+`%ProgramFiles%/LLVM/bin`) and `--runtime-library` (else the build's archive, recorded relative to
+`erlangaot`); LLVM Object checks every member's arch/format against the target. Linking works outside a
+VS developer shell. `examples/compile/client.erl` gained `main/1`. CTest `linking_executable` (example
+O0/O2, argv/halt, escript 127; absent/non-archive/wrong-target runtime, absent linker, real undefined-symbol
+link error, file-as-directory, directory and input destinations, existing output preserved, no staging
+left); entry/escript/CLI tests now stop at an absent runtime library; project `-o` stays notimpl (step 7).
+Entry-detection hints spell `--entry MODULE[:FUNCTION]` and, for project targets, the manifest
+`entry = "MODULE[:FUNCTION]"` key. Fresh gate: 131 fast tests, 272 quality units.
+
+### 6A. Link a single project target with explicit `-o`
+
+Users combine `--project` with `-o` and expect a program. Project `-o` already requires exactly
+one selected target, so that target links like a positional batch; manifest `output` without `-o`
+and multi-target linking stay in step 7.
+
+- Success criteria
+  - [x] `erlangaot --project P [--target T] [--entry M] -o PATH` links and runs.
+  - [x] No path reports `[executable linking] notimpl`; the catalog entry is implemented.
+- Tests
+  - [x] `linking_executable` links project targets (manifest and CLI entry, O0/O2) and reports
+    a project-prefixed failure; entry and placeholder tests no longer expect notimpl.
 
 <a id="step-7"></a>
 

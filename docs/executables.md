@@ -1,8 +1,8 @@
 # Executables
 
-Contract for programs built by `erlangaot -o`. Positional inputs link into an
-executable ([linking](#linking)); project targets still report
-`[executable linking] notimpl` for `-o` until plan 11 step 7.
+Contract for programs built by `erlangaot -o`. Positional inputs, or exactly
+one selected project target, link into an executable ([linking](#linking)).
+Without `-o`, the manifest `output` key is not linked yet (plan 11 step 7).
 
 ## Entry selection
 
@@ -124,8 +124,9 @@ works the same way (see `tests/compiler/linking/startup.cmake`).
 
 ## Linking
 
-`erlangaot [-O0|-O2] -o PATH a.erl b.erl ...` compiles the batch in memory, adds
-the startup object for the [entry](#entry-selection) and links an executable:
+`erlangaot [-O0|-O2] -o PATH a.erl b.erl ...` (or `--project FILE [--target T] -o PATH`
+for one selected target) compiles the batch in memory, adds the startup object
+for the [entry](#entry-selection) and links an executable:
 
 ```sh
 erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl

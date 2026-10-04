@@ -57,8 +57,8 @@ requiring the separately written C++ harness used today.
   connection remains.)
 - [ ] Drive Clang/platform linking with one matching target runtime and safe
   CLI/ project output publication; replace the supported executable-output
-  placeholder. (Step 6 links positional `-o` batches; project targets remain,
-  step 7.)
+  placeholder. (Steps 6/6A link positional batches and one project target with `-o`;
+  manifest `output` and multi-target linking remain, step 7.)
 - [x] Run emitted executables and verify missing-runtime, ABI, startup and link
   failures (steps 5–6: `linking_startup`, `runtime_startup`,
   `linking_executable`).

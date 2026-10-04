@@ -59,7 +59,8 @@ check(manifest_valid 0 "^$" --project project.toml --target app)
 check(manifest_custom 0 "^$" --project project.toml --target custom)
 check(manifest_private 1 "\\[target private\\]: error: [^\n]*${unexported}" --project project.toml --target private)
 check(manifest_absent 1 "project.toml:21:9 \\[target absent\\] \\(entry\\): ${missing}" --project project.toml --target absent)
-check(manifest_detect 1 "\\[target detect\\]: error: \\[executable linking\\] notimpl" --project project.toml --target detect -o out)
+check(manifest_detect 1 "\\[target detect\\]: error: runtime library not found"
+    --project project.toml --target detect -o out --runtime-library absent.lib)
 check(manifest_ambiguous 1 "main/1 is exported by app, other${hint}${manifest_hint}${arity_hint}"
     --project project.toml --target ambiguous -o out)
 check(manifest_check_ignores_entry 0 "^$" --project project.toml --parse-check)

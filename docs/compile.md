@@ -1,9 +1,9 @@
 # Compilation
 
 `erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
-or native objects. `-o/--output` links positional inputs, their
-[entry](executables.md) startup object and the runtime into an executable
-([linking](executables.md#linking)); project targets do not link yet. Emitted
+or native objects. `-o/--output` links positional inputs (or one selected
+project target), their [entry](executables.md) startup object and the runtime
+into an executable ([linking](executables.md#linking)). Emitted
 objects can also run through a C++ harness linked with the runtime (see the
 example below).
 

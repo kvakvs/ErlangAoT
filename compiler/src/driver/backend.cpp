@@ -10,7 +10,6 @@
 #include "progress.hpp"
 #include "publication.hpp"
 #include "type_report.hpp"
-#include <erlang_aot/abi/feature_diagnostic.hpp>
 #include <erlang_aot/compiler/source.hpp>
 
 namespace erlang_aot::cli {
@@ -122,12 +121,6 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
     Analysis analysis;
     const EntryRequest entry{frontend.entry, frontend.executable_output.has_value(), !request.project_target.empty()};
     if (!analyze(request, entry, analysis, sink)) {
-        return true;
-    }
-    // Project targets link to their manifest outputs in a later step; positional batches link below.
-    if (frontend.executable_output && !request.project_target.empty()) {
-        sink("error: " + abi::v1::format_feature_failure(abi::v1::FeatureId::executable_linking,
-                                                         {.target = request.project_target, .operation = "link"}));
         return true;
     }
     if (frontend.backend.print_types) {

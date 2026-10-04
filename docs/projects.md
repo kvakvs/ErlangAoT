@@ -42,7 +42,8 @@ my_dependency = "vendor/my_dependency"
   [executables](executables.md#entry-selection). CLI `--entry` overrides it for
   a single selected target.
 - `output` is the reserved executable destination, default
-  `<manifest-dir>/build/<target>` (`.exe` on Windows). Check/print modes ignore it.
+  `<manifest-dir>/build/<target>` (`.exe` on Windows). It is not linked yet
+  (plan 11 step 7); check/print modes ignore it.
 - Not supported yet: root defaults, inheritance, target dependencies, imports,
   profiles, exclusions, packages, watch, caching, parallel builds. Fields are
   added only together with their behavior.
@@ -63,7 +64,8 @@ erlangaot --new-project <filename>
 - `--project test1` loads `test1.toml` when `test1` does not exist.
 - CLI frontend options apply to every selected target. CLI-relative paths keep
   invocation-directory meaning; manifest paths are relative to the manifest.
-- `-o/--output` overrides `output` only when exactly one target is selected.
+- `-o/--output` links the target to that path ([linking](executables.md#linking));
+  it requires exactly one selected target.
 - `--verbose` traces `[pp]` files/includes and `[parse]` sources on stderr.
 - Exit 2: usage errors and unknown targets. Exit 1: manifest, discovery,
   frontend or creation failures. Exit 0: success (warnings allowed).

@@ -39,9 +39,9 @@ Options:
 
 Checks do not validate semantics or run parse transforms.
 With no check/print action, source batches compile to verified objects in memory.
-Only --emit writes module artifacts (default root: build/aot); --output links positional inputs.
+Only --emit writes module artifacts (default root: build/aot); --output links an executable.
 Compilation switches conflict with frontend check/print actions and --new-project.
---emit conflicts with --output; project targets report [executable linking] notimpl for --output.
+--emit conflicts with --output; with --project, --output needs exactly one selected target.
 Without --entry, --output uses the only module exporting main/1; the entry receives argv strings.
 A source whose first line starts with #! is an escript: implicit -module and main/1 export.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.

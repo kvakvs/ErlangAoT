@@ -1,4 +1,4 @@
-"""Audit catalog-owned CLI capability paths and explicit executable requests."""
+"""Audit catalog-owned CLI capability paths for deferred compiler features."""
 import pathlib
 import re
 import subprocess
@@ -27,9 +27,8 @@ def check(tool, work, feature, options, project, verbose):
     marker = f"[{feature}] notimpl"
     assert result.returncode == 1 and not result.stdout, (args, result)
     assert result.stderr.count(marker) == 1, (args, result.stderr)
-    if feature != "executable linking":
-        assert re.search(r"sample\.erl:\d+:\d+:", result.stderr), result.stderr
-        assert '[module="sample"]' in result.stderr, result.stderr
+    assert re.search(r"sample\.erl:\d+:\d+:", result.stderr), result.stderr
+    assert '[module="sample"]' in result.stderr, result.stderr
     if project:
         assert "audit" in result.stderr, result.stderr
     assert (work / "output/sentinel").read_text(encoding="utf-8") == "preserved"
@@ -50,16 +49,11 @@ def main():
     assert {name for name, owner, status in entries if owner == "compiler" and status == "deferred"} == set(CASES)
     (work / "project.toml").write_text("schema_version=1\n[[targets]]\nname='audit'\nsources=['sample.erl']\n",
                                         encoding="utf-8")
-    for feature, body in [*CASES.items(), ("executable linking", "-export([main/1]). main(_) -> 42.")]:
+    for feature, body in CASES.items():
         (work / "sample.erl").write_text("-module(sample).\n" + body + "\n", encoding="utf-8")
         for level in ["-O0", "-O2"]:
             options = [level, "--emit", "obj", "--artifact-dir", str(work / "output")]
-            if feature == "executable linking":
-                options = [level, "--output", str(work / "output/sentinel")]
             for project in [False, True]:
-                # Positional --output links (linking_executable); only project targets still report notimpl.
-                if feature == "executable linking" and not project:
-                    continue
                 for verbose in [False, True]:
                     check(tool, work, feature, options, project, verbose)
 

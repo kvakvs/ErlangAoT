@@ -1,4 +1,4 @@
-# Executable linking from positional inputs (docs/executables.md#linking): erlangaot -o drives Clang with the
+# Executable linking for positional inputs and a single project target (docs/executables.md#linking): -o drives Clang with the
 # module and startup objects plus the runtime archive; failures publish nothing and keep existing outputs.
 file(REMOVE_RECURSE "${WORK}")
 file(MAKE_DIRECTORY "${WORK}")
@@ -41,6 +41,13 @@ run("sub dir/app" 0 "[\"a b\"]\n" "a b")
 run("sub dir/app" 3 "" halt)
 compile(escript 0 "^$" -o boom boom.escript)
 run(boom 127 "")
+# A project target links with an explicit -o (exactly one selected target); manifest and CLI entries apply.
+compile(project 0 "^$" --project project.toml -o project)
+run(project 0 "[\"x\"]\n" x)
+compile(project_entry 0 "^$" --project project.toml --target app --entry app -O2 -o "sub dir/project")
+run("sub dir/project" 3 "" halt)
+compile(project_failure 1 "\\[target app\\]: error: runtime library not found"
+    --project project.toml -o kept.bin --runtime-library absent.lib)
 
 # Every failure keeps an existing output byte-for-byte and leaves no staging directory.
 set(kept "${WORK}/kept.bin")

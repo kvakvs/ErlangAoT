@@ -166,3 +166,7 @@ Project -o still notimpl (step 7). Tests: linking_executable (other archive = er
 for undefined-symbol link error); entry/escript/cli tests stop at --runtime-library absent.lib.
 examples/compile/client.erl gained main/1. Bash heredoc drops `\` -> use Edit for regex escapes.
 cmd: run .exe in cwd needs PowerShell (cmd said not recognized). Logs build/plan11-step6.
+Plan11 step6A 2026-10-04 (user request): --project + explicit -o (already single-target only) links;
+backend.cpp notimpl branch removed, FeatureId::executable_linking status implemented (failure_test
+linking_executable). Step 7 = manifest `output` without -o + multi-target. User's earlier amend of
+step 6 reverted the plan section (stale IDE buffer); restored. Don't stage user's test1.toml.

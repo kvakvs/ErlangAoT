@@ -290,10 +290,10 @@ With no check/print action, source inputs and `--project` run the complete pipel
 through verified native object buffers in memory. Positional inputs form one batch;
 each project target forms its own batch. `--emit` writes artifacts under `build/aot`
 or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
-default root. Filenames encode module identity. `-o PATH` links positional inputs into an
-executable with Clang and the runtime library (entry: `--entry MODULE[:FUNCTION]`, or the only
-module exporting `main/1`); project targets report `[executable linking] notimpl` for `-o` and
-TOML `output` remains reserved metadata.
+default root. Filenames encode module identity. `-o PATH` links positional inputs, or one
+selected project target, into an executable with Clang and the runtime library (entry:
+`--entry MODULE[:FUNCTION]`, manifest `entry`, or the only module exporting `main/1`); TOML
+`output` is not linked yet.
 See [executables](docs/executables.md) for the entry, argument and exit-status contract.
 
 ```sh
