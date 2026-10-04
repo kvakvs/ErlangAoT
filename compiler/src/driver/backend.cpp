@@ -120,7 +120,8 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
              const DiagnosticSink &sink) {
     auto request = backend_request(std::move(inputs), frontend);
     Analysis analysis;
-    if (!analyze(request, {frontend.entry, frontend.executable_output.has_value()}, analysis, sink)) {
+    const EntryRequest entry{frontend.entry, frontend.executable_output.has_value(), !request.project_target.empty()};
+    if (!analyze(request, entry, analysis, sink)) {
         return true;
     }
     // Project targets link to their manifest outputs in a later step; positional batches link below.

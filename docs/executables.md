@@ -31,8 +31,18 @@ The entry is an exported function of arity 1 that receives the argument list.
 | No `F/1` | `<file>:<line>:<col>: entry function M:F/1 is not defined` at the module declaration |
 | Only other arities | `... is not defined; found F/N, but the entry receives one argument (the argument list)` at that definition |
 | `F/1` not exported | `<file>:<line>:<col>: entry function M:F/1 is not exported` at the definition |
-| No selection, no `main/1` export | `no entry point: no module exports main/1; select one with --entry or the manifest entry key` |
-| No selection, several | `ambiguous entry point: main/1 is exported by a, b; select one ...` |
+| No selection, no `main/1` export | `no entry point: no module exports main/1; choose the entry with --entry MODULE[:FUNCTION] (an exported FUNCTION/1; FUNCTION defaults to main)` |
+| No selection, several | `ambiguous entry point: main/1 is exported by a, b; choose the entry with ...` (same hint) |
+
+For project targets the hint also names the manifest key: `... --entry MODULE[:FUNCTION] or with
+entry = "MODULE[:FUNCTION]" in this target's [[targets]] table of the project manifest ...`, for example:
+
+```toml
+[[targets]]
+name = "app"
+sources = ["src/*.erl"]
+entry = "app:start"   # calls app:start/1; plain "app" calls app:main/1
+```
 
 ## Arguments
 

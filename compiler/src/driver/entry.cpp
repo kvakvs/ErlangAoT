@@ -5,7 +5,15 @@
 namespace erlang_aot::cli {
 namespace {
 using Modules = std::span<const std::unique_ptr<semantic::Module>>;
-constexpr std::string_view selection_hint = "; select one with --entry or the manifest entry key";
+
+// Explain how to choose an entry; only project targets have the manifest key.
+std::string selection_hint(const bool project) {
+    const std::string manifest =
+        project ? " or with entry = \"MODULE[:FUNCTION]\" in this target's [[targets]] table of the project manifest"
+                : "";
+    return "; choose the entry with --entry MODULE[:FUNCTION]" + manifest +
+           " (an exported FUNCTION/1; FUNCTION defaults to main)";
+}
 
 // Find the batch module whose declared name matches the requested atom text.
 std::optional<std::size_t> find_module(Modules modules, const std::u32string &name) {
@@ -77,7 +85,7 @@ bool candidate(const semantic::Module &module, const bool escripts) {
 }
 
 // Pick the only escript, else the only module exporting main/1, when no entry was selected.
-std::optional<ResolvedEntry> detect(Modules modules, const DiagnosticSink &sink) {
+std::optional<ResolvedEntry> detect(Modules modules, const bool project, const DiagnosticSink &sink) {
     const bool escripts = std::ranges::any_of(modules, [](const auto &module) { return module->escript; });
     std::vector<std::size_t> candidates;
     std::string names;
@@ -90,9 +98,9 @@ std::optional<ResolvedEntry> detect(Modules modules, const DiagnosticSink &sink)
     if (candidates.size() == 1) {
         return ResolvedEntry{candidates.front(), {U"main", 1}, escripts};
     }
-    sink(candidates.empty()
-             ? "error: no entry point: no module exports main/1" + std::string(selection_hint)
-             : "error: ambiguous entry point: main/1 is exported by " + names + std::string(selection_hint));
+    sink((candidates.empty() ? "error: no entry point: no module exports main/1"
+                             : "error: ambiguous entry point: main/1 is exported by " + names) +
+         selection_hint(project));
     return std::nullopt;
 }
 } // namespace
@@ -102,7 +110,7 @@ bool resolve_entry(Modules modules, const EntryRequest &request, const semantic:
     if (request.selected) {
         entry = check_selected(modules, *request.selected, report, sink);
     } else if (request.required) {
-        entry = detect(modules, sink);
+        entry = detect(modules, request.project, sink);
     } else {
         return false;
     }

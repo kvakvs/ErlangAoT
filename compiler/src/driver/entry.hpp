@@ -11,6 +11,8 @@ struct EntryRequest {
     std::optional<project::SelectedEntry> selected;
     // Executables need an entry, so an absent selection is detected from the batch's main/1 exports.
     bool required = false;
+    // Project targets can also select the entry with the manifest key, so their hints mention it.
+    bool project = false;
 };
 
 struct ResolvedEntry {
