@@ -86,18 +86,19 @@
   Borrowed service arrays and both success outputs are rooted. Cells remain with heap backing until
   teardown and final host-pin release; GC/copying retain their separate owners.
 
-- Stable heap chunks support bounded word allocation, aligned reservations, rollback
-  and explicit resource destruction. No GC or graph copying runs. Plan 11 phase C
-  replaces this with the classic ERTS heap in `docs/runtime-heap.md` (header-parsed
-  words, start-bitmap admission, off-heap binary list, fragments, copying GC).
+- Each process owns one heap block (lazy, `max(min_heap_words=233, request)`) plus a
+  fragment chain; bump allocation, word alignment only, one reservation with rollback.
+  No GC or graph copying runs. Plan 11 phase C moves to the classic ERTS heap in
+  `docs/runtime-heap.md` (header-parsed words, off-heap binary list, fragments, copying GC).
   Done: 8B binaries (inline heap binaries; larger ones are `shared_ptr` buffers
   held by `RefcBinaryCell`s on the per-process off-heap list, `memory/off_heap`);
   8C parseable areas (`memory/heap_walk`, `ProcessHeap::verify` in `memory/heap_verify`);
-  8D admission = ownership (sorted chunk ranges, used bound) + header shape; process pointers only name
+  8D admission = ownership (heap block, then fragments sorted by address; below top) + header shape; process pointers only name
   object starts, so no index or start bitmap. 8E ERTS host terms: `Term` = word + borrowed heap +
   weak lifetime + collection count (no pin); roots = stack slots, handoff words, error payload,
   explicit span (`ProcessContext::visit_roots`). 8F interim root stack: `GeneratedRoots` frames are
-  windows in page-sized segments (4096 bytes incl. header, intrusive chain), freed when empty; flat stack waits for steps 17/26. Revision-4
+  windows in page-sized segments (4096 bytes incl. header, intrusive chain), freed when empty; flat stack waits for steps 17/26. 8G `HeapStorage` = `heap_` block +
+  `fragments_` (newest tried after heap, else new fragment), `HeapMark` restores tops. Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
   Exact-start object indices prove ownership before extraction. Compound host handles

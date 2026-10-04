@@ -9,7 +9,8 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 
 - Compound values live in their process heap ([runtime](runtime.md#process-memory)).
   Process pointers always name object starts. Admission checks ownership: the
-  word points, word-aligned, into the used part of one of the process's chunks,
+  word points, word-aligned, below the top of the process's heap block or one of
+  its fragments,
   and the header (or cons cell) there matches its tag
   ([admission](runtime-heap.md#admission)). Foreign and stale words are rejected
   without any load. Kind and extent are decoded from the header.

@@ -69,7 +69,7 @@ void ownership(Runtime &runtime, ProcessContext &context, const Term &value) {
 int main() {
     try {
         auto runtime = Runtime::start().value();
-        auto &context = *runtime->create_context({32 * sizeof(Word), 4096 * sizeof(Word)}).value();
+        auto &context = *runtime->create_context({32, 4096 * sizeof(Word)}).value();
         const auto value = canonical(context);
         ownership(*runtime, context, value);
     } catch (const std::exception &error) {

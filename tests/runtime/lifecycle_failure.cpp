@@ -427,7 +427,7 @@ void check_root_allocation() {
     require(succeeded, "root allocation sweep never succeeded");
 }
 
-// Sweep backing and chunk-index allocations; a failed reservation keeps no backing and allows retry.
+// Sweep heap block allocation; a failed reservation keeps no backing and allows retry.
 void check_heap_construction() {
     using namespace erlang_aot::runtime;
     bool succeeded = false;

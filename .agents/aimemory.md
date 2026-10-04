@@ -230,3 +230,10 @@ review: first version's doubling/spare/trim = over-engineered; wants minimal now
 stack w/ in-stack frame headers after codegen reloads frame base: steps 17/24/26 criteria added). Segments
 only exist because generated code holds absolute Word* from roots_enter across calls. Bash `cat > file`
 without heredoc hangs on stdin. Logs build/plan11-step8f.
+Plan11 step8G 2026-10-04: HeapStorage = heap_ (one lazy block per process, max(min_heap_words=233, req))
++ fragments_ vector (newest tried after heap) + ranges_ sorted; HeapArea{words_,capacity_,top_}. User:
+"heap is one block per process, each process owns its heap". HeapOptions{min_heap_words, limit_bytes}
+(positional: words, bytes). reserve(words) no alignment. Rollback drops new fragment/heap block -> tests
+expecting capacity 0 after failure still hold. Fragment vector grows geometrically (reserve(size+1)
+each push was quadratic). Python Path.write_text writes CRLF on Windows: use write_bytes. Logs
+build/plan11-step8g.

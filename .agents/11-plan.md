@@ -701,15 +701,27 @@ rollback resets `top` or drops the newest fragment. The alignment parameter is
 removed (word alignment only).
 
 - Success criteria
-  - [ ] All allocation goes to the heap or a fragment; admission and the
+  - [x] All allocation goes to the heap or a fragment; admission and the
     walker cover both.
-  - [ ] Heap plus fragments stay within `limit_bytes`; `limit_exceeded`,
+  - [x] Heap plus fragments stay within `limit_bytes`; `limit_exceeded`,
     `out_of_memory` and the one-reservation rule are unchanged.
 - Tests
-  - [ ] All goldens pass unchanged.
-  - [ ] Focused tests: overflow into fragments, rollback across a fragment
+  - [x] All goldens pass unchanged.
+  - [x] Focused tests: overflow into fragments, rollback across a fragment
     boundary, exhaustion with fragments, and many contexts with the default
     small heap.
+
+Done 2026-10-04. `HeapStorage` owns one process's single heap block `heap_` and its fragment chain
+`fragments_` (`HeapArea`: `unique_ptr<Word[]>`, capacity, top), fields renamed with trailing underscores.
+The block is created by the first reservation, sized `max(min_heap_words, request)` so the request fits;
+a request that does not fit goes to the newest fragment, else a new one of `max(min_heap_words, request)`
+words, both capped by the remaining budget. `HeapMark` records heap capacity/top, fragment count and newest
+top; rollback drops new fragments (or the new heap block) and resets tops, so failed construction still
+keeps no backing. `HeapOptions::chunk_bytes` became `min_heap_words` (233); `reserve` lost its alignment
+parameter. Admission checks the heap block, then fragments sorted by address; `verify()` walks both. New
+CTest `runtime_heap_fragments`; option literals in tests converted to words. Measurements: 1,000 contexts
+take 2.4 KB and 233 heap words each (was 66 KB, 8,192); the 100k kernel now spans about 3,000 fragments
+(build 219 ms, walk 174 ms) until 8H collects.
 
 <a id="step-8h"></a>
 

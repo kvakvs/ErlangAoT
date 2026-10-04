@@ -85,7 +85,7 @@ void malformed() {
 // External backing counts against the process budget, and invalid input never publishes a partial object.
 void budgets() {
     auto runtime = Runtime::start().value();
-    auto &context = *runtime->create_context({32 * sizeof(Word), 64 * sizeof(Word)}).value();
+    auto &context = *runtime->create_context({32, 64 * sizeof(Word)}).value();
     TermFactory factory(context);
     require(factory.bitstring({}, 1) == std::unexpected(TermError::invalid_argument), "short host input accepted");
     require(factory.bitstring({}, 1'000'001) == std::unexpected(TermError::resource_limit), "bit ceiling ignored");

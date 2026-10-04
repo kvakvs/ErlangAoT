@@ -37,15 +37,19 @@ class Verifier final {
     }
 
   private:
-    // Pass 1: parse every chunk, counting objects and remembering starts and traced slots.
+    // Pass 1: parse the heap and every fragment, counting objects and remembering starts and traced slots.
     bool collect() {
-        for (const auto &chunk : storage_.chunks) {
-            if (!walk(chunk.area(), [&](const HeapCell &cell) { record(cell); })) {
-                return false;
-            }
+        if (!parse(storage_.heap_) ||
+            !std::ranges::all_of(storage_.fragments_, [&](auto &area) { return parse(area); })) {
+            return false;
         }
         std::ranges::sort(starts_, {}, &Start::address);
         return true;
+    }
+
+    // Walk one area's used words.
+    bool parse(const HeapArea &area) {
+        return walk(area.used(), [&](const HeapCell &cell) { record(cell); }).has_value();
     }
 
     // Count one parsed object and keep what pass 2 needs.
@@ -79,7 +83,7 @@ class Verifier final {
         case TermKind::boxed:
             return shape_at(value) == Shape::boxed;
         case TermKind::atom:
-            return storage_.atoms->lookup(value).has_value();
+            return storage_.atoms_->lookup(value).has_value();
         default:
             return plain_immediate(value);
         }
@@ -92,7 +96,7 @@ class Verifier final {
 
     // Every listed cell is a parsed off-heap binary, and every parsed one is listed.
     bool off_heap_valid() {
-        for (const auto *cell = storage_.off_heap; cell != nullptr; cell = cell->next_) {
+        for (const auto *cell = storage_.off_heap_; cell != nullptr; cell = cell->next_) {
             const auto value = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
             if (shape_at(value) != Shape::boxed ||
                 layout::BoxHeader::kind(cell->header_.value_) != BoxedKind::refc_binary) {

@@ -35,15 +35,15 @@ ProcessHeap::ProcessHeap(ProcessContext &owner, HeapOptions options)
 
 ProcessHeap::~ProcessHeap() = default;
 
-std::expected<HeapReservation, HeapError> ProcessHeap::reserve(std::size_t words, std::size_t alignment) noexcept {
+std::expected<HeapReservation, HeapError> ProcessHeap::reserve(std::size_t words) noexcept {
     auto failure = HeapError::out_of_memory;
     try {
         const auto mark = storage_->mark();
-        const auto bytes = storage_->reserve(words, alignment);
-        if (bytes) {
-            return HeapReservation(storage_, *bytes, mark);
+        const auto words_reserved = storage_->reserve(words);
+        if (words_reserved) {
+            return HeapReservation(storage_, std::as_writable_bytes(*words_reserved), mark);
         }
-        failure = bytes.error();
+        failure = words_reserved.error();
     } catch (const std::bad_alloc &) {
         failure = HeapError::out_of_memory;
     } catch (const std::length_error &) {
@@ -81,11 +81,11 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word>, 
     return failure;
 }
 
-std::size_t ProcessHeap::used_words() const noexcept { return storage_->used_words; }
+std::size_t ProcessHeap::used_words() const noexcept { return storage_->used_words_; }
 
-std::size_t ProcessHeap::capacity_words() const noexcept { return storage_->capacity_words; }
+std::size_t ProcessHeap::capacity_words() const noexcept { return storage_->capacity_words_; }
 
-std::size_t ProcessHeap::off_heap_words() const noexcept { return storage_->off_heap_words; }
+std::size_t ProcessHeap::off_heap_words() const noexcept { return storage_->off_heap_words_; }
 
 std::expected<void, HeapError> ProcessHeap::charge_off_heap(std::size_t bytes) noexcept {
     const auto charged = storage_->charge((bytes + sizeof(Word) - 1) / sizeof(Word));
@@ -96,6 +96,6 @@ std::expected<void, HeapError> ProcessHeap::charge_off_heap(std::size_t bytes) n
 }
 
 void ProcessHeap::uncharge_off_heap(std::size_t bytes) noexcept {
-    storage_->off_heap_words -= (bytes + sizeof(Word) - 1) / sizeof(Word);
+    storage_->off_heap_words_ -= (bytes + sizeof(Word) - 1) / sizeof(Word);
 }
 } // namespace erlang_aot::runtime

@@ -31,7 +31,7 @@ std::expected<void, HeapError> HeapReservation::commit() noexcept {
         rollback();
         return std::unexpected(HeapError::expired_context);
     }
-    storage_->pending = false;
+    storage_->pending_ = false;
     active_ = false;
     return {};
 }

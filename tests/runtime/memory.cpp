@@ -35,14 +35,13 @@ void check_requests(ProcessHeap &heap) {
 
 // Check byte policy independently of requests, including target-word edges and a maximum valid budget.
 void check_options(Runtime &runtime) {
-    const std::array invalid{HeapOptions{0, sizeof(Word)}, HeapOptions{sizeof(Word), 0},
-                             HeapOptions{2 * sizeof(Word), sizeof(Word)}, HeapOptions{1, sizeof(Word)},
-                             HeapOptions{sizeof(Word), sizeof(Word) + 1}};
+    const std::array invalid{HeapOptions{0, sizeof(Word)}, HeapOptions{1, 0}, HeapOptions{2, sizeof(Word)},
+                             HeapOptions{1, sizeof(Word) + 1}};
     for (const auto options : invalid) {
         require(runtime.create_context(options) == std::unexpected(Status::invalid_argument), "invalid byte policy");
     }
     constexpr auto max_bytes = std::numeric_limits<std::size_t>::max() / sizeof(Word) * sizeof(Word);
-    auto context = runtime.create_context({sizeof(Word), max_bytes});
+    auto context = runtime.create_context({1, max_bytes});
     require(context.has_value(), "lazy maximum budget failed");
     auto &heap = (*context)->heap();
     require(heap.allocate(max_bytes / sizeof(Word)) == std::unexpected(HeapError::out_of_memory),
@@ -51,9 +50,9 @@ void check_options(Runtime &runtime) {
     require(runtime.destroy_context(*context) == Status::ok, "budget context cleanup failed");
 }
 
-// Growth and aborted construction preserve earlier addresses and restore exact capacity/word accounting.
+// Fragments and aborted construction preserve earlier addresses and restore exact capacity/word accounting.
 void check_reservations(Runtime &runtime) {
-    auto *context = runtime.create_context({2 * sizeof(Word), 32 * sizeof(Word)}).value();
+    auto *context = runtime.create_context({2, 32 * sizeof(Word)}).value();
     auto &heap = context->heap();
     // Raw words must stay parseable: store a nonzero one-word filler header to detect damage.
     constexpr auto filler = static_cast<Word>(BoxedKind::filler) << 2;
@@ -67,14 +66,13 @@ void check_reservations(Runtime &runtime) {
         require(reservation.bytes().empty(), "moved reservation kept access");
     }
     require(heap.used_words() == 1 && heap.capacity_words() == 2, "rollback kept backing or accounting");
-    require(heap.reserve(1, 3) == std::unexpected(HeapError::invalid_size), "non-power alignment accepted");
     {
-        auto aligned = heap.reserve(2, alignof(std::max_align_t)).value();
-        require(reinterpret_cast<std::uintptr_t>(aligned.bytes().data()) % alignof(std::max_align_t) == 0,
+        auto fragment = heap.reserve(2).value();
+        require(reinterpret_cast<std::uintptr_t>(fragment.bytes().data()) % alignof(Word) == 0,
                 "reservation is misaligned");
-        require(aligned.commit().has_value(), "aligned commit failed");
+        require(fragment.commit().has_value(), "fragment commit failed");
     }
-    require(*reinterpret_cast<const Word *>(first.data()) == filler, "growth moved or damaged committed data");
+    require(*reinterpret_cast<const Word *>(first.data()) == filler, "fragment moved or damaged committed data");
     require(heap.verify().has_value(), "raw allocations left an unparseable heap");
     {
         auto committed = heap.reserve(1).value();
@@ -95,8 +93,8 @@ void check_boundaries() {
     auto runtime = Runtime::start().value();
     check_options(*runtime);
     check_reservations(*runtime);
-    auto *context = runtime->create_context({sizeof(Word), 4 * sizeof(Word)}).value();
-    auto *other = runtime->create_context({sizeof(Word), sizeof(Word)}).value();
+    auto *context = runtime->create_context({1, 4 * sizeof(Word)}).value();
+    auto *other = runtime->create_context({1, sizeof(Word)}).value();
     check_requests(context->heap());
     require(other->heap().allocate(2) == std::unexpected(HeapError::limit_exceeded), "owners share budgets");
     require(other->heap().add(Term{}) == std::unexpected(TermError::invalid_encoding), "invalid slot added");

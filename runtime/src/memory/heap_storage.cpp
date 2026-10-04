@@ -1,114 +1,149 @@
 #include "heap_storage.hpp"
 #include "off_heap.hpp"
 #include <algorithm>
-#include <bit>
-#include <cstring>
 #include <limits>
+#include <memory>
 #include <new>
 
 namespace erlang_aot::runtime::detail {
-void ChunkDelete::operator()(std::byte *bytes) const noexcept { ::operator delete(bytes); }
+std::span<const Word> HeapArea::used() const noexcept { return {words_.get(), top_}; }
+
+std::span<const Word> HeapArea::from(std::uintptr_t address) const noexcept {
+    const auto begin = reinterpret_cast<std::uintptr_t>(words_.get());
+    if (address < begin || (address - begin) % sizeof(Word) != 0 || (address - begin) / sizeof(Word) >= top_) {
+        return {};
+    }
+    return used().subspan((address - begin) / sizeof(Word));
+}
+
+bool HeapArea::fits(std::size_t words) const noexcept { return words <= capacity_ - top_; }
+
+std::span<Word> HeapArea::bump(std::size_t words) noexcept {
+    const std::span<Word> reserved{words_.get() + top_, words};
+    std::ranges::fill(reserved, Word{0});
+    top_ += words;
+    return reserved;
+}
 
 HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms)
-    : options(options), lifetime(std::move(lifetime)), atoms(&atoms) {}
+    : options_(options), lifetime_(std::move(lifetime)), atoms_(&atoms) {}
 
 HeapStorage::~HeapStorage() { release_off_heap(*this); }
 
 bool HeapStorage::alive() const noexcept {
-    const auto token = lifetime.lock();
+    const auto token = lifetime_.lock();
     return token && token->alive();
 }
 
 HeapMark HeapStorage::mark() const noexcept {
-    return {chunks.size(), chunks.empty() ? 0 : chunks.back().used, used_words, capacity_words};
+    return {heap_.capacity_, heap_.top_,     fragments_.size(), fragments_.empty() ? 0 : fragments_.back().top_,
+            used_words_,     capacity_words_};
 }
 
 void HeapStorage::rollback(HeapMark mark) noexcept {
-    while (chunks.size() > mark.chunks) {
-        chunks.pop_back();
+    while (fragments_.size() > mark.fragments) {
+        fragments_.pop_back();
     }
-    std::erase_if(ranges, [&](const ChunkRange &range) { return range.chunk >= chunks.size(); });
-    if (!chunks.empty()) {
-        chunks.back().used = mark.tail_words;
+    std::erase_if(ranges_, [&](const FragmentRange &range) { return range.fragment_ >= fragments_.size(); });
+    if (!fragments_.empty()) {
+        fragments_.back().top_ = mark.fragment_top;
     }
-    used_words = mark.used_words;
-    capacity_words = mark.capacity_words;
-    pending = false;
+    if (mark.heap_capacity == 0) {
+        heap_ = {};
+    } else {
+        heap_.top_ = mark.heap_top;
+    }
+    used_words_ = mark.used_words;
+    capacity_words_ = mark.capacity_words;
+    pending_ = false;
 }
 
 namespace {
-// Validate arithmetic before reserving backing bytes or changing accounting.
-std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t words, std::size_t alignment) {
-    if (words == 0 || words > std::numeric_limits<std::size_t>::max() / sizeof(Word) ||
-        !std::has_single_bit(alignment) || alignment < alignof(Word) || alignment > alignof(std::max_align_t)) {
+// Validate arithmetic before reserving backing words or changing accounting.
+std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t words) {
+    if (words == 0 || words > std::numeric_limits<std::size_t>::max() / sizeof(Word)) {
         return std::unexpected(HeapError::invalid_size);
     }
-    if (storage.pending) {
+    if (storage.pending_) {
         return std::unexpected(HeapError::unsafe_point);
     }
-    if (words > storage.options.limit_bytes / sizeof(Word) - storage.used_words - storage.off_heap_words) {
+    if (words > storage.options_.limit_bytes / sizeof(Word) - storage.used_words_ - storage.off_heap_words_) {
         return std::unexpected(HeapError::limit_exceeded);
     }
     return {};
 }
-
-// Fundamental alignment satisfies every accepted reservation alignment; chunks never move on growth.
-HeapChunk chunk(std::size_t words) {
-    return {std::unique_ptr<std::byte, ChunkDelete>{static_cast<std::byte *>(::operator new(words * sizeof(Word)))},
-            words};
-}
 } // namespace
 
-std::span<const Word> HeapChunk::area() const noexcept { return {reinterpret_cast<const Word *>(bytes.get()), used}; }
-
 std::span<const Word> HeapStorage::owned(std::uintptr_t address) const noexcept {
-    const auto range = std::ranges::upper_bound(ranges, address, {}, &ChunkRange::begin);
-    if (range == ranges.begin()) {
-        return {};
+    if (const auto found = heap_.from(address); !found.empty()) {
+        return found;
     }
-    const auto &found = chunks[std::prev(range)->chunk];
-    const auto offset = address - std::prev(range)->begin;
-    if (offset % sizeof(Word) != 0 || offset / sizeof(Word) >= found.used) {
-        return {};
-    }
-    return found.area().subspan(offset / sizeof(Word));
+    const auto range = std::ranges::upper_bound(ranges_, address, {}, &FragmentRange::begin_);
+    return range == ranges_.begin() ? std::span<const Word>{} : fragments_[std::prev(range)->fragment_].from(address);
 }
 
-std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t words, std::size_t alignment) {
-    if (const auto valid = validate(*this, words, alignment); !valid) {
+std::expected<HeapArea, HeapError> HeapStorage::block(std::size_t words) const {
+    const auto remaining = options_.limit_bytes / sizeof(Word) - capacity_words_ - off_heap_words_;
+    if (words > remaining) {
+        return std::unexpected(HeapError::limit_exceeded);
+    }
+    const auto capacity = std::min(remaining, std::max(words, options_.min_heap_words));
+    return HeapArea{std::make_unique_for_overwrite<Word[]>(capacity), capacity};
+}
+
+std::expected<HeapArea *, HeapError> HeapStorage::add_fragment(std::size_t words) {
+    // Grow the chain geometrically up front, so the insertions below cannot throw.
+    if (fragments_.size() == fragments_.capacity()) {
+        fragments_.reserve(2 * fragments_.size() + 1);
+    }
+    ranges_.reserve(fragments_.capacity());
+    auto fresh = block(words);
+    if (!fresh) {
+        return std::unexpected(fresh.error());
+    }
+    const auto begin = reinterpret_cast<std::uintptr_t>(fresh->words_.get());
+    ranges_.insert(std::ranges::upper_bound(ranges_, begin, {}, &FragmentRange::begin_), {begin, fragments_.size()});
+    capacity_words_ += fresh->capacity_;
+    return &fragments_.emplace_back(std::move(*fresh));
+}
+
+std::expected<HeapArea *, HeapError> HeapStorage::area_for(std::size_t words) {
+    if (heap_.capacity_ == 0) {
+        auto fresh = block(words);
+        if (!fresh) {
+            return std::unexpected(fresh.error());
+        }
+        heap_ = std::move(*fresh);
+        capacity_words_ += heap_.capacity_;
+    }
+    if (heap_.fits(words)) {
+        return &heap_;
+    }
+    if (!fragments_.empty() && fragments_.back().fits(words)) {
+        return &fragments_.back();
+    }
+    return add_fragment(words);
+}
+
+std::expected<std::span<Word>, HeapError> HeapStorage::reserve(std::size_t words) {
+    if (const auto valid = validate(*this, words); !valid) {
         return std::unexpected(valid.error());
     }
-    const auto align_words = alignment / sizeof(Word);
-    auto offset = chunks.empty() ? 0 : (chunks.back().used + align_words - 1) / align_words * align_words;
-    if (chunks.empty() || offset > chunks.back().capacity || words > chunks.back().capacity - offset) {
-        const auto remaining = options.limit_bytes / sizeof(Word) - capacity_words - off_heap_words;
-        if (words > remaining) {
-            return std::unexpected(HeapError::limit_exceeded);
-        }
-        const auto capacity = std::min(remaining, std::max(words, options.chunk_bytes / sizeof(Word)));
-        auto fresh = chunk(capacity);
-        chunks.reserve(chunks.size() + 1);
-        ranges.reserve(ranges.size() + 1);
-        const auto begin = reinterpret_cast<std::uintptr_t>(fresh.bytes.get());
-        ranges.insert(std::ranges::upper_bound(ranges, begin, {}, &ChunkRange::begin), {begin, chunks.size()});
-        chunks.push_back(std::move(fresh));
-        capacity_words += capacity;
-        offset = 0;
+    // A failed or throwing area_for changed nothing: a new heap block always fits the request.
+    const auto area = area_for(words);
+    if (!area) {
+        return std::unexpected(area.error());
     }
-    auto &tail = chunks.back();
-    // Zero alignment padding as well, so it parses as filler.
-    std::memset(tail.bytes.get() + tail.used * sizeof(Word), 0, (offset + words - tail.used) * sizeof(Word));
-    used_words += offset + words - tail.used;
-    tail.used = offset + words;
-    pending = true;
-    return std::span<std::byte>{tail.bytes.get() + offset * sizeof(Word), words * sizeof(Word)};
+    used_words_ += words;
+    pending_ = true;
+    return (*area)->bump(words);
 }
 
 std::expected<void, HeapError> HeapStorage::charge(std::size_t words) noexcept {
-    if (words > options.limit_bytes / sizeof(Word) - capacity_words - off_heap_words) {
+    if (words > options_.limit_bytes / sizeof(Word) - capacity_words_ - off_heap_words_) {
         return std::unexpected(HeapError::limit_exceeded);
     }
-    off_heap_words += words;
+    off_heap_words_ += words;
     return {};
 }
 } // namespace erlang_aot::runtime::detail

@@ -24,7 +24,7 @@ TermResult<Term> Term::from_word(Word value, ProcessContext &context) noexcept {
 void Term::rebind(Word value) noexcept {
     value_ = value;
     if (heap_) {
-        collections_ = heap_->collections;
+        collections_ = heap_->collections_;
     }
 }
 

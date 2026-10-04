@@ -75,7 +75,7 @@ void tails_and_teardown() {
 void rollback() {
     constexpr auto buffer_words = (100 + sizeof(Word) - 1) / sizeof(Word);
     auto runtime = Runtime::start().value();
-    auto &context = *runtime->create_context({8 * sizeof(Word), (buffer_words + 5) * sizeof(Word)}).value();
+    auto &context = *runtime->create_context({8, (buffer_words + 5) * sizeof(Word)}).value();
     TermFactory factory(context);
     require(factory.binary(std::vector(100, std::byte{1})) == std::unexpected(TermError::resource_limit),
             "cell beyond budget published");

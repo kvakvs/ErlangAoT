@@ -1,6 +1,6 @@
 #pragma once
 
-// Stable bounded backing storage supports transactional construction; collection remains deferred.
+// One bounded heap block plus heap fragments supports transactional construction; collection remains deferred.
 #include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 
@@ -27,7 +27,7 @@ enum class HeapError : std::uint8_t {
 struct CollectionStats final {
     // Measure allocated live/dead term storage before the collection attempt.
     std::size_t bytes_before;
-    // Measure retained term storage after tracing/reclamation, excluding unused chunk capacity.
+    // Measure retained term storage after tracing/reclamation, excluding unused heap capacity.
     std::size_t bytes_after;
 };
 
@@ -45,11 +45,11 @@ struct HeapCensus final {
     std::size_t off_heap_cells = 0;
 };
 
-// Bound retained process storage until garbage collection is implemented.
+// Size the process heap and bound all of its storage (docs/runtime-heap.md#sizing-and-budget).
 struct HeapOptions final {
-    // Minimum backing chunk size; larger individual allocations get a larger chunk.
-    std::size_t chunk_bytes = std::size_t{64} * 1024;
-    // Maximum total backing capacity, including unused tails and alignment padding.
+    // Words of the heap block created by the first allocation (ERTS min_heap_size) and of the smallest fragment.
+    std::size_t min_heap_words = 233;
+    // Maximum total of heap block, fragments (including unused tails) and created off-heap buffers.
     std::size_t limit_bytes = std::size_t{64} * 1024 * 1024;
 };
 
@@ -62,9 +62,12 @@ struct BitAccess;
 } // namespace detail
 
 struct HeapMark {
-    // Restore both retained backing and consumed words when unpublished construction fails.
-    std::size_t chunks;
-    std::size_t tail_words;
+    // Restore the heap top, fragment chain and accounting when unpublished construction fails.
+    // A zero heap_capacity means the heap block did not exist yet and rollback releases it.
+    std::size_t heap_capacity;
+    std::size_t heap_top;
+    std::size_t fragments;
+    std::size_t fragment_top;
     std::size_t used_words;
     std::size_t capacity_words;
 };
@@ -76,9 +79,9 @@ class HeapReservation final {
     HeapReservation(const HeapReservation &) = delete;
     HeapReservation &operator=(const HeapReservation &) = delete;
     HeapReservation &operator=(HeapReservation &&) = delete;
-    // Roll back unpublished words and newly retained chunks.
+    // Roll back unpublished words and a newly created heap block or fragment.
     ~HeapReservation();
-    // Borrow aligned, zero-initialized storage until commit or rollback.
+    // Borrow word-aligned, zero-initialized storage until commit or rollback.
     std::span<std::byte> bytes() const noexcept;
     // Commit initialized words; an expired owner rolls the reservation back instead.
     std::expected<void, HeapError> commit() noexcept;
@@ -95,7 +98,7 @@ class HeapReservation final {
     bool active_ = true;
 };
 
-// Reserve one process's term storage; future growth preserves addresses until an explicit GC safe point.
+// Reserve one process's term storage; overflow goes to fragments, so addresses hold until an explicit GC safe point.
 // Allocation/accounting use target words, while configuration budgets remain exact byte multiples.
 class ProcessHeap final {
   public:
@@ -111,15 +114,14 @@ class ProcessHeap final {
     // Raw words must stay zero (filler) or hold complete objects whenever the heap is walked.
     std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words, DiagnosticSink sink = {}) noexcept;
     // Reserve one unpublished allocation; another allocation requires commit/rollback of the current one.
-    std::expected<HeapReservation, HeapError> reserve(std::size_t words,
-                                                      std::size_t alignment = alignof(Word)) noexcept;
+    std::expected<HeapReservation, HeapError> reserve(std::size_t words) noexcept;
     // Copy checked owner-independent immediates; rooted graph addition remains deferred.
     TermResult<Term> add(const Term &value) noexcept;
     // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
     std::expected<CollectionStats, HeapError> collect(DiagnosticSink sink = {}) noexcept;
     // Collect with host-held words as extra roots; the caller reads the rewritten words back afterwards.
     std::expected<CollectionStats, HeapError> collect(std::span<Word> roots, DiagnosticSink sink = {}) noexcept;
-    // Report consumed words (including alignment) and exact retained backing capacity.
+    // Report consumed words and exact retained capacity of the heap block and fragments.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
     // Report words of off-heap binary buffers created by this process, charged to the same budget.

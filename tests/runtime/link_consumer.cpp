@@ -39,7 +39,8 @@ void invalid_options(Runtime &runtime) {
     options.abi_version = erlang_aot::abi::v1::version;
     options.term_bits = sizeof(TermWord) == 8 ? 32 : 64;
     require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "word width mismatch accepted");
-    for (const HeapOptions heap : {HeapOptions{0, 1024}, HeapOptions{16, 8}, HeapOptions{1, 1024}, HeapOptions{8, 9}}) {
+    for (const HeapOptions heap :
+         {HeapOptions{0, 1024}, HeapOptions{16, 8}, HeapOptions{1025, 1024}, HeapOptions{8, 9}}) {
         require(runtime.create_context(heap) == std::unexpected(Status::invalid_argument), "invalid heap accepted");
     }
     require(runtime.context_count() == 0, "failed admission published context");
@@ -187,7 +188,7 @@ void workflow() {
     auto foreign = Runtime::start().value();
     invalid_options(*runtime);
     auto *source = runtime->create_context().value();
-    auto *destination = runtime->create_context({sizeof(Word), sizeof(Word)}).value();
+    auto *destination = runtime->create_context({1, sizeof(Word)}).value();
     auto *other = foreign->create_context().value();
     require(source->identity() != destination->identity() && source->identity() != other->identity(),
             "identity collision");

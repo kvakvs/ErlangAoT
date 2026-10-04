@@ -25,7 +25,8 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
   Defaults: 1,024 contexts, current ABI version and native term width,
   `max_atoms` 2^20.
 - `create_context(heap_options)` → borrowed `ProcessContext*`, stable until
-  destroyed. Heap defaults: 64 KiB chunks, 64 MiB limit (nonzero word multiples).
+  destroyed. Heap defaults: 233-word minimum heap (`min_heap_words`), 64 MiB
+  limit (a word multiple at least the minimum heap).
 - `destroy_context(ctx)`, `shutdown()`: shutdown returns `busy` while contexts
   remain; after that it succeeds idempotently and later calls return `stopped`.
   The destructor cleans up remaining contexts.
@@ -41,7 +42,9 @@ process.
 
 ## Process memory
 
-Each context owns a stable `ProcessHeap` made of chunks that never move.
+Each context owns one `ProcessHeap`: a single heap block created by its first
+allocation and sized `max(min_heap_words, request)`, plus a chain of heap
+fragments owned by the same process. Nothing moves while no collector runs.
 
 This heap is being replaced by the classic ERTS design in
 [runtime-heap.md](runtime-heap.md); the rules below describe the current code.
@@ -49,20 +52,25 @@ This heap is being replaced by the classic ERTS design in
 - `allocate(words)` returns zeroed word storage. `reserve` gives a move-only
   reservation with explicit commit and automatic rollback. One reservation at a
   time per heap: build children first, reserve the parent last.
-- Rejects zero, overflow, unsupported alignment and exhausted budget before
+- Bump allocation fills the heap block; a request that does not fit goes to the
+  newest fragment, else to a new fragment sized `max(min_heap_words, request)`
+  (capped by the remaining budget). Words are word-aligned only. Rollback
+  resets the area top, drops a fragment (or the heap block) created by the
+  reservation and restores accounting exactly.
+- Rejects zero, overflow and exhausted budget before
   publishing. Errors: `out_of_memory` (allocation) or `limit_exceeded` (budget);
   generated code receives the exact status.
 - Binaries over 64 bytes live in shared buffers outside the heap. Each heap cell
   that refers to one holds a `std::shared_ptr` and joins the process's off-heap
   list when published; teardown walks the list and drops those references
   ([off-heap binaries](runtime-heap.md#off-heap-binaries)).
-- `used_words` includes padding; `capacity_words` counts retained backing;
+- `used_words` counts allocated words; `capacity_words` counts heap block and fragments;
   `off_heap_words` counts buffers this process created. Backing plus off-heap
   words share the `limit_bytes` budget.
 - Every used word parses as a header-led object, a cons cell or filler
-  ([word layout](runtime-heap.md#word-layout)); alignment padding is zeroed.
+  ([word layout](runtime-heap.md#word-layout)); reserved words start zeroed.
   Raw `allocate()` words must stay zero or hold complete objects.
-  `verify()` walks every chunk and checks each term slot points at an object
+  `verify()` walks the heap block and every fragment and checks each term slot points at an object
   start of the same process (tests and debugging; `corrupt_heap` otherwise).
 - `collect()` reports `not_implemented`; nothing is reclaimed before teardown.
 

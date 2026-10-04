@@ -57,7 +57,7 @@ TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
     }
     const auto kind = TermTag{value}.get_kind();
     if (kind == TermKind::atom) {
-        return storage.atoms->lookup(value);
+        return storage.atoms_->lookup(value);
     }
     if (kind != TermKind::boxed && kind != TermKind::list) {
         return Term::from_word(value);
@@ -69,8 +69,8 @@ TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
     Term result;
     result.value_ = value;
     result.heap_ = &storage;
-    result.lifetime_ = storage.lifetime;
-    result.collections_ = storage.collections;
+    result.lifetime_ = storage.lifetime_;
+    result.collections_ = storage.collections_;
     return result;
 }
 
@@ -82,7 +82,7 @@ TermResult<HeapObject> TermAccess::object(const Term &value) noexcept {
     if (!lifetime || !lifetime->alive()) {
         return std::unexpected(TermError::expired_context);
     }
-    if (value.collections_ != value.heap_->collections) {
+    if (value.collections_ != value.heap_->collections_) {
         return std::unexpected(TermError::stale_term);
     }
     return decode(value.value_, value.heap_->owned(address(value.value_)));

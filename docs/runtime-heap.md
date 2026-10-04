@@ -75,12 +75,17 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
 
 ## Areas
 
-- **Heap.** One block `[start, top, end)` with bump allocation (8G). Until then
-  the chunk list stays and every rule here applies per chunk.
-- **Fragments.** When a request does not fit and the heap may not move, the
-  runtime allocates a fragment sized to fit (at least the minimum heap size)
-  and chains it to the process. The next collection merges fragments into the
-  new heap block.
+- **Heap.** One block `[start, top, end)` per process with bump allocation
+  (8G). It is created by the process's first allocation, sized
+  `max(min_heap_words, request)` so that request always fits, and owned by
+  that process alone.
+- **Fragments.** When a request does not fit and the heap may not move, it
+  goes into the newest fragment if it fits there, else into a new fragment
+  sized to fit (at least the minimum heap size) and chained to the process. The
+  next collection merges fragments into the new heap block. A reservation
+  lives in one area; rollback resets that area's top and drops a fragment (or
+  the heap block) the reservation created. Until 8H the heap never moves, so
+  all overflow becomes fragments.
 - **Stack.** Generated root frames (BEAM Y registers) are windows in stack
   segments kept apart from the heap (8F). A segment is one allocation that,
   with the allocator's own header, fits a 4 KiB page (the x86 page size; a
@@ -121,8 +126,8 @@ pointers to detect. Admission (8D) is an ownership check for words handed back
 to a process:
 
 1. The address is word-aligned inside one of the process's areas, below its
-   `top` (today: below a chunk's used words, found through chunks sorted by
-   address). Foreign and stale words fail here without any load.
+   `top`: the heap block is checked first, then fragments sorted by address.
+   Foreign and stale words fail here without any load.
 2. A boxed word names a header of an admitted kind (not filler); a list word
    names a cons cell (a word that is not a header).
 
@@ -172,3 +177,4 @@ index and other metadata).
 | --- | --- | --- | --- | --- | --- | --- |
 | `bb09359` (chunk list, object index) | Windows x64 Debug, clang-cl | 264 / 81 ms | 700,000 / 704,512 | 24,002,256 (about 80 per cell) | 66,217 | 8,192 |
 | 8D (chunk list, owned range) | Windows x64 Debug, clang-cl | 185 / 147 ms | 700,000 / 704,512 | 3,440 | 66,057 | 8,192 |
+| 8G (233-word heap, about 3,000 fragments) | Windows x64 Debug, clang-cl | 219 / 174 ms | 700,000 / 706,223 | 163,878 | 2,377 | 233 |

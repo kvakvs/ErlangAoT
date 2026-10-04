@@ -2,9 +2,9 @@
 #include "process_heap.hpp"
 
 namespace erlang_aot::runtime::detail {
-// Reject fractional target words or inconsistent budgets before publishing a process owner.
+// Reject a fractional word budget or a minimum heap above it before publishing a process owner.
 inline bool valid_heap_options(HeapOptions options) noexcept {
-    return options.chunk_bytes != 0 && options.chunk_bytes <= options.limit_bytes &&
-           options.chunk_bytes % sizeof(Word) == 0 && options.limit_bytes % sizeof(Word) == 0;
+    return options.min_heap_words != 0 && options.limit_bytes % sizeof(Word) == 0 &&
+           options.min_heap_words <= options.limit_bytes / sizeof(Word);
 }
 } // namespace erlang_aot::runtime::detail

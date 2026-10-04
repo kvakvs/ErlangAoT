@@ -224,7 +224,7 @@ void record_failures(ProcessContext &context) {
 
 // A real backing ceiling reached inside generated construction terminates guards and cleans frames.
 void heap_budget(Runtime &runtime) {
-    auto &context = *runtime.create_context({16 * sizeof(Word), 32 * sizeof(Word)}).value();
+    auto &context = *runtime.create_context({16, 32 * sizeof(Word)}).value();
     const auto entry = context.code_server().resolve({"service_answer", "heap_guard", 1}).value();
     const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
     for (unsigned i = 0; i < 16; ++i) {

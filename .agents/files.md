@@ -52,7 +52,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | --- | --- | --- |
 | `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
 | `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `roots`, `services` |
-| `memory/` | Stable backing, budgets, rollback; off-heap binary list (link, relocate, teardown release); area walker and heap verifier; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `off_heap`, `heap_walk`, `heap_verify`, `copy` |
+| `memory/` | One heap block plus fragments per process, budgets, rollback; off-heap binary list (link, relocate, teardown release); area walker and heap verifier; copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `off_heap`, `heap_walk`, `heap_verify`, `copy` |
 | `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `container_factory`, `container_access`, `term_layout`, `atoms`, `atom_spelling` |
 | `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `structural_order`, `immediate_services`, `container_services`, `service_errors` |
 | `terms/` | `~w`/display text: traversal, scalar rules | `term_text` (frames, `TextOutput`), `term_text_scalars` (atoms, floats, bits, display strings); API `output.hpp` |

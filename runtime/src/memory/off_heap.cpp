@@ -7,8 +7,8 @@ namespace erlang_aot::runtime::detail {
 void link_off_heap(HeapStorage &storage, layout::RefcBinaryCell &cell,
                    std::shared_ptr<const layout::BinaryBuffer> buffer) noexcept {
     cell.buffer_ = std::move(buffer);
-    cell.next_ = storage.off_heap;
-    storage.off_heap = &cell;
+    cell.next_ = storage.off_heap_;
+    storage.off_heap_ = &cell;
 }
 
 layout::RefcBinaryCell &relocate_off_heap(layout::RefcBinaryCell &from, std::byte *to) noexcept {
@@ -16,7 +16,7 @@ layout::RefcBinaryCell &relocate_off_heap(layout::RefcBinaryCell &from, std::byt
 }
 
 void release_off_heap(HeapStorage &storage) noexcept {
-    for (auto *cell = std::exchange(storage.off_heap, nullptr); cell != nullptr;) {
+    for (auto *cell = std::exchange(storage.off_heap_, nullptr); cell != nullptr;) {
         auto *next = cell->next_;
         std::destroy_at(cell);
         cell = next;
