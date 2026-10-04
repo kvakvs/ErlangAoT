@@ -38,16 +38,13 @@ TermResult<Term> tuple(ProcessHeap &heap, const std::shared_ptr<detail::HeapStor
     for (std::size_t i = 0; i < elements.size(); ++i) {
         words[i + 1] = elements[i].word();
     }
-    const auto value = reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{detail::HeapObject{value, TermKind::tuple, {words, elements.size() + 1}, elements.size()}};
-    return detail::publish(storage, *reserved, objects);
+    return detail::publish(storage, *reserved,
+                           reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
 
-// Stage one complete cons spine and every owned start before committing any of it.
+// Stage one complete cons spine before committing any of it; publication marks every cell start.
 TermResult<Term> list(ProcessHeap &heap, const std::shared_ptr<detail::HeapStorage> &storage,
                       std::span<const Term> elements, const Term &tail) {
-    std::vector<detail::HeapObject> objects;
-    objects.reserve(elements.size());
     auto reserved = heap.reserve(elements.size() * 2);
     if (!reserved) {
         return std::unexpected(heap_error(reserved.error()));
@@ -59,10 +56,9 @@ TermResult<Term> list(ProcessHeap &heap, const std::shared_ptr<detail::HeapStora
         cell[1] = i + 1 == elements.size()
                       ? tail.word()
                       : reinterpret_cast<Word>(cell + 2) | static_cast<Word>(TermKindPrimary::list);
-        objects.push_back(
-            {reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::list), TermKind::list, {cell, 2}, 2});
     }
-    return detail::publish(storage, *reserved, objects);
+    return detail::publish(storage, *reserved,
+                           reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::list));
 }
 } // namespace
 

@@ -92,7 +92,8 @@
   words, start-bitmap admission, off-heap binary list, fragments, copying GC).
   Done: 8B binaries (inline heap binaries; larger ones are `shared_ptr` buffers
   held by `RefcBinaryCell`s on the per-process off-heap list, `memory/off_heap`);
-  8C parseable areas (`memory/heap_walk`, `ProcessHeap::verify` in `memory/heap_verify`). Revision-4
+  8C parseable areas (`memory/heap_walk`, `ProcessHeap::verify` in `memory/heap_verify`);
+  8D admission by sorted chunk ranges, per-chunk start bitmaps and header shape (no object index). Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
   Exact-start object indices prove ownership before extraction. Compound host handles

@@ -82,7 +82,6 @@ class TermFactory;
 
 namespace detail {
 class HeapStorage;
-struct HeapObject;
 struct TermAccess;
 struct BitAccess;
 } // namespace detail
@@ -227,10 +226,8 @@ class Term final {
     Word value_;
     // Pin immutable atom spelling independently of process, module and runtime lifetimes.
     std::shared_ptr<const AtomValue> atom_;
-    // Retain stable backing and its immutable object index independently of the context address.
+    // Retain stable backing independently of the context address; set only for admitted heap words.
     std::shared_ptr<detail::HeapStorage> heap_;
-    // Borrow one stable index entry only while heap_ owns it; moved-from handles must not dereference this.
-    const detail::HeapObject *object_ = nullptr;
 };
 
 } // namespace erlang_aot::runtime

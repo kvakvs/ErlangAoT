@@ -26,9 +26,7 @@ TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
     words[1] = static_cast<Word>(value < 0);
     const Integer magnitude = value < 0 ? -value : value;
     boost::multiprecision::export_bits(magnitude, words + 2, sizeof(Word) * 8, false);
-    const auto encoded = reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{HeapObject{encoded, TermKind::bignum, {words, count + 2}, count}};
-    return publish(heap.storage_, *reserved, objects);
+    return publish(heap.storage_, *reserved, reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
 } // namespace erlang_aot::runtime::detail
 

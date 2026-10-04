@@ -10,10 +10,10 @@ TermResult<BitView> bit_view(const Term &term) {
     if (!object) {
         return std::unexpected(object.error());
     }
-    if ((*object)->kind != TermKind::bitstring) {
+    if (object->kind != TermKind::bitstring) {
         return std::unexpected(TermError::wrong_type);
     }
-    const auto words = (*object)->words;
+    const auto words = object->words;
     if (layout::BoxHeader::kind(words[0]) == BoxedKind::refc_binary) {
         const auto &cell = *reinterpret_cast<const layout::RefcBinaryCell *>(words.data());
         return BitView{*cell.buffer_, cell.offset_, cell.bits_};

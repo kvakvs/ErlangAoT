@@ -41,10 +41,7 @@ TermResult<Term> BitAccess::heap_binary(ProcessHeap &heap, std::span<const std::
     const auto data = storage.subspan(sizeof(HeapBinaryCell), size);
     std::ranges::copy(bytes.first(size), data.begin());
     clear_padding(data, count);
-    const auto encoded = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{
-        HeapObject{encoded, TermKind::bitstring, {reinterpret_cast<const Word *>(cell), total}, count}};
-    return publish(heap.storage_, *reserved, objects);
+    return publish(heap.storage_, *reserved, reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed));
 }
 
 TermResult<Term> BitAccess::refc_binary(ProcessHeap &heap, std::shared_ptr<const BinaryBuffer> buffer, BitRange range) {
@@ -57,10 +54,8 @@ TermResult<Term> BitAccess::refc_binary(ProcessHeap &heap, std::shared_ptr<const
     cell->header_ = {BoxHeader::make(BoxedKind::refc_binary, total - 1)};
     cell->offset_ = static_cast<Word>(range.offset);
     cell->bits_ = static_cast<Word>(range.length);
-    const auto encoded = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{
-        HeapObject{encoded, TermKind::bitstring, {reinterpret_cast<const Word *>(cell), total}, range.length}};
-    auto published = publish(heap.storage_, *reserved, objects);
+    auto published =
+        publish(heap.storage_, *reserved, reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed));
     if (published) {
         link_off_heap(*heap.storage_, *cell, std::move(buffer));
     }
@@ -111,7 +106,7 @@ TermResult<Term> BitAccess::slice(ProcessHeap &heap, const Term &source, std::si
     if (offset > view->length || count > view->length - offset) {
         return std::unexpected(TermError::out_of_range);
     }
-    const auto words = TermAccess::object(source).value()->words;
+    const auto words = TermAccess::object(source).value().words;
     if (BoxHeader::kind(words[0]) == BoxedKind::refc_binary) {
         const auto &original = *reinterpret_cast<const RefcBinaryCell *>(words.data());
         return refc_binary(heap, original.buffer_, {original.offset_ + offset, count});

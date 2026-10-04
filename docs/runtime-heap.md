@@ -108,7 +108,8 @@ A boxed or list word is admitted for a process only if all of these hold
 (8D); forged, interior, stale and foreign words fail without any load outside
 the checked range:
 
-1. The address lies inside one of the process's areas, below its `top`.
+1. The address lies inside one of the process's areas, below its `top`
+   (today: below a chunk's used words, found through chunks sorted by address).
 2. That area's start bitmap (one bit per word) has the address's bit set. Bits
    are set only when a construction is published, so rolled-back words never
    carry one.
@@ -151,3 +152,4 @@ index and other metadata).
 | Revision | Build | Kernel build / walk | Heap used / capacity words | Side bytes | Bytes per context | Heap words per context |
 | --- | --- | --- | --- | --- | --- | --- |
 | `bb09359` (chunk list, object index) | Windows x64 Debug, clang-cl | 264 / 81 ms | 700,000 / 704,512 | 24,002,256 (about 80 per cell) | 66,217 | 8,192 |
+| 8D (chunk list, start bitmap) | Windows x64 Debug, clang-cl | 198 / 150 ms | 700,000 / 704,512 | 93,607 | 67,105 | 8,192 |

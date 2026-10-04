@@ -99,9 +99,8 @@ TermResult<Term> MapAccess::publish(ProcessHeap &heap, std::span<const MapEntry>
         words[1 + 2 * i] = entries[i].first.word();
         words[2 + 2 * i] = entries[i].second.word();
     }
-    const auto encoded = reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{HeapObject{encoded, TermKind::map, {words, count}, entries.size()}};
-    return detail::publish(heap.storage_, *reserved, objects);
+    return detail::publish(heap.storage_, *reserved,
+                           reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
 
 TermResult<Term> MapAccess::make(ProcessHeap &heap, std::span<const MapEntry> entries) {

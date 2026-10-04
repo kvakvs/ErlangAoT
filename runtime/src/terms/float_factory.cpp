@@ -22,9 +22,7 @@ TermResult<Term> FloatAccess::make(ProcessHeap &heap, double value) {
     auto *words = ::new (reserved->bytes().data()) Word[count]{};
     words[0] = layout::BoxHeader::make(BoxedKind::floating, count - 1);
     std::memcpy(words + 1, &value, sizeof(value));
-    const auto encoded = reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{HeapObject{encoded, TermKind::floating, {words, count}, 1}};
-    return publish(heap.storage_, *reserved, objects);
+    return publish(heap.storage_, *reserved, reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
 } // namespace erlang_aot::runtime::detail
 
@@ -36,11 +34,11 @@ TermResult<double> Term::float_value() const {
     if (!object) {
         return std::unexpected(object.error());
     }
-    if ((*object)->kind != TermKind::floating) {
+    if (object->kind != TermKind::floating) {
         return std::unexpected(TermError::wrong_type);
     }
     double value = 0;
-    std::memcpy(&value, (*object)->words.data() + 1, sizeof(value));
+    std::memcpy(&value, object->words.data() + 1, sizeof(value));
     return value;
 }
 

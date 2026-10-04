@@ -208,3 +208,7 @@ filler) + heap_verify (public ProcessHeap::verify -> HeapCensus | HeapError::cor
 count now words. abi::v1::primary_mask is `unsigned` (32-bit): `~primary_mask` truncates 64-bit
 addresses -> always cast to Word first. Bash heredoc eats `\n` in C strings: use scratchpad scripts.
 Logs build/plan11-step8c.
+Plan11 step8D 2026-10-04: object index removed; HeapChunk.starts bitmap + HeapStorage.ranges (sorted by
+address); publish(storage, reservation, Word value) marks starts via walk after commit; TermAccess::object
+returns HeapObject by value decoded from header (memory/heap_terms.cpp). Test runtime_admission (public API).
+Measurements: side bytes 24 MB -> 94 KB. Logs build/plan11-step8d.

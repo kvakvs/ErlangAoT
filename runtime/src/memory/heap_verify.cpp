@@ -15,11 +15,6 @@ struct Start {
     Shape shape;
 };
 
-// Borrow the initialized words of one chunk as a walkable area.
-std::span<const Word> area(const HeapChunk &chunk) {
-    return {reinterpret_cast<const Word *>(chunk.bytes.get()), chunk.used};
-}
-
 // Accept only the immediates a heap may hold today; identities are not admitted yet.
 bool plain_immediate(Word value) {
     const auto kind = classify_immediate(value);
@@ -45,7 +40,7 @@ class Verifier final {
     // Pass 1: parse every chunk, counting objects and remembering starts and traced slots.
     bool collect() {
         for (const auto &chunk : storage_.chunks) {
-            if (!walk(area(chunk), [&](const HeapCell &cell) { record(cell); })) {
+            if (!walk(chunk.area(), [&](const HeapCell &cell) { record(cell); })) {
                 return false;
             }
         }

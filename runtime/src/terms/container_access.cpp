@@ -5,13 +5,13 @@
 
 namespace erlang_aot::runtime {
 namespace {
-// A checked object index supplies both shape and extent before any field load.
-TermResult<const detail::HeapObject *> container(const Term &value, TermKind expected) {
+// The decoded header supplies both shape and extent before any field load.
+TermResult<detail::HeapObject> container(const Term &value, TermKind expected) {
     const auto object = detail::TermAccess::object(value);
     if (!object) {
         return std::unexpected(object.error());
     }
-    if ((*object)->kind != expected) {
+    if (object->kind != expected) {
         return std::unexpected(TermError::wrong_type);
     }
     return *object;
@@ -23,7 +23,7 @@ TermResult<Term> cons_field(const Term &value, std::size_t index) {
     if (!object) {
         return std::unexpected(object.error());
     }
-    return detail::TermAccess::child(value, (*object)->words[index]);
+    return detail::TermAccess::child(value, object->words[index]);
 }
 } // namespace
 
@@ -43,7 +43,7 @@ TermResult<std::size_t> Term::tuple_size() const {
     if (kind() == TermKind::empty_tuple) {
         return 0;
     }
-    return container(*this, TermKind::tuple).transform([](const auto *object) { return object->count; });
+    return container(*this, TermKind::tuple).transform([](const auto &object) { return object.count; });
 }
 
 TermResult<Term> Term::tuple_element(std::size_t index) const {
@@ -55,7 +55,7 @@ TermResult<Term> Term::tuple_element(std::size_t index) const {
         return std::unexpected(TermError::out_of_range);
     }
     const auto object = detail::TermAccess::object(*this).value();
-    return detail::TermAccess::child(*this, object->words[index + 1]);
+    return detail::TermAccess::child(*this, object.words[index + 1]);
 }
 
 TermResult<std::vector<Term>> Term::tuple_elements() const {

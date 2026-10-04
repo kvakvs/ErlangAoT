@@ -5,19 +5,19 @@ namespace erlang_aot::runtime::detail {
 class HeapStorage;
 
 struct HeapObject {
-    // Index only fully constructed starts; exact tagged identity precedes any cell dereference.
+    // Decoded view of one admitted object, read from its header; borrows words while a Term pins the heap.
     Word value;
     TermKind kind;
-    // Borrow stable initialized words; count denotes logical tuple arity or cons field count.
+    // Every word of the object; count is tuple arity, map entries, cons fields, limbs, 1 for floats or bits.
     std::span<const Word> words;
     std::size_t count;
 };
 
 struct TermAccess {
-    // Admit immediates/atoms or an exact published object belonging to this live storage owner.
+    // Admit immediates/atoms, or a word that points at a published object start of the right shape.
     static TermResult<Term> admit(Word value, const std::shared_ptr<HeapStorage> &storage) noexcept;
-    // Check host lifetime before extracting any resource or child pointer.
-    static TermResult<const HeapObject *> object(const Term &value) noexcept;
+    // Check host lifetime, then decode a heap term's object from its header.
+    static TermResult<HeapObject> object(const Term &value) noexcept;
     // Retain the parent's backing when resolving a checked child slot.
     static TermResult<Term> child(const Term &parent, Word value) noexcept;
     // Preserve expiration distinctly from unsupported cross-heap copying.

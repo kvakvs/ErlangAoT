@@ -1,3 +1,4 @@
+#include "../memory/heap_object.hpp"
 #include "../memory/heap_storage.hpp"
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
@@ -65,8 +66,9 @@ TermResult<std::string_view> Term::atom_spelling() const noexcept {
 Word Term::word() const noexcept { return value_; }
 
 TermKind Term::kind() const {
-    if (heap_ && object_) {
-        return heap_->alive() ? object_->kind : TermKind::invalid;
+    if (heap_) {
+        const auto object = detail::TermAccess::object(*this);
+        return object ? object->kind : TermKind::invalid;
     }
     return TermTag{value_}.get_kind();
 }

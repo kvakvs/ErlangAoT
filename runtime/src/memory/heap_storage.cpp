@@ -1,4 +1,5 @@
 #include "heap_storage.hpp"
+#include "heap_walk.hpp"
 #include "off_heap.hpp"
 #include <algorithm>
 #include <bit>
@@ -27,6 +28,7 @@ void HeapStorage::rollback(HeapMark mark) noexcept {
     while (chunks.size() > mark.chunks) {
         chunks.pop_back();
     }
+    std::erase_if(ranges, [&](const ChunkRange &range) { return range.chunk >= chunks.size(); });
     if (!chunks.empty()) {
         chunks.back().used = mark.tail_words;
     }
@@ -53,10 +55,48 @@ std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t 
 
 // Fundamental alignment satisfies every accepted reservation alignment; chunks never move on growth.
 HeapChunk chunk(std::size_t words) {
+    std::vector<std::uint64_t> starts((words + 63) / 64);
     return {std::unique_ptr<std::byte, ChunkDelete>{static_cast<std::byte *>(::operator new(words * sizeof(Word)))},
-            words};
+            words, 0, std::move(starts)};
 }
 } // namespace
+
+std::span<const Word> HeapChunk::area() const noexcept { return {reinterpret_cast<const Word *>(bytes.get()), used}; }
+
+bool HeapChunk::started(std::size_t word) const noexcept { return ((starts[word / 64] >> (word % 64)) & 1U) != 0; }
+
+void HeapChunk::mark(std::size_t word) noexcept { starts[word / 64] |= std::uint64_t{1} << (word % 64); }
+
+std::span<const Word> HeapStorage::published(std::uintptr_t address) const noexcept {
+    const auto range = std::ranges::upper_bound(ranges, address, {}, &ChunkRange::begin);
+    if (range == ranges.begin()) {
+        return {};
+    }
+    const auto &found = chunks[std::prev(range)->chunk];
+    const auto offset = address - std::prev(range)->begin;
+    const auto word = offset / sizeof(Word);
+    if (offset % sizeof(Word) != 0 || word >= found.used || !found.started(word)) {
+        return {};
+    }
+    return found.area().subspan(word);
+}
+
+void HeapStorage::mark_published(std::span<const std::byte> bytes) noexcept {
+    auto &tail = chunks.back();
+    const auto *base = reinterpret_cast<const Word *>(tail.bytes.get());
+    std::span rest{reinterpret_cast<const Word *>(bytes.data()), bytes.size() / sizeof(Word)};
+    while (!rest.empty()) {
+        const auto cell = parse_cell(rest);
+        // Factory-written objects always parse; a malformed tail is left unmarked and so never admitted.
+        if (!cell) {
+            return;
+        }
+        if (cell->shape != HeapCell::Shape::filler) {
+            tail.mark(static_cast<std::size_t>(cell->words.data() - base));
+        }
+        rest = rest.subspan(cell->words.size());
+    }
+}
 
 std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t words, std::size_t alignment) {
     if (const auto valid = validate(*this, words, alignment); !valid) {
@@ -70,7 +110,12 @@ std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t 
             return std::unexpected(HeapError::limit_exceeded);
         }
         const auto capacity = std::min(remaining, std::max(words, options.chunk_bytes / sizeof(Word)));
-        chunks.push_back(chunk(capacity));
+        auto fresh = chunk(capacity);
+        chunks.reserve(chunks.size() + 1);
+        ranges.reserve(ranges.size() + 1);
+        const auto begin = reinterpret_cast<std::uintptr_t>(fresh.bytes.get());
+        ranges.insert(std::ranges::upper_bound(ranges, begin, {}, &ChunkRange::begin), {begin, chunks.size()});
+        chunks.push_back(std::move(fresh));
         capacity_words += capacity;
         offset = 0;
     }

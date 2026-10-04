@@ -35,8 +35,8 @@ TermResult<MapEntry> map_entry(const Term &map, std::size_t index) {
         return std::unexpected(TermError::out_of_range);
     }
     const auto object = TermAccess::object(map).value();
-    const auto key = TermAccess::child(map, object->words[1 + 2 * index]);
-    const auto value = TermAccess::child(map, object->words[2 + 2 * index]);
+    const auto key = TermAccess::child(map, object.words[1 + 2 * index]);
+    const auto value = TermAccess::child(map, object.words[2 + 2 * index]);
     if (!key || !value) {
         return std::unexpected(TermError::invalid_encoding);
     }
@@ -82,10 +82,10 @@ TermResult<std::size_t> Term::map_size() const {
     if (!object) {
         return std::unexpected(object.error());
     }
-    if ((*object)->kind != TermKind::map) {
+    if (object->kind != TermKind::map) {
         return std::unexpected(TermError::wrong_type);
     }
-    return (*object)->count;
+    return object->count;
 }
 
 TermResult<std::optional<Term>> Term::map_find(const Term &key) const {

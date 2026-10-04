@@ -594,14 +594,27 @@ rollback) and header/tag agreement. Accessors decode kind, count and payload
 from the header.
 
 - Success criteria
-  - [ ] Forged, interior, stale and foreign words are rejected before any load
+  - [x] Forged, interior, stale and foreign words are rejected before any load
     outside the checked range.
-  - [ ] Publication allocates nothing per object; rollback restores the bitmap.
+  - [x] Publication allocates nothing per object; rollback restores the bitmap.
 - Tests
-  - [ ] Existing ownership and forged-word runtime tests and all goldens pass
+  - [x] Existing ownership and forged-word runtime tests and all goldens pass
     unchanged.
-  - [ ] Focused test with interior pointers into tuples, maps, bignums and
+  - [x] Focused test with interior pointers into tuples, maps, bignums and
     binary payload.
+
+Done 2026-10-04. `HeapStorage::objects` (`std::map`) is gone. Each `HeapChunk` carries a start bitmap
+(one bit per word, allocated with the chunk) and `HeapStorage::ranges` keeps chunks sorted by address;
+rollback drops ranges of removed chunks, and bits are only set after commit, so rolled-back words never
+carry one. `publish(storage, reservation, value)` commits and then marks every non-filler start by
+walking the committed words (lists mark each cons cell; no per-object allocation). `TermAccess::admit`
+checks alignment, chunk range, used bound and start bit, then `parse_cell` shape against the tag;
+`TermAccess::object` returns a header-decoded `HeapObject` by value and `Term` lost its `object_`
+pointer. New CTest `runtime_admission`: interior words of tuples, maps, bignums, heap and off-heap
+binaries; misaligned, retagged, cons-tail, rolled-back, past-used and foreign words; later cons cells
+still admitted. `runtime_heap_measurements`: side bytes 24 MB to 94 KB, build 264 to 198 ms, but walk 81 to 150 ms:
+decoding re-finds the chunk on every access (clang-tidy rejects int-to-pointer casts), to be revisited
+with 8E handles and the 8G single block; about 1 KB more per context for the bitmap.
 
 <a id="step-8e"></a>
 

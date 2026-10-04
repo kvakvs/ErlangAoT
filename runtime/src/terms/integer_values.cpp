@@ -27,10 +27,10 @@ TermResult<Integer> integer_read(const Term &value) {
     if (!object) {
         return std::unexpected(object.error());
     }
-    if ((*object)->kind != TermKind::bignum) {
+    if (object->kind != TermKind::bignum) {
         return std::unexpected(TermError::wrong_type);
     }
-    const auto words = (*object)->words;
+    const auto words = object->words;
     return integer_words(words.subspan(2), words[1] != 0);
 }
 
