@@ -189,3 +189,11 @@ selfcheck (wrong golden diff, stale hash); executables_oracle opt-in. Oracle = p
 erts-17.1/bin/escript.exe. run.py uses matrix.combinations() (8 full / 2 fast), ~3 s per case on host.
 Pass --suffix=... as single token (CMake drops empty args). erlfmt: escript with code:add_path(
 "thirdparty/tools/erlfmt/_build/local") + erlfmt:format_file(F,[]) (beams flat there). Logs build/plan11-step8.
+Plan11 phase C inserted 2026-10-04 (user commit bb09359 "Replan new heap"): steps 8A-8I classic ERTS
+heap before step 9; single heap only (old heap/minor GC deferred, F04 backlog item). User direction:
+binaries >64 B stay std::shared_ptr buffers outside all heaps; refc_binary cell holds the shared_ptr
++ off-heap list link, relocated by move-constructing that member. 8C note from user: prefer C++ style.
+Plan11 step8A 2026-10-04: docs/runtime-heap.md contract; full_only CTest runtime_heap_measurements
+(tests/runtime/heap_measurements.cpp, counting operator new). Baseline bb09359 x64 Debug: 100k kernel
+264/81 ms, 700000 used words, side bytes 24 MB (~80 B/cell std::map index), 66 KB/context.
+Logs build/plan11-step8a.

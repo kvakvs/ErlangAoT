@@ -30,6 +30,13 @@ add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/link.cmake")
 set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)
 
+# Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
+add_executable(runtime_heap_measurements heap_measurements.cpp)
+erlang_aot_project_options(runtime_heap_measurements)
+target_link_libraries(runtime_heap_measurements PRIVATE ErlangAoT::generated_program)
+add_test(NAME runtime_heap_measurements COMMAND runtime_heap_measurements)
+set_tests_properties(runtime_heap_measurements PROPERTIES TIMEOUT 240 LABELS full_only)
+
 add_executable(runtime_immediate_tests immediate.cpp)
 erlang_aot_project_options(runtime_immediate_tests)
 target_link_libraries(runtime_immediate_tests PRIVATE ErlangAoT::generated_program)

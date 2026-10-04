@@ -439,9 +439,9 @@ collection:
 - Each published cell is a node in a per-process `std::map` index
   (`HeapStorage::objects`); admission and access depend on it, so heap words
   alone are not parseable.
-- Cells embed C++ objects (`shared_ptr` in `RefcBinaryCell`, `weak_ptr` in
-  `ClosureCell`) behind a destructor registry, so they cannot move by copying
-  words.
+- Every bitstring cell has a fixed 64-byte inline array and an embedded
+  `shared_ptr`, and C++ members are released through a destructor registry
+  indexed by address; nothing can move such a cell or find its dead copies.
 - Host `Term` handles hold `shared_ptr<HeapStorage>` and raw `HeapObject`
   pointers that no collector could rewrite.
 - Generated root frames are separate heap-allocated buffers rather than one
@@ -464,9 +464,11 @@ Target design, following classic ERTS:
   section, no safe point), it goes into a heap fragment; fragments form a
   chain owned by the process and are merged into the heap by the next
   collection.
-- Reference-counted resources (large binaries) live off-heap; heap cells hold
-  plain pointers linked into a per-process off-heap list that is swept after
-  collection.
+- Binaries larger than 64 bytes float outside every process heap as immutable
+  shared buffers. A boxed off-heap binary cell (BEAM ProcBin) holds a
+  `std::shared_ptr` to its buffer and is linked into a per-process off-heap
+  list. Moving the cell move-constructs that member; the list sweep after
+  collection and teardown destroys it in dead cells.
 
 Steps 8A–8I replace the storage behind the existing services without changing
 generated-code ABI or observable program behavior; every golden must pass
@@ -483,37 +485,52 @@ Backlog: F03, F04. Depends on: [8](#step-8). **Decision.**
 Publish `docs/runtime-heap.md` with the review above and its replacement.
 
 - Success criteria
-  - [ ] Word-level layout: header encoding (tag, kind, word count), cons cells,
+  - [x] Word-level layout: header encoding (tag, kind, word count), cons cells,
     untraced payload, filler words for padding and rolled-back tails, and a
     cell table for every admitted kind on 32- and 64-bit words.
-  - [ ] Areas and sizing: heap, stack, fragment chain and off-heap list; minimum heap size, growth sequence and one budget
+  - [x] Areas and sizing: heap, stack, fragment chain and off-heap list; minimum heap size, growth sequence and one budget
     (`limit_bytes`) across all areas, including off-heap binary bytes.
-  - [ ] Admission rule that replaces the object index while still rejecting
+  - [x] Admission rule that replaces the object index while still rejecting
     forged, interior, stale and foreign words.
-  - [ ] Safe points: when the heap may move, when allocation must use a
+  - [x] Safe points: when the heap may move, when allocation must use a
     fragment, and how host handles, stack frames and owned error payloads are
     found and rewritten.
-  - [ ] Scope changes for steps 23–28 and 45 are recorded in this plan.
+  - [x] Scope changes for steps 23–28 and 45 are recorded in this plan.
 - Tests
-  - [ ] Baseline measurement of an allocation-heavy runtime kernel and the
+  - [x] Baseline measurement of an allocation-heavy runtime kernel and the
     per-context footprint, recorded in the document for 8I (not gated).
+
+Done 2026-10-04. `docs/runtime-heap.md` fixes the contract: header word (tag `00`, five kind bits,
+word count from bit 7), headerless cons, zero-word and `filler` padding, a per-kind cell table (map
+header now counts words, 2 per entry), one heap plus fragments, a segmented stack, no old heap,
+ERTS sizing from 233 words, one `limit_bytes` budget including created off-heap buffers, start-bitmap
+admission and host-only safe points until step 26. Per user direction, binaries over 64 bytes stay
+`std::shared_ptr` buffers outside every heap: the `refc_binary` cell holds the pointer, joins a
+per-process off-heap list and is moved by move-constructing that member (8B updated). Full-only
+CTest `runtime_heap_measurements` recorded the baseline at `bb09359`: 100k-cell kernel 264/81 ms,
+700,000 used words, 24 MB index side bytes (about 80 per cell), 66 KB and 8,192 heap words per
+context.
 
 <a id="step-8b"></a>
 
-### 8B. Make every heap cell relocatable by word copy
+### 8B. Split binary cells and add the off-heap list
 
 Backlog: F03, F09. Depends on: [8A](#step-8a).
 
-Replace C++ objects inside cells with plain words: a large-binary cell holds a
-header, bit size, a raw pointer to an intrusively counted buffer and an
-off-heap link (BEAM ProcBin); the process keeps an off-heap list instead of the
+Replace the fixed `BitCell` with two cells: a variable-size heap binary (bit
+length and data words, at most 64 bytes) and an off-heap binary (bit offset,
+bit length, `std::shared_ptr` to the shared buffer, off-heap link). The process
+keeps an off-heap list of its off-heap binary cells instead of the
 `HeapDestructor` registry.
 
 - Success criteria
-  - [ ] Every layout in `term_layout.hpp` is trivially copyable
-    (`static_assert`); `HeapDestructor` and `HeapStorage::resources` are gone.
-  - [ ] Shared buffers are released exactly once when the owning heap is torn
-    down; extracted tails keep their buffer alive.
+  - [ ] Every layout in `term_layout.hpp` is trivially copyable except the
+    off-heap binary, whose only C++ member is the `shared_ptr` (`static_assert`
+    on its two-word size); one relocation hook moves that member.
+    `HeapDestructor` and `HeapStorage::resources` are gone.
+  - [ ] Shared buffers are released exactly once when the last cell holding
+    them dies (today: owning heap teardown); extracted tails keep their buffer
+    alive.
 - Tests
   - [ ] Bitstring, printing and executable goldens pass unchanged.
   - [ ] Focused runtime test: buffer counts across tails, rollback after a
@@ -526,7 +543,7 @@ off-heap link (BEAM ProcBin); the process keeps an off-heap list instead of the
 Backlog: F03, F04. Depends on: [8B](#step-8b).
 
 Works on the existing chunks first, so the walker is proven before storage
-changes.
+changes. Prefer C++ style design.
 
 - Success criteria
   - [ ] Every allocated word belongs to a boxed object with a valid header, a

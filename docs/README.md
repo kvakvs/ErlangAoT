@@ -17,6 +17,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Guards and the guard BIF catalog | [guards.md](guards.md) |
 | Term representations (atoms, numbers, containers, maps, bits, records) and printing | [terms.md](terms.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
+| Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Deferred-feature (`notimpl`) reporting | [features.md](features.md) |
 | OTP source reference pin and refresh procedure | [otp-reference.md](otp-reference.md) |
 | Validation baseline, test modes, platform gaps, history | [validation.md](validation.md) |

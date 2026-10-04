@@ -43,6 +43,9 @@ process.
 
 Each context owns a stable `ProcessHeap` made of chunks that never move.
 
+This heap is being replaced by the classic ERTS design in
+[runtime-heap.md](runtime-heap.md); the rules below describe the current code.
+
 - `allocate(words)` returns zeroed word storage. `reserve` gives a move-only
   reservation with explicit commit and automatic rollback. One reservation at a
   time per heap: build children first, reserve the parent last.

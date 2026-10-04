@@ -49,6 +49,10 @@ Other native runtime toolchains still need their own full layout validation.
 
 ## Explicit process-heap layout
 
+Superseded by the classic heap contract in
+[docs/runtime-heap.md](../../docs/runtime-heap.md) (plan 11 phase C); the
+reservations below remain until steps 8B–8D replace them.
+
 `Word` is the runtime target's unsigned pointer-width type, aligned to 4 or 8 bytes.
 `TermTag` and `BoxHeader` are each one word; host `Term` includes ownership pins. The private header reserves low
 two bits 00, five kind bits at bits 2–6, and a content-word count starting at bit 7.
