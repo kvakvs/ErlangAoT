@@ -75,13 +75,11 @@ void comparison_budget(ProcessContext &context) {
     require(context.generated_calls().failure()->status == Status::resource_limit, "comparison ceiling status lost");
 }
 
-// Foreign or interior pointers never reach a header read; expiration denies access while safely pinning storage.
+// Foreign or out-of-heap words never reach a header read; expiration denies access while safely pinning storage.
 void ownership(Runtime &runtime, ProcessContext &context, const Term &value) {
     auto &other = *runtime.create_context().value();
     require(Term::from_word(value.word(), other) == std::unexpected(TermError::wrong_owner), "foreign heap admitted");
     require(value.copy_to(other.heap()) == std::unexpected(TermError::wrong_owner), "foreign graph silently copied");
-    require(Term::from_word(value.word() + sizeof(Word), context) == std::unexpected(TermError::wrong_owner),
-            "interior tuple pointer admitted");
     require(Term::from_word(Word{1}, context) == std::unexpected(TermError::wrong_owner), "forged cons admitted");
     TermFactory factory(context);
     require(runtime.destroy_context(&context) == Status::ok, "context removal failed");

@@ -4,13 +4,11 @@
 namespace erlang_aot::runtime::detail {
 TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReservation &reservation,
                          Word value) noexcept {
-    const auto bytes = reservation.bytes();
     const auto committed = reservation.commit();
     if (!committed) {
         return std::unexpected(committed.error() == HeapError::out_of_memory ? TermError::out_of_memory
                                                                              : TermError::resource_limit);
     }
-    storage->mark_published(bytes);
     return TermAccess::admit(value, storage);
 }
 } // namespace erlang_aot::runtime::detail

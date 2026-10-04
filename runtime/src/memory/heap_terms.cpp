@@ -12,7 +12,7 @@ std::uintptr_t address(Word value) {
     return static_cast<std::uintptr_t>(value & ~static_cast<Word>(abi::v1::primary_mask));
 }
 
-// The object at a published start must have the shape its tag claims and a well-formed header.
+// The object a process pointer names must have the shape its tag claims and a well-formed header.
 bool shaped(TermKind tag, std::span<const Word> area) {
     const auto cell = parse_cell(area);
     return cell && cell->shape == (tag == TermKind::list ? HeapCell::Shape::cons : HeapCell::Shape::boxed);
@@ -39,7 +39,7 @@ HeapObject boxed(Word value, std::span<const Word> words) {
     }
 }
 
-// Decode an admitted word from the words at its published start; admission proved the shape and header.
+// Decode an admitted word from the words at its object start; admission proved the shape and header.
 HeapObject decode(Word value, std::span<const Word> area) {
     if (area.empty()) {
         return {value, TermKind::invalid, {}, 0};
@@ -62,7 +62,7 @@ TermResult<Term> TermAccess::admit(Word value, const std::shared_ptr<HeapStorage
     if (kind != TermKind::boxed && kind != TermKind::list) {
         return Term::from_word(value);
     }
-    const auto area = storage->published(address(value));
+    const auto area = storage->owned(address(value));
     if (area.empty() || !shaped(kind, area)) {
         return std::unexpected(TermError::wrong_owner);
     }
@@ -79,7 +79,7 @@ TermResult<HeapObject> TermAccess::object(const Term &value) noexcept {
     if (!value.heap_->alive()) {
         return std::unexpected(TermError::expired_context);
     }
-    return decode(value.value_, value.heap_->published(address(value.value_)));
+    return decode(value.value_, value.heap_->owned(address(value.value_)));
 }
 
 TermResult<Term> TermAccess::child(const Term &parent, Word value) noexcept {

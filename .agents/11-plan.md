@@ -588,33 +588,32 @@ construction failure and retry; `runtime_memory` writes a filler header instead 
 
 Backlog: F03. Depends on: [8C](#step-8c).
 
-Replace `HeapStorage::objects` with a range check against the process's areas,
-a per-area object-start bitmap (one bit per word, set on publish and cleared on
-rollback) and header/tag agreement. Accessors decode kind, count and payload
-from the header.
+Replace `HeapStorage::objects` with an ownership check: the word lies inside
+the process's used areas and its tag agrees with the header or cons cell it
+names. Process pointers only ever name object starts, so no start bitmap is
+kept. Accessors decode kind, count and payload from the header.
 
 - Success criteria
-  - [x] Forged, interior, stale and foreign words are rejected before any load
-    outside the checked range.
-  - [x] Publication allocates nothing per object; rollback restores the bitmap.
+  - [x] Foreign and stale words are rejected before any load outside the
+    process's used areas.
+  - [x] Publication allocates nothing per object.
 - Tests
   - [x] Existing ownership and forged-word runtime tests and all goldens pass
-    unchanged.
-  - [x] Focused test with interior pointers into tuples, maps, bignums and
-    binary payload.
+    (interior-pointer cases removed: such pointers cannot exist).
+  - [x] Focused test admitting every layout's start, including later cons
+    cells, and rejecting rolled-back, past-used and foreign words.
 
-Done 2026-10-04. `HeapStorage::objects` (`std::map`) is gone. Each `HeapChunk` carries a start bitmap
-(one bit per word, allocated with the chunk) and `HeapStorage::ranges` keeps chunks sorted by address;
-rollback drops ranges of removed chunks, and bits are only set after commit, so rolled-back words never
-carry one. `publish(storage, reservation, value)` commits and then marks every non-filler start by
-walking the committed words (lists mark each cons cell; no per-object allocation). `TermAccess::admit`
-checks alignment, chunk range, used bound and start bit, then `parse_cell` shape against the tag;
-`TermAccess::object` returns a header-decoded `HeapObject` by value and `Term` lost its `object_`
-pointer. New CTest `runtime_admission`: interior words of tuples, maps, bignums, heap and off-heap
-binaries; misaligned, retagged, cons-tail, rolled-back, past-used and foreign words; later cons cells
-still admitted. `runtime_heap_measurements`: side bytes 24 MB to 94 KB, build 264 to 198 ms, but walk 81 to 150 ms:
-decoding re-finds the chunk on every access (clang-tidy rejects int-to-pointer casts), to be revisited
-with 8E handles and the 8G single block; about 1 KB more per context for the bitmap.
+Done 2026-10-04. `HeapStorage::objects` (`std::map`) is gone; `HeapStorage::ranges` keeps chunks
+sorted by address and rollback drops ranges of removed chunks. `publish(storage, reservation, value)`
+commits and admits; nothing is allocated per object. `TermAccess::admit` checks alignment, chunk range
+and used bound (`HeapStorage::owned`), then `parse_cell` shape against the tag; `TermAccess::object`
+returns a header-decoded `HeapObject` by value and `Term` lost its `object_` pointer. A first version
+also kept a per-chunk start bitmap to reject interior pointers; per user review it was dropped, since
+pointers into a process heap only come from that process and always name object starts (`verify()`
+keeps the full start check for tests). CTest `runtime_admission`; interior-pointer asserts removed from
+`runtime_containers`/`runtime_bitstrings`. `runtime_heap_measurements`: side bytes 24 MB to 3.4 KB, build
+264 to 185 ms, walk 81 to 147 ms (decode re-finds the chunk because clang-tidy rejects int-to-pointer
+casts; revisit with 8E handles and the 8G single block).
 
 <a id="step-8e"></a>
 

@@ -51,8 +51,6 @@ void ownership() {
     auto &foreign = *runtime->create_context().value();
     require(Term::from_word(first.word(), foreign) == std::unexpected(TermError::wrong_owner),
             "foreign slice admitted");
-    require(Term::from_word(first.word() + sizeof(Word), context) == std::unexpected(TermError::wrong_owner),
-            "interior binary pointer admitted");
     for (unsigned i = 0; i < 100; ++i) {
         require(factory.binary(bytes).has_value(), "later buffer allocation failed");
     }

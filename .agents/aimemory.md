@@ -212,3 +212,6 @@ Plan11 step8D 2026-10-04: object index removed; HeapChunk.starts bitmap + HeapSt
 address); publish(storage, reservation, Word value) marks starts via walk after commit; TermAccess::object
 returns HeapObject by value decoded from header (memory/heap_terms.cpp). Test runtime_admission (public API).
 Measurements: side bytes 24 MB -> 94 KB. Logs build/plan11-step8d.
+8D rework (user review): NO start bitmap / interior-pointer checks. Pointers into a process heap come only
+from that process and always name object starts; admission = owned range + header shape. Don't add
+defenses for impossible cases; follow classic ERTS trust model.

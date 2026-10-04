@@ -14,7 +14,7 @@ struct HeapObject {
 };
 
 struct TermAccess {
-    // Admit immediates/atoms, or a word that points at a published object start of the right shape.
+    // Admit immediates/atoms, or a word inside this process's used heap whose object matches its tag.
     static TermResult<Term> admit(Word value, const std::shared_ptr<HeapStorage> &storage) noexcept;
     // Check host lifetime, then decode a heap term's object from its header.
     static TermResult<HeapObject> object(const Term &value) noexcept;

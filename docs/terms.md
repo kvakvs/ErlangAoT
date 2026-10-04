@@ -8,17 +8,15 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 ## Ownership
 
 - Compound values live in their process heap ([runtime](runtime.md#process-memory)).
-  Admission checks that a word points, word-aligned, into the used part of one
-  of the process's chunks at a bit set in that chunk's start bitmap, and that
-  the header (or cons cell) there matches the word's tag
-  ([admission](runtime-heap.md#admission)). Forged, interior, stale and foreign
-  words are rejected without loading outside the checked range. Kind and extent
-  are decoded from the header.
+  Process pointers always name object starts. Admission checks ownership: the
+  word points, word-aligned, into the used part of one of the process's chunks,
+  and the header (or cons cell) there matches its tag
+  ([admission](runtime-heap.md#admission)). Foreign and stale words are rejected
+  without any load. Kind and extent are decoded from the header.
 - Host `Term` handles pin backing and metadata. After context teardown, access
   returns `expired_context`, but handles remain safe to destroy.
 - Construction validates children, reserves, initializes, then publishes in one
-  step; failure rolls back backing and counters, and only published objects
-  get start bits.
+  step; failure rolls back backing and counters.
 - `Term::from_word(word)` admits only owner-independent immediates;
   `Term::from_word(word, context)` also admits atoms and heap terms of that
   context. Same-heap handoff keeps identity. Cross-process graph copying is not

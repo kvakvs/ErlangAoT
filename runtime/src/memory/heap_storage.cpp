@@ -1,5 +1,4 @@
 #include "heap_storage.hpp"
-#include "heap_walk.hpp"
 #include "off_heap.hpp"
 #include <algorithm>
 #include <bit>
@@ -55,47 +54,24 @@ std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t 
 
 // Fundamental alignment satisfies every accepted reservation alignment; chunks never move on growth.
 HeapChunk chunk(std::size_t words) {
-    std::vector<std::uint64_t> starts((words + 63) / 64);
     return {std::unique_ptr<std::byte, ChunkDelete>{static_cast<std::byte *>(::operator new(words * sizeof(Word)))},
-            words, 0, std::move(starts)};
+            words};
 }
 } // namespace
 
 std::span<const Word> HeapChunk::area() const noexcept { return {reinterpret_cast<const Word *>(bytes.get()), used}; }
 
-bool HeapChunk::started(std::size_t word) const noexcept { return ((starts[word / 64] >> (word % 64)) & 1U) != 0; }
-
-void HeapChunk::mark(std::size_t word) noexcept { starts[word / 64] |= std::uint64_t{1} << (word % 64); }
-
-std::span<const Word> HeapStorage::published(std::uintptr_t address) const noexcept {
+std::span<const Word> HeapStorage::owned(std::uintptr_t address) const noexcept {
     const auto range = std::ranges::upper_bound(ranges, address, {}, &ChunkRange::begin);
     if (range == ranges.begin()) {
         return {};
     }
     const auto &found = chunks[std::prev(range)->chunk];
     const auto offset = address - std::prev(range)->begin;
-    const auto word = offset / sizeof(Word);
-    if (offset % sizeof(Word) != 0 || word >= found.used || !found.started(word)) {
+    if (offset % sizeof(Word) != 0 || offset / sizeof(Word) >= found.used) {
         return {};
     }
-    return found.area().subspan(word);
-}
-
-void HeapStorage::mark_published(std::span<const std::byte> bytes) noexcept {
-    auto &tail = chunks.back();
-    const auto *base = reinterpret_cast<const Word *>(tail.bytes.get());
-    std::span rest{reinterpret_cast<const Word *>(bytes.data()), bytes.size() / sizeof(Word)};
-    while (!rest.empty()) {
-        const auto cell = parse_cell(rest);
-        // Factory-written objects always parse; a malformed tail is left unmarked and so never admitted.
-        if (!cell) {
-            return;
-        }
-        if (cell->shape != HeapCell::Shape::filler) {
-            tail.mark(static_cast<std::size_t>(cell->words.data() - base));
-        }
-        rest = rest.subspan(cell->words.size());
-    }
+    return found.area().subspan(offset / sizeof(Word));
 }
 
 std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t words, std::size_t alignment) {

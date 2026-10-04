@@ -9,7 +9,7 @@ the contract for that work; each item names the plan step that delivers it.
 | Today | Problem | Replacement |
 | --- | --- | --- |
 | A list of chunks that never move | Cells cannot be compacted or copied; capacity only grows | One contiguous heap block plus fragments, moved by a copying collector (8G, 8H) |
-| Each cell is a node in a per-process `std::map` index | Heap words alone are not parseable; one host allocation and an O(log n) lookup per cell | Self-describing cells; admission by range check, start bitmap and header (8C, 8D) |
+| Each cell is a node in a per-process `std::map` index | Heap words alone are not parseable; one host allocation and an O(log n) lookup per cell | Self-describing cells; admission by owned range and header (8C, 8D) |
 | Every bitstring cell has a fixed 64-byte array and a `shared_ptr`, released through a destructor registry | Large cells for small data; nothing can move a cell or find its dead copies | Variable-size heap binaries and off-heap binary cells on a per-process off-heap list (8B) |
 | Host `Term` holds `shared_ptr<HeapStorage>` and a raw index pointer | Nothing a collector can rewrite | One handle-table slot per held heap value (8E) |
 | One heap buffer per generated root frame | No process stack to scan | One stack of root frames per process (8F) |
@@ -104,20 +104,19 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
 
 ## Admission
 
-A boxed or list word is admitted for a process only if all of these hold
-(8D); forged, interior, stale and foreign words fail without any load outside
-the checked range:
+Pointers into a process heap are created only by the compiler and the runtime
+inside that process, and always name an object start; there are no interior
+pointers to detect. Admission (8D) is an ownership check for words handed back
+to a process:
 
-1. The address lies inside one of the process's areas, below its `top`
-   (today: below a chunk's used words, found through chunks sorted by address).
-2. That area's start bitmap (one bit per word) has the address's bit set. Bits
-   are set only when a construction is published, so rolled-back words never
-   carry one.
-3. A boxed word points at a header of an admitted kind (not filler); a list
-   word points at a cons cell (a word that is not a header).
+1. The address is word-aligned inside one of the process's areas, below its
+   `top` (today: below a chunk's used words, found through chunks sorted by
+   address). Foreign and stale words fail here without any load.
+2. A boxed word names a header of an admitted kind (not filler); a list word
+   names a cons cell (a word that is not a header).
 
-The collector rebuilds the bitmap for the new block. Accessors decode kind,
-count and payload from the header itself.
+Accessors decode kind, count and payload from the header itself. `verify()`
+remains the full check that every slot names an object start, for tests.
 
 ## Roots and safe points
 
@@ -152,4 +151,4 @@ index and other metadata).
 | Revision | Build | Kernel build / walk | Heap used / capacity words | Side bytes | Bytes per context | Heap words per context |
 | --- | --- | --- | --- | --- | --- | --- |
 | `bb09359` (chunk list, object index) | Windows x64 Debug, clang-cl | 264 / 81 ms | 700,000 / 704,512 | 24,002,256 (about 80 per cell) | 66,217 | 8,192 |
-| 8D (chunk list, start bitmap) | Windows x64 Debug, clang-cl | 198 / 150 ms | 700,000 / 704,512 | 93,607 | 67,105 | 8,192 |
+| 8D (chunk list, owned range) | Windows x64 Debug, clang-cl | 185 / 147 ms | 700,000 / 704,512 | 3,440 | 66,057 | 8,192 |
