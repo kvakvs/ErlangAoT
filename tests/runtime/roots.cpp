@@ -89,15 +89,19 @@ void segments(ProcessContext &context) {
     require(roots.depth() == 0 && roots.words() == 0 && roots.capacity() == 0, "empty segments not freed");
 }
 
-// A default segment, header included, fills one 4 KiB page; a larger frame takes whole pages.
+// A default segment fills one 4 KiB page together with its three-word header and a two-pointer allocator
+// header; a larger frame takes whole pages.
 void page_segments(ProcessContext &context) {
     GeneratedInvocation invocation(context.generated_calls());
     RootInvocation scope(context.roots());
     auto &roots = context.roots();
+    const auto headers = 5 * sizeof(void *);
     const auto bytes = [&] { return roots.capacity() * sizeof(Word); };
-    require(roots.enter(1) && bytes() < 4096 && bytes() + 64 >= 4096, "segment does not fill one page");
+    require(roots.enter(1) && bytes() + headers <= 4096 && bytes() + headers + sizeof(Word) > 4096,
+            "segment does not fill one page");
     const auto page_words = roots.capacity();
-    require(roots.enter(page_words + 1) && bytes() < 3 * 4096 && bytes() + 128 >= 3 * 4096,
+    require(roots.enter(page_words + 1) && bytes() + (2 * headers) <= 3 * 4096 &&
+                bytes() + (2 * headers) + (2 * sizeof(Word)) > 3 * 4096,
             "large frame segment not rounded to whole pages");
 }
 

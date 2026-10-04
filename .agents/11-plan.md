@@ -676,8 +676,8 @@ holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
     failed call.
 
 Done 2026-10-04. `GeneratedRoots` keeps one minimal process stack: a chain of `Segment`s, each one
-allocation of `RootOptions::segment_bytes` (4096, one x86 page) holding a header (older-segment link,
-capacity, used) followed by slots (509 on 64-bit), and `Frame` windows (slots pointer, count, handoff). A
+allocation that with a two-pointer allocator header fits `RootOptions::segment_bytes` (4096, one x86
+page), holding a header (older-segment link, capacity, used) followed by slots (507 on 64-bit), and `Frame` windows (slots pointer, count, handoff). A
 frame that does not fit the top segment opens a new one (whole pages for larger frames); the top
 segment is freed when its last frame returns, so the top frame always lies in it and live windows
 never move. Per user review the first version's doubling, spare segment and trimming were

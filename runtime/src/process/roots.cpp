@@ -4,6 +4,11 @@
 #include <new>
 
 namespace erlang_aot::runtime {
+namespace {
+// Leave room for the largest inline header of common release allocators (16 bytes on 64-bit Windows heaps).
+constexpr std::size_t allocator_overhead = 2 * sizeof(void *);
+} // namespace
+
 GeneratedRoots::GeneratedRoots(ProcessContext &owner, RootOptions options) noexcept
     : owner_(owner), options_(options) {}
 
@@ -50,9 +55,9 @@ void GeneratedRoots::push_segment(std::size_t count) {
     if (count > std::numeric_limits<std::size_t>::max() / (2 * sizeof(Word))) {
         throw std::bad_alloc();
     }
-    const auto unit = std::max(options_.segment_bytes, sizeof(Segment) + sizeof(Word));
-    const auto needed = sizeof(Segment) + (count * sizeof(Word));
-    const auto bytes = (needed + unit - 1) / unit * unit;
+    const auto unit = std::max(options_.segment_bytes, allocator_overhead + sizeof(Segment) + sizeof(Word));
+    const auto needed = allocator_overhead + sizeof(Segment) + (count * sizeof(Word));
+    const auto bytes = ((needed + unit - 1) / unit * unit) - allocator_overhead;
     top_ = ::new (::operator new(bytes)) Segment{top_, (bytes - sizeof(Segment)) / sizeof(Word), 0};
 }
 

@@ -224,8 +224,8 @@ storage pin (off_heap test: buffers die at destroy_context). TermError::stale_te
 GeneratedCallState::visit rebinds payload Term (friend). visit_roots template on ProcessContext.
 collect(span<Word> roots, sink) overload. Logs build/plan11-step8e.
 Plan11 step8F 2026-10-04: GeneratedRoots = minimal segmented stack: Segment header{previous,capacity,used}
-+ slots in ONE operator-new allocation of RootOptions.segment_bytes=4096 (user: page incl. container fields;
-larger frames whole pages), top_ chain, top freed when empty; Frame{slots,count,handoff}. User
++ slots in ONE operator-new allocation of 4096 - 2*sizeof(void*) (user: page incl. container fields and
+largest release allocator header = Win64 HEAP_ENTRY 16 B; 507 slots on 64-bit; larger frames whole pages), top_ chain, top freed when empty; Frame{slots,count,handoff}. User
 review: first version's doubling/spare/trim = over-engineered; wants minimal now, iterate later (flat moving
 stack w/ in-stack frame headers after codegen reloads frame base: steps 17/24/26 criteria added). Segments
 only exist because generated code holds absolute Word* from roots_enter across calls. Bash `cat > file`

@@ -82,10 +82,13 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   and chains it to the process. The next collection merges fragments into the
   new heap block.
 - **Stack.** Generated root frames (BEAM Y registers) are windows in stack
-  segments kept apart from the heap (8F). A segment is one allocation of a
-  4 KiB page (the x86 page size; a quarter of an Apple Silicon page): a
-  three-word header (link to the older segment, capacity, used) followed by
-  slots, so 509 slots on 64-bit and 1,021 on 32-bit targets. A frame that does
+  segments kept apart from the heap (8F). A segment is one allocation that,
+  with the allocator's own header, fits a 4 KiB page (the x86 page size; a
+  quarter of an Apple Silicon page). Two pointers are reserved for that
+  header, the largest inline one among common release allocators (64-bit
+  Windows heap). The segment holds a three-word header (link to the older
+  segment, capacity, used) followed by slots, so 507 slots on 64-bit and
+  1,019 on 32-bit targets. A frame that does
   not fit the top segment opens a new one; a larger frame takes whole pages.
   A segment is freed when its last frame returns. A frame never spans segments,
   so its address stays stable while generated code holds it. Bounds stay

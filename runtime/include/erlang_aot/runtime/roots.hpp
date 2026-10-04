@@ -7,7 +7,8 @@ struct RootOptions {
     // Bound total live slots and nesting independently of retained heap backing.
     std::size_t words = 1'000'000;
     std::size_t frames = 4096;
-    // Size each segment allocation, header included, to one 4 KiB page; larger frames take whole multiples.
+    // Fit each segment allocation, with its header and the allocator's, in one 4 KiB page; larger frames take
+    // whole multiples.
     // A frame never spans segments, so its address is stable.
     std::size_t segment_bytes = 4096;
 };
@@ -73,7 +74,7 @@ class GeneratedRoots final {
 
     // View the slot words that follow a segment header in the same allocation.
     static std::span<Word> window(Segment &segment) noexcept;
-    // Link a new top segment sized to whole multiples of `segment_bytes` that fits `count` slots.
+    // Link a new top segment that fits `count` slots and, with allocator overhead, whole `segment_bytes` units.
     void push_segment(std::size_t count);
     // Release the top frame's window back to the top segment.
     void pop() noexcept;
