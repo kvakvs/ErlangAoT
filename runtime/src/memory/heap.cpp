@@ -23,6 +23,8 @@ abi::v1::Status status(HeapError error) {
         return abi::v1::Status::not_implemented;
     case diagnostic_failure:
         return abi::v1::Status::diagnostic_failure;
+    case corrupt_heap:
+        return abi::v1::Status::internal_error;
     }
     return abi::v1::Status::internal_error;
 }

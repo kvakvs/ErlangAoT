@@ -29,8 +29,7 @@ void clear_padding(std::span<std::byte> bytes, std::size_t count) {
 
 TermResult<Term> BitAccess::heap_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
     const auto size = (count + 7) / 8;
-    const auto data_words = (size + sizeof(Word) - 1) / sizeof(Word);
-    const auto total = sizeof(HeapBinaryCell) / sizeof(Word) + data_words;
+    const auto total = 1 + layout::heap_binary_payload_words(count, sizeof(Word));
     auto reserved = heap.reserve(total);
     if (!reserved) {
         return std::unexpected(heap_error(reserved.error()));

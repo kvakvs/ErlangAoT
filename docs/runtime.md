@@ -59,6 +59,11 @@ This heap is being replaced by the classic ERTS design in
 - `used_words` includes padding; `capacity_words` counts retained backing;
   `off_heap_words` counts buffers this process created. Backing plus off-heap
   words share the `limit_bytes` budget.
+- Every used word parses as a header-led object, a cons cell or filler
+  ([word layout](runtime-heap.md#word-layout)); alignment padding is zeroed.
+  Raw `allocate()` words must stay zero or hold complete objects.
+  `verify()` walks every chunk and checks each term slot points at an object
+  start of the same process (tests and debugging; `corrupt_heap` otherwise).
 - `collect()` reports `not_implemented`; nothing is reclaimed before teardown.
 
 ## Code server and builtins

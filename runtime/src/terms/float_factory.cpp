@@ -20,9 +20,7 @@ TermResult<Term> FloatAccess::make(ProcessHeap &heap, double value) {
                                                                             : TermError::resource_limit);
     }
     auto *words = ::new (reserved->bytes().data()) Word[count]{};
-    // MSVC reports C4554 for a subtraction inside the shifted cast; name the content size instead.
-    const auto content = static_cast<Word>(count - 1);
-    words[0] = (content << layout::BoxHeader::CONTENT_SHIFT) | (static_cast<Word>(BoxedKind::floating) << 2);
+    words[0] = layout::BoxHeader::make(BoxedKind::floating, count - 1);
     std::memcpy(words + 1, &value, sizeof(value));
     const auto encoded = reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed);
     const std::array objects{HeapObject{encoded, TermKind::floating, {words, count}, 1}};

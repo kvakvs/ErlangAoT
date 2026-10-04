@@ -18,7 +18,9 @@ enum class HeapError : std::uint8_t {
     unsafe_point,
     not_implemented,
     diagnostic_failure,
-    expired_context
+    expired_context,
+    // A heap area failed to parse or a term slot points outside this process's objects.
+    corrupt_heap
 };
 
 // Report actual collector work; the initial collector stub returns not_implemented instead.
@@ -27,6 +29,20 @@ struct CollectionStats final {
     std::size_t bytes_before;
     // Measure retained term storage after tracing/reclamation, excluding unused chunk capacity.
     std::size_t bytes_after;
+};
+
+// Summarize a verified heap; counts cover every parsed word of every area.
+struct HeapCensus final {
+    // Headerless two-word list cells.
+    std::size_t cons_cells = 0;
+    // Objects that start with a header, excluding filler.
+    std::size_t boxed_objects = 0;
+    // Unused words skipped by the walker.
+    std::size_t filler_words = 0;
+    // All parsed words, equal to used_words.
+    std::size_t words = 0;
+    // Off-heap binary cells on the process's off-heap list.
+    std::size_t off_heap_cells = 0;
 };
 
 // Bound retained process storage until garbage collection is implemented.
@@ -92,6 +108,7 @@ class ProcessHeap final {
     ProcessHeap &operator=(ProcessHeap &&) = delete;
 
     // Commit raw stable words; constructors use reserve so their initialization failures can roll back.
+    // Raw words must stay zero (filler) or hold complete objects whenever the heap is walked.
     std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words, DiagnosticSink sink = {}) noexcept;
     // Reserve one unpublished allocation; another allocation requires commit/rollback of the current one.
     std::expected<HeapReservation, HeapError> reserve(std::size_t words,
@@ -105,6 +122,8 @@ class ProcessHeap final {
     std::size_t capacity_words() const noexcept;
     // Report words of off-heap binary buffers created by this process, charged to the same budget.
     std::size_t off_heap_words() const noexcept;
+    // Walk every area and check each term slot points at an object of this process (tests, debugging).
+    std::expected<HeapCensus, HeapError> verify() const noexcept;
 
   private:
     friend class ProcessContext;

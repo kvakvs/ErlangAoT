@@ -74,8 +74,8 @@ enum class BoxedKind : std::uint8_t {
     tuple = 0, // corresponds to BEAM VM constant ARITYVAL=0
     native_record = 1,
     bignum = 2, // Sign is stored in the implementation
-    // bignum_positive = 2,
-    // bignum_negative = 3,
+    // Unused heap words skipped by the walker; the all-zero word (tuple, count 0) is a one-word filler.
+    filler = 3,
     reference = 4,
     fun_closure = 5, // function or a closure with attached frozen values
     floating = 6,

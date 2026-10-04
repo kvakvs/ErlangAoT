@@ -55,8 +55,10 @@ void check_options(Runtime &runtime) {
 void check_reservations(Runtime &runtime) {
     auto *context = runtime.create_context({2 * sizeof(Word), 32 * sizeof(Word)}).value();
     auto &heap = context->heap();
+    // Raw words must stay parseable: store a nonzero one-word filler header to detect damage.
+    constexpr auto filler = static_cast<Word>(BoxedKind::filler) << 2;
     auto first = heap.allocate(1).value();
-    first.front() = std::byte{42};
+    *reinterpret_cast<Word *>(first.data()) = filler;
     {
         auto reservation = heap.reserve(8).value();
         require(reservation.bytes().size() == 8 * sizeof(Word), "wrong reservation size");
@@ -72,7 +74,8 @@ void check_reservations(Runtime &runtime) {
                 "reservation is misaligned");
         require(aligned.commit().has_value(), "aligned commit failed");
     }
-    require(first.front() == std::byte{42}, "growth moved or damaged committed data");
+    require(*reinterpret_cast<const Word *>(first.data()) == filler, "growth moved or damaged committed data");
+    require(heap.verify().has_value(), "raw allocations left an unparseable heap");
     {
         auto committed = heap.reserve(1).value();
         require(committed.commit().has_value(), "commit failed");

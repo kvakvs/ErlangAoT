@@ -82,6 +82,22 @@ struct alignas(Word) MapCell final {
     BoxHeader header_;
 };
 
+// Words after the header of a float cell on a target with word_bytes-wide words.
+constexpr std::size_t float_payload_words(std::size_t word_bytes) noexcept { return 8 / word_bytes; }
+
+// Words after the header of an off-heap binary: offset, bits, two-pointer shared_ptr, list link.
+constexpr std::size_t refc_payload_words(std::size_t) noexcept { return 5; }
+
+// Words after the header of a heap binary holding bits: the bit length, then data rounded up to words.
+constexpr std::size_t heap_binary_payload_words(std::size_t bits, std::size_t word_bytes) noexcept {
+    return 1 + ((bits + 7) / 8 + word_bytes - 1) / word_bytes;
+}
+
+static_assert(float_payload_words(4) == 2 && float_payload_words(8) == 1);
+static_assert(heap_binary_payload_words(512, 4) == 17 && heap_binary_payload_words(512, 8) == 9);
+static_assert(heap_binary_payload_words(0, 4) == 1 && heap_binary_payload_words(9, 8) == 2);
+static_assert(refc_payload_words(4) == 5 && refc_payload_words(8) == 5);
+
 // Packed MSB-first binary data shared by off-heap cells; immutable once published.
 using BinaryBuffer = std::vector<std::byte>;
 
@@ -153,7 +169,8 @@ static_assert(sizeof(ClosureCell) == 3 * sizeof(Word));
 // The shared_ptr is the only C++ member a cell may hold; it is two pointers on every supported STL.
 static_assert(sizeof(std::shared_ptr<const BinaryBuffer>) == 2 * sizeof(Word));
 static_assert(alignof(std::shared_ptr<const BinaryBuffer>) <= alignof(Word));
-static_assert(sizeof(RefcBinaryCell) == 6 * sizeof(Word));
+static_assert(sizeof(RefcBinaryCell) == (1 + refc_payload_words(sizeof(Word))) * sizeof(Word));
+static_assert(sizeof(FloatCell) == (1 + float_payload_words(sizeof(Word))) * sizeof(Word));
 static_assert(!std::is_trivially_copyable_v<RefcBinaryCell>);
 static_assert(std::is_nothrow_move_constructible_v<RefcBinaryCell>);
 // Every other cell moves by copying its words.

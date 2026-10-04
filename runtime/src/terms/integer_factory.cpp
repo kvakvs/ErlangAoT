@@ -22,8 +22,7 @@ TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
                                                                             : TermError::resource_limit);
     }
     auto *words = ::new (reserved->bytes().data()) Word[count + 2]{};
-    words[0] = (static_cast<Word>(count + 1) << layout::BoxHeader::CONTENT_SHIFT) |
-               (static_cast<Word>(BoxedKind::bignum) << 2);
+    words[0] = layout::BoxHeader::make(BoxedKind::bignum, count + 1);
     words[1] = static_cast<Word>(value < 0);
     const Integer magnitude = value < 0 ? -value : value;
     boost::multiprecision::export_bits(magnitude, words + 2, sizeof(Word) * 8, false);

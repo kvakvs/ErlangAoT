@@ -34,7 +34,7 @@ TermResult<Term> tuple(ProcessHeap &heap, const std::shared_ptr<detail::HeapStor
         return std::unexpected(heap_error(reserved.error()));
     }
     auto *words = ::new (reserved->bytes().data()) Word[elements.size() + 1]{};
-    words[0] = static_cast<Word>(elements.size()) << detail::layout::BoxHeader::CONTENT_SHIFT;
+    words[0] = detail::layout::BoxHeader::make(BoxedKind::tuple, elements.size());
     for (std::size_t i = 0; i < elements.size(); ++i) {
         words[i + 1] = elements[i].word();
     }

@@ -94,8 +94,7 @@ TermResult<Term> MapAccess::publish(ProcessHeap &heap, std::span<const MapEntry>
                                                                             : TermError::resource_limit);
     }
     auto *words = ::new (reserved->bytes().data()) Word[count]{};
-    words[0] = (static_cast<Word>(entries.size()) << layout::BoxHeader::CONTENT_SHIFT) |
-               (static_cast<Word>(BoxedKind::map) << 2);
+    words[0] = layout::BoxHeader::make(BoxedKind::map, count - 1);
     for (std::size_t i = 0; i < entries.size(); ++i) {
         words[1 + 2 * i] = entries[i].first.word();
         words[2 + 2 * i] = entries[i].second.word();

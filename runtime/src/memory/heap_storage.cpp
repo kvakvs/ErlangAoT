@@ -75,12 +75,12 @@ std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t 
         offset = 0;
     }
     auto &tail = chunks.back();
+    // Zero alignment padding as well, so it parses as filler.
+    std::memset(tail.bytes.get() + tail.used * sizeof(Word), 0, (offset + words - tail.used) * sizeof(Word));
     used_words += offset + words - tail.used;
     tail.used = offset + words;
     pending = true;
-    std::span<std::byte> result{tail.bytes.get() + offset * sizeof(Word), words * sizeof(Word)};
-    std::memset(result.data(), 0, result.size());
-    return result;
+    return std::span<std::byte>{tail.bytes.get() + offset * sizeof(Word), words * sizeof(Word)};
 }
 
 std::expected<void, HeapError> HeapStorage::charge(std::size_t words) noexcept {

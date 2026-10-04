@@ -558,16 +558,29 @@ Works on the existing chunks first, so the walker is proven before storage
 changes. Prefer C++ style design.
 
 - Success criteria
-  - [ ] Every allocated word belongs to a boxed object with a valid header, a
+  - [x] Every allocated word belongs to a boxed object with a valid header, a
     cons pair or filler; untraced payload is never reported as a term.
-  - [ ] `walk(area, visitor)` visits objects in address order and yields their
+  - [x] `walk(area, visitor)` visits objects in address order and yields their
     term slots; a debug verifier checks that every boxed/list slot points to an
     object start owned by the same process.
 - Tests
-  - [ ] Focused runtime test walks heaps built from every admitted layout,
+  - [x] Focused runtime test walks heaps built from every admitted layout,
     nested and shared; 32-bit cell sizes are checked by `static_assert`.
-  - [ ] Allocation failure injected mid-construction leaves a heap the verifier
+  - [x] Allocation failure injected mid-construction leaves a heap the verifier
     accepts.
+
+Done 2026-10-04. Map headers now count words (2 per entry); every factory encodes headers with
+`BoxHeader::make`; `BoxedKind::filler` (3) joins the zero word as filler, and `HeapStorage::reserve`
+zeroes alignment padding. `term_layout.hpp` gained `float_/refc_/heap_binary_payload_words` with
+`static_assert`s for 4- and 8-byte words. `memory/heap_walk` provides `parse_cell` and the template
+`walk(area, visitor)` yielding `HeapCell{words, slots, shape}` (errors `unknown_kind`, `bad_size`,
+`overrun`); `memory/heap_verify` implements public `ProcessHeap::verify()` returning a `HeapCensus`
+(cons, boxed, filler, words, off-heap cells) or the new `HeapError::corrupt_heap`: pass 1 walks every
+chunk, pass 2 resolves each slot (atoms through the runtime table, only small integers/`{}`/`[]` as
+other immediates) and matches the off-heap list. CTest `runtime_heap_walk` checks an exact census over
+every layout (including a bignum limb carrying a list tag), synthetic parse errors and three corrupt
+slots written into raw words; `runtime_lifecycle_failure` verifies the heap after every injected
+construction failure and retry; `runtime_memory` writes a filler header instead of arbitrary bytes.
 
 <a id="step-8d"></a>
 

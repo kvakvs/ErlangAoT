@@ -37,6 +37,13 @@ target_link_libraries(runtime_off_heap PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_off_heap PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_off_heap COMMAND runtime_off_heap)
 
+# Heap walker and verifier invariants over every admitted layout and malformed synthetic areas.
+add_executable(runtime_heap_walk heap_walk.cpp)
+erlang_aot_project_options(runtime_heap_walk)
+target_link_libraries(runtime_heap_walk PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_heap_walk PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_heap_walk COMMAND runtime_heap_walk)
+
 # Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
 add_executable(runtime_heap_measurements heap_measurements.cpp)
 erlang_aot_project_options(runtime_heap_measurements)

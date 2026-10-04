@@ -34,7 +34,8 @@ parses from its first word:
   so reserved but unused words parse as filler. Nonempty tuples always have a
   nonzero count and `{}` is an immediate.
 
-No cell needs alignment stronger than a word. Cells hold only words and bytes,
+No cell needs alignment stronger than a word. `memory/heap_walk` parses an area cell by cell and `ProcessHeap::verify`
+checks a whole heap (8C). Cells hold only words and bytes,
 except the off-heap binary's `std::shared_ptr` (below), so a cell moves by
 copying its words.
 

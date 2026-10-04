@@ -57,6 +57,11 @@ void require(bool condition, const char *message) {
     }
 }
 
+// A failed construction followed by a retry must leave a heap whose every area parses and resolves.
+void require_walkable(erlang_aot::runtime::ProcessContext &context) {
+    require(context.heap().verify().has_value(), "failed construction left an unparseable heap");
+}
+
 // Every startup allocation must roll back before an owner can escape to the host.
 void check_startup() {
     bool succeeded = false;
@@ -285,6 +290,7 @@ void check_integer_construction() {
                         "failed integer left published storage");
                 require(factory.integer_decimal(digits)->integer_decimal() == digits,
                         "integer retry corrupted magnitude");
+                require_walkable(context);
             }
         }
         require(live_allocations == baseline, "integer allocation sweep leaked");
@@ -314,6 +320,7 @@ void check_map_construction() {
                 require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
                         "failed map left published storage");
                 require(factory.map(entries)->map_size() == 2, "map retry lost entries");
+                require_walkable(context);
             }
         }
         require(live_allocations == baseline, "map allocation sweep leaked");
@@ -340,6 +347,7 @@ void check_float_construction() {
                 require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
                         "failed float left published storage");
                 require(factory.floating(1.5)->float_value() == 1.5, "float retry corrupted magnitude");
+                require_walkable(context);
             }
         }
         require(live_allocations == baseline, "float allocation sweep leaked");
@@ -385,6 +393,7 @@ void check_bitstrings(bool extraction, bool large) {
                 }
             }
             require(factory.binary(bytes).has_value(), "bit allocation rejection poisoned retry");
+            require_walkable(context);
         }
         require(live_allocations == baseline, "bit construction/extraction sweep leaked");
     }
@@ -463,6 +472,7 @@ void check_container_construction(bool list) {
                         "partial compound allocation survived rollback");
                 require((list ? factory.list(elements) : factory.tuple(elements)).has_value(),
                         "failed object index poisoned retry");
+                require_walkable(context);
             }
         }
         require(live_allocations == baseline, "compound allocation sweep leaked");
@@ -505,6 +515,7 @@ void check_integer_arithmetic() {
                         value.word(), value.word(), &output) == 0 &&
                         output == encode_integer(0).value(),
                     "arithmetic allocation failure poisoned exact retry");
+            require_walkable(context);
         }
         require(live_allocations == baseline, "integer arithmetic sweep leaked");
     }

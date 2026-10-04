@@ -203,3 +203,8 @@ after publish (cell built with empty shared_ptr, so rollback needs no destructor
 (ProcessHeap::charge/uncharge_off_heap, private; BitAccess static members since anon helpers aren't
 friends). Test runtime_off_heap includes runtime/src privately. Python edits: bash heredoc with many
 quotes failed once ("unexpected EOF") -> write script to scratchpad. Logs build/plan11-step8b.
+Plan11 step8C 2026-10-04: memory/heap_walk (parse_cell, template walk, HeapCell shape cons/boxed/
+filler) + heap_verify (public ProcessHeap::verify -> HeapCensus | HeapError::corrupt_heap). Map header
+count now words. abi::v1::primary_mask is `unsigned` (32-bit): `~primary_mask` truncates 64-bit
+addresses -> always cast to Word first. Bash heredoc eats `\n` in C strings: use scratchpad scripts.
+Logs build/plan11-step8c.
