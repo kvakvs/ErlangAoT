@@ -1,7 +1,43 @@
 # Share configure-time builds for static Windows LLVM dependencies.
 include_guard(GLOBAL)
 
-# Isolate retained artifacts by dependency options, host toolchain and runtime library.
+# Name a CRT selection with its MSVC switch; a Debug-only generator expression names its release family.
+function(erlang_aot_msvc_runtime_suffix output crt)
+    string(REPLACE "$<$<CONFIG:Debug>:Debug>" "" family "${crt}")
+    if(family STREQUAL "")
+        set(family MultiThreadedDLL)
+    endif()
+    if(NOT family MATCHES "^MultiThreaded(Debug)?(DLL)?$")
+        string(MAKE_C_IDENTIFIER "${family}" suffix)
+        set(${output} "${suffix}" PARENT_SCOPE)
+        return()
+    endif()
+    set(linkage T)
+    if(CMAKE_MATCH_2)
+        set(linkage D)
+    endif()
+    set(debug "")
+    if(CMAKE_MATCH_1)
+        set(debug d)
+    endif()
+    set(${output} "M${linkage}${debug}" PARENT_SCOPE)
+endfunction()
+
+# Discard a retained build whose toolchain, flags or options no longer match the requested ones.
+function(erlang_aot_reset_stale_dependency base identity)
+    set(stamp "${base}/.identity")
+    if(EXISTS "${stamp}")
+        file(READ "${stamp}" previous)
+        if(previous STREQUAL identity)
+            return()
+        endif()
+        message(STATUS "Rebuilding ${base}: toolchain, flags or options changed")
+    endif()
+    file(REMOVE_RECURSE "${base}/Debug" "${base}/Release" "${base}/install")
+    file(WRITE "${stamp}" "${identity}")
+endfunction()
+
+# Retain one Debug/Release installation per dependency, architecture and CRT family.
 function(erlang_aot_build_windows_dependency output)
     cmake_parse_arguments(PARSE_ARGV 1 dependency ""
         "NAME;SOURCE;HEADER;RELEASE_LIBRARY;DEBUG_LIBRARY" "OPTIONS")
@@ -12,12 +48,20 @@ function(erlang_aot_build_windows_dependency output)
     if(ERLANG_AOT_DOWNLOADED_LLVM AND ERLANG_AOT_DEFAULT_MSVC_RUNTIME)
         set(crt MultiThreaded)
     endif()
-    string(SHA256 identity "${dependency_NAME};${dependency_OPTIONS};${CMAKE_CXX_COMPILER};${CMAKE_C_COMPILER};${CMAKE_C_COMPILER_VERSION};${CMAKE_C_COMPILER_TARGET};${CMAKE_SIZEOF_VOID_P};${CMAKE_GENERATOR};${CMAKE_GENERATOR_PLATFORM};${CMAKE_GENERATOR_TOOLSET};${crt};${CMAKE_C_FLAGS};${CMAKE_C_FLAGS_DEBUG};${CMAKE_C_FLAGS_RELEASE}")
-    string(SUBSTRING "${identity}" 0 16 identity)
-    get_filename_component(base "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../thirdparty/${dependency_NAME}-build-${identity}" ABSOLUTE)
+    erlang_aot_msvc_runtime_suffix(crt_suffix "${crt}")
+    string(TOLOWER "${CMAKE_C_COMPILER_ARCHITECTURE_ID}" architecture)
+    if(architecture STREQUAL "")
+        math(EXPR architecture "${CMAKE_SIZEOF_VOID_P} * 8")
+    endif()
+    string(JOIN "\n" identity "${dependency_OPTIONS}" "${CMAKE_CXX_COMPILER}" "${CMAKE_C_COMPILER}"
+        "${CMAKE_C_COMPILER_VERSION}" "${CMAKE_C_COMPILER_TARGET}" "${CMAKE_GENERATOR}"
+        "${CMAKE_GENERATOR_PLATFORM}" "${CMAKE_GENERATOR_TOOLSET}" "${crt}" "${CMAKE_C_FLAGS}"
+        "${CMAKE_C_FLAGS_DEBUG}" "${CMAKE_C_FLAGS_RELEASE}")
+    get_filename_component(base "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../thirdparty/${dependency_NAME}-${architecture}-${crt_suffix}" ABSOLUTE)
     set(prefix "${base}/install")
     file(MAKE_DIRECTORY "${base}")
     file(LOCK "${base}/.build.lock" GUARD FUNCTION TIMEOUT 1800)
+    erlang_aot_reset_stale_dependency("${base}" "${identity}")
     set(generator_args)
     foreach(pair IN ITEMS "PLATFORM;-A" "TOOLSET;-T")
         list(GET pair 0 variable)
