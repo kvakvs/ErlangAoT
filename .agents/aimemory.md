@@ -78,162 +78,51 @@ narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_depe
 erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
 (float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).
 
-Plan11 step1 done 2026-10-03 (uncommitted): maint29 unchanged 21776803; fresh clang-cl Debug
-125/125 serial 729s, check-quality 258 units pass (tidy 22.1.8 from .venv-quality), 14 audit-only
-tests pass (build/plan11-audits), regenerate --check all 19 match. Gate cmd: vcvars64 + PATH
-"C:\Program Files\LLVM\bin"; DON'T pass LLVM_DIR (skips /MT+IDL0 -> probe mismatch). Logs
-build/plan11-step1. User added plan steps 1A (fast/full test split) and 1B (changed-file quality).
-
-Plan11 step1A done 2026-10-03 (uncommitted): ERLANG_AOT_TEST_MODE fast|full (unset=full).
-tests/compiler/patternmatch/matrix.py combinations()/option_lists(): fast = O0 positional +
-O2-off project. mutations.cmake fast=1 pass. LABELS full_only: parser_consumer,
-codegen_dependency, codegen_measurements. Presets debug-fast/windows-debug-fast (jobs 0),
-make test (fast, TEST_JOBS=nproc), make test-full, make-test.bat TEST_MODE/TEST_JOBS.
-Fast 122 tests ~60s wall (-j16 53s); full -j16 125/125 85s. Plan gate now fast per step,
-full per phase. No make on this host; gmake at C:/Strawberry/c/bin/gmake.exe for dry runs.
-
-Plan11 step1B 2026-10-03: changed-scope quality. cmake/quality_scope.py (+QualityScope.cmake)
-selects lizard files and tidy units (ninja -t deps for header dependents; cmake/,.clang-tidy,
-production CMakeLists -> all). Targets check-quality (changed) / check-quality-all;
-ERLANG_AOT_QUALITY_BASE overrides HEAD. make format/make-format.bat changed by default,
-format-all / FORMAT_SCOPE=all. First tidy run exited 1 with no diagnostics (silent analyzer
-crash, known flake); unchanged rerun passed. mutations.cmake per-call TIMEOUT 5->30 (load stall).
-cmd /c needs full path to repo .bat files on this host.
-
-Plan11 step1C 2026-10-03: docs/ consolidated 81 files (5,370 lines + ~500 KB evidence JSON)
-into 15 brief notes indexed by docs/README.md: preprocessor, parser, projects, compile,
-semantic, specialization, abi, features, patterns, guards, terms, runtime, otp-reference,
-validation (baseline, gate, provenance, test design, platform gaps, condensed history table).
-Old step validation md/json, compile-tests.txt and per-topic pattern/runtime docs deleted;
-originals in Git at 2777c98. README intro rewritten; all repo links repointed. Keep docs
-current-state only; step logs go to .agents, not docs.
-
-Plan11 step2 2026-10-03: six original fixtures tests/fixtures/programs/{textstats,frames,avltree,
-ring,kvstore,supervise} (project.toml, src, fixture.json entry+argv, expected/{stdout.txt,golden.json},
-compile.txt exact stderr with <fixture> paths). README = feature map (fixture -> steps). Oracle
-tests/compiler/programs/oracle.escript runs main/1 in spawn_monitor, logger -> stderr, halt 0/1;
-use erts-17.1/bin/escript.exe directly (bin/escript.exe segfaults; old otp-launch shim gone).
-regenerate.py [--check]; programs.py <tool> <work> [--update-diagnostics] = CTest programs_compile;
-programs_oracle opt-in. --check reproduced 3x. erlfmt CLI lacks getopt: format via escript calling
-erlfmt:format_file/2 with code path thirdparty/tools/erlfmt/_build/local (compiled erlfmt_cli there).
-`++`/`--` were ownerless ([arithmetic] notimpl) -> added to step 37. Logs build/plan11-step2.
-
-Plan11 step3 2026-10-03: entry contract docs/executables.md. project/entry parse_entry (u32 names,
-1..255, no ctrl/':'), SelectedEntry{name, origin}; manifest `entry` key (decode.cpp entry()),
-plan entry_selection (CLI overrides, single target else exit 2). driver/entry resolve_entry after
-index_inputs in analyze (EntryRequest{selected, required=-o}); Analysis.entry kept for step5.
-Exit: return/halt()=0, halt(N)=N, escaping exception incl exit(normal)=1, runtime failure=70.
-Bash tool mangles non-ASCII and `\n` in heredoc python; use Edit/Write for such text.
-CMake execute_process needs ENCODING UTF-8 for UTF-8 stderr matching on Windows.
-Plan11 step3A 2026-10-03: escript auto-detect by "#!" line 1 (no CLI flag). driver/escript
-escript_source rewrites line1 -> `-module('<basename .->_>__escript').` unless first form is
--module (lexical scan), %%! line 2/3 -> warning. CompilationInput.escript -> semantic::index(...,
-escript) -> semantic/escript index_escript (main/1 required+exported, -mode validated);
-capabilities allow -mode only in escripts. ResolvedEntry.escript -> exit 127 later (step 5).
-Name clash: ADL picked std::quoted for local `quoted` -> renamed atom_literal.
-Plan11 step4 2026-10-03: term printing. runtime output.hpp (TermStyle write|display, format_term,
-OutputSink, write_output); terms/term_text{,_scalars}.cpp; builtins/output.cpp erlang_aot_display_v1
-(abi/output.hpp, Status::output_failure=13). Compiler: body_builtin() erlang:display/1 only (qualified),
-ImmediateOperation::display marker -> lower_display. OTP display = C printer erl_printf_term.c (%.6e
-floats, printable latin1 lists as strings, <<"ascii">>, no '@'/reserved quoting), NOT ~w. OTP 26+ map
-internal order: atom keys by atom INDEX (varies per VM run!), >32 keys hash order -> we print map-key
-order (=~kw ordered); display goldens skip by structural rule (values.stable_order). Goldens
-tests/fixtures/printing (regenerate.py --escript erts-17.1/bin/escript.exe [--check]); match_wire.hpp
-reused. AtomStorage::boolean needs "true" pre-interned (registration does it). Python write_text on
-Windows writes CRLF: use write_bytes/newline=''. erlfmt: build/plan11-step4/fmt.escript (format_file(F,[])).
-Step4 gate: fresh fast 128/128 (first run after runtime source changes timed out 9 tests while ~10
-native sub-builds recompiled the runtime; rerun clean, 55 s). check-quality tidy with 2 jobs crashed
-clang-tidy (0xC0000005/0xC0000409) on random unchanged units 3x; same official script with
--DQUALITY_JOBS=1 passed all 265 units (build/plan11-step4/tidy1.cmd). Runtime CMake edits select all units.
-Plan11 step5 2026-10-04: startup object. abi/startup.hpp StartupDescriptor{abi,bits,modules**,count,
-entry module/function bytes,flags(escript=1)}; erlang_aot_main_v1(int,char**,const void*) +
-erlang_aot_halt_v1(ctx,word) (runtime/src/startup/{startup,arguments,halt}.cpp). Codegen
-codegen/startup.cpp appends llvm module "startup" AFTER inputs (serialize/emission/progress treat
-index>=inputs as startup; OutputBuffer.startup -> artifact eav1_start). Set from Analysis.entry in
-driver/backend.cpp (explicit entry only; -o still notimpl until step 6). Windows argv via
-_configure_wide_argv(_crt_argv_unexpanded_arguments)+__wargv (no shell32). halt -> CallFailure
-{code=halted, halt_status, value=slogan}; body_builtin erlang:halt/0,1 qualified only. Mangling
-verified with clang --target for 7 triples (decl file build/plan11-step5/mangle). CMake ARGN drops
-empty args: test "" via direct execute_process. Consumer exe from objects only needs LINKER_LANGUAGE CXX.
-Manual link: clang-cl /MT obj\*.obj build\debug\lib\erlang_runtime.lib (vcvars). Logs build/plan11-step5.
-Plan11 step6 2026-10-04: positional -o links. compiler/src/linking/{link,toolchain,runtime_library}
-(lib erlang_linking, LLVM Support/Object private). FrontendRequest.executable_output (optional path,
-replaced bool). Options --linker/--runtime-library (require --output). Default runtime path =
-compile def ERLANG_AOT_DEFAULT_RUNTIME ($<PATH:RELATIVE_PATH> runtime file vs erlangaot dir).
-Clang: --linker, PATH clang++/clang, then $ProgramFiles/LLVM/bin; args --driver-mode=g++ --target.
-Works outside vcvars (clang finds MSVC; picked lld-link). .exe appended for Windows targets w/o ext.
-Project -o still notimpl (step 7). Tests: linking_executable (other archive = erlang_artifacts lib
-for undefined-symbol link error); entry/escript/cli tests stop at --runtime-library absent.lib.
-examples/compile/client.erl gained main/1. Bash heredoc drops `\` -> use Edit for regex escapes.
-cmd: run .exe in cwd needs PowerShell (cmd said not recognized). Logs build/plan11-step6.
-Plan11 step6A 2026-10-04 (user request): --project + explicit -o (already single-target only) links;
-backend.cpp notimpl branch removed, FeatureId::executable_linking status implemented (failure_test
-linking_executable). Step 7 = manifest `output` without -o + multi-target. User's earlier amend of
-step 6 reverted the plan section (stale IDE buffer); restored. Don't stage user's test1.toml.
-Plan11 step7 2026-10-04: project builds link. Rule: target links iff not frontend(check/print/emit/inspect/
-print-types) AND (manifest output|entry or CLI -o|--entry) -> project/plan executable(); else in-memory
-library compile (kept so library-target compile checks work). linking: StagingDirectory (movable),
-StagedExecutable, stage_executable/publish_executable/link_executable; LinkRequest.create_directory for
-manifest outputs (not -o). Driver PendingExecutable{target, executable} queue in project_backend; publish
-artifacts then executables; colliding() catches names equal only after .exe. links_project() allows
---linker/--runtime-library without -o for --project (not --new-project). Test linking_project.
-Ninja did not rerun CMake after tests CMakeLists edit (cache had BUILD_TESTING=OFF): use the fresh gate.
--Os: LLVM 23 has no OptimizationLevel::Os/Oz; size = O2 pipeline + optsize fn attr (as Clang). LinkRequest.strip_unused
-adds --gc-sections / -dead_strip / /OPT:REF,ICF. MSVC link.exe already OPT:REF without /DEBUG, so Os==O2 size there.
-build/debug: BUILD_TESTING=OFF, needs vcvars64 env (LIB) for runtime/dep builds; MSVC C4554 false positive on
-static_cast<Word>(n - 1) << shift (hoist to a local).
-Plan11 step8 2026-10-04: executable golden runner tests/compiler/executables/{cases,run,selfcheck,regenerate}.py;
-cases tests/fixtures/executables/<case>/{*.erl,golden.json} (authored entry/runs[].args/stderr regex/sources;
-OTP exit_status/stdout/oracle_version/reference/inputs). CMake glob CONFIGURE_DEPENDS -> executables_<case>;
-selfcheck (wrong golden diff, stale hash); executables_oracle opt-in. Oracle = programs/oracle.escript via
-erts-17.1/bin/escript.exe. run.py uses matrix.combinations() (8 full / 2 fast), ~3 s per case on host.
-Pass --suffix=... as single token (CMake drops empty args). erlfmt: escript with code:add_path(
-"thirdparty/tools/erlfmt/_build/local") + erlfmt:format_file(F,[]) (beams flat there). Logs build/plan11-step8.
-Plan11 phase C inserted 2026-10-04 (user commit bb09359 "Replan new heap"): steps 8A-8I classic ERTS
-heap before step 9; single heap only (old heap/minor GC deferred, F04 backlog item). User direction:
-binaries >64 B stay std::shared_ptr buffers outside all heaps; refc_binary cell holds the shared_ptr
-+ off-heap list link, relocated by move-constructing that member. 8C note from user: prefer C++ style.
-Plan11 step8A 2026-10-04: docs/runtime-heap.md contract; full_only CTest runtime_heap_measurements
-(tests/runtime/heap_measurements.cpp, counting operator new). Baseline bb09359 x64 Debug: 100k kernel
-264/81 ms, 700000 used words, side bytes 24 MB (~80 B/cell std::map index), 66 KB/context.
-Logs build/plan11-step8a.
-Plan11 step8B 2026-10-04: BitCell -> layout::HeapBinaryCell (2 words + data) / RefcBinaryCell (6 words,
-shared_ptr<const BinaryBuffer=vector<byte>>, next_). Off-heap list memory/off_heap.{hpp,cpp}; link only
-after publish (cell built with empty shared_ptr, so rollback needs no destructor). off_heap_words charge
-(ProcessHeap::charge/uncharge_off_heap, private; BitAccess static members since anon helpers aren't
-friends). Test runtime_off_heap includes runtime/src privately. Python edits: bash heredoc with many
-quotes failed once ("unexpected EOF") -> write script to scratchpad. Logs build/plan11-step8b.
-Plan11 step8C 2026-10-04: memory/heap_walk (parse_cell, template walk, HeapCell shape cons/boxed/
-filler) + heap_verify (public ProcessHeap::verify -> HeapCensus | HeapError::corrupt_heap). Map header
-count now words. abi::v1::primary_mask is `unsigned` (32-bit): `~primary_mask` truncates 64-bit
-addresses -> always cast to Word first. Bash heredoc eats `\n` in C strings: use scratchpad scripts.
-Logs build/plan11-step8c.
-Plan11 step8D 2026-10-04: object index removed; HeapChunk.starts bitmap + HeapStorage.ranges (sorted by
-address); publish(storage, reservation, Word value) marks starts via walk after commit; TermAccess::object
-returns HeapObject by value decoded from header (memory/heap_terms.cpp). Test runtime_admission (public API).
-Measurements: side bytes 24 MB -> 94 KB. Logs build/plan11-step8d.
-8D rework (user review): NO start bitmap / interior-pointer checks. Pointers into a process heap come only
-from that process and always name object starts; admission = owned range + header shape. Don't add
-defenses for impossible cases; follow classic ERTS trust model.
-Plan 8E (user decision 2026-10-04): no handle table, ERTS model. Term = raw word + weak lifetime +
-collection count (stale-term error after GC, expired after teardown); handoffs/error payload = process
-root words (X regs/fvalue); host passes explicit root span to collect(). Term valid only in own process,
-read-only elsewhere (user criterion).
-Plan11 step8E 2026-10-04: Term {value_, atom_, HeapStorage* heap_, weak lifetime_, collections_}; no
-storage pin (off_heap test: buffers die at destroy_context). TermError::stale_term. Handoffs optional<Word>;
-GeneratedCallState::visit rebinds payload Term (friend). visit_roots template on ProcessContext.
-collect(span<Word> roots, sink) overload. Logs build/plan11-step8e.
-Plan11 step8F 2026-10-04: GeneratedRoots = minimal segmented stack: Segment header{previous,capacity,used}
-+ slots in ONE operator-new allocation of 4096 - 2*sizeof(void*) (user: page incl. container fields and
-largest release allocator header = Win64 HEAP_ENTRY 16 B; 507 slots on 64-bit; larger frames whole pages), top_ chain, top freed when empty; Frame{slots,count,handoff}. User
-review: first version's doubling/spare/trim = over-engineered; wants minimal now, iterate later (flat moving
-stack w/ in-stack frame headers after codegen reloads frame base: steps 17/24/26 criteria added). Segments
-only exist because generated code holds absolute Word* from roots_enter across calls. Bash `cat > file`
-without heredoc hangs on stdin. Logs build/plan11-step8f.
-Plan11 step8G 2026-10-04: HeapStorage = heap_ (one lazy block per process, max(min_heap_words=233, req))
-+ fragments_ vector (newest tried after heap) + ranges_ sorted; HeapArea{words_,capacity_,top_}. User:
-"heap is one block per process, each process owns its heap". HeapOptions{min_heap_words, limit_bytes}
-(positional: words, bytes). reserve(words) no alignment. Rollback drops new fragment/heap block -> tests
-expecting capacity 0 after failure still hold. Fragment vector grows geometrically (reserve(size+1)
-each push was quadratic). Python Path.write_text writes CRLF on Windows: use write_bytes. Logs
-build/plan11-step8g.
+Plan11 steps 1-8G done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
+Step facts beyond the plan record:
+- 1/1A/1B: maint29 21776803 unchanged. Fast mode = matrix.py O0 positional + O2-off project, mutations
+  once, LABELS full_only excluded. ERLANG_AOT_QUALITY_BASE overrides HEAD for changed-scope quality.
+- 2: fixture layout project.toml, src, fixture.json entry+argv, expected/{stdout.txt,golden.json},
+  compile.txt exact stderr; oracle tests/compiler/programs/oracle.escript (main/1 in spawn_monitor).
+- 3/3A: project/entry parse_entry, manifest decode entry(); driver/entry resolve_entry after
+  index_inputs; escript rewrites line 1 to `-module('<base>__escript').`, %%! warns.
+- 4: OTP display = C printer erl_printf_term.c, not ~w. OTP 26+ map order follows atom index (varies per
+  VM run) / hash order > 32 keys -> print key order, goldens skip unstable (values.stable_order).
+  AtomStorage::boolean needs "true" pre-interned (registration does it).
+- 5: startup llvm module appended after inputs (index >= inputs = startup). Windows argv via
+  _configure_wide_argv + __wargv (no shell32). halt -> CallFailure{halted, halt_status, slogan}.
+- 6/6A/7: linking lib erlang_linking; default runtime = ERLANG_AOT_DEFAULT_RUNTIME relative to
+  erlangaot; clang found via --linker, PATH, $ProgramFiles/LLVM/bin; works outside vcvars (lld-link).
+  Project rule: link iff not frontend action AND (manifest output|entry or CLI -o|--entry); else
+  in-memory library compile. -Os = O2 pipeline + optsize attr (LLVM 23 has no Os level).
+- 8: run.py uses matrix.combinations() (8 full / 2 fast), ~3 s per case. Pass --suffix=... as one token.
+- Phase C (user commit bb09359): single heap only, old heap/minor GC deferred (F04).
+- 8B: refc cell linked only after publish (built with empty shared_ptr, rollback needs no destructor).
+- 8C: abi::v1::primary_mask is 32-bit `unsigned`: cast to Word before `~`.
+- 8E: Term {value_, atom_, heap_, weak lifetime_, collections_}; GeneratedCallState::visit rebinds payload.
+- 8F: Segment = ONE operator-new of 4096 - 2*sizeof(void*) (Win64 HEAP_ENTRY 16 B). Segments exist only
+  because generated code holds absolute Word* from roots_enter across calls.
+- 8G: HeapArea{words_,capacity_,top_}; HeapOptions positional {words, bytes}; rollback drops a new
+  fragment/heap block, so tests expecting capacity 0 after failure hold. Fragment vector grows
+  geometrically (reserve(size+1) per push was quadratic). 100k kernel ~3,000 fragments.
+User directions (keep):
+- Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
+  checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.
+- ERTS host model: no handle table; Term valid only in own process, read-only elsewhere.
+- Binaries > 64 B stay std::shared_ptr buffers outside heaps; prefer C++ style designs.
+- Heap is one block per process; each process owns its heap.
+- Don't stage user's test1.toml. Stale IDE buffers may revert plan edits: re-check before commit.
+Host and tool gotchas:
+- Gate: vcvars64 + PATH "C:\Program Files\LLVM\bin"; never pass LLVM_DIR (skips /MT+IDL0). Scripts
+  build/plan11-step8g/{gate,rt,quality,all}.cmd; cmd /c needs full .bat path; run .exe via PowerShell.
+- build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.
+- First run after runtime source edits can time out tests while native sub-builds recompile; rerun.
+- clang-tidy may crash (0xC0000005/0xC0000409) or exit 1 silently with 2 jobs; rerun or
+  -DQUALITY_JOBS=1. Runtime CMake edits select all tidy units.
+- MSVC C4554 false positive on static_cast<Word>(n - 1) << shift: hoist to a local.
+- Bash heredocs mangle non-ASCII, `\n` and `\`, and many quotes break them: write files with Write
+  or scratchpad scripts. `cat > file` without heredoc hangs. Python Path.write_text writes CRLF on
+  Windows: use write_bytes. CMake drops empty ARGN args; execute_process needs ENCODING UTF-8.
+- ADL can pick std::quoted for a local `quoted`: rename. No make here; gmake at C:/Strawberry/c/bin.
+- OTP oracle: erts-17.1/bin/escript.exe directly (bin/escript.exe segfaults). erlfmt: escript with
+  code:add_path("thirdparty/tools/erlfmt/_build/local") + erlfmt:format_file(F, []).

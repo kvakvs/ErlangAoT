@@ -125,603 +125,209 @@ CTests (123 fast) and 258 production quality units.
 
 ---
 
-## A. Baseline and fixtures
+## Completed steps 1–8G (compact record)
+
+Full step texts, criteria and per-step evidence are in Git history (last full
+version at `a4e07bb`). Every step below passed the common gate.
+
+### A. Baseline and fixtures
 
 <a id="step-1"></a>
 
 ### 1. Refresh the OTP reference and record a fresh baseline
 
-Backlog: V03. Depends on: completed baseline.
-
-Check upstream `maint-29` per the reference procedure and capture the current
-gate as the starting point for this plan.
-
-- Success criteria
-  - [x] Pin, checkout, corpus hashes and grammar evidence agree with upstream,
-    or the unchanged revision is recorded with the fetch date.
-  - [x] The full gate passes and its test/quality-unit counts are recorded in
-    `docs/validation.md`.
-- Tests
-  - [x] Full gate on a fresh build.
-  - [x] Opt-in grammar, corpus and source audits pass against the pin; any
-    drift is reported, not hidden by regeneration.
+Done 2026-10-03. `maint-29` unchanged at `21776803`; fresh full gate 125/125,
+258 quality units; grammar, corpus and source audits pass.
 
 ### 1A. Tests run time too long
 
-The test running is taking too much time, can we split tests into fast and full?
-- Use fast during development
-- Use full test mode once per major feature completion.
-- Success criteria: Test runs while development is ongoing take 1-2 min instead of 700 seconds now.
-
-Done 2026-10-03. `ERLANG_AOT_TEST_MODE=fast` (presets `debug-fast`/`windows-debug-fast`,
-`make test`, `make-test.bat`) runs 122 tests in parallel in about 60 s: golden corpora use
-O0 positional plus O2-off project (`tests/compiler/patternmatch/matrix.py`), mutations run
-once, and `full_only` tests are excluded. Full mode (default when unset) passes 125/125 in
-85 s with `-j 16`, versus 729 s serially.
+Done 2026-10-03. `ERLANG_AOT_TEST_MODE=fast|full` (unset = full), presets
+`debug-fast`/`windows-debug-fast`, `make test`/`make test-full`; label
+`full_only`. Fast mode (O0 positional + O2-off project) about 60 s; full
+`-j 16` about 85 s.
 
 ### 1B. Quality check checks too much
 
-Quality checking should only check the files changed in the working tree, no need to hit same clean files repeatedly, unless they depend on changed files.
-- Success criteria: Scope of static checks and formatting is reduced for each change, instead of doing entire source every time.
-
-Done 2026-10-03. `check-quality`, `make format` and `make-format.bat` default to files changed
-since `HEAD` (plus untracked); `check-quality-all`, `make format-all` and `FORMAT_SCOPE=all`
-keep full scans. `cmake/quality_scope.py` selects Lizard files and clang-tidy units, adding
-units that include a changed header via Ninja deps; `.clang-tidy`, `cmake/` or production
-CMake changes (or missing deps) select every unit. Full formatting fixed two pre-existing
-unformatted declarations; the mutation hang guard rose from 5 s to 30 s after a load-only
-timeout under parallel fast CTest (the case takes 16 ms alone).
+Done 2026-10-03. `check-quality` and `make format` cover files changed since
+`HEAD` plus header dependents (`cmake/quality_scope.py`, Ninja deps);
+`check-quality-all`/`format-all` scan everything.
 
 ### 1C. Run the available documentation check
 
-The documentation in /doc/ was never createad intentionally rather as byproduct of implementation passes. Clean it up and drop duplicated, bloated text, keep only brief informational pieces which may later help build good documentation.
-
-Done 2026-10-03. 81 files (5,370 lines plus about 500 KB of evidence JSON) became 15 brief
-notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler
-(`compile`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`,
-`terms`), `runtime`, `otp-reference` and `validation`. Per-step validation records, evidence
-JSON and step logs were removed; [validation history](../docs/validation.md#history) keeps
-dates, revisions and counts, and originals remain in Git at `2777c98`. Stale claims (configure
-requiring OTP, revision-2 descriptors, placeholder compilation) were corrected; every
-repository link was repointed and checked.
+Done 2026-10-03. `docs/` reduced to 15 brief current-state notes indexed by
+`docs/README.md`; originals at `2777c98`.
 
 <a id="step-2"></a>
 
 ### 2. Author target program fixtures and their feature map
 
-Backlog: V03, F26. Depends on: [1](#step-1).
+Done 2026-10-03. Six OTP-goldened programs in `tests/fixtures/programs/`
+(`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with a
+feature map README; CTest `programs_compile`, opt-in `programs_oracle`.
 
-Write 4–6 small project-owned Erlang programs that represent the end goal (for
-example: text/number processing CLI, binary protocol parser, recursive data
-structure library, process ring, key-value server loop, supervisor-style
-restart). Record which language features and builtins each needs.
-
-- Success criteria
-  - [x] Each fixture is original code with a project manifest, entrypoint,
-    expected stdout and exit status generated once from OTP.
-  - [x] A table maps every fixture to the plan steps it depends on.
-- Tests
-  - [x] Explicit regeneration reproduces each golden under OTP.
-  - [x] A normal CTest compiles each fixture and checks today's expected
-    unsupported-feature diagnostics (updated as later steps land).
-
-Done 2026-10-03. Six fixtures in `tests/fixtures/programs/` (`textstats`, `frames`, `avltree`,
-`ring`, `kvstore`, `supervise`) with the feature map in its README. Goldens come from OTP 29.1.1
-through `tests/compiler/programs/oracle.escript` under the proposed step-3 contract;
-`regenerate.py --check` reproduced all six three times. CTest `programs_compile` verifies hashes
-and exact `compile.txt` diagnostics; opt-in `programs_oracle` reruns OTP. The fixtures showed
-`++`/`--` had no owner, so step 37 now lists them.
-
-## B. Production executables
+### B. Production executables
 
 <a id="step-3"></a>
 
 ### 3. Decide the entrypoint, arguments and exit-status contract
 
-Backlog: F01. Depends on: [1](#step-1). **Decision.**
-
-Define how an executable chooses its entry function, receives arguments and
-reports its result. Proposed default: `main/1` receives argv as a list of
-strings; normal return exits 0; `erlang:halt/0,1` sets the status; an uncaught
-exception prints a report to stderr and exits 1. Choose CLI (`--entry M:F`) and
-project-manifest spelling, including whether the manifest key extends schema 1.
-
-- Success criteria
-  - [x] `docs/executables.md` defines entry selection, argv encoding, exit
-    codes, stdout/stderr use and failures for missing or unexported entries.
-  - [x] The compiler validates the entry selection (exists, exported, arity)
-    and reports located errors, without linking yet.
-- Tests
-  - [x] CLI cases for valid entry, missing module, missing function, wrong
-    arity and unexported entry, checking exit status and diagnostics.
-  - [x] Project manifest cases for the new entry key, including unknown/invalid
-    values.
-
-Done 2026-10-03. Chosen: `--entry MODULE[:FUNCTION]` and optional schema-1 target key
-`entry`; function default `main`, arity always 1 (argv strings). Without a selection, `-o`
-uses the only module exporting `main/1`. Exit 0 on return/`halt()`, `halt(N)` sets N, any
-escaping exception (including `exit(normal)`) or killing signal exits 1, runtime failure 70.
-`driver/entry.cpp` resolves after indexing so entry and capability errors report together;
-CTest `linking_entry` covers CLI, manifest and detection cases. Fresh gate: 124 fast tests,
-260 quality units.
+Done 2026-10-03. `docs/executables.md`: `--entry MODULE[:FUNCTION]` or manifest
+`entry`; `main/1` gets argv strings; exit 0 on return/`halt()`, `halt(N)` = N,
+escaping exception 1, runtime failure 70. `driver/entry.cpp`; CTest
+`linking_entry`.
 
 ### 3A. Add escript compile mode
 
-Consider a new option (or better auto detect situations) when user wants to 
-compile a escript file/compile file into a escript executable. Those have slightly
-different start routine name and arguments. Consult with Erlang/OTP documentation
-how escript file main functions are to be defined.
-
-Done 2026-10-03. Auto-detected, no option: a first line starting with `#!` selects escript rules
-from OTP's `escript` docs and `escript.erl` (`docs/executables.md#escripts`). `driver/escript`
-rewrites the header (shebang replaced by `-module('<file>__escript').` when the first form is
-not `-module`, line numbers kept; `%%!` warns), `semantic/escript` requires and exports `main/1`
-and validates `-mode`, and entry detection prefers the batch's only escript, whose uncaught
-exceptions will exit 127. CTest `linking_escript`; acceptance matched OTP 29 `escript` once. Fresh gate:
-125 fast tests, 262 quality units.
+Done 2026-10-03. A `#!` first line selects escript rules (`driver/escript`,
+`semantic/escript`): `main/1` required, `-mode` validated, uncaught exception
+exits 127. CTest `linking_escript`.
 
 <a id="step-4"></a>
 
 ### 4. Add runtime term printing and `erlang:display/1`
 
-Backlog: F01, F26. Depends on: [1](#step-1).
-
-Implement `~w`-style text output for every admitted term in the runtime, used
-for program output, uncaught-error reports and later `io` support.
-
-- Success criteria
-  - [x] Atoms (with quoting), integers, floats (OTP shortest round-trip form),
-    tuples, lists, improper lists, maps (OTP key order), bitstrings and records
-    print exactly as OTP `~w`.
-  - [x] `erlang:display/1` is callable from source and writes one line.
-- Tests
-  - [x] Golden comparison of printed output against OTP for the existing owned
-    corpora values (reuse their expected results as inputs).
-  - [x] Deep and wide terms print within bounded work; output write failure is
-    reported.
-
-Done 2026-10-03. `format_term` (`runtime/src/terms/term_text*.cpp`) renders `~w` and the
-emulator's `erlang:display/1` text iteratively under a 64 MiB cap; `RuntimeOptions::standard_output`
-(default stdout) receives display lines. `erlang:display/1` is a body-only service lowered to
-`erlang_aot_display_v1` (new status `output_failure`). Maps print in map-key order (OTP `~kw`):
-OTP's default order follows atom-table indices (varying between VM runs) or hashing, so it is not
-reproduced and display goldens skip such values. `tests/fixtures/printing/` holds 9,542 values
-(corpus results plus authored edge cases; `regenerate.py --check` reproduced 3x); CTests
-`runtime_printing` (goldens, 100k-deep, 1M-wide, shared-subterm cap, sink failure) and
-`printing_display` (154 compiled display calls against real OTP stdout, all policies).
+Done 2026-10-03. `format_term` (`runtime/src/terms/term_text*.cpp`) prints `~w`
+and display text iteratively under a 64 MiB cap; `erlang:display/1` lowers to
+`erlang_aot_display_v1` (status `output_failure`). Maps print in key order (OTP
+order is not reproducible). Goldens `tests/fixtures/printing/` (9,542 values);
+CTests `runtime_printing`, `printing_display`.
 
 <a id="step-5"></a>
-  
+
 ### 5. Generate the startup object
 
-Backlog: F01. Depends on: [3](#step-3), [4](#step-4).
-
-Emit a native `main` that creates the runtime, registers every module of the
-batch, builds argv, calls the entry and maps the outcome to the exit status.
-
-- Success criteria
-  - [x] Startup registers modules transactionally and shuts the runtime down in
-    order on every exit path.
-  - [x] Uncaught errors print the step-3 report; ABI mismatch fails before
-    entry.
-- Tests
-  - [x] Link startup plus modules manually with the existing harness recipe and
-    check normal return, `halt/1`, uncaught error and argv passing.
-  - [x] IR inspection of the startup object at O0/O2 on both word widths.
-
-Done 2026-10-04. An explicit entry adds a startup module (`codegen/startup`, artifact `eav1_start`)
-whose `main` passes an `abi::v1::StartupDescriptor` to the runtime's `erlang_aot_main_v1`
-(`runtime/src/startup/`): all descriptors are ABI-checked before the first registration, a failed
-registration discards the runtime before entry (exit 70), argv is decoded per platform (CRT wide args
-on Windows), reports follow a stdout flush and teardown is ordered on every path. `erlang:halt/0,1`
-became a body builtin (`erlang_aot_halt_v1`, `CallError::halted`) so the exit paths are testable.
-CTests `linking_startup` (O0 positional, O2 project and escript objects linked by CMake without a
-harness; argv, return, halt, slogan, badarg, badmatch, function_clause, escript 127; startup IR for
-x64/x86 MSVC, x64 Linux, ARMv7 at O0/O2) and `runtime_startup` (ABI/flag mismatch, duplicate module,
-missing entry never run the entry).
+Done 2026-10-04. An explicit entry adds startup module `codegen/startup`
+(`eav1_start`) whose `main` calls `erlang_aot_main_v1` with an
+`abi::v1::StartupDescriptor`; ordered teardown on every path.
+`erlang:halt/0,1` is a body builtin (`erlang_aot_halt_v1`). CTests
+`linking_startup`, `runtime_startup`.
 
 <a id="step-6"></a>
 
 ### 6. Link executables from positional CLI inputs
 
-Backlog: F01. Depends on: [5](#step-5).
-
-Drive Clang to link module objects, startup and the matching runtime library;
-replace the explicit executable-output "not implemented" failure.
-
-- Success criteria
-  - [x] `erlangaot -o app[.exe] a.erl b.erl` produces a runnable program.
-  - [x] Missing runtime, missing linker, link errors and target mismatch fail
-    with clear diagnostics and publish no partial executable.
-- Tests
-  - [x] Build and run the two-module example at O0/O2; compare stdout and exit
-    status.
-  - [x] Failure cases: absent runtime library, wrong target triple, unwritable
-    output path, existing output preserved on failure.
-
-Done 2026-10-04. New `compiler/src/linking/` (`erlang_linking`, LLVM-private): positional `-o` keeps
-objects in memory, stages them in a private `.erlangaot-link-*` directory beside the output and runs
-`<clang> --driver-mode=g++ --target=<triple>` with the runtime archive, then replaces the output (`.exe`
-added for Windows targets without an extension). Options `--linker` (else `clang++`/`clang` on PATH, then
-`%ProgramFiles%/LLVM/bin`) and `--runtime-library` (else the build's archive, recorded relative to
-`erlangaot`); LLVM Object checks every member's arch/format against the target. Linking works outside a
-VS developer shell. `examples/compile/client.erl` gained `main/1`. CTest `linking_executable` (example
-O0/O2, argv/halt, escript 127; absent/non-archive/wrong-target runtime, absent linker, real undefined-symbol
-link error, file-as-directory, directory and input destinations, existing output preserved, no staging
-left); entry/escript/CLI tests now stop at an absent runtime library; project `-o` stays notimpl (step 7).
-Entry-detection hints spell `--entry MODULE[:FUNCTION]` and, for project targets, the manifest
-`entry = "MODULE[:FUNCTION]"` key. Fresh gate: 131 fast tests, 272 quality units.
+Done 2026-10-04. `compiler/src/linking/`: `-o` stages objects privately and
+links with `clang --driver-mode=g++ --target=<triple>` plus the runtime
+archive, then replaces the output (`.exe` added on Windows). Options
+`--linker`, `--runtime-library`; archive members checked against the target.
+CTest `linking_executable`.
 
 ### 6A. Link a single project target with explicit `-o`
 
-Users combine `--project` with `-o` and expect a program. Project `-o` already requires exactly
-one selected target, so that target links like a positional batch; manifest `output` without `-o`
-and multi-target linking stay in step 7.
-
-- Success criteria
-  - [x] `erlangaot --project P [--target T] [--entry M] -o PATH` links and runs.
-  - [x] No path reports `[executable linking] notimpl`; the catalog entry is implemented.
-- Tests
-  - [x] `linking_executable` links project targets (manifest and CLI entry, O0/O2) and reports
-    a project-prefixed failure; entry and placeholder tests no longer expect notimpl.
+Done 2026-10-04. `--project` with `-o` links its single target; executable
+linking is no longer `notimpl`.
 
 <a id="step-7"></a>
 
 ### 7. Link executables from project targets
 
-Backlog: F01. Depends on: [6](#step-6).
-
-Use the reserved manifest `output` paths so each selected target produces its
-executable.
-
-- Success criteria
-  - [x] Each selected target links to its output (default `build/<target>[.exe]`);
-    all targets validate before any publication.
-  - [x] A later target failure leaves earlier valid outputs unchanged.
-- Tests
-  - [x] Multi-target project workflow with selection, CLI `-o` rules and output
-    aliasing checks.
-  - [x] Run each produced executable and compare its output.
-
-Done 2026-10-04. Without `--emit` or a check/print action, a project build links every selected
-target that requests an executable (manifest `output` or `entry`, CLI `-o` or `--entry`) to CLI `-o`,
-else `output`, else `<manifest-dir>/build/<target>`; other targets stay in-memory library builds (the
-existing compile-check use of library targets keeps working, and `--new-project` templates already
-carry `output`). `linking::stage_executable` links into a private staging directory (missing
-manifest-output directories created), the driver queues `PendingExecutable`s and
-`publish_executable` replaces outputs only after every target succeeded; names equal only after
-`.exe` are rejected before publication. `--linker`/`--runtime-library` also apply to linking project
-builds. CTest `linking_project` (fixture `tests/fixtures/linking/project/`: all targets at O0/O2 run
-and compared, selection, `-o`/`--entry` rules, runtime-option failures, later link failure keeping an
-existing output, plan and `.exe` aliasing); `project_workflow`/`codegen_project` now expect
-`no entry point` for output-bearing targets without `main/1`. Fresh gate: 132 fast tests,
-check-quality (changed scope: 13 Lizard files, 33 tidy units).
+Done 2026-10-04. Targets requesting an executable (manifest `output`/`entry`
+or CLI `-o`/`--entry`) link to `-o`, else `output`, else
+`<manifest-dir>/build/<target>`; outputs publish only after every target
+succeeds. CTest `linking_project`.
 
 <a id="step-8"></a>
 
 ### 8. Add the executable golden test runner
 
-Backlog: F01, V04. Depends on: [7](#step-7).
+Done 2026-10-04. Case = `tests/fixtures/executables/<case>/` sources plus
+`golden.json` (authored entry/args/stderr regex, OTP stdout/exit status);
+`tests/compiler/executables/{run,regenerate}.py`, CTests `executables_<case>`
+and `executables_selfcheck`; policies from `matrix.py`. Phase B close: fast 135,
+full 138/138, `check-quality-all` 272 units.
 
-One shared CTest helper: compile Erlang sources to an executable, run it with
-arguments, and compare stdout, stderr pattern and exit status with an owned
-golden. Later steps use it for end-to-end tests.
+### C. Classic process heap
 
-- Success criteria
-  - [x] Adding a case needs only source files and a golden file.
-  - [x] The runner covers the four policy combinations (O0/O2 ×
-    specialization on/off) without duplicating code per test.
-- Tests
-  - [x] Port the documented two-module demo to the runner.
-  - [x] Self-check: a deliberately wrong golden fails with a readable diff.
+Inserted 2026-10-04. The phase-B heap (non-moving chunk list, per-cell
+`std::map` index, fixed 64-byte bitstring cells with a destructor registry,
+`shared_ptr`-pinning host terms, per-frame root buffers, no overflow area)
+could not grow into BEAM-style collection. Target design, contract in
+`docs/runtime-heap.md`:
 
-Done 2026-10-04. A case is a directory under `tests/fixtures/executables/` with Erlang sources and
-`golden.json`: authored `entry`, `runs[].args`, optional `runs[].stderr` regex (required when OTP
-writes stderr) and `sources`, plus OTP `exit_status`/`stdout`, oracle version, pin and source hashes
-written by `tests/compiler/executables/regenerate.py` (programs `oracle.escript`; `--check` reproduced
-both cases). CMake globs cases into `executables_<case>`; `run.py` rejects stale or ungenerated goldens,
-links under `matrix.py` (full: O0/O2 × specialization on/off × positional `--entry -o` and project
-manifest `entry`/`output`; fast: O0 positional, O2-off project) and prints unified stdout diffs plus
-exit/stderr mismatches. Cases `demo` (the `examples/compile` sources) and `exits` (argv, `halt(3)`,
-`badmatch`, `function_clause` across modules); `executables_selfcheck` checks the diff for a wrong
-golden and the early stale-golden failure. `linking_executable` keeps its `-Os` size and replacement
-checks. Step 58 adapts the program fixtures' layout to this runner. Phase B closes: fresh fast
-gate 135 tests; full `-j 16` 138/138 in 235 s; `check-quality-all` passes 272 units.
-
-## C. Classic process heap
-
-Review of the runtime heap at phase B close (`runtime/src/memory/`,
-`term_layout.hpp`, `roots.hpp`) found a design that cannot evolve into BEAM-style
-collection:
-
-- `HeapStorage` is a list of chunks that never move, so cells cannot be
-  compacted or copied and retained capacity only grows.
-- Each published cell is a node in a per-process `std::map` index
-  (`HeapStorage::objects`); admission and access depend on it, so heap words
-  alone are not parseable.
-- Every bitstring cell has a fixed 64-byte inline array and an embedded
-  `shared_ptr`, and C++ members are released through a destructor registry
-  indexed by address; nothing can move such a cell or find its dead copies.
-- Host `Term` handles hold `shared_ptr<HeapStorage>` and raw `HeapObject`
-  pointers that no collector could rewrite.
-- Generated root frames are separate heap-allocated buffers rather than one
-  process stack, and there is no overflow area for allocation that must not
-  move the heap.
-
-Target design, following classic ERTS:
-
-- A heap is a flat array of words. A boxed object starts with a header word
-  (primary tag `00`, kind, count of following words); a cons cell is two term
-  words without a header. Untraced payload (bignum limbs, float bytes, binary
-  data) is counted in its header, so a walker parses any heap area left to
-  right and the collector knows every value by its header.
-- Each process has one heap (BEAM `heap`) where all values allocate. A
-  generational old heap with minor collections (BEAM `old_heap`) is deferred;
-  the layout must keep it addable later.
-- Each process has a stack of root frames, kept separate from the heap (BEAM
-  grows it down from the heap end; a separate stable buffer is acceptable).
-- When a value must be allocated but the heap cannot move or grow (critical
-  section, no safe point), it goes into a heap fragment; fragments form a
-  chain owned by the process and are merged into the heap by the next
-  collection.
-- Binaries larger than 64 bytes float outside every process heap as immutable
-  shared buffers. A boxed off-heap binary cell (BEAM ProcBin) holds a
-  `std::shared_ptr` to its buffer and is linked into a per-process off-heap
-  list. Moving the cell move-constructs that member; the list sweep after
-  collection and teardown destroys it in dead cells.
-
-Steps 8A–8I replace the storage behind the existing services without changing
-generated-code ABI or observable program behavior; every golden must pass
-unchanged after each step. Generated code keeps raw words between runtime
-calls until step 26, so until then a heap moves only at explicit host-requested
-safe points and generated-code allocation overflows into fragments.
+- A heap is a flat word array: boxed objects start with a header (tag `00`,
+  kind, word count, untraced payload counted), cons cells are two headerless
+  words, so any area parses left to right.
+- Each process owns one heap block plus fragments for allocation that may not
+  move the heap, and a separate root stack; no old heap yet.
+- Binaries over 64 bytes are shared `std::shared_ptr` buffers outside every
+  heap, referenced by `refc_binary` cells on a per-process off-heap list.
+- Steps 8A–8I keep generated-code ABI and every golden unchanged. Until step
+  26 the heap moves only at explicit host safe points; generated-code overflow
+  goes to fragments.
 
 <a id="step-8a"></a>
 
 ### 8A. Decide the classic process heap contract
 
-Backlog: F03, F04. Depends on: [8](#step-8). **Decision.**
-
-Publish `docs/runtime-heap.md` with the review above and its replacement.
-
-- Success criteria
-  - [x] Word-level layout: header encoding (tag, kind, word count), cons cells,
-    untraced payload, filler words for padding and rolled-back tails, and a
-    cell table for every admitted kind on 32- and 64-bit words.
-  - [x] Areas and sizing: heap, stack, fragment chain and off-heap list; minimum heap size, growth sequence and one budget
-    (`limit_bytes`) across all areas, including off-heap binary bytes.
-  - [x] Admission rule that replaces the object index while still rejecting
-    forged, interior, stale and foreign words.
-  - [x] Safe points: when the heap may move, when allocation must use a
-    fragment, and how host handles, stack frames and owned error payloads are
-    found and rewritten.
-  - [x] Scope changes for steps 23–28 and 45 are recorded in this plan.
-- Tests
-  - [x] Baseline measurement of an allocation-heavy runtime kernel and the
-    per-context footprint, recorded in the document for 8I (not gated).
-
-Done 2026-10-04. `docs/runtime-heap.md` fixes the contract: header word (tag `00`, five kind bits,
-word count from bit 7), headerless cons, zero-word and `filler` padding, a per-kind cell table (map
-header now counts words, 2 per entry), one heap plus fragments, a segmented stack, no old heap,
-ERTS sizing from 233 words, one `limit_bytes` budget including created off-heap buffers, start-bitmap
-admission and host-only safe points until step 26. Per user direction, binaries over 64 bytes stay
-`std::shared_ptr` buffers outside every heap: the `refc_binary` cell holds the pointer, joins a
-per-process off-heap list and is moved by move-constructing that member (8B updated). Full-only
-CTest `runtime_heap_measurements` recorded the baseline at `bb09359`: 100k-cell kernel 264/81 ms,
-700,000 used words, 24 MB index side bytes (about 80 per cell), 66 KB and 8,192 heap words per
-context.
+Done 2026-10-04. `docs/runtime-heap.md`: header word (5 kind bits, count from
+bit 7), per-kind cell table (map count in words), filler, areas, ERTS sizing
+from 233 words, one `limit_bytes` budget including off-heap buffers, admission,
+safe points. Full-only CTest `runtime_heap_measurements`; baseline `bb09359`:
+kernel 264/81 ms, 24 MB index, 66 KB per context.
 
 <a id="step-8b"></a>
 
 ### 8B. Split binary cells and add the off-heap list
 
-Backlog: F03, F09. Depends on: [8A](#step-8a).
-
-Replace the fixed `BitCell` with two cells: a variable-size heap binary (bit
-length and data words, at most 64 bytes) and an off-heap binary (bit offset,
-bit length, `std::shared_ptr` to the shared buffer, off-heap link). The process
-keeps an off-heap list of its off-heap binary cells instead of the
-`HeapDestructor` registry.
-
-- Success criteria
-  - [x] Every layout in `term_layout.hpp` is trivially copyable except the
-    off-heap binary, whose only C++ member is the `shared_ptr` (`static_assert`
-    on its two-word size); one relocation hook moves that member.
-    `HeapDestructor` and `HeapStorage::resources` are gone.
-  - [x] Shared buffers are released exactly once when the last cell holding
-    them dies (today: owning heap teardown); extracted tails keep their buffer
-    alive.
-- Tests
-  - [x] Bitstring, printing and executable goldens pass unchanged.
-  - [x] Focused runtime test: buffer counts across tails, rollback after a
-    failed construction, and context teardown.
-
-Done 2026-10-04. `term_layout.hpp` now holds the real binary cells: `HeapBinaryCell` (header, bit
-length, data words; at most 64 bytes, sized to the data instead of a fixed 13 words) and
-`RefcBinaryCell` (6 words: header, offset, bits, `shared_ptr<const BinaryBuffer>`, `next_`), plus
-`BoxHeader::make/kind/count`; `ClosureCell` stores a registry ID instead of a `weak_ptr`.
-`memory/off_heap` links a cell only after publication, relocates it by move construction and releases
-the list at `HeapStorage` teardown. Created buffers are charged through `off_heap_words` (shared
-`limit_bytes` budget, uncharged if the cell fails) instead of physically reserved heap words.
-`HeapReservation::commit()` lost its destructor parameter; the unused `binary_heap_object.hpp` sketch
-was removed. New CTest `runtime_off_heap` (private headers): shared tails, one charge, list length,
-teardown after the last host pin, budget rollback, relocation; `runtime_lifecycle_failure` also checks
-off-heap words after injected failures. The alignment parameter stays until 8G.
+Done 2026-10-04. `HeapBinaryCell` (at most 64 bytes inline) and
+`RefcBinaryCell` (6 words: offset, bits, `shared_ptr<const BinaryBuffer>`,
+`next_`); `memory/off_heap` links after publication, relocates by move
+construction and releases at teardown. `HeapDestructor` removed; buffers are
+charged via `off_heap_words`. CTest `runtime_off_heap`.
 
 <a id="step-8c"></a>
 
 ### 8C. Make heap areas parseable and add a heap walker
 
-Backlog: F03, F04. Depends on: [8B](#step-8b).
-
-Works on the existing chunks first, so the walker is proven before storage
-changes. Prefer C++ style design.
-
-- Success criteria
-  - [x] Every allocated word belongs to a boxed object with a valid header, a
-    cons pair or filler; untraced payload is never reported as a term.
-  - [x] `walk(area, visitor)` visits objects in address order and yields their
-    term slots; a debug verifier checks that every boxed/list slot points to an
-    object start owned by the same process.
-- Tests
-  - [x] Focused runtime test walks heaps built from every admitted layout,
-    nested and shared; 32-bit cell sizes are checked by `static_assert`.
-  - [x] Allocation failure injected mid-construction leaves a heap the verifier
-    accepts.
-
-Done 2026-10-04. Map headers now count words (2 per entry); every factory encodes headers with
-`BoxHeader::make`; `BoxedKind::filler` (3) joins the zero word as filler, and `HeapStorage::reserve`
-zeroes alignment padding. `term_layout.hpp` gained `float_/refc_/heap_binary_payload_words` with
-`static_assert`s for 4- and 8-byte words. `memory/heap_walk` provides `parse_cell` and the template
-`walk(area, visitor)` yielding `HeapCell{words, slots, shape}` (errors `unknown_kind`, `bad_size`,
-`overrun`); `memory/heap_verify` implements public `ProcessHeap::verify()` returning a `HeapCensus`
-(cons, boxed, filler, words, off-heap cells) or the new `HeapError::corrupt_heap`: pass 1 walks every
-chunk, pass 2 resolves each slot (atoms through the runtime table, only small integers/`{}`/`[]` as
-other immediates) and matches the off-heap list. CTest `runtime_heap_walk` checks an exact census over
-every layout (including a bignum limb carrying a list tag), synthetic parse errors and three corrupt
-slots written into raw words; `runtime_lifecycle_failure` verifies the heap after every injected
-construction failure and retry; `runtime_memory` writes a filler header instead of arbitrary bytes.
+Done 2026-10-04. `memory/heap_walk` (`parse_cell`, `walk`) and
+`ProcessHeap::verify()` (`memory/heap_verify`, `HeapCensus` or
+`corrupt_heap`); `BoxedKind::filler`. CTest `runtime_heap_walk`; failure
+injection verifies the heap after each rollback.
 
 <a id="step-8d"></a>
 
 ### 8D. Admit heap words by header instead of the object index
 
-Backlog: F03. Depends on: [8C](#step-8c).
-
-Replace `HeapStorage::objects` with an ownership check: the word lies inside
-the process's used areas and its tag agrees with the header or cons cell it
-names. Process pointers only ever name object starts, so no start bitmap is
-kept. Accessors decode kind, count and payload from the header.
-
-- Success criteria
-  - [x] Foreign and stale words are rejected before any load outside the
-    process's used areas.
-  - [x] Publication allocates nothing per object.
-- Tests
-  - [x] Existing ownership and forged-word runtime tests and all goldens pass
-    (interior-pointer cases removed: such pointers cannot exist).
-  - [x] Focused test admitting every layout's start, including later cons
-    cells, and rejecting rolled-back, past-used and foreign words.
-
-Done 2026-10-04. `HeapStorage::objects` (`std::map`) is gone; `HeapStorage::ranges` keeps chunks
-sorted by address and rollback drops ranges of removed chunks. `publish(storage, reservation, value)`
-commits and admits; nothing is allocated per object. `TermAccess::admit` checks alignment, chunk range
-and used bound (`HeapStorage::owned`), then `parse_cell` shape against the tag; `TermAccess::object`
-returns a header-decoded `HeapObject` by value and `Term` lost its `object_` pointer. A first version
-also kept a per-chunk start bitmap to reject interior pointers; per user review it was dropped, since
-pointers into a process heap only come from that process and always name object starts (`verify()`
-keeps the full start check for tests). CTest `runtime_admission`; interior-pointer asserts removed from
-`runtime_containers`/`runtime_bitstrings`. `runtime_heap_measurements`: side bytes 24 MB to 3.4 KB, build
-264 to 185 ms, walk 81 to 147 ms (decode re-finds the chunk because clang-tidy rejects int-to-pointer
-casts; revisit with the 8G single block).
+Done 2026-10-04. Object index removed; admission = word-aligned address below
+an area top plus header/cons shape matching the tag. No start bitmap: process
+pointers always name object starts. `TermAccess::object` decodes from the
+header. CTest `runtime_admission`; side bytes 24 MB to 3.4 KB.
 
 <a id="step-8e"></a>
 
 ### 8E. Hold host terms as raw words between safe points
 
-Backlog: F02, F03. Depends on: [8D](#step-8d).
-
-Follow the ERTS model: C++ code holds tagged words (BEAM `Eterm`) only between
-safe points; there is no handle table. A host `Term` keeps its word, a weak
-context lifetime token and the heap's collection count instead of pinning heap
-storage with `shared_ptr<HeapStorage>`. Values the runtime itself must keep
-across a safe point become process root words that the collector scans and
-rewrites: generated-call result handoffs (BEAM X registers) and the current
-error payload (BEAM `fvalue`). Host code that needs values across `collect()`
-passes them as an explicit root span and reads them back afterwards.
-
-- Success criteria
-  - [x] A `Term` is only valid inside its own process context. Using term by a
-    non-owning process is read-only.
-  - [x] `Term` no longer pins heap storage. Access after context teardown still
-    reports `expired_context`; access after a later collection of its heap
-    reports a stale-term error instead of reading moved memory (checked in 8H).
-  - [x] Result handoffs and owned error payloads are process root words; the
-    stack, these words and the caller's explicit root span are the complete
-    root set.
-- Tests
-  - [x] Existing host-term, lifetime and root tests and all goldens pass.
-  - [x] Focused test: handoff and error-payload words appear in the root
-    enumeration; `Term`s outliving their context report `expired_context`.
-
-Done 2026-10-04. `Term` replaced `shared_ptr<HeapStorage>` with a borrowed `HeapStorage *`, a
-`weak_ptr<const ContextLifetime>` and the heap's collection count (`HeapStorage::collections`, bumped
-by 8H); `TermAccess::object` checks lifetime then count (`TermError::stale_term`, service status
-`internal_error`). Admission takes `HeapStorage &`. `GeneratedRoots` handoffs are `std::optional<Word>`;
-the channel's payload `Term` stays in `CallFailure` and `GeneratedCallState::visit` rewrites then
-`Term::rebind`s it. `ProcessContext::visit_roots(explicit, visitor)` visits stack slots, handoffs,
-the payload and the explicit span; `ProcessHeap::collect(std::span<Word> roots, sink)` overload added
-(still `not_implemented`). Non-owning reads already worked and stay read-only (`add`/`copy_to` reject
-foreign graphs). `runtime_roots` gained `root_set` (enumeration, payload rebind, expiry);
-`runtime_off_heap` now expects buffers released at context teardown although host Terms remain.
+Done 2026-10-04. `Term` = word + borrowed `HeapStorage *` + weak lifetime +
+collection count (`expired_context`, `stale_term`); no storage pin. Result
+handoffs (`std::optional<Word>`) and the error payload are process roots;
+`ProcessContext::visit_roots` covers stack, handoffs, payload and the explicit
+span of `collect(span<Word>)` (still `not_implemented`). CTest `runtime_roots`
+case `root_set`.
 
 <a id="step-8f"></a>
 
 ### 8F. Move generated root frames onto a process stack
 
-Backlog: F02. Depends on: [8E](#step-8e).
-
-Replace per-frame buffers with one per-process stack, separate from the heap,
-holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
-`erlang_aot_roots_leave_v4` keep their ABI.
-
-- Success criteria
-  - [x] A live frame's address stays stable (reserved capacity or stable
-    segments, as chosen in 8A); the 1,000,000-word and 4,096-frame limits and
-    LIFO errors are unchanged.
-  - [x] Stack enumeration yields every generated root slot.
-- Tests
-  - [x] Existing root, startup and executable goldens pass unchanged.
-  - [x] Focused tests for limit exhaustion, LIFO violation and restore after a
-    failed call.
-
-Done 2026-10-04. `GeneratedRoots` keeps one minimal process stack: a chain of `Segment`s, each one
-allocation that with a two-pointer allocator header fits `RootOptions::segment_bytes` (4096, one x86
-page), holding a header (older-segment link, capacity, used) followed by slots (507 on 64-bit), and `Frame` windows (slots pointer, count, handoff). A
-frame that does not fit the top segment opens a new one (whole pages for larger frames); the top
-segment is freed when its last frame returns, so the top frame always lies in it and live windows
-never move. Per user review the first version's doubling, spare segment and trimming were
-dropped as premature; the flat moving stack waits for frame-base reloads (steps 17, 24, 26).
-`capacity()` reports reserved words for 8H. ABI, limits and LIFO errors are unchanged. `runtime_roots`
-gained `segments` (stability across small segments, full enumeration, word bound across segments,
-release), `page_segments` (one page per default segment, whole pages for a larger frame),
-`default_limits` (1,000,000 words, 4,096 frames) and `failed_call` (restore after a failed call);
-`runtime_lifecycle_failure` checks a failed entry leaves no allocation behind.
+Done 2026-10-04. `GeneratedRoots` is a minimal segmented stack: one-page
+segments (4096 bytes including a two-pointer allocator header; 507 slots on
+64-bit), larger frames take whole pages, the top segment is freed when empty,
+frames never move. ABI, 1,000,000-word and 4,096-frame limits unchanged. A
+flat moving stack waits for frame-base reloads (steps 17, 24, 26).
 
 <a id="step-8g"></a>
 
 ### 8G. Replace chunks with a contiguous heap and heap fragments
 
-Backlog: F03. Depends on: [8F](#step-8f).
+Done 2026-10-04. `HeapStorage` owns one process's single heap block `heap_`,
+created by the first reservation at `max(min_heap_words, request)`, and its
+fragment chain `fragments_` (newest fragment tried after the heap, else a new
+one of at least `min_heap_words`, capped by the budget). `HeapOptions` is
+`{min_heap_words = 233, limit_bytes}`; `reserve` has no alignment parameter.
+Rollback resets tops and drops a new fragment or heap block. CTest
+`runtime_heap_fragments`; 1,000 contexts take 2.4 KB and 233 words each; the
+100k kernel spans about 3,000 fragments until 8H.
 
-The heap is one block `[start, top, end)` sized from a minimum heap size,
-with bump allocation. A request that does not fit while the heap may not move
-allocates a heap fragment sized to fit and chained to the process. Reservation
-rollback resets `top` or drops the newest fragment. The alignment parameter is
-removed (word alignment only).
-
-- Success criteria
-  - [x] All allocation goes to the heap or a fragment; admission and the
-    walker cover both.
-  - [x] Heap plus fragments stay within `limit_bytes`; `limit_exceeded`,
-    `out_of_memory` and the one-reservation rule are unchanged.
-- Tests
-  - [x] All goldens pass unchanged.
-  - [x] Focused tests: overflow into fragments, rollback across a fragment
-    boundary, exhaustion with fragments, and many contexts with the default
-    small heap.
-
-Done 2026-10-04. `HeapStorage` owns one process's single heap block `heap_` and its fragment chain
-`fragments_` (`HeapArea`: `unique_ptr<Word[]>`, capacity, top), fields renamed with trailing underscores.
-The block is created by the first reservation, sized `max(min_heap_words, request)` so the request fits;
-a request that does not fit goes to the newest fragment, else a new one of `max(min_heap_words, request)`
-words, both capped by the remaining budget. `HeapMark` records heap capacity/top, fragment count and newest
-top; rollback drops new fragments (or the new heap block) and resets tops, so failed construction still
-keeps no backing. `HeapOptions::chunk_bytes` became `min_heap_words` (233); `reserve` lost its alignment
-parameter. Admission checks the heap block, then fragments sorted by address; `verify()` walks both. New
-CTest `runtime_heap_fragments`; option literals in tests converted to words. Measurements: 1,000 contexts
-take 2.4 KB and 233 heap words each (was 66 KB, 8,192); the 100k kernel now spans about 3,000 fragments
-(build 219 ms, walk 174 ms) until 8H collects.
+## C. Classic process heap (remaining)
 
 <a id="step-8h"></a>
 
