@@ -372,13 +372,27 @@ Use the reserved manifest `output` paths so each selected target produces its
 executable.
 
 - Success criteria
-  - [ ] Each selected target links to its output (default `build/<target>[.exe]`);
+  - [x] Each selected target links to its output (default `build/<target>[.exe]`);
     all targets validate before any publication.
-  - [ ] A later target failure leaves earlier valid outputs unchanged.
+  - [x] A later target failure leaves earlier valid outputs unchanged.
 - Tests
-  - [ ] Multi-target project workflow with selection, CLI `-o` rules and output
+  - [x] Multi-target project workflow with selection, CLI `-o` rules and output
     aliasing checks.
-  - [ ] Run each produced executable and compare its output.
+  - [x] Run each produced executable and compare its output.
+
+Done 2026-10-04. Without `--emit` or a check/print action, a project build links every selected
+target that requests an executable (manifest `output` or `entry`, CLI `-o` or `--entry`) to CLI `-o`,
+else `output`, else `<manifest-dir>/build/<target>`; other targets stay in-memory library builds (the
+existing compile-check use of library targets keeps working, and `--new-project` templates already
+carry `output`). `linking::stage_executable` links into a private staging directory (missing
+manifest-output directories created), the driver queues `PendingExecutable`s and
+`publish_executable` replaces outputs only after every target succeeded; names equal only after
+`.exe` are rejected before publication. `--linker`/`--runtime-library` also apply to linking project
+builds. CTest `linking_project` (fixture `tests/fixtures/linking/project/`: all targets at O0/O2 run
+and compared, selection, `-o`/`--entry` rules, runtime-option failures, later link failure keeping an
+existing output, plan and `.exe` aliasing); `project_workflow`/`codegen_project` now expect
+`no entry point` for output-bearing targets without `main/1`. Fresh gate: 132 fast tests,
+check-quality (changed scope: 13 Lizard files, 33 tidy units).
 
 <a id="step-8"></a>
 

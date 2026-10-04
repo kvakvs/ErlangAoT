@@ -88,20 +88,26 @@ bool generate(codegen::Compilation &compilation, const Analysis &analysis, const
     return codegen::optimize(compilation) && emit(compilation);
 }
 
-// Link the in-memory module and startup objects into the explicit --output executable.
+// Link the in-memory module and startup objects; project executables wait for the whole invocation.
 void link(const codegen::Compilation &compilation, const FrontendRequest &frontend, const DiagnosticSink &sink) {
     auto inputs = frontend.protected_inputs;
     for (const auto &input : compilation.request().inputs) {
         inputs.push_back(input.source_path);
     }
-    const auto warnings = linking::link_executable({.output = *frontend.executable_output,
-                                                    .target_triple = codegen::target_triple(compilation),
-                                                    .objects = compilation.result().outputs(),
-                                                    .linker = frontend.backend.linker,
-                                                    .runtime_library = frontend.backend.runtime_library,
-                                                    .protected_inputs = inputs});
-    if (!warnings.empty()) {
-        sink(warnings);
+    auto executable = linking::stage_executable({.output = *frontend.executable_output,
+                                                 .target_triple = codegen::target_triple(compilation),
+                                                 .objects = compilation.result().outputs(),
+                                                 .linker = frontend.backend.linker,
+                                                 .runtime_library = frontend.backend.runtime_library,
+                                                 .protected_inputs = inputs,
+                                                 .create_directory = frontend.create_output_directory});
+    if (!executable.warnings.empty()) {
+        sink(executable.warnings);
+    }
+    if (frontend.pending_executables) {
+        frontend.pending_executables->push_back({frontend.project_target, std::move(executable)});
+    } else {
+        linking::publish_executable(executable);
     }
 }
 

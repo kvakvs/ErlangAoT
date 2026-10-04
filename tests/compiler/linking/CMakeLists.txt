@@ -24,4 +24,10 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "-DOTHER_LIBRARY=$<TARGET_FILE:erlang_artifacts>"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/executable.cmake")
     set_tests_properties(linking_executable PROPERTIES TIMEOUT 300)
+    # Project targets linked to their manifest outputs: selection, -o/--entry rules, aliasing, deferred publication.
+    add_test(NAME linking_project COMMAND "${CMAKE_COMMAND}"
+        "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}"
+        "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/project/$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/project.cmake")
+    set_tests_properties(linking_project PROPERTIES TIMEOUT 300)
 endif()

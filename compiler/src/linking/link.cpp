@@ -7,6 +7,7 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
+#include <utility>
 
 namespace erlang_aot::linking {
 namespace {
@@ -20,29 +21,6 @@ bool remove_tree(const std::filesystem::path &directory) noexcept {
         return false;
     }
 }
-
-struct Staging {
-    // Own a uniquely created directory beside the output; objects, logs and partial executables live here.
-    std::filesystem::path directory;
-
-    // Reserve the directory atomically so concurrent invocations never share files.
-    explicit Staging(const std::filesystem::path &parent) {
-        llvm::SmallString<256> created;
-        if (const auto error = llvm::sys::fs::createUniqueDirectory(utf8_path(parent / ".erlangaot-link"), created)) {
-            throw std::runtime_error("cannot create link staging directory in " + project::path_text(parent) + ": " +
-                                     error.message());
-        }
-        directory = project::native_path(created.str());
-    }
-
-    // Discard everything the link produced unless the executable was already moved out.
-    ~Staging() { static_cast<void>(remove_tree(directory)); }
-
-    Staging(const Staging &) = delete;
-    Staging &operator=(const Staging &) = delete;
-    Staging(Staging &&) = delete;
-    Staging &operator=(Staging &&) = delete;
-};
 
 // Resolve the invocation-relative output, adding ".exe" for Windows targets when no extension is given.
 std::filesystem::path executable_path(const LinkRequest &request) {
@@ -65,12 +43,22 @@ void check_destination(const std::filesystem::path &path, std::span<const std::f
     artifacts::detail::validate_destination(path, inputs);
 }
 
+// Create the output directory of a manifest output; an existing directory is kept as it is.
+void create_output_directory(const std::filesystem::path &directory) {
+    std::error_code error;
+    std::filesystem::create_directories(directory, error);
+    if (error) {
+        throw std::runtime_error("cannot create output directory " + project::path_text(directory) + ": " +
+                                 error.message());
+    }
+}
+
 // Write each object under a short indexed name and return the paths in link order.
-std::vector<std::string> stage_objects(const Staging &staging, const LinkRequest &request) {
+std::vector<std::string> stage_objects(const StagingDirectory &staging, const LinkRequest &request) {
     const auto extension = llvm::Triple(request.target_triple).isOSBinFormatCOFF() ? ".obj" : ".o";
     std::vector<std::string> paths;
     for (const auto &object : request.objects) {
-        const auto path = staging.directory / ("m" + std::to_string(paths.size()) + extension);
+        const auto path = staging.path() / ("m" + std::to_string(paths.size()) + extension);
         std::ofstream file(path, std::ios::binary);
         file.write(reinterpret_cast<const char *>(object.bytes.data()),
                    static_cast<std::streamsize>(object.bytes.size()));
@@ -104,22 +92,55 @@ std::runtime_error link_failure(const std::filesystem::path &output, const std::
 }
 } // namespace
 
-std::string link_executable(const LinkRequest &request) {
+StagingDirectory::StagingDirectory(const std::filesystem::path &parent) {
+    llvm::SmallString<256> created;
+    if (const auto error = llvm::sys::fs::createUniqueDirectory(utf8_path(parent / ".erlangaot-link"), created)) {
+        throw std::runtime_error("cannot create link staging directory in " + project::path_text(parent) + ": " +
+                                 error.message());
+    }
+    directory = project::native_path(created.str());
+}
+
+StagingDirectory::~StagingDirectory() {
+    if (!directory.empty()) {
+        static_cast<void>(remove_tree(directory));
+    }
+}
+
+StagingDirectory::StagingDirectory(StagingDirectory &&other) noexcept : directory(std::exchange(other.directory, {})) {}
+
+StagedExecutable stage_executable(const LinkRequest &request) {
     const auto output = executable_path(request);
+    if (request.create_directory) {
+        create_output_directory(output.parent_path());
+    }
     check_destination(output, request.protected_inputs);
     const auto linker = find_linker(request.linker);
     const auto runtime = find_runtime_library(request.runtime_library);
     check_runtime_target(runtime, request.target_triple);
-    const Staging staging(output.parent_path());
-    const auto staged = staging.directory / output.filename();
+    StagingDirectory staging(output.parent_path());
+    auto staged = staging.path() / output.filename();
     const auto arguments = link_arguments(request, staged, stage_objects(staging, request), runtime);
-    const auto run = run_linker(linker, arguments, staging.directory / "link.log");
+    auto run = run_linker(linker, arguments, staging.path() / "link.log");
     std::error_code error;
     if (run.status != 0 || !std::filesystem::is_regular_file(staged, error)) {
         throw link_failure(output, linker, run);
     }
-    check_destination(output, request.protected_inputs);
-    artifacts::detail::replace(staged, output);
-    return run.output;
+    return {std::move(staging),
+            std::move(staged),
+            output,
+            {request.protected_inputs.begin(), request.protected_inputs.end()},
+            std::move(run.output)};
+}
+
+void publish_executable(const StagedExecutable &executable) {
+    check_destination(executable.output, executable.protected_inputs);
+    artifacts::detail::replace(executable.staged, executable.output);
+}
+
+std::string link_executable(const LinkRequest &request) {
+    const auto executable = stage_executable(request);
+    publish_executable(executable);
+    return executable.warnings;
 }
 } // namespace erlang_aot::linking

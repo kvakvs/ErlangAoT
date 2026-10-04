@@ -17,10 +17,15 @@ std::filesystem::path default_output(const Target &target) {
 #endif
 }
 
-// Apply output precedence only for compilation requests.
+// A compiling target links when the manifest or CLI asks for an executable (output or entry).
+bool executable(const Target &target, const PlanOptions &options) {
+    return !options.frontend && (options.output || options.entry || target.output || target.entry);
+}
+
+// Apply output precedence only for executable requests; other targets compile in memory.
 std::optional<std::filesystem::path> output_path(const Target &target, const PlanOptions &options,
                                                  const std::filesystem::path &base) {
-    if (options.frontend) {
+    if (!executable(target, options)) {
         return std::nullopt;
     }
     if (options.output) {

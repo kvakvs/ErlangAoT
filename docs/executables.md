@@ -1,8 +1,9 @@
 # Executables
 
-Contract for programs built by `erlangaot -o`. Positional inputs, or exactly
-one selected project target, link into an executable ([linking](#linking)).
-Without `-o`, the manifest `output` key is not linked yet (plan 11 step 7).
+Contract for programs built by `erlangaot -o` or a project build. Positional
+inputs, or exactly one selected project target, link into the `-o` path; a
+project build links each selected executable target to its manifest `output`
+([linking](#linking), [projects](projects.md#executables)).
 
 ## Entry selection
 
@@ -12,7 +13,7 @@ The entry is an exported function of arity 1 that receives the argument list.
 | --- | --- | --- |
 | CLI | `--entry MODULE[:FUNCTION]` | Positional batch, or the single selected project target |
 | Manifest | `entry = "MODULE[:FUNCTION]"` in a `[[targets]]` table | That target |
-| Default | Only escript, else only module exporting `main/1` | Only when an executable is requested |
+| Default | Only escript, else only module exporting `main/1` | Only when an executable is requested (`-o`, or a project target with `output`) |
 
 - `FUNCTION` defaults to `main`. Names are unquoted atom text: 1–255 Unicode
   scalars, valid UTF-8, no control characters and no `:`. Other spellings are
@@ -150,7 +151,11 @@ erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.
   replaced only after a successful link, so every failure keeps an existing
   file unchanged. The output must not be a directory or alias an input.
 - Linker warnings are forwarded to stderr; `--linker` and `--runtime-library`
-  require `--output`.
+  require `--output` or a linking project build.
+- Project builds without `-o` link every selected target that has `output` or
+  `entry` to its manifest output, creating missing directories, and replace the
+  outputs only after all selected targets linked
+  ([projects](projects.md#executables)).
 
 | Failure (exit 1) | Diagnostic |
 | --- | --- |

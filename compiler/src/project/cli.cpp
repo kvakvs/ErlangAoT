@@ -69,6 +69,8 @@ Project commands:
       --new-project <filename>  Create one annotated default target; append .toml
                                 when needed and refuse to overwrite existing files.
 Manifest paths are relative to the TOML file; CLI paths use the invocation directory.
+Without --emit or a check/print action, each selected target with an output or entry key links
+an executable to its output (default build/<target>); outputs are replaced only after all succeed.
 )";
 }
 } // namespace erlang_aot::project

@@ -9,6 +9,7 @@
 
 namespace erlang_aot::cli {
 struct Publication;
+struct PendingExecutable;
 
 struct FrontendRequest {
     // Select existing frontend output/check behavior independently of input selection.
@@ -32,8 +33,12 @@ struct FrontendRequest {
     std::vector<Publication> *pending_publications = nullptr;
     // Preserve unambiguous inspection headers across independently processed project targets.
     bool multiple_targets = false;
-    // Explicit --output destination; present only when an executable is requested.
+    // Executable destination (--output or a project target's output); present only when linking is requested.
     std::optional<std::filesystem::path> executable_output = {};
+    // Create a missing executable directory; set for manifest outputs, never for an explicit --output.
+    bool create_output_directory = false;
+    // Borrow the project queue so linked executables replace their outputs only after every target succeeded.
+    std::vector<PendingExecutable> *pending_executables = nullptr;
     // Explicit entry selection (CLI or manifest) validated during analysis.
     std::optional<project::SelectedEntry> entry = {};
 };

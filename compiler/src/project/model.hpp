@@ -41,7 +41,7 @@ struct Target {
     // Preserve source selection order before expansion and deduplication.
     std::vector<Text> sources;
     std::vector<Text> source_dirs;
-    // Distinguish omitted output from an explicitly requested future destination.
+    // Distinguish omitted output (default build/<target>, or no executable without entry) from an explicit one.
     std::optional<Text> output;
     // Optional MODULE[:FUNCTION] entry selection; validated spelling, resolved during compilation.
     std::optional<Text> entry;

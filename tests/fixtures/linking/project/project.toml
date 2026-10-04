@@ -1,0 +1,25 @@
+schema_version = 1
+
+# Entry without output: linked to the default build/hello (build/hello.exe on Windows).
+[[targets]]
+name = "hello"
+sources = ["hello.erl"]
+entry = "hello"
+
+[targets.options]
+defines = ["LABEL=hello"]
+
+# Explicit output in a directory that does not exist yet, with a non-default entry function.
+[[targets]]
+name = "tool"
+sources = ["tool.erl", "support.erl"]
+output = "bin/tool"
+entry = "tool:run"
+
+# Neither output nor entry: compiled in memory and not linked, unless --entry or -o asks for it.
+[[targets]]
+name = "library"
+sources = ["support.erl", "hello.erl"]
+
+[targets.options]
+defines = ["LABEL=library"]

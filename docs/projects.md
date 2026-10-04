@@ -41,9 +41,10 @@ my_dependency = "vendor/my_dependency"
 - `entry` (optional) selects the executable entry `MODULE[:FUNCTION]`; see
   [executables](executables.md#entry-selection). CLI `--entry` overrides it for
   a single selected target.
-- `output` is the reserved executable destination, default
-  `<manifest-dir>/build/<target>` (`.exe` on Windows). It is not linked yet
-  (plan 11 step 7); check/print modes ignore it.
+- `output` is the executable destination, default
+  `<manifest-dir>/build/<target>` (`.exe` on Windows). A target with `output` or
+  `entry` is an executable target ([executables](#executables)); `--emit` and
+  check/print modes ignore both keys' outputs.
 - Not supported yet: root defaults, inheritance, target dependencies, imports,
   profiles, exclusions, packages, watch, caching, parallel builds. Fields are
   added only together with their behavior.
@@ -64,8 +65,10 @@ erlangaot --new-project <filename>
 - `--project test1` loads `test1.toml` when `test1` does not exist.
 - CLI frontend options apply to every selected target. CLI-relative paths keep
   invocation-directory meaning; manifest paths are relative to the manifest.
-- `-o/--output` links the target to that path ([linking](executables.md#linking));
-  it requires exactly one selected target.
+- Without `--emit` or a check/print action, executable targets link to their
+  outputs ([executables](#executables)); other targets compile in memory.
+- `-o/--output` links the target to that path instead of its `output`
+  ([linking](executables.md#linking)); it requires exactly one selected target.
 - `--verbose` traces `[pp]` files/includes and `[parse]` sources on stderr.
 - Exit 2: usage errors and unknown targets. Exit 1: manifest, discovery,
   frontend or creation failures. Exit 0: success (warnings allowed).
@@ -79,6 +82,34 @@ banners; context and diagnostics go to stderr.
 ```sh
 ./build/debug/bin/erlangaot --parse-check --project examples/project/project.toml
 ./build/debug/bin/erlangaot --print-ast --project examples/project/project.toml --target tests --target app
+```
+
+## Executables
+
+`erlangaot --project FILE [--target T]...` (no `--emit`, no check/print action)
+links every selected target that has an `output` or `entry` key, or that CLI
+`-o`/`--entry` addresses, into one executable per target:
+
+- Destination: CLI `-o` (invocation-relative), else `output`
+  (manifest-relative), else `<manifest-dir>/build/<target>`. Windows targets add
+  `.exe` to a name without extension. Missing directories of manifest outputs
+  are created; an explicit `-o` directory must exist.
+- Entry: CLI `--entry`, manifest `entry`, else detection
+  ([entry selection](executables.md#entry-selection)).
+- Targets without `output`, `entry`, `-o` and `--entry` are libraries: they
+  compile in memory and write nothing, even if a module exports `main/1`.
+- Planning rejects selected targets with the same destination; outputs that
+  coincide only after `.exe` is added are rejected before publication. An
+  output must not alias a selected source or the manifest.
+- Each target compiles and links into its own staging directory. Outputs are
+  replaced only after every selected target succeeded, in target order; any
+  failure keeps every existing output unchanged. A failure while replacing a
+  later output can leave earlier ones already replaced.
+- `--linker` and `--runtime-library` apply to every linked target
+  ([linking](executables.md#linking)).
+
+```sh
+./build/debug/bin/erlangaot --project tests/fixtures/linking/project/project.toml
 ```
 
 ## Creating a project
@@ -126,7 +157,7 @@ banners; context and diagnostics go to stderr.
 | `defines` | Manifest first, then CLI; duplicates across both are errors |
 | `applications` | Manifest map; CLI entries replace matching names |
 | Feature lists | Manifest settings, then ordered CLI changes; CLI wins |
-| `output` | Per target; CLI `-o` overrides for a single selected target |
+| `output` | Per target, executable targets only; CLI `-o` overrides for a single selected target |
 | `entry` | Per target; CLI `--entry` overrides for a single selected target |
 
 ## Build dependency

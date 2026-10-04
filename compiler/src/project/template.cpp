@@ -19,7 +19,7 @@ sources = []
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
 source_dirs = ["src"]
-# Future executable path; checks/printing do not write it. Windows: build/app.exe.
+# Executable linked by `erlangaot --project`; --emit/checks/printing do not write it. Windows: build/app.exe.
 output = "@OUTPUT@"
 
 [targets.options]

@@ -94,6 +94,12 @@ std::optional<std::string> inspection_conflict(const Options &options) {
     return {};
 }
 
+// A project build without emission, inspection or checks links every selected target to its output.
+bool links_project(const Options &options) {
+    return options.project.file.has_value() && !options.backend.emit && !options.backend.inspect_ir() &&
+           !options.backend.print_types && !options.preprocess;
+}
+
 // Keep artifact emission and executable linking options on their own sides of --output.
 std::optional<std::string> output_conflict(const Options &options) {
     const auto &backend = options.backend;
@@ -103,8 +109,8 @@ std::optional<std::string> output_conflict(const Options &options) {
     if (backend.artifact_directory && !backend.emit) {
         return "--artifact-dir requires --emit";
     }
-    if ((backend.linker || backend.runtime_library) && !options.output_explicit) {
-        return "--linker and --runtime-library require --output";
+    if ((backend.linker || backend.runtime_library) && !options.output_explicit && !links_project(options)) {
+        return "--linker and --runtime-library require --output or a linking project build";
     }
     return {};
 }

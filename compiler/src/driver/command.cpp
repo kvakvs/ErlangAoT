@@ -16,8 +16,8 @@ Options:
       --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
   -o, --output <path>  Link an executable (Windows targets add .exe when no extension is given).
       --entry <module[:function]>  Select the executable entry function/1 (default function: main).
-      --linker <path>   Clang driver used to link --output (default: clang++ or clang on PATH).
-      --runtime-library <path>  Runtime archive linked into --output (default: the one built with erlangaot).
+      --linker <path>   Clang driver used to link executables (default: clang++ or clang on PATH).
+      --runtime-library <path>  Runtime archive linked into executables (default: the one built with erlangaot).
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
       --artifact-dir <dir>  Override artifact root; requires --emit.
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.

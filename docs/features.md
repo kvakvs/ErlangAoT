@@ -18,7 +18,7 @@ or refine an entry when its feature lands; keep its ID reserved.
 | --- | --- |
 | Compiler semantic analysis | Capability checks over every function, including unused code |
 | Compiler lowering | Defensive rejection at reached operations; clears staged artifacts |
-| Driver | `-o/--output` [links](executables.md#linking) positional inputs or one project target; manifest `output` without `-o` is not linked yet (step 7) |
+| Driver | `-o/--output` [links](executables.md#linking) positional inputs or one project target; project builds link each executable target to its manifest [`output`](projects.md#executables) |
 | Runtime services | See [runtime deferred services](runtime.md#deferred-services) |
 
 ## Message rules

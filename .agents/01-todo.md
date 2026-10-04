@@ -55,10 +55,11 @@ requiring the separately written C++ harness used today.
   shutdown; connect cooperative process execution when F22 becomes available.
   (Step 5 delivered the startup object and single-context execution; F22
   connection remains.)
-- [ ] Drive Clang/platform linking with one matching target runtime and safe
+- [x] Drive Clang/platform linking with one matching target runtime and safe
   CLI/ project output publication; replace the supported executable-output
-  placeholder. (Steps 6/6A link positional batches and one project target with `-o`;
-  manifest `output` and multi-target linking remain, step 7.)
+  placeholder. (Steps 6/6A/7: positional `-o`, one project target with `-o`, and
+  every executable project target to its manifest `output`: `linking_executable`,
+  `linking_project`.)
 - [x] Run emitted executables and verify missing-runtime, ABI, startup and link
   failures (steps 5–6: `linking_startup`, `runtime_startup`,
   `linking_executable`).

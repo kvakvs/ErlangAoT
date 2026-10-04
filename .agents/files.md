@@ -42,7 +42,7 @@ Keys in the last column are relative to the directory column.
 | `codegen/` | Atom slots / registration; startup module (`main` → `erlang_aot_main_v1`); guarded variants | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
-| `linking/` | Executable linking: staging/publication, Clang discovery/run, runtime archive lookup and target check | `link`, `toolchain`, `runtime_library` |
+| `linking/` | Executable linking: staged link (`StagedExecutable`) and deferred publication, Clang discovery/run, runtime archive lookup and target check | `link`, `toolchain`, `runtime_library` |
 
 ## Runtime — R
 
@@ -96,7 +96,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
 | `printing` | `values.py` (authored values, corpus collection, wire parse, order rule), `regenerate.py` + `oracle.escript` (explicit OTP goldens), `display.py` CTest `printing_display` (compiled display calls via `codegen/match.cmake`); runtime goldens `tests/runtime/printing.cpp` |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
-| `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; fixtures `tests/fixtures/linking/{entry,escript,startup}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
+| `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; `project.cmake`: multi-target manifest outputs, selection, `-o`/`--entry`, aliasing, deferred publication; fixtures `tests/fixtures/linking/{entry,escript,startup,project}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
 

@@ -170,3 +170,11 @@ Plan11 step6A 2026-10-04 (user request): --project + explicit -o (already single
 backend.cpp notimpl branch removed, FeatureId::executable_linking status implemented (failure_test
 linking_executable). Step 7 = manifest `output` without -o + multi-target. User's earlier amend of
 step 6 reverted the plan section (stale IDE buffer); restored. Don't stage user's test1.toml.
+Plan11 step7 2026-10-04: project builds link. Rule: target links iff not frontend(check/print/emit/inspect/
+print-types) AND (manifest output|entry or CLI -o|--entry) -> project/plan executable(); else in-memory
+library compile (kept so library-target compile checks work). linking: StagingDirectory (movable),
+StagedExecutable, stage_executable/publish_executable/link_executable; LinkRequest.create_directory for
+manifest outputs (not -o). Driver PendingExecutable{target, executable} queue in project_backend; publish
+artifacts then executables; colliding() catches names equal only after .exe. links_project() allows
+--linker/--runtime-library without -o for --project (not --new-project). Test linking_project.
+Ninja did not rerun CMake after tests CMakeLists edit (cache had BUILD_TESTING=OFF): use the fresh gate.

@@ -154,7 +154,7 @@
   private `.erlangaot-link-*` directory beside the output, runs `clang --driver-mode=g++
   --target=<triple>` (`--linker`, else PATH/`%ProgramFiles%/LLVM/bin`) with the runtime archive
   (`--runtime-library`, else the build's own path relative to `erlangaot`, checked member by member
-  for arch/object format via LLVM Object), then replaces the output. One project target links with explicit `-o` (6A); manifest `output` is step 7.
+  for arch/object format via LLVM Object), then replaces the output. Project builds (step 7) stage every executable target (manifest `output`/`entry`, CLI `-o`/`--entry`; planner `project/plan`) via `linking::stage_executable`, queue `PendingExecutable`s and `publish_executable` them only after all targets succeed; library targets compile in memory.
 
 - Term printing: runtime `format_term` renders `~w` or emulator display text iteratively under a
   byte cap (maps in map-key order); `erlang:display/1` is a body-only service writing to

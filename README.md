@@ -27,8 +27,9 @@ a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 - Compilation subset checks, parameter bindings, batch call resolution and declared
   type/specification analysis; see [semantic analysis](docs/semantic.md).
 - LLVM O0/O2 compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
-- Native executables from positional inputs (`erlangaot -o app a.erl b.erl`), linked by Clang
-  with the runtime library; see [executables](docs/executables.md).
+- Native executables from positional inputs (`erlangaot -o app a.erl b.erl`) or project
+  targets (`erlangaot --project app.toml`), linked by Clang with the runtime library; see
+  [executables](docs/executables.md).
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
 
@@ -294,8 +295,9 @@ each project target forms its own batch. `--emit` writes artifacts under `build/
 or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
 default root. Filenames encode module identity. `-o PATH` links positional inputs, or one
 selected project target, into an executable with Clang and the runtime library (entry:
-`--entry MODULE[:FUNCTION]`, manifest `entry`, or the only module exporting `main/1`); TOML
-`output` is not linked yet.
+`--entry MODULE[:FUNCTION]`, manifest `entry`, or the only module exporting `main/1`). Without
+`-o`, project targets with an `output` or `entry` key link to their TOML `output` (default
+`build/<target>`), publishing only after every selected target linked.
 See [executables](docs/executables.md) for the entry, argument and exit-status contract.
 
 ```sh

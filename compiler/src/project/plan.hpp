@@ -12,7 +12,7 @@ struct PlanOptions {
     std::optional<std::filesystem::path> output;
     // CLI --entry replaces the manifest entry of the single selected target.
     std::optional<EntryName> entry;
-    // Frontend requests ignore manifest output paths and never plan executable writes.
+    // Frontend (check/print/emit/inspect) requests ignore manifest output paths and never plan executable writes.
     bool frontend = false;
     DiscoveryLimits discovery;
 };
@@ -22,7 +22,7 @@ struct PlannedTarget {
     std::string name;
     std::vector<std::filesystem::path> sources;
     PreprocessorOptions preprocessing;
-    // Keep future output destinations absent for check/print requests.
+    // Executable destination; absent for check/print requests and targets without output, entry, -o or --entry.
     std::optional<std::filesystem::path> output;
     // Explicit entry selection (CLI or manifest); absent means auto-detection when an executable is requested.
     std::optional<SelectedEntry> entry;
