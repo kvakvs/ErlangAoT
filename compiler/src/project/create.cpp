@@ -8,10 +8,10 @@
 namespace erlang_aot::project {
 namespace {
 // Fold only ASCII suffix letters without locale-sensitive filename changes.
-char lower(char value) { return value >= 'A' && value <= 'Z' ? static_cast<char>(value - 'A' + 'a') : value; }
+char lower(const char value) { return value >= 'A' && value <= 'Z' ? static_cast<char>(value - 'A' + 'a') : value; }
 
 // Write the complete bounded template and detect both write and close failures.
-void write_template(std::ofstream &output, std::string_view text, const CreationIO &io) {
+void write_template(std::ofstream &output, const std::string_view text, const CreationIO &io) {
     if (io.write) {
         io.write(output, text);
     } else {

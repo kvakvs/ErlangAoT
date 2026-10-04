@@ -33,7 +33,7 @@ int run(const Request &request, const PlanOptions &options, const TargetExecutor
         settings.selectors = request.targets;
         const auto invocation = prepare(manifest, settings);
         return execute(invocation, executor,
-                       [&](std::string_view message) { diagnostics << "erlangaot: " << message << '\n'; });
+                       [&](const std::string_view message) { diagnostics << "erlangaot: " << message << '\n'; });
     } catch (const Failure &error) {
         diagnostics << "erlangaot: error: " << error.what() << '\n';
         return error.detail.exit_code;

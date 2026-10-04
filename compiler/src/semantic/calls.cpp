@@ -69,7 +69,7 @@ void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, co
 }
 
 // Index every module before resolving any call, preserving forward references.
-Modules module_index(std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
+Modules module_index(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     Modules result;
     for (const auto &module : modules) {
         if (!result.emplace(module->name, module.get()).second) {
@@ -138,7 +138,7 @@ void order(CallGraph &graph, const std::vector<FunctionRef> &functions, const Re
 
 } // namespace
 
-CallGraph resolve_calls(std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
+CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     const auto names = module_index(modules, out);
     CallGraph graph;
     std::vector<FunctionRef> functions;

@@ -62,7 +62,7 @@ void install(llvm::Function &generic, Draft &draft) {
 }
 
 // Defend hard caps again at emission, including callers of this private stage adapter.
-void lower_function(llvm::Function &function, std::span<const SpecializationCandidate *const> candidates,
+void lower_function(llvm::Function &function, const std::span<const SpecializationCandidate *const> candidates,
                     ModuleBudget &budget, SpecializationPlan &plan) {
     Draft draft;
     for (const auto *candidate : candidates) {

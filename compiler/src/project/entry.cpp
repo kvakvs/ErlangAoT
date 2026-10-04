@@ -7,7 +7,7 @@
 namespace erlang_aot::project {
 namespace {
 // Decode strict UTF-8, treating any encoding failure as an invalid spelling.
-std::optional<std::u32string> decode(std::string_view text) {
+std::optional<std::u32string> decode(const std::string_view text) {
     try {
         return filename_scalars(text, {});
     } catch (const Failure &) {
@@ -18,7 +18,7 @@ std::optional<std::u32string> decode(std::string_view text) {
 // Accept 1..255 scalars without separators or control characters, matching the atom length limit.
 bool valid_name(const std::optional<std::u32string> &name) {
     return name && !name->empty() && name->size() <= 255 &&
-           std::ranges::none_of(*name, [](char32_t value) { return value < 0x20 || value == 0x7f || value == U':'; });
+           std::ranges::none_of(*name, [](const char32_t value) { return value < 0x20 || value == 0x7f || value == U':'; });
 }
 } // namespace
 

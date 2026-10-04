@@ -31,7 +31,7 @@ llvm::CallInst *return_call(llvm::IRBuilder<> &builder, llvm::Function &entry, l
 }
 } // namespace
 
-SpecializedDispatch create_dispatch(llvm::Function &generic, std::span<const SpecializedVariant> variants) {
+SpecializedDispatch create_dispatch(llvm::Function &generic, const std::span<const SpecializedVariant> variants) {
     auto *entry = llvm::Function::Create(generic.getFunctionType(), llvm::GlobalValue::InternalLinkage,
                                          generic.getName() + ".dispatch", generic.getParent());
     entry->setCallingConv(generic.getCallingConv());

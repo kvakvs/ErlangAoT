@@ -30,7 +30,7 @@ Value shift(const Value &left, const Value &right, bool forward) {
 }
 
 // Update an owned integer to avoid temporary expression lifetimes and redundant allocations.
-Value integer_arithmetic(std::u32string_view operation, BigInt result, const BigInt &right) {
+Value integer_arithmetic(const std::u32string_view operation, BigInt result, const BigInt &right) {
     if (operation == U"+") {
         result += right;
     } else if (operation == U"-") {
@@ -41,7 +41,7 @@ Value integer_arithmetic(std::u32string_view operation, BigInt result, const Big
     return integer(std::move(result));
 }
 
-Value arithmetic(std::u32string_view operation, const Value &a, const Value &b) {
+Value arithmetic(const std::u32string_view operation, const Value &a, const Value &b) {
     if (operation != U"/" && a.kind == ValueKind::integer && b.kind == ValueKind::integer) {
         return integer_arithmetic(operation, a.integer, b.integer);
     }
@@ -62,7 +62,7 @@ Value arithmetic(std::u32string_view operation, const Value &a, const Value &b) 
     return floating(left / right);
 }
 
-Value integer_operation(std::u32string_view operation, const Value &a, const Value &b) {
+Value integer_operation(const std::u32string_view operation, const Value &a, const Value &b) {
     const auto &left = integral(a);
     const auto &right = integral(b);
     if (operation == U"band") {
@@ -86,7 +86,7 @@ Value integer_operation(std::u32string_view operation, const Value &a, const Val
     return integer(left % right);
 }
 
-Value unary(std::u32string_view operation, const Value &value) {
+Value unary(const std::u32string_view operation, const Value &value) {
     if (operation == U"not") {
         return boolean(!boolean_value(value));
     }
@@ -102,18 +102,18 @@ Value unary(std::u32string_view operation, const Value &value) {
     return value.kind == ValueKind::integer ? integer(-value.integer) : floating(-value.real);
 }
 
-Value comparison(std::u32string_view operation, const Value &a, const Value &b) {
+Value comparison(const std::u32string_view operation, const Value &a, const Value &b) {
     const auto result = compare(a, b, operation == U"=:=" || operation == U"=/=");
     static const std::map<std::u32string_view, bool (*)(int)> operations{
-        {U"==", [](int n) { return n == 0; }}, {U"=:=", [](int n) { return n == 0; }},
-        {U"/=", [](int n) { return n != 0; }}, {U"=/=", [](int n) { return n != 0; }},
-        {U"<", [](int n) { return n < 0; }},   {U"=<", [](int n) { return n <= 0; }},
-        {U">", [](int n) { return n > 0; }},   {U">=", [](int n) { return n >= 0; }}};
+        {U"==", [](const int n) { return n == 0; }}, {U"=:=", [](const int n) { return n == 0; }},
+        {U"/=", [](const int n) { return n != 0; }}, {U"=/=", [](const int n) { return n != 0; }},
+        {U"<", [](const int n) { return n < 0; }},   {U"=<", [](const int n) { return n <= 0; }},
+        {U">", [](const int n) { return n > 0; }},   {U">=", [](const int n) { return n >= 0; }}};
     return boolean(operations.at(operation)(result));
 }
 } // namespace
 
-bool operator_signature(std::u32string_view name, std::size_t arity) {
+bool operator_signature(const std::u32string_view name, const std::size_t arity) {
     static const std::set<std::u32string_view> unary_names{U"+", U"-", U"not", U"bnot"};
     static const std::set<std::u32string_view> binary_names{
         U"+",   U"-",  U"*",   U"/",  U"div", U"rem", U"band", U"bor", U"bxor", U"bsl", U"bsr",
@@ -121,7 +121,7 @@ bool operator_signature(std::u32string_view name, std::size_t arity) {
     return (arity == 1 && unary_names.contains(name)) || (arity == 2 && binary_names.contains(name));
 }
 
-Value evaluate_operator(std::u32string_view name, const std::vector<Value> &arguments) {
+Value evaluate_operator(const std::u32string_view name, const std::vector<Value> &arguments) {
     if (arguments.size() == 1) {
         return unary(name, arguments.front());
     }

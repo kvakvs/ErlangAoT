@@ -7,16 +7,16 @@ namespace erlang_aot {
 class DirectiveCursor {
   public:
     // Retain an end sentinel for useful locations when an operand is missing.
-    DirectiveCursor(std::span<const Token> tokens, Span end)
+    DirectiveCursor(const std::span<const Token> tokens, Span end)
         : cursor_(tokens, Token{TokenKind::dot, std::u32string{}, std::move(end), {}, {}}) {}
 
     // Consume punctuation only, never a quoted atom with identical decoded
     // text.
-    bool take(std::u32string_view symbol) { return cursor_.take(TokenKind::symbol, symbol); }
+    bool take(const std::u32string_view symbol) { return cursor_.take(TokenKind::symbol, symbol); }
 
     // Require a delimiter while retaining the first unexpected token's
     // location.
-    void expect(std::u32string_view symbol) {
+    void expect(const std::u32string_view symbol) {
         if (!take(symbol)) {
             fail("expected '" + utf8(symbol) + "'");
         }
@@ -33,7 +33,7 @@ class DirectiveCursor {
         return category(TokenKind::variable, "macro name");
     }
 
-    Token category(TokenKind kind, std::string_view description) {
+    Token category(const TokenKind kind, const std::string_view description) {
         if (cursor_.empty()) {
             fail("expected " + std::string(description));
         }

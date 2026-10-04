@@ -35,7 +35,7 @@ std::filesystem::path executable_path(const LinkRequest &request) {
 }
 
 // Require an existing output directory and a replaceable destination that is not an input.
-void check_destination(const std::filesystem::path &path, std::span<const std::filesystem::path> inputs) {
+void check_destination(const std::filesystem::path &path, const std::span<const std::filesystem::path> inputs) {
     std::error_code error;
     if (!std::filesystem::is_directory(path.parent_path(), error)) {
         throw std::runtime_error("output directory does not exist: " + project::path_text(path.parent_path()));

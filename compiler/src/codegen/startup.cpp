@@ -9,13 +9,13 @@
 namespace erlang_aot::codegen {
 namespace {
 // Private constant with exact UTF-8 bytes; the descriptor stores its size separately.
-llvm::Constant *spelling(llvm::Module &output, std::string_view text, const char *name) {
+llvm::Constant *spelling(llvm::Module &output, const std::string_view text, const char *name) {
     auto *bytes = llvm::ConstantDataArray::getString(output.getContext(), text, false);
     return new llvm::GlobalVariable(output, bytes->getType(), true, llvm::GlobalValue::PrivateLinkage, bytes, name);
 }
 
 // Array of the batch's external module descriptors, in source (registration) order.
-llvm::Constant *descriptors(llvm::Module &output, std::span<const std::unique_ptr<semantic::Module>> modules) {
+llvm::Constant *descriptors(llvm::Module &output, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     auto &context = output.getContext();
     std::vector<llvm::Constant *> entries;
     for (const auto &module : modules) {
@@ -29,14 +29,14 @@ llvm::Constant *descriptors(llvm::Module &output, std::span<const std::unique_pt
 }
 
 // Constant abi::v1::StartupDescriptor naming the modules and the arity-1 entry.
-llvm::GlobalVariable *descriptor(llvm::Module &output, std::span<const std::unique_ptr<semantic::Module>> modules,
+llvm::GlobalVariable *descriptor(llvm::Module &output, const std::span<const std::unique_ptr<semantic::Module>> modules,
                                  const StartupRequest &request, llvm::IntegerType *word) {
     llvm::IRBuilder<> builder(output.getContext());
     auto *ptr = builder.getPtrTy();
     auto *i32 = builder.getInt32Ty();
     auto *type = llvm::StructType::get(i32, i32, ptr, word, ptr, word, ptr, word, i32);
     const auto module = utf8(modules[request.module]->name);
-    const auto size = [word](std::size_t value) { return llvm::ConstantInt::get(word, value); };
+    const auto size = [word](const std::size_t value) { return llvm::ConstantInt::get(word, value); };
     auto *data = llvm::ConstantStruct::get(
         type, {builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()), descriptors(output, modules),
                size(modules.size()), spelling(output, module, "startup.module"), size(module.size()),
@@ -59,7 +59,7 @@ void define_main(llvm::Module &output, llvm::GlobalVariable *startup) {
 }
 } // namespace
 
-void emit_startup(Compilation &compilation, std::span<const std::unique_ptr<semantic::Module>> modules,
+void emit_startup(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules,
                   llvm::IntegerType *word) {
     auto &state = detail::state(compilation);
     if (!state.request.startup || state.request.startup->module >= modules.size() || state.modules.empty()) {

@@ -23,7 +23,7 @@ bool reject(detail::CompilationState &state, const llvm::Module &module, const s
 }
 
 // Run LLVM's machine-code pipeline on a clone so repeated emission preserves the original IR.
-bool emit_module(detail::CompilationState &state, const llvm::Module &module, bool startup) {
+bool emit_module(detail::CompilationState &state, const llvm::Module &module, const bool startup) {
     const auto working = llvm::CloneModule(module);
     BoundedStream stream(output_capacity(state.request.limits, state.result.outputs()));
     llvm::legacy::PassManager passes;

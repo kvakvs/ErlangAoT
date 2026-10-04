@@ -8,7 +8,7 @@ namespace erlang_aot::codegen {
 namespace {
 // Large constructors use bounded runtime scratch roots, keeping source width off the native stack.
 llvm::Value *construct(ExpressionLowering &state, abi::v1::ContainerConstruction operation,
-                       std::span<llvm::Value *const> values) {
+                       const std::span<llvm::Value *const> values) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto *arguments = builder.CreateGEP(state.word, state.roots->buffer,
@@ -30,7 +30,7 @@ llvm::Value *construct(ExpressionLowering &state, abi::v1::ContainerConstruction
 }
 
 // Values already exist in SSA after the common iterative expression walk visits every child.
-std::vector<llvm::Value *> children(ExpressionLowering &state, std::span<const ast::ExprId> ids) {
+std::vector<llvm::Value *> children(ExpressionLowering &state, const std::span<const ast::ExprId> ids) {
     std::vector<llvm::Value *> result;
     result.reserve(ids.size() + 1);
     for (const auto &id : ids) {
@@ -55,7 +55,7 @@ llvm::Value *string(ExpressionLowering &state, const ast::StringLiteral &literal
 }
 } // namespace
 
-llvm::Value *lower_tuple(ExpressionLowering &state, std::span<llvm::Value *const> values) {
+llvm::Value *lower_tuple(ExpressionLowering &state, const std::span<llvm::Value *const> values) {
     return construct(state, abi::v1::ContainerConstruction::tuple, values);
 }
 
@@ -82,7 +82,7 @@ llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &va
 }
 
 llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspection operation, llvm::Value *value,
-                              std::size_t index, llvm::BasicBlock *mismatch) {
+                              const std::size_t index, llvm::BasicBlock *mismatch) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto *slot = root_slot(state);

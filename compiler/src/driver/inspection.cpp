@@ -10,7 +10,7 @@
 namespace erlang_aot::cli {
 namespace {
 // Capture only requested stages so optimized-only inspection never retains an unnecessary pre-pipeline copy.
-bool capture(codegen::Compilation &compilation, bool requested, std::vector<codegen::OutputBuffer> &outputs) {
+bool capture(codegen::Compilation &compilation, const bool requested, std::vector<codegen::OutputBuffer> &outputs) {
     if (!requested) {
         return true;
     }
@@ -23,8 +23,8 @@ bool capture(codegen::Compilation &compilation, bool requested, std::vector<code
 }
 
 // Separate concatenated modules with safe LLVM comments while leaving single snapshots plain assembly.
-void print_snapshot(const codegen::OutputBuffer &output, const std::filesystem::path &source, std::string_view target,
-                    std::string_view stage, bool headers) {
+void print_snapshot(const codegen::OutputBuffer &output, const std::filesystem::path &source,
+                    const std::string_view target, const std::string_view stage, const bool headers) {
     if (headers) {
         std::cout << "; erlangaot target=" << quote_text(target) << " module=" << quote_text(output.module_name)
                   << " source=" << quote_text(project::path_text(source)) << " stage=" << stage << '\n';

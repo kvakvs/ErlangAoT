@@ -6,7 +6,7 @@ Site site(const toml::node &node, const Context &context, std::string key) {
     return {context.file, std::move(key), context.target, node.source().begin.line, node.source().begin.column};
 }
 
-void keys(const toml::table &table, std::initializer_list<std::string_view> allowed, const Context &context) {
+void keys(const toml::table &table, const std::initializer_list<std::string_view> allowed, const Context &context) {
     for (const auto &[key, node] : table) {
         if (std::find(allowed.begin(), allowed.end(), key.str()) == allowed.end()) {
             fail(site(node, context, std::string(key.str())), "unknown key");
@@ -26,7 +26,7 @@ Text text(const toml::node &node, const Context &context, std::string key) {
     return {*value, where};
 }
 
-std::vector<Text> strings(const toml::table &table, std::string_view key, const Context &context) {
+std::vector<Text> strings(const toml::table &table, const std::string_view key, const Context &context) {
     const auto *node = table.get(key);
     if (!node) {
         return {};

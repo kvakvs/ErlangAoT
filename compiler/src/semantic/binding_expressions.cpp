@@ -82,7 +82,7 @@ bool conditional(const ast::ExprValue &value, std::vector<Visit> &pending) {
 }
 
 // Guards may read both operands for diagnostics, but a match can never introduce guard bindings.
-void match(BindingAnalysis &state, const ast::ExprId &id, const ast::MatchExpression &value,
+void match(const BindingAnalysis &state, const ast::ExprId &id, const ast::MatchExpression &value,
            const BindingContext context, std::vector<Visit> &pending) {
     if (context == BindingContext::guard) {
         report(state.module, &state.module.syntax->expression(id).source, "guards cannot bind variables", state.out);
@@ -94,7 +94,7 @@ void match(BindingAnalysis &state, const ast::ExprId &id, const ast::MatchExpres
 }
 
 // Ordinary value traversal never descends into deferred branch, exception or closure scopes.
-void expression(BindingAnalysis &state, const ast::ExprId &id, BindingEnvironment &environment,
+void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvironment &environment,
                 const BindingContext context, std::vector<Visit> &pending) {
     const auto &value = state.module.syntax->expression(id).value;
     if (const auto *binary = std::get_if<ast::Bitstring>(&value)) {

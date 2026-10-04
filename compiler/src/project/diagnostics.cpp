@@ -20,7 +20,7 @@ std::string render(const Error &error) { return where(error.site) + ": " + error
 
 Failure::Failure(Error error) : std::runtime_error(render(error)), detail(std::move(error)) {}
 
-void fail(const Site &site, std::string message, int exit_code) {
+void fail(const Site &site, std::string message, const int exit_code) {
     throw Failure({site, std::move(message), exit_code});
 }
 } // namespace erlang_aot::project

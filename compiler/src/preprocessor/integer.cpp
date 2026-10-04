@@ -6,7 +6,7 @@ namespace erlang_aot {
 std::string decimal_integer(const BigInt &number) { return number.str(); }
 
 // Convert finite binary64 through its exact mantissa; avoid wide floating-to-integer casts.
-BigInt integer_from_double(double number) {
+BigInt integer_from_double(const double number) {
     if (!std::isfinite(number)) {
         throw std::invalid_argument("nonfinite integer");
     }

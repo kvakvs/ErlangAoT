@@ -32,7 +32,7 @@ codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInpu
 }
 
 // Preserve severity when presenting owned backend messages.
-std::string_view diagnostic_prefix(codegen::DiagnosticLevel level) {
+std::string_view diagnostic_prefix(const codegen::DiagnosticLevel level) {
     switch (level) {
     case codegen::DiagnosticLevel::error:
         return "error: ";

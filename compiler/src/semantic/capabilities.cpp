@@ -46,7 +46,7 @@ struct FormCapability {
 };
 
 // Use one located diagnostic path for all capability rejection sites.
-void unsupported(const Module &module, const ast::NodeSource &source, std::string_view reason, const Reporter &out) {
+void unsupported(const Module &module, const ast::NodeSource &source, const std::string_view reason, const Reporter &out) {
     reject_capability(module, source, reason, out);
 }
 
@@ -68,7 +68,7 @@ bool literal_limit(const Module &module, const ast::Expression &expression, cons
 
 // Resolve local capability and service limits before scheduling an expression's children.
 bool available(const Module &module, const Function &function, const ast::ExprId &id, const Reporter &out,
-               unsigned bits) {
+               const unsigned bits) {
     const auto &expression = module.syntax->expression(id);
     if (literal_limit(module, expression, out)) {
         return false;
@@ -113,8 +113,8 @@ void body(const Module &module, const Function &function, const ast::FunctionCla
 }
 
 // Parameter patterns and guards remain separate from expression capability decisions.
-void head(const Module &module, const Function &function, std::size_t index, const ast::FunctionClause &clause,
-          const Reporter &out, unsigned bits) {
+void head(const Module &module, const Function &function, const std::size_t index, const ast::FunctionClause &clause,
+          const Reporter &out, const unsigned bits) {
     if (clause.guard) {
         for (const auto &alternative : clause.guard->alternatives) {
             expressions(module, function, alternative.tests, out, bits);

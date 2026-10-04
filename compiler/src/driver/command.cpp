@@ -53,7 +53,7 @@ Input paths may contain spaces when quoted by the shell.
 )";
 
 // Validate the request and dispatch explicit actions or the default compiler pipeline.
-int run_command(std::span<char *> arguments) {
+int run_command(const std::span<char *> arguments) {
     erlang_aot::cli::Options options;
     if (const auto error = erlang_aot::cli::parse_options(arguments, options)) {
         std::cerr << "erlangaot: error: " << *error << "\nTry 'erlangaot --help' for usage.\n";

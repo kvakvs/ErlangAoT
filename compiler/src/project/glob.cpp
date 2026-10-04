@@ -12,7 +12,7 @@ struct ComponentPattern {
 };
 
 // Split generic paths on separators, preserving Unicode scalar boundaries.
-std::vector<std::u32string> components(std::string_view path, const Site &site) {
+std::vector<std::u32string> components(const std::string_view path, const Site &site) {
     const auto decoded = filename_scalars(path, site);
     std::vector<std::u32string> result;
     std::size_t start = 0;
@@ -36,7 +36,7 @@ void charge(std::size_t &work, const Site &site) {
 }
 
 // Compute one character-pattern row with linear space and no recursive backtracking.
-std::vector<std::uint8_t> character_row(char32_t token, const std::u32string &text,
+std::vector<std::uint8_t> character_row(const char32_t token, const std::u32string &text,
                                         const std::vector<std::uint8_t> &previous, std::size_t &work,
                                         const Site &site) {
     std::vector<std::uint8_t> current(text.size() + 1, 0);
@@ -53,7 +53,7 @@ std::vector<std::uint8_t> character_row(char32_t token, const std::u32string &te
 }
 
 // Match a single component; wildcards cannot consume directory separators.
-bool component_match(ComponentPattern pattern, const std::u32string &text, std::size_t &work, const Site &site) {
+bool component_match(const ComponentPattern pattern, const std::u32string &text, std::size_t &work, const Site &site) {
     std::vector<std::uint8_t> row(text.size() + 1, 0);
     row[0] = 1;
     for (const auto token : pattern.value) {
@@ -80,7 +80,7 @@ std::vector<std::uint8_t> path_row(const std::u32string &pattern, const std::vec
 }
 } // namespace
 
-bool is_pattern(std::string_view text) { return text.find_first_of("*?[]{}!") != std::string_view::npos; }
+bool is_pattern(const std::string_view text) { return text.find_first_of("*?[]{}!") != std::string_view::npos; }
 
 Glob parse_glob(const Text &pattern) {
     if (pattern.value.find_first_of("[]{}!\\") != std::string::npos) {
@@ -95,7 +95,7 @@ Glob parse_glob(const Text &pattern) {
     return result;
 }
 
-bool matches_with_budget(const Glob &glob, std::string_view path, std::size_t &work) {
+bool matches_with_budget(const Glob &glob, const std::string_view path, std::size_t &work) {
     const auto text = components(path, glob.site);
     std::vector<std::uint8_t> row(text.size() + 1, 0);
     row[0] = 1;
@@ -106,7 +106,7 @@ bool matches_with_budget(const Glob &glob, std::string_view path, std::size_t &w
     return row.back() != 0;
 }
 
-bool matches(const Glob &glob, std::string_view path, GlobLimits limits) {
+bool matches(const Glob &glob, const std::string_view path, GlobLimits limits) {
     return matches_with_budget(glob, path, limits.work);
 }
 } // namespace erlang_aot::project

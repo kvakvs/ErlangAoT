@@ -16,7 +16,7 @@
 namespace erlang_aot::codegen {
 namespace {
 // Reject malformed phase inputs before generating a body or narrowing a literal.
-void require(bool condition, const char *message) {
+void require(const bool condition, const char *message) {
     if (!condition) {
         throw std::invalid_argument(message);
     }
@@ -52,7 +52,7 @@ void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerT
 }
 
 // Enforce the one-to-one syntax/module ownership contract before creating declarations.
-void validate_inputs(const Compilation &compilation, std::span<const std::unique_ptr<semantic::Module>> modules) {
+void validate_inputs(const Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     const auto &inputs = compilation.request().inputs;
     require(inputs.size() == modules.size(), "lowering: batch size mismatch");
     for (std::size_t i = 0; i < inputs.size(); ++i) {
@@ -61,7 +61,7 @@ void validate_inputs(const Compilation &compilation, std::span<const std::unique
 }
 } // namespace
 
-bool lower(Compilation &compilation, std::span<const std::unique_ptr<semantic::Module>> modules,
+bool lower(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules,
            const semantic::types::Inference &inferred) {
     if (!configure_target(compilation)) {
         return false;

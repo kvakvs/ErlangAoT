@@ -69,8 +69,8 @@ void stage(Staging &staging, const detail::Destination &destination, const Publi
 }
 } // namespace
 
-void publish(std::span<const codegen::OutputBuffer> outputs, const std::filesystem::path &root,
-             std::span<const std::filesystem::path> inputs, std::string_view object_extension,
+void publish(const std::span<const codegen::OutputBuffer> outputs, const std::filesystem::path &root,
+             const std::span<const std::filesystem::path> inputs, const std::string_view object_extension,
              const PublicationIO &io) {
     const auto destinations = detail::plan(outputs, root, inputs, object_extension);
     if (destinations.empty()) {

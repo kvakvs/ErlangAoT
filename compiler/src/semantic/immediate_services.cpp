@@ -5,7 +5,7 @@
 namespace erlang_aot::semantic {
 using Op = abi::v1::ImmediateOperation;
 
-std::optional<Op> immediate_operator(ast::BinaryOperator operation) {
+std::optional<Op> immediate_operator(const ast::BinaryOperator operation) {
     static const std::map<ast::BinaryOperator, Op> operators{
         {ast::BinaryOperator::add, Op::add},
         {ast::BinaryOperator::subtract, Op::subtract},
@@ -121,7 +121,7 @@ std::optional<FunctionKey> body_builtin(const ast::Module &syntax, const ast::Ca
     return builtin ? std::optional{key} : std::nullopt;
 }
 
-std::optional<Op> immediate_unary(ast::UnaryOperator operation) {
+std::optional<Op> immediate_unary(const ast::UnaryOperator operation) {
     static const std::map<ast::UnaryOperator, Op> operators{{ast::UnaryOperator::positive, Op::positive},
                                                             {ast::UnaryOperator::negative, Op::negative},
                                                             {ast::UnaryOperator::bit_not, Op::bit_not},

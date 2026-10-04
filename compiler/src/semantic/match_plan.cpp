@@ -10,7 +10,7 @@
 namespace erlang_aot::semantic {
 namespace {
 // Decode owned folded decimal text without arbitrary-size narrowing or host-width assumptions.
-std::optional<MatchLiteral> integer(const ast::IntegerLiteral &integer, unsigned bits) {
+std::optional<MatchLiteral> integer(const ast::IntegerLiteral &integer, const unsigned bits) {
     std::int64_t number = 0;
     const auto &text = integer.value.decimal;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), number);
@@ -38,7 +38,7 @@ std::optional<MatchLiteral> empty(const NormalizedPattern &pattern) {
 }
 
 // Folded integers use immediates where possible and preserve decimal text for rooted bignum construction.
-std::optional<MatchLiteral> literal(const NormalizedPattern &pattern, unsigned bits) {
+std::optional<MatchLiteral> literal(const NormalizedPattern &pattern, const unsigned bits) {
     if (const auto value = empty(pattern)) {
         return value;
     }
@@ -65,7 +65,7 @@ bool MatchPlanner::spend(const ast::ExprId &site) {
     return true;
 }
 
-void MatchPlanner::variable(const NormalizedPattern &pattern, std::size_t input) {
+void MatchPlanner::variable(const NormalizedPattern &pattern, const std::size_t input) {
     const auto &binding = *bindings.at(&module.syntax->expression(pattern.expression));
     const auto operation = binding.use == BindingUse::definition && definitions.insert(binding.identity).second
                                ? MatchOperation::bind
@@ -76,7 +76,7 @@ void MatchPlanner::variable(const NormalizedPattern &pattern, std::size_t input)
     }
 }
 
-bool MatchPlanner::node(const NormalizedPattern &pattern, std::size_t input) {
+bool MatchPlanner::node(const NormalizedPattern &pattern, const std::size_t input) {
     if (pattern.literal) {
         const auto *integer = std::get_if<ast::IntegerLiteral>(&*pattern.literal);
         if (integer && integer->value.decimal.size() > 10'000) {
@@ -151,7 +151,7 @@ bool task(Planner &state, const MatchTask &task, std::vector<MatchTask> &pending
 }
 
 // Expand nested patterns without consuming the native C++ call stack.
-bool argument(Planner &state, const ast::ExprId &root, std::size_t input) {
+bool argument(Planner &state, const ast::ExprId &root, const std::size_t input) {
     std::vector<MatchTask> pending{PatternVisit{root, input}};
     while (!pending.empty()) {
         auto next = std::move(pending.back());
@@ -176,7 +176,8 @@ void finish(MatchPlan &plan, const ast::ExprId &site) {
 }
 
 // Share bounded normalization consumption between function heads and body matches.
-std::optional<MatchPlan> build_plan(const Module &module, const Function &function, std::span<const ast::ExprId> roots,
+std::optional<MatchPlan> build_plan(const Module &module, const Function &function,
+                                    const std::span<const ast::ExprId> roots,
                                     const ast::ExprId &site, const Reporter &out, MatchOptions options) {
     const auto limit = options.work_limit;
     Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}, roots.size()}, 0, limit};

@@ -3,7 +3,7 @@
 namespace erlang_aot {
 namespace {
 // Structural branches share directive-envelope validation and move diagnostic ownership.
-Directive checked_directive(std::span<const Token> tokens) {
+Directive checked_directive(const std::span<const Token> tokens) {
     auto parsed = parse_directive(tokens);
     if (auto *error = std::get_if<Diagnostic>(&parsed)) {
         throw DiagnosticError(std::move(*error));
@@ -23,10 +23,10 @@ bool PreprocessorSession::State::test_branch(const Directive &directive) {
                 std::get<TokenOperand>(directive.operand).tokens.front());
     }
     return condition(tokens, options.limits.expression_depth,
-                     [this](std::u32string_view name) { return macros.contains(name, true); });
+                     [this](const std::u32string_view name) { return macros.contains(name, true); });
 }
 
-void PreprocessorSession::State::begin_branch(DirectiveKind kind, std::span<const Token> tokens) {
+void PreprocessorSession::State::begin_branch(const DirectiveKind kind, const std::span<const Token> tokens) {
     const bool parent = active();
     files.back().branches.push_back({tokens[1], parent, false, false, false});
     if (!parent) {
@@ -43,7 +43,7 @@ void PreprocessorSession::State::begin_branch(DirectiveKind kind, std::span<cons
     (void)kind;
 }
 
-void PreprocessorSession::State::change_branch(DirectiveKind kind, std::span<const Token> tokens) {
+void PreprocessorSession::State::change_branch(const DirectiveKind kind, const std::span<const Token> tokens) {
     auto &branches = files.back().branches;
     if (branches.empty()) {
         pp_fail(DiagnosticCode::conditional_structure, "unmatched conditional directive", tokens[1]);
@@ -59,7 +59,7 @@ void PreprocessorSession::State::change_branch(DirectiveKind kind, std::span<con
     select_branch(kind, tokens);
 }
 
-void PreprocessorSession::State::select_branch(DirectiveKind kind, std::span<const Token> tokens) {
+void PreprocessorSession::State::select_branch(const DirectiveKind kind, const std::span<const Token> tokens) {
     auto &branch = files.back().branches.back();
     if (branch.seen_else) {
         branch.active = false;
@@ -87,7 +87,7 @@ void PreprocessorSession::State::select_branch(DirectiveKind kind, std::span<con
     branch.selected = branch.active;
 }
 
-bool PreprocessorSession::State::conditional(DirectiveKind kind, std::span<const Token> tokens) {
+bool PreprocessorSession::State::conditional(const DirectiveKind kind, const std::span<const Token> tokens) {
     if (kind == DirectiveKind::ifdef || kind == DirectiveKind::ifndef || kind == DirectiveKind::if_condition) {
         begin_branch(kind, tokens);
         return true;

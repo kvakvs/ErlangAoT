@@ -70,7 +70,7 @@ TokenOperand include_operand(DirectiveCursor &cursor) {
 
 // Dispatch by operand family to keep syntax checks independent of session
 // state.
-DirectiveOperand operand(DirectiveKind kind, DirectiveCursor &cursor) {
+DirectiveOperand operand(const DirectiveKind kind, DirectiveCursor &cursor) {
     switch (kind) {
     case DirectiveKind::define:
         return definition(cursor);
@@ -111,7 +111,7 @@ Directive parse(std::span<const Token> tokens, DirectiveKind kind) {
 }
 } // namespace
 
-std::optional<DirectiveKind> directive_kind(std::span<const Token> tokens) {
+std::optional<DirectiveKind> directive_kind(const std::span<const Token> tokens) {
     if (tokens.size() < 2) {
         return std::nullopt;
     }
@@ -128,7 +128,7 @@ std::optional<DirectiveKind> directive_kind(std::span<const Token> tokens) {
     return static_cast<DirectiveKind>(found - names.begin());
 }
 
-std::variant<Directive, Diagnostic> parse_directive(std::span<const Token> tokens) {
+std::variant<Directive, Diagnostic> parse_directive(const std::span<const Token> tokens) {
     if (tokens.empty()) {
         return Diagnostic{DiagnosticCode::malformed_directive, "expected preprocessing directive", {}, {}};
     }

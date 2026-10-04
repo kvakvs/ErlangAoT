@@ -82,7 +82,7 @@ void BindingAnalysis::define(const ast::ExprId &id, BindingCandidate &scope, con
 
 namespace {
 // Each guard sees the completed tentative head, but no alternative can assign a name.
-void guards(BindingAnalysis &state, const ast::GuardSyntax &guard, BindingCandidate &head) {
+void guards(BindingAnalysis &state, const ast::GuardSyntax &guard, const BindingCandidate &head) {
     BindingEnvironment visible = head.incoming;
     head.commit(visible);
     for (const auto &alternative : guard.alternatives) {

@@ -5,9 +5,9 @@
 #include <utility>
 
 namespace erlang_aot::codegen {
-BoundedStream::BoundedStream(std::size_t limit) : raw_pwrite_stream(true), limit_(limit) {}
+BoundedStream::BoundedStream(const std::size_t limit) : raw_pwrite_stream(true), limit_(limit) {}
 
-void BoundedStream::write_impl(const char *data, std::size_t size) {
+void BoundedStream::write_impl(const char *data, const std::size_t size) {
     if (size > std::numeric_limits<std::uint64_t>::max() - position_) {
         failure_ = Failure::limit;
         position_ = std::numeric_limits<std::uint64_t>::max();
@@ -33,7 +33,7 @@ void BoundedStream::write_impl(const char *data, std::size_t size) {
     }
 }
 
-void BoundedStream::pwrite_impl(const char *data, std::size_t size, std::uint64_t offset) {
+void BoundedStream::pwrite_impl(const char *data, const std::size_t size, const std::uint64_t offset) {
     if (failure_ != Failure::none) {
         return;
     }

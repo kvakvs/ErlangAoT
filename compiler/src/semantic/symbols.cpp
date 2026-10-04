@@ -5,7 +5,7 @@
 namespace erlang_aot::semantic {
 namespace {
 // Only ASCII hex enters native symbols, including for quoted names and delimiter bytes.
-std::string hex(std::string_view text) {
+std::string hex(const std::string_view text) {
     constexpr std::string_view digits = "0123456789abcdef";
     std::string result;
     for (const unsigned char byte : text) {
@@ -16,7 +16,7 @@ std::string hex(std::string_view text) {
 }
 
 // Decode exactly two lowercase hex digits per byte; reject noncanonical components.
-std::optional<std::string> unhex(std::string_view text) {
+std::optional<std::string> unhex(const std::string_view text) {
     if (text.size() % 2 != 0) {
         return {};
     }
@@ -34,7 +34,7 @@ std::optional<std::string> unhex(std::string_view text) {
 }
 
 // Require a canonical, bounded arity component before forming a decoded identity.
-std::optional<std::size_t> symbol_arity(std::string_view text) {
+std::optional<std::size_t> symbol_arity(const std::string_view text) {
     std::size_t count = 0;
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), count);
     if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || count > 255) {

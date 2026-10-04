@@ -5,11 +5,11 @@
 namespace erlang_aot::semantic {
 namespace {
 // Resolve the normalized literal without converting through host-width integers.
-std::optional<MatchLiteral> float_literal(MatchPlanner &state, const ast::BinarySegment &segment);
+std::optional<MatchLiteral> float_literal(const MatchPlanner &state, const ast::BinarySegment &segment);
 
 // One checked extraction produces both an owned candidate and the following encoded bit cursor.
-void extract(MatchPlanner &state, const ast::BinarySegment &segment, std::size_t input, std::size_t &cursor,
-             std::vector<MatchTask> &forward, std::optional<std::int64_t> character = {}) {
+void extract(MatchPlanner &state, const ast::BinarySegment &segment, const std::size_t input, std::size_t &cursor,
+             std::vector<MatchTask> &forward, const std::optional<std::int64_t> character = {}) {
     MatchNode field{segment.value, MatchOperation::binary_extract, input};
     field.index = cursor;
     field.output = state.plan.values++;
@@ -30,7 +30,7 @@ void extract(MatchPlanner &state, const ast::BinarySegment &segment, std::size_t
 }
 
 // Literal float segments compare decoded values; integer literals are coerced before matching.
-std::optional<MatchLiteral> float_literal(MatchPlanner &state, const ast::BinarySegment &segment) {
+std::optional<MatchLiteral> float_literal(const MatchPlanner &state, const ast::BinarySegment &segment) {
     const auto &pattern = *state.patterns.at(&state.module.syntax->expression(segment.value));
     if (!pattern.literal) {
         return {};
@@ -45,7 +45,7 @@ std::optional<MatchLiteral> float_literal(MatchPlanner &state, const ast::Binary
 }
 
 // Expand string characters within the same work ceiling, scheduling each value before the next size read.
-bool fields(MatchPlanner &state, const ast::BinarySegment &segment, std::size_t input, std::size_t &cursor,
+bool fields(MatchPlanner &state, const ast::BinarySegment &segment, const std::size_t input, std::size_t &cursor,
             std::vector<MatchTask> &forward) {
     const auto &value = state.module.syntax->expression(ungroup(*state.module.syntax, segment.value)).value;
     const auto *string = std::get_if<ast::StringLiteral>(&value);

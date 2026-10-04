@@ -46,7 +46,8 @@ std::vector<std::pair<Value, ast::MapField>> metadata(const ast::Module &module,
 }
 } // namespace
 
-std::vector<ast::DocumentationEntry> FormParser::documentation_entries(const ast::MapExpression &map, bool module) {
+std::vector<ast::DocumentationEntry> FormParser::documentation_entries(const ast::MapExpression &map,
+                                                                       const bool module) {
     std::vector<ast::DocumentationEntry> entries;
     std::optional<Value> previous;
     for (const auto &[key, field] : metadata(builder_.view(), map, work_)) {

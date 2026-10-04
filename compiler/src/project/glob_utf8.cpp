@@ -5,7 +5,7 @@
 namespace erlang_aot::project {
 namespace {
 // Determine the canonical UTF-8 sequence width from its leading byte.
-std::size_t width(unsigned char byte, const Site &site) {
+std::size_t width(const unsigned char byte, const Site &site) {
     if (byte < 0x80) {
         return 1;
     }
@@ -22,7 +22,7 @@ std::size_t width(unsigned char byte, const Site &site) {
 }
 
 // Consume one canonical Unicode scalar while checking continuation bytes.
-char32_t scalar(std::string_view text, std::size_t &position, const Site &site) {
+char32_t scalar(const std::string_view text, std::size_t &position, const Site &site) {
     const auto first = static_cast<unsigned char>(text[position]);
     const auto count = width(first, site);
     if (count > text.size() - position) {
@@ -46,7 +46,7 @@ char32_t scalar(std::string_view text, std::size_t &position, const Site &site) 
 }
 } // namespace
 
-std::u32string filename_scalars(std::string_view text, const Site &site) {
+std::u32string filename_scalars(const std::string_view text, const Site &site) {
     std::u32string result;
     std::size_t position = 0;
     while (position < text.size()) {

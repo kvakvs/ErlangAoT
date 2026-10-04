@@ -41,7 +41,7 @@ Encoding detect_encoding(std::string_view bytes) {
 }
 
 // Classify UTF-8 leaders without accepting overlong two-byte sequences.
-unsigned sequence_length(unsigned char first) {
+unsigned sequence_length(const unsigned char first) {
     if (first < 0x80) {
         return 1;
     }
@@ -58,13 +58,13 @@ unsigned sequence_length(unsigned char first) {
 }
 
 // Reject non-scalar Unicode values and overlong UTF-8 sequences.
-bool scalar(char32_t value, unsigned length) {
+bool scalar(const char32_t value, const unsigned length) {
     constexpr std::array<char32_t, 5> minimum{0, 0, 0x80, 0x800, 0x10000};
     return value >= minimum[length] && value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff);
 }
 
 // Consume exactly one UTF-8 scalar, reporting the beginning of malformed input.
-char32_t decode(std::string_view bytes, std::size_t &offset) {
+char32_t decode(const std::string_view bytes, std::size_t &offset) {
     const auto start = offset;
     const auto first = static_cast<unsigned char>(bytes[offset]);
     const auto length = sequence_length(first);
@@ -88,10 +88,10 @@ char32_t decode(std::string_view bytes, std::size_t &offset) {
 }
 } // namespace
 
-EncodingError::EncodingError(std::size_t offset, const std::string &message)
+EncodingError::EncodingError(const std::size_t offset, const std::string &message)
     : std::runtime_error(message), byte(offset) {}
 
-Source::Source(std::size_t identity, std::string filename, std::string contents)
+Source::Source(const std::size_t identity, std::string filename, std::string contents)
     : id(identity), name(std::move(filename)), bytes(std::move(contents)), encoding(detect_encoding(bytes)) {
     Position current{0, 1, 1};
     while (current.byte < bytes.size()) {
@@ -110,9 +110,9 @@ Source::Source(std::size_t identity, std::string filename, std::string contents)
     positions_.push_back(current);
 }
 
-Position Source::position(std::size_t offset) const { return positions_.at(offset); }
+Position Source::position(const std::size_t offset) const { return positions_.at(offset); }
 
-std::string_view Source::spelling(std::size_t begin, std::size_t end) const {
+std::string_view Source::spelling(const std::size_t begin, const std::size_t end) const {
     return std::string_view(bytes).substr(position(begin).byte, position(end).byte - position(begin).byte);
 }
 
@@ -134,7 +134,7 @@ SourcePtr SourceManager::read(const std::filesystem::path &path) {
     return add(path.string(), std::move(bytes));
 }
 
-std::string utf8(std::u32string_view text) {
+std::string utf8(const std::u32string_view text) {
     std::string result;
     for (const auto value : text) {
         if (value < 0x80) {

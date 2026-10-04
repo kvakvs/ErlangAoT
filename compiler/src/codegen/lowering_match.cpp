@@ -44,7 +44,7 @@ std::vector<llvm::Value *> inputs(ExpressionLowering &state, const semantic::Mat
 }
 
 // Map plan extraction operations to the shared ownership-checking runtime service.
-std::optional<abi::v1::ContainerInspection> inspection(semantic::MatchOperation operation) {
+std::optional<abi::v1::ContainerInspection> inspection(const semantic::MatchOperation operation) {
     using Operation = semantic::MatchOperation;
     using Inspect = abi::v1::ContainerInspection;
     switch (operation) {
@@ -73,7 +73,7 @@ bool constrained(const semantic::MatchPlan &plan) {
 }
 
 // Shape checks preserve the candidate; extraction services populate a separate candidate slot.
-bool extracted(semantic::MatchOperation operation) {
+bool extracted(const semantic::MatchOperation operation) {
     using Op = semantic::MatchOperation;
     return operation == Op::tuple_element || operation == Op::cons_head || operation == Op::cons_tail ||
            operation == Op::map_lookup;
@@ -121,7 +121,7 @@ bool extraction(ExpressionLowering &state, const semantic::MatchNode &node, std:
 }
 
 // Bindings remain tentative; every failed constraint reaches the caller-owned mismatch continuation.
-void node(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
+void node(ExpressionLowering &state, const semantic::MatchNode &node, const std::span<llvm::Value *> values,
           const std::vector<llvm::BasicBlock *> &blocks) {
     locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(node.source).source);
     if (node.input >= values.size()) {

@@ -6,7 +6,7 @@ namespace {
 // Attach project/target context; the shared frontend retains each diagnostic's source.
 bool process(const Invocation &invocation, const PlannedTarget &target, const TargetExecutor &executor,
              const MessageSink &diagnostics) {
-    const MessageSink report = [&](std::string_view message) {
+    const MessageSink report = [&](const std::string_view message) {
         diagnostics(render({{invocation.file, "", target.name, 0, 0}, std::string(message), 1}));
     };
     try {

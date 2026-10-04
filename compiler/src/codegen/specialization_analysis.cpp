@@ -10,7 +10,7 @@
 namespace erlang_aot::codegen {
 namespace {
 // Prove only bounded implementation singletons; broad integer types and unions stay generic.
-Representation representation(const semantic::types::Graph &graph, semantic::types::Id id, unsigned bits) {
+Representation representation(const semantic::types::Graph &graph, const semantic::types::Id id, const unsigned bits) {
     const auto &node = graph.get(id);
     if (node.kind != semantic::types::Kind::integer) {
         return Representation::generic;
@@ -27,7 +27,7 @@ Representation representation(const semantic::types::Graph &graph, semantic::typ
 
 // Copy only observed per-argument representation proofs, never literal values or union combinations.
 TypeProfile call_profile(const ast::Module &syntax, const ast::CallExpression &call,
-                         const semantic::types::Inference &inferred, unsigned bits) {
+                         const semantic::types::Inference &inferred, const unsigned bits) {
     TypeProfile result;
     for (const auto &id : call.arguments) {
         const auto fact = inferred.expressions.find(&syntax.expression(id));
@@ -40,7 +40,7 @@ TypeProfile call_profile(const ast::Module &syntax, const ast::CallExpression &c
 // Bound source traversal by the caller's generic IR; preserve lexical order before deterministic ranking.
 void observe(const semantic::Module &module, const semantic::Function &function,
              std::map<std::string, SpecializationInput> &inputs, const semantic::types::Inference &inferred,
-             unsigned bits) {
+             const unsigned bits) {
     const auto &syntax = *module.syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
     auto pending = semantic::function_roots(definition);
@@ -66,7 +66,7 @@ void observe(const semantic::Module &module, const semantic::Function &function,
 }
 
 // Explain the policy shortcut without measuring or enumerating specialization profiles.
-void trace_disabled(const Compilation &compilation, std::span<const std::unique_ptr<semantic::Module>> modules) {
+void trace_disabled(const Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     if (!compilation.request().progress) {
         return;
     }
@@ -80,8 +80,7 @@ void trace_disabled(const Compilation &compilation, std::span<const std::unique_
 }
 
 // Measure actual generic IR and recognize only checks implemented by the specialization rewriter.
-std::map<std::string, SpecializationInput> measurements(Compilation &compilation,
-                                                        std::span<const std::unique_ptr<semantic::Module>> modules) {
+std::map<std::string, SpecializationInput> measurements(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     std::map<std::string, SpecializationInput> result;
     auto &outputs = detail::state(compilation).modules;
     for (std::size_t i = 0; i < modules.size(); ++i) {
@@ -105,7 +104,7 @@ std::map<std::string, SpecializationInput> measurements(Compilation &compilation
 } // namespace
 
 SpecializationPlan analyze_specializations(Compilation &compilation,
-                                           std::span<const std::unique_ptr<semantic::Module>> modules,
+                                           const std::span<const std::unique_ptr<semantic::Module>> modules,
                                            const semantic::types::Inference &inferred) {
     if (modules.empty()) {
         return {};

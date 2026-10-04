@@ -49,7 +49,7 @@ bool candidate(const std::filesystem::path &path, const Site &site) {
 } // namespace
 
 std::filesystem::path literal_source(const std::filesystem::path &base, const Text &source,
-                                     std::span<const Text> roots) {
+                                     const std::span<const Text> roots) {
     const auto supplied = native_path(source.value);
     if (supplied.extension() != ".erl") {
         fail(source.site, "source must have .erl extension");

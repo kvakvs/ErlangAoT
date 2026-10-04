@@ -5,12 +5,12 @@
 #include <stdexcept>
 
 namespace erlang_aot::artifacts {
-std::string encoded_name(std::string_view identity) { return semantic::encode_symbol({std::string(identity), "", 0}); }
+std::string encoded_name(const std::string_view identity) { return semantic::encode_symbol({std::string(identity), "", 0}); }
 
 namespace detail {
 namespace {
 // Preserve target object format independently of the compiler host's platform.
-std::string extension(codegen::OutputKind kind, std::string_view object_extension) {
+std::string extension(const codegen::OutputKind kind, const std::string_view object_extension) {
     switch (kind) {
     case codegen::OutputKind::llvm_ir:
         return ".ll";
@@ -35,7 +35,7 @@ bool same_file(const std::filesystem::path &left, const std::filesystem::path &r
 }
 } // namespace
 
-void validate_destination(const std::filesystem::path &path, std::span<const std::filesystem::path> inputs) {
+void validate_destination(const std::filesystem::path &path, const std::span<const std::filesystem::path> inputs) {
     std::error_code error;
     const auto status = std::filesystem::symlink_status(path, error);
     if (error && error != std::errc::no_such_file_or_directory) {
@@ -52,8 +52,9 @@ void validate_destination(const std::filesystem::path &path, std::span<const std
     }
 }
 
-std::vector<Destination> plan(std::span<const codegen::OutputBuffer> outputs, const std::filesystem::path &root,
-                              std::span<const std::filesystem::path> inputs, std::string_view object_extension) {
+std::vector<Destination> plan(const std::span<const codegen::OutputBuffer> outputs, const std::filesystem::path &root,
+                              const std::span<const std::filesystem::path> inputs,
+                              const std::string_view object_extension) {
     std::vector<Destination> destinations;
     std::set<std::filesystem::path> names;
     const auto base = project::absolute_path(std::filesystem::current_path(), root);

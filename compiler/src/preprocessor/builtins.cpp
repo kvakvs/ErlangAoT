@@ -79,7 +79,7 @@ void PreprocessorSession::State::function_context(std::vector<Token> &tokens) {
     }
 }
 
-std::vector<Token> PreprocessorSession::State::expand(std::span<const Token> tokens, bool function) {
+std::vector<Token> PreprocessorSession::State::expand(const std::span<const Token> tokens, const bool function) {
     auto result =
         MacroExpander(macros, options.limits, [this](const Token &name) { return builtin(name); }).expand(tokens);
     if (function) {
@@ -94,7 +94,7 @@ std::vector<Token> PreprocessorSession::State::expand(std::span<const Token> tok
     return result;
 }
 
-void PreprocessorSession::State::emit_file(const Token &site, const std::string &name, std::size_t line) {
+void PreprocessorSession::State::emit_file(const Token &site, const std::string &name, const std::size_t line) {
     auto tokens = fragment("-file(\"\",1).");
     Source converted(0, "<filename>", name);
     tokens[3] = generated(site, TokenKind::string, converted.text);

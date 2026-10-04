@@ -11,7 +11,7 @@ bool special_context(const Token &name) {
 }
 
 // Record every reference without expanding stored bodies or discarding unused arguments.
-std::vector<MacroKey> dependencies(std::span<const Token> body) {
+std::vector<MacroKey> dependencies(const std::span<const Token> body) {
     std::vector<MacroKey> result;
     for (std::size_t i = 0; i + 1 < body.size(); ++i) {
         if (!syntax(body[i], U"?")) {
@@ -32,7 +32,7 @@ std::vector<MacroKey> dependencies(std::span<const Token> body) {
 
 // Walk a dependency DAG once per invocation, retaining an active path for cycle diagnostics.
 void visit(const MacroTable &table, const MacroKey &key, std::set<MacroKey> &active, std::set<MacroKey> &done,
-           const Token &call, std::size_t limit) {
+           const Token &call, const std::size_t limit) {
     if (active.contains(key)) {
         pp_fail(DiagnosticCode::macro_cycle, "circular macro " + utf8(key.name), call);
     }
@@ -58,7 +58,7 @@ void visit(const MacroTable &table, const MacroKey &key, std::set<MacroKey> &act
 }
 } // namespace
 
-void MacroTable::check_cycles(const Definition &definition, const Token &call, std::size_t maximum_depth) const {
+void MacroTable::check_cycles(const Definition &definition, const Token &call, const std::size_t maximum_depth) const {
     std::set<MacroKey> active;
     std::set<MacroKey> done;
     const auto arity = definition.parameters ? std::optional(definition.parameters->size()) : std::nullopt;
@@ -93,7 +93,7 @@ void MacroTable::undefine(std::u32string_view name) {
     undefined.erase(std::u32string(name));
 }
 
-bool MacroTable::contains(std::u32string_view name, bool include_undefined) const {
+bool MacroTable::contains(std::u32string_view name, const bool include_undefined) const {
     const std::u32string key(name);
     if (undefined.contains(key)) {
         return include_undefined;
@@ -104,7 +104,7 @@ bool MacroTable::contains(std::u32string_view name, bool include_undefined) cons
     return std::ranges::any_of(definitions, [name](const auto &item) { return item.first.name == name; });
 }
 
-const Definition *MacroTable::lookup(const Token &name, std::optional<std::size_t> arity) const {
+const Definition *MacroTable::lookup(const Token &name, const std::optional<std::size_t> arity) const {
     const std::u32string key(name.text());
     const auto count = std::ranges::count_if(definitions, [&key](const auto &item) { return item.first.name == key; });
     if (count == 1) {
@@ -122,7 +122,7 @@ const Definition *MacroTable::lookup(const Token &name, std::optional<std::size_
 MacroExpander::MacroExpander(const MacroTable &table, const PreprocessorLimits &limits, Builtin builtin)
     : table_(table), limits_(limits), builtin_(std::move(builtin)) {}
 
-void MacroExpander::budget(std::size_t count, const Token &call) {
+void MacroExpander::budget(const std::size_t count, const Token &call) {
     if (count > limits_.tokens - std::min(produced_, limits_.tokens)) {
         pp_fail(DiagnosticCode::resource_limit, "macro token budget exhausted", call);
     }
@@ -131,7 +131,7 @@ void MacroExpander::budget(std::size_t count, const Token &call) {
 
 namespace {
 // Consume the double-question marker only when followed by a formal-shaped variable.
-bool stringify_parameter(std::span<const Token> body, std::size_t &position) {
+bool stringify_parameter(const std::span<const Token> body, std::size_t &position) {
     if (position + 2 >= body.size()) {
         return false;
     }
@@ -146,7 +146,7 @@ bool stringify_parameter(std::span<const Token> body, std::size_t &position) {
 }
 
 // Retain dynamic ancestry too: substitution can manufacture references absent from the static graph.
-void expansion_path(const Definition &definition, const Token &call, std::size_t limit) {
+void expansion_path(const Definition &definition, const Token &call, const std::size_t limit) {
     const auto &site = definition.name.spelling;
     const auto recursive = [&](const Span &origin) {
         return origin.source == site.source && origin.begin == site.begin && origin.end == site.end;
@@ -236,7 +236,7 @@ std::vector<Token> MacroExpander::invoke(const Token &name, const Arguments &arg
     return definition->parameters ? replacement : rescan(replacement);
 }
 
-std::vector<Token> MacroExpander::expand(std::span<const Token> input) {
+std::vector<Token> MacroExpander::expand(const std::span<const Token> input) {
     if (input.empty()) {
         return {};
     }

@@ -16,7 +16,7 @@ std::optional<std::string> read_file(const std::filesystem::path &path) {
 }
 
 // Copy environment values into session-owned storage using the platform CRT API.
-std::optional<std::string> environment(std::string_view name) {
+std::optional<std::string> environment(const std::string_view name) {
 #ifdef _WIN32
     char *buffer = nullptr;
     std::size_t size = 0;
@@ -62,7 +62,7 @@ PreprocessorSession::State::State(const SourcePtr &source, PreprocessorOptions s
     emit_file(start_token(source), source->name, 1);
 }
 
-void PreprocessorSession::State::initial_feature(const std::string &name, bool enabled) {
+void PreprocessorSession::State::initial_feature(const std::string &name, const bool enabled) {
     if (name == "all") {
         for (const auto &[known, state] : features) {
             (void)state;

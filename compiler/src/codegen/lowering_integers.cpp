@@ -9,7 +9,7 @@ namespace {
 using Op = abi::v1::ImmediateOperation;
 
 // Twice the target width holds every exact add/subtract/product of two small payloads.
-std::optional<llvm::Instruction::BinaryOps> arithmetic(Op operation) {
+std::optional<llvm::Instruction::BinaryOps> arithmetic(const Op operation) {
     switch (operation) {
     case Op::add:
         return llvm::Instruction::Add;
@@ -23,7 +23,7 @@ std::optional<llvm::Instruction::BinaryOps> arithmetic(Op operation) {
 }
 
 // Reject noninteger tags before decoding, independently of inferred facts or source specifications.
-llvm::Value *compare(ExpressionLowering &state, llvm::CmpInst::Predicate operation, llvm::Value *left,
+llvm::Value *compare(ExpressionLowering &state, const llvm::CmpInst::Predicate operation, llvm::Value *left,
                      llvm::Value *right) {
     return state.builder.Insert(llvm::CmpInst::Create(llvm::Instruction::ICmp, operation, left, right));
 }
@@ -42,7 +42,7 @@ struct Arithmetic {
 };
 
 // Compute without wrap in a double-width integer, then prove payload bounds before truncation and encoding.
-Arithmetic calculate(ExpressionLowering &state, llvm::Instruction::BinaryOps operation, llvm::Value *left,
+Arithmetic calculate(ExpressionLowering &state, const llvm::Instruction::BinaryOps operation, llvm::Value *left,
                      llvm::Value *right) {
     auto &builder = state.builder;
     auto *wide = builder.getIntNTy(state.word->getBitWidth() * 2);
@@ -92,7 +92,7 @@ llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state) {
     return state.bad_arithmetic;
 }
 
-llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal) {
+llvm::Value *lower_integer(ExpressionLowering &state, const std::string_view decimal) {
     auto &output = *state.entry.getParent();
     auto &builder = state.builder;
     auto *bytes = llvm::ConstantDataArray::getString(output.getContext(), decimal, false);
@@ -109,7 +109,7 @@ llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal) 
     return checked_value(state, {outcome, slot}, bad_arithmetic_exit(state));
 }
 
-llvm::Value *lower_operation(ExpressionLowering &state, Op operation, llvm::Value *left, llvm::Value *right) {
+llvm::Value *lower_operation(ExpressionLowering &state, const Op operation, llvm::Value *left, llvm::Value *right) {
     if (auto *map = lower_map_query(state, operation, left, right)) {
         return map;
     }

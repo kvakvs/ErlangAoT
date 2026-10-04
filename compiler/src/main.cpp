@@ -3,7 +3,7 @@
 #include <exception>
 
 // Keep unexpected failures inside the CLI diagnostic and exit-code contract.
-int main(int argc, char *argv[]) {
+int main(const int argc, char *argv[]) {
     try {
         return erlang_aot::cli::run_command(std::span{argv, static_cast<std::size_t>(argc)}.subspan(1));
     } catch (const std::exception &error) {

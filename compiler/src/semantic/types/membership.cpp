@@ -20,7 +20,7 @@ bool less(std::string_view left, std::string_view right) {
 }
 
 // Known numeric builtins admit exact integers without claiming a machine representation.
-bool builtin_excludes(const Node &node, std::string_view value) {
+bool builtin_excludes(const Node &node, const std::string_view value) {
     constexpr std::array general{"integer", "number"};
     if (std::ranges::contains(general, node.name)) {
         return false;
@@ -42,7 +42,7 @@ bool builtin_excludes(const Node &node, std::string_view value) {
 }
 
 // Flat structural categories and integer ranges can exclude a singleton without recursive analysis.
-bool concrete_excludes(const Graph &graph, const Node &node, std::string_view value) {
+bool concrete_excludes(const Graph &graph, const Node &node, const std::string_view value) {
     if (node.kind == Kind::integer) {
         return node.name != value;
     }
@@ -58,7 +58,7 @@ bool concrete_excludes(const Graph &graph, const Node &node, std::string_view va
 }
 
 // Stop on hidden or repeated references; recursive contracts cannot establish exclusion.
-bool expand(Registry &declared, const Id id, std::string_view owner, std::vector<Id> &pending,
+bool expand(Registry &declared, const Id id, const std::string_view owner, std::vector<Id> &pending,
             std::set<Id> &references) {
     if (!references.insert(id).second) {
         return false;

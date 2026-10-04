@@ -144,7 +144,7 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
 
 } // namespace
 
-bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
+bool process_files(const std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &sink) {
     Inputs inputs;
     if (request.compile && paths.size() > codegen::CompilationLimits{}.modules) {

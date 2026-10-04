@@ -10,7 +10,7 @@ using Guard = Value (*)(const Values &);
 using Signature = std::pair<std::u32string_view, std::size_t>;
 
 // Reject invalid Erlang types before indexing or operating on host containers.
-const Value &typed(const Value &value, ValueKind kind) {
+const Value &typed(const Value &value, const ValueKind kind) {
     if (value.kind != kind) {
         throw EvaluationFailure();
     }

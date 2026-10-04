@@ -19,7 +19,7 @@ std::string available(const Manifest &manifest) {
 }
 } // namespace
 
-std::vector<std::size_t> select_targets(const Manifest &manifest, std::span<const std::string> selectors) {
+std::vector<std::size_t> select_targets(const Manifest &manifest, const std::span<const std::string> selectors) {
     std::vector<std::size_t> result;
     if (selectors.empty()) {
         result.resize(manifest.targets.size());

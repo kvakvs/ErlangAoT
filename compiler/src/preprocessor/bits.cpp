@@ -16,7 +16,7 @@ struct Segment {
 };
 
 // Consume unit:N with OTP's positive, at-most-256 unit range.
-void set_unit(Segment &result, std::span<const Token> tokens, std::size_t &position) {
+void set_unit(Segment &result, const std::span<const Token> tokens, std::size_t &position) {
     if (tokens[position].text() != U"unit" || ++position == tokens.size()) {
         throw EvaluationFailure();
     }
@@ -41,7 +41,8 @@ void set_modifier(std::optional<std::u32string> &slot, std::u32string_view name)
 }
 
 // Decode modifier categories independently from defaults and compatibility checks.
-void read_modifier(Segment &result, std::array<std::optional<std::u32string>, 3> &seen, std::span<const Token> tokens,
+void read_modifier(Segment &result, std::array<std::optional<std::u32string>, 3> &seen,
+                   const std::span<const Token> tokens,
                    std::size_t &position) {
     auto name = tokens[position].text();
     if (name == U"bytes") {
@@ -78,7 +79,7 @@ Segment modifiers(const Expr &expression) {
 }
 
 // Round a finite double to IEEE binary16, including subnormals and signed zero.
-std::uint16_t half(double number) {
+std::uint16_t half(const double number) {
     const auto sign = static_cast<std::uint16_t>(std::signbit(number) ? 0x8000 : 0);
     const auto magnitude = std::abs(number);
     if (magnitude >= 65520) {
@@ -94,7 +95,7 @@ std::uint16_t half(double number) {
 }
 
 // Encode low-order integer bits; little-endian swaps octets while preserving partial octets.
-void append_integer(Value &output, const BigInt &number, std::size_t count, bool little) {
+void append_integer(Value &output, const BigInt &number, std::size_t count, const bool little) {
     if (count > 1000000 - output.bits.size()) {
         throw EvaluationLimit();
     }
@@ -135,7 +136,7 @@ void append_unicode(Value &output, const Value &value, const Segment &segment) {
 }
 
 // Floating segments share IEEE encodings across target hosts.
-void append_float(Value &output, const Value &value, const Segment &segment, std::size_t count) {
+void append_float(Value &output, const Value &value, const Segment &segment, const std::size_t count) {
     const auto number = real(value);
     if (count == 16) {
         append_integer(output, half(number), count, segment.little);
@@ -148,7 +149,7 @@ void append_float(Value &output, const Value &value, const Segment &segment, std
     }
 }
 
-void append_value(Value &output, const Value &value, const Segment &segment, std::size_t count) {
+void append_value(Value &output, const Value &value, const Segment &segment, const std::size_t count) {
     if (segment.type.starts_with(U"utf")) {
         append_unicode(output, value, segment);
         return;
@@ -191,7 +192,7 @@ Value evaluate_bits(const Expr &expression, const std::function<bool(std::u32str
 }
 
 void append_literal_bits(Value &output, const Value &value, const std::optional<Value> &size,
-                         std::span<const Token> tokens, bool string) {
+                         std::span<const Token> tokens, const bool string) {
     Expr descriptor{ExprKind::segment, {}, {}, {tokens.begin(), tokens.end()}};
     descriptor.children.resize(size ? 2 : 1);
     const auto settings = modifiers(descriptor);

@@ -1,7 +1,7 @@
 #include "display.hpp"
 
 namespace erlang_aot::cli {
-std::string quote_text(std::string_view text) {
+std::string quote_text(const std::string_view text) {
     constexpr std::string_view hex = "0123456789abcdef";
     std::string result = "\"";
     for (const unsigned char character : text) {

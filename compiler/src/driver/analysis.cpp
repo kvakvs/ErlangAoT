@@ -21,7 +21,7 @@ void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis
 }
 
 // Attach known module identities to each batch analysis phase before invoking its shared implementation.
-void trace_analysis(std::string_view phase, const codegen::CompilationRequest &request, const Analysis &analysis) {
+void trace_analysis(const std::string_view phase, const codegen::CompilationRequest &request, const Analysis &analysis) {
     for (std::size_t i = 0; i < analysis.modules.size(); ++i) {
         codegen::progress(request, phase, request.inputs[i].source_path, utf8(analysis.modules[i]->name));
     }

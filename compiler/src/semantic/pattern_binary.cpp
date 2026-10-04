@@ -111,7 +111,7 @@ void all_size(BindingAnalysis &state, const ast::BinarySegment &value, Types &ty
 }
 
 // Validate shared size/type constraints before construction or pattern extraction.
-void segment(BindingAnalysis &state, const ast::BinarySegment &value, bool last, bool pattern) {
+void segment(BindingAnalysis &state, const ast::BinarySegment &value, const bool last, const bool pattern) {
     Types types;
     segment_types(state, value, types);
     const bool utf = size_type(state, value, types);

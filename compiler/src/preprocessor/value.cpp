@@ -21,9 +21,9 @@ Value atom(std::u32string text) {
     return value;
 }
 
-Value boolean(bool value) { return atom(value ? U"true" : U"false"); }
+Value boolean(const bool value) { return atom(value ? U"true" : U"false"); }
 
-Value floating(double number) {
+Value floating(const double number) {
     if (!std::isfinite(number)) {
         throw EvaluationFailure();
     }
@@ -65,7 +65,7 @@ const BigInt &integral(const Value &value) {
     return value.integer;
 }
 
-std::size_t index(const Value &value, std::size_t maximum) {
+std::size_t index(const Value &value, const std::size_t maximum) {
     const auto &number = integral(value);
     if (number < 0 || number > maximum) {
         throw EvaluationFailure();
@@ -87,7 +87,7 @@ template <class T> int ordered(const T &left, const T &right) {
 }
 
 // Avoid converting a large integer to double when comparing mixed numeric values.
-int numeric_compare(const Value &left, const Value &right, bool exact) {
+int numeric_compare(const Value &left, const Value &right, const bool exact) {
     if (left.kind == right.kind) {
         return left.kind == ValueKind::integer ? ordered(left.integer, right.integer) : ordered(left.real, right.real);
     }
@@ -107,7 +107,7 @@ int numeric_compare(const Value &left, const Value &right, bool exact) {
 }
 
 // Compare tuple fields or binary bits in their original order.
-int sequence_compare(const std::vector<Value> &left, const std::vector<Value> &right, bool exact) {
+int sequence_compare(const std::vector<Value> &left, const std::vector<Value> &right, const bool exact) {
     for (std::size_t i = 0; i < std::min(left.size(), right.size()); ++i) {
         if (const auto result = compare(left[i], right[i], exact); result != 0) {
             return result;
@@ -117,13 +117,13 @@ int sequence_compare(const std::vector<Value> &left, const std::vector<Value> &r
 }
 
 // Atoms and external funs compare their names first; fun signatures then distinguish arity/name.
-int named_compare(const Value &left, const Value &right, bool exact) {
+int named_compare(const Value &left, const Value &right, const bool exact) {
     const auto name = ordered(left.text, right.text);
     return name != 0 ? name : sequence_compare(left.elements, right.elements, exact);
 }
 
 // Reconstruct a list suffix only at the unequal-length comparison boundary.
-Value tail(const Value &value, std::size_t skip) {
+Value tail(const Value &value, const std::size_t skip) {
     if (skip == value.elements.size()) {
         return value.tail ? *value.tail : Value{};
     }
@@ -132,7 +132,7 @@ Value tail(const Value &value, std::size_t skip) {
     return result;
 }
 
-int list_compare(const Value &left, const Value &right, bool exact) {
+int list_compare(const Value &left, const Value &right, const bool exact) {
     const auto count = std::min(left.elements.size(), right.elements.size());
     for (std::size_t i = 0; i < count; ++i) {
         if (const auto result = compare(left.elements[i], right.elements[i], exact); result != 0) {
@@ -149,11 +149,11 @@ std::vector<std::size_t> keys(const Value &value) {
         result.push_back(i);
     }
     std::ranges::sort(
-        result, [&](std::size_t a, std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
+        result, [&](const std::size_t a, const std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
     return result;
 }
 
-int map_compare(const Value &left, const Value &right, bool exact) {
+int map_compare(const Value &left, const Value &right, const bool exact) {
     if (left.elements.size() != right.elements.size()) {
         return ordered(left.elements.size(), right.elements.size());
     }
@@ -173,7 +173,7 @@ int map_compare(const Value &left, const Value &right, bool exact) {
 }
 } // namespace
 
-int compare(const Value &left, const Value &right, bool exact) {
+int compare(const Value &left, const Value &right, const bool exact) {
     if (numeric(left) && numeric(right)) {
         return numeric_compare(left, right, exact);
     }

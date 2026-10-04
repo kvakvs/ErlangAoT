@@ -23,7 +23,7 @@ std::vector<ast::ExprId> aliases(const ast::ExprValue &value) {
 }
 } // namespace
 
-BindingFacts::BindingFacts(FunctionRef owner, Inference &facts, std::size_t &work) : function(owner), inference(facts) {
+BindingFacts::BindingFacts(const FunctionRef owner, Inference &facts, std::size_t &work) : function(owner), inference(facts) {
     for (const auto &binding : function.function->bindings) {
         if (!spend(inference, work)) {
             return;

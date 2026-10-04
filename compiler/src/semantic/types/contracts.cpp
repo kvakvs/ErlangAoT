@@ -6,7 +6,7 @@ namespace erlang_aot::semantic::types {
 namespace {
 // Compare only precise implementation singletons; top and parameter relations are inconclusive here.
 bool excludes(Registry &declared, const Inference &inferred, const Fact fact, const Id expected,
-              std::string_view owner) {
+              const std::string_view owner) {
     const auto &node = inferred.graph.get(fact.type);
     return node.kind == Kind::integer && excludes_integer(declared, node.name, expected, owner);
 }

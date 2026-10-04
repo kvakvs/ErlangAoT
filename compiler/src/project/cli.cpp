@@ -11,16 +11,16 @@ bool creation_conflict(const Request &request, const Usage &usage) {
 }
 
 // Check repetition before consuming a second project filename operand.
-bool repeated(std::string_view argument, const Request &request) {
+bool repeated(const std::string_view argument, const Request &request) {
     return (argument == "--project" && request.file) || (argument == "--new-project" && request.create);
 }
 } // namespace
 
-bool is_option(std::string_view argument) {
+bool is_option(const std::string_view argument) {
     return argument == "--project" || argument == "--target" || argument == "--new-project";
 }
 
-std::optional<std::string> parse_option(std::string_view argument, std::span<char *> &remaining, Request &request) {
+std::optional<std::string> parse_option(const std::string_view argument, std::span<char *> &remaining, Request &request) {
     if (repeated(argument, request)) {
         return std::string(argument) + " specified more than once";
     }

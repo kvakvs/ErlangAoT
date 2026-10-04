@@ -4,7 +4,7 @@
 namespace erlang_aot {
 namespace {
 // Append punctuation and recursively normalized term tokens at one definition site.
-void symbol(std::vector<Token> &output, const Token &site, std::u32string_view text) {
+void symbol(std::vector<Token> &output, const Token &site, const std::u32string_view text) {
     output.push_back(generated(site, TokenKind::symbol, std::u32string(text)));
 }
 
@@ -56,7 +56,7 @@ void map_tokens(std::vector<Token> &output, const Value &value, const Token &sit
         keys.push_back(i);
     }
     std::ranges::sort(
-        keys, [&](std::size_t a, std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
+        keys, [&](const std::size_t a, const std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
     symbol(output, site, U"#");
     symbol(output, site, U"{");
     bool first = true;

@@ -37,7 +37,8 @@ void append_application(std::vector<std::filesystem::path> &result, const std::f
 }
 } // namespace
 
-std::vector<std::filesystem::path> PreprocessorSession::State::candidates(const std::string &name, bool library) const {
+std::vector<std::filesystem::path> PreprocessorSession::State::candidates(const std::string &name,
+                                                                          const bool library) const {
     const std::filesystem::path path(name);
     if (path.is_absolute()) {
         return {path};

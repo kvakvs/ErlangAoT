@@ -14,7 +14,8 @@ namespace {
 constexpr std::size_t output_limit = std::size_t{64} * 1024;
 
 // Search PATH (or the given directories) for one name, accepting only an executable file.
-std::optional<std::string> find_program(const std::string &name, llvm::ArrayRef<llvm::StringRef> directories = {}) {
+std::optional<std::string> find_program(const std::string &name,
+                                        const llvm::ArrayRef<llvm::StringRef> directories = {}) {
     auto found = llvm::sys::findProgramByName(name, directories);
     if (!found || !llvm::sys::fs::can_execute(*found)) {
         return std::nullopt;
@@ -23,7 +24,7 @@ std::optional<std::string> find_program(const std::string &name, llvm::ArrayRef<
 }
 
 // Prefer clang++, then clang; the forced g++ driver mode makes both link C++ runtime dependencies.
-std::optional<std::string> find_clang(llvm::ArrayRef<llvm::StringRef> directories) {
+std::optional<std::string> find_clang(const llvm::ArrayRef<llvm::StringRef> directories) {
     for (const auto *name : {"clang++", "clang"}) {
         if (auto found = find_program(name, directories)) {
             return found;

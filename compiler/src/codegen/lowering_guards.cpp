@@ -3,7 +3,7 @@
 namespace erlang_aot::codegen {
 namespace {
 // Comma boundaries require canonical true and share one rejection edge for the complete alternative.
-void conjunction(ExpressionLowering &state, const ast::GuardConjunction &guard, GuardEdges edges) {
+void conjunction(ExpressionLowering &state, const ast::GuardConjunction &guard, const GuardEdges edges) {
     for (std::size_t i = 0; i < guard.tests.size(); ++i) {
         auto *next = i + 1 == guard.tests.size()
                          ? edges.success
@@ -18,7 +18,7 @@ void conjunction(ExpressionLowering &state, const ast::GuardConjunction &guard, 
 }
 } // namespace
 
-void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, GuardEdges edges) {
+void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, const GuardEdges edges) {
     for (std::size_t i = 0; i < guard.alternatives.size(); ++i) {
         auto *reject = i + 1 == guard.alternatives.size()
                            ? edges.rejection

@@ -5,7 +5,7 @@
 namespace erlang_aot::semantic {
 namespace {
 // Charge every scheduled operation before growing either the task stack or the candidate-slot table.
-bool charge(MatchPlanner &state, const ast::ExprId &site, std::size_t count) {
+bool charge(MatchPlanner &state, const ast::ExprId &site, const std::size_t count) {
     for (std::size_t i = 0; i < count; ++i) {
         if (!state.spend(site)) {
             return false;
@@ -56,7 +56,7 @@ void terminus(const Chain &chain, const PatternVisit &visit, std::vector<MatchTa
 }
 
 // Each cons is checked before accessing its head; the tail becomes the next candidate only after success.
-void cell(const Chain &chain, const PatternVisit &visit, std::size_t index, std::vector<MatchTask> &pending) {
+void cell(const Chain &chain, const PatternVisit &visit, const std::size_t index, std::vector<MatchTask> &pending) {
     const auto head = chain.base + 2 * index;
     MatchNode tail{chain.pattern.origin, MatchOperation::cons_tail, visit.input};
     tail.output = head + 1;

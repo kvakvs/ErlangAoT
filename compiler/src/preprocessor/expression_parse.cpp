@@ -16,7 +16,7 @@ bool right_associative(const Token &token) {
 }
 } // namespace
 
-ExpressionParser::ExpressionParser(std::span<const Token> tokens, std::size_t maximum_depth)
+ExpressionParser::ExpressionParser(const std::span<const Token> tokens, const std::size_t maximum_depth)
     : input_(tokens, tokens.empty() ? Token{} : tokens.back()), anchor_(tokens.empty() ? Token{} : tokens.back()),
       maximum_depth_(maximum_depth) {}
 
@@ -29,7 +29,7 @@ Token ExpressionParser::consume() {
     return result;
 }
 
-bool ExpressionParser::take(std::u32string_view symbol) {
+bool ExpressionParser::take(const std::u32string_view symbol) {
     if (input_.empty() || !syntax(input_.anchor(), symbol)) {
         return false;
     }
@@ -37,7 +37,7 @@ bool ExpressionParser::take(std::u32string_view symbol) {
     return true;
 }
 
-void ExpressionParser::expect(std::u32string_view symbol) {
+void ExpressionParser::expect(const std::u32string_view symbol) {
     if (!take(symbol)) {
         pp_fail(DiagnosticCode::invalid_condition, "expected '" + utf8(symbol) + "'",
                 input_.empty() ? anchor_ : input_.anchor());
@@ -52,7 +52,7 @@ Expr ExpressionParser::parse() {
     return result;
 }
 
-Expr ExpressionParser::expression(int minimum) {
+Expr ExpressionParser::expression(const int minimum) {
     if (++depth_ > maximum_depth_) {
         pp_fail(DiagnosticCode::resource_limit, "expression nesting exhausted", anchor_);
     }
@@ -211,7 +211,7 @@ Expr ExpressionParser::atom_or_call(Token name) {
     return result;
 }
 
-Expr ExpressionParser::collection(ExprKind kind, std::u32string_view closing) {
+Expr ExpressionParser::collection(const ExprKind kind, const std::u32string_view closing) {
     Expr result{kind, anchor_, {}, {}};
     if (take(closing)) {
         return result;
@@ -238,7 +238,7 @@ Expr ExpressionParser::postfix(Expr base) {
     return base;
 }
 
-Expr ExpressionParser::map(ExprKind kind, std::optional<Expr> base) {
+Expr ExpressionParser::map(const ExprKind kind, std::optional<Expr> base) {
     Expr result{kind, anchor_, {}, {}};
     if (base) {
         result.children.push_back(std::move(*base));

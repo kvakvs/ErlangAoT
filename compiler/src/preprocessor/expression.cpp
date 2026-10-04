@@ -67,7 +67,7 @@ Value binary(const Expr &expression, const std::function<bool(std::u32string_vie
 }
 
 // Normalize list tails so type tests and length distinguish improper lists correctly.
-Value list_value(std::vector<Value> elements, bool has_tail) {
+Value list_value(std::vector<Value> elements, const bool has_tail) {
     if (!has_tail) {
         return list(std::move(elements));
     }
@@ -207,7 +207,7 @@ Value evaluate(const Expr &expression, const std::function<bool(std::u32string_v
     return evaluate_collection(expression, defined);
 }
 
-bool condition(std::span<const Token> input, std::size_t depth,
+bool condition(const std::span<const Token> input, const std::size_t depth,
                const std::function<bool(std::u32string_view)> &defined) {
     auto expression = ExpressionParser(input, depth).parse();
     try {
@@ -220,7 +220,7 @@ bool condition(std::span<const Token> input, std::size_t depth,
     }
 }
 
-Value parse_term(std::span<const Token> input, std::size_t depth) {
+Value parse_term(const std::span<const Token> input, const std::size_t depth) {
     const auto expression = ExpressionParser(input, depth).parse();
     if (!literal_term(expression)) {
         pp_fail(DiagnosticCode::malformed_directive, "expected literal Erlang term", expression.token);

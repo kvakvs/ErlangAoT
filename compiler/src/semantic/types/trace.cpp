@@ -4,7 +4,7 @@
 namespace erlang_aot::semantic::types {
 namespace {
 // Quote control bytes and delimiters so filenames and atoms cannot inject debug lines.
-std::string escaped(std::string_view text) {
+std::string escaped(const std::string_view text) {
     constexpr std::string_view hex = "0123456789abcdef";
     std::string result = "\"";
     for (const unsigned char character : text) {

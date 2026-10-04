@@ -34,7 +34,7 @@ BigInt decimal_value(std::string_view text) {
 }
 
 // Exact integer arithmetic shares the already bounded compiler evaluator, never runtime math.
-Id arithmetic(Resolver &r, const Node &node, const std::vector<Value> &values, const ast::NodeSource &source) {
+Id arithmetic(const Resolver &r, const Node &node, const std::vector<Value> &values, const ast::NodeSource &source) {
     const auto spelling = node.kind == Kind::unary
                               ? operator_spelling(static_cast<ast::UnaryOperator>(operation(node)))
                               : operator_spelling(static_cast<ast::BinaryOperator>(operation(node)));
@@ -55,7 +55,7 @@ Id arithmetic(Resolver &r, const Node &node, const std::vector<Value> &values, c
 }
 
 // Integer-only syntax categories reject nonconstants instead of treating declarations as executable code.
-std::optional<std::vector<Value>> operands(Resolver &r, const Node &node, const ast::NodeSource &source) {
+std::optional<std::vector<Value>> operands(const Resolver &r, const Node &node, const ast::NodeSource &source) {
     std::vector<Value> values;
     for (const auto child : node.children) {
         const auto &value = r.registry.graph.get(child);

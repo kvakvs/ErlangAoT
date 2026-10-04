@@ -64,7 +64,7 @@ void contracts(Registry &registry, const Reporter &out) {
     }
 }
 
-std::unique_ptr<Registry> resolve_declarations(std::span<const std::unique_ptr<Module>> modules, const Reporter &out,
+std::unique_ptr<Registry> resolve_declarations(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out,
                                                const Limits limits) {
     auto registry = std::make_unique<Registry>(limits);
     collect(*registry, modules, out);

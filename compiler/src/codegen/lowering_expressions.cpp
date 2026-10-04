@@ -70,7 +70,7 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
 // Lower body-only erlang builtins (display/1, halt/0,1); null for every other service.
 llvm::Value *body_builtin_value(ExpressionLowering &state, const std::optional<abi::v1::ImmediateOperation> &operation,
                                 const ast::CallExpression &call) {
-    const auto argument = [&](std::size_t index) {
+    const auto argument = [&](const std::size_t index) {
         return state.values.at(&state.module.syntax->expression(call.arguments.at(index)));
     };
     if (operation == abi::v1::ImmediateOperation::display) {

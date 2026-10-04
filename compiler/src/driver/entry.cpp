@@ -16,7 +16,7 @@ std::string selection_hint(const bool project) {
 }
 
 // Find the batch module whose declared name matches the requested atom text.
-std::optional<std::size_t> find_module(Modules modules, const std::u32string &name) {
+std::optional<std::size_t> find_module(const Modules modules, const std::u32string &name) {
     for (std::size_t index = 0; index < modules.size(); ++index) {
         if (modules[index]->declaration && modules[index]->name == name) {
             return index;
@@ -64,7 +64,7 @@ bool check_function(const semantic::Module &module, const project::EntryName &na
 }
 
 // Check an explicit selection; unknown modules are reported against the selection's origin.
-std::optional<ResolvedEntry> check_selected(Modules modules, const project::SelectedEntry &selected,
+std::optional<ResolvedEntry> check_selected(const Modules modules, const project::SelectedEntry &selected,
                                             const semantic::Reporter &report, const DiagnosticSink &sink) {
     const auto index = find_module(modules, selected.name.module);
     if (!index) {
@@ -105,7 +105,7 @@ std::optional<ResolvedEntry> detect(Modules modules, const bool project, const D
 }
 } // namespace
 
-bool resolve_entry(Modules modules, const EntryRequest &request, const semantic::Reporter &report,
+bool resolve_entry(const Modules modules, const EntryRequest &request, const semantic::Reporter &report,
                    const DiagnosticSink &sink, std::optional<ResolvedEntry> &entry) {
     if (request.selected) {
         entry = check_selected(modules, *request.selected, report, sink);

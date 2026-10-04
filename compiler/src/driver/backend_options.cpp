@@ -7,7 +7,7 @@
 namespace erlang_aot::cli {
 namespace {
 // Give every value-bearing switch the same absent/empty operand diagnostic.
-std::optional<std::string> operand(std::string_view option, std::span<char *> &remaining, std::string &value) {
+std::optional<std::string> operand(const std::string_view option, std::span<char *> &remaining, std::string &value) {
     if (remaining.empty() || std::string_view(remaining.front()).empty()) {
         return "expected a value after " + std::string(option);
     }
@@ -33,7 +33,7 @@ std::optional<std::string> emission(const std::string &value, BackendOptions &op
 }
 
 // Store a native path operand once, preserving the option spelling in duplicate errors.
-std::optional<std::string> path_option(std::string_view option, const std::string &value,
+std::optional<std::string> path_option(const std::string_view option, const std::string &value,
                                        std::optional<std::filesystem::path> &path) {
     if (path) {
         return std::string(option) + " specified more than once";
@@ -43,7 +43,7 @@ std::optional<std::string> path_option(std::string_view option, const std::strin
 }
 
 // Assign native path/triple operands only once, preserving option spelling in errors.
-std::optional<std::string> value_option(std::string_view option, const std::string &value, BackendOptions &options) {
+std::optional<std::string> value_option(const std::string_view option, const std::string &value, BackendOptions &options) {
     static const std::map<std::string_view, std::optional<std::filesystem::path> BackendOptions::*> paths{
         {"--artifact-dir", &BackendOptions::artifact_directory},
         {"--linker", &BackendOptions::linker},
@@ -62,7 +62,7 @@ std::optional<std::string> value_option(std::string_view option, const std::stri
 }
 
 // Parse idempotent inspection flags without consuming source operands.
-bool inspection_flag(std::string_view option, BackendOptions &options) {
+bool inspection_flag(const std::string_view option, BackendOptions &options) {
     static const std::map<std::string_view, bool BackendOptions::*> flags{
         {"--print-types", &BackendOptions::print_types},
         {"--print-ir", &BackendOptions::print_ir},
@@ -122,7 +122,7 @@ bool explicit_backend(const BackendOptions &options) {
 }
 } // namespace
 
-bool is_backend_option(std::string_view option) {
+bool is_backend_option(const std::string_view option) {
     static const std::set<std::string_view> options{"--emit",
                                                     "--artifact-dir",
                                                     "--target-triple",
@@ -137,7 +137,7 @@ bool is_backend_option(std::string_view option) {
     return options.contains(option);
 }
 
-std::optional<std::string> parse_backend_option(std::string_view option, std::span<char *> &remaining,
+std::optional<std::string> parse_backend_option(const std::string_view option, std::span<char *> &remaining,
                                                 BackendOptions &options) {
     if (inspection_flag(option, options)) {
         return {};

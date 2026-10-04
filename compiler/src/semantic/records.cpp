@@ -133,7 +133,7 @@ void initializers(Initializers &result, const ast::RecordExpression &record) {
 
 // Pattern omissions constrain nothing, whereas construction omissions evaluate their defaults.
 std::optional<ast::ExprId> selected(const Initializers &initializers, const ast::RecordDeclarationField &field,
-                                    bool pattern) {
+                                    const bool pattern) {
     const auto found = initializers.values.find(field.name.name);
     if (found != initializers.values.end()) {
         return found->second;
@@ -201,7 +201,7 @@ std::optional<std::size_t> record_field(const RecordLayout &layout, const ast::A
 }
 
 std::vector<std::optional<ast::ExprId>> record_values(const Module &module, const ast::RecordExpression &record,
-                                                      bool pattern) {
+                                                      const bool pattern) {
     const auto *layout = record_layout(module, record.identity);
     if (!layout) {
         return {};
@@ -232,7 +232,7 @@ void validate_record(const Module &module, const ast::Expression &expression, co
 }
 
 void validate_record_test(const Module &module, const ast::Expression &expression, const ast::CallExpression &call,
-                          bool guard, const Reporter &out) {
+                          const bool guard, const Reporter &out) {
     const auto &tag = module.syntax->expression(ungroup(*module.syntax, call.arguments.at(1)));
     const auto *name = std::get_if<ast::Atom>(&tag.value);
     if (guard && !name) {

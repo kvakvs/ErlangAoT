@@ -2,7 +2,7 @@
 #include <string_view>
 
 namespace erlang_aot::project {
-std::string starter_template(bool windows) {
+std::string starter_template(const bool windows) {
     std::string result = R"PROJECT(# ErlangAoT project. Paths are relative to this TOML file's directory.
 # Check with: erlangaot --parse-check --project <this-file.toml>
 # Also available: --preprocess-check, --print-pp, and --print-ast.

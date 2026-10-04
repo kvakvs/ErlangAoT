@@ -51,7 +51,8 @@ struct GuardSyntax {
 };
 
 // Authorize erlang identities before any lowering or runtime lookup; local body calls retain normal resolution.
-void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call, bool guard, bool top) {
+void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call, const bool guard,
+          const bool top) {
     const auto resolved = guard_identity(state, id, call, guard && top);
     const auto &expression = state.module.syntax->expression(id);
     if (!resolved) {
@@ -81,7 +82,7 @@ struct Visit {
 };
 
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
-void visit(BindingAnalysis &state, const Visit &visit, bool guard, std::vector<Visit> &pending) {
+void visit(BindingAnalysis &state, const Visit &visit, const bool guard, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(visit.id);
     if (const auto *value = std::get_if<ast::CallExpression>(&expression.value)) {
         call(state, visit.id, *value, guard, visit.top);
@@ -96,7 +97,8 @@ void visit(BindingAnalysis &state, const Visit &visit, bool guard, std::vector<V
 }
 
 // Every operand is traversed even behind constant lazy branches; no folding can hide semantic errors.
-void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, bool guard, bool legacy = true) {
+void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, const bool guard,
+                 const bool legacy = true) {
     std::vector<Visit> pending;
     pending.reserve(roots.size());
     for (const auto &root : roots) {
@@ -123,7 +125,7 @@ void clause(BindingAnalysis &state, const ast::FunctionClause &clause) {
 }
 } // namespace
 
-void resolve_services(Module &module, const Reporter &out, std::size_t work_limit) {
+void resolve_services(Module &module, const Reporter &out, const std::size_t work_limit) {
     std::size_t work = 0;
     const auto limit = std::min(work_limit, std::numeric_limits<std::size_t>::max() - 1);
     bool failed = false;

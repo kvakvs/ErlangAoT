@@ -45,7 +45,7 @@ void comparisons(llvm::BinaryOperator &mask, std::size_t index, const Users &saf
 }
 
 // Require a side-effect-free word load and an exact mask rather than broad integer annotations.
-void masks(llvm::LoadInst &load, std::size_t index, const Users &safe, IntegerGuards &result) {
+void masks(llvm::LoadInst &load, const std::size_t index, const Users &safe, IntegerGuards &result) {
     for (const auto &use : load.uses()) {
         auto *mask = llvm::dyn_cast<llvm::BinaryOperator>(use.getUser());
         if (mask && use.getOperandNo() == 0 && safe.contains(mask) && tag_mask(*mask, load)) {
@@ -55,7 +55,7 @@ void masks(llvm::LoadInst &load, std::size_t index, const Users &safe, IntegerGu
 }
 
 // Reject volatile/atomic and mismatched-width loads before considering their checks.
-void loads(llvm::GetElementPtrInst &slot, std::size_t index, const Users &safe, IntegerGuards &result) {
+void loads(llvm::GetElementPtrInst &slot, const std::size_t index, const Users &safe, IntegerGuards &result) {
     for (const auto &use : slot.uses()) {
         auto *load = llvm::dyn_cast<llvm::LoadInst>(use.getUser());
         if (!load || use.getOperandNo() != 0 || !safe.contains(load)) {
@@ -68,7 +68,8 @@ void loads(llvm::GetElementPtrInst &slot, std::size_t index, const Users &safe, 
 }
 
 // Let LLVM decode a constant byte offset, avoiding host-width assumptions and direct operand inspection.
-std::optional<std::size_t> slot_index(llvm::GetElementPtrInst &slot, llvm::Function &function, std::size_t arity) {
+std::optional<std::size_t> slot_index(llvm::GetElementPtrInst &slot, llvm::Function &function,
+                                      const std::size_t arity) {
     if (slot.getNumIndices() != 1 || slot.getSourceElementType() != function.getReturnType()) {
         return {};
     }
@@ -87,7 +88,7 @@ std::optional<std::size_t> slot_index(llvm::GetElementPtrInst &slot, llvm::Funct
 }
 } // namespace
 
-IntegerGuards integer_guards(llvm::Function &function, std::size_t arity) {
+IntegerGuards integer_guards(llvm::Function &function, const std::size_t arity) {
     IntegerGuards result;
     if (function.isDeclaration() || function.arg_size() != 2) {
         return result;

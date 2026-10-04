@@ -33,7 +33,7 @@ struct WorkBudget {
 };
 
 // Consume bounded analysis work without adding potentially overflowing bank sizes.
-bool consume(std::size_t cost, WorkBudget &budget) {
+bool consume(const std::size_t cost, WorkBudget &budget) {
     auto &work = budget.available;
     auto &reserve = budget.reserve;
     if (work >= cost) {
@@ -108,7 +108,7 @@ void select(const SpecializationInput &input, Budget &module, SpecializationPlan
 } // namespace
 
 SpecializationPlan plan_specializations(const CompilationRequest &request,
-                                        std::span<const SpecializationInput> inputs) {
+                                        const std::span<const SpecializationInput> inputs) {
     SpecializationPlan result;
     if (request.optimization != OptimizationLevel::speed || request.disable_type_specialization) {
         for (const auto &input : inputs) {

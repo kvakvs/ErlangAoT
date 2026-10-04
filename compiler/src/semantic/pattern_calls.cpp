@@ -165,7 +165,7 @@ bool legacy_owner(BindingAnalysis &state, const ast::ExprId &site, const Functio
 }
 
 // Legacy tests resolve separately from expression calls and cannot be recovered through suppression metadata.
-bool legacy_name(const ast::Atom *name, std::size_t count) {
+bool legacy_name(const ast::Atom *name, const std::size_t count) {
     static const std::set<std::u32string> legacy{U"integer", U"float",     U"number", U"atom",   U"list",    U"tuple",
                                                  U"pid",     U"reference", U"port",   U"binary", U"function"};
     return name && count == 1 && legacy.contains(name->name);
@@ -183,7 +183,7 @@ std::optional<FunctionKey> legacy(BindingAnalysis &state, const ast::ExprId &id,
 } // namespace
 
 std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::ExprId &id,
-                                          const ast::CallExpression &call, bool top_test) {
+                                          const ast::CallExpression &call, const bool top_test) {
     const auto &syntax = *state.module.syntax;
     const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
     const auto *name = std::get_if<ast::Atom>(&target);

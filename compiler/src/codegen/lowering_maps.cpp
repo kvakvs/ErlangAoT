@@ -12,7 +12,7 @@ namespace {
 using Op = abi::v1::MapOperation;
 
 // Semantic map errors carry their checked offending term; root cleanup follows the shared error transport.
-llvm::BasicBlock *rejection(ExpressionLowering &state, ServiceOutput result) {
+llvm::BasicBlock *rejection(ExpressionLowering &state, const ServiceOutput result) {
     if (state.rejection) {
         return state.rejection;
     }
@@ -37,7 +37,7 @@ llvm::BasicBlock *rejection(ExpressionLowering &state, ServiceOutput result) {
 }
 
 // Marshal source values into runtime-owned scratch roots, avoiding source-width native stack allocations.
-llvm::Value *service(ExpressionLowering &state, Op operation, std::span<llvm::Value *const> values) {
+llvm::Value *service(ExpressionLowering &state, Op operation, const std::span<llvm::Value *const> values) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto *arguments = builder.CreateGEP(state.word, state.roots->buffer,
@@ -77,7 +77,7 @@ llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map)
     return service(state, map.base ? Op::update : Op::make, values);
 }
 
-llvm::Value *lower_map_query(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
+llvm::Value *lower_map_query(ExpressionLowering &state, const abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right) {
     using Query = abi::v1::ImmediateOperation;
     switch (operation) {

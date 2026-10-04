@@ -59,7 +59,7 @@ bool builtin(const std::string &name, const std::size_t arity) {
 }
 
 // Distinguish a missing declaration in this batch from unavailable external metadata.
-Id unavailable_application(Resolver &r, const Key &key, const ast::NodeSource &source) {
+Id unavailable_application(const Resolver &r, const Key &key, const ast::NodeSource &source) {
     const bool known = r.registry.modules.contains(key.module);
     r.diagnostic(source,
                  (known ? "undefined remote type " : "unavailable external type metadata: ") + key.module + ":" +
@@ -111,7 +111,7 @@ Id application(Resolver &r, Node node, const ast::NodeSource &source) {
 }
 
 // Validate field names independently of record lookup and remote metadata availability.
-void record_fields(Resolver &r, const Node &node, const ast::RecordDeclaration &syntax, const ast::NodeSource &source) {
+void record_fields(const Resolver &r, const Node &node, const ast::RecordDeclaration &syntax, const ast::NodeSource &source) {
     std::vector<std::string> seen;
     for (const auto &name : node.labels) {
         if (std::ranges::contains(seen, name)) {

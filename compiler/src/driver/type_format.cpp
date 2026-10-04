@@ -14,7 +14,7 @@ struct DisplayBudget {
 };
 
 // Keep ordinary Erlang identifiers readable; unusual names use escaped quoted display text.
-bool identifier_character(unsigned char value) {
+bool identifier_character(const unsigned char value) {
     return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || (value >= '0' && value <= '9') ||
            value == '_' || value == '@';
 }
@@ -64,7 +64,7 @@ std::string head(const types::Node &node) {
 std::string describe(const types::Graph &graph, types::Id id, std::size_t depth, DisplayBudget &budget);
 
 // Stop a wide product once its shared display budget is exhausted.
-std::string children(const types::Graph &graph, std::span<const types::Id> ids, std::size_t depth,
+std::string children(const types::Graph &graph, const std::span<const types::Id> ids, const std::size_t depth,
                      DisplayBudget &budget) {
     std::string result;
     for (const auto id : ids) {
@@ -81,7 +81,7 @@ std::string children(const types::Graph &graph, std::span<const types::Id> ids, 
 }
 
 // Render function products with an explicit result position instead of treating specifications as inferred facts.
-std::string function(const types::Graph &graph, const types::Node &node, std::size_t depth, DisplayBudget &budget) {
+std::string function(const types::Graph &graph, const types::Node &node, const std::size_t depth, DisplayBudget &budget) {
     if (node.children.empty()) {
         return "fun()";
     }
@@ -103,7 +103,7 @@ std::string labels(const types::Node &node) {
     return result.empty() ? result : result + ']';
 }
 
-std::string describe(const types::Graph &graph, types::Id id, std::size_t depth, DisplayBudget &budget) {
+std::string describe(const types::Graph &graph, const types::Id id, const std::size_t depth, DisplayBudget &budget) {
     if (depth >= 32 || budget.work == 0) {
         return "<display-limit>";
     }
@@ -119,7 +119,7 @@ std::string describe(const types::Graph &graph, types::Id id, std::size_t depth,
 }
 } // namespace
 
-std::string type_text(const semantic::types::Graph &graph, semantic::types::Id type) {
+std::string type_text(const semantic::types::Graph &graph, const semantic::types::Id type) {
     DisplayBudget budget;
     return describe(graph, type, 0, budget);
 }

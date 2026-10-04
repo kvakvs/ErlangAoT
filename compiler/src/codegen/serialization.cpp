@@ -16,7 +16,7 @@ namespace {
 // Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
 // A null `syntax` marks the startup module, which has no Erlang source to annotate.
 OutputBuffer serialize(const llvm::Module &module, const ast::Module *syntax, const SourceScopes &sources,
-                       OutputKind kind, std::size_t capacity) {
+                       const OutputKind kind, const std::size_t capacity) {
     BoundedStream stream(capacity);
     if (kind == OutputKind::llvm_ir && syntax) {
         SourceAnnotations annotations(module, *syntax, sources, capacity);
@@ -34,7 +34,7 @@ OutputBuffer serialize(const llvm::Module &module, const ast::Module *syntax, co
 }
 
 // Verify all modules before capturing any snapshot; failures discard earlier staged artifacts.
-std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, OutputKind kind, bool artifact) {
+std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, const OutputKind kind, const bool artifact) {
     if (!verify_ir(compilation)) {
         return {};
     }
@@ -66,7 +66,7 @@ std::optional<std::vector<OutputBuffer>> snapshot_ir(Compilation &compilation) {
     return capture(compilation, OutputKind::llvm_ir, false);
 }
 
-bool emit_ir(Compilation &compilation, OutputKind kind) {
+bool emit_ir(Compilation &compilation, const OutputKind kind) {
     if (kind == OutputKind::object) {
         throw std::invalid_argument("IR serialization requires text or bitcode output");
     }

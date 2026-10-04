@@ -4,7 +4,7 @@
 namespace erlang_aot {
 namespace {
 // OTP's query macros expand to ordinary comparisons, preserving arbitrary argument syntax.
-Definition query_definition(std::string_view name, const std::vector<std::string> &features) {
+Definition query_definition(const std::string_view name, const std::vector<std::string> &features) {
     std::string body = "false";
     if (!features.empty()) {
         body = "(";
@@ -26,7 +26,7 @@ void PreprocessorSession::State::feature_macros() {
     macros.define(query_definition("FEATURE_ENABLED", enabled_features));
 }
 
-void PreprocessorSession::State::feature(const std::string &name, bool enabled, const Token &site) {
+void PreprocessorSession::State::feature(const std::string &name, const bool enabled, const Token &site) {
     if (!prefix) {
         pp_fail(DiagnosticCode::invalid_feature, "feature directive appears after module prefix", site);
     }

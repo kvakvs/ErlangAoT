@@ -6,7 +6,7 @@
 namespace erlang_aot::project {
 namespace {
 // Bound allocation during reading instead of checking only after loading a file.
-std::string read_bounded(const std::filesystem::path &file, std::size_t limit) {
+std::string read_bounded(const std::filesystem::path &file, const std::size_t limit) {
     std::error_code error;
     if (!std::filesystem::is_regular_file(file, error)) {
         fail({file, {}, {}, 0, 0}, "cannot read manifest: not an accessible regular file");
@@ -32,7 +32,7 @@ std::string read_bounded(const std::filesystem::path &file, std::size_t limit) {
 }
 } // namespace
 
-Document parse_document(std::string_view bytes, const std::filesystem::path &file, const Limits &limits) {
+Document parse_document(const std::string_view bytes, const std::filesystem::path &file, const Limits &limits) {
     if (bytes.size() > limits.manifest_bytes) {
         fail({file, {}, {}, 0, 0}, "manifest byte limit exceeded");
     }

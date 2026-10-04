@@ -17,7 +17,7 @@ void finish_argument(Arguments &result, std::vector<Token> &current, const Token
 }
 } // namespace
 
-Arguments collect_arguments(std::span<const Token> input, const Token &call) {
+Arguments collect_arguments(const std::span<const Token> input, const Token &call) {
     Arguments result;
     if (input.empty() || !syntax(input.front(), U"(")) {
         return result;

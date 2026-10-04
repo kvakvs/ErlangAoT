@@ -155,7 +155,7 @@ void forms(Registry &registry, const Module &module, const Reporter &out) {
 }
 } // namespace
 
-void collect(Registry &registry, std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
+void collect(Registry &registry, const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     for (const auto &module : modules) {
         forms(registry, *module, out);
     }

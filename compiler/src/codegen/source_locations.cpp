@@ -19,7 +19,7 @@ unsigned line_number(const Span &site) {
 
 // Preserve the original Erlang identity and physical declaration file in each definition's scope.
 void function_scope(llvm::DIBuilder &debug, llvm::Module &output, const semantic::Module &module,
-                    const semantic::Function &function, bool optimized, SourceScopes &sources) {
+                    const semantic::Function &function, const bool optimized, SourceScopes &sources) {
     const auto &site = source_site(module.syntax->anchor(module.syntax->form(function.form).source));
     auto *file = debug.createFile(site.source->name, "");
     auto *type = debug.createSubroutineType(debug.getOrCreateTypeArray({}));
@@ -45,7 +45,7 @@ const Span &source_site(const ast::TokenOrigin &origin) {
     return origin.related.empty() ? origin.spelling : origin.related.front();
 }
 
-void prepare_source_locations(llvm::Module &output, const semantic::Module &module, bool optimized,
+void prepare_source_locations(llvm::Module &output, const semantic::Module &module, const bool optimized,
                               SourceScopes &sources) {
     llvm::DIBuilder debug(output);
     auto *file = debug.createFile(output.getSourceFileName(), "");

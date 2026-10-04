@@ -4,7 +4,7 @@
 namespace erlang_aot::semantic::types {
 namespace {
 // Substitute this declaration's quantified formals; repeated names follow OTP's last-position mapping.
-std::optional<Id> replacement(const Node &node, const Declaration &decl, std::span<const Id> arguments) {
+std::optional<Id> replacement(const Node &node, const Declaration &decl, const std::span<const Id> arguments) {
     const auto scope = scope_identity(decl.key, "type");
     if (node.kind != Kind::variable || node.module != scope) {
         return {};

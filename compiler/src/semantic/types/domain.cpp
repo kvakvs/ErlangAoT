@@ -56,7 +56,7 @@ Id Graph::intern(Node node) {
     return {owner_, index};
 }
 
-Id Graph::join(std::span<const Id> members) {
+Id Graph::join(const std::span<const Id> members) {
     std::vector<Id> flat;
     for (const auto member : members) {
         const auto &node = get(member);

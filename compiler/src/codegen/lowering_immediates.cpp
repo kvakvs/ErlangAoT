@@ -76,7 +76,7 @@ llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status) {
     return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
 }
 
-llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection) {
+llvm::Value *checked_value(ExpressionLowering &state, const ServiceOutput result, llvm::BasicBlock *rejection) {
     auto &builder = state.builder;
     propagate_failure(state);
     auto *success = llvm::BasicBlock::Create(state.entry.getContext(), "service.success", &state.entry);

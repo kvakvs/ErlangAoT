@@ -12,12 +12,12 @@ namespace {
 using Op = abi::v1::BitOperation;
 
 // Metadata and cursors fit both target small-integer ranges; no raw host term words enter IR.
-llvm::Value *integer(ExpressionLowering &state, unsigned value) {
+llvm::Value *integer(ExpressionLowering &state, const unsigned value) {
     return llvm::ConstantInt::get(state.word, *abi::v1::IntegerEncoding<32>::encode(value));
 }
 
 // Resolve native endian from the LLVM data layout, including foreign object emission.
-llvm::Value *descriptor(ExpressionLowering &state, const semantic::BinaryOptions &options, bool empty = false) {
+llvm::Value *descriptor(ExpressionLowering &state, const semantic::BinaryOptions &options, const bool empty = false) {
     const bool little = options.native ? state.entry.getParent()->getDataLayout().isLittleEndian() : options.little;
     const auto flags = (empty ? abi::v1::bit_empty : 0) | (little ? abi::v1::bit_little : 0) |
                        (options.signed_value ? abi::v1::bit_signed : 0) | (options.all ? abi::v1::bit_all : 0);
@@ -25,7 +25,7 @@ llvm::Value *descriptor(ExpressionLowering &state, const semantic::BinaryOptions
 }
 
 // Root every borrowed argument and both success-only outputs through the shared runtime scratch buffer.
-BitLowering service(ExpressionLowering &state, Op operation, std::span<llvm::Value *const> values) {
+BitLowering service(ExpressionLowering &state, Op operation, const std::span<llvm::Value *const> values) {
     auto &builder = state.builder;
     auto &module = *state.entry.getParent();
     auto *arguments = builder.CreateGEP(state.word, state.roots->buffer,
@@ -95,7 +95,7 @@ llvm::Value *lower_bits(ExpressionLowering &state, const ast::Bitstring &binary)
 }
 
 BitLowering lower_bit_pattern(ExpressionLowering &state, const semantic::MatchNode &node,
-                              std::span<llvm::Value *> values, llvm::BasicBlock *mismatch) {
+                              const std::span<llvm::Value *> values, llvm::BasicBlock *mismatch) {
     auto *saved = std::exchange(state.rejection, mismatch);
     std::vector<llvm::Value *> arguments{values[node.input]};
     auto operation = Op::test;
@@ -121,7 +121,7 @@ BitLowering lower_bit_pattern(ExpressionLowering &state, const semantic::MatchNo
     return result;
 }
 
-llvm::Value *lower_binary_part(ExpressionLowering &state, std::span<llvm::Value *const> values) {
+llvm::Value *lower_binary_part(ExpressionLowering &state, const std::span<llvm::Value *const> values) {
     if (values.size() == 3) {
         return service(state, Op::part, values).value;
     }

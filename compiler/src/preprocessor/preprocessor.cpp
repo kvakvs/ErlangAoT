@@ -14,7 +14,7 @@ bool line_leading(const Token &token) {
 
 // Unary error/warning calls are expressions; leave their interpretation to the
 // parser.
-bool structural_directive(DirectiveKind kind) { return kind != DirectiveKind::error && kind != DirectiveKind::warning; }
+bool structural_directive(const DirectiveKind kind) { return kind != DirectiveKind::error && kind != DirectiveKind::warning; }
 
 // Flag line-leading preprocessing envelopes in a function body, without an AST.
 std::optional<Span> misplaced(std::span<const Token> tokens) {

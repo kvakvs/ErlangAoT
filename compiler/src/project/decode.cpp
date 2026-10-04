@@ -8,13 +8,13 @@
 namespace erlang_aot::project {
 namespace {
 // Recognize the portable first character of a target name without locale rules.
-bool initial(char value) {
+bool initial(const char value) {
     return (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') ||
            value == '_';
 }
 
 // Allow dots and hyphens only after the initial target-name character.
-bool continuation(char value) { return initial(value) || value == '.' || value == '-'; }
+bool continuation(const char value) { return initial(value) || value == '.' || value == '-'; }
 
 // Decode the optional entry key, rejecting spellings that cannot name an Erlang function.
 std::optional<Text> entry(const toml::table &values, const schema::Context &context) {

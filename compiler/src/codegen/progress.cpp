@@ -2,15 +2,15 @@
 #include "llvm_state.hpp"
 
 namespace erlang_aot::codegen {
-void progress(const CompilationRequest &request, std::string_view phase, const std::filesystem::path &source,
-              std::string_view module, std::string_view detail) {
+void progress(const CompilationRequest &request, const std::string_view phase, const std::filesystem::path &source,
+              const std::string_view module, const std::string_view detail) {
     if (request.progress) {
         request.progress({std::string(phase), source, std::string(module), std::string(detail)});
     }
 }
 
-void progress_module(const Compilation &compilation, std::size_t index, std::string_view phase,
-                     std::string_view message) {
+void progress_module(const Compilation &compilation, const std::size_t index, const std::string_view phase,
+                     const std::string_view message) {
     if (!compilation.request().progress) {
         return;
     }
@@ -21,7 +21,7 @@ void progress_module(const Compilation &compilation, std::size_t index, std::str
     progress(state.request, phase, source, state.modules.at(index)->getModuleIdentifier(), message);
 }
 
-void progress_modules(const Compilation &compilation, std::string_view phase, std::string_view message) {
+void progress_modules(const Compilation &compilation, const std::string_view phase, const std::string_view message) {
     if (!compilation.request().progress) {
         return;
     }

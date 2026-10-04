@@ -8,7 +8,7 @@
 namespace erlang_aot::codegen {
 namespace {
 // Analysis managers are local to a module and destroyed in reverse dependency order.
-void optimize_module(llvm::Module &module, llvm::TargetMachine &machine, OptimizationLevel level) {
+void optimize_module(llvm::Module &module, llvm::TargetMachine &machine, const OptimizationLevel level) {
     llvm::LoopAnalysisManager loops;
     llvm::FunctionAnalysisManager functions;
     llvm::CGSCCAnalysisManager call_graph;

@@ -6,7 +6,7 @@
 namespace erlang_aot::cli {
 namespace {
 // Return zero-based line `number` without its terminator; empty past the end.
-std::string_view line(std::string_view bytes, const std::size_t number) {
+std::string_view line(const std::string_view bytes, const std::size_t number) {
     std::size_t begin = 0;
     for (std::size_t index = 0; index < number; ++index) {
         const auto end = bytes.find('\n', begin);
@@ -19,7 +19,7 @@ std::string_view line(std::string_view bytes, const std::size_t number) {
 }
 
 // Locate "%%!" as escript does: on line 2, or on line 3 after a comment on line 2.
-std::optional<std::size_t> emulator_line(std::string_view bytes) {
+std::optional<std::size_t> emulator_line(const std::string_view bytes) {
     if (line(bytes, 1).starts_with("%%!")) {
         return 2;
     }
@@ -44,7 +44,7 @@ std::size_t skip_layout(std::string_view text, std::size_t at) {
 }
 
 // Mirror escript: only a first form spelled "-module(" declares the module explicitly.
-bool declares_module(std::string_view body) {
+bool declares_module(const std::string_view body) {
     auto at = skip_layout(body, 0);
     if (at >= body.size() || body[at] != '-') {
         return false;
@@ -58,7 +58,7 @@ bool declares_module(std::string_view body) {
 }
 
 // Quote atom text, escaping anything outside printable ASCII as \x{H} so source encoding never matters.
-std::string atom_literal(std::u32string_view name) {
+std::string atom_literal(const std::u32string_view name) {
     std::string result = "'";
     for (const auto value : name) {
         if (value >= 0x20 && value < 0x7f && value != U'\'' && value != U'\\') {

@@ -28,7 +28,7 @@ Sources source_files(const ast::Module &syntax) {
 }
 
 // Locate a physical line using the existing position table without rescanning the file per instruction.
-std::optional<std::u32string_view> source_line(const Source &source, std::size_t line) {
+std::optional<std::u32string_view> source_line(const Source &source, const std::size_t line) {
     std::size_t begin = 0;
     auto end = source.text.size();
     while (begin < end) {
@@ -52,7 +52,7 @@ std::optional<std::u32string_view> source_line(const Source &source, std::size_t
 }
 
 // Prevent source controls or path delimiters from escaping a single LLVM comment line.
-void escaped_text(llvm::raw_ostream &stream, std::string_view text, bool quoted) {
+void escaped_text(llvm::raw_ostream &stream, const std::string_view text, const bool quoted) {
     constexpr std::string_view digits = "0123456789abcdef";
     for (const unsigned char byte : text) {
         const bool delimiter = quoted && (byte == '\\' || byte == '"');
@@ -75,7 +75,7 @@ void source_text(llvm::raw_ostream &stream, std::u32string_view text) {
 }
 
 // List each physical source once, keeping unusual filename characters inside one comment.
-std::vector<std::byte> source_header(const Sources &sources, std::size_t capacity) {
+std::vector<std::byte> source_header(const Sources &sources, const std::size_t capacity) {
     BoundedStream stream(capacity);
     stream << "; Erlang source files:\n";
     for (const auto &[name, source] : sources) {
@@ -88,7 +88,7 @@ std::vector<std::byte> source_header(const Sources &sources, std::size_t capacit
 
 // Prepare one complete comment before entering LLVM; unmapped synthetic instructions stay unannotated.
 std::vector<std::byte> source_comment(const llvm::DebugLoc &location, const SourceScopes &sources,
-                                      std::size_t capacity) {
+                                      const std::size_t capacity) {
     const auto found = sources.find(location.getScope());
     if (found == sources.end()) {
         return {};

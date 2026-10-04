@@ -9,7 +9,7 @@ namespace {
 using Op = abi::v1::ImmediateOperation;
 
 // Predicates return canonical atoms; only canonical true follows the success edge.
-void branch(ExpressionLowering &state, llvm::Value *value, llvm::Value *truth, GuardEdges edges) {
+void branch(ExpressionLowering &state, llvm::Value *value, llvm::Value *truth, const GuardEdges edges) {
     state.builder.CreateCondBr(lower_exact(state, value, truth), edges.success, edges.rejection);
     state.builder.SetInsertPoint(edges.success);
 }
@@ -33,7 +33,7 @@ struct RecordArity {
 };
 
 // OTP accepts small integer tuple arities or atom native identities; other values cause badarg.
-void validate_size(ExpressionLowering &state, RecordArity arity, llvm::BasicBlock *no) {
+void validate_size(ExpressionLowering &state, const RecordArity arity, llvm::BasicBlock *no) {
     auto *integer = llvm::BasicBlock::Create(state.entry.getContext(), "record.integer.arity", &state.entry);
     auto *type = lower_immediate(state, Op::is_atom, arity.size);
     state.builder.CreateCondBr(lower_exact(state, type, arity.truth), no, integer);

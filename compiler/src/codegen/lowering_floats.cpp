@@ -5,7 +5,7 @@
 #include <llvm/IR/Module.h>
 
 namespace erlang_aot::codegen {
-llvm::Value *lower_float(ExpressionLowering &state, double value) {
+llvm::Value *lower_float(ExpressionLowering &state, const double value) {
     const auto bits = std::bit_cast<std::uint64_t>(value);
     std::array<char, 8> encoded{};
     for (std::size_t i = 0; i < encoded.size(); ++i) {

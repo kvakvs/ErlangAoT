@@ -1,14 +1,14 @@
 #include "token_utils.hpp"
 
 namespace erlang_aot {
-Token generated(const Token &origin, TokenKind kind, TokenValue value) {
+Token generated(const Token &origin, const TokenKind kind, TokenValue value) {
     Token result = origin;
     result.kind = kind;
     result.value = std::move(value);
     return result;
 }
 
-void pp_fail(DiagnosticCode code, std::string message, const Token &token) {
+void pp_fail(const DiagnosticCode code, std::string message, const Token &token) {
     throw DiagnosticError(token_diagnostic(code, std::move(message), token));
 }
 

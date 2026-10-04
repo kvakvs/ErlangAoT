@@ -34,7 +34,7 @@ struct Walk {
     ast::ExprId expression;
 
     // Store normalized structure and its original source anchor separately from executable capability.
-    void node(PatternKind kind, std::vector<ast::ExprId> children = {}, std::optional<PatternLiteral> literal = {}) {
+    void node(const PatternKind kind, std::vector<ast::ExprId> children = {}, std::optional<PatternLiteral> literal = {}) {
         const auto cost = literal ? std::visit(LiteralCost{}, *literal) : 1;
         if (!state.spend(expression, cost + children.size())) {
             return;
@@ -43,7 +43,7 @@ struct Walk {
     }
 
     // All compound siblings use the same readable environment; only equality constraints accumulate.
-    void children(PatternKind kind, const std::vector<ast::ExprId> &ids, bool whole = false) {
+    void children(const PatternKind kind, const std::vector<ast::ExprId> &ids, const bool whole = false) {
         node(kind, ids);
         if (state.work > state.limit) {
             return;
@@ -222,7 +222,7 @@ void segment(Walk &walk, const ast::ExprValue &value) {
 }
 
 // Only this binary's already analyzed variable segments become visible to its subsequent sizes.
-void publish(Walk &walk, const ast::ExprValue &value) {
+void publish(const Walk &walk, const ast::ExprValue &value) {
     const auto *variable = std::get_if<ast::Variable>(&value);
     if (variable) {
         if (const auto identity = walk.scope.find(variable->name)) {
@@ -232,7 +232,7 @@ void publish(Walk &walk, const ast::ExprValue &value) {
 }
 
 // Read-only syntax never contributes definitions, including inside a key's nested containers or calls.
-void read(Walk &walk) {
+void read(const Walk &walk) {
     BindingCandidate readable{*walk.visit.visible, {}};
     walk.state.read(walk.expression, readable, walk.context);
     walk.scope.valid = walk.scope.valid && readable.valid;

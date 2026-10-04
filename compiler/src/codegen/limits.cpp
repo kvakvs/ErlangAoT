@@ -6,7 +6,7 @@
 namespace erlang_aot::codegen {
 namespace {
 // Subtract before accumulating so even injected size_t ceilings cannot overflow.
-void consume(std::size_t size, std::size_t &remaining, const char *message) {
+void consume(const std::size_t size, std::size_t &remaining, const char *message) {
     if (size > remaining) {
         throw std::length_error(message);
     }
@@ -24,7 +24,7 @@ void charge(const ast::Module &module, const CompilationLimits &limits, std::siz
 }
 } // namespace
 
-void validate_input_limits(std::span<const CompilationInput> inputs, const CompilationLimits &limits,
+void validate_input_limits(const std::span<const CompilationInput> inputs, const CompilationLimits &limits,
                            const ast::Module *additional) {
     if (inputs.size() > limits.modules || (additional && inputs.size() == limits.modules)) {
         throw std::length_error("compilation module count limit exceeded");
@@ -38,7 +38,7 @@ void validate_input_limits(std::span<const CompilationInput> inputs, const Compi
     }
 }
 
-std::size_t output_capacity(const CompilationLimits &limits, std::span<const OutputBuffer> outputs) {
+std::size_t output_capacity(const CompilationLimits &limits, const std::span<const OutputBuffer> outputs) {
     auto remaining = limits.batch_bytes;
     for (const auto &output : outputs) {
         consume(output.bytes.size(), remaining, "compilation artifact batch limit exceeded");
