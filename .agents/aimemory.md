@@ -215,3 +215,7 @@ Measurements: side bytes 24 MB -> 94 KB. Logs build/plan11-step8d.
 8D rework (user review): NO start bitmap / interior-pointer checks. Pointers into a process heap come only
 from that process and always name object starts; admission = owned range + header shape. Don't add
 defenses for impossible cases; follow classic ERTS trust model.
+Plan 8E (user decision 2026-10-04): no handle table, ERTS model. Term = raw word + weak lifetime +
+collection count (stale-term error after GC, expired after teardown); handoffs/error payload = process
+root words (X regs/fvalue); host passes explicit root span to collect(). Term valid only in own process,
+read-only elsewhere (user criterion).

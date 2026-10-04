@@ -613,28 +613,36 @@ pointers into a process heap only come from that process and always name object 
 keeps the full start check for tests). CTest `runtime_admission`; interior-pointer asserts removed from
 `runtime_containers`/`runtime_bitstrings`. `runtime_heap_measurements`: side bytes 24 MB to 3.4 KB, build
 264 to 185 ms, walk 81 to 147 ms (decode re-finds the chunk because clang-tidy rejects int-to-pointer
-casts; revisit with 8E handles and the 8G single block).
+casts; revisit with the 8G single block).
 
 <a id="step-8e"></a>
 
-### 8E. Make host `Term` handles relocatable roots
+### 8E. Hold host terms as raw words between safe points
 
 Backlog: F02, F03. Depends on: [8D](#step-8d).
 
-A host `Term` for a heap value refers to a slot in a per-process handle table
-(stable nodes with a free list) that a collector can rewrite; liveness still
-comes from the context lifetime token. `GeneratedRoots` handoffs use the same
-slots.
+Follow the ERTS model: C++ code holds tagged words (BEAM `Eterm`) only between
+safe points; there is no handle table. A host `Term` keeps its word, a weak
+context lifetime token and the heap's collection count instead of pinning heap
+storage with `shared_ptr<HeapStorage>`. Values the runtime itself must keep
+across a safe point become process root words that the collector scans and
+rewrites: generated-call result handoffs (BEAM X registers) and the current
+error payload (BEAM `fvalue`). Host code that needs values across `collect()`
+passes them as an explicit root span and reads them back afterwards.
 
 - Success criteria
-  - [ ] No `Term` stores a raw cell pointer; enumerating the table yields every
-    host-held root.
-  - [ ] Expired-context results and handle destruction after teardown are
-    unchanged.
+  - [ ] A `Term` is only valid inside its own process context. Using term by a
+    non-owning process is read-only.
+  - [ ] `Term` no longer pins heap storage. Access after context teardown still
+    reports `expired_context`; access after a later collection of its heap
+    reports a stale-term error instead of reading moved memory (checked in 8H).
+  - [ ] Result handoffs and owned error payloads are process root words; the
+    stack, these words and the caller's explicit root span are the complete
+    root set.
 - Tests
-  - [ ] Existing host-handle and lifetime tests and all goldens pass unchanged.
-  - [ ] Focused test: many handles copied, moved and destroyed; a reused slot
-    never revives an expired handle.
+  - [ ] Existing host-term, lifetime and root tests and all goldens pass.
+  - [ ] Focused test: handoff and error-payload words appear in the root
+    enumeration; `Term`s outliving their context report `expired_context`.
 
 <a id="step-8f"></a>
 
@@ -685,8 +693,9 @@ removed (word alignment only).
 
 Backlog: F03, F04. Depends on: [8G](#step-8g). Absorbs the former step 25.
 
-Full-sweep Cheney copy: roots are handle slots, stack frames and owned error
-payloads; live objects from the heap and fragments move into a new block
+Full-sweep Cheney copy: roots are stack frames, process root words (result
+handoffs, error payload) and the caller's explicit root span; live objects from
+the heap and fragments move into a new block
 sized by the growth policy, leaving forwarding headers; roots are rewritten;
 the off-heap list is swept and fragments are freed. Allowed only at a safe
 point: until step 26, when the context is not running generated code.
@@ -694,15 +703,16 @@ point: until step 26, when the context is not running generated code.
 - Success criteria
   - [ ] Rooted values stay valid and equal, internal sharing is preserved,
     unreachable cells are reclaimed and last-owner binaries are released once;
-    the heap grows or shrinks per policy.
+    the heap grows or shrinks per policy. Host `Term`s taken before the
+    collection report the stale-term error.
   - [ ] A request at an unsafe point returns `unsafe_point` with no change;
     failure to allocate the new block leaves the heap untouched.
   - [ ] `ProcessHeap::collect` leaves the deferred-services table; statistics
     report heap, fragment, stack and off-heap sizes.
 - Tests
-  - [ ] Focused runtime tests: host handles across repeated collections, nested
-    and shared graphs of every layout, binary release counts, verifier after
-    each collection.
+  - [ ] Focused runtime tests: explicit roots across repeated collections, nested
+    and shared graphs of every layout, binary release counts, stale host terms,
+    verifier after each collection.
   - [ ] Injected failure of the new-block allocation.
 
 <a id="step-8i"></a>
@@ -956,14 +966,15 @@ Backlog: F13, F16. Depends on: [21](#step-21).
 
 Backlog: F02, F03, F04, F08–F11. Depends on: [17](#step-17), [8I](#step-8i).
 
-Phase C delivered the layout walker (8C), host handle roots (8E) and stack
-roots (8F). Add the roots the step-17 model introduces: suspended frames or
+Phase C delivered the layout walker (8C), process root words and explicit
+host roots (8E) and stack roots (8F). Add the roots the step-17 model introduces: suspended frames or
 continuations, in-flight error payloads and stack traces, and atom/module pins
 held by heap cells.
 
 - Success criteria
   - [ ] Every root owner of the step-17 model is enumerated by the collector;
-    nothing outside the handle table, stack and listed owners holds heap words.
+    nothing outside the stack, process root words and listed owners holds heap
+    words across a safe point.
 - Tests
   - [ ] Runtime tests collecting while each root kind holds nested and shared
     graphs, followed by the 8C verifier.

@@ -11,7 +11,7 @@ the contract for that work; each item names the plan step that delivers it.
 | A list of chunks that never move | Cells cannot be compacted or copied; capacity only grows | One contiguous heap block plus fragments, moved by a copying collector (8G, 8H) |
 | Each cell is a node in a per-process `std::map` index | Heap words alone are not parseable; one host allocation and an O(log n) lookup per cell | Self-describing cells; admission by owned range and header (8C, 8D) |
 | Every bitstring cell has a fixed 64-byte array and a `shared_ptr`, released through a destructor registry | Large cells for small data; nothing can move a cell or find its dead copies | Variable-size heap binaries and off-heap binary cells on a per-process off-heap list (8B) |
-| Host `Term` holds `shared_ptr<HeapStorage>` and a raw index pointer | Nothing a collector can rewrite | One handle-table slot per held heap value (8E) |
+| Host `Term` pins the heap with `shared_ptr<HeapStorage>`; runtime-held values live only in `Term`s | Nothing a collector can find or rewrite | ERTS model: C++ holds raw words only between safe points; runtime-held values are process root words; host callers pass explicit roots to `collect()` (8E) |
 | One heap buffer per generated root frame | No process stack to scan | One stack of root frames per process (8F) |
 | No overflow area | Allocation either fits the budget or fails | Heap fragments while the heap must not move (8G) |
 
@@ -120,9 +120,17 @@ remains the full check that every slot names an object start, for tests.
 
 ## Roots and safe points
 
-Roots are host handle slots (8E), stack frame slots (8F), owned error payloads
-and result handoffs (held through handles) and off-heap list links. Atoms and
-small immediates are not roots.
+Roots are stack frame slots (8F), process root words for result handoffs (BEAM
+X registers) and the current error payload (BEAM `fvalue`), the explicit root
+span a host caller passes to `collect()` (8E), and off-heap list links. Atoms
+and small immediates are not roots.
+
+As in ERTS C code, a host `Term` is a raw tagged word valid until the next safe
+point of its heap. It does not pin heap storage; it keeps a weak context
+lifetime token and the heap's collection count, so use after teardown reports
+`expired_context` and use after a later collection reports a stale-term error.
+A `Term` is only valid inside its own process; other processes may only read
+it.
 
 The heap moves only at a safe point. Until generated code reloads values after
 allocation (plan step 26), the only safe point is an explicit host `collect()`
