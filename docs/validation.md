@@ -144,5 +144,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-03 | Plan 11 step 2 program fixtures | 126 | 258 | Six OTP goldens; fast mode 123 tests; full `-j 16` 83 s |
 | 2026-10-03 | Plan 11 step 4 term printing | 128 fast | 265 | 9,542 `~w`/display goldens; 154 compiled display calls in all policies; clang-tidy run with one job (concurrent runs crashed the tool on unchanged units) |
 | 2026-10-04 | Plan 11 step 8 executable runner (phase B closed) | 138 (135 fast) | 272 | Cases `demo`, `exits` under eight policy/driver combinations; full `-j 16` 235 s |
+| 2026-10-04 | Plan 11 step 8I classic heap (phase C closed) | 144 (140 fast) | 276 | Full `-j 16` 370 s: 143/144, `codegen_dependency` timed out at 120 s under load and passed alone in 29 s; Lizard-all 0 warnings; tidy-all passed with one job after a silent two-job tool exit |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

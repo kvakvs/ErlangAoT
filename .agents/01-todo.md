@@ -53,7 +53,7 @@ Plan: [8A](11-plan.md#step-8a)–[8I](11-plan.md#step-8i),
 - [x] Header-parsed word layout, heap walker and `verify()`, admission by owned
   range and header (8B–8D).
 - [x] One heap block per process plus heap fragments; word alignment only (8G).
-- [ ] Close the heap rework with re-measurement and docs (8I).
+- [x] Close the heap rework with re-measurement and docs (8I).
 - [ ] Layouts for identities, closures and native records.
 
 ### F04 — Process garbage collection

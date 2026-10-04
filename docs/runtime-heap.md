@@ -1,12 +1,12 @@
 # Process heap contract
 
-The runtime is moving its process heap to the classic ERTS design. This note is
-the contract for that work; each item names the plan step that delivers it.
-[runtime.md](runtime.md#process-memory) describes what runs today.
+Process heaps follow the classic ERTS design. This note is the contract; plan
+11 phase C (steps 8A–8I) delivered it, and later steps named below extend it.
+[runtime.md](runtime.md#process-memory) summarizes the API.
 
-## Why the current heap is replaced
+## What phase C replaced
 
-| Today | Problem | Replacement |
+| Before phase C | Problem | Replacement |
 | --- | --- | --- |
 | A list of chunks that never move | Cells cannot be compacted or copied; capacity only grows | One contiguous heap block plus fragments, moved by a copying collector (8G, 8H) |
 | Each cell is a node in a per-process `std::map` index | Heap words alone are not parseable; one host allocation and an O(log n) lookup per cell | Self-describing cells; admission by owned range and header (8C, 8D) |
@@ -174,16 +174,27 @@ was never allocated is not collected. `CollectionStats` reports words before,
 live words, the new heap block, the merged fragments, stack slot capacity and
 off-heap words.
 
-## Baseline measurements
+## Measurements
 
 `runtime_heap_measurements` (full-mode CTest; numbers printed, not gated) builds
 a 100,000-element list of `{Index, Float}` tuples through `TermFactory`, walks
 it back through checked accessors, and creates 1,000 contexts that each hold
-one small tuple. Side bytes are host allocations beyond heap backing (the object
-index and other metadata).
+one small tuple. Since 8I it also collects with the list as the only root and
+walks the copy. Side bytes are host allocations beyond heap backing (an object
+index before 8D, the fragment chain since 8G).
 
 | Revision | Build | Kernel build / walk | Heap used / capacity words | Side bytes | Bytes per context | Heap words per context |
 | --- | --- | --- | --- | --- | --- | --- |
 | `bb09359` (chunk list, object index) | Windows x64 Debug, clang-cl | 264 / 81 ms | 700,000 / 704,512 | 24,002,256 (about 80 per cell) | 66,217 | 8,192 |
 | 8D (chunk list, owned range) | Windows x64 Debug, clang-cl | 185 / 147 ms | 700,000 / 704,512 | 3,440 | 66,057 | 8,192 |
 | 8G (233-word heap, about 3,000 fragments) | Windows x64 Debug, clang-cl | 219 / 174 ms | 700,000 / 706,223 | 163,878 | 2,377 | 233 |
+| 8I, before collection | Windows x64 Debug, clang-cl | 216 / 173 ms | 700,000 / 706,223 | 163,878 | 2,377 | 233 |
+| 8I, after one collection | Windows x64 Debug, clang-cl | collect 56 ms / walk 72 ms | 700,000 / 999,631 | 0 | — | — |
+
+Against the `bb09359` baseline: per-cell side metadata is gone (24 MB to none
+once collected), a context needs 2.4 KB and 233 heap words instead of 66 KB and
+8,192 words, building is about 20% faster, and walking is slower until a
+collection merges the fragments (fragment admission is a binary search over
+about 3,000 ranges); after one the walk takes 72 ms. A 700,000-word live set
+collects in about 56 ms into a 999,631-word block, the ERTS size that keeps it
+below 75%.

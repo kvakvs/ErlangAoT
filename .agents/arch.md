@@ -64,12 +64,12 @@
   Failed registration may retain valid atoms, but publishes no module/slots.
 
 - Integers normalize target-sized values to immediates and store larger immutable
-  sign/magnitude words in the indexed heap. Owned bounded multiprecision temporaries,
+  sign/magnitude words in the process heap. Owned bounded multiprecision temporaries,
   explicit word codecs/carry/borrow and double-width LLVM fast paths preserve exact
   promotion/demotion. Numeric semantic errors reject guards; badarith/abs badarg
   and infrastructure failures retain their separate body/channel outcomes.
 
-- Finite binary64 values use owned indexed storage and rooted literal services.
+- Finite binary64 values use float heap cells and rooted literal services.
   Numeric conversion has explicit rounding/range rules; mixed comparisons avoid
   rounding arbitrary integers, and exact equality preserves signed zero. Shared
   body/guard services retain semantic versus infrastructure failure outcomes.
@@ -83,32 +83,25 @@
   backing. Checked numeric/UTF builders stage before publication. Flat matching
   carries explicit cursors and preceding-segment size scopes; native endian derives
   from the LLVM target. Queries, parts and structural order share this representation.
-  Borrowed service arrays and both success outputs are rooted. Cells remain with heap backing until
-  teardown and final host-pin release; GC/copying retain their separate owners.
+  Borrowed service arrays and both success outputs are rooted. Dead cells are reclaimed by a
+  collection; a buffer is freed with its last cell.
 
-- Each process owns one heap block (lazy, `max(min_heap_words=233, request)`) plus a
-  fragment chain; bump allocation, word alignment only, one reservation with rollback.
-  No graph copying; collection only on explicit host request (8H). Plan 11 phase C moves to the classic ERTS heap in
-  `docs/runtime-heap.md` (header-parsed words, off-heap binary list, fragments, copying GC).
-  Done: 8B binaries (inline heap binaries; larger ones are `shared_ptr` buffers
-  held by `RefcBinaryCell`s on the per-process off-heap list, `memory/off_heap`);
-  8C parseable areas (`memory/heap_walk`, `ProcessHeap::verify` in `memory/heap_verify`);
-  8D admission = ownership (heap block, then fragments sorted by address; below top) + header shape; process pointers only name
-  object starts, so no index or start bitmap. 8E ERTS host terms: `Term` = word + borrowed heap +
-  weak lifetime + collection count (no pin); roots = stack slots, handoff words, error payload,
-  explicit span (`ProcessContext::visit_roots`). 8F interim root stack: `GeneratedRoots` frames are
-  windows in page-sized segments (4096 bytes incl. header, intrusive chain), freed when empty; flat stack waits for steps 17/26. 8G `HeapStorage` = `heap_` block +
-  `fragments_` (newest tried after heap, else new fragment), `HeapMark` restores tops. 8H
-  `memory/heap_collect` `Copier`: Cheney copy from heap+fragments into one new block at an explicit
-  host safe point (`ProcessHeap::collect(roots)`), forwarding words in from-space, off-heap sweep,
-  second copy to shrink a block under 25% live. Revision-4
-  generated scopes register arguments/temporaries, clear failed candidates, transfer
-  result ownership before pop and restore entry depth after native exceptions.
-  Exact-start object indices prove ownership before extraction. Compound host handles
-  pin backing, deny expired access and retain returned children/error payloads across
-  growth. Constructors publish initialized tuples/cons spines transactionally;
-  metadata/backing allocation failure rolls back. Rooted runtime scratch buffers
-  keep wide source constructors off the native stack.
+- Classic ERTS process heap (`docs/runtime-heap.md`, phase C 8A-8I). `HeapStorage` = one heap block
+  `heap_` (lazy, `max(min_heap_words=233, request)`) + `fragments_` (newest tried after the heap, else a
+  new one) + off-heap list of `RefcBinaryCell`s (`memory/off_heap`); bump allocation, word alignment,
+  one reservation with `HeapMark` rollback. Words are header-parsed (`memory/heap_walk`,
+  `ProcessHeap::verify` in `memory/heap_verify`); admission = owned range (heap, then fragments by
+  address, below top) + header shape; process pointers only name object starts. Host `Term` = word +
+  borrowed heap + weak lifetime + collection count (no pin). Roots = root-stack slots, handoff words,
+  error payload, explicit span (`ProcessContext::visit_roots`). Root stack = page-sized segments
+  (`GeneratedRoots`), frames never move; a flat stack waits for steps 17/26. `memory/heap_collect`
+  `Copier`: Cheney copy of heap+fragments into one new block at an explicit host safe point
+  (`ProcessHeap::collect(roots)`), forwarding words, off-heap sweep, ERTS size sequence, second copy
+  to shrink a block under 25% live. No cross-heap graph copying yet. Revision-4 generated scopes
+  register arguments/temporaries, clear failed candidates, transfer result ownership before pop and
+  restore entry depth after native exceptions. Constructors publish initialized cells
+  transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide
+  source constructors off the native stack.
 
 - Generated ABI entries retain target-word terms, context and argument arrays.
   Revision-2 first-error channels separate structured Erlang errors from exact

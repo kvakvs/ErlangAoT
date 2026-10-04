@@ -180,19 +180,12 @@ sketch; accepted commands must still complete their promises during failure clea
 ## Heap, term ownership and signals
 
 Each implemented `ProcessContext` owns a lazy `ProcessHeap`, empty mailbox and
-lifetime token. Step 12 implements checked allocation rejection, explicit collection
-unavailability and immediate-only copies; see [process memory](../../docs/runtime.md#process-memory).
-Root registration and `TermFactory` binding remain future work.
+lifetime token. The heap follows the classic ERTS design in
+[runtime-heap.md](../../docs/runtime-heap.md): one heap block plus fragments,
+off-heap binaries, header admission, process roots and a copying collector on
+explicit host request; see also [process memory](../../docs/runtime.md#process-memory).
 Explicit runtime shutdown requires contexts to be destroyed first; C++ RAII cleanup
 invalidates remaining contexts before releasing reserved runtime-wide services.
-
-Proposed allocation uses word-aligned chunks compatible with [term_layout.hpp](../src/terms/term_layout.hpp).
-Appending chunks never relocates earlier allocations. Allocation requests count
-nonzero target words; byte sizes use checked multiplication, and byte-based configuration is validated
-as exact word multiples; limits cover total backing capacity,
-including padding and unused chunk tails. Grow by at least one configured chunk,
-or the request size if larger; clamp spare capacity to the remaining limit when
-the rounded request itself still fits. Never reallocate/copy an existing chunk.
 
 The heap adds terms with `add(value)`, equivalent to `value.copy_to(heap)`; both
 return a rooted destination-owned graph. See [terms.md](terms.md#heap-ownership-copying-and-collection)
@@ -200,17 +193,10 @@ for deep-copy, identity, failure and thread-confinement rules. `TermFactory` als
 constructs terms directly in the context's heap; heap storage owns cells, while
 handles register roots rather than owning cells individually.
 
-`collect()` explicitly permits future tracing/reclamation at a registered safe
-point. The implemented stub always returns not_implemented; unsafe_point is reserved
-until owner safe-point registration exists. A future growth path may continue
-after collection reports not_implemented, but no growth path exists yet. There is
-initially **no reclamation before exit**, no compaction and no reuse of dead terms. When no chunk fits, return limit_exceeded or out_of_memory;
-the code adapter chooses whether to exit with heap_limit. Future collection must
-enumerate host roots, continuation roots, mailbox terms and cursor candidates,
-then update references before resuming. Raw heap spans cannot survive a future moving collection without
-an explicit pin/root protocol. Trivial term slots need no cleanup;
-cells containing shared handles, weak handles or Boost values require explicit
-C++ destruction before backing storage is released.
+`collect(roots)` copies the live graph at a host safe point and rewrites roots
+([collection](../../docs/runtime-heap.md#collection)). Later collection must
+also enumerate continuation roots, mailbox terms and cursor candidates (plan 11
+steps 23, 51) before generated code may collect (step 26).
 
 `ProcessSignal::message(sender, term)` copies into an independently owned transit
 buffer on the sender's scheduler thread. All signals, including messages and

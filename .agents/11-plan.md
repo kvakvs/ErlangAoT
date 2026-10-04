@@ -370,14 +370,21 @@ point: until step 26, when the context is not running generated code.
 Backlog: F03, F04. Depends on: [8H](#step-8h).
 
 - Success criteria
-  - [ ] `docs/runtime.md`, `docs/terms.md`, the ABI root-scope notes,
+  - [x] `docs/runtime.md`, `docs/terms.md`, the ABI root-scope notes,
     `arch.md` and `files.md` describe the new heap; no reference to the chunk
     list, object index or cell destructors remains.
-  - [ ] The 8A kernel and footprint are measured again and compared in
+  - [x] The 8A kernel and footprint are measured again and compared in
     `docs/runtime-heap.md` (descriptive, not gated).
 - Tests
-  - [ ] Fresh full-mode CTest and `check-quality-all` pass; counts recorded in
+  - [x] Fresh full-mode CTest and `check-quality-all` pass; counts recorded in
     `docs/validation.md`.
+- Evidence (2026-10-04): stale chunk/index/pin wording also removed from
+  `base_types.hpp` and `runtime/design/{processes,terms}.md`;
+  `runtime_heap_measurements` now also collects the kernel list (700,000 live
+  words in about 56 ms into a 999,631-word block; walk 173 to 72 ms; side bytes
+  163,878 to 0). Fresh Windows x64 Debug full `-j 16`: 143/144, the
+  `codegen_dependency` timeout under load passed alone (29 s); Lizard-all 0
+  warnings; tidy-all 276 units passed with one job. Logs `build/plan11-step8i/`.
 
 ## D. Control flow and exceptions
 

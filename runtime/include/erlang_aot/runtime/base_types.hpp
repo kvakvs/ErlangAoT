@@ -56,15 +56,15 @@ enum class TermKind : std::uint8_t {
     catch_object,
     // Mark an invalid or unresolved tag category.
     invalid,
-    // Resolve an admitted nonempty tuple through the owner's published object index.
+    // An admitted nonempty tuple; kind and extent come from its heap header.
     tuple,
-    // Resolve a canonical sign/magnitude integer stored as private target-word limbs.
+    // A canonical sign/magnitude integer stored as private target-word limbs.
     bignum,
-    // Resolve immutable finite binary64 storage through the owner index.
+    // Immutable finite binary64 storage.
     floating,
-    // Resolve a canonical immutable exact-key table through the owning heap index.
+    // A canonical immutable exact-key table.
     map,
-    // Resolve immutable packed bits and retained slice views through the owning heap index.
+    // Immutable packed bits: an inline heap binary or a view of an off-heap buffer.
     bitstring,
 };
 

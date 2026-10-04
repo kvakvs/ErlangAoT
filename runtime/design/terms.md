@@ -5,11 +5,13 @@ implemented with checked contextual admission and retained host ownership.
 See [containers](../../docs/terms.md#tuples-lists-strings), [runtime atoms](../../docs/terms.md#atoms),
 [process memory](../../docs/runtime.md#process-memory), and [generated roots](../../docs/abi.md#root-scopes).
 The table below also reserves future numeric/map/binary/identity APIs; a declaration
-alone does not establish implementation. Graph copying and collection remain absent.
+alone does not establish implementation. Cross-heap graph copying remains absent;
+collection runs on explicit host request ([heap contract](../../docs/runtime-heap.md)).
 
-Host [Term](../include/erlang_aot/runtime/terms.hpp) contains an ABI word and optional
-atom/heap ownership pins. It is not a generated or heap layout. Private layouts use
-target Word slots; exact published starts and extents are indexed before admission.
+Host [Term](../include/erlang_aot/runtime/terms.hpp) contains an ABI word, an optional
+atom spelling pin and a borrowed heap with a lifetime token and collection count.
+It is not a generated or heap layout. Private layouts use target Word slots that a
+walker parses from headers; admission checks owned range and header shape.
 
 ## Class boundary and immediate ABI
 
@@ -81,11 +83,10 @@ lifetimes of both prefixes and trailing elements before access. Native C++ membe
 need explicit construction/destruction and cannot be serialized or moved by blind
 byte copying. No constructors perform writes into unallocated trailing storage.
 
-A future collector must trace only term slots, rewrite relocated pointers, and avoid
-interpreting numeric bytes, registry IDs, smart pointers or Boost internals as terms.
-Raw heap pointers cannot survive safepoints without re-resolution through roots.
-Runtime IDs remain stable while referenced, and code references require pinning.
-These are private reservations, not implemented GC, identity or callable services.
+The collector traces only term slots, rewrites relocated pointers, and never
+interprets numeric bytes, registry IDs or the off-heap `shared_ptr` as terms.
+Raw heap pointers do not survive a collection except as rewritten roots. Runtime
+IDs remain stable while referenced, and code references require pinning.
 
 ## Coverage and construction
 
@@ -165,8 +166,8 @@ safe destruction and return `expired_context` from checked accessors thereafter.
 
 Current `add`/`copy_to` validate and retain same-heap compound handles, preserving
 identity. Owner-independent values and same-runtime atoms already transfer safely.
-The remaining paragraphs in this section describe **future graph copying and GC**,
-not current behavior; no collector or cross-heap copy is invoked by construction.
+The remaining paragraphs in this section describe **future graph copying**
+(plan 11 step 28), not current behavior.
 
 `ProcessContext` owns one `ProcessHeap` as an explicit member, and `TermFactory`
 allocates and registers roots there. The heap's `add(value)` and
@@ -200,15 +201,13 @@ copying does not promise rollback of backing capacity. Work/size limits must bou
 graph traversal. Tests must verify all term categories and that a copied value stays
 usable after the source process exits.
 
-`ProcessHeap::collect()` is the explicit GC boundary. A future collector requires
-the owner at a registered safe point; otherwise it must return `HeapError::unsafe_point`. The step 12
-non-collecting implementation always reports `not_implemented`, never fabricated
-reclamation statistics. The future collector enumerates host roots, saved continuation roots,
-mailbox terms and active receive candidates, traces the private layout, releases
-unreachable cells/resources and rewrites moved slots. Heap growth alone keeps addresses
-stable. Raw `allocate()` spans are runtime-internal construction borrows: publish/root
-the completed cell before any collection safe point; partially initialized cells
-must not be scanned. Compiler locals must have root maps before collection is enabled.
+`ProcessHeap::collect(roots)` is the explicit GC boundary: at a safe point it
+copies the live graph and rewrites roots, otherwise it returns
+`HeapError::unsafe_point` ([collection](../../docs/runtime-heap.md#collection)).
+Raw `allocate()` spans are runtime-internal construction borrows: publish/root
+the completed cell before any collection; partially initialized cells must not
+be scanned. Saved continuation, mailbox and receive-candidate roots join before
+generated code may collect.
 
 ## Operation details to review
 

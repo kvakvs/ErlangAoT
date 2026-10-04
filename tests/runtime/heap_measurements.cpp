@@ -12,7 +12,7 @@
 using namespace erlang_aot::runtime;
 
 namespace {
-// Count live host bytes so heap backing and side metadata (object index, buffers) are both visible.
+// Count live host bytes so heap backing and side metadata (fragment chain, buffers) are both visible.
 std::size_t live_bytes = 0;
 // Prefix each block with its size; a max_align_t prefix keeps returned storage fundamentally aligned.
 constexpr std::size_t prefix = alignof(std::max_align_t);
@@ -78,6 +78,21 @@ double walk(Term list) {
     return sum;
 }
 
+// Collect with the kernel list as the only root: time, live words, merged fragments, then walk the copy.
+void collection(ProcessContext &context, const Term &list, std::size_t baseline) {
+    std::array roots{list.word()};
+    const auto start = Clock::now();
+    const auto stats = context.heap().collect(roots).value();
+    const auto collect_ms = elapsed_ms(start);
+    const auto walk_start = Clock::now();
+    require(walk(Term::from_word(roots[0], context).value()) > 0, "collected walk lost values");
+    const auto walk_ms = elapsed_ms(walk_start);
+    const auto heap_bytes = stats.heap_words * sizeof(Word);
+    std::cout << "collect_ms=" << collect_ms << " walk_ms=" << walk_ms << " live_words=" << stats.live_words
+              << " heap_words=" << stats.heap_words << " merged_fragment_words=" << stats.fragment_words
+              << " side_bytes=" << (live_bytes - baseline - heap_bytes) << '\n';
+}
+
 // Allocation-heavy kernel: time, heap words and host bytes beyond the heap backing itself.
 void kernel(Runtime &runtime) {
     auto *context = runtime.create_context().value();
@@ -95,6 +110,7 @@ void kernel(Runtime &runtime) {
               << " used_words=" << heap.used_words() << " capacity_words=" << heap.capacity_words()
               << " host_bytes=" << (live_bytes - before) << " side_bytes=" << (live_bytes - before - heap_bytes)
               << '\n';
+    collection(*context, list, before);
     require(runtime.destroy_context(context) == erlang_aot::abi::v1::Status::ok, "kernel teardown failed");
 }
 

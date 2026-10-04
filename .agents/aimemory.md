@@ -78,7 +78,7 @@ narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_depe
 erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
 (float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).
 
-Plan11 steps 1-8H done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
+Plan11 steps 1-8I done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
 Step facts beyond the plan record:
 - 1/1A/1B: maint29 21776803 unchanged. Fast mode = matrix.py O0 positional + O2-off project, mutations
   once, LABELS full_only excluded. ERLANG_AOT_QUALITY_BASE overrides HEAD for changed-scope quality.
@@ -122,8 +122,10 @@ Host and tool gotchas:
   build/plan11-step8g/{gate,rt,quality,all}.cmd; cmd /c needs full .bat path; run .exe via PowerShell.
 - build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.
 - First run after runtime source edits can time out tests while native sub-builds recompile; rerun.
-- clang-tidy may crash (0xC0000005/0xC0000409) or exit 1 silently with 2 jobs; rerun or
-  -DQUALITY_JOBS=1. Runtime CMake edits select all tidy units.
+- clang-tidy may crash (0xC0000005/0xC0000409) or exit 1 silently with 2 jobs; rerun with one job.
+  The check targets do not forward QUALITY_JOBS: run `cmake -DQUALITY_SCOPE=all
+  -DQUALITY_BUILD_DIR=<build> -DQUALITY_NINJA=<ninja> -DQUALITY_JOBS=1 -P cmake/CheckClangTidy.cmake`
+  (script build/plan11-step8i/rerun.cmd). codegen_dependency can time out (120 s) under full -j 16. Runtime CMake edits select all tidy units.
 - MSVC C4554 false positive on static_cast<Word>(n - 1) << shift: hoist to a local.
 - Bash heredocs mangle non-ASCII, `\n` and `\`, and many quotes break them: write files with Write
   or scratchpad scripts. `cat > file` without heredoc hangs. Python Path.write_text writes CRLF on

@@ -48,8 +48,8 @@ allocation and sized `max(min_heap_words, request)`, plus a chain of heap
 fragments owned by the same process. Words move only when the host calls
 `collect()` at a safe point.
 
-This heap is being replaced by the classic ERTS design in
-[runtime-heap.md](runtime-heap.md); the rules below describe the current code.
+The heap follows the classic ERTS design; [runtime-heap.md](runtime-heap.md)
+is its contract (layout, areas, sizing, admission, roots, collection).
 
 - `allocate(words)` returns zeroed word storage. `reserve` gives a move-only
   reservation with explicit commit and automatic rollback. One reservation at a

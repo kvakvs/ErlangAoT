@@ -14,7 +14,7 @@ and [files.md](files.md). Full earlier wording is in Git history.
 | Test migration | Frontend/project/runtime migrations, 2026-09-28 | Frontend sanitizers pending. |
 | Compiler/runtime milestone | Steps 1–46, 2026-09-29 | Immediate-only subset and runtime skeleton. |
 | Pattern matching and guards | Steps 1–20 and 15a, 2026-10-01–03 | Function clauses and body matches over the admitted domain. |
-| Plan 11 | Steps 1–8 and 8A–8H, 2026-10-03–04 | Linked executables, golden runner, ERTS-style heap with a copying collector on host request. |
+| Plan 11 | Steps 1–8 and 8A–8I, 2026-10-03–04 | Linked executables, golden runner, ERTS-style heap with a copying collector on host request. |
 
 **Still unfinished:** GC and graph copying, process execution/messaging, more
 Erlang source contexts and representations, native platform/sanitizer closure.
@@ -165,7 +165,7 @@ Windows x64 Debug 124/124 CTests and 258 quality units. Descriptors use ABI
 revision 4; the revision-2 failure channel is unchanged. Normal builds and tests
 need no OTP.
 
-## Plan 11 (steps 1–8H, 2026-10-03–04, Windows x64)
+## Plan 11 (steps 1–8I, 2026-10-03–04, Windows x64)
 
 Compact per-step record: [11-plan.md](11-plan.md#step-1).
 
@@ -178,13 +178,14 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   and project builds with staged all-or-nothing publication, and the executable
   golden runner (`tests/fixtures/executables/`). Phase B close: full 138/138
   CTests, 272 quality units.
-- **Classic heap (8A–8H):** contract `docs/runtime-heap.md`; heap and off-heap
+- **Classic heap (8A–8I, phase C closed):** contract `docs/runtime-heap.md`; heap and off-heap
   binary cells with a per-process off-heap list; parseable areas with walker and
   `verify()`; admission by owned range and header shape (no object index);
   host `Term` as raw word with lifetime and collection count; segmented process
   root stack; one heap block per process plus heap fragments; full-sweep Cheney
   collector on explicit host request with ERTS sizing. Per-context footprint
-  fell from 66 KB to 2.4 KB.
+  fell from 66 KB to 2.4 KB; per-cell side metadata from 24 MB to none after a
+  collection (`docs/runtime-heap.md#measurements`).
 
 <a id="outstanding-work-to-finish"></a>
 
@@ -200,7 +201,8 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   bitstrings and ordinary records with checked construction, access,
   comparison and fault cleanup.
 - [x] **Parseable process heap:** ERTS word layout, off-heap binaries, header
-  admission, raw-word host terms, root stack, heap block plus fragments (8A–8G).
+  admission, raw-word host terms, root stack, heap block plus fragments,
+  copying collector on host request (8A–8I).
 - [ ] **Collection and copying:** generated-code safepoints, graph copying
   between heaps, continuation/mailbox/transit roots (host-requested copying
   collection done in 8H).
