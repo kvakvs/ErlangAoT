@@ -18,61 +18,33 @@ Word *GeneratedRoots::enter(std::size_t count) noexcept {
         return nullptr;
     }
     try {
-        // Grow the frame index before any segment, so a failed entry leaves no new segment behind.
-        if (frames_.size() == frames_.capacity()) {
-            frames_.reserve(std::min(std::max(frames_.size() * 2, std::size_t{16}), options_.frames));
+        if (segments_.empty() || segments_.back().capacity - segments_.back().used < count) {
+            const auto capacity = std::max(count, options_.segment_words);
+            segments_.push_back(Segment{std::make_unique_for_overwrite<Word[]>(capacity), capacity, 0});
         }
-        const auto index = segment_for(count);
-        auto &segment = segments_[index];
+        auto &segment = segments_.back();
         auto *slots = segment.words.get() + segment.used;
-        frames_.push_back(Frame{slots, count, index, {}});
+        frames_.push_back(Frame{slots, count, {}});
         segment.used += count;
         words_ += count;
         std::fill_n(slots, count, Word{0});
         return slots;
     } catch (const std::bad_alloc &) {
+        release_empty();
         calls.fail_service(abi::v1::Status::out_of_memory);
     }
     return nullptr;
 }
 
-std::size_t GeneratedRoots::segment_for(std::size_t count) {
-    const auto fits = [&](std::size_t index) {
-        return index < segments_.size() && segments_[index].capacity - segments_[index].used >= count;
-    };
-    auto index = frames_.empty() ? std::size_t{0} : frames_.back().segment;
-    if (fits(index)) {
-        return index;
-    }
-    // Segments above the top frame are empty; with no frames at all, segment 0 is empty too.
-    index += frames_.empty() ? 0 : 1;
-    if (fits(index)) {
-        return index;
-    }
-    const auto previous = index == 0 ? options_.segment_words : segments_[index - 1].capacity * 2;
-    const auto capacity = std::min(std::max(count, previous), options_.words);
-    Segment segment{std::make_unique_for_overwrite<Word[]>(capacity), capacity, 0};
-    while (segments_.size() > index) {
-        segments_.pop_back();
-    }
-    segments_.push_back(std::move(segment));
-    return index;
-}
-
 void GeneratedRoots::pop() noexcept {
-    const auto &frame = frames_.back();
-    segments_[frame.segment].used -= frame.count;
-    words_ -= frame.count;
+    segments_.back().used -= frames_.back().count;
+    words_ -= frames_.back().count;
     frames_.pop_back();
+    release_empty();
 }
 
-void GeneratedRoots::trim() noexcept {
-    auto keep = frames_.empty() ? std::size_t{1} : frames_.back().segment + 2;
-    // An empty stack keeps only a base segment of the configured first size.
-    if (frames_.empty() && !segments_.empty() && segments_.front().capacity > options_.segment_words) {
-        keep = 0;
-    }
-    while (segments_.size() > keep) {
+void GeneratedRoots::release_empty() noexcept {
+    if (!segments_.empty() && segments_.back().used == 0) {
         segments_.pop_back();
     }
 }
@@ -97,7 +69,6 @@ abi::v1::Status GeneratedRoots::leave(Word *frame, Word result) noexcept {
         }
     }
     pop();
-    trim();
     auto &handoff = frames_.empty() ? handoff_ : frames_.back().handoff;
     handoff = value;
     return status;
@@ -107,7 +78,6 @@ void GeneratedRoots::restore(std::size_t depth) noexcept {
     while (frames_.size() > depth) {
         pop();
     }
-    trim();
     if (depth == 0) {
         handoff_.reset();
     }

@@ -7,7 +7,7 @@ struct RootOptions {
     // Bound total live slots and nesting independently of retained heap backing.
     std::size_t words = 1'000'000;
     std::size_t frames = 4096;
-    // Size the first stack segment; later segments double up to `words`, and a frame never spans two.
+    // Size each stack segment (larger frames get their own); a frame never spans two, so its address is stable.
     std::size_t segment_words = 256;
 };
 
@@ -26,7 +26,7 @@ class GeneratedRoots final {
     // Expose bounded root accounting for host lifecycle/fault invariants.
     std::size_t depth() const noexcept;
     std::size_t words() const noexcept;
-    // Report reserved stack segment words, live or spare, for heap statistics.
+    // Report reserved stack segment words for heap statistics.
     std::size_t capacity() const noexcept;
     // Inspect registered words and result handoffs without dereferencing candidate heap words.
     bool contains(Word value) const noexcept;
@@ -44,17 +44,16 @@ class GeneratedRoots final {
 
   private:
     struct Segment {
-        // Stable backing for frame windows (BEAM Y registers); frames carve it bottom-up and release it LIFO.
+        // Stable backing for frame windows (BEAM Y registers); holds at least one frame while it exists.
         std::unique_ptr<Word[]> words;
         std::size_t capacity;
         std::size_t used;
     };
 
     struct Frame {
-        // Window inside one segment, stable while live; count includes the reserved zero-arity slot.
+        // Window inside the last segment at entry, stable while live; count includes the reserved zero-arity slot.
         Word *slots;
         std::size_t count;
-        std::size_t segment;
         // Root a nested result word (BEAM X register) until the parent publishes its own slot or exits.
         std::optional<Word> handoff;
     };
@@ -66,18 +65,15 @@ class GeneratedRoots final {
         }
     }
 
-    // Choose the segment for the next window: the top one if it fits, else an empty successor or a new one.
-    std::size_t segment_for(std::size_t count);
-    // Release the top frame's window back to its segment.
+    // Release the top frame's window back to the last segment.
     void pop() noexcept;
-    // Free empty segments beyond one spare above the top frame (base size when empty), so deep recursion does
-    // not pin capacity.
-    void trim() noexcept;
+    // Free the last segment once no frame uses it, so the top frame always lies in the last segment.
+    void release_empty() noexcept;
 
     // Keep liveness/error ownership with the context; host access remains serialized.
     ProcessContext &owner_;
     RootOptions options_;
-    // The process stack: segments in push order and the frames whose windows they hold.
+    // The process stack: segments appended on demand and the frames whose windows they hold.
     std::vector<Segment> segments_;
     std::vector<Frame> frames_;
     std::size_t words_ = 0;

@@ -418,7 +418,7 @@ void check_root_allocation() {
             if (!succeeded) {
                 require(context.generated_calls().failure()->status == Status::out_of_memory, "root OOM lost");
                 require(context.roots().depth() == 0 && context.roots().words() == 0, "failed root entry published");
-                // Only the grown frame index may remain; a failed entry keeps no stack segment.
+                // Only a grown index vector may remain; a failed entry keeps no stack segment.
                 require(context.roots().capacity() == 0 && live_allocations - retained <= 1,
                         "partial root segment leaked");
             }

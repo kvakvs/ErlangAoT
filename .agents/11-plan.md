@@ -675,17 +675,17 @@ holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
   - [x] Focused tests for limit exhaustion, LIFO violation and restore after a
     failed call.
 
-Done 2026-10-04. `GeneratedRoots` keeps one process stack: `Segment`s (`unique_ptr<Word[]>`, capacity,
-used) and `Frame` windows (slots pointer, count, segment, handoff). The first segment holds
-`RootOptions::segment_words` (256); a frame that does not fit the top segment goes to the empty
-successor or a new segment doubling the previous one (at least the frame, at most `words`), so live
-windows never move. Returns keep one spare segment above the top; an empty stack keeps only a
-first-size segment. `capacity()` reports reserved words for 8H statistics. ABI, limits and LIFO
-errors are unchanged. `runtime_roots` gained `segments` (stability across small segments, full
-enumeration, word bound across segments, trimming), `default_limits` (1,000,000 words, 4,096 frames)
-and `failed_call` (restore after a failed call reuses the stack base); entry grows the frame index
-before any segment, and `runtime_lifecycle_failure` checks a failed entry keeps no segment. Gate:
-fresh Debug, 138/138 fast CTests, `check-quality` (46 units) pass.
+Done 2026-10-04. `GeneratedRoots` keeps one minimal process stack: `Segment`s (`unique_ptr<Word[]>`,
+capacity, used) appended on demand and `Frame` windows (slots pointer, count, handoff). A frame that does
+not fit the last segment opens a new one of `RootOptions::segment_words` (256) or its own size; the last
+segment is freed when its last frame returns, so the top frame always lies in the last segment and live
+windows never move. Per user review the first version's doubling, spare segment and trimming were
+dropped as premature; the flat moving stack waits for frame-base reloads (steps 17, 24, 26).
+`capacity()` reports reserved words for 8H. ABI, limits and LIFO errors are unchanged. `runtime_roots`
+gained `segments` (stability across small segments, full enumeration, word bound across segments,
+release), `default_limits` (1,000,000 words, 4,096 frames) and `failed_call` (restore after a failed
+call); `runtime_lifecycle_failure` checks a failed entry keeps no segment (a grown index vector may
+remain).
 
 <a id="step-8g"></a>
 
@@ -898,6 +898,9 @@ small compiled prototype that calls, recurses, yields and resumes.
 - Success criteria
   - [ ] `docs/execution-model.md` defines call, return, tail call, yield,
     resume, exit, exception propagation and root visibility for each frame.
+  - [ ] It decides the successor of the interim 8F segmented root stack: a
+    flat per-process stack with in-stack frame headers and base-plus-offset
+    slot addressing, or the frame storage the chosen model needs instead.
   - [ ] The choice works on all required targets (including Windows x86 and
     32-bit ARM) or names the fallback per target.
 - Tests
@@ -1038,6 +1041,8 @@ at a safepoint collects instead of creating a fragment; fragments remain for
 critical sections and message delivery.
 
 - Success criteria
+  - [ ] Generated code reloads its frame base after safepoints, and the 8F
+    segments are replaced by the step-17 stack form.
   - [ ] Allocation-heavy loops run with a bounded heap.
   - [ ] Values in recursive frames and error payloads survive repeated
     collections.
