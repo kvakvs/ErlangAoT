@@ -84,6 +84,7 @@ foreach(program IN ITEMS positional project)
     run(${program} 1 "" "^uncaught exception error: function_clause\n$" clause)
 endforeach()
 run(escript 127 "" "^escript: exception error: {badmatch,2}\n$")
+run(escript 127 "" "^escript: exception throw: oops\n$" throw)
 
 # Startup IR keeps the descriptor layout and service spelling of each target width and ABI.
 set(word_64 i64)

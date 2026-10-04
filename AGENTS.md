@@ -90,6 +90,17 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
   missing it should be installed. Always run erlfmt on new and modified .ERL and
   terms files which did not have a syntax error in them planted intentionally.
 
+## Windows Toolchain
+
+Plain shells (PowerShell, Git Bash) do not have MSVC, the SDK or `vswhere` on
+`PATH`. Locate Visual Studio with
+`"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath`
+(currently `C:\Program Files\Microsoft Visual Studio\18\Community`), then run
+build/test/quality commands from a `.cmd` script that first calls
+`"<installationPath>\VC\Auxiliary\Build\vcvars64.bat" >nul` and prepends
+`C:\Program Files\LLVM\bin` to `PATH`; launch it with `cmd /c <full path>.cmd`.
+The `'vswhere.exe' is not recognized` line printed by `vcvars64.bat` is harmless.
+
 ## Code Style Guide
 
 - Internal fields of classes use trailing underscore. Rename existing fields when they did not have an underscore while you're working on them.

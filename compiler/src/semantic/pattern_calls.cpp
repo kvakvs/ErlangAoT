@@ -203,4 +203,42 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
     }
     return FunctionKey{name->name, call.arguments.size()};
 }
+
+namespace {
+// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's.
+bool raising(const FunctionKey &key) {
+    return (key.name == U"error" && key.arity >= 1 && key.arity <= 3) ||
+           ((key.name == U"exit" || key.name == U"throw") && key.arity == 1);
+}
+
+// Explicit erlang:display/1 and erlang:halt/0,1 wait for the builtin bridge (step 36) to resolve unqualified.
+std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const ast::RemoteExpression &remote,
+                                             const std::size_t count) {
+    const auto *owner = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote.module)).value);
+    const auto *name = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote.function)).value);
+    if (!owner || !name || owner->name != U"erlang") {
+        return {};
+    }
+    const FunctionKey key{name->name, count};
+    const bool builtin = raising(key) || key == FunctionKey{U"display", 1} || (key.name == U"halt" && count <= 1);
+    return builtin ? std::optional{key} : std::nullopt;
+}
+} // namespace
+
+std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id,
+                                        const ast::CallExpression &call) {
+    const auto &syntax = *state.module.syntax;
+    const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
+    if (const auto *remote = std::get_if<ast::RemoteExpression>(&target)) {
+        return qualified_builtin(syntax, *remote, call.arguments.size());
+    }
+    const auto *name = std::get_if<ast::Atom>(&target);
+    if (!name) {
+        return {};
+    }
+    // A local definition or no_auto_import keeps the unqualified name an ordinary local call.
+    const FunctionKey key{name->name, call.arguments.size()};
+    const bool imported = raising(key) && !state.module.lookup.contains(key) && auto_import(state, id, key);
+    return imported ? std::optional{key} : std::nullopt;
+}
 } // namespace erlang_aot::semantic

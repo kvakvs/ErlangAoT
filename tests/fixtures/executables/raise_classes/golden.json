@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "entry": "raises",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[]\n"
+    },
+    {
+      "args": [
+        "error"
+      ],
+      "stderr": "^uncaught exception error: oops\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "error_term"
+      ],
+      "stderr": "^uncaught exception error: \\{bad,\\[1,2\\.5,<<98,105,110>>\\],#\\{key => value\\},123456789012345678901234567890\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "error2"
+      ],
+      "stderr": "^uncaught exception error: with_args\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "error3"
+      ],
+      "stderr": "^uncaught exception error: with_info\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "throw"
+      ],
+      "stderr": "^uncaught exception throw: ball\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "exit"
+      ],
+      "stderr": "^uncaught exception exit: shutdown\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "exit_normal"
+      ],
+      "stderr": "^uncaught exception exit: normal\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "error_deep"
+      ],
+      "stderr": "^uncaught exception error: \\[two\\|\\{one,deep\\}\\]\n$",
+      "exit_status": 1,
+      "stdout": "{one,error}\n"
+    },
+    {
+      "args": [
+        "throw_deep"
+      ],
+      "stderr": "^uncaught exception throw: \\[two\\|\\{one,\\{ball,3\\}\\}\\]\n$",
+      "exit_status": 1,
+      "stdout": "{one,throw}\n"
+    },
+    {
+      "args": [
+        "exit_deep"
+      ],
+      "stderr": "^uncaught exception exit: \\[two\\|\\{one,\\[115,116,111,112\\]\\}\\]\n$",
+      "exit_status": 1,
+      "stdout": "{one,exit}\n"
+    },
+    {
+      "args": [
+        "local"
+      ],
+      "stderr": "^uncaught exception throw: \\{local,\\[second,first\\]\\}\n$",
+      "exit_status": 1,
+      "stdout": "local\n"
+    },
+    {
+      "args": [
+        "order"
+      ],
+      "stderr": "^uncaught exception throw: second\n$",
+      "exit_status": 1,
+      "stdout": "first\n"
+    },
+    {
+      "args": [
+        "case"
+      ],
+      "stderr": "^uncaught exception exit: \\{case_body,two\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "guarded"
+      ],
+      "stderr": "^uncaught exception error: remote_error\n$",
+      "exit_status": 1,
+      "stdout": "{not_raised,local_error}\n{not_raised,remote_error}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "depth.erl": "44eedbf6344a49fe7e76819b310721e80f1b57dcbebcd91095ddd676fcdb5d0b",
+    "raises.erl": "0255965588ef59c3c66ad94828e27468b08d453b0c18aab8389b1bff29ae6893",
+    "shadow.erl": "22d953aa4bcdbdcd35c780fc6da624808d8947cd7848e55e8843aadc8196063f"
+  }
+}

@@ -76,7 +76,9 @@ int failed_entry(const CallFailure &failure, bool escript) {
     if (!reason) {
         return runtime_failure("cannot format the uncaught exception");
     }
-    report(escript ? "escript: exception error: " : "uncaught exception error: ", *reason);
+    const auto prefix = std::string(escript ? "escript: exception " : "uncaught exception ") +
+                        std::string(exception_class(failure)) + ": ";
+    report(prefix, *reason);
     return escript ? abi::v1::exit_escript_uncaught : abi::v1::exit_uncaught;
 }
 
@@ -129,11 +131,22 @@ int run(const StartupDescriptor &startup, int argc, char **argv) {
 }
 } // namespace
 
+std::string_view exception_class(const CallFailure &failure) {
+    if (failure.reason == abi::v1::ErrorReason::raised_exit) {
+        return "exit";
+    }
+    return failure.reason == abi::v1::ErrorReason::raised_throw ? "throw" : "error";
+}
+
 TermResult<std::string> exception_reason(const CallFailure &failure) {
     static constexpr std::array<std::string_view, 11> names{"",          "function_clause", "badmatch", "badarg",
                                                             "badarg",    "badarith",        "badmap",   "badkey",
                                                             "badrecord", "case_clause",     "if_clause"};
     const auto index = failure.reason ? static_cast<std::size_t>(*failure.reason) : 0;
+    // Raised reasons (error/exit/throw) are the whole payload term.
+    if (index >= static_cast<std::size_t>(abi::v1::ErrorReason::raised_error) && failure.value) {
+        return format_term(*failure.value, TermStyle::write);
+    }
     if (index == 0 || index >= names.size()) {
         return std::unexpected(TermError::invalid_argument);
     }

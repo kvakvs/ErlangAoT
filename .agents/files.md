@@ -35,7 +35,7 @@ Keys in the last column are relative to the directory column.
 | `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `entry` (MODULE[:FUNCTION] spelling), `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls, executable admission (`literals`: children and the case/if `branch_clauses` view), escript rules | `declarations`, `escript`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
 | `semantic/` | Scoped bindings (`binding_expressions`: sequences, siblings, andalso/orelse and case/if scopes), normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
-| `semantic/` | Guard legality/resolution, service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
+| `semantic/` | Guard legality/resolution, body builtins (`pattern_calls`: auto-import, `body_builtin`), service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `inference_bindings`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics, runtime-service symbols | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi`, `runtime_symbols` |
 | `codegen/` | Bodies/calls, matching, guards, eager/lazy flow, `case`/`if` clause selection and joins (`lowering_walk`) | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
@@ -63,7 +63,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
 | `builtins/` | Generic registry, checked invocation/ABI bridge; standard output and `erlang_aot_display_v1` | `registry`, `invocation`, `bridge`, `output`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
-| `startup/` | Program startup `erlang_aot_main_v1` (ABI checks, registration, entry, exit status), argv decoding, `erlang_aot_halt_v1` | `startup` (+ private `startup.hpp`), `arguments`, `halt` |
+| `startup/` | Program startup `erlang_aot_main_v1` (ABI checks, registration, entry, exit status, uncaught class/reason report), argv decoding, `erlang_aot_halt_v1` | `startup` (+ private `startup.hpp`), `arguments`, `halt` |
 | `diagnostics/` | Runtime feature reporting | `features` |
 
 ## Build, support, evidence

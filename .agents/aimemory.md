@@ -121,6 +121,10 @@ Step facts beyond the plan record:
   null for if. Runtime erlang_aot_raise_v2 whitelists atom-only reasons (plain_reason) -> new plain reasons need it.
   OTP lint rejects `X =:= 0.0` in fixtures (match_float_zero). bindings.term rows are authored expectations; OTP
   regenerate only verifies them (fill corpus.json row sha256 = LF digest). Edit tool may write CRLF into .py: normalize.
+- 11: raise = ErrorReason raised_error/exit/throw (11-13) via existing erlang_aot_raise_v2 (no new symbol/ABI rev);
+  payload_reason range covers them; startup exception_class(). body_builtin moved to pattern_calls.cpp (needs
+  auto_import); unqualified only for the raise family, display/halt stay erlang:-qualified until step 36. Oracle stderr
+  prints `uncaught <class>: ~p` (compare class/reason manually; not stored).
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.
@@ -129,6 +133,9 @@ User directions (keep):
 - Heap is one block per process; each process owns its heap.
 - Don't stage user's test1.toml. Stale IDE buffers may revert plan edits: re-check before commit.
 Host and tool gotchas:
+- VS discovery (see AGENTS.md Windows Toolchain): vswhere at C:/Program Files (x86)/Microsoft Visual Studio/Installer/
+  vswhere.exe -latest -products * -property installationPath -> C:/Program Files/Microsoft Visual Studio/18/Community;
+  vcvars64 = <that>/VC/Auxiliary/Build/vcvars64.bat. Copy build/plan11-step11/*.cmd (sed step dir) for new steps.
 - Gate: vcvars64 + PATH "C:\Program Files\LLVM\bin"; never pass LLVM_DIR (skips /MT+IDL0). Scripts
   build/plan11-step8g/{gate,rt,quality,all}.cmd; cmd /c needs full .bat path; run .exe via PowerShell.
 - build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.

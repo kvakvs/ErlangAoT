@@ -205,9 +205,11 @@ Plan: [35](11-plan.md#step-35).
 ### F20 — Erlang exceptions
 
 Plan: [11](11-plan.md#step-11)–[15](11-plan.md#step-15). The checked failure
-channel already carries error class, `function_clause` and service reasons.
+channel carries `function_clause`, service reasons and the three source classes.
 
-- [ ] Classes, reasons, stack traces and uncaught outcomes.
+- [x] `error/1,2,3`, `exit/1`, `throw/1` classes, any-term reasons and uncaught
+  outcomes (step 11).
+- [ ] Stack traces and `erlang:raise/3`.
 - [ ] Raise, catch, try/after lowering without C++ exceptions crossing
   generated boundaries.
 - [ ] Nested handling and cleanup across module and builtin calls.

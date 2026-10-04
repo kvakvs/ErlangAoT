@@ -43,6 +43,9 @@
   exports in `Function::exports`; partial definitions become unsafe. `begin`/`end` is a plain sequence.
   `if` (step 10) takes the same paths with no scrutinee or pattern: `semantic::branch_clauses` gives every
   consumer one case/if clause view; exhaustion raises the atom-only `if_clause` (ErrorReason 10).
+  Source raises (step 11): `error/1,2,3`, `exit/1`, `throw/1` are body builtins (`semantic::body_builtin`,
+  unqualified via auto-import unless shadowed or suppressed) lowered by `lower_raise` to `erlang_aot_raise_v2`
+  with `raised_error/exit/throw` (11-13); the payload is the whole reason and the ID the class.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

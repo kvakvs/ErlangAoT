@@ -191,6 +191,9 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   `case_select`, `case_scope`; OTP-classed binding rows in the bindings corpus.
 - **`if` (10):** guard-only clauses share the `case` scoping and joins;
   exhaustion raises `if_clause`; golden `if_select`, four `if_*` binding rows.
+- **Raise (11):** `error/1,2,3`, `exit/1`, `throw/1` (qualified or auto-imported)
+  raise through `erlang_aot_raise_v2` with `raised_*` reasons; startup reports
+  `uncaught exception <class>: <reason>`; golden `raise_classes`.
 
 <a id="outstanding-work-to-finish"></a>
 

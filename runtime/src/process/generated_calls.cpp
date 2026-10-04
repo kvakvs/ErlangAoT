@@ -6,7 +6,8 @@ namespace {
 bool payload_reason(abi::v1::ErrorReason reason) {
     return reason == abi::v1::ErrorReason::badmatch || reason == abi::v1::ErrorReason::badarg_value ||
            reason == abi::v1::ErrorReason::badmap || reason == abi::v1::ErrorReason::badkey ||
-           reason == abi::v1::ErrorReason::badrecord || reason == abi::v1::ErrorReason::case_clause;
+           reason == abi::v1::ErrorReason::badrecord || reason == abi::v1::ErrorReason::case_clause ||
+           (reason >= abi::v1::ErrorReason::raised_error && reason <= abi::v1::ErrorReason::raised_throw);
 }
 
 // Atom-only language failures carry no term.

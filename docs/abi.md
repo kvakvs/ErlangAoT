@@ -75,10 +75,13 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
+| `erlang:error/1,2,3`, `exit/1`, `throw/1` | `raised_error`/`raised_exit`/`raised_throw`: class from the ID, owned payload is the whole reason |
 | `erlang:halt/0,1` | `CallError::halted` with `halt_status` (and slogan) |
 
-All Erlang errors currently have class `error`; reasons are typed IDs and
-`erlang_aot_raise_v2` records them. First failure wins; nested invocations share
+Reasons are typed IDs recorded by `erlang_aot_raise_v2`; the three `raised_*`
+IDs select class `exit` or `throw` (otherwise `error`) and carry any term as the
+reason. `error/2,3` evaluate their extra arguments and drop them until stack
+traces exist (step 15). First failure wins; nested invocations share
 the channel. `GeneratedInvocation` is the host scope: it checks pending failures
 before entry and after return, copies result or error, and clears only at the
 outermost exit (also on C++ exceptions). No exception crosses generated entries.

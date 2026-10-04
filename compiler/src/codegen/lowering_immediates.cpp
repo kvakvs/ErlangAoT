@@ -76,6 +76,23 @@ llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status) {
     return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
 }
 
+llvm::Value *lower_raise(ExpressionLowering &state, const std::u32string_view name, llvm::Value *reason) {
+    using abi::v1::ErrorReason;
+    const auto id = name == U"exit"    ? ErrorReason::raised_exit
+                    : name == U"throw" ? ErrorReason::raised_throw
+                                       : ErrorReason::raised_error;
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Raise>(output.getTargetTriple()),
+        llvm::FunctionType::get(state.builder.getInt8Ty(),
+                                {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));
+    state.builder.CreateCall(
+        service, {state.entry.getArg(0), state.builder.getInt8(static_cast<std::uint8_t>(id)), reason}, "raise");
+    // The service always records the exception or an infrastructure failure, so this check always unwinds.
+    propagate_failure(state);
+    return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
+}
+
 llvm::Value *checked_value(ExpressionLowering &state, const ServiceOutput result, llvm::BasicBlock *rejection) {
     auto &builder = state.builder;
     propagate_failure(state);

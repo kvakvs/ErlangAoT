@@ -460,11 +460,27 @@ Implement `erlang:error/1,2,3`, `throw/1` and `exit/1` through the checked error
 channel with class and owned reason.
 
 - Success criteria
-  - [ ] All three classes propagate through local/remote calls unchanged.
-  - [ ] Uncaught exceptions reach startup and print the step-3 report.
+  - [x] All three classes propagate through local/remote calls unchanged.
+  - [x] Uncaught exceptions reach startup and print the step-3 report.
 - Tests
-  - [ ] Golden programs raising each class at different call depths; stderr
+  - [x] Golden programs raising each class at different call depths; stderr
     report and exit status checked.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. `error/1,2,3`,
+  `exit/1`, `throw/1` are body builtins (`ImmediateOperation::raise`),
+  `erlang:`-qualified or auto-imported unless a local definition or
+  `no_auto_import` shadows them (`semantic::body_builtin` in `pattern_calls`);
+  `lower_raise` calls the existing `erlang_aot_raise_v2` with new
+  `ErrorReason::raised_error/exit/throw` (11-13) whose payload is the whole
+  reason (no new symbol or ABI revision); `error/2,3` extra arguments are
+  evaluated and dropped until step 15. Startup prints
+  `uncaught exception <class>: <reason>` (escript `escript: exception
+  <class>: ...`). OTP golden `executables_raise_classes` (15 runs: each class
+  qualified/unqualified, error/2,3, any-term reasons incl. bignum/map/binary,
+  `exit(normal)`, remote depth 3, local depth 3, argument order, case body,
+  `no_auto_import` shadowing); OTP's own class/reason output agrees for all 14
+  raising runs. `linking_startup` adds an escript `throw` run. Fresh Windows
+  x64 Debug: fast CTest 144/144; affected tests in full mode 22/22; Lizard
+  and tidy (124 changed units) pass. Logs `build/plan11-step11/`.
 
 <a id="step-12"></a>
 

@@ -67,17 +67,21 @@ abi::v1::ImmediateOperation operation(const std::optional<abi::v1::ImmediateOper
     return *value;
 }
 
-// Lower body-only erlang builtins (display/1, halt/0,1); null for every other service.
-llvm::Value *body_builtin_value(ExpressionLowering &state, const std::optional<abi::v1::ImmediateOperation> &operation,
+// Lower body-only erlang builtins (display/1, halt/0,1, the raise family); null for every other service.
+llvm::Value *body_builtin_value(ExpressionLowering &state, const semantic::ServiceResolution &service,
                                 const ast::CallExpression &call) {
     const auto argument = [&](const std::size_t index) {
         return state.values.at(&state.module.syntax->expression(call.arguments.at(index)));
     };
-    if (operation == abi::v1::ImmediateOperation::display) {
+    if (service.operation == abi::v1::ImmediateOperation::display) {
         return lower_display(state, argument(0));
     }
-    if (operation == abi::v1::ImmediateOperation::halt) {
+    if (service.operation == abi::v1::ImmediateOperation::halt) {
         return lower_halt(state, call.arguments.empty() ? nullptr : argument(0));
+    }
+    if (service.operation == abi::v1::ImmediateOperation::raise) {
+        // error/2,3 arguments only annotate the stack trace (step 15); they are evaluated and dropped.
+        return lower_raise(state, service.identity.name, argument(0));
     }
     return nullptr;
 }
@@ -94,7 +98,7 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
         return lower_record_test(state, expression, call);
     }
-    if (auto *value = body_builtin_value(state, service->second.operation, call)) {
+    if (auto *value = body_builtin_value(state, service->second, call)) {
         return value;
     }
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {

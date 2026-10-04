@@ -147,5 +147,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-04 | Plan 11 step 8I classic heap (phase C closed) | 144 (140 fast) | 276 | Full `-j 16` 370 s: 143/144, `codegen_dependency` timed out at 120 s under load and passed alone in 29 s; Lizard-all 0 warnings; tidy-all passed with one job after a silent two-job tool exit |
 | 2026-10-04 | Plan 11 step 9 `case` and `begin` | 146 (142 fast) | 114 changed | Fast 142/142; affected tests 7/7 in full mode; Lizard 0 warnings; tidy passed with one job after a silent two-job exit |
 | 2026-10-05 | Plan 11 step 10 `if` | 147 (143 fast) | 114 changed | Fast 143/143; affected tests 8/8 in full mode; Lizard 0 warnings; tidy passed |
+| 2026-10-05 | Plan 11 step 11 source raises | 148 (144 fast) | 124 changed | Fast 144/144; affected tests 22/22 in full mode; Lizard 0 warnings; tidy passed |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

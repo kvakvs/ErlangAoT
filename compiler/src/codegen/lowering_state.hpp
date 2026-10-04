@@ -5,6 +5,7 @@
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <map>
+#include <string_view>
 
 namespace erlang_aot::codegen {
 using BindingReads = std::map<const ast::Expression *, semantic::BindingId>;
@@ -67,6 +68,8 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
 llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value);
 // Stop the program through erlang:halt/0,1 (null `status` means halt/0); the dead continuation yields [].
 llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status);
+// Raise `reason` with the class of erlang:error/exit/throw (`name`); the dead continuation yields [].
+llvm::Value *lower_raise(ExpressionLowering &state, std::u32string_view name, llvm::Value *reason);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.

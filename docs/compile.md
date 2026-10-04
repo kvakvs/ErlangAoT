@@ -15,13 +15,14 @@ accept variables, `_`, aliases, repeated names and patterns over atoms,
 arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and
 ordinary tuple records. Bodies are sequences of matches, constructors, checked
 operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
-`erlang:halt/0,1` ([exit status](executables.md#exit-status)) and direct local
-or literal remote calls within the batch.
+`erlang:halt/0,1` ([exit status](executables.md#exit-status)), the raising
+`error/1,2,3`, `exit/1` and `throw/1` ([ABI](abi.md#failure-channel-revision-2)),
+`case`/`if` and direct local or literal remote calls within the batch.
 Guards support the full admitted catalog. See [patterns](patterns.md),
 [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: recursion (the call graph
-must be acyclic), `case`/`if`/`maybe`/`receive`, `try`/`catch`, funs and
+must be acyclic), `maybe`/`receive`, `try`/`catch`, funs and
 closures, dynamic calls, comprehensions, record updates and native records,
 processes and messaging. Accepted attributes: `module`, `export`, `file`,
 ordinary `record`, type/spec forms, `doc`/`moduledoc`, `author`, `vsn`,

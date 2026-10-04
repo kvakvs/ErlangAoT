@@ -13,7 +13,11 @@ enum class ErrorReason : std::uint8_t {
     badkey = 7,
     badrecord = 8,
     case_clause = 9,
-    if_clause = 10
+    if_clause = 10,
+    // erlang:error/1,2,3, exit/1 and throw/1: the payload is the whole reason and the ID selects the class.
+    raised_error = 11,
+    raised_exit = 12,
+    raised_throw = 13
 };
 } // namespace erlang_aot::abi::v1
 
