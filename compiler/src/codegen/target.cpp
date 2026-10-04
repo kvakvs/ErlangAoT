@@ -59,10 +59,14 @@ std::unique_ptr<llvm::TargetMachine> create_machine(const CompilationRequest &re
     const auto cpu = native ? llvm::sys::getHostCPUName().str() : "generic";
     const auto features = native ? host_features() : std::string{};
     const auto level =
-        request.optimization == OptimizationLevel::speed ? llvm::CodeGenOptLevel::Default : llvm::CodeGenOptLevel::None;
+        request.optimization == OptimizationLevel::none ? llvm::CodeGenOptLevel::None : llvm::CodeGenOptLevel::Default;
+    // Size mode places each function and object in its own section so the linker can drop unused ones.
+    llvm::TargetOptions options;
+    options.FunctionSections = request.optimization == OptimizationLevel::size;
+    options.DataSections = options.FunctionSections;
     // PIC supports later shared modules; Small is the baseline address-range contract on all configured targets.
-    auto machine = std::unique_ptr<llvm::TargetMachine>(target->createTargetMachine(
-        triple, cpu, features, llvm::TargetOptions{}, llvm::Reloc::PIC_, llvm::CodeModel::Small, level));
+    auto machine = std::unique_ptr<llvm::TargetMachine>(
+        target->createTargetMachine(triple, cpu, features, options, llvm::Reloc::PIC_, llvm::CodeModel::Small, level));
     if (!machine) {
         result.report({.level = DiagnosticLevel::error,
                        .message = "cannot construct target machine for " + triple.str(),

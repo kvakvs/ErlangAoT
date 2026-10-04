@@ -26,7 +26,7 @@ a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 - Source diagnostics and multiple input files.
 - Compilation subset checks, parameter bindings, batch call resolution and declared
   type/specification analysis; see [semantic analysis](docs/semantic.md).
-- LLVM O0/O2 compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
+- LLVM O0/O2/Os compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
 - Native executables from positional inputs (`erlangaot -o app a.erl b.erl`) or project
   targets (`erlangaot --project app.toml`), linked by Clang with the runtime library; see
   [executables](docs/executables.md).
@@ -263,7 +263,7 @@ erlangaot [options] <source.erl>...
   --emit obj|llvm-ir|llvm-bc  Write one artifact per module
   --artifact-dir <dir>     Override the artifact root (requires --emit)
   --target-triple <triple>  Select the machine/OS/ABI
-  -O0 / -O2               Generic O0 (default) / speed optimization
+  -O0 / -O2 / -Os         Generic O0 (default) / speed / size optimization
   --no-type-specialization  Disable compiler variants at either optimization level
   --verbose               Trace files and compilation phases to stderr
   --impldebug <n[,n...]>   Enable debug output for selected implementation steps

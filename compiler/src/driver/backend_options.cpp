@@ -43,7 +43,8 @@ std::optional<std::string> path_option(const std::string_view option, const std:
 }
 
 // Assign native path/triple operands only once, preserving option spelling in errors.
-std::optional<std::string> value_option(const std::string_view option, const std::string &value, BackendOptions &options) {
+std::optional<std::string> value_option(const std::string_view option, const std::string &value,
+                                        BackendOptions &options) {
     static const std::map<std::string_view, std::optional<std::filesystem::path> BackendOptions::*> paths{
         {"--artifact-dir", &BackendOptions::artifact_directory},
         {"--linker", &BackendOptions::linker},
@@ -115,6 +116,16 @@ std::optional<std::string> output_conflict(const Options &options) {
     return {};
 }
 
+// Map an -O switch to its pipeline policy; other options yield nothing.
+std::optional<codegen::OptimizationLevel> optimization_level(const std::string_view option) {
+    static const std::map<std::string_view, codegen::OptimizationLevel> levels{
+        {"-O0", codegen::OptimizationLevel::none},
+        {"-O2", codegen::OptimizationLevel::speed},
+        {"-Os", codegen::OptimizationLevel::size}};
+    const auto found = levels.find(option);
+    return found == levels.end() ? std::nullopt : std::optional(found->second);
+}
+
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
@@ -128,6 +139,7 @@ bool is_backend_option(const std::string_view option) {
                                                     "--target-triple",
                                                     "-O0",
                                                     "-O2",
+                                                    "-Os",
                                                     "--no-type-specialization",
                                                     "--print-ir",
                                                     "--print-optimized-ir",
@@ -146,11 +158,11 @@ std::optional<std::string> parse_backend_option(const std::string_view option, s
         options.disable_type_specialization = true;
         return {};
     }
-    if (option == "-O0" || option == "-O2") {
+    if (const auto level = optimization_level(option)) {
         if (options.optimization) {
             return "optimization level specified more than once";
         }
-        options.optimization = option == "-O2" ? codegen::OptimizationLevel::speed : codegen::OptimizationLevel::none;
+        options.optimization = level;
         return {};
     }
     std::string value;

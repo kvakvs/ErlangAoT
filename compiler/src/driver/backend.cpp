@@ -94,13 +94,15 @@ void link(const codegen::Compilation &compilation, const FrontendRequest &fronte
     for (const auto &input : compilation.request().inputs) {
         inputs.push_back(input.source_path);
     }
-    auto executable = linking::stage_executable({.output = *frontend.executable_output,
-                                                 .target_triple = codegen::target_triple(compilation),
-                                                 .objects = compilation.result().outputs(),
-                                                 .linker = frontend.backend.linker,
-                                                 .runtime_library = frontend.backend.runtime_library,
-                                                 .protected_inputs = inputs,
-                                                 .create_directory = frontend.create_output_directory});
+    auto executable = linking::stage_executable(
+        {.output = *frontend.executable_output,
+         .target_triple = codegen::target_triple(compilation),
+         .objects = compilation.result().outputs(),
+         .linker = frontend.backend.linker,
+         .runtime_library = frontend.backend.runtime_library,
+         .protected_inputs = inputs,
+         .create_directory = frontend.create_output_directory,
+         .strip_unused = compilation.request().optimization == codegen::OptimizationLevel::size});
     if (!executable.warnings.empty()) {
         sink(executable.warnings);
     }

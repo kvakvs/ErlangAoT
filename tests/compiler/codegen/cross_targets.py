@@ -24,7 +24,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
     client.write_text("-module(client). -export([value/0]). value() -> answer:identity(answer:value()).\n",
                       encoding="utf-8")
     extension = ".obj" if format_name == "COFF" else ".o"
-    for level in ["-O0", "-O2"]:
+    for level in ["-O0", "-O2", "-Os"]:
         root = work / triple / level
         for kind in ["obj", "llvm-ir"]:
             run([tool, "--target-triple", triple, level, "--emit", kind, "--artifact-dir", str(root / kind),
@@ -53,6 +53,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
         assert f"store i{bits} {minimum * 16 + 15}" in ir, ir
         assert f"store i{bits} {maximum * 16 + 15}" in ir, ir
         assert f"i32 4, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert ("optsize" in ir) == (level == "-Os"), ir
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
     promoted = work / triple / "promoted"
     run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(promoted), str(answer)])

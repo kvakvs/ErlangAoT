@@ -7,6 +7,21 @@
 
 namespace erlang_aot::codegen {
 namespace {
+// Select the standard LLVM pipeline; like Clang -Os, size mode is O2 over definitions marked optsize.
+llvm::ModulePassManager pipeline(llvm::PassBuilder &builder, llvm::Module &module, const OptimizationLevel level) {
+    if (level == OptimizationLevel::none) {
+        return builder.buildO0DefaultPipeline(llvm::OptimizationLevel::O0);
+    }
+    if (level == OptimizationLevel::size) {
+        for (auto &function : module) {
+            if (!function.isDeclaration()) {
+                function.addFnAttr(llvm::Attribute::OptimizeForSize);
+            }
+        }
+    }
+    return builder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O2);
+}
+
 // Analysis managers are local to a module and destroyed in reverse dependency order.
 void optimize_module(llvm::Module &module, llvm::TargetMachine &machine, const OptimizationLevel level) {
     llvm::LoopAnalysisManager loops;
@@ -19,10 +34,7 @@ void optimize_module(llvm::Module &module, llvm::TargetMachine &machine, const O
     builder.registerFunctionAnalyses(functions);
     builder.registerLoopAnalyses(loops);
     builder.crossRegisterProxies(loops, functions, call_graph, modules);
-    auto pipeline = level == OptimizationLevel::speed
-                        ? builder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O2)
-                        : builder.buildO0DefaultPipeline(llvm::OptimizationLevel::O0);
-    pipeline.run(module, modules);
+    pipeline(builder, module, level).run(module, modules);
 }
 } // namespace
 

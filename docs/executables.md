@@ -125,7 +125,7 @@ works the same way (see `tests/compiler/linking/startup.cmake`).
 
 ## Linking
 
-`erlangaot [-O0|-O2] -o PATH a.erl b.erl ...` (or `--project FILE [--target T] -o PATH`
+`erlangaot [-O0|-O2|-Os] -o PATH a.erl b.erl ...` (or `--project FILE [--target T] -o PATH`
 for one selected target) compiles the batch in memory, adds the startup object
 for the [entry](#entry-selection) and links an executable:
 
@@ -133,6 +133,10 @@ for the [entry](#entry-selection) and links an executable:
 erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
 ./build/demo          # build/demo.exe on Windows
 ```
+
+`-Os` additionally places every generated and runtime function and data object in
+its own section and links with `--gc-sections` (ELF), `-dead_strip` (Mach-O) or
+`/OPT:REF /OPT:ICF` (MSVC), so code no entry path reaches is removed.
 
 - `PATH` is invocation-relative. For Windows targets, `.exe` is appended when
   the file name has no extension. Its directory must exist.

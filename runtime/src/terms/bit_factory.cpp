@@ -20,7 +20,9 @@ TermResult<Term> BitAccess::publish(ProcessHeap &heap, BitCell cell, bool charge
         return std::unexpected(reserved.error() == HeapError::out_of_memory ? TermError::out_of_memory
                                                                             : TermError::resource_limit);
     }
-    cell.header = (static_cast<Word>(count - 1) << layout::BoxHeader::CONTENT_SHIFT) |
+    // MSVC reports C4554 for a subtraction inside the shifted cast; name the content size instead.
+    const auto content = static_cast<Word>(count - 1);
+    cell.header = (content << layout::BoxHeader::CONTENT_SHIFT) |
                   (static_cast<Word>(cell.shared ? BoxedKind::refc_binary : BoxedKind::heap_binary) << 2);
     auto *stored = std::construct_at(reinterpret_cast<BitCell *>(reserved->bytes().data()), std::move(cell));
     const auto encoded = reinterpret_cast<Word>(stored) | static_cast<Word>(TermKindPrimary::boxed);

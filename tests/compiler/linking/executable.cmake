@@ -28,12 +28,17 @@ function(run program code stdout)
     endif()
 endfunction()
 
-# The documented two-module example at both levels; an existing output is replaced by the new program.
+# The documented two-module example at every level; an existing output is replaced by the new program.
 file(WRITE "${WORK}/demo-O0${HOST_SUFFIX}" "old\n")
-foreach(level IN ITEMS O0 O2)
+foreach(level IN ITEMS O0 O2 Os)
     compile(demo-${level} 0 "^$" -${level} -o demo-${level} "${example}/answer.erl" "${example}/client.erl")
     run(demo-${level} 0 "42\n-7\n{record,map,binary,list,integer,other}\n")
+    file(SIZE "${WORK}/demo-${level}${HOST_SUFFIX}" size_${level})
 endforeach()
+# Size mode strips unreferenced generated and runtime sections at link time.
+if(NOT size_Os LESS size_O0 OR size_Os GREATER size_O2)
+    message(FATAL_ERROR "-Os executable is not smaller: O0=${size_O0} O2=${size_O2} Os=${size_Os}")
+endif()
 # Arguments and exit statuses reach the linked startup; escripts keep exit 127.
 file(MAKE_DIRECTORY "${WORK}/sub dir")
 compile(app 0 "^$" -O2 -o "sub dir/app" app.erl helper.erl)

@@ -21,6 +21,8 @@ struct LinkRequest {
     std::span<const std::filesystem::path> protected_inputs;
     // Create a missing output directory (manifest outputs) instead of rejecting it (explicit -o).
     bool create_directory = false;
+    // Ask the linker to drop unreferenced sections (-Os); objects then carry one section per symbol.
+    bool strip_unused = false;
 };
 
 // Own a uniquely created directory beside an output; it is removed with its contents on destruction.

@@ -21,7 +21,7 @@ Options:
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
       --artifact-dir <dir>  Override artifact root; requires --emit.
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
-      -O0 | -O2          Select generic O0 (default) or speed specialization and LLVM O2.
+      -O0 | -O2 | -Os    Select generic O0 (default), speed (specialization, LLVM O2) or size (LLVM Os, unused code stripped at link).
       --no-type-specialization  Disable variants regardless of optimization option order.
       --print-ir          Print verified IR with Erlang source comments before LLVM optimization.
       --print-types       Report declared/inferred types; stop before LLVM lowering.

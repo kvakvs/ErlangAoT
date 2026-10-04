@@ -2,7 +2,9 @@
 #include "../artifacts/paths.hpp"
 #include "../project/paths.hpp"
 #include "toolchain.hpp"
+#include <algorithm>
 #include <fstream>
+#include <iterator>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/TargetParser/Triple.h>
@@ -71,11 +73,25 @@ std::vector<std::string> stage_objects(const StagingDirectory &staging, const Li
     return paths;
 }
 
+// Spell unreferenced-section removal for the target's linker: ld64, MSVC-compatible COFF or GNU-style ELF/MinGW.
+std::vector<std::string> strip_arguments(const llvm::Triple &triple) {
+    if (triple.isOSBinFormatMachO()) {
+        return {"-Wl,-dead_strip"};
+    }
+    if (triple.isWindowsMSVCEnvironment()) {
+        return {"-Wl,/OPT:REF", "-Wl,/OPT:ICF"};
+    }
+    return {"-Wl,--gc-sections"};
+}
+
 // Build the Clang driver command: C++ link mode, explicit target, staged output, objects, then the runtime.
 std::vector<std::string> link_arguments(const LinkRequest &request, const std::filesystem::path &staged,
                                         std::vector<std::string> objects, const std::filesystem::path &runtime) {
     std::vector<std::string> arguments{"--driver-mode=g++", "--target=" + request.target_triple, "-o",
                                        utf8_path(staged)};
+    if (request.strip_unused) {
+        std::ranges::move(strip_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
+    }
     arguments.insert(arguments.end(), std::make_move_iterator(objects.begin()), std::make_move_iterator(objects.end()));
     arguments.push_back(utf8_path(runtime));
     return arguments;

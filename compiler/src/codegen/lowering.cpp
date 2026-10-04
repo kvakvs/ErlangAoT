@@ -80,7 +80,7 @@ bool lower(Compilation &compilation, const std::span<const std::unique_ptr<seman
             declare(*outputs[i], *modules[i], signature, inferred);
             if (compilation.request().annotate_source) {
                 prepare_source_locations(*outputs[i], *modules[i],
-                                         compilation.request().optimization == OptimizationLevel::speed,
+                                         compilation.request().optimization != OptimizationLevel::none,
                                          detail::state(compilation).source_scopes);
             }
         }

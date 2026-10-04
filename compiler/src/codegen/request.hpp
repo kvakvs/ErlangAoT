@@ -11,7 +11,8 @@
 #include <vector>
 
 namespace erlang_aot::codegen {
-enum class OptimizationLevel : std::uint8_t { none, speed };
+// Generic O0, speed (O2 with specialization) or size (Os with dead-stripped executables).
+enum class OptimizationLevel : std::uint8_t { none, speed, size };
 
 struct CompilationInput {
     // Transfer syntax and its original path into the batch without copying AST ownership.

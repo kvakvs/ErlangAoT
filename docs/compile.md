@@ -78,7 +78,7 @@ Other actions on the same sources:
 | `--linker PATH`, `--runtime-library PATH` | Clang driver and runtime archive for `-o` |
 | `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode and adds the `eav1_start` startup artifact ([executables](executables.md#startup-object)) |
 | `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
-| `-O0` / `-O2` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 |
+| `-O0` / `-O2` / `-Os` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 / LLVM Os, no specialization, one section per symbol and linker dead-stripping of unreferenced code and data |
 | `--no-type-specialization` | Disable variants regardless of option order |
 | `--print-ir` / `--print-optimized-ir` | Verified IR before/after LLVM passes, with Erlang source lines as comments |
 | `--print-types` | Declared and inferred type report; stops before LLVM |

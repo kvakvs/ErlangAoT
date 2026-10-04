@@ -38,6 +38,12 @@ set_target_properties(erlang_runtime PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
 erlang_aot_project_options(erlang_runtime)
+# One section per function/object lets -Os executables drop unused runtime code at link time.
+if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    target_compile_options(erlang_runtime PRIVATE /Gy /Gw)
+else()
+    target_compile_options(erlang_runtime PRIVATE -ffunction-sections -fdata-sections)
+endif()
 # Runtime headers use Multiprecision, so consumers need the same header-only dependency.
 target_include_directories(erlang_runtime PUBLIC include)
 target_link_libraries(erlang_runtime

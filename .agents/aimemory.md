@@ -178,3 +178,7 @@ manifest outputs (not -o). Driver PendingExecutable{target, executable} queue in
 artifacts then executables; colliding() catches names equal only after .exe. links_project() allows
 --linker/--runtime-library without -o for --project (not --new-project). Test linking_project.
 Ninja did not rerun CMake after tests CMakeLists edit (cache had BUILD_TESTING=OFF): use the fresh gate.
+-Os: LLVM 23 has no OptimizationLevel::Os/Oz; size = O2 pipeline + optsize fn attr (as Clang). LinkRequest.strip_unused
+adds --gc-sections / -dead_strip / /OPT:REF,ICF. MSVC link.exe already OPT:REF without /DEBUG, so Os==O2 size there.
+build/debug: BUILD_TESTING=OFF, needs vcvars64 env (LIB) for runtime/dep builds; MSVC C4554 false positive on
+static_cast<Word>(n - 1) << shift (hoist to a local).
