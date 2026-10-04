@@ -51,17 +51,18 @@ check_cli(multiple_inputs 0 "^$" "^$"
     "source with spaces.erl" ./-source.erl)
 file(WRITE "${TEST_DIR}/-source.erl" "-module(example).\n")
 
-set(output "${TEST_DIR}/output file")
+# A failed link (here: an absent runtime library) neither creates nor replaces the output.
+set(output "${TEST_DIR}/output file.bin")
 file(WRITE "${TEST_DIR}/entry.erl" "-module(entry). -export([main/1]). main(_) -> ok.\n")
 file(REMOVE "${output}")
-check_cli(no_output_created 1 "^$" "executable linking.*notimpl"
-    --output "${output}" "source with spaces.erl" entry.erl)
+check_cli(no_output_created 1 "^$" "runtime library not found"
+    --output "${output}" --runtime-library absent.lib "source with spaces.erl" entry.erl)
 if(EXISTS "${output}")
     message(FATAL_ERROR "Default pipeline created an output file")
 endif()
 file(WRITE "${output}" "preserve existing output\n")
-check_cli(no_output_overwritten 1 "^$" "executable linking.*notimpl"
-    -o "${output}" "source with spaces.erl" entry.erl)
+check_cli(no_output_overwritten 1 "^$" "runtime library not found"
+    -o "${output}" --runtime-library absent.lib "source with spaces.erl" entry.erl)
 file(READ "${output}" contents)
 if(NOT contents STREQUAL "preserve existing output\n")
     message(FATAL_ERROR "Default pipeline modified an existing output file")

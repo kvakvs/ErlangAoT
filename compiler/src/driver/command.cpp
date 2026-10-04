@@ -14,8 +14,10 @@ Options:
       --version        Show the tool version and exit.
       --verbose        Trace inputs and compilation phases to stderr with [pp]/[parse]/[comp].
       --impldebug <n[,n...]>  Enable selected implementation-step debug output; repeatable.
-  -o, --output <path>  Set the future executable output path (default: a.out).
+  -o, --output <path>  Link an executable (Windows targets add .exe when no extension is given).
       --entry <module[:function]>  Select the executable entry function/1 (default function: main).
+      --linker <path>   Clang driver used to link --output (default: clang++ or clang on PATH).
+      --runtime-library <path>  Runtime archive linked into --output (default: the one built with erlangaot).
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
       --artifact-dir <dir>  Override artifact root; requires --emit.
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
@@ -37,9 +39,9 @@ Options:
 
 Checks do not validate semantics or run parse transforms.
 With no check/print action, source batches compile to verified objects in memory.
-Only --emit writes module artifacts (default root: build/aot); native executable linking is deferred.
+Only --emit writes module artifacts (default root: build/aot); --output links positional inputs.
 Compilation switches conflict with frontend check/print actions and --new-project.
---emit conflicts with explicit --output; --output reports [executable linking] notimpl.
+--emit conflicts with --output; project targets report [executable linking] notimpl for --output.
 Without --entry, --output uses the only module exporting main/1; the entry receives argv strings.
 A source whose first line starts with #! is an escript: implicit -module and main/1 export.
 IR inspection accepts target/optimization/preprocessing options, but rejects emission/output options.

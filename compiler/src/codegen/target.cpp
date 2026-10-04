@@ -102,4 +102,12 @@ std::string object_extension(const Compilation &compilation) {
     }
     return machine->getTargetTriple().isOSBinFormatCOFF() ? ".obj" : ".o";
 }
+
+std::string target_triple(const Compilation &compilation) {
+    const auto &machine = detail::state(compilation).target_machine;
+    if (!machine) {
+        throw std::logic_error("target triple requires a configured target");
+    }
+    return machine->getTargetTriple().str();
+}
 } // namespace erlang_aot::codegen

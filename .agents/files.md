@@ -42,6 +42,7 @@ Keys in the last column are relative to the directory column.
 | `codegen/` | Atom slots / registration; startup module (`main` → `erlang_aot_main_v1`); guarded variants | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
+| `linking/` | Executable linking: staging/publication, Clang discovery/run, runtime archive lookup and target check | `link`, `toolchain`, `runtime_library` |
 
 ## Runtime — R
 
@@ -95,7 +96,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
 | `printing` | `values.py` (authored values, corpus collection, wire parse, order rule), `regenerate.py` + `oracle.escript` (explicit OTP goldens), `display.py` CTest `printing_display` (compiled display calls via `codegen/match.cmake`); runtime goldens `tests/runtime/printing.cpp` |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
-| `linking` | F01 entry selection, escripts and startup objects (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; fixtures `tests/fixtures/linking/{entry,escript,startup}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
+| `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; fixtures `tests/fixtures/linking/{entry,escript,startup}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
 
@@ -108,7 +109,7 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 
 | Feature(s) | Main / additional destinations |
 | --- | --- |
-| F01 executable startup; F32 LTO | **+** `C/linking`; `C/codegen/startup`; F01 bootstrap: `R/startup`, using `R/runtime.cpp` lifecycle |
+| F01 executable startup; F32 LTO | `C/linking`; `C/codegen/startup`; F01 bootstrap: `R/startup`, using `R/runtime.cpp` lifecycle |
 | F02 roots/safepoints | `C/codegen`, `R/memory`, `R/process`, shared ABI |
 | F03 heaps; F04 GC; F05 graph copying | `R/memory`: allocation/tracing/copying; `R/terms`: constructors/layout traversal/destruction |
 | F06 atoms | `R/terms`: synchronization; `R/modules`: bindings; `C/codegen/module_atoms` |
@@ -125,12 +126,12 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | F26 builtins; F27 typed/native callables | `R/builtins`: wrappers/conversions; algorithms stay with value/process owners; F27 retained code: `R/modules` |
 | F28 concurrent code server | `R/modules`; atom coordination: `R/terms`; shutdown: `R/scheduler` |
 | F29 specialization | `C/codegen/specialization*`, `C/codegen/integer_guards`, `C/semantic/types` |
-| F30 debug info | `C/codegen/source_locations` + metadata; **+** `C/linking` |
+| F30 debug info | `C/codegen/source_locations` + metadata; `C/linking` |
 | F31 profiling | `C/codegen`: instrumentation; **+** `R/profiling`: collection/attribution/export |
 | V01 native matrix; V02 sanitizers | `cmake/`, `CMakePresets.json`, root runners, owning tests, `docs/` evidence |
 | V03 OTP evidence | `references/`, parser/patternmatch/codegen runners + fixtures, `docs/otp-reference.md` |
 | V04 test migration | Owning tests/CMake registrations; `docs/validation.md#test-design` |
-| D01 dynamic modules/upgrades | `R/modules`, **+** `C/linking`, shared ABI |
+| D01 dynamic modules/upgrades | `R/modules`, `C/linking`, shared ABI |
 | D02 atom collection | `R/terms`; roots/resources: `R/{memory,modules,process}` |
 | D03 attributes/transforms | `C/semantic`; **+** `C/transforms`; invocation: `C/{driver,project}`; on-load: `R/modules` |
 | D04 stage interchange | **+** `C/stage_writers/{preprocessed,abstract,ir}`; format contracts: `docs/` |

@@ -17,4 +17,11 @@ if(ERLANG_AOT_BUILD_RUNTIME)
         "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/startup.cmake")
     set_tests_properties(linking_startup PROPERTIES TIMEOUT 600)
+    # Executables linked by erlangaot -o; erlang_artifacts serves as a same-target archive lacking runtime symbols.
+    add_test(NAME linking_executable COMMAND "${CMAKE_COMMAND}"
+        "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}"
+        "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/executable/$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+        "-DOTHER_LIBRARY=$<TARGET_FILE:erlang_artifacts>"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/executable.cmake")
+    set_tests_properties(linking_executable PROPERTIES TIMEOUT 300)
 endif()

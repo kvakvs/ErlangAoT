@@ -287,7 +287,7 @@ reproduced and display goldens skip such values. `tests/fixtures/printing/` hold
 `printing_display` (154 compiled display calls against real OTP stdout, all policies).
 
 <a id="step-5"></a>
-
+  
 ### 5. Generate the startup object
 
 Backlog: F01. Depends on: [3](#step-3), [4](#step-4).

@@ -32,8 +32,8 @@ struct FrontendRequest {
     std::vector<Publication> *pending_publications = nullptr;
     // Preserve unambiguous inspection headers across independently processed project targets.
     bool multiple_targets = false;
-    // Distinguish an explicit executable request from default in-memory compilation.
-    bool executable_requested = false;
+    // Explicit --output destination; present only when an executable is requested.
+    std::optional<std::filesystem::path> executable_output = {};
     // Explicit entry selection (CLI or manifest) validated during analysis.
     std::optional<project::SelectedEntry> entry = {};
 };

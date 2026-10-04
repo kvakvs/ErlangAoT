@@ -26,6 +26,9 @@ struct BackendOptions {
     std::optional<codegen::OptimizationLevel> optimization;
     // Disable variants independently of optimization option order.
     bool disable_type_specialization = false;
+    // Override the Clang driver and runtime archive used to link an explicit --output executable.
+    std::optional<std::filesystem::path> linker;
+    std::optional<std::filesystem::path> runtime_library;
 };
 
 // Recognize backend options separately from preprocessing and project operands.

@@ -8,16 +8,16 @@ documentation; current architecture and file ownership are in
 
 | Area | Delivered status | Remaining qualification |
 | --- | --- | --- |
-| Foundations | CLI/CMake scaffold, 2026-09-17 | Native objects implemented; production executable startup/linking remains deferred. |
+| Foundations | CLI/CMake scaffold, 2026-09-17 | Native objects implemented; executable startup and positional linking arrived in plan 11 steps 5–6; project-target linking remains. |
 | Preprocessor | Steps 1–13 implemented, 2026-09-18 | Focused OTP comparisons; no full upstream Common Test run. |
 | Parser | Steps 1–17 complete; step 18 implementation and macOS validation, 2026-09-19 | Required platform matrix is not fully closed. |
 | Projects | Steps 1–22 complete, 2026-09-20 | Historical host evidence and later Windows evidence remain distinct. |
 | Test migration | Available frontend/project/runtime migrations implemented, 2026-09-28 | Generated-program workflows delivered; frontend sanitizers remain pending. |
 | Compiler/runtime milestone | Steps 1–46 complete, 2026-09-29 | Historical immediate-only subset and runtime skeleton; later pattern/guard delivery is recorded below. |
 | Pattern matching and guards | Steps 1–20 and added step 15a complete, 2026-10-01–03 | Function clauses and body matches over the admitted domain; other source contexts, GC/process owners and native platform gaps remain open. |
-| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [validation](../docs/validation.md#current-baseline). Steps 1A (fast/full tests), 1B (changed-file quality) and 1C (docs consolidated from 81 files to 15) done. Step 2: six target program fixtures with OTP goldens and a feature map. Step 3: entry/argv/exit contract (`docs/executables.md`) with validated `--entry` and manifest `entry`. Step 3A: `#!` sources compile with OTP escript rules. Step 4: `~w`/`erlang:display/1` term printing with OTP goldens and source-callable `erlang:display/1`. Step 5: startup object (`eav1_start`, `erlang_aot_main_v1`) and `erlang:halt/0,1`; manually linked programs pass argv/exit-path tests. |
+| Plan 11 baseline | Step 1 complete, 2026-10-03: `maint-29` unchanged; 125/125 CTests, 258 quality units, 14 OTP audits and 19 corpus checks pass | Recorded in [validation](../docs/validation.md#current-baseline). Steps 1A (fast/full tests), 1B (changed-file quality) and 1C (docs consolidated from 81 files to 15) done. Step 2: six target program fixtures with OTP goldens and a feature map. Step 3: entry/argv/exit contract (`docs/executables.md`) with validated `--entry` and manifest `entry`. Step 3A: `#!` sources compile with OTP escript rules. Step 4: `~w`/`erlang:display/1` term printing with OTP goldens and source-callable `erlang:display/1`. Step 5: startup object (`eav1_start`, `erlang_aot_main_v1`) and `erlang:halt/0,1`; manually linked programs pass argv/exit-path tests. Step 6: `erlangaot -o` links positional batches with Clang and the runtime archive (`compiler/src/linking/`), with staged publication and runtime-target checks. |
 
-**Still unfinished:** production executable startup/linking, GC and graph
+**Still unfinished:** project-target executable linking, GC and graph
 copying, process execution/messaging, additional Erlang source contexts and
 representations, and native platform/sanitizer closure. See the
 [explicit completion checklist](#outstanding-work-to-finish).

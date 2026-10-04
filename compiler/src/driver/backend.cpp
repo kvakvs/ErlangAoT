@@ -4,6 +4,7 @@
 #include "../codegen/optimization.hpp"
 #include "../codegen/serialization.hpp"
 #include "../codegen/target.hpp"
+#include "../linking/link.hpp"
 #include "analysis.hpp"
 #include "inspection.hpp"
 #include "progress.hpp"
@@ -88,15 +89,42 @@ bool generate(codegen::Compilation &compilation, const Analysis &analysis, const
     return codegen::optimize(compilation) && emit(compilation);
 }
 
+// Link the in-memory module and startup objects into the explicit --output executable.
+void link(const codegen::Compilation &compilation, const FrontendRequest &frontend, const DiagnosticSink &sink) {
+    auto inputs = frontend.protected_inputs;
+    for (const auto &input : compilation.request().inputs) {
+        inputs.push_back(input.source_path);
+    }
+    const auto warnings = linking::link_executable({.output = *frontend.executable_output,
+                                                    .target_triple = codegen::target_triple(compilation),
+                                                    .objects = compilation.result().outputs(),
+                                                    .linker = frontend.backend.linker,
+                                                    .runtime_library = frontend.backend.runtime_library,
+                                                    .protected_inputs = inputs});
+    if (!warnings.empty()) {
+        sink(warnings);
+    }
+}
+
+// Select the startup module from the resolved entry, if any.
+std::optional<codegen::StartupRequest> startup_request(const Analysis &analysis) {
+    if (!analysis.entry) {
+        return std::nullopt;
+    }
+    const auto &entry = *analysis.entry;
+    return codegen::StartupRequest{entry.module, utf8(entry.function.name), entry.escript};
+}
+
 // Analyze before constructing LLVM state; moving the vector preserves borrowed AST addresses.
 bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendRequest &frontend,
              const DiagnosticSink &sink) {
     auto request = backend_request(std::move(inputs), frontend);
     Analysis analysis;
-    if (!analyze(request, {frontend.entry, frontend.executable_requested}, analysis, sink)) {
+    if (!analyze(request, {frontend.entry, frontend.executable_output.has_value()}, analysis, sink)) {
         return true;
     }
-    if (frontend.executable_requested) {
+    // Project targets link to their manifest outputs in a later step; positional batches link below.
+    if (frontend.executable_output && !request.project_target.empty()) {
         sink("error: " + abi::v1::format_feature_failure(abi::v1::FeatureId::executable_linking,
                                                          {.target = request.project_target, .operation = "link"}));
         return true;
@@ -105,15 +133,16 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
         print_types(analysis, request);
         return false;
     }
-    if (analysis.entry) {
-        const auto &entry = *analysis.entry;
-        request.startup = codegen::StartupRequest{entry.module, utf8(entry.function.name), entry.escript};
-    }
+    request.startup = startup_request(analysis);
     codegen::Compilation compilation(std::move(request));
     const bool succeeded = generate(compilation, analysis, frontend);
     report_backend(compilation.result(), sink);
     if (!succeeded || !compilation.result().complete()) {
         return true;
+    }
+    if (frontend.executable_output) {
+        link(compilation, frontend, sink);
+        return false;
     }
     deliver(std::move(compilation), frontend);
     return false;

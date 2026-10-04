@@ -18,7 +18,9 @@ function(check name code stdout stderr)
 endfunction()
 
 set(ignored "warning: greet:3:1: escript emulator arguments \\(%%!\\) are ignored by compiled executables\n")
-set(linking "error: \\[executable linking\\] notimpl")
+# Executable requests stop at an absent runtime library, checked only after the entry resolved.
+set(linking "error: runtime library not found")
+set(absent --runtime-library absent.lib)
 
 # Header handling: synthesized module, implicit export, -mode accepted, line numbers kept.
 check(synthesized_module 0 "- module \\( greet__escript \\) \\.\n- mode \\( compile \\) \\.\nmain \\( _Args \\) -> greet__escript \\." "^${ignored}$"
@@ -31,10 +33,10 @@ check(crlf_header 0 "^$" "^$" crlf)
 check(line_numbers 1 "^$" "late_error:5:34: undefined function late_error__escript:undefined_function/0" late_error)
 
 # Entries: the escript's main/1 is the default and is preferred over ordinary main/1 exporters.
-check(escript_entry 1 "^$" "^${ignored}${linking}" -o out greet)
-check(named_entry 1 "^$" "^${linking}" -o out named.escript)
-check(preferred_over_module 1 "^$" "${linking}" -o out greet app.erl)
-check(explicit_module_entry 1 "^$" "${linking}" -o out --entry app greet app.erl)
+check(escript_entry 1 "^$" "^${ignored}${linking}" -o out ${absent} greet)
+check(named_entry 1 "^$" "^${linking}" -o out ${absent} named.escript)
+check(preferred_over_module 1 "^$" "${linking}" -o out ${absent} greet app.erl)
+check(explicit_module_entry 1 "^$" "${linking}" -o out ${absent} --entry app greet app.erl)
 check(ambiguous_escripts 1 "^$" "ambiguous entry point: main/1 is exported by greet__escript, named" -o out greet named.escript)
 check(only_main_exported 1 "^$" "named.escript:7:1: entry function named:helper/1 is not defined; found helper/0"
     --entry named:helper named.escript)

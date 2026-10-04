@@ -156,3 +156,13 @@ _configure_wide_argv(_crt_argv_unexpanded_arguments)+__wargv (no shell32). halt 
 verified with clang --target for 7 triples (decl file build/plan11-step5/mangle). CMake ARGN drops
 empty args: test "" via direct execute_process. Consumer exe from objects only needs LINKER_LANGUAGE CXX.
 Manual link: clang-cl /MT obj\*.obj build\debug\lib\erlang_runtime.lib (vcvars). Logs build/plan11-step5.
+Plan11 step6 2026-10-04: positional -o links. compiler/src/linking/{link,toolchain,runtime_library}
+(lib erlang_linking, LLVM Support/Object private). FrontendRequest.executable_output (optional path,
+replaced bool). Options --linker/--runtime-library (require --output). Default runtime path =
+compile def ERLANG_AOT_DEFAULT_RUNTIME ($<PATH:RELATIVE_PATH> runtime file vs erlangaot dir).
+Clang: --linker, PATH clang++/clang, then $ProgramFiles/LLVM/bin; args --driver-mode=g++ --target.
+Works outside vcvars (clang finds MSVC; picked lld-link). .exe appended for Windows targets w/o ext.
+Project -o still notimpl (step 7). Tests: linking_executable (other archive = erlang_artifacts lib
+for undefined-symbol link error); entry/escript/cli tests stop at --runtime-library absent.lib.
+examples/compile/client.erl gained main/1. Bash heredoc drops `\` -> use Edit for regex escapes.
+cmd: run .exe in cwd needs PowerShell (cmd said not recognized). Logs build/plan11-step6.

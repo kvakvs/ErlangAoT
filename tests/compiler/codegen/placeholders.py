@@ -57,6 +57,9 @@ def main():
             if feature == "executable linking":
                 options = [level, "--output", str(work / "output/sentinel")]
             for project in [False, True]:
+                # Positional --output links (linking_executable); only project targets still report notimpl.
+                if feature == "executable linking" and not project:
+                    continue
                 for verbose in [False, True]:
                     check(tool, work, feature, options, project, verbose)
 

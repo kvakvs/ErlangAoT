@@ -88,3 +88,17 @@ erlang_aot_project_options(erlang_artifacts)
 target_include_directories(erlang_artifacts PRIVATE src)
 target_link_libraries(erlang_artifacts PRIVATE erlang_project erlang_semantic)
 target_link_libraries(erlang_aot PRIVATE erlang_artifacts)
+
+# Executable linking drives Clang with the module/startup objects and the matching runtime archive.
+add_library(erlang_linking STATIC src/linking/link.cpp src/linking/toolchain.cpp src/linking/runtime_library.cpp)
+erlang_aot_project_options(erlang_linking)
+target_include_directories(erlang_linking PRIVATE src)
+target_link_libraries(erlang_linking PRIVATE erlang_llvm_sdk erlang_artifacts erlang_project)
+# The default runtime archive path is relative to erlangaot and follows this build tree's layout.
+if(ERLANG_AOT_BUILD_RUNTIME)
+    set(default_runtime "$<PATH:RELATIVE_PATH,$<TARGET_FILE:erlang_runtime>,$<TARGET_FILE_DIR:erlang_aot>>")
+else()
+    set(default_runtime "../lib/${CMAKE_STATIC_LIBRARY_PREFIX}erlang_runtime${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif()
+target_compile_definitions(erlang_linking PRIVATE "ERLANG_AOT_DEFAULT_RUNTIME=\"${default_runtime}\"")
+target_link_libraries(erlang_aot PRIVATE erlang_linking)

@@ -1,11 +1,11 @@
 # Compilation
 
 `erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
-or native objects. Linking executables is not implemented yet: explicit
-`-o/--output` validates the [entry](executables.md) and then fails with
-`[executable linking] notimpl`. Generated objects run today through a C++
-harness linked with the runtime (see the example below), or, with `--entry`,
-through the emitted [startup object](executables.md#startup-object).
+or native objects. `-o/--output` links positional inputs, their
+[entry](executables.md) startup object and the runtime into an executable
+([linking](executables.md#linking)); project targets do not link yet. Emitted
+objects can also run through a C++ harness linked with the runtime (see the
+example below).
 
 ## Accepted source subset
 
@@ -34,7 +34,15 @@ Type/spec forms are analyzed but never change generated code. Syntax-only modes
 
 ## Run the compiled-module example
 
-From a Windows x64 Developer PowerShell with the built compiler:
+`client:main/1` makes the example a program:
+
+```sh
+./build/debug/bin/erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
+./build/demo     # prints 42, -7 and {record,map,binary,list,integer,other}
+```
+
+The same modules also run through a C++ harness. From a Windows x64 Developer
+PowerShell with the built compiler:
 
 ```powershell
 $tool = './build/debug/bin/erlangaot.exe'
@@ -65,6 +73,8 @@ Other actions on the same sources:
 |---|---|
 | `--emit obj\|llvm-ir\|llvm-bc` | Publish one artifact per module |
 | `--artifact-dir DIR` | Artifact root (requires `--emit`) |
+| `-o PATH` / `--output PATH` | Link an executable ([linking](executables.md#linking)); conflicts with `--emit` |
+| `--linker PATH`, `--runtime-library PATH` | Clang driver and runtime archive for `-o` |
 | `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode and adds the `eav1_start` startup artifact ([executables](executables.md#startup-object)) |
 | `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
 | `-O0` / `-O2` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 |

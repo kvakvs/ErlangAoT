@@ -12,7 +12,8 @@ validated on Windows x64; objects are inspected for seven targets. See the
 [documentation index](docs/README.md), in particular [compilation](docs/compile.md),
 [runtime](docs/runtime.md) and [validation status](docs/validation.md).
 
-The [compiled-module example](examples/compile/) contains two Erlang modules,
+The [compiled-module example](examples/compile/) contains two Erlang modules
+(`erlangaot -o demo answer.erl client.erl` builds a program from them),
 a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 [emission, inspection and native execution commands](docs/compile.md#run-the-compiled-module-example).
 
@@ -26,6 +27,8 @@ a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 - Compilation subset checks, parameter bindings, batch call resolution and declared
   type/specification analysis; see [semantic analysis](docs/semantic.md).
 - LLVM O0/O2 compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
+- Native executables from positional inputs (`erlangaot -o app a.erl b.erl`), linked by Clang
+  with the runtime library; see [executables](docs/executables.md).
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
 
@@ -287,12 +290,14 @@ With no check/print action, source inputs and `--project` run the complete pipel
 through verified native object buffers in memory. Positional inputs form one batch;
 each project target forms its own batch. `--emit` writes artifacts under `build/aot`
 or `--artifact-dir`; projects append an encoded target name and use a manifest-relative
-default root. Filenames encode module identity. No production executable is linked;
-`--output` validates the entry (`--entry MODULE[:FUNCTION]`, manifest `entry`, or the only module exporting
-`main/1`) and then fails with `[executable linking] notimpl`; TOML `output` remains reserved metadata.
+default root. Filenames encode module identity. `-o PATH` links positional inputs into an
+executable with Clang and the runtime library (entry: `--entry MODULE[:FUNCTION]`, or the only
+module exporting `main/1`); project targets report `[executable linking] notimpl` for `-o` and
+TOML `output` remains reserved metadata.
 See [executables](docs/executables.md) for the entry, argument and exit-status contract.
 
 ```sh
+erlangaot -O2 -o demo answer.erl client.erl && ./demo
 erlangaot -O2 --emit obj answer.erl client.erl
 erlangaot --print-ir --print-optimized-ir -O2 answer.erl
 erlangaot --print-types answer.erl client.erl
@@ -327,7 +332,7 @@ Each input has independent preprocessing state; any source error makes the overa
 
 Syntax checks do not validate semantics or execute parse transforms. Check/print
 modes do not create output files and reject `-o`/`--output`. Default compilation
-also writes no executable yet.
+without `-o` writes no executable.
 
 See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
 [validation status](docs/validation.md) for further details.

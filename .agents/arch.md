@@ -119,7 +119,7 @@
   both sides. Text/bitcode/object serialization owns bytes; source-scoped line
   metadata and bounded comments annotate textual IR. Artifact publication checks
   encoded paths/aliases, stages exclusive writes and replaces complete files;
-  multi-file publication is not atomic. Startup objects exist; executable linking stays deferred.
+  multi-file publication is not atomic. Startup objects exist; positional `-o` links executables.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,
@@ -150,6 +150,11 @@
   registers every module before entry, builds argv, runs the entry in one context and maps
   return/halt/exception/infrastructure outcomes to exit 0/N/1|127/70. `erlang:halt/0,1` records
   `CallError::halted` in the checked channel, so halts unwind like errors.
+- Linking (`linking/`, LLVM-private): positional `-o` keeps objects in memory, stages them in a
+  private `.erlangaot-link-*` directory beside the output, runs `clang --driver-mode=g++
+  --target=<triple>` (`--linker`, else PATH/`%ProgramFiles%/LLVM/bin`) with the runtime archive
+  (`--runtime-library`, else the build's own path relative to `erlangaot`, checked member by member
+  for arch/object format via LLVM Object), then replaces the output. Project targets still notimpl.
 
 - Term printing: runtime `format_term` renders `~w` or emulator display text iteratively under a
   byte cap (maps in map-key order); `erlang:display/1` is a body-only service writing to

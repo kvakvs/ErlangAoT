@@ -1,9 +1,8 @@
 # Executables
 
-Contract for programs built by `erlangaot -o`. Entry selection and the startup
-object exist; linking arrives with plan 11 steps 6–7, so `-o` still ends with
-`[executable linking] notimpl` after a valid entry is found. Until then a
-[startup object](#startup-object) is linked with the runtime by hand.
+Contract for programs built by `erlangaot -o`. Positional inputs link into an
+executable ([linking](#linking)); project targets still report
+`[executable linking] notimpl` for `-o` until plan 11 step 7.
 
 ## Entry selection
 
@@ -101,7 +100,8 @@ calls the runtime's `erlang_aot_main_v1`, which:
    stdout, then destroys the process and shuts the runtime down on every path
    (except `halt(abort)`).
 
-Manual linking (the [native harness recipe](compile.md#run-the-compiled-module-example)
+`erlangaot -o` links these objects itself ([linking](#linking)). Manual
+linking (the [native harness recipe](compile.md#run-the-compiled-module-example)
 without a harness source):
 
 ```powershell
@@ -111,6 +111,44 @@ clang-cl /MT build/app/*.obj build/debug/lib/erlang_runtime.lib /Fe:app.exe
 
 Any Clang-compatible link of the objects with `ErlangAoT::generated_program`
 works the same way (see `tests/compiler/linking/startup.cmake`).
+
+## Linking
+
+`erlangaot [-O0|-O2] -o PATH a.erl b.erl ...` compiles the batch in memory, adds
+the startup object for the [entry](#entry-selection) and links an executable:
+
+```sh
+erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
+./build/demo          # build/demo.exe on Windows
+```
+
+- `PATH` is invocation-relative. For Windows targets, `.exe` is appended when
+  the file name has no extension. Its directory must exist.
+- Linker: `--linker PATH` (a path or program name), else `clang++` or `clang`
+  from `PATH`, then (Windows) `%ProgramFiles%/LLVM/bin`. It runs as
+  `<clang> --driver-mode=g++ --target=<triple> -o <staged> <objects> <runtime>`,
+  so Clang chooses the platform linker and C/C++ runtime libraries (on Windows it
+  locates MSVC and the SDK itself; no developer shell is needed).
+- Runtime: `--runtime-library PATH`, else the `erlang_runtime` archive of the
+  build that produced `erlangaot` (path recorded relative to the executable, e.g.
+  `bin/../lib/erlang_runtime.lib`). Every native object in the archive must match
+  the target's architecture and object format; `--target-triple` for another
+  target therefore needs a runtime built for it.
+- Objects and the executable are staged in a private `.erlangaot-link-*`
+  directory beside the output, which is removed afterwards. The output is
+  replaced only after a successful link, so every failure keeps an existing
+  file unchanged. The output must not be a directory or alias an input.
+- Linker warnings are forwarded to stderr; `--linker` and `--runtime-library`
+  require `--output`.
+
+| Failure (exit 1) | Diagnostic |
+| --- | --- |
+| No Clang | `cannot find clang++ or clang on PATH; install LLVM/Clang or pass --linker` / `linker not found: X` |
+| No runtime | `runtime library not found: P; build the erlang_runtime target or pass --runtime-library` |
+| Not an archive | `runtime library is not a static library: P: ...` |
+| Wrong target | `runtime library P contains x86_64 coff objects, but the executable targets T; ...` |
+| Link error | `linking O failed: <clang> exited with status N:` followed by the linker output (first 64 KiB) |
+| Bad destination | `output directory does not exist: D`, `artifact destination is not a regular file: O`, `artifact destination aliases an input: O` |
 
 ## Escripts
 

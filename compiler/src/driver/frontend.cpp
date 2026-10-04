@@ -165,7 +165,9 @@ bool process_files(std::span<const std::filesystem::path> paths, const FrontendR
 int process_inputs(const Options &options) {
     FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
                             options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
-    request.executable_requested = options.output_explicit;
+    if (options.output_explicit) {
+        request.executable_output = options.output;
+    }
     if (options.entry) {
         request.entry = project::SelectedEntry{*options.entry, "--entry"};
     }

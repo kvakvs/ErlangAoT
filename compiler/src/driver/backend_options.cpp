@@ -2,6 +2,7 @@
 #include "../project/paths.hpp"
 #include "options.hpp"
 #include <map>
+#include <set>
 
 namespace erlang_aot::cli {
 namespace {
@@ -31,17 +32,27 @@ std::optional<std::string> emission(const std::string &value, BackendOptions &op
     return {};
 }
 
+// Store a native path operand once, preserving the option spelling in duplicate errors.
+std::optional<std::string> path_option(std::string_view option, const std::string &value,
+                                       std::optional<std::filesystem::path> &path) {
+    if (path) {
+        return std::string(option) + " specified more than once";
+    }
+    path = project::native_path(value);
+    return {};
+}
+
 // Assign native path/triple operands only once, preserving option spelling in errors.
 std::optional<std::string> value_option(std::string_view option, const std::string &value, BackendOptions &options) {
+    static const std::map<std::string_view, std::optional<std::filesystem::path> BackendOptions::*> paths{
+        {"--artifact-dir", &BackendOptions::artifact_directory},
+        {"--linker", &BackendOptions::linker},
+        {"--runtime-library", &BackendOptions::runtime_library}};
     if (option == "--emit") {
         return emission(value, options);
     }
-    if (option == "--artifact-dir") {
-        if (options.artifact_directory) {
-            return "--artifact-dir specified more than once";
-        }
-        options.artifact_directory = project::native_path(value);
-        return {};
+    if (const auto found = paths.find(option); found != paths.end()) {
+        return path_option(option, value, options.*(found->second));
     }
     if (!options.target_triple.empty()) {
         return "--target-triple specified more than once";
@@ -83,6 +94,21 @@ std::optional<std::string> inspection_conflict(const Options &options) {
     return {};
 }
 
+// Keep artifact emission and executable linking options on their own sides of --output.
+std::optional<std::string> output_conflict(const Options &options) {
+    const auto &backend = options.backend;
+    if (backend.emit && options.output_explicit) {
+        return "--emit cannot be combined with --output";
+    }
+    if (backend.artifact_directory && !backend.emit) {
+        return "--artifact-dir requires --emit";
+    }
+    if ((backend.linker || backend.runtime_library) && !options.output_explicit) {
+        return "--linker and --runtime-library require --output";
+    }
+    return {};
+}
+
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
@@ -91,9 +117,18 @@ bool explicit_backend(const BackendOptions &options) {
 } // namespace
 
 bool is_backend_option(std::string_view option) {
-    return option == "--emit" || option == "--artifact-dir" || option == "--target-triple" || option == "-O0" ||
-           option == "-O2" || option == "--no-type-specialization" || option == "--print-ir" ||
-           option == "--print-optimized-ir" || option == "--print-types";
+    static const std::set<std::string_view> options{"--emit",
+                                                    "--artifact-dir",
+                                                    "--target-triple",
+                                                    "-O0",
+                                                    "-O2",
+                                                    "--no-type-specialization",
+                                                    "--print-ir",
+                                                    "--print-optimized-ir",
+                                                    "--print-types",
+                                                    "--linker",
+                                                    "--runtime-library"};
+    return options.contains(option);
 }
 
 std::optional<std::string> parse_backend_option(std::string_view option, std::span<char *> &remaining,
@@ -126,12 +161,6 @@ std::optional<std::string> validate_backend_options(const Options &options) {
     if ((options.preprocess || options.project.create) && explicit_backend(options.backend)) {
         return "compilation switches cannot be combined with frontend actions or --new-project";
     }
-    if (options.backend.emit && options.output_explicit) {
-        return "--emit cannot be combined with --output";
-    }
-    if (options.backend.artifact_directory && !options.backend.emit) {
-        return "--artifact-dir requires --emit";
-    }
-    return {};
+    return output_conflict(options);
 }
 } // namespace erlang_aot::cli

@@ -1,5 +1,6 @@
 # Entry selection contract (docs/executables.md): CLI --entry and manifest entry keys are
-# validated against the compiled batch, with located diagnostics, before linking exists.
+# validated against the compiled batch, with located diagnostics. Executable requests stop at an absent
+# runtime library, which is checked only after the entry resolved and the batch compiled.
 file(REMOVE_RECURSE "${WORK}")
 file(COPY "${FIXTURES}/" DESTINATION "${WORK}")
 
@@ -31,8 +32,9 @@ check(unexported 1 "${unexported}\n$" --entry helper:hidden helper.erl)
 check(unicode_module 1 "entry module möd is not among" --entry "möd" app.erl)
 
 # Executable requests detect the only module exporting main/1.
-check(detected 1 "^error: \\[executable linking\\] notimpl" -o out app.erl helper.erl)
-check(selected_over_detection 1 "executable linking" -o out --entry other app.erl other.erl)
+set(linked "^error: runtime library not found: [^\n]*absent\\.lib")
+check(detected 1 "${linked}" -o out --runtime-library absent.lib app.erl helper.erl)
+check(selected_over_detection 1 "${linked}" -o out --runtime-library absent.lib --entry other app.erl other.erl)
 check(none_exported 1 "no entry point: no module exports main/1; select one with --entry" -o out helper.erl)
 check(ambiguous 1 "ambiguous entry point: main/1 is exported by app, other" -o out app.erl other.erl)
 check(selected_invalid_with_output 1 "${unexported}" -o out --entry helper:hidden helper.erl)
