@@ -117,6 +117,8 @@ class ProcessHeap final {
     TermResult<Term> add(const Term &value) noexcept;
     // Return not_implemented without claiming a safe point or fabricating reclamation statistics.
     std::expected<CollectionStats, HeapError> collect(DiagnosticSink sink = {}) noexcept;
+    // Collect with host-held words as extra roots; the caller reads the rewritten words back afterwards.
+    std::expected<CollectionStats, HeapError> collect(std::span<Word> roots, DiagnosticSink sink = {}) noexcept;
     // Report consumed words (including alignment) and exact retained backing capacity.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;

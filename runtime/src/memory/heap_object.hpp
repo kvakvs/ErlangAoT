@@ -15,8 +15,8 @@ struct HeapObject {
 
 struct TermAccess {
     // Admit immediates/atoms, or a word inside this process's used heap whose object matches its tag.
-    static TermResult<Term> admit(Word value, const std::shared_ptr<HeapStorage> &storage) noexcept;
-    // Check host lifetime, then decode a heap term's object from its header.
+    static TermResult<Term> admit(Word value, HeapStorage &storage) noexcept;
+    // Check host lifetime and collection count, then decode a heap term's object from its header.
     static TermResult<HeapObject> object(const Term &value) noexcept;
     // Retain the parent's backing when resolving a checked child slot.
     static TermResult<Term> child(const Term &parent, Word value) noexcept;

@@ -18,7 +18,14 @@ TermResult<Term> Term::from_word(Word value) noexcept {
 }
 
 TermResult<Term> Term::from_word(Word value, ProcessContext &context) noexcept {
-    return detail::TermAccess::admit(value, context.heap().storage_);
+    return detail::TermAccess::admit(value, *context.heap().storage_);
+}
+
+void Term::rebind(Word value) noexcept {
+    value_ = value;
+    if (heap_) {
+        collections_ = heap_->collections;
+    }
 }
 
 bool Term::is_atom() const { return static_cast<bool>(atom_); }

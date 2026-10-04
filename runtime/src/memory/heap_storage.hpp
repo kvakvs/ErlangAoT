@@ -65,6 +65,8 @@ class HeapStorage final {
     // Head of this process's off-heap binary cells, newest first; the only route to their C++ state.
     layout::RefcBinaryCell *off_heap = nullptr;
     bool pending = false;
+    // Completed collections; host Terms admitted before the latest one are stale.
+    std::size_t collections = 0;
     // Borrow the runtime atom table only while the process lifetime token remains alive.
     AtomStorage *atoms;
 };

@@ -51,24 +51,26 @@ HeapObject decode(Word value, std::span<const Word> area) {
 }
 } // namespace
 
-TermResult<Term> TermAccess::admit(Word value, const std::shared_ptr<HeapStorage> &storage) noexcept {
-    if (!storage->alive()) {
+TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
+    if (!storage.alive()) {
         return std::unexpected(TermError::expired_context);
     }
     const auto kind = TermTag{value}.get_kind();
     if (kind == TermKind::atom) {
-        return storage->atoms->lookup(value);
+        return storage.atoms->lookup(value);
     }
     if (kind != TermKind::boxed && kind != TermKind::list) {
         return Term::from_word(value);
     }
-    const auto area = storage->owned(address(value));
+    const auto area = storage.owned(address(value));
     if (area.empty() || !shaped(kind, area)) {
         return std::unexpected(TermError::wrong_owner);
     }
     Term result;
     result.value_ = value;
-    result.heap_ = storage;
+    result.heap_ = &storage;
+    result.lifetime_ = storage.lifetime;
+    result.collections_ = storage.collections;
     return result;
 }
 
@@ -76,8 +78,12 @@ TermResult<HeapObject> TermAccess::object(const Term &value) noexcept {
     if (!value.heap_) {
         return std::unexpected(TermError::wrong_type);
     }
-    if (!value.heap_->alive()) {
+    const auto lifetime = value.lifetime_.lock();
+    if (!lifetime || !lifetime->alive()) {
         return std::unexpected(TermError::expired_context);
+    }
+    if (value.collections_ != value.heap_->collections) {
+        return std::unexpected(TermError::stale_term);
     }
     return decode(value.value_, value.heap_->owned(address(value.value_)));
 }
@@ -87,7 +93,7 @@ TermResult<Term> TermAccess::child(const Term &parent, Word value) noexcept {
     if (!checked) {
         return std::unexpected(checked.error());
     }
-    return admit(value, parent.heap_);
+    return admit(value, *parent.heap_);
 }
 
 TermResult<void> TermAccess::validate(const Term &value) noexcept {

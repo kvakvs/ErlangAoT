@@ -50,15 +50,15 @@ Term slice(ProcessContext &context, const Term &value, std::size_t offset, std::
     return Term::from_word(output[0], context).value();
 }
 
-// Tails share one buffer charged once; teardown drops every reference after the last host pin goes.
+// Tails share one buffer charged once; context teardown drops every reference even while host Terms remain.
 void tails_and_teardown() {
     auto runtime = Runtime::start().value();
     auto &context = *runtime->create_context().value();
     TermFactory factory(context);
-    auto original = factory.binary(std::vector(100, std::byte{0x5a})).value();
-    auto small = factory.binary(std::vector(10, std::byte{0x5a})).value();
-    auto first = slice(context, original, 8, 700);
-    auto second = slice(context, first, 3, 600);
+    const auto original = factory.binary(std::vector(100, std::byte{0x5a})).value();
+    const auto small = factory.binary(std::vector(10, std::byte{0x5a})).value();
+    const auto first = slice(context, original, 8, 700);
+    const auto second = slice(context, first, 3, 600);
     std::weak_ptr<const BinaryBuffer> buffer = cell(original).buffer_;
     require(buffer.use_count() == 3, "tails do not share the buffer");
     require(cell(second).buffer_ == cell(original).buffer_ && cell(second).offset_ == 11, "tail lost its offset");
@@ -66,9 +66,9 @@ void tails_and_teardown() {
     require(context.heap().off_heap_words() == (100 + sizeof(Word) - 1) / sizeof(Word), "buffer charged per tail");
     require(small.bit_size() == 80 && small.word() != 0, "inline binary failed");
     require(runtime->destroy_context(&context) == Status::ok, "teardown failed");
-    require(buffer.use_count() == 3, "host pins did not keep storage alive");
-    original = first = second = small = Term{};
+    // Host Terms do not pin heap storage: teardown drops every buffer reference at once.
     require(buffer.expired(), "teardown kept a buffer reference");
+    require(first.bit_size() == std::unexpected(TermError::expired_context), "expired term read freed storage");
 }
 
 // A buffer that fits the budget but whose cell does not is uncharged and never listed.

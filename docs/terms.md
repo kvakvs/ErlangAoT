@@ -13,8 +13,10 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   and the header (or cons cell) there matches its tag
   ([admission](runtime-heap.md#admission)). Foreign and stale words are rejected
   without any load. Kind and extent are decoded from the header.
-- Host `Term` handles pin backing and metadata. After context teardown, access
-  returns `expired_context`, but handles remain safe to destroy.
+- A host `Term` for a heap value is a raw tagged word, valid until its heap's
+  next collection ([roots](runtime-heap.md#roots-and-safe-points)); it does not
+  pin heap storage. After context teardown, access returns `expired_context`;
+  after a later collection, `stale_term`. Terms are always safe to destroy.
 - Construction validates children, reserves, initializes, then publishes in one
   step; failure rolls back backing and counters.
 - `Term::from_word(word)` admits only owner-independent immediates;

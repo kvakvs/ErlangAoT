@@ -41,12 +41,11 @@ abi::v1::Status GeneratedRoots::leave(Word *frame, Word result) noexcept {
         calls.fail_service(abi::v1::Status::internal_error);
         return abi::v1::Status::internal_error;
     }
-    std::optional<Term> value;
+    std::optional<Word> value;
     auto status = abi::v1::Status::ok;
     if (!calls.failure()) {
-        const auto admitted = Term::from_word(result, owner_);
-        if (admitted) {
-            value = *admitted;
+        if (Term::from_word(result, owner_)) {
+            value = result;
         } else {
             status = abi::v1::Status::invalid_argument;
             calls.fail_service(status);
@@ -55,7 +54,7 @@ abi::v1::Status GeneratedRoots::leave(Word *frame, Word result) noexcept {
     words_ -= frames_.back().count;
     frames_.pop_back();
     auto &handoff = frames_.empty() ? handoff_ : frames_.back().handoff;
-    handoff = std::move(value);
+    handoff = value;
     return status;
 }
 
@@ -74,12 +73,11 @@ std::size_t GeneratedRoots::depth() const noexcept { return frames_.size(); }
 std::size_t GeneratedRoots::words() const noexcept { return words_; }
 
 bool GeneratedRoots::contains(Word value) const noexcept {
-    if (handoff_ && handoff_->word() == value) {
+    if (handoff_ == value) {
         return true;
     }
     for (const auto &frame : frames_) {
-        if ((frame.handoff && frame.handoff->word() == value) ||
-            std::ranges::contains(std::span(frame.slots.get(), frame.count), value)) {
+        if (frame.handoff == value || std::ranges::contains(std::span(frame.slots.get(), frame.count), value)) {
             return true;
         }
     }

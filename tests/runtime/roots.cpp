@@ -1,8 +1,10 @@
+#include <algorithm>
 #include <array>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 using namespace erlang_aot::runtime;
 using erlang_aot::abi::v1::Status;
@@ -67,6 +69,42 @@ void boundaries(ProcessContext &context) {
     require(!context.roots().enter(std::numeric_limits<std::size_t>::max()), "overflow root count admitted");
     require(context.generated_calls().failure()->status == Status::resource_limit, "overflow status lost");
 }
+
+// Stack slots, result handoffs, the error payload and explicit roots form the whole root set. Rewriting
+// the payload word keeps its Term current; a Term outliving its context reports expired_context.
+void root_set(Runtime &runtime) {
+    auto &context = *runtime.create_context().value();
+    TermFactory factory(context);
+    const auto box = [&](std::int64_t value) {
+        return factory.tuple(std::array{factory.integer(value).value()}).value();
+    };
+    const auto slot = box(1);
+    const auto handoff = box(2);
+    const auto payload = box(3);
+    const auto replacement = box(4);
+    std::array explicit_roots{box(5).word()};
+    {
+        GeneratedInvocation invocation(context.generated_calls());
+        auto &roots = context.roots();
+        roots.enter(1)[0] = slot.word();
+        require(roots.leave(roots.enter(1), handoff.word()) == Status::ok, "handoff failed");
+        context.generated_calls().fail({.code = CallError::erlang_exception,
+                                        .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
+                                        .value = payload});
+        std::vector<Word> seen;
+        context.visit_roots(explicit_roots, [&](Word &word) { seen.push_back(word); });
+        for (const auto &expected : {slot.word(), handoff.word(), payload.word(), explicit_roots[0]}) {
+            require(std::ranges::contains(seen, expected), "root missing from enumeration");
+        }
+        context.visit_roots({}, [&](Word &word) { word = word == payload.word() ? replacement.word() : word; });
+        const auto &moved = context.generated_calls().failure()->value;
+        require(moved->word() == replacement.word() && moved->tuple_element(0)->integer_value() == 4,
+                "rewritten payload not rebound");
+        roots.restore(0);
+    }
+    require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
+    require(slot.tuple_size() == std::unexpected(TermError::expired_context), "term outlived its context");
+}
 } // namespace
 
 int main() {
@@ -77,6 +115,7 @@ int main() {
         transfers(context);
         limits(context);
         transfers(context);
+        root_set(*runtime);
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

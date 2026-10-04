@@ -219,3 +219,7 @@ Plan 8E (user decision 2026-10-04): no handle table, ERTS model. Term = raw word
 collection count (stale-term error after GC, expired after teardown); handoffs/error payload = process
 root words (X regs/fvalue); host passes explicit root span to collect(). Term valid only in own process,
 read-only elsewhere (user criterion).
+Plan11 step8E 2026-10-04: Term {value_, atom_, HeapStorage* heap_, weak lifetime_, collections_}; no
+storage pin (off_heap test: buffers die at destroy_context). TermError::stale_term. Handoffs optional<Word>;
+GeneratedCallState::visit rebinds payload Term (friend). visit_roots template on ProcessContext.
+collect(span<Word> roots, sink) overload. Logs build/plan11-step8e.

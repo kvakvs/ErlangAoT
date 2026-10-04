@@ -68,6 +68,10 @@ std::expected<std::span<std::byte>, HeapError> ProcessHeap::allocate(std::size_t
 }
 
 std::expected<CollectionStats, HeapError> ProcessHeap::collect(DiagnosticSink sink) noexcept {
+    return collect(std::span<Word>{}, sink);
+}
+
+std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word>, DiagnosticSink sink) noexcept {
     const auto failure =
         deferred_service<HeapError>(abi::v1::FeatureId::garbage_collection, "ProcessHeap::collect", sink);
     owner_.generated_calls().fail_service(failure.error() == HeapError::not_implemented

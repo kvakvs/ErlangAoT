@@ -26,7 +26,9 @@ enum class TermError : std::uint8_t {
     resource_limit,
     out_of_memory,
     not_implemented,
-    diagnostic_failure
+    diagnostic_failure,
+    // A host Term taken before its heap's latest collection; its word may name moved memory.
+    stale_term
 };
 
 struct TermTag {
@@ -69,6 +71,8 @@ template <typename Value> using TermResult = std::expected<Value, TermError>;
 // Decode only small integers; malformed immediates are invalid_encoding, other categories wrong_type.
 [[nodiscard]] TermResult<std::int64_t> decode_integer(Word value) noexcept;
 class ProcessContext;
+class ContextLifetime;
+class GeneratedCallState;
 class ProcessHeap;
 class AtomStorage;
 struct AtomValue;
@@ -89,8 +93,8 @@ struct BitAccess;
 // Identify an atom within its runtime; word-sized IDs remain stable across future storage compaction.
 using AtomId = std::uintptr_t;
 
-// Host value pins immutable atoms or process-owned heap backing; generated code and cells remain one word.
-// Heap access checks context lifetime, while future identity/numeric/container families remain reserved.
+// Host value: one tagged word, valid until its heap's next collection (ERTS Eterm held by C code).
+// Atoms pin their spelling; heap words do not pin storage and are checked against lifetime and collection count.
 class Term final {
   public:
     // Reserve zero as an invalid slot until checked immediate construction supplies a value.
@@ -102,7 +106,7 @@ class Term final {
     // Rebind only this host handle, leaving every other alias unchanged.
     Term &operator=(const Term &other) = default;
     Term &operator=(Term &&other) noexcept = default;
-    // Release this handle's atom or heap storage pin.
+    // Release this handle's atom spelling pin; heap storage is never pinned.
     ~Term() = default;
 
     // Admit only small integers and canonical empty containers; identities/heap values remain unavailable.
@@ -220,14 +224,22 @@ class Term final {
   private:
     friend class TermFactory;
     friend class AtomStorage;
+    friend class GeneratedCallState;
     friend struct detail::TermAccess;
+
+    // Replace a process-root Term's word after a collection moved it, and mark it current again.
+    void rebind(Word value) noexcept;
 
     // Store the ABI word; atom_ supplies spelling lifetime while destination admission checks membership.
     Word value_;
     // Pin immutable atom spelling independently of process, module and runtime lifetimes.
     std::shared_ptr<const AtomValue> atom_;
-    // Retain stable backing independently of the context address; set only for admitted heap words.
-    std::shared_ptr<detail::HeapStorage> heap_;
+    // Borrow the owning heap of an admitted heap word; dereference only while lifetime_ is alive.
+    detail::HeapStorage *heap_ = nullptr;
+    // Detect context teardown without keeping heap storage alive.
+    std::weak_ptr<const ContextLifetime> lifetime_;
+    // The heap's collection count at admission; a later collection makes this Term stale.
+    std::size_t collections_ = 0;
 };
 
 } // namespace erlang_aot::runtime

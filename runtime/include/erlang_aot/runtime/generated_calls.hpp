@@ -15,8 +15,17 @@ class GeneratedCallState final {
     void fail(const CallFailure &failure) noexcept;
     // Convert infrastructure statuses without confusing them with Erlang errors or guard rejection.
     void fail_service(abi::v1::Status status, bool reported = false) noexcept;
-    // Borrow until the outer invocation ends; payload Terms currently own immediate words.
+    // Borrow until the outer invocation ends; the payload Term is a process root (BEAM fvalue).
     const std::optional<CallFailure> &failure() const noexcept;
+
+    // Visit the error payload word, then rebind the payload so it stays current after a collection.
+    template <typename Visitor> void visit(Visitor &&visit) {
+        if (failure_ && failure_->value) {
+            auto word = failure_->value->word();
+            visit(word);
+            failure_->value->rebind(word);
+        }
+    }
 
   private:
     // Mark the host scope owning cleanup; generated calls themselves never reset this state.

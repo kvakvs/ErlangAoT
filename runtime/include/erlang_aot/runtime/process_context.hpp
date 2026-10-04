@@ -99,6 +99,16 @@ class ProcessContext final {
     // Retain generated live words and transfer results before releasing nested call scopes.
     GeneratedRoots &roots() noexcept { return roots_; }
 
+    // Visit every root word (stack frame slots, result handoffs, the error payload), then the host's
+    // explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe point.
+    template <typename Visitor> void visit_roots(std::span<Word> explicit_roots, Visitor &&visit) {
+        roots_.visit(visit);
+        generated_calls_.visit(visit);
+        for (auto &word : explicit_roots) {
+            visit(word);
+        }
+    }
+
   private:
     friend class Scheduler;
     friend class SchedulerService;

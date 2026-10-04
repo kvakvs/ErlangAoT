@@ -122,7 +122,8 @@ remains the full check that every slot names an object start, for tests.
 
 Roots are stack frame slots (8F), process root words for result handoffs (BEAM
 X registers) and the current error payload (BEAM `fvalue`), the explicit root
-span a host caller passes to `collect()` (8E), and off-heap list links. Atoms
+span a host caller passes to `collect(roots)` (8E), and off-heap list links.
+`ProcessContext::visit_roots` enumerates every root word for the collector. Atoms
 and small immediates are not roots.
 
 As in ERTS C code, a host `Term` is a raw tagged word valid until the next safe

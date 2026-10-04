@@ -631,18 +631,29 @@ error payload (BEAM `fvalue`). Host code that needs values across `collect()`
 passes them as an explicit root span and reads them back afterwards.
 
 - Success criteria
-  - [ ] A `Term` is only valid inside its own process context. Using term by a
+  - [x] A `Term` is only valid inside its own process context. Using term by a
     non-owning process is read-only.
-  - [ ] `Term` no longer pins heap storage. Access after context teardown still
+  - [x] `Term` no longer pins heap storage. Access after context teardown still
     reports `expired_context`; access after a later collection of its heap
     reports a stale-term error instead of reading moved memory (checked in 8H).
-  - [ ] Result handoffs and owned error payloads are process root words; the
+  - [x] Result handoffs and owned error payloads are process root words; the
     stack, these words and the caller's explicit root span are the complete
     root set.
 - Tests
-  - [ ] Existing host-term, lifetime and root tests and all goldens pass.
-  - [ ] Focused test: handoff and error-payload words appear in the root
+  - [x] Existing host-term, lifetime and root tests and all goldens pass.
+  - [x] Focused test: handoff and error-payload words appear in the root
     enumeration; `Term`s outliving their context report `expired_context`.
+
+Done 2026-10-04. `Term` replaced `shared_ptr<HeapStorage>` with a borrowed `HeapStorage *`, a
+`weak_ptr<const ContextLifetime>` and the heap's collection count (`HeapStorage::collections`, bumped
+by 8H); `TermAccess::object` checks lifetime then count (`TermError::stale_term`, service status
+`internal_error`). Admission takes `HeapStorage &`. `GeneratedRoots` handoffs are `std::optional<Word>`;
+the channel's payload `Term` stays in `CallFailure` and `GeneratedCallState::visit` rewrites then
+`Term::rebind`s it. `ProcessContext::visit_roots(explicit, visitor)` visits stack slots, handoffs,
+the payload and the explicit span; `ProcessHeap::collect(std::span<Word> roots, sink)` overload added
+(still `not_implemented`). Non-owning reads already worked and stay read-only (`add`/`copy_to` reject
+foreign graphs). `runtime_roots` gained `root_set` (enumeration, payload rebind, expiry);
+`runtime_off_heap` now expects buffers released at context teardown although host Terms remain.
 
 <a id="step-8f"></a>
 

@@ -27,22 +27,40 @@ class GeneratedRoots final {
     // Inspect registered words and result handoffs without dereferencing candidate heap words.
     bool contains(Word value) const noexcept;
 
+    // Visit every frame slot and result handoff word so a collector can rewrite it in place.
+    template <typename Visitor> void visit(Visitor &&visit) {
+        for (auto &frame : frames_) {
+            for (auto &slot : std::span(frame.slots.get(), frame.count)) {
+                visit(slot);
+            }
+            visit_handoff(frame.handoff, visit);
+        }
+        visit_handoff(handoff_, visit);
+    }
+
   private:
     struct Frame {
         // Stable buffers survive growth of the frame index; count includes the reserved zero-arity slot.
         std::unique_ptr<Word[]> slots;
         std::size_t count;
-        // Pin a nested result until the parent publishes its own root slot or exits.
-        std::optional<Term> handoff;
+        // Root a nested result word (BEAM X register) until the parent publishes its own slot or exits.
+        std::optional<Word> handoff;
     };
+
+    // Visit one present handoff word.
+    template <typename Visitor> static void visit_handoff(std::optional<Word> &handoff, Visitor &visit) {
+        if (handoff) {
+            visit(*handoff);
+        }
+    }
 
     // Keep liveness/error ownership with the context; host access remains serialized.
     ProcessContext &owner_;
     RootOptions options_;
     std::vector<Frame> frames_;
     std::size_t words_ = 0;
-    // Retain the outermost return until its host invocation has copied the owned Term.
-    std::optional<Term> handoff_;
+    // Root the outermost return word until its host invocation has read it.
+    std::optional<Word> handoff_;
 };
 
 class RootInvocation final {

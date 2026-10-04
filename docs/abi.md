@@ -94,9 +94,9 @@ live words and 4,096 frames.
 
 - Arguments occupy persistent slots; every evaluated value is stored in a slot
   before the next expression or call. Failed candidates clear their slots.
-- Results become owned Terms in the parent's handoff before the buffer is
-  released; errors are already owned by the channel. LIFO violations are
-  infrastructure errors.
+- Results become root words in the parent's handoff (BEAM X registers) before
+  the buffer is released; error payloads are root words of the channel (BEAM
+  `fvalue`). LIFO violations are infrastructure errors.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
   There is no tracing or moving collector yet.
 
