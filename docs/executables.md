@@ -200,6 +200,8 @@ Rules follow OTP 29 `escript` for source scripts:
 
 Goldens for [program fixtures](../tests/fixtures/programs/README.md) run the
 entry under OTP with the same rules
-([oracle](../tests/compiler/programs/oracle.escript)). Differences from
+([oracle](../tests/compiler/programs/oracle.escript)); the same oracle generates
+the [executable golden cases](../tests/fixtures/executables/README.md) that the
+end-to-end runner links and runs under every policy. Differences from
 `escript` for ordinary modules: uncaught exceptions exit 1 instead of 127, and
 `main/1` must be exported. Escript sources keep OTP's rules (see above).

@@ -84,7 +84,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 ## Tests / fixtures
 
 Compiler runners: `tests/compiler/<area>/`; source/expected data: `tests/fixtures/<area>/`.
-Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime,programs,printing}`.
+Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runtime,programs,printing,executables,linking}`.
 
 | Area | Lookup / placement |
 | --- | --- |
@@ -94,6 +94,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `patternmatch` | `evidence.py`, `oracle.escript`, `atoms.*`, `bindings.*`, `patterns.*`, `immediate.*`, `services.py`, `booleans.py`, `clauses.py`, `sequences.py`, `containers.py`, `integers.py`, `floats.py`, `maps.py`, `bits.py`, `records.py`, `guard_catalog.py`, `facts.py`, `closure.py`: conservative proofs and seeded/provenance closure; native bounded value transport: `codegen/match_wire.hpp` |
 | `codegen` | `native*`, `differential.py`, `execution_oracle.escript`, `cross_targets.py`; inspection/resource/publication checks; `atoms*`, `match*`, `failure_*`, `service_*`: runtime integration |
 | `programs` | End-goal projects (`textstats`, `frames`, `avltree`, `ring`, `kvstore`, `supervise`) with feature map README; `fixtures.py` hashes, `programs.py` CTest (golden hashes + exact `compile.txt`), `regenerate.py` + `oracle.escript` explicit OTP goldens |
+| `executables` | Step-8 golden runner: case = sources + `golden.json` (authored entry/args/stderr regex, OTP stdout/exit/hashes); `cases.py` load/stage/hash/stale check, `run.py` links per `matrix.py` combination and diffs, `selfcheck.py` (wrong/stale golden), `regenerate.py` (programs `oracle.escript`); CTests `executables_<case>` (glob), `executables_selfcheck`, opt-in `executables_oracle` |
 | `printing` | `values.py` (authored values, corpus collection, wire parse, order rule), `regenerate.py` + `oracle.escript` (explicit OTP goldens), `display.py` CTest `printing_display` (compiled display calls via `codegen/match.cmake`); runtime goldens `tests/runtime/printing.cpp` |
 | `tests/runtime/`, `tests/abi/` | Runtime-only lifecycle/ownership/services (`link.cmake`, `link_consumer.cpp`); ABI codecs/layout/catalog. Keep runtime-only tests LLVM-free. |
 | `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; `project.cmake`: multi-target manifest outputs, selection, `-o`/`--entry`, aliasing, deferred publication; fixtures `tests/fixtures/linking/{entry,escript,startup,project}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |

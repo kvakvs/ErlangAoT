@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "entry": "exits",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[]\n"
+    },
+    {
+      "args": [
+        "a b",
+        "c"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"a b\",\"c\"]\n"
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 3,
+      "stdout": "stopping\n"
+    },
+    {
+      "args": [
+        "crash"
+      ],
+      "stderr": "^uncaught exception error: \\{badmatch,\\{error,missing\\}\\}",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "clause"
+      ],
+      "stderr": "^uncaught exception error: function_clause",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "checks.erl": "6b70b12b2067af12137dd6ed2783f50d3cb8875c240472ead6bf2e179e98e272",
+    "exits.erl": "2418368145e5d44e7f507ba4155accc9eb5d3e7e8bc711069a85b4f035c8eaf7"
+  }
+}

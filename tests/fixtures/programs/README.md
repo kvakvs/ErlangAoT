@@ -32,8 +32,9 @@ messages, so output is deterministic.
 python tests/compiler/programs/regenerate.py --escript 'C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe' --check
 ```
 
-Never regenerate to make an ErlangAoT comparison pass. Step 8's runner and step
-58 will run these goldens against linked executables.
+Never regenerate to make an ErlangAoT comparison pass. Step 58 will run these
+goldens against linked executables with the
+[step-8 runner](../executables/README.md).
 
 ## Feature map
 

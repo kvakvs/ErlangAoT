@@ -60,6 +60,12 @@ cmake --build build/debug --target check-quality-all  # whole tree
   `~w` and `erlang:display/1` text for 9,542 values plus OTP stdout of compiled
   display calls; `tests/compiler/printing/regenerate.py --check` reproduces them
   ([fixture notes](../tests/fixtures/printing/README.md)).
+- Executable golden cases (`tests/fixtures/executables/`, plan 11 step 8) are
+  source directories plus one `golden.json` with OTP stdout/exit status and an
+  authored stderr pattern; `tests/compiler/executables/run.py` links and runs
+  each under the policy/driver matrix (CTest `executables_<case>`), and
+  `regenerate.py --check` reproduces them under OTP
+  ([case notes](../tests/fixtures/executables/README.md)).
 - Regeneration and live audits are explicit:
   `-DERLANG_AOT_OTP_AUDITS=ON` and `tests/compiler/patternmatch/regenerate.py`
   ([instructions](../tests/fixtures/patternmatch/generated/README.md)).
@@ -137,5 +143,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-03 | Plan 11 step 1 baseline | 125 | 258 | See current baseline |
 | 2026-10-03 | Plan 11 step 2 program fixtures | 126 | 258 | Six OTP goldens; fast mode 123 tests; full `-j 16` 83 s |
 | 2026-10-03 | Plan 11 step 4 term printing | 128 fast | 265 | 9,542 `~w`/display goldens; 154 compiled display calls in all policies; clang-tidy run with one job (concurrent runs crashed the tool on unchanged units) |
+| 2026-10-04 | Plan 11 step 8 executable runner (phase B closed) | 138 (135 fast) | 272 | Cases `demo`, `exits` under eight policy/driver combinations; full `-j 16` 235 s |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

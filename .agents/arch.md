@@ -165,6 +165,11 @@
   goldens and today's exact compile diagnostics; later steps update `compile.txt`
   until step 58 runs them as executables.
 
+- End-to-end executable tests use the step-8 runner (`tests/compiler/executables/run.py`):
+  a case directory is sources plus an OTP-generated `golden.json` (stdout, exit status, authored
+  stderr regex, source hashes); CMake globs cases into `executables_<case>` and the runner links
+  them per fast/full policy/driver matrix. Later feature steps add cases there.
+
 - Remaining work is expanded in [plan 11](11-plan.md) as 78 small steps.
   The completed pattern/guard checklist is retired; its contracts/evidence remain
   in that plan and [the archive](00-finished.md#completed-patternmatch).

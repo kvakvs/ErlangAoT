@@ -318,6 +318,8 @@ add_subdirectory(compiler/programs)
 
 add_subdirectory(compiler/linking)
 
+add_subdirectory(compiler/executables)
+
 add_subdirectory(compiler/printing)
 
 # Symbol round trips have no observable emitted-object replacement until lowering exists.

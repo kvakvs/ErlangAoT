@@ -405,12 +405,25 @@ arguments, and compare stdout, stderr pattern and exit status with an owned
 golden. Later steps use it for end-to-end tests.
 
 - Success criteria
-  - [ ] Adding a case needs only source files and a golden file.
-  - [ ] The runner covers the four policy combinations (O0/O2 ×
+  - [x] Adding a case needs only source files and a golden file.
+  - [x] The runner covers the four policy combinations (O0/O2 ×
     specialization on/off) without duplicating code per test.
 - Tests
-  - [ ] Port the documented two-module demo to the runner.
-  - [ ] Self-check: a deliberately wrong golden fails with a readable diff.
+  - [x] Port the documented two-module demo to the runner.
+  - [x] Self-check: a deliberately wrong golden fails with a readable diff.
+
+Done 2026-10-04. A case is a directory under `tests/fixtures/executables/` with Erlang sources and
+`golden.json`: authored `entry`, `runs[].args`, optional `runs[].stderr` regex (required when OTP
+writes stderr) and `sources`, plus OTP `exit_status`/`stdout`, oracle version, pin and source hashes
+written by `tests/compiler/executables/regenerate.py` (programs `oracle.escript`; `--check` reproduced
+both cases). CMake globs cases into `executables_<case>`; `run.py` rejects stale or ungenerated goldens,
+links under `matrix.py` (full: O0/O2 × specialization on/off × positional `--entry -o` and project
+manifest `entry`/`output`; fast: O0 positional, O2-off project) and prints unified stdout diffs plus
+exit/stderr mismatches. Cases `demo` (the `examples/compile` sources) and `exits` (argv, `halt(3)`,
+`badmatch`, `function_clause` across modules); `executables_selfcheck` checks the diff for a wrong
+golden and the early stale-golden failure. `linking_executable` keeps its `-Os` size and replacement
+checks. Step 58 adapts the program fixtures' layout to this runner. Phase B closes: fresh fast
+gate 135 tests; full `-j 16` 138/138 in 235 s; `check-quality-all` passes 272 units.
 
 ## C. Control flow and exceptions
 

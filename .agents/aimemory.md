@@ -182,3 +182,10 @@ Ninja did not rerun CMake after tests CMakeLists edit (cache had BUILD_TESTING=O
 adds --gc-sections / -dead_strip / /OPT:REF,ICF. MSVC link.exe already OPT:REF without /DEBUG, so Os==O2 size there.
 build/debug: BUILD_TESTING=OFF, needs vcvars64 env (LIB) for runtime/dep builds; MSVC C4554 false positive on
 static_cast<Word>(n - 1) << shift (hoist to a local).
+Plan11 step8 2026-10-04: executable golden runner tests/compiler/executables/{cases,run,selfcheck,regenerate}.py;
+cases tests/fixtures/executables/<case>/{*.erl,golden.json} (authored entry/runs[].args/stderr regex/sources;
+OTP exit_status/stdout/oracle_version/reference/inputs). CMake glob CONFIGURE_DEPENDS -> executables_<case>;
+selfcheck (wrong golden diff, stale hash); executables_oracle opt-in. Oracle = programs/oracle.escript via
+erts-17.1/bin/escript.exe. run.py uses matrix.combinations() (8 full / 2 fast), ~3 s per case on host.
+Pass --suffix=... as single token (CMake drops empty args). erlfmt: escript with code:add_path(
+"thirdparty/tools/erlfmt/_build/local") + erlfmt:format_file(F,[]) (beams flat there). Logs build/plan11-step8.

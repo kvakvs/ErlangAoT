@@ -1,0 +1,63 @@
+"""Shared lookup, staging and hashing for executable golden cases."""
+import hashlib
+import json
+import pathlib
+import shutil
+
+ROOT = pathlib.Path(__file__).resolve().parents[3]
+CASES = ROOT / 'tests/fixtures/executables'
+GOLDEN = 'golden.json'
+# Fields written by regenerate.py from OTP; a golden lacking any of them was never generated.
+GENERATED_RUN_FIELDS = ('exit_status', 'stdout')
+
+
+def digest(path):
+    """Hashes file bytes with CRLF normalized to LF so checkouts agree across hosts."""
+    return hashlib.sha256(path.read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+
+
+def names():
+    """Lists case directories, each identified by its golden file."""
+    return sorted(path.parent.name for path in CASES.glob(f'*/{GOLDEN}'))
+
+
+def load(case_dir):
+    """Reads a case golden and checks the authored fields every tool relies on."""
+    golden = json.loads((case_dir / GOLDEN).read_text(encoding='utf8'))
+    assert golden.get('schema') == 1, f'{case_dir.name}: golden schema must be 1'
+    assert isinstance(golden.get('entry'), str), f'{case_dir.name}: golden needs an entry module'
+    assert golden.get('runs'), f'{case_dir.name}: golden needs at least one run'
+    assert all(isinstance(arg, str) for run in golden['runs'] for arg in run['args']), case_dir.name
+    return golden
+
+
+def sources(case_dir, golden):
+    """Erlang inputs as {case-relative spelling: path}: listed 'sources', else every .erl/.hrl beside the golden."""
+    if 'sources' in golden:
+        return {source: case_dir / source for source in golden['sources']}
+    return {path.name: path for path in sorted(case_dir.iterdir()) if path.suffix in ('.erl', '.hrl')}
+
+
+def inputs(case_dir, golden):
+    """Hashes every input that determines the golden, keyed by its case-relative spelling."""
+    return {spelling: digest(path) for spelling, path in sources(case_dir, golden).items()}
+
+
+def verify(case_dir):
+    """Loads a golden and rejects one that was never generated or whose sources changed since."""
+    golden = load(case_dir)
+    generated = 'inputs' in golden and all(field in run for run in golden['runs'] for field in GENERATED_RUN_FIELDS)
+    if not generated:
+        raise SystemExit(f'{case_dir.name}: golden was not generated; run tests/compiler/executables/regenerate.py')
+    if golden['inputs'] != inputs(case_dir, golden):
+        raise SystemExit(f'{case_dir.name}: stale golden: sources changed since OTP generation; regenerate it')
+    return golden
+
+
+def stage(case_dir, golden, destination):
+    """Copies the case sources into one flat directory, as compiled by the runner and the oracle."""
+    shutil.rmtree(destination, ignore_errors=True)
+    destination.mkdir(parents=True)
+    for path in sources(case_dir, golden).values():
+        shutil.copyfile(path, destination / path.name)
+    return destination
