@@ -524,17 +524,29 @@ keeps an off-heap list of its off-heap binary cells instead of the
 `HeapDestructor` registry.
 
 - Success criteria
-  - [ ] Every layout in `term_layout.hpp` is trivially copyable except the
+  - [x] Every layout in `term_layout.hpp` is trivially copyable except the
     off-heap binary, whose only C++ member is the `shared_ptr` (`static_assert`
     on its two-word size); one relocation hook moves that member.
     `HeapDestructor` and `HeapStorage::resources` are gone.
-  - [ ] Shared buffers are released exactly once when the last cell holding
+  - [x] Shared buffers are released exactly once when the last cell holding
     them dies (today: owning heap teardown); extracted tails keep their buffer
     alive.
 - Tests
-  - [ ] Bitstring, printing and executable goldens pass unchanged.
-  - [ ] Focused runtime test: buffer counts across tails, rollback after a
+  - [x] Bitstring, printing and executable goldens pass unchanged.
+  - [x] Focused runtime test: buffer counts across tails, rollback after a
     failed construction, and context teardown.
+
+Done 2026-10-04. `term_layout.hpp` now holds the real binary cells: `HeapBinaryCell` (header, bit
+length, data words; at most 64 bytes, sized to the data instead of a fixed 13 words) and
+`RefcBinaryCell` (6 words: header, offset, bits, `shared_ptr<const BinaryBuffer>`, `next_`), plus
+`BoxHeader::make/kind/count`; `ClosureCell` stores a registry ID instead of a `weak_ptr`.
+`memory/off_heap` links a cell only after publication, relocates it by move construction and releases
+the list at `HeapStorage` teardown. Created buffers are charged through `off_heap_words` (shared
+`limit_bytes` budget, uncharged if the cell fails) instead of physically reserved heap words.
+`HeapReservation::commit()` lost its destructor parameter; the unused `binary_heap_object.hpp` sketch
+was removed. New CTest `runtime_off_heap` (private headers): shared tails, one charge, list length,
+teardown after the last host pin, budget rollback, relocation; `runtime_lifecycle_failure` also checks
+off-heap words after injected failures. The alignment parameter stays until 8G.
 
 <a id="step-8c"></a>
 

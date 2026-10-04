@@ -6,15 +6,6 @@
 namespace erlang_aot::runtime::detail {
 inline constexpr std::size_t bit_limit = 1'000'000;
 
-struct alignas(Word) BitCell {
-    // Small values own inline bytes; large values and their slices retain immutable shared backing.
-    Word header;
-    std::size_t offset;
-    std::size_t length;
-    std::shared_ptr<const std::vector<std::byte>> shared;
-    std::array<std::byte, 64> small;
-};
-
 struct BitView {
     // Borrow only while the checked source Term retains the live owning heap cell.
     std::span<const std::byte> bytes;
@@ -22,13 +13,26 @@ struct BitView {
     std::size_t length;
 };
 
+struct BitRange {
+    // Select a view's bits within a shared buffer.
+    std::size_t offset;
+    std::size_t length;
+};
+
 struct BitAccess {
-    // Publish one complete immutable cell, retaining large backing and registering its destructor.
-    static TermResult<Term> publish(ProcessHeap &heap, BitCell cell, bool charge_backing = false);
-    // Copy packed MSB-first input, zeroing unused low bits and checking work before allocation.
+    // Copy packed MSB-first input, zeroing unused low bits: inline up to 64 bytes, else a new shared buffer.
     static TermResult<Term> make(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count);
-    // Retain large backing for a checked view; small slices use independent inline storage.
+    // Share an off-heap source's buffer for a checked view; slices of heap binaries are copied.
     static TermResult<Term> slice(ProcessHeap &heap, const Term &source, std::size_t offset, std::size_t count);
+
+  private:
+    // Publish an inline binary: header, bit length, then the data bytes rounded up to words.
+    static TermResult<Term> heap_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count);
+    // Copy the bits into a new buffer charged to this process, then publish a view of all of it.
+    static TermResult<Term> shared_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count);
+    // Publish an off-heap view; only a published cell receives the buffer reference and joins the list.
+    static TermResult<Term> refc_binary(ProcessHeap &heap, std::shared_ptr<const std::vector<std::byte>> buffer,
+                                        BitRange range);
 };
 
 // Establish kind and lifetime before accessing any bit buffer or cursor.

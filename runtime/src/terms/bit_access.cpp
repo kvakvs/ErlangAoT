@@ -1,5 +1,6 @@
 #include "../memory/heap_object.hpp"
 #include "bitstrings.hpp"
+#include "term_layout.hpp"
 #include <algorithm>
 #include <new>
 
@@ -12,8 +13,14 @@ TermResult<BitView> bit_view(const Term &term) {
     if ((*object)->kind != TermKind::bitstring) {
         return std::unexpected(TermError::wrong_type);
     }
-    const auto &cell = *reinterpret_cast<const BitCell *>((*object)->words.data());
-    return BitView{cell.shared ? std::span<const std::byte>(*cell.shared) : cell.small, cell.offset, cell.length};
+    const auto words = (*object)->words;
+    if (layout::BoxHeader::kind(words[0]) == BoxedKind::refc_binary) {
+        const auto &cell = *reinterpret_cast<const layout::RefcBinaryCell *>(words.data());
+        return BitView{*cell.buffer_, cell.offset_, cell.bits_};
+    }
+    const auto &cell = *reinterpret_cast<const layout::HeapBinaryCell *>(words.data());
+    const auto data = std::as_bytes(words.subspan(sizeof(layout::HeapBinaryCell) / sizeof(Word)));
+    return BitView{data.first((cell.bits_ + 7) / 8), 0, cell.bits_};
 }
 
 bool bit_at(const BitView &view, std::size_t index) noexcept {

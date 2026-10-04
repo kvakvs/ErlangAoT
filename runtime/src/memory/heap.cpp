@@ -78,4 +78,18 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(DiagnosticSink si
 std::size_t ProcessHeap::used_words() const noexcept { return storage_->used_words; }
 
 std::size_t ProcessHeap::capacity_words() const noexcept { return storage_->capacity_words; }
+
+std::size_t ProcessHeap::off_heap_words() const noexcept { return storage_->off_heap_words; }
+
+std::expected<void, HeapError> ProcessHeap::charge_off_heap(std::size_t bytes) noexcept {
+    const auto charged = storage_->charge((bytes + sizeof(Word) - 1) / sizeof(Word));
+    if (!charged) {
+        owner_.generated_calls().fail_service(status(charged.error()));
+    }
+    return charged;
+}
+
+void ProcessHeap::uncharge_off_heap(std::size_t bytes) noexcept {
+    storage_->off_heap_words -= (bytes + sizeof(Word) - 1) / sizeof(Word);
+}
 } // namespace erlang_aot::runtime

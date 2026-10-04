@@ -89,7 +89,9 @@
 - Stable heap chunks support bounded word allocation, aligned reservations, rollback
   and explicit resource destruction. No GC or graph copying runs. Plan 11 phase C
   replaces this with the classic ERTS heap in `docs/runtime-heap.md` (header-parsed
-  words, start-bitmap admission, off-heap binary list, fragments, copying GC). Revision-4
+  words, start-bitmap admission, off-heap binary list, fragments, copying GC).
+  Done: 8B binaries (inline heap binaries; larger ones are `shared_ptr` buffers
+  held by `RefcBinaryCell`s on the per-process off-heap list, `memory/off_heap`). Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
   Exact-start object indices prove ownership before extraction. Compound host handles

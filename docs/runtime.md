@@ -52,9 +52,13 @@ This heap is being replaced by the classic ERTS design in
 - Rejects zero, overflow, unsupported alignment and exhausted budget before
   publishing. Errors: `out_of_memory` (allocation) or `limit_exceeded` (budget);
   generated code receives the exact status.
-- Resource-bearing cells register destructors at commit; teardown runs them in
-  reverse order. Resources are never relocated as raw bytes.
-- `used_words` includes padding; `capacity_words` counts retained backing.
+- Binaries over 64 bytes live in shared buffers outside the heap. Each heap cell
+  that refers to one holds a `std::shared_ptr` and joins the process's off-heap
+  list when published; teardown walks the list and drops those references
+  ([off-heap binaries](runtime-heap.md#off-heap-binaries)).
+- `used_words` includes padding; `capacity_words` counts retained backing;
+  `off_heap_words` counts buffers this process created. Backing plus off-heap
+  words share the `limit_bytes` budget.
 - `collect()` reports `not_implemented`; nothing is reclaimed before teardown.
 
 ## Code server and builtins

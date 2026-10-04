@@ -1,4 +1,5 @@
 #include "../memory/heap_storage.hpp"
+#include "../memory/off_heap.hpp"
 #include "bitstrings.hpp"
 #include "term_layout.hpp"
 #include "terms.hpp"
@@ -7,27 +8,78 @@
 
 namespace erlang_aot::runtime::detail {
 namespace {
-// Pair the shared-buffer cell's C++ lifetime with its containing process reservation.
-void destroy(std::byte *bytes) noexcept { std::destroy_at(reinterpret_cast<BitCell *>(bytes)); }
+using layout::BinaryBuffer;
+using layout::BoxHeader;
+using layout::HeapBinaryCell;
+using layout::RefcBinaryCell;
+
+// Keep allocation failures distinct from the configured backing ceiling.
+TermError heap_error(HeapError error) {
+    return error == HeapError::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
+}
+
+// Zero the bits after the last valid one so equal values carry equal padding.
+void clear_padding(std::span<std::byte> bytes, std::size_t count) {
+    if (count % 8 != 0) {
+        bytes[count / 8] &= static_cast<std::byte>(0xffU << (8 - count % 8));
+    }
+}
+
 } // namespace
 
-TermResult<Term> BitAccess::publish(ProcessHeap &heap, BitCell cell, bool charge_backing) {
-    constexpr auto count = sizeof(BitCell) / sizeof(Word);
-    static_assert(sizeof(BitCell) % sizeof(Word) == 0);
-    const auto charged = charge_backing && cell.shared ? (cell.shared->size() + sizeof(Word) - 1) / sizeof(Word) : 0;
-    auto reserved = heap.reserve(count + charged);
+TermResult<Term> BitAccess::heap_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
+    const auto size = (count + 7) / 8;
+    const auto data_words = (size + sizeof(Word) - 1) / sizeof(Word);
+    const auto total = sizeof(HeapBinaryCell) / sizeof(Word) + data_words;
+    auto reserved = heap.reserve(total);
     if (!reserved) {
-        return std::unexpected(reserved.error() == HeapError::out_of_memory ? TermError::out_of_memory
-                                                                            : TermError::resource_limit);
+        return std::unexpected(heap_error(reserved.error()));
     }
-    // MSVC reports C4554 for a subtraction inside the shifted cast; name the content size instead.
-    const auto content = static_cast<Word>(count - 1);
-    cell.header = (content << layout::BoxHeader::CONTENT_SHIFT) |
-                  (static_cast<Word>(cell.shared ? BoxedKind::refc_binary : BoxedKind::heap_binary) << 2);
-    auto *stored = std::construct_at(reinterpret_cast<BitCell *>(reserved->bytes().data()), std::move(cell));
-    const auto encoded = reinterpret_cast<Word>(stored) | static_cast<Word>(TermKindPrimary::boxed);
-    const std::array objects{HeapObject{encoded, TermKind::bitstring, {&stored->header, 1}, stored->length}};
-    return detail::publish(heap.storage_, *reserved, objects, destroy);
+    const auto storage = reserved->bytes();
+    auto *cell = std::construct_at(
+        reinterpret_cast<HeapBinaryCell *>(storage.data()),
+        HeapBinaryCell{{BoxHeader::make(BoxedKind::heap_binary, total - 1)}, static_cast<Word>(count)});
+    const auto data = storage.subspan(sizeof(HeapBinaryCell), size);
+    std::ranges::copy(bytes.first(size), data.begin());
+    clear_padding(data, count);
+    const auto encoded = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
+    const std::array objects{
+        HeapObject{encoded, TermKind::bitstring, {reinterpret_cast<const Word *>(cell), total}, count}};
+    return publish(heap.storage_, *reserved, objects);
+}
+
+TermResult<Term> BitAccess::refc_binary(ProcessHeap &heap, std::shared_ptr<const BinaryBuffer> buffer, BitRange range) {
+    constexpr auto total = sizeof(RefcBinaryCell) / sizeof(Word);
+    auto reserved = heap.reserve(total);
+    if (!reserved) {
+        return std::unexpected(heap_error(reserved.error()));
+    }
+    auto *cell = std::construct_at(reinterpret_cast<RefcBinaryCell *>(reserved->bytes().data()));
+    cell->header_ = {BoxHeader::make(BoxedKind::refc_binary, total - 1)};
+    cell->offset_ = static_cast<Word>(range.offset);
+    cell->bits_ = static_cast<Word>(range.length);
+    const auto encoded = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
+    const std::array objects{
+        HeapObject{encoded, TermKind::bitstring, {reinterpret_cast<const Word *>(cell), total}, range.length}};
+    auto published = publish(heap.storage_, *reserved, objects);
+    if (published) {
+        link_off_heap(*heap.storage_, *cell, std::move(buffer));
+    }
+    return published;
+}
+
+TermResult<Term> BitAccess::shared_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
+    const auto size = (count + 7) / 8;
+    auto buffer = std::make_shared<BinaryBuffer>(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(size));
+    clear_padding(*buffer, count);
+    if (const auto charged = heap.charge_off_heap(size); !charged) {
+        return std::unexpected(heap_error(charged.error()));
+    }
+    auto published = refc_binary(heap, std::move(buffer), {0, count});
+    if (!published) {
+        heap.uncharge_off_heap(size);
+    }
+    return published;
 }
 
 TermResult<Term> BitAccess::make(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
@@ -38,22 +90,11 @@ TermResult<Term> BitAccess::make(ProcessHeap &heap, std::span<const std::byte> b
     if (size > bytes.size()) {
         return std::unexpected(TermError::invalid_argument);
     }
+    if (size <= layout::heap_binary_bytes) {
+        return heap_binary(heap, bytes, count);
+    }
     try {
-        BitCell cell{0, 0, count, {}, {}};
-        if (size <= cell.small.size()) {
-            std::ranges::copy(bytes.first(size), cell.small.begin());
-            if (count % 8 != 0) {
-                cell.small[size - 1] &= static_cast<std::byte>(0xffU << (8 - count % 8));
-            }
-        } else {
-            auto buffer = std::make_shared<std::vector<std::byte>>(bytes.begin(),
-                                                                   bytes.begin() + static_cast<std::ptrdiff_t>(size));
-            if (count % 8 != 0) {
-                buffer->back() &= static_cast<std::byte>(0xffU << (8 - count % 8));
-            }
-            cell.shared = std::move(buffer);
-        }
-        return publish(heap, std::move(cell), true);
+        return shared_binary(heap, bytes, count);
     } catch (const std::bad_alloc &) {
         return std::unexpected(TermError::out_of_memory);
     }
@@ -71,10 +112,10 @@ TermResult<Term> BitAccess::slice(ProcessHeap &heap, const Term &source, std::si
     if (offset > view->length || count > view->length - offset) {
         return std::unexpected(TermError::out_of_range);
     }
-    const auto object = TermAccess::object(source).value();
-    const auto &original = *reinterpret_cast<const BitCell *>(object->words.data());
-    if (original.shared) {
-        return publish(heap, {0, original.offset + offset, count, original.shared, {}});
+    const auto words = TermAccess::object(source).value()->words;
+    if (BoxHeader::kind(words[0]) == BoxedKind::refc_binary) {
+        const auto &original = *reinterpret_cast<const RefcBinaryCell *>(words.data());
+        return refc_binary(heap, original.buffer_, {original.offset_ + offset, count});
     }
     BitWriter writer;
     const auto copied = writer.append({view->bytes, view->offset + offset, count});

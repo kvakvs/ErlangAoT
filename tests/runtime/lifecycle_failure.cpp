@@ -364,6 +364,7 @@ void check_bitstrings(bool extraction, bool large) {
                                    factory.integer(0)->word()};
             const auto used = context.heap().used_words();
             const auto capacity = context.heap().capacity_words();
+            const auto off_heap = context.heap().off_heap_words();
             std::array<Word, 2> output{123, 456};
             {
                 GeneratedInvocation call(context.generated_calls());
@@ -375,7 +376,8 @@ void check_bitstrings(bool extraction, bool large) {
                 remaining = std::numeric_limits<std::size_t>::max();
                 succeeded = result == 0;
                 if (!succeeded) {
-                    require(context.heap().used_words() == used && context.heap().capacity_words() == capacity,
+                    require(context.heap().used_words() == used && context.heap().capacity_words() == capacity &&
+                                context.heap().off_heap_words() == off_heap,
                             "failed bit publication retained backing");
                     require(output == std::array<Word, 2>{123, 456}, "failed extraction published an output");
                     require(!extraction || context.generated_calls().failure()->status == Status::out_of_memory,
@@ -416,34 +418,24 @@ void check_root_allocation() {
     require(succeeded, "root allocation sweep never succeeded");
 }
 
-// A resource destructor must run once whether its index allocation fails or storage is later torn down.
-void count_destruction(std::byte *bytes) noexcept { ++**reinterpret_cast<unsigned **>(bytes); }
-
-// Sweep backing, chunk-index and resource-index allocations before publishing stable constructed values.
+// Sweep backing and chunk-index allocations; a failed reservation keeps no backing and allows retry.
 void check_heap_construction() {
     using namespace erlang_aot::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
-        unsigned destroyed = 0;
-        bool constructed = false;
         {
             auto runtime = Runtime::start().value();
             auto &heap = runtime->create_context().value()->heap();
             remaining = ordinal;
             auto reserved = heap.reserve(1);
-            if (reserved) {
-                std::construct_at(reinterpret_cast<unsigned **>(reserved->bytes().data()), &destroyed);
-                constructed = true;
-                succeeded = reserved->commit(count_destruction).has_value();
-            }
+            succeeded = reserved && reserved->commit().has_value();
             remaining = std::numeric_limits<std::size_t>::max();
             if (!succeeded) {
                 require(heap.used_words() == 0 && heap.capacity_words() == 0, "failed construction kept backing");
                 require(heap.allocate(1).has_value(), "failed construction poisoned retry");
             }
         }
-        require(destroyed == static_cast<unsigned>(constructed), "resource destroyed incorrectly");
         require(live_allocations == baseline, "heap construction leaked");
     }
     require(succeeded, "heap construction sweep never succeeded");

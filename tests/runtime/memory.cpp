@@ -51,16 +51,6 @@ void check_options(Runtime &runtime) {
     require(runtime.destroy_context(*context) == Status::ok, "budget context cleanup failed");
 }
 
-struct Resource {
-    // Observe proper C++ destruction while the stable storage owner still exists.
-    unsigned &destroyed;
-
-    ~Resource() { ++destroyed; }
-};
-
-// Transfer resource teardown to committed storage without storing ownership cycles in cells.
-void destroy_resource(std::byte *bytes) noexcept { std::destroy_at(reinterpret_cast<Resource *>(bytes)); }
-
 // Growth and aborted construction preserve earlier addresses and restore exact capacity/word accounting.
 void check_reservations(Runtime &runtime) {
     auto *context = runtime.create_context({2 * sizeof(Word), 32 * sizeof(Word)}).value();
@@ -83,21 +73,18 @@ void check_reservations(Runtime &runtime) {
         require(aligned.commit().has_value(), "aligned commit failed");
     }
     require(first.front() == std::byte{42}, "growth moved or damaged committed data");
-    unsigned destroyed = 0;
     {
-        auto resource = heap.reserve((sizeof(Resource) + sizeof(Word) - 1) / sizeof(Word)).value();
-        std::construct_at(reinterpret_cast<Resource *>(resource.bytes().data()), destroyed);
-        require(resource.commit(destroy_resource).has_value(), "resource commit failed");
-        require(resource.bytes().empty(), "committed reservation kept mutation access");
+        auto committed = heap.reserve(1).value();
+        require(committed.commit().has_value(), "commit failed");
+        require(committed.bytes().empty() && committed.commit() == std::unexpected(HeapError::invalid_size),
+                "committed reservation kept mutation access");
     }
     {
         auto expired = heap.reserve(1).value();
         require(runtime.destroy_context(context) == Status::ok, "context teardown failed");
         require(expired.bytes().empty() && expired.commit() == std::unexpected(HeapError::expired_context),
                 "reservation used expired context");
-        require(destroyed == 0, "reservation did not pin backing for safe rollback");
     }
-    require(destroyed == 1, "resource was not destroyed exactly once");
 }
 
 // Invalid host values cannot arise from valid Erlang or the linked consumer's successful copies.

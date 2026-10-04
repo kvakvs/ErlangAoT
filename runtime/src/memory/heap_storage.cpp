@@ -1,4 +1,5 @@
 #include "heap_storage.hpp"
+#include "off_heap.hpp"
 #include <algorithm>
 #include <bit>
 #include <cstring>
@@ -11,11 +12,7 @@ void ChunkDelete::operator()(std::byte *bytes) const noexcept { ::operator delet
 HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms)
     : options(options), lifetime(std::move(lifetime)), atoms(&atoms) {}
 
-HeapStorage::~HeapStorage() {
-    for (auto resource = resources.rbegin(); resource != resources.rend(); ++resource) {
-        resource->destroy(resource->bytes);
-    }
-}
+HeapStorage::~HeapStorage() { release_off_heap(*this); }
 
 bool HeapStorage::alive() const noexcept {
     const auto token = lifetime.lock();
@@ -48,13 +45,13 @@ std::expected<void, HeapError> validate(const HeapStorage &storage, std::size_t 
     if (storage.pending) {
         return std::unexpected(HeapError::unsafe_point);
     }
-    if (words > storage.options.limit_bytes / sizeof(Word) - storage.used_words) {
+    if (words > storage.options.limit_bytes / sizeof(Word) - storage.used_words - storage.off_heap_words) {
         return std::unexpected(HeapError::limit_exceeded);
     }
     return {};
 }
 
-// Fundamental alignment permits properly constructed C++ resources without relocating them on growth.
+// Fundamental alignment satisfies every accepted reservation alignment; chunks never move on growth.
 HeapChunk chunk(std::size_t words) {
     return {std::unique_ptr<std::byte, ChunkDelete>{static_cast<std::byte *>(::operator new(words * sizeof(Word)))},
             words};
@@ -68,7 +65,7 @@ std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t 
     const auto align_words = alignment / sizeof(Word);
     auto offset = chunks.empty() ? 0 : (chunks.back().used + align_words - 1) / align_words * align_words;
     if (chunks.empty() || offset > chunks.back().capacity || words > chunks.back().capacity - offset) {
-        const auto remaining = options.limit_bytes / sizeof(Word) - capacity_words;
+        const auto remaining = options.limit_bytes / sizeof(Word) - capacity_words - off_heap_words;
         if (words > remaining) {
             return std::unexpected(HeapError::limit_exceeded);
         }
@@ -84,5 +81,13 @@ std::expected<std::span<std::byte>, HeapError> HeapStorage::reserve(std::size_t 
     std::span<std::byte> result{tail.bytes.get() + offset * sizeof(Word), words * sizeof(Word)};
     std::memset(result.data(), 0, result.size());
     return result;
+}
+
+std::expected<void, HeapError> HeapStorage::charge(std::size_t words) noexcept {
+    if (words > options.limit_bytes / sizeof(Word) - capacity_words - off_heap_words) {
+        return std::unexpected(HeapError::limit_exceeded);
+    }
+    off_heap_words += words;
+    return {};
 }
 } // namespace erlang_aot::runtime::detail

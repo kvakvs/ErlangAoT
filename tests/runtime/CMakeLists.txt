@@ -30,6 +30,13 @@ add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/link.cmake")
 set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)
 
+# Off-heap binary ownership needs private layout headers; source cannot observe buffer references.
+add_executable(runtime_off_heap off_heap.cpp)
+erlang_aot_project_options(runtime_off_heap)
+target_link_libraries(runtime_off_heap PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_off_heap PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_off_heap COMMAND runtime_off_heap)
+
 # Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
 add_executable(runtime_heap_measurements heap_measurements.cpp)
 erlang_aot_project_options(runtime_heap_measurements)

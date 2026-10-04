@@ -1,6 +1,4 @@
 #include "heap_storage.hpp"
-#include <new>
-#include <stdexcept>
 #include <utility>
 
 namespace erlang_aot::runtime {
@@ -25,29 +23,16 @@ std::span<std::byte> HeapReservation::bytes() const noexcept {
     return active_ && storage_->alive() ? bytes_ : std::span<std::byte>{};
 }
 
-std::expected<void, HeapError> HeapReservation::commit(HeapDestructor destroy) noexcept {
+std::expected<void, HeapError> HeapReservation::commit() noexcept {
     if (!active_) {
         return std::unexpected(HeapError::invalid_size);
     }
-    auto failure = HeapError::expired_context;
-    try {
-        if (storage_->alive()) {
-            if (destroy) {
-                storage_->resources.push_back({bytes_.data(), destroy});
-            }
-            storage_->pending = false;
-            active_ = false;
-            return {};
-        }
-    } catch (const std::bad_alloc &) {
-        failure = HeapError::out_of_memory;
-    } catch (const std::length_error &) {
-        failure = HeapError::limit_exceeded;
+    if (!storage_->alive()) {
+        rollback();
+        return std::unexpected(HeapError::expired_context);
     }
-    if (destroy) {
-        destroy(bytes_.data());
-    }
-    rollback();
-    return std::unexpected(failure);
+    storage_->pending = false;
+    active_ = false;
+    return {};
 }
 } // namespace erlang_aot::runtime

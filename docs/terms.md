@@ -79,9 +79,11 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 
 ## Bitstrings
 
-- Packed MSB-first with exact bit length, zeroed padding. Up to 64 bytes inline;
-  larger values use shared immutable buffers that extracted tails retain.
-  Shared backing is charged once to the creating heap. Max 1,000,000 bits.
+- Packed MSB-first with exact bit length, zeroed padding. Up to 64 bytes live
+  inline in a heap binary sized to the data; larger values use a shared
+  immutable buffer outside the heap, viewed by off-heap binary cells that
+  extracted tails share. The buffer is charged once to the creating process.
+  Max 1,000,000 bits.
 - Construction stages all segments before publishing. Integer segments truncate;
   native endianness comes from the target data layout.
 - Float segments: widths 16/32/64; construction may encode infinity, but

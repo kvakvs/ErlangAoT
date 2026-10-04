@@ -9,7 +9,7 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/memory/heap_terms.cpp src/memory/heap_publication.cpp
     src/terms/container_access.cpp src/terms/container_factory.cpp src/terms/container_services.cpp src/terms/structural_order.cpp
     src/process/generated_calls.cpp src/process/roots.cpp src/process/services.cpp src/process/context.cpp src/process/ownership.cpp src/process/storage.cpp
-    src/memory/heap.cpp src/memory/heap_storage.cpp src/memory/heap_reservation.cpp src/memory/copy.cpp
+    src/memory/heap.cpp src/memory/heap_storage.cpp src/memory/heap_reservation.cpp src/memory/off_heap.cpp src/memory/copy.cpp
     src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp
     src/terms/term_text.cpp src/terms/term_text_scalars.cpp
     src/terms/atoms.cpp src/terms/atom_spelling.cpp src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp src/terms/equality.cpp src/terms/immediate_order.cpp src/terms/immediate_services.cpp
@@ -20,7 +20,6 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
 target_sources(erlang_runtime PRIVATE
     include/atom_storage.hpp
     include/base_types.hpp
-    include/binary_heap_object.hpp
     include/callable.hpp
     include/code_server.hpp
     include/mailbox.hpp

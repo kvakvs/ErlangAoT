@@ -14,7 +14,7 @@ void unpublish(HeapStorage &storage, std::span<const HeapObject> objects, std::s
 } // namespace
 
 TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReservation &reservation,
-                         std::span<const HeapObject> objects, HeapDestructor destroy) noexcept {
+                         std::span<const HeapObject> objects) noexcept {
     std::size_t inserted = 0;
     auto error = TermError::out_of_memory;
     try {
@@ -24,12 +24,11 @@ TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReserv
             }
             ++inserted;
         }
-        const auto committed = reservation.commit(destroy);
+        const auto committed = reservation.commit();
         if (committed) {
             return TermAccess::admit(objects.front().value, storage);
         }
         error = committed.error() == HeapError::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
-        destroy = nullptr; // commit has already destroyed the resource on its failure path.
     } catch (const std::bad_alloc &) {
         error = TermError::out_of_memory;
     } catch (const std::length_error &) {
@@ -38,9 +37,6 @@ TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReserv
         error = TermError::invalid_encoding;
     }
     unpublish(*storage, objects, inserted);
-    if (destroy) {
-        destroy(reservation.bytes().data());
-    }
     return std::unexpected(error);
 }
 } // namespace erlang_aot::runtime::detail

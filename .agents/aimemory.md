@@ -197,3 +197,9 @@ Plan11 step8A 2026-10-04: docs/runtime-heap.md contract; full_only CTest runtime
 (tests/runtime/heap_measurements.cpp, counting operator new). Baseline bb09359 x64 Debug: 100k kernel
 264/81 ms, 700000 used words, side bytes 24 MB (~80 B/cell std::map index), 66 KB/context.
 Logs build/plan11-step8a.
+Plan11 step8B 2026-10-04: BitCell -> layout::HeapBinaryCell (2 words + data) / RefcBinaryCell (6 words,
+shared_ptr<const BinaryBuffer=vector<byte>>, next_). Off-heap list memory/off_heap.{hpp,cpp}; link only
+after publish (cell built with empty shared_ptr, so rollback needs no destructor). off_heap_words charge
+(ProcessHeap::charge/uncharge_off_heap, private; BitAccess static members since anon helpers aren't
+friends). Test runtime_off_heap includes runtime/src privately. Python edits: bash heredoc with many
+quotes failed once ("unexpected EOF") -> write script to scratchpad. Logs build/plan11-step8b.

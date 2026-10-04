@@ -53,9 +53,6 @@ struct HeapMark {
     std::size_t capacity_words;
 };
 
-// Transfer destruction only after a resource has been constructed in its reserved storage.
-using HeapDestructor = void (*)(std::byte *) noexcept;
-
 class HeapReservation final {
   public:
     // Move the sole rollback obligation while preserving the backing address.
@@ -67,8 +64,8 @@ class HeapReservation final {
     ~HeapReservation();
     // Borrow aligned, zero-initialized storage until commit or rollback.
     std::span<std::byte> bytes() const noexcept;
-    // Commit initialized bytes; on failure destroy the supplied resource before rolling back.
-    std::expected<void, HeapError> commit(HeapDestructor destroy = nullptr) noexcept;
+    // Commit initialized words; an expired owner rolls the reservation back instead.
+    std::expected<void, HeapError> commit() noexcept;
 
   private:
     friend class ProcessHeap;
@@ -106,6 +103,8 @@ class ProcessHeap final {
     // Report consumed words (including alignment) and exact retained backing capacity.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
+    // Report words of off-heap binary buffers created by this process, charged to the same budget.
+    std::size_t off_heap_words() const noexcept;
 
   private:
     friend class ProcessContext;
@@ -117,6 +116,10 @@ class ProcessHeap final {
     friend struct detail::BitAccess;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
+    // Charge bytes of a new off-heap buffer; failures are reported like reservation failures.
+    std::expected<void, HeapError> charge_off_heap(std::size_t bytes) noexcept;
+    // Return a charge whose cell was never published.
+    void uncharge_off_heap(std::size_t bytes) noexcept;
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
     ProcessContext &owner_;
     // Pin stable backing independently of the context address; liveness still controls admission.

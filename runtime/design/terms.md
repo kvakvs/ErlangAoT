@@ -68,10 +68,10 @@ Cons cells have no header; they contain exactly a head term and a tail term.
 | `ConsCell` | 2 words | Head and tail traced |
 | `TupleCell` | 1 word | Arity consecutive term slots |
 | `MapCell` | 1 word | Key/value term pairs |
-| `HeapBinaryCell` | 2 words | Untraced Word data; valid high tail bits, zero means full final word |
-| `RefcBinaryCell` | Native C++ layout | Shared `BinaryHeapObject`, released by explicit C++ destruction |
+| `HeapBinaryCell` | 2 words | Bit length, then untraced data bytes rounded up to words (at most 64 bytes) |
+| `RefcBinaryCell` | 6 words | Bit offset/length, `shared_ptr` to an off-heap buffer, off-heap list link; moved by its relocation hook |
 | `ExternalFunctionCell` | 4 words | Module/name terms traced; arity untraced |
-| `ClosureCell` | Native C++ layout | Reserved callable weak reference and count, followed by traced capture slots |
+| `ClosureCell` | 3 words | Untraced callable registry ID and count, followed by traced capture slots |
 | `NativeRecordPrefix` | 3 words | Descriptor ID/count followed by traced field slots |
 
 All variable payloads follow fixed prefixes as separately allocated storage, without
