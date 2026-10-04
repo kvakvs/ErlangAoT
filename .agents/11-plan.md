@@ -666,14 +666,26 @@ holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
 `erlang_aot_roots_leave_v4` keep their ABI.
 
 - Success criteria
-  - [ ] A live frame's address stays stable (reserved capacity or stable
+  - [x] A live frame's address stays stable (reserved capacity or stable
     segments, as chosen in 8A); the 1,000,000-word and 4,096-frame limits and
     LIFO errors are unchanged.
-  - [ ] Stack enumeration yields every generated root slot.
+  - [x] Stack enumeration yields every generated root slot.
 - Tests
-  - [ ] Existing root, startup and executable goldens pass unchanged.
-  - [ ] Focused tests for limit exhaustion, LIFO violation and restore after a
+  - [x] Existing root, startup and executable goldens pass unchanged.
+  - [x] Focused tests for limit exhaustion, LIFO violation and restore after a
     failed call.
+
+Done 2026-10-04. `GeneratedRoots` keeps one process stack: `Segment`s (`unique_ptr<Word[]>`, capacity,
+used) and `Frame` windows (slots pointer, count, segment, handoff). The first segment holds
+`RootOptions::segment_words` (256); a frame that does not fit the top segment goes to the empty
+successor or a new segment doubling the previous one (at least the frame, at most `words`), so live
+windows never move. Returns keep one spare segment above the top; an empty stack keeps only a
+first-size segment. `capacity()` reports reserved words for 8H statistics. ABI, limits and LIFO
+errors are unchanged. `runtime_roots` gained `segments` (stability across small segments, full
+enumeration, word bound across segments, trimming), `default_limits` (1,000,000 words, 4,096 frames)
+and `failed_call` (restore after a failed call reuses the stack base); entry grows the frame index
+before any segment, and `runtime_lifecycle_failure` checks a failed entry keeps no segment. Gate:
+fresh Debug, 138/138 fast CTests, `check-quality` (46 units) pass.
 
 <a id="step-8g"></a>
 

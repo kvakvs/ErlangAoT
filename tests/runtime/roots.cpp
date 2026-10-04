@@ -3,7 +3,9 @@
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
+#include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 using namespace erlang_aot::runtime;
@@ -57,6 +59,68 @@ void limits(ProcessContext &context) {
     require(roots.leave(&forged, 0) == Status::internal_error && roots.depth() == 1, "out-of-order release accepted");
     require(roots.leave(first, 0) == Status::ok, "first-failure root cleanup failed");
     roots.restore(0);
+}
+
+// Frames crossing small stack segments keep their addresses and slots, all slots are enumerated, the word
+// bound counts every segment, and spare segments are reused or trimmed as frames return.
+void segments(ProcessContext &context) {
+    GeneratedInvocation invocation(context.generated_calls());
+    GeneratedRoots roots(context, RootOptions{.words = 24, .frames = 16, .segment_words = 4});
+    std::vector<std::pair<Word *, std::size_t>> frames;
+    for (const std::size_t count : {3, 3, 5, 2, 7}) {
+        auto *slots = roots.enter(count);
+        require(slots && std::ranges::all_of(std::span(slots, count), [](Word word) { return word == 0; }),
+                "segment window not zeroed");
+        std::ranges::fill(std::span(slots, count), encode_integer(static_cast<std::int64_t>(frames.size())).value());
+        frames.emplace_back(slots, count);
+    }
+    for (std::size_t index = 0; index < frames.size(); ++index) {
+        const auto expected = encode_integer(static_cast<std::int64_t>(index)).value();
+        require(std::ranges::all_of(std::span(frames[index].first, frames[index].second),
+                                    [&](Word word) { return word == expected; }),
+                "frame moved or was overwritten by a later frame");
+    }
+    std::size_t visited = 0;
+    roots.visit([&](Word &) { ++visited; });
+    require(visited == 20 && roots.words() == 20 && roots.capacity() >= 20, "stack enumeration missed slots");
+    require(roots.enter(4) && !roots.enter(1), "word bound ignored across segments");
+    require(context.generated_calls().failure()->status == Status::resource_limit, "stack limit status lost");
+    const auto reserved = roots.capacity();
+    roots.restore(0);
+    require(roots.depth() == 0 && roots.words() == 0 && roots.capacity() < reserved, "spare segments not trimmed");
+}
+
+// The default bounds stay 1,000,000 live words and 4,096 frames.
+void default_limits(ProcessContext &context) {
+    {
+        GeneratedInvocation invocation(context.generated_calls());
+        RootInvocation scope(context.roots());
+        require(context.roots().enter(1'000'000) && !context.roots().enter(1), "default word bound changed");
+    }
+    GeneratedInvocation invocation(context.generated_calls());
+    RootInvocation scope(context.roots());
+    for (std::size_t frame = 0; frame < 4096; ++frame) {
+        require(context.roots().enter(1) != nullptr, "default frame bound too small");
+    }
+    require(!context.roots().enter(1) && context.roots().depth() == 4096, "default frame bound changed");
+}
+
+// A failed call leaves frames behind; the host scope restores them and the next call reuses the stack.
+void failed_call(ProcessContext &context) {
+    auto &roots = context.roots();
+    const Word *first = nullptr;
+    {
+        GeneratedInvocation invocation(context.generated_calls());
+        RootInvocation scope(roots);
+        first = roots.enter(2);
+        require(first && roots.enter(300), "frames before failure not entered");
+        context.generated_calls().fail_service(Status::internal_error);
+        require(!roots.enter(1), "entry admitted after failure");
+    }
+    require(roots.depth() == 0 && roots.words() == 0 && roots.capacity() > 0, "failed call not restored");
+    GeneratedInvocation invocation(context.generated_calls());
+    RootInvocation scope(roots);
+    require(roots.enter(2) == first, "restored stack not reused from its base");
 }
 
 // Null/unscoped calls reject before allocating or reading a result representation.
@@ -115,6 +179,9 @@ int main() {
         transfers(context);
         limits(context);
         transfers(context);
+        segments(context);
+        default_limits(context);
+        failed_call(context);
         root_set(*runtime);
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

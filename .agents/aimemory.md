@@ -223,3 +223,7 @@ Plan11 step8E 2026-10-04: Term {value_, atom_, HeapStorage* heap_, weak lifetime
 storage pin (off_heap test: buffers die at destroy_context). TermError::stale_term. Handoffs optional<Word>;
 GeneratedCallState::visit rebinds payload Term (friend). visit_roots template on ProcessContext.
 collect(span<Word> roots, sink) overload. Logs build/plan11-step8e.
+Plan11 step8F 2026-10-04: GeneratedRoots = segmented stack (Segment{unique_ptr<Word[]>,capacity,used},
+Frame{Word* slots,count,segment,handoff}); RootOptions.segment_words=256, doubling, trim keeps 1 spare
+(empty stack: only first-size seg0). capacity() for 8H stats. Bash `cat > file` w/o heredoc hangs on stdin.
+Logs build/plan11-step8f.

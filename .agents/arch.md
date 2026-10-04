@@ -96,7 +96,8 @@
   8D admission = ownership (sorted chunk ranges, used bound) + header shape; process pointers only name
   object starts, so no index or start bitmap. 8E ERTS host terms: `Term` = word + borrowed heap +
   weak lifetime + collection count (no pin); roots = stack slots, handoff words, error payload,
-  explicit span (`ProcessContext::visit_roots`). Revision-4
+  explicit span (`ProcessContext::visit_roots`). 8F process root stack: `GeneratedRoots` frames are
+  windows in stable doubling segments (256 words first, one spare kept); same bounds/LIFO. Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
   Exact-start object indices prove ownership before extraction. Compound host handles

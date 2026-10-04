@@ -81,9 +81,13 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   runtime allocates a fragment sized to fit (at least the minimum heap size)
   and chains it to the process. The next collection merges fragments into the
   new heap block.
-- **Stack.** Generated root frames (BEAM Y registers) live in stack segments
-  kept apart from the heap (8F). A frame never spans segments, so its address
-  stays stable while it is live. Bounds stay 1,000,000 words and 4,096 frames.
+- **Stack.** Generated root frames (BEAM Y registers) are windows in stack
+  segments kept apart from the heap (8F). The first segment holds 256 words;
+  each new segment doubles the previous one (at least the frame size, at most
+  the word bound). A frame never spans segments, so its address stays stable
+  while it is live. Returning frames keep one empty spare segment above the
+  top; an empty stack keeps only a first-size segment. Bounds stay 1,000,000
+  live words and 4,096 frames.
 - **Off-heap list.** As above.
 - **Old heap.** None. Generational collection is deferred; immutable terms
   never point from older to newer data, so a high-water mark and an old heap

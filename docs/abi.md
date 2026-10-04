@@ -88,14 +88,15 @@ Raw entry callers must open a `GeneratedInvocation`; normal hosts use
 ## Root scopes
 
 Every generated function calls `erlang_aot_roots_enter_v4(context, count)` before
-loading arguments and `erlang_aot_roots_leave_v4(context, buffer, result)` on
-return. Buffers are zeroed target-word slots, bounded per context to 1,000,000
+loading arguments and `erlang_aot_roots_leave_v4(context, frame, result)` on
+return. A frame is a zeroed window of target-word slots on the process root
+stack (stable segments apart from the heap), bounded per context to 1,000,000
 live words and 4,096 frames.
 
 - Arguments occupy persistent slots; every evaluated value is stored in a slot
   before the next expression or call. Failed candidates clear their slots.
 - Results become root words in the parent's handoff (BEAM X registers) before
-  the buffer is released; error payloads are root words of the channel (BEAM
+  the frame is released; error payloads are root words of the channel (BEAM
   `fvalue`). LIFO violations are infrastructure errors.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
   There is no tracing or moving collector yet.
