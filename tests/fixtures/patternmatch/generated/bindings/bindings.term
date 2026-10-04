@@ -32,6 +32,10 @@
 {case_nested_unsafe, rejected, unsafe_var}.
 {case_clause_scope, rejected, unbound_var}.
 {case_sibling, rejected, unbound_var}.
+{if_export, accepted, none}.
+{if_unsafe, rejected, unsafe_var}.
+{if_clause_scope, rejected, unbound_var}.
+{if_guard_unbound, rejected, unbound_var}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

@@ -52,11 +52,10 @@ bool booleans(const ast::ExprValue &value) {
             binary->operation == ast::BinaryOperator::or_else);
 }
 
-// Case clause guards compare each test with the canonical true atom.
+// Case and if clause guards compare each test with the canonical true atom.
 bool guarded(const ast::ExprValue &value) {
-    const auto *selection = std::get_if<ast::CaseExpression>(&value);
-    return selection &&
-           std::ranges::any_of(selection->clauses, [](const auto &clause) { return clause.guard.has_value(); });
+    return std::ranges::any_of(semantic::branch_clauses(value),
+                               [](const auto &clause) { return clause.guard != nullptr; });
 }
 
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.

@@ -11,7 +11,7 @@ struct BindingFacts {
     std::map<const ast::Expression *, const Binding *> events;
     // Track successful whole-value assignments; extracted and unproved values remain top.
     std::map<BindingId, Fact> values;
-    // Identities defined by several case clauses stay top; their clause-specific facts are not joined.
+    // Identities defined by several case/if clauses stay top; their clause-specific facts are not joined.
     std::set<BindingId> shared;
 
     // Index validated bindings within the same batch inference ceiling.

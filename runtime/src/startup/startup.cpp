@@ -130,9 +130,9 @@ int run(const StartupDescriptor &startup, int argc, char **argv) {
 } // namespace
 
 TermResult<std::string> exception_reason(const CallFailure &failure) {
-    static constexpr std::array<std::string_view, 10> names{"",          "function_clause", "badmatch", "badarg",
+    static constexpr std::array<std::string_view, 11> names{"",          "function_clause", "badmatch", "badarg",
                                                             "badarg",    "badarith",        "badmap",   "badkey",
-                                                            "badrecord", "case_clause"};
+                                                            "badrecord", "case_clause",     "if_clause"};
     const auto index = failure.reason ? static_cast<std::size_t>(*failure.reason) : 0;
     if (index == 0 || index >= names.size()) {
         return std::unexpected(TermError::invalid_argument);

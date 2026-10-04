@@ -12,7 +12,8 @@ enum class ErrorReason : std::uint8_t {
     badmap = 6,
     badkey = 7,
     badrecord = 8,
-    case_clause = 9
+    case_clause = 9,
+    if_clause = 10
 };
 } // namespace erlang_aot::abi::v1
 

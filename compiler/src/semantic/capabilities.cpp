@@ -96,9 +96,9 @@ void patterns(const Module &module, const Function &function, const ast::Express
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
     }
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
-        for (const auto &clause : selection->clauses) {
-            (void)make_match_plan(module, function, pattern_root(*module.syntax, clause.pattern), out,
+    for (const auto &clause : branch_clauses(expression.value)) {
+        if (clause.pattern) {
+            (void)make_match_plan(module, function, pattern_root(*module.syntax, *clause.pattern), out,
                                   {.word_bits = bits});
         }
     }

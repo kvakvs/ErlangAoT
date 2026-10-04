@@ -25,6 +25,10 @@
     "guard_read.erl",
     "guard_wildcard.erl",
     "identity.erl",
+    "if_clause_scope.erl",
+    "if_export.erl",
+    "if_guard_unbound.erl",
+    "if_unsafe.erl",
     "named_missing.erl",
     "rebind.erl",
     "repeat.erl",
@@ -347,6 +351,42 @@
         "diagnostic": "unbound variable X",
         "otp_diagnostic": "unbound_var",
         "sha256": "37409593d74fafa0ddb185dbc26abfd513f21817bc4bec7743dc29c18baa0dce"
+      },
+      {
+        "name": "if_export",
+        "arity": 1,
+        "body": "f(A) -> if A > 0 -> X = a; true -> X = b end, X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "4b8641987c4de95c156950279c2b43e9b1e35d686077793d878bbb36fa73b214"
+      },
+      {
+        "name": "if_unsafe",
+        "arity": 1,
+        "body": "f(A) -> if A > 0 -> X = a; true -> ok end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "711eaf7f3782cb7dce3cf48e48087cebe28d288533ffc8ca3231b970098df76e"
+      },
+      {
+        "name": "if_clause_scope",
+        "arity": 1,
+        "body": "f(A) -> if A > 0 -> X = a; true -> X end.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "9467acd1b2aa98caca826854c90a1dc31fd81d18cd573fa243cc5211793f6011"
+      },
+      {
+        "name": "if_guard_unbound",
+        "arity": 1,
+        "body": "f(A) -> if X > A -> ok; true -> ok end.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "85766af15739db15375b50578502b35f2318a4e1b3da83037d8e465265ba64e2"
       },
       {
         "name": "bindings_local",

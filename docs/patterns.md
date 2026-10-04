@@ -1,6 +1,6 @@
 # Patterns, clauses and body matches
 
-Function clause heads, body matches and `case` clauses are executable for every
+Function clause heads, body matches, `case` clauses and `if` guards are executable for every
 admitted term kind ([terms](terms.md)). Legality and availability are checked
 separately: invalid Erlang is a **semantic** error even in unreachable code;
 legal code that needs a missing feature gets a **capability** diagnostic; a
@@ -11,7 +11,8 @@ runtime **mismatch** is never a compiler error.
 | Function heads + guards | Implemented; exhaustion raises `error:function_clause` |
 | Body matches and sequences, `begin`/`end` | Implemented; failure raises `error:{badmatch, RHS}` |
 | `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
-| `if`, `maybe`, comprehensions | Capability (backlog F16) |
+| `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
+| `maybe`, comprehensions | Capability (backlog F16) |
 | `catch`/`try` patterns | Capability (F20) |
 | Fun clauses | Capability (F18) |
 | `receive` | Capability (F22/F25) |
@@ -58,6 +59,9 @@ size/unit, typed/sized literal strings and non-final unsized binary segments.
   (including guard errors) goes to the next clause, exhaustion raises
   `{case_clause, Value}`. Every clause starts from the bindings before the
   case; the case value and each exported binding join in one PHI per value.
+- An `if` is a `case` without scrutinee or patterns: each clause guard is tried
+  in order (a guard error rejects the clause), exhaustion raises `if_clause`,
+  and values and exports join the same way.
 - `begin`/`end` runs its sequence in the enclosing scope and yields its last
   value.
 - Body sequences run in order and return the last value. A match evaluates its

@@ -2,8 +2,6 @@ exit 1
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:25:16: [heap expressions] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:27:16: [heap expressions] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:29:6: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:42:5: [guards] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:53:5: [guards] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:71:16: [heap expressions] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:73:16: [heap expressions] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:86:23: [heap expressions] notimpl [module="avl"]

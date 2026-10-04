@@ -8,6 +8,12 @@ bool payload_reason(abi::v1::ErrorReason reason) {
            reason == abi::v1::ErrorReason::badmap || reason == abi::v1::ErrorReason::badkey ||
            reason == abi::v1::ErrorReason::badrecord || reason == abi::v1::ErrorReason::case_clause;
 }
+
+// Atom-only language failures carry no term.
+bool plain_reason(abi::v1::ErrorReason reason) {
+    return reason == abi::v1::ErrorReason::function_clause || reason == abi::v1::ErrorReason::badarg ||
+           reason == abi::v1::ErrorReason::badarith || reason == abi::v1::ErrorReason::if_clause;
+}
 } // namespace
 
 bool GeneratedCallState::enter() noexcept {
@@ -71,8 +77,7 @@ std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason
             return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
         }
         failure.value = *payload;
-    } else if (reason != abi::v1::ErrorReason::function_clause && reason != abi::v1::ErrorReason::badarg &&
-               reason != abi::v1::ErrorReason::badarith) {
+    } else if (!plain_reason(reason)) {
         state.fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);
     }

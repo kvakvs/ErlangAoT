@@ -14,7 +14,7 @@ and [files.md](files.md). Full earlier wording is in Git history.
 | Test migration | Frontend/project/runtime migrations, 2026-09-28 | Frontend sanitizers pending. |
 | Compiler/runtime milestone | Steps 1–46, 2026-09-29 | Immediate-only subset and runtime skeleton. |
 | Pattern matching and guards | Steps 1–20 and 15a, 2026-10-01–03 | Function clauses and body matches over the admitted domain. |
-| Plan 11 | Steps 1–9 and 8A–8I, 2026-10-03–04 | Linked executables, golden runner, ERTS-style heap with a copying collector on host request, `case`/`begin`. |
+| Plan 11 | Steps 1–10 and 8A–8I, 2026-10-03–05 | Linked executables, golden runner, ERTS-style heap with a copying collector on host request, `case`/`begin`/`if`. |
 
 **Still unfinished:** GC and graph copying, process execution/messaging, more
 Erlang source contexts and representations, native platform/sanitizer closure.
@@ -165,7 +165,7 @@ Windows x64 Debug 124/124 CTests and 258 quality units. Descriptors use ABI
 revision 4; the revision-2 failure channel is unchanged. Normal builds and tests
 need no OTP.
 
-## Plan 11 (steps 1–9, 2026-10-03–04, Windows x64)
+## Plan 11 (steps 1–10, 2026-10-03–05, Windows x64)
 
 Compact per-step record: [11-plan.md](11-plan.md#step-1).
 
@@ -189,6 +189,8 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - **Control flow (9):** `begin`/`end` and `case` with ordered clauses, guards,
   OTP export/unsafe scoping and `{case_clause, V}`; executable goldens
   `case_select`, `case_scope`; OTP-classed binding rows in the bindings corpus.
+- **`if` (10):** guard-only clauses share the `case` scoping and joins;
+  exhaustion raises `if_clause`; golden `if_select`, four `if_*` binding rows.
 
 <a id="outstanding-work-to-finish"></a>
 
@@ -209,7 +211,7 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - [ ] **Collection and copying:** generated-code safepoints, graph copying
   between heaps, continuation/mailbox/transit roots (host-requested copying
   collection done in 8H).
-- [ ] **More Erlang semantics:** if/maybe/comprehensions, exceptions and
+- [ ] **More Erlang semantics:** maybe/comprehensions, exceptions and
   handlers, recursion and tail calls, record updates/`record_info`/native
   records, closures and dynamic calls.
 - [ ] **Identities and atoms:** pid/port/reference services; synchronized atom

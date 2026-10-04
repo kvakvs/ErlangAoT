@@ -40,7 +40,8 @@ context. Analysis is deterministic.
   clauses reuse the identity an earlier clause gave the name); names bound by
   only some clauses, or unsafe in any, are unsafe afterwards. Exports join
   conservatively like OTP's `erl_lint` (`icrt_export`); OTP's warning when a
-  later pattern matches an exported name is not emitted.
+  later pattern matches an exported name is not emitted. `if` clauses follow
+  the same rules with a guard and no pattern.
 - `begin`/`end` is a sequence in the enclosing scope.
 - Unbound, unsafe and wildcard reads are located errors. Messages keep the
   compiler's wording (`unbound variable X`, `unsafe variable X`); the bindings
@@ -85,8 +86,8 @@ Inference is separate from declared types and never trusts specs.
   (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements,
   service results and unproved values stay `term()` without relations.
 - Clause results join conservatively: a projection survives only if every
-  clause returns the same argument. A `case` joins its clause results the same
-  way; a binding defined by several case clauses stays `term()`.
+  clause returns the same argument. A `case` or `if` joins its clause results
+  the same way; a binding defined by several of its clauses stays `term()`.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
 - Specs are checked only for provable contradictions with known integer

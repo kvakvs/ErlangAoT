@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "entry": "choose",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[negative,zero,zero,even,odd,fraction,float,symbolic,symbolic,other]\n[third,first,other,list,fallback,other]\n[{big,2000},{small,30},{none,0}]\n[9,6]\n[above,below,equal,same,atom,other]\n[{positive,1},{nonpositive,0},1,other]\n"
+    },
+    {
+      "args": [
+        "if_clause"
+      ],
+      "stderr": "^uncaught exception error: if_clause",
+      "exit_status": 1,
+      "stdout": "2\n"
+    },
+    {
+      "args": [
+        "body"
+      ],
+      "stderr": "^uncaught exception error: \\{badmatch,\\{1\\}\\}",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "choose.erl": "6fd11faf55e9f1aa05385584579827c30fafe9f081bd176a734b02ca45d43e87"
+  }
+}

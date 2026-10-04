@@ -430,11 +430,25 @@ export (bound in every clause) and unsafe-variable diagnostics.
 Backlog: F14, F16. Depends on: [9](#step-9).
 
 - Success criteria
-  - [ ] Guard-only clauses select in order; no true guard raises `if_clause`;
+  - [x] Guard-only clauses select in order; no true guard raises `if_clause`;
     variable export follows step 9 rules.
 - Tests
-  - [ ] Golden programs for guard sequences, failing guards, `true` fallback and
+  - [x] Golden programs for guard sequences, failing guards, `true` fallback and
     `if_clause`.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`.
+  `semantic::branch_clauses` presents case and if clauses uniformly (optional
+  pattern/guard, body), so binding analysis, guard analysis, capability
+  planning, atom collection and the lowering walker reuse the step-9 paths;
+  inference joins `if` results like `case`. `ErrorReason::if_clause = 10`
+  (atom only; runtime `plain_reason`). OTP golden `executables_if_select`
+  (`;`/`,` sequences, `andalso`/`orelse`, raising guards, `true` fallback,
+  exports, nested case/if, `if_clause`, body error not retried); bindings
+  corpus +4 `if_*` rows verified by OTP 29.1.1 (`--check` reproduces);
+  `--print-types` `if` join checks; semantic `if_guard_call`/`if_in_guard`;
+  placeholder `[guards]` sample now `self()` in a guard; avltree/textstats
+  compile diagnostics lose their `if` rows. Fresh Windows x64 Debug: fast
+  CTest 143/143; affected tests in full mode 8/8; Lizard 0 warnings; tidy 114
+  changed units pass. Logs `build/plan11-step10/`.
 
 <a id="step-11"></a>
 

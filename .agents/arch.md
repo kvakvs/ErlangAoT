@@ -41,6 +41,8 @@
   value plus every exported binding with PHIs; exhaustion raises `{case_clause, V}` (ErrorReason 9). Binding
   analysis gives a name bound by several clauses one identity (`BindingAnalysis::branch_names`) and records
   exports in `Function::exports`; partial definitions become unsafe. `begin`/`end` is a plain sequence.
+  `if` (step 10) takes the same paths with no scrutinee or pattern: `semantic::branch_clauses` gives every
+  consumer one case/if clause view; exhaustion raises the atom-only `if_clause` (ErrorReason 10).
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

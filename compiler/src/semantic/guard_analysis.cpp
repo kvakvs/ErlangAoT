@@ -92,18 +92,20 @@ void push_guard(const ast::GuardSyntax &guard, std::vector<Visit> &pending) {
     }
 }
 
-// Schedule a case's scrutinee and bodies in the current context and its clause guards as top-level guard tests.
-bool case_guards(const ast::Expression &expression, const Visit &visit, std::vector<Visit> &pending) {
-    const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
-    if (!selection) {
+// Schedule a case scrutinee and case/if bodies in the current context and clause guards as top-level guard tests.
+bool branch_guards(const ast::Expression &expression, const Visit &visit, std::vector<Visit> &pending) {
+    const auto clauses = branch_clauses(expression.value);
+    if (clauses.empty()) {
         return false;
     }
-    pending.push_back({selection->value, false, visit.guard});
-    for (const auto &clause : selection->clauses) {
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
+        pending.push_back({selection->value, false, visit.guard});
+    }
+    for (const auto &clause : clauses) {
         if (clause.guard) {
             push_guard(*clause.guard, pending);
         }
-        for (const auto &body : clause.body) {
+        for (const auto &body : *clause.body) {
             pending.push_back({body, false, visit.guard});
         }
     }
@@ -118,7 +120,7 @@ void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pendi
     } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }
-    if (case_guards(expression, visit, pending)) {
+    if (branch_guards(expression, visit, pending)) {
         return;
     }
     const auto children = expression_children(state.module, expression);

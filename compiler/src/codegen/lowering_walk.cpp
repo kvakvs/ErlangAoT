@@ -15,7 +15,7 @@ struct Visit {
     ast::ExprId id;
     Action action = Action::enter;
     // Record-field actions capture one completed evaluation before a reused initializer can run again;
-    // case clause actions name their clause here.
+    // case and if clause actions name their clause here.
     std::size_t field = 0;
     std::optional<ast::ExprId> child = {};
 };
@@ -34,12 +34,12 @@ struct CaseIncoming {
 };
 
 struct CaseJoin {
-    // Every clause matches the same scrutinee and starts from the bindings visible before the case.
+    // Every case clause matches the same scrutinee (null for if); clauses start from the bindings before the branch.
     llvm::Value *value;
     std::map<semantic::BindingId, llvm::Value *> bindings;
     // The merge block is inserted after the last clause; completed clauses collect their incoming edges.
     llvm::BasicBlock *merge;
-    // The mismatch continuation of the current clause starts the next one, or raises case_clause.
+    // The mismatch continuation of the current clause starts the next one, or raises case_clause/if_clause.
     llvm::BasicBlock *next = nullptr;
     std::vector<CaseIncoming> incoming = {};
 };
@@ -102,14 +102,16 @@ bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<
     return true;
 }
 
-// A case evaluates its scrutinee first; clause selection starts once that value exists.
+// A case evaluates its scrutinee first and clause selection starts once that value exists; an if selects at once.
 bool case_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
-    const auto *selection = std::get_if<ast::CaseExpression>(&state.module.syntax->expression(id).value);
-    if (!selection) {
+    const auto &value = state.module.syntax->expression(id).value;
+    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
         return false;
     }
     pending.push_back({id, Action::case_select});
-    pending.push_back({selection->value});
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        pending.push_back({selection->value});
+    }
     return true;
 }
 
@@ -185,35 +187,37 @@ struct Walk {
     std::map<const ast::Expression *, LazyJoin> joins;
     std::map<const ast::Expression *, CaseJoin> cases;
 
-    // Open the case join and try its first clause.
+    // Open the case or if join and try its first clause.
     void select(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
-        const auto &selection = std::get<ast::CaseExpression>(expression.value);
+        const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
         auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "case.join");
-        auto *value = state.values.at(&state.module.syntax->expression(selection.value));
+        auto *value = selection ? state.values.at(&state.module.syntax->expression(selection->value)) : nullptr;
         cases.try_emplace(&expression, value, state.bindings, merge);
         start_clause(id, 0);
     }
 
-    // Match one clause pattern and guard from the case's entry bindings, then schedule its body.
+    // Match one clause pattern (case only) and guard from the entry bindings, then schedule its body.
     void start_clause(const ast::ExprId &id, const std::size_t index) {
         const auto &expression = state.module.syntax->expression(id);
-        const auto &clause = std::get<ast::CaseExpression>(expression.value).clauses.at(index);
+        const auto clause = semantic::branch_clauses(expression.value).at(index);
         auto &join = cases.at(&expression);
         auto &context = state.entry.getContext();
         state.bindings = join.bindings;
         auto *body = llvm::BasicBlock::Create(context, "case.body", &state.entry);
-        auto *guard = clause.guard ? llvm::BasicBlock::Create(context, "case.guard", &state.entry) : body;
         join.next = llvm::BasicBlock::Create(context, "case.next", &state.entry);
-        const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, clause.pattern));
-        lower_match_plan(state, plan, std::array{join.value}, guard, join.next);
-        if (clause.guard) {
+        if (clause.pattern) {
+            auto *guard = clause.guard ? llvm::BasicBlock::Create(context, "case.guard", &state.entry) : body;
+            const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, *clause.pattern));
+            lower_match_plan(state, plan, std::array{join.value}, guard, join.next);
             state.builder.SetInsertPoint(guard);
+        }
+        if (clause.guard) {
             lower_guard(state, *clause.guard, {.success = body, .rejection = join.next});
         }
         state.builder.SetInsertPoint(body);
         pending.push_back({id, Action::case_clause_end, index});
-        for (auto child = clause.body.rbegin(); child != clause.body.rend(); ++child) {
+        for (auto child = clause.body->rbegin(); child != clause.body->rend(); ++child) {
             pending.push_back({*child});
         }
     }
@@ -221,9 +225,9 @@ struct Walk {
     // Record a completed clause's edge to the join, then try the next clause or finish the case.
     void clause_end(const Visit &visit) {
         const auto &expression = state.module.syntax->expression(visit.id);
-        const auto &selection = std::get<ast::CaseExpression>(expression.value);
+        const auto clauses = semantic::branch_clauses(expression.value);
         auto &join = cases.at(&expression);
-        const auto &last = state.module.syntax->expression(selection.clauses.at(visit.field).body.back());
+        const auto &last = state.module.syntax->expression(clauses.at(visit.field).body->back());
         CaseIncoming completed{state.builder.GetInsertBlock(), {state.values.at(&last)}};
         for (const auto &identity : state.function.exports.at(&expression)) {
             completed.values.push_back(state.bindings.at(identity));
@@ -231,7 +235,7 @@ struct Walk {
         join.incoming.push_back(std::move(completed));
         state.builder.CreateBr(join.merge);
         state.builder.SetInsertPoint(join.next);
-        if (visit.field + 1 < selection.clauses.size()) {
+        if (visit.field + 1 < clauses.size()) {
             start_clause(visit.id, visit.field + 1);
             return;
         }
@@ -239,13 +243,15 @@ struct Walk {
         cases.erase(&expression);
     }
 
-    // Raise {case_clause, Value} when no clause matched, then join clause values and exported bindings.
+    // Raise {case_clause, Value} or if_clause when no clause matched, then join clause values and exported bindings.
     void finish_case(const ast::Expression &expression, CaseJoin &join) {
         if (join.next->use_empty()) {
             state.builder.ClearInsertionPoint();
             join.next->eraseFromParent();
-        } else {
+        } else if (join.value) {
             raise_reason(state, abi::v1::ErrorReason::case_clause, join.value);
+        } else {
+            raise_reason(state, abi::v1::ErrorReason::if_clause);
         }
         join.merge->insertInto(&state.entry);
         state.builder.SetInsertPoint(join.merge);

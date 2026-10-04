@@ -53,7 +53,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::CaseExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::IfExpression &) const { return "guards"; }
+    std::string_view operator()(const ast::IfExpression &) const { return {}; }
 
     std::string_view operator()(const ast::ReceiveExpression &) const { return "receive"; }
 

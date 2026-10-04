@@ -12,7 +12,8 @@ struct BindingAnalysis {
     std::size_t limit;
     // Pattern errors invalidate tentative bindings even before the module transaction is discarded.
     bool invalid_pattern = false;
-    // Names defined by earlier clauses of each enclosing case; later clauses reuse them so exports share one identity.
+    // Names defined by earlier clauses of each enclosing case or if; later clauses reuse them so exports share
+    // one identity.
     std::vector<std::map<std::u32string, BindingId>> branch_names = {};
 
     // Stop bounded iterative walks at the original node that exhausted the budget.

@@ -117,6 +117,10 @@ Step facts beyond the plan record:
   Pre-existing fix: capability pattern planning skipped after failed binding pass (was "invalid map<K, T> key").
   Bindings corpus: 8 case_* rows, OTP classes via regenerate --corpus bindings; sibling_local now compiles.
   Old step-9 attempt (pre phase C) sources reused for executables case_select/case_scope.
+- 10: if = case without scrutinee/pattern via semantic::branch_clauses (Branch{pattern*, guard*, body*}); CaseJoin.value
+  null for if. Runtime erlang_aot_raise_v2 whitelists atom-only reasons (plain_reason) -> new plain reasons need it.
+  OTP lint rejects `X =:= 0.0` in fixtures (match_float_zero). bindings.term rows are authored expectations; OTP
+  regenerate only verifies them (fill corpus.json row sha256 = LF digest). Edit tool may write CRLF into .py: normalize.
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

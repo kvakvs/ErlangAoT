@@ -33,7 +33,7 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
     return inference.expressions.at(&syntax.expression(argument));
 }
 
-// Only relations common to every successful function candidate or case clause survive the join.
+// Only relations common to every successful function candidate or case/if clause survive the join.
 template <typename Clauses> Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses) {
     auto result = inference.expressions.at(&syntax.expression(clauses.front().body.back()));
     for (const auto &clause : clauses) {
@@ -67,6 +67,9 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     }
     if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
         return joined(inference, syntax, selection->clauses);
+    }
+    if (const auto *choice = std::get_if<ast::IfExpression>(&expression.value)) {
+        return joined(inference, syntax, choice->clauses);
     }
     if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
         return inference.expressions.at(&syntax.expression(block->body.back()));

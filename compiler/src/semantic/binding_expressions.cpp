@@ -22,7 +22,7 @@ struct Visit {
     // Explicit tasks preserve RHS-first matches and isolate conditionally evaluated definitions.
     ast::ExprId id;
     Action action = Action::expression;
-    // Branch tasks name the case clause they start or finish.
+    // Branch tasks name the case or if clause they start or finish.
     std::size_t clause = 0;
 };
 
@@ -33,7 +33,7 @@ struct SiblingScope {
 };
 
 struct CaseScope {
-    // Every clause starts from the scope after the scrutinee; finished clause scopes wait for the join.
+    // Every clause starts from the scope after a case scrutinee or before an if; finished scopes wait for the join.
     BindingEnvironment incoming;
     std::vector<BindingEnvironment> clauses;
 };
@@ -99,30 +99,32 @@ bool conditional(const ast::ExprValue &value, std::vector<Visit> &pending) {
     return true;
 }
 
-// A case evaluates its scrutinee in the enclosing scope before any clause is bound.
+// A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if starts with its clauses.
 bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
-    const auto *selection = std::get_if<ast::CaseExpression>(&value);
-    if (!selection) {
+    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
         return false;
     }
     pending.push_back({id, Action::branch});
-    pending.push_back({selection->value});
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        pending.push_back({selection->value});
+    }
     return true;
 }
 
 // Bind one clause's pattern and guard over the incoming scope, then schedule its body before the clause end.
 void begin_branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
                   std::vector<Visit> &pending) {
-    const auto &selection = std::get<ast::CaseExpression>(state.module.syntax->expression(visit.id).value);
-    const auto &clause = selection.clauses.at(visit.clause);
+    const auto clause = branch_clauses(state.module.syntax->expression(visit.id).value).at(visit.clause);
     BindingCandidate head{environment, {}};
-    bind_pattern(state, clause.pattern, head, BindingContext::body);
+    if (clause.pattern) {
+        bind_pattern(state, *clause.pattern, head, BindingContext::body);
+    }
     if (clause.guard) {
         bind_guard(state, *clause.guard, head);
     }
     head.commit(environment);
     pending.push_back({visit.id, Action::branch_end, visit.clause});
-    for (auto body = clause.body.rbegin(); body != clause.body.rend(); ++body) {
+    for (auto body = clause.body->rbegin(); body != clause.body->rend(); ++body) {
         pending.push_back({*body});
     }
 }
@@ -171,8 +173,7 @@ void branch_end(BindingAnalysis &state, const Visit &visit, BindingEnvironment &
         }
     }
     current.clauses.push_back(std::move(environment));
-    const auto &selection = std::get<ast::CaseExpression>(state.module.syntax->expression(visit.id).value);
-    if (visit.clause + 1 < selection.clauses.size()) {
+    if (visit.clause + 1 < branch_clauses(state.module.syntax->expression(visit.id).value).size()) {
         pending.push_back({visit.id, Action::branch, visit.clause + 1});
         return;
     }

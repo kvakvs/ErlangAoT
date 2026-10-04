@@ -2,6 +2,15 @@
 #include "declarations.hpp"
 
 namespace erlang_aot::semantic {
+struct Branch {
+    // One case or if clause seen uniformly: if clauses have no pattern, case clauses may omit the guard.
+    const ast::PatternSyntaxId *pattern;
+    const ast::GuardSyntax *guard;
+    const std::vector<ast::ExprId> *body;
+};
+
+// List the clauses of a case or if expression in source order; every other expression has none.
+std::vector<Branch> branch_clauses(const ast::ExprValue &value);
 // Reject executable syntax outside the milestone without modifying parser coverage.
 void check_capabilities(const Module &module, const Reporter &out, unsigned word_bits = sizeof(void *) * 8);
 // Iterate accepted expression children without visiting literal call-target atoms as values.

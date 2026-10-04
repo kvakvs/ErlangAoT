@@ -45,7 +45,7 @@ std::optional<std::int64_t> literal_value(const ast::ExprValue &value) {
 }
 
 // Guard tests of every alternative, in source order.
-void append_guard(const std::optional<ast::GuardSyntax> &guard, std::vector<ast::ExprId> &result) {
+void append_guard(const ast::GuardSyntax *guard, std::vector<ast::ExprId> &result) {
     if (guard) {
         for (const auto &alternative : guard->alternatives) {
             result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
@@ -53,16 +53,34 @@ void append_guard(const std::optional<ast::GuardSyntax> &guard, std::vector<ast:
     }
 }
 
-// A case reads its scrutinee, then each clause's guard tests and body; patterns stay with match plans.
-std::vector<ast::ExprId> case_children(const ast::CaseExpression &value) {
-    std::vector<ast::ExprId> result{value.value};
-    for (const auto &clause : value.clauses) {
+// A case reads its scrutinee; every branch then reads each clause's guard tests and body.
+// Patterns stay with match plans.
+std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std::vector<Branch> &clauses) {
+    std::vector<ast::ExprId> result;
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        result.push_back(selection->value);
+    }
+    for (const auto &clause : clauses) {
         append_guard(clause.guard, result);
-        result.insert(result.end(), clause.body.begin(), clause.body.end());
+        result.insert(result.end(), clause.body->begin(), clause.body->end());
     }
     return result;
 }
 } // namespace
+
+std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
+    std::vector<Branch> result;
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        for (const auto &clause : selection->clauses) {
+            result.push_back({&clause.pattern, clause.guard ? &*clause.guard : nullptr, &clause.body});
+        }
+    } else if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
+        for (const auto &clause : choice->clauses) {
+            result.push_back({nullptr, &clause.guard, &clause.body});
+        }
+    }
+    return result;
+}
 
 std::optional<std::int64_t> integer_literal(const ast::Module &syntax, ast::ExprId expression,
                                             const unsigned word_bits) {
@@ -94,8 +112,8 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         return {match->right};
     }
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
-        return case_children(*selection);
+    if (const auto clauses = branch_clauses(expression.value); !clauses.empty()) {
+        return branch_children(expression.value, clauses);
     }
     return binding_children(expression.value);
 }
@@ -117,7 +135,7 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
 std::vector<ast::ExprId> function_roots(const ast::Function &function) {
     std::vector<ast::ExprId> result;
     for (const auto &clause : function.clauses) {
-        append_guard(clause.guard, result);
+        append_guard(clause.guard ? &*clause.guard : nullptr, result);
         result.insert(result.end(), clause.body.begin(), clause.body.end());
     }
     return result;
