@@ -97,7 +97,7 @@
   object starts, so no index or start bitmap. 8E ERTS host terms: `Term` = word + borrowed heap +
   weak lifetime + collection count (no pin); roots = stack slots, handoff words, error payload,
   explicit span (`ProcessContext::visit_roots`). 8F interim root stack: `GeneratedRoots` frames are
-  windows in 256-word segments appended on demand, freed when empty; flat stack waits for steps 17/26. Revision-4
+  windows in page-sized segments (4096 bytes incl. header, intrusive chain), freed when empty; flat stack waits for steps 17/26. Revision-4
   generated scopes register arguments/temporaries, clear failed candidates, transfer
   result ownership before pop and restore entry depth after native exceptions.
   Exact-start object indices prove ownership before extraction. Compound host handles

@@ -7,8 +7,9 @@ struct RootOptions {
     // Bound total live slots and nesting independently of retained heap backing.
     std::size_t words = 1'000'000;
     std::size_t frames = 4096;
-    // Size each stack segment (larger frames get their own); a frame never spans two, so its address is stable.
-    std::size_t segment_words = 256;
+    // Size each segment allocation, header included, to one 4 KiB page; larger frames take whole multiples.
+    // A frame never spans segments, so its address is stable.
+    std::size_t segment_bytes = 4096;
 };
 
 class GeneratedRoots final {
@@ -17,6 +18,8 @@ class GeneratedRoots final {
     explicit GeneratedRoots(ProcessContext &owner, RootOptions options = {}) noexcept;
     GeneratedRoots(const GeneratedRoots &) = delete;
     GeneratedRoots &operator=(const GeneratedRoots &) = delete;
+    // Free every segment, including ones left by frames still open at context teardown.
+    ~GeneratedRoots();
     // Push a zeroed frame window transactionally, reporting exact infrastructure failures in the context.
     Word *enter(std::size_t count) noexcept;
     // Transfer a successful result before releasing the most recent frame; failures retain their payload roots.
@@ -44,14 +47,17 @@ class GeneratedRoots final {
 
   private:
     struct Segment {
-        // Stable backing for frame windows (BEAM Y registers); holds at least one frame while it exists.
-        std::unique_ptr<Word[]> words;
+        // Header of one allocation whose remaining words are frame slots (BEAM Y registers); segments chain
+        // towards the stack base and each holds at least one frame while it exists.
+        Segment *previous;
         std::size_t capacity;
         std::size_t used;
     };
 
+    static_assert(sizeof(Segment) % alignof(Word) == 0, "slots must follow the header aligned");
+
     struct Frame {
-        // Window inside the last segment at entry, stable while live; count includes the reserved zero-arity slot.
+        // Window inside the top segment at entry, stable while live; count includes the reserved zero-arity slot.
         Word *slots;
         std::size_t count;
         // Root a nested result word (BEAM X register) until the parent publishes its own slot or exits.
@@ -65,16 +71,20 @@ class GeneratedRoots final {
         }
     }
 
-    // Release the top frame's window back to the last segment.
+    // View the slot words that follow a segment header in the same allocation.
+    static std::span<Word> window(Segment &segment) noexcept;
+    // Link a new top segment sized to whole multiples of `segment_bytes` that fits `count` slots.
+    void push_segment(std::size_t count);
+    // Release the top frame's window back to the top segment.
     void pop() noexcept;
-    // Free the last segment once no frame uses it, so the top frame always lies in the last segment.
+    // Free the top segment once no frame uses it, so the top frame always lies in the top segment.
     void release_empty() noexcept;
 
     // Keep liveness/error ownership with the context; host access remains serialized.
     ProcessContext &owner_;
     RootOptions options_;
-    // The process stack: segments appended on demand and the frames whose windows they hold.
-    std::vector<Segment> segments_;
+    // The process stack: the newest segment, linked to older ones, and the frames whose windows they hold.
+    Segment *top_ = nullptr;
     std::vector<Frame> frames_;
     std::size_t words_ = 0;
     // Root the outermost return word until its host invocation has read it.

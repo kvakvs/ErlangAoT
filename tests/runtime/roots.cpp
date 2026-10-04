@@ -65,7 +65,7 @@ void limits(ProcessContext &context) {
 // bound counts every segment, and segments are freed once their frames return.
 void segments(ProcessContext &context) {
     GeneratedInvocation invocation(context.generated_calls());
-    GeneratedRoots roots(context, RootOptions{.words = 24, .frames = 16, .segment_words = 4});
+    GeneratedRoots roots(context, RootOptions{.words = 24, .frames = 16, .segment_bytes = 64});
     std::vector<std::pair<Word *, std::size_t>> frames;
     for (const std::size_t count : {3, 3, 5, 2, 7}) {
         auto *slots = roots.enter(count);
@@ -87,6 +87,18 @@ void segments(ProcessContext &context) {
     require(context.generated_calls().failure()->status == Status::resource_limit, "stack limit status lost");
     roots.restore(0);
     require(roots.depth() == 0 && roots.words() == 0 && roots.capacity() == 0, "empty segments not freed");
+}
+
+// A default segment, header included, fills one 4 KiB page; a larger frame takes whole pages.
+void page_segments(ProcessContext &context) {
+    GeneratedInvocation invocation(context.generated_calls());
+    RootInvocation scope(context.roots());
+    auto &roots = context.roots();
+    const auto bytes = [&] { return roots.capacity() * sizeof(Word); };
+    require(roots.enter(1) && bytes() < 4096 && bytes() + 64 >= 4096, "segment does not fill one page");
+    const auto page_words = roots.capacity();
+    require(roots.enter(page_words + 1) && bytes() < 3 * 4096 && bytes() + 128 >= 3 * 4096,
+            "large frame segment not rounded to whole pages");
 }
 
 // The default bounds stay 1,000,000 live words and 4,096 frames.
@@ -180,6 +192,7 @@ int main() {
         limits(context);
         transfers(context);
         segments(context);
+        page_segments(context);
         default_limits(context);
         failed_call(context);
         root_set(*runtime);

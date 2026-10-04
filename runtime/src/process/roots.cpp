@@ -1,11 +1,19 @@
 #include <algorithm>
 #include <erlang_aot/runtime/process_context.hpp>
-#include <memory>
+#include <limits>
 #include <new>
 
 namespace erlang_aot::runtime {
 GeneratedRoots::GeneratedRoots(ProcessContext &owner, RootOptions options) noexcept
     : owner_(owner), options_(options) {}
+
+GeneratedRoots::~GeneratedRoots() {
+    while (top_) {
+        auto *previous = top_->previous;
+        ::operator delete(top_);
+        top_ = previous;
+    }
+}
 
 Word *GeneratedRoots::enter(std::size_t count) noexcept {
     auto &calls = owner_.generated_calls();
@@ -18,14 +26,12 @@ Word *GeneratedRoots::enter(std::size_t count) noexcept {
         return nullptr;
     }
     try {
-        if (segments_.empty() || segments_.back().capacity - segments_.back().used < count) {
-            const auto capacity = std::max(count, options_.segment_words);
-            segments_.push_back(Segment{std::make_unique_for_overwrite<Word[]>(capacity), capacity, 0});
+        if (!top_ || top_->capacity - top_->used < count) {
+            push_segment(count);
         }
-        auto &segment = segments_.back();
-        auto *slots = segment.words.get() + segment.used;
+        auto *slots = window(*top_).subspan(top_->used, count).data();
         frames_.push_back(Frame{slots, count, {}});
-        segment.used += count;
+        top_->used += count;
         words_ += count;
         std::fill_n(slots, count, Word{0});
         return slots;
@@ -36,16 +42,32 @@ Word *GeneratedRoots::enter(std::size_t count) noexcept {
     return nullptr;
 }
 
+std::span<Word> GeneratedRoots::window(Segment &segment) noexcept {
+    return {reinterpret_cast<Word *>(&segment + 1), segment.capacity};
+}
+
+void GeneratedRoots::push_segment(std::size_t count) {
+    if (count > std::numeric_limits<std::size_t>::max() / (2 * sizeof(Word))) {
+        throw std::bad_alloc();
+    }
+    const auto unit = std::max(options_.segment_bytes, sizeof(Segment) + sizeof(Word));
+    const auto needed = sizeof(Segment) + (count * sizeof(Word));
+    const auto bytes = (needed + unit - 1) / unit * unit;
+    top_ = ::new (::operator new(bytes)) Segment{top_, (bytes - sizeof(Segment)) / sizeof(Word), 0};
+}
+
 void GeneratedRoots::pop() noexcept {
-    segments_.back().used -= frames_.back().count;
+    top_->used -= frames_.back().count;
     words_ -= frames_.back().count;
     frames_.pop_back();
     release_empty();
 }
 
 void GeneratedRoots::release_empty() noexcept {
-    if (!segments_.empty() && segments_.back().used == 0) {
-        segments_.pop_back();
+    if (top_ && top_->used == 0) {
+        auto *previous = top_->previous;
+        ::operator delete(top_);
+        top_ = previous;
     }
 }
 
@@ -89,8 +111,8 @@ std::size_t GeneratedRoots::words() const noexcept { return words_; }
 
 std::size_t GeneratedRoots::capacity() const noexcept {
     std::size_t total = 0;
-    for (const auto &segment : segments_) {
-        total += segment.capacity;
+    for (const auto *segment = top_; segment; segment = segment->previous) {
+        total += segment->capacity;
     }
     return total;
 }

@@ -675,17 +675,18 @@ holding frames as BEAM-style Y-register windows. `erlang_aot_roots_enter_v4` and
   - [x] Focused tests for limit exhaustion, LIFO violation and restore after a
     failed call.
 
-Done 2026-10-04. `GeneratedRoots` keeps one minimal process stack: `Segment`s (`unique_ptr<Word[]>`,
-capacity, used) appended on demand and `Frame` windows (slots pointer, count, handoff). A frame that does
-not fit the last segment opens a new one of `RootOptions::segment_words` (256) or its own size; the last
-segment is freed when its last frame returns, so the top frame always lies in the last segment and live
-windows never move. Per user review the first version's doubling, spare segment and trimming were
+Done 2026-10-04. `GeneratedRoots` keeps one minimal process stack: a chain of `Segment`s, each one
+allocation of `RootOptions::segment_bytes` (4096, one x86 page) holding a header (older-segment link,
+capacity, used) followed by slots (509 on 64-bit), and `Frame` windows (slots pointer, count, handoff). A
+frame that does not fit the top segment opens a new one (whole pages for larger frames); the top
+segment is freed when its last frame returns, so the top frame always lies in it and live windows
+never move. Per user review the first version's doubling, spare segment and trimming were
 dropped as premature; the flat moving stack waits for frame-base reloads (steps 17, 24, 26).
 `capacity()` reports reserved words for 8H. ABI, limits and LIFO errors are unchanged. `runtime_roots`
 gained `segments` (stability across small segments, full enumeration, word bound across segments,
-release), `default_limits` (1,000,000 words, 4,096 frames) and `failed_call` (restore after a failed
-call); `runtime_lifecycle_failure` checks a failed entry keeps no segment (a grown index vector may
-remain).
+release), `page_segments` (one page per default segment, whole pages for a larger frame),
+`default_limits` (1,000,000 words, 4,096 frames) and `failed_call` (restore after a failed call);
+`runtime_lifecycle_failure` checks a failed entry leaves no allocation behind.
 
 <a id="step-8g"></a>
 
