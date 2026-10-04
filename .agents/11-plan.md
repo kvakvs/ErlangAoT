@@ -25,8 +25,9 @@ draft with smaller, single-commit steps.
 - **Gate:** freshly configure `build/debug` with compiler, runtime and
   `BUILD_TESTING=ON`; build; run fast-mode CTest (`ctest --preset debug-fast`);
   run `cmake --build build/debug --target check-quality` (changed files and
-  header dependents). Run full-mode CTest (`ctest --preset debug -j <N>`) and
-  `check-quality-all` when a phase or major feature completes. Lizard and clang-tidy pass
+  header dependents). Run full-mode CTest (`ctest --preset debug -j <N>`; each
+  test takes two slots, so N/2 run at once) and `check-quality-all` when a
+  phase or major feature completes. Lizard and clang-tidy pass
   without raised thresholds or suppressions. Code is clang-formatted; new and
   changed `.erl`/terms files pass erlfmt.
 - **Code:** project-internal C++23; document field and function intent in 1–2

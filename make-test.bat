@@ -7,6 +7,7 @@ if not defined BUILD_DIR set "BUILD_DIR=build/debug"
 if not defined BUILD_TYPE set "BUILD_TYPE=Debug"
 rem Development tests default to fast mode; set TEST_MODE=full to run every combination.
 if not defined TEST_MODE set "TEST_MODE=fast"
+rem CTest slots default to every logical CPU; each test takes two slots, so half run concurrently.
 if not defined TEST_JOBS set "TEST_JOBS=%NUMBER_OF_PROCESSORS%"
 set "TEST_FILTER="
 if /i "%TEST_MODE%"=="fast" set "TEST_FILTER=-LE full_only"

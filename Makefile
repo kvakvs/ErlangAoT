@@ -8,7 +8,7 @@ JOBS ?=
 CMAKE_ARGS ?=
 # Development tests default to fast mode; TEST_MODE=full (or make test-full) runs every combination.
 TEST_MODE ?= fast
-# CTest runs this many tests concurrently; the default uses every logical CPU.
+# CTest slot count; the default is every logical CPU. Each test takes two slots, so half run concurrently.
 TEST_JOBS ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 CLANG_FORMAT ?= $(shell command -v clang-format 2>/dev/null || xcrun --find clang-format 2>/dev/null)
 

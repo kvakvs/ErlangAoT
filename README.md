@@ -128,13 +128,15 @@ Tests have two modes, selected by `ERLANG_AOT_TEST_MODE`:
   when a major feature is complete.
 
 ```sh
-ctest --preset debug-fast            # or windows-debug-fast; runs on all CPUs
-ctest --preset debug -j 16           # full mode
+ctest --preset debug-fast            # or windows-debug-fast; tests use half the logical CPUs
+ctest --preset debug -j 32           # full mode; -j N runs N/2 tests at once
 make test                            # fast; make test-full or TEST_MODE=full for full
 ```
 
 `make-test.bat` follows the same `TEST_MODE` (default `fast`) and `TEST_JOBS` (default
-all logical CPUs) settings. On a 32-thread Windows x64 host, fast mode takes about
+all logical CPUs) settings. Every test reserves two CTest processor slots (`PROCESSORS 2`),
+so a slot count of N runs at most N/2 tests concurrently, leaving room for the compilers and
+nested native builds the tests start. On a 32-thread Windows x64 host, fast mode takes about
 one minute and full mode about 85 seconds with 16 jobs (729 seconds serially).
 
 For a build directory without a preset, pass `-DBUILD_TESTING=ON` to `cmake -S . -B <dir>`
