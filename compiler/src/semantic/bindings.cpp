@@ -19,6 +19,19 @@ void BindingCandidate::commit(BindingEnvironment &destination) const {
     }
 }
 
+namespace {
+// Reuse the identity an earlier clause of an enclosing case gave this name, innermost case first.
+std::optional<BindingId> branch_identity(const std::vector<std::map<std::u32string, BindingId>> &branches,
+                                         const std::u32string &name) {
+    for (auto names = branches.rbegin(); names != branches.rend(); ++names) {
+        if (const auto found = names->find(name); found != names->end()) {
+            return found->second;
+        }
+    }
+    return {};
+}
+} // namespace
+
 bool BindingAnalysis::spend(const ast::ExprId &id, const std::size_t amount) {
     if (amount > limit - std::min(work, limit)) {
         if (work <= limit) {
@@ -73,22 +86,25 @@ void BindingAnalysis::define(const ast::ExprId &id, BindingCandidate &scope, con
         function.bindings.push_back({id, sibling->second, BindingUse::exact_check, context});
         return;
     }
-    auto &definitions = function.clause_bindings.at(clause).definitions;
-    const BindingId identity{clause, definitions.size()};
-    definitions.push_back({name, id, argument});
-    scope.tentative.emplace(name, identity);
-    function.bindings.push_back({id, identity, BindingUse::definition, context});
+    auto identity = branch_identity(branch_names, name);
+    if (!identity) {
+        auto &definitions = function.clause_bindings.at(clause).definitions;
+        identity = BindingId{clause, definitions.size()};
+        definitions.push_back({name, id, argument});
+    }
+    scope.tentative.emplace(name, *identity);
+    function.bindings.push_back({id, *identity, BindingUse::definition, context});
 }
 
-namespace {
-// Each guard sees the completed tentative head, but no alternative can assign a name.
-void guards(BindingAnalysis &state, const ast::GuardSyntax &guard, const BindingCandidate &head) {
+void bind_guard(BindingAnalysis &state, const ast::GuardSyntax &guard, const BindingCandidate &head) {
     BindingEnvironment visible = head.incoming;
     head.commit(visible);
     for (const auto &alternative : guard.alternatives) {
         bind_expressions(state, alternative.tests, visible, BindingContext::guard);
     }
 }
+
+namespace {
 
 // Only the successful head candidate is made available to the body; the incoming scope stays empty.
 void bind_clause(BindingAnalysis &state, const ast::FunctionClause &clause) {
@@ -98,7 +114,7 @@ void bind_clause(BindingAnalysis &state, const ast::FunctionClause &clause) {
         bind_pattern(state, clause.arguments[i], head, BindingContext::head, i);
     }
     if (clause.guard) {
-        guards(state, *clause.guard, head);
+        bind_guard(state, *clause.guard, head);
     }
     BindingEnvironment body;
     head.commit(body);
@@ -110,6 +126,7 @@ void clear_bindings(Module &module) {
     for (auto &function : module.functions) {
         function.bindings.clear();
         function.clause_bindings.clear();
+        function.exports.clear();
         function.patterns.clear();
     }
 }

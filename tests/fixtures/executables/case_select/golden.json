@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "entry": "selector",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[zero,negative,big,other,number,number,result,result,pair,on_axis,point,{map,square},{prefix,<<\"cd\">>},string,{head,z},other]\n[equal,first,different]\n[x1,x2,xn,single,plural]\n[{small,{area,4}},{large,sixteen},{failed,unsupported}]\n{picked,two}\n"
+    },
+    {
+      "args": [
+        "clause"
+      ],
+      "stderr": "^uncaught exception error: \\{case_clause,3\\}",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "remote"
+      ],
+      "stderr": "^uncaught exception error: function_clause",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "selector.erl": "2f24bf36a5621a2837a4ae0e22a56360e68da45784f89167d87d2aa680486252",
+    "shapes.erl": "7e01d811499c8eafb2677d5f08c270edcc8e8c2d008e8d91223899386079bc28"
+  }
+}

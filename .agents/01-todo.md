@@ -150,7 +150,8 @@ Plan: [9](11-plan.md#step-9), [13](11-plan.md#step-13), [16](11-plan.md#step-16)
 Contract: [patterns](../docs/patterns.md).
 
 - [x] Function heads and body matches over the admitted domain.
-- [ ] case/if/maybe/comprehension, fun/catch and receive contexts.
+- [x] `case` clauses with exported/unsafe bindings (step 9).
+- [ ] if/maybe/comprehension, fun/catch and receive contexts.
 
 ### F14 — Guards
 
@@ -159,7 +160,8 @@ Plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10),
 
 - [x] Audited catalog (77 of 81 rows) and grouped/strict/lazy clause guards.
 - [ ] `self/0`, `node/0,1`, native `is_record/1` with F07/F17/F22/F26.
-- [ ] Guards outside function clauses; identity/function type tests.
+- [x] `case` clause guards (step 9).
+- [ ] Other guards outside function clauses; identity/function type tests.
 
 ### F15 — Multiple function clauses
 
@@ -171,7 +173,8 @@ Plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10), [16](11-plan.md#step-16)
 [21](11-plan.md#step-21), [22](11-plan.md#step-22).
 
 - [x] Sequences, body matches, strict/lazy boolean operators.
-- [ ] Blocks, case, if, maybe and comprehensions with OTP comparisons.
+- [x] `begin`/`end` blocks and `case` with OTP comparisons (step 9).
+- [ ] if, maybe and comprehensions with OTP comparisons.
 
 ### F17 — Record expansion and execution
 

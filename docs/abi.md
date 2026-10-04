@@ -70,7 +70,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Outcome | Transport |
 | --- | --- |
 | Pattern mismatch, guard rejection | Continuation to next candidate; channel untouched |
-| Exhausted clauses | `error:function_clause` |
+| Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case` |
 | Body match failure | `error:{badmatch, Value}` with owned payload |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |

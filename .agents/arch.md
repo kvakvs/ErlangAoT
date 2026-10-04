@@ -36,6 +36,11 @@
   operators and acyclic local/exported batch calls. Flat match plans carry explicit success/mismatch continuations and tentative
   SSA values. Each candidate owns fresh bindings; head/guard rejection advances with original arguments. All clause bodies feed call/inference/atom/inspection analysis. Result joins preserve only common argument relations. Checked equality is representation-aware; exhaustion
   raises function_clause. Body matches save the RHS once and reuse the matcher; only success publishes bindings, while badmatch retains the RHS and exits before later work. Unconditional heads retain direct argument projections inside their root scope.
+  `case` (step 9) reuses the one-input body plan per clause over the scrutinee, guards via `lower_guard`, and the
+  iterative walker (`case_select`/`case_clause_end` actions) restores the entry bindings per clause and joins the
+  value plus every exported binding with PHIs; exhaustion raises `{case_clause, V}` (ErrorReason 9). Binding
+  analysis gives a name bound by several clauses one identity (`BindingAnalysis::branch_names`) and records
+  exports in `Function::exports`; partial definitions become unsafe. `begin`/`end` is a plain sequence.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

@@ -11,12 +11,13 @@ enum class ErrorReason : std::uint8_t {
     badarith = 5,
     badmap = 6,
     badkey = 7,
-    badrecord = 8
+    badrecord = 8,
+    case_clause = 9
 };
 } // namespace erlang_aot::abi::v1
 
 // Native C++ services borrow a live context; generated code never inspects its layout.
 std::uint8_t erlang_aot_call_failed_v2(void *context) noexcept;
-// Preserve the first error; badmatch and {badarg,Value} retain checked payload ownership before root cleanup.
+// Preserve the first error; payload reasons (badmatch, case_clause, ...) retain ownership before root cleanup.
 std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason reason,
                                  erlang_aot::abi::v1::TermWord value) noexcept;

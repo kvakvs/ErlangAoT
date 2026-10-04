@@ -110,6 +110,13 @@ Step facts beyond the plan record:
   collect() never touches the generated failure channel; native/failure consumers now use deferred send
   and heap reservation faults. Term::bit_slice is unimplemented (link error): slice via erlang_aot_bits_v1.
   Python Path.read_text defaults to cp1252 here: always read_text(encoding="utf-8") or use Edit.
+- 9: case = one-input body plan per clause (`body_pattern_plan`, `semantic::pattern_root`); exported names share one
+  BindingId across clauses (first clause allocates, later reuse via branch_names stack), so lowering PHIs only
+  `Function::exports`; inference keeps multi-definition identities top. expression_children(case) = scrutinee +
+  guard tests + bodies (patterns via function.patterns); guard_analysis schedules case guards as guards.
+  Pre-existing fix: capability pattern planning skipped after failed binding pass (was "invalid map<K, T> key").
+  Bindings corpus: 8 case_* rows, OTP classes via regenerate --corpus bindings; sibling_local now compiles.
+  Old step-9 attempt (pre phase C) sources reused for executables case_select/case_scope.
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

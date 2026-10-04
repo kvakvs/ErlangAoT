@@ -63,6 +63,20 @@ assert verbose.stdout == text and 'phase=inference' in verbose.stderr
 assert not re.search(r'phase=(lowering|specialization|verification|optimization|emission)', verbose.stderr)
 assert not (work / 'build').exists()
 
+# Case results join like clause results; a name bound by several case clauses stays unknown.
+(work / 'branches.erl').write_text('''-module(branches).
+-export([pick/1, same/1, mixed/1, shared/1]).
+pick(X) -> case X of 1 -> 7; _ -> 7 end.
+same(X) -> case X of {_} -> X; _ -> X end.
+mixed(X) -> case X of 1 -> 1; _ -> 2 end.
+shared(X) -> case X of 1 -> Y = 5; _ -> Y = 6 end, Y.
+''', encoding='utf-8')
+facts = run('--print-types', 'branches.erl').stdout
+assert re.search(r'function "pick"/1[^\n]*result=7\n', facts), facts
+assert re.search(r'function "same"/1[^\n]*argument\[0\]', facts), facts
+assert re.search(r'function "mixed"/1[^\n]*result=union\(1, 2\)\n', facts), facts
+assert re.search(r'function "shared"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
+
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')
 (work / 'project.toml').write_text('''schema_version=1

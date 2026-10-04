@@ -23,7 +23,8 @@ std::vector<ast::ExprId> aliases(const ast::ExprValue &value) {
 }
 } // namespace
 
-BindingFacts::BindingFacts(const FunctionRef owner, Inference &facts, std::size_t &work) : function(owner), inference(facts) {
+BindingFacts::BindingFacts(const FunctionRef owner, Inference &facts, std::size_t &work)
+    : function(owner), inference(facts) {
     for (const auto &binding : function.function->bindings) {
         if (!spend(inference, work)) {
             return;
@@ -32,7 +33,10 @@ BindingFacts::BindingFacts(const FunctionRef owner, Inference &facts, std::size_
         events.emplace(&expression, &binding);
         const auto &definition =
             function.function->clause_bindings.at(binding.identity.clause).definitions.at(binding.identity.local);
-        values.try_emplace(binding.identity, Fact{inference.graph.top(), definition.argument});
+        if (!values.try_emplace(binding.identity, Fact{inference.graph.top(), definition.argument}).second &&
+            binding.use == BindingUse::definition) {
+            shared.insert(binding.identity);
+        }
     }
 }
 
@@ -57,7 +61,8 @@ void BindingFacts::publish(const ast::ExprId &pattern, Fact fact, std::size_t &w
         pending.pop_back();
         const auto &expression = function.module->syntax->expression(id);
         const auto event = events.find(&expression);
-        if (event != events.end() && event->second->use == BindingUse::definition) {
+        if (event != events.end() && event->second->use == BindingUse::definition &&
+            !shared.contains(event->second->identity)) {
             values.insert_or_assign(event->second->identity, fact);
         }
         const auto children = aliases(expression.value);

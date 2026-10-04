@@ -49,9 +49,9 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::RecordIndex &) const;
 
-    std::string_view operator()(const ast::BlockExpression &) const { return "pattern matching"; }
+    std::string_view operator()(const ast::BlockExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::CaseExpression &) const { return "pattern matching"; }
+    std::string_view operator()(const ast::CaseExpression &) const { return {}; }
 
     std::string_view operator()(const ast::IfExpression &) const { return "guards"; }
 

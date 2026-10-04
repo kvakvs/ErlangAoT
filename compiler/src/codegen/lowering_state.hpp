@@ -52,6 +52,8 @@ bool lower_unconditional_head(ExpressionLowering &state);
 // Lower the reusable matcher against caller-supplied values and selection continuations.
 void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan, std::span<llvm::Value *const> values,
                       llvm::BasicBlock *success, llvm::BasicBlock *mismatch);
+// Plan a one-input body or case pattern; semantic analysis accepted it, so failure is a phase-contract error.
+semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern);
 // Match an already evaluated RHS, publishing new bindings only along the successful continuation.
 llvm::Value *lower_body_match(ExpressionLowering &state, const ast::MatchExpression &match);
 // Raise clause exhaustion using the existing checked generated-call contract.

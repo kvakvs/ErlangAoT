@@ -7,6 +7,14 @@
     "body_match.erl",
     "call_sibling.erl",
     "calls.txt",
+    "case_clause_scope.erl",
+    "case_export.erl",
+    "case_nested_unsafe.erl",
+    "case_pattern_unsafe.erl",
+    "case_sibling.erl",
+    "case_subject.erl",
+    "case_unsafe.erl",
+    "case_unsafe_match.erl",
     "chain.erl",
     "clause_leak.erl",
     "clauses.erl",
@@ -110,7 +118,7 @@
         "name": "sibling_local",
         "arity": 0,
         "body": "f() -> {begin X = 1, X end, X = 2}, X.",
-        "capability": "pattern matching",
+        "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
         "sha256": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572"
@@ -267,6 +275,78 @@
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
         "sha256": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6"
+      },
+      {
+        "name": "case_export",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> X = b end, X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "62f213c88a3ef380c4c6b4df490fe1b68df1ee312d7fad17a0aa6b08d0276a2c"
+      },
+      {
+        "name": "case_subject",
+        "arity": 1,
+        "body": "f(A) -> case B = A of _ -> ok end, B.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7"
+      },
+      {
+        "name": "case_unsafe",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> ok end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca"
+      },
+      {
+        "name": "case_unsafe_match",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> ok end, X = b.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb"
+      },
+      {
+        "name": "case_pattern_unsafe",
+        "arity": 1,
+        "body": "f(A) -> case A of {X} -> ok; _ -> ok end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "6bdb2f9ff214a90a4e5f93eb856854d931c994b0627b37632c550cf8a7c6c984"
+      },
+      {
+        "name": "case_nested_unsafe",
+        "arity": 2,
+        "body": "f(A, B) -> case A of 1 -> case B of 1 -> X = a; _ -> ok end; _ -> X = b end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2ccfa569b458f70de54e27f2c4d5b71cb5399b95bcb0714b5a9d183f5906d58d"
+      },
+      {
+        "name": "case_clause_scope",
+        "arity": 1,
+        "body": "f(A) -> case A of {X} -> X; _ -> X end.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "41cbf3693a25cb527fbaa5e9bb9f8bf27552f79d3b61a25debe2c0bcbea18d6c"
+      },
+      {
+        "name": "case_sibling",
+        "arity": 1,
+        "body": "f(A) -> {case A of _ -> X = 1 end, X}.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "37409593d74fafa0ddb185dbc26abfd513f21817bc4bec7743dc29c18baa0dce"
       },
       {
         "name": "bindings_local",

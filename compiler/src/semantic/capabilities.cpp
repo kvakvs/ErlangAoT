@@ -46,7 +46,8 @@ struct FormCapability {
 };
 
 // Use one located diagnostic path for all capability rejection sites.
-void unsupported(const Module &module, const ast::NodeSource &source, const std::string_view reason, const Reporter &out) {
+void unsupported(const Module &module, const ast::NodeSource &source, const std::string_view reason,
+                 const Reporter &out) {
     reject_capability(module, source, reason, out);
 }
 
@@ -85,6 +86,24 @@ bool available(const Module &module, const Function &function, const ast::ExprId
     return true;
 }
 
+// Plan body-match and case-clause patterns so unsupported pattern forms are diagnosed before lowering.
+// A failed binding pass discards every binding table, leaving nothing to plan.
+void patterns(const Module &module, const Function &function, const ast::Expression &expression, const Reporter &out,
+              const unsigned bits) {
+    if (function.clause_bindings.empty()) {
+        return;
+    }
+    if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
+        (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
+    }
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
+        for (const auto &clause : selection->clauses) {
+            (void)make_match_plan(module, function, pattern_root(*module.syntax, clause.pattern), out,
+                                  {.word_bits = bits});
+        }
+    }
+}
+
 // Inspect every executable child iteratively, including unused functions and nested call arguments.
 void expressions(const Module &module, const Function &function, std::vector<ast::ExprId> pending, const Reporter &out,
                  const unsigned bits) {
@@ -98,9 +117,7 @@ void expressions(const Module &module, const Function &function, std::vector<ast
         if (integer_literal(*module.syntax, id, bits)) {
             continue;
         }
-        if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
-            (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
-        }
+        patterns(module, function, expression, out, bits);
         const auto children = expression_children(module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }

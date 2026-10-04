@@ -21,15 +21,23 @@
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
-  "input_manifest_sha256": "e25f478876ac9cb40b3d7e904005db3fae0a3927d92165f507379ba0451411e0",
+  "input_manifest_sha256": "ef5449e7d5617dbfd74526e807bf9fcb325b055a02012d36646e09c4a9d1de28",
   "files": {
     "alias.erl": "375c0766478c89fd6b5291fe509762251fdcf4e5bf335d971a4d6d08b02f17fd",
     "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
-    "bindings.term": "8f5b0bb1aea977ae79caae566cf3a252c5d6b15c2d1322db3faa38515a3a68dc",
+    "bindings.term": "840ecc582e660ccc212b0ffc065ec4b594dee886092e80d47872e3898a2d0b2b",
     "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
     "body_match.erl": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef",
     "call_sibling.erl": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260",
     "calls.txt": "af8567a0eb405d1afca6589681daeaee74b5d1a2fcf2bc7367834b47e2ad23bf",
+    "case_clause_scope.erl": "41cbf3693a25cb527fbaa5e9bb9f8bf27552f79d3b61a25debe2c0bcbea18d6c",
+    "case_export.erl": "62f213c88a3ef380c4c6b4df490fe1b68df1ee312d7fad17a0aa6b08d0276a2c",
+    "case_nested_unsafe.erl": "2ccfa569b458f70de54e27f2c4d5b71cb5399b95bcb0714b5a9d183f5906d58d",
+    "case_pattern_unsafe.erl": "6bdb2f9ff214a90a4e5f93eb856854d931c994b0627b37632c550cf8a7c6c984",
+    "case_sibling.erl": "37409593d74fafa0ddb185dbc26abfd513f21817bc4bec7743dc29c18baa0dce",
+    "case_subject.erl": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7",
+    "case_unsafe.erl": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca",
+    "case_unsafe_match.erl": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb",
     "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
     "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
     "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
@@ -134,7 +142,7 @@
         "name": "sibling_local",
         "arity": 0,
         "body": "f() -> {begin X = 1, X end, X = 2}, X.",
-        "capability": "pattern matching",
+        "capability": "",
         "diagnostic": "",
         "otp_diagnostic": "",
         "sha256": "6b5b339e8af6e24bebe77b0487558ea6eb639d8d6f3da0cecdc2c194a0481572"
@@ -293,6 +301,78 @@
         "sha256": "2860241ced84822e80b009b1da5c3552545f2f51f1eb4776e90481853a718eb6"
       },
       {
+        "name": "case_export",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> X = b end, X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "62f213c88a3ef380c4c6b4df490fe1b68df1ee312d7fad17a0aa6b08d0276a2c"
+      },
+      {
+        "name": "case_subject",
+        "arity": 1,
+        "body": "f(A) -> case B = A of _ -> ok end, B.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7"
+      },
+      {
+        "name": "case_unsafe",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> ok end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca"
+      },
+      {
+        "name": "case_unsafe_match",
+        "arity": 1,
+        "body": "f(A) -> case A of 1 -> X = a; _ -> ok end, X = b.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb"
+      },
+      {
+        "name": "case_pattern_unsafe",
+        "arity": 1,
+        "body": "f(A) -> case A of {X} -> ok; _ -> ok end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "6bdb2f9ff214a90a4e5f93eb856854d931c994b0627b37632c550cf8a7c6c984"
+      },
+      {
+        "name": "case_nested_unsafe",
+        "arity": 2,
+        "body": "f(A, B) -> case A of 1 -> case B of 1 -> X = a; _ -> ok end; _ -> X = b end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2ccfa569b458f70de54e27f2c4d5b71cb5399b95bcb0714b5a9d183f5906d58d"
+      },
+      {
+        "name": "case_clause_scope",
+        "arity": 1,
+        "body": "f(A) -> case A of {X} -> X; _ -> X end.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "41cbf3693a25cb527fbaa5e9bb9f8bf27552f79d3b61a25debe2c0bcbea18d6c"
+      },
+      {
+        "name": "case_sibling",
+        "arity": 1,
+        "body": "f(A) -> {case A of _ -> X = 1 end, X}.",
+        "capability": "",
+        "diagnostic": "unbound variable X",
+        "otp_diagnostic": "unbound_var",
+        "sha256": "37409593d74fafa0ddb185dbc26abfd513f21817bc4bec7743dc29c18baa0dce"
+      },
+      {
         "name": "bindings_local",
         "diagnostic": "",
         "capability": "",
@@ -310,6 +390,14 @@
       "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
       "body_match.erl": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef",
       "call_sibling.erl": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260",
+      "case_clause_scope.erl": "41cbf3693a25cb527fbaa5e9bb9f8bf27552f79d3b61a25debe2c0bcbea18d6c",
+      "case_export.erl": "62f213c88a3ef380c4c6b4df490fe1b68df1ee312d7fad17a0aa6b08d0276a2c",
+      "case_nested_unsafe.erl": "2ccfa569b458f70de54e27f2c4d5b71cb5399b95bcb0714b5a9d183f5906d58d",
+      "case_pattern_unsafe.erl": "6bdb2f9ff214a90a4e5f93eb856854d931c994b0627b37632c550cf8a7c6c984",
+      "case_sibling.erl": "37409593d74fafa0ddb185dbc26abfd513f21817bc4bec7743dc29c18baa0dce",
+      "case_subject.erl": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7",
+      "case_unsafe.erl": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca",
+      "case_unsafe_match.erl": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb",
       "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
       "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
       "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
@@ -335,6 +423,6 @@
       "unsafe_or.erl": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b",
       "wildcard.erl": "71a3cb18742be799d0c33d9cb8a81e4f3541701a5b151b17847e46a21fc237c5"
     },
-    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\nbindings_local accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
+    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\ncase_export accepted none\ncase_subject accepted none\ncase_unsafe rejected unsafe_var\ncase_unsafe_match rejected unsafe_var\ncase_pattern_unsafe rejected unsafe_var\ncase_nested_unsafe rejected unsafe_var\ncase_clause_scope rejected unbound_var\ncase_sibling rejected unbound_var\nbindings_local accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
   }
 }

@@ -33,6 +33,19 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
     return inference.expressions.at(&syntax.expression(argument));
 }
 
+// Only relations common to every successful function candidate or case clause survive the join.
+template <typename Clauses> Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses) {
+    auto result = inference.expressions.at(&syntax.expression(clauses.front().body.back()));
+    for (const auto &clause : clauses) {
+        const auto fact = inference.expressions.at(&syntax.expression(clause.body.back()));
+        result.type = inference.graph.widen(result.type, fact.type);
+        if (result.argument != fact.argument) {
+            result.argument.reset();
+        }
+    }
+    return result;
+}
+
 // Evaluate a postorder node only after all source-order argument facts are available.
 Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
               std::size_t &work) {
@@ -52,20 +65,13 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
         bindings.publish(match->left, fact, work);
         return fact;
     }
-    return leaf(inference, function, id, bindings);
-}
-
-// Only relations common to every successful candidate survive the function summary.
-Fact joined_result(Inference &inference, const ast::Module &syntax, const ast::Function &definition) {
-    auto result = inference.expressions.at(&syntax.expression(definition.clauses.front().body.back()));
-    for (const auto &clause : definition.clauses) {
-        const auto fact = inference.expressions.at(&syntax.expression(clause.body.back()));
-        result.type = inference.graph.widen(result.type, fact.type);
-        if (result.argument != fact.argument) {
-            result.argument.reset();
-        }
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
+        return joined(inference, syntax, selection->clauses);
     }
-    return result;
+    if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
+        return inference.expressions.at(&syntax.expression(block->body.back()));
+    }
+    return leaf(inference, function, id, bindings);
 }
 
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
@@ -96,7 +102,7 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
             }
         }
     }
-    return joined_result(inference, syntax, definition);
+    return joined(inference, syntax, definition.clauses);
 }
 } // namespace
 

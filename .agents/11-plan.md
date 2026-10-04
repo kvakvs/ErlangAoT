@@ -398,14 +398,30 @@ Reuse the clause/guard matcher for `case` clauses; implement branch-variable
 export (bound in every clause) and unsafe-variable diagnostics.
 
 - Success criteria
-  - [ ] Clause order, guards, nested `case`, exported and unsafe variables
+  - [x] Clause order, guards, nested `case`, exported and unsafe variables
     match OTP; no matching clause raises `{case_clause, Value}`.
-  - [ ] Inference joins branch facts conservatively.
+  - [x] Inference joins branch facts conservatively.
 - Tests
-  - [ ] Golden programs for selection, fallthrough, nested cases, exported
+  - [x] Golden programs for selection, fallthrough, nested cases, exported
     variables and `case_clause`.
-  - [ ] CLI diagnostics for unsafe and unbound variables matching OTP lint
+  - [x] CLI diagnostics for unsafe and unbound variables matching OTP lint
     wording/classes.
+- Evidence (2026-10-04): `maint-29` unchanged at `21776803`. Binding analysis
+  (`binding_expressions`) schedules case clauses iteratively, reuses one
+  identity per name across clauses and records exports in `Function::exports`;
+  the walker lowers clauses with the one-input body plan and joins value and
+  exports through `SSAUpdater`; `ErrorReason::case_clause = 9` (payload).
+  OTP goldens `executables_case_select` (16 classify rows, records, maps,
+  binaries, nested and remote cases, `case_clause`, `function_clause`) and
+  `executables_case_scope` (exports, scrutinee bindings, nested exports,
+  begin/end); bindings corpus +8 `case_*` rows regenerated with OTP 29.1.1
+  (`unsafe_var`/`unbound_var` classes; wording stays `unsafe/unbound variable
+  X`); `sibling_local` now compiles; `--print-types` join checks in
+  `codegen_types`. Also fixed: body-match planning after a failed binding pass
+  printed `invalid map<K, T> key`. Fresh Windows x64 Debug: fast CTest
+  142/142; affected tests in full mode 7/7; Lizard 0 warnings; tidy 114
+  changed units pass with one job (two-job run exited silently). Logs
+  `build/plan11-step9/`.
 
 <a id="step-10"></a>
 

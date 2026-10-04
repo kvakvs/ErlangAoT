@@ -177,8 +177,8 @@ void finish(MatchPlan &plan, const ast::ExprId &site) {
 
 // Share bounded normalization consumption between function heads and body matches.
 std::optional<MatchPlan> build_plan(const Module &module, const Function &function,
-                                    const std::span<const ast::ExprId> roots,
-                                    const ast::ExprId &site, const Reporter &out, MatchOptions options) {
+                                    const std::span<const ast::ExprId> roots, const ast::ExprId &site,
+                                    const Reporter &out, MatchOptions options) {
     const auto limit = options.work_limit;
     Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}, roots.size()}, 0, limit};
     if (!index(state, function, site)) {
@@ -204,7 +204,7 @@ std::optional<MatchPlan> make_match_plan(const Module &module, const Function &f
     std::vector<ast::ExprId> roots;
     roots.reserve(syntax.arguments.size());
     for (const auto &argument : syntax.arguments) {
-        roots.push_back(std::visit([](const auto &p) { return p.expression; }, module.syntax->pattern(argument).value));
+        roots.push_back(pattern_root(*module.syntax, argument));
     }
     return build_plan(module, function, roots, syntax.body.at(0), out, options);
 }

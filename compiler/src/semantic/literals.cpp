@@ -13,6 +13,10 @@ ast::ExprId ungroup(const ast::Module &syntax, ast::ExprId expression) {
     return expression;
 }
 
+ast::ExprId pattern_root(const ast::Module &syntax, const ast::PatternSyntaxId &pattern) {
+    return std::visit([](const auto &value) { return value.expression; }, syntax.pattern(pattern).value);
+}
+
 namespace {
 // Share ABI v1 bounds with runtime/codegen while choosing the eventual target width explicitly.
 bool fits_target(const std::int64_t number, const unsigned bits) {
@@ -36,6 +40,25 @@ std::optional<std::int64_t> literal_value(const ast::ExprValue &value) {
     const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
     if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) {
         return {};
+    }
+    return result;
+}
+
+// Guard tests of every alternative, in source order.
+void append_guard(const std::optional<ast::GuardSyntax> &guard, std::vector<ast::ExprId> &result) {
+    if (guard) {
+        for (const auto &alternative : guard->alternatives) {
+            result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
+        }
+    }
+}
+
+// A case reads its scrutinee, then each clause's guard tests and body; patterns stay with match plans.
+std::vector<ast::ExprId> case_children(const ast::CaseExpression &value) {
+    std::vector<ast::ExprId> result{value.value};
+    for (const auto &clause : value.clauses) {
+        append_guard(clause.guard, result);
+        result.insert(result.end(), clause.body.begin(), clause.body.end());
     }
     return result;
 }
@@ -71,6 +94,9 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         return {match->right};
     }
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
+        return case_children(*selection);
+    }
     return binding_children(expression.value);
 }
 
@@ -91,11 +117,7 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
 std::vector<ast::ExprId> function_roots(const ast::Function &function) {
     std::vector<ast::ExprId> result;
     for (const auto &clause : function.clauses) {
-        if (clause.guard) {
-            for (const auto &alternative : clause.guard->alternatives) {
-                result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
-            }
-        }
+        append_guard(clause.guard, result);
         result.insert(result.end(), clause.body.begin(), clause.body.end());
     }
     return result;

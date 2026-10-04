@@ -1,6 +1,7 @@
 #include "binding_state.hpp"
 #include "capabilities.hpp"
 #include "pattern_state.hpp"
+#include <algorithm>
 #include <cstdint>
 
 namespace erlang_aot::semantic {
@@ -12,19 +13,36 @@ enum class Action : std::uint8_t {
     conditional_exit,
     siblings_enter,
     sibling_end,
-    siblings_exit
+    siblings_exit,
+    branch,
+    branch_end
 };
 
 struct Visit {
     // Explicit tasks preserve RHS-first matches and isolate conditionally evaluated definitions.
     ast::ExprId id;
     Action action = Action::expression;
+    // Branch tasks name the case clause they start or finish.
+    std::size_t clause = 0;
 };
 
 struct SiblingScope {
     // All siblings read the same incoming scope; successful definitions accumulate for later expressions.
     BindingEnvironment incoming;
     BindingEnvironment accumulated;
+};
+
+struct CaseScope {
+    // Every clause starts from the scope after the scrutinee; finished clause scopes wait for the join.
+    BindingEnvironment incoming;
+    std::vector<BindingEnvironment> clauses;
+};
+
+struct Scopes {
+    // Indirection avoids allocating map moves during Windows scope-stack relocation.
+    std::vector<std::unique_ptr<BindingEnvironment>> conditional;
+    std::vector<std::unique_ptr<SiblingScope>> siblings;
+    std::vector<std::unique_ptr<CaseScope>> cases;
 };
 
 // Merge constraints without exposing an earlier sibling's new names to the next sibling's reads.
@@ -81,6 +99,88 @@ bool conditional(const ast::ExprValue &value, std::vector<Visit> &pending) {
     return true;
 }
 
+// A case evaluates its scrutinee in the enclosing scope before any clause is bound.
+bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
+    const auto *selection = std::get_if<ast::CaseExpression>(&value);
+    if (!selection) {
+        return false;
+    }
+    pending.push_back({id, Action::branch});
+    pending.push_back({selection->value});
+    return true;
+}
+
+// Bind one clause's pattern and guard over the incoming scope, then schedule its body before the clause end.
+void begin_branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
+                  std::vector<Visit> &pending) {
+    const auto &selection = std::get<ast::CaseExpression>(state.module.syntax->expression(visit.id).value);
+    const auto &clause = selection.clauses.at(visit.clause);
+    BindingCandidate head{environment, {}};
+    bind_pattern(state, clause.pattern, head, BindingContext::body);
+    if (clause.guard) {
+        bind_guard(state, *clause.guard, head);
+    }
+    head.commit(environment);
+    pending.push_back({visit.id, Action::branch_end, visit.clause});
+    for (auto body = clause.body.rbegin(); body != clause.body.rend(); ++body) {
+        pending.push_back({*body});
+    }
+}
+
+// Names bound by every clause are exported; names bound by only some clauses, or unsafe in any, become unsafe.
+BindingEnvironment join_branches(BindingAnalysis &state, const ast::ExprId &id, const CaseScope &scope) {
+    auto result = scope.incoming;
+    std::vector<BindingId> exports;
+    for (const auto &[name, identity] : state.branch_names.back()) {
+        const bool everywhere = std::ranges::all_of(scope.clauses, [&name](const auto &clause) {
+            return clause.names.contains(name) && !clause.unsafe.contains(name);
+        });
+        if (everywhere) {
+            result.names.emplace(name, identity);
+            exports.push_back(identity);
+        } else {
+            result.unsafe.insert(name);
+        }
+    }
+    for (const auto &clause : scope.clauses) {
+        result.unsafe.insert(clause.unsafe.begin(), clause.unsafe.end());
+    }
+    state.function.exports.insert_or_assign(&state.module.syntax->expression(id), std::move(exports));
+    return result;
+}
+
+// Start a clause from the case's incoming scope; the first clause opens the case scope.
+void branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, std::vector<Visit> &pending,
+            Scopes &scopes) {
+    if (visit.clause == 0) {
+        scopes.cases.push_back(std::make_unique<CaseScope>(environment, std::vector<BindingEnvironment>{}));
+        state.branch_names.emplace_back();
+    } else {
+        environment = scopes.cases.back()->incoming;
+    }
+    begin_branch(state, visit, environment, pending);
+}
+
+// Record the clause's new names for later clauses, then start the next clause or join them all.
+void branch_end(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
+                std::vector<Visit> &pending, Scopes &scopes) {
+    auto &current = *scopes.cases.back();
+    for (const auto &[name, identity] : environment.names) {
+        if (!current.incoming.names.contains(name)) {
+            state.branch_names.back().emplace(name, identity);
+        }
+    }
+    current.clauses.push_back(std::move(environment));
+    const auto &selection = std::get<ast::CaseExpression>(state.module.syntax->expression(visit.id).value);
+    if (visit.clause + 1 < selection.clauses.size()) {
+        pending.push_back({visit.id, Action::branch, visit.clause + 1});
+        return;
+    }
+    environment = join_branches(state, visit.id, current);
+    state.branch_names.pop_back();
+    scopes.cases.pop_back();
+}
+
 // Guards may read both operands for diagnostics, but a match can never introduce guard bindings.
 void match(const BindingAnalysis &state, const ast::ExprId &id, const ast::MatchExpression &value,
            const BindingContext context, std::vector<Visit> &pending) {
@@ -104,7 +204,7 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvi
         match(state, id, *assignment, context, pending);
         return;
     }
-    if (conditional(value, pending)) {
+    if (conditional(value, pending) || branches(id, value, pending)) {
         return;
     }
     BindingCandidate scope{environment, {}};
@@ -120,40 +220,50 @@ bool scope_budget(BindingAnalysis &state, const Visit &visit, const BindingEnvir
     return state.spend(visit.id, amount);
 }
 
+// Open or close the conditional, sibling and case scopes that surround scheduled expressions.
+void scope(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, std::vector<Visit> &pending,
+           Scopes &scopes) {
+    switch (visit.action) {
+    case Action::conditional_enter:
+        scopes.conditional.push_back(std::make_unique<BindingEnvironment>(environment));
+        break;
+    case Action::conditional_exit:
+        finish_conditional(environment, std::move(*scopes.conditional.back()));
+        scopes.conditional.pop_back();
+        break;
+    case Action::siblings_enter:
+        scopes.siblings.push_back(std::make_unique<SiblingScope>(environment, environment));
+        break;
+    case Action::sibling_end:
+        finish_sibling(environment, *scopes.siblings.back());
+        break;
+    case Action::siblings_exit:
+        environment = std::move(scopes.siblings.back()->accumulated);
+        scopes.siblings.pop_back();
+        break;
+    case Action::branch:
+        branch(state, visit, environment, pending, scopes);
+        break;
+    default:
+        branch_end(state, visit, environment, pending, scopes);
+        break;
+    }
+}
+
 // Task boundaries are the only publication points; no pattern walk mutates its incoming environment.
 bool execute(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, const BindingContext context,
-             std::vector<Visit> &pending, std::vector<std::unique_ptr<BindingEnvironment>> &conditional_scopes,
-             std::vector<std::unique_ptr<SiblingScope>> &sibling_scopes) {
+             std::vector<Visit> &pending, Scopes &scopes) {
     if (visit.action != Action::expression && !scope_budget(state, visit, environment)) {
         return false;
     }
-    switch (visit.action) {
-    case Action::pattern: {
+    if (visit.action == Action::pattern) {
         BindingCandidate candidate{environment, {}};
         bind_pattern(state, visit.id, candidate, context);
         candidate.commit(environment);
-        break;
-    }
-    case Action::conditional_enter:
-        conditional_scopes.push_back(std::make_unique<BindingEnvironment>(environment));
-        break;
-    case Action::conditional_exit:
-        finish_conditional(environment, std::move(*conditional_scopes.back()));
-        conditional_scopes.pop_back();
-        break;
-    case Action::expression:
+    } else if (visit.action == Action::expression) {
         expression(state, visit.id, environment, context, pending);
-        break;
-    case Action::siblings_enter:
-        sibling_scopes.push_back(std::make_unique<SiblingScope>(environment, environment));
-        break;
-    case Action::sibling_end:
-        finish_sibling(environment, *sibling_scopes.back());
-        break;
-    case Action::siblings_exit:
-        environment = std::move(sibling_scopes.back()->accumulated);
-        sibling_scopes.pop_back();
-        break;
+    } else {
+        scope(state, visit, environment, pending, scopes);
     }
     return true;
 }
@@ -165,14 +275,11 @@ void bind_expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &ro
     for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
         pending.push_back({*root});
     }
-    // Indirection avoids allocating map moves during Windows scope-stack relocation.
-    std::vector<std::unique_ptr<BindingEnvironment>> conditional_scopes;
-    std::vector<std::unique_ptr<SiblingScope>> sibling_scopes;
+    Scopes scopes;
     while (!pending.empty()) {
         const auto visit = pending.back();
         pending.pop_back();
-        if (!state.spend(visit.id) ||
-            !execute(state, visit, environment, context, pending, conditional_scopes, sibling_scopes)) {
+        if (!state.spend(visit.id) || !execute(state, visit, environment, context, pending, scopes)) {
             return;
         }
     }

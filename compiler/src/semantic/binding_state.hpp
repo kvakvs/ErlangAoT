@@ -12,6 +12,8 @@ struct BindingAnalysis {
     std::size_t limit;
     // Pattern errors invalidate tentative bindings even before the module transaction is discarded.
     bool invalid_pattern = false;
+    // Names defined by earlier clauses of each enclosing case; later clauses reuse them so exports share one identity.
+    std::vector<std::map<std::u32string, BindingId>> branch_names = {};
 
     // Stop bounded iterative walks at the original node that exhausted the budget.
     bool spend(const ast::ExprId &id, std::size_t amount = 1);
@@ -28,6 +30,8 @@ void bind_pattern(BindingAnalysis &state, const ast::PatternSyntaxId &id, Bindin
 // Body expression '=' supplies its left expression directly; pattern '=' is a compound constraint.
 void bind_pattern(BindingAnalysis &state, const ast::ExprId &id, BindingCandidate &scope, BindingContext context,
                   std::optional<std::size_t> argument = {});
+// Each guard alternative sees the completed tentative head, but no alternative can assign a name.
+void bind_guard(BindingAnalysis &state, const ast::GuardSyntax &guard, const BindingCandidate &head);
 // Evaluate RHS bindings before LHS patterns, and preserve sequential expression visibility.
 void bind_expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, BindingEnvironment &environment,
                       BindingContext context);

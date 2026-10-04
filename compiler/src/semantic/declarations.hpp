@@ -65,6 +65,8 @@ struct Function {
     // Preserve explicit binding operations and their clause-owned definitions outside syntax.
     std::vector<Binding> bindings = {};
     std::vector<ClauseBindings> clause_bindings = {};
+    // Each case expression lists the identities bound by all of its clauses; lowering joins them after the case.
+    std::map<const ast::Expression *, std::vector<BindingId>> exports = {};
     // Validated head/body patterns retain source identities for later match planning, without enabling execution.
     std::vector<NormalizedPattern> patterns = {};
     // Only semantically resolved service calls may reach lowering; keys borrow immutable owned syntax.

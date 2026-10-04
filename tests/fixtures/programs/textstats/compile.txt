@@ -1,5 +1,5 @@
 exit 1
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:18:5: [pattern matching] notimpl [module="textstats"]
+erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:21:38: [arithmetic] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:30:27: [closures] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:28:25: [heap expressions] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:58:53: [closures] notimpl [module="textstats"]
@@ -13,4 +13,3 @@ erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/texts
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:77:29: [arithmetic] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:7:5: [exceptions] notimpl [module="words"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:33:17: [closures] notimpl [module="words"]
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:36:5: [pattern matching] notimpl [module="words"]

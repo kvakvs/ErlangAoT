@@ -34,8 +34,18 @@ context. Analysis is deterministic.
   never publish bindings; matches in guards are errors even when unreachable.
 - Map keys read only incoming bindings; binary sizes also read earlier segments
   of the same binary (see [patterns](patterns.md#scopes)).
-- Unbound, unsafe and wildcard reads are located errors.
-- Branch, exception, comprehension and closure scopes are not analyzed yet; they
+- A `case` scrutinee binds in the enclosing scope. Each clause starts from that
+  scope; its pattern definitions are tentative until the guard, which only
+  reads. Names bound by every clause are exported with one identity (later
+  clauses reuse the identity an earlier clause gave the name); names bound by
+  only some clauses, or unsafe in any, are unsafe afterwards. Exports join
+  conservatively like OTP's `erl_lint` (`icrt_export`); OTP's warning when a
+  later pattern matches an exported name is not emitted.
+- `begin`/`end` is a sequence in the enclosing scope.
+- Unbound, unsafe and wildcard reads are located errors. Messages keep the
+  compiler's wording (`unbound variable X`, `unsafe variable X`); the bindings
+  corpus checks each against OTP's `unbound_var`/`unsafe_var` class.
+- `if`, exception, comprehension and closure scopes are not analyzed yet; they
   stay behind capability diagnostics.
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
@@ -75,7 +85,8 @@ Inference is separate from declared types and never trusts specs.
   (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements,
   service results and unproved values stay `term()` without relations.
 - Clause results join conservatively: a projection survives only if every
-  clause returns the same argument.
+  clause returns the same argument. A `case` joins its clause results the same
+  way; a binding defined by several case clauses stays `term()`.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
 - Specs are checked only for provable contradictions with known integer

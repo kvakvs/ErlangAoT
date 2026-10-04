@@ -24,6 +24,14 @@
 {guard_wildcard, rejected, unbound_var}.
 {unsafe_merge, rejected, unsafe_var}.
 {unsafe_merge_reverse, rejected, unsafe_var}.
+{case_export, accepted, none}.
+{case_subject, accepted, none}.
+{case_unsafe, rejected, unsafe_var}.
+{case_unsafe_match, rejected, unsafe_var}.
+{case_pattern_unsafe, rejected, unsafe_var}.
+{case_nested_unsafe, rejected, unsafe_var}.
+{case_clause_scope, rejected, unbound_var}.
+{case_sibling, rejected, unbound_var}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

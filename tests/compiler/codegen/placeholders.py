@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 CASES = {
-    "pattern matching": "f(X) -> case X of Y -> Y end.",
+    "pattern matching": "f() -> maybe 1 end.",
     "guards": "f(X) -> if true -> X end.",
     "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "f() -> [X || X <- []].",

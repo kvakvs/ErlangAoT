@@ -1,16 +1,17 @@
 # Patterns, clauses and body matches
 
-Function clause heads and body matches are executable for every admitted term
-kind ([terms](terms.md)). Legality and availability are checked separately:
-invalid Erlang is a **semantic** error even in unreachable code; legal code that
-needs a missing feature gets a **capability** diagnostic; a runtime
-**mismatch** is never a compiler error.
+Function clause heads, body matches and `case` clauses are executable for every
+admitted term kind ([terms](terms.md)). Legality and availability are checked
+separately: invalid Erlang is a **semantic** error even in unreachable code;
+legal code that needs a missing feature gets a **capability** diagnostic; a
+runtime **mismatch** is never a compiler error.
 
 | Context | Status |
 | --- | --- |
 | Function heads + guards | Implemented; exhaustion raises `error:function_clause` |
-| Body matches and sequences | Implemented; failure raises `error:{badmatch, RHS}` |
-| `case`, `if`, `maybe`, comprehensions | Capability (backlog F16) |
+| Body matches and sequences, `begin`/`end` | Implemented; failure raises `error:{badmatch, RHS}` |
+| `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
+| `if`, `maybe`, comprehensions | Capability (backlog F16) |
 | `catch`/`try` patterns | Capability (F20) |
 | Fun clauses | Capability (F18) |
 | `receive` | Capability (F22/F25) |
@@ -52,6 +53,13 @@ size/unit, typed/sized literal strings and non-final unsized binary segments.
 - Clauses run in source order, each with a fresh environment that reloads the
   original arguments. Head mismatch or guard rejection goes to the next clause;
   body errors and infrastructure failures never retry later clauses.
+- A `case` evaluates its scrutinee once, then tries each clause in order with
+  the scrutinee as the single plan input: pattern mismatch or guard rejection
+  (including guard errors) goes to the next clause, exhaustion raises
+  `{case_clause, Value}`. Every clause starts from the bindings before the
+  case; the case value and each exported binding join in one PHI per value.
+- `begin`/`end` runs its sequence in the enclosing scope and yields its last
+  value.
 - Body sequences run in order and return the last value. A match evaluates its
   RHS once, binds new names, checks existing ones and returns the RHS (also for
   `_ = RHS`). Chains evaluate the innermost RHS first.

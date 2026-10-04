@@ -111,6 +111,16 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     return lower_operation(state, operation(service->second.operation), left, right);
 }
 
+// Parentheses and begin/end blocks yield the value of their (last) inner expression.
+std::optional<ast::ExprId> forwarded(const ast::ExprValue &value) {
+    if (const auto *group = std::get_if<ast::Group>(&value)) {
+        return group->expression;
+    }
+    if (const auto *block = std::get_if<ast::BlockExpression>(&value)) {
+        return block->body.back();
+    }
+    return {};
+}
 } // namespace
 
 llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
@@ -130,8 +140,8 @@ llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
                                state.values.at(&state.module.syntax->expression(binary->left)),
                                state.values.at(&state.module.syntax->expression(binary->right)));
     }
-    if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
-        return state.values.at(&state.module.syntax->expression(group->expression));
+    if (const auto inner = forwarded(expression.value)) {
+        return state.values.at(&state.module.syntax->expression(*inner));
     }
     if (const auto *unary = std::get_if<ast::UnaryExpression>(&expression.value)) {
         return lower_operation(state, operation(semantic::immediate_unary(unary->operation)),

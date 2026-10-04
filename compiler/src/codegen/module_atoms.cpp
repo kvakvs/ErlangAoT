@@ -52,6 +52,13 @@ bool booleans(const ast::ExprValue &value) {
             binary->operation == ast::BinaryOperator::or_else);
 }
 
+// Case clause guards compare each test with the canonical true atom.
+bool guarded(const ast::ExprValue &value) {
+    const auto *selection = std::get_if<ast::CaseExpression>(&value);
+    return selection &&
+           std::ranges::any_of(selection->clauses, [](const auto &clause) { return clause.guard.has_value(); });
+}
+
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 void record_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
     const ast::RecordIdentity *identity = nullptr;
@@ -78,7 +85,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
         record_atoms(module, expression.value, result);
-        if (booleans(expression.value)) {
+        if (booleans(expression.value) || guarded(expression.value)) {
             result.insert("true");
             result.insert("false");
         }

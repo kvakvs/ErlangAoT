@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "entry": "scope",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{ok,1,{ok,1}},{error,gone,{error,gone}},{raw,{error,7},{error,7}},{raw,plain,plain}]\n[one_one,one_other,other]\n[{pair,v},{single,k},{single,single}]\n[11,25]\n[{7,6,3},{a,1},{b,2}]\n"
+    },
+    {
+      "args": [
+        "clause"
+      ],
+      "stderr": "^uncaught exception error: \\{case_clause,one_one\\}",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "badmatch"
+      ],
+      "stderr": "^uncaught exception error: \\{badmatch,\\{single,a\\}\\}",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "scope.erl": "edc82dbf76f739d830007d947c83cca31cd21d9279b9052cb4d3e666f0412d45"
+  }
+}

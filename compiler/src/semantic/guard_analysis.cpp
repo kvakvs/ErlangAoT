@@ -79,20 +79,52 @@ struct Visit {
     // Parentheses preserve the top-level legacy-test context; other descendants are ordinary guard expressions.
     ast::ExprId id;
     bool top;
+    // Case clause guards nested in a body are guard contexts of their own.
+    bool guard;
 };
 
+// Each guard test is a top-level legacy-test position.
+void push_guard(const ast::GuardSyntax &guard, std::vector<Visit> &pending) {
+    for (const auto &alternative : guard.alternatives) {
+        for (const auto &test : alternative.tests) {
+            pending.push_back({test, true, true});
+        }
+    }
+}
+
+// Schedule a case's scrutinee and bodies in the current context and its clause guards as top-level guard tests.
+bool case_guards(const ast::Expression &expression, const Visit &visit, std::vector<Visit> &pending) {
+    const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
+    if (!selection) {
+        return false;
+    }
+    pending.push_back({selection->value, false, visit.guard});
+    for (const auto &clause : selection->clauses) {
+        if (clause.guard) {
+            push_guard(*clause.guard, pending);
+        }
+        for (const auto &body : clause.body) {
+            pending.push_back({body, false, visit.guard});
+        }
+    }
+    return true;
+}
+
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
-void visit(BindingAnalysis &state, const Visit &visit, const bool guard, std::vector<Visit> &pending) {
+void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(visit.id);
     if (const auto *value = std::get_if<ast::CallExpression>(&expression.value)) {
-        call(state, visit.id, *value, guard, visit.top);
-    } else if (guard && !std::visit(GuardSyntax{}, expression.value)) {
+        call(state, visit.id, *value, visit.guard, visit.top);
+    } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
+    }
+    if (case_guards(expression, visit, pending)) {
+        return;
     }
     const auto children = expression_children(state.module, expression);
     const bool top = visit.top && std::holds_alternative<ast::Group>(expression.value);
     for (const auto &child : children) {
-        pending.push_back({child, top});
+        pending.push_back({child, top, visit.guard});
     }
 }
 
@@ -102,7 +134,7 @@ void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, 
     std::vector<Visit> pending;
     pending.reserve(roots.size());
     for (const auto &root : roots) {
-        pending.push_back({root, guard && legacy});
+        pending.push_back({root, guard && legacy, guard});
     }
     while (!pending.empty()) {
         const auto visit = pending.back();
@@ -110,7 +142,7 @@ void expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &roots, 
         if (!state.spend(visit.id)) {
             return;
         }
-        semantic::visit(state, visit, guard, pending);
+        semantic::visit(state, visit, pending);
     }
 }
 

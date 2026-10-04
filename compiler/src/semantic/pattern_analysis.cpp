@@ -1,3 +1,4 @@
+#include "capabilities.hpp"
 #include "pattern_state.hpp"
 #include "records.hpp"
 
@@ -34,7 +35,8 @@ struct Walk {
     ast::ExprId expression;
 
     // Store normalized structure and its original source anchor separately from executable capability.
-    void node(const PatternKind kind, std::vector<ast::ExprId> children = {}, std::optional<PatternLiteral> literal = {}) {
+    void node(const PatternKind kind, std::vector<ast::ExprId> children = {},
+              std::optional<PatternLiteral> literal = {}) {
         const auto cost = literal ? std::visit(LiteralCost{}, *literal) : 1;
         if (!state.spend(expression, cost + children.size())) {
             return;
@@ -266,9 +268,7 @@ void execute(Walk &walk) {
 
 void bind_pattern(BindingAnalysis &state, const ast::PatternSyntaxId &id, BindingCandidate &scope,
                   const BindingContext context, const std::optional<std::size_t> argument) {
-    const auto &pattern = state.module.syntax->pattern(id);
-    const auto expression = std::visit([](const auto &value) { return value.expression; }, pattern.value);
-    bind_pattern(state, expression, scope, context, argument);
+    bind_pattern(state, pattern_root(*state.module.syntax, id), scope, context, argument);
 }
 
 void bind_pattern(BindingAnalysis &state, const ast::ExprId &id, BindingCandidate &scope, const BindingContext context,

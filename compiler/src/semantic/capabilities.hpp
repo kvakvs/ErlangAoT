@@ -12,6 +12,8 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
 std::vector<ast::ExprId> function_roots(const ast::Function &function);
 // Enumerate analyzed map key expressions independently of value-pattern definitions.
 std::vector<ast::ExprId> pattern_reads(const Module &module, const Function &function);
+// Return the expression a restricted or permissive pattern syntax node wraps.
+ast::ExprId pattern_root(const ast::Module &syntax, const ast::PatternSyntaxId &pattern);
 // Strip source-only grouping while retaining the original node for diagnostics.
 ast::ExprId ungroup(const ast::Module &syntax, ast::ExprId expression);
 // Decode supported signed literals using the eventual target word width, never unchecked casts.
