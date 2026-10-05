@@ -3,9 +3,10 @@
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a subset of Erlang to LLVM IR, bitcode and native objects:
 ordered function clauses with guards, body matches and recursive local/remote
-calls over atoms, arbitrary integers, floats, tuples, lists, maps, bitstrings and
-tuple records. Generated code runs through native harnesses linked with the
-separate runtime; a production executable launcher is not implemented yet.
+calls with proper tail calls over atoms, arbitrary integers, floats, tuples,
+lists, maps, bitstrings and tuple records. Generated code runs through native
+harnesses linked with the separate runtime; a production executable launcher is
+not implemented yet.
 
 All APIs are project-internal C++23. Native generated-code execution is
 validated on Windows x64; objects are inspected for seven targets. See the

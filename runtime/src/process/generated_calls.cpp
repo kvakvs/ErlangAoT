@@ -36,7 +36,7 @@ void GeneratedCallState::fail(const CallFailure &failure) noexcept {
     if (active_ && !failure_) {
         failure_ = failure;
         if (failure.code == CallError::erlang_exception && !failure.stack) {
-            failure_->trace = roots_.trace();
+            failure_->trace = stack_.trace();
         }
     }
 }

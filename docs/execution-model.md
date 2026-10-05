@@ -2,10 +2,9 @@
 
 Decision of plan 11 step 17 (2026-10-05). It fixes how generated Erlang
 functions call, return, suspend and fail once recursion, tail calls and
-processes arrive. Nothing here is implemented yet: today's generated code
-still uses native calls and the segmented root stack described in
-[abi.md](abi.md#root-scopes). Step 19 switches lowering to this model; steps
-20, 23, 24, 26 and 43 build on it.
+processes arrive. Step 19 implemented calls, returns, tail calls and frames
+([Implementation](#implementation) lists what is still open); steps 23, 24,
+26 and 43 build on it.
 
 ## Decision
 
@@ -147,6 +146,44 @@ successful compile is the guarantee. Fallback for a future target that rejects
 it: a **trampoline**. Each code returns the next code pointer to the scheduler
 loop instead of jumping (null suspends); frames, roots and continuation
 indices are unchanged. No required target needs it.
+
+## Implementation
+
+Step 19 (2026-10-05) implements the model with these choices and gaps:
+
+- **Two stages.** Lowering still emits *native form*: one
+  `TermWord(context, arguments)` function per Erlang function, ordinary calls
+  between them, a placeholder `erlang_aot.frame` call naming the term slots,
+  and `ret` of a call's result in tail position. `lower_frames`
+  (`compiler/src/codegen/frames.cpp`) then moves each body into
+  `<symbol>.body`, adds the prologue (frame header, registers, resume
+  switch), splits blocks after non-tail calls, spills values used after a
+  call to raw slots, hoists constant slot addresses into the prologue, and
+  turns calls, tail calls and returns into `musttail` transfers. Type
+  specialization and test seams work on native form; the backend runs
+  `lower_frames` before IR inspection and `optimize` runs it if still needed.
+- **Entry and body.** There is no separate entry function: the caller calls
+  `erlang_aot_enter_v1(context, callee.frame)`, which pushes the frame, copies
+  the arguments and returns the callee's body. A tail call uses
+  `erlang_aot_tail_v1`, which first releases the caller's frame.
+- **Tail positions** are the last expression of a clause body, followed
+  through blocks, parentheses, `case` and `if` clause bodies. Calls in
+  `catch`, `try`, `maybe` and `andalso`/`orelse` operands are not tail calls.
+- **Exceptions** return through every caller, which checks the channel after
+  the call as before; handler indices and direct unwinding remain an
+  optimization. Stack traces read the frame chain at raise time.
+- **No yield yet.** Reductions and `resume_at` arrive with the scheduler
+  (step 43). Registers and raw spill slots are not roots; terms live across a
+  call are also in term slots, and step 23 must make collections reload them.
+- **Budget.** The stack has its own limit of 2^24 words
+  (`StackOptions::limit_words`, separate from the 64 MiB heap budget). A push
+  beyond it fails with `resource_limit`, so a program exits with status 70 and
+  `erlangaot: runtime failure: entry call failed: resource_limit`
+  ([executables](executables.md)). Frames take 4 header words plus 1-40 slots
+  today, so body recursion reaches over a million levels.
+- **Host entry.** An exported symbol keeps the native signature and runs its
+  function above a runtime bottom frame with `erlang_aot_invoke_v1`; native
+  exceptions thrown by services are contained there.
 
 ## Alternatives compared
 

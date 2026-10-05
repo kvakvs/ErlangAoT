@@ -1,0 +1,587 @@
+#include "frames.hpp"
+#include "llvm_state.hpp"
+#include "lowering_roots.hpp"
+#include "runtime_symbols.hpp"
+#include "verification.hpp"
+#include <algorithm>
+#include <charconv>
+#include <erlang_aot/abi/frames.hpp>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InstIterator.h>
+#include <llvm/Transforms/Utils/Local.h>
+#include <map>
+#include <optional>
+#include <set>
+#include <stdexcept>
+
+namespace erlang_aot::codegen {
+namespace {
+using abi::v1::frame_header_words;
+using abi::v1::frame_resume_word;
+
+// Arity recorded on a native-form Erlang function; empty for every other function.
+std::optional<std::size_t> erlang_arity(const llvm::Function *function) {
+    if (!function || !function->hasFnAttribute(ARITY_ATTRIBUTE)) {
+        return {};
+    }
+    const auto text = function->getFnAttribute(ARITY_ATTRIBUTE).getValueAsString();
+    std::size_t value = 0;
+    std::from_chars(text.begin(), text.end(), value);
+    return value;
+}
+
+// Declare one frame service of abi/frames.hpp with its target spelling.
+template <typename Service>
+llvm::FunctionCallee declare(llvm::Module &output, llvm::Type *result, llvm::ArrayRef<llvm::Type *> parameters) {
+    return output.getOrInsertFunction(services::symbol<Service>(output.getTargetTriple()),
+                                      llvm::FunctionType::get(result, parameters, false));
+}
+
+struct Services {
+    // Target word, the FrameDescriptor layout and the frame services of one output module.
+    llvm::Module &output;
+    llvm::IntegerType *word;
+    llvm::StructType *descriptor;
+    llvm::FunctionType *code;
+    llvm::FunctionCallee enter;
+    llvm::FunctionCallee tail;
+    llvm::FunctionCallee leave;
+    llvm::FunctionCallee frame;
+    llvm::FunctionCallee registers;
+    llvm::FunctionCallee invoke;
+
+    // Word alignment of slots and registers.
+    [[nodiscard]] llvm::Align align() const { return llvm::Align(word->getBitWidth() / 8); }
+
+    // The descriptor a call to `function` enters; remote callees are external declarations.
+    [[nodiscard]] llvm::Constant *descriptor_of(const llvm::Function &function) const {
+        return output.getOrInsertGlobal((function.getName() + ".frame").str(), descriptor);
+    }
+};
+
+// Declare the services and descriptor layout once per output module.
+Services frame_services(llvm::Module &output, llvm::IntegerType *word) {
+    auto *ptr = llvm::PointerType::get(output.getContext(), 0);
+    auto *descriptor = llvm::StructType::get(output.getContext(), {ptr, word, word, word, ptr, word, word});
+    return {output,
+            word,
+            descriptor,
+            llvm::FunctionType::get(llvm::Type::getVoidTy(output.getContext()), {ptr}, false),
+            declare<services::Enter>(output, ptr, {ptr, ptr}),
+            declare<services::Tail>(output, ptr, {ptr, ptr}),
+            declare<services::Return>(output, ptr, {ptr, word}),
+            declare<services::Frame>(output, ptr, {ptr}),
+            declare<services::Registers>(output, ptr, {ptr}),
+            declare<services::Invoke>(output, word, {ptr, ptr, ptr})};
+}
+
+struct Prologue {
+    // Computed whenever the body is entered, so these dominate every resume point and never spill.
+    llvm::BasicBlock *block;
+    llvm::Value *registers;
+    llvm::Value *slots;
+    llvm::Value *resume;
+};
+
+struct ErlangCall {
+    // A call of a native-form Erlang function and its callee.
+    llvm::CallInst *call;
+    llvm::Function *callee;
+};
+
+struct Continuation {
+    // A non-tail Erlang call and the block resuming after it, reached through the body's resume switch.
+    ErlangCall call;
+    llvm::BasicBlock *resume;
+};
+
+// Whether a use reads its value in a `reached` block other than the definition's. A PHI reads at the end of
+// an incoming block; any predecessor of its block counts, which can only spill more than needed.
+bool reads_in(const llvm::Use &use, const llvm::BasicBlock *definition,
+              const std::set<const llvm::BasicBlock *> &reached) {
+    const auto *user = llvm::cast<llvm::Instruction>(use.getUser());
+    const auto *block = user->getParent();
+    if (!llvm::isa<llvm::PHINode>(user)) {
+        return block != definition && reached.contains(block);
+    }
+    return std::ranges::any_of(llvm::predecessors(block), [&](const llvm::BasicBlock *from) {
+        return from != definition && reached.contains(from);
+    });
+}
+
+// Lower one native-form function into the body its descriptor names.
+class FrameLowering {
+  public:
+    // Borrow the module services and the native-form function; its body is created empty.
+    FrameLowering(const Services &services, llvm::Function &native)
+        : services_(services), native_(native),
+          body_(*llvm::Function::Create(services.code, llvm::GlobalValue::InternalLinkage, native.getName() + ".body",
+                                        services.output)),
+          arity_(erlang_arity(&native).value_or(0)), roots_(arity_) {}
+
+    // Run every step and return the descriptor contents.
+    llvm::Constant *lower() {
+        move_blocks();
+        build_prologue();
+        replace_marker();
+        const auto calls = erlang_calls();
+        replace_allocas(calls);
+        hoist_addresses();
+        for (const auto &call : calls) {
+            const auto *next = llvm::dyn_cast_or_null<llvm::ReturnInst>(call.call->getNextNode());
+            if (next && next->getReturnValue() == call.call) {
+                lower_tail(call);
+            } else {
+                split(call);
+            }
+        }
+        spill_values();
+        for (std::size_t i = 0; i < continuations_.size(); ++i) {
+            lower_call(continuations_[i], i + 1);
+        }
+        lower_returns();
+        finish_prologue();
+        return descriptor_value();
+    }
+
+  private:
+    // Move the blocks and debug scope into the body; the body takes the context in place of the native one.
+    void move_blocks() {
+        body_.getArg(0)->setName("context");
+        body_.splice(body_.end(), &native_);
+        native_.getArg(0)->replaceAllUsesWith(body_.getArg(0));
+        body_.setSubprogram(native_.getSubprogram());
+        native_.setSubprogram(nullptr);
+        llvm::removeUnreachableBlocks(body_);
+    }
+
+    // Read the frame header and registers on entry; argument reads become reads of the first slots.
+    void build_prologue() {
+        auto *entry = &body_.front();
+        auto *block = llvm::BasicBlock::Create(body_.getContext(), "frame", &body_, entry);
+        llvm::IRBuilder<> builder(block);
+        auto *header = builder.CreateCall(services_.frame, {body_.getArg(0)}, "frame.header");
+        auto *registers = builder.CreateCall(services_.registers, {body_.getArg(0)}, "frame.registers");
+        auto *slots = builder.CreateConstInBoundsGEP1_64(services_.word, header, frame_header_words, "frame.slots");
+        auto *resume = builder.CreateConstInBoundsGEP1_64(services_.word, header, frame_resume_word, "frame.resume");
+        builder.CreateBr(entry);
+        prologue_ = {block, registers, slots, resume};
+        native_.getArg(1)->replaceAllUsesWith(slots);
+    }
+
+    // The marker names the term slot count and the stack-trace names; its slots are the frame's slots.
+    void replace_marker() {
+        for (auto *call : calls_to(services_.output.getFunction(FRAME_MARKER))) {
+            roots_ = llvm::cast<llvm::ConstantInt>(call->getArgOperand(1))->getZExtValue();
+            auto *names = llvm::cast<llvm::GlobalVariable>(call->getArgOperand(2));
+            for (unsigned i = 0; i < names_.size(); ++i) {
+                names_.at(i) = names->getInitializer()->getAggregateElement(i);
+            }
+            call->replaceAllUsesWith(prologue_.slots);
+            call->eraseFromParent();
+            if (names->use_empty()) {
+                names->eraseFromParent();
+            }
+        }
+    }
+
+    // Recompute constant slot and register addresses on every entry: the stack may move during a call.
+    void hoist_addresses() {
+        std::set<llvm::Value *> stable{prologue_.registers, prologue_.slots};
+        for (bool moved = true; moved;) {
+            moved = false;
+            for (auto &instruction : llvm::make_early_inc_range(llvm::instructions(body_))) {
+                auto *address = llvm::dyn_cast<llvm::GetElementPtrInst>(&instruction);
+                if (address && address->getParent() != prologue_.block &&
+                    stable.contains(address->getPointerOperand()) && address->hasAllConstantIndices()) {
+                    stable.insert(hoist(*address));
+                    moved = true;
+                }
+            }
+        }
+        record_slot_stores();
+        record_argument_loads();
+    }
+
+    // Move one constant address into the prologue. Register addresses (one per argument passed) reuse an identical
+    // one; slot addresses stay distinct, one per service output or rooted value, so the IR names each use.
+    llvm::Value *hoist(llvm::GetElementPtrInst &address) {
+        auto &same = hoisted_[{address.getSourceElementType(), {address.op_begin(), address.op_end()}}];
+        if (!same.empty() && address.getPointerOperand() == prologue_.registers) {
+            address.replaceAllUsesWith(same.front());
+            address.eraseFromParent();
+            return same.front();
+        }
+        if (address.getPointerOperand() == prologue_.registers) {
+            address.setName("register");
+        }
+        address.moveBefore(prologue_.block->getTerminator()->getIterator());
+        address.dropLocation();
+        same.push_back(&address);
+        return &address;
+    }
+
+    // Index the loads from argument slots by load.
+    void record_argument_loads() {
+        for (std::size_t index = 0; index < arity_; ++index) {
+            const auto found =
+                hoisted_.find({services_.word, {prologue_.slots, llvm::ConstantInt::get(services_.word, index)}});
+            for (auto *slot : found == hoisted_.end() ? std::vector<llvm::Value *>{} : found->second) {
+                record_loads(*slot);
+            }
+        }
+    }
+
+    // Map every load from one argument slot address to that address.
+    void record_loads(llvm::Value &slot) {
+        for (auto *user : slot.users()) {
+            if (llvm::isa<llvm::LoadInst>(user)) {
+                argument_loads_.emplace(user, &slot);
+            }
+        }
+    }
+
+    // Index the stores into term slots by store.
+    void record_slot_stores() {
+        for (auto &instruction : *prologue_.block) {
+            const auto *address = llvm::dyn_cast<llvm::GetElementPtrInst>(&instruction);
+            if (!address || address->getPointerOperand() != prologue_.slots || raw_slots_.contains(address)) {
+                continue;
+            }
+            for (auto *user : instruction.users()) {
+                if (llvm::isa<llvm::StoreInst>(user)) {
+                    slot_stores_.emplace(user, &instruction);
+                }
+            }
+        }
+    }
+
+    // The term slot already holding the value: the argument slot it was read from (only ever rewritten with the same
+    // value), or a slot a store in its own block put it in (not reused within a candidate). Else a new raw slot.
+    llvm::Value *home(const llvm::Instruction &value) {
+        if (const auto argument = argument_loads_.find(&value); argument != argument_loads_.end()) {
+            return argument->second;
+        }
+        for (const auto *user : value.users()) {
+            const auto found = slot_stores_.find(user);
+            if (found != slot_stores_.end() && llvm::cast<llvm::Instruction>(user)->getParent() == value.getParent()) {
+                return found->second;
+            }
+        }
+        return raw_slot(body_.getParent()->getDataLayout().getTypeStoreSize(value.getType()).getFixedValue());
+    }
+
+    // Native stack memory does not survive a transfer. Native form fills an Erlang call's argument array right
+    // before the call, so those arrays become the registers; any other array becomes raw slots.
+    void replace_allocas(const std::vector<ErlangCall> &calls) {
+        std::set<const llvm::Value *> arguments;
+        for (const auto &call : calls) {
+            arguments.insert(call.call->getArgOperand(1));
+        }
+        for (auto &instruction : llvm::make_early_inc_range(llvm::instructions(body_))) {
+            auto *array = llvm::dyn_cast<llvm::AllocaInst>(&instruction);
+            if (!array) {
+                continue;
+            }
+            const auto size = array->getAllocationSize(body_.getParent()->getDataLayout());
+            if (!size || size->isScalable()) {
+                throw std::logic_error("lower_frames: unsized native stack array");
+            }
+            array->replaceAllUsesWith(arguments.contains(array) ? prologue_.registers
+                                                                : raw_slot(size->getFixedValue()));
+            array->eraseFromParent();
+        }
+    }
+
+    // Calls to native-form Erlang functions; other native calls stay ordinary calls.
+    std::vector<ErlangCall> erlang_calls() {
+        std::vector<ErlangCall> calls;
+        for (auto &callee : services_.output) {
+            if (erlang_arity(&callee)) {
+                for (auto *call : calls_to(&callee)) {
+                    calls.push_back({call, &callee});
+                }
+            }
+        }
+        return calls;
+    }
+
+    // Calls of `callee` in this body, found through its uses: native form passes functions only as callees.
+    std::vector<llvm::CallInst *> calls_to(llvm::Function *callee) const {
+        std::vector<llvm::CallInst *> calls;
+        if (!callee) {
+            return calls;
+        }
+        for (auto *user : callee->users()) {
+            auto *call = llvm::dyn_cast<llvm::CallInst>(user);
+            if (call && call->getFunction() == &body_) {
+                calls.push_back(call);
+            }
+        }
+        return calls;
+    }
+
+    // A tail call releases this frame and enters the callee, whose return reaches this function's caller.
+    void lower_tail(const ErlangCall &call) {
+        auto *ret = call.call->getNextNode();
+        llvm::IRBuilder<> builder(call.call);
+        copy_arguments(builder, call);
+        auto *code =
+            builder.CreateCall(services_.tail, {body_.getArg(0), services_.descriptor_of(*call.callee)}, "tail.code");
+        transfer(builder, code);
+        ret->eraseFromParent();
+        call.call->eraseFromParent();
+    }
+
+    // End the call's block at the call; the result arrives in the first register when the body resumes.
+    void split(const ErlangCall &call) {
+        auto *resume = call.call->getParent()->splitBasicBlock(std::next(call.call->getIterator()), "resume");
+        llvm::IRBuilder<> builder(resume, resume->getFirstInsertionPt());
+        builder.SetCurrentDebugLocation(call.call->getDebugLoc());
+        call.call->replaceAllUsesWith(
+            builder.CreateAlignedLoad(services_.word, prologue_.registers, services_.align(), "call.result"));
+        continuations_.push_back({call, resume});
+    }
+
+    // Store every value read after a resume point it was computed before in a raw slot.
+    void spill_values() {
+        if (continuations_.empty()) {
+            return;
+        }
+        std::vector<llvm::Instruction *> crossing;
+        for (auto &block : body_) {
+            for (auto &instruction : block) {
+                if (&block != prologue_.block && crosses(instruction)) {
+                    crossing.push_back(&instruction);
+                }
+            }
+        }
+        for (auto *instruction : crossing) {
+            spill(*instruction);
+        }
+    }
+
+    // A use outside the defining block that some resume point reaches without passing the definition.
+    bool crosses(const llvm::Instruction &value) {
+        const auto &reached = resumed(value.getParent());
+        return std::ranges::any_of(value.uses(),
+                                   [&](const llvm::Use &use) { return reads_in(use, value.getParent(), reached); });
+    }
+
+    // Blocks reachable from a resume point without entering `definition`, cached per defining block.
+    const std::set<const llvm::BasicBlock *> &resumed(const llvm::BasicBlock *definition) {
+        auto [found, fresh] = resumed_.try_emplace(definition);
+        if (!fresh) {
+            return found->second;
+        }
+        std::vector<const llvm::BasicBlock *> pending;
+        for (const auto &continuation : continuations_) {
+            if (continuation.resume != definition) {
+                pending.push_back(continuation.resume);
+            }
+        }
+        while (!pending.empty()) {
+            const auto *block = pending.back();
+            pending.pop_back();
+            if (found->second.insert(block).second) {
+                std::ranges::copy_if(llvm::successors(block), std::back_inserter(pending),
+                                     [&](const llvm::BasicBlock *next) { return next != definition; });
+            }
+        }
+        return found->second;
+    }
+
+    // Store the value after its definition and load it before each use (LLVM's register demotion), in a raw slot.
+    void spill(llvm::Instruction &value) {
+        if (value.getType()->isPointerTy()) {
+            throw std::logic_error("lower_frames: a native pointer is live across a call");
+        }
+        auto *slot = home(value);
+        auto *stack = llvm::DemoteRegToStack(value);
+        for (auto *user : stack->users()) {
+            // A reload sits right before its reader, the store right after the definition: share their lines.
+            if (auto *load = llvm::dyn_cast<llvm::LoadInst>(user)) {
+                load->setAlignment(services_.align());
+                load->setDebugLoc(load->getNextNode()->getDebugLoc());
+            } else {
+                llvm::cast<llvm::StoreInst>(user)->setAlignment(services_.align());
+                llvm::cast<llvm::StoreInst>(user)->setDebugLoc(value.getDebugLoc());
+            }
+        }
+        stack->replaceAllUsesWith(slot);
+        stack->eraseFromParent();
+    }
+
+    // Record the resume index, pass the arguments and enter the callee; its return resumes this body.
+    void lower_call(const Continuation &continuation, std::size_t index) {
+        auto *block = continuation.call.call->getParent();
+        llvm::IRBuilder<> builder(continuation.call.call);
+        builder.CreateAlignedStore(llvm::ConstantInt::get(services_.word, index), prologue_.resume, services_.align());
+        copy_arguments(builder, continuation.call);
+        auto *code = builder.CreateCall(
+            services_.enter, {body_.getArg(0), services_.descriptor_of(*continuation.call.callee)}, "call.code");
+        transfer(builder, code);
+        block->getTerminator()->eraseFromParent();
+        continuation.call.call->eraseFromParent();
+    }
+
+    // Every return passes its value to the caller's body through the return service.
+    void lower_returns() {
+        std::vector<llvm::ReturnInst *> returns;
+        for (auto &block : body_) {
+            auto *ret = llvm::dyn_cast<llvm::ReturnInst>(block.getTerminator());
+            if (ret && ret->getReturnValue()) {
+                returns.push_back(ret);
+            }
+        }
+        for (auto *ret : returns) {
+            llvm::IRBuilder<> builder(ret);
+            transfer(builder,
+                     builder.CreateCall(services_.leave, {body_.getArg(0), ret->getReturnValue()}, "return.code"));
+            ret->eraseFromParent();
+        }
+    }
+
+    // Dispatch on the resume index: 0 starts the function, index k continues after the k-th call.
+    void finish_prologue() {
+        if (continuations_.empty()) {
+            return;
+        }
+        auto *terminator = prologue_.block->getTerminator();
+        llvm::IRBuilder<> builder(terminator);
+        auto *resume = builder.CreateAlignedLoad(services_.word, prologue_.resume, services_.align(), "resume");
+        auto *dispatch = builder.CreateSwitch(resume, terminator->getSuccessor(0), continuations_.size());
+        for (std::size_t i = 0; i < continuations_.size(); ++i) {
+            dispatch->addCase(llvm::ConstantInt::get(services_.word, i + 1), continuations_[i].resume);
+        }
+        terminator->eraseFromParent();
+    }
+
+    // Copy arguments into the registers unless the call's array already is the registers.
+    void copy_arguments(llvm::IRBuilder<> &builder, const ErlangCall &call) const {
+        auto *arguments = call.call->getArgOperand(1);
+        const auto count = erlang_arity(call.callee).value_or(0);
+        if (count != 0 && arguments != prologue_.registers) {
+            builder.CreateMemCpy(prologue_.registers, services_.align(), arguments, services_.align(),
+                                 count * (services_.word->getBitWidth() / 8));
+        }
+    }
+
+    // Leave the body by a guaranteed tail call of `code`.
+    void transfer(llvm::IRBuilder<> &builder, llvm::Value *code) const {
+        auto *type = llvm::FunctionType::get(builder.getVoidTy(), {builder.getPtrTy()}, false);
+        auto *call = builder.CreateCall(type, code, {body_.getArg(0)});
+        call->setTailCallKind(llvm::CallInst::TCK_MustTail);
+        builder.CreateRetVoid();
+    }
+
+    // Reserve raw words after the term slots; their address is recomputed on every entry.
+    llvm::Value *raw_slot(std::uint64_t bytes) {
+        const auto unit = services_.word->getBitWidth() / 8;
+        llvm::IRBuilder<> builder(prologue_.block->getTerminator());
+        auto *slot = builder.CreateConstInBoundsGEP1_64(services_.word, prologue_.slots, roots_ + raw_, "frame.raw");
+        raw_ += std::max<std::uint64_t>(1, (bytes + unit - 1) / unit);
+        raw_slots_.insert(slot);
+        return slot;
+    }
+
+    // FrameDescriptor contents: stack-trace names, body, all slots and the leading term slots.
+    llvm::Constant *descriptor_value() {
+        auto *ptr = llvm::PointerType::get(body_.getContext(), 0);
+        auto *word = services_.word;
+        if (!names_[0]) {
+            names_ = {llvm::ConstantPointerNull::get(ptr), llvm::ConstantInt::get(word, 0),
+                      llvm::ConstantInt::get(word, 0), llvm::ConstantInt::get(word, arity_)};
+        }
+        return llvm::ConstantStruct::get(services_.descriptor, {names_[0], names_[1], names_[2], names_[3], &body_,
+                                                                llvm::ConstantInt::get(word, roots_ + raw_),
+                                                                llvm::ConstantInt::get(word, roots_)});
+    }
+
+    // Module services and the function being moved from native form into its body.
+    const Services &services_;
+    llvm::Function &native_;
+    llvm::Function &body_;
+    std::size_t arity_;
+    Prologue prologue_{};
+    // Term slots named by the marker (arguments first), then raw words for spills and native arrays.
+    std::size_t roots_;
+    std::size_t raw_ = 0;
+    // Stack-trace fields copied from the marker's name descriptor; empty without a marker.
+    std::array<llvm::Constant *, 4> names_{};
+    // Non-tail calls in resume-index order and the blocks each resume point reaches.
+    std::vector<Continuation> continuations_;
+    std::map<const llvm::BasicBlock *, std::set<const llvm::BasicBlock *>> resumed_;
+    // Constant prologue addresses by element type and operands.
+    using Address = std::pair<llvm::Type *, std::vector<llvm::Value *>>;
+    std::map<Address, std::vector<llvm::Value *>> hoisted_;
+    // Stores into term slots, mapped to the slot, and the raw slot addresses, which are not term slots.
+    std::map<const llvm::User *, llvm::Value *> slot_stores_;
+    std::map<const llvm::Value *, llvm::Value *> argument_loads_;
+    std::set<const llvm::Value *> raw_slots_;
+};
+
+// Exported entries keep their symbol as a host entry that runs the body above a bottom frame.
+void finish_native(const Services &services, llvm::Function &native, llvm::Constant *descriptor) {
+    native.removeFnAttr(ARITY_ATTRIBUTE);
+    if (native.hasLocalLinkage() && native.use_empty()) {
+        native.eraseFromParent();
+        return;
+    }
+    llvm::IRBuilder<> builder(llvm::BasicBlock::Create(native.getContext(), "entry", &native));
+    builder.CreateRet(builder.CreateCall(services.invoke, {native.getArg(0), descriptor, native.getArg(1)}));
+}
+
+// Drop declarations only native-form code referred to.
+void erase_unused(llvm::Module &output) {
+    for (auto &function : llvm::make_early_inc_range(output)) {
+        const bool erlang = function.isDeclaration() && erlang_arity(&function);
+        if ((erlang || function.getName() == llvm::StringRef(FRAME_MARKER)) && function.use_empty()) {
+            function.eraseFromParent();
+        }
+    }
+}
+
+// Create every descriptor first so calls between functions of the module resolve to them.
+void lower_module(llvm::Module &output) {
+    std::vector<llvm::Function *> natives;
+    for (auto &function : output) {
+        if (!function.isDeclaration() && erlang_arity(&function)) {
+            natives.push_back(&function);
+        }
+    }
+    if (natives.empty()) {
+        return;
+    }
+    const auto services = frame_services(output, llvm::cast<llvm::IntegerType>(natives.front()->getReturnType()));
+    std::vector<llvm::GlobalVariable *> descriptors;
+    descriptors.reserve(natives.size());
+    for (auto *native : natives) {
+        const auto linkage =
+            native->hasLocalLinkage() ? llvm::GlobalValue::InternalLinkage : llvm::GlobalValue::ExternalLinkage;
+        descriptors.push_back(new llvm::GlobalVariable(output, services.descriptor, true, linkage, nullptr,
+                                                       native->getName() + ".frame"));
+    }
+    for (std::size_t i = 0; i < natives.size(); ++i) {
+        descriptors[i]->setInitializer(FrameLowering(services, *natives[i]).lower());
+    }
+    for (std::size_t i = 0; i < natives.size(); ++i) {
+        finish_native(services, *natives[i], descriptors[i]);
+    }
+    erase_unused(output);
+}
+} // namespace
+
+bool lower_frames(Compilation &compilation) {
+    try {
+        for (auto &output : detail::state(compilation).modules) {
+            lower_module(*output);
+        }
+    } catch (const std::exception &error) {
+        compilation.result().report(
+            {.level = DiagnosticLevel::error, .message = error.what(), .location = {}, .module_name = {}});
+        return false;
+    }
+    return verify_ir(compilation);
+}
+} // namespace erlang_aot::codegen

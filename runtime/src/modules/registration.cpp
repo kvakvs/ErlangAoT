@@ -34,7 +34,6 @@ CallResult<Word> invoke_entry(abi::v1::GeneratedFunction *entry, ProcessContext 
 CallResult<Term> invoke(abi::v1::GeneratedFunction *entry, ProcessContext &context, std::span<const Term> arguments) {
     auto &state = context.generated_calls();
     GeneratedInvocation invocation(state);
-    RootInvocation roots(context.roots());
     if (state.failure()) {
         return std::unexpected(*state.failure());
     }

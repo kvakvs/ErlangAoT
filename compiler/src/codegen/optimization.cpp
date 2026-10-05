@@ -1,4 +1,5 @@
 #include "optimization.hpp"
+#include "frames.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
 #include "verification.hpp"
@@ -39,7 +40,7 @@ void optimize_module(llvm::Module &module, llvm::TargetMachine &machine, const O
 } // namespace
 
 bool optimize(Compilation &compilation) {
-    if (!verify_ir(compilation)) {
+    if (!lower_frames(compilation)) {
         return false;
     }
     auto &state = detail::state(compilation);

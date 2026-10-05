@@ -1,6 +1,7 @@
 #include "lowering.hpp"
 #include "llvm_state.hpp"
 #include "lowering_expressions.hpp"
+#include "lowering_roots.hpp"
 #include "module_registration.hpp"
 #include "progress.hpp"
 #include "source_locations.hpp"
@@ -36,6 +37,7 @@ void declare(llvm::Module &output, const semantic::Module &module, llvm::Functio
             function.exported ? llvm::GlobalValue::ExternalLinkage : llvm::GlobalValue::InternalLinkage;
         auto *entry = llvm::Function::Create(signature, linkage, function.symbol, output);
         entry->setCallingConv(llvm::CallingConv::C);
+        entry->addFnAttr(ARITY_ATTRIBUTE, std::to_string(function.key.arity));
         entry->getArg(0)->setName("context");
         entry->getArg(1)->setName("arguments");
     }

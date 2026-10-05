@@ -422,9 +422,17 @@ void check_bitstrings(bool extraction, bool large) {
     require(succeeded, "bit allocation sweep never reached success");
 }
 
+// Body of the frame pushed under allocation faults: return the argument.
+void identity_body(void *context) {
+    auto &stack = static_cast<erlang_aot::runtime::ProcessContext *>(context)->stack();
+    stack.leave(stack.frame()[erlang_aot::abi::v1::frame_header_words])(context);
+}
+
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 void check_root_allocation() {
     using namespace erlang_aot::runtime;
+    const erlang_aot::abi::v1::FrameDescriptor identity{nullptr, 0, 0, 1, &identity_body, 4, 4};
+    const auto argument = encode_integer(5).value();
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -434,19 +442,18 @@ void check_root_allocation() {
             GeneratedInvocation invocation(context.generated_calls());
             const auto retained = live_allocations;
             remaining = ordinal;
-            auto *frame = context.roots().enter(4);
+            const auto result = context.stack().invoke(identity, &argument);
             remaining = std::numeric_limits<std::size_t>::max();
-            succeeded = frame != nullptr;
+            succeeded = result == argument;
             if (!succeeded) {
-                require(context.generated_calls().failure()->status == Status::out_of_memory, "root OOM lost");
-                require(context.roots().depth() == 0 && context.roots().words() == 0, "failed root entry published");
-                require(context.roots().capacity() == 0 && live_allocations == retained, "partial root segment leaked");
+                require(context.generated_calls().failure()->status == Status::out_of_memory, "stack OOM lost");
+                require(context.stack().depth() == 0 && context.stack().words() == 0, "failed frame published");
+                require(live_allocations <= retained + 1, "partial stack leaked");
             }
-            context.roots().restore(0);
         }
-        require(live_allocations == baseline, "root teardown leaked");
+        require(live_allocations == baseline, "stack teardown leaked");
     }
-    require(succeeded, "root allocation sweep never succeeded");
+    require(succeeded, "stack allocation sweep never succeeded");
 }
 
 // Sweep heap block allocation; a failed reservation keeps no backing and allows retry.

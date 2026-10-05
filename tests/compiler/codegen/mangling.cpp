@@ -86,12 +86,18 @@ int main() {
                                   "_Z21erlang_aot_reraise_v2Pvmmm", "_Z21erlang_aot_reraise_v2Pvjjj"});
         check<services::Error>({"?erlang_aot_error_v1@@YAEPEAX_K1@Z", "?erlang_aot_error_v1@@YAEPAXII@Z",
                                 "_Z19erlang_aot_error_v1Pvmm", "_Z19erlang_aot_error_v1Pvjj"});
-        check<services::RootsEnter>({"?erlang_aot_roots_enter_v5@@YAPEA_KPEAX_KPEBX@Z",
-                                     "?erlang_aot_roots_enter_v5@@YAPAIPAXIPBX@Z",
-                                     "_Z25erlang_aot_roots_enter_v5PvmPKv", "_Z25erlang_aot_roots_enter_v5PvjPKv"});
-        check<services::RootsLeave>({"?erlang_aot_roots_leave_v4@@YAEPEAXPEA_K_K@Z",
-                                     "?erlang_aot_roots_leave_v4@@YAEPAXPAII@Z", "_Z25erlang_aot_roots_leave_v4PvPmm",
-                                     "_Z25erlang_aot_roots_leave_v4PvPjj"});
+        check<services::Enter>({"?erlang_aot_enter_v1@@YAPEAXPEAXPEBX@Z", "?erlang_aot_enter_v1@@YAPAXPAXPBX@Z",
+                                "_Z19erlang_aot_enter_v1PvPKv", "_Z19erlang_aot_enter_v1PvPKv"});
+        check<services::Tail>({"?erlang_aot_tail_v1@@YAPEAXPEAXPEBX@Z", "?erlang_aot_tail_v1@@YAPAXPAXPBX@Z",
+                               "_Z18erlang_aot_tail_v1PvPKv", "_Z18erlang_aot_tail_v1PvPKv"});
+        check<services::Return>({"?erlang_aot_return_v1@@YAPEAXPEAX_K@Z", "?erlang_aot_return_v1@@YAPAXPAXI@Z",
+                                 "_Z20erlang_aot_return_v1Pvm", "_Z20erlang_aot_return_v1Pvj"});
+        check<services::Frame>({"?erlang_aot_frame_v1@@YAPEA_KPEAX@Z", "?erlang_aot_frame_v1@@YAPAIPAX@Z",
+                                "_Z19erlang_aot_frame_v1Pv", "_Z19erlang_aot_frame_v1Pv"});
+        check<services::Registers>({"?erlang_aot_registers_v1@@YAPEA_KPEAX@Z", "?erlang_aot_registers_v1@@YAPAIPAX@Z",
+                                    "_Z23erlang_aot_registers_v1Pv", "_Z23erlang_aot_registers_v1Pv"});
+        check<services::Invoke>({"?erlang_aot_invoke_v1@@YA_KPEAXPEBXPEB_K@Z", "?erlang_aot_invoke_v1@@YAIPAXPBXPBI@Z",
+                                 "_Z20erlang_aot_invoke_v1PvPKvPKm", "_Z20erlang_aot_invoke_v1PvPKvPKj"});
         check<services::RegisterModule>(
             {"?erlang_aot_register_module_v4@@YAEPEAXPEBX@Z", "?erlang_aot_register_module_v4@@YAEPAXPBX@Z",
              "_Z29erlang_aot_register_module_v4PvPKv", "_Z29erlang_aot_register_module_v4PvPKv"});

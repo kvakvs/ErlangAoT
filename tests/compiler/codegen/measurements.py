@@ -32,7 +32,8 @@ def measure_source(tool, work, mode, options, executable, expected):
         record[kind + "_compile_seconds"] = time.perf_counter() - start
         outputs = sorted(root.iterdir())
         record[kind + "_bytes"] = sum(path.stat().st_size for path in outputs)
-        assert len(outputs) == 2 and record[kind + "_bytes"] < 1024 * 1024
+        # Annotated IR text of this call-dense client grows with explicit-frame transfers (a resume block per call).
+        assert len(outputs) == 2 and record[kind + "_bytes"] < (2 if kind == "llvm-ir" else 1) * 1024 * 1024
         if kind == "llvm-ir":
             ir = "\n".join(path.read_text(encoding="utf-8") for path in outputs)
             record["variants"] = len(re.findall(r"^define .*@[^\n]*\.type", ir, re.MULTILINE))

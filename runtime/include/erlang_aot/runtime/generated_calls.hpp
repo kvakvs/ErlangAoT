@@ -2,13 +2,13 @@
 #include "callable.hpp"
 
 namespace erlang_aot::runtime {
-class GeneratedRoots;
+class ProcessStack;
 
 // Own one synchronous invocation's first failure, shared by all nested generated/service calls.
 class GeneratedCallState final {
   public:
     // Borrow the process stack whose frames a recorded Erlang exception captures as its stack trace.
-    explicit GeneratedCallState(const GeneratedRoots &roots) noexcept : roots_(roots) {}
+    explicit GeneratedCallState(const ProcessStack &stack) noexcept : stack_(stack) {}
 
     GeneratedCallState(const GeneratedCallState &) = delete;
     GeneratedCallState &operator=(const GeneratedCallState &) = delete;
@@ -51,7 +51,7 @@ class GeneratedCallState final {
     }
 
     // The stack of generated frames, read when an Erlang exception is recorded.
-    const GeneratedRoots &roots_;
+    const ProcessStack &stack_;
     // Mark the host scope owning cleanup; generated calls themselves never reset this state.
     bool active_ = false;
     // First failure wins, including its Erlang payload or exact infrastructure status.

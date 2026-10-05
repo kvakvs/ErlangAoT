@@ -1,7 +1,6 @@
 #include "../semantic/symbols.hpp"
 #include "lowering_state.hpp"
 #include "module_atoms.hpp"
-#include "runtime_symbols.hpp"
 #include <algorithm>
 #include <llvm/IR/Module.h>
 
@@ -25,12 +24,11 @@ llvm::Constant *frame_descriptor(ExpressionLowering &state) {
 FunctionRoots begin_roots(ExpressionLowering &state) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
-    auto service = output.getOrInsertFunction(
-        services::symbol<services::RootsEnter>(output.getTargetTriple()),
+    auto marker = output.getOrInsertFunction(
+        FRAME_MARKER,
         llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
     auto *buffer = builder.CreateCall(
-        service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, 1), frame_descriptor(state)}, "roots");
-    propagate_failure(state);
+        marker, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, 1), frame_descriptor(state)}, "roots");
     return {buffer, state.word, state.function.key.arity};
 }
 
@@ -70,16 +68,5 @@ void reset_candidate_roots(ExpressionLowering &state) {
 void finish_roots(ExpressionLowering &state) {
     auto &roots = *state.roots;
     roots.buffer->setArgOperand(1, llvm::ConstantInt::get(roots.word, std::max(roots.capacity, std::size_t{1})));
-    auto &output = *state.entry.getParent();
-    auto service = output.getOrInsertFunction(
-        services::symbol<services::RootsLeave>(output.getTargetTriple()),
-        llvm::FunctionType::get(state.builder.getInt8Ty(),
-                                {state.builder.getPtrTy(), state.builder.getPtrTy(), roots.word}, false));
-    for (auto &block : state.entry) {
-        if (auto *ret = llvm::dyn_cast<llvm::ReturnInst>(block.getTerminator())) {
-            llvm::IRBuilder<> builder(ret);
-            builder.CreateCall(service, {state.entry.getArg(0), roots.buffer, ret->getReturnValue()});
-        }
-    }
 }
 } // namespace erlang_aot::codegen

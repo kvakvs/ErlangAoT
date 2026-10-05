@@ -86,20 +86,13 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   lives in one area; rollback resets that area's top and drops a fragment (or
   the heap block) the reservation created. Until step 26 allocation never
   moves the heap, so all overflow becomes fragments until a host collection.
-- **Stack.** Generated root frames (BEAM Y registers) are windows in stack
-  segments kept apart from the heap (8F). A segment is one allocation that,
-  with the allocator's own header, fits a 4 KiB page (the x86 page size; a
-  quarter of an Apple Silicon page). Two pointers are reserved for that
-  header, the largest inline one among common release allocators (64-bit
-  Windows heap). The segment holds a three-word header (link to the older
-  segment, capacity, used) followed by slots, so 507 slots on 64-bit and
-  1,019 on 32-bit targets. A frame that does
-  not fit the top segment opens a new one; a larger frame takes whole pages.
-  A segment is freed when its last frame returns. A frame never spans segments,
-  so its address stays stable while generated code holds it. Bounds stay
-  1,000,000 live words and 4,096 frames. This is a minimal interim form; step
-  17 decided its successor, one flat stack that moves as it grows with frame
-  headers inside it ([execution model](execution-model.md#successor-of-the-8f-root-stack)).
+- **Stack.** Generated frames (BEAM Y registers) live on one flat stack per
+  process, apart from the heap (`ProcessStack`, step 19). Each frame is a
+  four-word header (caller's header offset, descriptor, resume, handler)
+  followed by term slots and raw spill slots; frames link by offsets, so the
+  block grows by doubling and moves. It holds at most 2^24 words
+  (`StackOptions::limit_words`), counted separately from the heap budget
+  ([execution model](execution-model.md#implementation)).
 - **Off-heap list.** As above.
 - **Old heap.** None. Generational collection is deferred; immutable terms
   never point from older to newer data, so a high-water mark and an old heap
@@ -140,8 +133,8 @@ remains the full check that every slot names an object start, for tests.
 
 ## Roots and safe points
 
-Roots are stack frame slots (8F), process root words for result handoffs (BEAM
-X registers) and the current error payload (BEAM `fvalue`), the explicit root
+Roots are the term slots of every stack frame (step 19) and the current error
+payload (BEAM `fvalue`), the explicit root
 span a host caller passes to `collect(roots)` (8E), and off-heap list links.
 `ProcessContext::visit_roots` enumerates every root word for the collector. Atoms
 and small immediates are not roots.

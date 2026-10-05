@@ -40,8 +40,14 @@ using Catch = Function<"erlang_aot_catch_v1", UInt8, Context, Slot>;
 using Exception = Function<"erlang_aot_exception_v2", UInt8, Context, Slot, Slot, Slot>;
 using Reraise = Function<"erlang_aot_reraise_v2", UInt8, Context, Size, Size, Size>;
 using Error = Function<"erlang_aot_error_v1", UInt8, Context, Size, Size>;
-using RootsEnter = Function<"erlang_aot_roots_enter_v5", Slot, Context, Size, Descriptor>;
-using RootsLeave = Function<"erlang_aot_roots_leave_v4", UInt8, Context, Slot, Size>;
+// Frame transfers (abi/frames.hpp): each returns the continuation code generated code tail-calls next.
+using Code = Pointer<Void>;
+using Enter = Function<"erlang_aot_enter_v1", Code, Context, Descriptor>;
+using Tail = Function<"erlang_aot_tail_v1", Code, Context, Descriptor>;
+using Return = Function<"erlang_aot_return_v1", Code, Context, Size>;
+using Frame = Function<"erlang_aot_frame_v1", Slot, Context>;
+using Registers = Function<"erlang_aot_registers_v1", Slot, Context>;
+using Invoke = Function<"erlang_aot_invoke_v1", Size, Context, Descriptor, Words>;
 using RegisterModule = Function<"erlang_aot_register_module_v4", UInt8, Context, Descriptor>;
 using Atom = Function<"erlang_aot_atom_v3", Size, Context, Size, Descriptor>;
 // Program startup called by the generated native `main` (abi/startup.hpp).

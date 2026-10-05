@@ -2,7 +2,7 @@
 #include "generated_calls.hpp"
 #include "mailbox.hpp"
 #include "process_heap.hpp"
-#include "roots.hpp"
+#include "stack.hpp"
 #include <erlang_aot/abi/v1.hpp>
 
 namespace erlang_aot::runtime {
@@ -96,13 +96,13 @@ class ProcessContext final {
     // Share failure state across a synchronous generated invocation and its runtime services.
     GeneratedCallState &generated_calls() noexcept { return generated_calls_; }
 
-    // Retain generated live words and transfer results before releasing nested call scopes.
-    GeneratedRoots &roots() noexcept { return roots_; }
+    // The process stack of explicit generated frames and its argument/result registers.
+    ProcessStack &stack() noexcept { return stack_; }
 
-    // Visit every root word (stack frame slots, result handoffs, the error payload), then the host's
+    // Visit every root word (stack frame term slots, the error payload), then the host's
     // explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe point.
     template <typename Visitor> void visit_roots(std::span<Word> explicit_roots, Visitor &&visit) {
-        roots_.visit(visit);
+        stack_.visit(visit);
         generated_calls_.visit(visit);
         for (auto &word : explicit_roots) {
             visit(word);
@@ -128,8 +128,8 @@ class ProcessContext final {
     bool scheduler_registered_once_ = false;
     // Destroy pending immediate payloads with the context; host invocation scopes normally clear them first.
     GeneratedCallState generated_calls_;
-    // Root buffers are released before pending payloads and heap storage during context teardown.
-    GeneratedRoots roots_;
+    // Frames are released before pending payloads and heap storage during context teardown.
+    ProcessStack stack_;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options);
 };

@@ -772,11 +772,41 @@ components and run bounded inference over them.
 Backlog: F21. Depends on: [18](#step-18).
 
 - Success criteria
-  - [ ] Local, mutual and remote tail calls run in constant native stack.
+  - [x] Local, mutual and remote tail calls run in constant native stack.
 - Tests
-  - [ ] Golden programs looping 10 million iterations (local, mutual, remote) at
-    O0 and O2.
-  - [ ] IR inspection shows the chosen tail-transfer form.
+  - [x] Golden programs looping 10 million iterations (local, mutual, remote) at
+    O0 and O2. Reduced on user request to just past the stack budget: 2,000,000
+    iterations (500,000 through case/if/begin clause bodies).
+  - [x] IR inspection shows the chosen tail-transfer form.
+- Evidence (2026-10-05): `maint-29` fetched, unchanged at `21776803`. The step-17
+  model is implemented as a post-pass: lowering still emits native form
+  (`erlang-arity` attribute, `erlang_aot.frame` slot marker, tail calls as
+  `ret call` from a syntactic tail-position set through blocks, `case` and `if`
+  clause bodies), and `codegen/frames` (`lower_frames`, run by the backend before
+  IR inspection and by `optimize`) moves each function into `<sym>.body`
+  (`void(ctx)`), reads the frame header and registers in a prologue that
+  switches on the resume word, splits blocks after non-tail calls, spills values
+  read after a call (the term slot already holding them, else raw slots via
+  `DemoteRegToStack`), hoists constant addresses, and leaves only by `musttail`
+  calls of the code `erlang_aot_enter_v1`/`tail_v1`/`return_v1` return.
+  Descriptors `<sym>.frame` (7 words); exported symbols are host entries over
+  `erlang_aot_invoke_v1`. Runtime `ProcessStack` (`process/stack`) replaces the
+  segmented root stack: one `std::vector<Word>`, 4-word headers linked by
+  offsets, 256 registers, 2^24-word budget, bottom frame per invocation.
+  Exceptions still return through callers (channel check); no yield until step
+  43. ABI version 5. Tests: OTP golden `executables_tail_calls` (local, mutual,
+  remote, branches; full matrix O0/O2 x specialization x drivers);
+  `codegen_cross_targets` requires `musttail call void` right after each
+  enter/tail/return service on 7 targets (32/64-bit) at O0/O2/Os;
+  `runtime_stack` (invoke, nested call, 20-step tail chain under a 32-word
+  budget, budget failure, native exception, traces, root set); mangling of the
+  6 new services checked against Clang. Removed root-stack services and tests
+  (`roots_enter/leave`, segment and handoff checks, `service_consumer`
+  `root_failures`). `codegen_measurements` IR-text bound raised to 2 MiB (client
+  corpus: a resume block per call; objects stay under 1 MiB). Fresh Windows x64
+  Debug (clang-cl; a GNU-clang++ configure lacks the UTF-8 manifest): fast CTest
+  154/154, full 158/158 (both include the step-20 case); Lizard 0 warnings;
+  tidy 278 units pass. Logs `build/plan11-step19/`.
 
 <a id="step-20"></a>
 
@@ -949,7 +979,7 @@ Backlog: F17. Depends on: [29](#step-29).
 - Tests
   - [ ] Golden programs and CLI diagnostics for unknown records and non-literal
     arguments.
-
+ 
 <a id="step-31"></a>
 
 ### 31. Implement native, qualified and inferred record forms

@@ -1,5 +1,6 @@
 """Inspect CLI-produced foreign objects with LLVM tools; never execute them."""
 import pathlib
+import re
 import subprocess
 import sys
 from differential import run
@@ -40,7 +41,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             imports = run([nm, "--undefined-only", str(path)]).stdout
             exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
             assert "erlang_aot_register_module_v4" in imports, imports
-            assert "erlang_aot_roots_enter_v5" in imports and "erlang_aot_roots_leave_v4" in imports, imports
+            assert "erlang_aot_return_v1" in imports and "erlang_aot_invoke_v1" in imports, imports
             assert ".register" in exports and "eav1_" in exports, exports
             reports.append(headers + imports + exports)
             if "616e73776572" in path.name:
@@ -48,12 +49,17 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             if "636c69656e74" in path.name:
                 assert "eav1_616e73776572_76616c7565_0" in imports, imports
                 assert "eav1_616e73776572_6964656e74697479_1" in imports, imports
+                assert "erlang_aot_enter_v1" in imports and "erlang_aot_tail_v1" in imports, imports
         (root / "inspection.txt").write_text("\n".join(reports), encoding="utf-8")
         ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
         assert f"store i{bits} {minimum * 16 + 15}" in ir, ir
         assert f"store i{bits} {maximum * 16 + 15}" in ir, ir
-        assert f"i32 4, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert f"i32 5, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
         assert ("optsize" in ir) == (level == "-Os"), ir
+        # Calls, tail calls and returns all leave a body by a guaranteed tail call of the service's code.
+        caller = (root / "llvm-ir/eav1_636c69656e74__0.ll").read_text(encoding="utf-8")
+        for service in ["erlang_aot_enter_v1", "erlang_aot_tail_v1", "erlang_aot_return_v1"]:
+            assert re.search(service + r'[^\n]*\n\s*musttail call void %[\w.]+\(ptr[^\n]*\n\s*ret void', caller), caller
     answer.write_text(f"-module(answer). value() -> {maximum + 1}.\n", encoding="utf-8")
     promoted = work / triple / "promoted"
     run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(promoted), str(answer)])

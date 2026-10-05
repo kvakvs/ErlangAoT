@@ -160,7 +160,19 @@ Step facts beyond the plan record:
   graph.exhausted() (widened flag). A 16-function ring hits the limit, 15 converges. Codegen needed no change (all
   functions declared before definition; native recursion). Catalog recursive_calls implemented (placeholders.py set must
   equal deferred compiler entries). type_inspection.py needs an absolute tool path when run by hand.
+- 19: native form + `lower_frames` post-pass (codegen/frames), not a walker rewrite: test seams (failure_emit,
+  service_emit, specialization_emit) edit native form after analyze_and_lower, and `optimize` runs lower_frames
+  (idempotent: wrappers lose `erlang-arity`). Calls found via callee use-lists, never `getCalledFunction`/PHI
+  `getIncomingBlock`: clang-analyzer ArrayBound false positives in LLVM headers (Op<-1>, hung-off operands). Spills
+  use llvm::DemoteRegToStack then alloca -> raw slot. A native function without `erlang-arity` (test seams, `.reference`)
+  stays a native call. Removed roots_enter/leave, GeneratedRoots, RootInvocation, handoffs, service_consumer
+  root_failures (entry budget now tests/runtime/stack.cpp). ABI version 5; FrameDescriptor 7 words.
+  Gate MUST configure with -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl: plain --fresh picked GNU
+  clang++, MSVC=false, no UTF-8 manifest -> Unicode-path tests fail, parser_hardening segfaults. Switching compiler
+  needs rm -rf build/debug (nested native consumer caches). Scripts build/plan11-step19/*.cmd.
+  Debug runtime makes services ~0.1-0.5 us: 2M-step tail loop ~1 s, 200k-deep list build+len+sum ~1.3 s.
 User directions (keep):
+- Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

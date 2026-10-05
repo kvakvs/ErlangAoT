@@ -20,7 +20,7 @@ bool ContextLifetime::alive() const noexcept { return alive_; }
 
 ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions options)
     : impl_(std::make_unique<Impl>(runtime, identity)), heap_(*this, options), mailbox_(*this),
-      generated_calls_(roots_), roots_(*this) {}
+      generated_calls_(stack_), stack_(*this) {}
 
 ProcessContext::~ProcessContext() { impl_->lifetime->alive_ = false; }
 

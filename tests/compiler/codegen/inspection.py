@@ -81,12 +81,12 @@ round_trip(run('--print-ir', 'space å.erl').stdout)
 annotated = run('-O2', '--print-ir', '--print-optimized-ir', 'source_comments.erl', 'answer.erl')
 source_parts = round_trip(annotated.stdout)[:2]
 before, after = [assembly for _, assembly in source_parts]
-assert re.search(r'getelementptr [^\n]*;         Value\)\.', before)
-assert re.search(r'alloca [^\n]*;     \?OUTER\(', before)
-assert re.search(r'alloca [^\n]*;     answer:identity\(', before)
+assert re.search(r'load [^\n]*;         Value\)\.', before)
+assert re.search(r'store [^\n]*ptr %register[^\n]*;     \?OUTER\(', before)
+assert re.search(r'store [^\n]*ptr %register[^\n]*;     answer:identity\(', before)
 assert re.search(r'  [^\n]+ ;     7\. % original literal line', after)
 assert ';     answer:identity(' in after
-# Root bookkeeping can make the helper exceed LLVM's inlining cost; either form retains provenance.
+# Frame transfers keep the helper out of line; the transfer into it retains provenance.
 assert 'inlinedAt:' in after or re.search(r'call[^\n]*@eav1_736f757263655f636f6d6d656e7473_68656c706572_1[^\n]*!dbg', after)
 for assembly in (before, after):
     assert assembly.count('; "source_comments.erl"') == 1

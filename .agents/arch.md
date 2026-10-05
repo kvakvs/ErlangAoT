@@ -59,9 +59,9 @@
   `try ... after` (step 14): a second `ProtectedScope` (`afters`) encloses body and clauses; after the join the after
   body is lowered on the normal path (value kept in `AfterPath`), and, when its handler is used, again from the
   handler between `lower_exception` and `reraise`.
-  Stack traces (step 15): `begin_roots` passes a private `FrameDescriptor` (module descriptor, module/function atom
-  slots, arity) to `erlang_aot_roots_enter_v5`; `GeneratedCallState::fail` copies `GeneratedRoots::trace()` (8
-  innermost named frames) into `CallFailure::trace` for Erlang exceptions without a given `stack`. Terms are built
+  Stack traces (step 15): `begin_roots` names a private name descriptor (module descriptor, module/function atom
+  slots, arity) copied into the function's `FrameDescriptor`; `GeneratedCallState::fail` copies `ProcessStack::trace()`
+  (8 innermost named frames) into `CallFailure::trace` for Erlang exceptions without a given `stack`. Terms are built
   lazily (`stack_term`); `Exception` = {class, reason, stack}; reraise/raise3 store the stack term in
   `CallFailure::stack`; `error/2,3` keep `CallFailure::arguments` for the top frame. Both are process roots.
   `maybe` (step 16): AST keeps `MaybeMatch` items; `semantic::maybe_operands` lists body values, `branch_clauses`
@@ -69,12 +69,16 @@
   scope). The walker's `MaybeScope` collects `?=` mismatch edges into `maybe.else`; a PHI of unmatched values feeds a
   `CaseJoin` whose else clauses reuse case selection (`no_match` raises `else_clause`).
 
-- Execution model (step 17 decision, implemented from step 19; `docs/execution-model.md`): explicit
-  frames on one flat moving per-process stack (header: previous offset, descriptor, resume/handler
-  continuation indices; base+offset slots), args/results in process X registers, entry + one body per
-  function switching on the resume index, only `musttail` transfers of `void (Process *)` code (native
-  depth constant; trampoline fallback), yield at entry reductions, unwinding to handler frames.
-  Prototype `tests/prototypes/execution_model/` (run.py, not CTest).
+- Execution model (step 17 decision, implemented in step 19; `docs/execution-model.md#implementation`):
+  lowering emits native form (`Word f(ctx, args)`, ordinary calls, `erlang_aot.frame` slot marker, `erlang-arity`
+  attribute, tail calls as `ret call`); `codegen/frames` (`lower_frames`, run by the backend before inspection and by
+  `optimize`) moves each body to `<sym>.body` (`void(ctx)`), prologue = frame header/registers services + resume
+  switch, splits after non-tail calls, spills cross-call SSA values to raw slots, hoists constant slot GEPs, and emits
+  only `musttail` transfers via `erlang_aot_enter/tail/return_v1`. Descriptors `<sym>.frame` (7 words: names, arity,
+  body, slots, roots); exported `<sym>` = host wrapper over `erlang_aot_invoke_v1`. Runtime `ProcessStack`
+  (`process/stack`): flat `std::vector<Word>`, 4-word headers linked by offsets, 256 X registers, 2^24-word budget
+  (`resource_limit` -> exit 70), bottom frame per invocation contains native exceptions. Exceptions still return
+  through callers (channel check); no yield/reductions until step 43. Prototype `tests/prototypes/execution_model/`.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
@@ -131,14 +135,14 @@
   one reservation with `HeapMark` rollback. Words are header-parsed (`memory/heap_walk`,
   `ProcessHeap::verify` in `memory/heap_verify`); admission = owned range (heap, then fragments by
   address, below top) + header shape; process pointers only name object starts. Host `Term` = word +
-  borrowed heap + weak lifetime + collection count (no pin). Roots = root-stack slots, handoff words,
-  error payload, explicit span (`ProcessContext::visit_roots`). Root stack = page-sized segments
-  (`GeneratedRoots`), frames never move; step 17 chose the successor (docs/execution-model.md). `memory/heap_collect`
+  borrowed heap + weak lifetime + collection count (no pin). Roots = frame term slots of `ProcessStack`,
+  error payload, explicit span (`ProcessContext::visit_roots`); raw spill slots and X registers are not roots
+  yet (step 23). `memory/heap_collect`
   `Copier`: Cheney copy of heap+fragments into one new block at an explicit host safe point
   (`ProcessHeap::collect(roots)`), forwarding words, off-heap sweep, ERTS size sequence, second copy
-  to shrink a block under 25% live. No cross-heap graph copying yet. Revision-4 generated scopes
-  register arguments/temporaries, clear failed candidates, transfer result ownership before pop and
-  restore entry depth after native exceptions. Constructors publish initialized cells
+  to shrink a block under 25% live. No cross-heap graph copying yet. Revision-5 generated frames
+  hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
+  after native exceptions. Constructors publish initialized cells
   transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide
   source constructors off the native stack.
 

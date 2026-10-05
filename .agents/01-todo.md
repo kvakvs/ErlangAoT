@@ -33,12 +33,14 @@ Plan: [3](11-plan.md#step-3)–[8](11-plan.md#step-8), [43](11-plan.md#step-43),
 
 Plan: [8E](11-plan.md#step-8e), [8F](11-plan.md#step-8f),
 [17](11-plan.md#step-17), [23](11-plan.md#step-23), [26](11-plan.md#step-26),
-[51](11-plan.md#step-51). Contract: [root scopes](../docs/abi.md#root-scopes).
+[51](11-plan.md#step-51). Contract: [frames and transfers](../docs/abi.md#frames-and-transfers).
 
 - [x] Host/generated/registration roots and owned results/errors; versioned
   descriptors, width checks, contained native exceptions.
 - [x] ERTS host model: raw-word `Term`s, handoff and error-payload root words,
   explicit root span, segmented process root stack (8E, 8F).
+- [x] One flat process stack of explicit frames replaces the segmented root
+  stack; values live across calls spill to raw frame slots (step 19).
 - [ ] Continuation, mailbox and transit roots with concrete owners.
 - [ ] Generated-code safepoints and frame-base reloads after collection.
 
@@ -225,9 +227,10 @@ channel carries `function_clause`, service reasons and the three source classes.
 Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-34).
 
 - [x] Recursive call components in resolution and inference (step 18).
-- [ ] Frame/tail-call model compatible with roots, exceptions and suspension
+- [x] Frame/tail-call model compatible with roots, exceptions and suspension
   (compare explicit continuations with LLVM coroutines). Decided in step 17
-  ([execution model](../docs/execution-model.md)); implementation steps 19-20.
+  ([execution model](../docs/execution-model.md)), implemented in step 19:
+  explicit frames, `musttail` transfers, local/mutual/remote tail calls.
 - [ ] Deep tail and non-tail recursion, local/remote/mutual.
 
 ## Processes and runtime services

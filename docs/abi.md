@@ -153,30 +153,39 @@ Differences from OTP, all visible only in the stack term:
 - No frame names a failing BIF or operator (OTP adds
   `{erlang, '+', Args, [{error_info, ...}]}`), and nothing below the entry
   function appears.
-- Calls in tail position keep the caller's frame until tail calls exist
-  (step 19); OTP also turns calls to functions that never return into tail
-  calls, so their callers vanish from its traces.
+- A tail call releases the caller's frame (step 19), so, as in OTP, a caller
+  that ended in a tail call is missing from the trace. OTP also turns calls to
+  functions that never return into tail calls; ErlangAoT does not.
 - `{Fun, Args}` stack entries are rejected until function values exist.
 
-## Root scopes
+## Frames and transfers
 
-Every generated function calls `erlang_aot_roots_enter_v5(context, count, frame)` before
-loading arguments and `erlang_aot_roots_leave_v4(context, frame, result)` on
-return. A frame is a zeroed window of target-word slots on the process root
-stack (stable segments apart from the heap), bounded per context to 1,000,000
-live words and 4,096 frames.
+Generated functions run on explicit frames ([execution model](execution-model.md),
+step 19; services in [frames.hpp](../abi/include/erlang_aot/abi/frames.hpp)).
+Each function has a `<symbol>.frame` descriptor (`FrameDescriptor`: module
+descriptor, module and function atom slots, arity, body code, slot count, term
+slot count; external for exported functions) and an internal `<symbol>.body`
+of type `void(void *context)`. An exported `<symbol>` keeps the `TermWord(Context *,
+const TermWord *)` signature as a host entry calling
+`erlang_aot_invoke_v1(context, frame, arguments)`.
 
-- Arguments occupy persistent slots; every evaluated value is stored in a slot
-  before the next expression or call. Failed candidates clear their slots.
-- Results become root words in the parent's handoff (BEAM X registers) before
-  the frame is released; error payloads are root words of the channel (BEAM
-  `fvalue`). LIFO violations are infrastructure errors.
+- A body reads its frame header (`erlang_aot_frame_v1`) and the registers
+  (`erlang_aot_registers_v1`) on entry and switches on the header's resume
+  word. It leaves only by `musttail` calls of the code that
+  `erlang_aot_enter_v1` (call), `erlang_aot_tail_v1` (tail call) or
+  `erlang_aot_return_v1` (return) give back.
+- Arguments occupy the first frame slots; every evaluated value is stored in a
+  term slot before the next expression or call. Failed candidates clear their
+  slots. Values a body still needs after a call are spilled to raw slots
+  after the term slots; raw slots are not roots.
+- A result passes in register 0; error payloads are root words of the channel
+  (BEAM `fvalue`). A failure returns to the caller like a result and every
+  caller checks the channel after the call; the header's handler word stays 0.
+- The stack holds at most `StackOptions::limit_words` (2^24) words; a push
+  beyond it records the infrastructure failure `resource_limit`.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
   Generated code never collects yet; only a host `collect()` outside generated
   calls moves the heap.
-- Native calls and this root stack are interim: [the execution
-  model](execution-model.md) replaces them with explicit frames on a flat
-  process stack and tail transfers (step 19).
 
 ## Runtime services
 

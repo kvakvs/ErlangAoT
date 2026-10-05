@@ -1,11 +1,18 @@
 #pragma once
 #include <llvm/IR/IRBuilder.h>
+#include <string_view>
 
 namespace erlang_aot::codegen {
 struct ExpressionLowering;
 
+// Placeholder for a native-form function's frame slots: (context, slot count, name descriptor) -> slots.
+// lower_frames replaces it; it never reaches emitted objects.
+inline constexpr std::string_view FRAME_MARKER = "erlang_aot.frame";
+// Marks native-form Erlang function definitions and declarations with their arity.
+inline constexpr std::string_view ARITY_ATTRIBUTE = "erlang-arity";
+
 struct FunctionRoots {
-    // Patch the runtime buffer extent after all emitted candidate values have assigned their slots.
+    // Patch the frame's term slot count after all emitted candidate values have assigned their slots.
     llvm::CallInst *buffer;
     llvm::IntegerType *word;
     // Arguments persist across candidates; temporary slots are reused after candidate rejection.
@@ -14,7 +21,7 @@ struct FunctionRoots {
     std::size_t capacity = 0;
 };
 
-// Allocate a checked runtime root scope before any source body or heap allocation can execute.
+// Name the frame slots before any source body or heap allocation can execute.
 FunctionRoots begin_roots(ExpressionLowering &state);
 // Retain original arguments before attempting any candidate.
 void root_arguments(ExpressionLowering &state);
@@ -24,6 +31,6 @@ void root_value(ExpressionLowering &state, llvm::Value *value);
 llvm::Value *root_slot(ExpressionLowering &state);
 // Drop rejected-candidate temporaries while retaining the original argument roots.
 void reset_candidate_roots(ExpressionLowering &state);
-// Fix the maximum buffer extent and transfer return/error ownership at every generated exit.
+// Fix the frame's term slot count once every candidate has been lowered.
 void finish_roots(ExpressionLowering &state);
 } // namespace erlang_aot::codegen

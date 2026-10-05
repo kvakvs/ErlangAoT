@@ -1,5 +1,6 @@
 #include "backend.hpp"
 #include "../codegen/emission.hpp"
+#include "../codegen/frames.hpp"
 #include "../codegen/lowering.hpp"
 #include "../codegen/optimization.hpp"
 #include "../codegen/serialization.hpp"
@@ -79,7 +80,7 @@ void deliver(codegen::Compilation compilation, const FrontendRequest &frontend) 
 
 // Share lowering and specialization, then stop at the selected inspection or artifact boundary.
 bool generate(codegen::Compilation &compilation, const Analysis &analysis, const FrontendRequest &frontend) {
-    if (!codegen::lower(compilation, analysis.modules, *analysis.inferred)) {
+    if (!codegen::lower(compilation, analysis.modules, *analysis.inferred) || !codegen::lower_frames(compilation)) {
         return false;
     }
     if (frontend.backend.inspect_ir()) {

@@ -84,7 +84,7 @@ void failure_case(ProcessContext &context, const ResolvedFunction &entry, unsign
     const auto result = entry.call(context, {});
     require(!result && later_calls == 0 && take_calls == 0, "failure ran a later argument or caller body");
     require(!context.generated_calls().failure(), "outer boundary retained failure state");
-    require(context.roots().depth() == 0 && context.roots().words() == 0, "failed native call retained roots");
+    require(context.stack().depth() == 0 && context.stack().words() == 0, "failed native call retained roots");
     require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0,
             "failure changed heap accounting");
     check_failure(result.error(), selected);

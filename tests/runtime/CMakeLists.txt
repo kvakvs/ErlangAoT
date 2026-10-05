@@ -17,7 +17,7 @@ add_test(NAME runtime_feature_output COMMAND "${CMAKE_COMMAND}"
     "-DCONTEXT_FIXTURES=${PROJECT_SOURCE_DIR}/tests/fixtures/runtime/diagnostics"
     -P "${PROJECT_SOURCE_DIR}/tests/abi/feature_output.cmake")
 
-foreach(suite IN ITEMS lifecycle_failure memory roots containers integers floats maps bitstrings admission heap_fragments scheduler registration startup)
+foreach(suite IN ITEMS lifecycle_failure memory stack containers integers floats maps bitstrings admission heap_fragments scheduler registration startup)
     add_executable(runtime_${suite} ${suite}.cpp)
     erlang_aot_project_options(runtime_${suite})
     target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)

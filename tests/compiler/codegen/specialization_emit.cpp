@@ -1,4 +1,5 @@
 #include "codegen/integer_guards.hpp"
+#include "codegen/lowering_roots.hpp"
 #include "codegen/optimization.hpp"
 #include "codegen/specialization_lowering.hpp"
 #include "codegen/verification.hpp"
@@ -41,6 +42,8 @@ void specialize(cg::Compilation &compilation) {
     auto *reference = llvm::CloneFunction(&function, mapping);
     reference->setName(symbol + ".reference");
     reference->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    // The consumer calls the reference natively, outside any invocation, so it stays out of frame lowering.
+    reference->removeFnAttr(cg::ARITY_ATTRIBUTE);
     const auto baseline = function.getInstructionCount();
     const auto &policy = compilation.request();
     const bool enabled = policy.optimization == cg::OptimizationLevel::speed && !policy.disable_type_specialization;

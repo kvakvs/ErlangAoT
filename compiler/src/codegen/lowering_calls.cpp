@@ -1,5 +1,6 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
+#include <erlang_aot/abi/equality.hpp>
 #include <llvm/IR/Module.h>
 #include <stdexcept>
 
@@ -71,6 +72,7 @@ llvm::Function *callee_declaration(ExpressionLowering &state, const semantic::Fu
     auto *entry = llvm::Function::Create(state.entry.getFunctionType(), llvm::GlobalValue::ExternalLinkage,
                                          callee.function->symbol, output);
     entry->setCallingConv(llvm::CallingConv::C);
+    entry->addFnAttr(ARITY_ATTRIBUTE, std::to_string(callee.function->key.arity));
     return entry;
 }
 } // namespace
@@ -85,6 +87,12 @@ llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expres
     auto *target = callee_declaration(state, callee);
     auto *result = state.builder.CreateCall(target, {state.entry.getArg(0), arguments(state, call)}, "call.result");
     result->setCallingConv(llvm::CallingConv::C);
+    if (state.tail_calls && state.tail_calls->contains(&expression)) {
+        // The callee's result is this function's: lower_frames turns the return into a tail transfer.
+        state.builder.CreateRet(result);
+        state.builder.SetInsertPoint(llvm::BasicBlock::Create(state.entry.getContext(), "tail.dead", &state.entry));
+        return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
+    }
     propagate_failure(state);
     return result;
 }

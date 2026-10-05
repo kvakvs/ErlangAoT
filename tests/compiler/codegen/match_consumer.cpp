@@ -109,7 +109,7 @@ void calls(ProcessContext &context) {
             retained.emplace_back(*value, text.str());
         }
         require(!context.generated_calls().failure(), "stale failure after invocation");
-        require(context.roots().depth() == 0 && context.roots().words() == 0, "generated call leaked root frames");
+        require(context.stack().depth() == 0 && context.stack().words() == 0, "generated call leaked root frames");
     }
     require(std::cin.eof(), "invalid calls stream");
     for (const auto &[value, expected] : retained) {

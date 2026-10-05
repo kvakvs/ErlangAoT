@@ -16,7 +16,6 @@ using namespace erlang_aot::runtime;
 extern abi::v1::GeneratedRegistration register_answer asm("eav1_736572766963655f616e73776572__0.register");
 extern abi::v1::GeneratedRegistration register_client asm("eav1_736572766963655f636c69656e74__0.register");
 extern std::uint8_t injected(void *, std::uint8_t, Word, Word, Word *) noexcept asm("step7_service");
-extern Word *injected_roots(void *, std::size_t, const void *) noexcept asm("step11_roots");
 extern std::uint8_t injected_construct(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept
     asm("step12_construct");
 extern std::uint8_t injected_inspect(void *, std::uint8_t, Word, std::size_t, Word *) noexcept asm("step12_inspect");
@@ -37,8 +36,6 @@ unsigned predicate_calls = 0;
 bool unrooted = false;
 // Select extraction faults after successful binary construction and type checking.
 bool extraction_only = false;
-// Exhaust the real root budget at selected generated entry depths before any source service executes.
-std::size_t root_fault_depth = std::numeric_limits<std::size_t>::max();
 
 // Keep ownership, status and recovery assertions enabled in optimized consumers.
 void require(bool condition, const char *message) {
@@ -60,7 +57,7 @@ void failures(ProcessContext &context, std::string_view module, std::string_view
         require(!result && result.error().code == CallError::runtime_failure && result.error().status == status,
                 "service failure became semantic rejection or success");
         require(calls == 1 && !context.generated_calls().failure(), "service did not run or stale channel");
-        require(context.roots().depth() == 0 && context.roots().words() == 0, "service failure leaked roots");
+        require(context.stack().depth() == 0 && context.stack().words() == 0, "service failure leaked roots");
         fault = abi::v1::Status::ok;
         require(entry.call(context, arguments).has_value(), "service failure poisoned retry");
     }
@@ -151,22 +148,6 @@ void checked_arguments(ProcessContext &context) {
     require(output == 123 && !context.generated_calls().failure(), "semantic rejection polluted channel");
 }
 
-// Entry rejection at both the outer and nested generated boundary cleans every frame and skips the body.
-void root_failures(ProcessContext &context) {
-    const auto entry = context.code_server().resolve({"service_client", "nested", 1}).value();
-    const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
-    for (const auto depth : {0U, 1U}) {
-        root_fault_depth = depth;
-        calls = 0;
-        const auto failed = entry.call(context, arguments);
-        require(!failed && failed.error().status == abi::v1::Status::resource_limit, "root entry status lost");
-        require(calls == 0 && context.roots().depth() == 0 && context.roots().words() == 0,
-                "root rejection ran a body or leaked frames");
-        root_fault_depth = std::numeric_limits<std::size_t>::max();
-        require(entry.call(context, arguments).has_value(), "root failure poisoned retry");
-    }
-}
-
 // Returned extracted graphs and badmatch payloads stay valid after nested allocations and channel cleanup.
 void heap_lifetimes(ProcessContext &context) {
     TermFactory factory(context);
@@ -186,7 +167,7 @@ void heap_lifetimes(ProcessContext &context) {
     }
     require(output.tuple_element(0)->exactly_equal(child) == true, "returned extraction damaged by growth");
     require(failed.error().value->tuple_element(0)->exactly_equal(input) == true, "retained badmatch graph damaged");
-    require(context.roots().depth() == 0 && context.roots().words() == 0, "heap calls leaked roots");
+    require(context.stack().depth() == 0 && context.stack().words() == 0, "heap calls leaked roots");
 }
 
 // A real backing ceiling reached inside generated construction terminates guards and cleans frames.
@@ -202,7 +183,7 @@ void record_failures(ProcessContext &context) {
         calls = 0;
         const auto result = entry.call(context, std::array{record});
         require(!result && result.error().status == status && calls == 1, "record access fault became badrecord");
-        require(context.roots().depth() == 0 && !context.generated_calls().failure(), "record access leaked state");
+        require(context.stack().depth() == 0 && !context.generated_calls().failure(), "record access leaked state");
         fault = abi::v1::Status::ok;
         require(entry.call(context, std::array{record})->word() == child.word(), "record access retry failed");
     }
@@ -219,7 +200,7 @@ void record_failures(ProcessContext &context) {
                 "record allocation after error failed");
     }
     require(error.error().value->tuple_element(1)->exactly_equal(child) == true, "badrecord payload expired");
-    require(context.roots().depth() == 0 && !context.generated_calls().failure(), "badrecord leaked state");
+    require(context.stack().depth() == 0 && !context.generated_calls().failure(), "badrecord leaked state");
 }
 
 // A real backing ceiling reached inside generated construction terminates guards and cleans frames.
@@ -232,7 +213,7 @@ void heap_budget(Runtime &runtime) {
     }
     const auto result = entry.call(context, arguments);
     require(!result && result.error().status == abi::v1::Status::resource_limit, "heap ceiling became false guard");
-    require(context.roots().depth() == 0 && context.roots().words() == 0 && !context.generated_calls().failure(),
+    require(context.stack().depth() == 0 && context.stack().words() == 0 && !context.generated_calls().failure(),
             "heap ceiling leaked call state");
     require(context.code_server().resolve({"service_answer", "id", 1}).value().call(context, arguments).has_value(),
             "heap failure poisoned nonallocating retry");
@@ -246,7 +227,7 @@ void integer_budget(ProcessContext &context) {
     const auto failed = entry.call(context, std::array{excessive});
     require(!failed && failed.error().status == abi::v1::Status::resource_limit,
             "integer work ceiling became guard rejection");
-    require(context.roots().depth() == 0 && !context.generated_calls().failure(), "integer ceiling leaked state");
+    require(context.stack().depth() == 0 && !context.generated_calls().failure(), "integer ceiling leaked state");
     require(entry.call(context, std::array{TermFactory(context).integer(1).value()}).has_value(),
             "integer ceiling poisoned retry");
 }
@@ -260,7 +241,7 @@ void bit_extractions(ProcessContext &context) {
         fault = status;
         const auto result = entry.call(context, std::array{source});
         require(!result && result.error().status == status, "extraction fault became pattern mismatch");
-        require(context.roots().depth() == 0 && !context.generated_calls().failure(), "extraction fault leaked state");
+        require(context.stack().depth() == 0 && !context.generated_calls().failure(), "extraction fault leaked state");
         fault = abi::v1::Status::ok;
         const auto recovered = entry.call(context, std::array{source});
         require(recovered && recovered->tuple_element(1)->bit_size() == 632,
@@ -276,14 +257,14 @@ std::uint8_t injected_construct(void *opaque, std::uint8_t operation, const Word
     auto &context = *static_cast<ProcessContext *>(opaque);
     ++calls;
     for (const auto value : std::span(values, count)) {
-        unrooted |= !context.roots().contains(value);
+        unrooted |= !context.stack().contains(value);
     }
     if (fault != abi::v1::Status::ok) {
         context.generated_calls().fail_service(fault);
         return 2;
     }
     const auto result = erlang_aot_construct_v1(opaque, operation, values, count, output);
-    unrooted |= result == 0 && !context.roots().contains(*output);
+    unrooted |= result == 0 && !context.stack().contains(*output);
     return result;
 }
 
@@ -293,7 +274,7 @@ std::uint8_t injected_bits(void *opaque, std::uint8_t operation, const Word *val
     auto &context = *static_cast<ProcessContext *>(opaque);
     ++calls;
     for (const auto value : std::span(values, count)) {
-        unrooted |= !context.roots().contains(value);
+        unrooted |= !context.stack().contains(value);
     }
     const bool selected = !extraction_only || operation == static_cast<std::uint8_t>(abi::v1::BitOperation::extract);
     if (fault != abi::v1::Status::ok && selected) {
@@ -301,7 +282,7 @@ std::uint8_t injected_bits(void *opaque, std::uint8_t operation, const Word *val
         return 2;
     }
     const auto result = erlang_aot_bits_v1(opaque, operation, values, count, output);
-    unrooted |= result == 0 && (!context.roots().contains(output[0]) || !context.roots().contains(output[1]));
+    unrooted |= result == 0 && (!context.stack().contains(output[0]) || !context.stack().contains(output[1]));
     return result;
 }
 
@@ -311,14 +292,14 @@ std::uint8_t injected_map(void *opaque, std::uint8_t operation, const Word *valu
     auto &context = *static_cast<ProcessContext *>(opaque);
     ++calls;
     for (const auto value : std::span(values, count)) {
-        unrooted |= !context.roots().contains(value);
+        unrooted |= !context.stack().contains(value);
     }
     if (fault != abi::v1::Status::ok) {
         context.generated_calls().fail_service(fault);
         return 3;
     }
     const auto result = erlang_aot_map_v1(opaque, operation, values, count, output);
-    unrooted |= result != 3 && !context.roots().contains(*output);
+    unrooted |= result != 3 && !context.stack().contains(*output);
     return result;
 }
 
@@ -327,29 +308,21 @@ std::uint8_t injected_inspect(void *opaque, std::uint8_t operation, Word value, 
                               Word *output) noexcept {
     auto &context = *static_cast<ProcessContext *>(opaque);
     ++calls;
-    unrooted |= !context.roots().contains(value);
+    unrooted |= !context.stack().contains(value);
     if (fault != abi::v1::Status::ok) {
         context.generated_calls().fail_service(fault);
         return 2;
     }
     const auto result = erlang_aot_inspect_v1(opaque, operation, value, index, output);
-    unrooted |= result == 0 && !context.roots().contains(*output);
+    unrooted |= result == 0 && !context.stack().contains(*output);
     return result;
-}
-
-// Use the production entry service for both success and budget rejection; only its requested count changes.
-Word *injected_roots(void *context, std::size_t count, const void *frame) noexcept {
-    if (static_cast<ProcessContext *>(context)->roots().depth() == root_fault_depth) {
-        count = std::numeric_limits<std::size_t>::max();
-    }
-    return erlang_aot_roots_enter_v5(context, count, frame);
 }
 
 // This native seam changes only the service outcome and deliberately leaves success output untouched on faults.
 std::uint8_t injected(void *context, std::uint8_t operation, Word left, Word right, Word *output) noexcept {
     ++calls;
     const bool predicate = operation == static_cast<std::uint8_t>(abi::v1::ImmediateOperation::is_integer);
-    auto &roots = static_cast<ProcessContext *>(context)->roots();
+    auto &roots = static_cast<ProcessContext *>(context)->stack();
     if (roots.depth() == 0 || (predicate && !roots.contains(left))) {
         static_cast<ProcessContext *>(context)->generated_calls().fail_service(abi::v1::Status::internal_error);
         return 2;
@@ -379,7 +352,6 @@ int main() {
         boolean_failures(context);
         body_matches(context);
         checked_arguments(context);
-        root_failures(context);
         for (const auto name : {"construct", "inspect", "heap_guard", "integer_guard", "integer_body", "float_guard",
                                 "float_body", "map_guard", "map_body", "map_pattern", "bits_guard", "bits_body",
                                 "record_guard", "record_body", "range_guard", "range_body"}) {

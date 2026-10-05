@@ -6,6 +6,7 @@
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <map>
+#include <set>
 #include <string_view>
 
 namespace erlang_aot::codegen {
@@ -25,6 +26,8 @@ struct ExpressionLowering {
     const BindingReads *reads = nullptr;
     // Select the source candidate without allowing bindings from another clause to enter its environment.
     std::size_t clause = 0;
+    // Calls whose value is the function's result; they become tail transfers.
+    const std::set<const ast::Expression *> *tail_calls = nullptr;
     // Share argument roots and bounded temporary slots across all candidates of the generated function.
     FunctionRoots *roots = nullptr;
     // Match definitions retain the original candidate SSA word; repeated names read this same identity.

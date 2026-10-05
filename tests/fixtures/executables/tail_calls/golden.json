@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "entry": "tail_calls",
+  "runs": [
+    {
+      "args": [
+        "local"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{local,2000000}\n"
+    },
+    {
+      "args": [
+        "mutual"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{mutual,ping}\n"
+    },
+    {
+      "args": [
+        "remote"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{remote,2000000}\n"
+    },
+    {
+      "args": [
+        "branches"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{branches,500000}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "tail_calls.erl": "bba51b0a16d991bf0059730278aea559a8ea01d1bfadc6a9b4ec6502535ed8f9",
+    "tail_peer.erl": "a1b6b247197bbcaffae0c19caf2223ea4d788060f544b6d5d95513d909554cdd"
+  }
+}

@@ -64,10 +64,10 @@ def main():
     assert 'record.field' in ir and 'record.test' in ir and 'record.badrecord' in ir
     for name,count in [('eval_once',2),('default_calls',2),('wild_alloc',3)]:
         symbol = 'eav1_616e73776572_' + name.encode().hex() + '_'
-        # The generic function contains the source calls exactly once per required evaluation.
-        bodies = [b for b in re.findall(r'define .*?\n\}',ir,re.S) if symbol in b.split('{',1)[0]]
+        # The generic body enters a callee exactly once per required evaluation.
+        bodies = [b for b in re.findall(r'define .*?\n\}',ir,re.S) if symbol in b.split('{',1)[0] and '.body' in b.split('{',1)[0]]
         assert len(bodies) == 1,(name,symbol)
-        generated = re.findall(r'call i64 @eav1_[0-9a-f_]+\(',bodies[0])
+        generated = re.findall(r'ptr @eav1_[0-9a-f_]+\.frame\)',bodies[0])
         assert len(generated) == count,(name,generated)
     run([tool,'--print-types',str(work/'answer.erl'),str(work/'client.erl')])
     (work/'evidence.json').write_bytes((json.dumps(evidence,indent=2)+'\n').encode())

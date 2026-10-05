@@ -90,7 +90,7 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> r
     }
     stats.live_words = storage.used_words_;
     stats.heap_words = storage.capacity_words_;
-    stats.stack_words = owner_.roots().capacity();
+    stats.stack_words = owner_.stack().capacity();
     stats.off_heap_words = storage.off_heap_words_;
     return stats;
 }

@@ -34,7 +34,7 @@ void print(const CallResult<Term> &result) {
 
 // After every call, nothing generated remains on the root stack and the heap parses with only owned cells.
 void check_clean(ProcessContext &context) {
-    require(context.roots().depth() == 0, "generated root frames leaked");
+    require(context.stack().depth() == 0, "generated root frames leaked");
     require(context.heap().verify().has_value(), "heap does not verify");
     require(!context.generated_calls().failure().has_value(), "failure channel not cleared");
 }

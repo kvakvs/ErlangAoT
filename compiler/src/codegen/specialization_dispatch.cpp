@@ -1,3 +1,4 @@
+#include "lowering_roots.hpp"
 #include "specialization_lowering.hpp"
 #include <erlang_aot/abi/v1.hpp>
 
@@ -35,6 +36,7 @@ SpecializedDispatch create_dispatch(llvm::Function &generic, const std::span<con
     auto *entry = llvm::Function::Create(generic.getFunctionType(), llvm::GlobalValue::InternalLinkage,
                                          generic.getName() + ".dispatch", generic.getParent());
     entry->setCallingConv(generic.getCallingConv());
+    entry->addFnAttr(generic.getFnAttribute(ARITY_ATTRIBUTE));
     llvm::IRBuilder<> builder(llvm::BasicBlock::Create(generic.getContext(), "entry", entry));
     for (const auto &variant : variants) {
         auto *hit = llvm::BasicBlock::Create(generic.getContext(), "type.hit", entry);
