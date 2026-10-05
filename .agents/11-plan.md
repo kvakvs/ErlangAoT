@@ -647,12 +647,37 @@ locations optional) and bind it in `Class:Reason:Stack`.
 Backlog: F13, F16. Depends on: [9](#step-9).
 
 - Success criteria
-  - [ ] `?=` short-circuits on mismatch, `else` clauses select on the value,
+  - [x] `?=` short-circuits on mismatch, `else` clauses select on the value,
     and no matching `else` raises `{else_clause, Value}`.
-  - [ ] Feature enablement follows the preprocessor feature settings.
+  - [x] Feature enablement follows the preprocessor feature settings.
 - Tests
-  - [ ] Golden programs for success, early exit, `else` selection and
+  - [x] Golden programs for success, early exit, `else` selection and
     `else_clause`; feature-disabled source is rejected.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The AST keeps
+  `MaybeMatch` items; `semantic::maybe_operands` lists the body values and
+  `branch_clauses` the `else` clauses (`first_handler` 0), so guard analysis,
+  pattern planning, atoms and the walker reuse the case paths. Binding
+  analysis treats the body and `else` clauses as one conditional scope like a
+  try (each `?=` binds after its value; `else` sees body names unsafe; nothing
+  is exported). The walker's `MaybeScope` sends each failed `?=` to
+  `maybe.else` with its rooted value; an `SSAUpdater` merge of those values is
+  the result without `else`, or feeds a `CaseJoin` whose clauses raise
+  `ErrorReason::else_clause = 15` (payload) when none matches. No new runtime
+  service. Feature gating is the existing preprocessor keyword switch
+  (`-feature(maybe_expr, disable)` or `--disable-feature` makes `maybe` an
+  atom). The `pattern matching` catalog entry is implemented (its match-plan
+  fallback is unreachable from source). OTP golden `executables_maybe_else`
+  (6 runs: success, last `?=` value, early exit skipping later expressions,
+  guarded `else` selection, pre-maybe bindings in `else`, nested and
+  case-embedded maybes, caught and uncaught `else_clause`, exceptions from
+  `else`, badmatch inside a body, remote calls). Bindings corpus +4 `maybe_*`
+  rows verified by OTP 29.1.1 (`--check` reproduces); semantic `maybe_expr`,
+  `maybe_else`, `maybe_unsafe`, `maybe_else_unsafe`, `maybe_in_guard`,
+  `maybe_disabled`. Fresh Windows x64 Debug: fast CTest 151/151; Lizard 0
+  warnings; tidy 98 changed units pass after replacing a direct PHI (analyzer
+  false positive inside LLVM) with `SSAUpdater`. Phase D close: full `-j 16`
+  155/155 (259 s), `check-quality-all` 277 units and Lizard pass. Logs
+  `build/plan11-step16/`.
 
 ## E. Execution model, recursion, comprehensions
 

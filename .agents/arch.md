@@ -62,6 +62,10 @@
   innermost named frames) into `CallFailure::trace` for Erlang exceptions without a given `stack`. Terms are built
   lazily (`stack_term`); `Exception` = {class, reason, stack}; reraise/raise3 store the stack term in
   `CallFailure::stack`; `error/2,3` keep `CallFailure::arguments` for the top frame. Both are process roots.
+  `maybe` (step 16): AST keeps `MaybeMatch` items; `semantic::maybe_operands` lists body values, `branch_clauses`
+  gives else clauses (`first_handler` 0, so binding analysis treats them like catch clauses inside one conditional
+  scope). The walker's `MaybeScope` collects `?=` mismatch edges into `maybe.else`; a PHI of unmatched values feeds a
+  `CaseJoin` whose else clauses reuse case selection (`no_match` raises `else_clause`).
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

@@ -70,7 +70,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Outcome | Transport |
 | --- | --- |
 | Pattern mismatch, guard rejection | Continuation to next candidate; channel untouched |
-| Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case`; `error:if_clause`; `error:{try_clause, Value}` for a try's `of` clauses |
+| Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case`; `error:if_clause`; `error:{try_clause, Value}` for a try's `of` clauses; `error:{else_clause, Value}` for a maybe's `else` clauses |
 | Body match failure | `error:{badmatch, Value}` with owned payload |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
@@ -111,6 +111,12 @@ stack, which reports and catches exactly like the original.
 `of` clauses select on the body value and raise `{try_clause, Value}`
 (`ErrorReason::try_clause = 14`); exceptions inside `of` clauses and handlers go
 to the enclosing handler.
+
+`maybe` needs no service: each `?=` is an ordinary match whose mismatch edge
+leaves the body for the maybe's exit with the unmatched (already rooted) value.
+Without `else` that value is the result; otherwise `else` clauses select on it
+like `case` clauses and raise `{else_clause, Value}`
+(`ErrorReason::else_clause = 15`) when none matches.
 
 `try ... after A end` adds a second protection around the body and all `of`
 and catch clauses. On the normal path `A` runs after the selected value is

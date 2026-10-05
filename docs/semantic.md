@@ -36,7 +36,10 @@ context. Analysis is deterministic.
   names, catch clauses see them as unsafe, and the after body sees every name
   bound earlier in the try as unsafe. A catch clause's stack variable must be
   new (OTP `stacktrace_bound`) and its guard must not read it
-  (`stacktrace_guard`). Guards never publish bindings; matches in guards are errors even when unreachable.
+  (`stacktrace_guard`). A `maybe` exports nothing: each `?=` binds for the
+  following body expressions, `else` clauses see the body's names as unsafe
+  and every name bound inside is unsafe afterwards. Guards never publish
+  bindings; matches in guards are errors even when unreachable.
 - Map keys read only incoming bindings; binary sizes also read earlier segments
   of the same binary (see [patterns](patterns.md#scopes)).
 - A `case` scrutinee binds in the enclosing scope. Each clause starts from that

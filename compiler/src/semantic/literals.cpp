@@ -53,8 +53,8 @@ void append_guard(const ast::GuardSyntax *guard, std::vector<ast::ExprId> &resul
     }
 }
 
-// A case reads its scrutinee and a try its body first; every branch then reads each clause's guard tests and body,
-// and a try's after body comes last. Patterns stay with match plans.
+// A case reads its scrutinee and a try or maybe its body first; every branch then reads each clause's guard tests
+// and body, and a try's after body comes last. Patterns stay with match plans.
 std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std::vector<Branch> &clauses) {
     std::vector<ast::ExprId> result;
     const auto *attempt = std::get_if<ast::TryExpression>(&value);
@@ -62,6 +62,8 @@ std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std:
         result.push_back(selection->value);
     } else if (attempt) {
         result = attempt->body;
+    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value)) {
+        result = maybe_operands(*conditional);
     }
     for (const auto &clause : clauses) {
         append_guard(clause.guard, result);
@@ -103,6 +105,18 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
         }
     } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
         append_try(*attempt, result);
+    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
+               conditional && conditional->otherwise) {
+        append_branches(*conditional->otherwise, result);
+    }
+    return result;
+}
+
+std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value) {
+    std::vector<ast::ExprId> result;
+    for (const auto &item : value.body) {
+        const auto *match = std::get_if<ast::MaybeMatch>(&item);
+        result.push_back(match ? match->value : std::get<ast::ExprId>(item));
     }
     return result;
 }
@@ -110,6 +124,9 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
 std::size_t first_handler(const ast::ExprValue &value) {
     if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
         return attempt->of ? attempt->of->size() : 0;
+    }
+    if (std::holds_alternative<ast::MaybeExpression>(value)) {
+        return 0;
     }
     return branch_clauses(value).size();
 }
@@ -145,7 +162,8 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
         return {match->right};
     }
     if (const auto clauses = branch_clauses(expression.value);
-        !clauses.empty() || std::holds_alternative<ast::TryExpression>(expression.value)) {
+        !clauses.empty() || std::holds_alternative<ast::TryExpression>(expression.value) ||
+        std::holds_alternative<ast::MaybeExpression>(expression.value)) {
         return branch_children(expression.value, clauses);
     }
     return binding_children(expression.value);

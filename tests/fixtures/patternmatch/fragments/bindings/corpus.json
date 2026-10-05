@@ -33,6 +33,10 @@
     "if_export.erl",
     "if_guard_unbound.erl",
     "if_unsafe.erl",
+    "maybe_body.erl",
+    "maybe_else_reads.erl",
+    "maybe_else_unsafe.erl",
+    "maybe_unsafe.erl",
     "named_missing.erl",
     "rebind.erl",
     "repeat.erl",
@@ -547,6 +551,42 @@
         "diagnostic": "stacktrace variable S must not be used in a guard",
         "otp_diagnostic": "stacktrace_guard",
         "sha256": "d5ee9ece6e04e3beac76297d7f13fd1f5cf8cd22cbd711db1a533fb918b1d1c4"
+      },
+      {
+        "name": "maybe_body",
+        "arity": 1,
+        "body": "f(A) -> maybe {ok, X} ?= A, X end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "3b130cefe5d5850d1069e3099805a19ca851cc59b5347461d679c410f07527d2"
+      },
+      {
+        "name": "maybe_unsafe",
+        "arity": 1,
+        "body": "f(A) -> maybe {ok, X} ?= A end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "c7379734f0dd4914e240e34f7e9402e049745a3bfcd0cd473c6bdfdd3eaf7b8a"
+      },
+      {
+        "name": "maybe_else_unsafe",
+        "arity": 1,
+        "body": "f(A) -> maybe {ok, X} ?= A else _ -> X end.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "e2b609f09f23a00868a92fcce54abfe08360121dc1cd004b7e73cafb835b6e2f"
+      },
+      {
+        "name": "maybe_else_reads",
+        "arity": 1,
+        "body": "f(A) -> maybe B = A, ok ?= B else E -> {A, E} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "4bb3a92e70708a10f590024296f78591a77955d4dd5d3c3ac0bcde4e7621ef16"
       },
       {
         "name": "bindings_local",

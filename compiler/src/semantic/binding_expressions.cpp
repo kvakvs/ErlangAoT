@@ -136,6 +136,30 @@ bool attempt(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Vis
     return true;
 }
 
+// Nothing a maybe binds is exported (OTP): its body and else clauses form one conditional scope. Each ?= binds its
+// pattern after its value, for the following body expressions; else clauses see the body's names as unsafe.
+bool conditional_block(const ast::Module &syntax, const ast::ExprId &id, const ast::ExprValue &value,
+                       std::vector<Visit> &pending) {
+    const auto *block = std::get_if<ast::MaybeExpression>(&value);
+    if (!block) {
+        return false;
+    }
+    pending.push_back({id, Action::conditional_exit});
+    if (block->otherwise) {
+        pending.push_back({id, Action::branch});
+    }
+    for (auto item = block->body.rbegin(); item != block->body.rend(); ++item) {
+        if (const auto *match = std::get_if<ast::MaybeMatch>(&*item)) {
+            pending.push_back({pattern_root(syntax, match->pattern), Action::pattern});
+            pending.push_back({match->value});
+        } else {
+            pending.push_back({std::get<ast::ExprId>(*item)});
+        }
+    }
+    pending.push_back({id, Action::conditional_enter});
+    return true;
+}
+
 // A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if starts with its clauses.
 bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
     if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
@@ -226,7 +250,7 @@ BindingEnvironment join_branches(BindingAnalysis &state, const ast::ExprId &id, 
 std::unique_ptr<CaseScope> open_branches(const ast::ExprValue &value, const BindingEnvironment &environment,
                                          const Scopes &scopes) {
     auto scope = std::make_unique<CaseScope>(environment, std::vector<BindingEnvironment>{});
-    if (std::holds_alternative<ast::TryExpression>(value)) {
+    if (std::holds_alternative<ast::TryExpression>(value) || std::holds_alternative<ast::MaybeExpression>(value)) {
         scope->first_handler = first_handler(value);
         scope->handlers = environment;
         finish_conditional(*scope->handlers, *scopes.conditional.back());
@@ -291,7 +315,7 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvi
         return;
     }
     if (conditional(value, pending) || branches(id, value, pending) || protect(value, pending) ||
-        attempt(id, value, pending)) {
+        attempt(id, value, pending) || conditional_block(*state.module.syntax, id, value, pending)) {
         return;
     }
     BindingCandidate scope{environment, {}};

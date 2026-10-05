@@ -11,11 +11,14 @@ struct Branch {
     const ast::CatchClause *handler = nullptr;
 };
 
-// List the clauses of a case or if expression, or a try's of then catch clauses, in source order; every other
-// expression has none.
+// List the clauses of a case or if expression, a try's of then catch clauses, or a maybe's else clauses, in source
+// order; every other expression has none.
 std::vector<Branch> branch_clauses(const ast::ExprValue &value);
-// Index of a try's first catch clause in branch_clauses (the clause count for case and if).
+// Index of a try's first catch clause in branch_clauses (0 for a maybe's else clauses, the clause count for case
+// and if).
 std::size_t first_handler(const ast::ExprValue &value);
+// The expressions a maybe body evaluates in order: plain expressions and the values of its ?= matches.
+std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value);
 // Reject executable syntax outside the milestone without modifying parser coverage.
 void check_capabilities(const Module &module, const Reporter &out, unsigned word_bits = sizeof(void *) * 8);
 // Iterate accepted expression children without visiting literal call-target atoms as values.

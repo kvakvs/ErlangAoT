@@ -92,7 +92,7 @@ void push_guard(const ast::GuardSyntax &guard, std::vector<Visit> &pending) {
     }
 }
 
-// A case scrutinee, or a try's body and after body, stay in the current context.
+// A case scrutinee, a try's body and after body, or a maybe body stay in the current context.
 void branch_operands(const ast::ExprValue &value, const Visit &visit, std::vector<Visit> &pending) {
     std::vector<ast::ExprId> operands;
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
@@ -102,6 +102,8 @@ void branch_operands(const ast::ExprValue &value, const Visit &visit, std::vecto
         if (attempt->after) {
             operands.insert(operands.end(), attempt->after->begin(), attempt->after->end());
         }
+    } else if (const auto *block = std::get_if<ast::MaybeExpression>(&value)) {
+        operands = maybe_operands(*block);
     }
     for (const auto &operand : operands) {
         pending.push_back({operand, false, visit.guard});

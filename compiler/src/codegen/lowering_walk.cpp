@@ -20,7 +20,9 @@ enum class Action : std::uint8_t {
     catch_end,
     try_body_end,
     after_end,
-    after_raise_end
+    after_raise_end,
+    maybe_match,
+    maybe_end
 };
 
 struct Visit {
@@ -198,6 +200,14 @@ struct Incoming {
     llvm::Value *value;
 };
 
+struct MaybeScope {
+    // Names bound inside a maybe are unsafe afterwards, so its else clauses and its value start from these.
+    std::map<semantic::BindingId, llvm::Value *> bindings;
+    // Every failed ?= branches here with its unmatched value; it is erased when every match always succeeds.
+    llvm::BasicBlock *exit;
+    std::vector<Incoming> mismatches = {};
+};
+
 // Join two edges at `merge` (the insertion block); SSAUpdater adds a PHI only when the values differ.
 llvm::Value *join_two(ExpressionLowering &state, llvm::BasicBlock *merge, const char *name, const Incoming first,
                       const Incoming second) {
@@ -237,6 +247,7 @@ struct Walk {
     // A try's after protection encloses its body and clauses; its handler runs the after body on the raising path.
     std::map<const ast::Expression *, ProtectedScope> afters;
     std::map<const ast::Expression *, AfterPath> after_paths;
+    std::map<const ast::Expression *, MaybeScope> maybes;
 
     // Save the enclosing handler and error exits in `scopes`; failures in what follows reach a new handler instead.
     void protect(std::map<const ast::Expression *, ProtectedScope> &scopes, const ast::Expression &expression,
@@ -362,11 +373,109 @@ struct Walk {
         start_clause(id, semantic::first_handler(expression.value));
     }
 
-    // Enter an expression: a catch or try opens its protected scope, every other node schedules its operands.
+    // Enter an expression: a catch or try opens its protected scope, a maybe its exit, every other node schedules
+    // its operands.
     void enter_node(const ast::ExprId &id) {
-        if (!open_catch(id) && !open_try(id)) {
+        if (!open_catch(id) && !open_try(id) && !open_maybe(id)) {
             enter(state, id, pending);
         }
+    }
+
+    // Schedule a maybe body in order; each ?= matches once its value exists.
+    bool open_maybe(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto *block = std::get_if<ast::MaybeExpression>(&expression.value);
+        if (!block) {
+            return false;
+        }
+        auto *exit = llvm::BasicBlock::Create(state.entry.getContext(), "maybe.else", &state.entry);
+        maybes.try_emplace(&expression, state.bindings, exit);
+        pending.push_back({id, Action::maybe_end});
+        for (std::size_t i = block->body.size(); i != 0; --i) {
+            const auto &item = block->body[i - 1];
+            if (const auto *match = std::get_if<ast::MaybeMatch>(&item)) {
+                pending.push_back({id, Action::maybe_match, i - 1});
+                pending.push_back({match->value});
+            } else {
+                pending.push_back({std::get<ast::ExprId>(item)});
+            }
+        }
+        return true;
+    }
+
+    // Match one ?= pattern; a mismatch leaves the body for the maybe's exit with the unmatched value.
+    void maybe_match(const Visit &visit) {
+        const auto &expression = state.module.syntax->expression(visit.id);
+        const auto &match =
+            std::get<ast::MaybeMatch>(std::get<ast::MaybeExpression>(expression.value).body.at(visit.field));
+        auto &scope = maybes.at(&expression);
+        auto *value = state.values.at(&state.module.syntax->expression(match.value));
+        auto &context = state.entry.getContext();
+        auto *matched = llvm::BasicBlock::Create(context, "maybe.matched", &state.entry);
+        auto *failed = llvm::BasicBlock::Create(context, "maybe.mismatch", &state.entry);
+        const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, match.pattern));
+        lower_match_plan(state, plan, std::array{value}, matched, failed);
+        if (failed->use_empty()) {
+            failed->eraseFromParent();
+        } else {
+            state.builder.SetInsertPoint(failed);
+            state.builder.CreateBr(scope.exit);
+            scope.mismatches.push_back({failed, value});
+        }
+        state.builder.SetInsertPoint(matched);
+    }
+
+    // The value of a maybe body: its last expression, or the value its last ?= matched.
+    llvm::Value *maybe_value(const ast::MaybeExpression &block) const {
+        const auto &last = block.body.back();
+        const auto *match = std::get_if<ast::MaybeMatch>(&last);
+        return state.values.at(&state.module.syntax->expression(match ? match->value : std::get<ast::ExprId>(last)));
+    }
+
+    // Merge the values of every failed ?= at the maybe's exit (the insertion block).
+    llvm::Value *unmatched_value(const MaybeScope &scope) {
+        // SSA formation inspects successors, so terminate the exit until the else part resumes there.
+        auto *boundary = state.builder.CreateUnreachable();
+        llvm::SmallVector<llvm::PHINode *, 2> phis;
+        llvm::SSAUpdater updater(&phis);
+        updater.Initialize(state.word, "maybe.unmatched");
+        for (const auto &mismatch : scope.mismatches) {
+            updater.AddAvailableValue(mismatch.block, mismatch.value);
+        }
+        auto *value = updater.GetValueInMiddleOfBlock(scope.exit);
+        boundary->eraseFromParent();
+        state.builder.SetInsertPoint(scope.exit);
+        return value;
+    }
+
+    // Join the body value with the unmatched value, or select an else clause on the unmatched value.
+    void maybe_end(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto &block = std::get<ast::MaybeExpression>(expression.value);
+        auto node = maybes.extract(&expression);
+        auto &scope = node.mapped();
+        auto *value = maybe_value(block);
+        state.bindings = std::move(scope.bindings);
+        if (scope.mismatches.empty()) {
+            scope.exit->eraseFromParent();
+            state.values.insert_or_assign(&expression, value);
+            return;
+        }
+        locate_source(state.builder, *state.module.syntax, expression.source);
+        auto *normal = state.builder.GetInsertBlock();
+        auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "maybe.join");
+        state.builder.CreateBr(merge);
+        state.builder.SetInsertPoint(scope.exit);
+        auto *unmatched = unmatched_value(scope);
+        auto &join = cases.try_emplace(&expression, unmatched, state.bindings, merge).first->second;
+        join.incoming.push_back({normal, {value}});
+        if (block.otherwise) {
+            start_clause(id, 0);
+            return;
+        }
+        join.incoming.push_back({scope.exit, {unmatched}});
+        state.builder.CreateBr(merge);
+        finish(id, join);
     }
 
     // Open the case or if join and try its first clause.
@@ -438,9 +547,10 @@ struct Walk {
         state.builder.CreateCondBr(test, success, mismatch);
     }
 
-    // Bindings a case or if exports; everything bound inside a try is unsafe afterwards.
+    // Bindings a case or if exports; everything bound inside a try or maybe is unsafe afterwards.
     std::span<const semantic::BindingId> exported(const ast::Expression &expression) const {
-        if (std::holds_alternative<ast::TryExpression>(expression.value)) {
+        if (std::holds_alternative<ast::TryExpression>(expression.value) ||
+            std::holds_alternative<ast::MaybeExpression>(expression.value)) {
             return {};
         }
         return state.function.exports.at(&expression);
@@ -535,8 +645,8 @@ struct Walk {
         afters.erase(&expression);
     }
 
-    // Raise {case_clause, Value}, if_clause or {try_clause, Value}, or re-raise an unmatched exception, from the last
-    // clause's mismatch continuation; drop it when that clause always matches.
+    // Raise {case_clause, Value}, if_clause, {try_clause, Value} or {else_clause, Value}, or re-raise an unmatched
+    // exception, from the last clause's mismatch continuation; drop it when that clause always matches.
     void no_match(const ast::Expression &expression, const CaseJoin &join, const semantic::Branch &last) {
         if (join.next->use_empty()) {
             state.builder.ClearInsertionPoint();
@@ -545,6 +655,8 @@ struct Walk {
             reraise(state, join.exception);
         } else if (std::holds_alternative<ast::TryExpression>(expression.value)) {
             raise_reason(state, abi::v1::ErrorReason::try_clause, join.value);
+        } else if (std::holds_alternative<ast::MaybeExpression>(expression.value)) {
+            raise_reason(state, abi::v1::ErrorReason::else_clause, join.value);
         } else if (join.value) {
             raise_reason(state, abi::v1::ErrorReason::case_clause, join.value);
         } else {
@@ -627,6 +739,12 @@ struct Walk {
         case Action::after_end:
             after_end(visit.id);
             break;
+        case Action::maybe_match:
+            maybe_match(visit);
+            break;
+        case Action::maybe_end:
+            maybe_end(visit.id);
+            break;
         default:
             after_raise_end(visit.id);
             break;
@@ -636,7 +754,7 @@ struct Walk {
 } // namespace
 
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
-    Walk walk{state, {{root}}, {}, {}, {}, {}, {}};
+    Walk walk{state, {{root}}, {}, {}, {}, {}, {}, {}};
     while (!walk.pending.empty()) {
         const auto visit = walk.pending.back();
         walk.pending.pop_back();

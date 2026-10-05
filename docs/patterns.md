@@ -12,7 +12,8 @@ runtime **mismatch** is never a compiler error.
 | Body matches and sequences, `begin`/`end` | Implemented; failure raises `error:{badmatch, RHS}` |
 | `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
 | `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
-| `maybe`, comprehensions | Capability (backlog F16) |
+| `maybe` with `?=` and `else` clauses | Implemented; a failed `?=` yields its value or selects an `else` clause, whose exhaustion raises `error:{else_clause, Value}`; needs the `maybe_expr` feature ([preprocessor](preprocessor.md)) |
+| Comprehensions | Capability (backlog F16) |
 | `catch Expr` | Implemented; no patterns ([ABI](abi.md#failure-channel-revision-2)) |
 | `try` `of` and catch clauses | Implemented; `of` exhaustion raises `error:{try_clause, Value}`, unmatched exceptions re-raise and `after` runs on every path ([ABI](abi.md#failure-channel-revision-2)); `Class:Reason:Stack` binds the [stack trace](abi.md#stack-traces) |
 | Fun clauses | Capability (F18) |

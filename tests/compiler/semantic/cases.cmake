@@ -90,7 +90,13 @@ semantic_case(raise_stack "-module(a). f(S) -> erlang:raise(error, x, S)." 0 "^$
 semantic_case(raise_unqualified "-module(a). f(S) -> raise(error, x, S)." 1 "undefined function a:raise/3")
 semantic_case(get_stacktrace "-module(a). f() -> erlang:get_stacktrace()." 1
     "erlang:get_stacktrace/0 is removed; use the new try/catch syntax")
-semantic_case(maybe_expr "-module(a). f() -> maybe 1 end." 1 "pattern matching")
+semantic_case(maybe_expr "-module(a). f() -> maybe 1 end." 0 "^$")
+semantic_case(maybe_else "-module(a). f(A) -> maybe {ok, X} ?= A, X else E when is_atom(E) -> E end." 0 "^$")
+semantic_case(maybe_unsafe "-module(a). f(A) -> maybe {ok, X} ?= A end, X." 1 "unsafe variable X")
+semantic_case(maybe_else_unsafe "-module(a). f(A) -> maybe {ok, X} ?= A else _ -> X end." 1 "unsafe variable X")
+semantic_case(maybe_in_guard "-module(a). f(A) when maybe A end -> A." 1 "illegal guard expression")
+semantic_case(maybe_disabled "-module(a). -feature(maybe_expr, disable). f(A) -> maybe ok ?= A end." 1
+    "maybe_disabled.erl:1:58: expected form-ending dot")
 semantic_case(comprehension "-module(a). f(X) -> [Y || Y <- X]." 1 "heap expressions")
 semantic_case(binary_comprehension "-module(a). f(X) -> << <<Y>> || Y <- X >>." 1 "heap expressions")
 semantic_case(map_comprehension "-module(a). f(X) -> #{Y => Y || Y <- X}." 1 "heap expressions")

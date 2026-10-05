@@ -19,7 +19,9 @@ enum class ErrorReason : std::uint8_t {
     raised_exit = 12,
     raised_throw = 13,
     // A try's `of` clauses did not match; the payload is the body value.
-    try_clause = 14
+    try_clause = 14,
+    // No `else` clause of a maybe matched; the payload is the unmatched value.
+    else_clause = 15
 };
 } // namespace erlang_aot::abi::v1
 

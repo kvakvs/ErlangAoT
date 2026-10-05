@@ -52,6 +52,10 @@
 {try_stack_body, accepted, none}.
 {try_stack_bound, rejected, stacktrace_bound}.
 {try_stack_guard, rejected, stacktrace_guard}.
+{maybe_body, accepted, none}.
+{maybe_unsafe, rejected, unsafe_var}.
+{maybe_else_unsafe, rejected, unsafe_var}.
+{maybe_else_reads, accepted, none}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

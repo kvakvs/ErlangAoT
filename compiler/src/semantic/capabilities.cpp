@@ -86,6 +86,17 @@ bool available(const Module &module, const Function &function, const ast::ExprId
     return true;
 }
 
+// Plan the patterns of a maybe's ?= matches.
+void maybe_patterns(const Module &module, const Function &function, const ast::MaybeExpression &block,
+                    const Reporter &out, const unsigned bits) {
+    for (const auto &item : block.body) {
+        if (const auto *match = std::get_if<ast::MaybeMatch>(&item)) {
+            (void)make_match_plan(module, function, pattern_root(*module.syntax, match->pattern), out,
+                                  {.word_bits = bits});
+        }
+    }
+}
+
 // Plan body-match and case-clause patterns so unsupported pattern forms are diagnosed before lowering.
 // A failed binding pass discards every binding table, leaving nothing to plan.
 void patterns(const Module &module, const Function &function, const ast::Expression &expression, const Reporter &out,
@@ -95,6 +106,9 @@ void patterns(const Module &module, const Function &function, const ast::Express
     }
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
+    }
+    if (const auto *block = std::get_if<ast::MaybeExpression>(&expression.value)) {
+        maybe_patterns(module, function, *block, out, bits);
     }
     for (const auto &clause : branch_clauses(expression.value)) {
         if (clause.handler && clause.handler->exception_class) {

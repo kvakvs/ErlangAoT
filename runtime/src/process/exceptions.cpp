@@ -260,9 +260,9 @@ std::string_view exception_class(const CallFailure &failure) {
 
 std::string_view error_name(const ErrorReason reason) noexcept {
     // Raised reasons (11-13) carry their whole reason term and have no name.
-    static constexpr std::array<std::string_view, 15> names{
-        "",          "function_clause", "badmatch",  "badarg", "badarg", "badarith", "badmap",    "badkey",
-        "badrecord", "case_clause",     "if_clause", "",       "",       "",         "try_clause"};
+    static constexpr std::array<std::string_view, 16> names{
+        "",          "function_clause", "badmatch",  "badarg", "badarg", "badarith", "badmap",     "badkey",
+        "badrecord", "case_clause",     "if_clause", "",       "",       "",         "try_clause", "else_clause"};
     const auto index = static_cast<std::size_t>(reason);
     return index < names.size() ? names[index] : std::string_view{};
 }

@@ -146,6 +146,8 @@ Step facts beyond the plan record:
   `frame.<symbol>` global); OTP compiler turns calls to never-returning functions into tail calls, so trace fixtures
   need functions that can also return and non-tail call sites ({tag, f(X)}). Term::is_function is declared but not
   defined (link error). No recursion in fixtures yet (call graph must be acyclic).
+- 16: maybe keeps ast::MaybeMatch (not an ExprId): walkers use semantic::maybe_operands and Visit.field = item index.
+  The "pattern matching" capability fallback in match_plan is unreachable from source (all PatternKinds planned).
 User directions (keep):
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer

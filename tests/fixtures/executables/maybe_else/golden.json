@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "entry": "maybes",
+  "runs": [
+    {
+      "args": [
+        "success"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "3\n{ok,3}\n7\n{4,40,41}\n"
+    },
+    {
+      "args": [
+        "exit"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{error,first}\n{error,second}\nother\nnope\nbefore\nstop\n"
+    },
+    {
+      "args": [
+        "else"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{found,5}\n{failed,enoent}\n{code,42}\nretry\n{binary,<<\"bin\">>}\n{9,x}\n{9,x}\n"
+    },
+    {
+      "args": [
+        "nested"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{outer,{inner,1}}\n{outer,{inner_else,inner}}\n{outer_else,outer}\n{left,ok}\n{right,two}\n"
+    },
+    {
+      "args": [
+        "errors"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{else_clause,unknown}\n{else_clause,{error,1}}\nfine\n{caught,from_else}\n{caught,{badmatch,{ok,2}}}\n6\n{other,missing}\n"
+    },
+    {
+      "args": [
+        "else_clause"
+      ],
+      "stderr": "^uncaught exception error: \\{else_clause,unexpected\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "helper.erl": "527394a2ddf68a190e41666eb6d9620ec4ff838cd523ee29a182ee6527bafbcb",
+    "maybes.erl": "6581b5f1e7563fd3b4f795c96fc360e09db5320ec662a40e65ccffceec898b5d"
+  }
+}

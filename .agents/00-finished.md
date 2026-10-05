@@ -218,6 +218,13 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   show their argument list (`erlang_aot_error_v1`); `stacktrace_bound`/
   `stacktrace_guard` lint, `get_stacktrace/0` rejected; golden `stack_traces`,
   three `try_stack*` binding rows. The `exceptions` capability is implemented.
+- **`maybe` (16):** each `?=` is a match whose mismatch edge leaves for the
+  maybe's exit with the unmatched value; without `else` that value is the
+  result, otherwise `else` clauses select like `case` clauses and raise
+  `{else_clause, V}` (`ErrorReason::else_clause = 15`); bindings follow OTP
+  (nothing exported, `else` sees body names unsafe); golden `maybe_else`, four
+  `maybe_*` binding rows, feature-disabled source rejected. The `pattern
+  matching` capability is implemented.
 
 <a id="outstanding-work-to-finish"></a>
 
