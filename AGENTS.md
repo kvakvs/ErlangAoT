@@ -108,6 +108,15 @@ The `'vswhere.exe' is not recognized` line printed by `vcvars64.bat` is harmless
 - Function names and local variables: lower_snake_case
 - Class names and struct names: public use CapitalCase, and private can go any (suggested lower_snake_case)
 
+## Differences from Erlang/OTP
+
+- Keep `docs/differences.md` up to date: whenever work finds or introduces an
+  observable behavior that differs from Erlang/OTP (ordering, error terms,
+  stack traces, limits, diagnostics, printing, edge-case semantics), add a row
+  with OTP's behavior, ErlangAoT's behavior and the owning contract document.
+  Remove or update the row when the difference is fixed. Features that are
+  simply not implemented yet belong to the plan and `docs/features.md`.
+
 ## Testing Strategy
 
 - When testing against golden master, make sure the project owns the fixtures

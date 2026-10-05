@@ -49,7 +49,8 @@ follow OTP 29:
   unevenly, or a strict rejection, raise `error:{bad_generators, {L1', L2'}}`
   with the inputs remaining at that step (a map generator shows OTP's iterator
   `{K, V, Next}`, ending in `none`). Filters inside a zip group are semantic
-  errors.
+  errors. When relaxed and strict generators of one group share a variable,
+  the skip rule can differ from OTP ([differences](differences.md)).
 - An input that is not a map raises `error:{bad_generator, Input}` before a
   map generator starts, even inside a zip group.
 - A list input that is not a list, or an improper tail, and a bitstring input

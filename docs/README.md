@@ -21,6 +21,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |
 | Deferred-feature (`notimpl`) reporting | [features.md](features.md) |
 | OTP source reference pin and refresh procedure | [otp-reference.md](otp-reference.md) |
+| Known behavior differences from Erlang/OTP | [differences.md](differences.md) |
 | Validation baseline, test modes, platform gaps, history | [validation.md](validation.md) |
 
 Older per-step validation records and evidence JSON were condensed into
