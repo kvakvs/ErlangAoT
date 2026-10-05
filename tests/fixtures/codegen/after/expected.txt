@@ -1,0 +1,8 @@
+{kept,[1,2,3]}
+exception {thrown,[4,5]}
+runtime failure resource_limit
+runtime failure resource_limit
+{kept,[1,2,3]}
+exception {thrown,[4,5]}
+runtime failure resource_limit
+runtime failure resource_limit

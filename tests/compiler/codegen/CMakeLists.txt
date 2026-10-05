@@ -201,6 +201,13 @@ if(ERLANG_AOT_BUILD_RUNTIME)
             "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/native.cmake")
         set_tests_properties(codegen_native_${level} PROPERTIES TIMEOUT 180)
+        add_test(NAME codegen_after_fault_${level} COMMAND "${CMAKE_COMMAND}"
+            "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DOPTIMIZATION=${level}"
+            "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/after-${level}/$<CONFIG>"
+            "-DHOST_SETTINGS=${PROJECT_BINARY_DIR}/TestHost.cmake"
+            "-DHOST_CONFIG=$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/after.cmake")
+        set_tests_properties(codegen_after_fault_${level} PROPERTIES TIMEOUT 180)
     endforeach()
     add_test(NAME codegen_differential COMMAND "${Python3_EXECUTABLE}"
         "${CMAKE_CURRENT_SOURCE_DIR}/differential.py" "$<TARGET_FILE:erlang_aot>" "${CMAKE_COMMAND}"

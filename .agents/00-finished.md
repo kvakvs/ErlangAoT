@@ -204,6 +204,11 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   raise `{try_clause, V}`; everything bound inside is unsafe afterwards; golden
   `try_catch`, six `try_*` binding rows. Catch class/stacktrace are AST
   expressions.
+- **`try ... after` (14):** an after protection encloses body and clauses; the
+  normal path runs the after body once, the after handler takes the exception,
+  runs a second copy and re-raises; golden `try_after`, native
+  `codegen_after_fault_O0/O2` (budget failure in the after body), three
+  `try_after*` binding rows.
 
 <a id="outstanding-work-to-finish"></a>
 

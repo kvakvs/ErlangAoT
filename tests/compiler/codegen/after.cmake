@@ -1,0 +1,41 @@
+# Link a CLI-compiled try ... after module with a native consumer that runs its after body under a small heap budget.
+include("${HOST_SETTINGS}")
+set(input "${SOURCE_ROOT}/tests/fixtures/codegen/after")
+set(object_dir "${TEST_DIR}/objects")
+file(MAKE_DIRECTORY "${TEST_DIR}/source")
+execute_process(COMMAND "${TOOL}" -${OPTIMIZATION} --emit obj --artifact-dir "${object_dir}" "${input}/cleanup.erl"
+    RESULT_VARIABLE emitted OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 60)
+if(NOT emitted STREQUAL "0" OR NOT output STREQUAL "")
+    message(FATAL_ERROR "CLI emission failed: ${emitted}: ${output}${errors}")
+endif()
+file(GLOB objects "${object_dir}/*.o" "${object_dir}/*.obj")
+file(WRITE "${TEST_DIR}/source/CMakeLists.txt" [=[
+cmake_minimum_required(VERSION 3.28)
+project(GeneratedConsumer LANGUAGES CXX)
+set(ERLANG_AOT_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
+set(ERLANG_AOT_BUILD_RUNTIME ON CACHE BOOL "" FORCE)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+add_subdirectory("${SOURCE_ROOT}" runtime-build)
+add_executable(linked "${SOURCE_ROOT}/tests/compiler/codegen/after_consumer.cpp" ${OBJECTS})
+target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
+set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
+]=])
+execute_process(COMMAND "${CMAKE_COMMAND}" -S "${TEST_DIR}/source" -B "${TEST_DIR}/build"
+    "-DSOURCE_ROOT=${SOURCE_ROOT}" "-DOBJECTS=${objects}" ${host_configure_args}
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+if(NOT result STREQUAL "0")
+    message(FATAL_ERROR "Native configure: ${output}${errors}")
+endif()
+execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/build" --config "${HOST_CONFIG}" --target linked
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors)
+if(NOT result STREQUAL "0")
+    message(FATAL_ERROR "Native link: ${output}${errors}")
+endif()
+file(READ "${input}/expected.txt" expected)
+string(REPLACE "\r\n" "\n" expected "${expected}")
+execute_process(COMMAND "${TEST_DIR}/build/bin/${HOST_CONFIG}/linked${HOST_SUFFIX}"
+    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors TIMEOUT 30)
+string(REPLACE "\r\n" "\n" output "${output}")
+if(NOT result STREQUAL "0" OR NOT output STREQUAL expected OR NOT errors STREQUAL "")
+    message(FATAL_ERROR "After fault execution: ${result}\nExpected:\n${expected}\nActual:\n${output}\n${errors}")
+endif()

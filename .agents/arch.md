@@ -54,6 +54,9 @@
   `first_handler`); the walker protects only the body (`ProtectedScope`), selects of clauses on its value
   (`try_clause` on exhaustion), and from the handler takes `{class, reason}` (`erlang_aot_exception_v1`) and matches
   catch clauses from the pre-try bindings; no match re-raises (`erlang_aot_reraise_v1`). All try names stay unsafe.
+  `try ... after` (step 14): a second `ProtectedScope` (`afters`) encloses body and clauses; after the join the after
+  body is lowered on the normal path (value kept in `AfterPath`), and, when its handler is used, again from the
+  handler between `lower_exception` and `reraise`.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

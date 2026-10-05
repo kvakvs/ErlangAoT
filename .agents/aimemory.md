@@ -137,6 +137,11 @@ Step facts beyond the plan record:
   reason, observably identical). Walk::visit split (visit/branch) for Lizard CCN. Bindings OTP regenerate: use
   "C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe" directly (otp-launch shim gone). Atoms > numbers in term order:
   `zero > 0` is true in guards.
+- 14: after = second ProtectedScope map `afters` + `after_paths` (result/resume/exception); after body lowered twice
+  (normal path, then from the after handler). Never return/move ProtectedScope by value: MSVC std::map move may throw ->
+  tidy bugprone-exception-escape; emplace in place, extract node handles. `opt->` and `.value()` on std::optional are
+  both flagged by bugprone-unchecked-optional-access: test first. Process budget overflow reports resource_limit (7).
+  `after` is a reserved word: fixture atoms must not be `after`.
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

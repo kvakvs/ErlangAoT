@@ -560,15 +560,36 @@ Backlog: F13, F20. Depends on: [11](#step-11).
 Backlog: F20. Depends on: [13](#step-13).
 
 - Success criteria
-  - [ ] `after` runs exactly once on normal return, caught and uncaught
+  - [x] `after` runs exactly once on normal return, caught and uncaught
     exceptions; its value is discarded; an exception inside `after` replaces
     the original.
-  - [ ] Rooted temporaries are released on every path.
+  - [x] Rooted temporaries are released on every path.
 - Tests
-  - [ ] Golden programs observing `after` execution order with
+  - [x] Golden programs observing `after` execution order with
     `erlang:display/1` on each path.
-  - [ ] Allocation fault injected inside `after` keeps cleanup and ownership
+  - [x] Allocation fault injected inside `after` keeps cleanup and ownership
     correct.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The walker opens
+  a second `ProtectedScope` (`afters`) around the body and all `of`/catch
+  clauses. After the clause join it lowers the after body on the normal path
+  (the rooted try value kept in `AfterPath`); if anything protected can raise,
+  it lowers the after body again from the after handler between
+  `erlang_aot_exception_v1` and `erlang_aot_reraise_v1`. After-body failures
+  leave through the enclosing handler (replacing the original); halts and
+  infrastructure failures skip it; root slots are frame-owned and released at
+  the function exit. No new runtime service. OTP golden `executables_try_after`
+  (8 runs: normal/of/catch paths, discarded value, caught and uncaught
+  exceptions, `try_clause`, of/handler raises, remote depth, after-body
+  throw/exit/badmatch replacing the original, `catch` inside after, nested
+  afters, bindings before the try, remote `after`, uncaught at top, `halt`
+  skipping after). Native `codegen_after_fault_O0/O2`: a 256 KiB process budget
+  makes the after body's binary fail with `resource_limit` on the normal and
+  raising paths; the root stack is empty, the heap verifies, the channel is
+  clear and the same context keeps working, twice over. Bindings corpus +3
+  `try_after*` rows verified by OTP 29.1.1; semantic `try_after`/
+  `try_after_unsafe`. Fresh Windows x64 Debug: fast CTest 149/149; Lizard 0
+  warnings; tidy changed units pass after an optional-access fix. Logs
+  `build/plan11-step14/`.
 
 <a id="step-15"></a>
 

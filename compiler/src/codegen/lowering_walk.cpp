@@ -18,7 +18,9 @@ enum class Action : std::uint8_t {
     case_select,
     case_clause_end,
     catch_end,
-    try_body_end
+    try_body_end,
+    after_end,
+    after_raise_end
 };
 
 struct Visit {
@@ -67,6 +69,14 @@ struct ProtectedScope {
     std::map<semantic::BindingId, llvm::Value *> bindings;
     // Failures inside the protected part branch here; it is erased when nothing inside can fail.
     llvm::BasicBlock *handler;
+};
+
+struct AfterPath {
+    // The try value outlives the normal-path after body, whose end `resume` continues once the raising path is done.
+    llvm::Value *result;
+    llvm::BasicBlock *resume = nullptr;
+    // The exception taken by the after handler on the raising path.
+    std::array<llvm::Value *, 2> exception = {};
 };
 
 // Merge one per-clause value at the join; SSAUpdater adds a PHI only when the clauses disagree.
@@ -224,12 +234,16 @@ struct Walk {
     std::map<const ast::Expression *, LazyJoin> joins;
     std::map<const ast::Expression *, CaseJoin> cases;
     std::map<const ast::Expression *, ProtectedScope> catches;
+    // A try's after protection encloses its body and clauses; its handler runs the after body on the raising path.
+    std::map<const ast::Expression *, ProtectedScope> afters;
+    std::map<const ast::Expression *, AfterPath> after_paths;
 
-    // Save the enclosing handler and error exits; failures in what follows reach `handler` instead.
-    void protect(const ast::Expression &expression, const char *name) {
+    // Save the enclosing handler and error exits in `scopes`; failures in what follows reach a new handler instead.
+    void protect(std::map<const ast::Expression *, ProtectedScope> &scopes, const ast::Expression &expression,
+                 const char *name) {
         auto *handler = llvm::BasicBlock::Create(state.entry.getContext(), name, &state.entry);
-        catches.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
-                            handler);
+        scopes.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
+                           handler);
         // Shared error exits created outside the protected part would bypass its handler.
         state.handler = handler;
         state.bad_argument = nullptr;
@@ -250,7 +264,7 @@ struct Walk {
         if (!guarded) {
             return false;
         }
-        protect(expression, "catch.handler");
+        protect(catches, expression, "catch.handler");
         pending.push_back({id, Action::catch_end});
         pending.push_back({guarded->expression});
         return true;
@@ -284,14 +298,20 @@ struct Walk {
         state.values.insert_or_assign(&expression, result);
     }
 
-    // Protect a try body: its exceptions reach the catch clauses, which like the of clauses run unprotected.
+    // Protect a try body: its exceptions reach the catch clauses, which like the of clauses run outside that
+    // protection; an after protection encloses the body and all clauses.
     bool open_try(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
         const auto *attempt = std::get_if<ast::TryExpression>(&expression.value);
         if (!attempt) {
             return false;
         }
-        protect(expression, "try.handler");
+        if (attempt->after) {
+            protect(afters, expression, "try.after");
+        }
+        if (attempt->handlers) {
+            protect(catches, expression, "try.handler");
+        }
         pending.push_back({id, Action::try_body_end});
         for (auto body = attempt->body.rbegin(); body != attempt->body.rend(); ++body) {
             pending.push_back({*body});
@@ -304,7 +324,9 @@ struct Walk {
         const auto &expression = state.module.syntax->expression(id);
         const auto &attempt = std::get<ast::TryExpression>(expression.value);
         auto *value = state.values.at(&state.module.syntax->expression(attempt.body.back()));
-        restore(catches.at(&expression));
+        if (const auto scope = catches.find(&expression); scope != catches.end()) {
+            restore(scope->second);
+        }
         auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "try.join");
         auto &join = cases.try_emplace(&expression, value, state.bindings, merge).first->second;
         if (attempt.of) {
@@ -316,19 +338,22 @@ struct Walk {
         handlers(id);
     }
 
-    // Start the catch clauses from the try's handler with the bindings before the try, or finish the try when
-    // nothing in its body can fail.
+    // Start the catch clauses from the try's handler with the bindings before the try, or finish the try when it
+    // has none or nothing in its body can fail.
     void handlers(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
-        auto node = catches.extract(&expression);
-        auto &scope = node.mapped();
         auto &join = cases.at(&expression);
+        auto node = catches.extract(&expression);
+        if (node.empty()) {
+            finish(id, join);
+            return;
+        }
+        auto &scope = node.mapped();
         join.bindings = std::move(scope.bindings);
         if (scope.handler->use_empty()) {
             scope.handler->eraseFromParent();
             state.builder.ClearInsertionPoint();
-            finish_case(expression, join);
-            cases.erase(&expression);
+            finish(id, join);
             return;
         }
         state.builder.SetInsertPoint(scope.handler);
@@ -436,8 +461,68 @@ struct Walk {
             handlers(visit.id);
             return;
         }
+        finish(visit.id, join);
+    }
+
+    // Join the selection, then leave a try's after protection and lower its after body on the normal path.
+    void finish(const ast::ExprId &id, CaseJoin &join) {
+        const auto &expression = state.module.syntax->expression(id);
         finish_case(expression, join);
         cases.erase(&expression);
+        if (const auto found = afters.find(&expression); found != afters.end()) {
+            restore(found->second);
+            state.bindings = found->second.bindings;
+            after_paths.try_emplace(&expression, state.values.at(&expression));
+            schedule_after(id, Action::after_end);
+        }
+    }
+
+    // Lower the after body; its value is discarded and its names are unsafe afterwards.
+    void schedule_after(const ast::ExprId &id, const Action action) {
+        const auto &after = std::get<ast::TryExpression>(state.module.syntax->expression(id).value).after;
+        if (!after) {
+            return;
+        }
+        pending.push_back({id, action});
+        for (auto body = after->rbegin(); body != after->rend(); ++body) {
+            pending.push_back({*body});
+        }
+    }
+
+    // Finish the normal path; when anything protected can raise, take that exception at the after handler and
+    // lower the after body again before raising it.
+    void after_end(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto &scope = afters.at(&expression);
+        state.bindings = scope.bindings;
+        if (scope.handler->use_empty()) {
+            scope.handler->eraseFromParent();
+            close_after(expression);
+            return;
+        }
+        auto &path = after_paths.at(&expression);
+        path.resume = state.builder.GetInsertBlock();
+        state.builder.SetInsertPoint(scope.handler);
+        locate_source(state.builder, *state.module.syntax, expression.source);
+        path.exception = lower_exception(state);
+        schedule_after(id, Action::after_raise_end);
+    }
+
+    // Raise the taken exception again after the raising-path after body, then resume the normal path.
+    void after_raise_end(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto &path = after_paths.at(&expression);
+        reraise(state, path.exception);
+        state.builder.SetInsertPoint(path.resume);
+        state.bindings = afters.at(&expression).bindings;
+        close_after(expression);
+    }
+
+    // The try's value is the selected clause value, never the after body's.
+    void close_after(const ast::Expression &expression) {
+        state.values.insert_or_assign(&expression, after_paths.at(&expression).result);
+        after_paths.erase(&expression);
+        afters.erase(&expression);
     }
 
     // Raise {case_clause, Value}, if_clause or {try_clause, Value}, or re-raise an unmatched exception, from the last
@@ -526,8 +611,14 @@ struct Walk {
         case Action::catch_end:
             close_catch(state.module.syntax->expression(visit.id));
             break;
-        default:
+        case Action::try_body_end:
             try_body_end(visit.id);
+            break;
+        case Action::after_end:
+            after_end(visit.id);
+            break;
+        default:
+            after_raise_end(visit.id);
             break;
         }
     }
@@ -535,7 +626,7 @@ struct Walk {
 } // namespace
 
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
-    Walk walk{state, {{root}}, {}, {}, {}};
+    Walk walk{state, {{root}}, {}, {}, {}, {}, {}};
     while (!walk.pending.empty()) {
         const auto visit = walk.pending.back();
         walk.pending.pop_back();

@@ -213,8 +213,8 @@ channel carries `function_clause`, service reasons and the three source classes.
 - [x] `try ... of ... catch`: class/reason patterns and guards, re-raise,
   `try_clause`, binding safety (step 13).
 - [ ] Stack traces and `erlang:raise/3`.
-- [ ] `try ... after` lowering without C++ exceptions crossing generated
-  boundaries.
+- [x] `try ... after` on normal, caught and uncaught paths, after-body
+  exceptions replacing the original, allocation faults (step 14).
 - [ ] Nested handling and cleanup across module and builtin calls.
 
 ### F21 — Recursion and proper tail calls

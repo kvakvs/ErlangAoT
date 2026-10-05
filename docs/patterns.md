@@ -14,7 +14,7 @@ runtime **mismatch** is never a compiler error.
 | `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
 | `maybe`, comprehensions | Capability (backlog F16) |
 | `catch Expr` | Implemented; no patterns ([ABI](abi.md#failure-channel-revision-2)) |
-| `try` `of` and catch clauses | Implemented; `of` exhaustion raises `error:{try_clause, Value}`, unmatched exceptions re-raise ([ABI](abi.md#failure-channel-revision-2)); `after` and named stacktraces are capabilities (F20) |
+| `try` `of` and catch clauses | Implemented; `of` exhaustion raises `error:{try_clause, Value}`, unmatched exceptions re-raise and `after` runs on every path ([ABI](abi.md#failure-channel-revision-2)); named stacktraces are a capability (F20) |
 | Fun clauses | Capability (F18) |
 | `receive` | Capability (F22/F25) |
 

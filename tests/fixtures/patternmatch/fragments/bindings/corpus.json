@@ -40,6 +40,9 @@
     "sibling_checks.erl",
     "sibling_local.erl",
     "sibling_read.erl",
+    "try_after_body.erl",
+    "try_after_reads.erl",
+    "try_after_unsafe.erl",
     "try_class.erl",
     "try_clause_unsafe.erl",
     "try_handler_unsafe.erl",
@@ -487,6 +490,33 @@
         "diagnostic": "unsafe variable Y",
         "otp_diagnostic": "unsafe_var",
         "sha256": "6b0eedec08b6ab8862d6ee05dbc8d7ee9937ae462e89212d693f3f58a5b31fbb"
+      },
+      {
+        "name": "try_after_reads",
+        "arity": 1,
+        "body": "f(A) -> try A after {A} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "fabf1ac925b25fdd4c9fb55ab6cd277b8fd39c51f738efd3115e9d58686d0452"
+      },
+      {
+        "name": "try_after_unsafe",
+        "arity": 1,
+        "body": "f(A) -> try A after X = A end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "c50bff2afe8dcdb133d279f28bfda043f35fba5052b0b2d352ad7b53edf724b6"
+      },
+      {
+        "name": "try_after_body",
+        "arity": 1,
+        "body": "f(A) -> try X = A after X end.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "8996597d6ede8a0d100b2d3e512dab71e2f1381cfdd4c583aacb8fce9e84ff8d"
       },
       {
         "name": "bindings_local",

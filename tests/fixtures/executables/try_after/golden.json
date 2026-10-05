@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "entry": "afters",
+  "runs": [
+    {
+      "args": [
+        "normal"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "body\ncleanup\n{value,body}\nbody\nof_clause\ncleanup\n{value,of_clause}\nbody\ncleanup\n{value,body}\nbody\nof_clause\ncleanup\n{value,of_clause}\n{value,value}\ncleanup\nnext\n{value,{first,next}}\n"
+    },
+    {
+      "args": [
+        "caught"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "ball\ncleanup\n{value,{caught,ball}}\noops\n{handler,oops}\ncleanup\n{value,{handler,oops}}\ncleanup\n{value,{badmatch,2}}\ninner_after\nouter_handler\nouter_after\n{value,outer_handler}\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "passing\ncleanup\n{value,passing}\npassing\ncleanup\n{'EXIT',{passing,stack}}\npassing\ncleanup\n{value,{'EXIT',passing}}\ncleanup\n{'EXIT',{{try_clause,9},stack}}\nfrom_of\ncleanup\n{value,from_of}\nfrom_handler\ncleanup\n{value,from_handler}\n2\ncleanup\n{value,{deep,2}}\n"
+    },
+    {
+      "args": [
+        "replaced"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "body\nfrom_after\n{value,from_after}\nfrom_after\n{value,from_after}\nfrom_after\n{value,{'EXIT',from_after}}\n{'EXIT',{{badmatch,3},stack}}\n{value,original}\n"
+    },
+    {
+      "args": [
+        "nested"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "inner_body\ninner_after\nouter_after\n{value,inner_body}\ndeep\ninner_after\nouter_after\n{value,deep}\nbody\nin_after\nhandled_in_after\nafter_after\n{value,body}\nbefore\n{cleanup,before}\n{value,before}\nbefore\n{value,before}\n{cleanup,ok}\n{value,done}\n{cleanup,fail}\n{'EXIT',{failed,stack}}\n"
+    },
+    {
+      "args": [
+        "uncaught_top"
+      ],
+      "stderr": "^uncaught exception throw: \\{top,1\\}\n$",
+      "exit_status": 1,
+      "stdout": "{top,1}\ncleanup\n"
+    },
+    {
+      "args": [
+        "after_top"
+      ],
+      "stderr": "^uncaught exception error: from_after\n$",
+      "exit_status": 1,
+      "stdout": "body\nfrom_after\n"
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 5,
+      "stdout": "5\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "afters.erl": "26a6f851b2ea357f9ee19401e3d851ce470d7ff42236fd8473417db22b8b8040",
+    "raiser.erl": "9b51cb9a4c755e25512a56ee3f6851b05450a7a94b9afbd0bc459904275a6aab"
+  }
+}

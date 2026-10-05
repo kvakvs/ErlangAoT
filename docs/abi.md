@@ -108,8 +108,17 @@ guards; an omitted class matches `throw`. When none matches,
 with a `raised_*` reason, which reports and catches exactly like the original.
 `of` clauses select on the body value and raise `{try_clause, Value}`
 (`ErrorReason::try_clause = 14`); exceptions inside `of` clauses and handlers go
-to the enclosing handler. Named stacktrace variables and `after` remain
-capability diagnostics until steps 15 and 14.
+to the enclosing handler. Named stacktrace variables remain capability
+diagnostics until step 15.
+
+`try ... after A end` adds a second protection around the body and all `of`
+and catch clauses. On the normal path `A` runs after the selected value is
+rooted and its value is discarded. The after handler takes the exception with
+`erlang_aot_exception_v1`, runs a second copy of `A` and re-raises with
+`erlang_aot_reraise_v1`; an exception or failure inside `A` leaves through the
+enclosing handler instead, replacing the original. Halts and infrastructure
+failures skip `A`. Root slots belong to the function frame, so every path
+releases them at the function exit.
 
 ## Root scopes
 

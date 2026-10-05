@@ -46,6 +46,9 @@
 {try_unsafe, rejected, unsafe_var}.
 {try_handler_unsafe, rejected, unsafe_var}.
 {try_clause_unsafe, rejected, unsafe_var}.
+{try_after_reads, accepted, none}.
+{try_after_unsafe, rejected, unsafe_var}.
+{try_after_body, rejected, unsafe_var}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

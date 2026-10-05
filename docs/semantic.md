@@ -33,7 +33,8 @@ context. Analysis is deterministic.
 - Definitions on the RHS of `andalso`/`orelse` or inside `catch Expr` are unsafe
   afterwards (OTP `vtunsafe`); names bound before a `catch` stay usable. Every
   name bound inside a `try` is unsafe afterwards; `of` clauses see the body's
-  names, catch clauses see them as unsafe. Guards
+  names, catch clauses see them as unsafe, and the after body sees every name
+  bound earlier in the try as unsafe. Guards
   never publish bindings; matches in guards are errors even when unreachable.
 - Map keys read only incoming bindings; binary sizes also read earlier segments
   of the same binary (see [patterns](patterns.md#scopes)).
