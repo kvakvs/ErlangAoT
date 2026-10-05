@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "entry": "recursion",
+  "runs": [
+    {
+      "args": [
+        "factorial"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "1\n120\n15511210043330985984000000\n2432902008176640000\n"
+    },
+    {
+      "args": [
+        "parity"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "true\ntrue\ntrue\nfalse\nfalse\n"
+    },
+    {
+      "args": [
+        "lists"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[8,7,6,5,4,3,2,1]\n36\n[1,2,3,4,5,6,7,8]\n9\n[{a,1},{b,2},{c,3}]\n"
+    },
+    {
+      "args": [
+        "remote"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{done,ping}\n{done,pong}\n3\n"
+    },
+    {
+      "args": [
+        "errors"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{caught,bottom}\n{caught,function_clause}\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception error: bottom\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "recursion.erl": "83f8842c276a83a39658f5ed537c903fc0b439b0c7cae2c18e70a07f45af6d68",
+    "walk.erl": "b981b4b1f894ffd27c13057e42fbdf95d887a3b6de9ab8557834a9ab3282ac90"
+  }
+}

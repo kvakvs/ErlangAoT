@@ -1,6 +1,5 @@
 #include "calls.hpp"
 #include "capabilities.hpp"
-#include "features.hpp"
 #include <algorithm>
 
 namespace erlang_aot::semantic {
@@ -92,60 +91,125 @@ Modules module_index(const std::span<const std::unique_ptr<Module>> modules, con
     return result;
 }
 
-struct Dependencies {
-    // Count each edge once and retain reverse users for iterative topological ordering.
-    std::vector<std::size_t> remaining;
-    std::vector<std::vector<std::size_t>> users;
-};
-
-// Translate stable declaration pointers to dense indices without changing identity.
-Dependencies dependencies(const CallGraph &graph, const std::vector<FunctionRef> &functions) {
+// Translate stable declaration pointers to dense indices; each caller lists its callees in source order.
+std::vector<std::vector<std::size_t>> adjacency(const CallGraph &graph, const std::vector<FunctionRef> &functions) {
     std::map<Function *, std::size_t> indices;
     for (std::size_t i = 0; i < functions.size(); ++i) {
         indices.emplace(functions[i].function, i);
     }
-    Dependencies result{std::vector<std::size_t>(functions.size()),
-                        std::vector<std::vector<std::size_t>>(functions.size())};
+    std::vector<std::vector<std::size_t>> result(functions.size());
     for (const auto &call : graph.calls) {
-        const auto caller = indices.at(call.caller.function);
-        ++result.remaining[caller];
-        result.users[indices.at(call.callee.function)].push_back(caller);
+        result[indices.at(call.caller.function)].push_back(indices.at(call.callee.function));
     }
     return result;
 }
 
-// A partial order cannot be consumed when any function depends on a recursive component.
-void reject_cycle(CallGraph &graph, const Dependencies &edges, const std::vector<FunctionRef> &functions,
-                  const Reporter &out) {
-    if (graph.order.size() == functions.size()) {
-        return;
-    }
-    const auto blocked = static_cast<std::size_t>(
-        std::ranges::find_if(edges.remaining, [](auto count) { return count != 0; }) - edges.remaining.begin());
-    const auto &ref = functions[blocked];
-    reject_capability(*ref.module, ref.module->syntax->form(ref.function->form).source, "recursive calls", out);
-    graph.order.clear();
-}
+// Tarjan's algorithm with explicit frames emits each component after every component it calls.
+class Components {
+  public:
+    // Borrow the dense call edges; every node starts unvisited.
+    explicit Components(const std::vector<std::vector<std::size_t>> &edges)
+        : edges_(edges), index_(edges.size(), UNVISITED), low_(edges.size()), stacked_(edges.size()) {}
 
-// Kahn's algorithm avoids host-stack recursion and counts repeated dependency edges exactly.
-void order(CallGraph &graph, const std::vector<FunctionRef> &functions, const Reporter &out) {
-    auto edges = dependencies(graph, functions);
-    std::vector<std::size_t> ready;
-    for (std::size_t i = 0; i < edges.remaining.size(); ++i) {
-        if (edges.remaining[i] == 0) {
-            ready.push_back(i);
-        }
-    }
-    for (std::size_t cursor = 0; cursor < ready.size(); ++cursor) {
-        const auto next = ready[cursor];
-        graph.order.push_back(functions[next]);
-        for (const auto user : edges.users[next]) {
-            if (--edges.remaining[user] == 0) {
-                ready.push_back(user);
+    // Visit every unvisited root in declaration order so the result stays deterministic.
+    std::vector<std::vector<std::size_t>> run() {
+        for (std::size_t root = 0; root < edges_.size(); ++root) {
+            if (index_[root] == UNVISITED) {
+                visit(root);
             }
         }
+        return std::move(components_);
     }
-    reject_cycle(graph, edges, functions, out);
+
+  private:
+    static constexpr std::size_t UNVISITED = static_cast<std::size_t>(-1);
+
+    struct Frame {
+        // The node being explored and the next outgoing edge to inspect.
+        std::size_t node;
+        std::size_t edge = 0;
+    };
+
+    // Number a node and place it on both the component stack and the explicit DFS stack.
+    void enter(const std::size_t node, std::vector<Frame> &frames) {
+        index_[node] = low_[node] = next_++;
+        stack_.push_back(node);
+        stacked_[node] = true;
+        frames.push_back({node});
+    }
+
+    // Pop a finished root's component; members leave the stack in reverse discovery order.
+    void close(const std::size_t node) {
+        std::vector<std::size_t> component;
+        std::size_t member = 0;
+        do {
+            member = stack_.back();
+            stack_.pop_back();
+            stacked_[member] = false;
+            component.push_back(member);
+        } while (member != node);
+        std::ranges::sort(component);
+        components_.push_back(std::move(component));
+    }
+
+    // Advance one frame: descend into an unvisited callee or fold a finished child's low link.
+    void step(std::vector<Frame> &frames) {
+        auto &frame = frames.back();
+        const auto node = frame.node;
+        if (frame.edge < edges_[node].size()) {
+            const auto callee = edges_[node][frame.edge++];
+            if (index_[callee] == UNVISITED) {
+                enter(callee, frames);
+            } else if (stacked_[callee]) {
+                low_[node] = std::min(low_[node], index_[callee]);
+            }
+            return;
+        }
+        frames.pop_back();
+        if (!frames.empty()) {
+            low_[frames.back().node] = std::min(low_[frames.back().node], low_[node]);
+        }
+        if (low_[node] == index_[node]) {
+            close(node);
+        }
+    }
+
+    // Explore one root iteratively, avoiding host recursion for long call chains.
+    void visit(const std::size_t root) {
+        std::vector<Frame> frames;
+        enter(root, frames);
+        while (!frames.empty()) {
+            step(frames);
+        }
+    }
+
+    const std::vector<std::vector<std::size_t>> &edges_;
+    // Discovery numbers, lowest reachable numbers and component stack membership per node.
+    std::vector<std::size_t> index_;
+    std::vector<std::size_t> low_;
+    std::vector<bool> stacked_;
+    std::vector<std::size_t> stack_;
+    std::vector<std::vector<std::size_t>> components_;
+    std::size_t next_ = 0;
+};
+
+// A component is recursive when it has several members or its single member calls itself.
+bool recursive(const std::vector<std::size_t> &members, const std::vector<std::vector<std::size_t>> &edges) {
+    return members.size() > 1 ||
+           std::ranges::find(edges[members.front()], members.front()) != edges[members.front()].end();
+}
+
+// Record components with callees first; the flattened order keeps that dependency direction.
+void order(CallGraph &graph, const std::vector<FunctionRef> &functions) {
+    const auto edges = adjacency(graph, functions);
+    for (const auto &members : Components(edges).run()) {
+        Component component{{}, recursive(members, edges)};
+        for (const auto member : members) {
+            component.members.push_back(functions[member]);
+            graph.order.push_back(functions[member]);
+        }
+        graph.components.push_back(std::move(component));
+    }
 }
 
 } // namespace
@@ -160,7 +224,7 @@ CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, 
             body(graph, functions.back(), names, out);
         }
     }
-    order(graph, functions, out);
+    order(graph, functions);
     return graph;
 }
 } // namespace erlang_aot::semantic

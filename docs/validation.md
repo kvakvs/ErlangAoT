@@ -153,5 +153,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-05 | Plan 11 step 14 `try ... after` | 153 (149 fast) | 2 changed | Fast 149/149; Lizard 0 warnings; tidy passed |
 | 2026-10-05 | Plan 11 step 15 stack traces and `raise/3` | 154 (150 fast) | 129 changed | Fast 150/150; Lizard 0 warnings; tidy passed |
 | 2026-10-05 | Plan 11 step 16 `maybe` (phase D closed) | 155 (151 fast) | 277 | Fast 151/151; full `-j 16` 155/155 in 259 s; Lizard-all 0 warnings; tidy-all passed |
+| 2026-10-05 | Plan 11 step 18 recursive call graphs | 156 (152 fast) | 91 changed | Fast 152/152; affected tests 13/13 in full mode; Lizard 0 warnings; tidy passed |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

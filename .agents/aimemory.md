@@ -6,7 +6,7 @@ No subagents authorized or used. Separate current commits: step17 7d83b99,
 step18 684af35, step19 428c388; final step20 commit 2be9626.
 Each implementation commit followed fresh combined Debug build/fullCTest/Lizard/tidy.
 
-Current admitted scope: acyclic local/exported remote functions, ordered heads,
+Current admitted scope: recursive local/exported remote functions, ordered heads,
 body matches/sequences, grouped/strict/lazy guards, rooted checked construction/
 access/comparison/numeric services for owned atoms, arbitrary integers, finite
 floats, tuple/list/string/map/bitstring/ordinary tuple records. Descriptor ABI4,
@@ -145,7 +145,7 @@ Step facts beyond the plan record:
 - 15: trace captured at GeneratedCallState::fail from GeneratedRoots frames (FrameDescriptor per function, private
   `frame.<symbol>` global); OTP compiler turns calls to never-returning functions into tail calls, so trace fixtures
   need functions that can also return and non-tail call sites ({tag, f(X)}). Term::is_function is declared but not
-  defined (link error). No recursion in fixtures yet (call graph must be acyclic).
+  defined (link error). Recursion admitted from step 18.
 - 16: maybe keeps ast::MaybeMatch (not an ExprId): walkers use semantic::maybe_operands and Visit.field = item index.
   The "pattern matching" capability fallback in match_plan is unreachable from source (all PatternKinds planned).
 - 17: decision only (docs/execution-model.md). Prototype tests/prototypes/execution_model/run.py uses clang++ from
@@ -154,6 +154,12 @@ Step facts beyond the plan record:
   clang-format collapses one-line function bodies there (root .clang-format). Step 19 must: split walker at calls via
   body resume switch, reload frame base after every transfer/service that can push, replace GeneratedRoots + handoffs
   with flat stack + x registers, entry ABI becomes void(Process*).
+- 18: CallGraph::components (Tarjan, callees first; members sorted by declaration index) + flattened order. Inference
+  solve(): members start Fact{bottom}; merged() treats {bottom, no argument} as identity (also in clause joins);
+  expression facts erased per round via `recorded` (stale earlier-round facts would be unsound); 16 rounds then
+  graph.exhausted() (widened flag). A 16-function ring hits the limit, 15 converges. Codegen needed no change (all
+  functions declared before definition; native recursion). Catalog recursive_calls implemented (placeholders.py set must
+  equal deferred compiler entries). type_inspection.py needs an absolute tool path when run by hand.
 User directions (keep):
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer

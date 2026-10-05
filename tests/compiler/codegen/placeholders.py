@@ -9,7 +9,6 @@ CASES = {
     "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "f() -> [X || X <- []].",
     "dynamic calls": "f(F) -> F(1).",
-    "recursive calls": "f() -> f().",
     "closures": "f() -> fun(X) -> X end.",
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",

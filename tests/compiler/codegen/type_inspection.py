@@ -83,6 +83,46 @@ assert re.search(r'function "guarded"/1[^\n]*result=union\(1, 2\)\n', facts), fa
 assert re.search(r'function "alike"/1[^\n]*argument\[0\]', facts), facts
 assert re.search(r'function "bound"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
 
+# Recursive components iterate from none() to a fixed point; pending recursive calls add nothing to a join.
+(work / 'recursive.erl').write_text('''-module(recursive).
+-export([zero/1, keep/2, swap/2, forever/0, even/1, odd/1, fact/1, outer/1]).
+zero(0) -> 0; zero(N) -> zero(N - 1).
+keep(Acc, 0) -> Acc; keep(Acc, N) -> keep(Acc, N - 1).
+swap(A, 0) -> A; swap(A, B) -> swap(B, A).
+forever() -> forever().
+even(0) -> 1; even(N) -> odd(N - 1).
+odd(0) -> 0; odd(N) -> even(N - 1).
+fact(0) -> 1; fact(N) -> N * fact(N - 1).
+outer(X) -> case X of 0 -> 5; _ -> zero(X) end.
+''', encoding='utf-8')
+facts = run('--print-types', 'recursive.erl').stdout
+assert 'inferred=complete' in facts, facts
+assert re.search(r'function "zero"/1[^\n]*result=0\n', facts), facts
+assert re.search(r'function "keep"/2[^\n]*result=[^\n]*\[argument\[0\] relation\]\n', facts), facts
+assert re.search(r'function "swap"/2[^\n]*result=term\(\) \[unknown\]\n', facts), facts
+assert re.search(r'function "forever"/0[^\n]*result=none\(\)\n', facts), facts
+assert re.search(r'function "even"/1[^\n]*result=union\(0, 1\)\n', facts), facts
+assert re.search(r'function "odd"/1[^\n]*result=union\(0, 1\)\n', facts), facts
+assert re.search(r'function "fact"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
+assert re.search(r'function "outer"/1[^\n]*result=union\(0, 5\)\n', facts), facts
+# Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
+assert re.search(r'expression "recursive.erl":7:\d+ inferred=union\(0, 1\)\n', facts), facts
+
+
+# A cycle of n functions gains one result member per round: 15 converge, 16 hit the round limit and widen.
+def ring(size):
+    name = f'ring{size}'
+    lines = [f'-module({name}).', '-export([w1/1]).']
+    lines += [f'w{i}(X) -> case X of 0 -> {i}; _ -> w{i % size + 1}(X) end.' for i in range(1, size + 1)]
+    (work / f'{name}.erl').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    return run('--print-types', f'{name}.erl').stdout
+
+
+converged, widened = ring(15), ring(16)
+assert 'inferred=complete' in converged and 'union(1, 2, 3, ' in converged and ', 15)\n' in converged, converged
+assert 'inferred=widened' in widened, widened
+assert re.search(r'function "w1"/1[^\n]*result=term\(\) \[unknown\]\n', widened), widened
+
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')
 (work / 'project.toml').write_text('''schema_version=1

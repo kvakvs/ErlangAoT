@@ -24,7 +24,6 @@ def rejection(tool, work):
              ("later_guard", "f(X) -> X; f(X) when self() =:= X -> X.", "guards"),
              ("later_call", "f(X) -> X; f(_) -> missing().", "undefined function"),
              ("later_remote", "f(X) -> X; f(_) -> absent:f().", "unknown module"),
-             ("later_cycle", "f(0) -> 0; f(X) -> g(X). g(X) -> f(X).", "recursive calls"),
              ("later_leak", "f(X,_) -> X; f(_,_) -> X.", "unbound variable X")]
     for name, body, diagnostic in cases:
         (directory / (name + ".erl")).write_text(f"-module({name}).\n\n{body}\n", encoding="utf-8")

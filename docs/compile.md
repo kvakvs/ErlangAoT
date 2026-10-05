@@ -20,12 +20,14 @@ operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
 ([ABI](abi.md#failure-channel-revision-2)), `case`/`if`, `catch Expr`,
 `try ... of ... catch Class:Reason:Stack ... after` with
 [stack traces](abi.md#stack-traces), `maybe ... else ... end` and direct local or
-literal remote calls within the batch. Guards support the full admitted catalog. See [patterns](patterns.md),
-[guards](guards.md) and [terms](terms.md).
+literal remote calls within the batch, including self, mutual and cross-module
+recursion (native calls until the [execution model](execution-model.md) lands,
+so depth is bounded by the native stack). Guards support the full admitted
+catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
-Rejected with diagnostics even in unused functions: recursion (the call graph
-must be acyclic), `receive`, funs and closures, dynamic calls,
-comprehensions, record updates and native records, processes and messaging.
+Rejected with diagnostics even in unused functions: `receive`, funs and
+closures, dynamic calls, comprehensions, record updates and native records,
+processes and messaging.
 Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
 `-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for

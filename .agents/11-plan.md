@@ -733,14 +733,37 @@ Remove the acyclic-batch restriction: resolve recursive and mutually recursive
 components and run bounded inference over them.
 
 - Success criteria
-  - [ ] Self, mutual and cross-module recursion compile; inference terminates
+  - [x] Self, mutual and cross-module recursion compile; inference terminates
     with widening and stays sound.
-  - [ ] Cycle-rejection diagnostics are removed only where lowering supports the
+  - [x] Cycle-rejection diagnostics are removed only where lowering supports the
     case.
 - Tests
-  - [ ] `--print-types` goldens for recursive functions.
-  - [ ] Golden programs for factorial, mutual even/odd and cross-module
+  - [x] `--print-types` goldens for recursive functions.
+  - [x] Golden programs for factorial, mutual even/odd and cross-module
     recursion with small depths.
+- Evidence (2026-10-05): `maint-29` fetched, unchanged at `21776803`.
+  `resolve_calls` keeps every call edge and orders strongly connected
+  components callees-first (iterative Tarjan, `CallGraph::components`,
+  `Component::recursive`); the Kahn cycle rejection is gone. Inference runs a
+  non-recursive component once; a recursive one starts every member at
+  `none()`, re-infers all members per round (each result joined with the
+  previous; a pending recursive call adds nothing to a join), discards the
+  previous round's expression facts, and after 16 rounds without convergence
+  widens every member to `term()` (flagged widened) and recomputes facts once.
+  Lowering already declared all functions before defining them, so recursion
+  runs as native calls (depth bounded by the native stack until steps 19-20).
+  Catalog `recursive calls` (ID 9) implemented, step 18, test
+  `executables_recursion`. Tests: `codegen_types` (zero → 0, accumulator keeps
+  `argument[0]`, swap → term(), never-returning → `none()`, mutual even/odd →
+  `union(0, 1)`, 15-function ring converges, 16-function ring widens);
+  semantic `local_cycle`/`self_cycle`/cross-module cycle now compile; the
+  placeholder and `later_cycle` rejection cases are removed. OTP golden
+  `executables_recursion` (6 runs: factorial to 25! bignum, tail accumulator,
+  even/odd, list build/sum/reverse/length/zip, cross-module ping/pong, nested
+  tuple depth, error unwinding through recursion caught and uncaught,
+  `function_clause` from a guarded recursive clause), full matrix 48/48.
+  Fresh Windows x64 Debug: fast CTest 152/152; affected tests full mode 13/13;
+  Lizard 0 warnings; tidy 91 changed units pass. Logs `build/plan11-step18/`.
 
 <a id="step-19"></a>
 

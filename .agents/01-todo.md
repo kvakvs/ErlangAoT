@@ -224,7 +224,7 @@ channel carries `function_clause`, service reasons and the three source classes.
 
 Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-34).
 
-- [ ] Recursive call components in resolution and inference.
+- [x] Recursive call components in resolution and inference (step 18).
 - [ ] Frame/tail-call model compatible with roots, exceptions and suspension
   (compare explicit continuations with LLVM coroutines). Decided in step 17
   ([execution model](../docs/execution-model.md)); implementation steps 19-20.

@@ -11,9 +11,12 @@ macro/include origins, and later inputs are still diagnosed.
   their exact identity.
 - Every function is checked, including unused and unreachable code.
 - Calls resolve within the batch by module/name/arity. Remote calls (including
-  self-qualified) require exports. Missing/private callees, duplicate modules
-  and direct or indirect recursion are errors.
-- The call graph yields a callee-before-caller order used by inference.
+  self-qualified) require exports. Missing/private callees and duplicate
+  modules are errors.
+- Self, mutual and cross-module recursion are accepted. The call graph is split
+  into strongly connected components (iterative Tarjan) in callee-before-caller
+  order; a component is recursive when it has several members or a member
+  calls itself.
 
 ## Bindings
 
@@ -96,6 +99,14 @@ Inference is separate from declared types and never trusts specs.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
+- A recursive component starts every member's result at `none()` and re-infers
+  all members until no result changes; each round joins the new result with the
+  previous one, and a pending recursive call adds nothing to a join. A function
+  that can never return stays `none()`. After 16 rounds without convergence
+  every member widens to `term()` (reported as widened, like budget
+  exhaustion) and a final round recomputes the expression
+  facts; earlier rounds' expression facts are discarded, so only facts from the
+  final assumptions remain.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
 - Specs are checked only for provable contradictions with known integer

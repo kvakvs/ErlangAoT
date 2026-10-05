@@ -33,15 +33,23 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
     return inference.expressions.at(&syntax.expression(argument));
 }
 
+// Bottom (a recursive call not yet summarized) adds nothing; otherwise only a relation common to both survives.
+Fact merged(Graph &graph, const Fact previous, const Fact next) {
+    if (previous == Fact{graph.bottom()}) {
+        return next;
+    }
+    if (next == Fact{graph.bottom()}) {
+        return previous;
+    }
+    return {graph.widen(previous.type, next.type),
+            previous.argument == next.argument ? previous.argument : std::nullopt};
+}
+
 // Only relations common to every successful function candidate or case/if clause survive the join.
 template <typename Clauses> Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses) {
-    auto result = inference.expressions.at(&syntax.expression(clauses.front().body.back()));
+    Fact result{inference.graph.bottom()};
     for (const auto &clause : clauses) {
-        const auto fact = inference.expressions.at(&syntax.expression(clause.body.back()));
-        result.type = inference.graph.widen(result.type, fact.type);
-        if (result.argument != fact.argument) {
-            result.argument.reset();
-        }
+        result = merged(inference.graph, result, inference.expressions.at(&syntax.expression(clause.body.back())));
     }
     return result;
 }
@@ -78,7 +86,9 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
 }
 
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
-Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
+// Every recorded expression is listed so a later fixed-point round can discard it.
+Fact body(Inference &inference, const FunctionRef function, std::size_t &work,
+          std::vector<const ast::Expression *> &recorded) {
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
     BindingFacts bindings(function, inference, work);
@@ -97,6 +107,7 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
         const auto &expression = syntax.expression(visit.expression);
         if (visit.ready) {
             inference.expressions.emplace(&expression, evaluate(inference, function, visit.expression, bindings, work));
+            recorded.push_back(&expression);
         } else {
             pending.push_back({visit.expression, true});
             const auto children = expression_children(*function.module, expression);
@@ -107,6 +118,49 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work) {
     }
     return joined(inference, syntax, definition.clauses);
 }
+
+// Rounds after which a recursive component that has not converged widens every member to top.
+constexpr std::size_t WIDENING_ROUNDS = 16;
+
+// Replace a summary result, keeping every input unknown as for exported functions.
+void summarize(Inference &inference, const FunctionRef function, const Fact result) {
+    inference.functions.insert_or_assign(
+        function.function, Summary{std::vector<Id>(function.function->key.arity, inference.graph.top()), result});
+}
+
+// Re-infer every member from the current assumptions, discarding the previous round's expression facts.
+bool refine(Inference &inference, const Component &component, std::size_t &work,
+            std::vector<const ast::Expression *> &recorded) {
+    for (const auto *expression : recorded) {
+        inference.expressions.erase(expression);
+    }
+    recorded.clear();
+    bool changed = false;
+    for (const auto member : component.members) {
+        auto &summary = inference.functions.at(member.function);
+        const auto next = merged(inference.graph, summary.result, body(inference, member, work, recorded));
+        changed = changed || next != summary.result;
+        summary.result = next;
+    }
+    return changed;
+}
+
+// Iterate from bottom to a fixed point; non-convergence visibly widens all members to top and records final facts.
+void solve(Inference &inference, const Component &component, std::size_t &work) {
+    for (const auto member : component.members) {
+        summarize(inference, member, {inference.graph.bottom()});
+    }
+    std::vector<const ast::Expression *> recorded;
+    for (std::size_t round = 0; round < WIDENING_ROUNDS; ++round) {
+        if (!refine(inference, component, work, recorded)) {
+            return;
+        }
+    }
+    for (const auto member : component.members) {
+        summarize(inference, member, {inference.graph.exhausted()});
+    }
+    (void)refine(inference, component, work, recorded);
+}
 } // namespace
 
 std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
@@ -115,10 +169,15 @@ std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
         result->callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
     }
     std::size_t work = 0;
-    for (const auto function : calls.order) {
-        const auto fact = body(*result, function, work);
-        result->functions.emplace(function.function,
-                                  Summary{std::vector<Id>(function.function->key.arity, result->graph.top()), fact});
+    std::vector<const ast::Expression *> recorded;
+    for (const auto &component : calls.components) {
+        if (component.recursive) {
+            solve(*result, component, work);
+        } else {
+            const auto function = component.members.front();
+            recorded.clear();
+            summarize(*result, function, body(*result, function, work, recorded));
+        }
     }
     return result;
 }

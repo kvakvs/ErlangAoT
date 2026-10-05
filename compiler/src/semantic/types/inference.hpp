@@ -7,6 +7,7 @@ struct Fact {
     // A top-valued parameter may still carry an exact input/result relation.
     Id type;
     std::optional<std::size_t> argument = {};
+    bool operator==(const Fact &) const = default;
 };
 
 struct Summary {
@@ -27,6 +28,7 @@ struct Inference {
     std::map<const ast::Expression *, FunctionRef> callees;
 };
 
-// Infer supported bodies iteratively; budget exhaustion conservatively loses precision.
+// Infer supported bodies iteratively; recursive components iterate from bottom to a fixed point and widen
+// to top after a bounded number of rounds. Budget exhaustion conservatively loses precision.
 std::unique_ptr<Inference> infer(const CallGraph &calls, Limits limits = {});
 } // namespace erlang_aot::semantic::types
