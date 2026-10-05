@@ -889,11 +889,35 @@ Include filters, multiple generators, pattern generators, strict generators
 Backlog: F13, F16. Depends on: [21](#step-21).
 
 - Success criteria
-  - [ ] Binary generators/producers and map generators/producers match OTP,
+  - [x] Binary generators/producers and map generators/producers match OTP,
     including partial bytes and duplicate map keys.
 - Tests
-  - [ ] Golden programs for each combination of list, binary and map generators
+  - [x] Golden programs for each combination of list, binary and map generators
     and producers.
+- Evidence (2026-10-06): `maint-29` unchanged at `21776803`. Binary generators
+  use match plans with `semantic::GeneratorPattern::element` (a final
+  `binary`/`all` segment, `MatchPlan::rest`) and `skip` (OTP's skip pattern:
+  segment values and repeated names ignored, floats read as integers); map
+  generators keep the map, a position and its size in term slots and read
+  `MapOperation::key_at`/`value_at`; a non-map input raises `bad_generator`
+  before the loop. Each step tries the element, then a skip (relaxed generators
+  advance, strict ones in a zip must match), then exhaustion (empty list, end of
+  map, `<<>>` for strict and any bitstring for relaxed bit generators), then
+  the error: `{badmatch, E}` (list head, bitstring rest, `{K, V}`),
+  `bad_generator`, or `bad_generators` whose map entries are OTP's iterator
+  chain (`MapOperation::iterator`). Producers accumulate like lists; a binary
+  template must be a bitstring (`badarg`), the result is
+  `BitOperation::concat`; maps evaluate the value before the key and finish
+  with `MapOperation::from_list` (later keys win). `:=` map templates get OTP's
+  error. OTP golden `executables_bit_map_comprehensions` (7 runs: all nine
+  generator/producer combinations, partial bytes, sizes, UTF-8, floats, skips,
+  map patterns, zips mixing kinds, 15 caught errors incl. iterator payloads,
+  evaluation order, uncaught `badarg`), byte-identical to OTP; semantic cases
+  (binary/map generators and producers, `:=` template). Fresh Windows x64 Debug
+  (clang-cl): fast CTest 156/156, full 160/160 (275 s, `-j 12`); Lizard-all 0
+  warnings; tidy-all found four findings in the new code, fixed and rechecked
+  (changed units pass, affected tests 46/46 full mode). Phase E closed. Logs
+  `build/plan11-step22/`.
 
 ## F. Memory management
 

@@ -13,8 +13,7 @@ runtime **mismatch** is never a compiler error.
 | `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
 | `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
 | `maybe` with `?=` and `else` clauses | Implemented; a failed `?=` yields its value or selects an `else` clause, whose exhaustion raises `error:{else_clause, Value}`; needs the `maybe_expr` feature ([preprocessor](preprocessor.md)) |
-| List comprehensions | Implemented ([below](#comprehensions)) |
-| Binary and map comprehensions, binary and map generators | Capability (F16, step 22) |
+| List, binary and map comprehensions | Implemented ([below](#comprehensions)) |
 | `catch Expr` | Implemented; no patterns ([ABI](abi.md#failure-channel-revision-2)) |
 | `try` `of` and catch clauses | Implemented; `of` exhaustion raises `error:{try_clause, Value}`, unmatched exceptions re-raise and `after` runs on every path ([ABI](abi.md#failure-channel-revision-2)); `Class:Reason:Stack` binds the [stack trace](abi.md#stack-traces) |
 | Fun clauses | Capability (F18) |
@@ -22,23 +21,40 @@ runtime **mismatch** is never a compiler error.
 
 ## Comprehensions
 
-`[T1, ..., Tn || Q1, ..., Qm]` follows OTP 29:
+`[T1, ..., Tn || Q1, ..., Qm]`, `<< T || Q1, ... >>` and `#{K => V, ... || Q1, ... }`
+follow OTP 29:
 
 - Qualifiers run left to right; each generator loops over the rest. Templates
   are evaluated in that order for every surviving combination; several
-  templates add several elements per combination.
+  templates add several elements per combination. A binary comprehension's
+  template must be a bitstring (else `error:badarg` at that element); the
+  pieces are joined in order, partial bytes included. A map comprehension
+  evaluates its (first) value before its key, and a later duplicate key wins.
+- Generators: `P <- List`, `<<Segs>> <= Bits` and `K := V <- Map`, with the
+  strict forms `<:-` (lists, maps) and `<:=`. A bitstring generator matches its
+  pattern against a prefix and continues with the rest. When a relaxed one
+  rejects an element it skips as many bits as the pattern's sizes describe
+  (values ignored, floats read as integers, as OTP does); when even that
+  fails, or fewer bits remain, the generator ends. A map generator walks the
+  map in key order (OTP also iterates up to 32 keys in key order, except atom
+  keys, which it orders by atom index; larger maps follow OTP's hash order,
+  which ErlangAoT does not reproduce).
 - A generator pattern binds new names: it shadows outer names, and nothing a
-  comprehension binds is visible after it. A relaxed generator (`P <- L`)
-  skips elements its pattern rejects; a strict one (`P <:- L`) raises
-  `error:{badmatch, Element}`.
+  comprehension binds is visible after it. A relaxed generator skips
+  elements its pattern rejects; a strict one raises `error:{badmatch, E}` with
+  the list element, the remaining bitstring or `{Key, Value}`.
 - A zip group (`P1 <- L1 && P2 <- L2`) takes one element of every input per
   step; its patterns bind together, so a repeated name must match. A rejected
   step is skipped unless a strict pattern rejects it. Inputs running out
   unevenly, or a strict rejection, raise `error:{bad_generators, {L1', L2'}}`
-  with the inputs remaining at that step. Filters inside a zip group are
-  semantic errors.
-- An input that is not a list, or an improper tail, raises
-  `error:{bad_generator, Tail}` once the elements before it are done.
+  with the inputs remaining at that step (a map generator shows OTP's iterator
+  `{K, V, Next}`, ending in `none`). Filters inside a zip group are semantic
+  errors.
+- An input that is not a map raises `error:{bad_generator, Input}` before a
+  map generator starts, even inside a zip group.
+- A list input that is not a list, or an improper tail, and a bitstring input
+  that is no bitstring raise `error:{bad_generator, Tail}` once the elements
+  before it are done.
 - A filter that is a guard test (OTP `erl_lint:is_guard_test/3`: guard syntax
   calling only unshadowed guard BIFs, legacy type tests at top level) rejects
   the element on any failure, as a guard. Any other filter must return `true`
@@ -48,10 +64,11 @@ runtime **mismatch** is never a compiler error.
   experimental `compr_assign` feature is enabled; executing it then is not
   implemented (capability).
 
-Each generator is a loop in the function body whose input cursor lives in a
-frame term slot; the reversed result accumulates in another term slot and is
-reversed once at the end, so long inputs need constant native and process
-stack.
+Each generator is a loop in the function body whose input cursor (a list or
+bitstring rest, or a map and a position) lives in frame term slots; the
+produced elements accumulate reversed in another term slot and become the
+list, the joined bitstring or the map once at the end, so long inputs need
+constant native and process stack.
 
 ## Pattern forms
 

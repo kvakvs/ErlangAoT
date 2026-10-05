@@ -86,6 +86,11 @@ void literal_constraint(ExpressionLowering &state, llvm::Value *actual, llvm::Va
 }
 } // namespace
 
+llvm::Value *lower_bits_operation(ExpressionLowering &state, const Op operation,
+                                  const std::span<llvm::Value *const> values) {
+    return service(state, operation, values).value;
+}
+
 llvm::Value *lower_bits(ExpressionLowering &state, const ast::Bitstring &binary) {
     std::vector<llvm::Value *> values;
     for (const auto &segment : binary.segments) {

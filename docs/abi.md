@@ -119,10 +119,16 @@ Without `else` that value is the result; otherwise `else` clauses select on it
 like `case` clauses and raise `{else_clause, Value}`
 (`ErrorReason::else_clause = 15`) when none matches.
 
-List comprehensions need no new service: loops call `erlang_aot_inspect_v1`
-for each cons cell and `erlang_aot_construct_v1` to push template values; the
-accumulated list is reversed once by the construction `reverse`
-(`ContainerConstruction::reverse = 2`, values `{List, Tail}`).
+Comprehensions use the existing services with a few operations: the
+accumulated elements are reversed by the construction `reverse`
+(`ContainerConstruction::reverse = 2`, values `{List, Tail}`); a binary
+comprehension joins its pieces with `BitOperation::concat` (`{List}`) and a map
+comprehension builds its map with `MapOperation::from_list` (`{Pairs}`, later
+keys win). Map generators read `MapOperation::key_at`/`value_at`
+(`{Map, Position}` in canonical key order) and show a zip's remaining input
+with `MapOperation::iterator`, OTP's `{K, V, Next}` chain ending in `none`.
+Bitstring generators use ordinary pattern extraction plus a final
+`binary`/`all` segment for the rest.
 
 `try ... after A end` adds a second protection around the body and all `of`
 and catch clauses. On the normal path `A` runs after the selected value is

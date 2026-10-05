@@ -3,7 +3,7 @@
 Completed pattern/guard steps 1–20 and added15a are archived in .agents/00-finished.md.
 The retired checklist was removed by user request; durable context is .agents/11-plan.md#completed-patternmatch.
 No subagents authorized or used. Separate current commits: step17 7d83b99,
-step18 684af35, step19 428c388; final step20 commit 2be9626.
+step18 684af35, step19 428c388; final step20 commit 2be9626; step21 d5a9d36.
 Each implementation commit followed fresh combined Debug build/fullCTest/Lizard/tidy.
 
 Current admitted scope: recursive local/exported remote functions, ordered heads,
@@ -182,6 +182,13 @@ Step facts beyond the plan record:
   bind uses emplace: restore state.bindings before rematching the same identities. Name clash: a free function
   `accumulate` resolves to llvm::accumulate via ADL. "Unsupported" placeholders now use record update `#r{}#r{a = 1}`.
   programs.py --update-diagnostics rewrites programs compile.txt. Oracle needs -compile(nowarn_shadow_vars) for shadowing.
+- 22: OTP evaluates a map comprehension's value before its key; binary template not a bitstring -> badarg at that
+  element; map generator on non-map -> bad_generator before the loop (also in zips); zip payload for a map generator
+  is OTP's iterator {K,V,Next..none}, emulable for flatmaps. Atom-keyed maps iterate/print in atom-index order in OTP
+  (unstable): fixtures use integer keys. OTP display writes latin-1 bytes for chars 128-255; regenerate.py needs UTF-8
+  stdout, so avoid displaying such strings. erlfmt rewrote a UTF-8 literal as latin-1: keep fixtures ASCII.
+  lower_match_plan now returns candidate values (binary rest). Tidy: IRBuilder::CreateICmp trips
+  clang-analyzer ArrayBound; use builder.Insert(CmpInst::Create(...)).
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

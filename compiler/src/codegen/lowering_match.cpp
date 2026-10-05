@@ -197,8 +197,9 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
     lower_match_plan(state, *plan, inputs(state, *plan), success, mismatch);
 }
 
-void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan, std::span<llvm::Value *const> values,
-                      llvm::BasicBlock *success, llvm::BasicBlock *mismatch) {
+std::vector<llvm::Value *> lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan,
+                                            std::span<llvm::Value *const> values, llvm::BasicBlock *success,
+                                            llvm::BasicBlock *mismatch) {
     std::vector<llvm::Value *> candidates(plan.values);
     std::ranges::copy(values, candidates.begin());
     std::vector<llvm::BasicBlock *> blocks;
@@ -216,6 +217,7 @@ void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan
         state.builder.SetInsertPoint(blocks[i]);
         node(state, plan.nodes[i], candidates, blocks);
     }
+    return candidates;
 }
 
 // A raised exception continues at the innermost handler, or leaves the function through its checked exit.

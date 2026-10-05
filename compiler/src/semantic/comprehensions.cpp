@@ -69,10 +69,12 @@ std::vector<ast::ExprId> comprehension_templates(const ast::ExprValue &value) {
     if (const auto *binary = std::get_if<ast::BinaryComprehension>(&value)) {
         return {binary->expression};
     }
+    // OTP evaluates the first field's value before its key, every later field's key first.
     std::vector<ast::ExprId> result;
     for (const auto &field : std::get<ast::MapComprehension>(value).templates) {
-        result.push_back(field.key);
-        result.push_back(field.value);
+        const bool first = result.empty();
+        result.push_back(first ? field.value : field.key);
+        result.push_back(first ? field.key : field.value);
     }
     return result;
 }

@@ -70,6 +70,9 @@ void MatchPlanner::variable(const NormalizedPattern &pattern, const std::size_t 
     const auto operation = binding.use == BindingUse::definition && definitions.insert(binding.identity).second
                                ? MatchOperation::bind
                                : MatchOperation::exact_binding;
+    if (skip && operation == MatchOperation::exact_binding) {
+        return;
+    }
     plan.nodes.push_back({pattern.origin, operation, input, binding.identity});
     if (operation == MatchOperation::bind) {
         plan.outputs.push_back(binding.identity);
@@ -181,6 +184,10 @@ std::optional<MatchPlan> build_plan(const Module &module, const Function &functi
                                     const Reporter &out, MatchOptions options) {
     const auto limit = options.work_limit;
     Planner state{module, out, options.word_bits, {}, {}, {roots.size(), {}, {}, roots.size()}, 0, limit};
+    if (options.generator != GeneratorPattern::none) {
+        state.generator = &module.syntax->expression(roots.front());
+        state.skip = options.generator == GeneratorPattern::skip;
+    }
     if (!index(state, function, site)) {
         return {};
     }

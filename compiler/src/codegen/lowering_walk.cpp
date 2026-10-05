@@ -392,7 +392,7 @@ struct Walk {
         if (!qualifiers) {
             return false;
         }
-        comprehensions.try_emplace(&expression, begin_comprehension(state));
+        comprehensions.try_emplace(&expression, begin_comprehension(state, expression.value));
         pending.push_back({id, Action::comprehension_end});
         const auto templates = semantic::comprehension_templates(expression.value);
         for (auto item = templates.rbegin(); item != templates.rend(); ++item) {
@@ -435,12 +435,8 @@ struct Walk {
     void comprehension_end(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
         auto node = comprehensions.extract(&expression);
-        std::vector<llvm::Value *> values;
-        for (const auto &item : semantic::comprehension_templates(expression.value)) {
-            values.push_back(state.values.at(&state.module.syntax->expression(item)));
-        }
         locate_source(state.builder, *state.module.syntax, expression.source);
-        lower_templates(state, node.mapped(), values);
+        lower_templates(state, node.mapped());
         state.values.insert_or_assign(&expression, finish_comprehension(state, node.mapped()));
     }
 

@@ -30,7 +30,7 @@ std::optional<ast::ExprId> generator_input(const ast::Qualifier &qualifier);
 std::vector<ast::PatternSyntaxId> generator_patterns(const ast::Qualifier &qualifier);
 // Whether a generator is strict (<:-, <:=): a mismatching element raises instead of being skipped.
 bool strict_generator(const ast::Qualifier &qualifier);
-// A comprehension's templates in evaluation order (a map template's key, then its value).
+// A comprehension's templates in evaluation order (OTP: a map comprehension's first value before its key).
 std::vector<ast::ExprId> comprehension_templates(const ast::ExprValue &value);
 // A comprehension's operands in source order: every generator input or filter, then the templates.
 std::vector<ast::ExprId> comprehension_children(const ast::ExprValue &value);

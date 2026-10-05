@@ -107,9 +107,12 @@ semantic_case(comprehension_assign "-module(a). f(L) -> [Y || X <- L, Y = X]." 1
 semantic_case(comprehension_assign_feature "-module(a). -feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X]."
     1 "heap expressions")
 semantic_case(comprehension_in_guard "-module(a). f(L) when [X || X <- L] =:= [] -> L." 1 "illegal guard expression")
-semantic_case(binary_generator "-module(a). f(B) -> [X || <<X>> <= B]." 1 "heap expressions")
-semantic_case(binary_comprehension "-module(a). f(X) -> << <<Y>> || Y <- X >>." 1 "heap expressions")
-semantic_case(map_comprehension "-module(a). f(X) -> #{Y => Y || Y <- X}." 1 "heap expressions")
+semantic_case(binary_generator "-module(a). f(B) -> [X || <<X>> <= B]." 0 "^$")
+semantic_case(map_generator "-module(a). f(M) -> [{K, V} || K := V <- M]." 0 "^$")
+semantic_case(map_exact_template "-module(a). f(L) -> #{X := X || X <- L}." 1
+    "illegal map association, did you mean to use `=>`?")
+semantic_case(binary_comprehension "-module(a). f(X) -> << <<Y>> || Y <- X >>." 0 "^$")
+semantic_case(map_comprehension "-module(a). f(X) -> #{Y => Y || Y <- X}." 0 "^$")
 semantic_case(dynamic_call "-module(a). f(F) -> F(1)." 1 "dynamic calls")
 semantic_case(dynamic_remote "-module(a). f(M) -> M:f()." 1 "dynamic calls")
 semantic_case(remote_value "-module(a). f() -> a:f." 1 "dynamic calls")

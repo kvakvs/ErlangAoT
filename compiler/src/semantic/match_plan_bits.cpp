@@ -7,6 +7,28 @@ namespace {
 // Resolve the normalized literal without converting through host-width integers.
 std::optional<MatchLiteral> float_literal(const MatchPlanner &state, const ast::BinarySegment &segment);
 
+// A skip pattern keeps only the variables of segment values, which later sizes may read.
+void skipped_value(const MatchPlanner &state, const ast::BinarySegment &segment, const std::size_t output,
+                   const std::optional<std::int64_t> character, std::vector<MatchTask> &forward) {
+    const auto &pattern = *state.patterns.at(&state.module.syntax->expression(segment.value));
+    if (!character && pattern.kind == PatternKind::variable) {
+        forward.emplace_back(PatternVisit{segment.value, output});
+    }
+}
+
+// A generator pattern matches a prefix; a final tail segment holds the rest of the input (OTP append_tail_segment).
+void rest(MatchPlanner &state, const NormalizedPattern &pattern, const std::size_t input, std::size_t &cursor,
+          std::vector<MatchTask> &forward) {
+    MatchNode tail{pattern.origin, MatchOperation::binary_extract, input};
+    tail.index = cursor;
+    tail.output = state.plan.values++;
+    tail.cursor_output = state.plan.values++;
+    tail.bits = BinaryOptions{.type = abi::v1::BitType::binary, .unit = 1, .size = 0, .all = true};
+    state.plan.rest = tail.output;
+    cursor = tail.cursor_output;
+    forward.emplace_back(tail);
+}
+
 // One checked extraction produces both an owned candidate and the following encoded bit cursor.
 void extract(MatchPlanner &state, const ast::BinarySegment &segment, const std::size_t input, std::size_t &cursor,
              std::vector<MatchTask> &forward, const std::optional<std::int64_t> character = {}) {
@@ -16,13 +38,18 @@ void extract(MatchPlanner &state, const ast::BinarySegment &segment, const std::
     field.cursor_output = state.plan.values++;
     field.key = segment.size;
     field.bits = binary_options(segment);
+    if (state.skip && field.bits->type == abi::v1::BitType::floating) {
+        field.bits->type = abi::v1::BitType::integer;
+    }
     if (field.bits->type == abi::v1::BitType::floating) {
         field.literal = character ? MatchLiteral{ast::IntegerLiteral{Integer{std::to_string(*character)}}}
                                   : float_literal(state, segment);
     }
     cursor = field.cursor_output;
     forward.emplace_back(field);
-    if (character && !field.literal) {
+    if (state.skip) {
+        skipped_value(state, segment, field.output, character, forward);
+    } else if (character && !field.literal) {
         forward.emplace_back(MatchNode{segment.value, MatchOperation::exact_literal, field.output, {}, *character});
     } else if (!field.literal) {
         forward.emplace_back(PatternVisit{segment.value, field.output});
@@ -73,6 +100,9 @@ bool expand_bits(MatchPlanner &state, const PatternVisit &visit, const Normalize
         if (!fields(state, segment, visit.input, cursor, forward)) {
             return false;
         }
+    }
+    if (state.generator == &state.module.syntax->expression(visit.id)) {
+        rest(state, pattern, visit.input, cursor, forward);
     }
     MatchNode finish{pattern.origin, MatchOperation::binary_finish, visit.input};
     finish.index = cursor;

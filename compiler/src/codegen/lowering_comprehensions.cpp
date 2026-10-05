@@ -1,19 +1,26 @@
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
-#include <algorithm>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <utility>
 
 namespace erlang_aot::codegen {
 namespace {
-struct Cursor {
-    // One generator of a qualifier: the frame slot holding the rest of its input, the input this iteration reads
-    // and the values its patterns match (the element).
-    llvm::Value *slot;
+enum class Source : std::uint8_t { list, binary, map };
+
+struct Generator {
+    // One generator of a qualifier and the kind of input it walks.
+    const ast::Qualifier *part;
+    Source source;
+    bool strict;
+    // Frame slots: the rest of a list or bitstring input, or a map with its next position and its size.
+    llvm::Value *slot = nullptr;
+    llvm::Value *position = nullptr;
+    llvm::Value *size = nullptr;
+    // What this step reads: the rest of a list or bitstring, or a map and its position.
     llvm::Value *input = nullptr;
-    std::vector<llvm::Value *> elements = {};
+    llvm::Value *map = nullptr;
 };
 
 // A new block of the function being lowered.
@@ -35,135 +42,289 @@ llvm::Value *value_of(const ExpressionLowering &state, const ast::ExprId &id) {
     return state.values.at(&state.module.syntax->expression(id));
 }
 
-// The inputs of every generator, as a tuple for the bad_generators error.
-llvm::Value *inputs(ExpressionLowering &state, const std::vector<Cursor> &cursors) {
-    std::vector<llvm::Value *> values;
-    std::ranges::transform(cursors, std::back_inserter(values), &Cursor::input);
-    return lower_tuple(state, values);
+// Compare two immediate words (empty list, small integers) without a runtime service.
+llvm::Value *compare(const ExpressionLowering &state, const llvm::CmpInst::Predicate predicate, llvm::Value *left,
+                     llvm::Value *right) {
+    return state.builder.Insert(llvm::CmpInst::Create(llvm::Instruction::ICmp, predicate, left, right));
 }
 
-// Take the next element of every input; a generator whose input is not a cons cell ends the loop at `done`.
-void next_elements(ExpressionLowering &state, std::vector<Cursor> &cursors, llvm::BasicBlock *done) {
-    for (auto &cursor : cursors) {
-        cursor.input = load(state, cursor.slot, "generator.input");
-    }
-    for (auto &cursor : cursors) {
-        cursor.elements = {lower_inspection(state, abi::v1::ContainerInspection::cons_head, cursor.input, 0, done)};
-        store(state, lower_inspection(state, abi::v1::ContainerInspection::cons_tail, cursor.input, 0, done),
-              cursor.slot);
-    }
+// Whether a type test (is_map, is_bitstring) holds for `value`.
+llvm::Value *holds(ExpressionLowering &state, abi::v1::ImmediateOperation test, llvm::Value *value) {
+    return lower_exact(state, lower_immediate(state, test, value), lower_atom(state, ast::Atom{U"true"}));
 }
 
-// From the insertion block, continue at `next` once every input is exhausted; any other input raises
-// bad_generator, or bad_generators with all inputs for a zip.
-void exhausted(ExpressionLowering &state, const std::vector<Cursor> &cursors, llvm::BasicBlock *next) {
-    llvm::Value *empty = state.builder.getTrue();
-    for (const auto &cursor : cursors) {
-        auto *nil = llvm::ConstantInt::get(state.word, abi::v1::empty_list);
-        auto *test = state.builder.Insert(
-            llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ, cursor.input, nil));
-        empty = state.builder.CreateAnd(empty, test);
+// Continue in a new block when `test` holds; otherwise branch to `otherwise`.
+void require(ExpressionLowering &state, llvm::Value *test, llvm::BasicBlock *otherwise) {
+    auto *next = block(state, "generator.test");
+    state.builder.CreateCondBr(test, next, otherwise);
+    state.builder.SetInsertPoint(next);
+}
+
+// The kind of input a generator walks.
+Source source(const ast::Qualifier &part) {
+    if (std::holds_alternative<ast::BinaryGenerator>(part.value)) {
+        return Source::binary;
     }
-    auto *bad = block(state, "generator.bad");
-    state.builder.CreateCondBr(empty, next, bad);
+    return std::holds_alternative<ast::MapGenerator>(part.value) ? Source::map : Source::list;
+}
+
+// Before a map generator's loop: its input must be a map (else bad_generator); it starts at position 0.
+void start_map(ExpressionLowering &state, Generator &generator, llvm::Value *input) {
+    auto *bad = block(state, "generator.bad_map");
+    require(state, holds(state, abi::v1::ImmediateOperation::is_map, input), bad);
+    auto *ready = state.builder.GetInsertBlock();
     state.builder.SetInsertPoint(bad);
-    if (cursors.size() == 1) {
-        raise_reason(state, abi::v1::ErrorReason::bad_generator, cursors.front().input);
+    raise_reason(state, abi::v1::ErrorReason::bad_generator, input);
+    state.builder.SetInsertPoint(ready);
+    generator.size = root_slot(state);
+    store(state, lower_map_operation(state, abi::v1::MapOperation::size, std::array{input}), generator.size);
+    generator.position = root_slot(state);
+    store(state, lower_integer(state, "0"), generator.position);
+}
+
+// Before the loop: keep the generator's input in its slot.
+Generator start(ExpressionLowering &state, const ast::Qualifier &part) {
+    Generator generator{&part, source(part), semantic::strict_generator(part), root_slot(state)};
+    auto *input = value_of(state, *semantic::generator_input(part));
+    store(state, input, generator.slot);
+    if (generator.source == Source::map) {
+        start_map(state, generator, input);
+    }
+    return generator;
+}
+
+// At the loop head: read this step's input.
+void read(const ExpressionLowering &state, Generator &generator) {
+    if (generator.source == Source::map) {
+        generator.map = load(state, generator.slot, "generator.map");
+        generator.input = load(state, generator.position, "generator.position");
     } else {
-        raise_reason(state, abi::v1::ErrorReason::bad_generators, inputs(state, cursors));
+        generator.input = load(state, generator.slot, "generator.input");
     }
 }
 
-struct MatchEdges {
-    // Named continuations of a generator match, so acceptance and rejection cannot be swapped.
-    llvm::BasicBlock *success;
-    llvm::BasicBlock *mismatch;
+// Match `value` against one pattern of the generator, continuing in a new block.
+void match(ExpressionLowering &state, const ast::PatternSyntaxId &pattern, llvm::Value *value,
+           llvm::BasicBlock *mismatch) {
+    auto *matched = block(state, "generator.matched");
+    const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, pattern));
+    lower_match_plan(state, plan, std::array{value}, matched, mismatch);
+    state.builder.SetInsertPoint(matched);
+}
+
+// The key and value at the map generator's position.
+std::array<llvm::Value *, 2> entry(ExpressionLowering &state, const Generator &generator) {
+    const std::array arguments{generator.map, generator.input};
+    return {lower_map_operation(state, abi::v1::MapOperation::key_at, arguments),
+            lower_map_operation(state, abi::v1::MapOperation::value_at, arguments)};
+}
+
+// A bitstring element is the prefix its pattern matches; a skip pattern reads it without testing values.
+llvm::Value *take_bits(ExpressionLowering &state, const Generator &generator, const bool skip,
+                       llvm::BasicBlock *mismatch) {
+    auto *matched = block(state, "generator.matched");
+    const auto mode = skip ? semantic::GeneratorPattern::skip : semantic::GeneratorPattern::element;
+    const auto pattern = semantic::generator_patterns(*generator.part).front();
+    const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, pattern), mode);
+    const auto values = lower_match_plan(state, plan, std::array{generator.input}, matched, mismatch);
+    state.builder.SetInsertPoint(matched);
+    return values.at(*plan.rest);
+}
+
+// A map element is the key and value at the position, unless the map is exhausted.
+llvm::Value *take_entry(ExpressionLowering &state, const Generator &generator, const bool skip,
+                        llvm::BasicBlock *mismatch) {
+    auto *size = load(state, generator.size, "generator.size");
+    require(state, compare(state, llvm::CmpInst::ICMP_NE, generator.input, size), mismatch);
+    if (!skip) {
+        const auto patterns = semantic::generator_patterns(*generator.part);
+        const auto [key, value] = entry(state, generator);
+        match(state, patterns[0], key, mismatch);
+        match(state, patterns[1], value, mismatch);
+    }
+    return lower_operation(state, abi::v1::ImmediateOperation::add, generator.input, lower_integer(state, "1"));
+}
+
+// Take one element, matching it unless `skip`; return what the input continues with, or go to `mismatch`.
+llvm::Value *take(ExpressionLowering &state, const Generator &generator, const bool skip, llvm::BasicBlock *mismatch) {
+    if (generator.source == Source::binary) {
+        return take_bits(state, generator, skip, mismatch);
+    }
+    if (generator.source == Source::map) {
+        return take_entry(state, generator, skip, mismatch);
+    }
+    auto *rest = lower_inspection(state, abi::v1::ContainerInspection::cons_tail, generator.input, 0, mismatch);
+    if (!skip) {
+        auto *head = lower_inspection(state, abi::v1::ContainerInspection::cons_head, generator.input, 0, mismatch);
+        match(state, semantic::generator_patterns(*generator.part).front(), head, mismatch);
+    }
+    return rest;
+}
+
+// Take an element of every generator in step (matching only the strict ones when `skip_relaxed`) and advance them
+// all; continue in the current block or go to `rejected`.
+void take_all(ExpressionLowering &state, const std::vector<Generator> &generators, const bool skip_relaxed,
+              llvm::BasicBlock *rejected) {
+    std::vector<llvm::Value *> rests;
+    rests.reserve(generators.size());
+    for (const auto &generator : generators) {
+        rests.push_back(take(state, generator, skip_relaxed && !generator.strict, rejected));
+    }
+    for (std::size_t i = 0; i < generators.size(); ++i) {
+        const auto &generator = generators[i];
+        store(state, rests[i], generator.source == Source::map ? generator.position : generator.slot);
+    }
+}
+
+// Whether a generator has nothing left: an empty list, the end of a map, an empty bitstring for a strict
+// generator and any bitstring (too short for the pattern) for a relaxed one.
+llvm::Value *exhausted(ExpressionLowering &state, const Generator &generator) {
+    if (generator.source == Source::list) {
+        return compare(state, llvm::CmpInst::ICMP_EQ, generator.input,
+                       llvm::ConstantInt::get(state.word, abi::v1::empty_list));
+    }
+    if (generator.source == Source::map) {
+        return compare(state, llvm::CmpInst::ICMP_EQ, generator.input, load(state, generator.size, "generator.size"));
+    }
+    if (!generator.strict) {
+        return holds(state, abi::v1::ImmediateOperation::is_bitstring, generator.input);
+    }
+    return lower_exact(state, generator.input, lower_bits_operation(state, abi::v1::BitOperation::make, {}));
+}
+
+// What a zip's bad_generators error shows for one generator: its rest, or OTP's iterator for a map.
+llvm::Value *remaining(ExpressionLowering &state, const Generator &generator) {
+    if (generator.source != Source::map) {
+        return generator.input;
+    }
+    return lower_map_operation(state, abi::v1::MapOperation::iterator, std::array{generator.map, generator.input});
+}
+
+// The element a lone strict generator rejected: a list head, a bitstring's rest or a map's {Key, Value}; null for
+// a relaxed generator. Anything that is no list or bitstring goes to `bad` instead.
+llvm::Value *rejected_element(ExpressionLowering &state, const Generator &generator, llvm::BasicBlock *bad) {
+    if (!generator.strict) {
+        return nullptr;
+    }
+    if (generator.source == Source::list) {
+        return lower_inspection(state, abi::v1::ContainerInspection::cons_head, generator.input, 0, bad);
+    }
+    if (generator.source == Source::binary) {
+        require(state, holds(state, abi::v1::ImmediateOperation::is_bitstring, generator.input), bad);
+        return generator.input;
+    }
+    return lower_tuple(state, entry(state, generator));
+}
+
+// A lone generator that is not exhausted after a rejection: a strict one raises {badmatch, Element}, and an input
+// that is no list or bitstring raises bad_generator.
+void lone_failure(ExpressionLowering &state, const Generator &generator) {
+    auto *bad = block(state, "generator.bad");
+    if (auto *element = rejected_element(state, generator, bad)) {
+        raise_reason(state, abi::v1::ErrorReason::badmatch, element);
+    } else {
+        state.builder.CreateBr(bad);
+    }
+    state.builder.SetInsertPoint(bad);
+    raise_reason(state, abi::v1::ErrorReason::bad_generator,
+                 generator.source == Source::map ? generator.map : generator.input);
+}
+
+// Leave the loop for `next` once every generator is exhausted; anything else fails.
+void finish_loop(ExpressionLowering &state, const std::vector<Generator> &generators, llvm::BasicBlock *next) {
+    auto *bad = block(state, "generator.failed");
+    for (const auto &generator : generators) {
+        require(state, exhausted(state, generator), bad);
+    }
+    state.builder.CreateBr(next);
+    state.builder.SetInsertPoint(bad);
+    if (generators.size() == 1) {
+        lone_failure(state, generators.front());
+        return;
+    }
+    std::vector<llvm::Value *> inputs;
+    inputs.reserve(generators.size());
+    for (const auto &generator : generators) {
+        inputs.push_back(remaining(state, generator));
+    }
+    raise_reason(state, abi::v1::ErrorReason::bad_generators, lower_tuple(state, inputs));
+}
+
+struct LoopEdges {
+    // Where a skipped step takes the next element, and where the qualifier continues once the loop ends.
+    llvm::BasicBlock *head;
+    llvm::BasicBlock *next;
 };
 
-// Match every element against its generator's patterns in order (only the strict generators' when `only_strict`).
-void match_elements(ExpressionLowering &state, std::span<const ast::Qualifier> parts,
-                    const std::vector<Cursor> &cursors, const bool only_strict, const MatchEdges edges) {
-    for (std::size_t i = 0; i < parts.size(); ++i) {
-        if (only_strict && !semantic::strict_generator(parts[i])) {
-            continue;
-        }
-        const auto patterns = semantic::generator_patterns(parts[i]);
-        for (std::size_t j = 0; j < patterns.size(); ++j) {
-            auto *matched = block(state, "generator.matched");
-            const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, patterns[j]));
-            lower_match_plan(state, plan, std::array{cursors[i].elements.at(j)}, matched, edges.mismatch);
-            state.builder.SetInsertPoint(matched);
-        }
+// A rejected step is skipped when every relaxed generator still has an element and every strict one matches it
+// (a lone strict generator cannot match again); otherwise the loop ends or fails.
+void reject(ExpressionLowering &state, const std::vector<Generator> &generators, const LoopEdges edges) {
+    auto *ending = block(state, "generator.ending");
+    if (generators.size() == 1 && generators.front().strict) {
+        state.builder.CreateBr(ending);
+    } else {
+        take_all(state, generators, true, ending);
+        state.builder.CreateBr(edges.head);
     }
-    state.builder.CreateBr(edges.success);
+    state.builder.SetInsertPoint(ending);
+    finish_loop(state, generators, edges.next);
 }
 
-// A rejected element is skipped unless a strict generator's pattern rejects it: then a lone generator raises
-// {badmatch, Element} and a zip bad_generators with all its inputs.
-void reject(ExpressionLowering &state, std::span<const ast::Qualifier> parts, const std::vector<Cursor> &cursors,
-            llvm::BasicBlock *skip) {
-    const auto strict = std::ranges::count_if(parts, semantic::strict_generator);
-    if (strict == 0) {
-        state.builder.CreateBr(skip);
-    } else if (parts.size() == 1) {
-        raise_reason(state, abi::v1::ErrorReason::badmatch, cursors.front().elements.front());
-    } else if (std::cmp_equal(strict, parts.size())) {
-        raise_reason(state, abi::v1::ErrorReason::bad_generators, inputs(state, cursors));
-    } else {
-        auto *bad = block(state, "generator.strict");
-        match_elements(state, parts, cursors, true, {.success = skip, .mismatch = bad});
+// The elements one step adds: list templates in order, the bitstring template, or {Key, Value} per map field.
+std::vector<llvm::Value *> produced(ExpressionLowering &state, const Comprehension &comprehension) {
+    std::vector<llvm::Value *> values;
+    if (const auto *map = std::get_if<ast::MapComprehension>(comprehension.syntax)) {
+        for (const auto &field : map->templates) {
+            values.push_back(lower_tuple(state, std::array{value_of(state, field.key), value_of(state, field.value)}));
+        }
+        return values;
+    }
+    for (const auto &item : semantic::comprehension_templates(*comprehension.syntax)) {
+        values.push_back(value_of(state, item));
+    }
+    if (std::holds_alternative<ast::BinaryComprehension>(*comprehension.syntax)) {
+        auto *bad = block(state, "comprehension.badarg");
+        require(state, holds(state, abi::v1::ImmediateOperation::is_bitstring, values.front()), bad);
+        auto *ready = state.builder.GetInsertBlock();
         state.builder.SetInsertPoint(bad);
-        raise_reason(state, abi::v1::ErrorReason::bad_generators, inputs(state, cursors));
+        raise_reason(state, abi::v1::ErrorReason::badarg);
+        state.builder.SetInsertPoint(ready);
     }
-}
-
-// Bind the patterns of every generator and continue in the loop body; rejected elements go to `reject`.
-void bind_elements(ExpressionLowering &state, std::span<const ast::Qualifier> parts, const std::vector<Cursor> &cursors,
-                   llvm::BasicBlock *skip) {
-    const auto before = state.bindings;
-    auto *body = block(state, "generator.body");
-    auto *rejected = block(state, "generator.rejected");
-    match_elements(state, parts, cursors, false, {.success = body, .mismatch = rejected});
-    if (rejected->use_empty()) {
-        rejected->eraseFromParent();
-    } else {
-        auto matched = std::move(state.bindings);
-        state.bindings = before;
-        state.builder.SetInsertPoint(rejected);
-        reject(state, parts, cursors, skip);
-        state.bindings = std::move(matched);
-    }
-    state.builder.SetInsertPoint(body);
+    return values;
 }
 } // namespace
 
-Comprehension begin_comprehension(ExpressionLowering &state) {
+Comprehension begin_comprehension(ExpressionLowering &state, const ast::ExprValue &syntax) {
     auto *accumulator = root_slot(state);
     store(state, llvm::ConstantInt::get(state.word, abi::v1::empty_list), accumulator);
     auto *end = block(state, "comprehension.end");
-    return {.bindings = state.bindings, .accumulator = accumulator, .next = end, .end = end};
+    return {.syntax = &syntax, .bindings = state.bindings, .accumulator = accumulator, .next = end, .end = end};
 }
 
 void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
                       const ast::ComprehensionQualifier &qualifier) {
-    const auto parts = semantic::zipped(qualifier);
     locate_source(state.builder, *state.module.syntax,
                   std::visit([](const auto &value) -> const ast::NodeSource & { return value.source; }, qualifier));
-    std::vector<Cursor> cursors;
-    for (const auto &part : parts) {
-        cursors.push_back({root_slot(state)});
-        store(state, value_of(state, *semantic::generator_input(part)), cursors.back().slot);
+    std::vector<Generator> generators;
+    for (const auto &part : semantic::zipped(qualifier)) {
+        generators.push_back(start(state, part));
     }
     auto *head = block(state, "generator.next");
-    auto *done = block(state, "generator.done");
     state.builder.CreateBr(head);
     state.builder.SetInsertPoint(head);
-    next_elements(state, cursors, done);
-    auto *elements = state.builder.GetInsertBlock();
-    state.builder.SetInsertPoint(done);
-    exhausted(state, cursors, comprehension.next);
-    state.builder.SetInsertPoint(elements);
-    bind_elements(state, parts, cursors, head);
+    for (auto &generator : generators) {
+        read(state, generator);
+    }
+    const auto before = state.bindings;
+    auto *rejected = block(state, "generator.rejected");
+    take_all(state, generators, false, rejected);
+    auto *body = state.builder.GetInsertBlock();
+    auto matched = std::move(state.bindings);
+    state.bindings = before;
+    state.builder.SetInsertPoint(rejected);
+    reject(state, generators, {.head = head, .next = comprehension.next});
+    state.bindings = std::move(matched);
+    state.builder.SetInsertPoint(body);
     comprehension.next = head;
 }
 
@@ -188,8 +349,8 @@ void lower_filter(ExpressionLowering &state, const Comprehension &comprehension,
     state.builder.SetInsertPoint(pass);
 }
 
-void lower_templates(ExpressionLowering &state, const Comprehension &comprehension,
-                     const std::span<llvm::Value *const> values) {
+void lower_templates(ExpressionLowering &state, const Comprehension &comprehension) {
+    const auto values = produced(state, comprehension);
     std::vector<llvm::Value *> cells(values.rbegin(), values.rend());
     cells.push_back(load(state, comprehension.accumulator, "comprehension.accumulator"));
     store(state, lower_list(state, cells), comprehension.accumulator);
@@ -199,6 +360,13 @@ void lower_templates(ExpressionLowering &state, const Comprehension &comprehensi
 llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension) {
     state.builder.SetInsertPoint(comprehension.end);
     state.bindings = std::move(comprehension.bindings);
-    return lower_reverse(state, load(state, comprehension.accumulator, "comprehension.accumulator"));
+    auto *result = lower_reverse(state, load(state, comprehension.accumulator, "comprehension.accumulator"));
+    if (std::holds_alternative<ast::BinaryComprehension>(*comprehension.syntax)) {
+        return lower_bits_operation(state, abi::v1::BitOperation::concat, std::array{result});
+    }
+    if (std::holds_alternative<ast::MapComprehension>(*comprehension.syntax)) {
+        return lower_map_operation(state, abi::v1::MapOperation::from_list, std::array{result});
+    }
+    return result;
 }
 } // namespace erlang_aot::codegen

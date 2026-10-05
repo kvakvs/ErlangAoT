@@ -155,12 +155,26 @@ void assignment(const Module &module, const ast::Qualifier &qualifier, const Rep
            out);
 }
 
+// Map comprehension templates associate with `=>` (OTP illegal_map_exact_in_comprehension).
+void check_templates(const Module &module, const ast::ExprValue &value, const Reporter &out) {
+    const auto *map = std::get_if<ast::MapComprehension>(&value);
+    if (!map) {
+        return;
+    }
+    for (const auto &field : map->templates) {
+        if (field.kind == ast::MapFieldKind::exact) {
+            report(module, &field.source, "illegal map association, did you mean to use `=>`?", out);
+        }
+    }
+}
+
 // Zip groups may only contain generators (OTP illegal_zip_generator).
 void check_qualifiers(const Module &module, const ast::ExprValue &value, const Reporter &out) {
     const auto *qualifiers = comprehension_qualifiers(value);
     if (!qualifiers) {
         return;
     }
+    check_templates(module, value, out);
     for (const auto &qualifier : *qualifiers) {
         const bool zip = std::holds_alternative<ast::ZippedQualifier>(qualifier);
         for (const auto &part : zipped(qualifier)) {

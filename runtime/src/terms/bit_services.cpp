@@ -73,6 +73,34 @@ TermResult<BitExtract> part(ProcessContext &context, std::span<const Term> value
         .transform([](Term value) { return BitExtract{std::move(value), 0}; });
 }
 
+// Join a proper list of bitstrings in order into one bitstring.
+TermResult<BitExtract> concat(ProcessContext &context, std::span<const Term> values) {
+    if (values.size() != 1) {
+        return std::unexpected(TermError::invalid_encoding);
+    }
+    BitWriter writer;
+    auto rest = values[0];
+    while (rest.is_cons()) {
+        const auto head = rest.head();
+        const auto next = rest.tail();
+        const auto view = head.and_then(bit_view);
+        if (!view || !next) {
+            return std::unexpected(TermError::wrong_type);
+        }
+        const auto added = writer.append(*view);
+        if (!added) {
+            return std::unexpected(added.error());
+        }
+        rest = *next;
+    }
+    if (!rest.is_nil()) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    return BitAccess::make(context.heap(), writer.bytes, writer.length).transform([&](Term value) {
+        return BitExtract{std::move(value), writer.length};
+    });
+}
+
 // Validate arity before pattern services inspect the candidate or cursor.
 bool pattern_arity(Op operation, std::size_t count) {
     const auto expected = operation == Op::test ? 1U : (operation == Op::finish ? 2U : 5U);
@@ -114,6 +142,9 @@ TermResult<BitExtract> evaluate(ProcessContext &context, Op operation, std::span
     if (operation == Op::part) {
         return part(context, values);
     }
+    if (operation == Op::concat) {
+        return concat(context, values);
+    }
     return pattern(context, operation, values);
 }
 
@@ -152,7 +183,7 @@ bool ready(ProcessContext &context, std::uint8_t operation, const Word *values, 
     if (!calls.active() || calls.failure()) {
         return false;
     }
-    if (!output || (count != 0 && !values) || operation > static_cast<std::uint8_t>(Op::part)) {
+    if (!output || (count != 0 && !values) || operation > static_cast<std::uint8_t>(Op::concat)) {
         calls.fail_service(abi::v1::Status::invalid_argument);
         return false;
     }

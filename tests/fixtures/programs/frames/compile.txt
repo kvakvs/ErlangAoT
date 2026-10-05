@@ -1,5 +1,16 @@
 exit 1
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:21:17: [heap expressions] notimpl [module="codec"]
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:61:12: [heap expressions] notimpl [module="codec"]
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:52:32: [heap expressions] notimpl [module="frames"]
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:49:15: [heap expressions] notimpl [module="frames"]
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:15:21: undefined function codec:iolist_to_binary/1
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:23:26: undefined function codec:list_to_binary/1
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:23:39: undefined function codec:atom_to_list/1
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:49:18: unknown module lists
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:63:24: undefined function codec:list_to_atom/1
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:63:39: undefined function codec:binary_to_list/1
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:16:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:17:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:27:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:32:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:33:15: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:36:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:50:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:51:14: unknown module io
+erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:52:14: unknown module io

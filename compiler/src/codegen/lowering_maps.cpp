@@ -60,6 +60,11 @@ llvm::Value *service(ExpressionLowering &state, Op operation, const std::span<ll
 }
 } // namespace
 
+llvm::Value *lower_map_operation(ExpressionLowering &state, const Op operation,
+                                 const std::span<llvm::Value *const> values) {
+    return service(state, operation, values);
+}
+
 llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map) {
     std::vector<llvm::Value *> values;
     const auto read = [&](const ast::ExprId &id) { return state.values.at(&state.module.syntax->expression(id)); };

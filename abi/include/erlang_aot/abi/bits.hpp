@@ -3,7 +3,8 @@
 #include <cstddef>
 
 namespace erlang_aot::abi::v1 {
-enum class BitOperation : std::uint8_t { make, extract, test, finish, part };
+// concat joins a proper list of bitstrings in order; any other element is a bad argument.
+enum class BitOperation : std::uint8_t { make, extract, test, finish, part, concat };
 enum class BitType : std::uint8_t { integer, floating, binary, utf8, utf16, utf32 };
 // Pack segment metadata independently of term layout; native endian is resolved by the emitted target.
 inline constexpr unsigned bit_little = 8;

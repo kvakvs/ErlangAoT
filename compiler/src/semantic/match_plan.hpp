@@ -51,13 +51,21 @@ struct MatchPlan {
     std::vector<MatchNode> nodes;
     // Include original inputs and every checked extracted value, independently of source binding identities.
     std::size_t values = 0;
+    // A binary generator's plan leaves the bits after the element in this value.
+    std::optional<std::size_t> rest = {};
 };
+
+// How a binary generator's pattern reads its input (OTP v3_core): `element` matches a prefix and keeps the rest;
+// `skip` also ignores segment values and repeated names and reads floats as integers, to step over a rejected
+// element.
+enum class GeneratorPattern : std::uint8_t { none, element, skip };
 
 struct MatchOptions {
     // Select one source clause and target word layout within a shared construction ceiling.
     std::size_t clause = 0;
     unsigned word_bits = 64;
     std::size_t work_limit = 100'000;
+    GeneratorPattern generator = GeneratorPattern::none;
 };
 
 // Build a one-input body pattern with existing bindings preserved as exact constraints.

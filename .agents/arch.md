@@ -73,6 +73,10 @@
   qualifier (zip groups together); guard-test filters (`Function::guard_filters`) lower as guards. Each generator is a
   loop whose cursor and the reversed accumulator live in term slots (no PHIs); the result is reversed once by
   `ContainerConstruction::reverse`. Errors `bad_generator`/`bad_filter`/`bad_generators` (ErrorReason 16-18).
+  Step 22: binary generators use match plans with `GeneratorPattern::element` (tail segment -> `MatchPlan::rest`)
+  and `skip` (OTP skip pattern); map generators keep map/position/size slots (`MapOperation::key_at/value_at`);
+  each step tries acc, then skip (relaxed: advance; strict in a zip: rematch), then exhaustion, then the error.
+  Binary/map producers finish with `BitOperation::concat` / `MapOperation::from_list`.
 
 - Execution model (step 17 decision, implemented in step 19; `docs/execution-model.md#implementation`):
   lowering emits native form (`Word f(ctx, args)`, ordinary calls, `erlang_aot.frame` slot marker, `erlang-arity`

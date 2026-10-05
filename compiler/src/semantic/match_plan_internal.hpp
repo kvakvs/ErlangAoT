@@ -24,6 +24,9 @@ struct MatchPlanner {
     std::size_t limit;
     // Reused wildcard source nodes still publish each binding identity exactly once per plan.
     std::set<BindingId> definitions = {};
+    // The root binary of a binary generator's plan, and whether the plan skips a rejected element.
+    const ast::Expression *generator = nullptr;
+    bool skip = false;
 
     // Charge indexing, scheduling and emission before publishing any partial plan.
     bool spend(const ast::ExprId &site);

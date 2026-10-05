@@ -67,10 +67,10 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::MaybeExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::ListComprehension &value) const;
+    std::string_view operator()(const ast::ListComprehension &) const { return {}; }
 
-    std::string_view operator()(const ast::MapComprehension &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::MapComprehension &) const { return {}; }
 
-    std::string_view operator()(const ast::BinaryComprehension &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::BinaryComprehension &) const { return {}; }
 };
 } // namespace erlang_aot::semantic

@@ -3,8 +3,10 @@
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
 #include <array>
+#include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
+#include <erlang_aot/abi/maps.hpp>
 #include <map>
 #include <set>
 #include <string_view>
@@ -56,11 +58,14 @@ llvm::Value *lower_exact(ExpressionLowering &state, llvm::Value *left, llvm::Val
 void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::BasicBlock *mismatch);
 // Preserve compact projection/direct-call IR when the normalized plan has no rejection tests.
 bool lower_unconditional_head(ExpressionLowering &state);
-// Lower the reusable matcher against caller-supplied values and selection continuations.
-void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan, std::span<llvm::Value *const> values,
-                      llvm::BasicBlock *success, llvm::BasicBlock *mismatch);
+// Lower the reusable matcher against caller-supplied values and selection continuations; the result holds every
+// candidate value, defined where the success continuation can read it.
+std::vector<llvm::Value *> lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan,
+                                            std::span<llvm::Value *const> values, llvm::BasicBlock *success,
+                                            llvm::BasicBlock *mismatch);
 // Plan a one-input body or case pattern; semantic analysis accepted it, so failure is a phase-contract error.
-semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern);
+semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern,
+                                      semantic::GeneratorPattern generator = semantic::GeneratorPattern::none);
 // Match an already evaluated RHS, publishing new bindings only along the successful continuation.
 llvm::Value *lower_body_match(ExpressionLowering &state, const ast::MatchExpression &match);
 // Raise clause exhaustion using the existing checked generated-call contract.
@@ -123,6 +128,12 @@ BitLowering lower_bit_pattern(ExpressionLowering &state, const semantic::MatchNo
                               std::span<llvm::Value *> values, llvm::BasicBlock *mismatch);
 // Stage source-ordered map construction/update through rooted checked services.
 llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map);
+// Run one map service operation; badmap/badkey raise.
+llvm::Value *lower_map_operation(ExpressionLowering &state, abi::v1::MapOperation operation,
+                                 std::span<llvm::Value *const> values);
+// Run one bitstring service operation (construction or concat); a bad argument raises badarg.
+llvm::Value *lower_bits_operation(ExpressionLowering &state, abi::v1::BitOperation operation,
+                                  std::span<llvm::Value *const> values);
 // Resolve map BIFs separately from the two-operand numeric service; return null for other operations.
 llvm::Value *lower_map_query(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
                              llvm::Value *right);
@@ -139,6 +150,8 @@ llvm::Value *lower_list(ExpressionLowering &state, std::span<llvm::Value *const>
 llvm::Value *lower_reverse(ExpressionLowering &state, llvm::Value *list);
 
 struct Comprehension {
+    // The list, binary or map comprehension being lowered.
+    const ast::ExprValue *syntax;
     // The bindings before the comprehension come back after it: nothing it binds is visible outside.
     std::map<semantic::BindingId, llvm::Value *> bindings;
     // The reversed result lives in a term slot, so the loops carry no SSA value across iterations or calls.
@@ -150,7 +163,7 @@ struct Comprehension {
 };
 
 // Start a comprehension with an empty accumulator.
-Comprehension begin_comprehension(ExpressionLowering &state);
+Comprehension begin_comprehension(ExpressionLowering &state, const ast::ExprValue &syntax);
 // Loop over the generators of one qualifier (a zip group runs its generators in step), whose inputs are lowered;
 // the following qualifiers lower into the loop body.
 void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
@@ -158,10 +171,10 @@ void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
 // Continue when a filter holds; otherwise take the next element. A filter that is not a guard test and returns
 // neither true nor false raises {bad_filter, Value}.
 void lower_filter(ExpressionLowering &state, const Comprehension &comprehension, const ast::ExprId &filter);
-// Push the template values onto the accumulator, then take the next element.
-void lower_templates(ExpressionLowering &state, const Comprehension &comprehension,
-                     std::span<llvm::Value *const> values);
-// Once every generator is exhausted, restore the bindings and return the result list in source order.
+// Push the lowered template values onto the accumulator, then take the next element; a binary comprehension's
+// template must be a bitstring (else badarg).
+void lower_templates(ExpressionLowering &state, const Comprehension &comprehension);
+// Once every generator is exhausted, restore the bindings and return the list, bitstring or map (later keys win).
 llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension);
 // Lower record values/access/indices using tuple shape and checked element services.
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);

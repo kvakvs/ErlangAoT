@@ -3,11 +3,12 @@
 #include <stdexcept>
 
 namespace erlang_aot::codegen {
-semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern) {
-    auto plan =
-        semantic::make_match_plan(state.module, state.function, pattern,
-                                  [](const Diagnostic &diagnostic) { throw std::invalid_argument(render(diagnostic)); },
-                                  {.clause = state.clause, .word_bits = state.word->getBitWidth()});
+semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern,
+                                      const semantic::GeneratorPattern generator) {
+    auto plan = semantic::make_match_plan(
+        state.module, state.function, pattern,
+        [](const Diagnostic &diagnostic) { throw std::invalid_argument(render(diagnostic)); },
+        {.clause = state.clause, .word_bits = state.word->getBitWidth(), .generator = generator});
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable body match plan");
     }

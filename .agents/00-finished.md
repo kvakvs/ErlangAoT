@@ -238,6 +238,14 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   in step and raise `{bad_generators, Inputs}`, non-lists `{bad_generator, T}`;
   guard-test filters reject like guards, others raise `{bad_filter, V}`
   (`ErrorReason` 16-18); golden `list_comprehensions` (100k-element inputs).
+- **Binary and map comprehensions (22):** bitstring generators match a prefix
+  (plan `GeneratorPattern::element` adds a tail segment) and skip rejected
+  elements with OTP's skip pattern (`skip`: values ignored, floats as
+  integers); map generators walk `key_at`/`value_at` positions; producers
+  accumulate like lists and finish with `BitOperation::concat` or
+  `MapOperation::from_list`; zip payloads show OTP's map iterator chain
+  (`MapOperation::iterator`). Golden `bit_map_comprehensions` covers every
+  generator/producer combination. Phase E closed.
 
 <a id="outstanding-work-to-finish"></a>
 
@@ -258,9 +266,9 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - [ ] **Collection and copying:** generated-code safepoints, graph copying
   between heaps, continuation/mailbox/transit roots (host-requested copying
   collection done in 8H).
-- [ ] **More Erlang semantics:** maybe/comprehensions, exceptions and
-  handlers, recursion and tail calls, record updates/`record_info`/native
-  records, closures and dynamic calls.
+- [ ] **More Erlang semantics:** record updates/`record_info`/native records,
+  closures and dynamic calls (maybe, comprehensions, exceptions and handlers,
+  recursion and tail calls are done: plan 11 phases D and E).
 - [ ] **Identities and atoms:** pid/port/reference services; synchronized atom
   access before workers; atom collection is a scope decision (D02).
 - [ ] **Processes and scheduling:** cooperative execution, reductions, workers,

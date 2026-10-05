@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "entry": "bitmaps",
+  "runs": [
+    {
+      "args": [
+        "producers"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[1,2,3]\n<<1,2,3>>\n<<41,1:1>>\n#{1=>1,2=>4,3=>9}\n[1,2,3]\n<<1,1,2,2,3,3>>\n#{1=>-1,2=>-2,3=>-3}\n[{1,10},{2,20},{3,30}]\n<<1,10,2,20,3,30>>\n#{10=>1,20=>2,30=>3}\n#{0=>6,1=>4,2=>5}\n#{-2=>b,-1=>b,1=>a,2=>a}\n<<18,3:4>>\n<<1,2,3:4>>\n<<>>\n#{}\n<<>>\n<<\"abc\">>\n"
+    },
+    {
+      "args": [
+        "binaries"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[1,3]\n[7,7,6,0,0]\n[7,7,6,0,7]\n[{4,9},{8,200}]\n\"a\"\n[{104},{233},{108},{108},{111}]\n\"c\"\n[<<2,3>>,<<7,8>>]\n[1,4]\n[15]\n[1.000000e+00,1.000000e+00]\n[1,2]\n[1]\n[{1,1},{1,9},{2,2},{2,9}]\n"
+    },
+    {
+      "args": [
+        "maps"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{1,a},{2,b},{3,c}]\n[2]\n[1,3]\n[1,3]\n[1,2,3]\n[{1,1},{2,2}]\n#{1=>2,2=>3}\n[a,c]\n"
+    },
+    {
+      "args": [
+        "zips"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{1,5},{2,6}]\n[{a,1,x},{b,2,y}]\n[{0,0},{1,3},{0,0},{2,4}]\n[{1,y},{3,z}]\n<<1,3,2,4>>\n#{1=>a,2=>b}\n"
+    },
+    {
+      "args": [
+        "errors"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{error,{bad_generator,foo}}\n{error,{bad_generator,foo}}\n{error,{bad_generator,foo}}\n{error,{bad_generator,[a]}}\n{error,{badmatch,<<200,3>>}}\n{error,{badmatch,<<2:4>>}}\n{error,{badmatch,{2,2}}}\n{error,{badmatch,<<124,0>>}}\n{error,badarg}\n{error,{bad_generators,{[2],none}}}\n{error,{bad_generators,{{2,b,{3,c,none}},[]}}}\n{error,{bad_generators,{{2,b,{{1,a},a,none}},[x,y]}}}\n{error,{bad_generators,{[1],foo}}}\n{error,{bad_generators,{<<2:4>>,[b]}}}\n{error,{bad_generator,t}}\n"
+    },
+    {
+      "args": [
+        "order"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{v,1}\n{k,1}\n{v,2}\n{k,2}\n#{{k,1}=>{v,1},{k,2}=>{v,2}}\n<<1>>\n2\n{error,badarg}\n{filter,1}\n1\n{filter,2}\n2\n<<1,2>>\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception error: badarg\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "bitmaps.erl": "8b38c891b8bc7a5d5312e296cf5db1f29b0c43b526e355c0a1e03f8cc7f416ee"
+  }
+}

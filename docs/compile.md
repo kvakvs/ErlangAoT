@@ -19,7 +19,7 @@ operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
 `error/1,2,3`, `exit/1`, `throw/1` and `erlang:raise/3`
 ([ABI](abi.md#failure-channel-revision-2)), `case`/`if`, `catch Expr`,
 `try ... of ... catch Class:Reason:Stack ... after` with
-[stack traces](abi.md#stack-traces), `maybe ... else ... end`, list comprehensions
+[stack traces](abi.md#stack-traces), `maybe ... else ... end`, list, binary and map comprehensions
 ([patterns](patterns.md#comprehensions)) and direct local or
 literal remote calls within the batch, including self, mutual and cross-module
 recursion on explicit process frames with proper tail calls
@@ -28,8 +28,7 @@ by the 2^24-word process stack, not the native stack. Guards support the full ad
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: `receive`, funs and
-closures, dynamic calls, binary and map comprehensions (and binary or map
-generators), record updates and native records,
+closures, dynamic calls, record updates and native records,
 processes and messaging.
 Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
