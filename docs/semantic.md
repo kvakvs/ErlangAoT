@@ -34,8 +34,9 @@ context. Analysis is deterministic.
   afterwards (OTP `vtunsafe`); names bound before a `catch` stay usable. Every
   name bound inside a `try` is unsafe afterwards; `of` clauses see the body's
   names, catch clauses see them as unsafe, and the after body sees every name
-  bound earlier in the try as unsafe. Guards
-  never publish bindings; matches in guards are errors even when unreachable.
+  bound earlier in the try as unsafe. A catch clause's stack variable must be
+  new (OTP `stacktrace_bound`) and its guard must not read it
+  (`stacktrace_guard`). Guards never publish bindings; matches in guards are errors even when unreachable.
 - Map keys read only incoming bindings; binary sizes also read earlier segments
   of the same binary (see [patterns](patterns.md#scopes)).
 - A `case` scrutinee binds in the enclosing scope. Each clause starts from that

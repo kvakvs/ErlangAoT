@@ -238,13 +238,39 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
     unwind(state);
 }
 
-void reraise(ExpressionLowering &state, const std::array<llvm::Value *, 2> &exception) {
+namespace {
+// Declare erlang_aot_reraise_v2, shared by unmatched try handlers and erlang:raise/3.
+llvm::FunctionCallee reraise_service(ExpressionLowering &state) {
+    auto &output = *state.entry.getParent();
+    return output.getOrInsertFunction(
+        services::symbol<services::Reraise>(output.getTargetTriple()),
+        llvm::FunctionType::get(state.builder.getInt8Ty(),
+                                {state.builder.getPtrTy(), state.word, state.word, state.word}, false));
+}
+} // namespace
+
+void reraise(ExpressionLowering &state, const Exception &exception) {
+    state.builder.CreateCall(reraise_service(state), {state.entry.getArg(0), exception[0], exception[1], exception[2]});
+    unwind(state);
+}
+
+llvm::Value *lower_raise_stack(ExpressionLowering &state, const std::span<llvm::Value *const> arguments) {
+    state.builder.CreateCall(reraise_service(state), {state.entry.getArg(0), arguments[0], arguments[1], arguments[2]},
+                             "raise.outcome");
+    // A recorded exception leaves through this check; an invalid class or stack records nothing.
+    propagate_failure(state);
+    return lower_atom(state, ast::Atom{U"badarg"});
+}
+
+llvm::Value *lower_error(ExpressionLowering &state, llvm::Value *reason, llvm::Value *arguments) {
     auto &output = *state.entry.getParent();
     auto service = output.getOrInsertFunction(
-        services::symbol<services::Reraise>(output.getTargetTriple()),
+        services::symbol<services::Error>(output.getTargetTriple()),
         llvm::FunctionType::get(state.builder.getInt8Ty(), {state.builder.getPtrTy(), state.word, state.word}, false));
-    state.builder.CreateCall(service, {state.entry.getArg(0), exception[0], exception[1]});
-    unwind(state);
+    state.builder.CreateCall(service, {state.entry.getArg(0), reason, arguments}, "error.outcome");
+    // The service always records the exception or an infrastructure failure, so this check always unwinds.
+    propagate_failure(state);
+    return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
 }
 
 void raise_function_clause(ExpressionLowering &state) { raise_reason(state, abi::v1::ErrorReason::function_clause); }

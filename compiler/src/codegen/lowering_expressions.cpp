@@ -79,11 +79,17 @@ llvm::Value *body_builtin_value(ExpressionLowering &state, const semantic::Servi
     if (service.operation == abi::v1::ImmediateOperation::halt) {
         return lower_halt(state, call.arguments.empty() ? nullptr : argument(0));
     }
-    if (service.operation == abi::v1::ImmediateOperation::raise) {
-        // error/2,3 arguments only annotate the stack trace (step 15); they are evaluated and dropped.
-        return lower_raise(state, service.identity.name, argument(0));
+    if (service.operation != abi::v1::ImmediateOperation::raise) {
+        return nullptr;
     }
-    return nullptr;
+    if (service.identity.name == U"raise") {
+        return lower_raise_stack(state, std::array{argument(0), argument(1), argument(2)});
+    }
+    if (service.identity.name == U"error" && call.arguments.size() > 1) {
+        // error/3 options only add error_info to the top frame's location, which is not recorded.
+        return lower_error(state, argument(0), argument(1));
+    }
+    return lower_raise(state, service.identity.name, argument(0));
 }
 
 // Keep resolved runtime services and generated calls on their existing checked boundaries.

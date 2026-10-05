@@ -209,10 +209,11 @@ channel carries `function_clause`, service reasons and the three source classes.
 
 - [x] `error/1,2,3`, `exit/1`, `throw/1` classes, any-term reasons and uncaught
   outcomes (step 11).
-- [x] `catch Expr` values and binding safety, stack placeholder `[]` (step 12).
+- [x] `catch Expr` values and binding safety (step 12).
 - [x] `try ... of ... catch`: class/reason patterns and guards, re-raise,
   `try_clause`, binding safety (step 13).
-- [ ] Stack traces and `erlang:raise/3`.
+- [x] Stack traces (bounded to 8 frames, documented OTP differences),
+  `Class:Reason:Stack`, `erlang:raise/3`, `error/2,3` arguments (step 15).
 - [x] `try ... after` on normal, caught and uncaught paths, after-body
   exceptions replacing the original, allocation faults (step 14).
 - [ ] Nested handling and cleanup across module and builtin calls.

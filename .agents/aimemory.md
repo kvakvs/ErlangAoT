@@ -142,7 +142,12 @@ Step facts beyond the plan record:
   tidy bugprone-exception-escape; emplace in place, extract node handles. `opt->` and `.value()` on std::optional are
   both flagged by bugprone-unchecked-optional-access: test first. Process budget overflow reports resource_limit (7).
   `after` is a reserved word: fixture atoms must not be `after`.
+- 15: trace captured at GeneratedCallState::fail from GeneratedRoots frames (FrameDescriptor per function, private
+  `frame.<symbol>` global); OTP compiler turns calls to never-returning functions into tail calls, so trace fixtures
+  need functions that can also return and non-tail call sites ({tag, f(X)}). Term::is_function is declared but not
+  defined (link error). No recursion in fixtures yet (call graph must be acyclic).
 User directions (keep):
+- All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.
 - ERTS host model: no handle table; Term valid only in own process, read-only elsewhere.

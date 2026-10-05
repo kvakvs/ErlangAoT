@@ -7,12 +7,24 @@ namespace erlang_aot::semantic {
 namespace {
 using Modules = std::map<std::u32string, Module *>;
 
+// erlang:get_stacktrace/0 was removed in OTP 23; OTP 29 lint names the replacement and the call fails.
+bool removed_call(const ast::Module &syntax, const ast::RemoteExpression &remote, const std::size_t arity) {
+    const auto &module = std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote.module)).value).name;
+    const auto &function = std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote.function)).value).name;
+    return module == U"erlang" && function == U"get_stacktrace" && arity == 0;
+}
+
 // Resolve literal remote names without ever falling back to another project target.
-Module *call_module(const FunctionRef caller, const ast::RemoteExpression &remote, const Modules &modules,
-                    const ast::NodeSource &source, const Reporter &out) {
-    const auto &name =
-        std::get<ast::Atom>(caller.module->syntax->expression(ungroup(*caller.module->syntax, remote.module)).value)
-            .name;
+Module *call_module(const FunctionRef caller, const ast::CallExpression &call, const ast::RemoteExpression &remote,
+                    const Modules &modules, const ast::NodeSource &source, const Reporter &out) {
+    const auto &syntax = *caller.module->syntax;
+    if (removed_call(syntax, remote, call.arguments.size())) {
+        report(*caller.module, &source,
+               "erlang:get_stacktrace/0 is removed; use the new try/catch syntax for retrieving the stack backtrace",
+               out);
+        return nullptr;
+    }
+    const auto &name = std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote.module)).value).name;
     const auto found = modules.find(name);
     if (found == modules.end()) {
         report(*caller.module, &source, "unknown module " + utf8(name), out);
@@ -27,7 +39,7 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     const auto &syntax = *caller.module->syntax;
     const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
     const auto *remote = std::get_if<ast::RemoteExpression>(&target);
-    auto *owner = remote ? call_module(caller, *remote, modules, source, out) : caller.module;
+    auto *owner = remote ? call_module(caller, call, *remote, modules, source, out) : caller.module;
     if (!owner) {
         return {};
     }

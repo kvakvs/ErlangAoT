@@ -49,6 +49,9 @@
 {try_after_reads, accepted, none}.
 {try_after_unsafe, rejected, unsafe_var}.
 {try_after_body, rejected, unsafe_var}.
+{try_stack_body, accepted, none}.
+{try_stack_bound, rejected, stacktrace_bound}.
+{try_stack_guard, rejected, stacktrace_guard}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

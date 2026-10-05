@@ -54,6 +54,12 @@ void BindingAnalysis::read(const ast::ExprId &id, BindingCandidate &scope, const
     if (!variable) {
         return;
     }
+    if (guard_stack == variable->name) {
+        report(module, &expression.source,
+               "stacktrace variable " + utf8(variable->name) + " must not be used in a guard", out);
+        scope.valid = false;
+        return;
+    }
     const auto identity = scope.find(variable->name);
     if (identity && !scope.incoming.unsafe.contains(variable->name)) {
         function.bindings.push_back({id, *identity, BindingUse::read, context});

@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "entry": "traces",
+  "runs": [
+    {
+      "args": [
+        "classes"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{level1,{level2,ok}}\n{error,boom,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,main,1}]}\n{exit,stop,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,main,1}]}\n{throw,ball,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,main,1}]}\n{outer,ok}\n{remote,remote,[{tracer,inner,1},{tracer,outer,1},{traces,main,1}]}\n"
+    },
+    {
+      "args": [
+        "catch"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{'EXIT',boom,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,main,1}]}\n{'EXIT',stop}\nball\n{'EXIT',remote,[{tracer,inner,1},{tracer,outer,1},{traces,main,1}]}\n{'EXIT',why,[{traces,arguments,1}]}\n"
+    },
+    {
+      "args": [
+        "runtime"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{w,{call,ok}}\n{{badmatch,error},[{traces,failing,1},{traces,call,1},{traces,runtime,1}]}\n{{case_clause,9},[{traces,failing,1},{traces,call,1},{traces,runtime,1}]}\n{if_clause,[{traces,failing,1},{traces,call,1},{traces,runtime,1}]}\n{function_clause,[{traces,pick,1},{traces,failing,1},{traces,call,1}]}\n{badarith,[{traces,failing,1},{traces,call,1},{traces,runtime,1}]}\n{{try_clause,7},[{traces,failing,1},{traces,call,1},{traces,runtime,1}]}\n"
+    },
+    {
+      "args": [
+        "depth"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{d1,{d2,{d3,{d4,{d5,{d6,{d7,{d8,{d9,ok}}}}}}}}}\n{deep,eight,[{traces,d10,1},{traces,d9,1},{traces,d8,1},{traces,d7,1},{traces,d6,1},{traces,d5,1},{traces,d4,1},{traces,d3,1}]}\n"
+    },
+    {
+      "args": [
+        "arguments"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "ok\n{why,{traces,arguments,[1,two,\"three\"]}}\n{why,{traces,arguments,[]}}\n{why,{traces,arguments,[a|b]}}\n{why,{traces,arguments,2}}\n{why,{traces,arguments,2}}\n{why,{traces,arguments,[x]}}\n"
+    },
+    {
+      "args": [
+        "rethrow"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "ok\n{error,boom,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,rethrow,1}]}\ncleanup\n{exit,stop,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,rethrow,1}]}\n{exit,{again,boom},[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,rethrow,1}]}\n{error,boom,[{traces,level3,1},{traces,level2,1},{traces,level1,1},{traces,rethrow,1}]}\n{error,true}\n{throw,true}\n"
+    },
+    {
+      "args": [
+        "raise"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{given,[{m,f,1,[]},{m,g,[a],[{line,3}]}]}\n{empty,[]}\n{long,eight,[{m,f1,1,[]},{m,f2,2,[]},{m,f3,3,[]},{m,f4,4,[]},{m,f5,5,[]},{m,f6,6,[]},{m,f7,7,[]},{m,f8,8,[]}]}\n{improper,[{m,f,1,[a|b]}]}\n"
+    },
+    {
+      "args": [
+        "malformed"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "badarg\nbadarg\nbadarg\nbadarg\nbadarg\nbadarg\nbadarg\nbadarg\nbadarg\nbadarg\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception exit: gone\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "tracer.erl": "2ab327e123b45249384b92abf13e06769b8c3ff8540e7dff5c421ab3f0092eaf",
+    "traces.erl": "7d31862ee4f05c93d3fd8d6041cc867c42cd4e6546b06efedef76e28c78996f8"
+  }
+}

@@ -2,6 +2,7 @@
 #include <erlang_aot/runtime/process_context.hpp>
 #include <limits>
 #include <new>
+#include <ranges>
 
 namespace erlang_aot::runtime {
 namespace {
@@ -20,7 +21,7 @@ GeneratedRoots::~GeneratedRoots() {
     }
 }
 
-Word *GeneratedRoots::enter(std::size_t count) noexcept {
+Word *GeneratedRoots::enter(std::size_t count, const abi::v1::FrameDescriptor *function) noexcept {
     auto &calls = owner_.generated_calls();
     if (!calls.active() || calls.failure()) {
         return nullptr;
@@ -35,7 +36,7 @@ Word *GeneratedRoots::enter(std::size_t count) noexcept {
             push_segment(count);
         }
         auto *slots = window(*top_).subspan(top_->used, count).data();
-        frames_.push_back(Frame{slots, count, {}});
+        frames_.push_back(Frame{slots, count, {}, function});
         top_->used += count;
         words_ += count;
         std::fill_n(slots, count, Word{0});
@@ -134,13 +135,29 @@ bool GeneratedRoots::contains(Word value) const noexcept {
     return false;
 }
 
+StackTrace GeneratedRoots::trace() const noexcept {
+    StackTrace result;
+    for (const auto &frame : std::views::reverse(frames_)) {
+        if (result.depth == StackTrace::limit) {
+            break;
+        }
+        if (frame.function) {
+            result.frames.at(result.depth++) = frame.function;
+        }
+    }
+    return result;
+}
+
 RootInvocation::RootInvocation(GeneratedRoots &roots) noexcept : roots_(roots), depth_(roots.depth()) {}
 
 RootInvocation::~RootInvocation() { roots_.restore(depth_); }
 } // namespace erlang_aot::runtime
 
-erlang_aot::abi::v1::TermWord *erlang_aot_roots_enter_v4(void *context, std::size_t count) noexcept {
-    return context ? static_cast<erlang_aot::runtime::ProcessContext *>(context)->roots().enter(count) : nullptr;
+erlang_aot::abi::v1::TermWord *erlang_aot_roots_enter_v5(void *context, std::size_t count, const void *frame) noexcept {
+    using erlang_aot::abi::v1::FrameDescriptor;
+    return context ? static_cast<erlang_aot::runtime::ProcessContext *>(context)->roots().enter(
+                         count, static_cast<const FrameDescriptor *>(frame))
+                   : nullptr;
 }
 
 std::uint8_t erlang_aot_roots_leave_v4(void *context, erlang_aot::abi::v1::TermWord *frame,

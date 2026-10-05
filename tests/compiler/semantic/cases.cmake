@@ -79,7 +79,17 @@ semantic_case(try_unsafe "-module(a). f(X) -> try Y = X catch _ -> X end, Y." 1 
 semantic_case(try_in_guard "-module(a). f(X) when try X catch _ -> X end -> X." 1 "illegal guard expression")
 semantic_case(try_after "-module(a). f() -> try 1 of X -> X catch _ -> 2 after 3 end." 0 "^$")
 semantic_case(try_after_unsafe "-module(a). f(X) -> try X after Y = X end, Y." 1 "unsafe variable Y")
-semantic_case(try_stacktrace "-module(a). f() -> try 1 catch _:_:S -> S end." 1 "exceptions")
+semantic_case(try_stacktrace "-module(a). f() -> try 1 catch _:_:S -> S end." 0 "^$")
+semantic_case(stack_bound "-module(a). f(S) -> try 1 catch _:_:S -> S end." 1
+    "stacktrace variable S must not be previously bound")
+semantic_case(stack_in_pattern "-module(a). f() -> try 1 catch _:S:S -> S end." 1
+    "stacktrace variable S must not be previously bound")
+semantic_case(stack_in_guard "-module(a). f() -> try 1 catch _:_:S when S =:= [] -> S end." 1
+    "stacktrace variable S must not be used in a guard")
+semantic_case(raise_stack "-module(a). f(S) -> erlang:raise(error, x, S)." 0 "^$")
+semantic_case(raise_unqualified "-module(a). f(S) -> raise(error, x, S)." 1 "undefined function a:raise/3")
+semantic_case(get_stacktrace "-module(a). f() -> erlang:get_stacktrace()." 1
+    "erlang:get_stacktrace/0 is removed; use the new try/catch syntax")
 semantic_case(maybe_expr "-module(a). f() -> maybe 1 end." 1 "pattern matching")
 semantic_case(comprehension "-module(a). f(X) -> [Y || Y <- X]." 1 "heap expressions")
 semantic_case(binary_comprehension "-module(a). f(X) -> << <<Y>> || Y <- X >>." 1 "heap expressions")

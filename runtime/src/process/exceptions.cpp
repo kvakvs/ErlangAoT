@@ -1,17 +1,123 @@
 #include "exceptions.hpp"
 #include "../terms/service_errors.hpp"
 #include "terms.hpp"
+#include <algorithm>
 #include <array>
 #include <erlang_aot/abi/calls.hpp>
+#include <erlang_aot/runtime/code_server.hpp>
 #include <new>
 
 namespace erlang_aot::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
+using abi::v1::FrameDescriptor;
 using abi::v1::Status;
 
+// Read one atom slot of a frame's module as a term.
+TermResult<Term> frame_atom(ProcessContext &context, const FrameDescriptor &frame, const std::size_t slot) {
+    const auto word = context.code_server().atom_word(frame.module, slot);
+    if (!word) {
+        return std::unexpected(word.error());
+    }
+    return Term::from_word(*word, context);
+}
+
+// Build one {Module, Function, ArityOrArguments, []} stack entry; source locations are not recorded.
+TermResult<Term> frame_term(ProcessContext &context, const FrameDescriptor &frame,
+                            const std::optional<Term> &arguments) {
+    TermFactory factory(context);
+    const auto module = frame_atom(context, frame, frame.module_atom);
+    const auto function = frame_atom(context, frame, frame.function_atom);
+    const auto third =
+        arguments ? TermResult<Term>(*arguments) : factory.integer(static_cast<std::int64_t>(frame.arity));
+    const auto location = factory.nil();
+    for (const auto *part : {&module, &function, &third, &location}) {
+        if (!*part) {
+            return std::unexpected(part->error());
+        }
+    }
+    return factory.tuple(std::array{*module, *function, *third, *location});
+}
+
+// The stack trace term of an exception: the given stack, or the captured frames innermost first, where the top
+// frame shows the erlang:error/2,3 arguments when present.
+TermResult<Term> stack_term(ProcessContext &context, const CallFailure &failure) {
+    if (failure.stack) {
+        return *failure.stack;
+    }
+    TermFactory factory(context);
+    auto stack = factory.nil();
+    for (auto index = failure.trace.depth; stack && index > 0; --index) {
+        const auto &arguments = index == 1 ? failure.arguments : std::nullopt;
+        const auto entry = frame_term(context, *failure.trace.frames.at(index - 1), arguments);
+        stack = entry ? factory.cons(*entry, *stack) : entry;
+    }
+    return stack;
+}
+
+// How erlang:raise/3 treats one stack entry (BEAM raise_3): rejected, kept, or completed with a [] location.
+enum class EntryShape : std::uint8_t { invalid, complete, short_form };
+
+// {M, F, A} lacks a location and {M, F, A, Location} needs a list one, with atom M and F. BEAM also accepts
+// {Fun, Args[, Location]}; function values do not exist yet (plan step 32), so those are rejected.
+EntryShape entry_shape(const Term &entry) {
+    auto items = entry.is_tuple() ? entry.tuple_elements() : TermResult<std::vector<Term>>{};
+    if (!items || items->size() < 3 || items->size() > 4 || !(*items)[0].is_atom() || !(*items)[1].is_atom()) {
+        return EntryShape::invalid;
+    }
+    if (items->size() == 3) {
+        return EntryShape::short_form;
+    }
+    return items->back().is_list() ? EntryShape::complete : EntryShape::invalid;
+}
+
+// The entries of a well-formed raise/3 stack, or none when it is not a proper list of valid entries.
+std::optional<std::vector<Term>> stack_entries(const Term &stack) {
+    std::vector<Term> entries;
+    auto rest = stack;
+    while (rest.is_cons()) {
+        const auto head = rest.head();
+        const auto tail = rest.tail();
+        if (!head || !tail || entry_shape(*head) == EntryShape::invalid) {
+            return std::nullopt;
+        }
+        entries.push_back(*head);
+        rest = *tail;
+    }
+    return rest.is_nil() ? std::optional{std::move(entries)} : std::nullopt;
+}
+
+// Add the [] location to a short stack entry.
+TermResult<Term> completed_entry(TermFactory &factory, const Term &entry) {
+    auto items = entry.tuple_elements();
+    const auto location = factory.nil();
+    if (!items || !location) {
+        return std::unexpected(items ? location.error() : items.error());
+    }
+    items->push_back(*location);
+    return factory.tuple(*items);
+}
+
+// The stack raise/3 records: the given term, or a copy cut to the trace limit with short entries completed.
+TermResult<Term> recorded_stack(ProcessContext &context, const Term &stack, const std::span<const Term> entries) {
+    const auto short_entry = [](const Term &entry) { return entry_shape(entry) == EntryShape::short_form; };
+    if (entries.size() <= StackTrace::limit && std::ranges::none_of(entries, short_entry)) {
+        return stack;
+    }
+    TermFactory factory(context);
+    std::vector<Term> kept;
+    for (const auto &entry : entries.first(std::min(entries.size(), StackTrace::limit))) {
+        const auto item = short_entry(entry) ? completed_entry(factory, entry) : TermResult<Term>(entry);
+        if (!item) {
+            return std::unexpected(item.error());
+        }
+        kept.push_back(*item);
+    }
+    return factory.list(kept);
+}
+
 // Build the value of `catch Expr`: a thrown term as is, {'EXIT', Reason} for an exit and
-// {'EXIT', {Reason, Stack}} for an error; Stack stays [] until stack traces exist (plan step 15).
+// {'EXIT', {Reason, Stack}} for an error.
 TermResult<Term> catch_value(ProcessContext &context, const CallFailure &failure) {
     auto reason = exception_reason_term(context, failure);
     if (!reason || failure.reason == ErrorReason::raised_throw) {
@@ -19,7 +125,7 @@ TermResult<Term> catch_value(ProcessContext &context, const CallFailure &failure
     }
     TermFactory factory(context);
     if (failure.reason != ErrorReason::raised_exit) {
-        const auto stack = factory.nil();
+        const auto stack = stack_term(context, failure);
         if (!stack) {
             return stack;
         }
@@ -35,17 +141,17 @@ TermResult<Term> catch_value(ProcessContext &context, const CallFailure &failure
     return factory.tuple(std::array{*tag, *reason});
 }
 
-// Build the class atom and reason handed to a try ... catch handler.
-TermResult<std::array<Term, 2>> class_and_reason(ProcessContext &context, const CallFailure &failure) {
-    auto reason = exception_reason_term(context, failure);
-    if (!reason) {
-        return std::unexpected(reason.error());
+// Build the class atom, reason and stack trace handed to a try ... catch handler.
+TermResult<std::array<Term, 3>> class_reason_stack(ProcessContext &context, const CallFailure &failure) {
+    const auto name = TermFactory(context).atom(exception_class(failure));
+    const auto reason = exception_reason_term(context, failure);
+    const auto stack = stack_term(context, failure);
+    for (const auto *part : {&name, &reason, &stack}) {
+        if (!*part) {
+            return std::unexpected(part->error());
+        }
     }
-    auto name = TermFactory(context).atom(exception_class(failure));
-    if (!name) {
-        return std::unexpected(name.error());
-    }
-    return std::array{*name, *reason};
+    return std::array{*name, *reason, *stack};
 }
 
 // Contain allocation and other native exceptions while building terms from a pending exception.
@@ -100,20 +206,47 @@ std::optional<ErrorReason> raised_reason(const Term &name) {
     return *spelling == "throw" ? std::optional{ErrorReason::raised_throw} : std::nullopt;
 }
 
-// Record Class:Reason as the pending exception; an invalid class or term records badarg instead.
-Status reraise(ProcessContext &context, const Word exception_class, const Word reason) noexcept {
+// Record Class:Reason with a given stack as the pending exception (erlang:raise/3); an invalid class or stack
+// records nothing and reports invalid_argument, so raise/3 evaluates to badarg.
+Status reraise(ProcessContext &context, const Word exception_class, const Word reason, const Word stack) {
     auto &state = context.generated_calls();
     if (!state.active()) {
         return Status::invalid_argument;
     }
     const auto name = Term::from_word(exception_class, context);
     const auto value = Term::from_word(reason, context);
+    const auto given = Term::from_word(stack, context);
     const auto raised = name ? raised_reason(*name) : std::nullopt;
-    if (!raised || !value) {
-        state.fail({.code = CallError::erlang_exception, .reason = ErrorReason::badarg});
-        return Status::ok;
+    const auto entries = raised && value && given ? stack_entries(*given) : std::nullopt;
+    if (!entries) {
+        return Status::invalid_argument;
     }
-    state.fail({.code = CallError::erlang_exception, .reason = raised, .value = *value});
+    const auto recorded = recorded_stack(context, *given, *entries);
+    if (!recorded) {
+        state.fail_service(term_status(recorded.error()));
+        return term_status(recorded.error());
+    }
+    state.fail({.code = CallError::erlang_exception, .reason = raised, .value = *value, .stack = *recorded});
+    return Status::ok;
+}
+
+// Record erlang:error/2,3; a list (or []) of arguments replaces the arity in the top stack frame.
+Status raise_error(ProcessContext &context, const Word reason, const Word arguments) noexcept {
+    auto &state = context.generated_calls();
+    if (!state.active()) {
+        return Status::invalid_argument;
+    }
+    const auto value = Term::from_word(reason, context);
+    const auto list = Term::from_word(arguments, context);
+    if (!value || !list) {
+        state.fail_service(Status::invalid_argument);
+        return Status::invalid_argument;
+    }
+    CallFailure failure{.code = CallError::erlang_exception, .reason = ErrorReason::raised_error, .value = *value};
+    if (list->is_list()) {
+        failure.arguments = *list;
+    }
+    state.fail(failure);
     return Status::ok;
 }
 } // namespace
@@ -162,25 +295,45 @@ std::uint8_t erlang_aot_catch_v1(void *context, erlang_aot::abi::v1::TermWord *o
         detail::take_exception(*static_cast<ProcessContext *>(context), detail::catch_value, store));
 }
 
-std::uint8_t erlang_aot_exception_v1(void *context, erlang_aot::abi::v1::TermWord *exception_class,
-                                     erlang_aot::abi::v1::TermWord *reason) noexcept {
+std::uint8_t erlang_aot_exception_v2(void *context, erlang_aot::abi::v1::TermWord *exception_class,
+                                     erlang_aot::abi::v1::TermWord *reason,
+                                     erlang_aot::abi::v1::TermWord *stack) noexcept {
     using namespace erlang_aot::runtime;
-    if (!context || !exception_class || !reason) {
+    if (!context || !exception_class || !reason || !stack) {
         return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
     }
-    const auto store = [exception_class, reason](const std::array<Term, 2> &value) {
+    const auto store = [exception_class, reason, stack](const std::array<Term, 3> &value) {
         *exception_class = value[0].word();
         *reason = value[1].word();
+        *stack = value[2].word();
     };
     return static_cast<std::uint8_t>(
-        detail::take_exception(*static_cast<ProcessContext *>(context), detail::class_and_reason, store));
+        detail::take_exception(*static_cast<ProcessContext *>(context), detail::class_reason_stack, store));
 }
 
-std::uint8_t erlang_aot_reraise_v1(void *context, erlang_aot::abi::v1::TermWord exception_class,
-                                   erlang_aot::abi::v1::TermWord reason) noexcept {
+std::uint8_t erlang_aot_reraise_v2(void *context, erlang_aot::abi::v1::TermWord exception_class,
+                                   erlang_aot::abi::v1::TermWord reason, erlang_aot::abi::v1::TermWord stack) noexcept {
+    using erlang_aot::abi::v1::Status;
+    if (!context) {
+        return static_cast<std::uint8_t>(Status::invalid_argument);
+    }
+    auto &owner = *static_cast<erlang_aot::runtime::ProcessContext *>(context);
+    try {
+        return static_cast<std::uint8_t>(erlang_aot::runtime::detail::reraise(owner, exception_class, reason, stack));
+    } catch (const std::bad_alloc &) {
+        owner.generated_calls().fail_service(Status::out_of_memory);
+        return static_cast<std::uint8_t>(Status::out_of_memory);
+    } catch (...) {
+        owner.generated_calls().fail_service(Status::internal_error);
+        return static_cast<std::uint8_t>(Status::internal_error);
+    }
+}
+
+std::uint8_t erlang_aot_error_v1(void *context, erlang_aot::abi::v1::TermWord reason,
+                                 erlang_aot::abi::v1::TermWord arguments) noexcept {
     if (!context) {
         return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
     }
-    return static_cast<std::uint8_t>(erlang_aot::runtime::detail::reraise(
-        *static_cast<erlang_aot::runtime::ProcessContext *>(context), exception_class, reason));
+    return static_cast<std::uint8_t>(erlang_aot::runtime::detail::raise_error(
+        *static_cast<erlang_aot::runtime::ProcessContext *>(context), reason, arguments));
 }

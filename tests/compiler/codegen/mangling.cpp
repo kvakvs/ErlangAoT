@@ -79,14 +79,16 @@ int main() {
                                 "_Z19erlang_aot_raise_v2PvN10erlang_aot3abi2v111ErrorReasonEj"});
         check<services::Catch>({"?erlang_aot_catch_v1@@YAEPEAXPEA_K@Z", "?erlang_aot_catch_v1@@YAEPAXPAI@Z",
                                 "_Z19erlang_aot_catch_v1PvPm", "_Z19erlang_aot_catch_v1PvPj"});
-        check<services::Exception>({"?erlang_aot_exception_v1@@YAEPEAXPEA_K1@Z",
-                                    "?erlang_aot_exception_v1@@YAEPAXPAI1@Z", "_Z23erlang_aot_exception_v1PvPmS0_",
-                                    "_Z23erlang_aot_exception_v1PvPjS0_"});
-        check<services::Reraise>({"?erlang_aot_reraise_v1@@YAEPEAX_K1@Z", "?erlang_aot_reraise_v1@@YAEPAXII@Z",
-                                  "_Z21erlang_aot_reraise_v1Pvmm", "_Z21erlang_aot_reraise_v1Pvjj"});
-        check<services::RootsEnter>({"?erlang_aot_roots_enter_v4@@YAPEA_KPEAX_K@Z",
-                                     "?erlang_aot_roots_enter_v4@@YAPAIPAXI@Z", "_Z25erlang_aot_roots_enter_v4Pvm",
-                                     "_Z25erlang_aot_roots_enter_v4Pvj"});
+        check<services::Exception>({"?erlang_aot_exception_v2@@YAEPEAXPEA_K11@Z",
+                                    "?erlang_aot_exception_v2@@YAEPAXPAI11@Z", "_Z23erlang_aot_exception_v2PvPmS0_S0_",
+                                    "_Z23erlang_aot_exception_v2PvPjS0_S0_"});
+        check<services::Reraise>({"?erlang_aot_reraise_v2@@YAEPEAX_K11@Z", "?erlang_aot_reraise_v2@@YAEPAXIII@Z",
+                                  "_Z21erlang_aot_reraise_v2Pvmmm", "_Z21erlang_aot_reraise_v2Pvjjj"});
+        check<services::Error>({"?erlang_aot_error_v1@@YAEPEAX_K1@Z", "?erlang_aot_error_v1@@YAEPAXII@Z",
+                                "_Z19erlang_aot_error_v1Pvmm", "_Z19erlang_aot_error_v1Pvjj"});
+        check<services::RootsEnter>({"?erlang_aot_roots_enter_v5@@YAPEA_KPEAX_KPEBX@Z",
+                                     "?erlang_aot_roots_enter_v5@@YAPAIPAXIPBX@Z",
+                                     "_Z25erlang_aot_roots_enter_v5PvmPKv", "_Z25erlang_aot_roots_enter_v5PvjPKv"});
         check<services::RootsLeave>({"?erlang_aot_roots_leave_v4@@YAEPEAXPEA_K_K@Z",
                                      "?erlang_aot_roots_leave_v4@@YAEPAXPAII@Z", "_Z25erlang_aot_roots_leave_v4PvPmm",
                                      "_Z25erlang_aot_roots_leave_v4PvPjj"});

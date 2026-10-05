@@ -12,7 +12,6 @@ CASES = {
     "dynamic calls": "f(F) -> F(1).",
     "recursive calls": "f() -> f().",
     "closures": "f() -> fun(X) -> X end.",
-    "exceptions": "f() -> try 1 catch _:_:S -> S end.",
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
     "send expressions": "f(X) -> X ! 1.",

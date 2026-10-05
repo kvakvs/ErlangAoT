@@ -34,6 +34,15 @@ struct ModuleDescriptor {
     std::size_t atom_count = 0;
 };
 
+struct FrameDescriptor {
+    // Name one generated function in stack traces: its module, the atom slots spelling the module and
+    // function names, and its Erlang arity. Immutable, beside the module descriptor.
+    const ModuleDescriptor *module;
+    std::size_t module_atom;
+    std::size_t function_atom;
+    std::size_t arity;
+};
+
 // Explicit startup entry; the pointer must designate an active runtime owner.
 using GeneratedRegistration = std::uint8_t(void *);
 static_assert(std::is_standard_layout_v<ExportDescriptor>);
@@ -42,6 +51,8 @@ static_assert(sizeof(ExportDescriptor) == 4 * sizeof(TermWord));
 static_assert(offsetof(ExportDescriptor, entry) == 3 * sizeof(TermWord));
 static_assert(sizeof(AtomDescriptor) == 2 * sizeof(TermWord));
 static_assert(sizeof(ModuleDescriptor) == 8 + 6 * sizeof(TermWord));
+static_assert(std::is_standard_layout_v<FrameDescriptor>);
+static_assert(sizeof(FrameDescriptor) == 4 * sizeof(TermWord));
 static_assert(offsetof(ModuleDescriptor, name) == 8);
 static_assert(offsetof(ModuleDescriptor, exports) == 8 + 2 * sizeof(TermWord));
 } // namespace erlang_aot::abi::v1

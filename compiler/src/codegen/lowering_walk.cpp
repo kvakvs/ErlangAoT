@@ -57,7 +57,7 @@ struct CaseJoin {
     llvm::BasicBlock *next = nullptr;
     std::vector<CaseIncoming> incoming = {};
     // A try's catch clauses match the caught class atom and reason.
-    std::array<llvm::Value *, 2> exception = {};
+    Exception exception = {};
 };
 
 struct ProtectedScope {
@@ -76,7 +76,7 @@ struct AfterPath {
     llvm::Value *result;
     llvm::BasicBlock *resume = nullptr;
     // The exception taken by the after handler on the raising path.
-    std::array<llvm::Value *, 2> exception = {};
+    Exception exception = {};
 };
 
 // Merge one per-clause value at the join; SSAUpdater adds a PHI only when the clauses disagree.
@@ -403,17 +403,27 @@ struct Walk {
         }
     }
 
-    // Match a clause pattern against the case value, or a catch clause's class and reason against the exception.
+    // Match a clause pattern against the case value, or a catch clause's Class:Reason:Stack against the exception.
     void match_head(const semantic::Branch &clause, const CaseJoin &join, llvm::BasicBlock *success) {
         auto *input = join.value;
+        auto *matched = success;
         if (clause.handler) {
             auto *reason = llvm::BasicBlock::Create(state.entry.getContext(), "catch.reason", &state.entry);
             match_class(*clause.handler, join.exception[0], reason, join.next);
             state.builder.SetInsertPoint(reason);
             input = join.exception[1];
+            if (clause.handler->stacktrace) {
+                matched = llvm::BasicBlock::Create(state.entry.getContext(), "catch.stack", &state.entry);
+            }
         }
         const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, *clause.pattern));
-        lower_match_plan(state, plan, std::array{input}, success, join.next);
+        lower_match_plan(state, plan, std::array{input}, matched, join.next);
+        if (matched != success) {
+            // The stack variable is always new, so binding it cannot fail.
+            state.builder.SetInsertPoint(matched);
+            const auto stack = body_pattern_plan(state, *clause.handler->stacktrace);
+            lower_match_plan(state, stack, std::array{join.exception[2]}, success, join.next);
+        }
     }
 
     // An explicit class is an atom or variable pattern; an omitted class matches throw.

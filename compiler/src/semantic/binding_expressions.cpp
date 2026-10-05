@@ -148,6 +148,18 @@ bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Vi
     return true;
 }
 
+// A catch clause's stack variable must be new: neither bound before nor in its class or reason pattern.
+void bind_stack(BindingAnalysis &state, const ast::ExprId &id, BindingCandidate &head) {
+    const auto &expression = state.module.syntax->expression(id);
+    const auto &name = std::get<ast::Variable>(expression.value).name;
+    if (name != U"_" && (head.find(name) || head.incoming.unsafe.contains(name))) {
+        report(state.module, &expression.source, "stacktrace variable " + utf8(name) + " must not be previously bound",
+               state.out);
+        return;
+    }
+    bind_pattern(state, id, head, BindingContext::body);
+}
+
 // Bind a clause pattern; a catch clause matches Class:Reason:Stack left to right.
 void bind_head(BindingAnalysis &state, const Branch &clause, BindingCandidate &head) {
     if (clause.handler && clause.handler->exception_class) {
@@ -157,8 +169,17 @@ void bind_head(BindingAnalysis &state, const Branch &clause, BindingCandidate &h
         bind_pattern(state, *clause.pattern, head, BindingContext::body);
     }
     if (clause.handler && clause.handler->stacktrace) {
-        bind_pattern(state, *clause.handler->stacktrace, head, BindingContext::body);
+        bind_stack(state, *clause.handler->stacktrace, head);
     }
+}
+
+// The guard of a catch clause must not read its stack variable.
+std::optional<std::u32string> stack_name(const ast::Module &syntax, const Branch &clause) {
+    if (!clause.handler || !clause.handler->stacktrace) {
+        return {};
+    }
+    const auto &name = std::get<ast::Variable>(syntax.expression(*clause.handler->stacktrace).value).name;
+    return name == U"_" ? std::nullopt : std::optional{name};
 }
 
 // Bind one clause's pattern and guard over the incoming scope, then schedule its body before the clause end.
@@ -168,7 +189,9 @@ void begin_branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment
     BindingCandidate head{environment, {}};
     bind_head(state, clause, head);
     if (clause.guard) {
+        state.guard_stack = stack_name(*state.module.syntax, clause);
         bind_guard(state, *clause.guard, head);
+        state.guard_stack.reset();
     }
     head.commit(environment);
     pending.push_back({visit.id, Action::branch_end, visit.clause});

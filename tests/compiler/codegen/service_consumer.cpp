@@ -16,7 +16,7 @@ using namespace erlang_aot::runtime;
 extern abi::v1::GeneratedRegistration register_answer asm("eav1_736572766963655f616e73776572__0.register");
 extern abi::v1::GeneratedRegistration register_client asm("eav1_736572766963655f636c69656e74__0.register");
 extern std::uint8_t injected(void *, std::uint8_t, Word, Word, Word *) noexcept asm("step7_service");
-extern Word *injected_roots(void *, std::size_t) noexcept asm("step11_roots");
+extern Word *injected_roots(void *, std::size_t, const void *) noexcept asm("step11_roots");
 extern std::uint8_t injected_construct(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept
     asm("step12_construct");
 extern std::uint8_t injected_inspect(void *, std::uint8_t, Word, std::size_t, Word *) noexcept asm("step12_inspect");
@@ -338,11 +338,11 @@ std::uint8_t injected_inspect(void *opaque, std::uint8_t operation, Word value, 
 }
 
 // Use the production entry service for both success and budget rejection; only its requested count changes.
-Word *injected_roots(void *context, std::size_t count) noexcept {
+Word *injected_roots(void *context, std::size_t count, const void *frame) noexcept {
     if (static_cast<ProcessContext *>(context)->roots().depth() == root_fault_depth) {
         count = std::numeric_limits<std::size_t>::max();
     }
-    return erlang_aot_roots_enter_v4(context, count);
+    return erlang_aot_roots_enter_v5(context, count, frame);
 }
 
 // This native seam changes only the service outcome and deliberately leaves success output untouched on faults.

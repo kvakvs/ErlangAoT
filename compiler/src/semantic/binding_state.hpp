@@ -15,6 +15,8 @@ struct BindingAnalysis {
     // Names defined by earlier clauses of each enclosing case or if; later clauses reuse them so exports share
     // one identity.
     std::vector<std::map<std::u32string, BindingId>> branch_names = {};
+    // The catch clause's stack variable while its guard is analyzed; reading it there is an error.
+    std::optional<std::u32string> guard_stack = {};
 
     // Stop bounded iterative walks at the original node that exhausted the budget.
     bool spend(const ast::ExprId &id, std::size_t amount = 1);

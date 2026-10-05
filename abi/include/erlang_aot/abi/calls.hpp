@@ -31,10 +31,15 @@ std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason
 // Turn the pending Erlang exception into the value of `catch Expr` in `output` and clear the channel;
 // halts and infrastructure failures stay pending and return a nonzero status.
 std::uint8_t erlang_aot_catch_v1(void *context, erlang_aot::abi::v1::TermWord *output) noexcept;
-// Move the pending Erlang exception into its class atom and reason term (try ... catch) and clear the channel;
-// halts and infrastructure failures stay pending and return a nonzero status.
-std::uint8_t erlang_aot_exception_v1(void *context, erlang_aot::abi::v1::TermWord *exception_class,
-                                     erlang_aot::abi::v1::TermWord *reason) noexcept;
-// Raise Class:Reason again, as when no catch clause matched; the class must be error, exit or throw.
-std::uint8_t erlang_aot_reraise_v1(void *context, erlang_aot::abi::v1::TermWord exception_class,
-                                   erlang_aot::abi::v1::TermWord reason) noexcept;
+// Move the pending Erlang exception into its class atom, reason and stack trace terms (try ... catch) and clear
+// the channel; halts and infrastructure failures stay pending and return a nonzero status.
+std::uint8_t erlang_aot_exception_v2(void *context, erlang_aot::abi::v1::TermWord *exception_class,
+                                     erlang_aot::abi::v1::TermWord *reason,
+                                     erlang_aot::abi::v1::TermWord *stack) noexcept;
+// Raise Class:Reason with a given stack trace (erlang:raise/3, or a try with no matching catch clause). An invalid
+// class or malformed stack records nothing and returns a nonzero status: raise/3 then evaluates to badarg.
+std::uint8_t erlang_aot_reraise_v2(void *context, erlang_aot::abi::v1::TermWord exception_class,
+                                   erlang_aot::abi::v1::TermWord reason, erlang_aot::abi::v1::TermWord stack) noexcept;
+// Raise erlang:error/2,3: a list `arguments` replaces the arity in the top stack frame, any other term is ignored.
+std::uint8_t erlang_aot_error_v1(void *context, erlang_aot::abi::v1::TermWord reason,
+                                 erlang_aot::abi::v1::TermWord arguments) noexcept;

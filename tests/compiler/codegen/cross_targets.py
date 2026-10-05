@@ -40,7 +40,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
             imports = run([nm, "--undefined-only", str(path)]).stdout
             exports = run([nm, "--defined-only", "--extern-only", str(path)]).stdout
             assert "erlang_aot_register_module_v4" in imports, imports
-            assert "erlang_aot_roots_enter_v4" in imports and "erlang_aot_roots_leave_v4" in imports, imports
+            assert "erlang_aot_roots_enter_v5" in imports and "erlang_aot_roots_leave_v4" in imports, imports
             assert ".register" in exports and "eav1_" in exports, exports
             reports.append(headers + imports + exports)
             if "616e73776572" in path.name:

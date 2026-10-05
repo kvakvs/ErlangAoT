@@ -121,7 +121,7 @@ CTests (123 fast) and 258 production quality units.
 | L. Optimization and tooling | [59](#step-59)–[62](#step-62) | F29–F32 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
-| O. Final closure | [78](#step-78) | all |
+| O. Final closure | [78A](#step-78a), [78](#step-78) | all |
 
 ---
 
@@ -601,14 +601,44 @@ Choose the stack-trace content (at least `{M, F, Arity, []}` frames; source
 locations optional) and bind it in `Class:Reason:Stack`.
 
 - Success criteria
-  - [ ] Stack terms are well-formed and bounded in depth; documented
+  - [x] Stack terms are well-formed and bounded in depth; documented
     differences from OTP are explicit.
-  - [ ] `erlang:raise/3` re-raises with a supplied stack;
+  - [x] `erlang:raise/3` re-raises with a supplied stack;
     `erlang:get_stacktrace` stays rejected as in OTP 29.
 - Tests
-  - [ ] Golden programs comparing the top frames' module/function/arity with
+  - [x] Golden programs comparing the top frames' module/function/arity with
     OTP.
-  - [ ] Malformed stack argument to `raise/3` behaves as OTP.
+  - [x] Malformed stack argument to `raise/3` behaves as OTP.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Root frames name
+  their function: `erlang_aot_roots_enter_v5(context, count, frame)` takes a
+  private `abi::v1::FrameDescriptor` (module descriptor, module and function
+  name atom slots, arity; module atom tables now list both names).
+  `GeneratedCallState::fail` copies the innermost 8 named frames
+  (`GeneratedRoots::trace`) into `CallFailure::trace` for Erlang exceptions;
+  `[{M, F, Arity, []}]` is built only by `catch`, handlers and reports.
+  `erlang_aot_exception_v2` adds the stack slot (`Class:Reason:Stack` binds
+  it), `erlang_aot_reraise_v2` keeps it on re-raise and implements
+  `erlang:raise/3` (BEAM `raise_3` validation, `[]` added to `{M, F, A}`,
+  cut to 8, invalid class or stack evaluates to `badarg`; `{Fun, Args}`
+  entries wait for step 32), `erlang_aot_error_v1` keeps the `error/2,3`
+  argument list for the top frame. Argument list and given stack are process
+  roots. Lint: `stacktrace_bound`, `stacktrace_guard`, OTP 29 "removed" text
+  for `erlang:get_stacktrace/0`; the `exceptions` catalog entry is
+  implemented. Documented differences (docs/abi.md#stack-traces): `[]`
+  locations, arity in `function_clause` frames, no BIF or below-entry frames,
+  tail-call frames kept until step 19 (OTP also tail-calls functions that
+  never return). OTP golden `executables_stack_traces` (9 runs: classes,
+  `catch`, remote frames, typed runtime errors, depth 8, `error/2,3`
+  arguments, re-raise through unmatched clauses, `after` and `raise/3`,
+  unchanged re-raised stacks, valid and ten malformed `raise/3` stacks,
+  uncaught `raise/3`); OTP's own output matched ErlangAoT's before the golden
+  was written. Bindings corpus +3 `try_stack*` rows verified by OTP 29.1.1
+  (`--check` reproduces); semantic `try_stacktrace`, `stack_bound`,
+  `stack_in_pattern`, `stack_in_guard`, `raise_stack`, `raise_unqualified`,
+  `get_stacktrace`; mangling for the four new spellings; `runtime_roots`
+  enumerates the new roots. Fresh Windows x64 Debug: fast CTest 150/150;
+  Lizard 0 warnings; tidy 129 changed units pass after splitting
+  `spellings`. Logs `build/plan11-step15/`.
 
 <a id="step-16"></a>
 
@@ -1520,11 +1550,40 @@ Backlog: D07. Depends on: [58](#step-58). **Decision.**
 
 ## O. Final closure
 
+<a id="step-78a"></a>
+
+### 78A. Reset every versioned ABI name to v1
+
+Backlog: all. Depends on: steps 1–70 and any selected optional work. Inserted
+2026-10-05.
+
+The project has never been released, so no earlier generated-code contract has
+to stay loadable. Collapse every version marker to v1: runtime service symbols
+(`erlang_aot_roots_enter_v5`, `erlang_aot_roots_leave_v4`,
+`erlang_aot_raise_v2`, `erlang_aot_call_failed_v2`,
+`erlang_aot_register_module_v4`, `erlang_aot_atom_v3`,
+`erlang_aot_exception_v2`, `erlang_aot_reraise_v2` and the rest), C++
+namespaces such as `abi::v1`/`v2`, `abi::v1::version` and descriptor revision
+numbers, the generated `eav1_` prefixes if any other revision exists, and the
+revision tables in the docs.
+
+- Success criteria
+  - [ ] No `_v2`-or-later suffix, versioned namespace or revision number above
+    1 remains in sources, generated IR, tests, fixtures or docs; the ABI
+    document describes one revision 1 without a revision history.
+  - [ ] `runtime_symbols.hpp` aliases mirror the renamed `abi/include`
+    declarations; no mangled spelling is hardcoded elsewhere.
+- Tests
+  - [ ] `tests/compiler/codegen/mangling.cpp` spellings, cross-target import
+    checks, native consumers and every test calling a service directly use the
+    v1 names, checked against Clang for every target ABI and width.
+  - [ ] Fresh full gate and `check-quality-all` pass.
+
 <a id="step-78"></a>
 
 ### 78. Publish the final implementation and validation boundary
 
-Backlog: all. Depends on: steps 1–70 and any selected optional work.
+Backlog: all. Depends on: steps 1–70, [78A](#step-78a) and any selected optional work.
 
 - Success criteria
   - [ ] `00-finished.md`, `01-todo.md`, `arch.md`, `files.md`, contracts and

@@ -51,7 +51,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | Directory | Owns | File keys |
 | --- | --- | --- |
 | `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
-| `process/` | Context/heap/mailbox ownership, checked error transport; exception reason terms, `erlang_aot_catch_v1`, `erlang_aot_exception_v1`, `erlang_aot_reraise_v1` | `context`, `ownership`, `storage`, `generated_calls`, `exceptions`, `roots`, `services` |
+| `process/` | Context/heap/mailbox ownership, checked error transport; exception reason terms, stack traces, `erlang_aot_catch_v1`, `erlang_aot_exception_v2`, `erlang_aot_reraise_v2` (also `raise/3`), `erlang_aot_error_v1` | `context`, `ownership`, `storage`, `generated_calls`, `exceptions`, `roots`, `services` |
 | `memory/` | One heap block plus fragments per process, budgets, rollback; off-heap binary list (link, relocate, post-collection sweep, teardown release); area walker and heap verifier; Cheney collector and ERTS size sequence (`heap_collect`, driven by `heap`); copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `off_heap`, `heap_walk`, `heap_verify`, `heap_collect`, `copy` |
 | `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `container_factory`, `container_access`, `term_layout`, `atoms`, `atom_spelling` |
 | `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `structural_order`, `immediate_services`, `container_services`, `service_errors` |

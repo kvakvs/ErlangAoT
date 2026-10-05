@@ -106,7 +106,8 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"error", 2}, Op::raise},
                                                       {{U"error", 3}, Op::raise},
                                                       {{U"exit", 1}, Op::raise},
-                                                      {{U"throw", 1}, Op::raise}};
+                                                      {{U"throw", 1}, Op::raise},
+                                                      {{U"raise", 3}, Op::raise}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
 }

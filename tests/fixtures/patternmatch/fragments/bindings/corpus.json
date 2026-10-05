@@ -48,6 +48,9 @@
     "try_handler_unsafe.erl",
     "try_inside.erl",
     "try_of_body.erl",
+    "try_stack_body.erl",
+    "try_stack_bound.erl",
+    "try_stack_guard.erl",
     "try_unsafe.erl",
     "unbound.erl",
     "unsafe_and.erl",
@@ -517,6 +520,33 @@
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
         "sha256": "8996597d6ede8a0d100b2d3e512dab71e2f1381cfdd4c583aacb8fce9e84ff8d"
+      },
+      {
+        "name": "try_stack_body",
+        "arity": 1,
+        "body": "f(A) -> try A catch _:_:S -> {A, S} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "522ea6041328c36a1915fb62453d72b1949ab6f37ced432f7f0681afcd935a92"
+      },
+      {
+        "name": "try_stack_bound",
+        "arity": 1,
+        "body": "f(A) -> try A catch _:_:A -> A end.",
+        "capability": "",
+        "diagnostic": "stacktrace variable A must not be previously bound",
+        "otp_diagnostic": "stacktrace_bound",
+        "sha256": "3368626f168104df10fbecacd270b6f712842f331a28b8c2e225799af8106581"
+      },
+      {
+        "name": "try_stack_guard",
+        "arity": 1,
+        "body": "f(A) -> try A catch _:_:S when S =:= [] -> S end.",
+        "capability": "",
+        "diagnostic": "stacktrace variable S must not be used in a guard",
+        "otp_diagnostic": "stacktrace_guard",
+        "sha256": "d5ee9ece6e04e3beac76297d7f13fd1f5cf8cd22cbd711db1a533fb918b1d1c4"
       },
       {
         "name": "bindings_local",

@@ -142,7 +142,7 @@ void failed_call(ProcessContext &context) {
 // Null/unscoped calls reject before allocating or reading a result representation.
 void boundaries(ProcessContext &context) {
     require(!context.roots().enter(1), "unscoped roots admitted");
-    require(!erlang_aot_roots_enter_v4(nullptr, 1), "null context entered roots");
+    require(!erlang_aot_roots_enter_v5(nullptr, 1, nullptr), "null context entered roots");
     require(erlang_aot_roots_leave_v4(nullptr, nullptr, 0) == static_cast<std::uint8_t>(Status::invalid_argument),
             "null leave admitted");
     GeneratedInvocation invocation(context.generated_calls());
@@ -150,7 +150,8 @@ void boundaries(ProcessContext &context) {
     require(context.generated_calls().failure()->status == Status::resource_limit, "overflow status lost");
 }
 
-// Stack slots, result handoffs, the error payload and explicit roots form the whole root set. Rewriting
+// Stack slots, result handoffs, the error payload, argument list and stack, and explicit roots form the whole
+// root set. Rewriting
 // the payload word keeps its Term current; a Term outliving its context reports expired_context.
 void root_set(Runtime &runtime) {
     auto &context = *runtime.create_context().value();
@@ -163,6 +164,8 @@ void root_set(Runtime &runtime) {
     const auto payload = box(3);
     const auto replacement = box(4);
     std::array explicit_roots{box(5).word()};
+    const auto arguments = box(6);
+    const auto stack = box(7);
     {
         GeneratedInvocation invocation(context.generated_calls());
         auto &roots = context.roots();
@@ -170,10 +173,13 @@ void root_set(Runtime &runtime) {
         require(roots.leave(roots.enter(1), handoff.word()) == Status::ok, "handoff failed");
         context.generated_calls().fail({.code = CallError::erlang_exception,
                                         .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
-                                        .value = payload});
+                                        .value = payload,
+                                        .arguments = arguments,
+                                        .stack = stack});
         std::vector<Word> seen;
         context.visit_roots(explicit_roots, [&](Word &word) { seen.push_back(word); });
-        for (const auto &expected : {slot.word(), handoff.word(), payload.word(), explicit_roots[0]}) {
+        for (const auto &expected :
+             {slot.word(), handoff.word(), payload.word(), explicit_roots[0], arguments.word(), stack.word()}) {
             require(std::ranges::contains(seen, expected), "root missing from enumeration");
         }
         context.visit_roots({}, [&](Word &word) { word = word == payload.word() ? replacement.word() : word; });

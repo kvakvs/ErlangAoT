@@ -14,7 +14,7 @@ void seam(llvm::Module &module) {
         if (function.isDeclaration() && function.getName().contains("erlang_aot_immediate_v1")) {
             function.setName("step7_service");
         }
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_roots_enter_v4")) {
+        if (function.isDeclaration() && function.getName().contains("erlang_aot_roots_enter_v5")) {
             function.setName("step11_roots");
         }
         if (function.isDeclaration() && function.getName().contains("erlang_aot_construct_v1")) {

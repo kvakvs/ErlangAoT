@@ -106,21 +106,23 @@ llvm::Value *lower_catch(ExpressionLowering &state) {
     return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "catch.value");
 }
 
-std::array<llvm::Value *, 2> lower_exception(ExpressionLowering &state) {
+Exception lower_exception(ExpressionLowering &state) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
     auto *class_slot = root_slot(state);
     auto *reason_slot = root_slot(state);
-    auto service = output.getOrInsertFunction(
-        services::symbol<services::Exception>(output.getTargetTriple()),
-        llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy(), builder.getPtrTy(), builder.getPtrTy()},
-                                false));
-    builder.CreateCall(service, {state.entry.getArg(0), class_slot, reason_slot}, "exception.outcome");
+    auto *stack_slot = root_slot(state);
+    auto *ptr = builder.getPtrTy();
+    auto service =
+        output.getOrInsertFunction(services::symbol<services::Exception>(output.getTargetTriple()),
+                                   llvm::FunctionType::get(builder.getInt8Ty(), {ptr, ptr, ptr, ptr}, false));
+    builder.CreateCall(service, {state.entry.getArg(0), class_slot, reason_slot, stack_slot}, "exception.outcome");
     // A caught exception clears the channel; anything else is still pending and leaves through this check.
     propagate_failure(state);
     const llvm::Align align(state.word->getBitWidth() / 8);
     return {builder.CreateAlignedLoad(state.word, class_slot, align, "exception.class"),
-            builder.CreateAlignedLoad(state.word, reason_slot, align, "exception.reason")};
+            builder.CreateAlignedLoad(state.word, reason_slot, align, "exception.reason"),
+            builder.CreateAlignedLoad(state.word, stack_slot, align, "exception.stack")};
 }
 
 llvm::Value *checked_value(ExpressionLowering &state, const ServiceOutput result, llvm::BasicBlock *rejection) {

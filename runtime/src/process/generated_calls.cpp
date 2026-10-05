@@ -35,6 +35,9 @@ void GeneratedCallState::leave(bool outer) noexcept {
 void GeneratedCallState::fail(const CallFailure &failure) noexcept {
     if (active_ && !failure_) {
         failure_ = failure;
+        if (failure.code == CallError::erlang_exception && !failure.stack) {
+            failure_->trace = roots_.trace();
+        }
     }
 }
 

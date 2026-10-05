@@ -1,4 +1,5 @@
 #pragma once
+#include "callable.hpp"
 #include "terms.hpp"
 #include <erlang_aot/abi/roots.hpp>
 
@@ -21,8 +22,9 @@ class GeneratedRoots final {
     GeneratedRoots &operator=(const GeneratedRoots &) = delete;
     // Free every segment, including ones left by frames still open at context teardown.
     ~GeneratedRoots();
-    // Push a zeroed frame window transactionally, reporting exact infrastructure failures in the context.
-    Word *enter(std::size_t count) noexcept;
+    // Push a zeroed frame window transactionally, reporting exact infrastructure failures in the context;
+    // `function` names the frame in stack traces.
+    Word *enter(std::size_t count, const abi::v1::FrameDescriptor *function = nullptr) noexcept;
     // Transfer a successful result before releasing the most recent frame; failures retain their payload roots.
     abi::v1::Status leave(Word *frame, Word result) noexcept;
     // Restore host-entry depth on all native exception/failure paths without touching older frames.
@@ -34,6 +36,8 @@ class GeneratedRoots final {
     std::size_t capacity() const noexcept;
     // Inspect registered words and result handoffs without dereferencing candidate heap words.
     bool contains(Word value) const noexcept;
+    // Name the innermost named frames, up to the stack trace limit, for a newly raised exception.
+    StackTrace trace() const noexcept;
 
     // Visit every frame slot and result handoff word so a collector can rewrite it in place.
     template <typename Visitor> void visit(Visitor &&visit) {
@@ -63,6 +67,8 @@ class GeneratedRoots final {
         std::size_t count;
         // Root a nested result word (BEAM X register) until the parent publishes its own slot or exits.
         std::optional<Word> handoff;
+        // The generated function owning this frame, for stack traces; null for host-entered frames.
+        const abi::v1::FrameDescriptor *function;
     };
 
     // Visit one present handoff word.

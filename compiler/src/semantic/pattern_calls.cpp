@@ -211,7 +211,8 @@ bool raising(const FunctionKey &key) {
            ((key.name == U"exit" || key.name == U"throw") && key.arity == 1);
 }
 
-// Explicit erlang:display/1 and erlang:halt/0,1 wait for the builtin bridge (step 36) to resolve unqualified.
+// Explicit erlang:display/1 and erlang:halt/0,1 wait for the builtin bridge (step 36) to resolve unqualified;
+// erlang:raise/3 is never auto-imported.
 std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const ast::RemoteExpression &remote,
                                              const std::size_t count) {
     const auto *owner = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote.module)).value);
@@ -220,7 +221,8 @@ std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const as
         return {};
     }
     const FunctionKey key{name->name, count};
-    const bool builtin = raising(key) || key == FunctionKey{U"display", 1} || (key.name == U"halt" && count <= 1);
+    const bool builtin = raising(key) || key == FunctionKey{U"display", 1} || (key.name == U"halt" && count <= 1) ||
+                         key == FunctionKey{U"raise", 3};
     return builtin ? std::optional{key} : std::nullopt;
 }
 } // namespace

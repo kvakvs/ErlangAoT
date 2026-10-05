@@ -2,16 +2,24 @@
 #include "callable.hpp"
 
 namespace erlang_aot::runtime {
+class GeneratedRoots;
+
 // Own one synchronous invocation's first failure, shared by all nested generated/service calls.
 class GeneratedCallState final {
   public:
+    // Borrow the process stack whose frames a recorded Erlang exception captures as its stack trace.
+    explicit GeneratedCallState(const GeneratedRoots &roots) noexcept : roots_(roots) {}
+
+    GeneratedCallState(const GeneratedCallState &) = delete;
+    GeneratedCallState &operator=(const GeneratedCallState &) = delete;
+
     // Enter a host boundary; nested entries preserve the parent's pending failure.
     bool enter() noexcept;
     // Reject raw error-service calls without a host invocation owner.
     bool active() const noexcept;
     // Clear only the outer invocation, after its host result has copied the failure.
     void leave(bool outer) noexcept;
-    // Record once while active; direct host services keep their existing result contract.
+    // Record once while active, capturing the live frames of an Erlang exception without a given stack.
     void fail(const CallFailure &failure) noexcept;
     // Convert infrastructure statuses without confusing them with Erlang errors or guard rejection.
     void fail_service(abi::v1::Status status, bool reported = false) noexcept;
@@ -22,16 +30,28 @@ class GeneratedCallState final {
     // Borrow until the outer invocation ends; the payload Term is a process root (BEAM fvalue).
     const std::optional<CallFailure> &failure() const noexcept;
 
-    // Visit the error payload word, then rebind the payload so it stays current after a collection.
+    // Visit the error payload, argument list and stack words, then rebind them so they stay current after a
+    // collection.
     template <typename Visitor> void visit(Visitor &&visit) {
-        if (failure_ && failure_->value) {
-            auto word = failure_->value->word();
-            visit(word);
-            failure_->value->rebind(word);
+        if (failure_) {
+            visit_term(failure_->value, visit);
+            visit_term(failure_->arguments, visit);
+            visit_term(failure_->stack, visit);
         }
     }
 
   private:
+    // Visit and rebind one present root term.
+    template <typename Visitor> static void visit_term(std::optional<Term> &term, Visitor &visit) {
+        if (term) {
+            auto word = term->word();
+            visit(word);
+            term->rebind(word);
+        }
+    }
+
+    // The stack of generated frames, read when an Erlang exception is recorded.
+    const GeneratedRoots &roots_;
     // Mark the host scope owning cleanup; generated calls themselves never reset this state.
     bool active_ = false;
     // First failure wins, including its Erlang payload or exact infrastructure status.

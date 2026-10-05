@@ -75,7 +75,8 @@ enum class ImmediateOperation : std::uint8_t {
     display,
     // Body-only erlang:halt/0,1 lowers to erlang_aot_halt_v1 and never returns.
     halt,
-    // Body-only erlang:error/1,2,3, exit/1 and throw/1 lower to erlang_aot_raise_v2 and never return.
+    // Body-only erlang:error/1,2,3, exit/1 and throw/1 lower to erlang_aot_raise_v2 or erlang_aot_error_v1 and
+    // never return; erlang:raise/3 lowers to erlang_aot_reraise_v2 and returns badarg for invalid arguments.
     raise
 };
 } // namespace erlang_aot::abi::v1

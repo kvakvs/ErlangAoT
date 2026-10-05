@@ -75,13 +75,14 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
-| `erlang:error/1,2,3`, `exit/1`, `throw/1` | `raised_error`/`raised_exit`/`raised_throw`: class from the ID, owned payload is the whole reason |
+| `erlang:error/1,2,3`, `exit/1`, `throw/1`, `erlang:raise/3` | `raised_error`/`raised_exit`/`raised_throw`: class from the ID, owned payload is the whole reason |
 | `erlang:halt/0,1` | `CallError::halted` with `halt_status` (and slogan) |
 
 Reasons are typed IDs recorded by `erlang_aot_raise_v2`; the three `raised_*`
 IDs select class `exit` or `throw` (otherwise `error`) and carry any term as the
-reason. `error/2,3` evaluate their extra arguments and drop them until stack
-traces exist (step 15). First failure wins; nested invocations share
+reason. `error/2,3` raise through `erlang_aot_error_v1(context, reason, args)`,
+which also keeps a list `args` for the top stack frame. First failure wins;
+nested invocations share
 the channel. `GeneratedInvocation` is the host scope: it checks pending failures
 before entry and after return, copies result or error, and clears only at the
 outermost exit (also on C++ exceptions). No exception crosses generated entries.
@@ -92,37 +93,68 @@ Raw entry callers must open a `GeneratedInvocation`; normal hosts use
 block that calls `erlang_aot_catch_v1(context, slot)`. For a pending Erlang
 exception it writes the catch value to the root slot and clears the channel:
 the thrown term, `{'EXIT', Reason}` for an exit, or `{'EXIT', {Reason, []}}`
-for an error (the stack is empty until step 15; typed reasons become their
-OTP terms such as `{badmatch, V}`). Halts and infrastructure failures stay
+for an error (typed reasons become their OTP terms such as `{badmatch, V}`;
+the stack is described [below](#stack-traces)). Halts and infrastructure failures stay
 pending, and the handler's own check continues to the enclosing handler or
 function exit. Bindings made inside `Expr` are unsafe afterwards, so the join
 only merges the value.
 
 `try Body of ... catch ... end` protects only `Body` the same way. Its handler
-calls `erlang_aot_exception_v1(context, class_slot, reason_slot)`, which writes
-the class atom (`error`, `exit` or `throw`) and the reason term to root slots
-and clears the channel (halts and infrastructure failures stay pending as for
+calls `erlang_aot_exception_v2(context, class_slot, reason_slot, stack_slot)`,
+which writes the class atom (`error`, `exit` or `throw`), the reason and the
+stack trace term to root slots and clears the channel (halts and infrastructure failures stay pending as for
 `catch`). Catch clauses then match `Class:Reason` with ordinary patterns and
-guards; an omitted class matches `throw`. When none matches,
-`erlang_aot_reraise_v1(context, class, reason)` records the exception again
-with a `raised_*` reason, which reports and catches exactly like the original.
+guards; an omitted class matches `throw`, and a named stack variable binds the
+stack term. When none matches, `erlang_aot_reraise_v2(context, class, reason,
+stack)` records the exception again with a `raised_*` reason and the same
+stack, which reports and catches exactly like the original.
 `of` clauses select on the body value and raise `{try_clause, Value}`
 (`ErrorReason::try_clause = 14`); exceptions inside `of` clauses and handlers go
-to the enclosing handler. Named stacktrace variables remain capability
-diagnostics until step 15.
+to the enclosing handler.
 
 `try ... after A end` adds a second protection around the body and all `of`
 and catch clauses. On the normal path `A` runs after the selected value is
 rooted and its value is discarded. The after handler takes the exception with
-`erlang_aot_exception_v1`, runs a second copy of `A` and re-raises with
-`erlang_aot_reraise_v1`; an exception or failure inside `A` leaves through the
+`erlang_aot_exception_v2`, runs a second copy of `A` and re-raises with
+`erlang_aot_reraise_v2`; an exception or failure inside `A` leaves through the
 enclosing handler instead, replacing the original. Halts and infrastructure
 failures skip `A`. Root slots belong to the function frame, so every path
 releases them at the function exit.
 
+### Stack traces
+
+Each root frame names its generated function with a private
+`abi::v1::FrameDescriptor` (module descriptor, module and function name atom
+slots, arity). When an Erlang exception is recorded, the channel copies the
+innermost 8 named frames (BEAM's default `backtrace_depth`); the term
+`[{Module, Function, Arity, []}, ...]` is built only when a handler, `catch`
+or report asks for it. The top frame shows the `error/2,3` argument list
+instead of the arity when that argument is a list.
+
+`erlang:raise(Class, Reason, Stack)` (`erlang_aot_reraise_v2`) accepts the
+stacks BEAM accepts: a proper list of `{M, F, A}` (completed with a `[]`
+location) or `{M, F, A, Location}` with atom `M`, `F` and a list `Location`,
+cut to 8 entries; the stack is then kept as given and frames are no longer
+captured. An invalid class or stack records nothing and the call evaluates to
+`badarg`, as in OTP. `erlang:get_stacktrace/0` is rejected with OTP 29's
+"removed" lint text.
+
+Differences from OTP, all visible only in the stack term:
+
+- Locations are always `[]` (OTP adds `{file, F}`, `{line, L}`), and
+  `error/3` options add no `error_info`.
+- A `function_clause` top frame shows the arity, not the argument list.
+- No frame names a failing BIF or operator (OTP adds
+  `{erlang, '+', Args, [{error_info, ...}]}`), and nothing below the entry
+  function appears.
+- Calls in tail position keep the caller's frame until tail calls exist
+  (step 19); OTP also turns calls to functions that never return into tail
+  calls, so their callers vanish from its traces.
+- `{Fun, Args}` stack entries are rejected until function values exist.
+
 ## Root scopes
 
-Every generated function calls `erlang_aot_roots_enter_v4(context, count)` before
+Every generated function calls `erlang_aot_roots_enter_v5(context, count, frame)` before
 loading arguments and `erlang_aot_roots_leave_v4(context, frame, result)` on
 return. A frame is a zeroed window of target-word slots on the process root
 stack (stable segments apart from the heap), bounded per context to 1,000,000

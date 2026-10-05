@@ -1,6 +1,8 @@
 #pragma once
 #include "terms.hpp"
+#include <array>
 #include <erlang_aot/abi/calls.hpp>
+#include <erlang_aot/abi/modules.hpp>
 #include <erlang_aot/abi/status.hpp>
 #include <functional>
 #include <map>
@@ -22,6 +24,14 @@ enum class CallError : std::uint8_t {
     halted
 };
 
+// Generated frames live when an Erlang exception was raised, innermost first (BEAM's raw StackTrace).
+struct StackTrace final {
+    // Bound the captured frames like BEAM's default backtrace_depth.
+    static constexpr std::size_t limit = 8;
+    std::array<const abi::v1::FrameDescriptor *, limit> frames = {};
+    std::size_t depth = 0;
+};
+
 struct CallFailure final {
     // Preserve the operation failure without manufacturing an Erlang exception term.
     CallError code;
@@ -39,6 +49,12 @@ struct CallFailure final {
     std::optional<Term> value = {};
     // Exit status requested by erlang:halt/0,1; the program stops once the entry call unwinds.
     std::optional<int> halt_status = {};
+    // Frames captured when an Erlang exception is recorded; host failures have none.
+    StackTrace trace = {};
+    // The erlang:error/2,3 argument list shown in the top frame instead of its arity (a process root).
+    std::optional<Term> arguments = {};
+    // A complete stack trace term from erlang:raise/3 or a re-raise; replaces `trace` (a process root).
+    std::optional<Term> stack = {};
 };
 
 template <typename Value> using CallResult = std::expected<Value, CallFailure>;

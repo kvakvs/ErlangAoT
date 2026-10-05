@@ -209,6 +209,15 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   runs a second copy and re-raises; golden `try_after`, native
   `codegen_after_fault_O0/O2` (budget failure in the after body), three
   `try_after*` binding rows.
+- **Stack traces and `erlang:raise/3` (15):** root frames carry a
+  `FrameDescriptor` (`erlang_aot_roots_enter_v5`); an Erlang exception copies
+  the innermost 8 named frames, built into `[{M, F, Arity, []}]` only for
+  `catch`, handlers and reports; `Class:Reason:Stack` binds it
+  (`erlang_aot_exception_v2`), re-raise keeps it (`erlang_aot_reraise_v2`, also
+  `raise/3` with BEAM's stack validation and `badarg` result), `error/2,3`
+  show their argument list (`erlang_aot_error_v1`); `stacktrace_bound`/
+  `stacktrace_guard` lint, `get_stacktrace/0` rejected; golden `stack_traces`,
+  three `try_stack*` binding rows. The `exceptions` capability is implemented.
 
 <a id="outstanding-work-to-finish"></a>
 

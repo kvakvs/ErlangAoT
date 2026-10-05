@@ -78,28 +78,51 @@ void record_atoms(const semantic::Module &module, const ast::ExprValue &value, s
     }
 }
 
+// erlang:raise/3 evaluates to badarg when its class or stack is invalid.
+bool raises_stack(const ast::Module &syntax, const ast::ExprValue &value) {
+    const auto *call = std::get_if<ast::CallExpression>(&value);
+    const auto *remote =
+        call ? std::get_if<ast::RemoteExpression>(&syntax.expression(semantic::ungroup(syntax, call->target)).value)
+             : nullptr;
+    if (!remote || call->arguments.size() != 3) {
+        return false;
+    }
+    const auto *owner = std::get_if<ast::Atom>(&syntax.expression(semantic::ungroup(syntax, remote->module)).value);
+    const auto *name = std::get_if<ast::Atom>(&syntax.expression(semantic::ungroup(syntax, remote->function)).value);
+    return owner && name && owner->name == U"erlang" && name->name == U"raise";
+}
+
+// Collect the atoms one expression needs: its literal, record names and the atoms its lowering produces.
+void expression_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
+    record_atoms(module, value, result);
+    if (booleans(value) || guarded(value)) {
+        result.insert("true");
+        result.insert("false");
+    }
+    if (const auto *atom = std::get_if<ast::Atom>(&value)) {
+        result.insert(utf8(atom->name));
+    }
+    if (implicit_throw(value)) {
+        result.insert("throw");
+    }
+    if (raises_stack(*module.syntax, value)) {
+        result.insert("badarg");
+    }
+}
+
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
-    std::set<std::string> result;
+    std::set<std::string> result{utf8(module.name)};
     std::vector<ast::ExprId> pending;
     for (const auto &function : module.functions) {
+        result.insert(utf8(function.key.name));
         roots(module, function, pending, result);
     }
     while (!pending.empty()) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
-        record_atoms(module, expression.value, result);
-        if (booleans(expression.value) || guarded(expression.value)) {
-            result.insert("true");
-            result.insert("false");
-        }
-        if (const auto *atom = std::get_if<ast::Atom>(&expression.value)) {
-            result.insert(utf8(atom->name));
-        }
-        if (implicit_throw(expression.value)) {
-            result.insert("throw");
-        }
+        expression_atoms(module, expression.value, result);
         const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.begin(), children.end());
     }
@@ -128,10 +151,14 @@ llvm::Constant *emit_atom_table(llvm::Module &output, const semantic::Module &mo
                                     "module.atoms");
 }
 
+llvm::Constant *atom_slot(llvm::Module &output, const std::string &spelling) {
+    return output.getNamedGlobal(slot_name(spelling))->getInitializer();
+}
+
 llvm::Value *lower_atom(ExpressionLowering &state, const ast::Atom &atom) {
     auto &output = *state.entry.getParent();
     auto &builder = state.builder;
-    auto *slot = output.getNamedGlobal(slot_name(utf8(atom.name)))->getInitializer();
+    auto *slot = atom_slot(output, utf8(atom.name));
     const auto prefix = semantic::encode_symbol({utf8(state.module.name), "", 0});
     auto *descriptor = output.getNamedGlobal(prefix + ".descriptor");
     const auto symbol = services::symbol<services::Atom>(output.getTargetTriple());

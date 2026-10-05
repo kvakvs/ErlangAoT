@@ -19,16 +19,8 @@ std::string_view ExpressionCapability::operator()(const ast::RecordIndex &value)
     return layout && !layout->native ? "" : "heap expressions";
 }
 
-// try ... catch ... after runs; named stacktrace variables (plan step 15) stay deferred.
-std::string_view ExpressionCapability::operator()(const ast::TryExpression &value) const {
-    const auto named_stack = [this](const ast::CatchClause &clause) {
-        return clause.stacktrace && std::get<ast::Variable>(syntax.expression(*clause.stacktrace).value).name != U"_";
-    };
-    if (value.handlers && std::ranges::any_of(*value.handlers, named_stack)) {
-        return "exceptions";
-    }
-    return {};
-}
+// try ... of ... catch Class:Reason:Stack ... after runs.
+std::string_view ExpressionCapability::operator()(const ast::TryExpression &) const { return {}; }
 
 std::string_view ExpressionCapability::operator()(const ast::IntegerLiteral &) const { return {}; }
 

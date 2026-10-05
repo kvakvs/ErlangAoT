@@ -57,6 +57,11 @@
   `try ... after` (step 14): a second `ProtectedScope` (`afters`) encloses body and clauses; after the join the after
   body is lowered on the normal path (value kept in `AfterPath`), and, when its handler is used, again from the
   handler between `lower_exception` and `reraise`.
+  Stack traces (step 15): `begin_roots` passes a private `FrameDescriptor` (module descriptor, module/function atom
+  slots, arity) to `erlang_aot_roots_enter_v5`; `GeneratedCallState::fail` copies `GeneratedRoots::trace()` (8
+  innermost named frames) into `CallFailure::trace` for Erlang exceptions without a given `stack`. Terms are built
+  lazily (`stack_term`); `Exception` = {class, reason, stack}; reraise/raise3 store the stack term in
+  `CallFailure::stack`; `error/2,3` keep `CallFailure::arguments` for the top frame. Both are process roots.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
