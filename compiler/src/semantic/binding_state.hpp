@@ -25,6 +25,9 @@ struct BindingAnalysis {
     // Add a fresh identity or record an exact check without assigning over an existing name.
     void define(const ast::ExprId &id, BindingCandidate &scope, BindingContext context,
                 std::optional<std::size_t> argument);
+    // Define a name of a fresh candidate: new unless the same candidate already defined it.
+    void define_fresh(const ast::ExprId &id, BindingCandidate &scope, BindingContext context,
+                      const std::u32string &name);
 };
 
 // Validate/normalize a restricted or permissive pattern using the same bounded semantic rules.

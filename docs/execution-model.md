@@ -172,6 +172,10 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
 - **Exceptions** return through every caller, which checks the channel after
   the call as before; handler indices and direct unwinding remain an
   optimization. Stack traces read the frame chain at raise time.
+- **Loops.** Comprehension generators are loops inside one body. Their
+  cursors and accumulator live in term slots, so no SSA value is carried
+  around a loop and a resume point inside it needs nothing beyond the usual
+  spills.
 - **No yield yet.** Reductions and `resume_at` arrive with the scheduler
   (step 43). Registers and raw spill slots are not roots; terms live across a
   call are also in term slots, and step 23 must make collections reload them.

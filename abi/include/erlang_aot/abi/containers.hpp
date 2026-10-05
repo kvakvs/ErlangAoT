@@ -3,8 +3,9 @@
 #include <cstddef>
 
 namespace erlang_aot::abi::v1 {
-// Lists carry their final tail as the last argument, so proper and improper spines share one constructor.
-enum class ContainerConstruction : std::uint8_t { tuple, list };
+// Lists carry their final tail as the last argument, so proper and improper spines share one constructor;
+// reverse takes a proper list and the tail its elements are prepended to in reverse order.
+enum class ContainerConstruction : std::uint8_t { tuple, list, reverse };
 // Shape mismatch is a semantic outcome; ownership and infrastructure failures use the checked channel.
 enum class ContainerInspection : std::uint8_t { tuple_shape, tuple_element, cons_shape, cons_head, cons_tail };
 } // namespace erlang_aot::abi::v1

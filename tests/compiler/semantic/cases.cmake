@@ -97,7 +97,17 @@ semantic_case(maybe_else_unsafe "-module(a). f(A) -> maybe {ok, X} ?= A else _ -
 semantic_case(maybe_in_guard "-module(a). f(A) when maybe A end -> A." 1 "illegal guard expression")
 semantic_case(maybe_disabled "-module(a). -feature(maybe_expr, disable). f(A) -> maybe ok ?= A end." 1
     "maybe_disabled.erl:1:58: expected form-ending dot")
-semantic_case(comprehension "-module(a). f(X) -> [Y || Y <- X]." 1 "heap expressions")
+semantic_case(comprehension "-module(a). f(X) -> [Y || Y <- X]." 0 "^$")
+semantic_case(comprehension_shadow "-module(a). f(X, L) -> [X || X <- L]." 0 "^$")
+semantic_case(comprehension_scope "-module(a). f(L) -> [X || X <- L], X." 1 "unbound variable X")
+semantic_case(comprehension_zip_filter "-module(a). f(L) -> [X || X <- L && X > 1]." 1
+    "only generators are allowed in a zip generator")
+semantic_case(comprehension_assign "-module(a). f(L) -> [Y || X <- L, Y = X]." 1
+    "matches using '=' are not allowed in comprehension qualifiers")
+semantic_case(comprehension_assign_feature "-module(a). -feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X]."
+    1 "heap expressions")
+semantic_case(comprehension_in_guard "-module(a). f(L) when [X || X <- L] =:= [] -> L." 1 "illegal guard expression")
+semantic_case(binary_generator "-module(a). f(B) -> [X || <<X>> <= B]." 1 "heap expressions")
 semantic_case(binary_comprehension "-module(a). f(X) -> << <<Y>> || Y <- X >>." 1 "heap expressions")
 semantic_case(map_comprehension "-module(a). f(X) -> #{Y => Y || Y <- X}." 1 "heap expressions")
 semantic_case(dynamic_call "-module(a). f(F) -> F(1)." 1 "dynamic calls")
@@ -113,12 +123,13 @@ semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "behavior-changin
 semantic_case(unknown_attribute "-module(a). -custom(1). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 1 "behavior-changing attributes")
-semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused() -> [X || X <- []]." 1 "heap expressions")
+semantic_case(unused "-module(a). -export([f/0]). -record(r, {a}). f() -> 1. unused(X) -> X#r{a = 1}." 1
+    "heap expressions")
 semantic_case(bignum "-module(a). f() -> 99999999999999999999999999999." 0 "^$")
 semantic_case(negative_bignum "-module(a). f() -> -99999999999999999999999999999." 0 "^$")
-semantic_case(nested_bad "-module(a). f() -> g(h(1), [X || X <- []])." 1 "heap expressions")
-file(WRITE "${semantic_work}/unsupported.hrl" "bad() -> [X || X <- []].\n")
-semantic_case(include_origin "-module(a). -include(\"unsupported.hrl\")." 1 "unsupported.hrl:1:.*heap expressions")
+semantic_case(nested_bad "-module(a). -record(r, {a}). f(X) -> g(h(1), X#r{a = 1})." 1 "heap expressions")
+file(WRITE "${semantic_work}/unsupported.hrl" "-record(r, {a}).\nbad(X) -> X#r{a = 1}.\n")
+semantic_case(include_origin "-module(a). -include(\"unsupported.hrl\")." 1 "unsupported.hrl:2:.*heap expressions")
 
 if(WORD_BYTES EQUAL 8)
     set(minimum "-576460752303423488")
@@ -136,7 +147,7 @@ semantic_case(maximum "-module(a). f() -> ${maximum}." 0 "^$")
 semantic_case(overflow "-module(a). f() -> ${overflow}." 0 "^$")
 semantic_case(underflow "-module(a). f() -> ${underflow}." 0 "^$")
 
-semantic_case(feature_name "-module(a). f() -> [X || X <- []]." 1 "feature_name.erl:1:.*\\[heap expressions\\] notimpl")
+semantic_case(feature_name "-module(a). -record(r, {a}). f(X) -> X#r{a = 1}." 1 "feature_name.erl:1:.*\\[heap expressions\\] notimpl")
 file(WRITE "${semantic_work}/sentinel" "existing artifact")
 execute_process(COMMAND "${TOOL}" -o sentinel supported_subset.erl unused.erl WORKING_DIRECTORY "${semantic_work}"
     RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)

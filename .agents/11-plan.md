@@ -848,12 +848,39 @@ Include filters, multiple generators, pattern generators, strict generators
 (`<:-`) and zip generators (`&&`) as accepted by OTP 29.
 
 - Success criteria
-  - [ ] Results and evaluation order match OTP, including skipped non-matching
+  - [x] Results and evaluation order match OTP, including skipped non-matching
     elements and strict-generator errors.
-  - [ ] Long inputs run in bounded stack.
+  - [x] Long inputs run in bounded stack.
 - Tests
-  - [ ] Golden programs for each generator kind, nested comprehensions and
+  - [x] Golden programs for each generator kind, nested comprehensions and
     100k-element inputs.
+- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. Semantic
+  views `semantic/comprehensions` (qualifiers, zip parts, generator inputs/
+  patterns/strictness, templates); `expression_children` lists generator
+  inputs, filters and templates, so calls, atoms, inference and specialization
+  see them. Binding analysis saves and restores the scope around a
+  comprehension and binds each qualifier's generator patterns as one fresh
+  candidate (`BindingCandidate::fresh`: new identities shadow outer names);
+  templates are siblings. Guard analysis classifies filters with OTP's
+  `is_guard_test` rule (`Function::guard_filters`, legacy type tests at top
+  level). Capability: list generators admitted; binary/map generators,
+  zip-group filters (OTP `illegal_zip_generator` text) and match qualifiers
+  (`compr_assign` text when the feature is off, capability when on) rejected.
+  Lowering (`codegen/lowering_comprehensions`): one loop per generator
+  qualifier with its cursor and the reversed accumulator in term slots (no PHIs,
+  constant native and process stack), guard filters through `lower_guard`,
+  others `true`/`false`/`{bad_filter, V}`, final `ContainerConstruction::reverse`
+  (2). `ErrorReason` 16-18 `bad_generator`/`bad_filter`/`bad_generators`;
+  strict rejection `{badmatch, E}` alone, `bad_generators` in a zip. OTP golden
+  `executables_list_comprehensions` (6 runs: basic incl. shadowing, several
+  templates, filter-only; patterns incl. strict and zip groups; guard vs body
+  filters and evaluation order; 10 caught errors; 100,000-element inputs, a
+  100,000-pair nested product and zip; uncaught `bad_generator`), full matrix.
+  Semantic cases (shadowing, scope, zip filter, `compr_assign` both ways,
+  guard use, binary generator). Former comprehension "unsupported" examples use
+  record update `#r{}#r{a = 1}`; program `compile.txt` updated. Fresh Windows x64
+  Debug (clang-cl): fast CTest 155/155; Lizard 0 warnings; tidy changed units
+  pass. Logs `build/plan11-step21/`.
 
 <a id="step-22"></a>
 

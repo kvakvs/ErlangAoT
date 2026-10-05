@@ -128,6 +128,59 @@ bool branch_guards(const ast::Expression &expression, const Visit &visit, std::v
     return true;
 }
 
+// Whether a filter is a guard test (erl_lint:is_guard_test/3): guard syntax throughout, calling only guard BIFs
+// that no local function or import overrides; legacy type tests count at its top level.
+bool guard_test(BindingAnalysis &state, const ast::ExprId &root) {
+    std::vector<std::pair<ast::ExprId, bool>> pending{{root, true}};
+    while (!pending.empty()) {
+        const auto [id, top] = pending.back();
+        pending.pop_back();
+        const auto &expression = state.module.syntax->expression(id);
+        const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+        if (call ? !guard_identity(state, id, *call, top) : !std::visit(GuardSyntax{}, expression.value)) {
+            return false;
+        }
+        const bool group = std::holds_alternative<ast::Group>(expression.value);
+        for (const auto &child : expression_children(state.module, expression)) {
+            pending.emplace_back(child, top && group);
+        }
+    }
+    return true;
+}
+
+// A generator input stays in the current context; a filter that is a guard test is a top-level guard test (OTP
+// lc_guard_tests), any other filter an ordinary expression.
+void schedule_qualifier(BindingAnalysis &state, const ast::Qualifier &part, const Visit &visit,
+                        std::vector<Visit> &pending) {
+    const auto *filter = std::get_if<ast::FilterQualifier>(&part.value);
+    if (!filter) {
+        pending.push_back({*generator_input(part), false, visit.guard});
+    } else if (!visit.guard && guard_test(state, filter->expression)) {
+        state.function.guard_filters.insert(&state.module.syntax->expression(filter->expression));
+        pending.push_back({filter->expression, true, true});
+    } else {
+        pending.push_back({filter->expression, false, visit.guard});
+    }
+}
+
+// Schedule every qualifier, then the templates in the current context.
+bool comprehension_guards(BindingAnalysis &state, const ast::Expression &expression, const Visit &visit,
+                          std::vector<Visit> &pending) {
+    const auto *qualifiers = comprehension_qualifiers(expression.value);
+    if (!qualifiers) {
+        return false;
+    }
+    for (const auto &qualifier : *qualifiers) {
+        for (const auto &part : zipped(qualifier)) {
+            schedule_qualifier(state, part, visit, pending);
+        }
+    }
+    for (const auto &item : comprehension_templates(expression.value)) {
+        pending.push_back({item, false, visit.guard});
+    }
+    return true;
+}
+
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
 void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(visit.id);
@@ -136,7 +189,7 @@ void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pendi
     } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }
-    if (branch_guards(expression, visit, pending)) {
+    if (branch_guards(expression, visit, pending) || comprehension_guards(state, expression, visit, pending)) {
         return;
     }
     const auto children = expression_children(state.module, expression);
@@ -185,6 +238,7 @@ void resolve_services(Module &module, const Reporter &out, const std::size_t wor
     };
     for (auto &function : module.functions) {
         function.services.clear();
+        function.guard_filters.clear();
         BindingAnalysis pattern_state{module, function, transactional, 0, work, limit};
         expressions(pattern_state, pattern_reads(module, function), true, false);
         const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
@@ -196,6 +250,7 @@ void resolve_services(Module &module, const Reporter &out, const std::size_t wor
     if (failed) {
         for (auto &function : module.functions) {
             function.services.clear();
+            function.guard_filters.clear();
         }
     }
 }

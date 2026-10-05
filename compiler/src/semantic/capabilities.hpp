@@ -1,5 +1,6 @@
 #pragma once
 #include "declarations.hpp"
+#include <span>
 
 namespace erlang_aot::semantic {
 struct Branch {
@@ -19,6 +20,20 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value);
 std::size_t first_handler(const ast::ExprValue &value);
 // The expressions a maybe body evaluates in order: plain expressions and the values of its ?= matches.
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value);
+// The qualifiers of a list, binary or map comprehension; null for every other expression.
+const std::vector<ast::ComprehensionQualifier> *comprehension_qualifiers(const ast::ExprValue &value);
+// The simple qualifiers of one comprehension qualifier: itself, or the members of a zip group.
+std::span<const ast::Qualifier> zipped(const ast::ComprehensionQualifier &qualifier);
+// A generator's input expression; empty for a filter.
+std::optional<ast::ExprId> generator_input(const ast::Qualifier &qualifier);
+// The patterns a generator matches each element with (a map generator's key, then its value); none for a filter.
+std::vector<ast::PatternSyntaxId> generator_patterns(const ast::Qualifier &qualifier);
+// Whether a generator is strict (<:-, <:=): a mismatching element raises instead of being skipped.
+bool strict_generator(const ast::Qualifier &qualifier);
+// A comprehension's templates in evaluation order (a map template's key, then its value).
+std::vector<ast::ExprId> comprehension_templates(const ast::ExprValue &value);
+// A comprehension's operands in source order: every generator input or filter, then the templates.
+std::vector<ast::ExprId> comprehension_children(const ast::ExprValue &value);
 // Reject executable syntax outside the milestone without modifying parser coverage.
 void check_capabilities(const Module &module, const Reporter &out, unsigned word_bits = sizeof(void *) * 8);
 // Iterate accepted expression children without visiting literal call-target atoms as values.

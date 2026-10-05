@@ -72,6 +72,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Pattern mismatch, guard rejection | Continuation to next candidate; channel untouched |
 | Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case`; `error:if_clause`; `error:{try_clause, Value}` for a try's `of` clauses; `error:{else_clause, Value}` for a maybe's `else` clauses |
 | Body match failure | `error:{badmatch, Value}` with owned payload |
+| Comprehensions | `error:{bad_generator, Tail}`, `error:{bad_filter, Value}`, `error:{bad_generators, Inputs}` (`ErrorReason` 16-18); a strict generator's rejection is `{badmatch, Element}` |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
@@ -117,6 +118,11 @@ leaves the body for the maybe's exit with the unmatched (already rooted) value.
 Without `else` that value is the result; otherwise `else` clauses select on it
 like `case` clauses and raise `{else_clause, Value}`
 (`ErrorReason::else_clause = 15`) when none matches.
+
+List comprehensions need no new service: loops call `erlang_aot_inspect_v1`
+for each cons cell and `erlang_aot_construct_v1` to push template values; the
+accumulated list is reversed once by the construction `reverse`
+(`ContainerConstruction::reverse = 2`, values `{List, Tail}`).
 
 `try ... after A end` adds a second protection around the body and all `of`
 and catch clauses. On the normal path `A` runs after the selected value is

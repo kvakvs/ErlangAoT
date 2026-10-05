@@ -17,11 +17,15 @@ struct BindingCandidate {
     std::map<std::u32string, BindingId> tentative;
     // A binding error prevents publication of all definitions made by this candidate.
     bool valid = true;
+    // Comprehension generator patterns shadow incoming names: every name they define is new.
+    bool fresh = false;
 
     // Resolve incoming names before the candidate's new names; both require equality on reuse.
     [[nodiscard]] std::optional<BindingId> find(const std::u32string &name) const;
     // Publish only after successful pattern/guard selection; discarding a candidate is rollback.
     void commit(BindingEnvironment &destination) const;
+    // Publish a fresh candidate, replacing the incoming names it shadows.
+    void shadow(BindingEnvironment &destination) const;
 };
 
 // Resolve all clause heads, read-only guards and sequential body-match scopes within a work budget.

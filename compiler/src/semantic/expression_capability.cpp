@@ -19,6 +19,19 @@ std::string_view ExpressionCapability::operator()(const ast::RecordIndex &value)
     return layout && !layout->native ? "" : "heap expressions";
 }
 
+// List generators and filters run; binary and map generators arrive with binary and map comprehensions.
+std::string_view ExpressionCapability::operator()(const ast::ListComprehension &value) const {
+    for (const auto &qualifier : value.qualifiers) {
+        for (const auto &part : zipped(qualifier)) {
+            if (std::holds_alternative<ast::BinaryGenerator>(part.value) ||
+                std::holds_alternative<ast::MapGenerator>(part.value)) {
+                return "heap expressions";
+            }
+        }
+    }
+    return {};
+}
+
 // try ... of ... catch Class:Reason:Stack ... after runs.
 std::string_view ExpressionCapability::operator()(const ast::TryExpression &) const { return {}; }
 

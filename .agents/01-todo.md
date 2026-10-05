@@ -155,7 +155,8 @@ Contract: [patterns](../docs/patterns.md).
 - [x] `case` clauses with exported/unsafe bindings (step 9).
 - [x] `if` clauses with the same export/unsafe rules (step 10).
 - [x] `catch`/`try` and `maybe` binding contexts (steps 12, 13, 16).
-- [ ] Comprehension, fun and receive contexts.
+- [x] List comprehension generators, filters and zip groups (step 21).
+- [ ] Binary/map generator, fun and receive contexts.
 
 ### F14 — Guards
 
@@ -180,7 +181,8 @@ Plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10), [16](11-plan.md#step-16)
 - [x] `begin`/`end` blocks and `case` with OTP comparisons (step 9).
 - [x] `if` with OTP comparisons (step 10).
 - [x] `maybe` with `?=`, `else` and `else_clause` (step 16).
-- [ ] Comprehensions with OTP comparisons.
+- [x] List comprehensions with OTP comparisons (step 21).
+- [ ] Binary and map comprehensions with OTP comparisons.
 
 ### F17 — Record expansion and execution
 

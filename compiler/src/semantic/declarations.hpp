@@ -4,6 +4,7 @@
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <functional>
 #include <map>
+#include <set>
 
 namespace erlang_aot::semantic {
 // Compare decoded names and arities without host-dependent hashes.
@@ -71,6 +72,8 @@ struct Function {
     std::vector<NormalizedPattern> patterns = {};
     // Only semantically resolved service calls may reach lowering; keys borrow immutable owned syntax.
     std::map<const ast::Expression *, ServiceResolution> services = {};
+    // Comprehension filters that are guard tests: they reject the element on failure instead of raising.
+    std::set<const ast::Expression *> guard_filters = {};
 };
 
 struct RecordLayout {

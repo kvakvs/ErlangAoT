@@ -95,7 +95,7 @@ bool raises_stack(const ast::Module &syntax, const ast::ExprValue &value) {
 // Collect the atoms one expression needs: its literal, record names and the atoms its lowering produces.
 void expression_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
     record_atoms(module, value, result);
-    if (booleans(value) || guarded(value)) {
+    if (booleans(value) || guarded(value) || semantic::comprehension_qualifiers(value)) {
         result.insert("true");
         result.insert("false");
     }

@@ -166,6 +166,9 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
         std::holds_alternative<ast::MaybeExpression>(expression.value)) {
         return branch_children(expression.value, clauses);
     }
+    if (comprehension_qualifiers(expression.value)) {
+        return comprehension_children(expression.value);
+    }
     return binding_children(expression.value);
 }
 

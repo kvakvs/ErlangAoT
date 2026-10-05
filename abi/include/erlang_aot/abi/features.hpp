@@ -100,7 +100,7 @@ inline constexpr std::array feature_catalog{
                 .owner = FeatureOwner::compiler,
                 .boundary = "aggregate capability analysis",
                 .status = FeatureStatus::deferred,
-                .plan_step = 16,
+                .plan_step = 22,
                 .failure_test = "codegen_placeholders"},
     FeatureInfo{.id = FeatureId::dynamic_calls,
                 .name = "dynamic calls",

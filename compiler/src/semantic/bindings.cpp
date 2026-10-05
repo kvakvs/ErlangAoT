@@ -5,17 +5,30 @@
 
 namespace erlang_aot::semantic {
 std::optional<BindingId> BindingCandidate::find(const std::u32string &name) const {
+    const auto added = tentative.find(name);
+    if (fresh && added != tentative.end()) {
+        return added->second;
+    }
     const auto existing = incoming.names.find(name);
     if (existing != incoming.names.end()) {
         return existing->second;
     }
-    const auto added = tentative.find(name);
     return added == tentative.end() ? std::nullopt : std::optional{added->second};
 }
 
 void BindingCandidate::commit(BindingEnvironment &destination) const {
     if (valid) {
         destination.names.insert(tentative.begin(), tentative.end());
+    }
+}
+
+void BindingCandidate::shadow(BindingEnvironment &destination) const {
+    if (!valid) {
+        return;
+    }
+    for (const auto &[name, identity] : tentative) {
+        destination.names.insert_or_assign(name, identity);
+        destination.unsafe.erase(name);
     }
 }
 
@@ -61,7 +74,8 @@ void BindingAnalysis::read(const ast::ExprId &id, BindingCandidate &scope, const
         return;
     }
     const auto identity = scope.find(variable->name);
-    if (identity && !scope.incoming.unsafe.contains(variable->name)) {
+    const bool shadowed = scope.fresh && scope.tentative.contains(variable->name);
+    if (identity && (shadowed || !scope.incoming.unsafe.contains(variable->name))) {
         function.bindings.push_back({id, *identity, BindingUse::read, context});
         return;
     }
@@ -77,6 +91,10 @@ void BindingAnalysis::define(const ast::ExprId &id, BindingCandidate &scope, con
     const auto &expression = module.syntax->expression(id);
     const auto &name = std::get<ast::Variable>(expression.value).name;
     if (name == U"_") {
+        return;
+    }
+    if (scope.fresh) {
+        define_fresh(id, scope, context, name);
         return;
     }
     if (scope.incoming.unsafe.contains(name)) {
@@ -100,6 +118,19 @@ void BindingAnalysis::define(const ast::ExprId &id, BindingCandidate &scope, con
     }
     scope.tentative.emplace(name, *identity);
     function.bindings.push_back({id, *identity, BindingUse::definition, context});
+}
+
+void BindingAnalysis::define_fresh(const ast::ExprId &id, BindingCandidate &scope, const BindingContext context,
+                                   const std::u32string &name) {
+    if (const auto added = scope.tentative.find(name); added != scope.tentative.end()) {
+        function.bindings.push_back({id, added->second, BindingUse::exact_check, context});
+        return;
+    }
+    auto &definitions = function.clause_bindings.at(clause).definitions;
+    const BindingId identity{clause, definitions.size()};
+    definitions.push_back({name, id, std::nullopt});
+    scope.tentative.emplace(name, identity);
+    function.bindings.push_back({id, identity, BindingUse::definition, context});
 }
 
 void bind_guard(BindingAnalysis &state, const ast::GuardSyntax &guard, const BindingCandidate &head) {

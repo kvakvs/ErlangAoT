@@ -68,6 +68,11 @@
   gives else clauses (`first_handler` 0, so binding analysis treats them like catch clauses inside one conditional
   scope). The walker's `MaybeScope` collects `?=` mismatch edges into `maybe.else`; a PHI of unmatched values feeds a
   `CaseJoin` whose else clauses reuse case selection (`no_match` raises `else_clause`).
+  List comprehensions (step 21, `codegen/lowering_comprehensions`): `semantic::comprehension_*` views qualifiers;
+  binding analysis saves/restores the scope and binds generator patterns as a fresh (shadowing) candidate per
+  qualifier (zip groups together); guard-test filters (`Function::guard_filters`) lower as guards. Each generator is a
+  loop whose cursor and the reversed accumulator live in term slots (no PHIs); the result is reversed once by
+  `ContainerConstruction::reverse`. Errors `bad_generator`/`bad_filter`/`bad_generators` (ErrorReason 16-18).
 
 - Execution model (step 17 decision, implemented in step 19; `docs/execution-model.md#implementation`):
   lowering emits native form (`Word f(ctx, args)`, ordinary calls, `erlang_aot.frame` slot marker, `erlang-arity`

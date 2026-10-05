@@ -57,8 +57,13 @@ context. Analysis is deterministic.
 - Unbound, unsafe and wildcard reads are located errors. Messages keep the
   compiler's wording (`unbound variable X`, `unsafe variable X`); the bindings
   corpus checks each against OTP's `unbound_var`/`unsafe_var` class.
-- Comprehension and closure scopes are not analyzed yet; they stay behind
-  capability diagnostics.
+- A comprehension evaluates each qualifier in order in the scope left by the
+  previous ones. Generator patterns bind new names that shadow outer ones
+  (reads inside the pattern prefer names it already bound); a zip group binds
+  all its patterns together. Templates read like siblings. The scope after the
+  comprehension is the one before it: its names are unbound there.
+- Closure scopes are not analyzed yet; they stay behind capability
+  diagnostics.
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
 any semantic error clears the module's binding and normalization tables.

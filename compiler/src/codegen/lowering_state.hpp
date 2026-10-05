@@ -133,6 +133,36 @@ llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchN
 llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value);
 // Share rooted tuple construction with ordinary record expansion.
 llvm::Value *lower_tuple(ExpressionLowering &state, std::span<llvm::Value *const> values);
+// Construct a list of `values` whose last value is the tail.
+llvm::Value *lower_list(ExpressionLowering &state, std::span<llvm::Value *const> values);
+// Reverse a proper list built by a comprehension.
+llvm::Value *lower_reverse(ExpressionLowering &state, llvm::Value *list);
+
+struct Comprehension {
+    // The bindings before the comprehension come back after it: nothing it binds is visible outside.
+    std::map<semantic::BindingId, llvm::Value *> bindings;
+    // The reversed result lives in a term slot, so the loops carry no SSA value across iterations or calls.
+    llvm::Value *accumulator;
+    // Where the next qualifier continues once an element is done: the innermost generator's next element, or the
+    // end when no generator encloses it.
+    llvm::BasicBlock *next;
+    llvm::BasicBlock *end;
+};
+
+// Start a comprehension with an empty accumulator.
+Comprehension begin_comprehension(ExpressionLowering &state);
+// Loop over the generators of one qualifier (a zip group runs its generators in step), whose inputs are lowered;
+// the following qualifiers lower into the loop body.
+void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
+                      const ast::ComprehensionQualifier &qualifier);
+// Continue when a filter holds; otherwise take the next element. A filter that is not a guard test and returns
+// neither true nor false raises {bad_filter, Value}.
+void lower_filter(ExpressionLowering &state, const Comprehension &comprehension, const ast::ExprId &filter);
+// Push the template values onto the accumulator, then take the next element.
+void lower_templates(ExpressionLowering &state, const Comprehension &comprehension,
+                     std::span<llvm::Value *const> values);
+// Once every generator is exhausted, restore the bindings and return the result list in source order.
+llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension);
 // Lower record values/access/indices using tuple shape and checked element services.
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
 // Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.

@@ -1,8 +1,10 @@
 #include "service_errors.hpp"
 #include "terms.hpp"
+#include <algorithm>
 #include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <new>
+#include <span>
 #include <stdexcept>
 
 namespace erlang_aot::runtime::detail {
@@ -31,6 +33,30 @@ std::uint8_t publish_result(ProcessContext &context, const TermResult<Term> &res
     return static_cast<std::uint8_t>(Outcome::failure);
 }
 
+// Prepend the elements of a proper list (`terms[0]`) to a tail (`terms[1]`) in reverse order; an improper list is a
+// bad argument.
+TermResult<Term> reverse(ProcessContext &context, std::span<const Term> terms) {
+    if (terms.size() != 2) {
+        return std::unexpected(TermError::invalid_argument);
+    }
+    std::vector<Term> elements;
+    auto rest = terms[0];
+    while (rest.is_cons()) {
+        const auto head = rest.head();
+        const auto next = rest.tail();
+        if (!head || !next) {
+            return std::unexpected(TermError::invalid_argument);
+        }
+        elements.push_back(*head);
+        rest = *next;
+    }
+    if (!rest.is_nil()) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    std::ranges::reverse(elements);
+    return TermFactory(context).list(elements, terms[1]);
+}
+
 // Bound marshalling work and validate all input ownership before invoking a transactional factory.
 TermResult<Term> construct(ProcessContext &context, Construct operation, std::span<const Word> values) {
     if (values.size() > 1'000'000) {
@@ -48,6 +74,9 @@ TermResult<Term> construct(ProcessContext &context, Construct operation, std::sp
     TermFactory factory(context);
     if (operation == Construct::tuple) {
         return factory.tuple(terms);
+    }
+    if (operation == Construct::reverse) {
+        return reverse(context, terms);
     }
     if (terms.empty()) {
         return std::unexpected(TermError::invalid_argument);
@@ -98,7 +127,7 @@ std::uint8_t construct_service(ProcessContext &context, std::uint8_t operation, 
     if (!ready(context, output)) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (operation > static_cast<std::uint8_t>(Construct::list) || (count != 0 && !values)) {
+    if (operation > static_cast<std::uint8_t>(Construct::reverse) || (count != 0 && !values)) {
         context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }

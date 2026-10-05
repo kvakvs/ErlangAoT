@@ -19,8 +19,8 @@ def rejection(tool, work):
             file.unlink()
     (directory / "out/sentinel").write_bytes(b"preserve")
     (directory / "client.erl").write_bytes(b"-module(client). -export([id/1]). id(X) -> X.\n")
-    cases = [("later_heap", "f(X) -> X; f(_) -> [X || X <- []].", "heap expressions"),
-             ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> [X || X <- []].", "heap expressions"),
+    cases = [("later_heap", "-record(r, {a}).\nf(X) -> X; f(Y) -> Y#r{a = 1}.", "heap expressions"),
+             ("unused", "-record(r, {a}).\nf(X) -> X. unused(X) -> X; unused(Y) -> Y#r{a = 1}.", "heap expressions"),
              ("later_guard", "f(X) -> X; f(X) when self() =:= X -> X.", "guards"),
              ("later_call", "f(X) -> X; f(_) -> missing().", "undefined function"),
              ("later_remote", "f(X) -> X; f(_) -> absent:f().", "unknown module"),

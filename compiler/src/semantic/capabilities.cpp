@@ -97,6 +97,19 @@ void maybe_patterns(const Module &module, const Function &function, const ast::M
     }
 }
 
+// Plan every generator pattern of a comprehension.
+void generator_patterns(const Module &module, const Function &function, const ast::ExprValue &value,
+                        const Reporter &out, const unsigned bits) {
+    for (const auto &qualifier : *comprehension_qualifiers(value)) {
+        for (const auto &part : zipped(qualifier)) {
+            for (const auto &pattern : semantic::generator_patterns(part)) {
+                (void)make_match_plan(module, function, pattern_root(*module.syntax, pattern), out,
+                                      {.word_bits = bits});
+            }
+        }
+    }
+}
+
 // Plan body-match and case-clause patterns so unsupported pattern forms are diagnosed before lowering.
 // A failed binding pass discards every binding table, leaving nothing to plan.
 void patterns(const Module &module, const Function &function, const ast::Expression &expression, const Reporter &out,
@@ -110,6 +123,9 @@ void patterns(const Module &module, const Function &function, const ast::Express
     if (const auto *block = std::get_if<ast::MaybeExpression>(&expression.value)) {
         maybe_patterns(module, function, *block, out, bits);
     }
+    if (comprehension_qualifiers(expression.value)) {
+        generator_patterns(module, function, expression.value, out, bits);
+    }
     for (const auto &clause : branch_clauses(expression.value)) {
         if (clause.handler && clause.handler->exception_class) {
             (void)make_match_plan(module, function, *clause.handler->exception_class, out, {.word_bits = bits});
@@ -117,6 +133,41 @@ void patterns(const Module &module, const Function &function, const ast::Express
         if (clause.pattern) {
             (void)make_match_plan(module, function, pattern_root(*module.syntax, *clause.pattern), out,
                                   {.word_bits = bits});
+        }
+    }
+}
+
+// A top-level match qualifier needs the experimental compr_assign feature, whose execution is deferred.
+void assignment(const Module &module, const ast::Qualifier &qualifier, const Reporter &out) {
+    const auto *filter = std::get_if<ast::FilterQualifier>(&qualifier.value);
+    if (!filter || !std::holds_alternative<ast::MatchExpression>(
+                       module.syntax->expression(ungroup(*module.syntax, filter->expression)).value)) {
+        return;
+    }
+    const auto features = module.syntax->features();
+    if (features && std::ranges::contains(features->enabled, "compr_assign")) {
+        unsupported(module, qualifier.source, "heap expressions", out);
+        return;
+    }
+    report(module, &qualifier.source,
+           "matches using '=' are not allowed in comprehension qualifiers unless the experimental 'compr_assign' "
+           "language feature is enabled",
+           out);
+}
+
+// Zip groups may only contain generators (OTP illegal_zip_generator).
+void check_qualifiers(const Module &module, const ast::ExprValue &value, const Reporter &out) {
+    const auto *qualifiers = comprehension_qualifiers(value);
+    if (!qualifiers) {
+        return;
+    }
+    for (const auto &qualifier : *qualifiers) {
+        const bool zip = std::holds_alternative<ast::ZippedQualifier>(qualifier);
+        for (const auto &part : zipped(qualifier)) {
+            if (zip && !generator_input(part)) {
+                report(module, &part.source, "only generators are allowed in a zip generator", out);
+            }
+            assignment(module, part, out);
         }
     }
 }
@@ -135,6 +186,7 @@ void expressions(const Module &module, const Function &function, std::vector<ast
             continue;
         }
         patterns(module, function, expression, out, bits);
+        check_qualifiers(module, expression.value, out);
         const auto children = expression_children(module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }

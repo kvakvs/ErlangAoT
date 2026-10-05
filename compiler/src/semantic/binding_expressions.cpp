@@ -15,14 +15,17 @@ enum class Action : std::uint8_t {
     sibling_end,
     siblings_exit,
     branch,
-    branch_end
+    branch_end,
+    comprehension_enter,
+    generator,
+    comprehension_exit
 };
 
 struct Visit {
     // Explicit tasks preserve RHS-first matches and isolate conditionally evaluated definitions.
     ast::ExprId id;
     Action action = Action::expression;
-    // Branch tasks name the case or if clause they start or finish.
+    // Branch tasks name the case or if clause they start or finish; generator tasks their qualifier.
     std::size_t clause = 0;
 };
 
@@ -47,6 +50,8 @@ struct Scopes {
     std::vector<std::unique_ptr<BindingEnvironment>> conditional;
     std::vector<std::unique_ptr<SiblingScope>> siblings;
     std::vector<std::unique_ptr<CaseScope>> cases;
+    // The scope before each enclosing comprehension, which binds nothing outside itself.
+    std::vector<std::unique_ptr<BindingEnvironment>> comprehensions;
 };
 
 // Merge constraints without exposing an earlier sibling's new names to the next sibling's reads.
@@ -158,6 +163,77 @@ bool conditional_block(const ast::Module &syntax, const ast::ExprId &id, const a
     }
     pending.push_back({id, Action::conditional_enter});
     return true;
+}
+
+// Templates read the same scope as siblings: a name one of them binds is not visible to another (OTP).
+void schedule_templates(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
+    const auto templates = comprehension_templates(value);
+    if (templates.size() == 1) {
+        pending.push_back({templates.front()});
+        return;
+    }
+    pending.push_back({id, Action::siblings_exit});
+    for (auto item = templates.rbegin(); item != templates.rend(); ++item) {
+        pending.push_back({*item, Action::sibling_end});
+        pending.push_back({*item});
+    }
+    pending.push_back({id, Action::siblings_enter});
+}
+
+// Nothing a comprehension binds is visible after it. Each qualifier in order evaluates its generator inputs or
+// filter, then binds its generator patterns for the following qualifiers and the templates.
+bool comprehension(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
+    const auto *qualifiers = comprehension_qualifiers(value);
+    if (!qualifiers) {
+        return false;
+    }
+    pending.push_back({id, Action::comprehension_exit});
+    schedule_templates(id, value, pending);
+    for (std::size_t i = qualifiers->size(); i != 0; --i) {
+        const auto parts = zipped((*qualifiers)[i - 1]);
+        pending.push_back({id, Action::generator, i - 1});
+        for (auto part = parts.rbegin(); part != parts.rend(); ++part) {
+            // A filter inside a zip group is rejected by capability analysis and analyzed no further.
+            if (const auto input = generator_input(*part)) {
+                pending.push_back({*input});
+            } else if (parts.size() == 1) {
+                pending.push_back({std::get<ast::FilterQualifier>(part->value).expression});
+            }
+        }
+    }
+    pending.push_back({id, Action::comprehension_enter});
+    return true;
+}
+
+// Generator patterns shadow incoming names; the patterns of a zip group bind together, so a repeated name must match.
+void bind_generators(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment) {
+    const auto &qualifier = comprehension_qualifiers(state.module.syntax->expression(visit.id).value)->at(visit.clause);
+    BindingCandidate candidate{environment, {}};
+    candidate.fresh = true;
+    for (const auto &part : zipped(qualifier)) {
+        for (const auto &pattern : generator_patterns(part)) {
+            bind_pattern(state, pattern, candidate, BindingContext::body);
+        }
+    }
+    candidate.shadow(environment);
+}
+
+// Save the scope before a comprehension, bind a qualifier's generator patterns, or restore the saved scope.
+bool comprehension_scope(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, Scopes &scopes) {
+    switch (visit.action) {
+    case Action::comprehension_enter:
+        scopes.comprehensions.push_back(std::make_unique<BindingEnvironment>(environment));
+        return true;
+    case Action::generator:
+        bind_generators(state, visit, environment);
+        return true;
+    case Action::comprehension_exit:
+        environment = std::move(*scopes.comprehensions.back());
+        scopes.comprehensions.pop_back();
+        return true;
+    default:
+        return false;
+    }
 }
 
 // A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if starts with its clauses.
@@ -303,6 +379,14 @@ void match(const BindingAnalysis &state, const ast::ExprId &id, const ast::Match
     pending.push_back({value.right});
 }
 
+// Schedule syntax that opens binding scopes of its own; ordinary value syntax returns false.
+bool scoped(const ast::Module &syntax, const ast::ExprId &id, const ast::ExprValue &value,
+            std::vector<Visit> &pending) {
+    return conditional(value, pending) || branches(id, value, pending) || protect(value, pending) ||
+           attempt(id, value, pending) || conditional_block(syntax, id, value, pending) ||
+           comprehension(id, value, pending);
+}
+
 // Ordinary value traversal never descends into deferred branch, exception or closure scopes.
 void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvironment &environment,
                 const BindingContext context, std::vector<Visit> &pending) {
@@ -314,8 +398,7 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvi
         match(state, id, *assignment, context, pending);
         return;
     }
-    if (conditional(value, pending) || branches(id, value, pending) || protect(value, pending) ||
-        attempt(id, value, pending) || conditional_block(*state.module.syntax, id, value, pending)) {
+    if (scoped(*state.module.syntax, id, value, pending)) {
         return;
     }
     BindingCandidate scope{environment, {}};
@@ -373,7 +456,7 @@ bool execute(BindingAnalysis &state, const Visit &visit, BindingEnvironment &env
         candidate.commit(environment);
     } else if (visit.action == Action::expression) {
         expression(state, visit.id, environment, context, pending);
-    } else {
+    } else if (!comprehension_scope(state, visit, environment, scopes)) {
         scope(state, visit, environment, pending, scopes);
     }
     return true;

@@ -173,6 +173,15 @@ Step facts beyond the plan record:
   Debug runtime makes services ~0.1-0.5 us: 2M-step tail loop ~1 s, 200k-deep list build+len+sum ~1.3 s.
 - 20: user asked for minimal iteration counts (just exceed the limit), not plan's 10M/1M. Golden runs may be
   `"authored": true` (regenerate.py keeps them) for ErlangAoT-only outcomes (stack budget -> exit 70).
+- 21: comprehension = loops in the body (codegen/lowering_comprehensions), loop state in term slots (root_slot), no PHIs;
+  result reversed once (ContainerConstruction::reverse=2). Generator patterns bind via BindingCandidate::fresh
+  (define_fresh, shadow()); find() prefers tentative names when fresh. Guard-test filters classified in guard_analysis
+  (guard_test, top-level legacy names allowed) -> Function::guard_filters; lowered with a synthesized GuardSyntax.
+  OTP facts: guard filter errors skip; non-guard filter non-boolean -> {bad_filter,V}; strict -> {badmatch,E}; zip ->
+  {bad_generators,{Tails}} (strict rejection too); compr_assign is experimental/off (OTP error text). lower_match_plan's
+  bind uses emplace: restore state.bindings before rematching the same identities. Name clash: a free function
+  `accumulate` resolves to llvm::accumulate via ADL. "Unsupported" placeholders now use record update `#r{}#r{a = 1}`.
+  programs.py --update-diagnostics rewrites programs compile.txt. Oracle needs -compile(nowarn_shadow_vars) for shadowing.
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

@@ -44,7 +44,7 @@ if(EXISTS "${TEST_DIR}/outside/build" OR EXISTS "${TEST_DIR}/project/reserved")
     message(FATAL_ERROR "Failed linking wrote executable outputs")
 endif()
 # A later target failure must prevent earlier successful targets from publishing their new bytes.
-file(WRITE "${TEST_DIR}/project/shared.erl" "-module(shared). -export([value/0]).\n-if(?VALUE == 2).\nvalue() -> [X || X <- []].\n-else.\nvalue() -> 99.\n-endif.\n")
+file(WRITE "${TEST_DIR}/project/shared.erl" "-module(shared). -export([value/0]).\n-record(r, {a}).\n-if(?VALUE == 2).\nvalue() -> #r{}#r{a = 1}.\n-else.\nvalue() -> 99.\n-endif.\n")
 check(1 "target two.*notimpl" --emit llvm-ir)
 file(READ "${one}" after_one)
 file(READ "${two}" after_two)

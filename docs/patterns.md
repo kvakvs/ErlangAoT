@@ -13,11 +13,45 @@ runtime **mismatch** is never a compiler error.
 | `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
 | `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
 | `maybe` with `?=` and `else` clauses | Implemented; a failed `?=` yields its value or selects an `else` clause, whose exhaustion raises `error:{else_clause, Value}`; needs the `maybe_expr` feature ([preprocessor](preprocessor.md)) |
-| Comprehensions | Capability (backlog F16) |
+| List comprehensions | Implemented ([below](#comprehensions)) |
+| Binary and map comprehensions, binary and map generators | Capability (F16, step 22) |
 | `catch Expr` | Implemented; no patterns ([ABI](abi.md#failure-channel-revision-2)) |
 | `try` `of` and catch clauses | Implemented; `of` exhaustion raises `error:{try_clause, Value}`, unmatched exceptions re-raise and `after` runs on every path ([ABI](abi.md#failure-channel-revision-2)); `Class:Reason:Stack` binds the [stack trace](abi.md#stack-traces) |
 | Fun clauses | Capability (F18) |
 | `receive` | Capability (F22/F25) |
+
+## Comprehensions
+
+`[T1, ..., Tn || Q1, ..., Qm]` follows OTP 29:
+
+- Qualifiers run left to right; each generator loops over the rest. Templates
+  are evaluated in that order for every surviving combination; several
+  templates add several elements per combination.
+- A generator pattern binds new names: it shadows outer names, and nothing a
+  comprehension binds is visible after it. A relaxed generator (`P <- L`)
+  skips elements its pattern rejects; a strict one (`P <:- L`) raises
+  `error:{badmatch, Element}`.
+- A zip group (`P1 <- L1 && P2 <- L2`) takes one element of every input per
+  step; its patterns bind together, so a repeated name must match. A rejected
+  step is skipped unless a strict pattern rejects it. Inputs running out
+  unevenly, or a strict rejection, raise `error:{bad_generators, {L1', L2'}}`
+  with the inputs remaining at that step. Filters inside a zip group are
+  semantic errors.
+- An input that is not a list, or an improper tail, raises
+  `error:{bad_generator, Tail}` once the elements before it are done.
+- A filter that is a guard test (OTP `erl_lint:is_guard_test/3`: guard syntax
+  calling only unshadowed guard BIFs, legacy type tests at top level) rejects
+  the element on any failure, as a guard. Any other filter must return `true`
+  or `false`; other values raise `error:{bad_filter, Value}` and its exceptions
+  propagate.
+- A top-level match qualifier (`P = E`) is a semantic error unless the
+  experimental `compr_assign` feature is enabled; executing it then is not
+  implemented (capability).
+
+Each generator is a loop in the function body whose input cursor lives in a
+frame term slot; the reversed result accumulates in another term slot and is
+reversed once at the end, so long inputs need constant native and process
+stack.
 
 ## Pattern forms
 

@@ -1,8 +1,5 @@
 exit 1
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:15:53: [heap expressions] notimpl [module="codec"]
 erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:21:17: [heap expressions] notimpl [module="codec"]
 erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/codec.erl:61:12: [heap expressions] notimpl [module="codec"]
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:26:26: [heap expressions] notimpl [module="frames"]
-erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:33:5: [heap expressions] notimpl [module="frames"]
 erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:52:32: [heap expressions] notimpl [module="frames"]
 erlangaot: <fixture>/project.toml [target frames]: error: <fixture>/src/frames.erl:49:15: [heap expressions] notimpl [module="frames"]

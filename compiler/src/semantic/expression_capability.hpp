@@ -67,7 +67,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::MaybeExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::ListComprehension &) const { return "heap expressions"; }
+    std::string_view operator()(const ast::ListComprehension &value) const;
 
     std::string_view operator()(const ast::MapComprehension &) const { return "heap expressions"; }
 

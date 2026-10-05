@@ -10,7 +10,7 @@ from matrix import combinations
 def failed_batch(tool, work):
     """An unsupported later source must leave no earlier atom artifact, followed by a successful retry."""
     bad = work / "bad.erl"
-    bad.write_text("-module(bad). value() -> [X || X <- []].\n", encoding="utf-8")
+    bad.write_text("-module(bad). -record(r, {a}). value(X) -> X#r{a = 1}.\n", encoding="utf-8")
     output = work / "failed"
     output.mkdir(exist_ok=True)
     for file in output.iterdir():

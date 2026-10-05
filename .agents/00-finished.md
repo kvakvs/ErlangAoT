@@ -231,6 +231,13 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   fallback), entry reductions for yield and unwinding to handler frames;
   prototype `tests/prototypes/execution_model/` compared native calls and
   LLVM coroutines and checked all required targets.
+- **List comprehensions (21):** every generator is a loop in the function body
+  with its cursor and the reversed accumulator in frame term slots (constant
+  stack), reversed once by `ContainerConstruction::reverse`; generator patterns
+  shadow, relaxed ones skip, strict ones raise `{badmatch, E}`, zip groups run
+  in step and raise `{bad_generators, Inputs}`, non-lists `{bad_generator, T}`;
+  guard-test filters reject like guards, others raise `{bad_filter, V}`
+  (`ErrorReason` 16-18); golden `list_comprehensions` (100k-element inputs).
 
 <a id="outstanding-work-to-finish"></a>
 

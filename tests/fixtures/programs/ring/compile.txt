@@ -1,8 +1,5 @@
 exit 1
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:22:21: [heap expressions] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:21:15: [heap expressions] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:18:36: [closures] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:17:12: [heap expressions] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:14:5: [receive] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:13:11: [send expressions] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:10:46: [guards] notimpl [module="ring"]

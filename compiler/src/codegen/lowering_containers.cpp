@@ -1,5 +1,6 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
+#include <array>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
@@ -57,6 +58,16 @@ llvm::Value *string(ExpressionLowering &state, const ast::StringLiteral &literal
 
 llvm::Value *lower_tuple(ExpressionLowering &state, const std::span<llvm::Value *const> values) {
     return construct(state, abi::v1::ContainerConstruction::tuple, values);
+}
+
+llvm::Value *lower_list(ExpressionLowering &state, const std::span<llvm::Value *const> values) {
+    return construct(state, abi::v1::ContainerConstruction::list, values);
+}
+
+llvm::Value *lower_reverse(ExpressionLowering &state, llvm::Value *list) {
+    return construct(
+        state, abi::v1::ContainerConstruction::reverse,
+        std::array{list, static_cast<llvm::Value *>(llvm::ConstantInt::get(state.word, abi::v1::empty_list))});
 }
 
 llvm::Value *lower_container(ExpressionLowering &state, const ast::ExprValue &value) {

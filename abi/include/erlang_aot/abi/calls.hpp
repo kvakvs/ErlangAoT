@@ -21,7 +21,12 @@ enum class ErrorReason : std::uint8_t {
     // A try's `of` clauses did not match; the payload is the body value.
     try_clause = 14,
     // No `else` clause of a maybe matched; the payload is the unmatched value.
-    else_clause = 15
+    else_clause = 15,
+    // A comprehension generator's input is not a list (its remaining tail is the payload), a filter returned a
+    // non-boolean (the payload), or zipped generators ran out unevenly (the payload is the tuple of their inputs).
+    bad_generator = 16,
+    bad_filter = 17,
+    bad_generators = 18
 };
 } // namespace erlang_aot::abi::v1
 

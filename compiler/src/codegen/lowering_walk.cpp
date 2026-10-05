@@ -22,7 +22,9 @@ enum class Action : std::uint8_t {
     after_end,
     after_raise_end,
     maybe_match,
-    maybe_end
+    maybe_end,
+    qualifier,
+    comprehension_end
 };
 
 struct Visit {
@@ -30,7 +32,7 @@ struct Visit {
     ast::ExprId id;
     Action action = Action::enter;
     // Record-field actions capture one completed evaluation before a reused initializer can run again;
-    // case and if clause actions name their clause here.
+    // case and if clause actions name their clause here, comprehension qualifier actions their qualifier.
     std::size_t field = 0;
     std::optional<ast::ExprId> child = {};
 };
@@ -248,6 +250,7 @@ struct Walk {
     std::map<const ast::Expression *, ProtectedScope> afters;
     std::map<const ast::Expression *, AfterPath> after_paths;
     std::map<const ast::Expression *, MaybeScope> maybes;
+    std::map<const ast::Expression *, Comprehension> comprehensions;
 
     // Save the enclosing handler and error exits in `scopes`; failures in what follows reach a new handler instead.
     void protect(std::map<const ast::Expression *, ProtectedScope> &scopes, const ast::Expression &expression,
@@ -376,9 +379,69 @@ struct Walk {
     // Enter an expression: a catch or try opens its protected scope, a maybe its exit, every other node schedules
     // its operands.
     void enter_node(const ast::ExprId &id) {
-        if (!open_catch(id) && !open_try(id) && !open_maybe(id)) {
+        if (!open_catch(id) && !open_try(id) && !open_maybe(id) && !open_comprehension(id)) {
             enter(state, id, pending);
         }
+    }
+
+    // Schedule each qualifier after its generator inputs or body filter, then the templates; guard filters
+    // need no value before their qualifier.
+    bool open_comprehension(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto *qualifiers = semantic::comprehension_qualifiers(expression.value);
+        if (!qualifiers) {
+            return false;
+        }
+        comprehensions.try_emplace(&expression, begin_comprehension(state));
+        pending.push_back({id, Action::comprehension_end});
+        const auto templates = semantic::comprehension_templates(expression.value);
+        for (auto item = templates.rbegin(); item != templates.rend(); ++item) {
+            pending.push_back({*item});
+        }
+        for (std::size_t i = qualifiers->size(); i != 0; --i) {
+            pending.push_back({id, Action::qualifier, i - 1});
+            const auto parts = semantic::zipped((*qualifiers)[i - 1]);
+            for (auto part = parts.rbegin(); part != parts.rend(); ++part) {
+                schedule_operand(*part);
+            }
+        }
+        return true;
+    }
+
+    // A generator's input, or a filter evaluated as an ordinary expression.
+    void schedule_operand(const ast::Qualifier &part) {
+        const auto *filter = std::get_if<ast::FilterQualifier>(&part.value);
+        if (!filter) {
+            pending.push_back({*semantic::generator_input(part)});
+        } else if (!state.function.guard_filters.contains(&state.module.syntax->expression(filter->expression))) {
+            pending.push_back({filter->expression});
+        }
+    }
+
+    // Loop over a qualifier's generators or test its filter.
+    void lower_qualifier(const Visit &visit) {
+        const auto &expression = state.module.syntax->expression(visit.id);
+        const auto &qualifier = semantic::comprehension_qualifiers(expression.value)->at(visit.field);
+        const auto *simple = std::get_if<ast::Qualifier>(&qualifier);
+        const auto *filter = simple ? std::get_if<ast::FilterQualifier>(&simple->value) : nullptr;
+        if (filter) {
+            lower_filter(state, comprehensions.at(&expression), filter->expression);
+        } else {
+            lower_generators(state, comprehensions.at(&expression), qualifier);
+        }
+    }
+
+    // Accumulate the template values, then produce the result once the generators are exhausted.
+    void comprehension_end(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        auto node = comprehensions.extract(&expression);
+        std::vector<llvm::Value *> values;
+        for (const auto &item : semantic::comprehension_templates(expression.value)) {
+            values.push_back(state.values.at(&state.module.syntax->expression(item)));
+        }
+        locate_source(state.builder, *state.module.syntax, expression.source);
+        lower_templates(state, node.mapped(), values);
+        state.values.insert_or_assign(&expression, finish_comprehension(state, node.mapped()));
     }
 
     // Schedule a maybe body in order; each ?= matches once its value exists.
@@ -745,16 +808,28 @@ struct Walk {
         case Action::maybe_end:
             maybe_end(visit.id);
             break;
-        default:
+        case Action::after_raise_end:
             after_raise_end(visit.id);
             break;
+        default:
+            comprehend(visit);
+            break;
+        }
+    }
+
+    // Comprehension actions: a qualifier, or the templates' end.
+    void comprehend(const Visit &visit) {
+        if (visit.action == Action::qualifier) {
+            lower_qualifier(visit);
+        } else {
+            comprehension_end(visit.id);
         }
     }
 };
 } // namespace
 
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
-    Walk walk{state, {{root}}, {}, {}, {}, {}, {}, {}};
+    Walk walk{state, {{root}}, {}, {}, {}, {}, {}, {}, {}};
     while (!walk.pending.empty()) {
         const auto visit = walk.pending.back();
         walk.pending.pop_back();
