@@ -29,9 +29,15 @@ void Children::operator()(const FunExpression &value) const { function_clauses(v
 
 void Children::handler(const CatchClause &value) const {
     source(value.source);
+    if (value.exception_class) {
+        child(*value.exception_class);
+    }
     pattern(value.reason, true);
-    if (value.stacktrace && !value.exception_class) {
-        throw std::invalid_argument("stacktrace requires an explicit exception class");
+    if (value.stacktrace) {
+        if (!value.exception_class) {
+            throw std::invalid_argument("stacktrace requires an explicit exception class");
+        }
+        child(*value.stacktrace);
     }
     if (value.guard) {
         guard(*value.guard);

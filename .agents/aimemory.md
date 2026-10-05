@@ -131,6 +131,12 @@ Step facts beyond the plan record:
   skipped catch bodies: segfault / "invalid map<K, T> key") - fixed. OTP 29 warns deprecated_catch by default and
   the oracle uses warnings_as_errors: fixtures need -compile(nowarn_deprecated_catch); nowarn_* options admitted.
   Program fixtures hide stacks with show({'EXIT',{R,S}}) when is_list(S).
+- 13: CatchClause class/stacktrace are ExprIds (parser make()). Branch::handler + first_handler: try = of clauses then
+  catch clauses. Walker ProtectedScope (catches map) protects only the body; handlers() takes {class, reason} via
+  erlang_aot_exception_v1, catch clauses start from pre-try bindings; unmatched -> erlang_aot_reraise_v1 (raised_*
+  reason, observably identical). Walk::visit split (visit/branch) for Lizard CCN. Bindings OTP regenerate: use
+  "C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe" directly (otp-launch shim gone). Atoms > numbers in term order:
+  `zero > 0` is true in guards.
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

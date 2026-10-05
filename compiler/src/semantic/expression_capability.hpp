@@ -63,7 +63,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::FunExpression &) const { return "closures"; }
 
-    std::string_view operator()(const ast::TryExpression &) const { return "exceptions"; }
+    std::string_view operator()(const ast::TryExpression &) const;
 
     std::string_view operator()(const ast::MaybeExpression &) const { return "pattern matching"; }
 

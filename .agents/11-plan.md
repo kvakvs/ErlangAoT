@@ -520,13 +520,38 @@ Backlog: F20. Depends on: [11](#step-11).
 Backlog: F13, F20. Depends on: [11](#step-11).
 
 - Success criteria
-  - [ ] Class/reason patterns and guards select handlers in order; unmatched
+  - [x] Class/reason patterns and guards select handlers in order; unmatched
     exceptions re-raise unchanged; `of` clauses fail with `try_clause`.
-  - [ ] Exceptions inside `of` clauses and handlers are not caught by the same
+  - [x] Exceptions inside `of` clauses and handlers are not caught by the same
     `try`.
 - Tests
-  - [ ] Golden programs for each class, default `throw` class, nested tries,
+  - [x] Golden programs for each class, default `throw` class, nested tries,
     re-raise and `try_clause`.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Catch-clause class
+  and stacktrace are now AST expression nodes (bindings anchor on them; tree
+  and dump output unchanged). `semantic::branch_clauses` lists a try's `of`
+  then catch clauses (`Branch::handler`, `first_handler`), so guard analysis,
+  pattern planning and atoms reuse the case paths. Binding analysis: body and
+  clauses form one conditional scope (all names unsafe afterwards), `of`
+  clauses see body names, catch clauses see them unsafe (OTP `Uvt`). The
+  walker protects only the body; its handler calls new
+  `erlang_aot_exception_v1` (class atom + reason, clears the channel), catch
+  clauses match class (omitted = `throw`), reason and guard from the pre-try
+  bindings, and no match calls new `erlang_aot_reraise_v1`; `of` exhaustion
+  raises `ErrorReason::try_clause = 14`. `after` and named stacktrace
+  variables stay `[exceptions]` capabilities (steps 14/15). OTP golden
+  `executables_try_catch` (11 runs: classes, default class, class variable,
+  ten runtime reasons, ordered reason patterns of every kind, bound and
+  repeated variables, raising guards, `of` selection, `try_clause`, `of` and
+  handler exceptions escaping, nested and remote re-raise, flow, uncaught
+  error/throw/exit/`try_clause`, `halt` not caught); bindings corpus +6
+  `try_*` rows verified by OTP 29.1.1 (`--check` reproduces); semantic
+  `try_expr`/`try_unsafe`/`try_in_guard`/`try_after`/`try_stacktrace`;
+  placeholder sample now a named stacktrace; program compile goldens lose
+  their `[exceptions]` rows; mangling for `Exception`/`Reraise`. Fresh Windows
+  x64 Debug: fast CTest 146/146 (after the program-golden update); Lizard 0
+  warnings after splitting `Walk::visit`; tidy 189 changed units pass. Logs
+  `build/plan11-step13/`.
 
 <a id="step-14"></a>
 

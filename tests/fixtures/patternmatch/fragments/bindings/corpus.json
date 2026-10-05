@@ -40,6 +40,12 @@
     "sibling_checks.erl",
     "sibling_local.erl",
     "sibling_read.erl",
+    "try_class.erl",
+    "try_clause_unsafe.erl",
+    "try_handler_unsafe.erl",
+    "try_inside.erl",
+    "try_of_body.erl",
+    "try_unsafe.erl",
     "unbound.erl",
     "unsafe_and.erl",
     "unsafe_match.erl",
@@ -427,6 +433,60 @@
         "diagnostic": "unsafe variable X",
         "otp_diagnostic": "unsafe_var",
         "sha256": "57818033132ee12395b3228164a8392a056faa8718bbbe1e85c16055ed759bf2"
+      },
+      {
+        "name": "try_inside",
+        "arity": 1,
+        "body": "f(A) -> try X = A, {X} catch _ -> A end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "8cba4ceaa0f6726db7ce801fec56b342ad18e877b5a270cdab0c64d4fd65fa67"
+      },
+      {
+        "name": "try_of_body",
+        "arity": 1,
+        "body": "f(A) -> try X = A of Y -> {X, Y} catch _ -> A end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "bee834fd48852f97562b382d3b07ad39a16bc04b09feba32ce10f1ce389b78c2"
+      },
+      {
+        "name": "try_class",
+        "arity": 1,
+        "body": "f(A) -> try A catch C:R -> {C, R} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "8e5d0746b97bc3e55856e9d489e797ceac656cbc0d11d4b7696a9f39ec0439f1"
+      },
+      {
+        "name": "try_unsafe",
+        "arity": 1,
+        "body": "f(A) -> try X = A catch _ -> A end, X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "ba759ca1c6e54b2e2a667c038f0c024e8ac59606148f41ec97269fe1d48a5a0b"
+      },
+      {
+        "name": "try_handler_unsafe",
+        "arity": 1,
+        "body": "f(A) -> try X = A catch _ -> X end.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "2652e0cc1f3bd72b4d8e7248cb7f326abea29739ec3918f12ea78c0fcf0a4568"
+      },
+      {
+        "name": "try_clause_unsafe",
+        "arity": 1,
+        "body": "f(A) -> try A of Y -> Y catch Y -> Y end, Y.",
+        "capability": "",
+        "diagnostic": "unsafe variable Y",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "6b0eedec08b6ab8862d6ee05dbc8d7ee9937ae462e89212d693f3f58a5b31fbb"
       },
       {
         "name": "bindings_local",

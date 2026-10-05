@@ -125,12 +125,16 @@ struct ExpressionDump {
                                    " body=", value.body.size());
         test_records::records.node("tuple", (3), " elements=", 3);
         if (value.exception_class) {
-            std::visit(*this, *value.exception_class);
+            child(*value.exception_class);
         } else {
             (*this)(ast::Atom{U"throw"});
         }
         pattern(value.reason);
-        (*this)(value.stacktrace.value_or(ast::Variable{U"_"}));
+        if (value.stacktrace) {
+            child(*value.stacktrace);
+        } else {
+            (*this)(ast::Variable{U"_"});
+        }
         guards(value.guard);
         expressions(value.body);
     }

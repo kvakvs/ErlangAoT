@@ -2,6 +2,7 @@
 #include "../semantic/match_plan.hpp"
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
+#include <array>
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <map>
@@ -74,6 +75,11 @@ llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status);
 llvm::Value *lower_raise(ExpressionLowering &state, std::u32string_view name, llvm::Value *reason);
 // Turn the pending exception into the `catch Expr` value; halts and runtime failures continue to the outer exit.
 llvm::Value *lower_catch(ExpressionLowering &state);
+// Take the pending exception as rooted {class atom, reason} for try handlers; halts and runtime failures continue
+// to the outer exit.
+std::array<llvm::Value *, 2> lower_exception(ExpressionLowering &state);
+// Raise a caught class and reason again when no catch clause matched.
+void reraise(ExpressionLowering &state, const std::array<llvm::Value *, 2> &exception);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.

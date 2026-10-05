@@ -10,4 +10,3 @@ erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:25:12: [send expressions] notimpl [module="kvstore"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:24:12: [send expressions] notimpl [module="kvstore"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:45:5: [receive] notimpl [module="kvstore"]
-erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:52:5: [exceptions] notimpl [module="kvstore"]

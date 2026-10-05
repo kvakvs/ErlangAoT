@@ -10,6 +10,18 @@ struct Component {
 
     std::string operator()(const Integer &value) const { return value.decimal; }
 };
+
+// Name a catch class node (atom or variable) in the same compact form as fun reference components.
+std::string class_component(const ast::Module &module, const std::optional<ast::ExprId> &id) {
+    if (!id) {
+        return "<omitted>";
+    }
+    const auto &value = module.expression(*id).value;
+    if (const auto *name = std::get_if<ast::Atom>(&value)) {
+        return Component{}(*name);
+    }
+    return Component{}(std::get<ast::Variable>(value));
+}
 } // namespace
 
 void TreePrinter::operator()(const ast::LocalFunReference &value) const {
@@ -43,9 +55,10 @@ void TreePrinter::operator()(const ast::TryExpression &value) {
 }
 
 void TreePrinter::operator()(const ast::CatchClause &value) {
-    output_ << "CatchClause class="
-            << (value.exception_class ? std::visit(Component{}, *value.exception_class) : "<omitted>")
-            << " stacktrace=" << (value.stacktrace ? utf8(value.stacktrace->name) : "<omitted>");
+    const auto stacktrace = value.stacktrace
+                                ? utf8(std::get<ast::Variable>(module_.expression(*value.stacktrace).value).name)
+                                : "<omitted>";
+    output_ << "CatchClause class=" << class_component(module_, value.exception_class) << " stacktrace=" << stacktrace;
     child("reason", value.reason);
     if (value.guard) {
         child("guard", &*value.guard);

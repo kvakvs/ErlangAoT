@@ -149,5 +149,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-05 | Plan 11 step 10 `if` | 147 (143 fast) | 114 changed | Fast 143/143; affected tests 8/8 in full mode; Lizard 0 warnings; tidy passed |
 | 2026-10-05 | Plan 11 step 11 source raises | 148 (144 fast) | 124 changed | Fast 144/144; affected tests 22/22 in full mode; Lizard 0 warnings; tidy passed |
 | 2026-10-05 | Plan 11 step 12 `catch Expr` | 149 (145 fast) | 277 | Fast 145/145; affected tests 25/25 in full mode; Lizard 0 warnings; tidy passed |
+| 2026-10-05 | Plan 11 step 13 `try ... of ... catch` | 150 (146 fast) | 189 changed | Fast 146/146; Lizard 0 warnings; tidy passed |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

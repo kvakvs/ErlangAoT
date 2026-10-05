@@ -40,6 +40,12 @@
 {catch_bound, accepted, none}.
 {catch_unsafe, rejected, unsafe_var}.
 {catch_unsafe_match, rejected, unsafe_var}.
+{try_inside, accepted, none}.
+{try_of_body, accepted, none}.
+{try_class, accepted, none}.
+{try_unsafe, rejected, unsafe_var}.
+{try_handler_unsafe, rejected, unsafe_var}.
+{try_clause_unsafe, rejected, unsafe_var}.
 {bindings_local, accepted, none}.
 {answer, accepted, none}.
 {client, accepted, none}.

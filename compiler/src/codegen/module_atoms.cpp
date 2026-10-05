@@ -52,10 +52,16 @@ bool booleans(const ast::ExprValue &value) {
             binary->operation == ast::BinaryOperator::or_else);
 }
 
-// Case and if clause guards compare each test with the canonical true atom.
+// Case, if and try clause guards compare each test with the canonical true atom.
 bool guarded(const ast::ExprValue &value) {
     return std::ranges::any_of(semantic::branch_clauses(value),
                                [](const auto &clause) { return clause.guard != nullptr; });
+}
+
+// A catch clause without a class matches the class atom throw.
+bool implicit_throw(const ast::ExprValue &value) {
+    return std::ranges::any_of(semantic::branch_clauses(value),
+                               [](const auto &clause) { return clause.handler && !clause.handler->exception_class; });
 }
 
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
@@ -90,6 +96,9 @@ std::set<std::string> spellings(const semantic::Module &module) {
         }
         if (const auto *atom = std::get_if<ast::Atom>(&expression.value)) {
             result.insert(utf8(atom->name));
+        }
+        if (implicit_throw(expression.value)) {
+            result.insert("throw");
         }
         const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.begin(), children.end());

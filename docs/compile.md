@@ -17,12 +17,13 @@ ordinary tuple records. Bodies are sequences of matches, constructors, checked
 operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
 `erlang:halt/0,1` ([exit status](executables.md#exit-status)), the raising
 `error/1,2,3`, `exit/1` and `throw/1` ([ABI](abi.md#failure-channel-revision-2)),
-`case`/`if`, `catch Expr` and direct local or literal remote calls within the
-batch. Guards support the full admitted catalog. See [patterns](patterns.md),
+`case`/`if`, `catch Expr`, `try ... of ... catch` and direct local or literal
+remote calls within the batch. Guards support the full admitted catalog. See [patterns](patterns.md),
 [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: recursion (the call graph
-must be acyclic), `maybe`/`receive`, `try`, funs and closures, dynamic calls,
+must be acyclic), `maybe`/`receive`, `try ... after`, named stacktrace
+variables in catch clauses, funs and closures, dynamic calls,
 comprehensions, record updates and native records, processes and messaging.
 Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,

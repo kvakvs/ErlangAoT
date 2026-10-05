@@ -31,7 +31,9 @@ context. Analysis is deterministic.
   after the whole expression. `{X = 1, X}` is an unbound read; `{X = 4, X = 3}`
   is legal and fails at run time.
 - Definitions on the RHS of `andalso`/`orelse` or inside `catch Expr` are unsafe
-  afterwards (OTP `vtunsafe`); names bound before a `catch` stay usable. Guards
+  afterwards (OTP `vtunsafe`); names bound before a `catch` stay usable. Every
+  name bound inside a `try` is unsafe afterwards; `of` clauses see the body's
+  names, catch clauses see them as unsafe. Guards
   never publish bindings; matches in guards are errors even when unreachable.
 - Map keys read only incoming bindings; binary sizes also read earlier segments
   of the same binary (see [patterns](patterns.md#scopes)).
@@ -47,8 +49,8 @@ context. Analysis is deterministic.
 - Unbound, unsafe and wildcard reads are located errors. Messages keep the
   compiler's wording (`unbound variable X`, `unsafe variable X`); the bindings
   corpus checks each against OTP's `unbound_var`/`unsafe_var` class.
-- `try`, comprehension and closure scopes are not analyzed yet; they stay
-  behind capability diagnostics.
+- Comprehension and closure scopes are not analyzed yet; they stay behind
+  capability diagnostics.
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
 any semantic error clears the module's binding and normalization tables.

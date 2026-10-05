@@ -3,6 +3,8 @@
 #include <string_view>
 
 namespace erlang_aot::runtime::detail {
+// Name the class of an exception: exit/1 and throw/1 keep theirs, every other reason is an error.
+std::string_view exception_class(const CallFailure &failure);
 // Name the error atom of a typed language failure (badmatch, case_clause, ...); raised reasons have none.
 std::string_view error_name(abi::v1::ErrorReason reason) noexcept;
 // Build the Erlang reason of a pending exception: the raised term, the error atom or {Atom, Value}.

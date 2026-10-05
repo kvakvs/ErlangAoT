@@ -3,16 +3,20 @@
 namespace erlang_aot {
 ast::CatchClause FormParser::catch_clause() {
     const auto begin = cursor_.offset();
-    std::optional<std::variant<ast::Atom, ast::Variable>> exception_class;
+    std::optional<ast::ExprId> exception_class;
     const auto *next = cursor_.peek(1);
     if (next && syntax(*next, U":")) {
-        exception_class = atom_or_variable();
+        const auto start = cursor_.offset();
+        exception_class =
+            make(std::visit([](auto name) -> ast::ExprValue { return name; }, atom_or_variable()), start, start);
         expect(U":");
     }
     auto reason = pattern();
-    std::optional<ast::Variable> stacktrace;
+    std::optional<ast::ExprId> stacktrace;
     if (exception_class && cursor_.take_syntax(U":")) {
-        stacktrace = ast::Variable{value<std::u32string>(category(TokenKind::variable, "stacktrace variable"))};
+        const auto start = cursor_.offset();
+        auto name = ast::Variable{value<std::u32string>(category(TokenKind::variable, "stacktrace variable"))};
+        stacktrace = make(std::move(name), start, start);
     }
     auto guards = optional_guard();
     expect(U"->");

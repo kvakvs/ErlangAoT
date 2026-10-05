@@ -33,7 +33,7 @@ struct CallFailure final {
     bool reported = false;
     // Retain exact infrastructure status separately from Erlang exception reasons.
     std::optional<abi::v1::Status> status = {};
-    // All admitted Erlang exceptions have class error; catch/try and stacks remain deferred.
+    // The typed or raised Erlang reason; raised reasons also select the class (error, exit or throw).
     std::optional<abi::v1::ErrorReason> reason = {};
     // Own an admitted badmatch or {badarg,Value} payload, or the erlang:halt/1 slogan string.
     std::optional<Term> value = {};

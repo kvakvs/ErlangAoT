@@ -198,6 +198,12 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   `erlang_aot_catch_v1` (thrown term, `{'EXIT', R}`, `{'EXIT', {R, []}}`);
   halts and runtime failures pass through; inner bindings unsafe afterwards;
   golden `catch_values`, four `catch_*` binding rows; `nowarn_*` compile options.
+- **`try ... of ... catch` (13):** the body's handler takes `{Class, Reason}`
+  via `erlang_aot_exception_v1`; catch clauses match class (default `throw`),
+  reason and guard; unmatched re-raise via `erlang_aot_reraise_v1`; `of` clauses
+  raise `{try_clause, V}`; everything bound inside is unsafe afterwards; golden
+  `try_catch`, six `try_*` binding rows. Catch class/stacktrace are AST
+  expressions.
 
 <a id="outstanding-work-to-finish"></a>
 

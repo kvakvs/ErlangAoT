@@ -5,6 +5,7 @@
 #include <array>
 #include <erlang_aot/abi/calls.hpp>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
+#include <span>
 
 namespace erlang_aot::codegen {
 namespace {
@@ -16,7 +17,8 @@ enum class Action : std::uint8_t {
     record_field,
     case_select,
     case_clause_end,
-    catch_end
+    catch_end,
+    try_body_end
 };
 
 struct Visit {
@@ -43,7 +45,8 @@ struct CaseIncoming {
 };
 
 struct CaseJoin {
-    // Every case clause matches the same scrutinee (null for if); clauses start from the bindings before the branch.
+    // Every case clause matches the same scrutinee (null for if, the body value for a try's of clauses); clauses
+    // start from the bindings before the branch (catch clauses from those before the try).
     llvm::Value *value;
     std::map<semantic::BindingId, llvm::Value *> bindings;
     // The merge block is inserted after the last clause; completed clauses collect their incoming edges.
@@ -51,16 +54,18 @@ struct CaseJoin {
     // The mismatch continuation of the current clause starts the next one, or raises case_clause/if_clause.
     llvm::BasicBlock *next = nullptr;
     std::vector<CaseIncoming> incoming = {};
+    // A try's catch clauses match the caught class atom and reason.
+    std::array<llvm::Value *, 2> exception = {};
 };
 
-struct CatchScope {
-    // The enclosing handler and error exits come back once the protected expression completes.
+struct ProtectedScope {
+    // The enclosing handler and error exits come back once the protected catch expression or try body completes.
     llvm::BasicBlock *outer;
     llvm::BasicBlock *bad_argument;
     llvm::BasicBlock *bad_arithmetic;
-    // Names bound inside a catch are unsafe afterwards, so the bindings before it are restored.
+    // Names bound inside a catch or try are unsafe afterwards, so the bindings before it are restored.
     std::map<semantic::BindingId, llvm::Value *> bindings;
-    // Failures inside the protected expression branch here; it is erased when nothing inside can fail.
+    // Failures inside the protected part branch here; it is erased when nothing inside can fail.
     llvm::BasicBlock *handler;
 };
 
@@ -218,7 +223,25 @@ struct Walk {
     std::vector<Visit> pending;
     std::map<const ast::Expression *, LazyJoin> joins;
     std::map<const ast::Expression *, CaseJoin> cases;
-    std::map<const ast::Expression *, CatchScope> catches;
+    std::map<const ast::Expression *, ProtectedScope> catches;
+
+    // Save the enclosing handler and error exits; failures in what follows reach `handler` instead.
+    void protect(const ast::Expression &expression, const char *name) {
+        auto *handler = llvm::BasicBlock::Create(state.entry.getContext(), name, &state.entry);
+        catches.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
+                            handler);
+        // Shared error exits created outside the protected part would bypass its handler.
+        state.handler = handler;
+        state.bad_argument = nullptr;
+        state.bad_arithmetic = nullptr;
+    }
+
+    // Restore the enclosing handler and error exits once a protected part completes.
+    void restore(const ProtectedScope &scope) {
+        state.handler = scope.outer;
+        state.bad_argument = scope.bad_argument;
+        state.bad_arithmetic = scope.bad_arithmetic;
+    }
 
     // Protect a catch expression: failures inside it reach a fresh handler instead of the enclosing exit.
     bool open_catch(const ast::ExprId &id) {
@@ -227,13 +250,7 @@ struct Walk {
         if (!guarded) {
             return false;
         }
-        auto *handler = llvm::BasicBlock::Create(state.entry.getContext(), "catch.handler", &state.entry);
-        catches.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
-                            handler);
-        // Shared error exits created outside the catch would bypass its handler.
-        state.handler = handler;
-        state.bad_argument = nullptr;
-        state.bad_arithmetic = nullptr;
+        protect(expression, "catch.handler");
         pending.push_back({id, Action::catch_end});
         pending.push_back({guarded->expression});
         return true;
@@ -241,13 +258,11 @@ struct Walk {
 
     // Join the protected value with the caught exception value, then restore the enclosing scope.
     void close_catch(const ast::Expression &expression) {
-        auto &scope = catches.at(&expression);
+        auto node = catches.extract(&expression);
+        auto &scope = node.mapped();
         auto *handler = scope.handler;
-        state.handler = scope.outer;
-        state.bad_argument = scope.bad_argument;
-        state.bad_arithmetic = scope.bad_arithmetic;
-        state.bindings.swap(scope.bindings);
-        catches.erase(&expression);
+        restore(scope);
+        state.bindings = std::move(scope.bindings);
         const auto &guarded = std::get<ast::CatchExpression>(expression.value);
         auto *value = state.values.at(&state.module.syntax->expression(guarded.expression));
         if (handler->use_empty()) {
@@ -269,9 +284,62 @@ struct Walk {
         state.values.insert_or_assign(&expression, result);
     }
 
-    // Enter an expression: a catch opens its protected scope, every other node schedules its operands.
+    // Protect a try body: its exceptions reach the catch clauses, which like the of clauses run unprotected.
+    bool open_try(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto *attempt = std::get_if<ast::TryExpression>(&expression.value);
+        if (!attempt) {
+            return false;
+        }
+        protect(expression, "try.handler");
+        pending.push_back({id, Action::try_body_end});
+        for (auto body = attempt->body.rbegin(); body != attempt->body.rend(); ++body) {
+            pending.push_back({*body});
+        }
+        return true;
+    }
+
+    // Leave the protected try body, then select an of clause on its value or join that value directly.
+    void try_body_end(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto &attempt = std::get<ast::TryExpression>(expression.value);
+        auto *value = state.values.at(&state.module.syntax->expression(attempt.body.back()));
+        restore(catches.at(&expression));
+        auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "try.join");
+        auto &join = cases.try_emplace(&expression, value, state.bindings, merge).first->second;
+        if (attempt.of) {
+            start_clause(id, 0);
+            return;
+        }
+        join.incoming.push_back({state.builder.GetInsertBlock(), {value}});
+        state.builder.CreateBr(merge);
+        handlers(id);
+    }
+
+    // Start the catch clauses from the try's handler with the bindings before the try, or finish the try when
+    // nothing in its body can fail.
+    void handlers(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        auto node = catches.extract(&expression);
+        auto &scope = node.mapped();
+        auto &join = cases.at(&expression);
+        join.bindings = std::move(scope.bindings);
+        if (scope.handler->use_empty()) {
+            scope.handler->eraseFromParent();
+            state.builder.ClearInsertionPoint();
+            finish_case(expression, join);
+            cases.erase(&expression);
+            return;
+        }
+        state.builder.SetInsertPoint(scope.handler);
+        locate_source(state.builder, *state.module.syntax, expression.source);
+        join.exception = lower_exception(state);
+        start_clause(id, semantic::first_handler(expression.value));
+    }
+
+    // Enter an expression: a catch or try opens its protected scope, every other node schedules its operands.
     void enter_node(const ast::ExprId &id) {
-        if (!open_catch(id)) {
+        if (!open_catch(id) && !open_try(id)) {
             enter(state, id, pending);
         }
     }
@@ -297,8 +365,7 @@ struct Walk {
         join.next = llvm::BasicBlock::Create(context, "case.next", &state.entry);
         if (clause.pattern) {
             auto *guard = clause.guard ? llvm::BasicBlock::Create(context, "case.guard", &state.entry) : body;
-            const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, *clause.pattern));
-            lower_match_plan(state, plan, std::array{join.value}, guard, join.next);
+            match_head(clause, join, guard);
             state.builder.SetInsertPoint(guard);
         }
         if (clause.guard) {
@@ -311,37 +378,87 @@ struct Walk {
         }
     }
 
-    // Record a completed clause's edge to the join, then try the next clause or finish the case.
+    // Match a clause pattern against the case value, or a catch clause's class and reason against the exception.
+    void match_head(const semantic::Branch &clause, const CaseJoin &join, llvm::BasicBlock *success) {
+        auto *input = join.value;
+        if (clause.handler) {
+            auto *reason = llvm::BasicBlock::Create(state.entry.getContext(), "catch.reason", &state.entry);
+            match_class(*clause.handler, join.exception[0], reason, join.next);
+            state.builder.SetInsertPoint(reason);
+            input = join.exception[1];
+        }
+        const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, *clause.pattern));
+        lower_match_plan(state, plan, std::array{input}, success, join.next);
+    }
+
+    // An explicit class is an atom or variable pattern; an omitted class matches throw.
+    void match_class(const ast::CatchClause &handler, llvm::Value *name, llvm::BasicBlock *success,
+                     llvm::BasicBlock *mismatch) {
+        if (handler.exception_class) {
+            const auto plan = body_pattern_plan(state, *handler.exception_class);
+            lower_match_plan(state, plan, std::array{name}, success, mismatch);
+            return;
+        }
+        auto *test = lower_exact(state, name, lower_atom(state, ast::Atom{U"throw"}));
+        state.builder.CreateCondBr(test, success, mismatch);
+    }
+
+    // Bindings a case or if exports; everything bound inside a try is unsafe afterwards.
+    std::span<const semantic::BindingId> exported(const ast::Expression &expression) const {
+        if (std::holds_alternative<ast::TryExpression>(expression.value)) {
+            return {};
+        }
+        return state.function.exports.at(&expression);
+    }
+
+    // Record a completed clause's edge to the join, then try the next clause of the same group (case and if
+    // clauses, a try's of clauses or its catch clauses) or finish the group.
     void clause_end(const Visit &visit) {
         const auto &expression = state.module.syntax->expression(visit.id);
         const auto clauses = semantic::branch_clauses(expression.value);
         auto &join = cases.at(&expression);
         const auto &last = state.module.syntax->expression(clauses.at(visit.field).body->back());
         CaseIncoming completed{state.builder.GetInsertBlock(), {state.values.at(&last)}};
-        for (const auto &identity : state.function.exports.at(&expression)) {
+        for (const auto &identity : exported(expression)) {
             completed.values.push_back(state.bindings.at(identity));
         }
         join.incoming.push_back(std::move(completed));
         state.builder.CreateBr(join.merge);
         state.builder.SetInsertPoint(join.next);
-        if (visit.field + 1 < clauses.size()) {
+        const auto first = semantic::first_handler(expression.value);
+        const auto end = visit.field < first ? first : clauses.size();
+        if (visit.field + 1 < end) {
             start_clause(visit.id, visit.field + 1);
+            return;
+        }
+        no_match(expression, join, clauses.at(visit.field));
+        if (std::holds_alternative<ast::TryExpression>(expression.value) && visit.field < first) {
+            handlers(visit.id);
             return;
         }
         finish_case(expression, join);
         cases.erase(&expression);
     }
 
-    // Raise {case_clause, Value} or if_clause when no clause matched, then join clause values and exported bindings.
-    void finish_case(const ast::Expression &expression, CaseJoin &join) {
+    // Raise {case_clause, Value}, if_clause or {try_clause, Value}, or re-raise an unmatched exception, from the last
+    // clause's mismatch continuation; drop it when that clause always matches.
+    void no_match(const ast::Expression &expression, const CaseJoin &join, const semantic::Branch &last) {
         if (join.next->use_empty()) {
             state.builder.ClearInsertionPoint();
             join.next->eraseFromParent();
+        } else if (last.handler) {
+            reraise(state, join.exception);
+        } else if (std::holds_alternative<ast::TryExpression>(expression.value)) {
+            raise_reason(state, abi::v1::ErrorReason::try_clause, join.value);
         } else if (join.value) {
             raise_reason(state, abi::v1::ErrorReason::case_clause, join.value);
         } else {
             raise_reason(state, abi::v1::ErrorReason::if_clause);
         }
+    }
+
+    // Join clause values and exported bindings after every clause has been tried.
+    void finish_case(const ast::Expression &expression, CaseJoin &join) {
         join.merge->insertInto(&state.entry);
         state.builder.SetInsertPoint(join.merge);
         locate_source(state.builder, *state.module.syntax, expression.source);
@@ -349,7 +466,7 @@ struct Walk {
         auto *boundary = state.builder.CreateUnreachable();
         auto *result = merged(state, join, 0);
         state.bindings = std::move(join.bindings);
-        const auto &exports = state.function.exports.at(&expression);
+        const auto exports = exported(expression);
         for (std::size_t i = 0; i < exports.size(); ++i) {
             state.bindings.insert_or_assign(exports[i], merged(state, join, i + 1));
         }
@@ -391,6 +508,15 @@ struct Walk {
                 visit.child ? state.values.at(&state.module.syntax->expression(*visit.child))
                             : lower_atom(state, ast::Atom{U"undefined"});
             break;
+        default:
+            branch(visit);
+            break;
+        }
+    }
+
+    // Clause selection and exception handler actions continue a case, if, catch or try.
+    void branch(const Visit &visit) {
+        switch (visit.action) {
         case Action::case_select:
             select(visit.id);
             break;
@@ -398,7 +524,10 @@ struct Walk {
             clause_end(visit);
             break;
         case Action::catch_end:
-            close_catch(expression);
+            close_catch(state.module.syntax->expression(visit.id));
+            break;
+        default:
+            try_body_end(visit.id);
             break;
         }
     }

@@ -50,6 +50,10 @@
   `Expr` lowers, so `propagate_failure` and `raise_reason` branch to it; the handler calls `erlang_aot_catch_v1`
   (runtime `process/exceptions`: catch value, clears the channel) and re-checks to reach the outer exit for
   halts/runtime failures; a PHI joins the value and the pre-catch bindings are restored (inner names unsafe).
+  `try ... of ... catch` (step 13): `semantic::branch_clauses` lists of clauses then catch clauses (`Branch::handler`,
+  `first_handler`); the walker protects only the body (`ProtectedScope`), selects of clauses on its value
+  (`try_clause` on exhaustion), and from the handler takes `{class, reason}` (`erlang_aot_exception_v1`) and matches
+  catch clauses from the pre-try bindings; no match re-raises (`erlang_aot_reraise_v1`). All try names stay unsafe.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

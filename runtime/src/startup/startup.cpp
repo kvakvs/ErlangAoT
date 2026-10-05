@@ -132,13 +132,6 @@ int run(const StartupDescriptor &startup, int argc, char **argv) {
 }
 } // namespace
 
-std::string_view exception_class(const CallFailure &failure) {
-    if (failure.reason == abi::v1::ErrorReason::raised_exit) {
-        return "exit";
-    }
-    return failure.reason == abi::v1::ErrorReason::raised_throw ? "throw" : "error";
-}
-
 TermResult<std::string> exception_reason(const CallFailure &failure) {
     const auto name = failure.reason ? error_name(*failure.reason) : std::string_view{};
     // Raised reasons (error/exit/throw) are the whole payload term.

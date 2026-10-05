@@ -92,15 +92,29 @@ void push_guard(const ast::GuardSyntax &guard, std::vector<Visit> &pending) {
     }
 }
 
-// Schedule a case scrutinee and case/if bodies in the current context and clause guards as top-level guard tests.
+// A case scrutinee, or a try's body and after body, stay in the current context.
+void branch_operands(const ast::ExprValue &value, const Visit &visit, std::vector<Visit> &pending) {
+    std::vector<ast::ExprId> operands;
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        operands.push_back(selection->value);
+    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        operands = attempt->body;
+        if (attempt->after) {
+            operands.insert(operands.end(), attempt->after->begin(), attempt->after->end());
+        }
+    }
+    for (const auto &operand : operands) {
+        pending.push_back({operand, false, visit.guard});
+    }
+}
+
+// Schedule branch operands and clause bodies in the current context and clause guards as top-level guard tests.
 bool branch_guards(const ast::Expression &expression, const Visit &visit, std::vector<Visit> &pending) {
     const auto clauses = branch_clauses(expression.value);
     if (clauses.empty()) {
         return false;
     }
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
-        pending.push_back({selection->value, false, visit.guard});
-    }
+    branch_operands(expression.value, visit, pending);
     for (const auto &clause : clauses) {
         if (clause.guard) {
             push_guard(*clause.guard, pending);

@@ -237,10 +237,11 @@ struct FunExpression {
 };
 
 struct CatchClause {
-    // Omitted class/stacktrace project to throw/_; reason syntax is restricted pat_expr.
-    std::optional<std::variant<Atom, Variable>> exception_class;
+    // Omitted class/stacktrace project to throw/_; reason syntax is restricted pat_expr. The class is an Atom or
+    // Variable expression and the stacktrace a Variable expression, so bindings can anchor on them.
+    std::optional<ExprId> exception_class;
     PatternSyntaxId reason;
-    std::optional<Variable> stacktrace;
+    std::optional<ExprId> stacktrace;
     std::optional<GuardSyntax> guard;
     std::vector<ExprId> body;
     NodeSource source;

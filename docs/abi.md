@@ -70,7 +70,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Outcome | Transport |
 | --- | --- |
 | Pattern mismatch, guard rejection | Continuation to next candidate; channel untouched |
-| Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case`; `error:if_clause` |
+| Exhausted clauses | `error:function_clause`; `error:{case_clause, Value}` with owned payload for a `case`; `error:if_clause`; `error:{try_clause, Value}` for a try's `of` clauses |
 | Body match failure | `error:{badmatch, Value}` with owned payload |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Invalid lazy left operand | `{badarg, Value}` |
@@ -97,6 +97,19 @@ OTP terms such as `{badmatch, V}`). Halts and infrastructure failures stay
 pending, and the handler's own check continues to the enclosing handler or
 function exit. Bindings made inside `Expr` are unsafe afterwards, so the join
 only merges the value.
+
+`try Body of ... catch ... end` protects only `Body` the same way. Its handler
+calls `erlang_aot_exception_v1(context, class_slot, reason_slot)`, which writes
+the class atom (`error`, `exit` or `throw`) and the reason term to root slots
+and clears the channel (halts and infrastructure failures stay pending as for
+`catch`). Catch clauses then match `Class:Reason` with ordinary patterns and
+guards; an omitted class matches `throw`. When none matches,
+`erlang_aot_reraise_v1(context, class, reason)` records the exception again
+with a `raised_*` reason, which reports and catches exactly like the original.
+`of` clauses select on the body value and raise `{try_clause, Value}`
+(`ErrorReason::try_clause = 14`); exceptions inside `of` clauses and handlers go
+to the enclosing handler. Named stacktrace variables and `after` remain
+capability diagnostics until steps 15 and 14.
 
 ## Root scopes
 

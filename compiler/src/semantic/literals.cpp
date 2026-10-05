@@ -53,33 +53,65 @@ void append_guard(const ast::GuardSyntax *guard, std::vector<ast::ExprId> &resul
     }
 }
 
-// A case reads its scrutinee; every branch then reads each clause's guard tests and body.
-// Patterns stay with match plans.
+// A case reads its scrutinee and a try its body first; every branch then reads each clause's guard tests and body,
+// and a try's after body comes last. Patterns stay with match plans.
 std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std::vector<Branch> &clauses) {
     std::vector<ast::ExprId> result;
+    const auto *attempt = std::get_if<ast::TryExpression>(&value);
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         result.push_back(selection->value);
+    } else if (attempt) {
+        result = attempt->body;
     }
     for (const auto &clause : clauses) {
         append_guard(clause.guard, result);
         result.insert(result.end(), clause.body->begin(), clause.body->end());
     }
+    if (attempt && attempt->after) {
+        result.insert(result.end(), attempt->after->begin(), attempt->after->end());
+    }
     return result;
+}
+
+// Present branch clauses (case, or a try's of part) uniformly.
+void append_branches(const std::vector<ast::BranchClause> &clauses, std::vector<Branch> &result) {
+    for (const auto &clause : clauses) {
+        result.push_back({&clause.pattern, clause.guard ? &*clause.guard : nullptr, &clause.body});
+    }
+}
+
+// A try lists its of clauses before its catch clauses.
+void append_try(const ast::TryExpression &attempt, std::vector<Branch> &result) {
+    if (attempt.of) {
+        append_branches(*attempt.of, result);
+    }
+    if (attempt.handlers) {
+        for (const auto &clause : *attempt.handlers) {
+            result.push_back({&clause.reason, clause.guard ? &*clause.guard : nullptr, &clause.body, &clause});
+        }
+    }
 }
 } // namespace
 
 std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
     std::vector<Branch> result;
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        for (const auto &clause : selection->clauses) {
-            result.push_back({&clause.pattern, clause.guard ? &*clause.guard : nullptr, &clause.body});
-        }
+        append_branches(selection->clauses, result);
     } else if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
         for (const auto &clause : choice->clauses) {
             result.push_back({nullptr, &clause.guard, &clause.body});
         }
+    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        append_try(*attempt, result);
     }
     return result;
+}
+
+std::size_t first_handler(const ast::ExprValue &value) {
+    if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        return attempt->of ? attempt->of->size() : 0;
+    }
+    return branch_clauses(value).size();
 }
 
 std::optional<std::int64_t> integer_literal(const ast::Module &syntax, ast::ExprId expression,
@@ -112,7 +144,8 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         return {match->right};
     }
-    if (const auto clauses = branch_clauses(expression.value); !clauses.empty()) {
+    if (const auto clauses = branch_clauses(expression.value);
+        !clauses.empty() || std::holds_alternative<ast::TryExpression>(expression.value)) {
         return branch_children(expression.value, clauses);
     }
     return binding_children(expression.value);

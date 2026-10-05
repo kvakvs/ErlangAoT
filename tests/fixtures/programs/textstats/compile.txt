@@ -10,5 +10,4 @@ erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/texts
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:51:30: [closures] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:50:23: [closures] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:77:29: [arithmetic] notimpl [module="textstats"]
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:7:5: [exceptions] notimpl [module="words"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:33:17: [closures] notimpl [module="words"]

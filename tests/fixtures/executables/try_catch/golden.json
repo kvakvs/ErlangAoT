@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "entry": "tries",
+  "runs": [
+    {
+      "args": [
+        "classes"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{thrown,ball}\n{default_class,plain}\n{error,oops}\n{exit,shutdown}\n{error,with_args}\nvalue\n{throw,t}\n{error,e}\n{exit,x}\n{returned,none}\n"
+    },
+    {
+      "args": [
+        "runtime"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{error,{badmatch,2}}\n{error,function_clause}\n{error,badarith}\n{error,{case_clause,3}}\n{error,if_clause}\n{error,{badarg,1}}\n{error,{badkey,k}}\n{error,{badmap,nomap}}\n{error,{badrecord,{other,1,2}}}\n{returned,1}\n"
+    },
+    {
+      "args": [
+        "select"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{positive_tag,1}\n{tag,-1}\n{any_tag,2}\n{map,3}\n{record,4,5}\n{binary,6,<<7>>}\n{other,last}\n{matched,k}\n{different,j}\n{same,throw}\n{differ,throw,error}\n{positive,5}\n{negative,-5}\n{neither,zero}\n"
+    },
+    {
+      "args": [
+        "of"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "positive\nnegative\nzero\n{'EXIT',{{try_clause,nan},stack}}\n{20,20}\nfrom_of\nfrom_handler\n{two,inner_of}\n"
+    },
+    {
+      "args": [
+        "nested"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{outer,throw,inner}\n{outer,{rethrown,inner}}\n{outer,from_of}\n{caught,{deep,3}}\n{depth,[one,returned]}\n{unmatched,b}\nhandled\n{passed,{passing,2}}\n{'EXIT',{{try_clause,7},stack}}\n"
+    },
+    {
+      "args": [
+        "flow"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{before,of_clause}\n{same,before}\n[a,b,d]\nin_case\n3\n8\n"
+    },
+    {
+      "args": [
+        "uncaught_error"
+      ],
+      "stderr": "^uncaught exception error: \\{badmatch,2\\}\n$",
+      "exit_status": 1,
+      "stdout": "1\n"
+    },
+    {
+      "args": [
+        "uncaught_throw"
+      ],
+      "stderr": "^uncaught exception throw: \\{deep,1\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "uncaught_exit"
+      ],
+      "stderr": "^uncaught exception exit: stop\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "try_clause"
+      ],
+      "stderr": "^uncaught exception error: \\{try_clause,9\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 4,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "raiser.erl": "7ee767ee1f2b7bc2e84ea0546e6e9ef8a9eda167d805f8ebcf3c47c570bcd167",
+    "tries.erl": "250c9ac8f28361b1d650f81e49a9215e2e87bfb210b68f388c7c41897f280ff1"
+  }
+}

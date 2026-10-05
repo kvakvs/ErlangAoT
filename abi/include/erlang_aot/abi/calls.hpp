@@ -17,7 +17,9 @@ enum class ErrorReason : std::uint8_t {
     // erlang:error/1,2,3, exit/1 and throw/1: the payload is the whole reason and the ID selects the class.
     raised_error = 11,
     raised_exit = 12,
-    raised_throw = 13
+    raised_throw = 13,
+    // A try's `of` clauses did not match; the payload is the body value.
+    try_clause = 14
 };
 } // namespace erlang_aot::abi::v1
 
@@ -29,3 +31,10 @@ std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason
 // Turn the pending Erlang exception into the value of `catch Expr` in `output` and clear the channel;
 // halts and infrastructure failures stay pending and return a nonzero status.
 std::uint8_t erlang_aot_catch_v1(void *context, erlang_aot::abi::v1::TermWord *output) noexcept;
+// Move the pending Erlang exception into its class atom and reason term (try ... catch) and clear the channel;
+// halts and infrastructure failures stay pending and return a nonzero status.
+std::uint8_t erlang_aot_exception_v1(void *context, erlang_aot::abi::v1::TermWord *exception_class,
+                                     erlang_aot::abi::v1::TermWord *reason) noexcept;
+// Raise Class:Reason again, as when no catch clause matched; the class must be error, exit or throw.
+std::uint8_t erlang_aot_reraise_v1(void *context, erlang_aot::abi::v1::TermWord exception_class,
+                                   erlang_aot::abi::v1::TermWord reason) noexcept;

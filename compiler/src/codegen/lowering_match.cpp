@@ -218,6 +218,15 @@ void lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan
     }
 }
 
+// A raised exception continues at the innermost handler, or leaves the function through its checked exit.
+void unwind(ExpressionLowering &state) {
+    if (state.handler) {
+        state.builder.CreateBr(state.handler);
+    } else {
+        state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
+    }
+}
+
 void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload) {
     auto &output = *state.entry.getParent();
     const auto symbol = services::symbol<services::Raise>(output.getTargetTriple());
@@ -226,11 +235,16 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
                                         {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));
     state.builder.CreateCall(service, {state.entry.getArg(0), state.builder.getInt8(static_cast<std::uint8_t>(reason)),
                                        payload ? payload : llvm::ConstantInt::get(state.word, 0)});
-    if (state.handler) {
-        state.builder.CreateBr(state.handler);
-    } else {
-        state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
-    }
+    unwind(state);
+}
+
+void reraise(ExpressionLowering &state, const std::array<llvm::Value *, 2> &exception) {
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Reraise>(output.getTargetTriple()),
+        llvm::FunctionType::get(state.builder.getInt8Ty(), {state.builder.getPtrTy(), state.word, state.word}, false));
+    state.builder.CreateCall(service, {state.entry.getArg(0), exception[0], exception[1]});
+    unwind(state);
 }
 
 void raise_function_clause(ExpressionLowering &state) { raise_reason(state, abi::v1::ErrorReason::function_clause); }

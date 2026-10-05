@@ -33,9 +33,13 @@ struct SiblingScope {
 };
 
 struct CaseScope {
-    // Every clause starts from the scope after a case scrutinee or before an if; finished scopes wait for the join.
+    // Every clause starts from the scope after a case scrutinee, before an if or after a try body; finished scopes
+    // wait for the join.
     BindingEnvironment incoming;
     std::vector<BindingEnvironment> clauses;
+    // A try's catch clauses (from `first_handler` on) start before the try with the body's names unsafe (OTP Uvt).
+    std::optional<BindingEnvironment> handlers = {};
+    std::size_t first_handler = 0;
 };
 
 struct Scopes {
@@ -111,6 +115,27 @@ bool protect(const ast::ExprValue &value, std::vector<Visit> &pending) {
     return true;
 }
 
+// Everything a try binds is unsafe afterwards: its body and clauses form one conditional scope, then the after body
+// another. Of and catch clauses start once the body is analyzed.
+bool attempt(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
+    const auto *guarded = std::get_if<ast::TryExpression>(&value);
+    if (!guarded) {
+        return false;
+    }
+    if (guarded->after) {
+        pending.push_back({id, Action::conditional_exit});
+        pending.insert(pending.end(), guarded->after->rbegin(), guarded->after->rend());
+        pending.push_back({id, Action::conditional_enter});
+    }
+    pending.push_back({id, Action::conditional_exit});
+    if (!branch_clauses(value).empty()) {
+        pending.push_back({id, Action::branch});
+    }
+    pending.insert(pending.end(), guarded->body.rbegin(), guarded->body.rend());
+    pending.push_back({id, Action::conditional_enter});
+    return true;
+}
+
 // A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if starts with its clauses.
 bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
     if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
@@ -123,14 +148,25 @@ bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Vi
     return true;
 }
 
+// Bind a clause pattern; a catch clause matches Class:Reason:Stack left to right.
+void bind_head(BindingAnalysis &state, const Branch &clause, BindingCandidate &head) {
+    if (clause.handler && clause.handler->exception_class) {
+        bind_pattern(state, *clause.handler->exception_class, head, BindingContext::body);
+    }
+    if (clause.pattern) {
+        bind_pattern(state, *clause.pattern, head, BindingContext::body);
+    }
+    if (clause.handler && clause.handler->stacktrace) {
+        bind_pattern(state, *clause.handler->stacktrace, head, BindingContext::body);
+    }
+}
+
 // Bind one clause's pattern and guard over the incoming scope, then schedule its body before the clause end.
 void begin_branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
                   std::vector<Visit> &pending) {
     const auto clause = branch_clauses(state.module.syntax->expression(visit.id).value).at(visit.clause);
     BindingCandidate head{environment, {}};
-    if (clause.pattern) {
-        bind_pattern(state, *clause.pattern, head, BindingContext::body);
-    }
+    bind_head(state, clause, head);
     if (clause.guard) {
         bind_guard(state, *clause.guard, head);
     }
@@ -163,15 +199,29 @@ BindingEnvironment join_branches(BindingAnalysis &state, const ast::ExprId &id, 
     return result;
 }
 
-// Start a clause from the case's incoming scope; the first clause opens the case scope.
+// Open the clause scope of a case, if or try; a try's handler scope is the try's conditional scope (innermost).
+std::unique_ptr<CaseScope> open_branches(const ast::ExprValue &value, const BindingEnvironment &environment,
+                                         const Scopes &scopes) {
+    auto scope = std::make_unique<CaseScope>(environment, std::vector<BindingEnvironment>{});
+    if (std::holds_alternative<ast::TryExpression>(value)) {
+        scope->first_handler = first_handler(value);
+        scope->handlers = environment;
+        finish_conditional(*scope->handlers, *scopes.conditional.back());
+    }
+    return scope;
+}
+
+// Start a clause from the case's incoming scope (a try's catch clauses from its handler scope); the first clause
+// opens the case scope.
 void branch(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, std::vector<Visit> &pending,
             Scopes &scopes) {
     if (visit.clause == 0) {
-        scopes.cases.push_back(std::make_unique<CaseScope>(environment, std::vector<BindingEnvironment>{}));
+        const auto &value = state.module.syntax->expression(visit.id).value;
+        scopes.cases.push_back(open_branches(value, environment, scopes));
         state.branch_names.emplace_back();
-    } else {
-        environment = scopes.cases.back()->incoming;
     }
+    const auto &scope = *scopes.cases.back();
+    environment = scope.handlers && visit.clause >= scope.first_handler ? *scope.handlers : scope.incoming;
     begin_branch(state, visit, environment, pending);
 }
 
@@ -217,7 +267,8 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvi
         match(state, id, *assignment, context, pending);
         return;
     }
-    if (conditional(value, pending) || branches(id, value, pending) || protect(value, pending)) {
+    if (conditional(value, pending) || branches(id, value, pending) || protect(value, pending) ||
+        attempt(id, value, pending)) {
         return;
     }
     BindingCandidate scope{environment, {}};

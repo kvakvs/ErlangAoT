@@ -97,6 +97,9 @@ void patterns(const Module &module, const Function &function, const ast::Express
         (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
     }
     for (const auto &clause : branch_clauses(expression.value)) {
+        if (clause.handler && clause.handler->exception_class) {
+            (void)make_match_plan(module, function, *clause.handler->exception_class, out, {.word_bits = bits});
+        }
         if (clause.pattern) {
             (void)make_match_plan(module, function, pattern_root(*module.syntax, *clause.pattern), out,
                                   {.word_bits = bits});
