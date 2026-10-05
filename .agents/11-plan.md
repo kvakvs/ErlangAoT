@@ -815,12 +815,28 @@ Backlog: F21. Depends on: [18](#step-18).
 Backlog: F21. Depends on: [19](#step-19).
 
 - Success criteria
-  - [ ] Body recursion deeper than the native stack (for example building a
+  - [x] Body recursion deeper than the native stack (for example building a
     1-million-element list) succeeds within the process budget.
-  - [ ] Exceeding the budget produces the documented failure, not a native
+  - [x] Exceeding the budget produces the documented failure, not a native
     crash.
 - Tests
-  - [ ] Golden programs for deep body recursion and for the budget limit.
+  - [x] Golden programs for deep body recursion and for the budget limit.
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Step 19's frames
+  already make body recursion independent of the native stack; this step adds
+  the evidence. OTP golden `executables_deep_recursion`: 200,000-level body
+  recursion (depth chosen on user request: beyond an 8 MiB native stack at 42 B
+  per native frame) building a list and taking its length and sum, mutual
+  recursion, a nested tuple measured recursively, and an exception unwinding
+  200,000 frames to a handler. The budget run (`forever/1` never returns) is
+  authored, as OTP cannot show it: exit 70 and
+  `erlangaot: runtime failure: entry call failed: resource_limit`
+  ([executables](../docs/executables.md#exit-status)) after about 1.1 million
+  frames of 15 words. Golden runs may now be `"authored": true`
+  (`regenerate.py` keeps them). A 1,000,000-element list build/len/sum ran
+  once by hand (O0, Debug runtime, 6.5 s). Fresh Windows x64 Debug (clang-cl):
+  fast CTest 154/154, full 158/158; Lizard 0 warnings; tidy 278 units pass
+  (shared with step 19, no production code changed). Logs
+  `build/plan11-step19/`.
 
 <a id="step-21"></a>
 

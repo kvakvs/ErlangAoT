@@ -19,6 +19,7 @@ is registered.
 | `runs[].args` | author | Argument strings of one invocation |
 | `runs[].stderr` | author, or `^$` | Python regular expression searched in stderr; required when OTP writes stderr, because ErlangAoT's report text differs |
 | `runs[].exit_status`, `runs[].stdout` | OTP | Observed under the pinned OTP with the program-fixture [oracle](../../compiler/programs/oracle.escript) |
+| `runs[].authored` | author, optional | `true` keeps the run's `exit_status`, `stdout` and `stderr` as written: ErlangAoT-only behavior OTP cannot show, such as the stack budget failure of `deep_recursion` |
 | `oracle_version`, `reference`, `inputs` | OTP | Oracle release, `maint-29` pin, and source hashes that make a stale golden fail before linking |
 
 To add a case, write the sources and a golden with the author fields, then

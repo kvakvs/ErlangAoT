@@ -171,6 +171,8 @@ Step facts beyond the plan record:
   clang++, MSVC=false, no UTF-8 manifest -> Unicode-path tests fail, parser_hardening segfaults. Switching compiler
   needs rm -rf build/debug (nested native consumer caches). Scripts build/plan11-step19/*.cmd.
   Debug runtime makes services ~0.1-0.5 us: 2M-step tail loop ~1 s, 200k-deep list build+len+sum ~1.3 s.
+- 20: user asked for minimal iteration counts (just exceed the limit), not plan's 10M/1M. Golden runs may be
+  `"authored": true` (regenerate.py keeps them) for ErlangAoT-only outcomes (stack budget -> exit 70).
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

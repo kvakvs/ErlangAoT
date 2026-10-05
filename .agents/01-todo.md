@@ -231,7 +231,9 @@ Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-
   (compare explicit continuations with LLVM coroutines). Decided in step 17
   ([execution model](../docs/execution-model.md)), implemented in step 19:
   explicit frames, `musttail` transfers, local/mutual/remote tail calls.
-- [ ] Deep tail and non-tail recursion, local/remote/mutual.
+- [x] Deep tail and non-tail recursion, local/remote/mutual (steps 19, 20):
+  body recursion is bounded by the process stack budget, which fails with
+  `resource_limit` (exit 70).
 
 ## Processes and runtime services
 

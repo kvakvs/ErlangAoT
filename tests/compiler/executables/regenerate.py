@@ -46,6 +46,10 @@ def regenerate(escript, case_dir, work):
     staged = cases.stage(case_dir, golden, work / case_dir.name)
     runs, version = [], None
     for run in golden['runs']:
+        if run.get('authored'):
+            # ErlangAoT-only behavior OTP cannot show (such as its stack budget): kept as written.
+            runs.append(run)
+            continue
         result, version = observe(escript, staged, golden['entry'], run['args'], work)
         runs.append(generated_run(case_dir.name, run, result))
     listed = {'sources': golden['sources']} if 'sources' in golden else {}
