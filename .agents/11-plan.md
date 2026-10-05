@@ -691,17 +691,37 @@ Compare explicit heap frames, LLVM coroutines and CPS-style lowering with a
 small compiled prototype that calls, recurses, yields and resumes.
 
 - Success criteria
-  - [ ] `docs/execution-model.md` defines call, return, tail call, yield,
+  - [x] `docs/execution-model.md` defines call, return, tail call, yield,
     resume, exit, exception propagation and root visibility for each frame.
-  - [ ] It decides the successor of the interim 8F segmented root stack: a
+  - [x] It decides the successor of the interim 8F segmented root stack: a
     flat per-process stack with in-stack frame headers and base-plus-offset
     slot addressing, or the frame storage the chosen model needs instead.
-  - [ ] The choice works on all required targets (including Windows x86 and
+  - [x] The choice works on all required targets (including Windows x86 and
     32-bit ARM) or names the fallback per target.
 - Tests
-  - [ ] The prototype runs return, deep recursion, yield/resume and error exit
+  - [x] The prototype runs return, deep recursion, yield/resume and error exit
     on the host, recorded in the decision document.
-  - [ ] IR inspection on both word widths for the chosen lowering.
+  - [x] IR inspection on both word widths for the chosen lowering.
+- Evidence (2026-10-05): not OTP-dependent (no `maint-29` check). Decision:
+  explicit frames on one flat, moving per-process stack (4-word header:
+  `previous` offset, descriptor, `resume` and `handler` continuation indices;
+  base-plus-offset slots), arguments/results in process X registers, an entry
+  plus one body per function that switches on the resume index, and only
+  `musttail` transfers of `void (Process *)` code, so native depth is
+  constant; yield = entry reduction count reaching zero; exceptions unwind to
+  the innermost handler frame; trampoline fallback with the same frames.
+  Prototype `tests/prototypes/execution_model/` (`model.hpp`, hand-lowered
+  `generated.cpp`, `runtime.cpp` scheduler; rejected `native.cpp` and C++20
+  `coroutines.cpp`; `run.py`, not a CTest): Windows x64 host, clang 23.1.2,
+  O0 and O2 PASS for both transfer forms (return, 1M-deep recursion, 10M tail
+  calls, caught and uncaught error at depth 100k with an 8-frame trace, two
+  interleaved processes in 1,002 slices); `generated.cpp` compiles for x86_64
+  and i686 Windows/Linux, AArch64 Linux, ARMv7 Linux and arm64 macOS at O0
+  and O2 with every transfer `musttail` (15 at O0, 14 at O2) and tail jumps
+  in the assembly; IR on both word widths recorded. Native calls need 80 B
+  native stack per level and cannot yield; coroutines allocate per call
+  (64-80 B), lack tail calls and run 3.4x slower. No production code changed,
+  so the gate was not rerun. Log `build/plan11-step17/prototype.log`.
 
 <a id="step-18"></a>
 

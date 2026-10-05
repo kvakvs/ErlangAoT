@@ -165,7 +165,7 @@ Windows x64 Debug 124/124 CTests and 258 quality units. Descriptors use ABI
 revision 4; the revision-2 failure channel is unchanged. Normal builds and tests
 need no OTP.
 
-## Plan 11 (steps 1–10, 2026-10-03–05, Windows x64)
+## Plan 11 (steps 1–17, 2026-10-03–05, Windows x64)
 
 Compact per-step record: [11-plan.md](11-plan.md#step-1).
 
@@ -225,6 +225,12 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   (nothing exported, `else` sees body names unsafe); golden `maybe_else`, four
   `maybe_*` binding rows, feature-disabled source rejected. The `pattern
   matching` capability is implemented.
+- **Execution model decision (17):** `docs/execution-model.md` fixes explicit
+  frames on a flat moving process stack, X-register arguments, entry plus
+  resume-switch body per function, `musttail` transfers (trampoline
+  fallback), entry reductions for yield and unwinding to handler frames;
+  prototype `tests/prototypes/execution_model/` compared native calls and
+  LLVM coroutines and checked all required targets.
 
 <a id="outstanding-work-to-finish"></a>
 

@@ -226,7 +226,8 @@ Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-
 
 - [ ] Recursive call components in resolution and inference.
 - [ ] Frame/tail-call model compatible with roots, exceptions and suspension
-  (compare explicit continuations with LLVM coroutines).
+  (compare explicit continuations with LLVM coroutines). Decided in step 17
+  ([execution model](../docs/execution-model.md)); implementation steps 19-20.
 - [ ] Deep tail and non-tail recursion, local/remote/mutual.
 
 ## Processes and runtime services

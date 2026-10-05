@@ -18,6 +18,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Term representations (atoms, numbers, containers, maps, bits, records) and printing | [terms.md](terms.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
+| Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |
 | Deferred-feature (`notimpl`) reporting | [features.md](features.md) |
 | OTP source reference pin and refresh procedure | [otp-reference.md](otp-reference.md) |
 | Validation baseline, test modes, platform gaps, history | [validation.md](validation.md) |

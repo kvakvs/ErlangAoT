@@ -76,7 +76,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `cmake/` checks | `Check{Complexity,ClangTidy}.cmake` (changed or all scope via `QualityScope.cmake` + `quality_scope.py`), `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
 | `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `.agents/aimemory.md`: AI notes |
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
-| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `executables`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`), `runtime.md`, `runtime-heap.md` (heap contract), `otp-reference.md`, `validation.md` (baseline, test design, history) |
+| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `executables`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`), `runtime.md`, `runtime-heap.md` (heap contract), `execution-model.md` (step-17 frame/continuation decision), `otp-reference.md`, `validation.md` (baseline, test design, history) |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout and generated OTP headers; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
 | `examples/` | `compile/`: remote scalar/container/record classification and native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
 | Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies and `tools/erlfmt/` formatter; `.venv-quality/`: quality tools; editor state stays local |
@@ -100,6 +100,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; `project.cmake`: multi-target manifest outputs, selection, `-o`/`--entry`, aliasing, deferred publication; fixtures `tests/fixtures/linking/{entry,escript,startup,project}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
+| `tests/prototypes/` | Decision prototypes, not CTest: `execution_model/` (step 17: `model.hpp`, hand-lowered `generated.cpp`, `runtime.cpp`, rejected `native.cpp`/`coroutines.cpp`, `run.py` host runs + target IR/asm checks) |
 
 ## Backlog → owners
 

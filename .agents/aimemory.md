@@ -148,6 +148,12 @@ Step facts beyond the plan record:
   defined (link error). No recursion in fixtures yet (call graph must be acyclic).
 - 16: maybe keeps ast::MaybeMatch (not an ExprId): walkers use semantic::maybe_operands and Visit.field = item index.
   The "pattern matching" capability fallback in match_plan is unreachable from source (all PatternKinds planned).
+- 17: decision only (docs/execution-model.md). Prototype tests/prototypes/execution_model/run.py uses clang++ from
+  PATH or %ProgramFiles%/LLVM (works outside vcvars); generated.cpp is freestanding (-ffreestanding, stddef/stdint only)
+  so it cross-compiles for all 7 targets. ARM asm has no TAILCALL comment: run.py counts b/br/bx to symbol/register.
+  clang-format collapses one-line function bodies there (root .clang-format). Step 19 must: split walker at calls via
+  body resume switch, reload frame base after every transfer/service that can push, replace GeneratedRoots + handoffs
+  with flat stack + x registers, entry ABI becomes void(Process*).
 User directions (keep):
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer

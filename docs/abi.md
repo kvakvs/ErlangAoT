@@ -174,6 +174,9 @@ live words and 4,096 frames.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
   Generated code never collects yet; only a host `collect()` outside generated
   calls moves the heap.
+- Native calls and this root stack are interim: [the execution
+  model](execution-model.md) replaces them with explicit frames on a flat
+  process stack and tail transfers (step 19).
 
 ## Runtime services
 

@@ -97,9 +97,9 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   not fit the top segment opens a new one; a larger frame takes whole pages.
   A segment is freed when its last frame returns. A frame never spans segments,
   so its address stays stable while generated code holds it. Bounds stay
-  1,000,000 live words and 4,096 frames. This is a minimal interim form: once
-  generated code reloads its frame base after safepoints (steps 17, 24, 26),
-  the stack can become one flat array that moves as it grows.
+  1,000,000 live words and 4,096 frames. This is a minimal interim form; step
+  17 decided its successor, one flat stack that moves as it grows with frame
+  headers inside it ([execution model](execution-model.md#successor-of-the-8f-root-stack)).
 - **Off-heap list.** As above.
 - **Old heap.** None. Generational collection is deferred; immutable terms
   never point from older to newer data, so a high-water mark and an old heap

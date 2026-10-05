@@ -67,6 +67,13 @@
   scope). The walker's `MaybeScope` collects `?=` mismatch edges into `maybe.else`; a PHI of unmatched values feeds a
   `CaseJoin` whose else clauses reuse case selection (`no_match` raises `else_clause`).
 
+- Execution model (step 17 decision, implemented from step 19; `docs/execution-model.md`): explicit
+  frames on one flat moving per-process stack (header: previous offset, descriptor, resume/handler
+  continuation indices; base+offset slots), args/results in process X registers, entry + one body per
+  function switching on the resume index, only `musttail` transfers of `void (Process *)` code (native
+  depth constant; trampoline fallback), yield at entry reductions, unwinding to handler frames.
+  Prototype `tests/prototypes/execution_model/` (run.py, not CTest).
+
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
   access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
@@ -124,7 +131,7 @@
   address, below top) + header shape; process pointers only name object starts. Host `Term` = word +
   borrowed heap + weak lifetime + collection count (no pin). Roots = root-stack slots, handoff words,
   error payload, explicit span (`ProcessContext::visit_roots`). Root stack = page-sized segments
-  (`GeneratedRoots`), frames never move; a flat stack waits for steps 17/26. `memory/heap_collect`
+  (`GeneratedRoots`), frames never move; step 17 chose the successor (docs/execution-model.md). `memory/heap_collect`
   `Copier`: Cheney copy of heap+fragments into one new block at an explicit host safe point
   (`ProcessHeap::collect(roots)`), forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live. No cross-heap graph copying yet. Revision-4 generated scopes
