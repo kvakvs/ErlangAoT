@@ -14,6 +14,8 @@ struct Children {
 
     std::vector<ast::ExprId> operator()(const ast::MatchExpression &v) const { return {v.left, v.right}; }
 
+    std::vector<ast::ExprId> operator()(const ast::CatchExpression &v) const { return {v.expression}; }
+
     std::vector<ast::ExprId> operator()(const ast::Tuple &v) const { return v.elements; }
 
     std::vector<ast::ExprId> operator()(const ast::BlockExpression &v) const { return v.body; }

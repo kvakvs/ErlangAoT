@@ -17,17 +17,18 @@ ordinary tuple records. Bodies are sequences of matches, constructors, checked
 operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
 `erlang:halt/0,1` ([exit status](executables.md#exit-status)), the raising
 `error/1,2,3`, `exit/1` and `throw/1` ([ABI](abi.md#failure-channel-revision-2)),
-`case`/`if` and direct local or literal remote calls within the batch.
-Guards support the full admitted catalog. See [patterns](patterns.md),
+`case`/`if`, `catch Expr` and direct local or literal remote calls within the
+batch. Guards support the full admitted catalog. See [patterns](patterns.md),
 [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: recursion (the call graph
-must be acyclic), `maybe`/`receive`, `try`/`catch`, funs and
-closures, dynamic calls, comprehensions, record updates and native records,
-processes and messaging. Accepted attributes: `module`, `export`, `file`,
-ordinary `record`, type/spec forms, `doc`/`moduledoc`, `author`, `vsn`,
-`copyright`, `deprecated`, `-compile({no_auto_import, ...})` and `-import` of
-`erlang` guard BIFs. Other attributes (`on_load`, parse transforms, other
+must be acyclic), `maybe`/`receive`, `try`, funs and closures, dynamic calls,
+comprehensions, record updates and native records, processes and messaging.
+Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
+forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
+`-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for
+example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs. Other
+attributes (`on_load`, parse transforms, other
 `compile` options, parameterized modules) are rejected.
 Sources starting with `#!` follow [escript rules](executables.md#escripts)
 (implicit module and `main/1` export, `-mode` accepted).

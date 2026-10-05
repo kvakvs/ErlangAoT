@@ -15,6 +15,10 @@
     "case_subject.erl",
     "case_unsafe.erl",
     "case_unsafe_match.erl",
+    "catch_bound.erl",
+    "catch_inside.erl",
+    "catch_unsafe.erl",
+    "catch_unsafe_match.erl",
     "chain.erl",
     "clause_leak.erl",
     "clauses.erl",
@@ -387,6 +391,42 @@
         "diagnostic": "unbound variable X",
         "otp_diagnostic": "unbound_var",
         "sha256": "85766af15739db15375b50578502b35f2318a4e1b3da83037d8e465265ba64e2"
+      },
+      {
+        "name": "catch_inside",
+        "arity": 1,
+        "body": "f(A) -> catch begin X = A, {X} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "54a59a4b7f3b4f7b54a74778c5c202c729944ad1a7e3bbfe56e384862a99ae98"
+      },
+      {
+        "name": "catch_bound",
+        "arity": 1,
+        "body": "f(A) -> X = A, _ = (catch (X = A)), X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "849d0612f166c7b44ba221ea911b3b3111b3678c45f855b3790984f126b56e26"
+      },
+      {
+        "name": "catch_unsafe",
+        "arity": 1,
+        "body": "f(A) -> catch (X = A), X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "d5711c4b1c493d15670b8f96e1ac6d6d5e5d7a4f531a30f9d396f557e25c2651"
+      },
+      {
+        "name": "catch_unsafe_match",
+        "arity": 1,
+        "body": "f(A) -> _ = (catch (X = A)), X = A.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "57818033132ee12395b3228164a8392a056faa8718bbbe1e85c16055ed759bf2"
       },
       {
         "name": "bindings_local",

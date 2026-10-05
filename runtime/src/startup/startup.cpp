@@ -1,4 +1,5 @@
 #include "startup.hpp"
+#include "../process/exceptions.hpp"
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -139,23 +140,19 @@ std::string_view exception_class(const CallFailure &failure) {
 }
 
 TermResult<std::string> exception_reason(const CallFailure &failure) {
-    static constexpr std::array<std::string_view, 11> names{"",          "function_clause", "badmatch", "badarg",
-                                                            "badarg",    "badarith",        "badmap",   "badkey",
-                                                            "badrecord", "case_clause",     "if_clause"};
-    const auto index = failure.reason ? static_cast<std::size_t>(*failure.reason) : 0;
+    const auto name = failure.reason ? error_name(*failure.reason) : std::string_view{};
     // Raised reasons (error/exit/throw) are the whole payload term.
-    if (index >= static_cast<std::size_t>(abi::v1::ErrorReason::raised_error) && failure.value) {
+    if (name.empty() && failure.reason && failure.value) {
         return format_term(*failure.value, TermStyle::write);
     }
-    if (index == 0 || index >= names.size()) {
+    if (name.empty()) {
         return std::unexpected(TermError::invalid_argument);
     }
-    std::string name(names[index]);
     if (!failure.value) {
-        return name;
+        return std::string(name);
     }
     return format_term(*failure.value, TermStyle::write).transform([&](const std::string &value) {
-        return "{" + name + "," + value + "}";
+        return "{" + std::string(name) + "," + value + "}";
     });
 }
 } // namespace erlang_aot::runtime::detail

@@ -125,6 +125,12 @@ Step facts beyond the plan record:
   payload_reason range covers them; startup exception_class(). body_builtin moved to pattern_calls.cpp (needs
   auto_import); unqualified only for the raise family, display/halt stay erlang:-qualified until step 36. Oracle stderr
   prints `uncaught <class>: ~p` (compare class/reason manually; not stored).
+- 12: catch = ExpressionLowering::handler (innermost catch); failure_exit and raise_reason branch there; cached
+  bad_argument/bad_arithmetic exits reset inside the catch. Runtime erlang_aot_catch_v1 in process/exceptions
+  (error_name shared with startup); stack placeholder []. binding_children lacked CatchExpression (semantic walks
+  skipped catch bodies: segfault / "invalid map<K, T> key") - fixed. OTP 29 warns deprecated_catch by default and
+  the oracle uses warnings_as_errors: fixtures need -compile(nowarn_deprecated_catch); nowarn_* options admitted.
+  Program fixtures hide stacks with show({'EXIT',{R,S}}) when is_list(S).
 User directions (keep):
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer
   checks, classic ERTS trust model). 8F first version (doubling/spare/trim) rejected as over-engineered.

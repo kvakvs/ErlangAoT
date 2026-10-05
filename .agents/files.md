@@ -34,11 +34,11 @@ Keys in the last column are relative to the directory column.
 | `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
 | `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `entry` (MODULE[:FUNCTION] spelling), `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls, executable admission (`literals`: children and the case/if `branch_clauses` view), escript rules | `declarations`, `escript`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `features` |
-| `semantic/` | Scoped bindings (`binding_expressions`: sequences, siblings, andalso/orelse and case/if scopes), normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
+| `semantic/` | Scoped bindings (`binding_expressions`: sequences, siblings, andalso/orelse/catch and case/if scopes), normalized patterns, match plans | `bindings`, `binding_*`, `patterns`, `pattern_*`, `match_plan`, `match_plan_internal`, `match_plan_containers`, `match_plan_bits`, `binary_options`, `records`, `match_plan_records` |
 | `semantic/` | Guard legality/resolution, body builtins (`pattern_calls`: auto-import, `body_builtin`), service availability | `services`, `guard_analysis`, `immediate_services`, `service_metadata` |
 | `semantic/types/` | Type declarations, bounded inference/contracts | `domain`, `syntax`, `declarations`, `collect`, `resolver`, `traversal`, `constants`, `expansion`, `inference`, `inference_bindings`, `contracts`, `membership`, `trace` |
 | `codegen/` | LLVM ownership, target/ABI, diagnostics, runtime-service symbols | `request`, `output`, `result`, `compilation`, `llvm_state`, `sdk`, `diagnostics`, `target*`, `term_abi`, `runtime_symbols` |
-| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow, `case`/`if` clause selection and joins (`lowering_walk`) | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
+| `codegen/` | Bodies/calls, matching, guards, eager/lazy flow, `case`/`if` clause selection and joins, `catch` handlers (`lowering_walk`) | `lowering`, `lowering_{boundaries,clauses,expressions,state,calls,roots,match,body_match,immediates,containers,integers,floats,maps,bits,records,record_tests,guards,walk}` |
 | `codegen/` | Atom slots / registration; startup module (`main` → `erlang_aot_main_v1`); guarded variants | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
@@ -51,7 +51,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | Directory | Owns | File keys |
 | --- | --- | --- |
 | `.` | Runtime lifecycle/shared state | `runtime`, `runtime_state` |
-| `process/` | Context/heap/mailbox ownership, checked error transport | `context`, `ownership`, `storage`, `generated_calls`, `roots`, `services` |
+| `process/` | Context/heap/mailbox ownership, checked error transport; exception reason terms and `erlang_aot_catch_v1` | `context`, `ownership`, `storage`, `generated_calls`, `exceptions`, `roots`, `services` |
 | `memory/` | One heap block plus fragments per process, budgets, rollback; off-heap binary list (link, relocate, post-collection sweep, teardown release); area walker and heap verifier; Cheney collector and ERTS size sequence (`heap_collect`, driven by `heap`); copying boundary | `heap`, `heap_policy`, `heap_storage`, `heap_reservation`, `heap_object`, `heap_terms`, `heap_publication`, `off_heap`, `heap_walk`, `heap_verify`, `heap_collect`, `copy` |
 | `terms/` | Words/Terms, constructors/layouts, atoms | `immediate`, `term`, `factory`, `container_factory`, `container_access`, `term_layout`, `atoms`, `atom_spelling` |
 | `terms/` | Equality, ordering, immediate services | `equality`, `immediate_order`, `structural_order`, `immediate_services`, `container_services`, `service_errors` |
@@ -119,7 +119,7 @@ All IDs from `01-todo.md`; partial features extend existing owners; D-items rema
 | F13 patterns; F14 guards; F17 records | `C/semantic`, `C/codegen`, `R/terms`; F14 services also `R/builtins` |
 | F15 clauses; F16 control flow; F21 recursion/tail calls | `C/semantic`, `C/semantic/types`, `C/codegen`; F21 continuations: `R/process` |
 | F18 closures; F19 dynamic calls | `C/semantic`, `C/codegen`, `R/terms`, `R/modules`; F18 capture tracing/copying: `R/memory` |
-| F20 exceptions | `C/semantic`, `C/codegen`, `R/process/generated_calls`, shared ABI |
+| F20 exceptions | `C/semantic`, `C/codegen`, `R/process/{generated_calls,exceptions}`, shared ABI |
 | F22 cooperative execution | `R/process`, `R/scheduler`, `C/codegen`, shared ABI |
 | F23 workers/wakeups | `R/scheduler`; synchronize service owners in `R/{process,terms,modules}` |
 | F24 signals/send | `R/process`: inbox/mailbox; `R/memory`: transfer; `C/codegen`: send |

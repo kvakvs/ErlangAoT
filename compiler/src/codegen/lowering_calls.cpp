@@ -5,8 +5,12 @@
 
 namespace erlang_aot::codegen {
 namespace {
-// Reuse one terminal exit; callers must inspect the channel before interpreting its invalid word.
+// Reuse one terminal exit (or the enclosing catch handler); callers must inspect the channel before
+// interpreting its invalid word.
 llvm::BasicBlock *failure_exit(ExpressionLowering &state) {
+    if (state.handler) {
+        return state.handler;
+    }
     if (!state.failure) {
         state.failure = llvm::BasicBlock::Create(state.entry.getContext(), "call.failure", &state.entry);
         llvm::IRBuilder<> exit_builder(state.failure);

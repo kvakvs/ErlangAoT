@@ -14,10 +14,11 @@ bool selector(const ast::Module &syntax, const ast::TermId &id) {
     return name && number && arity(number->value).has_value();
 }
 
-// Only the exact suppression tuple is inert; parse transforms and other compile behavior remain gated.
+// Auto-import suppression and warning-only nowarn_* options are inert; parse transforms and other compile
+// behavior remain gated.
 bool option(const ast::Module &syntax, const ast::TermValue &value) {
     if (const auto *name = std::get_if<ast::Atom>(&value)) {
-        return name->name == U"no_auto_import";
+        return name->name == U"no_auto_import" || name->name.starts_with(U"nowarn_");
     }
     const auto *tuple = std::get_if<ast::TermTuple>(&value);
     if (!tuple || tuple->elements.size() != 2) {

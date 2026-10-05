@@ -8,7 +8,16 @@
 
 namespace erlang_aot::codegen {
 namespace {
-enum class Action : std::uint8_t { enter, value, lazy_left, lazy_right, record_field, case_select, case_clause_end };
+enum class Action : std::uint8_t {
+    enter,
+    value,
+    lazy_left,
+    lazy_right,
+    record_field,
+    case_select,
+    case_clause_end,
+    catch_end
+};
 
 struct Visit {
     // Explicit actions keep ordinary and conditionally reached operands off the host stack.
@@ -42,6 +51,17 @@ struct CaseJoin {
     // The mismatch continuation of the current clause starts the next one, or raises case_clause/if_clause.
     llvm::BasicBlock *next = nullptr;
     std::vector<CaseIncoming> incoming = {};
+};
+
+struct CatchScope {
+    // The enclosing handler and error exits come back once the protected expression completes.
+    llvm::BasicBlock *outer;
+    llvm::BasicBlock *bad_argument;
+    llvm::BasicBlock *bad_arithmetic;
+    // Names bound inside a catch are unsafe afterwards, so the bindings before it are restored.
+    std::map<semantic::BindingId, llvm::Value *> bindings;
+    // Failures inside the protected expression branch here; it is erased when nothing inside can fail.
+    llvm::BasicBlock *handler;
 };
 
 // Merge one per-clause value at the join; SSAUpdater adds a PHI only when the clauses disagree.
@@ -157,6 +177,30 @@ LazyJoin left(ExpressionLowering &state, const ast::Expression &expression, cons
     return {value, short_path, merge};
 }
 
+struct Incoming {
+    // One predecessor edge of a two-way join and the value it carries.
+    llvm::BasicBlock *block;
+    llvm::Value *value;
+};
+
+// Join two edges at `merge` (the insertion block); SSAUpdater adds a PHI only when the values differ.
+llvm::Value *join_two(ExpressionLowering &state, llvm::BasicBlock *merge, const char *name, const Incoming first,
+                      const Incoming second) {
+    // SSA formation inspects successors, so terminate the unfinished join until its surrounding expression resumes.
+    auto *boundary = state.builder.CreateUnreachable();
+    llvm::SmallVector<llvm::PHINode *, 2> phis;
+    llvm::SSAUpdater updater(&phis);
+    updater.Initialize(state.word, name);
+    updater.AddAvailableValue(first.block, first.value);
+    updater.AddAvailableValue(second.block, second.value);
+    auto *result = updater.GetValueInMiddleOfBlock(merge);
+    for (auto *phi : phis) {
+        phi->setDebugLoc(state.builder.getCurrentDebugLocation());
+    }
+    boundary->eraseFromParent();
+    return result;
+}
+
 // The reached RHS may return any admitted term; only its enclosing consumer imposes another boolean check.
 llvm::Value *right(ExpressionLowering &state, const ast::Expression &expression, const LazyJoin &join) {
     const auto &binary = std::get<ast::BinaryExpression>(expression.value);
@@ -165,19 +209,7 @@ llvm::Value *right(ExpressionLowering &state, const ast::Expression &expression,
     auto *predecessor = state.builder.GetInsertBlock();
     state.builder.CreateBr(join.merge);
     state.builder.SetInsertPoint(join.merge);
-    // SSA formation inspects successors, so terminate the unfinished join until its surrounding expression resumes.
-    auto *boundary = state.builder.CreateUnreachable();
-    llvm::SmallVector<llvm::PHINode *, 2> phis;
-    llvm::SSAUpdater updater(&phis);
-    updater.Initialize(state.word, "lazy.value");
-    updater.AddAvailableValue(join.short_path, join.left);
-    updater.AddAvailableValue(predecessor, value);
-    auto *result = updater.GetValueInMiddleOfBlock(join.merge);
-    for (auto *phi : phis) {
-        phi->setDebugLoc(state.builder.getCurrentDebugLocation());
-    }
-    boundary->eraseFromParent();
-    return result;
+    return join_two(state, join.merge, "lazy.value", {join.short_path, join.left}, {predecessor, value});
 }
 
 struct Walk {
@@ -186,6 +218,63 @@ struct Walk {
     std::vector<Visit> pending;
     std::map<const ast::Expression *, LazyJoin> joins;
     std::map<const ast::Expression *, CaseJoin> cases;
+    std::map<const ast::Expression *, CatchScope> catches;
+
+    // Protect a catch expression: failures inside it reach a fresh handler instead of the enclosing exit.
+    bool open_catch(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        const auto *guarded = std::get_if<ast::CatchExpression>(&expression.value);
+        if (!guarded) {
+            return false;
+        }
+        auto *handler = llvm::BasicBlock::Create(state.entry.getContext(), "catch.handler", &state.entry);
+        catches.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
+                            handler);
+        // Shared error exits created outside the catch would bypass its handler.
+        state.handler = handler;
+        state.bad_argument = nullptr;
+        state.bad_arithmetic = nullptr;
+        pending.push_back({id, Action::catch_end});
+        pending.push_back({guarded->expression});
+        return true;
+    }
+
+    // Join the protected value with the caught exception value, then restore the enclosing scope.
+    void close_catch(const ast::Expression &expression) {
+        auto &scope = catches.at(&expression);
+        auto *handler = scope.handler;
+        state.handler = scope.outer;
+        state.bad_argument = scope.bad_argument;
+        state.bad_arithmetic = scope.bad_arithmetic;
+        state.bindings.swap(scope.bindings);
+        catches.erase(&expression);
+        const auto &guarded = std::get<ast::CatchExpression>(expression.value);
+        auto *value = state.values.at(&state.module.syntax->expression(guarded.expression));
+        if (handler->use_empty()) {
+            handler->eraseFromParent();
+            state.values.insert_or_assign(&expression, value);
+            return;
+        }
+        locate_source(state.builder, *state.module.syntax, expression.source);
+        auto *normal = state.builder.GetInsertBlock();
+        auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "catch.join", &state.entry);
+        state.builder.CreateBr(merge);
+        state.builder.SetInsertPoint(handler);
+        auto *caught = lower_catch(state);
+        auto *handled = state.builder.GetInsertBlock();
+        state.builder.CreateBr(merge);
+        state.builder.SetInsertPoint(merge);
+        // Both incoming values are already rooted: the protected result and the catch service's slot.
+        auto *result = join_two(state, merge, "catch.value", {normal, value}, {handled, caught});
+        state.values.insert_or_assign(&expression, result);
+    }
+
+    // Enter an expression: a catch opens its protected scope, every other node schedules its operands.
+    void enter_node(const ast::ExprId &id) {
+        if (!open_catch(id)) {
+            enter(state, id, pending);
+        }
+    }
 
     // Open the case or if join and try its first clause.
     void select(const ast::ExprId &id) {
@@ -275,7 +364,7 @@ struct Walk {
         const auto &expression = state.module.syntax->expression(visit.id);
         switch (visit.action) {
         case Action::enter:
-            enter(state, visit.id, pending);
+            enter_node(visit.id);
             break;
         case Action::value: {
             auto *value = lower_value(state, visit.id);
@@ -308,13 +397,16 @@ struct Walk {
         case Action::case_clause_end:
             clause_end(visit);
             break;
+        case Action::catch_end:
+            close_catch(expression);
+            break;
         }
     }
 };
 } // namespace
 
 llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
-    Walk walk{state, {{root}}, {}, {}};
+    Walk walk{state, {{root}}, {}, {}, {}};
     while (!walk.pending.empty()) {
         const auto visit = walk.pending.back();
         walk.pending.pop_back();

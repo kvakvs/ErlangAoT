@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "entry": "catches",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[]\n"
+    },
+    {
+      "args": [
+        "classes"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "ball\n{ball,[1,2]}\n{'EXIT',shutdown}\n{'EXIT',normal}\n{'EXIT',{stop,1}}\n{'EXIT',{oops,stack}}\n{'EXIT',{with_args,stack}}\n{'EXIT',{{big,123456789012345678901234567890},stack}}\nplain\n42\n"
+    },
+    {
+      "args": [
+        "runtime"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{'EXIT',{{badmatch,2},stack}}\n{'EXIT',{function_clause,stack}}\n{'EXIT',{badarith,stack}}\n{'EXIT',{badarith,stack}}\n{'EXIT',{{case_clause,3},stack}}\n{'EXIT',{if_clause,stack}}\n{'EXIT',{{badarg,1},stack}}\n{'EXIT',{{badkey,k},stack}}\n{'EXIT',{{badmap,nomap},stack}}\n{'EXIT',{{badrecord,{other,1,2}},stack}}\n1\n"
+    },
+    {
+      "args": [
+        "nested"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "inner\n{outer,inner}\nouter\nfalse\n{1,2}\n{rethrown,deep}\n{accepted,ok}\n{rejected,bad}\n"
+    },
+    {
+      "args": [
+        "flow"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{deep,3}\n{value,{depth,[one,returned]}}\n[a,{'EXIT',b},c]\n{branch,one}\n{branch,{'EXIT',two}}\n{'EXIT',{badarith,stack}}\n5\n{'EXIT',{{badmatch,6},stack}}\n{5,after_catches}\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception throw: \\{deep,1\\}\n$",
+      "exit_status": 1,
+      "stdout": "first\n{deep,2}\n"
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 3,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "catches.erl": "4aa2c76f5ca8c47b46508d7185e0357d14be2994a5caadf946efb714eff696ae",
+    "thrower.erl": "e770e41b38f03937e76ae7a726c4271c862c7a8e81662ba6f55c4a3e3b3c2b09"
+  }
+}

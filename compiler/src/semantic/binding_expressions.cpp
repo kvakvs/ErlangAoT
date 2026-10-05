@@ -99,6 +99,18 @@ bool conditional(const ast::ExprValue &value, std::vector<Visit> &pending) {
     return true;
 }
 
+// A catch may stop its expression anywhere, so names bound inside it become unsafe afterwards (OTP vtunsafe).
+bool protect(const ast::ExprValue &value, std::vector<Visit> &pending) {
+    const auto *guarded = std::get_if<ast::CatchExpression>(&value);
+    if (!guarded) {
+        return false;
+    }
+    pending.push_back({guarded->expression, Action::conditional_exit});
+    pending.push_back({guarded->expression});
+    pending.push_back({guarded->expression, Action::conditional_enter});
+    return true;
+}
+
 // A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if starts with its clauses.
 bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
     if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
@@ -205,7 +217,7 @@ void expression(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvi
         match(state, id, *assignment, context, pending);
         return;
     }
-    if (conditional(value, pending) || branches(id, value, pending)) {
+    if (conditional(value, pending) || branches(id, value, pending) || protect(value, pending)) {
         return;
     }
     BindingCandidate scope{environment, {}};

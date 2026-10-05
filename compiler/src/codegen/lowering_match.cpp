@@ -226,7 +226,11 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
                                         {state.builder.getPtrTy(), state.builder.getInt8Ty(), state.word}, false));
     state.builder.CreateCall(service, {state.entry.getArg(0), state.builder.getInt8(static_cast<std::uint8_t>(reason)),
                                        payload ? payload : llvm::ConstantInt::get(state.word, 0)});
-    state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
+    if (state.handler) {
+        state.builder.CreateBr(state.handler);
+    } else {
+        state.builder.CreateRet(llvm::ConstantInt::get(state.word, 0));
+    }
 }
 
 void raise_function_clause(ExpressionLowering &state) { raise_reason(state, abi::v1::ErrorReason::function_clause); }

@@ -13,7 +13,8 @@ runtime **mismatch** is never a compiler error.
 | `case` clauses + guards | Implemented; exhaustion raises `error:{case_clause, Value}` |
 | `if` guard clauses | Implemented; exhaustion raises `error:if_clause` |
 | `maybe`, comprehensions | Capability (backlog F16) |
-| `catch`/`try` patterns | Capability (F20) |
+| `catch Expr` | Implemented; no patterns ([ABI](abi.md#failure-channel-revision-2)) |
+| `try` patterns | Capability (F20) |
 | Fun clauses | Capability (F18) |
 | `receive` | Capability (F22/F25) |
 

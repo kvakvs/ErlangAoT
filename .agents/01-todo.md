@@ -209,9 +209,10 @@ channel carries `function_clause`, service reasons and the three source classes.
 
 - [x] `error/1,2,3`, `exit/1`, `throw/1` classes, any-term reasons and uncaught
   outcomes (step 11).
+- [x] `catch Expr` values and binding safety, stack placeholder `[]` (step 12).
 - [ ] Stack traces and `erlang:raise/3`.
-- [ ] Raise, catch, try/after lowering without C++ exceptions crossing
-  generated boundaries.
+- [ ] `try`/`after` lowering without C++ exceptions crossing generated
+  boundaries.
 - [ ] Nested handling and cleanup across module and builtin calls.
 
 ### F21 — Recursion and proper tail calls

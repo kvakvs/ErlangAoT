@@ -30,6 +30,8 @@ struct ExpressionLowering {
     std::map<semantic::BindingId, llvm::Value *> bindings = {};
     // Share a terminal failure exit across calls instead of duplicating return blocks per expression.
     llvm::BasicBlock *failure = nullptr;
+    // The innermost enclosing `catch` handler; failures and raises branch there instead of leaving the function.
+    llvm::BasicBlock *handler = nullptr;
     // Semantic service errors reject the enclosing guard, while body errors raise badarg.
     llvm::BasicBlock *rejection = nullptr;
     llvm::BasicBlock *bad_argument = nullptr;
@@ -70,6 +72,8 @@ llvm::Value *lower_display(ExpressionLowering &state, llvm::Value *value);
 llvm::Value *lower_halt(ExpressionLowering &state, llvm::Value *status);
 // Raise `reason` with the class of erlang:error/exit/throw (`name`); the dead continuation yields [].
 llvm::Value *lower_raise(ExpressionLowering &state, std::u32string_view name, llvm::Value *reason);
+// Turn the pending exception into the `catch Expr` value; halts and runtime failures continue to the outer exit.
+llvm::Value *lower_catch(ExpressionLowering &state);
 // Ordinary service errors reject guards or raise badarg; boolean operand errors additionally retain their value.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload = nullptr);
 // Arithmetic errors reject guards and raise badarith in ordinary bodies.

@@ -489,13 +489,29 @@ channel with class and owned reason.
 Backlog: F20. Depends on: [11](#step-11).
 
 - Success criteria
-  - [ ] Values follow OTP: thrown value, `{'EXIT', Reason}` for exit, and
+  - [x] Values follow OTP: thrown value, `{'EXIT', Reason}` for exit, and
     `{'EXIT', {Reason, Stack}}` for error (stack per step 15; placeholder
     documented until then).
-  - [ ] Bindings inside `catch` follow OTP safety rules.
+  - [x] Bindings inside `catch` follow OTP safety rules.
 - Tests
-  - [ ] Golden programs for each class, nested catches and catch of runtime
+  - [x] Golden programs for each class, nested catches and catch of runtime
     errors (`badmatch`, `function_clause`, `badarith`).
+- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The walker sets
+  `ExpressionLowering::handler` while the protected expression lowers (fresh
+  badarg/badarith exits), so failure checks and `raise_reason` branch to it;
+  the handler calls new `erlang_aot_catch_v1` (`runtime/src/process/exceptions`)
+  which writes the catch value to a root slot and clears the channel; halts and
+  runtime failures stay pending and continue outward. Stack placeholder `[]`
+  (`docs/abi.md`). Binding analysis treats `catch` like a conditional scope
+  (inner names unsafe); `binding_children` gained the missing catch child.
+  `-compile` now admits warning-only `nowarn_*` options (OTP 29 warns
+  `deprecated_catch`). OTP golden `executables_catch_values` (7 runs: classes,
+  11 runtime reasons, nested, flow/exports/remote depth, uncaught after catch,
+  `halt` not caught); bindings corpus +4 `catch_*` rows verified by OTP 29.1.1
+  (`--check` reproduces); semantic `catch_expr`/`catch_in_guard`/
+  `catch_unsafe`/`compile_nowarn`; mangling for `Catch`. Fresh Windows x64
+  Debug: fast CTest 145/145; affected tests in full mode 25/25; Lizard 0
+  warnings; tidy 277 units pass. Logs `build/plan11-step12/`.
 
 <a id="step-13"></a>
 

@@ -88,6 +88,16 @@ outermost exit (also on C++ exceptions). No exception crosses generated entries.
 Raw entry callers must open a `GeneratedInvocation`; normal hosts use
 `ResolvedFunction::call`.
 
+`catch Expr` redirects every failure check and raise inside `Expr` to a handler
+block that calls `erlang_aot_catch_v1(context, slot)`. For a pending Erlang
+exception it writes the catch value to the root slot and clears the channel:
+the thrown term, `{'EXIT', Reason}` for an exit, or `{'EXIT', {Reason, []}}`
+for an error (the stack is empty until step 15; typed reasons become their
+OTP terms such as `{badmatch, V}`). Halts and infrastructure failures stay
+pending, and the handler's own check continues to the enclosing handler or
+function exit. Bindings made inside `Expr` are unsafe afterwards, so the join
+only merges the value.
+
 ## Root scopes
 
 Every generated function calls `erlang_aot_roots_enter_v4(context, count)` before

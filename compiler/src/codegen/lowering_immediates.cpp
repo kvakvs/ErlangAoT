@@ -93,6 +93,19 @@ llvm::Value *lower_raise(ExpressionLowering &state, const std::u32string_view na
     return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
 }
 
+llvm::Value *lower_catch(ExpressionLowering &state) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto *slot = root_slot(state);
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Catch>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getInt8Ty(), {builder.getPtrTy(), builder.getPtrTy()}, false));
+    builder.CreateCall(service, {state.entry.getArg(0), slot}, "catch.outcome");
+    // A caught exception clears the channel; anything else is still pending and leaves through this check.
+    propagate_failure(state);
+    return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "catch.value");
+}
+
 llvm::Value *checked_value(ExpressionLowering &state, const ServiceOutput result, llvm::BasicBlock *rejection) {
     auto &builder = state.builder;
     propagate_failure(state);

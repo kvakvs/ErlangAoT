@@ -46,6 +46,10 @@
   Source raises (step 11): `error/1,2,3`, `exit/1`, `throw/1` are body builtins (`semantic::body_builtin`,
   unqualified via auto-import unless shadowed or suppressed) lowered by `lower_raise` to `erlang_aot_raise_v2`
   with `raised_error/exit/throw` (11-13); the payload is the whole reason and the ID the class.
+  `catch Expr` (step 12): the walker sets `ExpressionLowering::handler` (and fresh badarg/badarith exits) while
+  `Expr` lowers, so `propagate_failure` and `raise_reason` branch to it; the handler calls `erlang_aot_catch_v1`
+  (runtime `process/exceptions`: catch value, clears the channel) and re-checks to reach the outer exit for
+  halts/runtime failures; a PHI joins the value and the pre-catch bindings are restored (inner names unsafe).
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked

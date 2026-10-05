@@ -37,7 +37,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::MatchExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::CatchExpression &) const { return "exceptions"; }
+    std::string_view operator()(const ast::CatchExpression &) const { return {}; }
 
     std::string_view operator()(const ast::RemoteExpression &) const { return "dynamic calls"; }
 

@@ -26,3 +26,6 @@ std::uint8_t erlang_aot_call_failed_v2(void *context) noexcept;
 // Preserve the first error; payload reasons (badmatch, case_clause, ...) retain ownership before root cleanup.
 std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason reason,
                                  erlang_aot::abi::v1::TermWord value) noexcept;
+// Turn the pending Erlang exception into the value of `catch Expr` in `output` and clear the channel;
+// halts and infrastructure failures stay pending and return a nonzero status.
+std::uint8_t erlang_aot_catch_v1(void *context, erlang_aot::abi::v1::TermWord *output) noexcept;

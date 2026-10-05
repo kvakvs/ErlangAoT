@@ -194,6 +194,10 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - **Raise (11):** `error/1,2,3`, `exit/1`, `throw/1` (qualified or auto-imported)
   raise through `erlang_aot_raise_v2` with `raised_*` reasons; startup reports
   `uncaught exception <class>: <reason>`; golden `raise_classes`.
+- **`catch Expr` (12):** failures inside reach a handler that calls
+  `erlang_aot_catch_v1` (thrown term, `{'EXIT', R}`, `{'EXIT', {R, []}}`);
+  halts and runtime failures pass through; inner bindings unsafe afterwards;
+  golden `catch_values`, four `catch_*` binding rows; `nowarn_*` compile options.
 
 <a id="outstanding-work-to-finish"></a>
 

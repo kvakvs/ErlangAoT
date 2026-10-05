@@ -15,6 +15,10 @@ class GeneratedCallState final {
     void fail(const CallFailure &failure) noexcept;
     // Convert infrastructure statuses without confusing them with Erlang errors or guard rejection.
     void fail_service(abi::v1::Status status, bool reported = false) noexcept;
+
+    // Drop a caught Erlang exception so the invocation continues (`catch Expr`).
+    void clear() noexcept { failure_.reset(); }
+
     // Borrow until the outer invocation ends; the payload Term is a process root (BEAM fvalue).
     const std::optional<CallFailure> &failure() const noexcept;
 

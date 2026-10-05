@@ -21,11 +21,11 @@
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
-  "input_manifest_sha256": "f24bf63664b5a95caabaf8da1a8f1cd0c28e3735cef09960b5fb7fea19ec0829",
+  "input_manifest_sha256": "9a04076a5f4302494d45e101ef1c9819e213f8900f7cd352a4a86e9b3176ef78",
   "files": {
     "alias.erl": "375c0766478c89fd6b5291fe509762251fdcf4e5bf335d971a4d6d08b02f17fd",
     "answer.erl": "29fb9c03015232831068aa427cde0b412d645a9b3d90790bb255794aa971cf76",
-    "bindings.term": "6e487f8949284788ca18762e1f73a32d9a732b2c75165d830e4f9771710b1460",
+    "bindings.term": "550b47cf51dac1a8953ae462dde1f7f64c6f5cfab6a87617dab9bc3849bd73d7",
     "bindings_local.erl": "c2ff655a68ea4da88903a2bb036a92957ecbf73a8ee5e3f725de5fba2935287a",
     "body_match.erl": "ff2a3c178a895caeccb328f930fb7f15a58df4bfcd2ff811d7ef6ac403ada9ef",
     "call_sibling.erl": "fbe4c22828bac4670631c974d32f4bfab5fffa3cba00c86fe0d0d36f9b6fd260",
@@ -38,6 +38,10 @@
     "case_subject.erl": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7",
     "case_unsafe.erl": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca",
     "case_unsafe_match.erl": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb",
+    "catch_bound.erl": "849d0612f166c7b44ba221ea911b3b3111b3678c45f855b3790984f126b56e26",
+    "catch_inside.erl": "54a59a4b7f3b4f7b54a74778c5c202c729944ad1a7e3bbfe56e384862a99ae98",
+    "catch_unsafe.erl": "d5711c4b1c493d15670b8f96e1ac6d6d5e5d7a4f531a30f9d396f557e25c2651",
+    "catch_unsafe_match.erl": "57818033132ee12395b3228164a8392a056faa8718bbbe1e85c16055ed759bf2",
     "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
     "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
     "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
@@ -413,6 +417,42 @@
         "sha256": "85766af15739db15375b50578502b35f2318a4e1b3da83037d8e465265ba64e2"
       },
       {
+        "name": "catch_inside",
+        "arity": 1,
+        "body": "f(A) -> catch begin X = A, {X} end.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "54a59a4b7f3b4f7b54a74778c5c202c729944ad1a7e3bbfe56e384862a99ae98"
+      },
+      {
+        "name": "catch_bound",
+        "arity": 1,
+        "body": "f(A) -> X = A, _ = (catch (X = A)), X.",
+        "capability": "",
+        "diagnostic": "",
+        "otp_diagnostic": "",
+        "sha256": "849d0612f166c7b44ba221ea911b3b3111b3678c45f855b3790984f126b56e26"
+      },
+      {
+        "name": "catch_unsafe",
+        "arity": 1,
+        "body": "f(A) -> catch (X = A), X.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "d5711c4b1c493d15670b8f96e1ac6d6d5e5d7a4f531a30f9d396f557e25c2651"
+      },
+      {
+        "name": "catch_unsafe_match",
+        "arity": 1,
+        "body": "f(A) -> _ = (catch (X = A)), X = A.",
+        "capability": "",
+        "diagnostic": "unsafe variable X",
+        "otp_diagnostic": "unsafe_var",
+        "sha256": "57818033132ee12395b3228164a8392a056faa8718bbbe1e85c16055ed759bf2"
+      },
+      {
         "name": "bindings_local",
         "diagnostic": "",
         "capability": "",
@@ -438,6 +478,10 @@
       "case_subject.erl": "5eb7ed812e8bc04fc752687e37a14a962166be1916a9de4df919a8f6f9e121a7",
       "case_unsafe.erl": "2c7c5d048e9015890aa3a2fbcf83b382f7fa9e26977fe6da7a2858bcc47cfaca",
       "case_unsafe_match.erl": "55e6e4268da46ce630c9bb5e7cd77f819bf047b547913d026673eb09e69af1bb",
+      "catch_bound.erl": "849d0612f166c7b44ba221ea911b3b3111b3678c45f855b3790984f126b56e26",
+      "catch_inside.erl": "54a59a4b7f3b4f7b54a74778c5c202c729944ad1a7e3bbfe56e384862a99ae98",
+      "catch_unsafe.erl": "d5711c4b1c493d15670b8f96e1ac6d6d5e5d7a4f531a30f9d396f557e25c2651",
+      "catch_unsafe_match.erl": "57818033132ee12395b3228164a8392a056faa8718bbbe1e85c16055ed759bf2",
       "chain.erl": "a103ccc6f9837acfb09e64b3eb14a0a3cd8177678c4a14a9c08f4907d690919b",
       "clause_leak.erl": "df59d810de8eec8c70fd95381ff41050937586e667cc38f14efd2ac31cb786a6",
       "clauses.erl": "903c72ed8ede18b2503fff2689115691c27aa3f525b05b6232bde22e4ae3b124",
@@ -467,6 +511,6 @@
       "unsafe_or.erl": "282895fe358c07dc4bd5f40416ab268c8b81456f28d78d3889fbeff281ee437b",
       "wildcard.erl": "71a3cb18742be799d0c33d9cb8a81e4f3541701a5b151b17847e46a21fc237c5"
     },
-    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\ncase_export accepted none\ncase_subject accepted none\ncase_unsafe rejected unsafe_var\ncase_unsafe_match rejected unsafe_var\ncase_pattern_unsafe rejected unsafe_var\ncase_nested_unsafe rejected unsafe_var\ncase_clause_scope rejected unbound_var\ncase_sibling rejected unbound_var\nif_export accepted none\nif_unsafe rejected unsafe_var\nif_clause_scope rejected unbound_var\nif_guard_unbound rejected unbound_var\nbindings_local accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
+    "oracle": "otp=29.1.1 erts=17.1\nidentity accepted none\nrepeat accepted none\nclauses accepted none\nguard_read accepted none\nbody_match accepted none\nchain accepted none\nrebind accepted none\nsibling_checks accepted none\nsibling_local accepted none\nalias accepted none\ncompound accepted none\nclause_leak rejected unbound_var\nguard_assign rejected illegal_guard_expr\nguard_leak rejected unbound_var\nunbound rejected unbound_var\nwildcard rejected unbound_var\nnamed_missing rejected unbound_var\nrhs_first rejected unbound_var\nsibling_read rejected unbound_var\ncall_sibling rejected unbound_var\nunsafe_and rejected unsafe_var\nunsafe_or rejected unsafe_var\nunsafe_match rejected unsafe_var\nguard_wildcard rejected unbound_var\nunsafe_merge rejected unsafe_var\nunsafe_merge_reverse rejected unsafe_var\ncase_export accepted none\ncase_subject accepted none\ncase_unsafe rejected unsafe_var\ncase_unsafe_match rejected unsafe_var\ncase_pattern_unsafe rejected unsafe_var\ncase_nested_unsafe rejected unsafe_var\ncase_clause_scope rejected unbound_var\ncase_sibling rejected unbound_var\nif_export accepted none\nif_unsafe rejected unsafe_var\nif_clause_scope rejected unbound_var\nif_guard_unbound rejected unbound_var\ncatch_inside accepted none\ncatch_bound accepted none\ncatch_unsafe rejected unsafe_var\ncatch_unsafe_match rejected unsafe_var\nbindings_local accepted none\nanswer accepted none\nclient accepted none\nnative helper oracle: -42 -134217728 -7\n"
   }
 }

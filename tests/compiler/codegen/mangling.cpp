@@ -77,6 +77,8 @@ int main() {
                                 "?erlang_aot_raise_v2@@YAEPAXW4ErrorReason@v1@abi@erlang_aot@@I@Z",
                                 "_Z19erlang_aot_raise_v2PvN10erlang_aot3abi2v111ErrorReasonEm",
                                 "_Z19erlang_aot_raise_v2PvN10erlang_aot3abi2v111ErrorReasonEj"});
+        check<services::Catch>({"?erlang_aot_catch_v1@@YAEPEAXPEA_K@Z", "?erlang_aot_catch_v1@@YAEPAXPAI@Z",
+                                "_Z19erlang_aot_catch_v1PvPm", "_Z19erlang_aot_catch_v1PvPj"});
         check<services::RootsEnter>({"?erlang_aot_roots_enter_v4@@YAPEA_KPEAX_K@Z",
                                      "?erlang_aot_roots_enter_v4@@YAPAIPAXI@Z", "_Z25erlang_aot_roots_enter_v4Pvm",
                                      "_Z25erlang_aot_roots_enter_v4Pvj"});
