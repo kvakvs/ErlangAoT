@@ -975,11 +975,28 @@ generated code collects: heap full at allocation, off-heap binary pressure,
 sections that keep using fragments.
 
 - Success criteria
-  - [ ] `docs/runtime-heap.md` defines triggers, safepoint placement, the
+  - [x] `docs/runtime-heap.md` defines triggers, safepoint placement, the
     reload rule for values held in registers, and failure behavior.
 - Tests
-  - [ ] IR prototype of one safepoint with reload on both word widths, recorded
+  - [x] IR prototype of one safepoint with reload on both word widths, recorded
     in the document.
+- Evidence (2026-10-06): not OTP-dependent (no `maint-29` check). Decision in
+  `docs/runtime-heap.md#collection-in-generated-code`: safepoints only at
+  function entry (inside `erlang_aot_enter_v1`/`tail_v1`, callee arguments
+  kept as register roots) and comprehension loop heads (new
+  `erlang_aot_safepoint_v1`); every service, including allocation, is a
+  critical section that overflows into fragments (allocation-as-safepoint
+  rejected). Triggers: any fragment (heap full), off-heap words over a
+  virtual binary heap (46,422 words, then twice the survivors),
+  `erlang:garbage_collect/0` with the builtins; new block sized for live plus
+  stack words. Reload rule: `lower_frames` splits after a safepoint call and
+  spills crossing term values to term slots (calls too), other words to raw
+  slots; the stack never moves at a loop safepoint. Failure: a collection that
+  cannot allocate is skipped; budget overflow stays `resource_limit` (step
+  27). Prototype `tests/prototypes/safepoint/` (`loop.ll`, `run.py`, not a
+  CTest): clang 23.1.2, x86_64/i686 Windows, AArch64/ARMv7 Linux at O0 and O2,
+  the slot reload follows the safepoint call in all 8. No production code
+  changed, so the gate was not rerun. Log `build/plan11-step24/prototype.log`.
 
 <a id="step-25"></a>
 

@@ -114,7 +114,8 @@ Values never survive a transfer in native registers or SSA values. Each body
 reloads its frame address from `stack + frame` after it is entered, and reads
 live values from slots. Within one continuation, a service that can push a
 frame or move the heap invalidates every slot pointer and heap pointer held in
-SSA values; the reload rule for collections is fixed by step 24.
+SSA values; the reload rule for collections is fixed in
+[collection in generated code](runtime-heap.md#collection-in-generated-code).
 
 ## Successor of the 8F root stack
 

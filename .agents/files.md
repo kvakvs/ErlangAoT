@@ -101,7 +101,7 @@ Existing fixture areas: `{preprocessor,parser,project,codegen,patternmatch,runti
 | `linking` | F01 entry selection, escripts, startup objects and `-o` linking (`entry.cmake`, `escript.cmake`, `startup.cmake`: manual CMake link, exit paths, startup IR; `executable.cmake`: `-o` example/argv/escript runs and toolchain/destination failures; `project.cmake`: multi-target manifest outputs, selection, `-o`/`--entry`, aliasing, deferred publication; fixtures `tests/fixtures/linking/{entry,escript,startup,project}/`); runtime-only startup rejections `tests/runtime/startup.cpp`; later link workflows (F32/D01) join here |
 | **+** `transforms`, `stage_writers`, `stage_readers` | D03–D05 selected workflows; runners/fixtures follow area convention; reserved until selected |
 | **+** `tests/interop/` | D06 independent external consumers |
-| `tests/prototypes/` | Decision prototypes, not CTest: `execution_model/` (step 17: `model.hpp`, hand-lowered `generated.cpp`, `runtime.cpp`, rejected `native.cpp`/`coroutines.cpp`, `run.py` host runs + target IR/asm checks) |
+| `tests/prototypes/` | Decision prototypes, not CTest: `execution_model/` (step 17: `model.hpp`, hand-lowered `generated.cpp`, `runtime.cpp`, rejected `native.cpp`/`coroutines.cpp`, `run.py` host runs + target IR/asm checks); `safepoint/` (step 24: `loop.ll` loop-head safepoint with slot reload, `run.py` checks it on 32/64-bit targets at O0/O2) |
 
 ## Backlog → owners
 

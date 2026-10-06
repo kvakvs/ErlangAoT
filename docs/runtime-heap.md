@@ -162,13 +162,112 @@ The heap moves only at a safe point, and never while a reservation is open:
 
 - an explicit host `collect()` while the context runs no generated code;
 - a `collect()` while running generated code has declared a `SafePoint`
-  scope, promising that it holds heap words only in the roots above. Step 24
-  decides where generated code declares one and step 26 places them; until
-  then only runtime tests open such scopes.
+  scope, promising that it holds heap words only in the roots above. The
+  runtime opens one only at the generated-code safepoints of the next section.
 
 Any other request returns `unsafe_point` and changes nothing, not even the
-failure channel of a running generated call. Allocation never moves the heap
-before step 26: a request that does not fit creates a fragment.
+failure channel of a running generated call. Allocation never moves the heap:
+a request that does not fit creates a fragment.
+
+## Collection in generated code
+
+Decision of plan 11 step 24 (2026-10-06); step 26 implements it. Generated
+code collects only at a few **safepoints** where every live term already sits
+in a root. Everything else, including every allocating service, is a
+**critical section** that never moves the heap.
+
+### Triggers
+
+A safepoint collects when the heap asks for it; otherwise it costs one check.
+
+| Trigger | Condition at the safepoint | ERTS counterpart |
+| --- | --- | --- |
+| Heap full | Any fragment exists: an allocation did not fit the heap block since the last collection | Heap top reaches the heap end |
+| Off-heap binary pressure | Off-heap words reach the virtual binary heap limit: 46,422 words at first, after each collection twice the surviving off-heap words, never less than that | `bin_vheap_sz` / binary virtual heap |
+| `erlang:garbage_collect/0` | Always; arrives with the builtin families (steps 36-37) as a forced safepoint | Explicit full sweep |
+
+The new block is sized for the live words **plus the stack words in use**
+(ERTS keeps the stack inside the heap block): a deep stack gets a larger
+heap, so a long recursion collects in proportion to its allocation rather than
+rescanning the whole stack every few hundred words.
+
+### Safepoints
+
+| Point | Where | Live outside frame term slots |
+| --- | --- | --- |
+| Function entry | In `erlang_aot_enter_v1` / `erlang_aot_tail_v1` (and so host invocation), before the callee frame is pushed | The callee's arguments `x[0..arity)`, kept as roots (`keep_registers`) |
+| Loop head | A call of `erlang_aot_safepoint_v1(context)` at the head of every comprehension generator loop | Nothing |
+
+Every Erlang loop is either recursion, which passes a function entry per
+step, or a comprehension, which passes its loop head, so garbage between two
+safepoints is bounded by straight-line code and single service results.
+
+Not safepoints (critical sections, which keep allocating into fragments):
+every other runtime service, including allocation, construction and matching
+services; `erlang_aot_return_v1`; exception propagation; and later message
+delivery (step 45). Services may therefore hold raw heap words in C++ for their
+whole run, and their input arrays and outputs need no reload.
+
+Rejected: allocation as a safepoint (BEAM `test_heap`). It would need every
+service input and every SSA term live across any allocation in a root, a reload
+after each allocating service and a retry protocol in every service, while the
+two safepoints above already bound the garbage.
+
+### Reload rule
+
+No SSA value (a value in a native register) holds a heap word across a
+safepoint, and no native pointer crosses one at all (already an error in
+`lower_frames`).
+
+- `lower_frames` treats a loop-head safepoint call like the resume point of a
+  call: it splits the block after the call and spills every value read after
+  it that was computed before it. A **term value** (a load from a term slot or
+  a register, a value stored into a term slot, or a PHI of such values) is
+  stored after its definition into its existing term slot or a new term slot
+  counted in the descriptor's `roots`, and reloaded before each use. Other
+  words (small immediates, atoms, raw integers, flags) keep raw slots: a
+  collection never changes them.
+- Calls already spill and reload this way, and since this step terms spilled
+  around calls also go to term slots, so the entry safepoint sees every live
+  term of every caller.
+- The frame base stays valid across a loop-head safepoint, because a
+  collection rewrites stack words in place and never moves the stack; every
+  transfer re-reads it in the body prologue as before.
+- Optimization runs after `lower_frames` and cannot replace a reload by the
+  older SSA value: the frame address comes from `erlang_aot_frame_v1`, so the
+  safepoint call may write every slot (prototype below).
+
+### Failure behavior
+
+- A collection at a safepoint never records a failure. When its new block
+  cannot be allocated (`out_of_memory`) the heap stays as it is and execution
+  continues with fragments.
+- An allocation beyond the budget fails as before (`limit_exceeded`, reported
+  as `resource_limit`, exit status 70). Step 27 defines the report of a live
+  set that exceeds the budget even after collection.
+
+### Prototype
+
+[tests/prototypes/safepoint](../tests/prototypes/safepoint/) holds one
+comprehension-style loop in post-`lower_frames` form (`loop.ll`): a term `Y`
+computed before the loop is stored to a term slot and reloaded after the
+loop-head safepoint. `python tests/prototypes/safepoint/run.py` compiles it for
+`x86_64-pc-windows-msvc`, `aarch64-unknown-linux-gnu` (64-bit words),
+`i686-pc-windows-msvc` and `armv7-unknown-linux-gnueabihf` (32-bit words) at
+O0 and O2 and checks that a load of `Y`'s frame word follows the safepoint
+call. All eight pass with clang 23.1.2. At O2 (i686) the loop keeps the
+slot reload and never reuses the register that held `Y`:
+
+```text
+LBB0_2:                     # loop head
+    pushl  %edi
+    calll  _erlang_aot_safepoint_v1
+    pushl  20(%esi)         # cursor reloaded from its term slot
+    ...
+    pushl  24(%esi)         # accumulator
+    pushl  28(%esi)         # Y reloaded from its term slot
+    calll  _make
+```
 
 ## Collection
 

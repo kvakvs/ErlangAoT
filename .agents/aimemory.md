@@ -195,6 +195,9 @@ Step facts beyond the plan record:
   push/truncate). Test: collection.cpp `root_owners` hand-written frames spread one shared graph over every owner.
   Raw spill slots may hold stale term copies after a call: generated code is NOT a safe point until 24/26.
   build/debug Ninja may skip test targets (stale BUILD_TESTING): always run the fresh gate first.
+- 24: decision only. Safepoints = entry (in enter/tail before push, keep_registers(arity)) + comprehension loop heads
+  (erlang_aot_safepoint_v1); services are critical sections (fragments). Prototype tests/prototypes/safepoint/run.py
+  (clang on PATH or ProgramFiles/LLVM); O2 GEPs print as `getelementptr inbounds nuw i8`.
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
