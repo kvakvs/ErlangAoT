@@ -1161,6 +1161,89 @@ runtime options (`startup/options`: command line and `ERLANG_AOT_FLAGS`, like
     caps, proving bounded memory again.
   - [ ] Runtime test: two processes sharing a runtime-wide limit.
 
+<a id="step-27b"></a>
+
+### 27B. Remove list length caps
+
+Backlog: F08. Depends on: [27](#step-27). Added 2026-10-06 (user direction:
+lists are limited only by available memory).
+
+List construction, the container construction service and `list_length` stop
+at 1,000,000 elements, and comparison/equality stop after one million steps by
+default, which also refuses comparing long lists and binaries.
+
+- Success criteria
+  - [ ] Lists of any length build, measure, reverse and compare, bounded only
+    by memory (and an opt-in heap budget).
+  - [ ] Comparison and equality have no default work cap, as in OTP.
+- Tests
+  - [ ] Runtime test: a list one element past the former cap builds, measures
+    and compares; a shared graph of 2^20 leaf pairs compares equal.
+
+<a id="step-27c"></a>
+
+### 27C. Match OTP's tuple arity limit
+
+Backlog: F08. Depends on: [27B](#step-27b). Added 2026-10-06 (user
+direction: limits match OTP).
+
+OTP allows 16,777,215 elements (`MAX_ARITYVAL`, 2^24 - 1); larger tuples from
+BIFs such as `erlang:make_tuple/2` and `list_to_tuple/1` fail with `badarg`
+(observed under OTP 29.1.1). ErlangAoT stops at 1,000,000.
+
+- Success criteria
+  - [ ] Tuples up to 16,777,215 elements build; the limit lives in one place
+    for the later builtin families (steps 37-38) to raise `badarg`.
+- Tests
+  - [ ] Runtime test at the boundary (arity 16,777,215 accepted, one more
+    refused); `differences.md` row removed.
+
+<a id="step-27d"></a>
+
+### 27D. Remove map size and key-work caps
+
+Backlog: F08. Depends on: [27B](#step-27b). Added 2026-10-06 (user
+direction: limits match OTP).
+
+OTP maps have no size limit. ErlangAoT refuses constructions and updates above
+1,000,000 associations and gives construction, update and lookup a
+one-million-step key comparison budget.
+
+- Success criteria
+  - [ ] Map construction, update and lookup have no size or work cap beyond
+    memory.
+- Tests
+  - [ ] Runtime test: a map past the former cap builds and finds keys that are
+    long lists; `differences.md` row removed.
+
+<a id="step-27e"></a>
+
+### 27E. Match OTP's big integer limit
+
+Backlog: F10. Depends on: [27](#step-27). Added 2026-10-06 (user direction:
+limits match OTP).
+
+ERTS caps a bignum at `BIG_ARITY_MAX` words: 65,535 x 64 = 4,194,240
+magnitude bits on 64-bit, 131,071 x 32 = 4,194,272 on 32-bit. Beyond it
+arithmetic and `list_to_integer/1` raise `error:system_limit`; there is no
+separate digit limit (1,262,592 digits print and parse; observed under OTP
+29.1.1). ErlangAoT caps magnitudes at 1,000,000 bits and decimal text at
+10,000 digits, reported as the infrastructure failure `resource_limit`.
+
+- Success criteria
+  - [ ] Runtime magnitude limit equals the ERTS limit of the target width; the
+    decimal-text limit follows from it.
+  - [ ] Compiler limits agree: integer literal and constant-pattern digit caps
+    (`semantic/capabilities`, `match_plan`, `pattern_constants`) and the
+    preprocessor's integer and shift caps (`preprocessor/value`,
+    `operators`) use the same bit limit.
+  - [ ] Decide and document whether exceeding it raises `error:system_limit`
+    (needs an error reason, ABI change) or stays `resource_limit`.
+- Tests
+  - [ ] Golden: arithmetic reaching exactly the limit succeeds, one bit past it
+    fails as decided; runtime and compiler boundary tests updated;
+    `differences.md` updated.
+
 <a id="step-28"></a>
 
 ### 28. Copy term graphs between heaps
