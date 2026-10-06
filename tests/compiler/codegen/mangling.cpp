@@ -92,6 +92,8 @@ int main() {
                                "_Z18erlang_aot_tail_v1PvPKv", "_Z18erlang_aot_tail_v1PvPKv"});
         check<services::Return>({"?erlang_aot_return_v1@@YAPEAXPEAX_K@Z", "?erlang_aot_return_v1@@YAPAXPAXI@Z",
                                  "_Z20erlang_aot_return_v1Pvm", "_Z20erlang_aot_return_v1Pvj"});
+        check<services::Safepoint>({"?erlang_aot_safepoint_v1@@YAXPEAX@Z", "?erlang_aot_safepoint_v1@@YAXPAX@Z",
+                                    "_Z23erlang_aot_safepoint_v1Pv", "_Z23erlang_aot_safepoint_v1Pv"});
         check<services::Frame>({"?erlang_aot_frame_v1@@YAPEA_KPEAX@Z", "?erlang_aot_frame_v1@@YAPAIPAX@Z",
                                 "_Z19erlang_aot_frame_v1Pv", "_Z19erlang_aot_frame_v1Pv"});
         check<services::Registers>({"?erlang_aot_registers_v1@@YAPEA_KPEAX@Z", "?erlang_aot_registers_v1@@YAPAIPAX@Z",

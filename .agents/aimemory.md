@@ -198,6 +198,12 @@ Step facts beyond the plan record:
 - 24: decision only. Safepoints = entry (in enter/tail before push, keep_registers(arity)) + comprehension loop heads
   (erlang_aot_safepoint_v1); services are critical sections (fragments). Prototype tests/prototypes/safepoint/run.py
   (clang on PATH or ProgramFiles/LLVM); O2 GEPs print as `getelementptr inbounds nuw i8`.
+- 26: safepoints collect when ProcessHeap::wants_collection(); host Terms held across generated calls go stale
+  once any call collects: native consumers that keep Terms use HeapOptions{1 << 16 / 1 << 20} min heap
+  (match_consumer also host-collects between calls). Two different blocks can share an address (shrink copy reuses
+  a freed block): test collection by stale host Terms, not by word inequality. clang-analyzer ArrayBound also fires
+  on LoadInst::getPointerOperand / StoreInst::getValueOperand / PHI incoming_values: walk use lists instead.
+  bugprone-unused-return-value flags discarded std::expected (static_cast<void> too).
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

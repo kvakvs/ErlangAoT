@@ -89,6 +89,7 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> r
         }
         shrink(roots);
     }
+    storage.binary_limit_words_ = std::max(detail::MIN_BINARY_HEAP_WORDS, 2 * storage.off_heap_words_);
     stats.live_words = storage.used_words_;
     stats.heap_words = storage.capacity_words_;
     stats.stack_words = owner_.stack().capacity();
@@ -96,10 +97,16 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> r
     return stats;
 }
 
+bool ProcessHeap::wants_collection() const noexcept {
+    const auto &storage = *storage_;
+    return !storage.fragments_.empty() || storage.off_heap_words_ >= storage.binary_limit_words_;
+}
+
 std::size_t ProcessHeap::collected_size(std::size_t live_words) const noexcept {
     const auto &storage = *storage_;
-    const auto wanted =
-        std::max(storage.options_.min_heap_words, detail::heap_size_at_least(live_words + live_words / 3 + 1));
+    // ERTS keeps the stack in the heap block: a deep stack gets a larger heap, so collections stay proportional.
+    const auto words = live_words + owner_.stack().words();
+    const auto wanted = std::max(storage.options_.min_heap_words, detail::heap_size_at_least(words + words / 3 + 1));
     return std::min(wanted, storage.options_.limit_bytes / sizeof(Word) - storage.off_heap_words_);
 }
 
@@ -110,8 +117,8 @@ void ProcessHeap::copy_live(std::span<Word> roots, std::size_t capacity) {
 }
 
 void ProcessHeap::shrink(std::span<Word> roots) noexcept {
-    const auto live = storage_->used_words_;
-    const auto target = collected_size(live);
+    const auto live = storage_->used_words_ + owner_.stack().words();
+    const auto target = collected_size(storage_->used_words_);
     if (4 * live >= storage_->heap_.capacity_ || target >= storage_->heap_.capacity_) {
         return;
     }

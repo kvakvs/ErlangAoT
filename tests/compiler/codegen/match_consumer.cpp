@@ -82,14 +82,31 @@ void equality_failures(ProcessContext &context) {
             "equality did not recover");
 }
 
+// Host Terms stay valid only until a collection: merge fragments here, with the retained words as roots, so
+// the safepoints of the next call find nothing to collect in the large heap.
+void collect_between_calls(ProcessContext &context, std::vector<std::pair<Word, std::string>> &retained) {
+    if (!context.heap().wants_collection()) {
+        return;
+    }
+    std::vector<Word> roots;
+    for (const auto &[word, text] : retained) {
+        roots.push_back(word);
+    }
+    require(context.heap().collect(roots).has_value(), "host collection between calls failed");
+    for (std::size_t i = 0; i < roots.size(); ++i) {
+        retained[i].first = roots[i];
+    }
+}
+
 // Invoke each complete source helper through its registered generated ABI entry.
 void calls(ProcessContext &context) {
-    std::vector<std::pair<Term, std::string>> retained;
+    std::vector<std::pair<Word, std::string>> retained;
     std::string module;
     std::string function;
     std::size_t arity = 0;
     while (std::cin >> module >> function >> arity) {
         require(arity <= 255, "call arity limit");
+        collect_between_calls(context, retained);
         std::vector<Term> arguments;
         for (std::size_t i = 0; i < arity; ++i) {
             std::string token;
@@ -106,15 +123,15 @@ void calls(ProcessContext &context) {
             (value->is_cons() || value->kind() == TermKind::tuple || value->is_float() || value->is_map())) {
             std::ostringstream text;
             wire::write(*value, text);
-            retained.emplace_back(*value, text.str());
+            retained.emplace_back(value->word(), text.str());
         }
         require(!context.generated_calls().failure(), "stale failure after invocation");
         require(context.stack().depth() == 0 && context.stack().words() == 0, "generated call leaked root frames");
     }
     require(std::cin.eof(), "invalid calls stream");
-    for (const auto &[value, expected] : retained) {
+    for (const auto &[word, expected] : retained) {
         std::ostringstream text;
-        wire::write(value, text);
+        wire::write(Term::from_word(word, context).value(), text);
         require(text.str() == expected, "later calls changed retained result/error graph");
     }
 }
@@ -125,7 +142,7 @@ int main() {
     try {
         auto runtime = Runtime::start().value();
         require(register_answer(runtime.get()) == 0 && register_client(runtime.get()) == 0, "registration failed");
-        auto *context = runtime->create_context().value();
+        auto *context = runtime->create_context(HeapOptions{std::size_t{1} << 20}).value();
         equality_failures(*context);
         calls(*context);
         require(runtime->destroy_context(context) == erlang_aot::abi::v1::Status::ok, "context teardown failed");

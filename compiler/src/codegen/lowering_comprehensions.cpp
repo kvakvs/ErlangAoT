@@ -1,8 +1,10 @@
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
+#include "runtime_symbols.hpp"
 #include "source_locations.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
+#include <llvm/IR/Module.h>
 #include <utility>
 
 namespace erlang_aot::codegen {
@@ -58,6 +60,15 @@ void require(ExpressionLowering &state, llvm::Value *test, llvm::BasicBlock *oth
     auto *next = block(state, "generator.test");
     state.builder.CreateCondBr(test, next, otherwise);
     state.builder.SetInsertPoint(next);
+}
+
+// Every iteration starts at a safepoint: the heap may move there, so lower_frames reloads values read after it.
+void safepoint(ExpressionLowering &state) {
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Safepoint>(output.getTargetTriple()),
+        llvm::FunctionType::get(state.builder.getVoidTy(), {state.builder.getPtrTy()}, false));
+    state.builder.CreateCall(service, {state.entry.getArg(0)});
 }
 
 // The kind of input a generator walks.
@@ -312,6 +323,7 @@ void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
     auto *head = block(state, "generator.next");
     state.builder.CreateBr(head);
     state.builder.SetInsertPoint(head);
+    safepoint(state);
     for (auto &generator : generators) {
         read(state, generator);
     }

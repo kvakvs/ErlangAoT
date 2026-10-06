@@ -31,7 +31,7 @@ struct CollectionStats final {
     // Capacity of the new heap block and of the fragments it replaced.
     std::size_t heap_words = 0;
     std::size_t fragment_words = 0;
-    // Slot capacity of the root stack segments, which the collection scans but never moves.
+    // Word capacity of the process stack, which the collection scans but never moves.
     std::size_t stack_words = 0;
     // Words of off-heap buffers still charged after dead binary cells were released.
     std::size_t off_heap_words = 0;
@@ -130,6 +130,9 @@ class ProcessHeap final {
     std::expected<CollectionStats, HeapError> collect() noexcept;
     // Collect with host-held words as extra roots; the caller reads the rewritten words back afterwards.
     std::expected<CollectionStats, HeapError> collect(std::span<Word> roots) noexcept;
+    // Whether a generated-code safepoint should collect: a fragment exists (the heap block filled up) or
+    // off-heap binaries reached the virtual binary heap limit (docs/runtime-heap.md#triggers).
+    bool wants_collection() const noexcept;
     // Report consumed words and exact retained capacity of the heap block and fragments.
     std::size_t used_words() const noexcept;
     std::size_t capacity_words() const noexcept;
@@ -152,7 +155,8 @@ class ProcessHeap final {
     std::expected<void, HeapError> charge_off_heap(std::size_t bytes) noexcept;
     // Return a charge whose cell was never published.
     void uncharge_off_heap(std::size_t bytes) noexcept;
-    // Size a new heap block so live words stay below 75% of it, at least the minimum heap, within the budget.
+    // Size a new heap block so live and stack words stay below 75% of it, at least the minimum heap, within the
+    // budget.
     std::size_t collected_size(std::size_t live_words) const noexcept;
     // Copy everything reachable from the process roots and the host's roots into a new block of capacity words.
     void copy_live(std::span<Word> roots, std::size_t capacity);

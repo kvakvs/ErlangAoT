@@ -44,7 +44,8 @@ Plan: [8E](11-plan.md#step-8e), [8F](11-plan.md#step-8f),
 - [x] Continuation roots: frame term slots, live registers and the failure
   channel enumerated, collectable inside a declared `SafePoint` (step 23).
 - [ ] Mailbox and transit roots with concrete owners.
-- [ ] Generated-code safepoints and frame-base reloads after collection.
+- [x] Generated-code safepoints (function entry, comprehension loop heads) with
+  term spills reloaded from term slots after collection (steps 24, 26).
 
 ### F03 — Process heaps and TermFactory construction
 
@@ -71,7 +72,10 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
   every admitted layout (8A, 8C).
 - [x] Copying collector on explicit host request: rewrite roots, sweep off-heap
   list, merge fragments, grow/shrink along the ERTS sizes (8H).
-- [ ] Triggers from generated code, allocation retry, heap exhaustion (24–27).
+- [x] Triggers from generated code: fragments, off-heap pressure; allocation
+  stays a critical section, so no retry (24, 26).
+- [ ] Heap exhaustion as a defined failure (27); `erlang:garbage_collect/0`
+  with the builtins.
 - [ ] Stress with continuations and mailbox roots as they arrive.
 - [ ] Optional later: generational old heap with minor collections.
 

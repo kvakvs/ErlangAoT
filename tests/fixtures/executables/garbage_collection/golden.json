@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "entry": "garbage_collection",
+  "runs": [
+    {
+      "args": [
+        "churn"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{48,none}\n"
+    },
+    {
+      "args": [
+        "binaries"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{9000,8196}\n"
+    },
+    {
+      "args": [
+        "comprehension"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "8333\n"
+    },
+    {
+      "args": [
+        "deep"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "20000\n200010000\ntrue\n"
+    },
+    {
+      "args": [
+        "payload"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "1000\n500500\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "garbage_collection.erl": "271843e64fa761cf975e55e27d4ec8f1eeea062a2edc18d68d2037adcf2444d7"
+  }
+}

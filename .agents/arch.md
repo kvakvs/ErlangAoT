@@ -148,7 +148,10 @@
   frame term slots of `ProcessStack`, `keep_registers` live X registers, failure payload/arguments/stack,
   explicit span (`ProcessContext::visit_roots`); raw spill slots are never roots. `memory/heap_collect`
   `Copier`: Cheney copy of heap+fragments into one new block at a safe point (`ProcessHeap::collect(roots)`
-  outside generated code, or inside a `SafePoint` scope), forwarding words, off-heap sweep, ERTS size sequence, second copy
+  outside generated code, or inside a `SafePoint` scope). Generated code collects at function entry
+  (`ProcessStack::enter` -> `safepoint(arity)`) and comprehension loop heads (`erlang_aot_safepoint_v1`) when
+  `wants_collection()` (fragments, or off-heap words >= `binary_limit_words_`); all services are critical
+  sections. `lower_frames` spills crossing terms to term slots (`term_value`, `place_slots`). Forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live. No cross-heap graph copying yet. Revision-5 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells

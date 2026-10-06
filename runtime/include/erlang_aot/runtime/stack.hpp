@@ -22,6 +22,10 @@ class ProcessStack final {
 
     // Push a frame for `function` and return its body, or record the budget failure and return the caller's body.
     abi::v1::Code *enter(const abi::v1::FrameDescriptor &function) noexcept;
+    // Collect when the heap asks for it, keeping the first `live` registers as roots: the safepoint of a function
+    // entry or loop head (docs/runtime-heap.md#collection-in-generated-code). Return whether it collected; a failed
+    // collection changes nothing.
+    bool safepoint(std::size_t live) noexcept;
     // Release the current frame for a tail call, then enter `function`.
     abi::v1::Code *tail(const abi::v1::FrameDescriptor &function) noexcept;
     // Pass `result` in the first register, release the current frame and return the body below it.

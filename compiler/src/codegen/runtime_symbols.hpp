@@ -45,6 +45,8 @@ using Code = Pointer<Void>;
 using Enter = Function<"erlang_aot_enter_v1", Code, Context, Descriptor>;
 using Tail = Function<"erlang_aot_tail_v1", Code, Context, Descriptor>;
 using Return = Function<"erlang_aot_return_v1", Code, Context, Size>;
+// Loop-head safepoint: may collect and rewrite term slots (docs/runtime-heap.md#collection-in-generated-code).
+using Safepoint = Function<"erlang_aot_safepoint_v1", Void, Context>;
 using Frame = Function<"erlang_aot_frame_v1", Slot, Context>;
 using Registers = Function<"erlang_aot_registers_v1", Slot, Context>;
 using Invoke = Function<"erlang_aot_invoke_v1", Size, Context, Descriptor, Words>;

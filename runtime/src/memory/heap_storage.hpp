@@ -1,5 +1,6 @@
 #pragma once
 #include "heap_object.hpp"
+#include "heap_policy.hpp"
 #include "process_heap.hpp"
 #include <cstdint>
 #include <erlang_aot/runtime/process_context.hpp>
@@ -69,6 +70,8 @@ class HeapStorage final {
     std::size_t capacity_words_ = 0;
     // Words of off-heap buffers created by this process; capacity_words_ + off_heap_words_ stays within budget.
     std::size_t off_heap_words_ = 0;
+    // Off-heap words at which a safepoint collects: twice the survivors of the last collection, at least the minimum.
+    std::size_t binary_limit_words_ = MIN_BINARY_HEAP_WORDS;
     // Head of this process's off-heap binary cells, newest first; the only route to their C++ state.
     layout::RefcBinaryCell *off_heap_ = nullptr;
     // Set while a reservation is open; one reservation at a time.

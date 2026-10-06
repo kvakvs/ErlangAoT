@@ -303,6 +303,9 @@ void root_owners(Runtime &runtime) {
     owners = Owners{};
     owners.context = &context;
     owners.roots = layouts(context);
+    // Merge the fragments first, so the function entries below (safepoints) have nothing to collect.
+    require(context.heap().collect(owners.roots).has_value() && !context.heap().wants_collection(),
+            "host collection left fragments");
     for (const auto word : owners.roots) {
         owners.texts.push_back(text(current(context, word)));
     }
@@ -316,6 +319,44 @@ void root_owners(Runtime &runtime) {
     require(owners.outer[2] == owners.roots[0], "raw slot was treated as a root");
     require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
 }
+
+// Record the argument slot after the entry safepoint, then after a loop-head safepoint that follows garbage.
+void safepoint_body(void *context) {
+    auto &stack = owners.context->stack();
+    auto *slots = stack.frame() + frame_header_words;
+    owners.current = {slots[0]};
+    garbage(*owners.context, 1000);
+    const auto before = current(*owners.context, slots[0]);
+    erlang_aot_safepoint_v1(context);
+    owners.visited_inside = before.tuple_size() == std::unexpected(TermError::stale_term) ? 1 : 0;
+    owners.current.push_back(slots[0]);
+    run(stack.leave(slots[0]), context);
+}
+
+// One argument, kept in its slot.
+const FrameDescriptor safepointed{nullptr, 0, 0, 1, &safepoint_body, 1, 1};
+
+// A function entry collects with its arguments as register roots, and a loop-head safepoint rewrites term slots
+// in place: the frame address taken before it stays valid.
+void safepoints(Runtime &runtime) {
+    auto &context = *runtime.create_context({16, std::size_t{1} << 20}).value();
+    owners = Owners{};
+    owners.context = &context;
+    owners.roots = layouts(context);
+    owners.texts = {text(current(context, owners.roots[0]))};
+    require(context.heap().wants_collection(), "fixture left no fragment");
+    {
+        GeneratedInvocation invocation(context.generated_calls());
+        const auto result = context.stack().invoke(safepointed, owners.roots.data());
+        require(!context.generated_calls().failure() && result == owners.current[1], "safepoint result lost");
+    }
+    require(owners.current[0] != owners.roots[0], "the entry did not collect");
+    require(owners.visited_inside == 1, "the loop head did not collect");
+    require(!context.heap().wants_collection() && text(current(context, owners.current[1])) == owners.texts[0],
+            "collected argument changed");
+    require(context.heap().verify().has_value(), "heap does not verify after the safepoints");
+    require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
+}
 } // namespace
 
 int main() {
@@ -326,6 +367,7 @@ int main() {
         policy(*runtime);
         unsafe(*runtime);
         root_owners(*runtime);
+        safepoints(*runtime);
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

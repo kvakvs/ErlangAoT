@@ -158,8 +158,9 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   and `ret` of a call's result in tail position. `lower_frames`
   (`compiler/src/codegen/frames.cpp`) then moves each body into
   `<symbol>.body`, adds the prologue (frame header, registers, resume
-  switch), splits blocks after non-tail calls, spills values used after a
-  call to raw slots, hoists constant slot addresses into the prologue, and
+  switch), splits blocks after non-tail calls and loop-head safepoints,
+  spills values used after them (terms to term slots, other words to raw
+  slots), hoists constant slot addresses into the prologue, and
   turns calls, tail calls and returns into `musttail` transfers. Type
   specialization and test seams work on native form; the backend runs
   `lower_frames` before IR inspection and `optimize` runs it if still needed.
@@ -180,10 +181,11 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
 - **No yield yet.** Reductions and `resume_at` arrive with the scheduler
   (step 43). The collector enumerates frame term slots, the registers a
   suspension keeps live (`ProcessStack::keep_registers`) and the failure
-  channel (step 23, [roots](runtime-heap.md#roots-and-safe-points)). Raw spill
-  slots are not roots: a term read after a call may be reloaded from a raw
-  copy, so generated code is not yet a safe point; steps 24 and 26 fix the
-  reload rule.
+  channel (step 23, [roots](runtime-heap.md#roots-and-safe-points)). Function
+  entries and comprehension loop heads are safepoints that collect when the
+  heap asks for it (step 26,
+  [collection in generated code](runtime-heap.md#collection-in-generated-code));
+  raw spill slots never hold terms.
 - **Budget.** The stack has its own limit of 2^24 words
   (`StackOptions::limit_words`, separate from the 64 MiB heap budget). A push
   beyond it fails with `resource_limit`, so a program exits with status 70 and

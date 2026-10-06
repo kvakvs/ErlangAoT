@@ -1016,15 +1016,46 @@ at a safepoint collects instead of creating a fragment; fragments remain for
 critical sections and message delivery.
 
 - Success criteria
-  - [ ] Generated code reloads its frame base after safepoints, and the 8F
+  - [x] Generated code reloads its frame base after safepoints, and the 8F
     segments are replaced by the step-17 stack form.
-  - [ ] Allocation-heavy loops run with a bounded heap.
-  - [ ] Values in recursive frames and error payloads survive repeated
+  - [x] Allocation-heavy loops run with a bounded heap.
+  - [x] Values in recursive frames and error payloads survive repeated
     collections.
 - Tests
-  - [ ] Golden programs allocating far more than the heap budget while keeping
+  - [x] Golden programs allocating far more than the heap budget while keeping
     a small live set.
-  - [ ] Small-heap stress at O0/O2 with deep recursion and nested terms.
+  - [x] Small-heap stress at O0/O2 with deep recursion and nested terms.
+- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. Per the
+  step-24 decision, allocation stays a critical section (no retry): overflow
+  goes to fragments and the next safepoint collects. `ProcessStack::safepoint`
+  (`wants_collection()`: a fragment, or off-heap words at
+  `binary_limit_words_`, 46,422 then twice the survivors) runs in `enter`
+  (callee arguments kept as register roots, so also tail calls and host
+  invocation) and in the new `erlang_aot_safepoint_v1`, which comprehension
+  lowering calls at every generator loop head. New heap blocks count stack
+  words as live. `lower_frames` splits after safepoint calls and spills
+  crossing term values (`find_terms` over use lists: loads from/stores into
+  registers and term slots, PHIs of them) into new term slots counted in
+  `roots` (`place_slots` moves raw slots after them); other words stay raw. The
+  stack never moves at a loop safepoint, so slot addresses stay valid; every
+  transfer re-reads the frame base (the 8F segments went in step 19). Tests:
+  OTP golden `executables_garbage_collection` (5 runs, each allocating more
+  than the 64 MiB budget with a small live set: 25,000 400-word strings in a
+  tail loop, 9,000 8 KiB off-heap binaries, a 25,000-element comprehension
+  allocating in its filter, 20,000-deep body recursion keeping
+  `{N, [N, N+1], <<N:32>>}` per frame with garbage per level, and a
+  1,000-element error payload raised under 2,000 allocating frames and kept
+  through 25,000 more allocating steps), full matrix O0/O2 x specialization x
+  drivers on the default 233-word minimum heap; `runtime_collection`
+  `safepoints` (entry collects with the argument as register root; loop-head
+  service rewrites the slot in place); mangling of
+  `erlang_aot_safepoint_v1` checked against Clang. Host harnesses that keep
+  `Term`s across calls (ERTS host model) now use a large minimum heap
+  (`service_consumer`, `match_consumer`, which also collects between calls
+  with its retained words as roots); the heap-ceiling check uses a one-word
+  budget, since earlier calls' garbage is now collected. Fresh Windows x64
+  Debug (clang-cl): fast CTest 157/157, full `-j 12` 161/161 (107 s); Lizard
+  0 warnings; tidy 63 changed units pass. Logs `build/plan11-step26/`.
 
 <a id="step-27"></a>
 

@@ -14,11 +14,14 @@ inline constexpr std::size_t register_count = 256;
 // Generated code moves between functions only by tail transfers to the Code these services return.
 // Push a zeroed frame for `frame` (a FrameDescriptor), copy its arguments from the registers into its first slots
 // and return its body. When the stack budget is exhausted, record the failure and return the caller's body instead.
+// Entry is a safepoint: it first collects when the heap asks for it, with the arguments as register roots.
 void *erlang_aot_enter_v1(void *context, const void *frame) noexcept;
 // Tail call: release the current frame, then enter `frame` as erlang_aot_enter_v1 does.
 void *erlang_aot_tail_v1(void *context, const void *frame) noexcept;
 // Return `result` in the first register, release the current frame and return the body of the frame below.
 void *erlang_aot_return_v1(void *context, erlang_aot::abi::v1::TermWord result) noexcept;
+// Loop-head safepoint: collect when the heap asks for it. Term slots may be rewritten; the stack never moves.
+void erlang_aot_safepoint_v1(void *context) noexcept;
 // Header of the current frame, read once when a body is entered; its slots follow the header.
 erlang_aot::abi::v1::TermWord *erlang_aot_frame_v1(void *context) noexcept;
 // The process registers; their address is stable for the context's lifetime.

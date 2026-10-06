@@ -52,7 +52,20 @@ const FrameDescriptor &ProcessStack::descriptor(std::size_t at) const noexcept {
     return *std::bit_cast<const FrameDescriptor *>(words_[at + 1]);
 }
 
+bool ProcessStack::safepoint(std::size_t live) noexcept {
+    auto &heap = owner_.heap();
+    if (!heap.wants_collection()) {
+        return false;
+    }
+    keep_registers(live);
+    const SafePoint safe(owner_.generated_calls());
+    const auto collected = heap.collect().has_value();
+    live_registers_ = 0;
+    return collected;
+}
+
 abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
+    safepoint(function.arity);
     if (!push(function)) {
         registers_[0] = 0;
         return descriptor(frame_).body;
@@ -145,6 +158,8 @@ void *erlang_aot_tail_v1(void *context, const void *frame) noexcept {
 void *erlang_aot_return_v1(void *context, erlang_aot::abi::v1::TermWord result) noexcept {
     return code(stack(context).leave(result));
 }
+
+void erlang_aot_safepoint_v1(void *context) noexcept { stack(context).safepoint(0); }
 
 erlang_aot::abi::v1::TermWord *erlang_aot_frame_v1(void *context) noexcept { return stack(context).frame(); }
 

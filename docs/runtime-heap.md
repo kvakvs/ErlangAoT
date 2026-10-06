@@ -84,12 +84,14 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   sized to fit (at least the minimum heap size) and chained to the process. The
   next collection merges fragments into the new heap block. A reservation
   lives in one area; rollback resets that area's top and drops a fragment (or
-  the heap block) the reservation created. Until step 26 allocation never
-  moves the heap, so all overflow becomes fragments until a host collection.
+  the heap block) the reservation created. Allocation never moves the heap:
+  overflow stays in fragments until the next safepoint or host collection
+  ([collection in generated code](#collection-in-generated-code)).
 - **Stack.** Generated frames (BEAM Y registers) live on one flat stack per
   process, apart from the heap (`ProcessStack`, step 19). Each frame is a
   four-word header (caller's header offset, descriptor, resume, handler)
-  followed by term slots and raw spill slots; frames link by offsets, so the
+  followed by term slots (spilled terms included) and raw spill slots; frames
+  link by offsets, so the
   block grows by doubling and moves. It holds at most 2^24 words
   (`StackOptions::limit_words`), counted separately from the heap budget
   ([execution model](execution-model.md#implementation)).
@@ -107,7 +109,9 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   may receive below 75% of it: first all used words, since live data is not
   known before copying. A result less than 25% live is copied once more into
   the size its live data needs (8H); failing to allocate that block keeps the
-  larger one. Neither is smaller than `min_heap_words`.
+  larger one. Neither is smaller than `min_heap_words`. Both sizes count the
+  process stack's words as live (step 26), as ERTS keeps the stack inside the
+  heap block.
 - One budget, `limit_bytes`, covers the heap block, fragments and the bytes of
   off-heap buffers created by this process. Exceeding it is `limit_exceeded`; a
   failed host allocation is `out_of_memory`. During a collection the old and new
@@ -171,7 +175,8 @@ a request that does not fit creates a fragment.
 
 ## Collection in generated code
 
-Decision of plan 11 step 24 (2026-10-06); step 26 implements it. Generated
+Decision of plan 11 step 24 (2026-10-06), implemented in step 26
+([implementation](#implementation)). Generated
 code collects only at a few **safepoints** where every live term already sits
 in a root. Everything else, including every allocating service, is a
 **critical section** that never moves the heap.
@@ -227,9 +232,8 @@ safepoint, and no native pointer crosses one at all (already an error in
   counted in the descriptor's `roots`, and reloaded before each use. Other
   words (small immediates, atoms, raw integers, flags) keep raw slots: a
   collection never changes them.
-- Calls already spill and reload this way, and since this step terms spilled
-  around calls also go to term slots, so the entry safepoint sees every live
-  term of every caller.
+- Calls spill and reload the same way, terms into term slots, so the entry
+  safepoint sees every live term of every caller.
 - The frame base stays valid across a loop-head safepoint, because a
   collection rewrites stack words in place and never moves the stack; every
   transfer re-reads it in the body prologue as before.
@@ -245,6 +249,30 @@ safepoint, and no native pointer crosses one at all (already an error in
 - An allocation beyond the budget fails as before (`limit_exceeded`, reported
   as `resource_limit`, exit status 70). Step 27 defines the report of a live
   set that exceeds the budget even after collection.
+
+### Implementation
+
+Step 26 (2026-10-06):
+
+- `ProcessStack::safepoint(live)` asks `ProcessHeap::wants_collection()` (a
+  fragment exists, or off-heap words reached `binary_limit_words_`), keeps
+  `x[0..live)` as roots, opens a `SafePoint` and collects; a failed collection
+  is ignored. `enter` (and so `tail` and `invoke`) calls it with the callee's
+  arity before pushing; `erlang_aot_safepoint_v1` calls it with 0.
+- Comprehension lowering emits `erlang_aot_safepoint_v1` at the head of every
+  generator loop (`lowering_comprehensions`).
+- `lower_frames` splits each body after a safepoint call and spills crossing
+  values as after a call. `home()` keeps the argument slot or a same-block
+  term slot when one holds the value; otherwise a term value (`term_value`:
+  loaded from a term slot or register, stored into a term slot, or a PHI of
+  those) gets a new term slot, which `place_slots` appends to the leading
+  term slots before the raw slots, and any other value a raw slot.
+- Golden `executables_garbage_collection` (OTP-generated) allocates more than
+  the 64 MiB budget with a small live set: a tail loop building a 400-word
+  string per step, 9,000 off-heap 8 KiB binaries, a comprehension whose filter
+  allocates per element, 20,000-deep body recursion keeping a nested term
+  (tuple, list, binary) per frame, and an error payload caught after unwinding
+  allocating frames and kept through a long allocating loop.
 
 ### Prototype
 

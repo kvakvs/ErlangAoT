@@ -188,17 +188,20 @@ const TermWord *)` signature as a host entry calling
   `erlang_aot_return_v1` (return) give back.
 - Arguments occupy the first frame slots; every evaluated value is stored in a
   term slot before the next expression or call. Failed candidates clear their
-  slots. Values a body still needs after a call are spilled to raw slots
-  after the term slots; raw slots are not roots.
+  slots. Values a body still needs after a call or a loop-head safepoint are
+  spilled: terms to term slots (counted in the descriptor's `roots`), other
+  words to raw slots after them; raw slots are not roots.
 - A result passes in register 0; error payloads are root words of the channel
   (BEAM `fvalue`). A failure returns to the caller like a result and every
   caller checks the channel after the call; the header's handler word stays 0.
 - The stack holds at most `StackOptions::limit_words` (2^24) words; a push
   beyond it records the infrastructure failure `resource_limit`.
-- Heap allocation is the future GC safepoint: all live values are rooted there.
-  Generated code never collects yet; only a host `collect()` outside generated
-  calls, or inside a runtime `SafePoint` scope, moves the heap
-  ([roots](runtime-heap.md#roots-and-safe-points)).
+- Safepoints: `erlang_aot_enter_v1`/`erlang_aot_tail_v1` collect before
+  pushing the callee frame (its arguments are register roots), and
+  `erlang_aot_safepoint_v1(context)` at each comprehension loop head collects
+  in place, when the heap asks for it. Every other service is a critical
+  section that never moves the heap
+  ([collection in generated code](runtime-heap.md#collection-in-generated-code)).
 
 ## Runtime services
 

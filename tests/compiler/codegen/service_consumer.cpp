@@ -203,21 +203,25 @@ void record_failures(ProcessContext &context) {
     require(context.stack().depth() == 0 && !context.generated_calls().failure(), "badrecord leaked state");
 }
 
-// A real backing ceiling reached inside generated construction terminates guards and cleans frames.
+// A real backing ceiling reached inside generated construction terminates guards and cleans frames. Garbage of
+// earlier calls is collected at function entries, so only a single allocation beyond the budget reaches it.
 void heap_budget(Runtime &runtime) {
     auto &context = *runtime.create_context({16, 32 * sizeof(Word)}).value();
     const auto entry = context.code_server().resolve({"service_answer", "heap_guard", 1}).value();
     const std::array arguments{Term::from_word(encode_integer(42).value()).value()};
-    for (unsigned i = 0; i < 16; ++i) {
-        require(entry.call(context, arguments).has_value(), "premature heap ceiling");
+    for (unsigned i = 0; i < 64; ++i) {
+        require(entry.call(context, arguments).has_value(), "garbage of earlier calls reached the heap ceiling");
     }
-    const auto result = entry.call(context, arguments);
+    auto &tiny = *runtime.create_context({1, sizeof(Word)}).value();
+    const auto result = tiny.code_server().resolve({"service_answer", "heap_guard", 1}).value().call(tiny, arguments);
     require(!result && result.error().status == abi::v1::Status::resource_limit, "heap ceiling became false guard");
-    require(context.stack().depth() == 0 && context.stack().words() == 0 && !context.generated_calls().failure(),
+    require(tiny.stack().depth() == 0 && tiny.stack().words() == 0 && !tiny.generated_calls().failure(),
             "heap ceiling leaked call state");
-    require(context.code_server().resolve({"service_answer", "id", 1}).value().call(context, arguments).has_value(),
+    require(tiny.code_server().resolve({"service_answer", "id", 1}).value().call(tiny, arguments).has_value(),
             "heap failure poisoned nonallocating retry");
-    require(runtime.destroy_context(&context) == abi::v1::Status::ok, "bounded context teardown failed");
+    require(runtime.destroy_context(&tiny) == abi::v1::Status::ok &&
+                runtime.destroy_context(&context) == abi::v1::Status::ok,
+            "bounded context teardown failed");
 }
 
 // Excessive exact-integer work bypasses all guard alternatives and leaves a later invocation usable.
@@ -342,7 +346,8 @@ int main() {
         auto runtime = Runtime::start().value();
         require(register_answer(runtime.get()) == 0 && register_client(runtime.get()) == 0,
                 "service registration failed");
-        auto &context = *runtime->create_context().value();
+        // Host Terms stay valid across calls only while no safepoint collects: a large heap never fills here.
+        auto &context = *runtime->create_context(HeapOptions{std::size_t{1} << 16}).value();
         failures(context, "service_answer", "head");
         failures(context, "service_answer", "fallback");
         failures(context, "service_answer", "body");

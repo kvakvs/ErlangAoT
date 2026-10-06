@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <charconv>
 #include <erlang_aot/abi/frames.hpp>
+#include <iterator>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/Transforms/Utils/Local.h>
@@ -135,7 +136,9 @@ class FrameLowering {
                 split(call);
             }
         }
+        split_safepoints();
         spill_values();
+        place_slots();
         for (std::size_t i = 0; i < continuations_.size(); ++i) {
             lower_call(continuations_[i], i + 1);
         }
@@ -257,7 +260,8 @@ class FrameLowering {
     }
 
     // The term slot already holding the value: the argument slot it was read from (only ever rewritten with the same
-    // value), or a slot a store in its own block put it in (not reused within a candidate). Else a new raw slot.
+    // value), or a slot a store in its own block put it in (not reused within a candidate). Else a new term slot for
+    // a term, which a collection rewrites, or a raw slot for any other value.
     llvm::Value *home(const llvm::Instruction &value) {
         if (const auto argument = argument_loads_.find(&value); argument != argument_loads_.end()) {
             return argument->second;
@@ -268,7 +272,52 @@ class FrameLowering {
                 return found->second;
             }
         }
+        if (terms_.contains(&value)) {
+            return term_slot();
+        }
         return raw_slot(body_.getParent()->getDataLayout().getTypeStoreSize(value.getType()).getFixedValue());
+    }
+
+    // Find every term word of the body: loaded from the registers or a term slot, stored into a term slot, or a
+    // PHI merging one. Only use lists are walked: operand accessors trip clang-analyzer in LLVM headers.
+    void find_terms() {
+        const auto accesses = term_accesses();
+        std::vector<const llvm::Value *> pending;
+        for (const auto &instruction : llvm::instructions(body_)) {
+            if (instruction.getType() == services_.word &&
+                (accesses.contains(&instruction) ||
+                 std::ranges::any_of(instruction.users(),
+                                     [&](const llvm::User *user) { return accesses.contains(user); }))) {
+                pending.push_back(&instruction);
+            }
+        }
+        while (!pending.empty()) {
+            const auto *value = pending.back();
+            pending.pop_back();
+            if (terms_.insert(value).second) {
+                std::ranges::copy_if(value->users(), std::back_inserter(pending),
+                                     [](const llvm::User *user) { return llvm::isa<llvm::PHINode>(user); });
+            }
+        }
+    }
+
+    // Loads from and stores into the registers and the term slots (every slot address but the raw ones).
+    std::set<const llvm::User *> term_accesses() const {
+        std::set<const llvm::User *> accesses;
+        const auto record = [&](const llvm::Value &address) {
+            std::ranges::copy_if(address.users(), std::inserter(accesses, accesses.end()), [](const llvm::User *user) {
+                return llvm::isa<llvm::LoadInst>(user) || llvm::isa<llvm::StoreInst>(user);
+            });
+        };
+        for (const auto *base : {prologue_.slots, prologue_.registers}) {
+            record(*base);
+            for (const auto *user : base->users()) {
+                if (llvm::isa<llvm::GetElementPtrInst>(user) && !raw_slots_.contains(user)) {
+                    record(*user);
+                }
+            }
+        }
+        return accesses;
     }
 
     // Native stack memory does not survive a transfer. Native form fills an Erlang call's argument array right
@@ -343,11 +392,20 @@ class FrameLowering {
         continuations_.push_back({call, resume});
     }
 
-    // Store every value read after a resume point it was computed before in a raw slot.
+    // A loop-head safepoint may move the heap: values read after it are spilled as after a call, without a transfer.
+    void split_safepoints() {
+        const auto symbol = services::symbol<services::Safepoint>(services_.output.getTargetTriple());
+        for (auto *call : calls_to(services_.output.getFunction(symbol))) {
+            safepoints_.push_back(call->getParent()->splitBasicBlock(std::next(call->getIterator()), "safepoint"));
+        }
+    }
+
+    // Store every value read after a resume point or safepoint it was computed before in a slot.
     void spill_values() {
-        if (continuations_.empty()) {
+        if (continuations_.empty() && safepoints_.empty()) {
             return;
         }
+        find_terms();
         std::vector<llvm::Instruction *> crossing;
         for (auto &block : body_) {
             for (auto &instruction : block) {
@@ -380,6 +438,8 @@ class FrameLowering {
                 pending.push_back(continuation.resume);
             }
         }
+        std::ranges::copy_if(safepoints_, std::back_inserter(pending),
+                             [&](const llvm::BasicBlock *block) { return block != definition; });
         while (!pending.empty()) {
             const auto *block = pending.back();
             pending.pop_back();
@@ -475,14 +535,36 @@ class FrameLowering {
         builder.CreateRetVoid();
     }
 
-    // Reserve raw words after the term slots; their address is recomputed on every entry.
+    // Reserve raw words after the term slots; place_slots() fixes their index, recomputed on every entry.
     llvm::Value *raw_slot(std::uint64_t bytes) {
         const auto unit = services_.word->getBitWidth() / 8;
-        llvm::IRBuilder<> builder(prologue_.block->getTerminator());
-        auto *slot = builder.CreateConstInBoundsGEP1_64(services_.word, prologue_.slots, roots_ + raw_, "frame.raw");
+        auto *slot = slot_address(roots_ + raw_, "frame.raw");
+        raw_addresses_.emplace_back(slot, raw_);
         raw_ += std::max<std::uint64_t>(1, (bytes + unit - 1) / unit);
         raw_slots_.insert(slot);
         return slot;
+    }
+
+    // Reserve a term slot for a spilled term after the marker's term slots; a collection rewrites it.
+    llvm::Value *term_slot() { return slot_address(roots_ + spilled_terms_++, "frame.term"); }
+
+    // The address of slot `index`, computed in the prologue.
+    llvm::GetElementPtrInst *slot_address(std::uint64_t index, const char *name) {
+        llvm::IRBuilder<> builder(prologue_.block->getTerminator());
+        auto *slot = llvm::dyn_cast<llvm::GetElementPtrInst>(
+            builder.CreateConstInBoundsGEP1_64(services_.word, prologue_.slots, index, name));
+        if (!slot) {
+            throw std::logic_error("lower_frames: slot address folded");
+        }
+        return slot;
+    }
+
+    // Spilled term slots join the leading term slots, which are roots; raw slots move after them.
+    void place_slots() {
+        for (const auto &[slot, offset] : raw_addresses_) {
+            slot->setOperand(1, llvm::ConstantInt::get(services_.word, roots_ + spilled_terms_ + offset));
+        }
+        roots_ += spilled_terms_;
     }
 
     // FrameDescriptor contents: stack-trace names, body, all slots and the leading term slots.
@@ -504,13 +586,18 @@ class FrameLowering {
     llvm::Function &body_;
     std::size_t arity_;
     Prologue prologue_{};
-    // Term slots named by the marker (arguments first), then raw words for spills and native arrays.
+    // Term slots named by the marker (arguments first) plus spilled terms, then raw words for other spills and
+    // native arrays; raw addresses are placed once the spilled term count is known.
     std::size_t roots_;
+    std::size_t spilled_terms_ = 0;
     std::size_t raw_ = 0;
+    std::vector<std::pair<llvm::GetElementPtrInst *, std::size_t>> raw_addresses_;
     // Stack-trace fields copied from the marker's name descriptor; empty without a marker.
     std::array<llvm::Constant *, 4> names_{};
     // Non-tail calls in resume-index order and the blocks each resume point reaches.
     std::vector<Continuation> continuations_;
+    // Blocks continuing after each loop-head safepoint call.
+    std::vector<const llvm::BasicBlock *> safepoints_;
     std::map<const llvm::BasicBlock *, std::set<const llvm::BasicBlock *>> resumed_;
     // Constant prologue addresses by element type and operands.
     using Address = std::pair<llvm::Type *, std::vector<llvm::Value *>>;
@@ -519,6 +606,8 @@ class FrameLowering {
     std::map<const llvm::User *, llvm::Value *> slot_stores_;
     std::map<const llvm::Value *, llvm::Value *> argument_loads_;
     std::set<const llvm::Value *> raw_slots_;
+    // Term words of the body, spilled to term slots (found before spilling).
+    std::set<const llvm::Value *> terms_;
 };
 
 // Exported entries keep their symbol as a host entry that runs the body above a bottom frame.
