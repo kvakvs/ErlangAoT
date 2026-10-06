@@ -8,6 +8,7 @@ inline abi::v1::Status term_status(TermError error) noexcept {
     using abi::v1::Status;
     static constexpr std::array entries{std::pair{TermError::out_of_memory, Status::out_of_memory},
                                         std::pair{TermError::resource_limit, Status::resource_limit},
+                                        std::pair{TermError::system_limit, Status::resource_limit},
                                         std::pair{TermError::wrong_owner, Status::wrong_owner},
                                         std::pair{TermError::expired_context, Status::stopped},
                                         std::pair{TermError::not_implemented, Status::not_implemented},

@@ -92,6 +92,37 @@ llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state) {
     return state.bad_arithmetic;
 }
 
+namespace {
+// Integer results beyond the size limit reject guards and raise system_limit in ordinary bodies.
+llvm::BasicBlock *system_limit_exit(ExpressionLowering &state) {
+    if (state.rejection) {
+        return state.rejection;
+    }
+    if (!state.system_limit) {
+        auto *saved = state.builder.GetInsertBlock();
+        state.system_limit = llvm::BasicBlock::Create(state.entry.getContext(), "body.system_limit", &state.entry);
+        state.builder.SetInsertPoint(state.system_limit);
+        raise_reason(state, abi::v1::ErrorReason::system_limit);
+        state.builder.SetInsertPoint(saved);
+    }
+    return state.system_limit;
+}
+} // namespace
+
+llvm::Value *checked_arithmetic(ExpressionLowering &state, const ServiceOutput result) {
+    auto &builder = state.builder;
+    propagate_failure(state);
+    auto *bad = bad_arithmetic_exit(state);
+    auto *limit = system_limit_exit(state);
+    auto *success = llvm::BasicBlock::Create(state.entry.getContext(), "service.success", &state.entry);
+    auto *outcomes = builder.CreateSwitch(result.outcome, bad, 2);
+    outcomes->addCase(builder.getInt8(static_cast<std::uint8_t>(abi::v1::ValueOutcome::success)), success);
+    outcomes->addCase(builder.getInt8(static_cast<std::uint8_t>(abi::v1::ValueOutcome::system_limit)), limit);
+    builder.SetInsertPoint(success);
+    return builder.CreateAlignedLoad(state.word, result.slot, llvm::Align(state.word->getBitWidth() / 8),
+                                     "service.value");
+}
+
 llvm::Value *lower_integer(ExpressionLowering &state, const std::string_view decimal) {
     auto &output = *state.entry.getParent();
     auto &builder = state.builder;

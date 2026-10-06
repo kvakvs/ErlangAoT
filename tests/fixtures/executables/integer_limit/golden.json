@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "entry": "integer_limit",
+  "runs": [
+    {
+      "args": [
+        "limit"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "1\n255\n{error,system_limit}\n{ok,true}\n{error,system_limit}\n{error,system_limit}\n{ok,true}\n{ok,1}\n{error,system_limit}\n{ok,3}\n{error,system_limit}\n{error,system_limit}\n{ok,0}\n"
+    },
+    {
+      "args": [
+        "guard"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "failed\nfits\nsecond\n"
+    },
+    {
+      "args": [
+        "bits"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "true\ntrue\n"
+    },
+    {
+      "args": [
+        "extract"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "none\n"
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception error: system_limit\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "integer_limit.erl": "639820c19e34c14c893b07e9e456ac88d08781387554bb6190ac2ac8365884f2"
+  }
+}

@@ -70,12 +70,16 @@ Result comparison(ProcessContext &context, Op operation, const Term &left, const
     return boolean(context, results.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::less)));
 }
 
-// Structural argument errors reject guards; resource and ownership errors remain infrastructure failures.
+// Structural argument errors reject guards; an integer beyond the size limit is error:system_limit (rejection in a
+// guard); resource and ownership errors remain infrastructure failures.
 Result checked(TermResult<Word> result) {
     if (result) {
         return *result;
     }
     const auto error = result.error();
+    if (error == TermError::system_limit) {
+        return std::unexpected(Fault{Outcome::system_limit});
+    }
     if (error == TermError::wrong_type || error == TermError::out_of_range || error == TermError::improper_list ||
         error == TermError::invalid_argument) {
         return std::unexpected(Fault{Outcome::bad_argument});

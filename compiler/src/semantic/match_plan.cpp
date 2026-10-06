@@ -80,14 +80,6 @@ void MatchPlanner::variable(const NormalizedPattern &pattern, const std::size_t 
 }
 
 bool MatchPlanner::node(const NormalizedPattern &pattern, const std::size_t input) {
-    if (pattern.literal) {
-        const auto *integer = std::get_if<ast::IntegerLiteral>(&*pattern.literal);
-        if (integer && integer->value.decimal.size() > 10'000) {
-            report(module, &module.syntax->expression(pattern.origin).source, "integer literal digit limit exceeded",
-                   out);
-            return false;
-        }
-    }
     if (pattern.kind == PatternKind::wildcard || pattern.kind == PatternKind::alias) {
         return true;
     }

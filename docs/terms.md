@@ -51,8 +51,14 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   infinite two's complement; negative shift counts reverse direction; huge right
   shifts saturate to 0 or -1.
 - Errors: wrong operands and zero divisor → `badarith`; `abs/1` → `badarg`.
-- Limits: 1,000,000-bit magnitude, 10,000-character decimal text. Exceeding is
-  `resource_limit`, not OTP's `system_limit`.
+- Limits: as ERTS, a magnitude of at most `BIG_ARITY_MAX` words: 4,194,240
+  bits on 64-bit targets (65,535 words), 4,194,272 on 32-bit (131,071 words);
+  decimal text follows (1,262,593 and 1,262,602 digits). A larger arithmetic
+  result raises `error:system_limit` in a body (`ValueOutcome::system_limit`,
+  [ABI](abi.md#failure-channel-revision-2)) and fails a guard; an integer
+  segment extracting a larger value does not match. The compiler rejects a
+  literal past 4,194,240 bits (`illegal integer`, as OTP's scanner) and a
+  constant pattern past it (`illegal pattern`).
 
 ## Floats
 

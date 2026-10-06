@@ -45,8 +45,12 @@ Term canonical(ProcessContext &context) {
     require(arithmetic(context, ImmediateOperation::subtract, huge, copy).kind() == TermKind::smallint,
             "arithmetic zero failed to demote");
     require(factory.integer_decimal("1x") == std::unexpected(TermError::invalid_argument), "invalid decimal accepted");
-    require(factory.integer_decimal(std::string(10001, '1')) == std::unexpected(TermError::resource_limit),
-            "decimal ceiling ignored");
+    // One digit more than 2^limit - 1 has (ERTS: 4,194,240 bits on 64-bit targets, 4,194,272 on 32-bit).
+    const std::size_t digits = sizeof(Word) == 8 ? 1'262'594 : 1'262'603;
+    require(factory.integer_decimal(std::string(digits, '1')) == std::unexpected(TermError::system_limit),
+            "decimal past the integer limit accepted");
+    require(factory.integer_decimal("-" + std::string(digits - 1, '0') + "7")->integer_value() == -7,
+            "leading zeros counted against the integer limit");
     return huge;
 }
 

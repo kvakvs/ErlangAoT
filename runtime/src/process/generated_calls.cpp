@@ -13,7 +13,8 @@ bool payload_reason(abi::v1::ErrorReason reason) {
 // Atom-only language failures carry no term.
 bool plain_reason(abi::v1::ErrorReason reason) {
     return reason == abi::v1::ErrorReason::function_clause || reason == abi::v1::ErrorReason::badarg ||
-           reason == abi::v1::ErrorReason::badarith || reason == abi::v1::ErrorReason::if_clause;
+           reason == abi::v1::ErrorReason::badarith || reason == abi::v1::ErrorReason::if_clause ||
+           reason == abi::v1::ErrorReason::system_limit;
 }
 } // namespace
 

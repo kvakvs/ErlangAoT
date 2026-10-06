@@ -26,7 +26,9 @@ enum class ErrorReason : std::uint8_t {
     // non-boolean (the payload), or zipped generators ran out unevenly (the payload is the tuple of their inputs).
     bad_generator = 16,
     bad_filter = 17,
-    bad_generators = 18
+    bad_generators = 18,
+    // An integer result beyond the ERTS size limit (error:system_limit).
+    system_limit = 19
 };
 } // namespace erlang_aot::abi::v1
 

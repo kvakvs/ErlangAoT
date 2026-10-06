@@ -224,16 +224,17 @@ void heap_budget(Runtime &runtime) {
             "bounded context teardown failed");
 }
 
-// Excessive exact-integer work bypasses all guard alternatives and leaves a later invocation usable.
+// An integer past the ERTS size limit (error:system_limit) rejects its guard, as in OTP, so the next clause runs; one
+// bit less fits, and later invocations stay usable.
 void integer_budget(ProcessContext &context) {
     const auto entry = context.code_server().resolve({"service_answer", "integer_budget", 1}).value();
-    const auto excessive = TermFactory(context).integer(1000001).value();
-    const auto failed = entry.call(context, std::array{excessive});
-    require(!failed && failed.error().status == abi::v1::Status::resource_limit,
-            "integer work ceiling became guard rejection");
-    require(context.stack().depth() == 0 && !context.generated_calls().failure(), "integer ceiling leaked state");
+    const auto largest = entry.call(context, std::array{TermFactory(context).integer(4'194'239).value()});
+    require(largest && largest->atom_spelling() == "fits", "largest integer rejected its guard");
+    const auto passed = entry.call(context, std::array{TermFactory(context).integer(4'194'240).value()});
+    require(passed && passed->atom_spelling() == "recovered", "integer size limit escaped its guard");
+    require(context.stack().depth() == 0 && !context.generated_calls().failure(), "integer limit leaked state");
     require(entry.call(context, std::array{TermFactory(context).integer(1).value()}).has_value(),
-            "integer ceiling poisoned retry");
+            "integer limit poisoned retry");
 }
 
 // A reached extraction failure cannot become badmatch or fallback; retained large tails survive caller cleanup.

@@ -6,9 +6,11 @@
 namespace erlang_aot::runtime::detail {
 // Eager owned intermediates avoid expression-template references surviving a checked-result boundary.
 using Integer = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
-// Bound stored magnitude and arithmetic work separately from Erlang operand errors.
-inline constexpr std::size_t integer_bit_limit = 1'000'000;
-inline constexpr std::size_t integer_decimal_limit = 10'000;
+// Largest magnitude in bits, as ERTS: BIG_ARITY_MAX words (65,535 of 64 bits, 131,071 of 32 bits); a larger result is
+// error:system_limit.
+inline constexpr std::size_t integer_bit_limit = (sizeof(Word) == 8 ? 65'535 : 131'071) * sizeof(Word) * 8;
+// Decimal digits of the largest magnitude, 2^integer_bit_limit - 1.
+inline constexpr std::size_t integer_decimal_limit = sizeof(Word) == 8 ? 1'262'593 : 1'262'602;
 
 // Read canonical signed-magnitude limb extent without allocating an absolute-value temporary.
 std::size_t integer_bits(const Integer &value) noexcept;

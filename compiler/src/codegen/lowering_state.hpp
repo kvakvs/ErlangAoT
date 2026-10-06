@@ -43,6 +43,8 @@ struct ExpressionLowering {
     llvm::BasicBlock *bad_argument = nullptr;
     // Arithmetic operand failures share a body error exit while guards retain their rejection edge.
     llvm::BasicBlock *bad_arithmetic = nullptr;
+    // Integer results beyond the size limit share a body exit raising system_limit; guards reject instead.
+    llvm::BasicBlock *system_limit = nullptr;
     // Capture each evaluated record field immediately, including repeated wildcard/default source nodes.
     std::map<const ast::Expression *, std::vector<llvm::Value *>> record_values = {};
 };
@@ -113,6 +115,9 @@ struct ServiceOutput {
 
 // Consume a checked success-only output after separating infrastructure failure from semantic rejection.
 llvm::Value *checked_value(ExpressionLowering &state, ServiceOutput result, llvm::BasicBlock *rejection);
+// Consume an arithmetic service output: bad operands raise badarith and an oversized integer system_limit in bodies;
+// both reject guards.
+llvm::Value *checked_arithmetic(ExpressionLowering &state, ServiceOutput result);
 
 struct BitLowering {
     // Success-only words retain both extracted ownership and the following logical bit cursor.

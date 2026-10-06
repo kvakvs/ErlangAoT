@@ -59,11 +59,6 @@ bool literal_limit(const Module &module, const ast::Expression &expression, cons
         report(module, &expression.source, "map construction requires '=>' associations", out);
         return true;
     }
-    const auto *integer = std::get_if<ast::IntegerLiteral>(&expression.value);
-    if (integer && integer->value.decimal.size() > 10'000) {
-        report(module, &expression.source, "integer literal digit limit exceeded", out);
-        return true;
-    }
     return false;
 }
 

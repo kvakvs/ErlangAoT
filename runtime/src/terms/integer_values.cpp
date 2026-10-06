@@ -35,9 +35,6 @@ TermResult<Integer> integer_read(const Term &value) {
 }
 
 TermResult<Integer> integer_parse(std::string_view text) {
-    if (text.size() > integer_decimal_limit) {
-        return std::unexpected(TermError::resource_limit);
-    }
     const bool negative = text.starts_with('-');
     if (negative || text.starts_with('+')) {
         text.remove_prefix(1);
@@ -50,6 +47,10 @@ TermResult<Integer> integer_parse(std::string_view text) {
     }
     const auto first = text.find_first_not_of('0');
     text = first == std::string_view::npos ? std::string_view{"0"} : text.substr(first);
+    // More digits than the largest magnitude has never fit; one more bit is caught when the value is stored.
+    if (text.size() > integer_decimal_limit) {
+        return std::unexpected(TermError::system_limit);
+    }
     Integer result = integer_digits(text);
     if (negative) {
         result = -result;

@@ -74,6 +74,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Body match failure | `error:{badmatch, Value}` with owned payload |
 | Comprehensions | `error:{bad_generator, Tail}`, `error:{bad_filter, Value}`, `error:{bad_generators, Inputs}` (`ErrorReason` 16-18); a strict generator's rejection is `{badmatch, Element}` |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
+| Integer result past the size limit | Service outcome `ValueOutcome::system_limit` (3): a guard rejects, a body raises `error:system_limit` (`ErrorReason` 19) |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
 | `erlang:error/1,2,3`, `exit/1`, `throw/1`, `erlang:raise/3` | `raised_error`/`raised_exit`/`raised_throw`: class from the ID, owned payload is the whole reason |

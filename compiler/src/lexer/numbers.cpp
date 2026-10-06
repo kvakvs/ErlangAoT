@@ -1,4 +1,5 @@
 #include "parsing/boost_parser.hpp"
+#include "preprocessor/value.hpp"
 #include <cmath>
 #include <erlang_aot/compiler/lexer.hpp>
 #include <locale>
@@ -45,8 +46,22 @@ void multiply_add(std::string &decimal, const unsigned base, unsigned carry) {
     }
 }
 
+// Copy decimal digits without separators and leading zeros; long literals need no arithmetic.
+Integer decimal_digits(const std::u32string_view digits) {
+    std::string decimal;
+    for (const auto value : digits) {
+        if (value != U'_' && (value != U'0' || !decimal.empty())) {
+            decimal.push_back(static_cast<char>(value));
+        }
+    }
+    return {decimal.empty() ? std::string("0") : decimal};
+}
+
 // Parse a based integer without depending on the future Erlang runtime.
 Integer integer(const std::u32string_view digits, const unsigned base) {
+    if (base == 10) {
+        return decimal_digits(digits);
+    }
     std::string decimal = "0";
     for (const auto value : digits) {
         if (value == U'_') {
@@ -59,6 +74,14 @@ Integer integer(const std::u32string_view digits, const unsigned base) {
         multiply_add(decimal, base, digit);
     }
     return {decimal};
+}
+
+// Admit an integer token within OTP's integer size limit; its scanner reports a larger one as an illegal integer.
+Integer sized_integer(Integer value) {
+    if (!decimal_fits(value.decimal)) {
+        throw std::out_of_range("illegal integer (more than 4194240 bits)");
+    }
+    return value;
 }
 
 // Parse floating values with a fixed locale and reject non-finite results.
@@ -112,7 +135,8 @@ Token Lexer::number() {
             return floating_number(begin);
         }
         number_end();
-        return token(TokenKind::integer, integer(std::u32string_view(source_->text).substr(begin, cursor_ - begin), 10),
+        return token(TokenKind::integer,
+                     sized_integer(integer(std::u32string_view(source_->text).substr(begin, cursor_ - begin), 10)),
                      begin, cursor_);
     } catch (const std::invalid_argument &error) {
         fail(DiagnosticCode::invalid_number, error.what(), begin);
@@ -139,9 +163,10 @@ Token Lexer::based_number(const std::size_t begin) {
         return based_float(begin, BasedMantissa{.begin = value_begin, .base = base});
     }
     number_end();
-    return token(TokenKind::integer,
-                 integer(std::u32string_view(source_->text).substr(value_begin, cursor_ - value_begin), base), begin,
-                 cursor_);
+    return token(
+        TokenKind::integer,
+        sized_integer(integer(std::u32string_view(source_->text).substr(value_begin, cursor_ - value_begin), base)),
+        begin, cursor_);
 }
 
 // Reject adjacent name characters as OTP does, rather than splitting bad

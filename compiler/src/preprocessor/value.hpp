@@ -37,6 +37,15 @@ struct Value {
 std::string decimal_integer(const BigInt &number);
 BigInt integer_from_double(double number);
 
+// Largest integer magnitude in bits: the ERTS limit of 64-bit hosts (BIG_ARITY_MAX = 65,535 words of 64 bits), where
+// OTP's scanner rejects larger literals; 32-bit targets allow 32 more bits at run time.
+inline constexpr std::size_t INTEGER_BIT_LIMIT = 65'535 * 64;
+// Parse canonical decimal digits with an optional leading '-'.
+BigInt decimal_number(std::string_view decimal);
+// Whether a canonical decimal integer has at most INTEGER_BIT_LIMIT magnitude bits; only literals as long as the
+// largest one are parsed.
+bool decimal_fits(std::string_view decimal);
+
 // Construct and inspect primitive values without C++ truthiness/coercion leaks.
 Value integer(BigInt number);
 Value atom(std::u32string text);

@@ -16,9 +16,10 @@ std::uint8_t erlang_aot_integer_v1(void *opaque, const char *digits, std::size_t
     if (!calls.active() || calls.failure()) {
         return static_cast<std::uint8_t>(Outcome::failure);
     }
-    if (!digits || !output || size > runtime::detail::integer_decimal_limit) {
-        calls.fail_service(size > runtime::detail::integer_decimal_limit ? abi::v1::Status::resource_limit
-                                                                         : abi::v1::Status::invalid_argument);
+    // The compiler emits only literals within the integer limit, with at most a sign on top of the digits.
+    const auto too_long = size > runtime::detail::integer_decimal_limit + 1;
+    if (!digits || !output || too_long) {
+        calls.fail_service(too_long ? abi::v1::Status::resource_limit : abi::v1::Status::invalid_argument);
         return static_cast<std::uint8_t>(Outcome::failure);
     }
     runtime::TermFactory factory(context);

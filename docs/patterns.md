@@ -126,7 +126,9 @@ size/unit, typed/sized literal strings and non-final unsized binary segments.
 
 ## Limits
 
-Pattern normalization shares the module's 1,000,000-unit semantic budget;
-constants are capped at 10,000 decimal digits and shifts at 1,000,000 bits.
+Pattern normalization shares the module's 1,000,000-unit semantic budget
+(an integer costs about its decimal digits); a constant past the integer limit
+of 4,194,240 bits is an `illegal pattern`, as in OTP
+([terms](terms.md#integers)).
 Each match plan has a 100,000-work ceiling. The parser separately limits nesting
 to 256 (hard ceiling 512).

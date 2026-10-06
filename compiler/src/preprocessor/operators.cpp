@@ -18,7 +18,7 @@ Value shift(const Value &left, const Value &right, bool forward) {
         amount = -amount;
         forward = !forward;
     }
-    if (amount > 1000000) {
+    if (amount > INTEGER_BIT_LIMIT) {
         throw EvaluationLimit();
     }
     const auto count = amount.convert_to<unsigned>();

@@ -47,8 +47,8 @@ def limits(tool, work):
     """Public source depth and arithmetic ceilings reject cleanly, including after an earlier valid form."""
     for name, body, diagnostic in [
         ("depth", "f(" + "{" * 800 + "X" + "}" * 800 + ") -> X.", "nesting budget exhausted"),
-        ("constant", "f({1 bsl 1000001}) -> ok.", "pattern constant limit exceeded"),
-        ("digits", "f({1 bsl 40000}) -> ok.", "pattern constant limit exceeded"),
+        ("constant", "f({1 bsl 4194240}) -> ok.", "illegal pattern"),
+        ("digits", "f({(1 bsl 2000000) bsl 2194240}) -> ok.", "illegal pattern"),
         ("wide", "f({" + ",".join(["1 bsl 30000"] * 200) + "}) -> ok.", "binding analysis work limit exceeded")]:
         path = work / (name + ".erl")
         path.write_text(f"-module({name}).\ng(X) -> X.\n{body}\n", encoding="utf-8")

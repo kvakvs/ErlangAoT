@@ -19,7 +19,7 @@ TermResult<Integer> shift(const Integer &value, const Integer &count) {
         return Integer(value >> (-count).convert_to<std::size_t>());
     }
     if (count > integer_bit_limit - bits) {
-        return std::unexpected(TermError::resource_limit);
+        return std::unexpected(TermError::system_limit);
     }
     return Integer(value << count.convert_to<std::size_t>());
 }
@@ -63,8 +63,9 @@ TermResult<Integer> integer_binary(Op operation, Integer left, const Integer &ri
     case Op::subtract:
         return integer_sum(left, right, true);
     case Op::multiply:
+        // The product has at least bits(left) + bits(right) - 1 bits.
         if (left != 0 && right != 0 && integer_bits(left) + integer_bits(right) > integer_bit_limit + 1) {
-            return std::unexpected(TermError::resource_limit);
+            return std::unexpected(TermError::system_limit);
         }
         left *= right;
         return left;

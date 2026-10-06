@@ -28,7 +28,9 @@ enum class TermError : std::uint8_t {
     not_implemented,
     diagnostic_failure,
     // A host Term taken before its heap's latest collection; its word may name moved memory.
-    stale_term
+    stale_term,
+    // An integer beyond the ERTS size limit; Erlang code sees error:system_limit.
+    system_limit
 };
 
 struct TermTag {

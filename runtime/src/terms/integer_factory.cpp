@@ -10,7 +10,7 @@ namespace erlang_aot::runtime::detail {
 TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
     const auto bits = integer_bits(value);
     if (bits > integer_bit_limit) {
-        return std::unexpected(TermError::resource_limit);
+        return std::unexpected(TermError::system_limit);
     }
     if (value >= abi::v1::NativeIntegerEncoding::minimum && value <= abi::v1::NativeIntegerEncoding::maximum) {
         return Term::from_word(encode_integer(value.convert_to<std::int64_t>()).value());

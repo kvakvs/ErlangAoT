@@ -112,7 +112,7 @@
   Globally non-recycled words reject foreign ownership; immutable pins retain
   host/error spellings after teardown. Revision-4 module descriptors initialize
   deterministic atom slots before registry publication. Generated reads/booleans
-  never intern on evaluation. Iterative structural order uses decoded integers, atom spelling, tuple arity/fields and cons heads/tails, with bounded work.
+  never intern on evaluation. Iterative structural order uses decoded integers, atom spelling, tuple arity/fields and cons heads/tails, with no work cap (27B). Integers follow the ERTS size limit (`BIG_ARITY_MAX` words); a larger result is service outcome `system_limit`: guards reject, bodies raise `error:system_limit` (27E).
   Failed registration may retain valid atoms, but publishes no module/slots.
 
 - Integers normalize target-sized values to immediates and store larger immutable

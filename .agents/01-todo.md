@@ -139,10 +139,13 @@ Plan: [8B](11-plan.md#step-8b), [23](11-plan.md#step-23),
 
 ### F10 — Arbitrary integers and integer arithmetic
 
-Plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28).
+Plan: [23](11-plan.md#step-23), [27E](11-plan.md#step-27e), [28](11-plan.md#step-28).
 
 - [x] Owned bignums, exact arithmetic/bitwise operations, fast paths,
   promotion/demotion, checked lowering compared with OTP.
+- [x] ERTS size limit (4,194,240 bits on 64-bit) with `error:system_limit`
+  in bodies and guard rejection; compiler literal and constant limits agree
+  (27E).
 - [ ] GC/copying integration.
 
 ### F11 — Floating-point values and arithmetic

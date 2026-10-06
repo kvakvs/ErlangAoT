@@ -5,7 +5,7 @@
 namespace erlang_aot {
 Value integer(BigInt number) {
     const BigInt magnitude = number < 0 ? -number : number;
-    if (magnitude != 0 && boost::multiprecision::msb(magnitude) >= 1000000) {
+    if (magnitude != 0 && boost::multiprecision::msb(magnitude) >= INTEGER_BIT_LIMIT) {
         throw EvaluationLimit();
     }
     Value value;

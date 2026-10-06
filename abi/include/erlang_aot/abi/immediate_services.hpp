@@ -2,8 +2,9 @@
 #include "v1.hpp"
 
 namespace erlang_aot::abi::v1 {
-// Guard argument errors are selection outcomes; infrastructure failures use the checked channel.
-enum class ValueOutcome : std::uint8_t { success, bad_argument, failure };
+// Guard argument errors are selection outcomes; infrastructure failures use the checked channel. An integer result
+// beyond the ERTS size limit rejects a guard and raises error:system_limit in a body.
+enum class ValueOutcome : std::uint8_t { success, bad_argument, failure, system_limit };
 enum class ImmediateOperation : std::uint8_t {
     exact_equal,
     exact_not_equal,

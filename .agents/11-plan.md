@@ -1308,18 +1308,60 @@ separate digit limit (1,262,592 digits print and parse; observed under OTP
 10,000 digits, reported as the infrastructure failure `resource_limit`.
 
 - Success criteria
-  - [ ] Runtime magnitude limit equals the ERTS limit of the target width; the
+  - [x] Runtime magnitude limit equals the ERTS limit of the target width; the
     decimal-text limit follows from it.
-  - [ ] Compiler limits agree: integer literal and constant-pattern digit caps
+  - [x] Compiler limits agree: integer literal and constant-pattern digit caps
     (`semantic/capabilities`, `match_plan`, `pattern_constants`) and the
     preprocessor's integer and shift caps (`preprocessor/value`,
     `operators`) use the same bit limit.
-  - [ ] Decide and document whether exceeding it raises `error:system_limit`
+  - [x] Decide and document whether exceeding it raises `error:system_limit`
     (needs an error reason, ABI change) or stays `resource_limit`.
 - Tests
-  - [ ] Golden: arithmetic reaching exactly the limit succeeds, one bit past it
+  - [x] Golden: arithmetic reaching exactly the limit succeeds, one bit past it
     fails as decided; runtime and compiler boundary tests updated;
     `differences.md` updated.
+- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. OTP
+  29.1.1 observed: 4,194,240 bits succeed and one more bit raises
+  `error:system_limit` for `+`, unary `-`, `bnot`, `bsl` and `*` (64-bit);
+  a guard error fails only its alternative; the largest value has 1,262,593
+  digits; the scanner rejects a longer literal as `illegal integer`; a
+  constant pattern past it is `illegal pattern`; a body constant past it is
+  folded with a warning and raises at run time; an all-ones `<<V:4194241>>`
+  match makes the x86 JIT build an invalid term that crashes the VM
+  (`size_object: bad tag`). Decision: raise `error:system_limit`, as OTP.
+  ABI: `ValueOutcome::system_limit` (3) and `ErrorReason::system_limit` (19),
+  no symbol change (versions collapse in 78A). Runtime: `integer_bit_limit` =
+  `BIG_ARITY_MAX` words of the target (4,194,240 / 4,194,272 bits),
+  `integer_decimal_limit` 1,262,593 / 1,262,602 digits; new
+  `TermError::system_limit` (host status `resource_limit`); arithmetic
+  services return the new outcome; an extracted integer past the limit does
+  not match (ERTS intends `THE_NON_VALUE`); decimal parsing takes nine digits
+  per pass. Codegen: `checked_arithmetic` switches success / `system_limit`
+  (cached body exit raising it, saved and restored with protected scopes like
+  `badarith`) / `badarith`; guards reject both. Compiler: one
+  `INTEGER_BIT_LIMIT` (64-bit ERTS value) in `preprocessor/value.hpp` for the
+  preprocessor integer and shift caps and the lexer, which now rejects a
+  longer literal like OTP's scanner (`illegal integer (more than 4194240
+  bits)`; base-10 literals no longer go through quadratic decimal
+  arithmetic); the semantic literal checks of `capabilities` and
+  `match_plan` became unreachable and were removed; `pattern_constants`
+  reports a constant past the limit as `illegal pattern` and charges its
+  budget by estimated digits instead of converting to text. Tests: OTP golden
+  `executables_integer_limit` (`limit`: exact limit values, every operation
+  one bit past it, `Top - Top`; `guard`; `bits`: 4,194,240-bit segment
+  round trip; `uncaught`: exit 1 `uncaught exception error: system_limit`;
+  authored `extract`: the over-limit segment does not match);
+  `runtime_integers` (one digit past the decimal limit is `system_limit`,
+  leading zeros do not count); `codegen_service` (`integer_budget` fixture now
+  `fits` at 4,194,239 and falls to the next clause at 4,194,240);
+  `patternmatch_integers` (20,000-digit literals compile, 1,262,594 digits
+  are rejected); `patternmatch_patterns` (constants past the limit are
+  illegal patterns); parser CLI `semantics_24` now `1 bsl 4194240`.
+  `differences.md`: big-integer row removed, over-limit extraction row added.
+  `service_answer.erl` erlfmt-formatted for the first time. Fresh Windows
+  x64 Debug (clang-cl): fast 161/161, full `-j 12` 165/165 (130 s); Lizard
+  0 warnings; tidy 157 changed units pass; all 21 executable goldens
+  reproduce under OTP (`regenerate.py --check`). Logs `build/plan11-step27e/`.
 
 <a id="step-28"></a>
 

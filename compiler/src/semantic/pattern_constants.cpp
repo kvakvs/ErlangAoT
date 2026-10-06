@@ -5,19 +5,9 @@
 
 namespace erlang_aot::semantic {
 namespace {
-// Canonical decimal digits must not pass through Boost's octal/prefix parser.
-BigInt decimal(const std::string &text) {
-    if (text.size() > 10000) {
-        throw EvaluationLimit();
-    }
-    BigInt result = 0;
-    for (const char digit : text) {
-        if (digit != '-') {
-            result = result * 10 + static_cast<unsigned>(digit - '0');
-        }
-    }
-    return text.starts_with('-') ? -result : result;
-}
+// Canonical decimal digits must not pass through Boost's octal/prefix parser; the lexer admitted only literals within
+// the integer size limit.
+BigInt decimal(const std::string &text) { return decimal_number(text); }
 
 // Only arithmetic operators belong to constant patterns; guard booleans/comparisons do not.
 std::u32string_view arithmetic(const ast::ExprValue &value) {
@@ -51,13 +41,6 @@ Value scalar(const ast::ExprValue &value) {
     throw EvaluationFailure();
 }
 
-// Limit every intermediate, not just the final answer, before another expensive operation consumes it.
-void bound(const Value &value) {
-    if (value.kind == ValueKind::integer && decimal_integer(value.integer).size() > 10000) {
-        throw EvaluationLimit();
-    }
-}
-
 struct Visit {
     // Postorder tasks avoid C++ recursion even for deeply nested arithmetic.
     ast::ExprId id;
@@ -69,9 +52,8 @@ void reduce(const ast::ExprValue &value, std::vector<Value> &values) {
     const auto count = std::holds_alternative<ast::UnaryExpression>(value) ? 1U : 2U;
     std::vector<Value> arguments(values.end() - count, values.end());
     values.erase(values.end() - count, values.end());
-    auto result = evaluate_operator(arithmetic(value), arguments);
-    bound(result);
-    values.push_back(std::move(result));
+    // integer() refuses every intermediate past the size limit with EvaluationLimit.
+    values.push_back(evaluate_operator(arithmetic(value), arguments));
 }
 
 // Schedule arithmetic only after rejecting nonconstant and nonarithmetic syntax.
@@ -107,7 +89,11 @@ bool scalar_budget(BindingAnalysis &state, const ast::ExprId &id, const std::vec
         return true;
     }
     const auto &value = values.back();
-    const auto cost = value.kind == ValueKind::integer ? decimal_integer(value.integer).size() : 1;
+    // About the decimal digits of an integer (log10 2 = 0.30103), without converting a large one to text.
+    const auto bits = value.kind == ValueKind::integer && value.integer != 0
+                          ? boost::multiprecision::msb(boost::multiprecision::abs(value.integer)) + 1
+                          : 0;
+    const auto cost = value.kind == ValueKind::integer ? bits * 30'103 / 100'000 + 1 : 1;
     return state.spend(id, cost);
 }
 
@@ -144,7 +130,8 @@ std::optional<PatternLiteral> pattern_constant(BindingAnalysis &state, const ast
     try {
         return evaluate_constant(state, root);
     } catch (const EvaluationLimit &) {
-        pattern_error(state, root, "pattern constant limit exceeded (10000 decimal digits / 1000000 shift bits)");
+        // OTP's linter reports a constant past the integer size limit as an illegal pattern too.
+        pattern_error(state, root);
     } catch (const EvaluationFailure &) {
         pattern_error(state, root);
     }

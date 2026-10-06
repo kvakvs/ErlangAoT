@@ -41,11 +41,12 @@ llvm::Value *lower_immediate(ExpressionLowering &state, abi::v1::ImmediateOperat
                                        {state.entry.getArg(0), builder.getInt8(static_cast<std::uint8_t>(operation)),
                                         left, right ? right : llvm::ConstantInt::get(state.word, 0), slot},
                                        "service.outcome");
+    if ((operation >= abi::v1::ImmediateOperation::add && operation < abi::v1::ImmediateOperation::absolute) ||
+        operation == abi::v1::ImmediateOperation::divide) {
+        return checked_arithmetic(state, {outcome, slot});
+    }
     auto *rejection =
-        (operation >= abi::v1::ImmediateOperation::add && operation < abi::v1::ImmediateOperation::absolute) ||
-                operation == abi::v1::ImmediateOperation::divide
-            ? bad_arithmetic_exit(state)
-            : bad_argument_exit(state, operation == abi::v1::ImmediateOperation::boolean_check ? left : nullptr);
+        bad_argument_exit(state, operation == abi::v1::ImmediateOperation::boolean_check ? left : nullptr);
     return checked_value(state, {outcome, slot}, rejection);
 }
 

@@ -228,6 +228,11 @@ Step facts beyond the plan record:
 - 27C/27D: MAX_TUPLE_ARITY + TermFactory::tuple_words in runtime/include/terms.hpp (construct service uses words).
   structural_order has no budget overload anymore; map make = adjacent_find ascending check, else stable_sort +
   keep-last dedupe (OrderFailure exception out of comparator); publish checks MAX_MAP_SIZE (header count / 2).
+- 27E: system_limit = ValueOutcome 3 + ErrorReason 19 + TermError::system_limit; codegen checked_arithmetic (switch)
+  with cached state.system_limit exit in ProtectedScope. Compiler INTEGER_BIT_LIMIT/decimal_fits/decimal_number in
+  preprocessor/value.hpp + integer.cpp; lexer sized_integer() rejects literals (Lexer::literal name clash). Funs are
+  not implemented: fixtures dispatch on atoms instead of closures. OTP probes: erl.exe -noshell -eval 'c:c(m), ...'
+  (delete erl_crash.dump). Python 3.14 needs sys.set_int_max_str_digits(0) for huge str(int).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

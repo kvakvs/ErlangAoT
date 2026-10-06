@@ -52,7 +52,8 @@ interface, not a public stage format. `DirectiveReader` is the older syntax-only
 
 Defaults (configurable through `PreprocessorLimits`): 256 expansion levels and
 1,000,000 produced tokens per form, include depth 64, expression nesting 256,
-plus a fixed 1,000,000-bit bound for integer/bitstring values. Exhaustion is a
+plus fixed bounds of 4,194,240 bits for integers (OTP's limit on 64-bit hosts) and
+1,000,000 bits for bitstring values. Exhaustion is a
 resource diagnostic, never a silent false condition.
 
 Diagnostics carry a stable category, severity, physical spans, optional logical

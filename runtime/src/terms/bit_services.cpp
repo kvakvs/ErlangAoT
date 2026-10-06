@@ -162,7 +162,8 @@ TermResult<std::vector<Term>> admit(ProcessContext &context, std::span<const Wor
     return terms;
 }
 
-// Publish both checked output words together; ordinary segment errors reject guards and patterns silently.
+// Publish both checked output words together; ordinary segment errors reject guards and patterns silently. An
+// extracted integer beyond the size limit does not match either (ERTS returns no value for it).
 Outcome publish_result(ProcessContext &context, const TermResult<BitExtract> &result, Word *output) {
     if (result) {
         output[0] = result->value.word();
@@ -170,7 +171,8 @@ Outcome publish_result(ProcessContext &context, const TermResult<BitExtract> &re
         return Outcome::success;
     }
     const auto error = result.error();
-    if (error == TermError::wrong_type || error == TermError::invalid_argument || error == TermError::out_of_range) {
+    if (error == TermError::wrong_type || error == TermError::invalid_argument || error == TermError::out_of_range ||
+        error == TermError::system_limit) {
         return Outcome::bad_argument;
     }
     context.generated_calls().fail_service(term_status(error));

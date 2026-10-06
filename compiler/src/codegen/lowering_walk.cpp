@@ -69,6 +69,7 @@ struct ProtectedScope {
     llvm::BasicBlock *outer;
     llvm::BasicBlock *bad_argument;
     llvm::BasicBlock *bad_arithmetic;
+    llvm::BasicBlock *system_limit;
     // Names bound inside a catch or try are unsafe afterwards, so the bindings before it are restored.
     std::map<semantic::BindingId, llvm::Value *> bindings;
     // Failures inside the protected part branch here; it is erased when nothing inside can fail.
@@ -256,12 +257,13 @@ struct Walk {
     void protect(std::map<const ast::Expression *, ProtectedScope> &scopes, const ast::Expression &expression,
                  const char *name) {
         auto *handler = llvm::BasicBlock::Create(state.entry.getContext(), name, &state.entry);
-        scopes.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.bindings,
-                           handler);
+        scopes.try_emplace(&expression, state.handler, state.bad_argument, state.bad_arithmetic, state.system_limit,
+                           state.bindings, handler);
         // Shared error exits created outside the protected part would bypass its handler.
         state.handler = handler;
         state.bad_argument = nullptr;
         state.bad_arithmetic = nullptr;
+        state.system_limit = nullptr;
     }
 
     // Restore the enclosing handler and error exits once a protected part completes.
@@ -269,6 +271,7 @@ struct Walk {
         state.handler = scope.outer;
         state.bad_argument = scope.bad_argument;
         state.bad_arithmetic = scope.bad_arithmetic;
+        state.system_limit = scope.system_limit;
     }
 
     // Protect a catch expression: failures inside it reach a fresh handler instead of the enclosing exit.
