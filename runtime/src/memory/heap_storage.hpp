@@ -5,6 +5,8 @@
 #include "runtime_memory.hpp"
 #include <cstdint>
 #include <erlang_aot/runtime/process_context.hpp>
+#include <unordered_map>
+#include <vector>
 
 namespace erlang_aot::runtime::detail {
 namespace layout {
@@ -40,7 +42,8 @@ class HeapStorage final {
     // reservation.
     HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms,
                 std::shared_ptr<RuntimeMemory> memory);
-    // Release every off-heap reference while all backing bytes still exist, and return every charge.
+    // Release every off-heap reference while all backing bytes still exist, and return the block charges; buffers
+    // return their own when their last reference dies.
     ~HeapStorage();
     HeapStorage(const HeapStorage &) = delete;
     HeapStorage &operator=(const HeapStorage &) = delete;
@@ -52,10 +55,6 @@ class HeapStorage final {
     void rollback(HeapMark mark) noexcept;
     // Bump-allocate in the heap, else the newest fragment, else a new fragment; nothing ever moves.
     std::expected<std::span<Word>, HeapError> reserve(std::size_t words);
-    // Count a newly created off-heap buffer against the budget shared with heap backing.
-    std::expected<void, HeapError> charge(std::size_t words) noexcept;
-    // Return the charge of an off-heap buffer that was released or never published.
-    void uncharge(std::size_t words) noexcept;
     // Words that new blocks and off-heap buffers may still add: the rest of the process budget, at most what the
     // runtime-wide limit leaves.
     std::size_t room() const noexcept;
@@ -71,7 +70,8 @@ class HeapStorage final {
     // Retain bounded backing independently of future host pins.
     HeapOptions options_;
     std::weak_ptr<const ContextLifetime> lifetime_;
-    // Runtime-wide account charged with capacity_words_ + off_heap_words_; collections force their to-space.
+    // Runtime-wide account charged with capacity_words_ and by each buffer created here; collections force their
+    // to-space.
     std::shared_ptr<RuntimeMemory> memory_;
     // The process heap block; empty until the first reservation.
     HeapArea heap_;
@@ -82,8 +82,12 @@ class HeapStorage final {
     // Words below the tops of all areas, and words of all areas' capacity.
     std::size_t used_words_ = 0;
     std::size_t capacity_words_ = 0;
-    // Words of off-heap buffers created by this process; capacity_words_ + off_heap_words_ stays within budget.
+    // Words of the off-heap buffers this process's cells reference, each counted once; capacity_words_ +
+    // off_heap_words_ stays within the process budget. The runtime-wide account charges each buffer once instead.
     std::size_t off_heap_words_ = 0;
+    // Cells of this process per referenced off-heap buffer (layout::BinaryBuffer); a buffer stays in off_heap_words_
+    // while its count is nonzero.
+    std::unordered_map<const std::vector<std::byte> *, std::size_t> buffers_;
     // Off-heap words at which a safepoint collects: twice the survivors of the last collection, at least the minimum.
     std::size_t binary_limit_words_ = MIN_BINARY_HEAP_WORDS;
     // Head of this process's off-heap binary cells, newest first; the only route to their C++ state.

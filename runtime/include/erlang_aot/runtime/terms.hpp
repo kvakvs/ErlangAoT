@@ -118,7 +118,7 @@ class Term final {
     // Expose the one-word representation for the generated service bridge.
     Word word() const noexcept;
 
-    // Retain immediates, same-runtime atoms and same-heap compounds; cross-heap graph copying is deferred.
+    // Return this value as a term of destination; see ProcessHeap::add.
     TermResult<Term> copy_to(ProcessHeap &destination) const noexcept;
 
     // Remaining semantic/heap operations below are reserved unless documented as implemented.

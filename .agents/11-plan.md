@@ -573,13 +573,44 @@ walker, then copy into a destination heap fragment (BEAM `size_object` and
 rollback. Off-heap binaries gain a reference instead of being copied.
 
 - Success criteria
-  - [ ] Copies compare equal and survive destruction or collection of the source
+  - [x] Copies compare equal and survive destruction or collection of the source
     process.
-  - [ ] A failed copy leaves both heaps and resource counts unchanged.
+  - [x] A failed copy leaves both heaps and resource counts unchanged.
 - Tests
-  - [ ] Runtime tests copying nested/shared graphs, maps, large binaries and
+  - [x] Runtime tests copying nested/shared graphs, maps, large binaries and
     partial-byte bitstrings between contexts.
-  - [ ] Destination exhaustion injected mid-copy.
+  - [x] Destination exhaustion injected mid-copy.
+- Evidence (2026-10-06): no OTP behavior involved (no golden; `maint-29` not
+  consulted). `ProcessHeap::add`/`Term::copy_to` (`memory/copy`, `GraphCopy`):
+  immediates and same-runtime atoms pass through, same-heap terms keep their
+  identity, a foreign same-runtime graph is copied; another runtime is
+  `wrong_owner`, an expired or stale source `expired_context`/`stale_term`.
+  One iterative walk keyed by object address finds each distinct object once
+  (sharing kept, unlike ERTS's flattening `copy_struct`), one reservation
+  holds them all, pointers are rewritten to the copies; refc cells share the
+  buffer and are linked only after commit. Factories now admit inputs with
+  `ProcessHeap::retain`, still refusing foreign graphs. Off-heap accounting
+  reworked for shared buffers: the runtime-wide account is charged once per
+  buffer at creation and released by the buffer's deleter
+  (`detail::make_buffer`); each process counts its cells per buffer
+  (`HeapStorage::buffers_`, `hold_off_heap`/`drop_off_heap`) and charges a
+  buffer once to its own budget; `verify()` checks the counts and charge.
+  Tests: new `runtime_copy` (every layout incl. map with compound keys,
+  bignum, float, improper list, inline/off-heap/partial-byte bitstrings and
+  an off-heap slice copies equal and survives source collection and
+  teardown and its own collection; a 64-level shared tower copies in
+  3 words per level with each level's two fields one word; a 100,000-deep
+  nested list copies without recursion; two copies of `{B, Slice, B}` share
+  one buffer charged once per process and once runtime-wide; same-heap
+  identity, atoms without storage, factories refusing foreign inputs;
+  destination exhaustion before the reservation, at the second buffer hold
+  and after the holds, each leaving both heaps, the runtime account and
+  buffer references unchanged; cross-runtime, stale and expired sources);
+  `runtime_lifecycle_failure` `check_graph_copy` fails every host allocation
+  of a copy in turn (out_of_memory, empty destination, no leak, retry
+  succeeds); `runtime_containers` `ownership` now expects a copy. Fresh
+  Windows x64 Debug (clang-cl): fast 162/162, full `-j 12` 166/166 (130 s);
+  Lizard 0 warnings; tidy 71 changed units pass. Logs `build/plan11-step28/`.
 
 ## G. Records, function values, dynamic calls
 

@@ -71,11 +71,11 @@ TermResult<void> associate(MapEntries &entries, const MapUpdate &update) {
 
 // Every child belongs to this heap/runtime before it can enter immutable map storage.
 TermResult<void> validate(ProcessHeap &heap, const Term &key, const Term &value) {
-    const auto checked_key = heap.add(key);
+    const auto checked_key = heap.retain(key);
     if (!checked_key) {
         return std::unexpected(checked_key.error());
     }
-    return heap.add(value).transform([](const Term &) {});
+    return heap.retain(value).transform([](const Term &) {});
 }
 
 // Construct associations in source order, retaining the last value for each exact key; no size or work cap.
@@ -96,7 +96,7 @@ TermResult<Term> make(ProcessHeap &heap, std::span<const MapEntry> values) {
 
 // Keep the source map immutable while exact updates see preceding associations from the same expression.
 MapResult update(ProcessHeap &heap, const Term &map, std::span<const MapUpdate> updates) {
-    const auto owned = heap.add(map);
+    const auto owned = heap.retain(map);
     if (!owned) {
         return std::unexpected(MapFault{owned.error(), map});
     }

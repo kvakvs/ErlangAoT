@@ -188,7 +188,7 @@ Explicit runtime shutdown requires contexts to be destroyed first; C++ RAII clea
 invalidates remaining contexts before releasing reserved runtime-wide services.
 
 The heap adds terms with `add(value)`, equivalent to `value.copy_to(heap)`; both
-return a rooted destination-owned graph. See [terms.md](terms.md#heap-ownership-copying-and-collection)
+return a destination-owned term, copying a foreign graph of the same runtime. See [terms.md](terms.md#heap-ownership-copying-and-collection)
 for deep-copy, identity, failure and thread-confinement rules. `TermFactory` also
 constructs terms directly in the context's heap; heap storage owns cells, while
 handles register roots rather than owning cells individually.

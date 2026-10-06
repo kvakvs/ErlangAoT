@@ -13,6 +13,7 @@
 #include <new>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 using erlang_aot::abi::v1::Status;
 using erlang_aot::runtime::Runtime;
@@ -509,6 +510,41 @@ void check_container_construction(bool list) {
     require(succeeded, "compound allocation sweep never reached success");
 }
 
+// A copy failing at any host allocation, while discovering the graph or holding its binary buffer, leaves the
+// destination empty and the source intact; a retry succeeds.
+void check_graph_copy() {
+    using namespace erlang_aot::runtime;
+    bool succeeded = false;
+    for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
+        const auto baseline = live_allocations;
+        {
+            auto runtime = Runtime::start().value();
+            auto &source = *runtime->create_context().value();
+            auto &destination = *runtime->create_context().value();
+            TermFactory factory(source);
+            const auto large = factory.binary(std::vector(100, std::byte{0x3c})).value();
+            const std::array numbers{factory.integer(1).value(), factory.integer(2).value()};
+            const std::array fields{large, factory.list(numbers).value(), large};
+            const auto graph = factory.tuple(fields).value();
+            const auto source_words = source.heap().used_words();
+            remaining = ordinal;
+            const auto result = graph.copy_to(destination.heap());
+            remaining = std::numeric_limits<std::size_t>::max();
+            succeeded = result.has_value();
+            if (!succeeded) {
+                require(result.error() == TermError::out_of_memory, "copy allocation status lost");
+                require(destination.heap().used_words() == 0 && destination.heap().capacity_words() == 0 &&
+                            destination.heap().off_heap_words() == 0 && source.heap().used_words() == source_words,
+                        "failed copy changed a heap");
+                require(graph.copy_to(destination.heap())->exactly_equal(graph) == true, "failed copy poisoned retry");
+                require_walkable(destination);
+            }
+        }
+        require(live_allocations == baseline, "graph copy sweep leaked");
+    }
+    require(succeeded, "graph copy sweep never reached success");
+}
+
 // Sweep temporary arithmetic limbs and final publication through the real checked fallback boundary.
 void check_integer_arithmetic() {
     using namespace erlang_aot::runtime;
@@ -569,6 +605,7 @@ int main() {
         check_float_construction();
         check_map_construction();
         check_integer_arithmetic();
+        check_graph_copy();
         for (const bool large : {false, true}) {
             check_bitstrings(false, large);
             check_bitstrings(true, large);

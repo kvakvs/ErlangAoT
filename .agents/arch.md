@@ -157,7 +157,11 @@
   no default heap or stack cap: opt-in per-process budgets, host refusal = `out_of_memory`, exit 70; step 27A:
   optional runtime-wide limit, one `detail::RuntimeMemory` account charged by heap blocks, fragments,
   off-heap buffers and stack capacity, seen by each process as budget = own storage + what the limit leaves;
-  programs set `--max-heap/--max-stack/--max-memory`). No cross-heap graph copying yet. Revision-5 generated frames
+  programs set `--max-heap/--max-stack/--max-memory`). Step 28: `ProcessHeap::add`/`copy_to` copy a foreign
+  same-runtime graph (`memory/copy` `GraphCopy`: iterative discovery keyed by address keeps sharing, one
+  reservation, refc cells share buffers and link after commit); factories use `retain` (foreign = wrong_owner).
+  Buffers charge the runtime account once (deleter releases); each process counts cells per buffer
+  (`HeapStorage::buffers_`) and charges a buffer once to its own budget. Revision-5 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells
   transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide

@@ -1,4 +1,5 @@
 #include "heap_collect.hpp"
+#include "off_heap.hpp"
 #include <algorithm>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <new>
@@ -52,7 +53,7 @@ std::expected<HeapReservation, HeapError> ProcessHeap::reserve(std::size_t words
     } catch (const std::length_error &) {
         failure = HeapError::limit_exceeded;
     }
-    owner_.generated_calls().fail_service(status(failure));
+    report(failure);
     return std::unexpected(failure);
 }
 
@@ -64,7 +65,7 @@ std::expected<std::span<std::byte>, HeapError> ProcessHeap::allocate(std::size_t
     const auto bytes = reservation->bytes();
     const auto committed = reservation->commit();
     if (!committed) {
-        owner_.generated_calls().fail_service(status(committed.error()));
+        report(committed.error());
         return std::unexpected(committed.error());
     }
     return bytes;
@@ -148,15 +149,36 @@ std::size_t ProcessHeap::capacity_words() const noexcept { return storage_->capa
 
 std::size_t ProcessHeap::off_heap_words() const noexcept { return storage_->off_heap_words_; }
 
-std::expected<void, HeapError> ProcessHeap::charge_off_heap(std::size_t bytes) noexcept {
-    const auto charged = storage_->charge((bytes + sizeof(Word) - 1) / sizeof(Word));
-    if (!charged) {
-        owner_.generated_calls().fail_service(status(charged.error()));
+void ProcessHeap::report(HeapError error) noexcept { owner_.generated_calls().fail_service(status(error)); }
+
+std::expected<std::shared_ptr<std::vector<std::byte>>, HeapError>
+ProcessHeap::off_heap_buffer(std::span<const std::byte> bytes) noexcept {
+    auto failure = HeapError::out_of_memory;
+    try {
+        auto buffer = detail::make_buffer(*storage_, bytes);
+        if (buffer) {
+            return buffer;
+        }
+        failure = buffer.error();
+    } catch (const std::bad_alloc &) {
+        failure = HeapError::out_of_memory;
     }
-    return charged;
+    report(failure);
+    return std::unexpected(failure);
 }
 
-void ProcessHeap::uncharge_off_heap(std::size_t bytes) noexcept {
-    storage_->uncharge((bytes + sizeof(Word) - 1) / sizeof(Word));
+std::expected<void, HeapError> ProcessHeap::hold_off_heap(const std::vector<std::byte> &buffer) noexcept {
+    auto failure = HeapError::out_of_memory;
+    try {
+        const auto held = detail::hold_off_heap(*storage_, buffer);
+        if (held) {
+            return held;
+        }
+        failure = held.error();
+    } catch (const std::bad_alloc &) {
+        failure = HeapError::out_of_memory;
+    }
+    report(failure);
+    return std::unexpected(failure);
 }
 } // namespace erlang_aot::runtime

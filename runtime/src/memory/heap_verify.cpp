@@ -1,5 +1,6 @@
 #include "heap_storage.hpp"
 #include "heap_walk.hpp"
+#include "off_heap.hpp"
 #include <algorithm>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <new>
@@ -94,17 +95,25 @@ class Verifier final {
         return std::ranges::all_of(slots, [&](Word value) { return slot_valid(value); });
     }
 
-    // Every listed cell is a parsed off-heap binary, and every parsed one is listed.
+    // Every listed cell is a parsed off-heap binary, every parsed one is listed, and the per-buffer cell counts and
+    // the off-heap charge match the list.
     bool off_heap_valid() {
+        decltype(storage_.buffers_) buffers;
         for (const auto *cell = storage_.off_heap_; cell != nullptr; cell = cell->next_) {
             const auto value = reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed);
             if (shape_at(value) != Shape::boxed ||
                 layout::BoxHeader::kind(cell->header_.value_) != BoxedKind::refc_binary) {
                 return false;
             }
+            ++buffers[cell->buffer_.get()];
             ++census_.off_heap_cells;
         }
-        return census_.off_heap_cells == refc_cells_;
+        std::size_t words = 0;
+        for (const auto &entry : buffers) {
+            words += buffer_words(*entry.first);
+        }
+        return census_.off_heap_cells == refc_cells_ && buffers == storage_.buffers_ &&
+               words == storage_.off_heap_words_;
     }
 
     // Borrowed storage, the sorted object starts, traced slot spans and running counts.

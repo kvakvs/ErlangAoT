@@ -11,8 +11,8 @@ namespace {
 // Validate every child before reservation; lists have no length cap beyond memory.
 TermResult<void> validate(ProcessHeap &heap, std::span<const Term> values) {
     for (const auto &value : values) {
-        if (const auto copied = heap.add(value); !copied) {
-            return std::unexpected(copied.error());
+        if (const auto owned = heap.retain(value); !owned) {
+            return std::unexpected(owned.error());
         }
     }
     return {};
@@ -121,7 +121,7 @@ TermResult<Term> TermFactory::list_tail(std::span<const Term> elements, const Te
     if (const auto checked = validate(**owner, elements); !checked) {
         return std::unexpected(checked.error());
     }
-    const auto checked_tail = (*owner)->add(tail);
+    const auto checked_tail = (*owner)->retain(tail);
     if (!checked_tail || elements.empty()) {
         return checked_tail;
     }

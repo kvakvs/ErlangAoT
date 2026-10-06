@@ -20,7 +20,10 @@ struct TermAccess {
     static TermResult<HeapObject> object(const Term &value) noexcept;
     // Retain the parent's backing when resolving a checked child slot.
     static TermResult<Term> child(const Term &parent, Word value) noexcept;
-    // Preserve expiration distinctly from unsupported cross-heap copying.
+    // Check that value is a live, current term or an immediate; expiration and staleness stay distinct.
     static TermResult<void> validate(const Term &value) noexcept;
+
+    // The heap holding a compound term's object; null for immediates and atoms.
+    static HeapStorage *storage(const Term &value) noexcept { return value.heap_; }
 };
 } // namespace erlang_aot::runtime::detail

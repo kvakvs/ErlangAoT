@@ -63,13 +63,19 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
 - Its boxed `refc_binary` cell holds a `std::shared_ptr` to the buffer, a bit
   offset and a bit length; slices of a large binary are new `refc_binary` cells
   sharing the buffer (ERTS sub-binaries are not used). Copying a cell to another
-  process copies the `shared_ptr`.
+  process copies the `shared_ptr` ([copying between heaps](#copying-between-heaps)),
+  never the bytes.
 - Each cell is linked into its process's off-heap list through its link word.
   The list is the only way to find these cells' C++ state.
 - Moving a cell copies its other words and move-constructs the `shared_ptr` into
   the new cell, so the old copy owns nothing. After a collection the list sweep
   relinks moved cells and destroys the `shared_ptr` of dead ones; teardown
-  destroys all of them. A buffer is freed when its last cell dies.
+  destroys all of them. A buffer is freed when its last cell, in any process,
+  dies.
+- Each process counts its cells per buffer (`HeapStorage::buffers_`); a buffer
+  is charged once to every process that references it (its off-heap words, the
+  virtual binary heap of ERTS) until that process's last cell for it dies, and
+  once to the runtime-wide account from creation until the buffer is freed.
 - `std::shared_ptr` is two pointers on every supported STL; a `static_assert`
   keeps the cell size fixed at five words after the header on both widths.
 
@@ -123,11 +129,11 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   grows until the host refuses memory (`out_of_memory`), while the sizing
   above keeps it near its live size. An optional per-process budget,
   `HeapOptions::limit_bytes` (default `UNLIMITED_HEAP_BYTES`), covers the heap
-  block, fragments and the bytes of off-heap buffers created by this process;
+  block, fragments and the bytes of off-heap buffers this process references;
   exceeding it is `limit_exceeded`. During a collection the old and new
   blocks coexist; only the new block is checked against the budget, capped at
   the budget left after off-heap buffers. A buffer's charge returns when the
-  process drops its last reference. The stack keeps its own optional cap,
+  process drops its last cell for it. The stack keeps its own optional cap,
   `StackOptions::limit_words`. Programs set both caps with `--max-heap` and
   `--max-stack` ([runtime options](executables.md#runtime-options)).
 
@@ -141,8 +147,10 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   the node.
 - One account per runtime (`detail::RuntimeMemory`, shared by every heap
   storage and stack) is charged when a block, fragment, off-heap buffer or
-  stack capacity is created and released when it is dropped; teardown returns
-  every charge. `Runtime::memory_bytes()` reports the total.
+  stack capacity is created and released when it is dropped; a buffer shared by
+  several processes is charged once and released when its last reference dies
+  (step 28). Teardown returns every charge of the process.
+  `Runtime::memory_bytes()` reports the total.
 - To each process the limit acts as a budget of the storage it owns plus what
   the limit leaves (`HeapStorage::budget`, `room`), so the sizing above keeps
   half of the free memory free after each collection, and a request beyond it
@@ -392,6 +400,32 @@ dead cells destroyed), and the old block and fragments are freed. A heap that
 was never allocated is not collected. `CollectionStats` reports words before,
 live words, the new heap block, the merged fragments, stack slot capacity and
 off-heap words.
+
+## Copying between heaps
+
+`ProcessHeap::add(value)`, equivalently `value.copy_to(heap)`, returns a term
+of the destination heap (step 28, BEAM `size_object` and `copy_struct`):
+
+- Immediates and atoms of the same runtime need no storage, and a term of the
+  destination heap keeps its identity. A graph of another process of the same
+  runtime is copied; another runtime's graph is `wrong_owner`, an expired
+  source `expired_context`, a source handle older than its heap's last
+  collection `stale_term`. Factories still refuse foreign inputs
+  (`ProcessHeap::retain`), so only an explicit copy moves a graph.
+- One walk with an explicit stack (no recursion) finds every distinct object
+  reachable from the value, keyed by address, so internal sharing survives:
+  `{T, T}` copies `T` once, unlike ERTS's default `copy_struct`, which
+  flattens sharing. The copy is one reservation of the sum of their words, in
+  the heap block or a fragment, filled in walk order with pointers rewritten
+  to the copies.
+- An off-heap binary's copy is a new cell sharing the buffer; the destination
+  holds the buffer (charging its own off-heap words if it held none of it)
+  before reserving, and lists the cell only after the reservation commits.
+- The source is only read. A failure (`resource_limit` for the destination
+  budget or runtime limit, `out_of_memory` for the host) drops the buffer
+  holds and rolls the reservation back, so both heaps and every charge are as
+  before. A copy owns no source storage: it survives the source's collection
+  and teardown.
 
 ## Measurements
 

@@ -8,7 +8,9 @@
 #include <cstdint>
 #include <expected>
 #include <limits>
+#include <memory>
 #include <span>
+#include <vector>
 
 namespace erlang_aot::runtime {
 // Distinguish invalid requests, configured limits and backing allocation failures.
@@ -66,6 +68,7 @@ struct HeapOptions final {
 
 namespace detail {
 class HeapStorage;
+class GraphCopy;
 struct IntegerAccess;
 struct FloatAccess;
 struct MapAccess;
@@ -126,8 +129,13 @@ class ProcessHeap final {
     std::expected<std::span<std::byte>, HeapError> allocate(std::size_t words, DiagnosticSink sink = {}) noexcept;
     // Reserve one unpublished allocation; another allocation requires commit/rollback of the current one.
     std::expected<HeapReservation, HeapError> reserve(std::size_t words) noexcept;
-    // Copy checked owner-independent immediates; rooted graph addition remains deferred.
+    // Return value as a term of this heap: immediates and same-runtime atoms as they are, this heap's own terms
+    // unchanged, and a graph of another process of the same runtime copied with its sharing (BEAM copy_struct).
+    // A failed copy changes neither heap; another runtime's graph is wrong_owner.
     TermResult<Term> add(const Term &value) noexcept;
+    // Admit value only if it needs no copy: an immediate, a same-runtime atom or a term of this heap; factories use it
+    // to refuse foreign inputs with wrong_owner.
+    TermResult<Term> retain(const Term &value) noexcept;
     // Copy everything reachable from the process roots into a new heap block, sized by the growth policy.
     // Only a safe point collects: no generated code running outside a SafePoint and no open reservation, else
     // unsafe_point.
@@ -156,10 +164,17 @@ class ProcessHeap final {
     friend struct detail::BitAccess;
     // Bind one process owner and validate heap limits before creating lazy backing storage.
     ProcessHeap(ProcessContext &owner, HeapOptions options);
-    // Charge bytes of a new off-heap buffer; failures are reported like reservation failures.
-    std::expected<void, HeapError> charge_off_heap(std::size_t bytes) noexcept;
-    // Return a charge whose cell was never published.
-    void uncharge_off_heap(std::size_t bytes) noexcept;
+    // Record a heap failure as the failed service's status, as reservations do.
+    void report(HeapError error) noexcept;
+    // Create an off-heap buffer holding bytes, charged to the runtime-wide account until its last reference dies.
+    std::expected<std::shared_ptr<std::vector<std::byte>>, HeapError>
+    off_heap_buffer(std::span<const std::byte> bytes) noexcept;
+    // Count one more cell of this process referencing an off-heap buffer; the first charges the process budget.
+    std::expected<void, HeapError> hold_off_heap(const std::vector<std::byte> &buffer) noexcept;
+    // Copy the graph at root from another heap of the same runtime into this one, keeping its sharing.
+    TermResult<Term> copy(detail::HeapStorage &source, Word root) noexcept;
+    // Hold the graph's binary buffers, reserve its words and publish the copy; any failure undoes every step.
+    TermResult<Term> publish_copy(const detail::GraphCopy &graph, Word root) noexcept;
     // Words of the budget left after off-heap buffers, shared by the heap block and fragments.
     std::size_t budget_words() const noexcept;
     // Largest block for live_words: half of the budget left after them stays free for fragments and off-heap buffers,

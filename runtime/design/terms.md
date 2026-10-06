@@ -5,8 +5,9 @@ implemented with checked contextual admission and retained host ownership.
 See [containers](../../docs/terms.md#tuples-lists-strings), [runtime atoms](../../docs/terms.md#atoms),
 [process memory](../../docs/runtime.md#process-memory), and [generated roots](../../docs/abi.md#root-scopes).
 The table below also reserves future numeric/map/binary/identity APIs; a declaration
-alone does not establish implementation. Cross-heap graph copying remains absent;
-collection runs on explicit host request ([heap contract](../../docs/runtime-heap.md)).
+alone does not establish implementation. Graphs copy between heaps of one runtime
+(`copy_to`); collection runs at safepoints or on host request
+([heap contract](../../docs/runtime-heap.md)).
 
 Host [Term](../include/erlang_aot/runtime/terms.hpp) contains an ABI word, an optional
 atom spelling pin and a borrowed heap with a lifetime token and collection count.
@@ -139,8 +140,8 @@ safe destruction and return `expired_context` from checked accessors thereafter.
   No borrowed view survives heap movement or collection.
 - Composite construction and updates accept terms from the same process context.
   Foreign compound inputs return `wrong_owner`; immediates are owner-independent
-  and atoms are shared within one runtime. `copy_to`/`ProcessHeap::add` currently
-  retain same-heap values and reject foreign graphs;
+  and atoms are shared within one runtime. `copy_to`/`ProcessHeap::add` retain
+  same-heap values and copy foreign graphs of the same runtime;
   ordinary C++ handle copies never transfer process ownership.
   Runtime-issued identities/descriptors must belong to the same runtime instance.
 - Scheduler-mediated process exit invalidates term/factory lifetime tokens before
@@ -164,42 +165,25 @@ safe destruction and return `expired_context` from checked accessors thereafter.
 
 ## Heap ownership, copying and collection
 
-Current `add`/`copy_to` validate and retain same-heap compound handles, preserving
-identity. Owner-independent values and same-runtime atoms already transfer safely.
-The remaining paragraphs in this section describe **future graph copying**
-(plan 11 step 28), not current behavior.
-
 `ProcessContext` owns one `ProcessHeap` as an explicit member, and `TermFactory`
-allocates and registers roots there. The heap's `add(value)` and
-`value.copy_to(destination)` describe the same operation: copy the reachable term
-graph into the destination and return a destination-owned rooted handle. This
-includes container children and closure captures, integer limbs and binary data.
-Preserve sharing within the copied graph using a visited map; never retain source
-heap pointers. Heap-resident cells are copied even for a same-heap request; immediate
-values and immutable runtime-wide atom/identity/descriptor entries need no duplicate
-registry allocation. Copying a pid/reference/fun preserves identity, not liveness.
-
-Owner-independent small integers and empty containers already copy without roots,
-including across runtimes, and survive context exit. The remaining graph-copy
-rules below apply to future owner-bound values.
+allocates there. The heap's `add(value)` and `value.copy_to(destination)` are the
+same operation (step 28): immediates and same-runtime atoms transfer as they
+are, a term of the destination heap keeps its identity, and a graph of another
+process of the same runtime is copied with its sharing, sharing off-heap binary
+buffers ([copying between heaps](../../docs/runtime-heap.md#copying-between-heaps)).
+Factories accept only inputs `retain` admits, so foreign graphs there stay
+`wrong_owner`. Copying a future pid/reference/fun preserves identity, not liveness.
 
 Both heaps must belong to the same runtime, be live, and be exclusively accessible
-to the caller on their owner thread. Different heaps assigned to the same scheduler
-can be copied directly while the source is rooted and quiescent. Calling from one
-worker into another worker's heap is forbidden (`wrong_owner`); messaging uses
-independently owned transit storage, then receiver-side import instead. Cross-runtime
-and remote serialization remain outside this copy API. An expired source or
-destination reports `expired_context`; allocation/budget exhaustion reports
-`resource_limit`, including host bookkeeping failures contained by the nonthrowing
-`copy_to`/`add` boundary.
-
-Copying registers temporary source/destination roots before any allocating safe
-point and publishes the result only after success. Failure must release those
-temporary roots without exposing a partial value or changing the source. Unreachable
-partial allocations can remain charged to the destination until GC/exit; successful
-copying does not promise rollback of backing capacity. Work/size limits must bound
-graph traversal. Tests must verify all term categories and that a copied value stays
-usable after the source process exits.
+to the caller on their owner thread; the source is only read and must not change
+until the copy returns. Calling from one worker into another worker's heap will be
+forbidden once workers exist; messaging copies into receiver fragments
+([step 45](../../.agents/11-plan.md#step-45)). Cross-runtime copies are `wrong_owner`
+and remote serialization stays outside this API. An expired source reports
+`expired_context`, a source handle older than its heap's last collection
+`stale_term`; destination budget or runtime-limit exhaustion reports
+`resource_limit` and host allocation failure `out_of_memory`, with both heaps and
+every charge unchanged. A copy survives the source's collection and teardown.
 
 `ProcessHeap::collect(roots)` is the explicit GC boundary: at a safe point it
 copies the live graph and rewrites roots, otherwise it returns

@@ -31,7 +31,7 @@ HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetim
 
 HeapStorage::~HeapStorage() {
     release_off_heap(*this);
-    memory_->release(capacity_words_ + off_heap_words_);
+    memory_->release(capacity_words_);
 }
 
 bool HeapStorage::alive() const noexcept {
@@ -144,20 +144,6 @@ std::expected<std::span<Word>, HeapError> HeapStorage::reserve(std::size_t words
     used_words_ += words;
     pending_ = true;
     return (*area)->bump(words);
-}
-
-std::expected<void, HeapError> HeapStorage::charge(std::size_t words) noexcept {
-    if (words > room()) {
-        return std::unexpected(HeapError::limit_exceeded);
-    }
-    off_heap_words_ += words;
-    memory_->force(words);
-    return {};
-}
-
-void HeapStorage::uncharge(std::size_t words) noexcept {
-    off_heap_words_ -= words;
-    memory_->release(words);
 }
 
 std::size_t HeapStorage::room() const noexcept {

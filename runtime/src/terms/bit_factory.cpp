@@ -47,8 +47,12 @@ TermResult<Term> BitAccess::heap_binary(ProcessHeap &heap, std::span<const std::
 
 TermResult<Term> BitAccess::refc_binary(ProcessHeap &heap, std::shared_ptr<const BinaryBuffer> buffer, BitRange range) {
     constexpr auto total = sizeof(RefcBinaryCell) / sizeof(Word);
+    if (const auto held = heap.hold_off_heap(*buffer); !held) {
+        return std::unexpected(heap_error(held.error()));
+    }
     auto reserved = heap.reserve(total);
     if (!reserved) {
+        drop_off_heap(*heap.storage_, *buffer);
         return std::unexpected(heap_error(reserved.error()));
     }
     auto *cell = std::construct_at(reinterpret_cast<RefcBinaryCell *>(reserved->bytes().data()));
@@ -59,22 +63,20 @@ TermResult<Term> BitAccess::refc_binary(ProcessHeap &heap, std::shared_ptr<const
         publish(heap.storage_, *reserved, reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed));
     if (published) {
         link_off_heap(*heap.storage_, *cell, std::move(buffer));
+    } else {
+        drop_off_heap(*heap.storage_, *buffer);
     }
     return published;
 }
 
 TermResult<Term> BitAccess::shared_binary(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
-    const auto size = (count + 7) / 8;
-    auto buffer = std::make_shared<BinaryBuffer>(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(size));
-    clear_padding(*buffer, count);
-    if (const auto charged = heap.charge_off_heap(size); !charged) {
-        return std::unexpected(heap_error(charged.error()));
+    auto buffer = heap.off_heap_buffer(bytes.first((count + 7) / 8));
+    if (!buffer) {
+        return std::unexpected(heap_error(buffer.error()));
     }
-    auto published = refc_binary(heap, std::move(buffer), {0, count});
-    if (!published) {
-        heap.uncharge_off_heap(size);
-    }
-    return published;
+    clear_padding(**buffer, count);
+    // A failed publication drops the last reference, which returns the buffer's charge.
+    return refc_binary(heap, std::move(*buffer), {0, count});
 }
 
 TermResult<Term> BitAccess::make(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
@@ -93,7 +95,7 @@ TermResult<Term> BitAccess::make(ProcessHeap &heap, std::span<const std::byte> b
 }
 
 TermResult<Term> BitAccess::slice(ProcessHeap &heap, const Term &source, std::size_t offset, std::size_t count) {
-    const auto owned = heap.add(source);
+    const auto owned = heap.retain(source);
     if (!owned) {
         return std::unexpected(owned.error());
     }

@@ -22,8 +22,10 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   step; failure rolls back backing and counters.
 - `Term::from_word(word)` admits only owner-independent immediates;
   `Term::from_word(word, context)` also admits atoms and heap terms of that
-  context. Same-heap handoff keeps identity. Cross-process graph copying is not
-  implemented: foreign values are rejected, not copied.
+  context. Same-heap handoff keeps identity. `copy_to`/`ProcessHeap::add`
+  copy a graph of another process of the same runtime with its sharing; term
+  factories refuse foreign inputs with `wrong_owner`
+  ([copying between heaps](runtime-heap.md#copying-between-heaps)).
 - Cells live until an explicit collection finds them unreachable, or until
   heap teardown.
 

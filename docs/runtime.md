@@ -74,8 +74,11 @@ is its contract (layout, areas, sizing, admission, roots, collection).
   that refers to one holds a `std::shared_ptr` and joins the process's off-heap
   list when published; teardown walks the list and drops those references
   ([off-heap binaries](runtime-heap.md#off-heap-binaries)).
+- `add(value)`/`copy_to` copy a graph of another process of the same runtime,
+  keeping its sharing and sharing off-heap buffers; a failed copy changes
+  nothing ([copying between heaps](runtime-heap.md#copying-between-heaps)).
 - `used_words` counts allocated words; `capacity_words` counts heap block and fragments;
-  `off_heap_words` counts buffers this process created. Backing plus off-heap
+  `off_heap_words` counts the buffers this process references, each once. Backing plus off-heap
   words share the optional `limit_bytes` budget; a collection keeps half of the
   budget left after survivors free, so exhausting it means the live data no
   longer fits ([failure behavior](runtime-heap.md#failure-behavior)).

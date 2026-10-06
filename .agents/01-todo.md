@@ -89,12 +89,13 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
 ### F05 — Graph copying and process isolation
 
 Plan: [8H](11-plan.md#step-8h), [28](11-plan.md#step-28),
-[45](11-plan.md#step-45). Immediate copies exist; compound graphs do not.
+[45](11-plan.md#step-45). Graphs copy between heaps of one runtime (28).
 
-- [ ] Sharing-preserving bounded copy with destination budget and rollback;
-  extend `Term::copy_to` and `ProcessHeap::add`.
-- [ ] Cross-runtime atom/identity handling; reuse for message delivery.
-- [ ] Verify independent lifetimes and failure cleanup.
+- [x] Sharing-preserving copy with destination budget and rollback;
+  `Term::copy_to` and `ProcessHeap::add` (28).
+- [ ] Cross-runtime atom/identity handling (cross-runtime copies are
+  `wrong_owner`); reuse for message delivery (45).
+- [x] Independent lifetimes and failure cleanup verified (28).
 
 ### F06 — Atom storage and atom expressions
 
@@ -125,7 +126,8 @@ Plan: [23](11-plan.md#step-23), [27B](11-plan.md#step-27b), [27C](11-plan.md#ste
 - [x] No list length cap and no comparison work cap (27B).
 - [x] Tuple arity limit of OTP, 16,777,215 (27C).
 - [x] No map size or key-work caps; O(n log n) map construction (27D).
-- [ ] GC/copying integration (F04/F05); more list operations via F26.
+- [x] GC/copying integration (F04/F05, 28).
+- [ ] More list operations via F26.
 
 ### F09 — Binaries and bitstrings
 
@@ -135,7 +137,7 @@ Plan: [8B](11-plan.md#step-8b), [23](11-plan.md#step-23),
 - [x] Inline heap binaries up to 64 bytes and shared `refc_binary` buffers on a
   per-process off-heap list (8B); checked segments, cursors, tails, queries.
 - [x] Collector sweep of dead off-heap cells (8H).
-- [ ] Cross-process copying.
+- [x] Cross-process copying shares the buffer; each process charges it once (28).
 
 ### F10 — Arbitrary integers and integer arithmetic
 
@@ -146,7 +148,7 @@ Plan: [23](11-plan.md#step-23), [27E](11-plan.md#step-27e), [28](11-plan.md#step
 - [x] ERTS size limit (4,194,240 bits on 64-bit) with `error:system_limit`
   in bodies and guard rejection; compiler literal and constant limits agree
   (27E).
-- [ ] GC/copying integration.
+- [x] GC/copying integration (28).
 
 ### F11 — Floating-point values and arithmetic
 
@@ -154,7 +156,8 @@ Plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28),
 [38](11-plan.md#step-38).
 
 - [x] Finite binary64 values, operations, conversions and mixed comparisons.
-- [ ] GC/copying integration; broader numeric scope when selected.
+- [x] GC/copying integration (28).
+- [ ] Broader numeric scope when selected.
 
 ## Executable language semantics
 

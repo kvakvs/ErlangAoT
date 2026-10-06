@@ -233,6 +233,9 @@ Step facts beyond the plan record:
   preprocessor/value.hpp + integer.cpp; lexer sized_integer() rejects literals (Lexer::literal name clash). Funs are
   not implemented: fixtures dispatch on atoms instead of closures. OTP probes: erl.exe -noshell -eval 'c:c(m), ...'
   (delete erl_crash.dump). Python 3.14 needs sys.set_int_max_str_digits(0) for huge str(int).
+- 28: ProcessHeap::add copies foreign graphs (copy.cpp GraphCopy); factories call retain(). Off-heap buffers: runtime
+  charge in shared_ptr deleter (make_buffer), per-process hold/drop counts in HeapStorage::buffers_; verify() checks
+  counts. Never compare shared-subterm towers across heaps (no identical-word shortcut => 2^depth walk).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

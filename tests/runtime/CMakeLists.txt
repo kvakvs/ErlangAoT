@@ -51,6 +51,13 @@ target_link_libraries(runtime_collection PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_collection PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_collection COMMAND runtime_collection)
 
+# Graph copies between heaps: equality, sharing, shared off-heap buffers, survival and failure rollback.
+add_executable(runtime_copy copy.cpp)
+erlang_aot_project_options(runtime_copy)
+target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_copy PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_copy COMMAND runtime_copy)
+
 # Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
 add_executable(runtime_heap_measurements heap_measurements.cpp)
 erlang_aot_project_options(runtime_heap_measurements)
