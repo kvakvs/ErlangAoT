@@ -69,8 +69,9 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 ## Tuples, lists, strings
 
 - Tuple: arity header + fields. Cons: head + tail words. `{}` and `[]` are
-  immediates. Strings are lists of code points. Up to 1,000,000 elements per
-  constructor.
+  immediates. Strings are lists of code points. Lists have no length cap
+  beyond memory (an optional heap budget included); tuples hold up to
+  1,000,000 elements.
 - Services: `hd`, `tl`, `length`, `tuple_size`, `size`, one-based `element`.
 
 ## Maps
@@ -121,8 +122,10 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 
 ## Comparison and order
 
-Iterative, bounded to one million pending pairs; exhaustion is `resource_limit`,
-never "unequal". Order: numbers < atoms < tuples < maps < nil < lists <
+Iterative with no work cap, as in OTP: only memory for pending pairs bounds a
+comparison, and identical words are equal without a walk. Map key searches
+inside construction, update and lookup still charge a one-million-step budget
+(exhaustion is `resource_limit`, never "unequal"). Order: numbers < atoms < tuples < maps < nil < lists <
 bitstrings. Atoms compare by UTF-8 spelling (code-point order); tuples by arity
 then fields; maps by size, then keys, then values; bitstrings by logical bits.
 

@@ -1,9 +1,11 @@
 #include "terms.hpp"
 #include <array>
+#include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 using namespace erlang_aot::runtime;
 using erlang_aot::abi::v1::Status;
@@ -59,20 +61,51 @@ void failure_payload(ProcessContext &context, const Term &value) {
     require(retained->value->exactly_equal(value) == true, "later allocation damaged retained error");
 }
 
-// A compact shared graph can require exponential value traversal; the checked budget must stop it.
-void comparison_budget(ProcessContext &context) {
+// Comparison has no work cap, as in OTP: two separately built shared graphs of 2^20 leaf pairs compare equal, and
+// a different innermost leaf still makes them unequal.
+void unbounded_comparison(ProcessContext &context) {
     TermFactory factory(context);
     auto left = factory.nil().value();
     auto right = factory.nil().value();
+    auto other = factory.atom("other").value();
     for (unsigned i = 0; i < 20; ++i) {
         left = factory.tuple(std::array{left, left}).value();
         right = factory.tuple(std::array{right, right}).value();
+        other = factory.tuple(std::array{right, other}).value();
     }
-    require(left.exactly_equal(right) == std::unexpected(TermError::resource_limit),
-            "structural traversal ignored ceiling");
+    require(left.exactly_equal(right) == true, "shared graph comparison failed");
+    require(left.exactly_equal(other) == false, "different leaf compared equal");
     GeneratedInvocation invocation(context.generated_calls());
-    require(erlang_aot_exact_v1(&context, left.word(), right.word()) == 2, "comparison ceiling became inequality");
-    require(context.generated_calls().failure()->status == Status::resource_limit, "comparison ceiling status lost");
+    require(erlang_aot_exact_v1(&context, left.word(), right.word()) ==
+                static_cast<std::uint8_t>(erlang_aot::abi::v1::Equality::equal),
+            "generated comparison stopped on a large graph");
+}
+
+// Lists have no length cap (plan 11 step 27B): one element past the former 1,000,000 cap builds through the
+// factory and the construction service, measures, reverses and compares.
+void long_lists(Runtime &runtime) {
+    constexpr std::size_t length = 1'000'001;
+    auto &context = *runtime.create_context().value();
+    TermFactory factory(context);
+    const std::vector elements(length, factory.integer(7).value());
+    const auto built = factory.list(elements).value();
+    require(built.list_length() == length, "long list length failed");
+    std::vector<Word> words(length + 1, factory.integer(7)->word());
+    words.back() = factory.nil()->word();
+    GeneratedInvocation invocation(context.generated_calls());
+    Word constructed = 0;
+    require(erlang_aot_construct_v1(&context,
+                                    static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::list),
+                                    words.data(), words.size(), &constructed) == 0,
+            "construction service refused a long list");
+    const std::array reverse{constructed, factory.nil()->word()};
+    Word reversed = 0;
+    require(erlang_aot_construct_v1(&context,
+                                    static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::reverse),
+                                    reverse.data(), reverse.size(), &reversed) == 0,
+            "reverse service refused a long list");
+    require(Term::from_word(reversed, context)->exactly_equal(built) == true, "long lists compared unequal");
+    require(runtime.destroy_context(&context) == Status::ok, "long list context teardown failed");
 }
 
 // Foreign or out-of-heap words never reach a header read; expiration denies access while safely pinning storage.
@@ -94,7 +127,8 @@ int main() {
         auto &context = *runtime->create_context({32, 4096 * sizeof(Word)}).value();
         const auto value = values(context);
         failure_payload(context, value);
-        comparison_budget(context);
+        unbounded_comparison(context);
+        long_lists(*runtime);
         ownership(*runtime, context, value);
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

@@ -4,6 +4,7 @@
 #include "floats.hpp"
 #include "maps.hpp"
 #include <algorithm>
+#include <limits>
 #include <new>
 #include <stdexcept>
 
@@ -111,8 +112,12 @@ TermResult<int> maps(const Pair &values, std::vector<Pair> &pending, std::size_t
     return 0;
 }
 
-// Dispatch only validated parents; extracted children inherit their live owning storage.
+// Dispatch only validated parents; extracted children inherit their live owning storage. One word names one term,
+// so identical words are equal without a walk, as in ERTS.
 TermResult<int> step(const Pair &values, std::vector<Pair> &pending, std::size_t remaining) {
+    if (values.left.word() == values.right.word()) {
+        return 0;
+    }
     const auto lhs = rank(values.left);
     const auto rhs = rank(values.right);
     if (!lhs || !rhs) {
@@ -179,7 +184,8 @@ TermResult<int> structural_order(const Term &left, const Term &right, bool exact
 }
 
 TermResult<int> structural_order(const Term &left, const Term &right, bool exact) noexcept {
-    std::size_t remaining = 1'000'000;
+    // No work cap, as in OTP: only memory for pending pairs bounds a comparison.
+    std::size_t remaining = std::numeric_limits<std::size_t>::max();
     return structural_order(left, right, exact, remaining);
 }
 } // namespace erlang_aot::runtime::detail

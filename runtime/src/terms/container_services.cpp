@@ -57,11 +57,8 @@ TermResult<Term> reverse(ProcessContext &context, std::span<const Term> terms) {
     return TermFactory(context).list(elements, terms[1]);
 }
 
-// Bound marshalling work and validate all input ownership before invoking a transactional factory.
+// Validate all input ownership before invoking a transactional factory; the tuple factory checks the arity.
 TermResult<Term> construct(ProcessContext &context, Construct operation, std::span<const Word> values) {
-    if (values.size() > 1'000'000) {
-        return std::unexpected(TermError::resource_limit);
-    }
     std::vector<Term> terms;
     terms.reserve(values.size());
     for (const auto value : values) {
@@ -129,10 +126,6 @@ std::uint8_t construct_service(ProcessContext &context, std::uint8_t operation, 
     }
     if (operation > static_cast<std::uint8_t>(Construct::reverse) || (count != 0 && !values)) {
         context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
-        return static_cast<std::uint8_t>(Outcome::failure);
-    }
-    if (count > 1'000'000) {
-        context.generated_calls().fail_service(abi::v1::Status::resource_limit);
         return static_cast<std::uint8_t>(Outcome::failure);
     }
     try {

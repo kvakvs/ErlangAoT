@@ -1203,12 +1203,25 @@ at 1,000,000 elements, and comparison/equality stop after one million steps by
 default, which also refuses comparing long lists and binaries.
 
 - Success criteria
-  - [ ] Lists of any length build, measure, reverse and compare, bounded only
+  - [x] Lists of any length build, measure, reverse and compare, bounded only
     by memory (and an opt-in heap budget).
-  - [ ] Comparison and equality have no default work cap, as in OTP.
+  - [x] Comparison and equality have no default work cap, as in OTP.
 - Tests
-  - [ ] Runtime test: a list one element past the former cap builds, measures
+  - [x] Runtime test: a list one element past the former cap builds, measures
     and compares; a shared graph of 2^20 leaf pairs compares equal.
+- Evidence (2026-10-06): removed the 1,000,000 caps of the list factory,
+  the container construction service (count and marshalling) and
+  `list_length`; the tuple factory keeps its own 1,000,000 arity check until
+  27C. `structural_order` without a budget runs uncapped (map key searches
+  keep theirs until 27D) and returns equal for identical words without a walk,
+  as ERTS `eq` does. `runtime_containers`: `unbounded_comparison` (two
+  separately built 20-level shared graphs compare equal through
+  `exactly_equal` and `erlang_aot_exact_v1`; a graph differing in one leaf is
+  unequal) and `long_lists` (1,000,001 elements through the factory and the
+  construction service, `list_length`, reverse service, equality); the test
+  takes 12.6 s in Debug. Fresh Windows x64 Debug (clang-cl): fast 160/160,
+  full `-j 12` 164/164 (125 s); Lizard 0 warnings; tidy 4 changed units
+  pass. Logs `build/plan11-step27b/`.
 
 <a id="step-27c"></a>
 

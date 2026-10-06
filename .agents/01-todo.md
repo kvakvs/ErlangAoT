@@ -116,11 +116,14 @@ Plan: [42](11-plan.md#step-42), [48](11-plan.md#step-48),
 
 ### F08 — Lists, tuples, maps and strings
 
-Plan: [23](11-plan.md#step-23), [28](11-plan.md#step-28),
+Plan: [23](11-plan.md#step-23), [27B](11-plan.md#step-27b), [27C](11-plan.md#step-27c),
+[27D](11-plan.md#step-27d), [28](11-plan.md#step-28),
 [39](11-plan.md#step-39). Contract: [terms](../docs/terms.md#tuples-lists-strings).
 
 - [x] Layouts, improper lists, exact map keys; checked construction, access,
   updates and matching compared with OTP.
+- [x] No list length cap and no comparison work cap (27B).
+- [ ] Tuple arity limit of OTP (27C); no map size or key-work caps (27D).
 - [ ] GC/copying integration (F04/F05); more list operations via F26.
 
 ### F09 — Binaries and bitstrings

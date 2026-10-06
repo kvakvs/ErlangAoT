@@ -8,11 +8,8 @@
 
 namespace erlang_aot::runtime {
 namespace {
-// Bound constructor work independently of backing limits and validate every child before reservation.
+// Validate every child before reservation; lists have no length cap beyond memory.
 TermResult<void> validate(ProcessHeap &heap, std::span<const Term> values) {
-    if (values.size() > 1'000'000) {
-        return std::unexpected(TermError::resource_limit);
-    }
     for (const auto &value : values) {
         if (const auto copied = heap.add(value); !copied) {
             return std::unexpected(copied.error());
@@ -78,6 +75,9 @@ TermResult<Term> TermFactory::tuple(std::span<const Term> elements) {
     const auto owner = heap();
     if (!owner) {
         return std::unexpected(owner.error());
+    }
+    if (elements.size() > 1'000'000) {
+        return std::unexpected(TermError::resource_limit);
     }
     if (const auto checked = validate(**owner, elements); !checked) {
         return std::unexpected(checked.error());

@@ -91,9 +91,7 @@ TermResult<std::size_t> Term::list_length() const {
     auto current = *this;
     std::size_t count = 0;
     while (current.is_cons()) {
-        if (++count > 1'000'000) {
-            return std::unexpected(TermError::resource_limit);
-        }
+        ++count;
         const auto next = current.tail();
         if (!next) {
             return std::unexpected(next.error());
