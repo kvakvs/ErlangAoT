@@ -80,8 +80,8 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
   stays a critical section, so no retry (24, 26).
 - [x] Memory exhaustion as a defined failure: no default cap, host refusal is
   `out_of_memory`; opt-in per-process budgets fail after collection (27).
-- [ ] Optional runtime-wide memory limit (uncapped by default) and
-  program-facing caps (27A).
+- [x] Optional runtime-wide memory limit (uncapped by default) and
+  program-facing caps `--max-heap`, `--max-stack`, `--max-memory` (27A).
 - [ ] `erlang:garbage_collect/0` with the builtins.
 - [ ] Stress with continuations and mailbox roots as they arrive.
 - [ ] Optional later: generational old heap with minor collections.

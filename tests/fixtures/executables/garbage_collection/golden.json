@@ -41,6 +41,61 @@
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "1000\n500500\n"
+    },
+    {
+      "args": [
+        "--max-memory",
+        "1048576",
+        "churn"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{48,none}\n"
+    },
+    {
+      "args": [
+        "--max-memory",
+        "1048576",
+        "binaries"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{9000,8196}\n"
+    },
+    {
+      "args": [
+        "--max-heap",
+        "1048576",
+        "comprehension"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "8333\n"
+    },
+    {
+      "args": [
+        "--max-memory",
+        "16777216",
+        "payload"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "1000\n500500\n"
+    },
+    {
+      "args": [
+        "--max-memory",
+        "1048576",
+        "deep"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "exit_status": 70,
+      "stdout": ""
     }
   ],
   "oracle_version": [

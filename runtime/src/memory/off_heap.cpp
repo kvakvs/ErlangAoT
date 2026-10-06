@@ -20,7 +20,7 @@ namespace {
 // Destroy a dead cell's reference, returning the buffer's charge when no other cell still shares it.
 void release(HeapStorage &storage, layout::RefcBinaryCell &cell) noexcept {
     if (cell.buffer_.use_count() == 1) {
-        storage.off_heap_words_ -= (cell.buffer_->size() + sizeof(Word) - 1) / sizeof(Word);
+        storage.uncharge((cell.buffer_->size() + sizeof(Word) - 1) / sizeof(Word));
     }
     std::destroy_at(&cell);
 }

@@ -25,10 +25,14 @@ std::span<Word> HeapArea::bump(std::size_t words) noexcept {
     return reserved;
 }
 
-HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms)
-    : options_(options), lifetime_(std::move(lifetime)), atoms_(&atoms) {}
+HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms,
+                         std::shared_ptr<RuntimeMemory> memory)
+    : options_(options), lifetime_(std::move(lifetime)), memory_(std::move(memory)), atoms_(&atoms) {}
 
-HeapStorage::~HeapStorage() { release_off_heap(*this); }
+HeapStorage::~HeapStorage() {
+    release_off_heap(*this);
+    memory_->release(capacity_words_ + off_heap_words_);
+}
 
 bool HeapStorage::alive() const noexcept {
     const auto token = lifetime_.lock();
@@ -54,6 +58,7 @@ void HeapStorage::rollback(HeapMark mark) noexcept {
         heap_.top_ = mark.heap_top;
     }
     used_words_ = mark.used_words;
+    memory_->release(capacity_words_ - mark.capacity_words);
     capacity_words_ = mark.capacity_words;
     pending_ = false;
 }
@@ -83,7 +88,7 @@ std::span<Word> HeapStorage::owned(std::uintptr_t address) noexcept {
 }
 
 std::expected<HeapArea, HeapError> HeapStorage::block(std::size_t words) const {
-    const auto remaining = options_.limit_bytes / sizeof(Word) - capacity_words_ - off_heap_words_;
+    const auto remaining = room();
     if (words > remaining) {
         return std::unexpected(HeapError::limit_exceeded);
     }
@@ -104,6 +109,7 @@ std::expected<HeapArea *, HeapError> HeapStorage::add_fragment(std::size_t words
     const auto begin = reinterpret_cast<std::uintptr_t>(fresh->words_.get());
     ranges_.insert(std::ranges::upper_bound(ranges_, begin, {}, &FragmentRange::begin_), {begin, fragments_.size()});
     capacity_words_ += fresh->capacity_;
+    memory_->force(fresh->capacity_);
     return &fragments_.emplace_back(std::move(*fresh));
 }
 
@@ -115,6 +121,7 @@ std::expected<HeapArea *, HeapError> HeapStorage::area_for(std::size_t words) {
         }
         heap_ = std::move(*fresh);
         capacity_words_ += heap_.capacity_;
+        memory_->force(heap_.capacity_);
     }
     if (heap_.fits(words)) {
         return &heap_;
@@ -140,10 +147,34 @@ std::expected<std::span<Word>, HeapError> HeapStorage::reserve(std::size_t words
 }
 
 std::expected<void, HeapError> HeapStorage::charge(std::size_t words) noexcept {
-    if (words > options_.limit_bytes / sizeof(Word) - capacity_words_ - off_heap_words_) {
+    if (words > room()) {
         return std::unexpected(HeapError::limit_exceeded);
     }
     off_heap_words_ += words;
+    memory_->force(words);
     return {};
+}
+
+void HeapStorage::uncharge(std::size_t words) noexcept {
+    off_heap_words_ -= words;
+    memory_->release(words);
+}
+
+std::size_t HeapStorage::room() const noexcept {
+    return std::min(options_.limit_bytes / sizeof(Word) - capacity_words_ - off_heap_words_, memory_->available());
+}
+
+std::size_t HeapStorage::budget() const noexcept {
+    const auto owned = capacity_words_ + off_heap_words_;
+    return std::min(options_.limit_bytes / sizeof(Word), owned + memory_->available());
+}
+
+void HeapStorage::replace(HeapArea heap) noexcept {
+    memory_->release(capacity_words_);
+    heap_ = std::move(heap);
+    fragments_ = std::vector<HeapArea>{};
+    ranges_ = std::vector<FragmentRange>{};
+    used_words_ = heap_.top_;
+    capacity_words_ = heap_.capacity_;
 }
 } // namespace erlang_aot::runtime::detail

@@ -53,6 +53,18 @@ void check_options(Runtime &runtime) {
     require(runtime.destroy_context(*context) == Status::ok, "budget context cleanup failed");
 }
 
+// create_context() without options applies the runtime's process options, which Runtime::start validates.
+void check_process_defaults() {
+    require(Runtime::start({.process_heap = {0, sizeof(Word)}}) == std::unexpected(Status::invalid_argument),
+            "invalid process heap options accepted");
+    auto runtime = Runtime::start({.process_heap = {16, 64 * sizeof(Word)}}).value();
+    auto *context = runtime->create_context().value();
+    require(context->heap().allocate(65) == std::unexpected(HeapError::limit_exceeded), "process heap cap ignored");
+    require(context->heap().allocate(64).has_value(), "process heap cap too small");
+    require(runtime->destroy_context(context) == Status::ok && runtime->memory_bytes() == 0,
+            "teardown kept runtime memory charges");
+}
+
 // Fragments and aborted construction preserve earlier addresses and restore exact capacity/word accounting.
 void check_reservations(Runtime &runtime) {
     auto *context = runtime.create_context({2, 32 * sizeof(Word)}).value();
@@ -95,6 +107,7 @@ void check_reservations(Runtime &runtime) {
 void check_boundaries() {
     auto runtime = Runtime::start().value();
     check_options(*runtime);
+    check_process_defaults();
     check_reservations(*runtime);
     auto *context = runtime->create_context({1, 4 * sizeof(Word)}).value();
     auto *other = runtime->create_context({1, sizeof(Word)}).value();

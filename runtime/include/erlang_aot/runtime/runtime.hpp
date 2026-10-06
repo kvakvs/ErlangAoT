@@ -18,6 +18,13 @@ struct RuntimeOptions {
     std::uint32_t term_bits = sizeof(abi::v1::TermWord) * 8;
     // Receive erlang:display/1 and future standard_io bytes; the default writes to process stdout.
     OutputSink standard_output = {};
+    // Heap and stack options of every process created by create_context() without options; programs set their
+    // caps with --max-heap and --max-stack, uncapped by default.
+    HeapOptions process_heap = {};
+    StackOptions process_stack = {};
+    // Optional cap on the memory of all processes together (heap blocks, fragments, off-heap buffers, stacks);
+    // programs set it with --max-memory, uncapped by default.
+    std::size_t memory_limit_bytes = UNLIMITED_HEAP_BYTES;
 };
 
 // Own stable process contexts and reserved runtime-wide services; calls require host-side serialization.
@@ -33,14 +40,18 @@ class Runtime final {
     Runtime &operator=(Runtime &&) = delete;
     // Stop only once all contexts are gone; BUSY leaves admission and existing contexts unchanged.
     abi::v1::Status shutdown() noexcept;
-    // Create a stable runtime-owned context with lazy storage and a unique, never-recycled identity; both option
-    // sets default to no memory cap.
-    std::expected<ProcessContext *, abi::v1::Status> create_context(HeapOptions options = {},
+    // Create a stable runtime-owned context with lazy storage and a unique, never-recycled identity, using the
+    // runtime's process options (RuntimeOptions::process_heap and process_stack).
+    std::expected<ProcessContext *, abi::v1::Status> create_context() noexcept;
+    // Create a context with explicit options; the stack options default to no cap.
+    std::expected<ProcessContext *, abi::v1::Status> create_context(HeapOptions options,
                                                                     StackOptions stack_options = {}) noexcept;
     // Remove only a context owned by this runtime; foreign pointers are compared without dereferencing.
     abi::v1::Status destroy_context(ProcessContext *context) noexcept;
     // Observe active context ownership without claiming scheduler/process execution support.
     std::size_t context_count() const noexcept;
+    // Report the bytes all processes hold now: heap blocks, fragments, off-heap buffers and stacks.
+    std::size_t memory_bytes() const noexcept;
 
     // Borrow the runtime-wide server while active; stopped runtimes return null.
     CodeServer *code_server() noexcept;

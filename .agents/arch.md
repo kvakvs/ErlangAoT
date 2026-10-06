@@ -154,7 +154,10 @@
   sections. `lower_frames` spills crossing terms to term slots (`term_value`, `place_slots`). Forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live or above `block_limit` (step 27: a block and the virtual binary heap keep
   half of the budget left after survivors free, so garbage triggers a safepoint before `limit_exceeded`;
-  no default heap or stack cap: opt-in per-process budgets, host refusal = `out_of_memory`, exit 70). No cross-heap graph copying yet. Revision-5 generated frames
+  no default heap or stack cap: opt-in per-process budgets, host refusal = `out_of_memory`, exit 70; step 27A:
+  optional runtime-wide limit, one `detail::RuntimeMemory` account charged by heap blocks, fragments,
+  off-heap buffers and stack capacity, seen by each process as budget = own storage + what the limit leaves;
+  programs set `--max-heap/--max-stack/--max-memory`). No cross-heap graph copying yet. Revision-5 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells
   transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide

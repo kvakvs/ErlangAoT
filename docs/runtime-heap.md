@@ -124,11 +124,35 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   above keeps it near its live size. An optional per-process budget,
   `HeapOptions::limit_bytes` (default `UNLIMITED_HEAP_BYTES`), covers the heap
   block, fragments and the bytes of off-heap buffers created by this process;
-  exceeding it is `limit_exceeded`. A runtime-wide option, also uncapped by
-  default, is planned (plan 11 step 27A). During a collection the old and new
+  exceeding it is `limit_exceeded`. During a collection the old and new
   blocks coexist; only the new block is checked against the budget, capped at
   the budget left after off-heap buffers. A buffer's charge returns when the
-  process drops its last reference. The stack keeps its own root bounds.
+  process drops its last reference. The stack keeps its own optional cap,
+  `StackOptions::limit_words`. Programs set both caps with `--max-heap` and
+  `--max-stack` ([runtime options](executables.md#runtime-options)).
+
+## Runtime memory limit
+
+- An optional runtime-wide limit, `RuntimeOptions::memory_limit_bytes`
+  (default `UNLIMITED_HEAP_BYTES`; programs set it with `--max-memory`), bounds
+  the memory of all processes together: heap blocks, fragments, off-heap
+  buffers and stack capacity (step 27A). OTP has no such limit; it is closest
+  to running the VM under an OS memory limit, but fails one process instead of
+  the node.
+- One account per runtime (`detail::RuntimeMemory`, shared by every heap
+  storage and stack) is charged when a block, fragment, off-heap buffer or
+  stack capacity is created and released when it is dropped; teardown returns
+  every charge. `Runtime::memory_bytes()` reports the total.
+- To each process the limit acts as a budget of the storage it owns plus what
+  the limit leaves (`HeapStorage::budget`, `room`), so the sizing above keeps
+  half of the free memory free after each collection, and a request beyond it
+  is `limit_exceeded` (`resource_limit`) for the requesting process only;
+  other processes keep running. Another process's garbage counts until that
+  process collects.
+- A collection's to-space is charged even past the limit, because it replaces
+  the blocks it releases at the end of the same collection.
+- The stack doubles while the limit allows it, then grows only by the frame
+  being pushed.
 
 ## Admission
 
@@ -259,7 +283,8 @@ safepoint, and no native pointer crosses one at all (already an error in
   continues with fragments.
 - **Memory exhaustion** (step 27). With no cap, memory runs out only when the
   host refuses a heap block, fragment, off-heap buffer or stack growth:
-  `out_of_memory`. With an optional budget set, a request beyond it is
+  `out_of_memory`. With an optional budget or
+  [runtime-wide limit](#runtime-memory-limit) set, a request beyond it is
   `limit_exceeded`, reported as `resource_limit`. Both are infrastructure
   failures: no handler runs, the frames unwind to the bottom frame and a
   program prints `erlangaot: runtime failure: entry call failed: <status>`
@@ -313,6 +338,23 @@ Step 27 (2026-10-06):
   (72 MB) while dropping four per step and prints the count as OTP does.
   `runtime_collection` `near_budget` checks both caps with a 10,000-word
   budget (heap block and off-heap buffers).
+
+Step 27A (2026-10-06):
+
+- Runtime-wide limit and `--max-heap`, `--max-stack`, `--max-memory`
+  ([runtime memory limit](#runtime-memory-limit)). Authored golden runs prove
+  bounded memory again: `garbage_collection` `churn` and `binaries` under a
+  1 MiB runtime limit, `comprehension` under a 1 MiB heap cap and `payload`
+  under a 16 MiB runtime limit (each allocates more than 64 MiB);
+  `tail_calls` loops under a 4 KiB stack and 64 KiB heap cap; `deep` under
+  1 MiB and `deep_recursion` `build` under a 64 KiB stack fail with
+  `resource_limit`. `deep` itself needs about 100 MiB at O0 (live frames keep
+  stale terms and are about 130 words each), so it has no capped success run.
+  `runtime_collection` `shared_limit`: two processes under a 40,000-word
+  limit; the holder's block stops at 28,000 words, the other collects 20
+  rounds of garbage near the limit, then fails a 16,000-word list with
+  `resource_limit` while the holder keeps allocating, and teardown returns
+  every charge.
 
 ### Prototype
 

@@ -11,6 +11,10 @@ class CodeServer;
 class AtomStorage;
 struct OutputSink;
 
+namespace detail {
+class RuntimeMemory;
+} // namespace detail
+
 // Keep control/creation failures separate from Erlang exceptions and exit reasons.
 enum class ProcessError : std::uint8_t {
     invalid_argument,
@@ -117,6 +121,7 @@ class ProcessContext final {
     friend class TermFactory;
     friend class Process;
     friend class ProcessHeap;
+    friend class ProcessStack;
     friend class Mailbox;
     // Keep runtime binding and lifetime token alive through mailbox and heap teardown.
     class Impl;
@@ -132,7 +137,10 @@ class ProcessContext final {
     // Frames are released before pending payloads and heap storage during context teardown.
     ProcessStack stack_;
     // Create only after runtime identity/ownership and heap limits are validated.
-    ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options, StackOptions stack_options);
+    ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options, StackOptions stack_options,
+                   std::shared_ptr<detail::RuntimeMemory> memory);
+    // The runtime-wide memory account that this process's heap and stack charge.
+    const std::shared_ptr<detail::RuntimeMemory> &memory() const noexcept;
 };
 
 } // namespace erlang_aot::runtime

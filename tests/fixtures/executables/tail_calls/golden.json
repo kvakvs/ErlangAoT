@@ -33,6 +33,45 @@
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "{branches,500000}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "local"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{local,2000000}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "remote"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{remote,2000000}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "branches"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{branches,500000}\n"
     }
   ],
   "oracle_version": [

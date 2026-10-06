@@ -1,4 +1,5 @@
 #pragma once
+#include "memory/runtime_memory.hpp"
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <erlang_aot/runtime/scheduler.hpp>
@@ -21,6 +22,9 @@ class Runtime::Impl final {
     // Retain admission policy and the runtime portion of each immutable process identity.
     RuntimeOptions options;
     std::uint64_t identity;
+    // Account the memory of every process against the optional runtime-wide limit; heaps share it with their
+    // storage owners, which may outlive a context.
+    std::shared_ptr<detail::RuntimeMemory> memory;
     // Advance only after successful context publication; never reuse an issued serial.
     std::uint64_t next_context = 1;
     // Destroy process owners before the above service bindings; no signals or workers exist yet.

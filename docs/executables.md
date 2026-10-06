@@ -68,6 +68,9 @@ way; a value goes in the next argument or after `=`.
 | Option | Effect |
 | --- | --- |
 | `--max-atoms N` | Atom table size, 1 to 2^26 (67,108,864); default 2^20 (1,048,576), like OTP's `+t` |
+| `--max-heap BYTES` | Cap on each process's heap block, fragments and off-heap binaries, at least the minimum heap (233 words); default uncapped |
+| `--max-stack BYTES` | Cap on each process's frame stack; default uncapped |
+| `--max-memory BYTES` | Cap on the memory of all processes together (heaps, off-heap binaries, stacks); default uncapped |
 | `--args-file FILE` | Options file like OTP's `vm.args`: reserved, reports `runtime option --args-file is not implemented` |
 | `--` | Ends the runtime options; the following arguments all go to `Entry` |
 
@@ -76,8 +79,10 @@ option, so `prog data --max-atoms 9` passes all three arguments to the program.
 In `ERLANG_AOT_FLAGS` every word must be a runtime option. An invalid value, a
 word that is not an option in the variable, or `--args-file` stops the program
 before any module is registered: `erlangaot: runtime failure: <reason>`,
-exit 70. Process counts are not limited and memory is uncapped by default;
-program-facing memory caps are planned (plan 11 step 27A).
+exit 70. Process counts are not limited and memory is uncapped by default.
+Byte values are decimal without suffixes and round down to whole words; a
+program reaching a cap fails with `resource_limit`, exit 70
+([runtime memory limit](runtime-heap.md#runtime-memory-limit)).
 
 ## Exit status
 

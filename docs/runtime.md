@@ -26,8 +26,12 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
   Defaults: current ABI version and native term width, `max_atoms` 2^20
   (at most 2^26; programs set it with `--max-atoms`,
   [runtime options](executables.md#runtime-options)). The number of contexts
-  is not limited.
-- `create_context(heap_options, stack_options)` → borrowed `ProcessContext*`,
+  is not limited. `process_heap` and `process_stack` are the options of
+  contexts created by `create_context()`; `memory_limit_bytes` is the optional
+  [runtime-wide limit](runtime-heap.md#runtime-memory-limit), reported by
+  `memory_bytes()`. All are uncapped by default.
+- `create_context()` or `create_context(heap_options, stack_options)` →
+  borrowed `ProcessContext*`,
   stable until destroyed. Heap defaults: 233-word minimum heap
   (`min_heap_words`) and no memory cap (`limit_bytes` =
   `UNLIMITED_HEAP_BYTES`; a set budget is a word multiple at least the minimum

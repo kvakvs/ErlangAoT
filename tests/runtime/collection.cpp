@@ -223,6 +223,39 @@ void near_budget(Runtime &runtime) {
     require(runtime.destroy_context(&binary_context) == Status::ok, "teardown failed");
 }
 
+// Two processes share a runtime-wide limit (docs/runtime-heap.md#runtime-memory-limit): garbage near the limit is
+// collected, the process asking past it fails with resource_limit while the other keeps running, and teardown
+// returns every charge.
+void shared_limit() {
+    constexpr std::size_t limit = 40'000;
+    auto runtime = Runtime::start({.memory_limit_bytes = limit * sizeof(Word)}).value();
+    auto &holder = *runtime->create_context().value();
+    std::array kept{numbers(holder, 8000).word()};
+    const auto text_kept = text(current(holder, kept[0]));
+    // Half of the 24,000 words the limit leaves after 16,000 live ones stays free for other storage.
+    require(holder.heap().collect(kept).value().heap_words == 28'000, "holder ignored the runtime-wide limit");
+    auto &churner = *runtime->create_context().value();
+    std::array mine{numbers(churner, 1000).word()};
+    for (int round = 0; round < 20; ++round) {
+        while (!churner.heap().wants_collection()) {
+            garbage(churner, 1);
+        }
+        require(churner.heap().collect(mine).value().live_words == 2000, "garbage survived near the limit");
+    }
+    require(runtime->memory_bytes() <= limit * sizeof(Word), "storage passed the runtime-wide limit");
+    TermFactory factory(churner);
+    const std::vector too_many(8000, factory.integer(1).value());
+    require(factory.list(too_many) == std::unexpected(TermError::resource_limit), "allocation passed the limit");
+    garbage(holder, 100);
+    require(holder.heap().collect(kept).has_value() && text(current(holder, kept[0])) == text_kept,
+            "the other process stopped working");
+    require(runtime->destroy_context(&churner) == Status::ok &&
+                runtime->memory_bytes() == holder.heap().capacity_words() * sizeof(Word),
+            "churner teardown kept charges");
+    require(runtime->destroy_context(&holder) == Status::ok && runtime->memory_bytes() == 0,
+            "holder teardown kept charges");
+}
+
 // Generated code running or an open reservation is not a safe point; nothing changes.
 void unsafe(Runtime &runtime) {
     auto &context = *runtime.create_context().value();
@@ -403,6 +436,7 @@ int main() {
         binaries(*runtime);
         policy(*runtime);
         near_budget(*runtime);
+        shared_limit();
         unsafe(*runtime);
         root_owners(*runtime);
         safepoints(*runtime);

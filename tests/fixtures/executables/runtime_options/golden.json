@@ -108,6 +108,51 @@
       "stderr": "^erlangaot: runtime failure: ERLANG_AOT_FLAGS: not a runtime option: e\n$",
       "exit_status": 70,
       "stdout": ""
+    },
+    {
+      "args": [
+        "--max-heap",
+        "1048576",
+        "--max-stack=65536",
+        "f"
+      ],
+      "env": {
+        "ERLANG_AOT_FLAGS": "--max-memory 1073741824"
+      },
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"f\"]\n"
+    },
+    {
+      "args": [
+        "--max-heap",
+        "1000"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: invalid --max-heap value '1000' \\(bytes, at least [0-9]+\\)\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-memory=1M"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: invalid --max-memory value '1M' \\(bytes, at least [0-9]+\\)\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-memory",
+        "64",
+        "g"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "exit_status": 70,
+      "stdout": ""
     }
   ],
   "oracle_version": [

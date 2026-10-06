@@ -33,6 +33,17 @@
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "{caught,bottom}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "65536",
+        "build"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "exit_status": 70,
+      "stdout": ""
     }
   ],
   "oracle_version": [

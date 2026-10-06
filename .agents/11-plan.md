@@ -1152,14 +1152,44 @@ runtime options (`startup/options`: command line and `ERLANG_AOT_FLAGS`, like
 `--max-atoms`), all uncapped unless set.
 
 - Success criteria
-  - [ ] With no option set, no process or runtime cap applies.
-  - [ ] A set runtime-wide limit fails the requesting process with
+  - [x] With no option set, no process or runtime cap applies.
+  - [x] A set runtime-wide limit fails the requesting process with
     `resource_limit` after collection; others keep running.
-  - [ ] Programs can set per-process heap and stack caps.
+  - [x] Programs can set per-process heap and stack caps.
 - Tests
-  - [ ] `garbage_collection` and `tail_calls` (or companions) run under small
+  - [x] `garbage_collection` and `tail_calls` (or companions) run under small
     caps, proving bounded memory again.
-  - [ ] Runtime test: two processes sharing a runtime-wide limit.
+  - [x] Runtime test: two processes sharing a runtime-wide limit.
+- Evidence (2026-10-06): `RuntimeOptions::memory_limit_bytes` (default
+  `UNLIMITED_HEAP_BYTES`) feeds one `detail::RuntimeMemory` account per
+  runtime, shared by every `HeapStorage` and `ProcessStack`: heap blocks,
+  fragments, off-heap buffers and stack capacity are charged on creation and
+  released on drop/teardown (`Runtime::memory_bytes()`); a collection's
+  to-space is charged past the limit until it replaces the old blocks. A
+  process sees budget = own storage + what the limit leaves, so the step-27
+  sizing keeps half of the free memory free and a request beyond it is
+  `limit_exceeded` -> `resource_limit` for that process only. Unlimited
+  accounts never refuse (else `codegen_failure` mode 1 became
+  `resource_limit`). Options `--max-heap`, `--max-stack`, `--max-memory`
+  (bytes, decimal, rounded down to words; also in `ERLANG_AOT_FLAGS`) set
+  `RuntimeOptions::process_heap/process_stack/memory_limit_bytes`;
+  `create_context()` without options uses the process defaults. Tests:
+  authored golden runs `garbage_collection` `churn`/`binaries` under 1 MiB
+  `--max-memory`, `comprehension` under 1 MiB `--max-heap`, `payload` under
+  16 MiB `--max-memory` (each allocates > 64 MiB), `deep` under 1 MiB fails
+  `resource_limit`; `tail_calls` `local`/`remote`/`branches` under 4 KiB
+  stack + 64 KiB heap; `deep_recursion` `build` under 64 KiB stack fails;
+  `runtime_options` option/env/invalid-value/64-byte-limit runs;
+  `runtime_collection` `shared_limit` (40,000-word limit: holder's block
+  stops at 28,000 words, the other collects 20 rounds near the limit, then a
+  16,000-word list fails while the holder keeps working; teardown returns
+  every charge); `runtime_memory` process defaults. Gap: `deep` needs about
+  100 MiB under `--max-memory` at O0 (≈130-word frames keep stale terms), so
+  it has no capped success run. Fresh Windows x64 Debug (clang-cl): fast
+  160/160, full `-j 12` 164/164 (118 s); tidy then flagged `push`
+  (`resize` outside try), fixed by `ProcessStack::grow`; after it 42 affected
+  tests pass, Lizard 0 warnings, tidy 49 changed units pass. Logs
+  `build/plan11-step27a/`.
 
 <a id="step-27b"></a>
 

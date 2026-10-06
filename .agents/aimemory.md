@@ -216,6 +216,12 @@ Step facts beyond the plan record:
 - 27 follow-up: no binary size cap, no context-count cap, atoms 2^20 default / --max-atoms <= 2^26 via
   startup/options (argv + ERLANG_AOT_FLAGS, `--` ends, --args-file notimpl). RuntimeOptions{2} positional init
   now means max_atoms (max_contexts field removed): use designated initializers. Golden runs may set `env`.
+- 27A: RuntimeMemory (memory/runtime_memory.hpp) shared_ptr in Runtime::Impl, ProcessContext::Impl (memory()),
+  HeapStorage::memory_; charges mirror capacity_words_ + off_heap_words_ (replace(), rollback, dtor) + Copier
+  to-space force; stack charges capacity in grow(). Unlimited account must return UNLIMITED_WORDS from available()
+  (finite limit broke codegen_failure mode 1). Runtime options --max-heap/--max-stack/--max-memory (BYTE_OPTIONS
+  table, options.cpp); create_context() = runtime process defaults. cmd scripts: never pass `|` patterns as %1,
+  use pattern.txt. Don't edit runtime sources while a gate runs (nested consumers compile them).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

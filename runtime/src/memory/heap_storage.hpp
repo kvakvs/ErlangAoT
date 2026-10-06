@@ -2,6 +2,7 @@
 #include "heap_object.hpp"
 #include "heap_policy.hpp"
 #include "process_heap.hpp"
+#include "runtime_memory.hpp"
 #include <cstdint>
 #include <erlang_aot/runtime/process_context.hpp>
 
@@ -35,9 +36,11 @@ struct FragmentRange {
 // The storage of exactly one process: its single heap block, its fragment chain and its off-heap list.
 class HeapStorage final {
   public:
-    // Bind validated budgets and a liveness token; the heap block is created by the first reservation.
-    HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms);
-    // Release every off-heap reference while all backing bytes still exist.
+    // Bind validated budgets, the runtime-wide account and a liveness token; the heap block is created by the first
+    // reservation.
+    HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms,
+                std::shared_ptr<RuntimeMemory> memory);
+    // Release every off-heap reference while all backing bytes still exist, and return every charge.
     ~HeapStorage();
     HeapStorage(const HeapStorage &) = delete;
     HeapStorage &operator=(const HeapStorage &) = delete;
@@ -51,6 +54,15 @@ class HeapStorage final {
     std::expected<std::span<Word>, HeapError> reserve(std::size_t words);
     // Count a newly created off-heap buffer against the budget shared with heap backing.
     std::expected<void, HeapError> charge(std::size_t words) noexcept;
+    // Return the charge of an off-heap buffer that was released or never published.
+    void uncharge(std::size_t words) noexcept;
+    // Words that new blocks and off-heap buffers may still add: the rest of the process budget, at most what the
+    // runtime-wide limit leaves.
+    std::size_t room() const noexcept;
+    // Words this process may own in all, its own storage included: the budget seen by the sizing policy.
+    std::size_t budget() const noexcept;
+    // Replace the heap block and fragments by a collected block, returning the charges of the replaced areas.
+    void replace(HeapArea heap) noexcept;
     // Borrow the used words from an address to the end of its area; empty unless the address is
     // word-aligned below the top of the heap or a fragment. Process pointers only name object starts.
     // The words are writable for the collector, which forwards objects in place.
@@ -59,6 +71,8 @@ class HeapStorage final {
     // Retain bounded backing independently of future host pins.
     HeapOptions options_;
     std::weak_ptr<const ContextLifetime> lifetime_;
+    // Runtime-wide account charged with capacity_words_ + off_heap_words_; collections force their to-space.
+    std::shared_ptr<RuntimeMemory> memory_;
     // The process heap block; empty until the first reservation.
     HeapArea heap_;
     // Overflow blocks allocated while the heap may not move, oldest first; a collection merges them.

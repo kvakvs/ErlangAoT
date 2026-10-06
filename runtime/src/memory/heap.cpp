@@ -32,7 +32,9 @@ abi::v1::Status status(HeapError error) {
 } // namespace
 
 ProcessHeap::ProcessHeap(ProcessContext &owner, HeapOptions options)
-    : owner_(owner), storage_(std::make_shared<detail::HeapStorage>(options, owner.lifetime(), owner.atom_storage())) {}
+    : owner_(owner),
+      storage_(std::make_shared<detail::HeapStorage>(options, owner.lifetime(), owner.atom_storage(), owner.memory())) {
+}
 
 ProcessHeap::~ProcessHeap() = default;
 
@@ -113,9 +115,7 @@ std::size_t ProcessHeap::collected_size(std::size_t live_words) const noexcept {
     return std::min(wanted, block_limit(live_words));
 }
 
-std::size_t ProcessHeap::budget_words() const noexcept {
-    return storage_->options_.limit_bytes / sizeof(Word) - storage_->off_heap_words_;
-}
+std::size_t ProcessHeap::budget_words() const noexcept { return storage_->budget() - storage_->off_heap_words_; }
 
 std::size_t ProcessHeap::block_limit(std::size_t live_words) const noexcept {
     const auto budget = budget_words();
@@ -157,6 +157,6 @@ std::expected<void, HeapError> ProcessHeap::charge_off_heap(std::size_t bytes) n
 }
 
 void ProcessHeap::uncharge_off_heap(std::size_t bytes) noexcept {
-    storage_->off_heap_words_ -= (bytes + sizeof(Word) - 1) / sizeof(Word);
+    storage_->uncharge((bytes + sizeof(Word) - 1) / sizeof(Word));
 }
 } // namespace erlang_aot::runtime

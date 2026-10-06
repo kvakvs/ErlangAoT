@@ -41,6 +41,8 @@ std::size_t heap_size_at_least(std::size_t words) noexcept {
 
 Copier::Copier(HeapStorage &storage, std::size_t capacity)
     : storage_(storage), to_{std::make_unique_for_overwrite<Word[]>(capacity), capacity} {
+    // The to-space may pass the runtime-wide limit until finish() releases the blocks it replaces.
+    storage_.memory_->force(capacity);
     ++storage_.collections_;
 }
 
@@ -108,10 +110,6 @@ void Copier::evacuate_slots(std::span<Word> object, const HeapCell &cell) noexce
 void Copier::finish() noexcept {
     scan();
     sweep_off_heap(storage_, to_);
-    storage_.heap_ = std::move(to_);
-    storage_.fragments_ = std::vector<HeapArea>{};
-    storage_.ranges_ = std::vector<FragmentRange>{};
-    storage_.used_words_ = storage_.heap_.top_;
-    storage_.capacity_words_ = storage_.heap_.capacity_;
+    storage_.replace(std::move(to_));
 }
 } // namespace erlang_aot::runtime::detail

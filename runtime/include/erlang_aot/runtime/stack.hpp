@@ -19,8 +19,12 @@ class ProcessStack final {
   public:
     // Bind the stack to its process; no words are allocated before the first frame.
     explicit ProcessStack(ProcessContext &owner, StackOptions options = {}) noexcept;
+    // Return the stack's charge to the runtime-wide memory account.
+    ~ProcessStack();
     ProcessStack(const ProcessStack &) = delete;
     ProcessStack &operator=(const ProcessStack &) = delete;
+    ProcessStack(ProcessStack &&) = delete;
+    ProcessStack &operator=(ProcessStack &&) = delete;
 
     // Push a frame for `function` and return its body, or record the budget failure and return the caller's body.
     abi::v1::Code *enter(const abi::v1::FrameDescriptor &function) noexcept;
@@ -77,6 +81,8 @@ class ProcessStack final {
 
     // Push a zeroed frame for `function` linked to the current one; false records the failure.
     bool push(const abi::v1::FrameDescriptor &function) noexcept;
+    // Resize to `size` words, charging new capacity to the runtime-wide account; false records the failure.
+    bool grow(std::size_t size) noexcept;
     // Release the current frame.
     void pop() noexcept;
     // Drop every word from `size` on; shrinking never allocates.
@@ -89,6 +95,8 @@ class ProcessStack final {
     StackOptions options_;
     // Frame headers and slots; the size is the first free word.
     std::vector<Word> words_;
+    // Capacity of words_ charged to the runtime-wide memory account.
+    std::size_t charged_words_ = 0;
     // Offset of the current frame's header.
     std::size_t frame_ = none;
     // X registers; valid only across a transfer, never roots between invocations.

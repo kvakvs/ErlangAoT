@@ -8,6 +8,13 @@
 namespace erlang_aot::runtime {
 using abi::v1::Status;
 
+std::expected<ProcessContext *, Status> Runtime::create_context() noexcept {
+    if (!impl_) {
+        return std::unexpected(Status::stopped);
+    }
+    return create_context(impl_->options.process_heap, impl_->options.process_stack);
+}
+
 std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions options,
                                                                 StackOptions stack_options) noexcept {
     if (!impl_) {
@@ -21,8 +28,8 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
         return std::unexpected(Status::resource_limit);
     }
     try {
-        auto context = std::unique_ptr<ProcessContext>(
-            new ProcessContext(*this, ProcessIdentity({impl_->identity}, impl_->next_context), options, stack_options));
+        auto context = std::unique_ptr<ProcessContext>(new ProcessContext(
+            *this, ProcessIdentity({impl_->identity}, impl_->next_context), options, stack_options, impl_->memory));
         auto *borrowed = context.get();
         impl_->contexts.push_back(std::move(context));
         ++impl_->next_context;

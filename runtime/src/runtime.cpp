@@ -1,3 +1,4 @@
+#include "memory/heap_policy.hpp"
 #include "runtime_state.hpp"
 #include <atomic>
 #include <limits>
@@ -23,7 +24,8 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
 
 // Explicit count construction keeps Debug STL proxy allocation failures catchable during startup.
 Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
-    : atom_storage(options.max_atoms), scheduler(identity), options(options), identity(identity), contexts(0) {}
+    : atom_storage(options.max_atoms), scheduler(identity), options(options), identity(identity),
+      memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))), contexts(0) {}
 
 Runtime::Impl::~Impl() { scheduler.clear(); }
 
@@ -35,7 +37,8 @@ std::expected<std::unique_ptr<Runtime>, Status> Runtime::start(RuntimeOptions op
     if (options.abi_version != abi::v1::version || options.term_bits != sizeof(abi::v1::TermWord) * 8) {
         return std::unexpected(Status::abi_mismatch);
     }
-    if (options.max_atoms == 0 || options.max_atoms > AtomStorage::hard_limit) {
+    if (options.max_atoms == 0 || options.max_atoms > AtomStorage::hard_limit ||
+        !detail::valid_heap_options(options.process_heap)) {
         return std::unexpected(Status::invalid_argument);
     }
     const auto identity = reserve_identity();
@@ -69,4 +72,6 @@ SchedulerService *Runtime::scheduler() noexcept { return impl_ ? &impl_->schedul
 OutputSink Runtime::standard_output() const noexcept { return impl_ ? impl_->options.standard_output : OutputSink{}; }
 
 std::size_t Runtime::context_count() const noexcept { return impl_ ? impl_->contexts.size() : 0; }
+
+std::size_t Runtime::memory_bytes() const noexcept { return impl_ ? impl_->memory->used() * sizeof(Word) : 0; }
 } // namespace erlang_aot::runtime

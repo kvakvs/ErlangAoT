@@ -1,3 +1,4 @@
+#include "../memory/runtime_memory.hpp"
 #include <algorithm>
 #include <bit>
 #include <erlang_aot/runtime/process_context.hpp>
@@ -17,6 +18,31 @@ constexpr FrameDescriptor bottom{nullptr, 0, 0, 0, &finish, 0, 0};
 
 ProcessStack::ProcessStack(ProcessContext &owner, StackOptions options) noexcept : owner_(owner), options_(options) {}
 
+ProcessStack::~ProcessStack() { owner_.memory()->release(charged_words_); }
+
+bool ProcessStack::grow(std::size_t size) noexcept {
+    const auto capacity = words_.capacity();
+    // Double like std::vector while the runtime-wide limit allows it, else grow only to what is needed.
+    auto &memory = *owner_.memory();
+    const auto wanted = std::max(size, capacity + std::min(capacity, memory.available()));
+    if (size > capacity && wanted - capacity > memory.available()) {
+        owner_.generated_calls().fail_service(abi::v1::Status::resource_limit);
+        return false;
+    }
+    try {
+        if (size > capacity) {
+            words_.reserve(wanted);
+        }
+        words_.resize(size);
+    } catch (const std::bad_alloc &) {
+        owner_.generated_calls().fail_service(abi::v1::Status::out_of_memory);
+        return false;
+    }
+    memory.force(words_.capacity() - charged_words_);
+    charged_words_ = words_.capacity();
+    return true;
+}
+
 bool ProcessStack::push(const FrameDescriptor &function) noexcept {
     live_registers_ = 0;
     const auto size = frame_header_words + function.slots;
@@ -25,10 +51,7 @@ bool ProcessStack::push(const FrameDescriptor &function) noexcept {
         return false;
     }
     const auto at = words_.size();
-    try {
-        words_.resize(at + size);
-    } catch (const std::bad_alloc &) {
-        owner_.generated_calls().fail_service(abi::v1::Status::out_of_memory);
+    if (!grow(at + size)) {
         return false;
     }
     words_[at] = frame_;

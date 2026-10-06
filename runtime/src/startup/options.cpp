@@ -1,5 +1,6 @@
 #include "startup.hpp"
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cstdlib>
 #include <memory>
@@ -70,6 +71,52 @@ std::expected<std::uint32_t, std::string> atom_limit(std::string_view text) {
     return static_cast<std::uint32_t>(value);
 }
 
+// A memory cap given in bytes: its option name, smallest accepted value and the setting it writes.
+struct ByteOption {
+    std::string_view name;
+    std::size_t minimum;
+    void (*set)(RuntimeOptions &options, std::size_t bytes);
+};
+
+// Memory caps (docs/executables.md#runtime-options); values round down to whole words.
+constexpr std::array BYTE_OPTIONS{
+    ByteOption{"--max-heap", HeapOptions{}.min_heap_words * sizeof(Word),
+               [](RuntimeOptions &options, std::size_t bytes) { options.process_heap.limit_bytes = bytes; }},
+    ByteOption{
+        "--max-stack", sizeof(Word),
+        [](RuntimeOptions &options, std::size_t bytes) { options.process_stack.limit_words = bytes / sizeof(Word); }},
+    ByteOption{"--max-memory", sizeof(Word),
+               [](RuntimeOptions &options, std::size_t bytes) { options.memory_limit_bytes = bytes; }},
+};
+
+// Parse a byte count of a memory cap: a decimal from the option's minimum to UNLIMITED_HEAP_BYTES, in whole words.
+std::expected<std::size_t, std::string> byte_count(const ByteOption &option, std::string_view text) {
+    std::uint64_t value = 0;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (error != std::errc{} || end != text.data() + text.size() || value < option.minimum ||
+        value > UNLIMITED_HEAP_BYTES) {
+        return std::unexpected("invalid " + std::string(option.name) + " value '" + std::string(text) +
+                               "' (bytes, at least " + std::to_string(option.minimum) + ")");
+    }
+    return static_cast<std::size_t>(value) / sizeof(Word) * sizeof(Word);
+}
+
+// Apply a memory cap at `at` and return how many arguments it used; 0 when it is not one.
+std::expected<std::size_t, std::string> apply_bytes(std::span<const std::string> args, std::size_t at,
+                                                    RuntimeOptions &options) {
+    for (const auto &option : BYTE_OPTIONS) {
+        if (const auto found = match(args, at, option.name)) {
+            const auto bytes = byte_count(option, found->value);
+            if (!bytes) {
+                return std::unexpected(bytes.error());
+            }
+            option.set(options, *bytes);
+            return found->used;
+        }
+    }
+    return 0;
+}
+
 // Apply the option at `at` and return how many arguments it used; 0 when it is not a runtime option.
 std::expected<std::size_t, std::string> apply(std::span<const std::string> args, std::size_t at,
                                               RuntimeOptions &options) {
@@ -85,7 +132,7 @@ std::expected<std::size_t, std::string> apply(std::span<const std::string> args,
     if (match(args, at, "--args-file")) {
         return std::unexpected(std::string("runtime option --args-file is not implemented"));
     }
-    return 0;
+    return apply_bytes(args, at, options);
 }
 
 // Apply leading runtime options until another argument; `--` ends them and is used too.
