@@ -47,7 +47,7 @@ def regenerate(escript, case_dir, work):
     runs, version = [], None
     for run in golden['runs']:
         if run.get('authored'):
-            # ErlangAoT-only behavior OTP cannot show (such as its stack budget): kept as written.
+            # ErlangAoT-only behavior OTP cannot show: kept as written.
             runs.append(run)
             continue
         result, version = observe(escript, staged, golden['entry'], run['args'], work)

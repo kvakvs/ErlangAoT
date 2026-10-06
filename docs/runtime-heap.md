@@ -92,8 +92,8 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   four-word header (caller's header offset, descriptor, resume, handler)
   followed by term slots (spilled terms included) and raw spill slots; frames
   link by offsets, so the
-  block grows by doubling and moves. It holds at most 2^24 words
-  (`StackOptions::limit_words`), counted separately from the heap budget
+  block grows by doubling and moves. It has no cap by default; an optional
+  per-process `StackOptions::limit_words` bounds it separately from the heap
   ([execution model](execution-model.md#implementation)).
 - **Off-heap list.** As above.
 - **Old heap.** None. Generational collection is deferred; immutable terms
@@ -112,16 +112,20 @@ process heap, shared by reference count (BEAM ProcBin and `Binary`).
   larger one. Neither is smaller than `min_heap_words`. Both sizes count the
   process stack's words as live (step 26), as ERTS keeps the stack inside the
   heap block.
-- Near the budget, a new block holds at most its live words plus half of the
+- With a budget set (below), a new block holds at most its live words plus half of the
   budget left after them and off-heap buffers (`block_limit`, step 27), never
   less than `min_heap_words`. The other half stays free for fragments and new
   off-heap buffers, so garbage allocated after a collection reaches the next
   safepoint as a trigger instead of exhausting the budget. The first copy is
   sized from all used words, so a block above the limit for the words that
   survived is copied once more into its policy size.
-- One budget, `limit_bytes`, covers the heap block, fragments and the bytes of
-  off-heap buffers created by this process. Exceeding it is `limit_exceeded`; a
-  failed host allocation is `out_of_memory`. During a collection the old and new
+- There is no memory cap by default, per process or for the runtime: the heap
+  grows until the host refuses memory (`out_of_memory`), while the sizing
+  above keeps it near its live size. An optional per-process budget,
+  `HeapOptions::limit_bytes` (default `UNLIMITED_HEAP_BYTES`), covers the heap
+  block, fragments and the bytes of off-heap buffers created by this process;
+  exceeding it is `limit_exceeded`. A runtime-wide option, also uncapped by
+  default, is planned (plan 11 step 27A). During a collection the old and new
   blocks coexist; only the new block is checked against the budget, capped at
   the budget left after off-heap buffers. A buffer's charge returns when the
   process drops its last reference. The stack keeps its own root bounds.
@@ -253,18 +257,18 @@ safepoint, and no native pointer crosses one at all (already an error in
 - A collection at a safepoint never records a failure. When its new block
   cannot be allocated (`out_of_memory`) the heap stays as it is and execution
   continues with fragments.
-- **Heap exhaustion** (step 27). An allocation or off-heap buffer that does
-  not fit the budget fails with `limit_exceeded`, an infrastructure failure
-  reported as `resource_limit`: no handler runs, the frames unwind to the
-  bottom frame and a program prints
-  `erlangaot: runtime failure: entry call failed: resource_limit` and exits
-  with status 70 after flushing stdout and destroying the process
-  ([executables](executables.md#exit-status)). Because every collection keeps
-  half of the budget left after its survivors free ([sizing](#sizing-and-budget),
-  [triggers](#triggers)), this happens only when the live set no longer fits
-  or when straight-line code between two safepoints allocates more than that
-  half; garbage is collected first. OTP has no default limit
-  ([differences](differences.md)).
+- **Memory exhaustion** (step 27). With no cap, memory runs out only when the
+  host refuses a heap block, fragment, off-heap buffer or stack growth:
+  `out_of_memory`. With an optional budget set, a request beyond it is
+  `limit_exceeded`, reported as `resource_limit`. Both are infrastructure
+  failures: no handler runs, the frames unwind to the bottom frame and a
+  program prints `erlangaot: runtime failure: entry call failed: <status>`
+  and exits with status 70 after flushing stdout and destroying the process
+  ([executables](executables.md#exit-status), [differences](differences.md)).
+  Because every collection keeps half of the budget left after its survivors
+  free ([sizing](#sizing-and-budget), [triggers](#triggers)), a budget fails
+  only when the live set no longer fits or when straight-line code between two
+  safepoints allocates more than that half; garbage is collected first.
 
 ### Implementation
 
@@ -284,7 +288,7 @@ Step 26 (2026-10-06):
   those) gets a new term slot, which `place_slots` appends to the leading
   term slots before the raw slots, and any other value a raw slot.
 - Golden `executables_garbage_collection` (OTP-generated) allocates more than
-  the 64 MiB budget with a small live set: a tail loop building a 400-word
+  64 MiB with a small live set: a tail loop building a 400-word
   string per step, 9,000 off-heap 8 KiB binaries, a comprehension whose filter
   allocates per element, 20,000-deep body recursion keeping a nested term
   (tuple, list, binary) per frame, and an error payload caught after unwinding
@@ -299,13 +303,16 @@ Step 27 (2026-10-06):
 - Before, a block could take the whole remaining budget (sized from used
   words including garbage) and the virtual binary heap could exceed it once
   survivors passed half the budget, so allocations failed with garbage still
-  uncollected: a 64-bit run retaining 700 64 KiB binaries while dropping four
-  per step failed at 68% live; now 1,010 (99%) fit.
-- Golden `executables_heap_exhaustion`: retaining 900 binaries of 65,540
-  bytes (88% of the budget) while dropping four per step finishes as in OTP;
-  retaining 2,500 stops with the report above, exit 70 and the earlier stdout
-  (authored run: OTP has no limit). `runtime_collection` `near_budget` checks
-  both caps with a 10,000-word budget (heap block and off-heap buffers).
+  uncollected: under the then-default 64 MiB budget, a 64-bit run retaining
+  700 64 KiB binaries while dropping four per step failed at 68% live; with
+  the caps, 1,010 (99%) fit.
+- The default 64 MiB heap budget and 2^24-word stack budget were removed (user
+  direction): both are opt-in per process
+  (`Runtime::create_context(HeapOptions, StackOptions)`), uncapped by default.
+- Golden `executables_heap_growth` keeps 1,100 binaries of 65,540 bytes
+  (72 MB) while dropping four per step and prints the count as OTP does.
+  `runtime_collection` `near_budget` checks both caps with a 10,000-word
+  budget (heap block and off-heap buffers).
 
 ### Prototype
 

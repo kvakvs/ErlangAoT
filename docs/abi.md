@@ -194,8 +194,10 @@ const TermWord *)` signature as a host entry calling
 - A result passes in register 0; error payloads are root words of the channel
   (BEAM `fvalue`). A failure returns to the caller like a result and every
   caller checks the channel after the call; the header's handler word stays 0.
-- The stack holds at most `StackOptions::limit_words` (2^24) words; a push
-  beyond it records the infrastructure failure `resource_limit`.
+- The stack has no cap by default; a push the host cannot allocate records
+  `out_of_memory`, and one beyond an optional per-process
+  `StackOptions::limit_words` records `resource_limit` (infrastructure
+  failures).
 - Safepoints: `erlang_aot_enter_v1`/`erlang_aot_tail_v1` collect before
   pushing the callee frame (its arguments are register roots), and
   `erlang_aot_safepoint_v1(context)` at each comprehension loop head collects

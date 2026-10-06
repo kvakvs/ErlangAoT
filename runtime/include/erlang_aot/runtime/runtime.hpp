@@ -34,8 +34,10 @@ class Runtime final {
     Runtime &operator=(Runtime &&) = delete;
     // Stop only once all contexts are gone; BUSY leaves admission and existing contexts unchanged.
     abi::v1::Status shutdown() noexcept;
-    // Create a stable runtime-owned context with lazy storage and a unique, never-recycled identity.
-    std::expected<ProcessContext *, abi::v1::Status> create_context(HeapOptions options = {}) noexcept;
+    // Create a stable runtime-owned context with lazy storage and a unique, never-recycled identity; both option
+    // sets default to no memory cap.
+    std::expected<ProcessContext *, abi::v1::Status> create_context(HeapOptions options = {},
+                                                                    StackOptions stack_options = {}) noexcept;
     // Remove only a context owned by this runtime; foreign pointers are compared without dereferencing.
     abi::v1::Status destroy_context(ProcessContext *context) noexcept;
     // Observe active context ownership without claiming scheduler/process execution support.

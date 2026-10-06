@@ -18,9 +18,10 @@ ProcessIdentity::ProcessIdentity(RuntimeKey runtime, std::uint64_t serial) : run
 
 bool ContextLifetime::alive() const noexcept { return alive_; }
 
-ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions options)
+ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions options,
+                               StackOptions stack_options)
     : impl_(std::make_unique<Impl>(runtime, identity)), heap_(*this, options), mailbox_(*this),
-      generated_calls_(stack_), stack_(*this) {}
+      generated_calls_(stack_), stack_(*this, stack_options) {}
 
 ProcessContext::~ProcessContext() { impl_->lifetime->alive_ = false; }
 

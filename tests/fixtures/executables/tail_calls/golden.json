@@ -44,7 +44,7 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "tail_calls.erl": "bba51b0a16d991bf0059730278aea559a8ea01d1bfadc6a9b4ec6502535ed8f9",
+    "tail_calls.erl": "0af33465c5007948551fdf44d356d2cb0571e7090c601f23a81e547b73dfb52d",
     "tail_peer.erl": "a1b6b247197bbcaffae0c19caf2223ea4d788060f544b6d5d95513d909554cdd"
   }
 }

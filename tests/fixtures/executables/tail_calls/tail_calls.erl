@@ -1,8 +1,8 @@
 -module(tail_calls).
 -export([main/1, back/2]).
 
-%% Just long enough that a loop keeping one frame per iteration would exceed
-%% the ErlangAoT stack budget of 2^24 words: these frames take at least 11
+%% Long enough that a loop keeping one frame per iteration would need more
+%% than 2^24 stack words (128 MiB on 64 bits): these frames take at least 11
 %% words each, branch/2 frames 41.
 -define(STEPS, 2000000).
 -define(BRANCH_STEPS, 500000).

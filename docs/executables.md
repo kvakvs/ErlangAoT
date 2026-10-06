@@ -68,8 +68,7 @@ excluding the program name, unchanged and in order, like `escript`.
 | Any exception escaping the entry, including `throw` and `exit(normal)` | Report on stderr, 1 |
 | Entry process killed by an exit signal | Report on stderr, 1 |
 | Runtime startup or infrastructure failure (ABI mismatch, registration, memory before entry) | Message on stderr, 70 |
-| Process stack budget exceeded (body recursion beyond 2^24 stack words) | `erlangaot: runtime failure: entry call failed: resource_limit`, 70 |
-| Process heap budget exceeded (live heap words and created off-heap binaries beyond 64 MiB after collection, [heap exhaustion](runtime-heap.md#failure-behavior)) | `erlangaot: runtime failure: entry call failed: resource_limit`, 70 |
+| Host memory exhausted (heap, off-heap binary or stack growth refused; no memory cap by default, [memory exhaustion](runtime-heap.md#failure-behavior)) | `erlangaot: runtime failure: entry call failed: out_of_memory`, 70 |
 
 Invalid `halt/1` arguments raise `badarg` in the caller. When the entry
 finishes, the program exits: other processes are stopped without running

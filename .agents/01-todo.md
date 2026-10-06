@@ -66,6 +66,7 @@ Plan: [8A](11-plan.md#step-8a)–[8I](11-plan.md#step-8i),
 Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
 [8H](11-plan.md#step-8h), [8I](11-plan.md#step-8i), [23](11-plan.md#step-23),
 [24](11-plan.md#step-24), [26](11-plan.md#step-26), [27](11-plan.md#step-27),
+[27A](11-plan.md#step-27a),
 [51](11-plan.md#step-51).
 
 - [x] Collector policy (full Cheney copy, ERTS sizing) and traced words for
@@ -74,7 +75,10 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
   list, merge fragments, grow/shrink along the ERTS sizes (8H).
 - [x] Triggers from generated code: fragments, off-heap pressure; allocation
   stays a critical section, so no retry (24, 26).
-- [x] Heap exhaustion as a defined failure after collection (27).
+- [x] Memory exhaustion as a defined failure: no default cap, host refusal is
+  `out_of_memory`; opt-in per-process budgets fail after collection (27).
+- [ ] Optional runtime-wide memory limit (uncapped by default) and
+  program-facing caps (27A).
 - [ ] `erlang:garbage_collect/0` with the builtins.
 - [ ] Stress with continuations and mailbox roots as they arrive.
 - [ ] Optional later: generational old heap with minor collections.
@@ -242,8 +246,8 @@ Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-
   ([execution model](../docs/execution-model.md)), implemented in step 19:
   explicit frames, `musttail` transfers, local/mutual/remote tail calls.
 - [x] Deep tail and non-tail recursion, local/remote/mutual (steps 19, 20):
-  body recursion is bounded by the process stack budget, which fails with
-  `resource_limit` (exit 70).
+  body recursion grows the process stack until the host refuses memory
+  (`out_of_memory`, exit 70); a per-process stack cap is opt-in.
 
 ## Processes and runtime services
 

@@ -85,8 +85,8 @@
   switch, splits after non-tail calls, spills cross-call SSA values to raw slots, hoists constant slot GEPs, and emits
   only `musttail` transfers via `erlang_aot_enter/tail/return_v1`. Descriptors `<sym>.frame` (7 words: names, arity,
   body, slots, roots); exported `<sym>` = host wrapper over `erlang_aot_invoke_v1`. Runtime `ProcessStack`
-  (`process/stack`): flat `std::vector<Word>`, 4-word headers linked by offsets, 256 X registers, 2^24-word budget
-  (`resource_limit` -> exit 70), bottom frame per invocation contains native exceptions. Exceptions still return
+  (`process/stack`): flat `std::vector<Word>`, 4-word headers linked by offsets, 256 X registers, uncapped
+  by default (opt-in `StackOptions::limit_words` -> `resource_limit`; host refusal `out_of_memory` -> exit 70), bottom frame per invocation contains native exceptions. Exceptions still return
   through callers (channel check); no yield/reductions until step 43. Prototype `tests/prototypes/execution_model/`.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
@@ -154,7 +154,7 @@
   sections. `lower_frames` spills crossing terms to term slots (`term_value`, `place_slots`). Forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live or above `block_limit` (step 27: a block and the virtual binary heap keep
   half of the budget left after survivors free, so garbage triggers a safepoint before `limit_exceeded`;
-  budget exhaustion = `resource_limit`, exit 70). No cross-heap graph copying yet. Revision-5 generated frames
+  no default heap or stack cap: opt-in per-process budgets, host refusal = `out_of_memory`, exit 70). No cross-heap graph copying yet. Revision-5 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells
   transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide

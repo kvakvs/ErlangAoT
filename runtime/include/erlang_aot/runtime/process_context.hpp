@@ -132,7 +132,7 @@ class ProcessContext final {
     // Frames are released before pending payloads and heap storage during context teardown.
     ProcessStack stack_;
     // Create only after runtime identity/ownership and heap limits are validated.
-    ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options);
+    ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options, StackOptions stack_options);
 };
 
 } // namespace erlang_aot::runtime

@@ -49,7 +49,7 @@ CallResult<Term> builtin(ProcessContext &context, std::span<const Term>) {
 // Distinguish infrastructure status from Erlang reasons; heap services report nothing themselves.
 void check_service(const CallFailure &failure, unsigned selected) {
     require(failure.code == CallError::runtime_failure && !failure.reported, "service failure became reported");
-    require(failure.status == (selected == 1 ? abi::v1::Status::resource_limit : abi::v1::Status::busy),
+    require(failure.status == (selected == 1 ? abi::v1::Status::out_of_memory : abi::v1::Status::busy),
             "service status changed");
 }
 
@@ -105,6 +105,7 @@ Word leaf(ProcessContext *context, const Word *) {
         throw std::runtime_error("injected generated-entry exception");
     }
     if (mode == 1) {
+        // No default budget applies, so the host refuses the backing block: out_of_memory.
         (void)context->heap().allocate(std::numeric_limits<std::size_t>::max() / sizeof(Word));
     } else if (mode == 5) {
         // A second allocation while a reservation is open is refused; the reservation then rolls back.

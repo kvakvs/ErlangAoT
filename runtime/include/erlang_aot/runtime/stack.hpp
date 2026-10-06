@@ -4,11 +4,13 @@
 #include <algorithm>
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/abi/modules.hpp>
+#include <limits>
 
 namespace erlang_aot::runtime {
 struct StackOptions {
-    // Bound the words of all frames, headers included; deep body recursion fails once it needs more.
-    std::size_t limit_words = std::size_t{1} << 24;
+    // Optional per-process cap on the words of all frames, headers included; by default body recursion grows until
+    // the host refuses memory.
+    std::size_t limit_words = std::numeric_limits<std::size_t>::max();
 };
 
 // One flat, growable stack of explicit frames per process (docs/execution-model.md) plus its X registers.

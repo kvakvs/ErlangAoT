@@ -23,8 +23,7 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | Failing BIF/operator frames | Present (`{erlang, '+', Args, ...}`) | Absent; nothing below the entry function | [ABI](abi.md#stack-traces) |
 | Calls to functions that never return | Compiled as tail calls (caller missing from the trace) | Ordinary calls (caller present) | [ABI](abi.md#stack-traces) |
 | Big integer limit | `system_limit` | `resource_limit` above 1,000,000 bits | [terms](terms.md) |
-| Unbounded body recursion | Process grows until memory runs out | Stops at the 2^24-word process stack: exit 70, `resource_limit` | [executables](executables.md#exit-status) |
-| Live data beyond 64 MiB per process | No default limit (`max_heap_size` 0): the process grows until memory runs out | Allocation fails once heap, fragments and created off-heap binaries exceed 64 MiB after collection: exit 70, `resource_limit` | [runtime heap](runtime-heap.md#failure-behavior) |
+| Host memory exhausted | The emulator reports that it cannot allocate memory, writes a crash dump and stops | `erlangaot: runtime failure: entry call failed: out_of_memory`, exit 70, no dump | [runtime heap](runtime-heap.md#failure-behavior) |
 | Bitstring size limit | Limited by memory (`system_limit` far above) | `resource_limit` when constructing a value above 1,000,000 bits | [terms](terms.md#bitstrings) |
 | Uncaught exception in an ordinary entry module | `escript` exits 127 | Exits 1 with one `uncaught exception <class>: <reason>` line (escript sources keep 127) | [executables](executables.md) |
 | Compiler diagnostics | `erl_lint` wording (`variable 'X' is unbound`) and warnings | Own wording (`unbound variable X`); OTP lint warnings are mostly not emitted | [semantic](semantic.md#bindings) |

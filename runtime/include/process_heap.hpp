@@ -1,12 +1,13 @@
 #pragma once
 
-// One bounded heap block plus heap fragments supports transactional construction and copying collection.
+// One heap block plus heap fragments supports transactional construction and copying collection.
 #include <erlang_aot/runtime/features.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <limits>
 #include <span>
 
 namespace erlang_aot::runtime {
@@ -51,12 +52,16 @@ struct HeapCensus final {
     std::size_t off_heap_cells = 0;
 };
 
-// Size the process heap and bound all of its storage (docs/runtime-heap.md#sizing-and-budget).
+// Default heap budget: no cap, so a process grows until the host refuses memory (a word multiple for validation).
+inline constexpr std::size_t UNLIMITED_HEAP_BYTES =
+    std::numeric_limits<std::size_t>::max() / sizeof(Word) * sizeof(Word);
+
+// Size the process heap and optionally bound all of its storage (docs/runtime-heap.md#sizing-and-budget).
 struct HeapOptions final {
     // Words of the heap block created by the first allocation (ERTS min_heap_size) and of the smallest fragment.
     std::size_t min_heap_words = 233;
-    // Maximum total of heap block, fragments (including unused tails) and created off-heap buffers.
-    std::size_t limit_bytes = std::size_t{64} * 1024 * 1024;
+    // Optional per-process cap on heap block, fragments (including unused tails) and created off-heap buffers.
+    std::size_t limit_bytes = UNLIMITED_HEAP_BYTES;
 };
 
 namespace detail {

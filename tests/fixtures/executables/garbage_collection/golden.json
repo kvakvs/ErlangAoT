@@ -52,6 +52,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "garbage_collection.erl": "271843e64fa761cf975e55e27d4ec8f1eeea062a2edc18d68d2037adcf2444d7"
+    "garbage_collection.erl": "9ce3e67ad60e68f38f2845e783e31b5ad98eb0a8a5c9b9508e7c2fdcb29d4e1c"
   }
 }

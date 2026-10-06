@@ -166,5 +166,6 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-06 | Plan 11 step 23 root inventory, `SafePoint`, live registers | 160 (156 fast) | 50 changed | Fast 156/156; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 26 collection from generated code | 161 (157 fast) | 63 changed | Fast 157/157; full `-j 12` 161/161 in 107 s; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27 heap exhaustion after collection | 162 (158 fast) | 50 changed | Fast 158/158; full `-j 12` 162/162 in 108 s; Lizard 0 warnings; tidy passed |
+| 2026-10-06 | Plan 11 step 27 correction: no default memory caps | 162 (158 fast) | 50 changed | Full `-j 12` 158/162 in 120 s, 4 `codegen_failure_*` fixed by expecting `out_of_memory`, then 10/10 affected; Lizard 0 warnings; tidy passed |
 
 PG = pattern/guard plan step (archived in `.agents/00-finished.md`).

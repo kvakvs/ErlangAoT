@@ -1,9 +1,9 @@
 -module(garbage_collection).
 -export([main/1]).
 
-%% Each run allocates more than the 64 MiB process budget (8 Mi words of 64
-%% bits) while its live set stays small, so it only finishes when generated
-%% code collects.
+%% Each run allocates more than 64 MiB (8 Mi words of 64 bits) while its live
+%% set stays small, so generated code collects many times and every kept
+%% value must survive being moved.
 
 %% 200 characters: one string literal is one 400-word list per evaluation.
 -define(TEXT,

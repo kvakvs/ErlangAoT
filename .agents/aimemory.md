@@ -140,7 +140,7 @@ Step facts beyond the plan record:
 - 14: after = second ProtectedScope map `afters` + `after_paths` (result/resume/exception); after body lowered twice
   (normal path, then from the after handler). Never return/move ProtectedScope by value: MSVC std::map move may throw ->
   tidy bugprone-exception-escape; emplace in place, extract node handles. `opt->` and `.value()` on std::optional are
-  both flagged by bugprone-unchecked-optional-access: test first. Process budget overflow reports resource_limit (7).
+  both flagged by bugprone-unchecked-optional-access: test first. An opt-in process budget overflow reports resource_limit (7).
   `after` is a reserved word: fixture atoms must not be `after`.
 - 15: trace captured at GeneratedCallState::fail from GeneratedRoots frames (FrameDescriptor per function, private
   `frame.<symbol>` global); OTP compiler turns calls to never-returning functions into tail calls, so trace fixtures
@@ -172,7 +172,7 @@ Step facts beyond the plan record:
   needs rm -rf build/debug (nested native consumer caches). Scripts build/plan11-step19/*.cmd.
   Debug runtime makes services ~0.1-0.5 us: 2M-step tail loop ~1 s, 200k-deep list build+len+sum ~1.3 s.
 - 20: user asked for minimal iteration counts (just exceed the limit), not plan's 10M/1M. Golden runs may be
-  `"authored": true` (regenerate.py keeps them) for ErlangAoT-only outcomes (stack budget -> exit 70).
+  `"authored": true` (regenerate.py keeps them) for ErlangAoT-only outcomes (none left since the step-27 correction).
 - 21: comprehension = loops in the body (codegen/lowering_comprehensions), loop state in term slots (root_slot), no PHIs;
   result reversed once (ContainerConstruction::reverse=2). Generator patterns bind via BindingCandidate::fresh
   (define_fresh, shadow()); find() prefers tentative names when fresh. Guard-test filters classified in guard_analysis
@@ -204,7 +204,9 @@ Step facts beyond the plan record:
   a freed block): test collection by stale host Terms, not by word inequality. clang-analyzer ArrayBound also fires
   on LoadInst::getPointerOperand / StoreInst::getValueOperand / PHI incoming_values: walk use lists instead.
   bugprone-unused-return-value flags discarded std::expected (static_cast<void> too).
-- 27: exhaustion = existing limit_exceeded -> resource_limit, exit 70 (no new rule). Rejected a "live > 3/4 budget
+- 27: CORRECTED by user: no default memory cap (heap UNLIMITED_HEAP_BYTES, stack unlimited); caps are
+  opt-in per process (create_context(HeapOptions, StackOptions)); runtime-wide limit + program-facing caps = 27A.
+  Host refusal = out_of_memory exit 70; opt-in budget = limit_exceeded -> resource_limit (no new rule). Rejected a "live > 3/4 budget
   fails at entry" rule: frames keep stale garbage in term slots (garbage_collection deep is 7.0M of 8.4M words live
   after collection). Fix = block_limit (survivors + half the free budget) + capped binary_limit_words_. Heap-word
   goldens near 64 MiB cost ~5-9 s per run in Debug (GC copying), so the golden uses 64 KiB off-heap binaries
@@ -212,6 +214,7 @@ Step facts beyond the plan record:
   erlfmt: escript with code:add_path + erlfmt:format_file returns {ok, IoData, []}: write it back yourself
   (scratch fmt.escript). Never `cat > file` without heredoc: hangs on stdin.
 User directions (keep):
+- No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
 - Minimal first, iterate later; no defenses for impossible cases (8D: no start bitmap / interior-pointer

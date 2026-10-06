@@ -33,15 +33,6 @@
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "{caught,bottom}\n"
-    },
-    {
-      "args": [
-        "budget"
-      ],
-      "authored": true,
-      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
-      "exit_status": 70,
-      "stdout": ""
     }
   ],
   "oracle_version": [
@@ -53,6 +44,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "deep_recursion.erl": "ca6de2c0d0463e86929f0d4074a87d54f9ebd68c8142dcb5f97d893da2900343"
+    "deep_recursion.erl": "61975d0b11166c22d83e294cace87f34d2caf0b852239d66aba7d32707e30e7b"
   }
 }

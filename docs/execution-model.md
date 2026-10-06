@@ -186,12 +186,11 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   heap asks for it (step 26,
   [collection in generated code](runtime-heap.md#collection-in-generated-code));
   raw spill slots never hold terms.
-- **Budget.** The stack has its own limit of 2^24 words
-  (`StackOptions::limit_words`, separate from the 64 MiB heap budget). A push
-  beyond it fails with `resource_limit`, so a program exits with status 70 and
-  `erlangaot: runtime failure: entry call failed: resource_limit`
-  ([executables](executables.md)). Frames take 4 header words plus 1-40 slots
-  today, so body recursion reaches over a million levels.
+- **No cap.** The stack grows until the host refuses memory, which fails
+  with `out_of_memory` (exit 70, [executables](executables.md)), as an OTP
+  process grows. An optional per-process `StackOptions::limit_words`
+  (separate from the optional heap budget) fails a push beyond it with
+  `resource_limit`. Frames take 4 header words plus 1-40 slots today.
 - **Host entry.** An exported symbol keeps the native signature and runs its
   function above a runtime bottom frame with `erlang_aot_invoke_v1`; native
   exceptions thrown by services are contained there.

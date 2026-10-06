@@ -23,9 +23,7 @@ main(["unwind"]) ->
         catch
             error:Reason -> {caught, Reason}
         end
-    );
-main(["budget"]) ->
-    show(forever(id(0))).
+    ).
 
 show(Value) -> erlang:display(Value).
 
@@ -58,6 +56,3 @@ depth({node, Inner}) -> 1 + depth(Inner).
 %% An exception raised at the bottom unwinds every frame to the handler.
 boom(0) -> error(bottom);
 boom(N) -> 1 + boom(N - 1).
-
-%% Body recursion that never ends: ErlangAoT stops it at the stack budget.
-forever(N) -> 1 + forever(N + 1).

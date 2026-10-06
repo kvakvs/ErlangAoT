@@ -25,9 +25,11 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
 - `Runtime::start(options)` → `std::expected<std::unique_ptr<Runtime>, Status>`.
   Defaults: 1,024 contexts, current ABI version and native term width,
   `max_atoms` 2^20.
-- `create_context(heap_options)` → borrowed `ProcessContext*`, stable until
-  destroyed. Heap defaults: 233-word minimum heap (`min_heap_words`), 64 MiB
-  limit (a word multiple at least the minimum heap).
+- `create_context(heap_options, stack_options)` → borrowed `ProcessContext*`,
+  stable until destroyed. Heap defaults: 233-word minimum heap
+  (`min_heap_words`) and no memory cap (`limit_bytes` =
+  `UNLIMITED_HEAP_BYTES`; a set budget is a word multiple at least the minimum
+  heap). The stack is uncapped too unless `StackOptions::limit_words` is set.
 - `destroy_context(ctx)`, `shutdown()`: shutdown returns `busy` while contexts
   remain; after that it succeeds idempotently and later calls return `stopped`.
   The destructor cleans up remaining contexts.
@@ -68,9 +70,9 @@ is its contract (layout, areas, sizing, admission, roots, collection).
   ([off-heap binaries](runtime-heap.md#off-heap-binaries)).
 - `used_words` counts allocated words; `capacity_words` counts heap block and fragments;
   `off_heap_words` counts buffers this process created. Backing plus off-heap
-  words share the `limit_bytes` budget; a collection keeps half of the budget
-  left after survivors free, so exhausting it means the live data no longer
-  fits ([failure behavior](runtime-heap.md#failure-behavior)).
+  words share the optional `limit_bytes` budget; a collection keeps half of the
+  budget left after survivors free, so exhausting it means the live data no
+  longer fits ([failure behavior](runtime-heap.md#failure-behavior)).
 - Every used word parses as a header-led object, a cons cell or filler
   ([word layout](runtime-heap.md#word-layout)); reserved words start zeroed.
   Raw `allocate()` words must stay zero or hold complete objects.

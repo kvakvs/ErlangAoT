@@ -1098,6 +1098,47 @@ Backlog: F04. Depends on: [26](#step-26).
   expectation: an empty 4-word budget keeps a 2-word block. Fresh Windows x64
   Debug (clang-cl): fast CTest 158/158, full `-j 12` 162/162 (108 s); Lizard
   0 warnings; tidy 50 changed units pass. Logs `build/plan11-step27/`.
+- Correction (2026-10-06, user direction): memory has no hard cap by default,
+  per process or for the runtime; caps are options only. Default
+  `HeapOptions::limit_bytes` is `UNLIMITED_HEAP_BYTES` and
+  `StackOptions::limit_words` unlimited; `Runtime::create_context(HeapOptions,
+  StackOptions)` sets both per process. The defined failure is now host
+  refusal (`out_of_memory`, exit 70); an opt-in budget still fails with
+  `resource_limit` only after collection (the caps above). Removed the
+  authored stack-budget run of `deep_recursion`; `heap_exhaustion` became the
+  OTP golden `heap_growth` (1,100 retained 64 KiB binaries, 72 MB, beyond the
+  former 64 MiB default). Gap: with nothing capped, `garbage_collection` and
+  `tail_calls` still check values across collections and deep tail loops but
+  no longer prove bounded memory; step 27A restores that with program-facing
+  caps. `codegen_failure` mode 1 (huge allocation) now expects
+  `out_of_memory` (host refusal) instead of the old default budget's
+  `resource_limit`. Fresh Windows x64 Debug (clang-cl): fast 154/158 and
+  full `-j 12` 158/162 (120 s), the 4 failures being `codegen_failure_*`
+  before that expectation change; after it the affected codegen tests pass
+  10/10; Lizard 0 warnings; tidy 50 changed units pass. Logs
+  `build/plan11-step27-uncapped/`.
+
+<a id="step-27a"></a>
+
+### 27A. Runtime-wide memory limit and program-facing caps
+
+Backlog: F04. Depends on: [27](#step-27). Added 2026-10-06 by the step-27
+correction.
+
+Add an optional runtime-wide (per-application) memory limit, uncapped by
+default, accounting heap blocks, fragments, off-heap buffers and stacks of all
+processes; and let programs set the per-process and runtime-wide caps (a
+startup or link option), all uncapped unless set.
+
+- Success criteria
+  - [ ] With no option set, no process or runtime cap applies.
+  - [ ] A set runtime-wide limit fails the requesting process with
+    `resource_limit` after collection; others keep running.
+  - [ ] Programs can set per-process heap and stack caps.
+- Tests
+  - [ ] `garbage_collection` and `tail_calls` (or companions) run under small
+    caps, proving bounded memory again.
+  - [ ] Runtime test: two processes sharing a runtime-wide limit.
 
 <a id="step-28"></a>
 

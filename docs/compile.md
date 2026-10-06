@@ -24,7 +24,7 @@ operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
 literal remote calls within the batch, including self, mutual and cross-module
 recursion on explicit process frames with proper tail calls
 ([execution model](execution-model.md#implementation)); body recursion is bounded
-by the 2^24-word process stack, not the native stack. Guards support the full admitted
+by the process stack (uncapped by default), not the native stack. Guards support the full admitted
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: `receive`, funs and
