@@ -12,20 +12,15 @@ file(WRITE "${TEST_DIR}/source/empty.cpp" "int main() { return 0; }\n")
 file(WRITE "${TEST_DIR}/source/CMakeLists.txt" [=[
 cmake_minimum_required(VERSION 3.28)
 project(RuntimeConsumer LANGUAGES CXX)
-set(ERLANG_AOT_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
-set(ERLANG_AOT_BUILD_RUNTIME ON CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory("${SOURCE_ROOT}" runtime-build)
-if(TARGET erlang_llvm_sdk)
-    message(FATAL_ERROR "Generated-program consumer acquired host LLVM")
-endif()
+# Link the runtime the parent build already compiled (ErlangAoT::generated_program).
+include("${RUNTIME_TARGETS}")
 add_executable(linked "${CONSUMER}")
 target_sources(linked PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/0.obj" "${CMAKE_CURRENT_SOURCE_DIR}/1.obj")
 target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
 set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 # Project headers alone must not satisfy the mandatory runtime dependency.
 add_executable(unlinked EXCLUDE_FROM_ALL "${CMAKE_CURRENT_SOURCE_DIR}/empty.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/0.obj" "${CMAKE_CURRENT_SOURCE_DIR}/1.obj")
-target_link_libraries(unlinked PRIVATE erlang_aot_abi)
+target_link_libraries(unlinked PRIVATE ErlangAoT::abi)
 target_include_directories(unlinked PRIVATE "${SOURCE_ROOT}/runtime/include")
 ]=])
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "CXXFLAGS=" "${CMAKE_COMMAND}"

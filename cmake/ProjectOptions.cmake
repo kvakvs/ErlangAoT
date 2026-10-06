@@ -1,3 +1,17 @@
+# Drop debug information from targets created after this call in the calling directory and its later
+# subdirectories (test programs) unless ERLANG_AOT_TEST_DEBUG_INFO is set.
+macro(erlang_aot_test_debug_info)
+    if(NOT ERLANG_AOT_TEST_DEBUG_INFO)
+        set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "")
+        if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+            string(REGEX REPLACE "/[Dd][Ee][Bb][Uu][Gg]( |$)" "" CMAKE_EXE_LINKER_FLAGS_DEBUG
+                "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
+        else()
+            add_compile_options(-g0)
+        endif()
+    endif()
+endmacro()
+
 # Apply project diagnostics and source encoding without changing dependency targets.
 function(erlang_aot_project_options target)
     set_target_properties(${target} PROPERTIES

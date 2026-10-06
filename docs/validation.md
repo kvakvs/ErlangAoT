@@ -36,6 +36,11 @@ cmake --build build/debug --target check-quality-all  # whole tree
   `HEAD` plus untracked files; `cmake/quality_scope.py` adds translation units
   that include a changed header. Changes to `.clang-tidy`, `cmake/` or production
   CMake select everything.
+- Test programs carry no debug information (no PDBs); configure with
+  `-DERLANG_AOT_TEST_DEBUG_INFO=ON` to rebuild them for a debugger. Nested
+  native consumers link the parent build's runtime through
+  `ErlangAoTRuntimeTargets.cmake` instead of compiling it again; only
+  `runtime_link` builds the runtime standalone.
 - Thresholds and suppressions are never raised to pass the gate.
 
 ## Fixtures and provenance

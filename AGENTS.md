@@ -50,7 +50,8 @@ separate dynamic SO/DLL modules, or dropped.
   `examples/`, and `docs/`; see `.agents/files.md` for component locations.
   Intermediate stage readers have reserved directory locations only.
 
-Use `.agents/aimemory.md` for AI notes and memory, this file will not be read by humans.
+Use `.agents/aimemory.md` for AI notes and memory, this file will not be read by
+humans.
 
 ## Artifacts Produced
 
@@ -71,9 +72,9 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
   `compiler/src/codegen/runtime_symbols.hpp` as a `mangling::Function<...>`
   alias mirroring its `abi/include` declaration, and emit it via
   `services::symbol<services::X>(triple)`. Extend
-  `compiler/include/erlang_aot/compiler/mangling.hpp` when a new signature
-  shape is needed, and add the expected spellings, checked against Clang for
-  every target ABI and width, to `tests/compiler/codegen/mangling.cpp`.
+  `compiler/include/erlang_aot/compiler/mangling.hpp` when a new signature shape
+  is needed, and add the expected spellings, checked against Clang for every
+  target ABI and width, to `tests/compiler/codegen/mangling.cpp`.
 - IMPORTANT: Document class fields creation intent, what will they be doing.
   Document function creation intent. Keep comments down to 1-2 lines.
 - The code will be read by humans, keep it readable.
@@ -99,23 +100,26 @@ Plain shells (PowerShell, Git Bash) do not have MSVC, the SDK or `vswhere` on
 build/test/quality commands from a `.cmd` script that first calls
 `"<installationPath>\VC\Auxiliary\Build\vcvars64.bat" >nul` and prepends
 `C:\Program Files\LLVM\bin` to `PATH`; launch it with `cmd /c <full path>.cmd`.
-The `'vswhere.exe' is not recognized` line printed by `vcvars64.bat` is harmless.
+The `'vswhere.exe' is not recognized` line printed by `vcvars64.bat` is
+harmless.
 
 ## Code Style Guide
 
-- Internal fields of classes use trailing underscore. Rename existing fields when they did not have an underscore while you're working on them.
+- Internal fields of classes use trailing underscore. Rename existing fields
+  when they did not have an underscore while you're working on them.
 - Constants and inline constexpr constants prefer ALL_CAPS_SNAKE_CASE
 - Function names and local variables: lower_snake_case
-- Class names and struct names: public use CapitalCase, and private can go any (suggested lower_snake_case)
+- Class names and struct names: public use CapitalCase, and private can go any
+  (suggested lower_snake_case)
 
 ## Differences from Erlang/OTP
 
 - Keep `docs/differences.md` up to date: whenever work finds or introduces an
-  observable behavior that differs from Erlang/OTP (ordering, error terms,
-  stack traces, limits, diagnostics, printing, edge-case semantics), add a row
-  with OTP's behavior, ErlangAoT's behavior and the owning contract document.
-  Remove or update the row when the difference is fixed. Features that are
-  simply not implemented yet belong to the plan and `docs/features.md`.
+  observable behavior that differs from Erlang/OTP (ordering, error terms, stack
+  traces, limits, diagnostics, printing, edge-case semantics), add a row with
+  OTP's behavior, ErlangAoT's behavior and the owning contract document. Remove
+  or update the row when the difference is fixed. Features that are simply not
+  implemented yet belong to the plan and `docs/features.md`.
 
 ## Testing Strategy
 
@@ -137,4 +141,17 @@ The `'vswhere.exe' is not recognized` line printed by `vcvars64.bat` is harmless
   unless equivalent behavioral coverage replaces them.
 - IMPORTANT: OTP source and copied files from OTP source remain transient and
   never join the ErlangAoT git, if necessary, save observations/oracle data/gold
-  master data in ErlangAoT git, but not the license-protected files.
+  master data in ErlangAoT git, but not the license-protected files.- Keep test
+  disk writes low. Test programs (main-build test executables and the nested
+  CMake consumers under `build/*/tests`) are rebuilt by test runs and are built
+  without debug information: no PDB files unless
+  `-DERLANG_AOT_TEST_DEBUG_INFO=ON`. A PDB only helps to debug a crash, so when
+  a test program crashes, reconfigure with that option, rebuild and rerun the
+  test to get one, then switch it back off. `erlangaot`, compiler and runtime
+  libraries keep their debug information.
+- Nested test consumers link the runtime the parent build already compiled:
+  `include("${RUNTIME_TARGETS}")` (passed by `TestHost.cmake` through
+  `host_configure_args`) provides `ErlangAoT::generated_program` and
+  `ErlangAoT::abi`. Never `add_subdirectory` the repository into a new test to
+  rebuild the runtime; only `runtime_link` does that, to prove the standalone
+  LLVM-free runtime build, and the `examples/compile` example shows it to users.

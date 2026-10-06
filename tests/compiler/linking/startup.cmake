@@ -32,10 +32,8 @@ emit(escript -O0 --entry boom boom.escript)
 file(WRITE "${WORK}/consumer/CMakeLists.txt" [=[
 cmake_minimum_required(VERSION 3.28)
 project(StartupConsumer LANGUAGES CXX)
-set(ERLANG_AOT_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
-set(ERLANG_AOT_BUILD_RUNTIME ON CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-add_subdirectory("${SOURCE_ROOT}" runtime-build)
+# Link the runtime the parent build already compiled (ErlangAoT::generated_program).
+include("${RUNTIME_TARGETS}")
 foreach(name IN ITEMS positional project escript)
     add_executable(${name} ${OBJECTS_${name}})
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")

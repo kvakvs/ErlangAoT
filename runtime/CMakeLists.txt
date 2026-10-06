@@ -54,3 +54,6 @@ target_link_libraries(erlang_runtime
 add_library(erlang_generated_program INTERFACE)
 target_link_libraries(erlang_generated_program INTERFACE erlang_runtime)
 add_library(ErlangAoT::generated_program ALIAS erlang_generated_program)
+# Exported for nested test programs as ErlangAoT::generated_program and ErlangAoT::runtime.
+set_target_properties(erlang_generated_program PROPERTIES EXPORT_NAME generated_program)
+set_target_properties(erlang_runtime PROPERTIES EXPORT_NAME runtime)

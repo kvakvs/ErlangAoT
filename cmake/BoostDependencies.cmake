@@ -74,5 +74,6 @@ if(APPLE AND NOT CMAKE_CROSSCOMPILING AND ERLANG_AOT_BREW_EXECUTABLE)
     endif()
 endif()
 add_library(erlang_aot_multiprecision_dependency INTERFACE)
+set_target_properties(erlang_aot_multiprecision_dependency PROPERTIES EXPORT_NAME multiprecision)
 target_include_directories(erlang_aot_multiprecision_dependency SYSTEM INTERFACE
     ${ERLANG_AOT_BOOST_SYSTEM_INCLUDES})

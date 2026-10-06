@@ -12,6 +12,9 @@ option(ERLANG_AOT_BUILD_COMPILER "Build the erlangaot compiler tool" ON)
 option(ERLANG_AOT_BUILD_RUNTIME "Build the runtime library" ON)
 # Override CTest's default so ordinary builds omit test executables and dependencies.
 option(BUILD_TESTING "Build test executables and register CTest tests" OFF)
+# Test programs are rebuilt by every run; debug information (PDBs) only helps to debug a crash, so it is
+# off unless this is set and the build or test is run again.
+option(ERLANG_AOT_TEST_DEBUG_INFO "Build test programs with debug information" OFF)
 
 if(WIN32)
     message(STATUS "Windows development build; remaining platform work is tracked in abi/plan-windows.md.")
@@ -74,6 +77,15 @@ if(ERLANG_AOT_BUILD_COMPILER)
 endif()
 if(ERLANG_AOT_BUILD_RUNTIME)
     add_subdirectory(runtime)
+endif()
+if(BUILD_TESTING AND ERLANG_AOT_BUILD_RUNTIME AND NOT CMAKE_CROSSCOMPILING)
+    # Nested test programs link this build's runtime through these targets instead of compiling it again;
+    # runtime_link alone keeps proving the standalone, LLVM-free runtime build.
+    export(TARGETS erlang_generated_program erlang_runtime erlang_aot_abi erlang_aot_multiprecision_dependency
+        NAMESPACE ErlangAoT:: FILE "${PROJECT_BINARY_DIR}/ErlangAoTRuntimeTargets.cmake")
+endif()
+if(BUILD_TESTING)
+    erlang_aot_test_debug_info()
 endif()
 if(BUILD_TESTING AND ERLANG_AOT_BUILD_COMPILER AND NOT CMAKE_CROSSCOMPILING)
     add_subdirectory(tests)
