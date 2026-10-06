@@ -67,7 +67,15 @@ TermResult<void> BitWriter::append(const BitView &source) {
     if (!grown) {
         return grown;
     }
-    for (std::size_t i = 0; i < source.length; ++i) {
+    std::size_t i = 0;
+    // Byte-aligned whole bytes copy at once; the remaining bits go one at a time.
+    if (length % 8 == 0 && source.offset % 8 == 0) {
+        i = source.length / 8 * 8;
+        std::ranges::copy(source.bytes.subspan(source.offset / 8, i / 8),
+                          bytes.begin() + static_cast<std::ptrdiff_t>(length / 8));
+        length += i;
+    }
+    for (; i < source.length; ++i) {
         put(*this, bit_at(source, i));
     }
     return {};

@@ -32,7 +32,8 @@ void check_requests(ProcessHeap &heap) {
     require(heap.used_words() == 4 && heap.capacity_words() == 4, "rejection changed accounting");
     const auto collected = heap.collect();
     require(collected && collected->words_before == 4 && collected->live_words == 0, "unrooted words survived");
-    require(heap.used_words() == 0 && heap.capacity_words() == 4, "new heap block ignored the budget");
+    // The 12-word policy size is capped so half of the 4-word budget stays free for fragments.
+    require(heap.used_words() == 0 && heap.capacity_words() == 2, "new heap block ignored the budget");
 }
 
 // Check byte policy independently of requests, including target-word edges and a maximum valid budget.

@@ -89,7 +89,10 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> r
         }
         shrink(roots);
     }
-    storage.binary_limit_words_ = std::max(detail::MIN_BINARY_HEAP_WORDS, 2 * storage.off_heap_words_);
+    // Surviving buffers double the virtual binary heap, but half of the free budget stays for heap fragments.
+    const auto doubled = std::max(detail::MIN_BINARY_HEAP_WORDS, 2 * storage.off_heap_words_);
+    const auto room = (budget_words() - storage.capacity_words_) / 2;
+    storage.binary_limit_words_ = std::min(doubled, storage.off_heap_words_ + room);
     stats.live_words = storage.used_words_;
     stats.heap_words = storage.capacity_words_;
     stats.stack_words = owner_.stack().capacity();
@@ -107,7 +110,16 @@ std::size_t ProcessHeap::collected_size(std::size_t live_words) const noexcept {
     // ERTS keeps the stack in the heap block: a deep stack gets a larger heap, so collections stay proportional.
     const auto words = live_words + owner_.stack().words();
     const auto wanted = std::max(storage.options_.min_heap_words, detail::heap_size_at_least(words + words / 3 + 1));
-    return std::min(wanted, storage.options_.limit_bytes / sizeof(Word) - storage.off_heap_words_);
+    return std::min(wanted, block_limit(live_words));
+}
+
+std::size_t ProcessHeap::budget_words() const noexcept {
+    return storage_->options_.limit_bytes / sizeof(Word) - storage_->off_heap_words_;
+}
+
+std::size_t ProcessHeap::block_limit(std::size_t live_words) const noexcept {
+    const auto budget = budget_words();
+    return std::min(budget, std::max(storage_->options_.min_heap_words, live_words + (budget - live_words) / 2));
 }
 
 void ProcessHeap::copy_live(std::span<Word> roots, std::size_t capacity) {
@@ -117,13 +129,14 @@ void ProcessHeap::copy_live(std::span<Word> roots, std::size_t capacity) {
 }
 
 void ProcessHeap::shrink(std::span<Word> roots) noexcept {
-    const auto live = storage_->used_words_ + owner_.stack().words();
-    const auto target = collected_size(storage_->used_words_);
-    if (4 * live >= storage_->heap_.capacity_ || target >= storage_->heap_.capacity_) {
+    const auto used = storage_->used_words_;
+    const auto capacity = storage_->heap_.capacity_;
+    const auto sparse = 4 * (used + owner_.stack().words()) < capacity;
+    if (collected_size(used) >= capacity || (!sparse && capacity <= block_limit(used))) {
         return;
     }
     try {
-        copy_live(roots, target);
+        copy_live(roots, collected_size(used));
     } catch (const std::bad_alloc &) {
         return; // The larger block stays; it already holds every live word.
     }

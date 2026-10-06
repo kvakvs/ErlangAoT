@@ -204,6 +204,13 @@ Step facts beyond the plan record:
   a freed block): test collection by stale host Terms, not by word inequality. clang-analyzer ArrayBound also fires
   on LoadInst::getPointerOperand / StoreInst::getValueOperand / PHI incoming_values: walk use lists instead.
   bugprone-unused-return-value flags discarded std::expected (static_cast<void> too).
+- 27: exhaustion = existing limit_exceeded -> resource_limit, exit 70 (no new rule). Rejected a "live > 3/4 budget
+  fails at entry" rule: frames keep stale garbage in term slots (garbage_collection deep is 7.0M of 8.4M words live
+  after collection). Fix = block_limit (survivors + half the free budget) + capped binary_limit_words_. Heap-word
+  goldens near 64 MiB cost ~5-9 s per run in Debug (GC copying), so the golden uses 64 KiB off-heap binaries
+  (bit_limit = 1,000,000 bits per value); BitWriter::append got a byte-aligned copy (was bit-by-bit, 330 us/8 KiB).
+  erlfmt: escript with code:add_path + erlfmt:format_file returns {ok, IoData, []}: write it back yourself
+  (scratch fmt.escript). Never `cat > file` without heredoc: hangs on stdin.
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

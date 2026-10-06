@@ -68,7 +68,9 @@ is its contract (layout, areas, sizing, admission, roots, collection).
   ([off-heap binaries](runtime-heap.md#off-heap-binaries)).
 - `used_words` counts allocated words; `capacity_words` counts heap block and fragments;
   `off_heap_words` counts buffers this process created. Backing plus off-heap
-  words share the `limit_bytes` budget.
+  words share the `limit_bytes` budget; a collection keeps half of the budget
+  left after survivors free, so exhausting it means the live data no longer
+  fits ([failure behavior](runtime-heap.md#failure-behavior)).
 - Every used word parses as a header-led object, a cons cell or filler
   ([word layout](runtime-heap.md#word-layout)); reserved words start zeroed.
   Raw `allocate()` words must stay zero or hold complete objects.

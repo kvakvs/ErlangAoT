@@ -186,6 +186,43 @@ void policy(Runtime &runtime) {
     require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
 }
 
+// Allocate unrooted off-heap binaries of `words` words each until the heap asks for a collection; each must fit.
+void binary_garbage_until_due(ProcessContext &context, std::size_t words) {
+    TermFactory factory(context);
+    while (!context.heap().wants_collection()) {
+        require(factory.binary(std::vector(words * sizeof(Word), std::byte{3})).has_value(),
+                "off-heap budget ran out before a collection was due");
+    }
+}
+
+// Near the budget a collection leaves half of the free budget for fragments and off-heap buffers, so garbage
+// allocated after it asks for the next collection before the budget runs out (docs/runtime-heap.md#sizing-and-budget).
+void near_budget(Runtime &runtime) {
+    constexpr std::size_t budget = 10'000;
+    auto &heap_context = *runtime.create_context({16, budget * sizeof(Word)}).value();
+    std::array roots{numbers(heap_context, 3000).word()};
+    const auto first = heap_context.heap().collect(roots).value();
+    require(first.live_words == 6000 && first.heap_words <= 8000, "heap block left no room for fragments");
+    while (!heap_context.heap().wants_collection()) {
+        garbage(heap_context, 1);
+    }
+    require(heap_context.heap().collect(roots).value().live_words == 6000, "garbage survived near the budget");
+    require(runtime.destroy_context(&heap_context) == Status::ok, "teardown failed");
+
+    // Six live 1,000-word buffers: a virtual binary heap of twice the survivors would exceed the budget.
+    auto &binary_context = *runtime.create_context({2000, budget * sizeof(Word)}).value();
+    TermFactory factory(binary_context);
+    std::vector<Word> kept;
+    for (int i = 0; i < 6; ++i) {
+        kept.push_back(factory.binary(std::vector(1000 * sizeof(Word), std::byte{2})).value().word());
+    }
+    require(binary_context.heap().collect(kept).has_value(), "binary collection failed");
+    binary_garbage_until_due(binary_context, 100);
+    require(binary_context.heap().collect(kept).value().off_heap_words == 6000, "dead buffers survived");
+    require(binary_context.heap().verify().has_value(), "heap does not verify near the budget");
+    require(runtime.destroy_context(&binary_context) == Status::ok, "teardown failed");
+}
+
 // Generated code running or an open reservation is not a safe point; nothing changes.
 void unsafe(Runtime &runtime) {
     auto &context = *runtime.create_context().value();
@@ -365,6 +402,7 @@ int main() {
         repeated(*runtime);
         binaries(*runtime);
         policy(*runtime);
+        near_budget(*runtime);
         unsafe(*runtime);
         root_owners(*runtime);
         safepoints(*runtime);

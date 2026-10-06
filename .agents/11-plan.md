@@ -1064,11 +1064,40 @@ critical sections and message delivery.
 Backlog: F04. Depends on: [26](#step-26).
 
 - Success criteria
-  - [ ] A live set exceeding the process budget fails with the documented
+  - [x] A live set exceeding the process budget fails with the documented
     outcome after collection, and the runtime stays usable for teardown.
 - Tests
-  - [ ] Golden program growing a retained list past the budget; exit status
+  - [x] Golden program growing a retained list past the budget; exit status
     and report checked.
+- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803` (the new
+  golden is OTP-generated). Outcome kept from step 14/20: budget overflow is
+  `limit_exceeded` -> infrastructure `resource_limit`, no handler runs, stdout
+  flushed, process destroyed, `erlangaot: runtime failure: entry call failed:
+  resource_limit`, exit 70 (`docs/runtime-heap.md#failure-behavior`,
+  `executables.md`, `differences.md`). Defect fixed so it happens only after
+  collection: a collected block could take the whole remaining budget (sized
+  from used words including garbage) and the virtual binary heap (twice the
+  survivors) could exceed the budget, so allocations failed with garbage
+  uncollected (64-bit: 400-word strings dropping ten per step failed at 38%
+  live; 64 KiB binaries dropping four per step at 68%). Now `block_limit`
+  caps a block at survivors plus half of the budget left after them, `shrink`
+  recopies a block above that limit, and `binary_limit_words_` is capped at
+  survivors plus half of the free budget; binaries then fit up to 1,010 (99%).
+  A "live above 3/4 of the budget fails at entry" rule was tried and rejected:
+  frames keep stale garbage in term slots, so `garbage_collection` `deep` has
+  7.0M of 8.4M words live after collection. `BitWriter::append` copies
+  byte-aligned bytes at once (was bit by bit: 8 KiB binary 330 us in Debug;
+  `garbage_collection` `binaries` 2.9 s -> 0.19 s). Tests: golden
+  `executables_heap_exhaustion` (900 retained 65,540-byte binaries, 88% of the
+  budget, while dropping four per step: OTP output; 2,500: authored exit 70,
+  report regex and the earlier `growing` stdout), full matrix; it fails
+  `fits` under the old policy. `runtime_collection` `near_budget`
+  (10,000-word budget: block <= 8,000 words for 6,000 live and garbage
+  reaches a fragment; six live 1,000-word buffers and garbage buffers reach
+  the binary trigger; the heap check fails under the old policy); `runtime_memory`
+  expectation: an empty 4-word budget keeps a 2-word block. Fresh Windows x64
+  Debug (clang-cl): fast CTest 158/158, full `-j 12` 162/162 (108 s); Lizard
+  0 warnings; tidy 50 changed units pass. Logs `build/plan11-step27/`.
 
 <a id="step-28"></a>
 

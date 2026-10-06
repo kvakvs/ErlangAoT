@@ -74,8 +74,8 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
   list, merge fragments, grow/shrink along the ERTS sizes (8H).
 - [x] Triggers from generated code: fragments, off-heap pressure; allocation
   stays a critical section, so no retry (24, 26).
-- [ ] Heap exhaustion as a defined failure (27); `erlang:garbage_collect/0`
-  with the builtins.
+- [x] Heap exhaustion as a defined failure after collection (27).
+- [ ] `erlang:garbage_collect/0` with the builtins.
 - [ ] Stress with continuations and mailbox roots as they arrive.
 - [ ] Optional later: generational old heap with minor collections.
 

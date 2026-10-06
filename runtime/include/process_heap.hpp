@@ -155,12 +155,18 @@ class ProcessHeap final {
     std::expected<void, HeapError> charge_off_heap(std::size_t bytes) noexcept;
     // Return a charge whose cell was never published.
     void uncharge_off_heap(std::size_t bytes) noexcept;
+    // Words of the budget left after off-heap buffers, shared by the heap block and fragments.
+    std::size_t budget_words() const noexcept;
+    // Largest block for live_words: half of the budget left after them stays free for fragments and off-heap buffers,
+    // but never below the minimum heap while the budget allows it.
+    std::size_t block_limit(std::size_t live_words) const noexcept;
     // Size a new heap block so live and stack words stay below 75% of it, at least the minimum heap, within the
-    // budget.
+    // block limit.
     std::size_t collected_size(std::size_t live_words) const noexcept;
     // Copy everything reachable from the process roots and the host's roots into a new block of capacity words.
     void copy_live(std::span<Word> roots, std::size_t capacity);
-    // Copy a block less than 25% live into the policy size; failing to allocate keeps the larger block.
+    // Copy a block less than 25% live, or above the block limit of its live words, into the policy size; failing to
+    // allocate keeps the larger block.
     void shrink(std::span<Word> roots) noexcept;
     // Keep this lazy heap bound to exactly one live process; never transfer it between contexts.
     ProcessContext &owner_;
