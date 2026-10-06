@@ -133,11 +133,23 @@ remains the full check that every slot names an object start, for tests.
 
 ## Roots and safe points
 
-Roots are the term slots of every stack frame (step 19) and the current error
-payload (BEAM `fvalue`), the explicit root
-span a host caller passes to `collect(roots)` (8E), and off-heap list links.
-`ProcessContext::visit_roots` enumerates every root word for the collector. Atoms
-and small immediates are not roots.
+`ProcessContext::visit_roots` enumerates every root word for the collector
+(step 23). At a safe point nothing else holds heap words of the process:
+
+| Owner | Root words | Notes |
+| --- | --- | --- |
+| Frame term slots | The first `roots` slots of every frame on the stack (step 19) | Bottom frames have none; resume and handler indices are integers |
+| Raw frame slots | None | Spilled native values; generated code keeps no heap word there at a safe point (step 24 reload rule) |
+| Registers | `x[0..live)` (`ProcessStack::keep_registers`) | A suspended entry's arguments (step 43); every push and pop clears `live` |
+| Failure channel | Error payload (BEAM `fvalue`), `erlang:error/2,3` argument list, stack trace term | Rebound in place; captured trace frames are descriptor pointers into code |
+| Explicit roots | The span a host passes to `collect(roots)` (8E) | Read back after the call |
+| Off-heap list | None | Links are swept and relinked, not traced |
+
+No heap cell holds a pin. Atoms are immediates and the atom table is never
+collected. No admitted cell refers to code: funs (step 32) will name code by
+registry ID in untraced words, and loaded modules are never unloaded, so
+trace descriptors need no pin either. Mailbox terms join the inventory with
+messages (step 45). Small immediates are not roots.
 
 As in ERTS C code, a host `Term` is a raw tagged word valid until the next safe
 point of its heap. It does not pin heap storage; it keeps a weak context
@@ -146,12 +158,17 @@ lifetime token and the heap's collection count, so use after teardown reports
 A `Term` is only valid inside its own process; other processes may only read
 it.
 
-The heap moves only at a safe point. Until generated code reloads values after
-allocation (plan step 26), the only safe point is an explicit host `collect()`
-while the context runs no generated code and has no pending reservation; any
-other request returns `unsafe_point` and changes nothing, not even the failure
-channel of a running generated call. Allocation never moves the heap before
-step 26: a request that does not fit creates a fragment.
+The heap moves only at a safe point, and never while a reservation is open:
+
+- an explicit host `collect()` while the context runs no generated code;
+- a `collect()` while running generated code has declared a `SafePoint`
+  scope, promising that it holds heap words only in the roots above. Step 24
+  decides where generated code declares one and step 26 places them; until
+  then only runtime tests open such scopes.
+
+Any other request returns `unsafe_point` and changes nothing, not even the
+failure channel of a running generated call. Allocation never moves the heap
+before step 26: a request that does not fit creates a fragment.
 
 ## Collection
 

@@ -177,8 +177,12 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   around a loop and a resume point inside it needs nothing beyond the usual
   spills.
 - **No yield yet.** Reductions and `resume_at` arrive with the scheduler
-  (step 43). Registers and raw spill slots are not roots; terms live across a
-  call are also in term slots, and step 23 must make collections reload them.
+  (step 43). The collector enumerates frame term slots, the registers a
+  suspension keeps live (`ProcessStack::keep_registers`) and the failure
+  channel (step 23, [roots](runtime-heap.md#roots-and-safe-points)). Raw spill
+  slots are not roots: a term read after a call may be reloaded from a raw
+  copy, so generated code is not yet a safe point; steps 24 and 26 fix the
+  reload rule.
 - **Budget.** The stack has its own limit of 2^24 words
   (`StackOptions::limit_words`, separate from the 64 MiB heap budget). A push
   beyond it fails with `resource_limit`, so a program exits with status 70 and

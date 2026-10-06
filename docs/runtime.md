@@ -78,7 +78,9 @@ is its contract (layout, areas, sizing, admission, roots, collection).
   host's root words into a new heap block, frees the old block and fragments,
   releases dead off-heap binaries and rewrites the roots
   ([collection](runtime-heap.md#collection)). It runs only at a safe point (no
-  generated code running, no open reservation), else `unsafe_point`; failure
+  generated code running outside a `SafePoint` scope, no open reservation),
+  else `unsafe_point`; the [root inventory](runtime-heap.md#roots-and-safe-points)
+  lists what it rewrites; failure
   to allocate the new block is `out_of_memory` with nothing changed.
 
 ## Code server and builtins

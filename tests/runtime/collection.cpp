@@ -6,17 +6,22 @@
 #include <erlang_aot/runtime/output.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 // Copying collection at an explicit host safe point: explicit roots are rewritten, every layout and
 // internal sharing survives, garbage and dead off-heap binaries are reclaimed, the heap follows the
-// ERTS size policy, and host Terms taken before a collection become stale.
+// ERTS size policy, and host Terms taken before a collection become stale. At a declared safe point
+// inside generated frames, every root owner of the execution model is rewritten too.
 namespace {
 using namespace erlang_aot::runtime;
 using detail::layout::BinaryBuffer;
 using detail::layout::RefcBinaryCell;
+using erlang_aot::abi::v1::frame_header_words;
+using erlang_aot::abi::v1::frame_resume_word;
+using erlang_aot::abi::v1::FrameDescriptor;
 using Status = erlang_aot::abi::v1::Status;
 
 // Keep every check active in optimized builds.
@@ -200,6 +205,117 @@ void unsafe(Runtime &runtime) {
             "refused collection changed the heap");
     require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
 }
+
+// The layout roots spread over every root owner by the hand-written frame bodies below, and what they observed.
+struct Owners {
+    ProcessContext *context = nullptr;
+    // layouts() words and their texts before any collection.
+    std::vector<Word> roots;
+    std::vector<std::string> texts;
+    // Each layout root read back from its owner after the collections, in layouts() order.
+    std::vector<Word> current;
+    // The outer frame's two term slots and its raw slot once its callee returned.
+    std::vector<Word> outer;
+    // Root words visited before collecting inside the callee and after returning to the outer frame.
+    std::size_t visited_inside = 0;
+    std::size_t visited_outside = 0;
+};
+
+Owners owners;
+
+// Run continuation code; hand-written bodies use ordinary calls where generated code uses tail calls.
+void run(erlang_aot::abi::v1::Code *code, void *context) { code(context); }
+
+// Count the root words the context enumerates beyond the given explicit ones.
+std::size_t root_count(std::span<Word> explicit_roots) {
+    std::size_t count = 0;
+    owners.context->visit_roots(explicit_roots, [&](Word &) { ++count; });
+    return count;
+}
+
+// Collect repeatedly at a declared safe point while frames, registers, the failure channel and explicit
+// roots share one graph: pair and first in the caller's slots, second and map in this frame's slots, big
+// and pair in live registers, first, real and map in the failure channel, large and second as explicit roots.
+void collecting_body(void *) {
+    auto &context = *owners.context;
+    auto &stack = context.stack();
+    auto &calls = context.generated_calls();
+    const auto &roots = owners.roots;
+    auto *slots = stack.frame() + frame_header_words;
+    slots[1] = roots[3];
+    stack.registers()[0] = roots[4];
+    stack.registers()[1] = roots[0];
+    stack.keep_registers(2);
+    calls.fail({.code = CallError::erlang_exception,
+                .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
+                .value = current(context, roots[1]),
+                .arguments = current(context, roots[5]),
+                .stack = current(context, roots[3])});
+    std::array explicit_roots{roots[6], roots[2]};
+    owners.visited_inside = root_count(explicit_roots);
+    const auto &failure = *calls.failure();
+    for (int round = 0; round < 2; ++round) {
+        {
+            SafePoint safe(calls);
+            require(context.heap().collect(explicit_roots).has_value(), "safe point refused the collection");
+        }
+        slots = stack.frame() + frame_header_words;
+        require(explicit_roots[1] == slots[0] && failure.stack->word() == slots[1], "shared root diverged");
+        owners.current = {stack.registers()[1], failure.value->word(),     slots[0],         slots[1],
+                          stack.registers()[0], failure.arguments->word(), explicit_roots[0]};
+        require_graph(context, owners.current, owners.texts);
+        garbage(context, 50);
+    }
+    require(context.heap().collect(explicit_roots) == std::unexpected(HeapError::unsafe_point),
+            "collected after the safe point ended");
+    calls.clear();
+    run(stack.leave(slots[0]), &context);
+}
+
+// The callee taking second as its argument, with one more term slot.
+const FrameDescriptor collecting{nullptr, 0, 0, 1, &collecting_body, 2, 2};
+
+// Hold pair and first in term slots and a stale copy of pair in a raw slot across the collecting call.
+void holding_body(void *) {
+    auto &stack = owners.context->stack();
+    auto *header = stack.frame();
+    auto *slots = header + frame_header_words;
+    if (header[frame_resume_word] == 0) {
+        slots[0] = owners.roots[0];
+        slots[1] = owners.roots[1];
+        slots[2] = owners.roots[0];
+        header[frame_resume_word] = 1;
+        stack.registers()[0] = owners.roots[2];
+        run(stack.enter(collecting), owners.context);
+        return;
+    }
+    owners.outer = {slots[0], slots[1], slots[2]};
+    owners.visited_outside = root_count({});
+    run(stack.leave(stack.registers()[0]), owners.context);
+}
+
+// The caller: no arguments, two term slots and one raw slot.
+const FrameDescriptor holding{nullptr, 0, 0, 0, &holding_body, 3, 2};
+
+// Every root owner of the execution model is enumerated and rewritten; raw slots and dead registers are not.
+void root_owners(Runtime &runtime) {
+    auto &context = *runtime.create_context({16, std::size_t{1} << 20}).value();
+    owners = Owners{};
+    owners.context = &context;
+    owners.roots = layouts(context);
+    for (const auto word : owners.roots) {
+        owners.texts.push_back(text(current(context, word)));
+    }
+    {
+        GeneratedInvocation invocation(context.generated_calls());
+        const auto result = context.stack().invoke(holding, nullptr);
+        require(!context.generated_calls().failure() && result == owners.current[2], "frames returned a stale word");
+    }
+    require(owners.visited_inside == 11 && owners.visited_outside == 2, "root owners enumerated wrongly");
+    require(owners.outer[0] == owners.current[0] && owners.outer[1] == owners.current[1], "caller slots not rewritten");
+    require(owners.outer[2] == owners.roots[0], "raw slot was treated as a root");
+    require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
+}
 } // namespace
 
 int main() {
@@ -209,6 +325,7 @@ int main() {
         binaries(*runtime);
         policy(*runtime);
         unsafe(*runtime);
+        root_owners(*runtime);
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

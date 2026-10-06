@@ -75,7 +75,8 @@ std::expected<CollectionStats, HeapError> ProcessHeap::collect(std::span<Word> r
     if (!storage.alive()) {
         return std::unexpected(HeapError::expired_context);
     }
-    if (storage.pending_ || owner_.generated_calls().active()) {
+    const auto &calls = owner_.generated_calls();
+    if (storage.pending_ || (calls.active() && !calls.at_safe_point())) {
         return std::unexpected(HeapError::unsafe_point);
     }
     CollectionStats stats{.words_before = storage.used_words_,

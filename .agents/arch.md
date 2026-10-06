@@ -144,11 +144,11 @@
   one reservation with `HeapMark` rollback. Words are header-parsed (`memory/heap_walk`,
   `ProcessHeap::verify` in `memory/heap_verify`); admission = owned range (heap, then fragments by
   address, below top) + header shape; process pointers only name object starts. Host `Term` = word +
-  borrowed heap + weak lifetime + collection count (no pin). Roots = frame term slots of `ProcessStack`,
-  error payload, explicit span (`ProcessContext::visit_roots`); raw spill slots and X registers are not roots
-  yet (step 23). `memory/heap_collect`
-  `Copier`: Cheney copy of heap+fragments into one new block at an explicit host safe point
-  (`ProcessHeap::collect(roots)`), forwarding words, off-heap sweep, ERTS size sequence, second copy
+  borrowed heap + weak lifetime + collection count (no pin). Roots (step 23 inventory in runtime-heap.md) =
+  frame term slots of `ProcessStack`, `keep_registers` live X registers, failure payload/arguments/stack,
+  explicit span (`ProcessContext::visit_roots`); raw spill slots are never roots. `memory/heap_collect`
+  `Copier`: Cheney copy of heap+fragments into one new block at a safe point (`ProcessHeap::collect(roots)`
+  outside generated code, or inside a `SafePoint` scope), forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live. No cross-heap graph copying yet. Revision-5 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells

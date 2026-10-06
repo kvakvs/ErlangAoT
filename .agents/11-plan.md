@@ -933,12 +933,35 @@ continuations, in-flight error payloads and stack traces, and atom/module pins
 held by heap cells.
 
 - Success criteria
-  - [ ] Every root owner of the step-17 model is enumerated by the collector;
+  - [x] Every root owner of the step-17 model is enumerated by the collector;
     nothing outside the stack, process root words and listed owners holds heap
     words across a safe point.
 - Tests
-  - [ ] Runtime tests collecting while each root kind holds nested and shared
+  - [x] Runtime tests collecting while each root kind holds nested and shared
     graphs, followed by the 8C verifier.
+- Evidence (2026-10-06): runtime only, not OTP-dependent (no `maint-29`
+  check). Before this step frames and the failure channel existed only while
+  a `GeneratedInvocation` was active, when `collect()` refused, so only
+  explicit roots were ever live at a collection. Added `SafePoint`
+  (`generated_calls.hpp`): while generated code has declared one, `collect()`
+  runs inside an active invocation (reservations still refuse); step 24/26
+  place them. `ProcessStack::keep_registers` makes `x[0..live)` roots (a
+  suspended entry's arguments, step 43), cleared by every push and pop.
+  Inventory in `docs/runtime-heap.md#roots-and-safe-points`: frame term slots,
+  live registers, failure payload/arguments/stack term, explicit roots; raw
+  slots, off-heap links, atoms, resume indices and trace descriptors are not
+  roots and no heap cell pins code or atoms (modules never unload; funs will
+  use untraced registry IDs). Raw spill slots may hold stale term copies after
+  a call, so generated code is not a safe point until steps 24/26. Test
+  `runtime_collection` `root_owners`: hand-written caller/callee frames spread
+  the shared all-layout graph over caller slots, callee slots, two live
+  registers, the failure channel and explicit roots; two collections at a
+  `SafePoint` with garbage between, each followed by sharing checks and the
+  8C verifier; 11 root words enumerated inside, 2 after the return (registers
+  and channel cleared); the raw slot keeps its stale word; collection outside
+  the scope is `unsafe_point`. Fresh Windows x64 Debug (clang-cl): fast CTest
+  156/156; Lizard 0 warnings; tidy 50 changed units pass. Logs
+  `build/plan11-step23/`.
 
 <a id="step-24"></a>
 

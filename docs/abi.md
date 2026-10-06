@@ -197,7 +197,8 @@ const TermWord *)` signature as a host entry calling
   beyond it records the infrastructure failure `resource_limit`.
 - Heap allocation is the future GC safepoint: all live values are rooted there.
   Generated code never collects yet; only a host `collect()` outside generated
-  calls moves the heap.
+  calls, or inside a runtime `SafePoint` scope, moves the heap
+  ([roots](runtime-heap.md#roots-and-safe-points)).
 
 ## Runtime services
 

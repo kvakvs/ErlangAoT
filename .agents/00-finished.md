@@ -264,8 +264,9 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   admission, raw-word host terms, root stack, heap block plus fragments,
   copying collector on host request (8A–8I).
 - [ ] **Collection and copying:** generated-code safepoints, graph copying
-  between heaps, continuation/mailbox/transit roots (host-requested copying
-  collection done in 8H).
+  between heaps, mailbox/transit roots (host-requested copying collection done
+  in 8H; frame, register and failure-channel roots enumerated in plan 11
+  step 23).
 - [ ] **More Erlang semantics:** record updates/`record_info`/native records,
   closures and dynamic calls (maybe, comprehensions, exceptions and handlers,
   recursion and tail calls are done: plan 11 phases D and E).

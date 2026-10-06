@@ -194,9 +194,10 @@ constructs terms directly in the context's heap; heap storage owns cells, while
 handles register roots rather than owning cells individually.
 
 `collect(roots)` copies the live graph at a host safe point and rewrites roots
-([collection](../../docs/runtime-heap.md#collection)). Later collection must
-also enumerate continuation roots, mailbox terms and cursor candidates (plan 11
-steps 23, 51) before generated code may collect (step 26).
+([collection](../../docs/runtime-heap.md#collection)). Frame slots, live
+registers and the failure channel are enumerated (plan 11 step 23); mailbox
+terms and cursor candidates join with messages (steps 45, 51), and generated
+code collects from step 26.
 
 `ProcessSignal::message(sender, term)` copies into an independently owned transit
 buffer on the sender's scheduler thread. All signals, including messages and

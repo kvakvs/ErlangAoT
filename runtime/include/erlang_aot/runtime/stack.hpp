@@ -1,6 +1,7 @@
 #pragma once
 #include "callable.hpp"
 #include "terms.hpp"
+#include <algorithm>
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/abi/modules.hpp>
 
@@ -32,6 +33,9 @@ class ProcessStack final {
     // Registers carrying arguments into and results out of every transfer.
     Word *registers() noexcept { return registers_.data(); }
 
+    // Keep the first `count` registers as roots until the next push or pop, as a suspended entry's arguments.
+    void keep_registers(std::size_t count) noexcept { live_registers_ = std::min(count, registers_.size()); }
+
     // Run `function` to completion above a bottom frame; frames left by native exceptions are released.
     Word invoke(const abi::v1::FrameDescriptor &function, const Word *arguments) noexcept;
 
@@ -49,12 +53,15 @@ class ProcessStack final {
     // Name the innermost named frames, up to the stack trace limit, for a newly raised exception.
     StackTrace trace() const noexcept;
 
-    // Visit every term slot of every frame so a collector can rewrite it in place.
+    // Visit every term slot of every frame, then the live registers, so a collector can rewrite them in place.
     template <typename Visitor> void visit(Visitor &&visit) {
         for (auto at = frame_; at != none; at = words_[at]) {
             for (auto &slot : std::span(words_).subspan(at + abi::v1::frame_header_words, descriptor(at).roots)) {
                 visit(slot);
             }
+        }
+        for (auto &word : std::span(registers_).first(live_registers_)) {
+            visit(word);
         }
     }
 
@@ -80,5 +87,7 @@ class ProcessStack final {
     std::size_t frame_ = none;
     // X registers; valid only across a transfer, never roots between invocations.
     std::array<Word, abi::v1::register_count> registers_{};
+    // Leading registers that are roots: set by keep_registers, cleared by every push and pop.
+    std::size_t live_registers_ = 0;
 };
 } // namespace erlang_aot::runtime

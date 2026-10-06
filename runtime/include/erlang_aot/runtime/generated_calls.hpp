@@ -17,6 +17,10 @@ class GeneratedCallState final {
     bool enter() noexcept;
     // Reject raw error-service calls without a host invocation owner.
     bool active() const noexcept;
+
+    // Whether running generated code declared a safe point, so its heap may move (SafePoint).
+    bool at_safe_point() const noexcept { return safe_point_; }
+
     // Clear only the outer invocation, after its host result has copied the failure.
     void leave(bool outer) noexcept;
     // Record once while active, capturing the live frames of an Erlang exception without a given stack.
@@ -41,6 +45,8 @@ class GeneratedCallState final {
     }
 
   private:
+    friend class SafePoint;
+
     // Visit and rebind one present root term.
     template <typename Visitor> static void visit_term(std::optional<Term> &term, Visitor &visit) {
         if (term) {
@@ -54,6 +60,8 @@ class GeneratedCallState final {
     const ProcessStack &stack_;
     // Mark the host scope owning cleanup; generated calls themselves never reset this state.
     bool active_ = false;
+    // Set while running generated code holds heap words only in process roots (SafePoint).
+    bool safe_point_ = false;
     // First failure wins, including its Erlang payload or exact infrastructure status.
     std::optional<CallFailure> failure_;
 };
@@ -72,6 +80,28 @@ class GeneratedInvocation final {
     // Borrow the context channel for this synchronous scope.
     GeneratedCallState &state_;
     // Only its outermost owner clears the channel on exit.
+    bool outer_;
+};
+
+// Declare a safe point inside generated code: it holds heap words only in frame term slots, live registers and
+// the failure channel, so a collection may move the heap until the scope ends (docs/runtime-heap.md).
+class SafePoint final {
+  public:
+    // Mark the state's running code as collectable; scopes nest.
+    explicit SafePoint(GeneratedCallState &state) noexcept : state_(state), outer_(!state.safe_point_) {
+        state_.safe_point_ = true;
+    }
+
+    // Restore the unsafe state when leaving the outermost scope.
+    ~SafePoint() { state_.safe_point_ = !outer_; }
+
+    SafePoint(const SafePoint &) = delete;
+    SafePoint &operator=(const SafePoint &) = delete;
+
+  private:
+    // The channel whose running code declared the safe point.
+    GeneratedCallState &state_;
+    // Only the outermost scope clears the mark.
     bool outer_;
 };
 } // namespace erlang_aot::runtime

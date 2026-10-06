@@ -18,6 +18,7 @@ constexpr FrameDescriptor bottom{nullptr, 0, 0, 0, &finish, 0, 0};
 ProcessStack::ProcessStack(ProcessContext &owner, StackOptions options) noexcept : owner_(owner), options_(options) {}
 
 bool ProcessStack::push(const FrameDescriptor &function) noexcept {
+    live_registers_ = 0;
     const auto size = frame_header_words + function.slots;
     if (size > options_.limit_words - std::min(options_.limit_words, words_.size())) {
         owner_.generated_calls().fail_service(abi::v1::Status::resource_limit);
@@ -43,6 +44,7 @@ void ProcessStack::pop() noexcept {
 }
 
 void ProcessStack::truncate(std::size_t size) noexcept {
+    live_registers_ = 0;
     words_.erase(words_.begin() + static_cast<std::ptrdiff_t>(size), words_.end());
 }
 

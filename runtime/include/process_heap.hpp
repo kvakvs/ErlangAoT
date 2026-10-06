@@ -124,7 +124,8 @@ class ProcessHeap final {
     // Copy checked owner-independent immediates; rooted graph addition remains deferred.
     TermResult<Term> add(const Term &value) noexcept;
     // Copy everything reachable from the process roots into a new heap block, sized by the growth policy.
-    // Only a safe point collects: no generated code running and no open reservation, else unsafe_point.
+    // Only a safe point collects: no generated code running outside a SafePoint and no open reservation, else
+    // unsafe_point.
     // Failing to allocate the new block is out_of_memory with nothing changed; host Terms become stale.
     std::expected<CollectionStats, HeapError> collect() noexcept;
     // Collect with host-held words as extra roots; the caller reads the rewritten words back afterwards.

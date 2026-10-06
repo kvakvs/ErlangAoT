@@ -41,7 +41,9 @@ Plan: [8E](11-plan.md#step-8e), [8F](11-plan.md#step-8f),
   explicit root span, segmented process root stack (8E, 8F).
 - [x] One flat process stack of explicit frames replaces the segmented root
   stack; values live across calls spill to raw frame slots (step 19).
-- [ ] Continuation, mailbox and transit roots with concrete owners.
+- [x] Continuation roots: frame term slots, live registers and the failure
+  channel enumerated, collectable inside a declared `SafePoint` (step 23).
+- [ ] Mailbox and transit roots with concrete owners.
 - [ ] Generated-code safepoints and frame-base reloads after collection.
 
 ### F03 — Process heaps and TermFactory construction
@@ -117,7 +119,8 @@ Plan: [8B](11-plan.md#step-8b), [23](11-plan.md#step-23),
 
 - [x] Inline heap binaries up to 64 bytes and shared `refc_binary` buffers on a
   per-process off-heap list (8B); checked segments, cursors, tails, queries.
-- [ ] Collector sweep of dead off-heap cells and cross-process copying.
+- [x] Collector sweep of dead off-heap cells (8H).
+- [ ] Cross-process copying.
 
 ### F10 — Arbitrary integers and integer arithmetic
 

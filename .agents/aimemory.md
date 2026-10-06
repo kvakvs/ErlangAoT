@@ -189,6 +189,12 @@ Step facts beyond the plan record:
   stdout, so avoid displaying such strings. erlfmt rewrote a UTF-8 literal as latin-1: keep fixtures ASCII.
   lower_match_plan now returns candidate values (binary rest). Tidy: IRBuilder::CreateICmp trips
   clang-analyzer ArrayBound; use builder.Insert(CmpInst::Create(...)).
+- 23: before it, no root but explicit ones could be live at a collection (frames/failure exist only while a
+  GeneratedInvocation is active, and collect() refused then). Added runtime `SafePoint` scope (generated_calls.hpp;
+  collect allowed while active only inside one) and `ProcessStack::keep_registers` (x[0..live) roots, cleared by
+  push/truncate). Test: collection.cpp `root_owners` hand-written frames spread one shared graph over every owner.
+  Raw spill slots may hold stale term copies after a call: generated code is NOT a safe point until 24/26.
+  build/debug Ninja may skip test targets (stale BUILD_TESTING): always run the fresh gate first.
 User directions (keep):
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).

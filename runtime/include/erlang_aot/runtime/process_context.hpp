@@ -99,8 +99,9 @@ class ProcessContext final {
     // The process stack of explicit generated frames and its argument/result registers.
     ProcessStack &stack() noexcept { return stack_; }
 
-    // Visit every root word (stack frame term slots, the error payload), then the host's
-    // explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe point.
+    // Visit every root word (frame term slots, live registers, the failure channel's terms), then the host's
+    // explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe point
+    // (docs/runtime-heap.md#roots-and-safe-points).
     template <typename Visitor> void visit_roots(std::span<Word> explicit_roots, Visitor &&visit) {
         stack_.visit(visit);
         generated_calls_.visit(visit);
