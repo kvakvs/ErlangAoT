@@ -125,10 +125,11 @@ CTests (123 fast) and 258 production quality units.
 
 ---
 
-## Completed steps 1–8G (compact record)
+## Completed steps 1–27E (compact record)
 
 Full step texts, criteria and per-step evidence are in Git history (last full
-version at `a4e07bb`). Every step below passed the common gate.
+versions: steps 1–8G at `a4e07bb`, steps 8H–27E at `9decf7a`). Every step below
+passed the common gate; per-step logs are in `build/plan11-step*/`.
 
 ### A. Baseline and fixtures
 
@@ -238,765 +239,244 @@ full 138/138, `check-quality-all` 272 units.
 
 ### C. Classic process heap
 
-Inserted 2026-10-04. The phase-B heap (non-moving chunk list, per-cell
-`std::map` index, fixed 64-byte bitstring cells with a destructor registry,
-`shared_ptr`-pinning host terms, per-frame root buffers, no overflow area)
-could not grow into BEAM-style collection. Target design, contract in
-`docs/runtime-heap.md`:
-
-- A heap is a flat word array: boxed objects start with a header (tag `00`,
-  kind, word count, untraced payload counted), cons cells are two headerless
-  words, so any area parses left to right.
-- Each process owns one heap block plus fragments for allocation that may not
-  move the heap, and a separate root stack; no old heap yet.
-- Binaries over 64 bytes are shared `std::shared_ptr` buffers outside every
-  heap, referenced by `refc_binary` cells on a per-process off-heap list.
-- Steps 8A–8I keep generated-code ABI and every golden unchanged. Until step
-  26 the heap moves only at explicit host safe points; generated-code overflow
-  goes to fragments.
+Inserted 2026-10-04 to replace the phase-B heap (chunk list, per-cell index,
+fixed bitstring cells, pinning host terms) with a BEAM-style design
+(`docs/runtime-heap.md`): parseable flat word areas, one heap block plus
+fragments per process, binaries over 64 bytes in shared off-heap buffers.
+Generated-code ABI and goldens stayed unchanged.
 
 <a id="step-8a"></a>
 
 ### 8A. Decide the classic process heap contract
 
 Done 2026-10-04. `docs/runtime-heap.md`: header word (5 kind bits, count from
-bit 7), per-kind cell table (map count in words), filler, areas, ERTS sizing
-from 233 words, one `limit_bytes` budget including off-heap buffers, admission,
-safe points. Full-only CTest `runtime_heap_measurements`; baseline `bb09359`:
-kernel 264/81 ms, 24 MB index, 66 KB per context.
+bit 7), per-kind cell table, filler, areas, ERTS sizing from 233 words, one
+`limit_bytes` budget including off-heap buffers, admission, safe points.
+Full-only CTest `runtime_heap_measurements`.
 
 <a id="step-8b"></a>
 
 ### 8B. Split binary cells and add the off-heap list
 
-Done 2026-10-04. `HeapBinaryCell` (at most 64 bytes inline) and
-`RefcBinaryCell` (6 words: offset, bits, `shared_ptr<const BinaryBuffer>`,
-`next_`); `memory/off_heap` links after publication, relocates by move
-construction and releases at teardown. `HeapDestructor` removed; buffers are
-charged via `off_heap_words`. CTest `runtime_off_heap`.
+Done 2026-10-04. `HeapBinaryCell` (up to 64 bytes inline) and 6-word
+`RefcBinaryCell` (`shared_ptr<const BinaryBuffer>`, `next_`) on the
+`memory/off_heap` list; buffers charged via `off_heap_words`. CTest
+`runtime_off_heap`.
 
 <a id="step-8c"></a>
 
 ### 8C. Make heap areas parseable and add a heap walker
 
 Done 2026-10-04. `memory/heap_walk` (`parse_cell`, `walk`) and
-`ProcessHeap::verify()` (`memory/heap_verify`, `HeapCensus` or
-`corrupt_heap`); `BoxedKind::filler`. CTest `runtime_heap_walk`; failure
-injection verifies the heap after each rollback.
+`ProcessHeap::verify()` (`HeapCensus` or `corrupt_heap`); `BoxedKind::filler`.
+CTest `runtime_heap_walk`.
 
 <a id="step-8d"></a>
 
 ### 8D. Admit heap words by header instead of the object index
 
-Done 2026-10-04. Object index removed; admission = word-aligned address below
-an area top plus header/cons shape matching the tag. No start bitmap: process
-pointers always name object starts. `TermAccess::object` decodes from the
-header. CTest `runtime_admission`; side bytes 24 MB to 3.4 KB.
+Done 2026-10-04. Admission = word-aligned address below an area top plus a
+header/cons shape matching the tag; no start bitmap. CTest
+`runtime_admission`.
 
 <a id="step-8e"></a>
 
 ### 8E. Hold host terms as raw words between safe points
 
 Done 2026-10-04. `Term` = word + borrowed `HeapStorage *` + weak lifetime +
-collection count (`expired_context`, `stale_term`); no storage pin. Result
-handoffs (`std::optional<Word>`) and the error payload are process roots;
-`ProcessContext::visit_roots` covers stack, handoffs, payload and the explicit
-span of `collect(span<Word>)` (still `not_implemented`). CTest `runtime_roots`
-case `root_set`.
+collection count (`expired_context`, `stale_term`); no storage pin.
+`ProcessContext::visit_roots` enumerates every root.
 
 <a id="step-8f"></a>
 
 ### 8F. Move generated root frames onto a process stack
 
-Done 2026-10-04. `GeneratedRoots` is a minimal segmented stack: one-page
-segments (4096 bytes including a two-pointer allocator header; 507 slots on
-64-bit), larger frames take whole pages, the top segment is freed when empty,
-frames never move. ABI, 1,000,000-word and 4,096-frame limits unchanged. A
-flat moving stack waits for frame-base reloads (steps 17, 24, 26).
+Done 2026-10-04. Interim segmented root stack; replaced by the flat
+`ProcessStack` in step 19.
 
 <a id="step-8g"></a>
 
 ### 8G. Replace chunks with a contiguous heap and heap fragments
 
-Done 2026-10-04. `HeapStorage` owns one process's single heap block `heap_`,
-created by the first reservation at `max(min_heap_words, request)`, and its
-fragment chain `fragments_` (newest fragment tried after the heap, else a new
-one of at least `min_heap_words`, capped by the budget). `HeapOptions` is
-`{min_heap_words = 233, limit_bytes}`; `reserve` has no alignment parameter.
-Rollback resets tops and drops a new fragment or heap block. CTest
-`runtime_heap_fragments`; 1,000 contexts take 2.4 KB and 233 words each; the
-100k kernel spans about 3,000 fragments until 8H.
-
-## C. Classic process heap (remaining)
+Done 2026-10-04. `HeapStorage`: one heap block (first reservation,
+`max(min_heap_words, request)`) plus a fragment chain; `HeapOptions
+{min_heap_words = 233, limit_bytes}`; rollback drops new areas. CTest
+`runtime_heap_fragments`.
 
 <a id="step-8h"></a>
 
 ### 8H. Collect on explicit host request with a copying collector
 
-Backlog: F03, F04. Depends on: [8G](#step-8g). Absorbs the former step 25.
-
-Full-sweep Cheney copy: roots are stack frames, process root words (result
-handoffs, error payload) and the caller's explicit root span; live objects from
-the heap and fragments move into a new block
-sized by the growth policy, leaving forwarding headers; roots are rewritten;
-the off-heap list is swept and fragments are freed. Allowed only at a safe
-point: until step 26, when the context is not running generated code.
-
-- Success criteria
-  - [x] Rooted values stay valid and equal, internal sharing is preserved,
-    unreachable cells are reclaimed and last-owner binaries are released once;
-    the heap grows or shrinks per policy. Host `Term`s taken before the
-    collection report the stale-term error.
-  - [x] A request at an unsafe point returns `unsafe_point` with no change;
-    failure to allocate the new block leaves the heap untouched.
-  - [x] `ProcessHeap::collect` leaves the deferred-services table; statistics
-    report heap, fragment, stack and off-heap sizes.
-- Tests
-  - [x] Focused runtime tests: explicit roots across repeated collections, nested
-    and shared graphs of every layout, binary release counts, stale host terms,
-    verifier after each collection.
-  - [x] Injected failure of the new-block allocation.
-- Evidence (2026-10-04): `memory/heap_collect` (`Copier`, `heap_size_at_least`),
-  off-heap sweep in `memory/off_heap`; CTest `runtime_collection`, new-block OOM
-  in `runtime_lifecycle_failure`; tests that used `collect` as a deferred
-  service now use deferred send / heap reservation faults. Fresh Windows x64
-  Debug gate: fast CTest 140/140, `check-quality` 276 tidy units plus Lizard
-  pass. Logs `build/plan11-step8h/`.
+Done 2026-10-04 (absorbs former step 25). Cheney copy (`memory/heap_collect`:
+`Copier`, `heap_size_at_least`) into one new block at a safe point, roots
+rewritten, off-heap list swept, fragments freed; `unsafe_point` and new-block
+OOM change nothing. CTests `runtime_collection`, `runtime_lifecycle_failure`.
 
 <a id="step-8i"></a>
 
 ### 8I. Close the heap rework
 
-Backlog: F03, F04. Depends on: [8H](#step-8h).
+Done 2026-10-04. Docs, `arch.md`, `files.md` describe the new heap; kernel
+re-measured (700,000 live words collected in about 56 ms). Phase C close: full
+143/144 (one load timeout, passed alone), quality-all 276 units.
 
-- Success criteria
-  - [x] `docs/runtime.md`, `docs/terms.md`, the ABI root-scope notes,
-    `arch.md` and `files.md` describe the new heap; no reference to the chunk
-    list, object index or cell destructors remains.
-  - [x] The 8A kernel and footprint are measured again and compared in
-    `docs/runtime-heap.md` (descriptive, not gated).
-- Tests
-  - [x] Fresh full-mode CTest and `check-quality-all` pass; counts recorded in
-    `docs/validation.md`.
-- Evidence (2026-10-04): stale chunk/index/pin wording also removed from
-  `base_types.hpp` and `runtime/design/{processes,terms}.md`;
-  `runtime_heap_measurements` now also collects the kernel list (700,000 live
-  words in about 56 ms into a 999,631-word block; walk 173 to 72 ms; side bytes
-  163,878 to 0). Fresh Windows x64 Debug full `-j 16`: 143/144, the
-  `codegen_dependency` timeout under load passed alone (29 s); Lizard-all 0
-  warnings; tidy-all 276 units passed with one job. Logs `build/plan11-step8i/`.
-
-## D. Control flow and exceptions
+### D. Control flow and exceptions
 
 <a id="step-9"></a>
 
 ### 9. Lower `begin`/`end` blocks and `case` expressions
 
-Backlog: F13, F14, F16. Depends on: [8I](#step-8i).
-
-Reuse the clause/guard matcher for `case` clauses; implement branch-variable
-export (bound in every clause) and unsafe-variable diagnostics.
-
-- Success criteria
-  - [x] Clause order, guards, nested `case`, exported and unsafe variables
-    match OTP; no matching clause raises `{case_clause, Value}`.
-  - [x] Inference joins branch facts conservatively.
-- Tests
-  - [x] Golden programs for selection, fallthrough, nested cases, exported
-    variables and `case_clause`.
-  - [x] CLI diagnostics for unsafe and unbound variables matching OTP lint
-    wording/classes.
-- Evidence (2026-10-04): `maint-29` unchanged at `21776803`. Binding analysis
-  (`binding_expressions`) schedules case clauses iteratively, reuses one
-  identity per name across clauses and records exports in `Function::exports`;
-  the walker lowers clauses with the one-input body plan and joins value and
-  exports through `SSAUpdater`; `ErrorReason::case_clause = 9` (payload).
-  OTP goldens `executables_case_select` (16 classify rows, records, maps,
-  binaries, nested and remote cases, `case_clause`, `function_clause`) and
-  `executables_case_scope` (exports, scrutinee bindings, nested exports,
-  begin/end); bindings corpus +8 `case_*` rows regenerated with OTP 29.1.1
-  (`unsafe_var`/`unbound_var` classes; wording stays `unsafe/unbound variable
-  X`); `sibling_local` now compiles; `--print-types` join checks in
-  `codegen_types`. Also fixed: body-match planning after a failed binding pass
-  printed `invalid map<K, T> key`. Fresh Windows x64 Debug: fast CTest
-  142/142; affected tests in full mode 7/7; Lizard 0 warnings; tidy 114
-  changed units pass with one job (two-job run exited silently). Logs
-  `build/plan11-step9/`.
+Done 2026-10-04. Case clauses reuse the one-input body plan; one binding
+identity per name across clauses, exports in `Function::exports`, joined with
+`SSAUpdater`; `ErrorReason::case_clause` (9). OTP goldens
+`executables_case_select`, `executables_case_scope`; bindings corpus +8 rows.
 
 <a id="step-10"></a>
 
 ### 10. Lower `if` expressions
 
-Backlog: F14, F16. Depends on: [9](#step-9).
-
-- Success criteria
-  - [x] Guard-only clauses select in order; no true guard raises `if_clause`;
-    variable export follows step 9 rules.
-- Tests
-  - [x] Golden programs for guard sequences, failing guards, `true` fallback and
-    `if_clause`.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`.
-  `semantic::branch_clauses` presents case and if clauses uniformly (optional
-  pattern/guard, body), so binding analysis, guard analysis, capability
-  planning, atom collection and the lowering walker reuse the step-9 paths;
-  inference joins `if` results like `case`. `ErrorReason::if_clause = 10`
-  (atom only; runtime `plain_reason`). OTP golden `executables_if_select`
-  (`;`/`,` sequences, `andalso`/`orelse`, raising guards, `true` fallback,
-  exports, nested case/if, `if_clause`, body error not retried); bindings
-  corpus +4 `if_*` rows verified by OTP 29.1.1 (`--check` reproduces);
-  `--print-types` `if` join checks; semantic `if_guard_call`/`if_in_guard`;
-  placeholder `[guards]` sample now `self()` in a guard; avltree/textstats
-  compile diagnostics lose their `if` rows. Fresh Windows x64 Debug: fast
-  CTest 143/143; affected tests in full mode 8/8; Lizard 0 warnings; tidy 114
-  changed units pass. Logs `build/plan11-step10/`.
+Done 2026-10-05. `semantic::branch_clauses` presents case and if clauses
+uniformly; `ErrorReason::if_clause` (10). OTP golden `executables_if_select`;
+bindings corpus +4 rows.
 
 <a id="step-11"></a>
 
 ### 11. Raise exceptions from source
 
-Backlog: F20. Depends on: [9](#step-9).
-
-Implement `erlang:error/1,2,3`, `throw/1` and `exit/1` through the checked error
-channel with class and owned reason.
-
-- Success criteria
-  - [x] All three classes propagate through local/remote calls unchanged.
-  - [x] Uncaught exceptions reach startup and print the step-3 report.
-- Tests
-  - [x] Golden programs raising each class at different call depths; stderr
-    report and exit status checked.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. `error/1,2,3`,
-  `exit/1`, `throw/1` are body builtins (`ImmediateOperation::raise`),
-  `erlang:`-qualified or auto-imported unless a local definition or
-  `no_auto_import` shadows them (`semantic::body_builtin` in `pattern_calls`);
-  `lower_raise` calls the existing `erlang_aot_raise_v2` with new
-  `ErrorReason::raised_error/exit/throw` (11-13) whose payload is the whole
-  reason (no new symbol or ABI revision); `error/2,3` extra arguments are
-  evaluated and dropped until step 15. Startup prints
-  `uncaught exception <class>: <reason>` (escript `escript: exception
-  <class>: ...`). OTP golden `executables_raise_classes` (15 runs: each class
-  qualified/unqualified, error/2,3, any-term reasons incl. bignum/map/binary,
-  `exit(normal)`, remote depth 3, local depth 3, argument order, case body,
-  `no_auto_import` shadowing); OTP's own class/reason output agrees for all 14
-  raising runs. `linking_startup` adds an escript `throw` run. Fresh Windows
-  x64 Debug: fast CTest 144/144; affected tests in full mode 22/22; Lizard
-  and tidy (124 changed units) pass. Logs `build/plan11-step11/`.
+Done 2026-10-05. `error/1,2,3`, `exit/1`, `throw/1` as body builtins
+(`semantic::body_builtin`, auto-import rules) through `erlang_aot_raise_v2`
+with `ErrorReason` 11-13 (whole-reason payload); startup prints
+`uncaught exception <class>: <reason>`. OTP golden `executables_raise_classes`.
 
 <a id="step-12"></a>
 
 ### 12. Lower `catch Expr`
 
-Backlog: F20. Depends on: [11](#step-11).
-
-- Success criteria
-  - [x] Values follow OTP: thrown value, `{'EXIT', Reason}` for exit, and
-    `{'EXIT', {Reason, Stack}}` for error (stack per step 15; placeholder
-    documented until then).
-  - [x] Bindings inside `catch` follow OTP safety rules.
-- Tests
-  - [x] Golden programs for each class, nested catches and catch of runtime
-    errors (`badmatch`, `function_clause`, `badarith`).
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The walker sets
-  `ExpressionLowering::handler` while the protected expression lowers (fresh
-  badarg/badarith exits), so failure checks and `raise_reason` branch to it;
-  the handler calls new `erlang_aot_catch_v1` (`runtime/src/process/exceptions`)
-  which writes the catch value to a root slot and clears the channel; halts and
-  runtime failures stay pending and continue outward. Stack placeholder `[]`
-  (`docs/abi.md`). Binding analysis treats `catch` like a conditional scope
-  (inner names unsafe); `binding_children` gained the missing catch child.
-  `-compile` now admits warning-only `nowarn_*` options (OTP 29 warns
-  `deprecated_catch`). OTP golden `executables_catch_values` (7 runs: classes,
-  11 runtime reasons, nested, flow/exports/remote depth, uncaught after catch,
-  `halt` not caught); bindings corpus +4 `catch_*` rows verified by OTP 29.1.1
-  (`--check` reproduces); semantic `catch_expr`/`catch_in_guard`/
-  `catch_unsafe`/`compile_nowarn`; mangling for `Catch`. Fresh Windows x64
-  Debug: fast CTest 145/145; affected tests in full mode 25/25; Lizard 0
-  warnings; tidy 277 units pass. Logs `build/plan11-step12/`.
+Done 2026-10-05. `ExpressionLowering::handler` while the protected expression
+lowers (fresh badarg/badarith exits); `erlang_aot_catch_v1` builds the value
+and clears the channel, halts and runtime failures continue outward; inner
+bindings unsafe. OTP golden `executables_catch_values`; bindings corpus +4
+rows.
 
 <a id="step-13"></a>
 
 ### 13. Lower `try … of … catch`
 
-Backlog: F13, F20. Depends on: [11](#step-11).
-
-- Success criteria
-  - [x] Class/reason patterns and guards select handlers in order; unmatched
-    exceptions re-raise unchanged; `of` clauses fail with `try_clause`.
-  - [x] Exceptions inside `of` clauses and handlers are not caught by the same
-    `try`.
-- Tests
-  - [x] Golden programs for each class, default `throw` class, nested tries,
-    re-raise and `try_clause`.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Catch-clause class
-  and stacktrace are now AST expression nodes (bindings anchor on them; tree
-  and dump output unchanged). `semantic::branch_clauses` lists a try's `of`
-  then catch clauses (`Branch::handler`, `first_handler`), so guard analysis,
-  pattern planning and atoms reuse the case paths. Binding analysis: body and
-  clauses form one conditional scope (all names unsafe afterwards), `of`
-  clauses see body names, catch clauses see them unsafe (OTP `Uvt`). The
-  walker protects only the body; its handler calls new
-  `erlang_aot_exception_v1` (class atom + reason, clears the channel), catch
-  clauses match class (omitted = `throw`), reason and guard from the pre-try
-  bindings, and no match calls new `erlang_aot_reraise_v1`; `of` exhaustion
-  raises `ErrorReason::try_clause = 14`. `after` and named stacktrace
-  variables stay `[exceptions]` capabilities (steps 14/15). OTP golden
-  `executables_try_catch` (11 runs: classes, default class, class variable,
-  ten runtime reasons, ordered reason patterns of every kind, bound and
-  repeated variables, raising guards, `of` selection, `try_clause`, `of` and
-  handler exceptions escaping, nested and remote re-raise, flow, uncaught
-  error/throw/exit/`try_clause`, `halt` not caught); bindings corpus +6
-  `try_*` rows verified by OTP 29.1.1 (`--check` reproduces); semantic
-  `try_expr`/`try_unsafe`/`try_in_guard`/`try_after`/`try_stacktrace`;
-  placeholder sample now a named stacktrace; program compile goldens lose
-  their `[exceptions]` rows; mangling for `Exception`/`Reraise`. Fresh Windows
-  x64 Debug: fast CTest 146/146 (after the program-golden update); Lizard 0
-  warnings after splitting `Walk::visit`; tidy 189 changed units pass. Logs
-  `build/plan11-step13/`.
+Done 2026-10-05. Only the body is protected; the handler takes class and
+reason (`erlang_aot_exception_v*`), catch clauses match from pre-try bindings,
+no match re-raises (`erlang_aot_reraise_v*`), `of` exhaustion raises
+`try_clause` (14). OTP golden `executables_try_catch`; bindings corpus +6
+rows.
 
 <a id="step-14"></a>
 
 ### 14. Lower `try … after`
 
-Backlog: F20. Depends on: [13](#step-13).
-
-- Success criteria
-  - [x] `after` runs exactly once on normal return, caught and uncaught
-    exceptions; its value is discarded; an exception inside `after` replaces
-    the original.
-  - [x] Rooted temporaries are released on every path.
-- Tests
-  - [x] Golden programs observing `after` execution order with
-    `erlang:display/1` on each path.
-  - [x] Allocation fault injected inside `after` keeps cleanup and ownership
-    correct.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The walker opens
-  a second `ProtectedScope` (`afters`) around the body and all `of`/catch
-  clauses. After the clause join it lowers the after body on the normal path
-  (the rooted try value kept in `AfterPath`); if anything protected can raise,
-  it lowers the after body again from the after handler between
-  `erlang_aot_exception_v1` and `erlang_aot_reraise_v1`. After-body failures
-  leave through the enclosing handler (replacing the original); halts and
-  infrastructure failures skip it; root slots are frame-owned and released at
-  the function exit. No new runtime service. OTP golden `executables_try_after`
-  (8 runs: normal/of/catch paths, discarded value, caught and uncaught
-  exceptions, `try_clause`, of/handler raises, remote depth, after-body
-  throw/exit/badmatch replacing the original, `catch` inside after, nested
-  afters, bindings before the try, remote `after`, uncaught at top, `halt`
-  skipping after). Native `codegen_after_fault_O0/O2`: a 256 KiB process budget
-  makes the after body's binary fail with `resource_limit` on the normal and
-  raising paths; the root stack is empty, the heap verifies, the channel is
-  clear and the same context keeps working, twice over. Bindings corpus +3
-  `try_after*` rows verified by OTP 29.1.1; semantic `try_after`/
-  `try_after_unsafe`. Fresh Windows x64 Debug: fast CTest 149/149; Lizard 0
-  warnings; tidy changed units pass after an optional-access fix. Logs
-  `build/plan11-step14/`.
+Done 2026-10-05. A second protected scope (`afters`) around body and clauses;
+the after body is lowered on the normal path and again from the after handler;
+its exceptions replace the original. OTP golden `executables_try_after`;
+native `codegen_after_fault_O0/O2` (budget failure inside `after`).
 
 <a id="step-15"></a>
 
 ### 15. Provide stack traces and `erlang:raise/3`
 
-Backlog: F20. Depends on: [13](#step-13).
-
-Choose the stack-trace content (at least `{M, F, Arity, []}` frames; source
-locations optional) and bind it in `Class:Reason:Stack`.
-
-- Success criteria
-  - [x] Stack terms are well-formed and bounded in depth; documented
-    differences from OTP are explicit.
-  - [x] `erlang:raise/3` re-raises with a supplied stack;
-    `erlang:get_stacktrace` stays rejected as in OTP 29.
-- Tests
-  - [x] Golden programs comparing the top frames' module/function/arity with
-    OTP.
-  - [x] Malformed stack argument to `raise/3` behaves as OTP.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Root frames name
-  their function: `erlang_aot_roots_enter_v5(context, count, frame)` takes a
-  private `abi::v1::FrameDescriptor` (module descriptor, module and function
-  name atom slots, arity; module atom tables now list both names).
-  `GeneratedCallState::fail` copies the innermost 8 named frames
-  (`GeneratedRoots::trace`) into `CallFailure::trace` for Erlang exceptions;
-  `[{M, F, Arity, []}]` is built only by `catch`, handlers and reports.
-  `erlang_aot_exception_v2` adds the stack slot (`Class:Reason:Stack` binds
-  it), `erlang_aot_reraise_v2` keeps it on re-raise and implements
-  `erlang:raise/3` (BEAM `raise_3` validation, `[]` added to `{M, F, A}`,
-  cut to 8, invalid class or stack evaluates to `badarg`; `{Fun, Args}`
-  entries wait for step 32), `erlang_aot_error_v1` keeps the `error/2,3`
-  argument list for the top frame. Argument list and given stack are process
-  roots. Lint: `stacktrace_bound`, `stacktrace_guard`, OTP 29 "removed" text
-  for `erlang:get_stacktrace/0`; the `exceptions` catalog entry is
-  implemented. Documented differences (docs/abi.md#stack-traces): `[]`
-  locations, arity in `function_clause` frames, no BIF or below-entry frames,
-  tail-call frames kept until step 19 (OTP also tail-calls functions that
-  never return). OTP golden `executables_stack_traces` (9 runs: classes,
-  `catch`, remote frames, typed runtime errors, depth 8, `error/2,3`
-  arguments, re-raise through unmatched clauses, `after` and `raise/3`,
-  unchanged re-raised stacks, valid and ten malformed `raise/3` stacks,
-  uncaught `raise/3`); OTP's own output matched ErlangAoT's before the golden
-  was written. Bindings corpus +3 `try_stack*` rows verified by OTP 29.1.1
-  (`--check` reproduces); semantic `try_stacktrace`, `stack_bound`,
-  `stack_in_pattern`, `stack_in_guard`, `raise_stack`, `raise_unqualified`,
-  `get_stacktrace`; mangling for the four new spellings; `runtime_roots`
-  enumerates the new roots. Fresh Windows x64 Debug: fast CTest 150/150;
-  Lizard 0 warnings; tidy 129 changed units pass after splitting
-  `spellings`. Logs `build/plan11-step15/`.
+Done 2026-10-05. Frames name their function (`FrameDescriptor`); the innermost
+8 named frames are captured at `GeneratedCallState::fail`, built as
+`[{M, F, Arity, []}]` on demand; `Class:Reason:Stack`, `erlang:raise/3` (BEAM
+validation) and `error/2,3` arguments. Differences in `docs/abi.md#stack-traces`.
+OTP golden `executables_stack_traces`.
 
 <a id="step-16"></a>
 
 ### 16. Lower `maybe` expressions
 
-Backlog: F13, F16. Depends on: [9](#step-9).
+Done 2026-10-05. `semantic::maybe_operands` plus `branch_clauses` for `else`;
+failed `?=` goes to `maybe.else`; no `else` match raises `else_clause` (15);
+feature gating is the preprocessor keyword switch. OTP golden
+`executables_maybe_else`. Phase D close: full 155/155, quality-all 277 units.
 
-- Success criteria
-  - [x] `?=` short-circuits on mismatch, `else` clauses select on the value,
-    and no matching `else` raises `{else_clause, Value}`.
-  - [x] Feature enablement follows the preprocessor feature settings.
-- Tests
-  - [x] Golden programs for success, early exit, `else` selection and
-    `else_clause`; feature-disabled source is rejected.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. The AST keeps
-  `MaybeMatch` items; `semantic::maybe_operands` lists the body values and
-  `branch_clauses` the `else` clauses (`first_handler` 0), so guard analysis,
-  pattern planning, atoms and the walker reuse the case paths. Binding
-  analysis treats the body and `else` clauses as one conditional scope like a
-  try (each `?=` binds after its value; `else` sees body names unsafe; nothing
-  is exported). The walker's `MaybeScope` sends each failed `?=` to
-  `maybe.else` with its rooted value; an `SSAUpdater` merge of those values is
-  the result without `else`, or feeds a `CaseJoin` whose clauses raise
-  `ErrorReason::else_clause = 15` (payload) when none matches. No new runtime
-  service. Feature gating is the existing preprocessor keyword switch
-  (`-feature(maybe_expr, disable)` or `--disable-feature` makes `maybe` an
-  atom). The `pattern matching` catalog entry is implemented (its match-plan
-  fallback is unreachable from source). OTP golden `executables_maybe_else`
-  (6 runs: success, last `?=` value, early exit skipping later expressions,
-  guarded `else` selection, pre-maybe bindings in `else`, nested and
-  case-embedded maybes, caught and uncaught `else_clause`, exceptions from
-  `else`, badmatch inside a body, remote calls). Bindings corpus +4 `maybe_*`
-  rows verified by OTP 29.1.1 (`--check` reproduces); semantic `maybe_expr`,
-  `maybe_else`, `maybe_unsafe`, `maybe_else_unsafe`, `maybe_in_guard`,
-  `maybe_disabled`. Fresh Windows x64 Debug: fast CTest 151/151; Lizard 0
-  warnings; tidy 98 changed units pass after replacing a direct PHI (analyzer
-  false positive inside LLVM) with `SSAUpdater`. Phase D close: full `-j 16`
-  155/155 (259 s), `check-quality-all` 277 units and Lizard pass. Logs
-  `build/plan11-step16/`.
-
-## E. Execution model, recursion, comprehensions
+### E. Execution model, recursion, comprehensions
 
 <a id="step-17"></a>
 
 ### 17. Decide the frame and continuation model
 
-Backlog: F02, F21, F22. Depends on: [11](#step-11). **Decision.**
-
-Compare explicit heap frames, LLVM coroutines and CPS-style lowering with a
-small compiled prototype that calls, recurses, yields and resumes.
-
-- Success criteria
-  - [x] `docs/execution-model.md` defines call, return, tail call, yield,
-    resume, exit, exception propagation and root visibility for each frame.
-  - [x] It decides the successor of the interim 8F segmented root stack: a
-    flat per-process stack with in-stack frame headers and base-plus-offset
-    slot addressing, or the frame storage the chosen model needs instead.
-  - [x] The choice works on all required targets (including Windows x86 and
-    32-bit ARM) or names the fallback per target.
-- Tests
-  - [x] The prototype runs return, deep recursion, yield/resume and error exit
-    on the host, recorded in the decision document.
-  - [x] IR inspection on both word widths for the chosen lowering.
-- Evidence (2026-10-05): not OTP-dependent (no `maint-29` check). Decision:
-  explicit frames on one flat, moving per-process stack (4-word header:
-  `previous` offset, descriptor, `resume` and `handler` continuation indices;
-  base-plus-offset slots), arguments/results in process X registers, an entry
-  plus one body per function that switches on the resume index, and only
-  `musttail` transfers of `void (Process *)` code, so native depth is
-  constant; yield = entry reduction count reaching zero; exceptions unwind to
-  the innermost handler frame; trampoline fallback with the same frames.
-  Prototype `tests/prototypes/execution_model/` (`model.hpp`, hand-lowered
-  `generated.cpp`, `runtime.cpp` scheduler; rejected `native.cpp` and C++20
-  `coroutines.cpp`; `run.py`, not a CTest): Windows x64 host, clang 23.1.2,
-  O0 and O2 PASS for both transfer forms (return, 1M-deep recursion, 10M tail
-  calls, caught and uncaught error at depth 100k with an 8-frame trace, two
-  interleaved processes in 1,002 slices); `generated.cpp` compiles for x86_64
-  and i686 Windows/Linux, AArch64 Linux, ARMv7 Linux and arm64 macOS at O0
-  and O2 with every transfer `musttail` (15 at O0, 14 at O2) and tail jumps
-  in the assembly; IR on both word widths recorded. Native calls need 80 B
-  native stack per level and cannot yield; coroutines allocate per call
-  (64-80 B), lack tail calls and run 3.4x slower. No production code changed,
-  so the gate was not rerun. Log `build/plan11-step17/prototype.log`.
+Done 2026-10-05 (decision, `docs/execution-model.md`). Explicit frames on one
+flat moving per-process stack (4-word header: previous offset, descriptor,
+resume, handler), arguments in X registers, entry plus resume-switch body per
+function, only `musttail` transfers; trampoline fallback. Prototype
+`tests/prototypes/execution_model/` on 7 targets at O0/O2; native calls and
+coroutines rejected.
 
 <a id="step-18"></a>
 
 ### 18. Accept recursive call graphs in analysis
 
-Backlog: F21. Depends on: [17](#step-17).
-
-Remove the acyclic-batch restriction: resolve recursive and mutually recursive
-components and run bounded inference over them.
-
-- Success criteria
-  - [x] Self, mutual and cross-module recursion compile; inference terminates
-    with widening and stays sound.
-  - [x] Cycle-rejection diagnostics are removed only where lowering supports the
-    case.
-- Tests
-  - [x] `--print-types` goldens for recursive functions.
-  - [x] Golden programs for factorial, mutual even/odd and cross-module
-    recursion with small depths.
-- Evidence (2026-10-05): `maint-29` fetched, unchanged at `21776803`.
-  `resolve_calls` keeps every call edge and orders strongly connected
-  components callees-first (iterative Tarjan, `CallGraph::components`,
-  `Component::recursive`); the Kahn cycle rejection is gone. Inference runs a
-  non-recursive component once; a recursive one starts every member at
-  `none()`, re-infers all members per round (each result joined with the
-  previous; a pending recursive call adds nothing to a join), discards the
-  previous round's expression facts, and after 16 rounds without convergence
-  widens every member to `term()` (flagged widened) and recomputes facts once.
-  Lowering already declared all functions before defining them, so recursion
-  runs as native calls (depth bounded by the native stack until steps 19-20).
-  Catalog `recursive calls` (ID 9) implemented, step 18, test
-  `executables_recursion`. Tests: `codegen_types` (zero → 0, accumulator keeps
-  `argument[0]`, swap → term(), never-returning → `none()`, mutual even/odd →
-  `union(0, 1)`, 15-function ring converges, 16-function ring widens);
-  semantic `local_cycle`/`self_cycle`/cross-module cycle now compile; the
-  placeholder and `later_cycle` rejection cases are removed. OTP golden
-  `executables_recursion` (6 runs: factorial to 25! bignum, tail accumulator,
-  even/odd, list build/sum/reverse/length/zip, cross-module ping/pong, nested
-  tuple depth, error unwinding through recursion caught and uncaught,
-  `function_clause` from a guarded recursive clause), full matrix 48/48.
-  Fresh Windows x64 Debug: fast CTest 152/152; affected tests full mode 13/13;
-  Lizard 0 warnings; tidy 91 changed units pass. Logs `build/plan11-step18/`.
+Done 2026-10-05. Calls ordered by strongly connected components
+(`CallGraph::components`, iterative Tarjan); recursive components infer from
+`none()` for at most 16 rounds, then widen to `term()`. OTP golden
+`executables_recursion`; `codegen_types` recursion checks.
 
 <a id="step-19"></a>
 
 ### 19. Implement proper tail calls
 
-Backlog: F21. Depends on: [18](#step-18).
-
-- Success criteria
-  - [x] Local, mutual and remote tail calls run in constant native stack.
-- Tests
-  - [x] Golden programs looping 10 million iterations (local, mutual, remote) at
-    O0 and O2. Reduced on user request to just past the stack budget: 2,000,000
-    iterations (500,000 through case/if/begin clause bodies).
-  - [x] IR inspection shows the chosen tail-transfer form.
-- Evidence (2026-10-05): `maint-29` fetched, unchanged at `21776803`. The step-17
-  model is implemented as a post-pass: lowering still emits native form
-  (`erlang-arity` attribute, `erlang_aot.frame` slot marker, tail calls as
-  `ret call` from a syntactic tail-position set through blocks, `case` and `if`
-  clause bodies), and `codegen/frames` (`lower_frames`, run by the backend before
-  IR inspection and by `optimize`) moves each function into `<sym>.body`
-  (`void(ctx)`), reads the frame header and registers in a prologue that
-  switches on the resume word, splits blocks after non-tail calls, spills values
-  read after a call (the term slot already holding them, else raw slots via
-  `DemoteRegToStack`), hoists constant addresses, and leaves only by `musttail`
-  calls of the code `erlang_aot_enter_v1`/`tail_v1`/`return_v1` return.
-  Descriptors `<sym>.frame` (7 words); exported symbols are host entries over
-  `erlang_aot_invoke_v1`. Runtime `ProcessStack` (`process/stack`) replaces the
-  segmented root stack: one `std::vector<Word>`, 4-word headers linked by
-  offsets, 256 registers, 2^24-word budget, bottom frame per invocation.
-  Exceptions still return through callers (channel check); no yield until step
-  43. ABI version 5. Tests: OTP golden `executables_tail_calls` (local, mutual,
-  remote, branches; full matrix O0/O2 x specialization x drivers);
-  `codegen_cross_targets` requires `musttail call void` right after each
-  enter/tail/return service on 7 targets (32/64-bit) at O0/O2/Os;
-  `runtime_stack` (invoke, nested call, 20-step tail chain under a 32-word
-  budget, budget failure, native exception, traces, root set); mangling of the
-  6 new services checked against Clang. Removed root-stack services and tests
-  (`roots_enter/leave`, segment and handoff checks, `service_consumer`
-  `root_failures`). `codegen_measurements` IR-text bound raised to 2 MiB (client
-  corpus: a resume block per call; objects stay under 1 MiB). Fresh Windows x64
-  Debug (clang-cl; a GNU-clang++ configure lacks the UTF-8 manifest): fast CTest
-  154/154, full 158/158 (both include the step-20 case); Lizard 0 warnings;
-  tidy 278 units pass. Logs `build/plan11-step19/`.
+Done 2026-10-05. Post-pass `codegen/frames` (`lower_frames`) turns native form
+into `<sym>.body` code with resume switches, spills and `musttail` transfers
+via `erlang_aot_enter/tail/return_v1`; descriptors `<sym>.frame`; runtime
+`ProcessStack` (flat vector, 256 registers, bottom frame per invocation); ABI
+version 5. OTP golden `executables_tail_calls` (2,000,000 iterations, reduced
+on user request); `codegen_cross_targets` checks `musttail` on 7 targets.
 
 <a id="step-20"></a>
 
 ### 20. Support deep non-tail recursion
 
-Backlog: F21. Depends on: [19](#step-19).
-
-- Success criteria
-  - [x] Body recursion deeper than the native stack (for example building a
-    1-million-element list) succeeds within the process budget.
-  - [x] Exceeding the budget produces the documented failure, not a native
-    crash.
-- Tests
-  - [x] Golden programs for deep body recursion and for the budget limit.
-- Evidence (2026-10-05): `maint-29` unchanged at `21776803`. Step 19's frames
-  already make body recursion independent of the native stack; this step adds
-  the evidence. OTP golden `executables_deep_recursion`: 200,000-level body
-  recursion (depth chosen on user request: beyond an 8 MiB native stack at 42 B
-  per native frame) building a list and taking its length and sum, mutual
-  recursion, a nested tuple measured recursively, and an exception unwinding
-  200,000 frames to a handler. The budget run (`forever/1` never returns) is
-  authored, as OTP cannot show it: exit 70 and
-  `erlangaot: runtime failure: entry call failed: resource_limit`
-  ([executables](../docs/executables.md#exit-status)) after about 1.1 million
-  frames of 15 words. Golden runs may now be `"authored": true`
-  (`regenerate.py` keeps them). A 1,000,000-element list build/len/sum ran
-  once by hand (O0, Debug runtime, 6.5 s). Fresh Windows x64 Debug (clang-cl):
-  fast CTest 154/154, full 158/158; Lizard 0 warnings; tidy 278 units pass
-  (shared with step 19, no production code changed). Logs
-  `build/plan11-step19/`.
+Done 2026-10-05. Evidence only: step-19 frames make depth independent of the
+native stack. OTP golden `executables_deep_recursion` (200,000 levels); its
+authored stack-budget run was removed by the step-27 correction.
 
 <a id="step-21"></a>
 
 ### 21. Lower list comprehensions
 
-Backlog: F13, F16. Depends on: [19](#step-19).
-
-Include filters, multiple generators, pattern generators, strict generators
-(`<:-`) and zip generators (`&&`) as accepted by OTP 29.
-
-- Success criteria
-  - [x] Results and evaluation order match OTP, including skipped non-matching
-    elements and strict-generator errors.
-  - [x] Long inputs run in bounded stack.
-- Tests
-  - [x] Golden programs for each generator kind, nested comprehensions and
-    100k-element inputs.
-- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. Semantic
-  views `semantic/comprehensions` (qualifiers, zip parts, generator inputs/
-  patterns/strictness, templates); `expression_children` lists generator
-  inputs, filters and templates, so calls, atoms, inference and specialization
-  see them. Binding analysis saves and restores the scope around a
-  comprehension and binds each qualifier's generator patterns as one fresh
-  candidate (`BindingCandidate::fresh`: new identities shadow outer names);
-  templates are siblings. Guard analysis classifies filters with OTP's
-  `is_guard_test` rule (`Function::guard_filters`, legacy type tests at top
-  level). Capability: list generators admitted; binary/map generators,
-  zip-group filters (OTP `illegal_zip_generator` text) and match qualifiers
-  (`compr_assign` text when the feature is off, capability when on) rejected.
-  Lowering (`codegen/lowering_comprehensions`): one loop per generator
-  qualifier with its cursor and the reversed accumulator in term slots (no PHIs,
-  constant native and process stack), guard filters through `lower_guard`,
-  others `true`/`false`/`{bad_filter, V}`, final `ContainerConstruction::reverse`
-  (2). `ErrorReason` 16-18 `bad_generator`/`bad_filter`/`bad_generators`;
-  strict rejection `{badmatch, E}` alone, `bad_generators` in a zip. OTP golden
-  `executables_list_comprehensions` (6 runs: basic incl. shadowing, several
-  templates, filter-only; patterns incl. strict and zip groups; guard vs body
-  filters and evaluation order; 10 caught errors; 100,000-element inputs, a
-  100,000-pair nested product and zip; uncaught `bad_generator`), full matrix.
-  Semantic cases (shadowing, scope, zip filter, `compr_assign` both ways,
-  guard use, binary generator). Former comprehension "unsupported" examples use
-  record update `#r{}#r{a = 1}`; program `compile.txt` updated. Fresh Windows x64
-  Debug (clang-cl): fast CTest 155/155; Lizard 0 warnings; tidy changed units
-  pass. Logs `build/plan11-step21/`.
+Done 2026-10-06. `semantic/comprehensions` views; fresh generator bindings;
+guard filters via OTP's `is_guard_test`; loops in `codegen/lowering_comprehensions`
+with cursor and reversed accumulator in term slots; `ErrorReason` 16-18
+(`bad_generator`, `bad_filter`, `bad_generators`). OTP golden
+`executables_list_comprehensions` (100,000-element inputs).
 
 <a id="step-22"></a>
 
 ### 22. Lower binary and map comprehensions
 
-Backlog: F13, F16. Depends on: [21](#step-21).
+Done 2026-10-06. Binary generators via match plans with element/skip patterns;
+map generators by position (`MapOperation::key_at/value_at`, OTP iterator
+payloads); producers finish with `BitOperation::concat` or
+`MapOperation::from_list`. OTP golden `executables_bit_map_comprehensions`.
+Phase E close: full 160/160.
 
-- Success criteria
-  - [x] Binary generators/producers and map generators/producers match OTP,
-    including partial bytes and duplicate map keys.
-- Tests
-  - [x] Golden programs for each combination of list, binary and map generators
-    and producers.
-- Evidence (2026-10-06): `maint-29` unchanged at `21776803`. Binary generators
-  use match plans with `semantic::GeneratorPattern::element` (a final
-  `binary`/`all` segment, `MatchPlan::rest`) and `skip` (OTP's skip pattern:
-  segment values and repeated names ignored, floats read as integers); map
-  generators keep the map, a position and its size in term slots and read
-  `MapOperation::key_at`/`value_at`; a non-map input raises `bad_generator`
-  before the loop. Each step tries the element, then a skip (relaxed generators
-  advance, strict ones in a zip must match), then exhaustion (empty list, end of
-  map, `<<>>` for strict and any bitstring for relaxed bit generators), then
-  the error: `{badmatch, E}` (list head, bitstring rest, `{K, V}`),
-  `bad_generator`, or `bad_generators` whose map entries are OTP's iterator
-  chain (`MapOperation::iterator`). Producers accumulate like lists; a binary
-  template must be a bitstring (`badarg`), the result is
-  `BitOperation::concat`; maps evaluate the value before the key and finish
-  with `MapOperation::from_list` (later keys win). `:=` map templates get OTP's
-  error. OTP golden `executables_bit_map_comprehensions` (7 runs: all nine
-  generator/producer combinations, partial bytes, sizes, UTF-8, floats, skips,
-  map patterns, zips mixing kinds, 15 caught errors incl. iterator payloads,
-  evaluation order, uncaught `badarg`), byte-identical to OTP; semantic cases
-  (binary/map generators and producers, `:=` template). Fresh Windows x64 Debug
-  (clang-cl): fast CTest 156/156, full 160/160 (275 s, `-j 12`); Lizard-all 0
-  warnings; tidy-all found four findings in the new code, fixed and rechecked
-  (changed units pass, affected tests 46/46 full mode). Phase E closed. Logs
-  `build/plan11-step22/`.
-
-## F. Memory management
+### F. Memory management
 
 <a id="step-23"></a>
 
 ### 23. Extend the root inventory to the execution model
 
-Backlog: F02, F03, F04, F08–F11. Depends on: [17](#step-17), [8I](#step-8i).
-
-Phase C delivered the layout walker (8C), process root words and explicit
-host roots (8E) and stack roots (8F). Add the roots the step-17 model introduces: suspended frames or
-continuations, in-flight error payloads and stack traces, and atom/module pins
-held by heap cells.
-
-- Success criteria
-  - [x] Every root owner of the step-17 model is enumerated by the collector;
-    nothing outside the stack, process root words and listed owners holds heap
-    words across a safe point.
-- Tests
-  - [x] Runtime tests collecting while each root kind holds nested and shared
-    graphs, followed by the 8C verifier.
-- Evidence (2026-10-06): runtime only, not OTP-dependent (no `maint-29`
-  check). Before this step frames and the failure channel existed only while
-  a `GeneratedInvocation` was active, when `collect()` refused, so only
-  explicit roots were ever live at a collection. Added `SafePoint`
-  (`generated_calls.hpp`): while generated code has declared one, `collect()`
-  runs inside an active invocation (reservations still refuse); step 24/26
-  place them. `ProcessStack::keep_registers` makes `x[0..live)` roots (a
-  suspended entry's arguments, step 43), cleared by every push and pop.
-  Inventory in `docs/runtime-heap.md#roots-and-safe-points`: frame term slots,
-  live registers, failure payload/arguments/stack term, explicit roots; raw
-  slots, off-heap links, atoms, resume indices and trace descriptors are not
-  roots and no heap cell pins code or atoms (modules never unload; funs will
-  use untraced registry IDs). Raw spill slots may hold stale term copies after
-  a call, so generated code is not a safe point until steps 24/26. Test
-  `runtime_collection` `root_owners`: hand-written caller/callee frames spread
-  the shared all-layout graph over caller slots, callee slots, two live
-  registers, the failure channel and explicit roots; two collections at a
-  `SafePoint` with garbage between, each followed by sharing checks and the
-  8C verifier; 11 root words enumerated inside, 2 after the return (registers
-  and channel cleared); the raw slot keeps its stale word; collection outside
-  the scope is `unsafe_point`. Fresh Windows x64 Debug (clang-cl): fast CTest
-  156/156; Lizard 0 warnings; tidy 50 changed units pass. Logs
-  `build/plan11-step23/`.
+Done 2026-10-06. Roots: frame term slots, live registers
+(`ProcessStack::keep_registers`), failure payload/arguments/stack, explicit
+roots (`docs/runtime-heap.md#roots-and-safe-points`); `SafePoint` scopes allow
+collection inside generated code. `runtime_collection` `root_owners`.
 
 <a id="step-24"></a>
 
 ### 24. Decide collection triggers and safepoints in generated code
 
-Backlog: F04. Depends on: [23](#step-23). **Decision.**
-
-The policy (single-heap copying with fragments) is fixed by 8A. Decide when
-generated code collects: heap full at allocation, off-heap binary pressure,
-`erlang:garbage_collect/0`, and which calls are safepoints versus critical
-sections that keep using fragments.
-
-- Success criteria
-  - [x] `docs/runtime-heap.md` defines triggers, safepoint placement, the
-    reload rule for values held in registers, and failure behavior.
-- Tests
-  - [x] IR prototype of one safepoint with reload on both word widths, recorded
-    in the document.
-- Evidence (2026-10-06): not OTP-dependent (no `maint-29` check). Decision in
-  `docs/runtime-heap.md#collection-in-generated-code`: safepoints only at
-  function entry (inside `erlang_aot_enter_v1`/`tail_v1`, callee arguments
-  kept as register roots) and comprehension loop heads (new
-  `erlang_aot_safepoint_v1`); every service, including allocation, is a
-  critical section that overflows into fragments (allocation-as-safepoint
-  rejected). Triggers: any fragment (heap full), off-heap words over a
-  virtual binary heap (46,422 words, then twice the survivors),
-  `erlang:garbage_collect/0` with the builtins; new block sized for live plus
-  stack words. Reload rule: `lower_frames` splits after a safepoint call and
-  spills crossing term values to term slots (calls too), other words to raw
-  slots; the stack never moves at a loop safepoint. Failure: a collection that
-  cannot allocate is skipped; budget overflow stays `resource_limit` (step
-  27). Prototype `tests/prototypes/safepoint/` (`loop.ll`, `run.py`, not a
-  CTest): clang 23.1.2, x86_64/i686 Windows, AArch64/ARMv7 Linux at O0 and O2,
-  the slot reload follows the safepoint call in all 8. No production code
-  changed, so the gate was not rerun. Log `build/plan11-step24/prototype.log`.
+Done 2026-10-06 (decision, `docs/runtime-heap.md#collection-in-generated-code`).
+Safepoints only at function entry and comprehension loop heads
+(`erlang_aot_safepoint_v1`); every service is a critical section using
+fragments. Triggers: a fragment exists, or off-heap words reach the virtual
+binary heap. Prototype `tests/prototypes/safepoint/`.
 
 <a id="step-25"></a>
 
@@ -1008,360 +488,78 @@ Folded into [8H](#step-8h) on 2026-10-04; no separate commit.
 
 ### 26. Collect from generated code
 
-Backlog: F02, F03, F04. Depends on: [24](#step-24), [20](#step-20), [8H](#step-8h).
-
-Implement the step-24 safepoints: publish live values in stack frames before
-collection, reload them afterwards and retry the failed allocation. Allocation
-at a safepoint collects instead of creating a fragment; fragments remain for
-critical sections and message delivery.
-
-- Success criteria
-  - [x] Generated code reloads its frame base after safepoints, and the 8F
-    segments are replaced by the step-17 stack form.
-  - [x] Allocation-heavy loops run with a bounded heap.
-  - [x] Values in recursive frames and error payloads survive repeated
-    collections.
-- Tests
-  - [x] Golden programs allocating far more than the heap budget while keeping
-    a small live set.
-  - [x] Small-heap stress at O0/O2 with deep recursion and nested terms.
-- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. Per the
-  step-24 decision, allocation stays a critical section (no retry): overflow
-  goes to fragments and the next safepoint collects. `ProcessStack::safepoint`
-  (`wants_collection()`: a fragment, or off-heap words at
-  `binary_limit_words_`, 46,422 then twice the survivors) runs in `enter`
-  (callee arguments kept as register roots, so also tail calls and host
-  invocation) and in the new `erlang_aot_safepoint_v1`, which comprehension
-  lowering calls at every generator loop head. New heap blocks count stack
-  words as live. `lower_frames` splits after safepoint calls and spills
-  crossing term values (`find_terms` over use lists: loads from/stores into
-  registers and term slots, PHIs of them) into new term slots counted in
-  `roots` (`place_slots` moves raw slots after them); other words stay raw. The
-  stack never moves at a loop safepoint, so slot addresses stay valid; every
-  transfer re-reads the frame base (the 8F segments went in step 19). Tests:
-  OTP golden `executables_garbage_collection` (5 runs, each allocating more
-  than the 64 MiB budget with a small live set: 25,000 400-word strings in a
-  tail loop, 9,000 8 KiB off-heap binaries, a 25,000-element comprehension
-  allocating in its filter, 20,000-deep body recursion keeping
-  `{N, [N, N+1], <<N:32>>}` per frame with garbage per level, and a
-  1,000-element error payload raised under 2,000 allocating frames and kept
-  through 25,000 more allocating steps), full matrix O0/O2 x specialization x
-  drivers on the default 233-word minimum heap; `runtime_collection`
-  `safepoints` (entry collects with the argument as register root; loop-head
-  service rewrites the slot in place); mangling of
-  `erlang_aot_safepoint_v1` checked against Clang. Host harnesses that keep
-  `Term`s across calls (ERTS host model) now use a large minimum heap
-  (`service_consumer`, `match_consumer`, which also collects between calls
-  with its retained words as roots); the heap-ceiling check uses a one-word
-  budget, since earlier calls' garbage is now collected. Fresh Windows x64
-  Debug (clang-cl): fast CTest 157/157, full `-j 12` 161/161 (107 s); Lizard
-  0 warnings; tidy 63 changed units pass. Logs `build/plan11-step26/`.
+Done 2026-10-06. `ProcessStack::safepoint` collects in `enter` (arguments as
+register roots) and at loop heads; new blocks count stack words as live;
+`lower_frames` spills crossing term values into term slots. OTP golden
+`executables_garbage_collection` (each run allocates over 64 MiB with a small
+live set); host harnesses keeping `Term`s use a large minimum heap.
 
 <a id="step-27"></a>
 
 ### 27. Report heap exhaustion as a defined failure
 
-Backlog: F04. Depends on: [26](#step-26).
-
-- Success criteria
-  - [x] A live set exceeding the process budget fails with the documented
-    outcome after collection, and the runtime stays usable for teardown.
-- Tests
-  - [x] Golden program growing a retained list past the budget; exit status
-    and report checked.
-- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803` (the new
-  golden is OTP-generated). Outcome kept from step 14/20: budget overflow is
-  `limit_exceeded` -> infrastructure `resource_limit`, no handler runs, stdout
-  flushed, process destroyed, `erlangaot: runtime failure: entry call failed:
-  resource_limit`, exit 70 (`docs/runtime-heap.md#failure-behavior`,
-  `executables.md`, `differences.md`). Defect fixed so it happens only after
-  collection: a collected block could take the whole remaining budget (sized
-  from used words including garbage) and the virtual binary heap (twice the
-  survivors) could exceed the budget, so allocations failed with garbage
-  uncollected (64-bit: 400-word strings dropping ten per step failed at 38%
-  live; 64 KiB binaries dropping four per step at 68%). Now `block_limit`
-  caps a block at survivors plus half of the budget left after them, `shrink`
-  recopies a block above that limit, and `binary_limit_words_` is capped at
-  survivors plus half of the free budget; binaries then fit up to 1,010 (99%).
-  A "live above 3/4 of the budget fails at entry" rule was tried and rejected:
-  frames keep stale garbage in term slots, so `garbage_collection` `deep` has
-  7.0M of 8.4M words live after collection. `BitWriter::append` copies
-  byte-aligned bytes at once (was bit by bit: 8 KiB binary 330 us in Debug;
-  `garbage_collection` `binaries` 2.9 s -> 0.19 s). Tests: golden
-  `executables_heap_exhaustion` (900 retained 65,540-byte binaries, 88% of the
-  budget, while dropping four per step: OTP output; 2,500: authored exit 70,
-  report regex and the earlier `growing` stdout), full matrix; it fails
-  `fits` under the old policy. `runtime_collection` `near_budget`
-  (10,000-word budget: block <= 8,000 words for 6,000 live and garbage
-  reaches a fragment; six live 1,000-word buffers and garbage buffers reach
-  the binary trigger; the heap check fails under the old policy); `runtime_memory`
-  expectation: an empty 4-word budget keeps a 2-word block. Fresh Windows x64
-  Debug (clang-cl): fast CTest 158/158, full `-j 12` 162/162 (108 s); Lizard
-  0 warnings; tidy 50 changed units pass. Logs `build/plan11-step27/`.
-- Correction (2026-10-06, user direction): memory has no hard cap by default,
-  per process or for the runtime; caps are options only. Default
-  `HeapOptions::limit_bytes` is `UNLIMITED_HEAP_BYTES` and
-  `StackOptions::limit_words` unlimited; `Runtime::create_context(HeapOptions,
-  StackOptions)` sets both per process. The defined failure is now host
-  refusal (`out_of_memory`, exit 70); an opt-in budget still fails with
-  `resource_limit` only after collection (the caps above). Removed the
-  authored stack-budget run of `deep_recursion`; `heap_exhaustion` became the
-  OTP golden `heap_growth` (1,100 retained 64 KiB binaries, 72 MB, beyond the
-  former 64 MiB default). Gap: with nothing capped, `garbage_collection` and
-  `tail_calls` still check values across collections and deep tail loops but
-  no longer prove bounded memory; step 27A restores that with program-facing
-  caps. `codegen_failure` mode 1 (huge allocation) now expects
-  `out_of_memory` (host refusal) instead of the old default budget's
-  `resource_limit`. Fresh Windows x64 Debug (clang-cl): fast 154/158 and
-  full `-j 12` 158/162 (120 s), the 4 failures being `codegen_failure_*`
-  before that expectation change; after it the affected codegen tests pass
-  10/10; Lizard 0 warnings; tidy 50 changed units pass. Logs
-  `build/plan11-step27-uncapped/`.
-
-- Follow-up (2026-10-06, user direction): no other default limits. Removed the
-  1,000,000-bit binary cap (only an optional heap budget limits a binary;
-  `grow`/`binary` keep address-range overflow checks; wide negative integer
-  segments invert bits of -(V+1) instead of building a segment-wide integer)
-  and the 1,024 process-count limit (`RuntimeOptions::max_contexts` gone).
-  Printed text keeps its 64 MiB cap. Atoms keep 2^20 by default; programs
-  raise it up to 2^26 with `--max-atoms N` (or `=N`) as a leading argument or
-  in `ERLANG_AOT_FLAGS` (same parser, command line last); `--` ends runtime
-  options; `--args-file FILE` is a reserved vm.args-like entry point that
-  reports not implemented (`startup/options`, `docs/executables.md`). Golden
-  runner gained `runs[].env` (authored runs only; inherited
-  `ERLANG_AOT_FLAGS` dropped). Tests: `executables_runtime_options` (OTP runs
-  without options; authored option, `--`, invalid value, too-small table,
-  `--args-file`, environment, override and stray-word runs),
-  `executables_large_binaries` (1 MiB binary, 1,000,008-bit integer segments
-  incl. negative and little-endian, OTP-generated); `link_consumer` admits a
-  third context. Fresh Windows x64 Debug (clang-cl): fast CTest 160/160,
-  full `-j 12` 164/164 (105 s); Lizard 0 warnings; tidy all 281 units pass
-  (runtime CMake changed). Logs `build/plan11-step27-limits/`.
+Done 2026-10-06, corrected by the user the same day. No memory cap by
+default: heap and stack grow until the host refuses (`out_of_memory`, exit
+70); opt-in per-process budgets (`HeapOptions::limit_bytes`,
+`StackOptions::limit_words`) fail with `resource_limit` only after
+collection (`block_limit` keeps half of the free budget for fragments, capped
+`binary_limit_words_`). No binary size or process-count caps; atoms 2^20 by
+default, `--max-atoms` up to 2^26; runtime options from leading arguments and
+`ERLANG_AOT_FLAGS` (`startup/options`, `--`, reserved `--args-file`). OTP
+goldens `executables_heap_growth`, `executables_runtime_options`,
+`executables_large_binaries`; golden runs may set `env`.
 
 <a id="step-27a"></a>
 
 ### 27A. Runtime-wide memory limit and program-facing caps
 
-Backlog: F04. Depends on: [27](#step-27). Added 2026-10-06 by the step-27
-correction.
-
-Add an optional runtime-wide (per-application) memory limit, uncapped by
-default, accounting heap blocks, fragments, off-heap buffers and stacks of all
-processes; and let programs set the per-process and runtime-wide caps as
-runtime options (`startup/options`: command line and `ERLANG_AOT_FLAGS`, like
-`--max-atoms`), all uncapped unless set.
-
-- Success criteria
-  - [x] With no option set, no process or runtime cap applies.
-  - [x] A set runtime-wide limit fails the requesting process with
-    `resource_limit` after collection; others keep running.
-  - [x] Programs can set per-process heap and stack caps.
-- Tests
-  - [x] `garbage_collection` and `tail_calls` (or companions) run under small
-    caps, proving bounded memory again.
-  - [x] Runtime test: two processes sharing a runtime-wide limit.
-- Evidence (2026-10-06): `RuntimeOptions::memory_limit_bytes` (default
-  `UNLIMITED_HEAP_BYTES`) feeds one `detail::RuntimeMemory` account per
-  runtime, shared by every `HeapStorage` and `ProcessStack`: heap blocks,
-  fragments, off-heap buffers and stack capacity are charged on creation and
-  released on drop/teardown (`Runtime::memory_bytes()`); a collection's
-  to-space is charged past the limit until it replaces the old blocks. A
-  process sees budget = own storage + what the limit leaves, so the step-27
-  sizing keeps half of the free memory free and a request beyond it is
-  `limit_exceeded` -> `resource_limit` for that process only. Unlimited
-  accounts never refuse (else `codegen_failure` mode 1 became
-  `resource_limit`). Options `--max-heap`, `--max-stack`, `--max-memory`
-  (bytes, decimal, rounded down to words; also in `ERLANG_AOT_FLAGS`) set
-  `RuntimeOptions::process_heap/process_stack/memory_limit_bytes`;
-  `create_context()` without options uses the process defaults. Tests:
-  authored golden runs `garbage_collection` `churn`/`binaries` under 1 MiB
-  `--max-memory`, `comprehension` under 1 MiB `--max-heap`, `payload` under
-  16 MiB `--max-memory` (each allocates > 64 MiB), `deep` under 1 MiB fails
-  `resource_limit`; `tail_calls` `local`/`remote`/`branches` under 4 KiB
-  stack + 64 KiB heap; `deep_recursion` `build` under 64 KiB stack fails;
-  `runtime_options` option/env/invalid-value/64-byte-limit runs;
-  `runtime_collection` `shared_limit` (40,000-word limit: holder's block
-  stops at 28,000 words, the other collects 20 rounds near the limit, then a
-  16,000-word list fails while the holder keeps working; teardown returns
-  every charge); `runtime_memory` process defaults. Gap: `deep` needs about
-  100 MiB under `--max-memory` at O0 (≈130-word frames keep stale terms), so
-  it has no capped success run. Fresh Windows x64 Debug (clang-cl): fast
-  160/160, full `-j 12` 164/164 (118 s); tidy then flagged `push`
-  (`resize` outside try), fixed by `ProcessStack::grow`; after it 42 affected
-  tests pass, Lizard 0 warnings, tidy 49 changed units pass. Logs
-  `build/plan11-step27a/`.
+Done 2026-10-06. Optional `RuntimeOptions::memory_limit_bytes`: one
+`detail::RuntimeMemory` account charged by heap blocks, fragments, off-heap
+buffers and stack capacity (`Runtime::memory_bytes()`); each process sees its
+own storage plus what the limit leaves, so only the requesting process fails.
+Options `--max-heap`, `--max-stack`, `--max-memory` set the process defaults
+used by `create_context()`. Capped authored runs in `garbage_collection`,
+`tail_calls`, `deep_recursion`; `runtime_collection` `shared_limit`. Gap:
+`deep` has no capped success run (about 100 MiB at O0).
 
 <a id="step-27b"></a>
 
 ### 27B. Remove list length caps
 
-Backlog: F08. Depends on: [27](#step-27). Added 2026-10-06 (user direction:
-lists are limited only by available memory).
-
-List construction, the container construction service and `list_length` stop
-at 1,000,000 elements, and comparison/equality stop after one million steps by
-default, which also refuses comparing long lists and binaries.
-
-- Success criteria
-  - [x] Lists of any length build, measure, reverse and compare, bounded only
-    by memory (and an opt-in heap budget).
-  - [x] Comparison and equality have no default work cap, as in OTP.
-- Tests
-  - [x] Runtime test: a list one element past the former cap builds, measures
-    and compares; a shared graph of 2^20 leaf pairs compares equal.
-- Evidence (2026-10-06): removed the 1,000,000 caps of the list factory,
-  the container construction service (count and marshalling) and
-  `list_length`; the tuple factory keeps its own 1,000,000 arity check until
-  27C. `structural_order` without a budget runs uncapped (map key searches
-  keep theirs until 27D) and returns equal for identical words without a walk,
-  as ERTS `eq` does. `runtime_containers`: `unbounded_comparison` (two
-  separately built 20-level shared graphs compare equal through
-  `exactly_equal` and `erlang_aot_exact_v1`; a graph differing in one leaf is
-  unequal) and `long_lists` (1,000,001 elements through the factory and the
-  construction service, `list_length`, reverse service, equality); the test
-  takes 12.6 s in Debug. Fresh Windows x64 Debug (clang-cl): fast 160/160,
-  full `-j 12` 164/164 (125 s); Lizard 0 warnings; tidy 4 changed units
-  pass. Logs `build/plan11-step27b/`.
+Done 2026-10-06. No list length cap and no comparison work cap; identical
+words compare equal without a walk. `runtime_containers` `long_lists`
+(1,000,001 elements) and `unbounded_comparison` (2^20 leaf pairs).
 
 <a id="step-27c"></a>
 
 ### 27C. Match OTP's tuple arity limit
 
-Backlog: F08. Depends on: [27B](#step-27b). Added 2026-10-06 (user
-direction: limits match OTP).
-
-OTP allows 16,777,215 elements (`MAX_ARITYVAL`, 2^24 - 1); larger tuples from
-BIFs such as `erlang:make_tuple/2` and `list_to_tuple/1` fail with `badarg`
-(observed under OTP 29.1.1). ErlangAoT stops at 1,000,000.
-
-- Success criteria
-  - [x] Tuples up to 16,777,215 elements build; the limit lives in one place
-    for the later builtin families (steps 37-38) to raise `badarg`.
-- Tests
-  - [x] Runtime test at the boundary (arity 16,777,215 accepted, one more
-    refused); `differences.md` row removed.
-- Evidence (2026-10-06): public `MAX_TUPLE_ARITY` (16,777,215, OTP
-  `MAX_ARITYVAL`) next to `TermFactory` in `runtime/include/terms.hpp`;
-  `TermFactory::tuple` and the new `tuple_words` refuse more with
-  `resource_limit` before allocating; a `static_assert` proves the arity fits
-  the 25-bit header count of 32-bit targets. The construction service builds
-  tuples from words through `tuple_words` (a `Term` is 48 bytes, so a
-  `vector<Term>` of the largest tuple would take about 800 MB).
-  `runtime_containers` `tuple_arity`: the service refuses 16,777,216 fields
-  (heap untouched) and builds 16,777,215 (fields read back); the test now
-  takes 13.4 s in Debug. `differences.md` had no tuple row (the plan text
-  assumed one); `docs/terms.md` states the limit. Fresh Windows x64 Debug
-  (clang-cl): fast 160/160, full `-j 12` 164/164 (121 s); Lizard 0
-  warnings; tidy 51 changed units pass. Logs `build/plan11-step27c/`.
+Done 2026-10-06. Public `MAX_TUPLE_ARITY` (16,777,215) beside `TermFactory`;
+the construction service builds tuples from words (`TermFactory::tuple_words`).
+`runtime_containers` `tuple_arity` at the boundary.
 
 <a id="step-27d"></a>
 
 ### 27D. Remove map size and key-work caps
 
-Backlog: F08. Depends on: [27B](#step-27b). Added 2026-10-06 (user
-direction: limits match OTP).
-
-OTP maps have no size limit. ErlangAoT refuses constructions and updates above
-1,000,000 associations and gives construction, update and lookup a
-one-million-step key comparison budget.
-
-- Success criteria
-  - [x] Map construction, update and lookup have no size or work cap beyond
-    memory.
-- Tests
-  - [x] Runtime test: a map past the former cap builds and finds keys that are
-    long lists; `differences.md` row removed.
-- Evidence (2026-10-06): the comparison budget is gone from
-  `structural_order`, `bit_order`, `map_position` and map lookup; the size
-  caps of map construction, update and the map service are gone. Without
-  the work cap, insertion-based construction would be O(n^2) for unsorted
-  keys (map comprehensions build through `from_list`), so `make` now
-  stable-sorts by exact key order and keeps the last value of each key
-  (first key kept, as successive associations did), after an O(n) check
-  that skips already strictly ascending keys; updates still insert by binary
-  search. `MapAccess::publish` refuses more entries than the header count
-  holds (2^24 - 1 on 32-bit targets) with `resource_limit`. Byte-aligned
-  bitstrings compare whole bytes at once (long binaries are no longer cut
-  off by a budget). `runtime_maps` `large_maps` replaces `work_limit`:
-  1,000 descending keys with duplicates sort and keep the last value;
-  1,000,001 ascending entries build, find keys and grow by an update; two
-  keys that are 1,000,001-element lists differing in the last element are
-  built and found by a separately built list (8.8 s in Debug; a 1,000,001
-  descending sort took 31 s, hence ascending). `differences.md` had no map
-  row. Fresh Windows x64 Debug (clang-cl): fast 160/160, full `-j 12`
-  164/164 (115 s); tidy then flagged `bit_order` cognitive complexity 13,
-  fixed by the `byte_order` helper; after it 35 affected tests pass, Lizard
-  0 warnings, tidy 13 changed units pass. Logs `build/plan11-step27d/`.
+Done 2026-10-06. No map size or key-comparison budget; construction
+stable-sorts by exact key order keeping the last value (skipped for ascending
+keys); a header-capacity check bounds 32-bit maps; byte-aligned bitstrings
+compare by bytes. `runtime_maps` `large_maps`.
 
 <a id="step-27e"></a>
 
 ### 27E. Match OTP's big integer limit
 
-Backlog: F10. Depends on: [27](#step-27). Added 2026-10-06 (user direction:
-limits match OTP).
+Done 2026-10-06. ERTS limit (`BIG_ARITY_MAX` words: 4,194,240 bits on 64-bit,
+4,194,272 on 32-bit); a larger result raises `error:system_limit` in bodies
+and rejects guards (`ValueOutcome::system_limit` 3, `ErrorReason::system_limit`
+19, codegen `checked_arithmetic`); an over-limit extracted segment does not
+match. Compiler: one `INTEGER_BIT_LIMIT`; the lexer rejects longer literals
+like OTP's scanner, constant patterns past it are illegal. OTP golden
+`executables_integer_limit`.
 
-ERTS caps a bignum at `BIG_ARITY_MAX` words: 65,535 x 64 = 4,194,240
-magnitude bits on 64-bit, 131,071 x 32 = 4,194,272 on 32-bit. Beyond it
-arithmetic and `list_to_integer/1` raise `error:system_limit`; there is no
-separate digit limit (1,262,592 digits print and parse; observed under OTP
-29.1.1). ErlangAoT caps magnitudes at 1,000,000 bits and decimal text at
-10,000 digits, reported as the infrastructure failure `resource_limit`.
-
-- Success criteria
-  - [x] Runtime magnitude limit equals the ERTS limit of the target width; the
-    decimal-text limit follows from it.
-  - [x] Compiler limits agree: integer literal and constant-pattern digit caps
-    (`semantic/capabilities`, `match_plan`, `pattern_constants`) and the
-    preprocessor's integer and shift caps (`preprocessor/value`,
-    `operators`) use the same bit limit.
-  - [x] Decide and document whether exceeding it raises `error:system_limit`
-    (needs an error reason, ABI change) or stays `resource_limit`.
-- Tests
-  - [x] Golden: arithmetic reaching exactly the limit succeeds, one bit past it
-    fails as decided; runtime and compiler boundary tests updated;
-    `differences.md` updated.
-- Evidence (2026-10-06): `maint-29` fetched, unchanged at `21776803`. OTP
-  29.1.1 observed: 4,194,240 bits succeed and one more bit raises
-  `error:system_limit` for `+`, unary `-`, `bnot`, `bsl` and `*` (64-bit);
-  a guard error fails only its alternative; the largest value has 1,262,593
-  digits; the scanner rejects a longer literal as `illegal integer`; a
-  constant pattern past it is `illegal pattern`; a body constant past it is
-  folded with a warning and raises at run time; an all-ones `<<V:4194241>>`
-  match makes the x86 JIT build an invalid term that crashes the VM
-  (`size_object: bad tag`). Decision: raise `error:system_limit`, as OTP.
-  ABI: `ValueOutcome::system_limit` (3) and `ErrorReason::system_limit` (19),
-  no symbol change (versions collapse in 78A). Runtime: `integer_bit_limit` =
-  `BIG_ARITY_MAX` words of the target (4,194,240 / 4,194,272 bits),
-  `integer_decimal_limit` 1,262,593 / 1,262,602 digits; new
-  `TermError::system_limit` (host status `resource_limit`); arithmetic
-  services return the new outcome; an extracted integer past the limit does
-  not match (ERTS intends `THE_NON_VALUE`); decimal parsing takes nine digits
-  per pass. Codegen: `checked_arithmetic` switches success / `system_limit`
-  (cached body exit raising it, saved and restored with protected scopes like
-  `badarith`) / `badarith`; guards reject both. Compiler: one
-  `INTEGER_BIT_LIMIT` (64-bit ERTS value) in `preprocessor/value.hpp` for the
-  preprocessor integer and shift caps and the lexer, which now rejects a
-  longer literal like OTP's scanner (`illegal integer (more than 4194240
-  bits)`; base-10 literals no longer go through quadratic decimal
-  arithmetic); the semantic literal checks of `capabilities` and
-  `match_plan` became unreachable and were removed; `pattern_constants`
-  reports a constant past the limit as `illegal pattern` and charges its
-  budget by estimated digits instead of converting to text. Tests: OTP golden
-  `executables_integer_limit` (`limit`: exact limit values, every operation
-  one bit past it, `Top - Top`; `guard`; `bits`: 4,194,240-bit segment
-  round trip; `uncaught`: exit 1 `uncaught exception error: system_limit`;
-  authored `extract`: the over-limit segment does not match);
-  `runtime_integers` (one digit past the decimal limit is `system_limit`,
-  leading zeros do not count); `codegen_service` (`integer_budget` fixture now
-  `fits` at 4,194,239 and falls to the next clause at 4,194,240);
-  `patternmatch_integers` (20,000-digit literals compile, 1,262,594 digits
-  are rejected); `patternmatch_patterns` (constants past the limit are
-  illegal patterns); parser CLI `semantics_24` now `1 bsl 4194240`.
-  `differences.md`: big-integer row removed, over-limit extraction row added.
-  `service_answer.erl` erlfmt-formatted for the first time. Fresh Windows
-  x64 Debug (clang-cl): fast 161/161, full `-j 12` 165/165 (130 s); Lizard
-  0 warnings; tidy 157 changed units pass; all 21 executable goldens
-  reproduce under OTP (`regenerate.py --check`). Logs `build/plan11-step27e/`.
+## F. Memory management (remaining)
 
 <a id="step-28"></a>
 
