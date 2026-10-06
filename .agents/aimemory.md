@@ -245,6 +245,9 @@ Step facts beyond the plan record:
 - 30: record_info/2 = compile-time pseudo-function: semantic::record_info_call (unqualified, 2 args) gates calls.cpp,
   inference evaluate (top), specialization_analysis and codegen call_value; expression_children(module) returns {}
   for it. A local record_info/2 definition is still indexed (skipping it crashed a later lookup).
+- 31A: native records split into 31B runtime, 31C local, 31D qualified/imported, 31E anonymous (contract
+  docs/native-records.md). OTP probe modules (scratchpad/native) are transient. Key OTP quirks kept: local `X#r.f`
+  checks only the name, `X#_.f` skips export check, failed external construction -> {badrecord,{M,N}}.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

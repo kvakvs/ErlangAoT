@@ -694,6 +694,97 @@ sub-steps if more than one representation is needed.
   - [ ] Golden programs per selected form, including errors and cross-module
     use.
 
+Split on 2026-10-07 into 31A–31E: the three forms share one representation,
+but runtime cells, local records, cross-module forms and anonymous forms are
+separate reviewable changes. The step closes when 31E passes.
+
+<a id="step-31a"></a>
+
+### 31A. Decide the native record contract
+
+**Decision.** Depends on: [30](#step-30).
+
+- Success criteria
+  - [x] `docs/native-records.md` selects the forms, the representation
+    (descriptor plus `native_record` cell), every operation's acceptance and
+    error terms, compile-time rules, printing and order, and the kept
+    differences.
+- Tests
+  - [x] None beyond the gate (decision only).
+- Evidence (2026-10-07): `maint-29` re-fetched, unchanged at `21776803`.
+  Facts from the pinned sources and OTP 29.1.1 probes (scratch modules outside
+  Git): error terms `{badrecord, X}`, `{badrecord, {M, N}}` for failed external
+  construction, `{badfield, {{M, N}, F}}`, `{novalue, {{M, N}, F}}`; local and
+  anonymous access skip the module/export checks while update and patterns do
+  not; term order tuple < native record < map; `display` prints fields in
+  atom-index order (not reproducible; definition order chosen). All three
+  forms selected; `records` module, `RECORD_EXT` and upgrades not selected.
+  Documentation only: no source, test or build file changed, so the build
+  and test gate was not rerun (last gate: step 30).
+
+<a id="step-31b"></a>
+
+### 31B. Add native record cells and runtime services
+
+Backlog: F03, F05, F12, F17. Depends on: [31A](#step-31a), [28](#step-28).
+
+`abi::v1::RecordDescriptor`, the `native_record` heap cell, checked services
+for construction, field access, update, field extraction for patterns and the
+record tests, plus equality, order, `display` text, copying, collection,
+walking and verification.
+
+- Success criteria
+  - [ ] Services implement the 31A acceptance table and error terms.
+  - [ ] Cells survive collection and copies between heaps; forged descriptor
+    words are rejected.
+- Tests
+  - [ ] Runtime tests with registered hand-written descriptors: every
+    operation and error, order against tuples/maps, printing, copy and
+    collection.
+
+<a id="step-31c"></a>
+
+### 31C. Compile local native records
+
+Backlog: F17, F14. Depends on: [31B](#step-31b).
+
+`-record #r{...}` with literal defaults, local construction, access, update,
+patterns, guard field access and `is_record/1,2,3` on native records.
+
+- Success criteria
+  - [ ] Results and errors match OTP; 31A compile-time rules diagnosed.
+- Tests
+  - [ ] OTP golden program for local native records, including errors and
+    printing; CLI diagnostics for each compile-time rule.
+
+<a id="step-31d"></a>
+
+### 31D. Compile qualified and imported native records
+
+Backlog: F17. Depends on: [31C](#step-31c).
+
+`-export_record`, `-import_record`, `#m:r` construction, access, update and
+patterns with the export rules.
+
+- Success criteria
+  - [ ] Cross-module results and errors match OTP, including non-exported
+    records and modules outside the batch.
+- Tests
+  - [ ] Cross-module OTP golden program; CLI diagnostics for attribute errors.
+
+<a id="step-31e"></a>
+
+### 31E. Compile anonymous native record forms
+
+Backlog: F17. Depends on: [31D](#step-31d).
+
+`X#_.f`, `X#_{...}` and `#_{...}` patterns; closes step 31.
+
+- Success criteria
+  - [ ] Results and errors match OTP; `#_{...}` as an expression is rejected.
+- Tests
+  - [ ] OTP golden program for anonymous forms on local and foreign records.
+
 <a id="step-32"></a>
 
 ### 32. Implement function values without captures
@@ -1014,7 +1105,7 @@ continuations as roots.
 Backlog: F14. Depends on: [42](#step-42), [31](#step-31), [32](#step-32).
 
 `self/0` in guards, `node/0,1` (returning `nonode@nohost`), native
-`is_record/1`, and positive `is_pid/1`, `is_reference/1`, `is_function/1,2`.
+`is_record/1` (delivered by step 31C), and positive `is_pid/1`, `is_reference/1`, `is_function/1,2`.
 
 - Success criteria
   - [ ] The four gated catalog signatures become available; results match OTP.

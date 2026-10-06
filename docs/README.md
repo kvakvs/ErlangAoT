@@ -16,6 +16,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Patterns, clauses and body matches | [patterns.md](patterns.md) |
 | Guards and the guard BIF catalog | [guards.md](guards.md) |
 | Term representations (atoms, numbers, containers, maps, bits, records) and printing | [terms.md](terms.md) |
+| Native, qualified and anonymous records (OTP 29) | [native-records.md](native-records.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |
