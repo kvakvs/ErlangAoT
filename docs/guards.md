@@ -56,7 +56,7 @@ services) and native `is_record/1` (F17).
   `is_float`; nested or qualified `float/1` is conversion. Legacy `record/2`
   ignores suppression of its old name, but a local `is_record/2` blocks it.
 - Not allowed in guards: assignment, arbitrary local/remote/dynamic calls, `++`,
-  `--`, `!`, funs, comprehensions, control flow, record updates.
+  `--`, `!`, funs, comprehensions, control flow, record updates, `record_info/2`.
 
 ## Oracle limitations
 

@@ -215,8 +215,8 @@ Plan: [29](11-plan.md#step-29), [30](11-plan.md#step-30),
 [31](11-plan.md#step-31).
 
 - [x] Ordinary declarations, defaults, construction, access, matching, tests.
-- [x] Record updates (step 29).
-- [ ] `record_info/2`, native/qualified/inferred records.
+- [x] Record updates (step 29) and `record_info/2` (step 30).
+- [ ] Native/qualified/inferred records.
 
 ### F18 — Closures and function values
 

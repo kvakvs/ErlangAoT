@@ -64,8 +64,14 @@ bool implicit_throw(const ast::ExprValue &value) {
                                [](const auto &clause) { return clause.handler && !clause.handler->exception_class; });
 }
 
-// Walk only admitted executable children; atom call targets are metadata rather than term expressions.
-void record_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
+// Record tags, the undefined default and the field names a record_info(fields, R) list holds.
+void record_atoms(const semantic::Module &module, const ast::Expression &expression, std::set<std::string> &result) {
+    const auto &value = expression.value;
+    if (const auto info = semantic::record_info(module, expression); info && info->fields) {
+        for (const auto &field : info->layout.fields) {
+            result.insert(utf8(field.name.name));
+        }
+    }
     const ast::RecordIdentity *identity = nullptr;
     if (const auto *record = std::get_if<ast::RecordExpression>(&value)) {
         identity = &record->identity;
@@ -93,8 +99,10 @@ bool raises_stack(const ast::Module &syntax, const ast::ExprValue &value) {
 }
 
 // Collect the atoms one expression needs: its literal, record names and the atoms its lowering produces.
-void expression_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
-    record_atoms(module, value, result);
+void expression_atoms(const semantic::Module &module, const ast::Expression &expression,
+                      std::set<std::string> &result) {
+    const auto &value = expression.value;
+    record_atoms(module, expression, result);
     if (booleans(value) || guarded(value) || semantic::comprehension_qualifiers(value)) {
         result.insert("true");
         result.insert("false");
@@ -122,7 +130,7 @@ std::set<std::string> spellings(const semantic::Module &module) {
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
-        expression_atoms(module, expression.value, result);
+        expression_atoms(module, expression, result);
         const auto children = semantic::expression_children(module, expression);
         pending.insert(pending.end(), children.begin(), children.end());
     }

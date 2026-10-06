@@ -183,6 +183,8 @@ void lower_templates(ExpressionLowering &state, const Comprehension &comprehensi
 llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension);
 // Lower record values/updates/access/indices using tuple shape and checked element services.
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
+// Expand a validated record_info/2 call to its constant field-name list or tuple size.
+llvm::Value *lower_record_info(ExpressionLowering &state, const ast::Expression &expression);
 // Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.
 llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression &expression,
                                const ast::CallExpression &call);

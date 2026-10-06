@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "entry": "infos",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{[],1}\n{[name,age,email,tags],5}\n{[kind,size],3}\n{schema,[name,age,email,tags],5}\n[name,age,email,tags]\n{true,false}\n[age,email,tags]\nthree\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "infos.erl": "d512e3eddf45decb9338213a964814bacccae2b65e56f52db0e27cefdb5a8378",
+    "shapes.hrl": "d7c3883b0bcbb4cf81e743b120d28a92b2222ccda501b5b99c78a1d47097ef5e"
+  }
+}

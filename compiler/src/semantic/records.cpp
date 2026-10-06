@@ -146,6 +146,26 @@ std::optional<ast::ExprId> selected(const Initializers &initializers, const ast:
     return pattern ? std::nullopt : field.default_value;
 }
 
+// A record_info/2 argument must be a literal atom; parentheses vanish as in OTP's abstract format.
+const ast::Atom *info_argument(const ast::Module &syntax, const ast::ExprId &id) {
+    return std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, id)).value);
+}
+
+// OTP rejects non-literal arguments and selectors other than fields/size, then any name that is not a visible
+// tuple record (an undefined name included).
+void validate_record_info(const Module &module, const ast::Expression &expression, const Reporter &out) {
+    const auto &call = std::get<ast::CallExpression>(expression.value);
+    const auto &selector = module.syntax->expression(call.arguments[0]);
+    const auto *info = info_argument(*module.syntax, call.arguments[0]);
+    if (!info || !info_argument(*module.syntax, call.arguments[1])) {
+        report(module, &expression.source, "illegal record info", out);
+    } else if (info->name != U"fields" && info->name != U"size") {
+        report(module, &selector.source, "illegal record info", out);
+    } else if (!record_info(module, expression)) {
+        report(module, &selector.source, "record_info/2 is only supported for tuple records", out);
+    }
+}
+
 // Tuple indices are constants only for ordinary records with a visible declared field.
 void validate_index(const Module &module, const ast::RecordIndex &index, const ast::NodeSource &source,
                     const Reporter &out) {
@@ -230,7 +250,32 @@ void validate_record(const Module &module, const ast::Expression &expression, co
         }
     } else if (const auto *index = std::get_if<ast::RecordIndex>(&expression.value)) {
         validate_index(module, *index, expression.source, out);
+    } else if (record_info_call(*module.syntax, expression.value)) {
+        validate_record_info(module, expression, out);
     }
+}
+
+bool record_info_call(const ast::Module &syntax, const ast::ExprValue &value) {
+    const auto *call = std::get_if<ast::CallExpression>(&value);
+    const auto *name = call ? std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, call->target)).value) : nullptr;
+    return name && name->name == U"record_info" && call->arguments.size() == 2;
+}
+
+std::optional<RecordInfo> record_info(const Module &module, const ast::Expression &expression) {
+    if (!record_info_call(*module.syntax, expression.value)) {
+        return {};
+    }
+    const auto &call = std::get<ast::CallExpression>(expression.value);
+    const auto *info = info_argument(*module.syntax, call.arguments[0]);
+    const auto *name = info_argument(*module.syntax, call.arguments[1]);
+    if (!info || !name || (info->name != U"fields" && info->name != U"size")) {
+        return {};
+    }
+    const auto *layout = record_layout(module, *name, expression.source);
+    if (!layout || layout->native) {
+        return {};
+    }
+    return RecordInfo{*layout, info->name == U"fields"};
 }
 
 void validate_record_test(const Module &module, const ast::Expression &expression, const ast::CallExpression &call,

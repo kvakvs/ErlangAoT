@@ -1,5 +1,7 @@
 #include "../semantic/records.hpp"
 #include "lowering_state.hpp"
+#include <erlang_aot/abi/equality.hpp>
+#include <stdexcept>
 
 namespace erlang_aot::codegen {
 namespace {
@@ -77,5 +79,27 @@ llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id) {
         return lower_integer(state, std::to_string(*semantic::record_field(layout, index->field) + 2));
     }
     return nullptr;
+}
+
+llvm::Value *lower_record_info(ExpressionLowering &state, const ast::Expression &expression) {
+    const auto info = semantic::record_info(state.module, expression);
+    if (!info) {
+        throw std::invalid_argument("lowering: record_info/2 call was not validated");
+    }
+    const auto &fields = info->layout.fields;
+    if (!info->fields) {
+        return lower_integer(state, std::to_string(fields.size() + 1));
+    }
+    auto *empty = llvm::ConstantInt::get(state.word, abi::v1::empty_list);
+    if (fields.empty()) {
+        return empty;
+    }
+    std::vector<llvm::Value *> values;
+    values.reserve(fields.size() + 1);
+    for (const auto &field : fields) {
+        values.push_back(lower_atom(state, field.name));
+    }
+    values.push_back(empty);
+    return lower_list(state, values);
 }
 } // namespace erlang_aot::codegen

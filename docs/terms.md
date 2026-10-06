@@ -134,7 +134,11 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   `Expr`, then checks arity and tag (`{badrecord, Value}` on mismatch, also for
   `Expr#r{}`) and builds a new tuple; the other fields are copied. `_ = V` is
   rejected in updates; updates are illegal in patterns and guards.
-- Not implemented: `record_info/2`, native/qualified/inferred forms.
+- `record_info(fields | size, r)` expands at compile time to the field-name list
+  or the tuple size. Both arguments must be literal atoms and `r` a tuple record
+  declared earlier; it is illegal in guards, and a local `record_info/2` is
+  rejected as already defined.
+- Not implemented: native/qualified/inferred forms.
 
 ## Comparison and order
 

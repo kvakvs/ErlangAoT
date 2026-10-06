@@ -173,6 +173,9 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
 }
 
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression) {
+    if (record_info_call(*module.syntax, expression.value)) {
+        return {};
+    }
     const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
     if (!record) {
         return expression_children(expression);

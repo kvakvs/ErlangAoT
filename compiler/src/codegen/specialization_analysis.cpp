@@ -1,5 +1,6 @@
 #include "specialization_analysis.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/records.hpp"
 #include "integer_guards.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
@@ -52,7 +53,7 @@ void observe(const semantic::Module &module, const semantic::Function &function,
         pending.pop_back();
         const auto &expression = syntax.expression(id);
         if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
-            call && !function.services.contains(&expression)) {
+            call && !function.services.contains(&expression) && !semantic::record_info_call(syntax, expression.value)) {
             const auto callee = inferred.callees.at(&expression);
             if (call->arguments.size() > work) {
                 break;
@@ -80,7 +81,8 @@ void trace_disabled(const Compilation &compilation, const std::span<const std::u
 }
 
 // Measure actual generic IR and recognize only checks implemented by the specialization rewriter.
-std::map<std::string, SpecializationInput> measurements(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules) {
+std::map<std::string, SpecializationInput>
+measurements(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     std::map<std::string, SpecializationInput> result;
     auto &outputs = detail::state(compilation).modules;
     for (std::size_t i = 0; i < modules.size(); ++i) {

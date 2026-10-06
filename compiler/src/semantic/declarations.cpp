@@ -56,6 +56,10 @@ void function(Module &module, const ast::FormId &id, const ast::Function &syntax
         report(module, &source, "function arity exceeds 255", out);
         return;
     }
+    if (key == FunctionKey{U"record_info", 2}) {
+        // OTP expands record_info/2 at compile time, so the module already defines it; index it anyway.
+        report(module, &source, "function record_info/2 already defined", out);
+    }
     if (!module.lookup.emplace(key, module.functions.size()).second) {
         report(module, &source, "duplicate function " + utf8(key.name) + "/" + std::to_string(key.arity), out);
         return;

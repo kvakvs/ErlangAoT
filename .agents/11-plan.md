@@ -653,11 +653,29 @@ Backlog: F17. Depends on: [9](#step-9).
 Backlog: F17. Depends on: [29](#step-29).
 
 - Success criteria
-  - [ ] `record_info(fields | size, r)` resolves at compile time; invalid uses
+  - [x] `record_info(fields | size, r)` resolves at compile time; invalid uses
     are diagnosed like OTP.
 - Tests
-  - [ ] Golden programs and CLI diagnostics for unknown records and non-literal
+  - [x] Golden programs and CLI diagnostics for unknown records and non-literal
     arguments.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP facts
+  (`erl_lint:check_record_info_call/4`, live OTP 29.1.1 probes): non-atom
+  arguments are `illegal record info` at the call, a selector other than
+  `fields`/`size` at the selector, any name that is not an earlier tuple
+  record (unknown, later or native) `record_info/2 is only supported for tuple
+  records`; illegal in guards; a local `record_info/2` is `already defined`;
+  `size` is the tuple arity. `semantic::record_info_call`/`record_info` resolve
+  every unqualified `record_info/2` call (parentheses ignored); it has no
+  executable children and is skipped by call resolution, inference and
+  specialization; `lower_record_info` emits the field-name list or the size
+  constant, `module_atoms` adds the field names. Defaults may use it. Not
+  matched: guard wording (`illegal guard call`), `fun record_info/2` is the
+  closures capability. OTP golden `executables_record_info` (empty record,
+  included record, defaults, parenthesized arguments, comparison with
+  `#r.f`, comprehension, case) passes all 8 combinations; 8 CLI cases in
+  `semantic/cases.cmake`. Fresh Windows x64 Debug (clang-cl): fast 164/164,
+  full `-j 12` 168/168 in 119 s; Lizard 0 warnings; tidy 42 changed units
+  pass. Logs `build/plan11-step29/*30*`.
  
 <a id="step-31"></a>
 

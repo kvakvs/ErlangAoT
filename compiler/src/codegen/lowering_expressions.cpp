@@ -1,5 +1,6 @@
 #include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/records.hpp"
 #include "../semantic/services.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
@@ -94,6 +95,9 @@ llvm::Value *body_builtin_value(ExpressionLowering &state, const semantic::Servi
 
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
+    if (semantic::record_info_call(*state.module.syntax, expression.value)) {
+        return lower_record_info(state, expression);
+    }
     const auto service = state.function.services.find(&expression);
     if (service == state.function.services.end()) {
         return lower_call(state, expression, call);

@@ -92,8 +92,8 @@
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
   access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
-  Updates evaluate values, then the record, check it, copy the other fields. `record_info/2` and
-  native/qualified/inferred records retain separate capability owners.
+  Updates evaluate values, then the record, check it, copy the other fields; `record_info/2` folds to
+  constants. Native/qualified/inferred records retain separate capability owners.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

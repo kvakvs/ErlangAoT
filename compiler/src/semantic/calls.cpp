@@ -1,5 +1,6 @@
 #include "calls.hpp"
 #include "capabilities.hpp"
+#include "records.hpp"
 #include <algorithm>
 
 namespace erlang_aot::semantic {
@@ -69,7 +70,7 @@ void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, co
         pending.pop_back();
         const auto &expression = syntax.expression(id);
         if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
-            call && !caller.function->services.contains(&expression)) {
+            call && !caller.function->services.contains(&expression) && !record_info_call(syntax, expression.value)) {
             if (const auto resolved = callee(caller, *call, modules, expression.source, out)) {
                 graph.calls.push_back({id, caller, *resolved});
             }

@@ -130,6 +130,22 @@ semantic_case(record_update_sibling "-module(a). -record(r, {a, b}). f(X) -> X#r
     "unbound variable Y")
 semantic_case(record_update_guard "-module(a). -record(r, {a}). f(X) when X#r{a = 1} =:= X -> X." 1
     "illegal guard expression")
+semantic_case(record_info "-module(a). -record(r, {a}). f() -> {record_info(fields, r), record_info(size, r)}." 0
+    "^$")
+semantic_case(record_info_selector "-module(a). -record(r, {a}). f() -> record_info(names, r)." 1
+    "record_info_selector.erl:1:49: illegal record info")
+semantic_case(record_info_variable "-module(a). -record(r, {a}). f(I) -> record_info(I, r)." 1 "illegal record info")
+semantic_case(record_info_name "-module(a). f(N) -> record_info(fields, N)." 1 "illegal record info")
+semantic_case(record_info_unknown "-module(a). f() -> record_info(fields, r)." 1
+    "record_info/2 is only supported for tuple records")
+semantic_case(record_info_later "-module(a). f() -> record_info(size, r). -record(r, {a})." 1
+    "record_info/2 is only supported for tuple records")
+semantic_case(record_info_native "-module(a). -record(#r{a}). f() -> record_info(size, r)." 1
+    "record_info/2 is only supported for tuple records")
+semantic_case(record_info_guard "-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
+    "illegal guard call")
+semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_info(A, B) -> {A, B}." 1
+    "function record_info/2 already defined")
 semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(transform "-module(a). -compile({parse_transform,x}). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(compile_nowarn "-module(a). -compile([nowarn_deprecated_catch, nowarn_unused_function]). f() -> 1." 0 "^$")

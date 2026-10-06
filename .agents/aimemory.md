@@ -242,6 +242,9 @@ Step facts beyond the plan record:
   input_manifest_sha256 = evidence.digest(corpus.json) must change with any corpus.json edit. Bash heredocs here
   collapse `\\` to `\`: write JSON/regex/edit scripts with Write into scratchpad. A killed session can leave the
   background gate running: check Get-Process ctest/cmake/ninja/python before rerunning.
+- 30: record_info/2 = compile-time pseudo-function: semantic::record_info_call (unqualified, 2 args) gates calls.cpp,
+  inference evaluate (top), specialization_analysis and codegen call_value; expression_children(module) returns {}
+  for it. A local record_info/2 definition is still indexed (skipping it crashed a later lookup).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
