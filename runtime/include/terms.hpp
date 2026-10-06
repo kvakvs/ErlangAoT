@@ -19,6 +19,10 @@
 namespace erlang_aot::runtime {
 class ContextLifetime;
 
+// Largest tuple arity, OTP's MAX_ARITYVAL (2^24 - 1); builtins building larger tuples raise badarg (plan 11 steps
+// 37-38), constructors report resource_limit.
+inline constexpr std::size_t MAX_TUPLE_ARITY = 16'777'215;
+
 // Bind process-owned constructors; atoms/booleans use the checked runtime-owned spelling table.
 // Raw small integers and empty containers remain available through Term::from_word.
 class TermFactory final {
@@ -49,8 +53,10 @@ class TermFactory final {
     TermResult<Term> list(std::span<const Term> elements);
     // Construct a proper or improper spine with an explicit final tail in one transaction.
     TermResult<Term> list(std::span<const Term> elements, const Term &tail);
-    // Construct a tuple, including the zero-element tuple.
+    // Construct a tuple, including the zero-element tuple, of at most MAX_TUPLE_ARITY elements.
     TermResult<Term> tuple(std::span<const Term> elements);
+    // Construct a tuple from ABI words, admitting each like Term::from_word; generated services avoid a Term per field.
+    TermResult<Term> tuple_words(std::span<const Word> elements);
     // Construct a map; the last input entry wins for an exactly equal key.
     TermResult<Term> map(std::span<const std::pair<Term, Term>> entries);
     // Copy bytes or an explicitly sized MSB-first sequence of bits.

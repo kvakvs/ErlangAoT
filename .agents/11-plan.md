@@ -1235,11 +1235,24 @@ BIFs such as `erlang:make_tuple/2` and `list_to_tuple/1` fail with `badarg`
 (observed under OTP 29.1.1). ErlangAoT stops at 1,000,000.
 
 - Success criteria
-  - [ ] Tuples up to 16,777,215 elements build; the limit lives in one place
+  - [x] Tuples up to 16,777,215 elements build; the limit lives in one place
     for the later builtin families (steps 37-38) to raise `badarg`.
 - Tests
-  - [ ] Runtime test at the boundary (arity 16,777,215 accepted, one more
+  - [x] Runtime test at the boundary (arity 16,777,215 accepted, one more
     refused); `differences.md` row removed.
+- Evidence (2026-10-06): public `MAX_TUPLE_ARITY` (16,777,215, OTP
+  `MAX_ARITYVAL`) next to `TermFactory` in `runtime/include/terms.hpp`;
+  `TermFactory::tuple` and the new `tuple_words` refuse more with
+  `resource_limit` before allocating; a `static_assert` proves the arity fits
+  the 25-bit header count of 32-bit targets. The construction service builds
+  tuples from words through `tuple_words` (a `Term` is 48 bytes, so a
+  `vector<Term>` of the largest tuple would take about 800 MB).
+  `runtime_containers` `tuple_arity`: the service refuses 16,777,216 fields
+  (heap untouched) and builds 16,777,215 (fields read back); the test now
+  takes 13.4 s in Debug. `differences.md` had no tuple row (the plan text
+  assumed one); `docs/terms.md` states the limit. Fresh Windows x64 Debug
+  (clang-cl): fast 160/160, full `-j 12` 164/164 (121 s); Lizard 0
+  warnings; tidy 51 changed units pass. Logs `build/plan11-step27c/`.
 
 <a id="step-27d"></a>
 

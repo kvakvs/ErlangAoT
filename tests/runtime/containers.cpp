@@ -108,6 +108,30 @@ void long_lists(Runtime &runtime) {
     require(runtime.destroy_context(&context) == Status::ok, "long list context teardown failed");
 }
 
+// Tuples hold up to OTP's 16,777,215 elements (plan 11 step 27C); the construction service refuses one more with
+// resource_limit before allocating.
+void tuple_arity(Runtime &runtime) {
+    auto &context = *runtime.create_context().value();
+    std::vector<Word> words(MAX_TUPLE_ARITY + 1, encode_integer(5).value());
+    const auto construct = [&](std::size_t count, Word &output) {
+        GeneratedInvocation invocation(context.generated_calls());
+        const auto outcome = erlang_aot_construct_v1(
+            &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::tuple), words.data(), count,
+            &output);
+        const auto failure = context.generated_calls().failure();
+        return outcome == 0 ? Status::ok : failure ? failure->status.value_or(Status::internal_error) : Status::busy;
+    };
+    Word refused = 0;
+    require(construct(words.size(), refused) == Status::resource_limit && context.heap().used_words() == 0,
+            "tuple above the arity limit accepted");
+    Word largest = 0;
+    require(construct(MAX_TUPLE_ARITY, largest) == Status::ok, "tuple at the arity limit refused");
+    const auto tuple = Term::from_word(largest, context).value();
+    require(tuple.tuple_size() == MAX_TUPLE_ARITY && tuple.tuple_element(MAX_TUPLE_ARITY - 1)->integer_value() == 5,
+            "largest tuple lost fields");
+    require(runtime.destroy_context(&context) == Status::ok, "tuple context teardown failed");
+}
+
 // Foreign or out-of-heap words never reach a header read; expiration denies access while safely pinning storage.
 void ownership(Runtime &runtime, ProcessContext &context, const Term &value) {
     auto &other = *runtime.create_context().value();
@@ -129,6 +153,7 @@ int main() {
         failure_payload(context, value);
         unbounded_comparison(context);
         long_lists(*runtime);
+        tuple_arity(*runtime);
         ownership(*runtime, context, value);
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

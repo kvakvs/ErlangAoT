@@ -59,6 +59,10 @@ TermResult<Term> reverse(ProcessContext &context, std::span<const Term> terms) {
 
 // Validate all input ownership before invoking a transactional factory; the tuple factory checks the arity.
 TermResult<Term> construct(ProcessContext &context, Construct operation, std::span<const Word> values) {
+    TermFactory factory(context);
+    if (operation == Construct::tuple) {
+        return factory.tuple_words(values);
+    }
     std::vector<Term> terms;
     terms.reserve(values.size());
     for (const auto value : values) {
@@ -67,10 +71,6 @@ TermResult<Term> construct(ProcessContext &context, Construct operation, std::sp
             return std::unexpected(term.error());
         }
         terms.push_back(*term);
-    }
-    TermFactory factory(context);
-    if (operation == Construct::tuple) {
-        return factory.tuple(terms);
     }
     if (operation == Construct::reverse) {
         return reverse(context, terms);

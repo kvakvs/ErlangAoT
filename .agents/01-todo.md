@@ -123,7 +123,8 @@ Plan: [23](11-plan.md#step-23), [27B](11-plan.md#step-27b), [27C](11-plan.md#ste
 - [x] Layouts, improper lists, exact map keys; checked construction, access,
   updates and matching compared with OTP.
 - [x] No list length cap and no comparison work cap (27B).
-- [ ] Tuple arity limit of OTP (27C); no map size or key-work caps (27D).
+- [x] Tuple arity limit of OTP, 16,777,215 (27C).
+- [ ] No map size or key-work caps (27D).
 - [ ] GC/copying integration (F04/F05); more list operations via F26.
 
 ### F09 — Binaries and bitstrings

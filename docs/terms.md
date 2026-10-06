@@ -70,8 +70,9 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 
 - Tuple: arity header + fields. Cons: head + tail words. `{}` and `[]` are
   immediates. Strings are lists of code points. Lists have no length cap
-  beyond memory (an optional heap budget included); tuples hold up to
-  1,000,000 elements.
+  beyond memory (an optional heap budget included). Tuples hold up to
+  16,777,215 elements (`MAX_TUPLE_ARITY`, OTP's `MAX_ARITYVAL`); constructors
+  report a larger one as `resource_limit`, builtins will raise `badarg`.
 - Services: `hd`, `tl`, `length`, `tuple_size`, `size`, one-based `element`.
 
 ## Maps

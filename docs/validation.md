@@ -168,6 +168,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-06 | Plan 11 step 27 heap exhaustion after collection | 162 (158 fast) | 50 changed | Fast 158/158; full `-j 12` 162/162 in 108 s; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27 correction: no default memory caps | 162 (158 fast) | 50 changed | Full `-j 12` 158/162 in 120 s, 4 `codegen_failure_*` fixed by expecting `out_of_memory`, then 10/10 affected; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27 follow-up: no binary or process-count caps, `--max-atoms` | 164 (160 fast) | 281 | Fast 160/160; full `-j 12` 164/164 in 105 s; Lizard 0 warnings; tidy-all passed |
+| 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27B no list length or comparison work caps | 164 (160 fast) | 4 changed | Fast 160/160; full `-j 12` 164/164 in 125 s; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27A runtime-wide memory limit and `--max-heap/stack/memory` | 164 (160 fast) | 49 changed | Fast 160/160; full `-j 12` 164/164 in 118 s; after a tidy fix in `ProcessStack::grow`, 42 affected tests pass; Lizard 0 warnings; tidy passed |
 

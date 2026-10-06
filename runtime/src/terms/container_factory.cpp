@@ -23,9 +23,21 @@ TermError heap_error(HeapError error) {
     return error == HeapError::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
 }
 
-// Publish the initialized tuple header and fields as a single immutable object.
+// Every tuple arity fits the header's word count on 32-bit targets too.
+static_assert(MAX_TUPLE_ARITY <= static_cast<Word>(~Word{0}) >> detail::layout::BoxHeader::CONTENT_SHIFT);
+
+// The ABI word of a tuple field given as a Term or as a word.
+Word word_of(const Term &value) { return value.word(); }
+
+Word word_of(Word value) { return value; }
+
+// Publish the initialized tuple header and fields of validated elements as a single immutable object.
+template <typename Element>
 TermResult<Term> tuple(ProcessHeap &heap, const std::shared_ptr<detail::HeapStorage> &storage,
-                       std::span<const Term> elements) {
+                       std::span<const Element> elements) {
+    if (elements.empty()) {
+        return Term::from_word(abi::v1::empty_tuple);
+    }
     auto reserved = heap.reserve(elements.size() + 1);
     if (!reserved) {
         return std::unexpected(heap_error(reserved.error()));
@@ -33,7 +45,7 @@ TermResult<Term> tuple(ProcessHeap &heap, const std::shared_ptr<detail::HeapStor
     auto *words = ::new (reserved->bytes().data()) Word[elements.size() + 1]{};
     words[0] = detail::layout::BoxHeader::make(BoxedKind::tuple, elements.size());
     for (std::size_t i = 0; i < elements.size(); ++i) {
-        words[i + 1] = elements[i].word();
+        words[i + 1] = word_of(elements[i]);
     }
     return detail::publish(storage, *reserved,
                            reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
@@ -76,14 +88,27 @@ TermResult<Term> TermFactory::tuple(std::span<const Term> elements) {
     if (!owner) {
         return std::unexpected(owner.error());
     }
-    if (elements.size() > 1'000'000) {
+    if (elements.size() > MAX_TUPLE_ARITY) {
         return std::unexpected(TermError::resource_limit);
     }
     if (const auto checked = validate(**owner, elements); !checked) {
         return std::unexpected(checked.error());
     }
-    if (elements.empty()) {
-        return Term::from_word(abi::v1::empty_tuple);
+    return runtime::tuple(**owner, (*owner)->storage_, elements);
+}
+
+TermResult<Term> TermFactory::tuple_words(std::span<const Word> elements) {
+    const auto owner = heap();
+    if (!owner) {
+        return std::unexpected(owner.error());
+    }
+    if (elements.size() > MAX_TUPLE_ARITY) {
+        return std::unexpected(TermError::resource_limit);
+    }
+    for (const auto element : elements) {
+        if (const auto admitted = Term::from_word(element, (*owner)->owner_); !admitted) {
+            return std::unexpected(admitted.error());
+        }
     }
     return runtime::tuple(**owner, (*owner)->storage_, elements);
 }
