@@ -4,7 +4,6 @@
 #include <process_heap.hpp>
 
 namespace erlang_aot::runtime::detail {
-inline constexpr std::size_t bit_limit = 1'000'000;
 
 struct BitView {
     // Borrow only while the checked source Term retains the live owning heap cell.

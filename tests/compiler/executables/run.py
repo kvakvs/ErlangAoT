@@ -2,6 +2,7 @@
 import argparse
 import difflib
 import json
+import os
 import pathlib
 import re
 import shutil
@@ -49,10 +50,17 @@ def stdout_problem(expected, actual):
     return 'stdout differs:\n' + '\n'.join(lines)
 
 
+def environment(run):
+    """The host environment without inherited runtime flags, plus the run's own 'env' entries."""
+    inherited = {name: value for name, value in os.environ.items() if name.upper() != 'ERLANG_AOT_FLAGS'}
+    return inherited | run.get('env', {})
+
+
 def compare(executable, run):
     """Runs one golden invocation; returns readable mismatch descriptions (empty when it matches)."""
     try:
-        result = subprocess.run([executable, *run['args']], capture_output=True, timeout=60, check=False)
+        result = subprocess.run([executable, *run['args']], capture_output=True, timeout=60, check=False,
+                                env=environment(run))
     except subprocess.TimeoutExpired:
         return ['timed out after 60 s']
     stdout, stderr = text(result.stdout), text(result.stderr)

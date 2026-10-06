@@ -64,7 +64,7 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `scheduler/` | Process records/transitions, execution boundary | `state`, `registry`, `transitions`, `services` |
 | `builtins/` | Generic registry, checked invocation/ABI bridge; standard output and `erlang_aot_display_v1` | `registry`, `invocation`, `bridge`, `output`; known-BIF catalog: canonical API `builtins.hpp` |
 | `modules/` | Code pins, publication, descriptors, atom bindings | `code_server`, `registration`, `atoms`, `services` |
-| `startup/` | Program startup `erlang_aot_main_v1` (ABI checks, registration, entry, exit status, uncaught class/reason report), argv decoding, `erlang_aot_halt_v1` | `startup` (+ private `startup.hpp`), `arguments`, `halt` |
+| `startup/` | Program startup `erlang_aot_main_v1` (ABI checks, registration, entry, exit status, uncaught class/reason report), argv decoding, runtime options (`--max-atoms`, `--args-file` placeholder, `--`, `ERLANG_AOT_FLAGS`), `erlang_aot_halt_v1` | `startup` (+ private `startup.hpp`), `arguments`, `options`, `halt` |
 | `diagnostics/` | Runtime feature reporting | `features` |
 
 ## Build, support, evidence

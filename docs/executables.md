@@ -48,13 +48,36 @@ entry = "app:start"   # calls app:start/1; plain "app" calls app:main/1
 ## Arguments
 
 `Entry(Argv)` receives a proper list of strings (lists of Unicode code points),
-excluding the program name, unchanged and in order, like `escript`.
+excluding the program name and the leading [runtime options](#runtime-options),
+otherwise unchanged and in order, like `escript`.
 
 - POSIX: each argument's bytes are decoded as UTF-8; a byte that does not start
   a valid sequence becomes the code point of that byte (Latin-1 fallback).
 - Windows: the CRT's wide (UTF-16) argument vector, split by the same rules as
   `argv`; an unpaired surrogate becomes U+FFFD.
-- No option parsing, globbing or environment expansion happens in the runtime.
+- No other option parsing, globbing or environment expansion happens in the
+  runtime.
+
+## Runtime options
+
+The runtime reads its options from the `ERLANG_AOT_FLAGS` environment variable
+(words split on spaces and tabs, no quoting) and then from the leading
+command-line arguments, so the command line wins. Both are parsed the same
+way; a value goes in the next argument or after `=`.
+
+| Option | Effect |
+| --- | --- |
+| `--max-atoms N` | Atom table size, 1 to 2^26 (67,108,864); default 2^20 (1,048,576), like OTP's `+t` |
+| `--args-file FILE` | Options file like OTP's `vm.args`: reserved, reports `runtime option --args-file is not implemented` |
+| `--` | Ends the runtime options; the following arguments all go to `Entry` |
+
+On the command line, parsing stops at the first argument that is not a runtime
+option, so `prog data --max-atoms 9` passes all three arguments to the program.
+In `ERLANG_AOT_FLAGS` every word must be a runtime option. An invalid value, a
+word that is not an option in the variable, or `--args-file` stops the program
+before any module is registered: `erlangaot: runtime failure: <reason>`,
+exit 70. Process counts are not limited and memory is uncapped by default;
+program-facing memory caps are planned (plan 11 step 27A).
 
 ## Exit status
 

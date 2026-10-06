@@ -1,7 +1,9 @@
 #include "startup.hpp"
 #include "terms.hpp"
+#include <algorithm>
 #include <array>
 #include <cstdint>
+#include <span>
 #include <stdexcept>
 #include <string_view>
 #include <vector>
@@ -120,10 +122,11 @@ TermResult<Term> string_term(TermFactory &factory, const Points &points) {
 }
 } // namespace
 
-TermResult<Term> program_arguments(ProcessContext &context, int argc, char **argv) {
+TermResult<Term> program_arguments(ProcessContext &context, int argc, char **argv, std::size_t skip) {
     TermFactory factory(context);
     std::vector<Term> strings;
-    for (const auto &points : native_arguments(argc, argv)) {
+    const auto arguments = native_arguments(argc, argv);
+    for (const auto &points : std::span(arguments).subspan(std::min(skip, arguments.size()))) {
         const auto string = string_term(factory, points);
         if (!string) {
             return string;

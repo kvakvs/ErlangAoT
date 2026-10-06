@@ -23,8 +23,10 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
 [runtime.hpp](../runtime/include/erlang_aot/runtime/runtime.hpp):
 
 - `Runtime::start(options)` → `std::expected<std::unique_ptr<Runtime>, Status>`.
-  Defaults: 1,024 contexts, current ABI version and native term width,
-  `max_atoms` 2^20.
+  Defaults: current ABI version and native term width, `max_atoms` 2^20
+  (at most 2^26; programs set it with `--max-atoms`,
+  [runtime options](executables.md#runtime-options)). The number of contexts
+  is not limited.
 - `create_context(heap_options, stack_options)` → borrowed `ProcessContext*`,
   stable until destroyed. Heap defaults: 233-word minimum heap
   (`min_heap_words`) and no memory cap (`limit_bytes` =

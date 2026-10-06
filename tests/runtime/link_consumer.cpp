@@ -32,7 +32,7 @@ void require(bool condition, const char *message) {
 
 // Rejected startup and context options must leave valid subsequent admission usable.
 void invalid_options(Runtime &runtime) {
-    require(Runtime::start({0}) == std::unexpected(Status::invalid_argument), "zero context limit accepted");
+    require(Runtime::start({.max_atoms = 0}) == std::unexpected(Status::invalid_argument), "zero atom limit accepted");
     RuntimeOptions options;
     ++options.abi_version;
     require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "ABI version mismatch accepted");
@@ -184,7 +184,7 @@ void stop_dispatch(Runtime &runtime, ProcessContext &context) {
 
 // Copies and callable pins survive their source runtime while context tokens become dead.
 void workflow() {
-    auto runtime = Runtime::start({2}).value();
+    auto runtime = Runtime::start().value();
     auto foreign = Runtime::start().value();
     invalid_options(*runtime);
     auto *source = runtime->create_context().value();
@@ -195,7 +195,8 @@ void workflow() {
     require(&source->heap() != &destination->heap() && &source->mailbox() != &destination->mailbox(), "owners alias");
     require(runtime->destroy_context(other) == Status::wrong_owner, "foreign context destroyed");
     require(runtime->context_count() == 2 && foreign->context_count() == 1, "foreign rejection changed ownership");
-    require(runtime->create_context() == std::unexpected(Status::resource_limit), "admission limit ignored");
+    // The number of contexts is not limited.
+    require(runtime->destroy_context(runtime->create_context().value()) == Status::ok, "third context refused");
     auto target = install(*runtime);
     require(!foreign->code_server()->find_module("consumer"), "module escaped runtime");
     scheduled_calls(*runtime, *destination, target);

@@ -1,0 +1,129 @@
+#include "startup.hpp"
+#include <algorithm>
+#include <charconv>
+#include <cstdlib>
+#include <memory>
+#include <optional>
+#include <span>
+#include <vector>
+
+namespace erlang_aot::runtime::detail {
+namespace {
+// Environment variable whose words are parsed like the leading command-line arguments.
+constexpr const char *FLAGS_VARIABLE = "ERLANG_AOT_FLAGS";
+
+// The value of an option and how many arguments carried it.
+struct OptionValue {
+    std::string_view value;
+    std::size_t used;
+};
+
+// Read an environment variable through the platform CRT; an unset variable reads as empty.
+std::string environment(const char *name) {
+#ifdef _WIN32
+    char *buffer = nullptr;
+    std::size_t size = 0;
+    const auto error = _dupenv_s(&buffer, &size, name);
+    const std::unique_ptr<char, decltype(&std::free)> value(buffer, &std::free);
+    return error == 0 && value ? std::string(value.get()) : std::string();
+#else
+    const auto *value = std::getenv(name);
+    return value ? std::string(value) : std::string();
+#endif
+}
+
+// Split on spaces and tabs; there is no quoting.
+std::vector<std::string> words(std::string_view text) {
+    std::vector<std::string> result;
+    for (std::size_t at = 0; at < text.size();) {
+        const auto begin = text.find_first_not_of(" \t", at);
+        if (begin == std::string_view::npos) {
+            break;
+        }
+        const auto end = std::min(text.find_first_of(" \t", begin), text.size());
+        result.emplace_back(text.substr(begin, end - begin));
+        at = end;
+    }
+    return result;
+}
+
+// Match `name=value` or `name value` at `at`; nothing when the argument is another one.
+std::optional<OptionValue> match(std::span<const std::string> args, std::size_t at, std::string_view name) {
+    const std::string_view argument = args[at];
+    if (argument == name) {
+        return at + 1 < args.size() ? OptionValue{args[at + 1], 2} : OptionValue{{}, 1};
+    }
+    if (argument.size() > name.size() && argument.starts_with(name) && argument[name.size()] == '=') {
+        return OptionValue{argument.substr(name.size() + 1), 1};
+    }
+    return std::nullopt;
+}
+
+// Parse an atom table size: a decimal from 1 to AtomStorage::hard_limit.
+std::expected<std::uint32_t, std::string> atom_limit(std::string_view text) {
+    std::uint64_t value = 0;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (error != std::errc{} || end != text.data() + text.size() || value == 0 || value > AtomStorage::hard_limit) {
+        return std::unexpected("invalid --max-atoms value '" + std::string(text) + "' (1 to " +
+                               std::to_string(AtomStorage::hard_limit) + ")");
+    }
+    return static_cast<std::uint32_t>(value);
+}
+
+// Apply the option at `at` and return how many arguments it used; 0 when it is not a runtime option.
+std::expected<std::size_t, std::string> apply(std::span<const std::string> args, std::size_t at,
+                                              RuntimeOptions &options) {
+    if (const auto atoms = match(args, at, "--max-atoms")) {
+        const auto limit = atom_limit(atoms->value);
+        if (!limit) {
+            return std::unexpected(limit.error());
+        }
+        options.max_atoms = *limit;
+        return atoms->used;
+    }
+    // Entry point for a vm.args-like options file; reading it is not implemented yet.
+    if (match(args, at, "--args-file")) {
+        return std::unexpected(std::string("runtime option --args-file is not implemented"));
+    }
+    return 0;
+}
+
+// Apply leading runtime options until another argument; `--` ends them and is used too.
+std::expected<std::size_t, std::string> apply_all(std::span<const std::string> args, RuntimeOptions &options) {
+    std::size_t at = 0;
+    while (at < args.size() && args[at] != "--") {
+        const auto used = apply(args, at, options);
+        if (!used) {
+            return std::unexpected(used.error());
+        }
+        if (*used == 0) {
+            return at;
+        }
+        at += *used;
+    }
+    return at < args.size() ? at + 1 : at;
+}
+} // namespace
+
+std::expected<ProgramOptions, std::string> program_options(int argc, char **argv) {
+    ProgramOptions result;
+    const auto flags = words(environment(FLAGS_VARIABLE));
+    const auto from_environment = apply_all(flags, result.runtime);
+    if (!from_environment) {
+        return std::unexpected(from_environment.error());
+    }
+    if (*from_environment != flags.size()) {
+        return std::unexpected(std::string(FLAGS_VARIABLE) + ": not a runtime option: " + flags[*from_environment]);
+    }
+    std::vector<std::string> arguments;
+    for (int i = 1; i < argc && argv; ++i) {
+        arguments.emplace_back(argv[i] ? argv[i] : "");
+    }
+    const auto used = apply_all(arguments, result.runtime);
+    if (!used) {
+        return std::unexpected(used.error());
+    }
+    result.consumed = *used;
+    return result;
+}
+} // namespace erlang_aot::runtime::detail

@@ -5,12 +5,13 @@
 #include <bit>
 #include <cmath>
 #include <erlang_aot/runtime/process_context.hpp>
+#include <limits>
 
 namespace erlang_aot::runtime::detail {
 namespace {
-// Grow packed staging storage only within the shared per-value work/bit ceiling.
+// Grow packed staging storage; only a bit count past the address range is refused (no size cap).
 TermResult<void> grow(BitWriter &writer, std::size_t count) {
-    if (count > bit_limit - writer.length) {
+    if (count > std::numeric_limits<std::size_t>::max() - 7 - writer.length) {
         return std::unexpected(TermError::resource_limit);
     }
     writer.bytes.resize((writer.length + count + 7) / 8);
@@ -86,14 +87,16 @@ TermResult<void> BitWriter::integer(const Integer &value, std::size_t count, boo
     if (!grown) {
         return grown;
     }
-    Integer bits = value;
-    if (bits < 0) {
-        bits = integer_sum(bits, power(std::max(count, integer_bits(bits) + 1)), false);
-    }
+    // Two's complement of a negative value: bit i is the inverse of bit i of -(value + 1), so no integer as wide as
+    // the segment is built.
+    const bool negative = value < 0;
+    const Integer bits = negative ? Integer(-integer_sum(value, 1, false)) : value;
+    const auto significant = integer_bits(bits);
     for (std::size_t i = 0; i < count; ++i) {
         const auto group = i / 8 * 8;
         const auto index = little ? group + std::min(std::size_t{8}, count - group) - 1 - i % 8 : count - 1 - i;
-        put(*this, boost::multiprecision::bit_test(bits, static_cast<unsigned>(index)));
+        const bool set = index < significant && boost::multiprecision::bit_test(bits, static_cast<unsigned>(index));
+        put(*this, set != negative);
     }
     return {};
 }

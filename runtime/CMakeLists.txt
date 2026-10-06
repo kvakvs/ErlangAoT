@@ -14,7 +14,8 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/terms/term_text.cpp src/terms/term_text_scalars.cpp
     src/terms/atoms.cpp src/terms/atom_spelling.cpp src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp src/terms/equality.cpp src/terms/immediate_order.cpp src/terms/immediate_services.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp src/builtins/output.cpp
-    src/startup/startup.cpp src/startup/arguments.cpp src/startup/halt.cpp
+    src/startup/startup.cpp src/startup/arguments.cpp src/startup/options.cpp
+    src/startup/halt.cpp
     src/modules/atoms.cpp src/modules/services.cpp src/modules/code_server.cpp src/modules/registration.cpp)
 # List review headers for IDE navigation; they are not separate compilation units.
 target_sources(erlang_runtime PRIVATE

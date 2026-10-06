@@ -88,7 +88,6 @@ void budgets() {
     auto &context = *runtime->create_context({32, 64 * sizeof(Word)}).value();
     TermFactory factory(context);
     require(factory.bitstring({}, 1) == std::unexpected(TermError::invalid_argument), "short host input accepted");
-    require(factory.bitstring({}, 1'000'001) == std::unexpected(TermError::resource_limit), "bit ceiling ignored");
     const auto large = std::vector(1024, std::byte{0});
     require(factory.binary(large) == std::unexpected(TermError::resource_limit), "shared backing escaped heap budget");
     require(context.heap().used_words() == 0 && context.heap().capacity_words() == 0, "failed binary retained storage");

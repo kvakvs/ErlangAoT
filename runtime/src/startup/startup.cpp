@@ -83,9 +83,9 @@ int failed_entry(const CallFailure &failure, bool escript) {
     return escript ? abi::v1::exit_escript_uncaught : abi::v1::exit_uncaught;
 }
 
-// Build argv, resolve the arity-1 entry and run it to completion in the first context.
-int call_entry(ProcessContext &context, const StartupDescriptor &startup, int argc, char **argv) {
-    const auto arguments = program_arguments(context, argc, argv);
+// Build argv without the runtime options, resolve the arity-1 entry and run it to completion in the first context.
+int call_entry(ProcessContext &context, const StartupDescriptor &startup, int argc, char **argv, std::size_t skip) {
+    const auto arguments = program_arguments(context, argc, argv, skip);
     if (!arguments) {
         return runtime_failure("cannot build the argument list");
     }
@@ -101,7 +101,7 @@ int call_entry(ProcessContext &context, const StartupDescriptor &startup, int ar
 }
 
 // Register every module before the entry runs; a failure discards the whole runtime before entry.
-int run_program(Runtime &runtime, const StartupDescriptor &startup, int argc, char **argv) {
+int run_program(Runtime &runtime, const StartupDescriptor &startup, int argc, char **argv, std::size_t skip) {
     for (const auto *module : std::span(startup.modules, startup.module_count)) {
         if (!register_module(runtime, *module)) {
             return runtime_failure("cannot register module " + std::string(module->name, module->name_size));
@@ -111,7 +111,7 @@ int run_program(Runtime &runtime, const StartupDescriptor &startup, int argc, ch
     if (!context) {
         return runtime_failure("cannot create the entry process: " + status_name(context.error()));
     }
-    const int status = call_entry(**context, startup, argc, argv);
+    const int status = call_entry(**context, startup, argc, argv, skip);
     const auto destroyed = runtime.destroy_context(*context);
     return destroyed == Status::ok ? status : runtime_failure("entry process teardown: " + status_name(destroyed));
 }
@@ -121,11 +121,15 @@ int run(const StartupDescriptor &startup, int argc, char **argv) {
     if (!compatible(startup)) {
         return runtime_failure("startup ABI mismatch (rebuild objects and runtime together)");
     }
-    auto runtime = Runtime::start();
+    const auto options = program_options(argc, argv);
+    if (!options) {
+        return runtime_failure(options.error());
+    }
+    auto runtime = Runtime::start(options->runtime);
     if (!runtime) {
         return runtime_failure("cannot start the runtime: " + status_name(runtime.error()));
     }
-    const int status = run_program(**runtime, startup, argc, argv);
+    const int status = run_program(**runtime, startup, argc, argv, options->consumed);
     const auto stopped = (*runtime)->shutdown();
     std::fflush(stdout);
     return stopped == Status::ok ? status : runtime_failure("shutdown: " + status_name(stopped));

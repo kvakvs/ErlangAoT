@@ -9,9 +9,8 @@ namespace erlang_aot::runtime {
 class SchedulerService;
 
 struct RuntimeOptions {
-    // Bound live context owners independently of future heap and atom budgets.
-    std::size_t max_contexts = 1024;
-    // Bound retained UTF-8 atom entries; no atom garbage collection runs in this slice.
+    // Bound retained UTF-8 atom entries (default 2^20, at most 2^26, programs set it with --max-atoms); no atom
+    // garbage collection runs in this slice.
     std::uint32_t max_atoms = AtomStorage::default_limit;
     // Reject a caller built for a different project ABI before publishing runtime state.
     std::uint32_t abi_version = abi::v1::version;

@@ -35,7 +35,7 @@ std::expected<std::unique_ptr<Runtime>, Status> Runtime::start(RuntimeOptions op
     if (options.abi_version != abi::v1::version || options.term_bits != sizeof(abi::v1::TermWord) * 8) {
         return std::unexpected(Status::abi_mismatch);
     }
-    if (options.max_contexts == 0 || options.max_atoms == 0 || options.max_atoms > AtomStorage::hard_limit) {
+    if (options.max_atoms == 0 || options.max_atoms > AtomStorage::hard_limit) {
         return std::unexpected(Status::invalid_argument);
     }
     const auto identity = reserve_identity();

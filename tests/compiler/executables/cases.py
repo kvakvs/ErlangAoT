@@ -28,6 +28,8 @@ def load(case_dir):
     assert isinstance(golden.get('entry'), str), f'{case_dir.name}: golden needs an entry module'
     assert golden.get('runs'), f'{case_dir.name}: golden needs at least one run'
     assert all(isinstance(arg, str) for run in golden['runs'] for arg in run['args']), case_dir.name
+    # OTP never sees a run's environment, so only authored runs may set one.
+    assert all(run.get('authored') for run in golden['runs'] if 'env' in run), f'{case_dir.name}: env needs authored'
     return golden
 
 

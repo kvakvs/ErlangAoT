@@ -213,6 +213,9 @@ Step facts beyond the plan record:
   (bit_limit = 1,000,000 bits per value); BitWriter::append got a byte-aligned copy (was bit-by-bit, 330 us/8 KiB).
   erlfmt: escript with code:add_path + erlfmt:format_file returns {ok, IoData, []}: write it back yourself
   (scratch fmt.escript). Never `cat > file` without heredoc: hangs on stdin.
+- 27 follow-up: no binary size cap, no context-count cap, atoms 2^20 default / --max-atoms <= 2^26 via
+  startup/options (argv + ERLANG_AOT_FLAGS, `--` ends, --args-file notimpl). RuntimeOptions{2} positional init
+  now means max_atoms (max_contexts field removed): use designated initializers. Golden runs may set `env`.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

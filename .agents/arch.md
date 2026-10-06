@@ -212,6 +212,7 @@
 - Startup: a resolved entry sets `CompilationRequest::startup`; `codegen/startup` appends a
   module (after the inputs, no syntax; artifact `eav1_start`) whose `main` hands a
   `StartupDescriptor` to runtime `erlang_aot_main_v1`. The runtime ABI-checks all descriptors,
+  parses runtime options (`ERLANG_AOT_FLAGS`, then leading `--max-atoms`/`--args-file`/`--`, `startup/options`),
   registers every module before entry, builds argv, runs the entry in one context and maps
   return/halt/exception/infrastructure outcomes to exit 0/N/1|127/70. `erlang:halt/0,1` records
   `CallError::halted` in the checked channel, so halts unwind like errors.

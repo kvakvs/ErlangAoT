@@ -1118,6 +1118,26 @@ Backlog: F04. Depends on: [26](#step-26).
   10/10; Lizard 0 warnings; tidy 50 changed units pass. Logs
   `build/plan11-step27-uncapped/`.
 
+- Follow-up (2026-10-06, user direction): no other default limits. Removed the
+  1,000,000-bit binary cap (only an optional heap budget limits a binary;
+  `grow`/`binary` keep address-range overflow checks; wide negative integer
+  segments invert bits of -(V+1) instead of building a segment-wide integer)
+  and the 1,024 process-count limit (`RuntimeOptions::max_contexts` gone).
+  Printed text keeps its 64 MiB cap. Atoms keep 2^20 by default; programs
+  raise it up to 2^26 with `--max-atoms N` (or `=N`) as a leading argument or
+  in `ERLANG_AOT_FLAGS` (same parser, command line last); `--` ends runtime
+  options; `--args-file FILE` is a reserved vm.args-like entry point that
+  reports not implemented (`startup/options`, `docs/executables.md`). Golden
+  runner gained `runs[].env` (authored runs only; inherited
+  `ERLANG_AOT_FLAGS` dropped). Tests: `executables_runtime_options` (OTP runs
+  without options; authored option, `--`, invalid value, too-small table,
+  `--args-file`, environment, override and stray-word runs),
+  `executables_large_binaries` (1 MiB binary, 1,000,008-bit integer segments
+  incl. negative and little-endian, OTP-generated); `link_consumer` admits a
+  third context. Fresh Windows x64 Debug (clang-cl): fast CTest 160/160,
+  full `-j 12` 164/164 (105 s); Lizard 0 warnings; tidy all 281 units pass
+  (runtime CMake changed). Logs `build/plan11-step27-limits/`.
+
 <a id="step-27a"></a>
 
 ### 27A. Runtime-wide memory limit and program-facing caps
@@ -1127,8 +1147,9 @@ correction.
 
 Add an optional runtime-wide (per-application) memory limit, uncapped by
 default, accounting heap blocks, fragments, off-heap buffers and stacks of all
-processes; and let programs set the per-process and runtime-wide caps (a
-startup or link option), all uncapped unless set.
+processes; and let programs set the per-process and runtime-wide caps as
+runtime options (`startup/options`: command line and `ERLANG_AOT_FLAGS`, like
+`--max-atoms`), all uncapped unless set.
 
 - Success criteria
   - [ ] With no option set, no process or runtime cap applies.

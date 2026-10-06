@@ -89,7 +89,8 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   inline in a heap binary sized to the data; larger values use a shared
   immutable buffer outside the heap, viewed by off-heap binary cells that
   extracted tails share. The buffer is charged once to the creating process.
-  Max 1,000,000 bits.
+  There is no size cap beyond an optional process heap budget; integer
+  segments are written without building an integer as wide as the segment.
 - Construction stages all segments before publishing. Integer segments truncate;
   native endianness comes from the target data layout.
 - Float segments: widths 16/32/64; construction may encode infinity, but

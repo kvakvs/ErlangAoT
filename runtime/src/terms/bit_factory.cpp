@@ -4,6 +4,7 @@
 #include "term_layout.hpp"
 #include "terms.hpp"
 #include <algorithm>
+#include <limits>
 #include <new>
 
 namespace erlang_aot::runtime::detail {
@@ -77,10 +78,7 @@ TermResult<Term> BitAccess::shared_binary(ProcessHeap &heap, std::span<const std
 }
 
 TermResult<Term> BitAccess::make(ProcessHeap &heap, std::span<const std::byte> bytes, std::size_t count) {
-    if (count > bit_limit) {
-        return std::unexpected(TermError::resource_limit);
-    }
-    const auto size = (count + 7) / 8;
+    const auto size = count / 8 + (count % 8 != 0 ? 1 : 0);
     if (size > bytes.size()) {
         return std::unexpected(TermError::invalid_argument);
     }
@@ -122,7 +120,8 @@ TermResult<Term> BitAccess::slice(ProcessHeap &heap, const Term &source, std::si
 
 namespace erlang_aot::runtime {
 TermResult<Term> TermFactory::binary(std::span<const std::byte> bytes) {
-    if (bytes.size() > detail::bit_limit / 8) {
+    // Only a size whose bit count leaves the address range is refused; there is no size cap.
+    if (bytes.size() > std::numeric_limits<std::size_t>::max() / 8) {
         return std::unexpected(TermError::resource_limit);
     }
     return bitstring(bytes, bytes.size() * 8);

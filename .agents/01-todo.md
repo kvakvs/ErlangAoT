@@ -28,6 +28,9 @@ Plan: [3](11-plan.md#step-3)–[8](11-plan.md#step-8), [43](11-plan.md#step-43),
 - [x] Clang linking for positional and project builds with staged publication
   (steps 6, 6A, 7); missing-runtime/ABI/link failures tested.
 - [ ] Connect startup to cooperative process execution (F22, step 43).
+- [x] Runtime options `--max-atoms` and `ERLANG_AOT_FLAGS` (step 27 follow-up).
+- [ ] `--args-file` options file like `vm.args` (reserved; reports not
+  implemented).
 
 ### F02 — Roots, safepoints and generated-code ABI evolution
 

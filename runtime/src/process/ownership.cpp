@@ -16,8 +16,8 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
     if (!detail::valid_heap_options(options)) {
         return std::unexpected(Status::invalid_argument);
     }
-    if (impl_->contexts.size() >= impl_->options.max_contexts ||
-        impl_->next_context == std::numeric_limits<std::uint64_t>::max()) {
+    // Process count is unlimited; only the never-recycled identity sequence can run out.
+    if (impl_->next_context == std::numeric_limits<std::uint64_t>::max()) {
         return std::unexpected(Status::resource_limit);
     }
     try {

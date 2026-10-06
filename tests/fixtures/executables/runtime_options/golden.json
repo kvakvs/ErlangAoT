@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "entry": "runtime_options",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[]\n"
+    },
+    {
+      "args": [
+        "plain",
+        "--max-atoms",
+        "9"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"plain\",\"--max-atoms\",\"9\"]\n"
+    },
+    {
+      "args": [
+        "--max-atoms",
+        "4194304",
+        "a"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"a\"]\n"
+    },
+    {
+      "args": [
+        "--max-atoms=67108864",
+        "--",
+        "--max-atoms",
+        "b"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"--max-atoms\",\"b\"]\n"
+    },
+    {
+      "args": [
+        "--max-atoms",
+        "67108865"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: invalid --max-atoms value '67108865' \\(1 to 67108864\\)\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-atoms",
+        "3"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: cannot register module runtime_options\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--args-file",
+        "vm.args"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: runtime option --args-file is not implemented\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "c"
+      ],
+      "env": {
+        "ERLANG_AOT_FLAGS": "--max-atoms 3"
+      },
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: cannot register module runtime_options\n$",
+      "exit_status": 70,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-atoms",
+        "100",
+        "d"
+      ],
+      "env": {
+        "ERLANG_AOT_FLAGS": "--max-atoms 3"
+      },
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[\"d\"]\n"
+    },
+    {
+      "args": [
+        "e"
+      ],
+      "env": {
+        "ERLANG_AOT_FLAGS": "--max-atoms 4194304 e"
+      },
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: ERLANG_AOT_FLAGS: not a runtime option: e\n$",
+      "exit_status": 70,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "runtime_options.erl": "838c815caba02292aeb64921f63d5dac535a48ebcc24d6a10c2cb3f50e229d24"
+  }
+}
