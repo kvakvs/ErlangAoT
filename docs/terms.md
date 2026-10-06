@@ -78,7 +78,10 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 ## Maps
 
 - Immutable tables sorted by exact key order. Duplicate construction keys keep
-  the last value. Integer and float keys differ (also `0.0` vs `-0.0`, also
+  the last value. Construction sorts the keys (O(n log n) comparisons; already
+  ascending keys are only checked); updates insert by binary search. No size
+  or work cap beyond memory, as in OTP; on 32-bit targets the header's word
+  count bounds a map at 2^24 - 1 entries (`resource_limit`). Integer and float keys differ (also `0.0` vs `-0.0`, also
   nested).
 - `K := V` updates require the key; `K => V` inserts or replaces. Updates stage
   a new table and publish once.
@@ -124,9 +127,8 @@ yet. Word encodings are in [abi.md](abi.md#terms).
 ## Comparison and order
 
 Iterative with no work cap, as in OTP: only memory for pending pairs bounds a
-comparison, and identical words are equal without a walk. Map key searches
-inside construction, update and lookup still charge a one-million-step budget
-(exhaustion is `resource_limit`, never "unequal"). Order: numbers < atoms < tuples < maps < nil < lists <
+comparison, map key searches included, and identical words are equal without
+a walk. Byte-aligned bitstrings compare whole bytes at once. Order: numbers < atoms < tuples < maps < nil < lists <
 bitstrings. Atoms compare by UTF-8 spelling (code-point order); tuples by arity
 then fields; maps by size, then keys, then values; bitstrings by logical bits.
 

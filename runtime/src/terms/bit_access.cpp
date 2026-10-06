@@ -28,15 +28,34 @@ bool bit_at(const BitView &view, std::size_t index) noexcept {
     return (std::to_integer<unsigned>(view.bytes[position / 8]) & (1U << (7 - position % 8))) != 0;
 }
 
-TermResult<int> bit_order(const Term &left, const Term &right, std::size_t &budget) {
+namespace {
+// Compare the whole leading bytes of the first `count` bits of two byte-aligned views at once: the order of the first
+// differing byte, else 0 with `compared` set to the bits already equal (0 for unaligned views).
+int byte_order(const BitView &lhs, const BitView &rhs, std::size_t count, std::size_t &compared) noexcept {
+    compared = 0;
+    if (lhs.offset % 8 != 0 || rhs.offset % 8 != 0) {
+        return 0;
+    }
+    const auto a = lhs.bytes.subspan(lhs.offset / 8, count / 8);
+    const auto b = rhs.bytes.subspan(rhs.offset / 8, count / 8);
+    const auto [at, other] = std::ranges::mismatch(a, b);
+    if (at != a.end()) {
+        return std::to_integer<unsigned>(*at) < std::to_integer<unsigned>(*other) ? -1 : 1;
+    }
+    compared = count / 8 * 8;
+    return 0;
+}
+} // namespace
+
+TermResult<int> bit_order(const Term &left, const Term &right) {
     const auto lhs = bit_view(left).value();
     const auto rhs = bit_view(right).value();
     const auto count = std::min(lhs.length, rhs.length);
-    for (std::size_t i = 0; i < count; ++i) {
-        if (budget == 0) {
-            return std::unexpected(TermError::resource_limit);
-        }
-        --budget;
+    std::size_t i = 0;
+    if (const auto order = byte_order(lhs, rhs, count, i); order != 0) {
+        return order;
+    }
+    for (; i < count; ++i) {
         const bool a = bit_at(lhs, i);
         const bool b = bit_at(rhs, i);
         if (a != b) {

@@ -1266,11 +1266,32 @@ OTP maps have no size limit. ErlangAoT refuses constructions and updates above
 one-million-step key comparison budget.
 
 - Success criteria
-  - [ ] Map construction, update and lookup have no size or work cap beyond
+  - [x] Map construction, update and lookup have no size or work cap beyond
     memory.
 - Tests
-  - [ ] Runtime test: a map past the former cap builds and finds keys that are
+  - [x] Runtime test: a map past the former cap builds and finds keys that are
     long lists; `differences.md` row removed.
+- Evidence (2026-10-06): the comparison budget is gone from
+  `structural_order`, `bit_order`, `map_position` and map lookup; the size
+  caps of map construction, update and the map service are gone. Without
+  the work cap, insertion-based construction would be O(n^2) for unsorted
+  keys (map comprehensions build through `from_list`), so `make` now
+  stable-sorts by exact key order and keeps the last value of each key
+  (first key kept, as successive associations did), after an O(n) check
+  that skips already strictly ascending keys; updates still insert by binary
+  search. `MapAccess::publish` refuses more entries than the header count
+  holds (2^24 - 1 on 32-bit targets) with `resource_limit`. Byte-aligned
+  bitstrings compare whole bytes at once (long binaries are no longer cut
+  off by a budget). `runtime_maps` `large_maps` replaces `work_limit`:
+  1,000 descending keys with duplicates sort and keep the last value;
+  1,000,001 ascending entries build, find keys and grow by an update; two
+  keys that are 1,000,001-element lists differing in the last element are
+  built and found by a separately built list (8.8 s in Debug; a 1,000,001
+  descending sort took 31 s, hence ascending). `differences.md` had no map
+  row. Fresh Windows x64 Debug (clang-cl): fast 160/160, full `-j 12`
+  164/164 (115 s); tidy then flagged `bit_order` cognitive complexity 13,
+  fixed by the `byte_order` helper; after it 35 affected tests pass, Lizard
+  0 warnings, tidy 13 changed units pass. Logs `build/plan11-step27d/`.
 
 <a id="step-27e"></a>
 

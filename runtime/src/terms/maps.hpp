@@ -26,8 +26,8 @@ struct MapPosition {
     bool found;
 };
 
-// Share bounded exact key ordering across staged updates and published immutable lookup.
-TermResult<MapPosition> map_position(std::span<const MapEntry> entries, const Term &key, std::size_t &budget);
+// Find the exact-order slot of key by binary search; shared by staged updates and published lookup.
+TermResult<MapPosition> map_position(std::span<const MapEntry> entries, const Term &key);
 // Read one canonical pair after the owning map's shape and lifetime have been proved.
 TermResult<MapEntry> map_entry(const Term &map, std::size_t index);
 

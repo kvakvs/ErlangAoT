@@ -225,6 +225,9 @@ Step facts beyond the plan record:
 - 27B: list/compare caps gone; structural_order default budget = SIZE_MAX, word-equal fast path in step(). Tuple
   1M check now only in TermFactory::tuple. A 2^24-1 tuple via vector<Term> costs ~800 MB (Term is 48 bytes): 27C
   needs a word-based tuple path. Map construction is insertion O(n^2): 27D should sort.
+- 27C/27D: MAX_TUPLE_ARITY + TermFactory::tuple_words in runtime/include/terms.hpp (construct service uses words).
+  structural_order has no budget overload anymore; map make = adjacent_find ascending check, else stable_sort +
+  keep-last dedupe (OrderFailure exception out of comparator); publish checks MAX_MAP_SIZE (header count / 2).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

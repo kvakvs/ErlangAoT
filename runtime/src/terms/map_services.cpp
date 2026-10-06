@@ -189,10 +189,6 @@ bool ready(ProcessContext &context, std::uint8_t operation, const Word *values, 
         calls.fail_service(abi::v1::Status::invalid_argument);
         return false;
     }
-    if (count > 1'000'000) {
-        calls.fail_service(abi::v1::Status::resource_limit);
-        return false;
-    }
     return true;
 }
 } // namespace

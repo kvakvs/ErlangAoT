@@ -4,6 +4,7 @@
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 namespace {
 using namespace erlang_aot::runtime;
@@ -101,19 +102,59 @@ void malformed() {
     require(value.first == Outcome::success && value.second.map_size() == 0, "map service retry failed");
 }
 
-// Descending keys exhaust charged insertion work before any backing is published, then ordinary work recovers.
-void work_limit() {
-    auto runtime = Runtime::start().value();
-    auto &context = *runtime->create_context().value();
+// A list of `length` sevens ending in `last`, as a map key that takes a long comparison.
+Term long_key(TermFactory &factory, std::size_t length, std::int64_t last) {
+    std::vector elements(length, factory.integer(7).value());
+    elements.back() = factory.integer(last).value();
+    return factory.list(elements).value();
+}
+
+// Descending keys with duplicates sort into key order, and the last value of each key wins.
+void unsorted_keys(ProcessContext &context) {
     TermFactory factory(context);
     std::vector<std::pair<Term, Term>> entries;
-    for (int i = 1500; i > 0; --i) {
-        const auto value = factory.integer(i).value();
-        entries.emplace_back(value, value);
+    for (std::int64_t key = 999; key >= 0; --key) {
+        entries.emplace_back(factory.integer(key % 500).value(), factory.integer(key).value());
     }
-    require(factory.map(entries) == std::unexpected(TermError::resource_limit), "unbounded map insertion work");
-    require(context.heap().used_words() == 0, "work rejection published a partial map");
-    require(factory.map({})->map_size() == 0, "work rejection poisoned retry");
+    const auto map = factory.map(entries).value();
+    require(map.map_size() == 500, "duplicate keys survived");
+    for (std::size_t i = 0; i < 500; ++i) {
+        const auto entry =
+            invoke(context, Op::key_at, std::array{map, factory.integer(static_cast<std::int64_t>(i)).value()});
+        require(entry.second.integer_value() == static_cast<std::int64_t>(i), "keys not in order");
+    }
+    require(map.map_find(factory.integer(7).value()).value()->integer_value() == 7, "last duplicate did not win");
+}
+
+// Maps have no size or key-work cap (plan 11 step 27D): one entry past the former 1,000,000 cap builds, grows by an
+// update and finds keys; keys that are long lists are compared in full.
+void large_maps() {
+    constexpr std::int64_t size = 1'000'001;
+    auto runtime = Runtime::start().value();
+    auto &context = *runtime->create_context().value();
+    unsorted_keys(context);
+    TermFactory factory(context);
+    std::vector<std::pair<Term, Term>> entries;
+    for (std::int64_t key = 0; key < size; ++key) {
+        entries.emplace_back(factory.integer(key).value(), factory.integer(key).value());
+    }
+    const auto map = factory.map(entries).value();
+    require(map.map_size() == static_cast<std::size_t>(size), "large map lost entries");
+    require(map.map_find(factory.integer(size / 2).value()).value()->integer_value() == size / 2,
+            "large map lookup failed");
+    const auto grown =
+        invoke(context, Op::update,
+               std::array{map, factory.integer(size).value(), factory.atom("new").value(), factory.integer(0).value()});
+    require(grown.first == Outcome::success && grown.second.map_size() == static_cast<std::size_t>(size) + 1,
+            "large map update failed");
+
+    const auto length = static_cast<std::size_t>(size);
+    const auto lists = factory
+                           .map(std::array{std::pair{long_key(factory, length, 1), factory.atom("one").value()},
+                                           std::pair{long_key(factory, length, 2), factory.atom("two").value()}})
+                           .value();
+    const auto found = lists.map_find(long_key(factory, length, 2)).value();
+    require(lists.map_size() == 2 && found && found->atom_spelling() == "two", "long list key not found");
 }
 } // namespace
 
@@ -122,7 +163,7 @@ int main() {
     try {
         ownership();
         malformed();
-        work_limit();
+        large_maps();
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

@@ -4,7 +4,6 @@
 #include "floats.hpp"
 #include "maps.hpp"
 #include <algorithm>
-#include <limits>
 #include <new>
 #include <stdexcept>
 
@@ -66,14 +65,11 @@ TermResult<int> scalar(const Pair &values) {
 }
 
 // Tuple arity precedes lexicographic fields; reverse scheduling visits the first field first.
-TermResult<int> tuples(const Pair &values, std::vector<Pair> &pending, std::size_t remaining) {
+TermResult<int> tuples(const Pair &values, std::vector<Pair> &pending) {
     const auto lhs = values.left.tuple_size().value();
     const auto rhs = values.right.tuple_size().value();
     if (lhs != rhs) {
         return lhs < rhs ? -1 : 1;
-    }
-    if (lhs > remaining - std::min(remaining, pending.size())) {
-        return std::unexpected(TermError::resource_limit);
     }
     for (std::size_t i = lhs; i > 0; --i) {
         pending.push_back(
@@ -83,24 +79,18 @@ TermResult<int> tuples(const Pair &values, std::vector<Pair> &pending, std::size
 }
 
 // Cons comparison checks heads before arbitrary tails, preserving proper and improper list semantics.
-TermResult<int> lists(const Pair &values, std::vector<Pair> &pending, std::size_t remaining) {
-    if (remaining - std::min(remaining, pending.size()) < 2) {
-        return std::unexpected(TermError::resource_limit);
-    }
+TermResult<int> lists(const Pair &values, std::vector<Pair> &pending) {
     pending.push_back({values.left.tail().value(), values.right.tail().value(), values.exact});
     pending.push_back({values.left.head().value(), values.right.head().value(), values.exact});
     return 0;
 }
 
 // Canonical storage orders exact keys; compare all keys before any values, after comparing map sizes.
-TermResult<int> maps(const Pair &values, std::vector<Pair> &pending, std::size_t remaining) {
+TermResult<int> maps(const Pair &values, std::vector<Pair> &pending) {
     const auto lhs = values.left.map_size().value();
     const auto rhs = values.right.map_size().value();
     if (lhs != rhs) {
         return lhs < rhs ? -1 : 1;
-    }
-    if (lhs > (remaining - std::min(remaining, pending.size())) / 2) {
-        return std::unexpected(TermError::resource_limit);
     }
     for (std::size_t i = lhs; i > 0; --i) {
         pending.push_back(
@@ -114,7 +104,7 @@ TermResult<int> maps(const Pair &values, std::vector<Pair> &pending, std::size_t
 
 // Dispatch only validated parents; extracted children inherit their live owning storage. One word names one term,
 // so identical words are equal without a walk, as in ERTS.
-TermResult<int> step(const Pair &values, std::vector<Pair> &pending, std::size_t remaining) {
+TermResult<int> step(const Pair &values, std::vector<Pair> &pending) {
     if (values.left.word() == values.right.word()) {
         return 0;
     }
@@ -127,37 +117,31 @@ TermResult<int> step(const Pair &values, std::vector<Pair> &pending, std::size_t
         return *lhs < *rhs ? -1 : 1;
     }
     if (values.left.is_tuple()) {
-        return tuples(values, pending, remaining);
+        return tuples(values, pending);
     }
     if (values.left.is_cons()) {
-        return lists(values, pending, remaining);
+        return lists(values, pending);
     }
     if (values.left.is_map()) {
-        return maps(values, pending, remaining);
+        return maps(values, pending);
     }
     if (values.left.is_bitstring()) {
-        return bit_order(values.left, values.right, remaining);
+        return bit_order(values.left, values.right);
     }
     return scalar(values);
 }
 
-// Charge nodes across every comparison in a staged map operation, with no source-depth recursion.
-TermResult<int> compare(const Term &left, const Term &right, bool exact, std::size_t &remaining) {
-    if (remaining == 0) {
-        return std::unexpected(TermError::resource_limit);
-    }
+// Walk pending pairs depth first, with no source-depth recursion.
+TermResult<int> compare(const Term &left, const Term &right, bool exact) {
     std::vector<Pair> pending;
-    const auto initial = step({left, right, exact}, pending, --remaining);
+    const auto initial = step({left, right, exact}, pending);
     if (!initial || *initial != 0) {
         return initial;
     }
     while (!pending.empty()) {
-        if (remaining == 0) {
-            return std::unexpected(TermError::resource_limit);
-        }
         auto values = std::move(pending.back());
         pending.pop_back();
-        const auto result = step(values, pending, --remaining);
+        const auto result = step(values, pending);
         if (!result || *result != 0) {
             return result;
         }
@@ -166,14 +150,14 @@ TermResult<int> compare(const Term &left, const Term &right, bool exact, std::si
 }
 } // namespace
 
-TermResult<int> structural_order(const Term &left, const Term &right, bool exact, std::size_t &remaining) noexcept {
+TermResult<int> structural_order(const Term &left, const Term &right, bool exact) noexcept {
     for (const auto *value : {&left, &right}) {
         if (const auto checked = TermAccess::validate(*value); !checked) {
             return std::unexpected(checked.error());
         }
     }
     try {
-        return compare(left, right, exact, remaining);
+        return compare(left, right, exact);
     } catch (const std::bad_alloc &) {
         return std::unexpected(TermError::out_of_memory);
     } catch (const std::length_error &) {
@@ -183,9 +167,4 @@ TermResult<int> structural_order(const Term &left, const Term &right, bool exact
     }
 }
 
-TermResult<int> structural_order(const Term &left, const Term &right, bool exact) noexcept {
-    // No work cap, as in OTP: only memory for pending pairs bounds a comparison.
-    std::size_t remaining = std::numeric_limits<std::size_t>::max();
-    return structural_order(left, right, exact, remaining);
-}
 } // namespace erlang_aot::runtime::detail

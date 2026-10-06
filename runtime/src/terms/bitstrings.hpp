@@ -39,7 +39,7 @@ TermResult<BitView> bit_view(const Term &term);
 // Read one proved in-range bit in logical MSB-first order.
 bool bit_at(const BitView &view, std::size_t index) noexcept;
 // Compare logical sequences independently of backing identity, offsets and padding.
-TermResult<int> bit_order(const Term &left, const Term &right, std::size_t &budget);
+TermResult<int> bit_order(const Term &left, const Term &right);
 
 struct BitWriter {
     // Stage packed bytes privately until every segment has succeeded.

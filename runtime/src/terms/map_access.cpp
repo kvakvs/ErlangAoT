@@ -5,12 +5,12 @@
 #include <stdexcept>
 
 namespace erlang_aot::runtime::detail {
-TermResult<MapPosition> map_position(std::span<const MapEntry> entries, const Term &key, std::size_t &budget) {
+TermResult<MapPosition> map_position(std::span<const MapEntry> entries, const Term &key) {
     std::size_t first = 0;
     std::size_t last = entries.size();
     while (first < last) {
         const auto middle = first + (last - first) / 2;
-        const auto order = structural_order(entries[middle].first, key, true, budget);
+        const auto order = structural_order(entries[middle].first, key, true);
         if (!order) {
             return std::unexpected(order.error());
         }
@@ -52,11 +52,10 @@ TermResult<std::optional<Term>> find(const Term &map, const Term &key, std::size
     }
     std::size_t first = 0;
     std::size_t last = size;
-    std::size_t budget = 1'000'000;
     while (first < last) {
         const auto middle = first + (last - first) / 2;
         const auto entry = map_entry(map, middle).value();
-        const auto order = structural_order(entry.first, *admitted, true, budget);
+        const auto order = structural_order(entry.first, *admitted, true);
         if (!order) {
             return std::unexpected(order.error());
         }
