@@ -6,7 +6,7 @@
 namespace erlang_aot::semantic {
 std::string_view ExpressionCapability::operator()(const ast::RecordExpression &value) const {
     const auto *layout = record_layout(module, value.identity);
-    return !value.base && layout && !layout->native ? "" : "heap expressions";
+    return layout && !layout->native ? "" : "heap expressions";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::RecordAccess &value) const {

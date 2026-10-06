@@ -236,6 +236,12 @@ Step facts beyond the plan record:
 - 28: ProcessHeap::add copies foreign graphs (copy.cpp GraphCopy); factories call retain(). Off-heap buffers: runtime
   charge in shared_ptr deleter (make_buffer), per-process hold/drop counts in HeapStorage::buffers_; verify() checks
   counts. Never compare shared-subterm towers across heaps (no identical-word shortcut => 2^depth walk).
+- 29: update children = values in source order, then base (semantic::expression_children(module)); walker's
+  record_enter is construction-only, updates use the generic value path + lower_record -> update(). Placeholders for
+  "unsupported" now use `receive` (body) or `-record(#r{a}).` (one heap-expressions marker). Records corpus
+  input_manifest_sha256 = evidence.digest(corpus.json) must change with any corpus.json edit. Bash heredocs here
+  collapse `\\` to `\`: write JSON/regex/edit scripts with Write into scratchpad. A killed session can leave the
+  background gate running: check Get-Process ctest/cmake/ninja/python before rerunning.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

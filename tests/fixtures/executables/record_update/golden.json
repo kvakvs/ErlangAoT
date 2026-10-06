@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "entry": "updates",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{point,10,2,3},{point,10,2,30},{point,10,20,30},{point,1,2,3},{point,1,2,3}]\n{point,1,2,3}\ny\nx\nbase\n{point,1,2,0}\nbase\n{point,0,0,0}\n{line,{point,5,0,0},{point,0,0,0},b}\n{point,0,7,0}\n{line,none,{point,0,0,0},d}\n{point,0,0,9}\n{point,3,2,0}\n{empty}\n{{point,4,5,0},4}\n[{point,1,0,0},{point,2,0,0},{point,3,0,0}]\n{point,4,5,done}\n{counter,loop,100000}\nx\nx\nx\nx\nx\nx\nx\n[{badrecord,{point,1,2}},{badrecord,{point,1,2,3,4}},{badrecord,{line,1,2,3}},{point,1,2,3},{badrecord,point},{badrecord,[point,1,2,3]},{badrecord,#{x=>1}}]\n"
+    },
+    {
+      "args": [
+        "wrong_tag"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,\\{other,1,2,3\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "wrong_arity"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,\\{point,1\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "not_tuple"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,42\\}\n$",
+      "exit_status": 1,
+      "stdout": "y\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "geometry.erl": "4fc2335669a5efa73099007f30999b7f8610da7b9c9640e8a0d1666ad5c549fb",
+    "updates.erl": "2393697f7b4ab426107fe9984f6a4b716ab7d100f7edb6b21740f016370dc38a"
+  }
+}

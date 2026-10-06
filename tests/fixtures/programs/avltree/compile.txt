@@ -1,12 +1,6 @@
 exit 1
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:25:16: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:27:16: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:29:6: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:71:16: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:73:16: [heap expressions] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:86:23: [heap expressions] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:92:14: [dynamic calls] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:98:6: [heap expressions] notimpl [module="avl"]
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:98:21: [dynamic calls] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:101:34: [closures] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:104:18: [closures] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:23:27: [closures] notimpl [module="avltree"]

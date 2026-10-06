@@ -174,10 +174,18 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
 
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression) {
     const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
-    if (!record || record->base) {
+    if (!record) {
         return expression_children(expression);
     }
     std::vector<ast::ExprId> result;
+    if (record->base) {
+        // OTP evaluates the update values in source order before the updated record.
+        for (const auto &field : record->fields) {
+            result.push_back(field.value);
+        }
+        result.push_back(*record->base);
+        return result;
+    }
     for (const auto &field : record_values(module, *record, false)) {
         if (field) {
             result.push_back(*field);

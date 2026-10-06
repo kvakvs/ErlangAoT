@@ -21,7 +21,7 @@
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
-  "input_manifest_sha256": "7a89563affdc6cf2110dc5c11fadaabe2301ae3feb679a118aad967ed3def63f",
+  "input_manifest_sha256": "95d670ab987eb699d1fe3dc2d266919fcf36232fdeb5e9f29dc69410633ed4fc",
   "files": {
     "answer.erl": "2bcd098695de4ec30d37dd6ce7072a806e82487552a5616ab60d6d28deb6691f",
     "calls.term": "88b55e617becf96ca77143161390116a8026e138c81ac12d48eb161628d92e13",
@@ -257,7 +257,7 @@
         "name": "rec_update_gate",
         "body": "-record(r,{a}). f(X) -> X#r{a=1}.",
         "diagnostic": "",
-        "capability": "heap expressions",
+        "capability": "",
         "sha256": "a6b9eec249dea7c7c8fa5b191296e02315e5afdda426fb9220f3e9decf10ae7f"
       },
       {

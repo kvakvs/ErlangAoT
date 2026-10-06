@@ -82,7 +82,9 @@ void fields(const Module &module, const ast::RecordExpression &record, const Rec
             wildcard_field(module, field, wildcard, out);
         }
     }
-    if (wildcard && names.size() >= layout.fields.size()) {
+    if (wildcard && record.base) {
+        report(module, wildcard, "meaningless use of _ in update of record " + utf8(layout.name.name), out);
+    } else if (wildcard && names.size() >= layout.fields.size()) {
         report(module, wildcard, "record wildcard requires an omitted field", out);
     }
 }

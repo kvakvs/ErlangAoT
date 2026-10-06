@@ -130,7 +130,11 @@ yet. Word encodings are in [abi.md](abi.md#terms).
   integer arity (non-positive → false; wrong types → `badarg`); an atom third
   argument is the native-record query and returns false. Guards require literal
   arguments.
-- Not implemented: updates `R#r{f = V}`, `record_info/2`, native/qualified forms.
+- Update `Expr#r{f = V, ...}` evaluates the new values in source order, then
+  `Expr`, then checks arity and tag (`{badrecord, Value}` on mismatch, also for
+  `Expr#r{}`) and builds a new tuple; the other fields are copied. `_ = V` is
+  rejected in updates; updates are illegal in patterns and guards.
+- Not implemented: `record_info/2`, native/qualified/inferred forms.
 
 ## Comparison and order
 

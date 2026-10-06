@@ -621,11 +621,30 @@ rollback. Off-heap binaries gain a reference instead of being copied.
 Backlog: F17. Depends on: [9](#step-9).
 
 - Success criteria
-  - [ ] `Expr#r{f = V}` checks the record shape and raises `{badrecord, Value}`
+  - [x] `Expr#r{f = V}` checks the record shape and raises `{badrecord, Value}`
     like OTP; evaluation order matches OTP.
 - Tests
-  - [ ] Golden programs for single/multi-field updates, nested records and
+  - [x] Golden programs for single/multi-field updates, nested records and
     wrong-record values.
+- Evidence (2026-10-07): `maint-29` re-fetched, unchanged at `21776803`.
+  OTP (`erl_expand_records:record_update/5`) binds the non-literal update
+  values in source order, then evaluates the record, then matches
+  `{Name, _...}` of the declared arity or raises `{badrecord, Record}`
+  (`Expr#r{}` too). `semantic::expression_children` orders update values
+  before the record; `lowering_records` checks shape and tag (shared
+  `check_record` with access), extracts only the fields not updated and builds
+  a new tuple. `R#r{_ = V}` reports OTP's `meaningless use of _ in update of
+  record r`; update values are siblings (`X#r{a = Y = 1, b = Y}` is unbound,
+  `Y` is visible after). Former `#r{}#r{a = 1}` "unsupported" placeholders now
+  use `receive` or a native record declaration; the records corpus row
+  `rec_update_gate` is accepted (input digest updated, OTP `--check`
+  reproduces). OTP golden `executables_record_update` (single/multi-field,
+  order trace, nested and chained updates, a record from another module,
+  bindings, a 100,000-update loop, seven caught `badrecord` values, three
+  uncaught runs) passes all 8 combinations; 7 CLI cases in
+  `semantic/cases.cmake`; `avltree` diagnostics refreshed. Fresh Windows x64
+  Debug (clang-cl): fast 163/163; Lizard 0 warnings; tidy 38 changed units
+  pass. Logs `build/plan11-step29/`.
 
 <a id="step-30"></a>
 

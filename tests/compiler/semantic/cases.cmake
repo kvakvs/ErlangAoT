@@ -119,6 +119,17 @@ semantic_case(remote_value "-module(a). f() -> a:f." 1 "dynamic calls")
 semantic_case(record_value "-module(a). f() -> #r{}." 1 "heap expressions")
 semantic_case(record_access "-module(a). f(X) -> X#r.a." 1 "heap expressions")
 semantic_case(record_index "-module(a). f() -> #r.a." 1 "heap expressions")
+semantic_case(record_update "-module(a). -record(r, {a, b}). f(X) -> X#r{a = Y = 1}, Y." 0 "^$")
+semantic_case(record_update_unknown "-module(a). f(X) -> X#r{a = 1}." 1 "undefined record")
+semantic_case(record_update_field "-module(a). -record(r, {a}). f(X) -> X#r{b = 1}." 1 "undefined record field b")
+semantic_case(record_update_twice "-module(a). -record(r, {a}). f(X) -> X#r{a = 1, a = 2}." 1
+    "duplicate record initializer")
+semantic_case(record_update_wildcard "-module(a). -record(r, {a}). f(X) -> X#r{_ = 1}." 1
+    "meaningless use of _ in update of record r")
+semantic_case(record_update_sibling "-module(a). -record(r, {a, b}). f(X) -> X#r{a = Y = 1, b = Y}." 1
+    "unbound variable Y")
+semantic_case(record_update_guard "-module(a). -record(r, {a}). f(X) when X#r{a = 1} =:= X -> X." 1
+    "illegal guard expression")
 semantic_case(compile_option "-module(a). -compile(export_all). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(transform "-module(a). -compile({parse_transform,x}). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(compile_nowarn "-module(a). -compile([nowarn_deprecated_catch, nowarn_unused_function]). f() -> 1." 0 "^$")
@@ -126,13 +137,12 @@ semantic_case(on_load "-module(a). -on_load(f/0). f() -> 1." 1 "behavior-changin
 semantic_case(unknown_attribute "-module(a). -custom(1). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(parameterized "-module(a, [X]). f() -> 1." 1 "behavior-changing attributes")
 semantic_case(import "-module(a). -import(b,[f/0]). g() -> 1." 1 "behavior-changing attributes")
-semantic_case(unused "-module(a). -export([f/0]). -record(r, {a}). f() -> 1. unused(X) -> X#r{a = 1}." 1
-    "heap expressions")
+semantic_case(unused "-module(a). -export([f/0]). f() -> 1. unused(X) -> receive X -> X end." 1 "receive")
 semantic_case(bignum "-module(a). f() -> 99999999999999999999999999999." 0 "^$")
 semantic_case(negative_bignum "-module(a). f() -> -99999999999999999999999999999." 0 "^$")
-semantic_case(nested_bad "-module(a). -record(r, {a}). f(X) -> g(h(1), X#r{a = 1})." 1 "heap expressions")
-file(WRITE "${semantic_work}/unsupported.hrl" "-record(r, {a}).\nbad(X) -> X#r{a = 1}.\n")
-semantic_case(include_origin "-module(a). -include(\"unsupported.hrl\")." 1 "unsupported.hrl:2:.*heap expressions")
+semantic_case(nested_bad "-module(a). f(X) -> g(h(1), receive X -> X end)." 1 "receive")
+file(WRITE "${semantic_work}/unsupported.hrl" "%% Unsupported.\nbad(X) -> receive X -> X end.\n")
+semantic_case(include_origin "-module(a). -include(\"unsupported.hrl\")." 1 "unsupported.hrl:2:.*receive")
 
 if(WORD_BYTES EQUAL 8)
     set(minimum "-576460752303423488")
@@ -150,12 +160,12 @@ semantic_case(maximum "-module(a). f() -> ${maximum}." 0 "^$")
 semantic_case(overflow "-module(a). f() -> ${overflow}." 0 "^$")
 semantic_case(underflow "-module(a). f() -> ${underflow}." 0 "^$")
 
-semantic_case(feature_name "-module(a). -record(r, {a}). f(X) -> X#r{a = 1}." 1 "feature_name.erl:1:.*\\[heap expressions\\] notimpl")
+semantic_case(feature_name "-module(a). f(X) -> receive X -> X end." 1 "feature_name.erl:1:.*\\[receive\\] notimpl")
 file(WRITE "${semantic_work}/sentinel" "existing artifact")
 execute_process(COMMAND "${TOOL}" -o sentinel supported_subset.erl unused.erl WORKING_DIRECTORY "${semantic_work}"
     RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
 file(READ "${semantic_work}/sentinel" sentinel)
-if(NOT result STREQUAL "1" OR NOT out STREQUAL "" OR NOT err MATCHES "\\[heap expressions\\] notimpl"
+if(NOT result STREQUAL "1" OR NOT out STREQUAL "" OR NOT err MATCHES "\\[receive\\] notimpl"
     OR NOT sentinel STREQUAL "existing artifact")
     message(FATAL_ERROR "Capability failure published output or lost its feature diagnostic: ${err}")
 endif()

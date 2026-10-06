@@ -181,7 +181,7 @@ void lower_filter(ExpressionLowering &state, const Comprehension &comprehension,
 void lower_templates(ExpressionLowering &state, const Comprehension &comprehension);
 // Once every generator is exhausted, restore the bindings and return the list, bitstring or map (later keys win).
 llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension);
-// Lower record values/access/indices using tuple shape and checked element services.
+// Lower record values/updates/access/indices using tuple shape and checked element services.
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
 // Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.
 llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression &expression,

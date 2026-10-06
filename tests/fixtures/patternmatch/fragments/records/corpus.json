@@ -233,7 +233,7 @@
         "name": "rec_update_gate",
         "body": "-record(r,{a}). f(X) -> X#r{a=1}.",
         "diagnostic": "",
-        "capability": "heap expressions",
+        "capability": "",
         "sha256": "a6b9eec249dea7c7c8fa5b191296e02315e5afdda426fb9220f3e9decf10ae7f"
       },
       {

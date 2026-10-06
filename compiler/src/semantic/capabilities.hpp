@@ -38,7 +38,8 @@ std::vector<ast::ExprId> comprehension_children(const ast::ExprValue &value);
 void check_capabilities(const Module &module, const Reporter &out, unsigned word_bits = sizeof(void *) * 8);
 // Iterate accepted expression children without visiting literal call-target atoms as values.
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression);
-// Include selected record defaults in the same bounded executable walks as explicit operands.
+// Include selected record defaults in the same bounded executable walks as explicit operands; update values
+// precede the updated record.
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression);
 // Return guard/body roots in source order across every candidate; heads use normalized pattern plans.
 std::vector<ast::ExprId> function_roots(const ast::Function &function);
