@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "entry": "conversions",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{ok,\"abc\"}\n{ok,[]}\n{ok,\"hello world\"}\n{error,badarg}\n{error,badarg}\n{ok,abc}\n{ok,''}\n{ok,ab}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,system_limit}\n{error,system_limit}\n{ok,\"0\"}\n{ok,\"-15\"}\n{ok,\"1180591620717411303424\"}\n{ok,\"-1180591620717411303424\"}\n{error,badarg}\n{error,badarg}\n{ok,\"FF\"}\n{ok,\"-101\"}\n{ok,\"21I3V9\"}\n{ok,\"0\"}\n{ok,\"400000000000000000\"}\n{ok,\"-101210022122111122111122201121110200210100020\"}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{ok,123}\n{ok,0}\n{ok,7}\n{ok,7}\n{ok,0}\n{ok,123456789012345678901234567890}\n{ok,-123456789012345678901234567890}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{ok,255}\n{ok,-255}\n{ok,1295}\n{ok,5}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{ok,1512366075204170929049582354406559215}\n{ok,\"1.50000000000000000000e+00\"}\n{ok,\"-0.00000000000000000000e+00\"}\n{ok,\"1.00000000000000005250e+300\"}\n{error,badarg}\n{ok,\"1.50000000000000000000e+00\"}\n{ok,\"1.000000e+00\"}\n{ok,\"1e+00\"}\n{error,badarg}\n{error,badarg}\n{ok,\"3.142e+00\"}\n{error,badarg}\n{error,badarg}\n{ok,\"1\"}\n{ok,\"100\"}\n{ok,\"0.13\"}\n{ok,\"3\"}\n{ok,\"-3\"}\n{ok,\"0.100000000000000005551115123126\"}\n{ok,\"1.5\"}\n{ok,\"10.0\"}\n{ok,\"-0.00\"}\n{ok,\"1.00\"}\n{ok,\"123456.8\"}\n{error,badarg}\n{ok,\"1.50000000000000000000e+00\"}\n{ok,\"1.50\"}\n{ok,\"1.5\"}\n{ok,\"1.5\"}\n{ok,\"1.0e10\"}\n{ok,\"1.2345678901234568e17\"}\n{ok,\"0.0001\"}\n{ok,\"1.0e-5\"}\n{ok,\"100.0\"}\n{ok,\"1.0e3\"}\n{ok,\"-0.0\"}\n{ok,\"9.007199254740992e15\"}\n{ok,\"9007199254740991.0\"}\n{ok,\"1.0e-300\"}\n{ok,\"5.0e-324\"}\n{ok,\"1.7976931348623157e308\"}\n{ok,\"0.1\"}\n{ok,\"1234.5678\"}\n{ok,\"1.0e9\"}\n{ok,\"1.2345e-7\"}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{ok,[]}\n{ok,[1,2,255]}\n{error,badarg}\n{error,badarg}\n{ok,<<>>}\n{ok,<<1,2,3,4,5,6>>}\n{ok,<<>>}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{error,badarg}\n{ok,<<1,2>>}\n{ok,<<\"abc\">>}\n{error,badarg}\n{error,badarg}\n[true,true,\"round trip\",2,\"abcd\",<<\"xyz\">>,\"2.50000000000000000000e+00\",\"2.5\",[\"42\",\"ok\"],true]\n[1000,true,3322,true,1,20000,10000]\n{error,system_limit}\n{error,badarg}\n"
+    },
+    {
+      "args": [
+        "atoms"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "10000\n"
+    },
+    {
+      "args": [
+        "--max-atoms",
+        "300",
+        "atoms"
+      ],
+      "authored": true,
+      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "exit_status": 70,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "conversions.erl": "9608f47efbe84d287500fc191929a395716fb22e1b9d624c0a9ddf2074b7c8d3"
+  }
+}

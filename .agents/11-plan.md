@@ -809,9 +809,31 @@ Atom, integer, float, list, binary and string conversions
 selected).
 
 - Success criteria
-  - [ ] Results and errors match OTP; atom-table limits fail as documented.
+  - [x] Results and errors match OTP; atom-table limits fail as documented.
 - Tests
-  - [ ] Golden call/result corpus regenerated from OTP.
+  - [x] Golden call/result corpus regenerated from OTP.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Catalog appended;
+  `runtime/src/builtins/conversions.cpp` (`conversion_builtins()`) and
+  `float_text` implement `atom_to_list/1`, `list_to_atom/1`,
+  `integer_to_list/1,2`, `list_to_integer/1,2`, `float_to_list/1,2`,
+  `binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1` from OTP's
+  `bif.c`, `big.c`, `utils.c`, `erlang.erl` rules and probes (OTP 29.1.1):
+  255-character atoms with the length checked first (`system_limit`),
+  bases 2..36, OTP's list_to_integer size limits ahead of digit checks,
+  `float_to_list` default `%.20e`, `{scientific, D}` (negative is 6),
+  `{decimals, D}` with OTP's own rounding and `compact` (including its
+  integer-zero trimming), `short` via `std::to_chars` digits placed by OTP's
+  Ryu rules, 256-byte text limit; iolists walked iteratively. A full atom
+  table is a `resource_limit` runtime failure (exit 70); differences recorded
+  for that and for `list_to_integer` characters above 255. All auto-imported.
+  OTP golden `executables_conversions` (124 apply/3 cases, direct calls, funs,
+  round trips, 1000-digit integers in bases 2/10/36, a 100,000-deep iolist,
+  `system_limit`/`badarg` for 1,300,000-digit strings; `atoms` run, authored
+  `--max-atoms 300` run exiting 70) passes all 8 combinations; semantic case;
+  `textstats`/`frames` diagnostics refreshed. Fresh Windows x64 Debug: fast
+  176/176, full `-j 12` 180/180; Lizard 0 warnings and tidy pass after
+  complexity and swappable-parameter splits and a boost analyzer workaround
+  (`swap` instead of copy assignment). Logs `build/plan11-step38/`.
 
 <a id="step-39"></a>
 

@@ -298,6 +298,11 @@ Step facts beyond the plan record:
   undefined_function). `--` uses exact order (CMP_TERM = erts_cmp exact): [1,1.0,1]--[1.0] = [1,1]. Term::list_elements
   and with_tuple_element are unimplemented (link errors): walk head/tail, rebuild via tuple(). User: long-running
   builtins must later run in interruptible portions -> TODO(step 43A) markers + plan step 43A, not now.
+- 38: OTP float_to_list probes: {scientific,-1} = default 6 digits; {decimals,-1} badarg; text >= 256 bytes badarg;
+  {decimals,0},compact on 1.0e20 gives "1" (OTP trims integer zeros); [short,{decimals,2}] = "1.50" (last wins).
+  list_to_integer: OTP size check (system_limit) precedes digit validation only once the first ~18 digits are valid;
+  chars > 255 use the low byte (difference recorded). Building a 1.3M-element list in Debug costs ~2.5 s
+  (2 us per cons): build long strings by binary doubling + binary_to_list.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

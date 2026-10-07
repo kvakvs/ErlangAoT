@@ -140,7 +140,9 @@
   `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported. Step 37: term-access family (`term_access_builtins()`:
   `setelement`, `make_tuple/2,3`, `tuple_to_list`, `list_to_tuple`, `'++'`, `'--'`); `A ++ B`/`A -- B` lower to the
   bridge (`binary_value`), so the `arithmetic` capability is implemented. Long-running builtins run to completion
-  until plan step 43A adds traps (`TODO(step 43A)`).
+  until plan step 43A adds traps (`TODO(step 43A)`). Step 38: conversions (`conversion_builtins()`, float text in
+  `builtins/float_text`: printf for `%.*e`, OTP's own fixed rounding, shortest digits from `std::to_chars` placed by
+  OTP's Ryu notation rules).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

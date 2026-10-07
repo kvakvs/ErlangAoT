@@ -22,7 +22,11 @@ builtin both the compiler and the runtime know:
   `function_exported/3`;
 - term access (plan step 37): `setelement/3`, `make_tuple/2,3`,
   `tuple_to_list/1`, `list_to_tuple/1` and the list operators `'++'/2` and
-  `'--'/2` (`A ++ B`, `A -- B` lower to them).
+  `'--'/2` (`A ++ B`, `A -- B` lower to them);
+- conversions (plan step 38): `atom_to_list/1`, `list_to_atom/1`,
+  `integer_to_list/1,2`, `list_to_integer/1,2`, `float_to_list/1,2`,
+  `binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1`
+  (`term_to_binary/1` is not selected).
 
 Entries are only appended: an entry's index is the number generated code
 passes to the bridge service. Other `erlang` functions keep their diagnostics:
@@ -42,8 +46,8 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
 - `fun F/A` of an auto-imported builtin the module neither defines nor
   suppresses (`-compile({no_auto_import, ...})`) is the external fun
   `erlang:F/A`, as in OTP: `fun abs/1 =:= fun erlang:abs/1` and it prints as
-  `fun erlang:abs/1`. `halt/0,1`, `setelement/3`, `tuple_to_list/1` and
-  `list_to_tuple/1` are auto-imported like OTP's; `display/1`, `raise/3`,
+  `fun erlang:abs/1`. `halt/0,1`, `setelement/3`, `tuple_to_list/1`,
+  `list_to_tuple/1` and the conversions are auto-imported like OTP's; `display/1`, `raise/3`,
   `function_exported/3` and `make_tuple/2,3` need the `erlang:` prefix.
 - A builtin has a `FrameDescriptor` with a null body (`BuiltinFrame`). Entering
   it (`erlang_aot_enter_v1`, `erlang_aot_tail_v1`) pushes no frame: the
@@ -60,6 +64,26 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   `A ++ B` a proper list `A` (`[] ++ B` is `B` for any `B`, a non-list `B`
   ends the result); `A -- B` two proper lists, each element of `B` removing
   the first exactly equal (`=:=`) element of `A`, in O((n + m) log m).
+- Conversions follow OTP:
+  - `list_to_atom/1` takes a proper list of code points (no surrogates);
+    a 256th character is `system_limit` before it is checked. A full atom
+    table (`--max-atoms`) stops the program as a runtime failure
+    (`resource_limit`, exit 70).
+  - `integer_to_list/2` and `list_to_integer/2` take a small base in 2..36;
+    digits print uppercase and parse in either case. `list_to_integer`
+    accepts one optional sign, skips leading zeros, needs a digit, and raises
+    `system_limit` for more than 1,262,611 significant decimal digits (or
+    4,194,304 in any base) once its first digits are valid, and for a value
+    past the integer limit.
+  - `float_to_list/1` is `"%.20e"`; `/2` options apply in order, the last
+    format winning: `{scientific, D}` (`"%.*e"`, negative D is 6),
+    `{decimals, D}` (D >= 0; fixed with OTP's own rounding below 2^53 and 19
+    decimals, `compact` trims trailing zeros, also of an integer with
+    `{decimals, 0}` above 2^53), `short` (shortest round-trip digits in
+    OTP's fixed/scientific choice). Text of 256 bytes or more is `badarg`.
+  - `binary_to_list/1` needs a binary; `list_to_binary/1` a list and
+    `iolist_to_binary/1` a list or binary of bytes, binaries and nested
+    lists, each list ending in `[]` or a binary.
 - Every builtin runs to completion; work that grows with the input becomes
   interruptible once the scheduler exists (plan step 43A).
 - `function_exported(M, F, A)` raises `badarg` unless `M` and `F` are atoms
@@ -75,7 +99,8 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   name already registered (or repeated in the batch) rejects the batch with
   nothing kept.
 - Runtime startup registers every table of `production_builtins()`
-  (`erlang_builtins()`, `term_access_builtins()`), which together cover the
+  (`erlang_builtins()`, `term_access_builtins()`, `conversion_builtins()`),
+  which together cover the
   catalog; later families add their own tables.
 - A body reads exactly its arity of argument words and records errors in the
   checked channel; host exceptions become `out_of_memory` or `internal_error`

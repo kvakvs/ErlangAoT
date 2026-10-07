@@ -109,6 +109,18 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "list_to_tuple", 1},
     BuiltinName{"erlang", "++", 2},
     BuiltinName{"erlang", "--", 2},
+    // Conversions (plan step 38).
+    BuiltinName{"erlang", "atom_to_list", 1},
+    BuiltinName{"erlang", "list_to_atom", 1},
+    BuiltinName{"erlang", "integer_to_list", 1},
+    BuiltinName{"erlang", "integer_to_list", 2},
+    BuiltinName{"erlang", "list_to_integer", 1},
+    BuiltinName{"erlang", "list_to_integer", 2},
+    BuiltinName{"erlang", "float_to_list", 1},
+    BuiltinName{"erlang", "float_to_list", 2},
+    BuiltinName{"erlang", "binary_to_list", 1},
+    BuiltinName{"erlang", "list_to_binary", 1},
+    BuiltinName{"erlang", "iolist_to_binary", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

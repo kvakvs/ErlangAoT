@@ -325,7 +325,9 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)â€
   `tuple_to_list/1`, `list_to_tuple/1`, `++`/`--` operators and functions;
   `element`, `tuple_size`, `hd`, `tl`, `length`, `map_get`, `map_size`,
   `is_map_key` in bodies.
-- [ ] Remaining families (conversions, `lists`/`maps` subset, `io`).
+- [x] Conversion family (step 38): atoms, integers (bases 2..36), floats
+  (`float_to_list/1,2` formats), binaries and iolists; atom-table limit.
+- [ ] Remaining families (`lists`/`maps` subset, `io`).
 - [ ] Interruptible long-running builtins once the scheduler exists (step 43A).
 
 ### F27 â€” Typed/native callables and conversions

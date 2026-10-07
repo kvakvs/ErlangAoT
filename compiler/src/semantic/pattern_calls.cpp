@@ -206,11 +206,32 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 
 namespace {
 // Body builtins auto-imported like OTP's (erl_internal:bif/2): the raising error/1,2,3, exit/1 and throw/1, halt/0,1,
-// the dynamic calls apply/2,3 and setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not).
+// the dynamic calls apply/2,3, setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not) and the
+// conversions.
 bool auto_imported(const FunctionKey &key) {
-    static const std::set<FunctionKey> names{
-        {U"error", 1}, {U"error", 2}, {U"error", 3}, {U"exit", 1},       {U"throw", 1},         {U"halt", 0},
-        {U"halt", 1},  {U"apply", 2}, {U"apply", 3}, {U"setelement", 3}, {U"tuple_to_list", 1}, {U"list_to_tuple", 1}};
+    static const std::set<FunctionKey> names{{U"error", 1},
+                                             {U"error", 2},
+                                             {U"error", 3},
+                                             {U"exit", 1},
+                                             {U"throw", 1},
+                                             {U"halt", 0},
+                                             {U"halt", 1},
+                                             {U"apply", 2},
+                                             {U"apply", 3},
+                                             {U"setelement", 3},
+                                             {U"tuple_to_list", 1},
+                                             {U"list_to_tuple", 1},
+                                             {U"atom_to_list", 1},
+                                             {U"list_to_atom", 1},
+                                             {U"integer_to_list", 1},
+                                             {U"integer_to_list", 2},
+                                             {U"list_to_integer", 1},
+                                             {U"list_to_integer", 2},
+                                             {U"float_to_list", 1},
+                                             {U"float_to_list", 2},
+                                             {U"binary_to_list", 1},
+                                             {U"list_to_binary", 1},
+                                             {U"iolist_to_binary", 1}};
     return names.contains(key);
 }
 
