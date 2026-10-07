@@ -31,6 +31,7 @@ ast::TermValue FormParser::term_container(const Value &value, const ast::NodeSou
                                  .arity = {value.elements[2].integer.str()}};
     case ValueKind::map: {
         ast::TermMap result;
+        result.entries.reserve(value.elements.size() / 2);
         for (std::size_t i = 0; i < value.elements.size(); i += 2) {
             result.entries.emplace_back(term_value(value.elements[i], source),
                                         term_value(value.elements[i + 1], source));

@@ -92,6 +92,7 @@ bool generate(codegen::Compilation &compilation, const Analysis &analysis, const
 // Link the in-memory module and startup objects; project executables wait for the whole invocation.
 void link(const codegen::Compilation &compilation, const FrontendRequest &frontend, const DiagnosticSink &sink) {
     auto inputs = frontend.protected_inputs;
+    inputs.reserve(inputs.size() + compilation.request().inputs.size());
     for (const auto &input : compilation.request().inputs) {
         inputs.push_back(input.source_path);
     }

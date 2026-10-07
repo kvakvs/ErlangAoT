@@ -133,7 +133,9 @@ Expr ExpressionParser::sigil() {
         pp_fail(DiagnosticCode::invalid_condition, "unknown string sigil", prefix);
     }
     Expr result{ExprKind::bits, prefix, {}, {}};
-    for (const unsigned char byte : utf8(text.text())) {
+    const auto bytes = utf8(text.text());
+    result.children.reserve(bytes.size());
+    for (const unsigned char byte : bytes) {
         Expr literal{ExprKind::literal, generated(text, TokenKind::integer, Integer{std::to_string(byte)}), {}, {}};
         result.children.push_back({ExprKind::segment, text, {std::move(literal)}, {}});
     }

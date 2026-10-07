@@ -11,8 +11,10 @@ namespace erlang_aot::codegen {
 namespace {
 // Serialize explicit enabled/disabled host features in stable order for reproducible IR later.
 std::string host_features() {
+    const auto host = llvm::sys::getHostCPUFeatures();
     std::vector<std::string> features;
-    for (const auto &feature : llvm::sys::getHostCPUFeatures()) {
+    features.reserve(host.size());
+    for (const auto &feature : host) {
         features.push_back(std::string(feature.second ? "+" : "-") + feature.first().str());
     }
     std::ranges::sort(features);

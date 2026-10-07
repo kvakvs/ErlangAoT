@@ -105,8 +105,10 @@ TermResult<Term> recorded_stack(ProcessContext &context, const Term &stack, cons
         return stack;
     }
     TermFactory factory(context);
+    const auto limited = entries.first(std::min(entries.size(), StackTrace::limit));
     std::vector<Term> kept;
-    for (const auto &entry : entries.first(std::min(entries.size(), StackTrace::limit))) {
+    kept.reserve(limited.size());
+    for (const auto &entry : limited) {
         const auto item = short_entry(entry) ? completed_entry(factory, entry) : TermResult<Term>(entry);
         if (!item) {
             return std::unexpected(item.error());

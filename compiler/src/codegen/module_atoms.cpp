@@ -239,8 +239,10 @@ llvm::Constant *emit_atom_table(llvm::Module &output, const semantic::Module &mo
                                 std::size_t &count) {
     auto &context = output.getContext();
     auto *type = llvm::StructType::get(llvm::PointerType::get(context, 0), word);
+    const auto names = spellings(module);
     std::vector<llvm::Constant *> entries;
-    for (const auto &name : spellings(module)) {
+    entries.reserve(names.size());
+    for (const auto &name : names) {
         auto *bytes = llvm::ConstantDataArray::getString(context, name, false);
         auto *text = new llvm::GlobalVariable(output, bytes->getType(), true, llvm::GlobalValue::PrivateLinkage, bytes,
                                               "atom.spelling");

@@ -59,6 +59,7 @@ void create_output_directory(const std::filesystem::path &directory) {
 std::vector<std::string> stage_objects(const StagingDirectory &staging, const LinkRequest &request) {
     const auto extension = llvm::Triple(request.target_triple).isOSBinFormatCOFF() ? ".obj" : ".o";
     std::vector<std::string> paths;
+    paths.reserve(request.objects.size());
     for (const auto &object : request.objects) {
         const auto path = staging.path() / ("m" + std::to_string(paths.size()) + extension);
         std::ofstream file(path, std::ios::binary);
@@ -87,8 +88,10 @@ std::vector<std::string> strip_arguments(const llvm::Triple &triple) {
 // Build the Clang driver command: C++ link mode, explicit target, staged output, objects, then the runtime.
 std::vector<std::string> link_arguments(const LinkRequest &request, const std::filesystem::path &staged,
                                         std::vector<std::string> objects, const std::filesystem::path &runtime) {
-    std::vector<std::string> arguments{"--driver-mode=g++", "--target=" + request.target_triple, "-o",
-                                       utf8_path(staged)};
+    std::vector<std::string> arguments;
+    arguments.reserve(objects.size() + 7);
+    arguments.insert(arguments.end(),
+                     {"--driver-mode=g++", "--target=" + request.target_triple, "-o", utf8_path(staged)});
     if (request.strip_unused) {
         std::ranges::move(strip_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
     }

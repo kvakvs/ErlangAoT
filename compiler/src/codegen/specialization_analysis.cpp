@@ -30,6 +30,7 @@ Representation representation(const semantic::types::Graph &graph, const semanti
 TypeProfile call_profile(const ast::Module &syntax, const ast::CallExpression &call,
                          const semantic::types::Inference &inferred, const unsigned bits) {
     TypeProfile result;
+    result.reserve(call.arguments.size());
     for (const auto &id : call.arguments) {
         const auto fact = inferred.expressions.find(&syntax.expression(id));
         result.push_back(fact == inferred.expressions.end() ? Representation::generic
@@ -126,6 +127,7 @@ SpecializationPlan analyze_specializations(Compilation &compilation,
         }
     }
     std::vector<SpecializationInput> ordered;
+    ordered.reserve(inputs.size());
     for (auto &[symbol, input] : inputs) {
         (void)symbol;
         ordered.push_back(std::move(input));

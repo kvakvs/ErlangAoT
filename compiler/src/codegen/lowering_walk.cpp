@@ -631,7 +631,9 @@ struct Walk {
         auto &join = cases.at(&expression);
         const auto &last = state.module.syntax->expression(clauses.at(visit.field).body->back());
         CaseIncoming completed{state.builder.GetInsertBlock(), {state.values.at(&last)}};
-        for (const auto &identity : exported(expression)) {
+        const auto identities = exported(expression);
+        completed.values.reserve(1 + identities.size());
+        for (const auto &identity : identities) {
             completed.values.push_back(state.bindings.at(identity));
         }
         join.incoming.push_back(std::move(completed));

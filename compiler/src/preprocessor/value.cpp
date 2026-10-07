@@ -145,11 +145,13 @@ int list_compare(const Value &left, const Value &right, const bool exact) {
 // Map keys have exact equality and a deterministic ordering independent of insertion.
 std::vector<std::size_t> keys(const Value &value) {
     std::vector<std::size_t> result;
+    result.reserve(value.elements.size() / 2);
     for (std::size_t i = 0; i < value.elements.size(); i += 2) {
         result.push_back(i);
     }
-    std::ranges::sort(
-        result, [&](const std::size_t a, const std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
+    std::ranges::sort(result, [&](const std::size_t a, const std::size_t b) {
+        return compare(value.elements[a], value.elements[b], true) < 0;
+    });
     return result;
 }
 

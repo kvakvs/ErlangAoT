@@ -93,6 +93,7 @@ llvm::Value *lower_bits_operation(ExpressionLowering &state, const Op operation,
 
 llvm::Value *lower_bits(ExpressionLowering &state, const ast::Bitstring &binary) {
     std::vector<llvm::Value *> values;
+    values.reserve(3 * binary.segments.size());
     for (const auto &segment : binary.segments) {
         segment_values(state, segment, values);
     }

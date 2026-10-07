@@ -5,7 +5,9 @@
 #include <stdexcept>
 
 namespace erlang_aot::artifacts {
-std::string encoded_name(const std::string_view identity) { return semantic::encode_symbol({std::string(identity), "", 0}); }
+std::string encoded_name(const std::string_view identity) {
+    return semantic::encode_symbol({std::string(identity), "", 0});
+}
 
 namespace detail {
 namespace {
@@ -56,6 +58,7 @@ std::vector<Destination> plan(const std::span<const codegen::OutputBuffer> outpu
                               const std::span<const std::filesystem::path> inputs,
                               const std::string_view object_extension) {
     std::vector<Destination> destinations;
+    destinations.reserve(outputs.size());
     std::set<std::filesystem::path> names;
     const auto base = project::absolute_path(std::filesystem::current_path(), root);
     for (const auto &output : outputs) {

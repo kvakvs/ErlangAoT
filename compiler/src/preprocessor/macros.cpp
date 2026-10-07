@@ -180,6 +180,7 @@ std::vector<Token> MacroExpander::substitute(const Definition &definition, const
         }
     }
     std::vector<Token> result;
+    result.reserve(definition.body.size());
     auto location = call;
     for (std::size_t i = 0; i < definition.body.size(); ++i) {
         const bool stringified = stringify_parameter(definition.body, i);
@@ -248,6 +249,7 @@ std::vector<Token> MacroExpander::expand(const std::span<const Token> input) {
 std::vector<Token> MacroExpander::rescan(std::span<const Token> input) {
     std::deque<Token> pending(input.begin(), input.end());
     std::vector<Token> output;
+    output.reserve(input.size());
     while (!pending.empty()) {
         if (!syntax(pending.front(), U"?")) {
             output.push_back(std::move(pending.front()));

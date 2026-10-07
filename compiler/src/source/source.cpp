@@ -94,6 +94,8 @@ EncodingError::EncodingError(const std::size_t offset, const std::string &messag
 Source::Source(const std::size_t identity, std::string filename, std::string contents)
     : id(identity), name(std::move(filename)), bytes(std::move(contents)), encoding(detect_encoding(bytes)) {
     Position current{0, 1, 1};
+    positions_.reserve(bytes.size() + 1);
+    text.reserve(bytes.size());
     while (current.byte < bytes.size()) {
         positions_.push_back(current);
         const auto value = encoding == Encoding::latin1
@@ -136,6 +138,7 @@ SourcePtr SourceManager::read(const std::filesystem::path &path) {
 
 std::string utf8(const std::u32string_view text) {
     std::string result;
+    result.reserve(text.size());
     for (const auto value : text) {
         if (value < 0x80) {
             result.push_back(static_cast<char>(value));

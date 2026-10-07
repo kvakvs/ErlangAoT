@@ -73,7 +73,9 @@ std::string find_linker(const std::optional<std::filesystem::path> &linker) {
 
 LinkerRun run_linker(const std::string &program, std::span<const std::string> arguments,
                      const std::filesystem::path &log) {
-    std::vector<llvm::StringRef> argv{program};
+    std::vector<llvm::StringRef> argv;
+    argv.reserve(arguments.size() + 1);
+    argv.push_back(program);
     argv.insert(argv.end(), arguments.begin(), arguments.end());
     const auto log_text = utf8_path(log);
     const std::array<std::optional<llvm::StringRef>, 3> redirects{llvm::StringRef(), llvm::StringRef(log_text),

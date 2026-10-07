@@ -90,6 +90,7 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
     const auto file = absolute_path(options.working_directory, manifest.file);
     const auto base = file.parent_path();
     Invocation result{file, {}, options.frontend};
+    result.targets.reserve(selected.size());
     for (const auto index : selected) {
         const auto &target = manifest.targets[index];
         result.targets.push_back({target.name.value, target_sources(base, target, options.discovery),

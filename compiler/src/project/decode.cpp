@@ -83,6 +83,7 @@ Manifest decode(const Document &document, const Limits &limits) {
     auto remaining = limits.entries;
     schema::budget(document.table, remaining, context);
     Manifest result{document.file, {}};
+    result.targets.reserve(array.size());
     std::set<std::string> names;
     for (const auto &node : array) {
         auto value = target(node, context);

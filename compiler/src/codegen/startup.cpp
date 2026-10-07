@@ -18,6 +18,7 @@ llvm::Constant *spelling(llvm::Module &output, const std::string_view text, cons
 llvm::Constant *descriptors(llvm::Module &output, const std::span<const std::unique_ptr<semantic::Module>> modules) {
     auto &context = output.getContext();
     std::vector<llvm::Constant *> entries;
+    entries.reserve(modules.size());
     for (const auto &module : modules) {
         const auto symbol = semantic::encode_symbol({utf8(module->name), "", 0}) + ".descriptor";
         entries.push_back(output.getOrInsertGlobal(symbol, llvm::Type::getInt8Ty(context)));

@@ -21,6 +21,7 @@ bool emit_string(const Value &value, const Token &site, std::vector<Token> &outp
         return false;
     }
     std::u32string text;
+    text.reserve(value.elements.size());
     for (const auto &element : value.elements) {
         text += static_cast<char32_t>(element.integer.convert_to<unsigned>());
     }
@@ -52,11 +53,13 @@ void sequence(std::vector<Token> &output, const Value &value, const Token &site)
 // Stable exact-key order makes initial definitions independent of map insertion order.
 void map_tokens(std::vector<Token> &output, const Value &value, const Token &site) {
     std::vector<std::size_t> keys;
+    keys.reserve(value.elements.size() / 2);
     for (std::size_t i = 0; i < value.elements.size(); i += 2) {
         keys.push_back(i);
     }
-    std::ranges::sort(
-        keys, [&](const std::size_t a, const std::size_t b) { return compare(value.elements[a], value.elements[b], true) < 0; });
+    std::ranges::sort(keys, [&](const std::size_t a, const std::size_t b) {
+        return compare(value.elements[a], value.elements[b], true) < 0;
+    });
     symbol(output, site, U"#");
     symbol(output, site, U"{");
     bool first = true;

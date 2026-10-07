@@ -82,7 +82,9 @@ struct Walk {
     void operator()(const ast::Tuple &value) { children(PatternKind::tuple, value.elements); }
 
     void operator()(const ast::List &value) {
-        auto ids = value.elements;
+        std::vector<ast::ExprId> ids;
+        ids.reserve(value.elements.size() + 1);
+        ids.assign(value.elements.begin(), value.elements.end());
         if (value.tail) {
             ids.push_back(*value.tail);
         }

@@ -112,6 +112,7 @@ void fields(const Module &module, const ast::RecordExpression &record, const Rec
 // Values of the atom-named fields in source order; a native record pattern lists only those.
 std::vector<ast::ExprId> named_values(const ast::RecordExpression &record) {
     std::vector<ast::ExprId> result;
+    result.reserve(record.fields.size());
     for (const auto &field : record.fields) {
         if (std::holds_alternative<ast::Atom>(field.name)) {
             result.push_back(field.value);
@@ -330,6 +331,7 @@ std::vector<std::size_t> record_order(const Module &module, const ast::RecordExp
     if (!layout) {
         return result;
     }
+    result.reserve(layout->fields.size());
     std::vector<bool> placed(layout->fields.size());
     if (layout->native) {
         explicit_positions(record, *layout, placed, result);

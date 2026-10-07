@@ -54,8 +54,10 @@ llvm::GlobalVariable *records(llvm::Module &output, const semantic::Module &modu
     auto *ptr = llvm::PointerType::get(output.getContext(), 0);
     auto *type = llvm::StructType::get(ptr, word, word, word, ptr, word);
     const auto slot = [&](const ast::Atom &atom) { return atom_slot(output, utf8(atom.name)); };
+    const auto layouts = semantic::native_layouts(module);
     std::vector<llvm::Constant *> entries;
-    for (const auto *layout : semantic::native_layouts(module)) {
+    entries.reserve(layouts.size());
+    for (const auto *layout : layouts) {
         std::vector<llvm::Constant *> slots;
         slots.reserve(layout->fields.size());
         for (const auto &field : layout->fields) {

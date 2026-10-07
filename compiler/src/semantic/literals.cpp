@@ -111,6 +111,7 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         append_branches(selection->clauses, result);
     } else if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
+        result.reserve(choice->clauses.size());
         for (const auto &clause : choice->clauses) {
             result.push_back({nullptr, &clause.guard, &clause.body});
         }
@@ -130,6 +131,7 @@ const std::vector<ast::FunctionClause> *fun_clauses(const ast::ExprValue &value)
 
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value) {
     std::vector<ast::ExprId> result;
+    result.reserve(value.body.size());
     for (const auto &item : value.body) {
         const auto *match = std::get_if<ast::MaybeMatch>(&item);
         result.push_back(match ? match->value : std::get<ast::ExprId>(item));
@@ -214,7 +216,10 @@ std::vector<ast::ExprId> call_children(const Module &module, const ast::Expressi
     }
     if (dynamic_call(syntax, call)) {
         const auto &remote = std::get<ast::RemoteExpression>(syntax.expression(ungroup(syntax, call.target)).value);
-        std::vector<ast::ExprId> result{remote.module, remote.function};
+        std::vector<ast::ExprId> result;
+        result.reserve(2 + call.arguments.size());
+        result.push_back(remote.module);
+        result.push_back(remote.function);
         result.insert(result.end(), call.arguments.begin(), call.arguments.end());
         return result;
     }
@@ -236,6 +241,7 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
     std::vector<ast::ExprId> result;
     if (external_record(module, record->identity)) {
         // External construction evaluates the given fields in source order; defaults belong to the definition.
+        result.reserve(record->fields.size());
         for (const auto &field : record->fields) {
             result.push_back(field.value);
         }

@@ -59,7 +59,9 @@ bool declares_module(const std::string_view body) {
 
 // Quote atom text, escaping anything outside printable ASCII as \x{H} so source encoding never matters.
 std::string atom_literal(const std::u32string_view name) {
-    std::string result = "'";
+    std::string result;
+    result.reserve(name.size() + 2);
+    result += '\'';
     for (const auto value : name) {
         if (value >= 0x20 && value < 0x7f && value != U'\'' && value != U'\\') {
             result.push_back(static_cast<char>(value));

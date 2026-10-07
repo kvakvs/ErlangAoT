@@ -35,6 +35,7 @@ std::uint32_t pair(std::wstring_view text, std::size_t at) {
 // Decode UTF-16 code units; an unpaired surrogate becomes U+FFFD.
 Points decode(std::wstring_view text) {
     Points points;
+    points.reserve(text.size());
     for (std::size_t at = 0; at < text.size(); ++at) {
         const auto combined = pair(text, at);
         const std::uint32_t unit = text[at];
@@ -50,6 +51,7 @@ std::vector<Points> native_arguments(int, char **) {
         throw std::runtime_error("wide command line unavailable");
     }
     std::vector<Points> arguments;
+    arguments.reserve(__argc > 1 ? static_cast<std::size_t>(__argc - 1) : 0);
     for (auto **argument = __wargv; *argument; ++argument) {
         if (argument != __wargv) {
             arguments.push_back(decode(*argument));
@@ -88,6 +90,7 @@ std::size_t sequence(std::string_view bytes, std::size_t at, std::uint32_t &poin
 // Decode UTF-8; a byte that does not start a valid sequence becomes its own (Latin-1) code point.
 Points decode(std::string_view bytes) {
     Points points;
+    points.reserve(bytes.size());
     for (std::size_t at = 0; at < bytes.size();) {
         std::uint32_t point = 0;
         const auto size = static_cast<unsigned char>(bytes[at]) < 0x80 ? 0 : sequence(bytes, at, point);
@@ -100,6 +103,7 @@ Points decode(std::string_view bytes) {
 // POSIX arguments are bytes; skip the program name.
 std::vector<Points> native_arguments(int argc, char **argv) {
     std::vector<Points> arguments;
+    arguments.reserve(argc > 1 ? static_cast<std::size_t>(argc - 1) : 0);
     for (int i = 1; i < argc && argv; ++i) {
         arguments.push_back(decode(argv[i] ? argv[i] : ""));
     }
@@ -124,9 +128,11 @@ TermResult<Term> string_term(TermFactory &factory, const Points &points) {
 
 TermResult<Term> program_arguments(ProcessContext &context, int argc, char **argv, std::size_t skip) {
     TermFactory factory(context);
-    std::vector<Term> strings;
     const auto arguments = native_arguments(argc, argv);
-    for (const auto &points : std::span(arguments).subspan(std::min(skip, arguments.size()))) {
+    const auto remaining = std::span(arguments).subspan(std::min(skip, arguments.size()));
+    std::vector<Term> strings;
+    strings.reserve(remaining.size());
+    for (const auto &points : remaining) {
         const auto string = string_term(factory, points);
         if (!string) {
             return string;

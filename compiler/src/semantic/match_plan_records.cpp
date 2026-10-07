@@ -18,6 +18,7 @@ bool expand_native(MatchPlanner &state, const PatternVisit &visit, const Normali
                    const ast::RecordExpression &record, const NativeIdentity &identity,
                    std::vector<MatchTask> &pending) {
     std::vector<const ast::RecordField *> fields;
+    fields.reserve(record.fields.size());
     for (const auto &field : record.fields) {
         if (std::holds_alternative<ast::Atom>(field.name)) {
             fields.push_back(&field);

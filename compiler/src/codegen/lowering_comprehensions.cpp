@@ -285,12 +285,15 @@ void reject(ExpressionLowering &state, const std::vector<Generator> &generators,
 std::vector<llvm::Value *> produced(ExpressionLowering &state, const Comprehension &comprehension) {
     std::vector<llvm::Value *> values;
     if (const auto *map = std::get_if<ast::MapComprehension>(comprehension.syntax)) {
+        values.reserve(map->templates.size());
         for (const auto &field : map->templates) {
             values.push_back(lower_tuple(state, std::array{value_of(state, field.key), value_of(state, field.value)}));
         }
         return values;
     }
-    for (const auto &item : semantic::comprehension_templates(*comprehension.syntax)) {
+    const auto templates = semantic::comprehension_templates(*comprehension.syntax);
+    values.reserve(templates.size());
+    for (const auto &item : templates) {
         values.push_back(value_of(state, item));
     }
     if (std::holds_alternative<ast::BinaryComprehension>(*comprehension.syntax)) {
@@ -316,8 +319,10 @@ void lower_generators(ExpressionLowering &state, Comprehension &comprehension,
                       const ast::ComprehensionQualifier &qualifier) {
     locate_source(state.builder, *state.module.syntax,
                   std::visit([](const auto &value) -> const ast::NodeSource & { return value.source; }, qualifier));
+    const auto parts = semantic::zipped(qualifier);
     std::vector<Generator> generators;
-    for (const auto &part : semantic::zipped(qualifier)) {
+    generators.reserve(parts.size());
+    for (const auto &part : parts) {
         generators.push_back(start(state, part));
     }
     auto *head = block(state, "generator.next");
@@ -363,7 +368,9 @@ void lower_filter(ExpressionLowering &state, const Comprehension &comprehension,
 
 void lower_templates(ExpressionLowering &state, const Comprehension &comprehension) {
     const auto values = produced(state, comprehension);
-    std::vector<llvm::Value *> cells(values.rbegin(), values.rend());
+    std::vector<llvm::Value *> cells;
+    cells.reserve(values.size() + 1);
+    cells.assign(values.rbegin(), values.rend());
     cells.push_back(load(state, comprehension.accumulator, "comprehension.accumulator"));
     store(state, lower_list(state, cells), comprehension.accumulator);
     state.builder.CreateBr(comprehension.next);

@@ -36,7 +36,9 @@ std::u32string character_text(const Integer &number) {
 
 // Quote decoded values; original whitespace and literal escapes are not preserved by epp.
 std::u32string quoted(const std::u32string_view text, const char32_t quote) {
-    std::u32string result(1, quote);
+    std::u32string result;
+    result.reserve(text.size() + 2);
+    result += quote;
     for (const auto item : text) {
         result += escaped(item, quote);
     }

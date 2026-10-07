@@ -109,7 +109,11 @@ llvm::Value *construct(ExpressionLowering &state, const ast::Expression &express
 
 // Update: the record, then field/value pairs, under the identity check.
 llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &record, const Identity &identity) {
-    std::vector<llvm::Value *> values{value_of(state, *record.base), identity.module, identity.name};
+    std::vector<llvm::Value *> values;
+    values.reserve(3 + 2 * record.fields.size());
+    values.push_back(value_of(state, *record.base));
+    values.push_back(identity.module);
+    values.push_back(identity.name);
     for (const auto &field : record.fields) {
         values.push_back(lower_atom(state, std::get<ast::Atom>(field.name)));
         values.push_back(value_of(state, field.value));
@@ -174,6 +178,7 @@ std::vector<llvm::Value *> external_values(ExpressionLowering &state, const ast:
                                            const semantic::Module &owner, const semantic::RecordLayout &layout,
                                            const ast::Atom *&missing) {
     std::vector<llvm::Value *> values;
+    values.reserve(layout.fields.size());
     for (const auto &declared : layout.fields) {
         const auto given = std::ranges::find_if(record.fields, [&](const ast::RecordField &field) {
             return std::get<ast::Atom>(field.name).name == declared.name.name;

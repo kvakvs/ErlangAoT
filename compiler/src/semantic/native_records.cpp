@@ -97,6 +97,7 @@ std::optional<std::vector<std::u32string>> export_names(const ast::Module &synta
         return std::nullopt;
     }
     std::vector<std::u32string> names;
+    names.reserve(list->elements.size());
     for (const auto &element : list->elements) {
         const auto *atom = std::get_if<ast::Atom>(&syntax.term(element).value);
         if (!atom) {

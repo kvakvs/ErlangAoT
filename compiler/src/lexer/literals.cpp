@@ -110,6 +110,7 @@ char32_t escaped(std::u32string_view &input) {
 // Decode multiline content after applying indentation to physical lines.
 std::u32string unescape(std::u32string_view input) {
     std::u32string result;
+    result.reserve(input.size());
     while (!input.empty()) {
         const auto value = input.front();
         input.remove_prefix(1);

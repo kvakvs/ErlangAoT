@@ -49,6 +49,7 @@ void multiply_add(std::string &decimal, const unsigned base, unsigned carry) {
 // Copy decimal digits without separators and leading zeros; long literals need no arithmetic.
 Integer decimal_digits(const std::u32string_view digits) {
     std::string decimal;
+    decimal.reserve(digits.size());
     for (const auto value : digits) {
         if (value != U'_' && (value != U'0' || !decimal.empty())) {
             decimal.push_back(static_cast<char>(value));

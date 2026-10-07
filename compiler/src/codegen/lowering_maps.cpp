@@ -67,6 +67,7 @@ llvm::Value *lower_map_operation(ExpressionLowering &state, const Op operation,
 
 llvm::Value *lower_map(ExpressionLowering &state, const ast::MapExpression &map) {
     std::vector<llvm::Value *> values;
+    values.reserve(1 + 3 * map.fields.size());
     const auto read = [&](const ast::ExprId &id) { return state.values.at(&state.module.syntax->expression(id)); };
     if (map.base) {
         values.push_back(read(*map.base));

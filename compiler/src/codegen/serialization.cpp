@@ -40,6 +40,7 @@ std::optional<std::vector<OutputBuffer>> capture(Compilation &compilation, const
     }
     std::vector<OutputBuffer> outputs;
     try {
+        outputs.reserve(detail::state(compilation).modules.size());
         std::size_t index = 0;
         for (const auto &module : detail::state(compilation).modules) {
             if (artifact) {

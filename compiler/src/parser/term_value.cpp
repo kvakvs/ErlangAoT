@@ -46,6 +46,7 @@ Value TermNormalizer::operator()(const ast::CharacterLiteral &value) const { ret
 Value TermNormalizer::operator()(const ast::StringLiteral &value) const {
     literal_work(work_, value.value.size());
     std::vector<Value> characters;
+    characters.reserve(value.value.size());
     for (const auto c : value.value) {
         characters.push_back(integer(c));
     }
@@ -88,6 +89,7 @@ Value TermNormalizer::operator()(const ast::BinaryExpression &value) const {
 Value TermNormalizer::operator()(const ast::Tuple &value) const {
     Value result;
     result.kind = ValueKind::tuple;
+    result.elements.reserve(value.elements.size());
     for (const auto &id : value.elements) {
         result.elements.push_back(child(id));
     }

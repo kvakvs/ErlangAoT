@@ -36,6 +36,7 @@ std::vector<Text> strings(const toml::table &table, const std::string_view key, 
         fail(site(*node, context, std::string(key)), "expected an array of strings");
     }
     std::vector<Text> result;
+    result.reserve(array->size());
     for (const auto &element : *array) {
         result.push_back(text(element, context, std::string(key)));
     }

@@ -50,6 +50,8 @@ struct Describe {
 
     Description operator()(const ast::MapType &v) const {
         Description d{{Kind::map, v.any ? "any" : "exact"}};
+        d.children.reserve(2 * v.fields.size());
+        d.node.labels.reserve(v.fields.size());
         for (const auto &field : v.fields) {
             d.children.push_back(field.key);
             d.children.push_back(field.value);
@@ -60,6 +62,8 @@ struct Describe {
 
     Description operator()(const ast::RecordType &v) const {
         Description d{{Kind::record, utf8(v.name.name), v.module ? utf8(v.module->name) : ""}};
+        d.children.reserve(v.fields.size());
+        d.node.labels.reserve(v.fields.size());
         for (const auto &field : v.fields) {
             d.children.push_back(field.type);
             d.node.labels.push_back(utf8(field.name.name));
@@ -94,7 +98,11 @@ struct Describe {
 };
 } // namespace
 
-Description describe(const ast::TypeValue &value) { return std::visit(Describe{}, value); }
+Description describe(const ast::TypeValue &value) {
+    auto description = std::visit(Describe{}, value);
+    description.node.children.reserve(description.children.size());
+    return description;
+}
 
 Id translate(Graph &graph, const ast::Module &syntax, const ast::TypeId &root) {
     struct Frame {

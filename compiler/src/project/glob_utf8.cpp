@@ -48,6 +48,7 @@ char32_t scalar(const std::string_view text, std::size_t &position, const Site &
 
 std::u32string filename_scalars(const std::string_view text, const Site &site) {
     std::u32string result;
+    result.reserve(text.size());
     std::size_t position = 0;
     while (position < text.size()) {
         result.push_back(scalar(text, position, site));

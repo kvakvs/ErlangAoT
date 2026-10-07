@@ -83,6 +83,7 @@ ast::TypeDeclaration FormParser::type_declaration(const ast::Atom &name, const a
         const auto &call = attribute_as<ast::CallExpression>(builder_.view(), head);
         auto type_name = attribute_as<ast::Atom>(builder_.view(), call.target);
         std::vector<ast::Variable> parameters;
+        parameters.reserve(call.arguments.size());
         for (const auto &id : call.arguments) {
             auto variable = attribute_as<ast::Variable>(builder_.view(), id);
             if (variable.name == U"_") {

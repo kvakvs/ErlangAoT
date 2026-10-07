@@ -107,8 +107,11 @@ llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id) {
             return update(state, *record);
         }
         const auto &layout = *semantic::record_layout(state.module, record->identity);
-        auto values = state.record_values.at(&expression);
-        values.insert(values.begin(), lower_atom(state, layout.name));
+        const auto &fields = state.record_values.at(&expression);
+        std::vector<llvm::Value *> values;
+        values.reserve(1 + fields.size());
+        values.push_back(lower_atom(state, layout.name));
+        values.insert(values.end(), fields.begin(), fields.end());
         return lower_tuple(state, values);
     }
     if (const auto *field = std::get_if<ast::RecordAccess>(&expression.value)) {

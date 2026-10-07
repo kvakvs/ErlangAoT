@@ -25,7 +25,9 @@ struct Children {
     std::vector<ast::ExprId> operator()(const ast::RecordAccess &v) const { return {v.base}; }
 
     std::vector<ast::ExprId> operator()(const ast::List &v) const {
-        auto result = v.elements;
+        std::vector<ast::ExprId> result;
+        result.reserve(v.elements.size() + 1);
+        result.assign(v.elements.begin(), v.elements.end());
         if (v.tail) {
             result.push_back(*v.tail);
         }
@@ -33,13 +35,16 @@ struct Children {
     }
 
     std::vector<ast::ExprId> operator()(const ast::CallExpression &v) const {
-        std::vector<ast::ExprId> result{v.target};
+        std::vector<ast::ExprId> result;
+        result.reserve(1 + v.arguments.size());
+        result.push_back(v.target);
         result.insert(result.end(), v.arguments.begin(), v.arguments.end());
         return result;
     }
 
     std::vector<ast::ExprId> operator()(const ast::MapExpression &v) const {
         std::vector<ast::ExprId> result;
+        result.reserve(1 + 2 * v.fields.size());
         if (v.base) {
             result.push_back(*v.base);
         }
@@ -52,6 +57,7 @@ struct Children {
 
     std::vector<ast::ExprId> operator()(const ast::RecordExpression &v) const {
         std::vector<ast::ExprId> result;
+        result.reserve(1 + v.fields.size());
         if (v.base) {
             result.push_back(*v.base);
         }
@@ -63,6 +69,7 @@ struct Children {
 
     std::vector<ast::ExprId> operator()(const ast::Bitstring &v) const {
         std::vector<ast::ExprId> result;
+        result.reserve(2 * v.segments.size());
         for (const auto &segment : v.segments) {
             result.push_back(segment.value);
             if (segment.size) {

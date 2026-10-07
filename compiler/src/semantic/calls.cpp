@@ -224,6 +224,7 @@ void order(CallGraph &graph, const std::vector<FunctionRef> &functions) {
     const auto edges = adjacency(graph, functions);
     for (const auto &members : Components(edges).run()) {
         Component component{{}, recursive(members, edges)};
+        component.members.reserve(members.size());
         for (const auto member : members) {
             component.members.push_back(functions[member]);
             graph.order.push_back(functions[member]);
@@ -300,11 +301,14 @@ std::set<std::u32string> referenced_modules(const ast::Module &syntax) {
 
 CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     const auto names = module_index(modules, out);
+    std::size_t total = 0;
     for (const auto &module : modules) {
         module->peers.insert(names.begin(), names.end());
+        total += module->functions.size();
     }
     CallGraph graph;
     std::vector<FunctionRef> functions;
+    functions.reserve(total);
     for (const auto &module : modules) {
         for (auto &function : module->functions) {
             functions.push_back({module.get(), &function});

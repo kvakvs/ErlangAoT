@@ -7,6 +7,7 @@ namespace {
 // Preserve all formal positions; OTP substitution uses the last occurrence of a repeated name.
 std::vector<std::string> parameters(const ast::TypeDeclaration &decl) {
     std::vector<std::string> names;
+    names.reserve(decl.parameters.size());
     for (const auto &parameter : decl.parameters) {
         const auto name = utf8(parameter.name);
         names.push_back(name);

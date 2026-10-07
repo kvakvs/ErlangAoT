@@ -83,7 +83,9 @@ template <typename Service>
 llvm::FunctionCallee frame_service(ExpressionLowering &state, std::size_t words, bool registers) {
     auto &output = *state.entry.getParent();
     auto *ptr = state.builder.getPtrTy();
-    std::vector<llvm::Type *> parameters{ptr};
+    std::vector<llvm::Type *> parameters;
+    parameters.reserve(words + 2);
+    parameters.push_back(ptr);
     parameters.insert(parameters.end(), words, state.word);
     if (registers) {
         parameters.push_back(ptr);
@@ -194,7 +196,9 @@ llvm::Value *lower_dynamic_call(ExpressionLowering &state, const ast::Expression
 llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression,
                          const ast::CallExpression &call) {
     auto *array = registers(state, abi::v1::register_count);
-    std::vector<llvm::Value *> operands{state.entry.getArg(0)};
+    std::vector<llvm::Value *> operands;
+    operands.reserve(call.arguments.size() + 2);
+    operands.push_back(state.entry.getArg(0));
     for (const auto &argument : call.arguments) {
         operands.push_back(value_of(state, argument));
     }

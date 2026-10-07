@@ -47,7 +47,10 @@ std::vector<std::filesystem::path> PreprocessorSession::State::candidates(const 
     if (directory.is_relative()) {
         directory = options.working_directory / directory;
     }
-    std::vector<std::filesystem::path> result{directory / path, options.working_directory / path};
+    std::vector<std::filesystem::path> result;
+    result.reserve(2 + options.include_paths.size());
+    result.push_back(directory / path);
+    result.push_back(options.working_directory / path);
     for (auto include : options.include_paths) {
         if (include.is_relative()) {
             include = options.working_directory / include;

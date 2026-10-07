@@ -10,6 +10,7 @@ namespace erlang_aot::cli {
 namespace {
 // Establish all owned declaration tables before resolving inter-module references.
 void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis, const semantic::Reporter &report) {
+    analysis.modules.reserve(request.inputs.size());
     for (const auto &input : request.inputs) {
         codegen::progress(request, "analysis", input.source_path);
         auto module = semantic::index(input.syntax, project::path_text(input.source_path), report, input.escript);
@@ -21,7 +22,8 @@ void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis
 }
 
 // Attach known module identities to each batch analysis phase before invoking its shared implementation.
-void trace_analysis(const std::string_view phase, const codegen::CompilationRequest &request, const Analysis &analysis) {
+void trace_analysis(const std::string_view phase, const codegen::CompilationRequest &request,
+                    const Analysis &analysis) {
     for (std::size_t i = 0; i < analysis.modules.size(); ++i) {
         codegen::progress(request, phase, request.inputs[i].source_path, utf8(analysis.modules[i]->name));
     }

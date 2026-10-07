@@ -163,6 +163,7 @@ std::expected<ProgramOptions, std::string> program_options(int argc, char **argv
         return std::unexpected(std::string(FLAGS_VARIABLE) + ": not a runtime option: " + flags[*from_environment]);
     }
     std::vector<std::string> arguments;
+    arguments.reserve(argc > 1 ? static_cast<std::size_t>(argc - 1) : 0);
     for (int i = 1; i < argc && argv; ++i) {
         arguments.emplace_back(argv[i] ? argv[i] : "");
     }

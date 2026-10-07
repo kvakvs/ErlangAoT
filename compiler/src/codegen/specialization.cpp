@@ -117,6 +117,7 @@ SpecializationPlan plan_specializations(const CompilationRequest &request,
         return result;
     }
     std::vector<const SpecializationInput *> ordered;
+    ordered.reserve(inputs.size());
     std::map<std::string, Budget> modules;
     for (const auto &input : inputs) {
         ordered.push_back(&input);

@@ -5,6 +5,7 @@
 namespace erlang_aot::cli {
 Publication publication(codegen::Compilation compilation, const std::filesystem::path &root,
                         std::vector<std::filesystem::path> protected_inputs) {
+    protected_inputs.reserve(protected_inputs.size() + compilation.request().inputs.size());
     for (const auto &input : compilation.request().inputs) {
         protected_inputs.push_back(input.source_path);
     }

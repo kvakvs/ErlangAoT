@@ -18,8 +18,10 @@ std::vector<ast::ExprId> attribute_list(const ast::Module &module, const ast::Ex
 }
 
 std::vector<ast::NameArity> attribute_arities(const ast::Module &module, const ast::ExprId &id) {
+    const auto items = attribute_list(module, id);
     std::vector<ast::NameArity> result;
-    for (const auto &item : attribute_list(module, id)) {
+    result.reserve(items.size());
+    for (const auto &item : items) {
         const auto &division = attribute_as<ast::BinaryExpression>(module, item);
         if (operator_spelling(division.operation) != U"/") {
             throw EvaluationFailure();
@@ -48,8 +50,10 @@ ast::ModuleAttribute module_attribute(const ast::Module &module, const std::vect
     }
     ast::ModuleAttribute result{.name = attribute_as<ast::Atom>(module, arguments.front()), .parameters = {}};
     if (arguments.size() == 2) {
+        const auto items = attribute_list(module, arguments[1]);
         result.parameters.emplace();
-        for (const auto &id : attribute_list(module, arguments[1])) {
+        result.parameters->reserve(items.size());
+        for (const auto &id : items) {
             result.parameters->push_back(attribute_as<ast::Variable>(module, id));
         }
     }
@@ -70,7 +74,9 @@ ast::FormValue paired_attribute(const ast::Module &module, const ast::Atom &name
     }
     if (name.name == U"import_record") {
         ast::ImportRecordAttribute result{.module = std::move(module_name), .names = {}};
-        for (const auto &id : attribute_list(module, arguments[1])) {
+        const auto items = attribute_list(module, arguments[1]);
+        result.names.reserve(items.size());
+        for (const auto &id : items) {
             result.names.push_back(attribute_as<ast::Atom>(module, id));
         }
         return result;

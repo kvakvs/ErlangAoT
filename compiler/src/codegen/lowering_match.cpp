@@ -36,6 +36,7 @@ llvm::Value *literal(ExpressionLowering &state, const semantic::MatchLiteral &li
 // Original candidate arguments are loaded once; checked extractions populate separate SSA slots.
 std::vector<llvm::Value *> inputs(ExpressionLowering &state, const semantic::MatchPlan &plan) {
     std::vector<llvm::Value *> values;
+    values.reserve(plan.inputs);
     for (std::size_t i = 0; i < plan.inputs; ++i) {
         auto *slot = state.builder.CreateGEP(state.word, state.entry.getArg(1), llvm::ConstantInt::get(state.word, i));
         values.push_back(state.builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8),
@@ -213,6 +214,7 @@ std::vector<llvm::Value *> lower_match_plan(ExpressionLowering &state, const sem
     std::vector<llvm::Value *> candidates(plan.values);
     std::ranges::copy(values, candidates.begin());
     std::vector<llvm::BasicBlock *> blocks;
+    blocks.reserve(plan.nodes.size());
     for (const auto &node : plan.nodes) {
         if (node.operation == semantic::MatchOperation::success) {
             blocks.push_back(success);

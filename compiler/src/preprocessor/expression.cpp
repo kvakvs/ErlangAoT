@@ -16,6 +16,7 @@ Value literal_value(const Token &token) {
     }
     if (token.kind == TokenKind::string) {
         std::vector<Value> chars;
+        chars.reserve(token.text().size());
         for (const auto character : token.text()) {
             chars.push_back(integer(static_cast<std::uint32_t>(character)));
         }

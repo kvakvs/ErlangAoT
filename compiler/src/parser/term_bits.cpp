@@ -4,6 +4,7 @@ namespace erlang_aot {
 void TermNormalizer::segment(Value &output, const ast::BinarySegment &value) const {
     std::vector<Token> modifiers;
     if (value.modifiers) {
+        modifiers.reserve(2 * value.modifiers->size());
         for (const auto &modifier : *value.modifiers) {
             Token token;
             token.kind = TokenKind::atom;

@@ -57,6 +57,7 @@ Id arithmetic(const Resolver &r, const Node &node, const std::vector<Value> &val
 // Integer-only syntax categories reject nonconstants instead of treating declarations as executable code.
 std::optional<std::vector<Value>> operands(const Resolver &r, const Node &node, const ast::NodeSource &source) {
     std::vector<Value> values;
+    values.reserve(node.children.size());
     for (const auto child : node.children) {
         const auto &value = r.registry.graph.get(child);
         if (value.kind != Kind::integer) {

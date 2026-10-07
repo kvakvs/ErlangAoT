@@ -32,6 +32,7 @@ std::vector<std::pair<Value, ast::MapField>> metadata(const ast::Module &module,
         throw EvaluationFailure();
     }
     std::vector<std::pair<Value, ast::MapField>> result;
+    result.reserve(map.fields.size());
     for (const auto &field : map.fields) {
         if (field.kind != ast::MapFieldKind::associate) {
             throw EvaluationFailure();

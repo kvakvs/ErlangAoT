@@ -111,8 +111,10 @@ Id application(Resolver &r, Node node, const ast::NodeSource &source) {
 }
 
 // Validate field names independently of record lookup and remote metadata availability.
-void record_fields(const Resolver &r, const Node &node, const ast::RecordDeclaration &syntax, const ast::NodeSource &source) {
+void record_fields(const Resolver &r, const Node &node, const ast::RecordDeclaration &syntax,
+                   const ast::NodeSource &source) {
     std::vector<std::string> seen;
+    seen.reserve(node.labels.size());
     for (const auto &name : node.labels) {
         if (std::ranges::contains(seen, name)) {
             r.diagnostic(source, "duplicate record type field " + name);

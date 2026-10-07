@@ -8,6 +8,7 @@ namespace {
 std::string hex(const std::string_view text) {
     constexpr std::string_view digits = "0123456789abcdef";
     std::string result;
+    result.reserve(2 * text.size());
     for (const unsigned char byte : text) {
         result += digits[byte >> 4U];
         result += digits[byte & 15U];
@@ -22,6 +23,7 @@ std::optional<std::string> unhex(const std::string_view text) {
     }
     constexpr std::string_view digits = "0123456789abcdef";
     std::string result;
+    result.reserve(text.size() / 2);
     for (std::size_t i = 0; i < text.size(); i += 2) {
         const auto high = digits.find(text[i]);
         const auto low = digits.find(text[i + 1]);

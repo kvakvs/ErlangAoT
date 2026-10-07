@@ -13,6 +13,7 @@ Overload overload(Registry &registry, const Contract &contract, const ast::Speci
         description.node.children.push_back(resolver.type(child));
     }
     Overload result{registry.graph.intern(std::move(description.node)), {}, signature.source};
+    result.constraints.reserve(signature.constraints.size());
     if (!signature.function.arguments || signature.function.arguments->size() != contract.key.arity) {
         resolver.diagnostic(signature.source, "specification overload arity mismatch");
     }
@@ -46,7 +47,9 @@ void records(Registry &registry, const Reporter &out) {
         const auto &form = module.syntax->form(record.form);
         Scope scope{scope_identity({key.first, key.second, 0}, "record"), {}};
         Resolver resolver{registry, module, out, scope};
-        for (const auto &field : std::get<ast::RecordDeclaration>(form.value).fields) {
+        const auto &fields = std::get<ast::RecordDeclaration>(form.value).fields;
+        record.fields.reserve(fields.size());
+        for (const auto &field : fields) {
             record.fields.emplace_back(utf8(field.name.name),
                                        field.type ? resolver.type(*field.type) : registry.graph.top());
         }
@@ -58,14 +61,15 @@ void records(Registry &registry, const Reporter &out) {
 void contracts(Registry &registry, const Reporter &out) {
     for (auto &contract : registry.contracts) {
         const auto &syntax = std::get<ast::Specification>(contract.module->syntax->form(contract.form).value);
+        contract.overloads.reserve(syntax.signatures.size());
         for (std::size_t i = 0; i < syntax.signatures.size(); ++i) {
             contract.overloads.push_back(overload(registry, contract, syntax.signatures[i], i, out));
         }
     }
 }
 
-std::unique_ptr<Registry> resolve_declarations(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out,
-                                               const Limits limits) {
+std::unique_ptr<Registry> resolve_declarations(const std::span<const std::unique_ptr<Module>> modules,
+                                               const Reporter &out, const Limits limits) {
     auto registry = std::make_unique<Registry>(limits);
     collect(*registry, modules, out);
     for (auto &declaration : registry->declarations) {
