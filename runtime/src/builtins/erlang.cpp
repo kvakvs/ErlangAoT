@@ -1,4 +1,4 @@
-#include "support.hpp"
+#include "typed.hpp"
 #include <array>
 #include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/calls.hpp>
@@ -13,7 +13,8 @@
 #include <erlang_aot/runtime/process_context.hpp>
 
 // The erlang builtins of the bridge (docs/builtins.md): adapters over the services generated code calls inline,
-// raising the errors the inline lowering raises in a body.
+// raising the errors the inline lowering raises in a body. They pass argument words to those services unconverted
+// (the services admit them); builtins checking their own arguments are typed (typed.hpp).
 namespace erlang_aot::runtime {
 namespace {
 using abi::v1::ErrorReason;
@@ -79,22 +80,11 @@ Word binary_part3(ProcessContext &context, Arguments arguments) {
 }
 
 // binary_part(Binary, {Start, Length}): anything but a pair raises badarg.
-Word binary_part2(ProcessContext &context, Arguments arguments) {
-    const auto range = Term::from_word(arguments[1], context);
-    if (!range) {
-        context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
-        return 0;
-    }
-    if (!range->is_tuple() || range->tuple_size().value_or(0) != 2) {
+Word binary_part2(ProcessContext &context, const Term &binary, const builtins::TupleArgument &range) {
+    if (range.elements.size() != 2) {
         return raise(context, ErrorReason::badarg);
     }
-    const auto start = range->tuple_element(0);
-    const auto length = range->tuple_element(1);
-    if (!start || !length) {
-        context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
-        return 0;
-    }
-    return binary_part(context, {arguments[0], start->word(), length->word()});
+    return binary_part(context, {binary.word(), range.elements[0].word(), range.elements[1].word()});
 }
 
 // display(Term) prints one line and returns true.
@@ -136,20 +126,12 @@ Word raise_stack(ProcessContext &context, Arguments arguments) {
 
 // function_exported(Module, Function, Arity): true when a module of the program exports it or it is a builtin;
 // non-atom names or a non-small arity raise badarg.
-Word function_exported(ProcessContext &context, Arguments arguments) {
-    const auto module = Term::from_word(arguments[0], context);
-    const auto function = Term::from_word(arguments[1], context);
-    if (!module || !function) {
-        context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
-        return 0;
-    }
-    const auto arity = builtins::small(arguments[2]);
-    if (!module->is_atom() || !function->is_atom() || !arity) {
-        return raise(context, ErrorReason::badarg);
-    }
-    const bool valid = *arity >= 0 && *arity < static_cast<std::int64_t>(abi::v1::register_count);
+Word function_exported(ProcessContext &context, const builtins::AtomArgument &module,
+                       const builtins::AtomArgument &function, std::int64_t arity) {
+    const bool valid = arity >= 0 && arity < static_cast<std::int64_t>(abi::v1::register_count);
     const auto *frame =
-        valid ? context.code_server().function_frame(*module, *function, static_cast<std::size_t>(*arity)) : nullptr;
+        valid ? context.code_server().function_frame(module.term, function.term, static_cast<std::size_t>(arity))
+              : nullptr;
     return boolean(context, frame != nullptr);
 }
 
@@ -191,7 +173,7 @@ constexpr std::array ERLANG_BUILTINS{
     BuiltinEntry{"erlang", "tl", 1, immediate<Op::tl>},
     BuiltinEntry{"erlang", "trunc", 1, immediate<Op::trunc>},
     BuiltinEntry{"erlang", "tuple_size", 1, immediate<Op::tuple_size>},
-    BuiltinEntry{"erlang", "binary_part", 2, binary_part2},
+    builtins::typed_entry<binary_part2>("erlang", "binary_part"),
     BuiltinEntry{"erlang", "binary_part", 3, binary_part3},
     BuiltinEntry{"erlang", "=:=", 2, immediate<Op::exact_equal>},
     BuiltinEntry{"erlang", "=/=", 2, immediate<Op::exact_not_equal>},
@@ -228,7 +210,7 @@ constexpr std::array ERLANG_BUILTINS{
     BuiltinEntry{"erlang", "exit", 1, raise_reason<ErrorReason::raised_exit>},
     BuiltinEntry{"erlang", "throw", 1, raise_reason<ErrorReason::raised_throw>},
     BuiltinEntry{"erlang", "raise", 3, raise_stack},
-    BuiltinEntry{"erlang", "function_exported", 3, function_exported},
+    builtins::typed_entry<function_exported>("erlang", "function_exported"),
 };
 } // namespace
 

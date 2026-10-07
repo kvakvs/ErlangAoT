@@ -152,6 +152,10 @@
   one-line lengths, then pp/cind layout; sequences iterate, nesting recursion capped at 256 -> system_limit),
   shared `builtins/text` (UTF-8, digits); text is built as `std::u32string`, validated, written as UTF-8.
   `TermStyle::write_unicode` = `~tw` atoms.
+  Step 41: typed builtins (`builtins/typed.hpp`): `typed<Function>` adapts `Result(ProcessContext &, Params...)`
+  to a BuiltinBody (admit, convert via `Argument<T>`, mismatch -> badarg, publish Term/TermResult/BuiltinResult/Word;
+  thrown `BuiltinFailure` recorded). term_access, conversions, io, binary_part/2, function_exported/3 use it;
+  the other erlang adapters forward raw words to the inline services.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

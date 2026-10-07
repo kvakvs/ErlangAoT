@@ -311,6 +311,10 @@ Step facts beyond the plan record:
   (kill erl/beam.smp). Pretty layout recursion ~1.2 KiB/level Debug: 800 levels overflow 1 MiB main stack -> cap
   256. ADL: local `advance`/`quoted` resolve to std:: -> renamed. avltree/frames/textstats now compile and their
   linked executables match expected stdout (step 58 runs them). Fixture console: lists:duplicate not in library.
+- 41: BuiltinFailure/need/bad_argument/fail live in builtins/support.hpp (io used FormatFailure before).
+  typed_entry<F>(module, name) derives arity. Tests reach private headers via target_include_directories
+  runtime/src (runtime_typed_builtins). TermFactory: integer, integer_decimal, floating. term_status maps
+  stale_term -> internal_error (use wrong_owner to distinguish). Reserve sweep (a2be154) measured no change.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

@@ -339,8 +339,9 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)â€
 
 Plan: [41](11-plan.md#step-41).
 
-- [ ] Concrete use cases, checked conversions, generic fallback; no STL values
-  or C++ exceptions across generated boundaries.
+- [x] Concrete use cases, checked conversions, generic fallback; no STL values
+  or C++ exceptions across generated boundaries (step 41: typed builtin
+  adapters, `runtime/src/builtins/typed.hpp`).
 
 ### F28 â€” Concurrent code-server access
 

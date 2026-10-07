@@ -90,6 +90,12 @@ foreach(suite IN ITEMS builtins builtin_bridge)
     target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)
     add_test(NAME runtime_${suite} COMMAND runtime_${suite})
 endforeach()
+# Typed builtin adapters: conversion failures, foreign and expired words, throwing bodies.
+add_executable(runtime_typed_builtins typed_builtins.cpp)
+erlang_aot_project_options(runtime_typed_builtins)
+target_link_libraries(runtime_typed_builtins PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_typed_builtins PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_typed_builtins COMMAND runtime_typed_builtins)
 add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_builtin_bridge>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/builtin_output.cmake")

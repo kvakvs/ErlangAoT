@@ -929,12 +929,35 @@ Use the builtin families as the concrete use case: typed C++ signatures with
 checked argument conversion and generic Term fallback.
 
 - Success criteria
-  - [ ] Existing builtins migrate to typed wrappers with identical behavior;
+  - [x] Existing builtins migrate to typed wrappers with identical behavior;
     wrong types become `badarg`; C++ exceptions never cross the generated ABI.
 - Tests
-  - [ ] Existing builtin goldens pass unchanged.
-  - [ ] Focused tests for conversion failure, expired handles and a throwing
+  - [x] Existing builtin goldens pass unchanged.
+  - [x] Focused tests for conversion failure, expired handles and a throwing
     callback.
+- Evidence (2026-10-07): no OTP-dependent change. `runtime/src/builtins/typed.hpp`:
+  `typed<Function>` adapts `Result(ProcessContext &, Parameters...)` to a
+  `BuiltinBody`; `typed_entry<Function>(module, name)` takes the arity from
+  the signature. Arguments are admitted in order (unowned words are
+  failures), then converted by `Argument<T>` (`Term` fallback,
+  `std::int64_t` small, `detail::Integer`, `double`, `ListArgument`,
+  `TupleArgument`, `BinaryArgument`, `AtomArgument`); a mismatch raises
+  badarg without running the body. Results `Term`, `TermResult<Term>`,
+  `BuiltinResult<Term>` or a self-published `Word`; a thrown
+  `BuiltinFailure` (moved from io to `support.hpp`) is raised or recorded,
+  other exceptions stay in `call_builtin`. Migrated: term-access family,
+  conversions, io, `binary_part/2`, `function_exported/3`; the remaining
+  erlang adapters forward raw words to the inline services (documented in
+  `docs/builtins.md#typed-builtins`). Unchanged goldens
+  (`builtin_bridge`, `term_access`, `conversions`, `console`, `library`)
+  pass; new `runtime_typed_builtins` (conversion failures of every argument
+  type skip the body; foreign and destroyed-process words are service
+  failures; runtime_error, bad_alloc and thrown BuiltinFailure become
+  internal_error, out_of_memory, system_limit and the term status). Fresh
+  Windows x64 Debug: fast 179/179, full `-j 12` 183/183; Lizard 0 warnings;
+  tidy (now batched) flagged one swappable-parameter pair in `'++'/2`,
+  fixed (`ListArgument` left operand) and the affected shards rerun clean.
+  Logs `build/plan11-step41/`.
 
 ## I. Processes and messaging
 

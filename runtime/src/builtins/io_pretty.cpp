@@ -120,7 +120,7 @@ class Builder final {
     // The node of `term` nested `depth` containers deep.
     Node node(const Term &term, std::size_t depth) {
         if (depth > MAX_NESTING) {
-            throw FormatFailure{.reason = abi::v1::ErrorReason::system_limit};
+            throw BuiltinFailure{.reason = abi::v1::ErrorReason::system_limit};
         }
         if (term.is_cons()) {
             return list(term, depth);

@@ -1,8 +1,8 @@
 #include "../terms/integers.hpp"
 #include "float_text.hpp"
-#include "support.hpp"
 #include "terms.hpp"
 #include "text.hpp"
+#include "typed.hpp"
 #include <algorithm>
 #include <array>
 #include <erlang_aot/abi/equality.hpp>
@@ -19,17 +19,17 @@ using detail::Integer;
 constexpr std::size_t MAX_ATOM_CHARACTERS = 255;
 
 // A proper list of the given character codes.
-Word char_list(ProcessContext &context, std::u32string_view codes) {
+TermResult<Term> char_list(ProcessContext &context, std::u32string_view codes) {
     std::vector<Term> items;
     items.reserve(codes.size());
     for (const auto code : codes) {
         items.push_back(*Term::from_word(*abi::v1::NativeIntegerEncoding::encode(code)));
     }
-    return publish(context, TermFactory(context).list(items));
+    return TermFactory(context).list(items);
 }
 
 // A proper list of the bytes of `text`.
-Word byte_list(ProcessContext &context, std::string_view text) {
+TermResult<Term> byte_list(ProcessContext &context, std::string_view text) {
     std::u32string codes(text.size(), 0);
     std::ranges::transform(text, codes.begin(), [](char c) { return static_cast<unsigned char>(c); });
     return char_list(context, codes);
@@ -43,13 +43,8 @@ Term next(Term &list) {
 }
 
 // atom_to_list(Atom): its characters.
-Word atom_to_list(ProcessContext &context, Arguments arguments) {
-    const auto atom = admit(context, arguments[0]);
-    if (!atom) {
-        return 0;
-    }
-    const auto spelling = atom->is_atom() ? atom->atom_spelling() : std::unexpected(TermError::wrong_type);
-    return spelling ? char_list(context, code_points(*spelling)) : badarg(context);
+TermResult<Term> atom_to_list(ProcessContext &context, const AtomArgument &atom) {
+    return char_list(context, code_points(atom.spelling));
 }
 
 // Why a list_to_atom argument is not a name: OTP checks the length before each character.
@@ -75,37 +70,32 @@ std::expected<std::string, NameError> atom_name(Term list) {
 }
 
 // list_to_atom(String): more than 255 characters is system_limit; a full atom table stops the program.
-Word list_to_atom(ProcessContext &context, Arguments arguments) {
-    const auto list = admit(context, arguments[0]);
-    if (!list) {
-        return 0;
-    }
-    const auto name = atom_name(*list);
+BuiltinResult<Term> list_to_atom(ProcessContext &context, const Term &list) {
+    const auto name = atom_name(list);
     if (!name) {
-        return name.error() == NameError::too_long ? raise(context, abi::v1::ErrorReason::system_limit)
-                                                   : badarg(context);
+        return std::unexpected(BuiltinFailure{name.error() == NameError::too_long ? abi::v1::ErrorReason::system_limit
+                                                                                  : abi::v1::ErrorReason::badarg});
     }
-    return publish(context, context.atom_storage().intern(*name));
+    return context.atom_storage().intern(*name).transform_error(
+        [](TermError error) { return BuiltinFailure{.term = error}; });
 }
 
-// A base argument: a small integer in 2..36.
-std::optional<unsigned> base_of(Word word) {
-    const auto base = small(word);
-    return base && *base >= 2 && *base <= 36 ? std::optional{static_cast<unsigned>(*base)} : std::nullopt;
+// A base argument: a small integer in 2..36, else badarg.
+unsigned base_of(std::int64_t base) {
+    if (base < 2 || base > 36) {
+        bad_argument();
+    }
+    return static_cast<unsigned>(base);
 }
 
-// integer_to_list(Integer) and integer_to_list(Integer, Base).
-Word integer_to_list(ProcessContext &context, Arguments arguments) {
-    const auto number = admit(context, arguments[0]);
-    if (!number) {
-        return 0;
-    }
-    const auto base = arguments.size() == 1 ? std::optional{10U} : base_of(arguments[1]);
-    const auto value = number->is_integer() ? detail::integer_read(*number) : std::unexpected(TermError::wrong_type);
-    if (!value || !base) {
-        return badarg(context);
-    }
-    return byte_list(context, integer_digits(*value, *base));
+// integer_to_list(Integer, Base).
+TermResult<Term> integer_to_list2(ProcessContext &context, const Integer &value, std::int64_t base) {
+    return byte_list(context, integer_digits(value, base_of(base)));
+}
+
+// integer_to_list(Integer).
+TermResult<Term> integer_to_list1(ProcessContext &context, const Integer &value) {
+    return integer_to_list2(context, value, 10);
 }
 
 // The value of a digit character of base 36 (either letter case); 36 for any other character.
@@ -221,21 +211,22 @@ std::expected<Integer, ParseError> parse_integer(std::span<const unsigned char> 
     return value;
 }
 
-// list_to_integer(String) and list_to_integer(String, Base); a value past the integer limit is system_limit.
-Word list_to_integer(ProcessContext &context, Arguments arguments) {
-    const auto list = admit(context, arguments[0]);
-    if (!list) {
-        return 0;
-    }
-    const auto base = arguments.size() == 1 ? std::optional{10U} : base_of(arguments[1]);
-    const auto text = base ? byte_codes(*list) : std::nullopt;
-    const auto value = text ? parse_integer(*text, *base) : std::unexpected(ParseError::badarg);
+// list_to_integer(String, Base); a value past the integer limit is system_limit.
+TermResult<Term> list_to_integer2(ProcessContext &context, const Term &list, std::int64_t base) {
+    const auto radix = base_of(base);
+    const auto text = byte_codes(list);
+    const auto value = text ? parse_integer(*text, radix) : std::unexpected(ParseError::badarg);
     if (!value || detail::integer_bits(*value) > detail::integer_bit_limit) {
-        return value.error_or(ParseError::system_limit) == ParseError::badarg
-                   ? badarg(context)
-                   : raise(context, abi::v1::ErrorReason::system_limit);
+        throw BuiltinFailure{value.error_or(ParseError::system_limit) == ParseError::badarg
+                                 ? abi::v1::ErrorReason::badarg
+                                 : abi::v1::ErrorReason::system_limit};
     }
-    return publish(context, detail::IntegerAccess::make(context.heap(), *value));
+    return detail::IntegerAccess::make(context.heap(), *value);
+}
+
+// list_to_integer(String).
+TermResult<Term> list_to_integer1(ProcessContext &context, const Term &list) {
+    return list_to_integer2(context, list, 10);
 }
 
 // Apply the atom option compact or short; false for any other atom.
@@ -280,33 +271,27 @@ bool float_options(Term options, FloatFormat &format) {
     return options.is_nil();
 }
 
-// float_to_list(Float) and float_to_list(Float, Options): later options override earlier ones.
-Word float_to_list(ProcessContext &context, Arguments arguments) {
-    const auto number = admit(context, arguments[0]);
-    auto options = arguments.size() == 1 ? Term::from_word(abi::v1::empty_list).value() : admit(context, arguments[1]);
-    if (!number || !options) {
-        return 0;
-    }
+// float_to_list(Float, Options): later options override earlier ones.
+TermResult<Term> float_to_list2(ProcessContext &context, double number, const Term &options) {
     FloatFormat format;
-    const auto text = number->is_float() && float_options(*options, format)
-                          ? float_text(number->float_value().value(), format)
-                          : std::nullopt;
-    return text ? byte_list(context, *text) : badarg(context);
+    const auto text = float_options(options, format) ? float_text(number, format) : std::nullopt;
+    if (!text) {
+        bad_argument();
+    }
+    return byte_list(context, *text);
+}
+
+// float_to_list(Float).
+TermResult<Term> float_to_list1(ProcessContext &context, double number) {
+    return float_to_list2(context, number, Term::from_word(abi::v1::empty_list).value());
 }
 
 // binary_to_list(Binary): its bytes; other bitstrings are badarg.
-Word binary_to_list(ProcessContext &context, Arguments arguments) {
-    const auto binary = admit(context, arguments[0]);
-    if (!binary) {
-        return 0;
-    }
-    const auto bytes = binary->is_binary() ? binary->binary_bytes() : std::unexpected(TermError::wrong_type);
-    if (!bytes) {
-        return badarg(context);
-    }
+TermResult<Term> binary_to_list(ProcessContext &context, const BinaryArgument &binary) {
     std::u32string codes;
-    codes.reserve(bytes->size());
-    std::ranges::transform(*bytes, std::back_inserter(codes), [](std::byte b) { return std::to_integer<char32_t>(b); });
+    codes.reserve(binary.bytes.size());
+    std::ranges::transform(binary.bytes, std::back_inserter(codes),
+                           [](std::byte b) { return std::to_integer<char32_t>(b); });
     return char_list(context, codes);
 }
 
@@ -359,37 +344,32 @@ std::optional<std::vector<std::byte>> iolist_bytes(const Term &root) {
     return bytes;
 }
 
-// list_to_binary(IoList) and iolist_to_binary(IoListOrBinary).
-Word list_to_binary(ProcessContext &context, Arguments arguments, bool binary_allowed) {
-    const auto root = admit(context, arguments[0]);
-    if (!root) {
-        return 0;
+// list_to_binary(IoList): the argument must be a list.
+TermResult<Term> list_to_binary(ProcessContext &context, const Term &root) {
+    const auto bytes = root.is_list() ? iolist_bytes(root) : std::nullopt;
+    if (!bytes) {
+        bad_argument();
     }
-    if (binary_allowed && root->is_binary()) {
-        return root->word();
-    }
-    const auto bytes = root->is_nil() || root->is_cons() ? iolist_bytes(*root) : std::nullopt;
-    return bytes ? publish(context, TermFactory(context).binary(*bytes)) : badarg(context);
+    return TermFactory(context).binary(*bytes);
 }
 
-// list_to_binary(IoList): the argument must be a list.
-Word list_to_binary1(ProcessContext &context, Arguments arguments) { return list_to_binary(context, arguments, false); }
-
 // iolist_to_binary(IoListOrBinary): a binary is returned as it is.
-Word iolist_to_binary(ProcessContext &context, Arguments arguments) { return list_to_binary(context, arguments, true); }
+TermResult<Term> iolist_to_binary(ProcessContext &context, const Term &root) {
+    return root.is_binary() ? root : list_to_binary(context, root);
+}
 
 constexpr std::array CONVERSION_BUILTINS{
-    BuiltinEntry{"erlang", "atom_to_list", 1, atom_to_list},
-    BuiltinEntry{"erlang", "list_to_atom", 1, list_to_atom},
-    BuiltinEntry{"erlang", "integer_to_list", 1, integer_to_list},
-    BuiltinEntry{"erlang", "integer_to_list", 2, integer_to_list},
-    BuiltinEntry{"erlang", "list_to_integer", 1, list_to_integer},
-    BuiltinEntry{"erlang", "list_to_integer", 2, list_to_integer},
-    BuiltinEntry{"erlang", "float_to_list", 1, float_to_list},
-    BuiltinEntry{"erlang", "float_to_list", 2, float_to_list},
-    BuiltinEntry{"erlang", "binary_to_list", 1, binary_to_list},
-    BuiltinEntry{"erlang", "list_to_binary", 1, list_to_binary1},
-    BuiltinEntry{"erlang", "iolist_to_binary", 1, iolist_to_binary},
+    typed_entry<atom_to_list>("erlang", "atom_to_list"),
+    typed_entry<list_to_atom>("erlang", "list_to_atom"),
+    typed_entry<integer_to_list1>("erlang", "integer_to_list"),
+    typed_entry<integer_to_list2>("erlang", "integer_to_list"),
+    typed_entry<list_to_integer1>("erlang", "list_to_integer"),
+    typed_entry<list_to_integer2>("erlang", "list_to_integer"),
+    typed_entry<float_to_list1>("erlang", "float_to_list"),
+    typed_entry<float_to_list2>("erlang", "float_to_list"),
+    typed_entry<binary_to_list>("erlang", "binary_to_list"),
+    typed_entry<list_to_binary>("erlang", "list_to_binary"),
+    typed_entry<iolist_to_binary>("erlang", "iolist_to_binary"),
 };
 } // namespace
 } // namespace erlang_aot::runtime::builtins

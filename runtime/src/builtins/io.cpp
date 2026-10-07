@@ -1,15 +1,14 @@
 #include "../terms/service_errors.hpp"
 #include "io_format.hpp"
-#include "support.hpp"
 #include "text.hpp"
+#include "typed.hpp"
 #include <array>
 #include <erlang_aot/abi/term.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <erlang_aot/runtime/output.hpp>
-#include <vector>
 
 // The io builtins (docs/io.md): io:format/1,2 and io:put_chars/1 write UTF-8 to standard output and return ok.
-// Text the standard output device rejects raises badarg, writing nothing.
+// Text the standard output device rejects raises badarg (a thrown BuiltinFailure), writing nothing.
 namespace erlang_aot::runtime::builtins {
 namespace {
 // Write `text` as UTF-8 and return ok; a rejected write is the output_failure runtime failure.
@@ -21,51 +20,21 @@ Word emit(ProcessContext &context, std::u32string_view text) {
     return publish(context, context.atom_storage().intern("ok"));
 }
 
-// Produce text from the admitted arguments and write it; a FormatFailure raises its Erlang error, or records the
-// failed term access.
-template <typename Produce> Word output(ProcessContext &context, Arguments arguments, Produce produce) {
-    std::vector<Term> terms;
-    terms.reserve(arguments.size());
-    for (const auto word : arguments) {
-        auto term = admit(context, word);
-        if (!term) {
-            return 0;
-        }
-        terms.push_back(std::move(*term));
-    }
-    std::u32string text;
-    try {
-        text = produce(terms);
-    } catch (const FormatFailure &failure) {
-        if (failure.term) {
-            context.generated_calls().fail_service(detail::term_status(*failure.term));
-            return 0;
-        }
-        return raise(context, failure.reason);
-    }
-    return emit(context, text);
-}
-
 // io:format(Format): io:format(Format, []).
-Word format1(ProcessContext &context, Arguments arguments) {
-    return output(context, arguments,
-                  [](const std::vector<Term> &terms) { return format_text(terms[0], std::nullopt); });
-}
+Word format1(ProcessContext &context, const Term &format) { return emit(context, format_text(format, std::nullopt)); }
 
 // io:format(Format, Args).
-Word format2(ProcessContext &context, Arguments arguments) {
-    return output(context, arguments, [](const std::vector<Term> &terms) { return format_text(terms[0], terms[1]); });
+Word format2(ProcessContext &context, const Term &format, const Term &arguments) {
+    return emit(context, format_text(format, arguments));
 }
 
 // io:put_chars(Chardata).
-Word put_chars(ProcessContext &context, Arguments arguments) {
-    return output(context, arguments, [](const std::vector<Term> &terms) { return characters(terms[0]); });
-}
+Word put_chars(ProcessContext &context, const Term &chardata) { return emit(context, characters(chardata)); }
 
 constexpr std::array IO_BUILTINS{
-    BuiltinEntry{"io", "format", 1, format1},
-    BuiltinEntry{"io", "format", 2, format2},
-    BuiltinEntry{"io", "put_chars", 1, put_chars},
+    typed_entry<format1>("io", "format"),
+    typed_entry<format2>("io", "format"),
+    typed_entry<put_chars>("io", "put_chars"),
 };
 } // namespace
 } // namespace erlang_aot::runtime::builtins

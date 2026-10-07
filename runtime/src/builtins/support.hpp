@@ -5,6 +5,7 @@
 #include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <optional>
+#include <utility>
 
 // Helpers shared by builtin implementations: argument admission, error raising and result publication.
 namespace erlang_aot::runtime::builtins {
@@ -39,6 +40,36 @@ inline Word publish(ProcessContext &context, const TermResult<Term> &result) {
         return 0;
     }
     return result->word();
+}
+
+// Why a builtin ended without a value: an Erlang error to raise, or a term access failure (a runtime failure).
+// Builtin helpers throw it; the typed adapter and the io builtins record it.
+struct BuiltinFailure {
+    // The Erlang error raised when `term` is empty.
+    abi::v1::ErrorReason reason = abi::v1::ErrorReason::badarg;
+    // A failed term access, reported as a service failure instead of an Erlang error.
+    std::optional<TermError> term = std::nullopt;
+};
+
+// The value of a term access, or BuiltinFailure thrown with its error.
+template <typename T> T need(TermResult<T> result) {
+    if (!result) {
+        throw BuiltinFailure{.term = result.error()};
+    }
+    return std::move(*result);
+}
+
+// Throw the badarg of a rejected argument.
+[[noreturn]] inline void bad_argument() { throw BuiltinFailure{}; }
+
+// Record a BuiltinFailure: raise its Erlang error, or fail the service for a term access failure; returns the
+// unused result word.
+inline Word fail(ProcessContext &context, const BuiltinFailure &failure) {
+    if (failure.term) {
+        context.generated_calls().fail_service(detail::term_status(*failure.term));
+        return 0;
+    }
+    return raise(context, failure.reason);
 }
 
 // The value of a small integer word, as OTP's is_small; none for anything else.

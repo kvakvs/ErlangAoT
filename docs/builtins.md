@@ -94,6 +94,31 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   and `A` a small integer; it is true when a module of the program exports
   `M:F/A` or `M:F/A` is a registered builtin.
 
+## Typed builtins
+
+Plan 11 step 41 (2026-10-07): builtins that check their own arguments are C++
+functions of typed parameters ([typed.hpp](../runtime/src/builtins/typed.hpp)),
+`Result Function(ProcessContext &, Parameters...)`, registered with
+`typed_entry<Function>(module, name)` (the arity is the parameter count).
+
+- The adapter admits every argument word in order (a word this process does
+  not own is the failure it is, never `badarg`), then converts each to its
+  parameter type; a mismatch raises `badarg` and the function does not run.
+- Parameter types: `Term` (any term, the generic fallback), `std::int64_t`
+  (a small integer), `detail::Integer` (any integer), `double` (a float),
+  `ListArgument` (a proper list and its elements), `TupleArgument`,
+  `BinaryArgument` (bytes of a binary), `AtomArgument` (its spelling).
+- Results: `Term`, `TermResult<Term>` (a failed construction is a runtime
+  failure), `BuiltinResult<Term>` (`std::expected` with a `BuiltinFailure`),
+  or a raw `Word` the function published itself. A function may also throw
+  `BuiltinFailure` (an Erlang error such as `badarg` or `system_limit`, or a
+  term access failure); `call_builtin` turns every other C++ exception into
+  `out_of_memory` or `internal_error`, so none crosses the generated-code ABI.
+- The term-access, conversion and io families, `binary_part/2` and
+  `function_exported/3` are typed. The other `erlang` builtins pass their
+  argument words unconverted to the inline services generated code also calls,
+  which admit them; they stay word-level `BuiltinBody` adapters.
+
 ## Registration
 
 - `BuiltinRegistry` ([builtin_registry.hpp](../runtime/include/erlang_aot/runtime/builtin_registry.hpp)),
@@ -104,7 +129,7 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   nothing kept.
 - Runtime startup registers every table of `production_builtins()`
   (`erlang_builtins()`, `term_access_builtins()`, `conversion_builtins()`,
-  `io_builtins()`),
+  `io_builtins()`), most entries made by `typed_entry`,
   which together cover the
   catalog; later families add their own tables.
 - A body reads exactly its arity of argument words and records errors in the

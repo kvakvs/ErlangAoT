@@ -1,6 +1,6 @@
 #include "../terms/structural_order.hpp"
-#include "support.hpp"
 #include "terms.hpp"
+#include "typed.hpp"
 #include <algorithm>
 #include <array>
 #include <stdexcept>
@@ -12,90 +12,29 @@
 // bounded portions with rooted state (BEAM traps).
 namespace erlang_aot::runtime::builtins {
 namespace {
-// The elements of a proper list; none for an improper one.
-TermResult<std::optional<std::vector<Term>>> elements(Term list) {
-    std::vector<Term> result;
-    while (list.is_cons()) {
-        auto head = list.head();
-        auto tail = list.tail();
-        if (!head || !tail) {
-            return std::unexpected(head ? tail.error() : head.error());
-        }
-        result.push_back(std::move(*head));
-        list = std::move(*tail);
-    }
-    return list.is_nil() ? std::optional{std::move(result)} : std::nullopt;
-}
-
-// The elements of a proper list argument; none after raising badarg for anything else or recording a failure.
-std::optional<std::vector<Term>> list_argument(ProcessContext &context, Word word) {
-    const auto list = admit(context, word);
-    if (!list) {
-        return std::nullopt;
-    }
-    auto items = elements(*list);
-    if (!items) {
-        context.generated_calls().fail_service(detail::term_status(items.error()));
-        return std::nullopt;
-    }
-    if (!*items) {
-        badarg(context);
-    }
-    return std::move(*items);
-}
-
-// The elements of a tuple argument; none after raising badarg for anything else or recording a failure.
-std::optional<std::vector<Term>> tuple_argument(ProcessContext &context, Word word) {
-    const auto tuple = admit(context, word);
-    if (!tuple) {
-        return std::nullopt;
-    }
-    if (!tuple->is_tuple()) {
-        badarg(context);
-        return std::nullopt;
-    }
-    auto items = tuple->tuple_elements();
-    if (!items) {
-        context.generated_calls().fail_service(detail::term_status(items.error()));
-        return std::nullopt;
-    }
-    return std::move(*items);
-}
-
 // A tuple size argument of make_tuple: a small integer in 0..MAX_TUPLE_ARITY.
-std::optional<std::size_t> arity(Word word) {
-    const auto value = small(word);
-    if (!value || *value < 0 || static_cast<std::uint64_t>(*value) > MAX_TUPLE_ARITY) {
-        return std::nullopt;
+std::size_t arity(std::int64_t size) {
+    if (size < 0 || static_cast<std::uint64_t>(size) > MAX_TUPLE_ARITY) {
+        bad_argument();
     }
-    return static_cast<std::size_t>(*value);
+    return static_cast<std::size_t>(size);
 }
 
 // setelement(Index, Tuple, Value): a copy of Tuple with element Index (1-based) replaced.
 // TODO(step 43A): copying a large tuple should run in portions.
-Word setelement(ProcessContext &context, Arguments arguments) {
-    auto items = tuple_argument(context, arguments[1]);
-    const auto value = items ? admit(context, arguments[2]) : std::nullopt;
-    if (!value) {
-        return 0;
+TermResult<Term> setelement(ProcessContext &context, std::int64_t index, TupleArgument tuple, const Term &value) {
+    if (index < 1 || static_cast<std::uint64_t>(index) > tuple.elements.size()) {
+        bad_argument();
     }
-    const auto index = small(arguments[0]);
-    if (!index || *index < 1 || static_cast<std::uint64_t>(*index) > items->size()) {
-        return badarg(context);
-    }
-    (*items)[static_cast<std::size_t>(*index - 1)] = *value;
-    return publish(context, TermFactory(context).tuple(*items));
+    tuple.elements[static_cast<std::size_t>(index - 1)] = value;
+    return TermFactory(context).tuple(tuple.elements);
 }
 
 // make_tuple(Size, Value): Size copies of Value.
 // TODO(step 43A): filling a large tuple should run in portions.
-Word make_tuple(ProcessContext &context, Arguments arguments) {
-    const auto size = arity(arguments[0]);
-    if (!size) {
-        return badarg(context);
-    }
-    const std::vector<Word> words(*size, arguments[1]);
-    return publish(context, TermFactory(context).tuple_words(words));
+TermResult<Term> make_tuple(ProcessContext &context, std::int64_t size, const Term &value) {
+    const std::vector<Word> words(arity(size), value.word());
+    return TermFactory(context).tuple_words(words);
 }
 
 // One {Index, Value} entry of make_tuple/3's list: true after storing Value at Index in `words`.
@@ -114,59 +53,34 @@ bool place(const Term &entry, std::vector<Word> &words) {
 }
 
 // make_tuple(Size, Default, [{Index, Value}]): later entries replace earlier ones.
-Word make_tuple_list(ProcessContext &context, Arguments arguments) {
-    const auto size = arity(arguments[0]);
-    const auto entries = size ? admit(context, arguments[2]) : std::nullopt;
-    if (!size || !entries) {
-        return size ? 0 : badarg(context);
+TermResult<Term> make_tuple_list(ProcessContext &context, std::int64_t size, const Term &value,
+                                 const ListArgument &entries) {
+    std::vector<Word> words(arity(size), value.word());
+    if (!std::ranges::all_of(entries.elements, [&](const Term &entry) { return place(entry, words); })) {
+        bad_argument();
     }
-    auto items = elements(*entries);
-    if (!items) {
-        return publish(context, std::unexpected(items.error()));
-    }
-    std::vector<Word> words(*size, arguments[1]);
-    if (!*items || !std::ranges::all_of(**items, [&](const Term &entry) { return place(entry, words); })) {
-        return badarg(context);
-    }
-    return publish(context, TermFactory(context).tuple_words(words));
+    return TermFactory(context).tuple_words(words);
 }
 
 // tuple_to_list(Tuple).
 // TODO(step 43A): building a long list should run in portions.
-Word tuple_to_list(ProcessContext &context, Arguments arguments) {
-    const auto items = tuple_argument(context, arguments[0]);
-    return items ? publish(context, TermFactory(context).list(*items)) : 0;
+TermResult<Term> tuple_to_list(ProcessContext &context, const TupleArgument &tuple) {
+    return TermFactory(context).list(tuple.elements);
 }
 
 // list_to_tuple(List): a proper list of at most MAX_TUPLE_ARITY elements.
 // TODO(step 43A): walking a long list should run in portions.
-Word list_to_tuple(ProcessContext &context, Arguments arguments) {
-    const auto items = list_argument(context, arguments[0]);
-    if (!items) {
-        return 0;
+TermResult<Term> list_to_tuple(ProcessContext &context, const ListArgument &list) {
+    if (list.elements.size() > MAX_TUPLE_ARITY) {
+        bad_argument();
     }
-    if (items->size() > MAX_TUPLE_ARITY) {
-        return badarg(context);
-    }
-    return publish(context, TermFactory(context).tuple(*items));
+    return TermFactory(context).tuple(list.elements);
 }
 
 // Left ++ Right: Left must be a proper list; [] ++ Right is Right whatever it is.
 // TODO(step 43A): copy Left in portions, as OTP's append traps.
-Word append(ProcessContext &context, Arguments arguments) {
-    const auto left = admit(context, arguments[0]);
-    const auto right = left ? admit(context, arguments[1]) : std::nullopt;
-    if (!right) {
-        return 0;
-    }
-    if (left->is_nil()) {
-        return right->word();
-    }
-    if (!left->is_cons()) {
-        return badarg(context);
-    }
-    const auto items = list_argument(context, arguments[0]);
-    return items ? publish(context, TermFactory(context).list(*items, *right)) : 0;
+TermResult<Term> append(ProcessContext &context, const ListArgument &left, const Term &right) {
+    return left.elements.empty() ? right : TermFactory(context).list(left.elements, right);
 }
 
 // Exact term order (=:= equal is 0) for subtracting; a comparison failure aborts the builtin.
@@ -206,34 +120,29 @@ bool consume(Removals &pending, const Term &item) {
 
 // Left -- Right: both proper lists; each element of Right removes the first exactly equal element of Left.
 // TODO(step 43A): length checks, the removal set and the copy should run in portions, as OTP's subtract traps.
-Word subtract(ProcessContext &context, Arguments arguments) {
-    const auto left = list_argument(context, arguments[0]);
-    const auto right = left ? list_argument(context, arguments[1]) : std::nullopt;
-    if (!right) {
-        return 0;
+TermResult<Term> subtract(ProcessContext &context, const ListArgument &left, ListArgument right) {
+    if (right.elements.empty()) {
+        return left.term;
     }
-    if (right->empty()) {
-        return arguments[0];
-    }
-    auto pending = removals(*right);
+    auto pending = removals(std::move(right.elements));
     std::vector<Term> kept;
-    kept.reserve(left->size());
-    for (const auto &item : *left) {
+    kept.reserve(left.elements.size());
+    for (const auto &item : left.elements) {
         if (!consume(pending, item)) {
             kept.push_back(item);
         }
     }
-    return publish(context, TermFactory(context).list(kept));
+    return TermFactory(context).list(kept);
 }
 
 constexpr std::array TERM_ACCESS_BUILTINS{
-    BuiltinEntry{"erlang", "setelement", 3, setelement},
-    BuiltinEntry{"erlang", "make_tuple", 2, make_tuple},
-    BuiltinEntry{"erlang", "make_tuple", 3, make_tuple_list},
-    BuiltinEntry{"erlang", "tuple_to_list", 1, tuple_to_list},
-    BuiltinEntry{"erlang", "list_to_tuple", 1, list_to_tuple},
-    BuiltinEntry{"erlang", "++", 2, append},
-    BuiltinEntry{"erlang", "--", 2, subtract},
+    typed_entry<setelement>("erlang", "setelement"),
+    typed_entry<make_tuple>("erlang", "make_tuple"),
+    typed_entry<make_tuple_list>("erlang", "make_tuple"),
+    typed_entry<tuple_to_list>("erlang", "tuple_to_list"),
+    typed_entry<list_to_tuple>("erlang", "list_to_tuple"),
+    typed_entry<append>("erlang", "++"),
+    typed_entry<subtract>("erlang", "--"),
 };
 } // namespace
 } // namespace erlang_aot::runtime::builtins
