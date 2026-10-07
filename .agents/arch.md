@@ -93,7 +93,10 @@
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
   access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
   Updates evaluate values, then the record, check it, copy the other fields; `record_info/2` folds to
-  constants. Native/qualified/inferred records retain separate capability owners.
+  constants. Local native records (31C) lower to `erlang_aot_record_v1` with the module's
+  `<prefix>.records` descriptor table; patterns plan `record_test`/`record_field` nodes; construction
+  evaluates explicit fields in source order, native updates the record first. Qualified/inferred
+  records retain separate capability owners.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

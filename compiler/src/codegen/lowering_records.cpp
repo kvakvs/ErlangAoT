@@ -58,10 +58,24 @@ llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &reco
     }
     return lower_tuple(state, values);
 }
+
+// The local native record a record expression or field access names; null for tuple records and other syntax.
+const semantic::RecordLayout *native_layout(ExpressionLowering &state, const ast::ExprValue &value) {
+    const semantic::RecordLayout *layout = nullptr;
+    if (const auto *record = std::get_if<ast::RecordExpression>(&value)) {
+        layout = semantic::record_layout(state.module, record->identity);
+    } else if (const auto *access = std::get_if<ast::RecordAccess>(&value)) {
+        layout = semantic::record_layout(state.module, access->identity);
+    }
+    return layout && layout->native ? layout : nullptr;
+}
 } // namespace
 
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
+    if (const auto *layout = native_layout(state, expression.value)) {
+        return lower_native_record(state, expression, *layout);
+    }
     if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
         if (record->base) {
             return update(state, *record);

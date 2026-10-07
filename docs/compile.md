@@ -28,7 +28,7 @@ by the process stack (uncapped by default), not the native stack. Guards support
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: `receive`, funs and
-closures, dynamic calls, native records,
+closures, dynamic calls, qualified/imported and anonymous records,
 processes and messaging.
 Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,

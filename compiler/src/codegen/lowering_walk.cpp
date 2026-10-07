@@ -131,12 +131,13 @@ bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<
         return false;
     }
     const auto fields = semantic::record_values(state.module, *record, false);
+    const auto order = semantic::record_order(state.module, *record);
     state.record_values.insert_or_assign(&expression, std::vector<llvm::Value *>(fields.size()));
     pending.push_back({id, Action::value});
-    for (std::size_t i = fields.size(); i != 0; --i) {
-        pending.push_back({id, Action::record_field, i - 1, fields[i - 1]});
-        if (fields[i - 1]) {
-            pending.push_back({*fields[i - 1]});
+    for (auto position = order.rbegin(); position != order.rend(); ++position) {
+        pending.push_back({id, Action::record_field, *position, fields[*position]});
+        if (fields[*position]) {
+            pending.push_back({*fields[*position]});
         }
     }
     return true;

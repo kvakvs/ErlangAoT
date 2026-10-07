@@ -7,7 +7,7 @@ import sys
 CASES = {
     "guards": "f(X) when self() =:= X -> X.",
     "arithmetic": "f(X) -> X ++ [].",
-    "heap expressions": "-record(#r{a}). f() -> 1.",
+    "heap expressions": "f(X) -> X#_.a.",
     "dynamic calls": "f(F) -> F(1).",
     "closures": "f() -> fun(X) -> X end.",
     "receive": "f() -> receive X -> X end.",

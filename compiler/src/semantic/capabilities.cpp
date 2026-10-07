@@ -33,9 +33,7 @@ struct FormCapability {
 
     std::string_view operator()(const ast::ImportRecordAttribute &) const { return "behavior-changing attributes"; }
 
-    std::string_view operator()(const ast::RecordDeclaration &value) const {
-        return value.native ? "heap expressions" : "";
-    }
+    std::string_view operator()(const ast::RecordDeclaration &) const { return {}; }
 
     std::string_view operator()(const ast::GenericAttribute &value) const {
         constexpr std::array<std::u32string_view, 6> allowed{U"author",     U"vsn",         U"copyright",

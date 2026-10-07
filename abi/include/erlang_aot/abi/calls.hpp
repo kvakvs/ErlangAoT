@@ -28,7 +28,9 @@ enum class ErrorReason : std::uint8_t {
     bad_filter = 17,
     bad_generators = 18,
     // An integer result beyond the ERTS size limit (error:system_limit).
-    system_limit = 19
+    system_limit = 19,
+    // A native record lacks a field; the payload is {{Module, Name}, Field}.
+    badfield = 20
 };
 } // namespace erlang_aot::abi::v1
 

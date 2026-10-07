@@ -769,13 +769,39 @@ walking and verification.
 Backlog: F17, F14. Depends on: [31B](#step-31b).
 
 `-record #r{...}` with literal defaults, local construction, access, update,
-patterns, guard field access and `is_record/1,2,3` on native records.
+patterns, guard field access and `is_record/2,3` on native records.
 
 - Success criteria
-  - [ ] Results and errors match OTP; 31A compile-time rules diagnosed.
+  - [x] Results and errors match OTP; 31A compile-time rules diagnosed.
 - Tests
-  - [ ] OTP golden program for local native records, including errors and
+  - [x] OTP golden program for local native records, including errors and
     printing; CLI diagnostics for each compile-time rule.
+- Evidence (2026-10-07): `maint-29` unchanged. New OTP 29.1.1 facts (probes):
+  native construction evaluates the given fields in source order, a native
+  update evaluates the record before its values (tuple updates do the
+  opposite), `display` prints fields in atom-index order and the compiler
+  folds `#r{a=1} == #r{a=1.0}` to false (both recorded in
+  `docs/differences.md`). Semantic: native declarations and expressions no
+  longer report capabilities; literal defaults, uninitialized fields, unknown
+  construction fields, `#r.a`, `_ =` and guard construction use OTP's
+  messages; unknown fields in access, update and patterns are accepted (OTP
+  warns); `semantic::record_order` and `expression_children` give the OTP
+  evaluation order. Patterns plan `record_test` (module and name) and
+  `record_field` nodes. Codegen: `<prefix>.records` descriptor table (export
+  flag 0 until 31D), `lowering_native_records` (make/get name check/update
+  module check/match), `is_record/2` with a native name, `is_record/3` with an
+  atom and dynamic `is_record/2` test native records; `ErrorReason::badfield`
+  (20); `services::Record` with Clang-checked spellings on 7 targets.
+  `is_record/1` stays with step 52. OTP golden `executables_native_records`
+  (construction and update order traces, defaults incl. keyword name `div`
+  and folded/map/binary defaults, patterns incl. missing fields and a foreign
+  same-name record, guard access, seven caught errors, `is_record` forms,
+  name-only local access, order, a 100,000-update loop, three uncaught runs)
+  passes all 8 combinations; 10 CLI cases; placeholder tests now use `X#_.a`.
+  erlfmt cannot parse native record declarations: the fixture keeps them
+  unformatted. Fresh Windows x64 Debug (clang-cl): fast 166/166, full `-j 12`
+  170/170 in 146 s; after complexity fixes (Lizard 1, tidy 5) fast
+  166/166 again, Lizard 0 warnings, tidy 285 changed units pass. Logs `build/plan11-step31/`.
 
 <a id="step-31d"></a>
 
@@ -1125,7 +1151,7 @@ continuations as roots.
 Backlog: F14. Depends on: [42](#step-42), [31](#step-31), [32](#step-32).
 
 `self/0` in guards, `node/0,1` (returning `nonode@nohost`), native
-`is_record/1` (delivered by step 31C), and positive `is_pid/1`, `is_reference/1`, `is_function/1,2`.
+`is_record/1`, and positive `is_pid/1`, `is_reference/1`, `is_function/1,2`.
 
 - Success criteria
   - [ ] The four gated catalog signatures become available; results match OTP.

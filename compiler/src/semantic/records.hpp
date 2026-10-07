@@ -14,8 +14,18 @@ std::optional<std::size_t> record_field(const RecordLayout &layout, const ast::A
 // Select explicit/wildcard/default fields in declaration order; omitted pattern fields have no constraint.
 std::vector<std::optional<ast::ExprId>> record_values(const Module &module, const ast::RecordExpression &record,
                                                       bool pattern);
-// Diagnose missing declarations, duplicate/unknown fields and invalid wildcard initializers at original sites.
-void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out);
+// Positions of record_values in evaluation order: declaration order for tuple records; for native records the
+// explicit fields in source order, then the defaulted ones (OTP v3_core).
+std::vector<std::size_t> record_order(const Module &module, const ast::RecordExpression &record);
+// Native record definitions of a module in descriptor order (record name order).
+std::vector<const RecordLayout *> native_layouts(const Module &module);
+// Values a record pattern matches: explicit native fields in source order (they may name fields the record lacks),
+// or the selected tuple-record fields in declaration order.
+std::vector<ast::ExprId> pattern_fields(const Module &module, const ast::RecordExpression &record);
+// Diagnose missing declarations, duplicate/unknown fields and invalid wildcard initializers at original sites;
+// patterns, like updates, may name fields a native record does not declare.
+void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out,
+                     bool pattern = false);
 // An unqualified record_info/2 call is the compile-time pseudo-function, never a local or builtin call.
 bool record_info_call(const ast::Module &syntax, const ast::ExprValue &value);
 

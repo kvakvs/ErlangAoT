@@ -172,6 +172,22 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     return binding_children(expression.value);
 }
 
+namespace {
+// OTP evaluates tuple-record update values in source order before the record; a native update evaluates the
+// record first.
+std::vector<ast::ExprId> update_children(const Module &module, const ast::RecordExpression &record) {
+    const auto *layout = record_layout(module, record.identity);
+    const bool native = layout && layout->native;
+    std::vector<ast::ExprId> result;
+    result.reserve(record.fields.size() + 1);
+    for (const auto &field : record.fields) {
+        result.push_back(field.value);
+    }
+    result.insert(native ? result.begin() : result.end(), *record.base);
+    return result;
+}
+} // namespace
+
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression) {
     if (record_info_call(*module.syntax, expression.value)) {
         return {};
@@ -180,18 +196,14 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
     if (!record) {
         return expression_children(expression);
     }
-    std::vector<ast::ExprId> result;
     if (record->base) {
-        // OTP evaluates the update values in source order before the updated record.
-        for (const auto &field : record->fields) {
-            result.push_back(field.value);
-        }
-        result.push_back(*record->base);
-        return result;
+        return update_children(module, *record);
     }
-    for (const auto &field : record_values(module, *record, false)) {
-        if (field) {
-            result.push_back(*field);
+    std::vector<ast::ExprId> result;
+    const auto fields = record_values(module, *record, false);
+    for (const auto position : record_order(module, *record)) {
+        if (fields[position]) {
+            result.push_back(*fields[position]);
         }
     }
     return result;

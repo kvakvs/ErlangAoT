@@ -3,8 +3,8 @@
 Decision of plan 11 step 31A (2026-10-07). It scopes the OTP 29 record forms
 beyond ordinary tuple records and fixes their representation, operations and
 errors. Step 31B implemented the runtime cells and `erlang_aot_record_v1`;
-31C–31E compile the forms, which keep the `[heap expressions] notimpl`
-diagnostic until then. Tuple records are in
+31C compiles local native records; qualified/imported (31D) and anonymous
+(31E) forms keep the `[heap expressions] notimpl` diagnostic until then. Tuple records are in
 [terms](terms.md#records).
 
 OTP 29 marks native records experimental. Facts below come from the pinned
@@ -67,9 +67,9 @@ are the offending value except failed external construction.
 | External pattern `#m:r{...}` | Module `m`, name `r`; exported when a field is listed | no match |
 | Anonymous pattern `#_{...}` | Any native record; exported or module `M` when a field is listed | no match |
 
-- Update evaluates new values in source order, then the record (as tuple
-  updates); construction evaluates fields in definition order with defaults
-  for omitted fields. Empty updates still check.
+- Construction evaluates the given fields in source order (defaults are
+  literals); an update evaluates the record first, then the new values in
+  source order, unlike a tuple-record update. Empty updates still check.
 - Guards: only field access (a failure fails the guard) and `is_record`.
   Construction in a guard is `creating a record in a guard is only supported
   for tuple records`; update is `illegal guard expression`.
@@ -117,5 +117,5 @@ Messages follow `erl_lint`:
 | --- | --- |
 | `display` field order follows atom indexes | Definition order |
 | External construction of a module that is not loaded fails until it is loaded | Every batch module is loaded at startup; a module outside the batch always fails |
-| Compiler may fold `==` between records to `=:=` | Runtime `==` |
+| Compiler may fold `==` between records to `=:=` (`#r{a=1} == #r{a=1.0}` is false) | Runtime `==` (true) |
 | Unknown fields in access/update/patterns, own-module qualified construction without values, unused or header-defined records: warnings | No warnings |

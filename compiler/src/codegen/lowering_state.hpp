@@ -7,6 +7,7 @@
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/maps.hpp>
+#include <erlang_aot/abi/records.hpp>
 #include <map>
 #include <set>
 #include <string_view>
@@ -183,6 +184,15 @@ void lower_templates(ExpressionLowering &state, const Comprehension &comprehensi
 llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comprehension);
 // Lower record values/updates/access/indices using tuple shape and checked element services.
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
+// Construct, update or read a field of a local native record through the record service.
+llvm::Value *lower_native_record(ExpressionLowering &state, const ast::Expression &expression,
+                                 const semantic::RecordLayout &layout);
+// Test a native record pattern's identity or extract one of its fields; failures branch to mismatch.
+llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
+                                  llvm::BasicBlock *mismatch);
+// An i1 that is true when value is a native record passing check against the module and name atoms.
+llvm::Value *lower_native_test(ExpressionLowering &state, abi::v1::RecordCheck check, llvm::Value *value,
+                               llvm::Value *module, llvm::Value *name);
 // Expand a validated record_info/2 call to its constant field-name list or tuple size.
 llvm::Value *lower_record_info(ExpressionLowering &state, const ast::Expression &expression);
 // Compose the tuple-record BIF with context-appropriate argument rejection and literal declaration sizes.

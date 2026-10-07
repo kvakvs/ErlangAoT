@@ -76,7 +76,7 @@ bool constrained(const semantic::MatchPlan &plan) {
 bool extracted(const semantic::MatchOperation operation) {
     using Op = semantic::MatchOperation;
     return operation == Op::tuple_element || operation == Op::cons_head || operation == Op::cons_tail ||
-           operation == Op::map_lookup;
+           operation == Op::map_lookup || operation == Op::record_field;
 }
 
 // Binary services carry both a checked extracted value and a distinct following bit cursor.
@@ -109,6 +109,9 @@ bool extraction(ExpressionLowering &state, const semantic::MatchNode &node, std:
     } else if (node.operation == semantic::MatchOperation::map_shape ||
                node.operation == semantic::MatchOperation::map_lookup) {
         result = lower_map_pattern(state, node, values[node.input], blocks.at(node.mismatch));
+    } else if (node.operation == semantic::MatchOperation::record_test ||
+               node.operation == semantic::MatchOperation::record_field) {
+        result = lower_record_pattern(state, node, values[node.input], blocks.at(node.mismatch));
     }
     if (!result) {
         return false;

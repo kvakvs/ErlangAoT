@@ -142,7 +142,23 @@ semantic_case(record_info_later "-module(a). f() -> record_info(size, r). -recor
     "record_info/2 is only supported for tuple records")
 semantic_case(record_info_native "-module(a). -record(#r{a}). f() -> record_info(size, r)." 1
     "record_info/2 is only supported for tuple records")
-semantic_case(record_info_guard "-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
+semantic_case(native_record "-module(a). -record #r{a = 1 + 2, b = [x | <<\"s\">>]}. f(X) -> {#r{}, X#r.zz, X#r{zz = 1}}."
+    0 "^$")
+semantic_case(native_default "-module(a). -record #r{a = foo()}. f() -> 1." 1
+    "native_default.erl:1:[0-9]+: illegal default value for field a in native record r")
+semantic_case(native_default_binary "-module(a). -record #r{a = <<1>>}. f() -> 1." 1
+    "illegal default value for field a in native record r")
+semantic_case(native_uninitialized "-module(a). -record #r{a, b}. f() -> #r{b = 1}." 1
+    "field a is not initialized in native record r")
+semantic_case(native_unknown_field "-module(a). -record #r{a}. f() -> #r{a = 1, zz = 2}." 1 "undefined record field zz")
+semantic_case(native_index "-module(a). -record #r{a}. f() -> #r.a." 1 "syntax #r.a is only supported for tuple records")
+semantic_case(native_wildcard "-module(a). -record #r{a = 1}. f() -> #r{_ = 2}." 1
+    "multi-field initialization \\(assigning to _\\) is only supported for tuple records")
+semantic_case(native_guard "-module(a). -record #r{a = 1}. f(X) when X =:= #r{} -> X." 1
+    "creating a record in a guard is only supported for tuple records")
+semantic_case(native_guard_update "-module(a). -record #r{a = 1}. f(X) when X#r{a = 2} =:= X -> X." 1
+    "illegal guard expression")
+semantic_case(record_info_guard"-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
     "illegal guard call")
 semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_info(A, B) -> {A, B}." 1
     "function record_info/2 already defined")

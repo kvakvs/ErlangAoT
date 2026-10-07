@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "entry": "natives",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "y\nx\n{1,2}\n{0,0}\n[#natives:empty{},#natives:counter{n=0},#natives:counter{n=#natives:empty{}},#natives:div{class=\"c\"}]\n[true,[a|b],#{k=>{1,2.500000e+00}},<<\"ab\">>,3]\n[1,2]\nbase\ny\nx\n{10,20,1,2}\ntrue\n#natives:counter{n=100000}\n[origin,{diagonal,3},{point,4},{pair,l,1},empty,{big,11},counter,{tuple_record,1},other,other]\nbound\n{seven,7}\n[far,near,unknown,unknown]\n[{badrecord,42},{badrecord,{tup,undefined,undefined}},{badrecord,#natives:empty{}},{badfield,{{natives,point},z}},{badrecord,foo},{badrecord,#other:point{x=1,y=0}},{badfield,{{natives,point},z}}]\n[true,false,false,true,true,true,false,true,true,true,false,false]\n1\n[true,false,true,true,true,true,true,[1,2]]\n"
+    },
+    {
+      "args": [
+        "badrecord"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,42\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "badfield"
+      ],
+      "stderr": "^uncaught exception error: \\{badfield,\\{\\{natives,point\\},z\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "update"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,#other:point\\{x = 1,y = 0\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "natives.erl": "8a50fc6ed9c9877cde0298fe690006b7dfc0ba005143d173968bbda200823b0c",
+    "other.erl": "4894d5498d0d169cef5a15eac50dc7ba2c0f3e7b2ad7103e7f603f8749d4deac"
+  }
+}

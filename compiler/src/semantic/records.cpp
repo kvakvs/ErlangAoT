@@ -1,6 +1,7 @@
 #include "records.hpp"
 #include "binding_state.hpp"
 #include "capabilities.hpp"
+#include "native_records.hpp"
 #include <algorithm>
 #include <set>
 
@@ -47,10 +48,10 @@ const RecordLayout *required(const Module &module, const ast::RecordIdentity &id
     return layout;
 }
 
-// Wildcards initialize omitted fields only and cannot repeat or accompany a completely explicit record.
+// Explicit names are unique; a checked layout must declare each of them.
 void explicit_field(const Module &module, const ast::RecordField &field, const ast::Atom &name,
-                    const RecordLayout &layout, std::set<std::u32string> &names, const Reporter &out) {
-    if (!record_field(layout, name)) {
+                    const RecordLayout *layout, std::set<std::u32string> &names, const Reporter &out) {
+    if (layout && !record_field(*layout, name)) {
         report(module, &field.source, "undefined record field " + utf8(name.name), out);
     }
     if (!names.insert(name.name).second) {
@@ -70,22 +71,53 @@ void wildcard_field(const Module &module, const ast::RecordField &field, const a
     wildcard = &field.source;
 }
 
-// Wildcards initialize omitted fields only and cannot repeat or accompany a completely explicit record.
-void fields(const Module &module, const ast::RecordExpression &record, const RecordLayout &layout,
+// Native records take no wildcard; an update wildcard is meaningless; otherwise it must cover an omitted field.
+void wildcard_rules(const Module &module, const ast::RecordExpression &record, const RecordLayout &layout,
+                    const std::size_t named, const ast::NodeSource *wildcard, const Reporter &out) {
+    if (!wildcard) {
+        return;
+    }
+    if (layout.native) {
+        report(module, wildcard, "multi-field initialization (assigning to _) is only supported for tuple records",
+               out);
+    } else if (record.base) {
+        report(module, wildcard, "meaningless use of _ in update of record " + utf8(layout.name.name), out);
+    } else if (named >= layout.fields.size()) {
+        report(module, wildcard, "record wildcard requires an omitted field", out);
+    }
+}
+
+// Native records carry their own field list, so only their construction must name declared fields (OTP warns
+// for updates and patterns) and give every field a value.
+void fields(const Module &module, const ast::RecordExpression &record, const RecordLayout &layout, const bool pattern,
             const Reporter &out) {
+    const bool construction = !pattern && !record.base;
+    const auto *checked = !layout.native || construction ? &layout : nullptr;
     std::set<std::u32string> names;
     const ast::NodeSource *wildcard = nullptr;
     for (const auto &field : record.fields) {
         if (const auto *name = std::get_if<ast::Atom>(&field.name)) {
-            explicit_field(module, field, *name, layout, names, out);
+            explicit_field(module, field, *name, checked, names, out);
         } else {
             wildcard_field(module, field, wildcard, out);
         }
     }
-    if (wildcard && record.base) {
-        report(module, wildcard, "meaningless use of _ in update of record " + utf8(layout.name.name), out);
-    } else if (wildcard && names.size() >= layout.fields.size()) {
-        report(module, wildcard, "record wildcard requires an omitted field", out);
+    wildcard_rules(module, record, layout, names.size(), wildcard, out);
+    if (layout.native && construction) {
+        native_initialized(module, record, layout, names, out);
+    }
+}
+
+// Append the declared positions of a record's explicit fields in source order, each once.
+void explicit_positions(const ast::RecordExpression &record, const RecordLayout &layout, std::vector<bool> &placed,
+                        std::vector<std::size_t> &result) {
+    for (const auto &field : record.fields) {
+        const auto *name = std::get_if<ast::Atom>(&field.name);
+        const auto position = name ? record_field(layout, *name) : std::nullopt;
+        if (position && !placed[*position]) {
+            placed[*position] = true;
+            result.push_back(*position);
+        }
     }
 }
 
@@ -173,7 +205,10 @@ void validate_index(const Module &module, const ast::RecordIndex &index, const a
     if (!layout) {
         report(module, &index.name_source, "undefined record", out);
     } else if (layout->native) {
-        report(module, &index.name_source, "native record has no tuple field index", out);
+        report(module, &index.name_source,
+               "syntax #" + utf8(index.record.name) + "." + utf8(index.field.name) +
+                   " is only supported for tuple records",
+               out);
     } else if (!record_field(*layout, index.field)) {
         report(module, &index.field_source, "undefined record field", out);
     }
@@ -188,6 +223,9 @@ void index_records(Module &module, const Reporter &out) {
     }
     for (const auto &[name, layout] : module.records) {
         (void)name;
+        if (layout.native) {
+            native_defaults(module, layout, out);
+        }
         for (const auto &field : layout.fields) {
             if (field.default_value) {
                 pending.push_back(*field.default_value);
@@ -238,14 +276,14 @@ std::vector<std::optional<ast::ExprId>> record_values(const Module &module, cons
     return result;
 }
 
-void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out) {
+void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out, const bool pattern) {
     if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
         if (const auto *layout = required(module, record->identity, out)) {
-            fields(module, *record, *layout, out);
+            fields(module, *record, *layout, pattern, out);
         }
     } else if (const auto *access = std::get_if<ast::RecordAccess>(&expression.value)) {
         const auto *layout = required(module, access->identity, out);
-        if (layout && !record_field(*layout, access->field)) {
+        if (layout && !layout->native && !record_field(*layout, access->field)) {
             report(module, &access->field_source, "undefined record field", out);
         }
     } else if (const auto *index = std::get_if<ast::RecordIndex>(&expression.value)) {
@@ -253,6 +291,54 @@ void validate_record(const Module &module, const ast::Expression &expression, co
     } else if (record_info_call(*module.syntax, expression.value)) {
         validate_record_info(module, expression, out);
     }
+}
+
+std::vector<std::size_t> record_order(const Module &module, const ast::RecordExpression &record) {
+    const auto *layout = record_layout(module, record.identity);
+    std::vector<std::size_t> result;
+    if (!layout) {
+        return result;
+    }
+    std::vector<bool> placed(layout->fields.size());
+    if (layout->native) {
+        explicit_positions(record, *layout, placed, result);
+    }
+    for (std::size_t i = 0; i < placed.size(); ++i) {
+        if (!placed[i]) {
+            result.push_back(i);
+        }
+    }
+    return result;
+}
+
+std::vector<const RecordLayout *> native_layouts(const Module &module) {
+    std::vector<const RecordLayout *> result;
+    for (const auto &[name, layout] : module.records) {
+        (void)name;
+        if (layout.native) {
+            result.push_back(&layout);
+        }
+    }
+    return result;
+}
+
+std::vector<ast::ExprId> pattern_fields(const Module &module, const ast::RecordExpression &record) {
+    std::vector<ast::ExprId> result;
+    const auto *layout = record_layout(module, record.identity);
+    if (layout && layout->native) {
+        for (const auto &field : record.fields) {
+            if (std::holds_alternative<ast::Atom>(field.name)) {
+                result.push_back(field.value);
+            }
+        }
+        return result;
+    }
+    for (const auto &field : record_values(module, record, true)) {
+        if (field) {
+            result.push_back(*field);
+        }
+    }
+    return result;
 }
 
 bool record_info_call(const ast::Module &syntax, const ast::ExprValue &value) {

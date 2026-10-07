@@ -13,9 +13,22 @@ namespace {
 // Reuse the collision-free symbol encoding for private literal-slot metadata.
 std::string slot_name(const std::string &spelling) { return "atom.slot." + semantic::encode_symbol({spelling, "", 0}); }
 
+// Field names a record expression or pattern spells; native operations pass them to the record service.
+void field_atoms(const ast::RecordExpression &record, std::set<std::string> &result) {
+    for (const auto &field : record.fields) {
+        if (const auto *name = std::get_if<ast::Atom>(&field.name)) {
+            result.insert(utf8(name->name));
+        }
+    }
+}
+
 // Normalized patterns can contain atoms folded from grouped syntax; collect their runtime spellings too.
-void pattern_atoms(const semantic::Function &function, std::set<std::string> &result) {
+void pattern_atoms(const semantic::Module &module, const semantic::Function &function, std::set<std::string> &result) {
     for (const auto &pattern : function.patterns) {
+        if (const auto *record =
+                std::get_if<ast::RecordExpression>(&module.syntax->expression(pattern.expression).value)) {
+            field_atoms(*record, result);
+        }
         if (!pattern.literal) {
             continue;
         }
@@ -38,7 +51,7 @@ void roots(const semantic::Module &module, const semantic::Function &function, s
         result.insert("true");
         result.insert("false");
     }
-    pattern_atoms(function, result);
+    pattern_atoms(module, function, result);
 }
 
 // Boolean syntax needs both canonical slots even when all source operands are incoming variables.
@@ -76,8 +89,10 @@ void record_atoms(const semantic::Module &module, const ast::Expression &express
     if (const auto *record = std::get_if<ast::RecordExpression>(&value)) {
         identity = &record->identity;
         result.insert("undefined");
+        field_atoms(*record, result);
     } else if (const auto *access = std::get_if<ast::RecordAccess>(&value)) {
         identity = &access->identity;
+        result.insert(utf8(access->field.name));
     }
     if (identity) {
         result.insert(utf8(semantic::record_layout(module, *identity)->name.name));
@@ -121,6 +136,13 @@ void expression_atoms(const semantic::Module &module, const ast::Expression &exp
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
 std::set<std::string> spellings(const semantic::Module &module) {
     std::set<std::string> result{utf8(module.name)};
+    // Native record descriptors name their record and fields by slot.
+    for (const auto *layout : semantic::native_layouts(module)) {
+        result.insert(utf8(layout->name.name));
+        for (const auto &field : layout->fields) {
+            result.insert(utf8(field.name.name));
+        }
+    }
     std::vector<ast::ExprId> pending;
     for (const auto &function : module.functions) {
         result.insert(utf8(function.key.name));

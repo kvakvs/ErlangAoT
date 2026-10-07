@@ -17,6 +17,10 @@ enum class MatchOperation : std::uint8_t {
     binary_start,
     binary_extract,
     binary_finish,
+    // Native records: test the captured identity (check in index, module in record_module, name in literal), then
+    // extract one field (name in literal) or fail to match.
+    record_test,
+    record_field,
     success,
     mismatch
 };
@@ -41,6 +45,8 @@ struct MatchNode {
     // Binary extraction retains canonical modifiers and an explicit next-cursor candidate slot.
     std::optional<BinaryOptions> bits = {};
     std::size_t cursor_output = 0;
+    // The module a native record test names.
+    std::optional<ast::Atom> record_module = {};
 };
 
 struct MatchPlan {

@@ -216,7 +216,8 @@ Plan: [29](11-plan.md#step-29), [30](11-plan.md#step-30),
 
 - [x] Ordinary declarations, defaults, construction, access, matching, tests.
 - [x] Record updates (step 29) and `record_info/2` (step 30).
-- [ ] Native/qualified/inferred records.
+- [x] Local native records: runtime cells and services (31B), compilation (31C).
+- [ ] Qualified/imported (31D) and anonymous (31E) native records.
 
 ### F18 — Closures and function values
 

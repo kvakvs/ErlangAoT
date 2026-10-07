@@ -2,7 +2,7 @@
 
 Admitted kinds: atoms/booleans, arbitrary integers, finite binary64 floats,
 tuples, proper/improper lists and strings, maps, bitstrings and ordinary tuple
-records; native records exist as runtime cells but source cannot build them yet.
+records; local native records ([native records](native-records.md)).
 Pids, ports, references and funs are not representable yet. Word encodings are in [abi.md](abi.md#terms).
 
 ## Ownership
@@ -138,8 +138,8 @@ Pids, ports, references and funs are not representable yet. Word encodings are i
   or the tuple size. Both arguments must be literal atoms and `r` a tuple record
   declared earlier; it is illegal in guards, and a local `record_info/2` is
   rejected as already defined.
-- Native, qualified and anonymous forms: [native records](native-records.md)
-  (runtime cells exist; the compiler does not accept them yet).
+- Native records: [native records](native-records.md); local forms compile,
+  qualified/imported and anonymous forms do not yet.
 
 ## Comparison and order
 

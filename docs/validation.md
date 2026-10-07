@@ -172,6 +172,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-07 | Plan 11 step 29 record updates | 167 (163 fast) | 38 changed | Fast 163/163; Lizard 0 warnings; tidy passed; records corpus reproduces under OTP |
 | 2026-10-07 | Plan 11 step 30 `record_info/2` | 168 (164 fast) | 42 changed | Fast 164/164; full `-j 12` 168/168 in 119 s; Lizard 0 warnings; tidy passed |
 | 2026-10-07 | Plan 11 step 31B native record cells and `erlang_aot_record_v1` (ABI 6) | 169 (165 fast) | 283 changed | Fast 165/165; full `-j 12` 169/169 in 122 s; Lizard 0 warnings; tidy passed after two fixes |
+| 2026-10-07 | Plan 11 step 31C local native records | 170 (166 fast) | 285 changed | Fast 166/166; full `-j 12` 170/170 in 146 s; Lizard and tidy passed after complexity fixes |
 | 2026-10-06 | Plan 11 step 27E ERTS big integer limit, `error:system_limit` | 165 (161 fast) | 157 changed | Fast 161/161; full `-j 12` 165/165 in 130 s; Lizard 0 warnings; tidy passed; 21 executable goldens reproduce under OTP |
 | 2026-10-06 | Plan 11 step 27D no map size or key-work caps | 164 (160 fast) | 13 changed | Fast 160/160; full `-j 12` 164/164 in 115 s; after a tidy fix in `bit_order`, 35 affected tests pass; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |

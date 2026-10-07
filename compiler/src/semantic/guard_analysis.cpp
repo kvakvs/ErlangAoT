@@ -181,11 +181,21 @@ bool comprehension_guards(BindingAnalysis &state, const ast::Expression &express
     return true;
 }
 
+// Guards may build tuple records only; OTP names native construction separately.
+bool native_construction(const Module &module, const ast::ExprValue &value) {
+    const auto *record = std::get_if<ast::RecordExpression>(&value);
+    const auto *layout = record && !record->base ? record_layout(module, record->identity) : nullptr;
+    return layout && layout->native;
+}
+
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
 void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(visit.id);
     if (const auto *value = std::get_if<ast::CallExpression>(&expression.value)) {
         call(state, visit.id, *value, visit.guard, visit.top);
+    } else if (visit.guard && native_construction(state.module, expression.value)) {
+        report(state.module, &expression.source, "creating a record in a guard is only supported for tuple records",
+               state.out);
     } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }

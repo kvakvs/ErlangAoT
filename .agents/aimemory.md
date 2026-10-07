@@ -253,6 +253,10 @@ Step facts beyond the plan record:
   returns the untraced payload prefix; HeapCell slots of untraced cells are an empty span at the cell end. ABI
   version bump needs cross_targets.py and linking/startup.cmake descriptor strings updated. Full gate > 10 min
   when runtime changes: run it with run_in_background.
+- 31C: native construction = explicit fields in source order (record_order), native update = record first;
+  `display` of multi-field native records is unstable vs OTP (atom index order): goldens display fields or
+  single-field records. erlfmt cannot parse `-record #r{a, b}.` nor `#div`: fixture left partly unformatted
+  (it rewrote parseable ones to `-record(#r{...}).`). Uncaught-exception report prints `~w` (`x = 1`).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

@@ -33,7 +33,10 @@ signatures from the pinned `guard_bif`, `new_type_test`, `old_type_test`,
 equality with upstream. [The audit manifest](../tests/fixtures/patternmatch/generated/guard_catalog/manifest.json)
 maps each to resolver, lowering and runtime owner. 77 are implemented on admitted
 terms; four are legal but unavailable: `self/0`, `node/0,1` (process/node
-services) and native `is_record/1` (F17).
+services) and native `is_record/1` (F17, step 52). `is_record/2` with a local
+native record name tests module and name; `is_record/3` with an atom third
+argument tests a native record's module and name; native field access fails
+the guard on any mismatch.
 
 - Type tests: `is_atom`, `is_integer`, `is_float`, `is_number`, `is_boolean`,
   `is_tuple`, `is_list`, `is_map`, `is_binary`, `is_bitstring`; `is_pid`,

@@ -109,13 +109,7 @@ struct Walk {
         if (value.base) {
             pattern_error(state, expression, "record update is illegal in a pattern");
         }
-        std::vector<ast::ExprId> ids;
-        for (const auto &field : record_values(state.module, value, true)) {
-            if (field) {
-                ids.push_back(*field);
-            }
-        }
-        children(PatternKind::record, ids);
+        children(PatternKind::record, pattern_fields(state.module, value));
         if (const auto *layout = record_layout(state.module, value.identity); layout && state.work <= state.limit) {
             state.function.patterns.back().literal = layout->name;
         }
@@ -247,7 +241,7 @@ void read(const Walk &walk) {
 // Dispatch bounded tasks without recursively visiting either patterns or their embedded expressions.
 void execute(Walk &walk) {
     const auto &expression = walk.state.module.syntax->expression(walk.expression);
-    validate_record(walk.state.module, expression, walk.state.out);
+    validate_record(walk.state.module, expression, walk.state.out, true);
     const auto &value = expression.value;
     switch (walk.visit.action) {
     case Action::read:
