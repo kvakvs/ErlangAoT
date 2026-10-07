@@ -1,4 +1,5 @@
 #include "binding_state.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include <algorithm>
 #include <limits>
@@ -166,6 +167,8 @@ void clear_bindings(Module &module) {
         function.exports.clear();
         function.patterns.clear();
     }
+    module.funs.clear();
+    module.fun_entries.clear();
 }
 } // namespace
 
@@ -192,6 +195,8 @@ void bind_parameters(Module &module, const Reporter &out, const std::size_t work
     }
     if (failed) {
         clear_bindings(module);
+    } else {
+        index_funs(module);
     }
 }
 

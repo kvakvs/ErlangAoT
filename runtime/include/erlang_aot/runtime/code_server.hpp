@@ -39,6 +39,24 @@ struct RecordDefinition final {
     std::vector<Word> fields;
 };
 
+// A function value's identity bound to runtime atoms; fun cells point at it (docs/funs.md).
+struct FunDefinition final {
+    // The compiler's FunDescriptor this was built from; a lookup key, never dereferenced at use sites.
+    const void *descriptor = nullptr;
+    // Atom words of the module and function a call enters: this module and its function for a local fun, M and F
+    // for an external fun.
+    Word module = 0;
+    Word function = 0;
+    // The fun's Erlang arity and a local fun's index among its module's funs.
+    std::size_t arity = 0;
+    std::size_t index = 0;
+    bool external = false;
+    // Captured values a local fun's cells hold, passed after its arguments; 0 for an external fun.
+    std::size_t captures = 0;
+    // The FrameDescriptor a call enters; null for an external fun the program does not export.
+    const void *frame = nullptr;
+};
+
 struct ModuleAtoms final {
     // Explicit empty construction keeps Debug STL bookkeeping failures inside registration's catch boundary.
     ModuleAtoms() : slots(0) {}
@@ -49,6 +67,8 @@ struct ModuleAtoms final {
     std::vector<Term> slots;
     // The module's native record definitions in descriptor order; never resized after registration.
     std::vector<RecordDefinition> records;
+    // The module's fun definitions in descriptor order; never resized after registration.
+    std::vector<FunDefinition> funs;
 };
 
 struct ModuleDefinition final {
@@ -132,6 +152,8 @@ class CodeServer final {
     TermResult<Word> atom_word(const void *descriptor, std::size_t slot) const noexcept;
     // Find the bound definition of a registered module's record descriptor; null when none is registered.
     const RecordDefinition *record_definition(const void *descriptor) const noexcept;
+    // Find the bound definition of a registered module's fun descriptor; null when none is registered.
+    const FunDefinition *fun_definition(const void *descriptor) const noexcept;
 
   private:
     // Find the immutable descriptor key without dereferencing image-owned storage.

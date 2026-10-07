@@ -39,7 +39,8 @@ void check_capabilities(const Module &module, const Reporter &out, unsigned word
 // Iterate accepted expression children without visiting literal call-target atoms as values.
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression);
 // Include selected record defaults in the same bounded executable walks as explicit operands; update values
-// precede the updated record and record_info/2 has no executable children.
+// precede the updated record, record_info/2 has no executable children and a called value (F(Args)) precedes the
+// arguments.
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression);
 // Return guard/body roots in source order across every candidate; heads use normalized pattern plans.
 std::vector<ast::ExprId> function_roots(const ast::Function &function);

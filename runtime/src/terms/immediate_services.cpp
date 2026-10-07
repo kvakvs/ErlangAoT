@@ -46,7 +46,7 @@ bool predicate(Op operation, const Term &value) {
                                 false,
                                 false,
                                 false,
-                                false};
+                                value.is_function()};
     return predicates.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::is_atom));
 }
 
@@ -125,7 +125,19 @@ Result container_query(const Term &left, Op operation, const Term &right) {
     }
 }
 
-// An absent function representation still validates its arity argument before returning false.
+// is_function/2 validates its arity argument first; the result word is nonzero when the arity matches.
+Result function_arity(const Term &value, const TermResult<Integer> &arity) {
+    if (!arity) {
+        return checked(std::unexpected(arity.error()));
+    }
+    if (*arity < 0) {
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+    // No fun takes more than 255 arguments; a larger arity never matches.
+    return Word{*arity <= 255 && value.is_function(static_cast<std::size_t>(*arity)) ? 1U : 0U};
+}
+
+// Size queries and is_function/2; other queries read containers.
 Result query(const Term &left, Op operation, const Term &right) {
     if (operation == Op::bit_size || operation == Op::byte_size) {
         return checked(left.bit_size().and_then([&](std::size_t bits) {
@@ -133,14 +145,7 @@ Result query(const Term &left, Op operation, const Term &right) {
         }));
     }
     if (operation == Op::is_function_arity) {
-        const auto arity = integer_read(right);
-        if (!arity) {
-            return checked(std::unexpected(arity.error()));
-        }
-        if (*arity < 0) {
-            return std::unexpected(Fault{Outcome::bad_argument});
-        }
-        return Word{0};
+        return function_arity(left, integer_read(right));
     }
     return container_query(left, operation, right);
 }
@@ -198,7 +203,7 @@ Result evaluate(ProcessContext &context, Op operation, const Term &left, const T
     }
     const auto result = query(left, operation, right);
     if (result && operation == Op::is_function_arity) {
-        return boolean(context, false);
+        return boolean(context, *result != 0);
     }
     return result;
 }

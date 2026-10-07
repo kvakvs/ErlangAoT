@@ -89,6 +89,19 @@ struct RecordLayout {
     explicit RecordLayout(const ast::RecordDeclaration &declaration);
 };
 
+struct FunEntry {
+    // An external fun M:F/A finds its code by name at run time; a local fun F/A enters a function of this module.
+    bool external = false;
+    // The module and function the value names, and its Erlang arity.
+    std::u32string module;
+    std::u32string function;
+    std::size_t arity = 0;
+    // A local fun's index among the module's local funs in source order (OTP numbers them differently).
+    std::size_t index = 0;
+    // The native symbol of a local fun's code; empty for an external fun.
+    std::string symbol;
+};
+
 struct Module {
     // Borrow the batch-owned immutable AST for the duration of semantic analysis.
     const ast::Module *syntax = nullptr;
@@ -108,6 +121,10 @@ struct Module {
     // Native records listed in -export_record, and record names -import_record maps to their modules.
     std::set<std::u32string> exported_records = {};
     std::map<std::u32string, std::u32string> imported_records = {};
+    // The function values this module creates, one entry per distinct fun F/A or fun M:F/A, and the entry each
+    // fun expression creates.
+    std::vector<FunEntry> funs = {};
+    std::map<const ast::Expression *, std::size_t> fun_entries = {};
     // Every module of the compilation batch by name, set once calls are resolved; external records read it.
     std::map<std::u32string, const Module *> peers = {};
     // Escript sources implicitly export main/1, accept -mode and use escript exit semantics.

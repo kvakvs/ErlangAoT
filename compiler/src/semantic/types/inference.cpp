@@ -1,6 +1,7 @@
 #include "inference.hpp"
 #include "../bindings.hpp"
 #include "../capabilities.hpp"
+#include "../funs.hpp"
 #include "../records.hpp"
 #include "inference_bindings.hpp"
 #include <algorithm>
@@ -61,7 +62,8 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
-        if (function.function->services.contains(&expression) || record_info_call(syntax, expression.value)) {
+        if (function.function->services.contains(&expression) || record_info_call(syntax, expression.value) ||
+            fun_call(syntax, *call)) {
             return {inference.graph.top()};
         }
         return call_result(inference, syntax, expression, *call);

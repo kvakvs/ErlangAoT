@@ -53,7 +53,7 @@ void observe(const semantic::Module &module, const semantic::Function &function,
         pending.pop_back();
         const auto &expression = syntax.expression(id);
         if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
-            call && !function.services.contains(&expression) && !semantic::record_info_call(syntax, expression.value)) {
+            call && inferred.callees.contains(&expression)) {
             const auto callee = inferred.callees.at(&expression);
             if (call->arguments.size() > work) {
                 break;

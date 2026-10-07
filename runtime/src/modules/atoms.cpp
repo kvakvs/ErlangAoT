@@ -1,5 +1,6 @@
 #include "atoms.hpp"
 #include <algorithm>
+#include <erlang_aot/abi/funs.hpp>
 #include <erlang_aot/abi/records.hpp>
 
 namespace erlang_aot::runtime {
@@ -73,6 +74,39 @@ CodeResult<void> bind_records(ModuleAtoms &bindings, const abi::v1::ModuleDescri
     }
     return {};
 }
+
+// A fun names only slots of its own module; a local fun's code takes its arguments, then its captured values.
+bool valid_fun(const abi::v1::ModuleDescriptor &module, const abi::v1::FunDescriptor &fun) {
+    const auto slot = [&](std::size_t index) { return index < module.atom_count; };
+    if (fun.module != &module || !slot(fun.module_atom) || !slot(fun.function_atom)) {
+        return false;
+    }
+    return fun.external || (fun.frame && fun.frame->arity >= fun.arity);
+}
+
+// Bind every fun definition to the module's atom words in descriptor order; only an external fun may lack code.
+CodeResult<void> bind_funs(ModuleAtoms &bindings, const abi::v1::ModuleDescriptor &descriptor) {
+    if (descriptor.fun_count && !descriptor.funs) {
+        return std::unexpected(CodeError::invalid_module);
+    }
+    const auto word = [&](std::size_t slot) { return bindings.slots[slot].word(); };
+    bindings.funs.reserve(descriptor.fun_count);
+    for (const auto &fun : std::span(descriptor.funs, descriptor.fun_count)) {
+        if (!valid_fun(descriptor, fun)) {
+            return std::unexpected(CodeError::invalid_module);
+        }
+        const std::size_t captures = fun.external ? 0 : fun.frame->arity - fun.arity;
+        bindings.funs.push_back(FunDefinition{.descriptor = &fun,
+                                              .module = word(fun.module_atom),
+                                              .function = word(fun.function_atom),
+                                              .arity = fun.arity,
+                                              .index = fun.index,
+                                              .external = fun.external != 0,
+                                              .captures = captures,
+                                              .frame = fun.frame});
+    }
+    return {};
+}
 } // namespace
 
 CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
@@ -96,6 +130,9 @@ CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
     }
     if (const auto records = bind_records(*bindings, descriptor); !records) {
         return std::unexpected(records.error());
+    }
+    if (const auto funs = bind_funs(*bindings, descriptor); !funs) {
+        return std::unexpected(funs.error());
     }
     return bindings;
 }

@@ -68,6 +68,8 @@ enum class TermKind : std::uint8_t {
     bitstring,
     // An OTP 29 native record: a captured definition and its field values.
     native_record,
+    // A fun: a local function or anonymous fun with its captured values, or an external fun M:F/A.
+    function,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.
@@ -79,7 +81,7 @@ enum class BoxedKind : std::uint8_t {
     // Unused heap words skipped by the walker; the all-zero word (tuple, count 0) is a one-word filler.
     filler = 3,
     reference = 4,
-    fun_closure = 5, // function or a closure with attached frozen values
+    fun_closure = 5, // every fun: a captured definition followed by its captured values
     floating = 6,
     external_function = 7,
     refc_binary = 8, // a shared binary object owning its word vector

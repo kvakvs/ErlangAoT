@@ -226,6 +226,11 @@ struct GuardEdges {
 // Preserve comma conjunctions and semicolon alternatives using canonical-true boundaries.
 void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, GuardEdges edges);
 
+// Build the value of fun F/A or fun M:F/A through the fun service.
+llvm::Value *lower_fun(ExpressionLowering &state, const ast::Expression &expression);
+// Call the value of the call's target with its arguments (F(Args)); badfun, badarity and undef raise.
+llvm::Value *lower_fun_call(ExpressionLowering &state, const ast::Expression &expression,
+                            const ast::CallExpression &call);
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
 } // namespace erlang_aot::codegen

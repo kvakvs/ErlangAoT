@@ -8,6 +8,9 @@ struct ExpressionLowering;
 // Placeholder for a native-form function's frame slots: (context, slot count, name descriptor) -> slots.
 // lower_frames replaces it; it never reaches emitted objects.
 inline constexpr std::string_view FRAME_MARKER = "erlang_aot.frame";
+// Placeholder for a call of a function value: (context, arguments, FrameDescriptor) -> result, where `arguments`
+// already holds the arguments and the fun's captured values (erlang_aot_apply_v1). lower_frames replaces it.
+inline constexpr std::string_view APPLY_MARKER = "erlang_aot.apply";
 // Marks native-form Erlang function definitions and declarations with their arity.
 inline constexpr std::string_view ARITY_ATTRIBUTE = "erlang-arity";
 

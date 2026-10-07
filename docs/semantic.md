@@ -13,6 +13,10 @@ macro/include origins, and later inputs are still diagnosed.
 - Calls resolve within the batch by module/name/arity. Remote calls (including
   self-qualified) require exports. Missing/private callees and duplicate
   modules are errors.
+- `fun F/A` must name a function of the module (`function F/A undefined`);
+  `fun M:F/A` and calls of values (`F(Args)`) are not resolved at compile time
+  ([funs](funs.md)). Each distinct fun value gets a `Module::funs` entry after
+  binding analysis.
 - Self, mutual and cross-module recursion are accepted. The call graph is split
   into strongly connected components (iterative Tarjan) in callee-before-caller
   order; a component is recursive when it has several members or a member

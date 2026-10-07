@@ -263,6 +263,13 @@ Step facts beyond the plan record:
   `#m:r` forms. The OTP oracle compiles with warnings as errors: avoid updating literals (`(#r{})#r{...}`).
 - 31E: step 31 closed. "Unsupported" test placeholders use `-feature(compr_assign, enable)` + `[Y || X <- L, Y = X]`
   (last `heap expressions` capability). features.hpp heap_expressions still says plan_step 29 (stale).
+- 32: funs = Module::funs (index_funs at end of bind_parameters) + <prefix>.funs FunDescriptor table; cells
+  fun_closure {hdr, FunDefinition*, captures}. Fun call = args alloca (>=1 word) + erlang_aot_apply_v1 (writes captures
+  after args, returns frame or raises) + `erlang_aot.apply` marker; frames.cpp ErlangCall{call, descriptor, arity}
+  treats it as an Erlang call (alloca -> registers). lower_module reuses `.frame` globals the fun table declared.
+  OTP oracle: warnings_as_errors rejects `fun m:f/1` of own unexported f, calls with statically wrong arity
+  (`F = fun(ok)..., F(nope)`: nomatch) -> route through a helper. tidy bugprone-easily-swappable-parameters: Word and
+  size_t are the same type; parameters used together in one call expression are not flagged.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

@@ -2,8 +2,8 @@
 
 Admitted kinds: atoms/booleans, arbitrary integers, finite binary64 floats,
 tuples, proper/improper lists and strings, maps, bitstrings and ordinary tuple
-records; local native records ([native records](native-records.md)).
-Pids, ports, references and funs are not representable yet. Word encodings are in [abi.md](abi.md#terms).
+records; native records ([native records](native-records.md)); funs
+([function values](funs.md)). Pids, ports and references are not representable yet. Word encodings are in [abi.md](abi.md#terms).
 
 ## Ownership
 
@@ -145,8 +145,8 @@ Pids, ports, references and funs are not representable yet. Word encodings are i
 
 Iterative with no work cap, as in OTP: only memory for pending pairs bounds a
 comparison, map key searches included, and identical words are equal without
-a walk. Byte-aligned bitstrings compare whole bytes at once. Order: numbers < atoms < tuples < native records < maps < nil < lists <
-bitstrings. Atoms compare by UTF-8 spelling (code-point order); tuples by arity
+a walk. Byte-aligned bitstrings compare whole bytes at once. Order: numbers < atoms < funs < tuples < native records < maps < nil < lists <
+bitstrings ([funs](funs.md#comparison-and-printing) order among themselves). Atoms compare by UTF-8 spelling (code-point order); tuples by arity
 then fields; maps by size, then keys, then values; bitstrings by logical bits.
 
 ## Printing

@@ -6,6 +6,7 @@
 
 namespace erlang_aot::abi::v1 {
 struct RecordDescriptor;
+struct FunDescriptor;
 
 struct AtomDescriptor {
     // Borrow exact UTF-8 bytes; empty atoms may use a null pointer with zero length.
@@ -37,6 +38,9 @@ struct ModuleDescriptor {
     // Native record definitions of this module (records.hpp), bound to its atom slots at registration.
     const RecordDescriptor *records = nullptr;
     std::size_t record_count = 0;
+    // Function values this module creates (funs.hpp), bound to its atom slots at registration.
+    const FunDescriptor *funs = nullptr;
+    std::size_t fun_count = 0;
 };
 
 struct FrameDescriptor {
@@ -60,7 +64,7 @@ static_assert(std::is_standard_layout_v<ModuleDescriptor>);
 static_assert(sizeof(ExportDescriptor) == 4 * sizeof(TermWord));
 static_assert(offsetof(ExportDescriptor, entry) == 3 * sizeof(TermWord));
 static_assert(sizeof(AtomDescriptor) == 2 * sizeof(TermWord));
-static_assert(sizeof(ModuleDescriptor) == 8 + 8 * sizeof(TermWord));
+static_assert(sizeof(ModuleDescriptor) == 8 + 10 * sizeof(TermWord));
 static_assert(std::is_standard_layout_v<FrameDescriptor>);
 static_assert(sizeof(FrameDescriptor) == 7 * sizeof(TermWord));
 static_assert(offsetof(ModuleDescriptor, name) == 8);

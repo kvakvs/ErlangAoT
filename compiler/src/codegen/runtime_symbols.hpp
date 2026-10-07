@@ -41,6 +41,9 @@ using Catch = Function<"erlang_aot_catch_v1", UInt8, Context, Slot>;
 using Exception = Function<"erlang_aot_exception_v2", UInt8, Context, Slot, Slot, Slot>;
 using Reraise = Function<"erlang_aot_reraise_v2", UInt8, Context, Size, Size, Size>;
 using Error = Function<"erlang_aot_error_v1", UInt8, Context, Size, Size>;
+// Function values (abi/funs.hpp): build a fun, and check a called one, returning the FrameDescriptor to enter.
+using MakeFun = Function<"erlang_aot_make_fun_v1", UInt8, Context, Descriptor, Words, Size, Slot>;
+using Apply = Function<"erlang_aot_apply_v1", Descriptor, Context, Size, Size, Slot>;
 // Frame transfers (abi/frames.hpp): each returns the continuation code generated code tail-calls next.
 using Code = Pointer<Void>;
 using Enter = Function<"erlang_aot_enter_v1", Code, Context, Descriptor>;

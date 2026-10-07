@@ -1,13 +1,8 @@
 exit 1
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:92:14: [dynamic calls] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:98:21: [dynamic calls] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:101:34: [closures] notimpl [module="avl"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:104:18: [closures] notimpl [module="avl"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:23:27: [closures] notimpl [module="avltree"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:21:26: [closures] notimpl [module="avltree"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:19:20: [closures] notimpl [module="avltree"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:18:23: [closures] notimpl [module="avltree"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:15:26: [closures] notimpl [module="avltree"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:8:24: [closures] notimpl [module="avltree"]
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:41:9: [dynamic calls] notimpl [module="avltree"]
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:34:12: [closures] notimpl [module="avltree"]

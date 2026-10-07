@@ -102,6 +102,16 @@
   external `<prefix>.records`. 31E: anonymous `#_` access (check any), update (`exported_or_module`) and
   patterns (`any` without fields, else `exported_or_module`); `#_{...}` as an expression is an error.
 
+- Function values (step 32, `docs/funs.md`): `semantic::index_funs` (end of binding analysis) gives each distinct
+  `fun F/A` / literal `fun M:F/A` a `Module::funs` entry (local funs numbered in source order); registration emits
+  `<prefix>.funs` (`abi::v1::FunDescriptor`: atom slots, arity, index, external flag, entered `FrameDescriptor`,
+  null for an external fun the batch does not export), bound to runtime `FunDefinition`s. Cells `fun_closure` =
+  header, untraced `const FunDefinition *`, captured values. `F(Args)` (`semantic::fun_call`: target neither atom
+  nor remote) evaluates the target first; lowering stores the arguments in an array, calls `erlang_aot_apply_v1`
+  (badfun/badarity/undef, appends captures, returns the frame) and the `erlang_aot.apply` marker, which
+  `lower_frames` turns into an enter/tail transfer with the array as the registers. Funs order after atoms;
+  local < external. Builtin funs and `fun M:F/A` with variables stay `dynamic calls`.
+
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
   and top-level legacy tests are resolved before every operand is traversed, including

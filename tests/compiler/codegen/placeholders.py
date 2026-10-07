@@ -8,7 +8,7 @@ CASES = {
     "guards": "f(X) when self() =:= X -> X.",
     "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
-    "dynamic calls": "f(F) -> F(1).",
+    "dynamic calls": "f(M) -> M:f().",
     "closures": "f() -> fun(X) -> X end.",
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",

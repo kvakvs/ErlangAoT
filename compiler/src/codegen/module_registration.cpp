@@ -65,13 +65,59 @@ llvm::GlobalVariable *records(llvm::Module &output, const semantic::Module &modu
     return new llvm::GlobalVariable(output, array->getType(), true, llvm::GlobalValue::ExternalLinkage, array,
                                     prefix + ".records");
 }
+
+// The exported function of a batch module an external fun names; null when the batch exports none.
+const semantic::Function *exported(const semantic::Module &module, const semantic::FunEntry &fun) {
+    const auto peer = module.peers.find(fun.module);
+    if (peer == module.peers.end()) {
+        return nullptr;
+    }
+    const auto &owner = *peer->second;
+    const auto found = owner.lookup.find({fun.function, fun.arity});
+    if (found == owner.lookup.end()) {
+        return nullptr;
+    }
+    const auto &function = owner.functions.at(found->second);
+    return function.exported ? &function : nullptr;
+}
+
+// The FrameDescriptor a fun enters: a function of this module or an exported function of the batch, or null for
+// an external fun nothing in the batch exports. lower_frames defines the descriptors of this module.
+llvm::Constant *fun_frame(llvm::Module &output, const semantic::Module &module, const semantic::FunEntry &fun,
+                          llvm::IntegerType *word) {
+    auto *ptr = llvm::PointerType::get(output.getContext(), 0);
+    const auto *target = fun.external ? exported(module, fun) : nullptr;
+    if (fun.external && !target) {
+        return llvm::ConstantPointerNull::get(ptr);
+    }
+    auto *frame = llvm::StructType::get(output.getContext(), {ptr, word, word, word, ptr, word, word});
+    return output.getOrInsertGlobal((target ? target->symbol : fun.symbol) + ".frame", frame);
+}
+
+// One abi::v1::FunDescriptor per semantic::FunEntry, in order; lowering addresses entries of `<prefix>.funs`.
+llvm::GlobalVariable *funs(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word,
+                           llvm::GlobalVariable *descriptor, const std::string &prefix) {
+    auto *ptr = llvm::PointerType::get(output.getContext(), 0);
+    auto *type = llvm::StructType::get(ptr, word, word, word, word, word, ptr);
+    const auto value = [&](std::size_t number) { return llvm::ConstantInt::get(word, number); };
+    std::vector<llvm::Constant *> entries;
+    entries.reserve(module.funs.size());
+    for (const auto &fun : module.funs) {
+        entries.push_back(llvm::ConstantStruct::get(
+            type, descriptor, atom_slot(output, utf8(fun.module)), atom_slot(output, utf8(fun.function)),
+            value(fun.arity), value(fun.index), value(fun.external ? 1 : 0), fun_frame(output, module, fun, word)));
+    }
+    auto *array = llvm::ConstantArray::get(llvm::ArrayType::get(type, entries.size()), entries);
+    return new llvm::GlobalVariable(output, array->getType(), true, llvm::GlobalValue::PrivateLinkage, array,
+                                    prefix + ".funs");
+}
 } // namespace
 
 void emit_registration(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word) {
     llvm::IRBuilder<> builder(output.getContext());
     auto *ptr = builder.getPtrTy();
-    auto *type =
-        llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word, ptr, word, ptr, word);
+    auto *type = llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word, ptr, word, ptr,
+                                       word, ptr, word);
     const auto name = utf8(module.name);
     std::size_t count = 0;
     auto *table = exports(output, module, word, count);
@@ -83,10 +129,12 @@ void emit_registration(llvm::Module &output, const semantic::Module &module, llv
                                                 prefix + ".descriptor");
     auto *record_table = records(output, module, word, descriptor, prefix);
     const auto record_count = semantic::native_layouts(module).size();
+    auto *fun_table = funs(output, module, word, descriptor, prefix);
     descriptor->setInitializer(llvm::ConstantStruct::get(
         type, builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()), spelling(output, name),
         llvm::ConstantInt::get(word, name.size()), table, llvm::ConstantInt::get(word, count), atoms,
-        llvm::ConstantInt::get(word, atom_count), record_table, llvm::ConstantInt::get(word, record_count)));
+        llvm::ConstantInt::get(word, atom_count), record_table, llvm::ConstantInt::get(word, record_count), fun_table,
+        llvm::ConstantInt::get(word, module.funs.size())));
     auto *entry = llvm::Function::Create(llvm::FunctionType::get(builder.getInt8Ty(), {ptr}, false),
                                          llvm::GlobalValue::ExternalLinkage, prefix + ".register", output);
     builder.SetInsertPoint(llvm::BasicBlock::Create(output.getContext(), "entry", entry));

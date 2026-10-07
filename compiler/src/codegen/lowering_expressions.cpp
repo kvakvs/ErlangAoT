@@ -1,5 +1,6 @@
 #include "../semantic/bindings.hpp"
 #include "../semantic/capabilities.hpp"
+#include "../semantic/funs.hpp"
 #include "../semantic/records.hpp"
 #include "../semantic/services.hpp"
 #include "lowering_state.hpp"
@@ -51,6 +52,10 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *map = std::get_if<ast::MapExpression>(&value)) {
         return lower_map(state, *map);
     }
+    if (std::holds_alternative<ast::LocalFunReference>(value) ||
+        std::holds_alternative<ast::RemoteFunReference>(value)) {
+        return lower_fun(state, state.module.syntax->expression(expression));
+    }
     if (auto *record = lower_record(state, expression)) {
         return record;
     }
@@ -93,6 +98,13 @@ llvm::Value *body_builtin_value(ExpressionLowering &state, const semantic::Servi
     return lower_raise(state, service.identity.name, argument(0));
 }
 
+// A call that is no service: a call of a value or of a named function.
+llvm::Value *generated_call(ExpressionLowering &state, const ast::Expression &expression,
+                            const ast::CallExpression &call) {
+    return semantic::fun_call(*state.module.syntax, call) ? lower_fun_call(state, expression, call)
+                                                          : lower_call(state, expression, call);
+}
+
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     if (semantic::record_info_call(*state.module.syntax, expression.value)) {
@@ -100,7 +112,7 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     }
     const auto service = state.function.services.find(&expression);
     if (service == state.function.services.end()) {
-        return lower_call(state, expression, call);
+        return generated_call(state, expression, call);
     }
     if (service->second.operation == abi::v1::ImmediateOperation::is_integer_range) {
         return lower_integer_range(state, call);

@@ -2,9 +2,11 @@
 #include "../memory/heap_object.hpp"
 #include "bitstrings.hpp"
 #include "floats.hpp"
+#include "funs.hpp"
 #include "maps.hpp"
 #include "records.hpp"
 #include <algorithm>
+#include <array>
 #include <new>
 #include <stdexcept>
 
@@ -22,25 +24,21 @@ TermResult<unsigned> rank(const Term &term) {
     if (term.is_number()) {
         return 0;
     }
-    switch (term.kind()) {
-    case TermKind::atom:
-        return 1;
-    case TermKind::tuple:
-    case TermKind::empty_tuple:
-        return 2;
-    case TermKind::native_record:
-        return 3;
-    case TermKind::map:
-        return 4;
-    case TermKind::empty_list:
-        return 5;
-    case TermKind::list:
-        return 6;
-    case TermKind::bitstring:
-        return 7;
-    default:
+    static constexpr std::array<std::pair<TermKind, unsigned>, 9> ranks{{{TermKind::atom, 1},
+                                                                         {TermKind::function, 2},
+                                                                         {TermKind::tuple, 3},
+                                                                         {TermKind::empty_tuple, 3},
+                                                                         {TermKind::native_record, 4},
+                                                                         {TermKind::map, 5},
+                                                                         {TermKind::empty_list, 6},
+                                                                         {TermKind::list, 7},
+                                                                         {TermKind::bitstring, 8}}};
+    const auto kind = term.kind();
+    const auto found = std::ranges::find(ranks, kind, &std::pair<TermKind, unsigned>::first);
+    if (found == ranks.end()) {
         return std::unexpected(TermError::invalid_encoding);
     }
+    return found->second;
 }
 
 // Exact host atom equality preserves runtime identity; Erlang ordering uses Unicode spelling.
@@ -156,6 +154,53 @@ TermResult<int> records(const Pair &values, std::vector<Pair> &pending) {
     return 0;
 }
 
+// Order two counts or indices.
+int sizes(std::size_t left, std::size_t right) {
+    if (left == right) {
+        return 0;
+    }
+    return left < right ? -1 : 1;
+}
+
+// External funs order by module, function and arity (OTP erts_cmp).
+int external_funs(const Pair &values, const FunDefinition &lhs, const FunDefinition &rhs) {
+    if (const auto order = atom_words(values, lhs.module, rhs.module); order != 0) {
+        return order;
+    }
+    if (const auto order = atom_words(values, lhs.function, rhs.function); order != 0) {
+        return order;
+    }
+    return sizes(lhs.arity, rhs.arity);
+}
+
+// Local funs order before external ones; external funs by module, function and arity.
+int fun_kinds(const Pair &values, const FunDefinition &left, const FunDefinition &right) {
+    if (left.external && right.external) {
+        return external_funs(values, left, right);
+    }
+    return left.external ? 1 : -1;
+}
+
+// Local funs order by module and index, then by their captured values in order.
+TermResult<int> funs(const Pair &values, std::vector<Pair> &pending) {
+    const auto lhs = fun_view(values.left).value();
+    const auto rhs = fun_view(values.right).value();
+    const auto &left = *lhs.definition;
+    const auto &right = *rhs.definition;
+    if (left.external || right.external) {
+        return fun_kinds(values, left, right);
+    }
+    if (&left != &right) {
+        const auto order = atom_words(values, left.module, right.module);
+        return order != 0 ? order : sizes(left.index, right.index);
+    }
+    for (std::size_t i = lhs.captures.size(); i > 0; --i) {
+        pending.push_back({TermAccess::child(values.left, lhs.captures[i - 1]).value(),
+                           TermAccess::child(values.right, rhs.captures[i - 1]).value(), values.exact});
+    }
+    return 0;
+}
+
 TermResult<int> same_rank(const Pair &values, std::vector<Pair> &pending);
 
 // Dispatch only validated parents; extracted children inherit their live owning storage. One word names one term,
@@ -188,6 +233,9 @@ TermResult<int> same_rank(const Pair &values, std::vector<Pair> &pending) {
     }
     if (values.left.is_native_record()) {
         return records(values, pending);
+    }
+    if (values.left.is_function()) {
+        return funs(values, pending);
     }
     if (values.left.is_bitstring()) {
         return bit_order(values.left, values.right);

@@ -66,6 +66,11 @@ int main() {
         check<services::Record>({"?erlang_aot_record_v1@@YAEPEAXEEPEBXPEB_K_KPEA_K@Z",
                                  "?erlang_aot_record_v1@@YAEPAXEEPBXPBIIPAI@Z", "_Z20erlang_aot_record_v1PvhhPKvPKmmPm",
                                  "_Z20erlang_aot_record_v1PvhhPKvPKjjPj"});
+        check<services::MakeFun>({"?erlang_aot_make_fun_v1@@YAEPEAXPEBXPEB_K_KPEA_K@Z",
+                                  "?erlang_aot_make_fun_v1@@YAEPAXPBXPBIIPAI@Z",
+                                  "_Z22erlang_aot_make_fun_v1PvPKvPKmmPm", "_Z22erlang_aot_make_fun_v1PvPKvPKjjPj"});
+        check<services::Apply>({"?erlang_aot_apply_v1@@YAPEBXPEAX_K1PEA_K@Z", "?erlang_aot_apply_v1@@YAPBXPAXIIPAI@Z",
+                                "_Z19erlang_aot_apply_v1PvmmPm", "_Z19erlang_aot_apply_v1PvjjPj"});
         check<services::Display>({"?erlang_aot_display_v1@@YAEPEAX_KPEA_K@Z", "?erlang_aot_display_v1@@YAEPAXIPAI@Z",
                                   "_Z21erlang_aot_display_v1PvmPm", "_Z21erlang_aot_display_v1PvjPj"});
         check<services::Halt>({"?erlang_aot_halt_v1@@YAEPEAX_K@Z", "?erlang_aot_halt_v1@@YAEPAXI@Z",

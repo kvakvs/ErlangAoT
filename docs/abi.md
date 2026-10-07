@@ -43,9 +43,10 @@ are external, others internal.
 
 Each module emits `eav1_<hex module>__0.descriptor` and `.register`. The
 descriptor holds ABI version, term width, export table, atom spellings
-(UTF-8 pointer/size pairs) and native record descriptors (module, name and field
+(UTF-8 pointer/size pairs), native record descriptors (module, name and field
 atom slots, export flag; [native records](native-records.md#representation)) in
-an external `<prefix>.records` table that other modules of a batch reference. Registration calls
+an external `<prefix>.records` table that other modules of a batch reference,
+and fun descriptors in a private `<prefix>.funs` table ([funs](funs.md#representation)). Registration calls
 `erlang_aot_register_module_v4(Runtime*)`, which validates version/width and all
 exports, interns atoms, builds a frozen registry and publishes it with the code
 image in one transaction. Duplicate modules never replace code; any failure
@@ -77,6 +78,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Comprehensions | `error:{bad_generator, Tail}`, `error:{bad_filter, Value}`, `error:{bad_generators, Inputs}` (`ErrorReason` 16-18); a strict generator's rejection is `{badmatch, Element}` |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Native record field missing | `ErrorReason::badfield` (20), payload `{{Module, Name}, Field}` |
+| Calling a value (`F(Args)`) | `ErrorReason::badfun` (22, payload the value), `badarity` (23, payload `{Fun, Args}`), `undef` (24), recorded by `erlang_aot_apply_v1` ([funs](funs.md)) |
 | External native construction without a value | `ErrorReason::novalue` (21), payload `{{Module, Name}, Field}` |
 | Integer result past the size limit | Service outcome `ValueOutcome::system_limit` (3): a guard rejects, a body raises `error:system_limit` (`ErrorReason` 19) |
 | Invalid lazy left operand | `{badarg, Value}` |
@@ -173,7 +175,7 @@ Differences from OTP, all visible only in the stack term:
 - A tail call releases the caller's frame (step 19), so, as in OTP, a caller
   that ended in a tail call is missing from the trace. OTP also turns calls to
   functions that never return into tail calls; ErlangAoT does not.
-- `{Fun, Args}` stack entries are rejected until function values exist.
+- `{Fun, Args}` stack entries of `erlang:raise/3` are still rejected.
 
 ## Frames and transfers
 
@@ -203,6 +205,9 @@ const TermWord *)` signature as a host entry calling
   `out_of_memory`, and one beyond an optional per-process
   `StackOptions::limit_words` records `resource_limit` (infrastructure
   failures).
+- A call of a function value passes its arguments, and the fun's captured
+  values after them, in the registers; `erlang_aot_apply_v1` returns the
+  `FrameDescriptor` the transfer enters ([funs](funs.md#representation)).
 - Safepoints: `erlang_aot_enter_v1`/`erlang_aot_tail_v1` collect before
   pushing the callee frame (its arguments are register roots), and
   `erlang_aot_safepoint_v1(context)` at each comprehension loop head collects
@@ -217,7 +222,8 @@ equality), `erlang_aot_immediate_v1` (immediate predicates/queries),
 `erlang_aot_construct_v1`, `erlang_aot_inspect_v1`, `erlang_aot_integer_v1`,
 `erlang_aot_float_v1`, `erlang_aot_map_v1`, `erlang_aot_bits_v1`,
 `erlang_aot_record_v1` (native record make/get/update/match/test under a
-`RecordCheck`; outcomes `bad_record`, `bad_field`, `no_match`). Each returns
+`RecordCheck`; outcomes `bad_record`, `bad_field`, `no_match`),
+`erlang_aot_make_fun_v1` (build a fun of a `FunDescriptor`). Each returns
 success, semantic error (`badarg`/`badarith`/...) or infrastructure failure and
 writes output only on success. `erlang_aot_display_v1` ([output.hpp](../abi/include/erlang_aot/abi/output.hpp))
 prints one `erlang:display/1` line and yields `true`; it has no semantic error.
@@ -256,3 +262,4 @@ success.
 | 4 | Mandatory generated root scopes |
 | 5 | Explicit process frames and transfers |
 | 6 | Native record descriptors in module descriptors, `erlang_aot_record_v1` |
+| 7 | Fun descriptors in module descriptors, `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1` |

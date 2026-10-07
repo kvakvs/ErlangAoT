@@ -41,9 +41,7 @@ bool throwing(void *, std::string_view) { throw std::runtime_error("sink failure
 void check_factory(ProcessContext &context) {
     Reports reports;
     TermFactory factory(context, {&reports, record});
-    const auto term = *Term::from_word(*encode_integer(3));
-    const std::array results{factory.pid(context.identity()), factory.make_reference(),
-                             factory.external_function(term, term, 0)};
+    const std::array results{factory.pid(context.identity()), factory.make_reference()};
     for (const auto &result : results) {
         require(result == std::unexpected(TermError::not_implemented), "factory fabricated a term");
     }

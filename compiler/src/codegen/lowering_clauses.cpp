@@ -1,4 +1,5 @@
 #include "../semantic/capabilities.hpp"
+#include "../semantic/funs.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 
@@ -27,8 +28,10 @@ void tail_position(const ExpressionLowering &state, const ast::Expression &expre
         for (const auto &clause : semantic::branch_clauses(expression.value)) {
             pending.push_back(clause.body->back());
         }
-    } else if (std::holds_alternative<ast::CallExpression>(expression.value) &&
-               !state.function.services.contains(&expression) && state.inferred.callees.contains(&expression)) {
+    } else if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+               call &&
+               (state.inferred.callees.contains(&expression) ||
+                (!state.function.services.contains(&expression) && semantic::fun_call(*state.module.syntax, *call)))) {
         calls.insert(&expression);
     }
 }

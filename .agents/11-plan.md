@@ -885,12 +885,36 @@ Backlog: F03, F12, F18. Depends on: [23](#step-23), [19](#step-19).
 Represent `fun F/A` and `fun M:F/A` with retained code ownership.
 
 - Success criteria
-  - [ ] Values compare, print and pass `is_function/1,2` like OTP.
-  - [ ] Calling with wrong arity raises `{badarity, …}`; a non-function raises
+  - [x] Values compare, print and pass `is_function/1,2` like OTP.
+  - [x] Calling with wrong arity raises `{badarity, …}`; a non-function raises
     `{badfun, …}`.
 - Tests
-  - [ ] Golden programs passing, storing and calling local and remote function
+  - [x] Golden programs passing, storing and calling local and remote function
     values.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP facts
+  (`utils.c` `erts_cmp`, `erl_printf_term.c`, OTP 29.1.1 probes): every
+  `fun f/1` of a module is one value; order number < atom < fun < tuple, local
+  funs before external, local by module/index/env, external by M/F/A;
+  `F(Args)` evaluates `F` first, `{badfun, V}`, `{badarity, {F, Args}}`
+  (checked before the module), `undef`; local funs print `#Fun<M.I.Uniq>`
+  (index/uniq not reproducible: `docs/differences.md`). ABI revision 7
+  (`abi/funs.hpp` `FunDescriptor`, `ModuleDescriptor::funs`,
+  `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1`, `ErrorReason` 22-24);
+  runtime `fun_closure` cells (untraced `FunDefinition *`, captured values),
+  `CodeServer::fun_definition`, ordering, printing, `is_function/1,2`;
+  semantic `index_funs`/`Module::funs`, `fun_call`, `function F/A undefined`,
+  builtin funs and variable `fun M:F/A` stay `dynamic calls`; codegen
+  `<prefix>.funs`, `lowering_funs`, `erlang_aot.apply` marker lowered by
+  `lower_frames` to enter/tail transfers (pre-declared `.frame` globals
+  reused). Contract `docs/funs.md`. OTP golden `executables_fun_values`
+  (local/remote/self/unknown funs, equality and order, `is_function` in bodies
+  and guards, maps/tuples holding funs, higher-order helpers, a 100,000-step
+  tail loop and 20,000-deep recursion through funs, 30,000 funs across
+  collections, eleven caught errors, three uncaught runs) passes all 8
+  combinations; 6 CLI cases; programs `compile.txt` refreshed. Fresh Windows
+  x64 Debug (clang-cl): fast 169/169, full `-j 12` 173/173 in 122 s; after
+  complexity/tidy fixes fast 169/169, Lizard 0 warnings, tidy 289 changed
+  units pass. Logs `build/plan11-step32/`.
 
 <a id="step-33"></a>
 

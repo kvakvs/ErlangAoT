@@ -54,7 +54,7 @@ def inspect(tool, readobj, nm, work, triple, bits, format_name, architecture):
         ir = (root / "llvm-ir/eav1_616e73776572__0.ll").read_text(encoding="utf-8")
         assert f"store i{bits} {minimum * 16 + 15}" in ir, ir
         assert f"store i{bits} {maximum * 16 + 15}" in ir, ir
-        assert f"i32 6, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
+        assert f"i32 7, i32 {bits}" in ir and f"define i{bits} @eav1_" in ir, ir
         assert ("optsize" in ir) == (level == "-Os"), ir
         # Calls, tail calls and returns all leave a body by a guaranteed tail call of the service's code.
         caller = (root / "llvm-ir/eav1_636c69656e74__0.ll").read_text(encoding="utf-8")

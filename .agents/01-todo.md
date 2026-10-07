@@ -225,9 +225,12 @@ Plan: [29](11-plan.md#step-29), [30](11-plan.md#step-30),
 Plan: [32](11-plan.md#step-32), [33](11-plan.md#step-33),
 [34](11-plan.md#step-34).
 
-- [ ] Representation, arity, captures and code ownership.
-- [ ] Rooted traced environments; construction/invocation lowering.
+- [x] Representation, arity and code ownership; `fun F/A`, `fun M:F/A`, calls
+  of function values with `badfun`/`badarity`/`undef` (step 32).
+- [ ] Captures: rooted traced environments; anonymous fun construction and
+  invocation lowering (step 33).
 - [ ] Verify captures after return/GC, wrong arity, copies, module lifetime.
+- [ ] Named funs (step 34).
 
 ### F19 — Dynamic calls
 

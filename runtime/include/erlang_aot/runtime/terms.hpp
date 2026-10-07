@@ -82,7 +82,6 @@ class ProcessIdentity;
 class PortIdentity;
 class ReferenceIdentity;
 class FunctionIdentity;
-class ClosureDescriptor;
 class TermFactory;
 
 namespace detail {

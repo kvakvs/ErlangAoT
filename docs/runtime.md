@@ -175,7 +175,7 @@ state:
 
 | Boundary | Error |
 | --- | --- |
-| `TermFactory` pid/reference/fun constructors | `TermError::not_implemented` |
+| `TermFactory` pid/reference constructors and `function(FunctionIdentity)` | `TermError::not_implemented` |
 | `ProcessContext::send` | `ProcessError::not_implemented` |
 | `SchedulerService::run` / `execute` | `SchedulerError::not_implemented` |
 | `CodeServer::unload` | `CodeError::not_implemented` |

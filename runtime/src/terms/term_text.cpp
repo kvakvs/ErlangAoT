@@ -1,4 +1,5 @@
 #include "term_text.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <new>
@@ -77,6 +78,9 @@ class Renderer final {
         }
         if (term.is_atom()) {
             return detail::print_atom(term, style_, out_);
+        }
+        if (term.is_function()) {
+            return detail::print_fun(term, style_, out_);
         }
         return term.is_bitstring() ? detail::print_bits(term, style_, out_) : open(term);
     }

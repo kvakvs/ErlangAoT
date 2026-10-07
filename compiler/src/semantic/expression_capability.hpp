@@ -57,9 +57,9 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::ReceiveExpression &) const { return "receive"; }
 
-    std::string_view operator()(const ast::LocalFunReference &) const { return "closures"; }
+    std::string_view operator()(const ast::LocalFunReference &) const;
 
-    std::string_view operator()(const ast::RemoteFunReference &) const { return "closures"; }
+    std::string_view operator()(const ast::RemoteFunReference &) const;
 
     std::string_view operator()(const ast::FunExpression &) const { return "closures"; }
 

@@ -3,7 +3,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/terms/bit_factory.cpp src/terms/bit_access.cpp src/terms/bit_float.cpp src/terms/bit_numeric.cpp src/terms/bit_utf.cpp src/terms/bit_services.cpp
     src/terms/map_factory.cpp src/terms/map_access.cpp src/terms/map_services.cpp
-    src/terms/records.cpp src/terms/record_services.cpp
+    src/terms/records.cpp src/terms/record_services.cpp src/terms/funs.cpp src/terms/fun_services.cpp
     src/terms/float_factory.cpp src/terms/float_literal.cpp src/terms/float_operations.cpp src/terms/numeric_conversions.cpp src/terms/numeric_order.cpp src/terms/numeric_service.cpp
     src/terms/integer_values.cpp src/terms/integer_factory.cpp src/terms/integer_operations.cpp src/terms/integer_access.cpp src/terms/integer_literal.cpp
     src/terms/integer_service.cpp src/terms/integer_decimal.cpp src/terms/integer_sum.cpp src/terms/integer_words.cpp

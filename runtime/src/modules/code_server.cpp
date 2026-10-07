@@ -49,6 +49,21 @@ const RecordDefinition *CodeServer::record_definition(const void *descriptor) co
     return nullptr;
 }
 
+const FunDefinition *CodeServer::fun_definition(const void *descriptor) const noexcept {
+    for (const auto &[name, module] : modules_) {
+        const auto *atoms = module->atoms();
+        if (!atoms) {
+            continue;
+        }
+        for (const auto &fun : atoms->funs) {
+            if (fun.descriptor == descriptor) {
+                return &fun;
+            }
+        }
+    }
+    return nullptr;
+}
+
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);

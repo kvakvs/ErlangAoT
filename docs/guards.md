@@ -39,9 +39,9 @@ argument tests a native record's module and name; native field access fails
 the guard on any mismatch.
 
 - Type tests: `is_atom`, `is_integer`, `is_float`, `is_number`, `is_boolean`,
-  `is_tuple`, `is_list`, `is_map`, `is_binary`, `is_bitstring`; `is_pid`,
-  `is_port`, `is_reference`, `is_function/1,2` return false for every admitted
-  value (positive values need F07/F18).
+  `is_tuple`, `is_list`, `is_map`, `is_binary`, `is_bitstring`,
+  `is_function/1,2` ([funs](funs.md)); `is_pid`, `is_port`, `is_reference`
+  return false for every admitted value (positive values need F07).
 - `is_integer(V, Lo, Hi)` validates both bounds as integers first (else
   `badarg`), then tests the inclusive range; reversed bounds give false.
 - Comparisons `==`, `/=`, `=:=`, `=/=`, `<`, `=<`, `>`, `>=`; arithmetic and

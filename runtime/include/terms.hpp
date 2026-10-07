@@ -19,6 +19,7 @@
 namespace erlang_aot::runtime {
 class ContextLifetime;
 struct RecordDefinition;
+struct FunDefinition;
 
 // Largest tuple arity, OTP's MAX_ARITYVAL (2^24 - 1); builtins building larger tuples raise badarg (plan 11 steps
 // 37-38), constructors report resource_limit.
@@ -70,10 +71,10 @@ class TermFactory final {
     TermResult<Term> reference(const ReferenceIdentity &identity);
     // Obtain a fresh unique reference from the owning runtime.
     TermResult<Term> make_reference();
-    // Construct an external fun from module/name atoms and a validated arity.
-    TermResult<Term> external_function(const Term &module, const Term &name, std::size_t arity);
-    // Bind captures to a runtime-registered closure descriptor, never a raw C++ callback.
-    TermResult<Term> closure(const ClosureDescriptor &descriptor, std::span<const Term> captures);
+    // Construct a fun of a registered definition with every captured value in capture order.
+    TermResult<Term> fun(const FunDefinition &definition, std::span<const Term> captures);
+    // The same from ABI words, admitting each like Term::from_word.
+    TermResult<Term> fun_words(const FunDefinition &definition, std::span<const Word> captures);
     // Rewrap an extracted callable identity without losing its captured values.
     TermResult<Term> function(const FunctionIdentity &identity);
     // Construct a native record of a registered definition with every field value in definition order.

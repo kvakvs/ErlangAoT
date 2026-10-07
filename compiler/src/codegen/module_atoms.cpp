@@ -197,6 +197,11 @@ std::set<std::string> spellings(const semantic::Module &module) {
             result.insert(utf8(field.name.name));
         }
     }
+    // Fun descriptors name their module and function by slot.
+    for (const auto &fun : module.funs) {
+        result.insert(utf8(fun.module));
+        result.insert(utf8(fun.function));
+    }
     std::vector<ast::ExprId> pending;
     for (const auto &function : module.functions) {
         result.insert(utf8(function.key.name));

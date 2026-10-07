@@ -85,9 +85,11 @@ struct Prologue {
 };
 
 struct ErlangCall {
-    // A call of a native-form Erlang function and its callee.
+    // A call of a native-form Erlang function, or of a fun through the apply marker, the FrameDescriptor it enters
+    // and the arguments to copy into the registers (a fun call's arguments are in the registers already).
     llvm::CallInst *call;
-    llvm::Function *callee;
+    llvm::Value *descriptor;
+    std::size_t arity;
 };
 
 struct Continuation {
@@ -342,15 +344,18 @@ class FrameLowering {
         }
     }
 
-    // Calls to native-form Erlang functions; other native calls stay ordinary calls.
+    // Calls to native-form Erlang functions and fun calls; other native calls stay ordinary calls.
     std::vector<ErlangCall> erlang_calls() {
         std::vector<ErlangCall> calls;
         for (auto &callee : services_.output) {
-            if (erlang_arity(&callee)) {
+            if (const auto arity = erlang_arity(&callee)) {
                 for (auto *call : calls_to(&callee)) {
-                    calls.push_back({call, &callee});
+                    calls.push_back({call, services_.descriptor_of(callee), *arity});
                 }
             }
+        }
+        for (auto *call : calls_to(services_.output.getFunction(APPLY_MARKER))) {
+            calls.push_back({call, call->getArgOperand(2), 0});
         }
         return calls;
     }
@@ -375,8 +380,7 @@ class FrameLowering {
         auto *ret = call.call->getNextNode();
         llvm::IRBuilder<> builder(call.call);
         copy_arguments(builder, call);
-        auto *code =
-            builder.CreateCall(services_.tail, {body_.getArg(0), services_.descriptor_of(*call.callee)}, "tail.code");
+        auto *code = builder.CreateCall(services_.tail, {body_.getArg(0), call.descriptor}, "tail.code");
         transfer(builder, code);
         ret->eraseFromParent();
         call.call->eraseFromParent();
@@ -478,8 +482,7 @@ class FrameLowering {
         llvm::IRBuilder<> builder(continuation.call.call);
         builder.CreateAlignedStore(llvm::ConstantInt::get(services_.word, index), prologue_.resume, services_.align());
         copy_arguments(builder, continuation.call);
-        auto *code = builder.CreateCall(
-            services_.enter, {body_.getArg(0), services_.descriptor_of(*continuation.call.callee)}, "call.code");
+        auto *code = builder.CreateCall(services_.enter, {body_.getArg(0), continuation.call.descriptor}, "call.code");
         transfer(builder, code);
         block->getTerminator()->eraseFromParent();
         continuation.call.call->eraseFromParent();
@@ -520,10 +523,9 @@ class FrameLowering {
     // Copy arguments into the registers unless the call's array already is the registers.
     void copy_arguments(llvm::IRBuilder<> &builder, const ErlangCall &call) const {
         auto *arguments = call.call->getArgOperand(1);
-        const auto count = erlang_arity(call.callee).value_or(0);
-        if (count != 0 && arguments != prologue_.registers) {
+        if (call.arity != 0 && arguments != prologue_.registers) {
             builder.CreateMemCpy(prologue_.registers, services_.align(), arguments, services_.align(),
-                                 count * (services_.word->getBitWidth() / 8));
+                                 call.arity * (services_.word->getBitWidth() / 8));
         }
     }
 
@@ -625,7 +627,9 @@ void finish_native(const Services &services, llvm::Function &native, llvm::Const
 void erase_unused(llvm::Module &output) {
     for (auto &function : llvm::make_early_inc_range(output)) {
         const bool erlang = function.isDeclaration() && erlang_arity(&function);
-        if ((erlang || function.getName() == llvm::StringRef(FRAME_MARKER)) && function.use_empty()) {
+        const bool marker =
+            function.getName() == llvm::StringRef(FRAME_MARKER) || function.getName() == llvm::StringRef(APPLY_MARKER);
+        if ((erlang || marker) && function.use_empty()) {
             function.eraseFromParent();
         }
     }
@@ -646,10 +650,13 @@ void lower_module(llvm::Module &output) {
     std::vector<llvm::GlobalVariable *> descriptors;
     descriptors.reserve(natives.size());
     for (auto *native : natives) {
-        const auto linkage =
-            native->hasLocalLinkage() ? llvm::GlobalValue::InternalLinkage : llvm::GlobalValue::ExternalLinkage;
-        descriptors.push_back(new llvm::GlobalVariable(output, services.descriptor, true, linkage, nullptr,
-                                                       native->getName() + ".frame"));
+        // Fun descriptors may have declared this function's descriptor already.
+        auto *descriptor = llvm::cast<llvm::GlobalVariable>(
+            output.getOrInsertGlobal((native->getName() + ".frame").str(), services.descriptor));
+        descriptor->setConstant(true);
+        descriptor->setLinkage(native->hasLocalLinkage() ? llvm::GlobalValue::InternalLinkage
+                                                         : llvm::GlobalValue::ExternalLinkage);
+        descriptors.push_back(descriptor);
     }
     for (std::size_t i = 0; i < natives.size(); ++i) {
         descriptors[i]->setInitializer(FrameLowering(services, *natives[i]).lower());

@@ -7,8 +7,8 @@ class ProcessContext;
 
 namespace erlang_aot::abi::v1 {
 // Identify this project's generated-code contract; no external language compatibility is promised.
-// Revision 6 adds native record descriptors to modules; v1 names the unchanged term encoding.
-inline constexpr std::uint32_t version = 6;
+// Revision 7 adds fun descriptors to modules; v1 names the unchanged term encoding.
+inline constexpr std::uint32_t version = 7;
 // Decode the shared immediate-term representation without preprocessor constants.
 inline constexpr unsigned primary_mask = 0x3;
 inline constexpr unsigned small_integer_tag = 0xf;

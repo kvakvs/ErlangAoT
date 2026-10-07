@@ -1,5 +1,6 @@
 #include "binding_state.hpp"
 #include "capabilities.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include <charconv>
 #include <erlang_aot/abi/term.hpp>
@@ -186,11 +187,20 @@ std::vector<ast::ExprId> update_children(const Module &module, const ast::Record
     result.insert(native ? result.begin() : result.end(), *record.base);
     return result;
 }
+
+// The operands of a call: a called value before the arguments (OTP); a named function is not a value.
+std::vector<ast::ExprId> call_children(const Module &module, const ast::Expression &expression,
+                                       const ast::CallExpression &call) {
+    if (record_info_call(*module.syntax, expression.value)) {
+        return {};
+    }
+    return fun_call(*module.syntax, call) ? binding_children(expression.value) : call.arguments;
+}
 } // namespace
 
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression) {
-    if (record_info_call(*module.syntax, expression.value)) {
-        return {};
+    if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        return call_children(module, expression, *call);
     }
     const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
     if (!record) {

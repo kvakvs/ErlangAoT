@@ -1,5 +1,6 @@
 #include "calls.hpp"
 #include "capabilities.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include <algorithm>
 
@@ -60,6 +61,23 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     return FunctionRef{owner, &function};
 }
 
+// A direct call of a named function: not a service, record_info/2 or the call of a value.
+bool direct_call(const FunctionRef caller, const ast::Expression &expression) {
+    const auto &syntax = *caller.module->syntax;
+    const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+    return call && !caller.function->services.contains(&expression) && !record_info_call(syntax, expression.value) &&
+           !fun_call(syntax, *call);
+}
+
+// A local fun F/A must name a function of its module (erl_lint undefined_function).
+void check_reference(const Module &module, const ast::Expression &expression, const Reporter &out) {
+    const auto *reference = std::get_if<ast::LocalFunReference>(&expression.value);
+    if (reference && !fun_target(module, *reference)) {
+        report(module, &expression.source,
+               "function " + utf8(reference->name.name) + "/" + reference->arity.decimal + " undefined", out);
+    }
+}
+
 // Walk all accepted bodies iteratively; source-order dependencies remain deterministic.
 void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, const Reporter &out) {
     const auto &syntax = *caller.module->syntax;
@@ -69,12 +87,13 @@ void body(CallGraph &graph, const FunctionRef caller, const Modules &modules, co
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = syntax.expression(id);
-        if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
-            call && !caller.function->services.contains(&expression) && !record_info_call(syntax, expression.value)) {
-            if (const auto resolved = callee(caller, *call, modules, expression.source, out)) {
+        if (direct_call(caller, expression)) {
+            const auto &call = std::get<ast::CallExpression>(expression.value);
+            if (const auto resolved = callee(caller, call, modules, expression.source, out)) {
                 graph.calls.push_back({id, caller, *resolved});
             }
         }
+        check_reference(*caller.module, expression, out);
         const auto children = expression_children(*caller.module, expression);
         pending.insert(pending.end(), children.rbegin(), children.rend());
     }

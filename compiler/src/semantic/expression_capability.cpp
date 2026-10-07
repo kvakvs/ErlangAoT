@@ -1,4 +1,5 @@
 #include "expression_capability.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include "services.hpp"
 #include <algorithm>
@@ -34,19 +35,28 @@ std::string_view ExpressionCapability::operator()(const ast::UnaryExpression &va
     return immediate_unary(value.operation) ? "" : "arithmetic";
 }
 
+// A fun of an erlang builtin needs builtins callable as values; fun M:F/A with variables needs dynamic lookup.
+std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &value) const {
+    const auto count = arity(value.arity);
+    const FunctionKey key{value.name.name, count.value_or(0)};
+    return count && !module.lookup.contains(key) && guard_signature(key) ? "dynamic calls" : "";
+}
+
+std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference &value) const {
+    const auto names = external_fun(value);
+    return names && std::get<0>(*names) != U"erlang" ? "" : "dynamic calls";
+}
+
 std::string_view ExpressionCapability::operator()(const ast::CallExpression &value) const {
     const auto &target = syntax.expression(ungroup(syntax, value.target)).value;
-    if (std::holds_alternative<ast::Atom>(target)) {
+    if (std::holds_alternative<ast::Atom>(target) || fun_call(syntax, value)) {
         return {};
     }
-    const auto *remote = std::get_if<ast::RemoteExpression>(&target);
-    if (!remote) {
-        return "dynamic calls";
-    }
+    const auto &remote = std::get<ast::RemoteExpression>(target);
     const bool literal_module =
-        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote->module)).value);
+        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote.module)).value);
     const bool literal_function =
-        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote->function)).value);
+        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote.function)).value);
     return literal_module && literal_function ? "" : "dynamic calls";
 }
 

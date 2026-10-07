@@ -32,13 +32,5 @@ TermResult<Term> TermFactory::reference(const ReferenceIdentity &) { return unav
 
 TermResult<Term> TermFactory::make_reference() { return unavailable("TermFactory::make_reference"); }
 
-TermResult<Term> TermFactory::external_function(const Term &, const Term &, std::size_t) {
-    return unavailable("TermFactory::external_function");
-}
-
-TermResult<Term> TermFactory::closure(const ClosureDescriptor &, std::span<const Term>) {
-    return unavailable("TermFactory::closure");
-}
-
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
 } // namespace erlang_aot::runtime

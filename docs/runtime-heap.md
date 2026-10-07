@@ -45,6 +45,7 @@ copying its words.
 | `tuple` | n element slots | all |
 | `map` | 2n slots: keys in exact term order, each followed by its value | all |
 | `native_record` | address of the runtime's `RecordDefinition`, then n field values in definition order | values |
+| `fun_closure` | address of the runtime's `FunDefinition`, then n captured values ([funs](funs.md)) | values |
 | `bignum` | sign word, then magnitude limbs, least significant first | none |
 | `floating` | 8 bytes: 1 word (64-bit) or 2 words (32-bit) | none |
 | `heap_binary` | bit length, then data bytes rounded up to words (at most 64 bytes) | none |
@@ -52,7 +53,7 @@ copying its words.
 | `filler` | n unused words | none |
 
 The `map` count is in words (entries = count / 2). Kinds not yet admitted
-(references, funs, closures, external identities) follow the
+(references, external identities) follow the
 same rules when they arrive: identities and descriptors are registry IDs in
 untraced words, never owning C++ pointers.
 
@@ -194,9 +195,9 @@ remains the full check that every slot names an object start, for tests.
 | Off-heap list | None | Links are swept and relinked, not traced |
 
 No heap cell holds a pin. Atoms are immediates and the atom table is never
-collected. No admitted cell refers to code: funs (step 32) will name code by
-registry ID in untraced words, and loaded modules are never unloaded, so
-trace descriptors need no pin either. Mailbox terms join the inventory with
+collected. Fun cells name code through their untraced `FunDefinition`, which
+lives as long as the runtime; loaded modules are never unloaded, so neither
+funs nor trace descriptors need a pin. Mailbox terms join the inventory with
 messages (step 45). Small immediates are not roots.
 
 As in ERTS C code, a host `Term` is a raw tagged word valid until the next safe

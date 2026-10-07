@@ -17,13 +17,14 @@ bool heap_binary_sized(std::span<const Word> payload) {
 }
 
 // Check the payload size each admitted kind requires and count the untraced words before its terms; a payload
-// without terms is untraced throughout. A native record's definition word precedes its field values.
+// without terms is untraced throughout. A native record's or fun's definition word precedes its values.
 std::expected<std::size_t, WalkError> untraced(BoxedKind kind, std::span<const Word> payload) {
     const auto all = payload.size();
     switch (kind) {
     case BoxedKind::tuple:
         return 0;
     case BoxedKind::native_record:
+    case BoxedKind::fun_closure:
         return sized(!payload.empty(), 1);
     case BoxedKind::map:
         return sized(payload.size() % 2 == 0, 0);

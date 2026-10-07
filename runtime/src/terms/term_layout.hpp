@@ -13,7 +13,8 @@
 
 namespace erlang_aot::runtime {
 struct RecordDefinition;
-}
+struct FunDefinition;
+} // namespace erlang_aot::runtime
 
 namespace erlang_aot::runtime::detail::layout {
 using Bignum = boost::multiprecision::cpp_int;
@@ -127,20 +128,11 @@ struct alignas(Word) RefcBinaryCell final {
     RefcBinaryCell *next_;
 };
 
-struct alignas(Word) ExternalFunctionCell final {
-    // Identify module/name atom slots and an untraced arity word.
+struct alignas(Word) FunCell final {
+    // The header count is 1 plus the captured value count; the captured values follow (docs/funs.md).
     BoxHeader header_;
-    Word module_;
-    Word function_;
-    Word arity_;
-};
-
-struct alignas(Word) ClosureCell final {
-    // Identify the private prefix followed by capture_count_ Term slots.
-    BoxHeader header_;
-    // Untraced registry ID of the callable; pinning remains a later module-service decision.
-    Word function_;
-    Word capture_count_;
+    // Untraced address of the runtime's definition the fun was created from.
+    const FunDefinition *definition_;
 };
 
 struct alignas(Word) NativeRecordCell final {
@@ -164,11 +156,10 @@ static_assert(sizeof(FloatCell) == sizeof(Word) + 8);
 static_assert(offsetof(FloatCell, value_) == sizeof(Word));
 static_assert(sizeof(RemoteIdentityCell) == 3 * sizeof(Word));
 static_assert(sizeof(HeapBinaryCell) == 2 * sizeof(Word));
-static_assert(sizeof(ExternalFunctionCell) == 4 * sizeof(Word));
 static_assert(sizeof(NativeRecordCell) == 2 * sizeof(Word));
 static_assert(sizeof(BignumCell) % sizeof(Word) == 0);
 static_assert(alignof(BignumCell) >= alignof(Word));
-static_assert(sizeof(ClosureCell) == 3 * sizeof(Word));
+static_assert(sizeof(FunCell) == 2 * sizeof(Word));
 // The shared_ptr is the only C++ member a cell may hold; it is two pointers on every supported STL.
 static_assert(sizeof(std::shared_ptr<const BinaryBuffer>) == 2 * sizeof(Word));
 static_assert(alignof(std::shared_ptr<const BinaryBuffer>) <= alignof(Word));
@@ -181,6 +172,6 @@ static_assert(std::is_trivially_copyable_v<BoxHeader> && std::is_trivially_copya
               std::is_trivially_copyable_v<FloatCell> && std::is_trivially_copyable_v<RemoteIdentityCell> &&
               std::is_trivially_copyable_v<ConsCell> && std::is_trivially_copyable_v<TupleCell> &&
               std::is_trivially_copyable_v<KeyValuePair> && std::is_trivially_copyable_v<MapCell> &&
-              std::is_trivially_copyable_v<HeapBinaryCell> && std::is_trivially_copyable_v<ExternalFunctionCell> &&
-              std::is_trivially_copyable_v<ClosureCell> && std::is_trivially_copyable_v<NativeRecordCell>);
+              std::is_trivially_copyable_v<HeapBinaryCell> && std::is_trivially_copyable_v<FunCell> &&
+              std::is_trivially_copyable_v<NativeRecordCell>);
 } // namespace erlang_aot::runtime::detail::layout

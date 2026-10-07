@@ -28,6 +28,8 @@ HeapObject boxed(Word value, std::span<const Word> words) {
         return {value, TermKind::map, words, payload.size() / 2};
     case BoxedKind::native_record:
         return {value, TermKind::native_record, words, payload.size() - 1};
+    case BoxedKind::fun_closure:
+        return {value, TermKind::function, words, payload.size() - 1};
     case BoxedKind::bignum:
         return {value, TermKind::bignum, words, payload.size() - 1};
     case BoxedKind::floating:

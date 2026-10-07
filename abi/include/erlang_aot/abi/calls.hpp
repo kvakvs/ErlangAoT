@@ -32,7 +32,12 @@ enum class ErrorReason : std::uint8_t {
     // A native record lacks a field; the payload is {{Module, Name}, Field}.
     badfield = 20,
     // An external native record construction gave no value to a field without default; same payload.
-    novalue = 21
+    novalue = 21,
+    // A call of a value that is not a function (payload: the value), of a fun with another arity (payload:
+    // {Fun, Args}), or of an external fun whose function the program does not export (no payload).
+    badfun = 22,
+    badarity = 23,
+    undef = 24
 };
 } // namespace erlang_aot::abi::v1
 
