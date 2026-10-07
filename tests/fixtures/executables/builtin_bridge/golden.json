@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "entry": "builtin_bridge",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "shown\n[true,true,true,true,true,true,true,true,true,true,true,false,false,false,true,5,3,2,2,b,3.000000e+00,-2,h,3,v,2,true,2.000000e+00,a,3,2,[2],-2,3,<<\"ell\">>,<<\"he\">>,false,true,true,true,true,true,true,false,false,false,true,false,3,6,42,3.500000e+00,3,-1,8,14,6,1180591620717411303424,-4,5,-5,-6,true,badarg]\n[{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,{badkey,k}},{error,{badmap,x}},{error,{badmap,x}},{error,{badmap,x}},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarith},{error,badarith},{error,badarith},{error,badarith},{error,badarith},{error,badarith},{error,system_limit},{error,badarith},{error,boom},{error,boom},{error,boom},{exit,bye},{throw,ball},{throw,ball},{exit,gone},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,undef}]\n[2,3,true,fun erlang:abs/1]\n[fun erlang:'+'/2,fun erlang:is_atom/1,fun erlang:display/1,fun erlang:halt/1]\n[0,1,2]\n[-1,2]\n9\n10\n[a,b]\n[x,true,z,5]\n[4,q]\n{error,{badarity,{fun erlang:abs/1,[1,2]}}}\n{throw,thrown}\n[true,false,false,true,true,true,false,false]\n"
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 3,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "halt0"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "uncaught"
+      ],
+      "stderr": "^uncaught exception error: boom\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "builtin_bridge.erl": "64634890ee45b04369c1f0c7859dec426663563aa2afa631494a3e8c11257dae"
+  }
+}

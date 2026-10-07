@@ -64,10 +64,10 @@ void require_walkable(erlang_aot::runtime::ProcessContext &context) {
     require(context.heap().verify().has_value(), "failed construction left an unparseable heap");
 }
 
-// Every startup allocation must roll back before an owner can escape to the host.
+// Every startup allocation, builtin registration included, must roll back before an owner can escape to the host.
 void check_startup() {
     bool succeeded = false;
-    for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
+    for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
         remaining = ordinal;
         auto runtime = Runtime::start();

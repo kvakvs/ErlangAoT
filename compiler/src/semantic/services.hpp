@@ -10,9 +10,16 @@ std::optional<abi::v1::ImmediateOperation> immediate_operator(ast::BinaryOperato
 std::optional<abi::v1::ImmediateOperation> immediate_unary(ast::UnaryOperator operation);
 // Map only resolved erlang name/arity identities to executable service operations.
 std::optional<abi::v1::ImmediateOperation> immediate_service(const FunctionKey &key);
-// Identify erlang body-only builtins, never guard-legal: explicit display/1 and halt/0,1, and the raising
-// error/1,2,3, exit/1 and throw/1 and the dynamic apply/2,3, also unqualified through auto-import.
+// Identify erlang body-only builtins, never guard-legal: explicit display/1, raise/3 and other bridge builtins, and
+// halt/0,1, the raising error/1,2,3, exit/1 and throw/1 and the dynamic apply/2,3, also unqualified through
+// auto-import.
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call);
+// The bridge index (abi::v1::bridge_builtins) of erlang:Name/Arity, when the runtime provides it as a builtin.
+std::optional<std::size_t> bridge_builtin(const FunctionKey &key);
+// The erlang builtin a local fun F/A names: an auto-imported bridge builtin the module neither defines nor
+// suppresses (OTP makes fun abs/1 the external fun erlang:abs/1).
+std::optional<FunctionKey> builtin_fun(BindingAnalysis &state, const ast::ExprId &id,
+                                       const ast::LocalFunReference &reference);
 // Resolve legal guard calls using the same imports/suppression rules as embedded pattern expressions.
 std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::ExprId &id,
                                           const ast::CallExpression &call, bool top_test);

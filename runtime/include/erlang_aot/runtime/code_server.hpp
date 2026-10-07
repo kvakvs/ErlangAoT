@@ -1,4 +1,5 @@
 #pragma once
+#include "builtin_registry.hpp"
 #include "callable.hpp"
 #include "features.hpp"
 #include <compare>
@@ -178,11 +179,19 @@ class CodeServer final {
     const FunDefinition *fun_definition(const void *descriptor) const noexcept;
     // The FrameDescriptor of Module:Function/Arity exported by a registered module; null when none exports it.
     const void *export_frame(const FunctionAtoms &name) const noexcept;
-    // The definition of external fun Module:Function/Arity built at run time (fun M:F/A with variables), created on
-    // first use and kept for the server's lifetime; may throw std::bad_alloc.
-    const FunDefinition &external_fun(const FunctionAtoms &name);
+    // The FrameDescriptor a call of the atoms Module:Function/Arity enters: a registered module's export, else a
+    // builtin's frame; null when neither exists.
+    const void *function_frame(const Term &module, const Term &function, std::size_t arity) const noexcept;
+    // The definition of external fun Module:Function/Arity built at run time (fun M:F/A with variables) from atoms,
+    // created on first use and kept for the server's lifetime; may throw std::bad_alloc.
+    const FunDefinition &external_fun(const Term &module, const Term &function, std::size_t arity);
     // Whether `definition` is a registered module's fun definition or an external fun this server built.
     bool owns(const FunDefinition &definition) const noexcept;
+
+    // The production builtins calls reach besides the modules' exports.
+    BuiltinRegistry &builtins() noexcept { return builtins_; }
+
+    const BuiltinRegistry &builtins() const noexcept { return builtins_; }
 
   private:
     // Find the immutable descriptor key without dereferencing image-owned storage.
@@ -191,5 +200,7 @@ class CodeServer final {
     std::map<std::string, std::shared_ptr<const LoadedModule>, std::less<>> modules_;
     // External funs built from runtime operands, by module, function and arity; fun cells point at them.
     std::map<FunctionAtoms, std::unique_ptr<FunDefinition>> external_funs_;
+    // Registered once at runtime startup; external fun definitions may point at its frames.
+    BuiltinRegistry builtins_;
 };
 } // namespace erlang_aot::runtime

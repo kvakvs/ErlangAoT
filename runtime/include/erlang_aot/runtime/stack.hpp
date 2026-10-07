@@ -27,6 +27,7 @@ class ProcessStack final {
     ProcessStack &operator=(ProcessStack &&) = delete;
 
     // Push a frame for `function` and return its body, or record the budget failure and return the caller's body.
+    // A builtin's frame (null body) runs the builtin instead and returns the caller's body with the result.
     abi::v1::Code *enter(const abi::v1::FrameDescriptor &function) noexcept;
     // Collect when the heap asks for it, keeping the first `live` registers as roots: the safepoint of a function
     // entry or loop head (docs/runtime-heap.md#collection-in-generated-code). Return whether it collected; a failed

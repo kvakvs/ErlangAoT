@@ -68,7 +68,9 @@ bool available(const Module &module, const Function &function, const ast::ExprId
         return false;
     }
     const auto service = function.services.find(&expression);
-    if (service != function.services.end() && !service->second.operation && !service->second.apply()) {
+    const bool lowered = service != function.services.end() &&
+                         (service->second.operation || service->second.apply() || service->second.builtin);
+    if (service != function.services.end() && !lowered) {
         unsupported(module, expression.source, "guards", out);
     }
     const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits, module}, expression.value);

@@ -242,7 +242,8 @@ Plan: [35](11-plan.md#step-35).
   variables), arity checks and missing-function outcomes (step 35).
 - [x] Generic lookup/invocation with module pins (export frames, modules stay
   registered); verify failures (step 35: `executables_dynamic_calls`,
-  `runtime_funs`). Builtins reached dynamically wait for step 36.
+  `runtime_funs`). Builtins of the bridge catalog are reached dynamically and
+  as funs (step 36: `executables_builtin_bridge`).
 
 ### F20 — Erlang exceptions
 
@@ -313,8 +314,13 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)�
 [50](11-plan.md#step-50).
 
 - [x] Guard catalog services; `erlang:display/1` and `erlang:halt/0,1`.
-- [ ] Generic production registration bridge and selected families
-  (term access, conversions, `lists`/`maps` subset, `io`, `++`/`--`).
+- [x] Generic production registration bridge (step 36): `BuiltinRegistry`
+  by module/name/arity with transactional batches, the append-only
+  `bridge_builtins` catalog, `erlang_aot_builtin_v1`, builtin frames entered
+  by dynamic calls and funs; guard BIFs, operators, `display`, `halt`, the
+  raise family and `function_exported/3` registered.
+- [ ] Selected families (term access, conversions, `lists`/`maps` subset,
+  `io`, `++`/`--`).
 
 ### F27 — Typed/native callables and conversions
 

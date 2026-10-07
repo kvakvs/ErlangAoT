@@ -148,6 +148,18 @@ void index_funs(Module &module) {
     }
 }
 
+void add_builtin_fun(Module &module, const ast::Expression &expression, const FunctionKey &key) {
+    const auto equal = [&](const FunEntry &entry) {
+        return entry.external && entry.module == U"erlang" && entry.function == key.name && entry.arity == key.arity;
+    };
+    const auto found = std::ranges::find_if(module.funs, equal);
+    const auto index = static_cast<std::size_t>(found - module.funs.begin());
+    if (found == module.funs.end()) {
+        module.funs.push_back({true, U"erlang", key.name, key.arity, 0, {}});
+    }
+    module.fun_entries.emplace(&expression, index);
+}
+
 const FunEntry &fun_entry(const Module &module, const ast::Expression &expression) {
     return module.funs.at(module.fun_entries.at(&expression));
 }

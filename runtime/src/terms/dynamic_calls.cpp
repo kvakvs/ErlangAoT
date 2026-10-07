@@ -70,13 +70,14 @@ TermResult<std::optional<std::size_t>> unpack(Term list, Word *registers) {
     return list.is_nil() ? std::optional{count} : std::nullopt;
 }
 
-// The frame Module:Function/Arity enters: badarg for a non-atom name, undef when no module exports it.
+// The frame Module:Function/Arity enters: badarg for a non-atom name, undef when neither a module exports it nor
+// a builtin has that name.
 const void *lookup(ProcessContext &context, const Term &module, const Term &function, std::size_t arity) {
     if (!module.is_atom() || !function.is_atom()) {
         raise_call_error(context, ErrorReason::badarg);
         return nullptr;
     }
-    const auto *frame = context.code_server().export_frame({module.word(), function.word(), arity});
+    const auto *frame = context.code_server().function_frame(module, function, arity);
     if (!frame) {
         raise_call_error(context, ErrorReason::undef);
     }
@@ -121,8 +122,7 @@ Status make_external(ProcessContext &context, const std::array<Term, 3> &operand
         raise_call_error(context, ErrorReason::badarg);
         return Status::erlang_error;
     }
-    const auto &definition =
-        context.code_server().external_fun({module.word(), function.word(), static_cast<std::size_t>(*count)});
+    const auto &definition = context.code_server().external_fun(module, function, static_cast<std::size_t>(*count));
     const auto fun = TermFactory(context).fun_words(definition, {});
     if (!fun) {
         return term_status(fun.error());

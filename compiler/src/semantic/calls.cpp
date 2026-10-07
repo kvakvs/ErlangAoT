@@ -69,10 +69,10 @@ bool direct_call(const FunctionRef caller, const ast::Expression &expression) {
            !fun_call(syntax, *call) && !dynamic_call(syntax, *call);
 }
 
-// A local fun F/A must name a function of its module (erl_lint undefined_function).
+// A local fun F/A must name a function of its module or an auto-imported builtin (erl_lint undefined_function).
 void check_reference(const Module &module, const ast::Expression &expression, const Reporter &out) {
     const auto *reference = std::get_if<ast::LocalFunReference>(&expression.value);
-    if (reference && !fun_target(module, *reference)) {
+    if (reference && !fun_target(module, *reference) && !module.fun_entries.contains(&expression)) {
         report(module, &expression.source,
                "function " + utf8(reference->name.name) + "/" + reference->arity.decimal + " undefined", out);
     }

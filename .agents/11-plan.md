@@ -718,12 +718,42 @@ Register production builtins by module/name/arity and call them from generated
 code with checked status and owned results.
 
 - Success criteria
-  - [ ] Generated code calls a registered builtin; unregistered names keep the
+  - [x] Generated code calls a registered builtin; unregistered names keep the
     unavailable diagnostic; failures use the checked error channel.
 - Tests
-  - [ ] Golden programs calling bridge builtins with valid and invalid
+  - [x] Golden programs calling bridge builtins with valid and invalid
     arguments.
-  - [ ] Focused test for duplicate registration and failure rollback.
+  - [x] Focused test for duplicate registration and failure rollback.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Contract
+  `docs/builtins.md`. ABI: append-only catalog `abi::v1::bridge_builtins`
+  (72 `erlang` entries: guard BIFs, operators, `display/1`, `halt/0,1`, the
+  raise family, `function_exported/3`) and service `erlang_aot_builtin_v1`
+  (index, arguments, output); no descriptor revision change. Runtime:
+  `BuiltinRegistry` in the `CodeServer` (all-or-none batches; invalid,
+  duplicate and in-batch duplicate entries and allocation failures roll
+  back), `erlang_builtins()` registered at startup as adapters over the
+  inline services; `BuiltinFrame` = `FrameDescriptor` with a null body that
+  `ProcessStack::enter` runs on the registers without a push;
+  `CodeServer::function_frame` (exports, then builtins) serves `M:F(Args)`,
+  `apply/3` and runtime `fun M:F/A`; registration binds external funs without
+  a frame to builtins. Compiler: catalog builtins without an inline service
+  are body builtins (`ServiceResolution::builtin`, `lower_builtin`); `fun F/A`
+  of an auto-imported catalog builtin becomes `erlang:F/A`
+  (`Function::builtin_funs`, `add_builtin_fun`); `halt/0,1` auto-imported;
+  other `erlang` names keep `unknown module erlang` / `dynamic calls`
+  (catalog owner now step 52). OTP golden `executables_builtin_bridge` (every
+  catalog builtin through `apply/3` with valid arguments, 46 error cases with
+  OTP classes/reasons, builtin funs: equality, printing, higher-order use,
+  runtime `fun M:F/A`, badarity; `function_exported/3`; `halt` through apply,
+  unqualified `halt()`, uncaught error through apply) passes all 8
+  combinations; `runtime_builtins` registry checks; `runtime_lifecycle_failure`
+  startup sweep raised to 256 allocations (registration rollback on every
+  failpoint); mangling spellings checked with Clang on four targets; semantic
+  cases. Difference recorded: `function_exported/3` is true only for the
+  builtins this runtime provides. Fresh Windows x64 Debug (clang-cl): fast
+  174/174, full `-j 12` 178/178; after complexity splits Lizard 0 warnings and
+  tidy 291 units pass (rerun with one job after clang-tidy crashed with two).
+  Logs `build/plan11-step36/`.
 
 <a id="step-37"></a>
 

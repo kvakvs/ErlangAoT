@@ -15,9 +15,11 @@ accept variables, `_`, aliases, repeated names and patterns over atoms,
 arbitrary integers, finite floats, tuples, lists/strings, maps, bitstrings and
 ordinary tuple records. Bodies are sequences of matches, constructors, checked
 operators/guard BIFs, `erlang:display/1` ([printing](terms.md#printing)),
-`erlang:halt/0,1` ([exit status](executables.md#exit-status)), the raising
+`halt/0,1` ([exit status](executables.md#exit-status)), the raising
 `error/1,2,3`, `exit/1`, `throw/1` and `erlang:raise/3`
-([ABI](abi.md#failure-channel-revision-2)), `case`/`if`, `catch Expr`,
+([ABI](abi.md#failure-channel-revision-2)), the other
+[bridge builtins](builtins.md) (`erlang:function_exported/3`) and funs of
+builtins, `case`/`if`, `catch Expr`,
 `try ... of ... catch Class:Reason:Stack ... after` with
 [stack traces](abi.md#stack-traces), `maybe ... else ... end`, list, binary and map comprehensions
 ([patterns](patterns.md#comprehensions)) and direct local or

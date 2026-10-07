@@ -107,6 +107,24 @@ llvm::Value *generated_call(ExpressionLowering &state, const ast::Expression &ex
                                                               : lower_call(state, expression, call);
 }
 
+// Lower services with lowerings of their own: apply/2,3, bridge builtins and compound guard tests; null for others.
+llvm::Value *special_service(ExpressionLowering &state, const ast::Expression &expression,
+                             const semantic::ServiceResolution &service, const ast::CallExpression &call) {
+    if (service.apply()) {
+        return lower_apply(state, expression, call);
+    }
+    if (service.builtin) {
+        return lower_builtin(state, *service.builtin, call);
+    }
+    if (service.operation == abi::v1::ImmediateOperation::is_integer_range) {
+        return lower_integer_range(state, call);
+    }
+    if (service.operation == abi::v1::ImmediateOperation::is_record) {
+        return lower_record_test(state, expression, call);
+    }
+    return body_builtin_value(state, service, call);
+}
+
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
 llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     if (semantic::record_info_call(*state.module.syntax, expression.value)) {
@@ -116,16 +134,7 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     if (service == state.function.services.end()) {
         return generated_call(state, expression, call);
     }
-    if (service->second.apply()) {
-        return lower_apply(state, expression, call);
-    }
-    if (service->second.operation == abi::v1::ImmediateOperation::is_integer_range) {
-        return lower_integer_range(state, call);
-    }
-    if (service->second.operation == abi::v1::ImmediateOperation::is_record) {
-        return lower_record_test(state, expression, call);
-    }
-    if (auto *value = body_builtin_value(state, service->second, call)) {
+    if (auto *value = special_service(state, expression, service->second, call)) {
         return value;
     }
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {

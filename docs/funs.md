@@ -17,10 +17,12 @@ and probes on OTP 29.1.1.
 | `fun Name(X) -> ... end` | The same, with `Name` bound to the fun inside its clauses | The fun's own generated function |
 | `fun M:F/A` with variables | External fun built when evaluated; equal to the literal `fun m:f/1` it names | `m:f/1` when a module of the program exports it |
 
-- `fun F/A` must name a function of the module (`function F/A undefined`).
-  Naming an auto-imported builtin (`fun is_atom/1`) or a literal
-  `fun erlang:F/A` reports the unavailable `dynamic calls` capability (plan
-  step 36): builtins are not callable as values yet.
+- `fun F/A` must name a function of the module (`function F/A undefined`) or
+  an auto-imported builtin: `fun is_atom/1` is the external fun
+  `erlang:is_atom/1`. Funs of builtins call them through the
+  [builtin bridge](builtins.md); a builtin outside its catalog
+  (`fun self/0`, `fun erlang:apply/2`) reports the unavailable
+  `dynamic calls` capability.
 - `F(Args)` evaluates `F`, then the arguments left to right, then checks the
   value: a non-function raises `{badfun, F}`, another arity
   `{badarity, {F, Args}}` (checked before the module), an external fun whose
@@ -48,10 +50,9 @@ and probes on OTP 29.1.1.
 - Lookup uses the export tables of the program's modules, which stay
   registered for the program's lifetime, so a found function cannot go away
   during the call. It scans the modules and their exports, comparing atom
-  words; hash-map indexes are plan step 62A. Builtins are not in them yet:
-  `M:F(...)`, `apply/3` and
-  runtime `fun M:F/A` naming an `erlang` builtin raise `undef` until the
-  builtin bridge (plan step 36).
+  words; hash-map indexes are plan step 62A. A name no module exports is
+  then looked up among the [builtins](builtins.md), so `M:F(...)`, `apply/3`
+  and runtime `fun M:F/A` reach `erlang` builtins of the bridge catalog.
 - **Services.** `erlang_aot_call_v1(context, module, function, arity)` checks
   the names and returns the `FrameDescriptor` of the export (ABI revision 8
   adds it to `ExportDescriptor`); the arguments are already in the registers.

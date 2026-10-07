@@ -102,11 +102,10 @@ Invalid `halt/1` arguments raise `badarg` in the caller. When the entry
 finishes, the program exits: other processes are stopped without running
 further, as with OTP's `halt/1` after `escript` returns.
 
-`erlang:halt/0,1` is callable with an explicit `erlang:` prefix (unqualified
-auto-imported calls and `halt/2` arrive with the builtin bridge, step 36).
-`error/1,2,3`, `exit/1` and `throw/1` are callable with or without the prefix;
-a local definition or `-compile({no_auto_import, ...})` keeps the unqualified
-name local, as in OTP.
+`halt/0,1`, `error/1,2,3`, `exit/1` and `throw/1` are callable with or
+without the `erlang:` prefix; a local definition or
+`-compile({no_auto_import, ...})` keeps the unqualified name local, as in OTP.
+`halt/2` is not available.
 `halt(N)` keeps the low 31 bits of any non-negative integer, as OTP does. A
 slogan is a proper list of at most 1,023 Unicode code points. A halt unwinds the
 entry through the checked error channel like an error, so it stops the program

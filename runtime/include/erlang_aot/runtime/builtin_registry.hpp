@@ -1,0 +1,75 @@
+#pragma once
+#include "callable.hpp"
+#include <array>
+#include <cstddef>
+#include <erlang_aot/abi/builtins.hpp>
+#include <erlang_aot/abi/modules.hpp>
+#include <map>
+#include <span>
+#include <tuple>
+#include <type_traits>
+
+namespace erlang_aot::runtime {
+// Native implementation of one builtin: reads exactly its arity of argument words, records an Erlang error or a
+// failure in the context's checked channel and returns the result word (ignored after a failure).
+using BuiltinBody = Word (*)(ProcessContext &context, std::span<const Word> arguments);
+
+// One builtin to register. The names must outlive the registry (production tables use string literals).
+struct BuiltinEntry final {
+    std::string_view module;
+    std::string_view function;
+    std::size_t arity = 0;
+    BuiltinBody body = nullptr;
+};
+
+// A registered builtin as calls enter it: a FrameDescriptor with a null body, which marks a builtin, then its
+// implementation. Dynamic calls and funs enter it like generated code (docs/builtins.md).
+struct BuiltinFrame final {
+    abi::v1::FrameDescriptor frame{};
+    BuiltinBody body = nullptr;
+};
+
+static_assert(std::is_standard_layout_v<BuiltinFrame>);
+static_assert(offsetof(BuiltinFrame, frame) == 0);
+
+// The production builtins of one runtime, by exact module, function and arity.
+class BuiltinRegistry final {
+  public:
+    BuiltinRegistry() = default;
+    BuiltinRegistry(const BuiltinRegistry &) = delete;
+    BuiltinRegistry &operator=(const BuiltinRegistry &) = delete;
+    ~BuiltinRegistry() = default;
+
+    // Register every entry or none: an invalid entry or a name registered already (or twice in `entries`)
+    // rejects the whole batch, as does an allocation failure.
+    RegistryResult<void> add(std::span<const BuiltinEntry> entries);
+    // The builtin registered under these names; null when none is.
+    const BuiltinFrame *find(std::string_view module, std::string_view function, std::size_t arity) const noexcept;
+    // The builtin of a bridge index (abi::v1::bridge_builtins); null when the index is unknown or unregistered.
+    const BuiltinFrame *bridge(std::size_t index) const noexcept;
+
+    // Count registered builtins.
+    std::size_t size() const noexcept { return entries_.size(); }
+
+  private:
+    using Key = std::tuple<std::string_view, std::string_view, std::size_t>;
+    // Record a registered frame under its bridge index, if its name is in the catalog.
+    void link_bridge(const Key &key, const BuiltinFrame &frame) noexcept;
+    // Map nodes keep each frame's address stable: fun definitions and generated calls hold them.
+    std::map<Key, BuiltinFrame> entries_;
+    // Registered frames by bridge index, for erlang_aot_builtin_v1.
+    std::array<const BuiltinFrame *, abi::v1::bridge_builtins.size()> bridge_{};
+};
+
+// The builtin of a FrameDescriptor with a null body, as the registry built it.
+inline const BuiltinFrame &builtin_frame(const abi::v1::FrameDescriptor &frame) noexcept {
+    return *reinterpret_cast<const BuiltinFrame *>(&frame);
+}
+
+// Run `builtin` on its arguments; returns the result, or 0 with an Erlang error or failure recorded in the
+// checked channel. Host exceptions become failures.
+Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept;
+
+// The production builtins of module erlang that runtime startup registers.
+std::span<const BuiltinEntry> erlang_builtins() noexcept;
+} // namespace erlang_aot::runtime

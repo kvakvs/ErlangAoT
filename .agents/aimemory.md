@@ -285,6 +285,15 @@ Step facts beyond the plan record:
   funs (catalog plan_step 36). Service resolutions without an operation report `guards` notimpl unless apply().
   TermFactory::fun_words checks CodeServer::owns (descriptor-less definitions = interned external funs).
   Bash heredoc with many quotes fails ("unexpected EOF"): write edit scripts with Write into scratchpad.
+- 36: bridge = ABI catalog abi::v1::bridge_builtins (append-only, index = erlang_aot_builtin_v1 arg) + runtime
+  BuiltinRegistry in CodeServer (names are string_views: static storage). Builtin frame = FrameDescriptor with null
+  body (BuiltinFrame, reinterpret via builtin_frame); ProcessStack::enter runs it and returns the caller's body (no
+  push). erlang builtins are adapters over the C ABI services (erlang_aot_immediate_v1, _map_v1, _bits_v1 ...):
+  bits service `part` writes TWO output words (value + cursor) -> 1-word output = /GS fail-fast 0xC0000409 (exit 127
+  in bash). BindingAnalysis::module is const: module-level effects of resolve_services go through Function fields
+  (builtin_funs) applied after the loop. Capability "guards" notimpl fires for services without operation unless
+  apply()/builtin. OTP oracle constant-folds apply(erlang, abs, [a]) with literals -> warnings_as_errors failure:
+  route via id(). erlfmt beams live in thirdparty/tools/erlfmt/_build/local.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

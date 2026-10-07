@@ -1,3 +1,4 @@
+#include <array>
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
@@ -99,14 +100,51 @@ void check_calls() {
     const std::array valid{integer(-42)};
     require(target.call(*context, valid)->integer_value() == -42 && calls == 1, "generic identity failed");
 }
+
+// A builtin body that is never called.
+Word unused(ProcessContext &, std::span<const Word>) { return 0; }
+
+// Production registration covers the bridge catalog by index; duplicates and invalid entries roll back a batch.
+void check_builtin_registry() {
+    auto runtime = Runtime::start().value();
+    const auto &production = runtime->code_server()->builtins();
+    for (std::size_t index = 0; index < erlang_aot::abi::v1::bridge_builtins.size(); ++index) {
+        const auto &name = erlang_aot::abi::v1::bridge_builtins[index];
+        const auto *frame = production.bridge(index);
+        require(frame && frame == production.find(name.module, name.function, name.arity), "bridge builtin missing");
+        require(!frame->frame.body && frame->frame.arity == name.arity, "builtin frame malformed");
+    }
+    require(!production.bridge(erlang_aot::abi::v1::bridge_builtins.size()), "bridge index out of range found");
+    BuiltinRegistry registry;
+    require(registry.add(erlang_builtins()).has_value() && registry.size() == production.size(), "table rejected");
+    require(registry.add(erlang_builtins()).error() == RegistryError::duplicate_key, "duplicate table accepted");
+    require(registry.size() == production.size(), "duplicate table changed the registry");
+    const std::array fresh{BuiltinEntry{"extra", "first", 0, unused}, BuiltinEntry{"extra", "second", 1, unused}};
+    const std::array repeated{fresh[0], BuiltinEntry{"erlang", "abs", 1, unused}};
+    require(registry.add(repeated).error() == RegistryError::duplicate_key, "existing name accepted");
+    require(!registry.find("extra", "first", 0), "rejected batch kept its first entry");
+    const std::array twice{fresh[0], fresh[0]};
+    require(registry.add(twice).error() == RegistryError::duplicate_key && !registry.find("extra", "first", 0),
+            "batch duplicate accepted");
+    const std::array invalid{fresh[0], BuiltinEntry{"extra", "", 0, unused}, BuiltinEntry{"extra", "big", 256, unused},
+                             BuiltinEntry{"extra", "none", 0, nullptr}};
+    for (std::size_t bad = 1; bad < invalid.size(); ++bad) {
+        const std::array batch{invalid[0], invalid[bad]};
+        require(registry.add(batch).error() == RegistryError::invalid_entry, "invalid entry accepted");
+    }
+    require(registry.size() == production.size() && registry.add(fresh).has_value() &&
+                registry.find("extra", "second", 1),
+            "valid batch rejected after rollbacks");
+}
 } // namespace
 
-// Validate the host registry boundary without implementing compiler BIF lowering.
+// Validate the host registry boundary and the production builtin registry.
 int main() {
     try {
         check_terms();
         check_pinning();
         check_calls();
+        check_builtin_registry();
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

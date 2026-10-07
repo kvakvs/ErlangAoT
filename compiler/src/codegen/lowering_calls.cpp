@@ -77,6 +77,22 @@ llvm::Function *callee_declaration(ExpressionLowering &state, const semantic::Fu
 }
 } // namespace
 
+llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, const ast::CallExpression &call) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto *slot = root_slot(state);
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Builtin>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getInt8Ty(),
+                                {builder.getPtrTy(), state.word, builder.getPtrTy(), builder.getPtrTy()}, false));
+    builder.CreateCall(
+        service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, builtin), arguments(state, call), slot},
+        "builtin.outcome");
+    // Every error and failure is in the checked channel: the builtin has no semantic rejection of its own.
+    propagate_failure(state);
+    return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "builtin.value");
+}
+
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     const auto callee = state.inferred.callees.at(&expression);
     // Consume the resolved identity and summary, never repeat Erlang name resolution here.

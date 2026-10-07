@@ -205,16 +205,15 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 }
 
 namespace {
-// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's, as are the
-// dynamic calls apply/2,3.
+// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's, as are halt/0,1
+// and the dynamic calls apply/2,3.
 bool auto_imported(const FunctionKey &key) {
-    return (key.name == U"error" && key.arity >= 1 && key.arity <= 3) ||
-           ((key.name == U"exit" || key.name == U"throw") && key.arity == 1) ||
-           (key.name == U"apply" && (key.arity == 2 || key.arity == 3));
+    static const std::set<FunctionKey> names{{U"error", 1}, {U"error", 2}, {U"error", 3}, {U"exit", 1}, {U"throw", 1},
+                                             {U"halt", 0},  {U"halt", 1},  {U"apply", 2}, {U"apply", 3}};
+    return names.contains(key);
 }
 
-// Explicit erlang:display/1 and erlang:halt/0,1 wait for the builtin bridge (step 36) to resolve unqualified;
-// erlang:raise/3 is never auto-imported.
+// Other erlang bridge builtins (display/1, raise/3, function_exported/3) are callable only qualified.
 std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const ast::RemoteExpression &remote,
                                              const std::size_t count) {
     const auto *owner = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote.module)).value);
@@ -223,11 +222,23 @@ std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const as
         return {};
     }
     const FunctionKey key{name->name, count};
-    const bool builtin = auto_imported(key) || key == FunctionKey{U"display", 1} ||
-                         (key.name == U"halt" && count <= 1) || key == FunctionKey{U"raise", 3};
-    return builtin ? std::optional{key} : std::nullopt;
+    return auto_imported(key) || bridge_builtin(key) ? std::optional{key} : std::nullopt;
 }
 } // namespace
+
+std::optional<FunctionKey> builtin_fun(BindingAnalysis &state, const ast::ExprId &id,
+                                       const ast::LocalFunReference &reference) {
+    const auto count = arity(reference.arity);
+    if (!count) {
+        return {};
+    }
+    FunctionKey key{reference.name.name, *count};
+    const bool imported = guard_bif(key.name, key.arity) || auto_imported(key);
+    if (!imported || !bridge_builtin(key) || state.module.lookup.contains(key) || !auto_import(state, id, key)) {
+        return {};
+    }
+    return key;
+}
 
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id,
                                         const ast::CallExpression &call) {

@@ -79,14 +79,23 @@ const void *CodeServer::export_frame(const FunctionAtoms &name) const noexcept {
     return nullptr;
 }
 
-const FunDefinition &CodeServer::external_fun(const FunctionAtoms &name) {
-    auto &definition = external_funs_[name];
+const void *CodeServer::function_frame(const Term &module, const Term &function, std::size_t arity) const noexcept {
+    if (const auto *frame = export_frame({module.word(), function.word(), arity})) {
+        return frame;
+    }
+    const auto module_name = module.atom_spelling();
+    const auto function_name = function.atom_spelling();
+    return module_name && function_name ? builtins_.find(*module_name, *function_name, arity) : nullptr;
+}
+
+const FunDefinition &CodeServer::external_fun(const Term &module, const Term &function, std::size_t arity) {
+    auto &definition = external_funs_[{module.word(), function.word(), arity}];
     if (!definition) {
-        definition = std::make_unique<FunDefinition>(FunDefinition{.module = name.module,
-                                                                   .function = name.function,
-                                                                   .arity = name.arity,
+        definition = std::make_unique<FunDefinition>(FunDefinition{.module = module.word(),
+                                                                   .function = function.word(),
+                                                                   .arity = arity,
                                                                    .external = true,
-                                                                   .frame = export_frame(name)});
+                                                                   .frame = function_frame(module, function, arity)});
     }
     return *definition;
 }

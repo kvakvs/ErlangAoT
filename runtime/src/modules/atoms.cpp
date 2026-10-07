@@ -91,8 +91,20 @@ bool valid_fun(const abi::v1::ModuleDescriptor &module, const abi::v1::FunDescri
     return fun.external || (fun.frame && fun.frame->arity >= fun.arity);
 }
 
+// The code a fun enters: its descriptor's, else for an external fun nothing in the program exports the builtin of
+// that name, if any (fun erlang:abs/1).
+const void *fun_frame(const ModuleAtoms &bindings, const abi::v1::FunDescriptor &fun, const BuiltinRegistry &builtins) {
+    if (fun.frame || !fun.external) {
+        return fun.frame;
+    }
+    const auto module = bindings.slots[fun.module_atom].atom_spelling();
+    const auto function = bindings.slots[fun.function_atom].atom_spelling();
+    return module && function ? builtins.find(*module, *function, fun.arity) : nullptr;
+}
+
 // Bind every fun definition to the module's atom words in descriptor order; only an external fun may lack code.
-CodeResult<void> bind_funs(ModuleAtoms &bindings, const abi::v1::ModuleDescriptor &descriptor) {
+CodeResult<void> bind_funs(ModuleAtoms &bindings, const abi::v1::ModuleDescriptor &descriptor,
+                           const BuiltinRegistry &builtins) {
     if (descriptor.fun_count && !descriptor.funs) {
         return std::unexpected(CodeError::invalid_module);
     }
@@ -110,14 +122,14 @@ CodeResult<void> bind_funs(ModuleAtoms &bindings, const abi::v1::ModuleDescripto
                                               .index = fun.index,
                                               .external = fun.external != 0,
                                               .captures = captures,
-                                              .frame = fun.frame});
+                                              .frame = fun_frame(bindings, fun, builtins)});
     }
     return {};
 }
 } // namespace
 
-CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
-                                                          const abi::v1::ModuleDescriptor &descriptor) {
+CodeResult<std::shared_ptr<const ModuleAtoms>>
+bind_atoms(AtomStorage &storage, const abi::v1::ModuleDescriptor &descriptor, const BuiltinRegistry &builtins) {
     if (!valid_spellings(descriptor)) {
         return std::unexpected(CodeError::invalid_module);
     }
@@ -138,7 +150,7 @@ CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
     if (const auto records = bind_records(*bindings, descriptor); !records) {
         return std::unexpected(records.error());
     }
-    if (const auto funs = bind_funs(*bindings, descriptor); !funs) {
+    if (const auto funs = bind_funs(*bindings, descriptor, builtins); !funs) {
         return std::unexpected(funs.error());
     }
     return bindings;

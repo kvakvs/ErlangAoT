@@ -123,10 +123,15 @@ auto fn = context.code_server().resolve({.module = "native_demo", .function = "i
   `spawn_link/3`, `send/2`, `make_ref/0`, `garbage_collect/0`, `apply/3` (generated
   code calls `apply/2,3` through the dynamic call services instead, [funs](funs.md#dynamic-calls)),
   `tuple_size/1`, `+/2`) reports `not_implemented`; other unregistered names
-  return `unknown_builtin` silently. No production BIFs are registered yet.
+  return `unknown_builtin` silently. This host path does not reach the
+  production builtins.
+- Production builtins live in the server's `BuiltinRegistry`, registered at
+  runtime startup; generated code, dynamic calls and funs reach them through
+  the [builtin bridge](builtins.md).
 - `CodeServer::export_frame` finds the `FrameDescriptor` of an export by module,
-  function atom and arity for dynamic calls; `external_fun` interns the
-  definitions of external funs built at run time.
+  function atom and arity; `function_frame` adds the builtins for dynamic
+  calls; `external_fun` interns the definitions of external funs built at run
+  time.
 - `CodeServer::unload` is deferred; dynamic loading is not supported.
 
 ## Scheduler bookkeeping

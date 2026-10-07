@@ -1,4 +1,5 @@
 #include "capabilities.hpp"
+#include "funs.hpp"
 #include "records.hpp"
 #include "services.hpp"
 #include <algorithm>
@@ -50,21 +51,35 @@ struct GuardSyntax {
     }
 };
 
+// Record a body builtin: its inline operation, or else the bridge builtin it calls.
+void body_service(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call) {
+    if (const auto builtin = body_builtin(state, id, call)) {
+        const auto operation = immediate_service(*builtin);
+        state.function.services.emplace(
+            &state.module.syntax->expression(id),
+            ServiceResolution{*builtin, false, false, operation, operation ? std::nullopt : bridge_builtin(*builtin)});
+    }
+}
+
+// A call that is no guard signature: illegal in a guard, else possibly a body builtin.
+void unresolved(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call, const bool guard) {
+    if (guard) {
+        report(state.module, &state.module.syntax->expression(id).source,
+               "illegal guard call (not an authorized erlang guard signature)", state.out);
+    } else {
+        body_service(state, id, call);
+    }
+}
+
 // Authorize erlang identities before any lowering or runtime lookup; local body calls retain normal resolution.
 void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call, const bool guard,
           const bool top) {
     const auto resolved = guard_identity(state, id, call, guard && top);
-    const auto &expression = state.module.syntax->expression(id);
     if (!resolved) {
-        if (guard) {
-            report(state.module, &expression.source, "illegal guard call (not an authorized erlang guard signature)",
-                   state.out);
-        } else if (const auto builtin = body_builtin(state, id, call)) {
-            state.function.services.emplace(&expression,
-                                            ServiceResolution{*builtin, false, false, immediate_service(*builtin)});
-        }
+        unresolved(state, id, call, guard);
         return;
     }
+    const auto &expression = state.module.syntax->expression(id);
     const auto &target = state.module.syntax->expression(ungroup(*state.module.syntax, call.target)).value;
     const auto *name = std::get_if<ast::Atom>(&target);
     const bool legacy = guard && top && name && name->name != resolved->name;
@@ -215,17 +230,31 @@ bool scoped_guards(BindingAnalysis &state, const ast::Expression &expression, co
            fun_guards(expression, pending);
 }
 
-// Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
-void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
-    const auto &expression = state.module.syntax->expression(visit.id);
+// A local fun F/A naming an auto-imported builtin is the external fun erlang:F/A.
+void reference(BindingAnalysis &state, const ast::ExprId &id, const ast::LocalFunReference &value) {
+    if (const auto key = builtin_fun(state, id, value)) {
+        state.function.builtin_funs.emplace(&state.module.syntax->expression(id), *key);
+    }
+}
+
+// Authorize one node: calls and builtin funs resolve, guard-illegal syntax reports.
+void authorize(BindingAnalysis &state, const Visit &visit, const ast::Expression &expression) {
     if (const auto *value = std::get_if<ast::CallExpression>(&expression.value)) {
         call(state, visit.id, *value, visit.guard, visit.top);
+    } else if (const auto *fun = std::get_if<ast::LocalFunReference>(&expression.value); fun && !visit.guard) {
+        reference(state, visit.id, *fun);
     } else if (visit.guard && native_construction(state.module, expression.value)) {
         report(state.module, &expression.source, "creating a record in a guard is only supported for tuple records",
                state.out);
     } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }
+}
+
+// Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
+void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
+    const auto &expression = state.module.syntax->expression(visit.id);
+    authorize(state, visit, expression);
     if (scoped_guards(state, expression, visit, pending)) {
         return;
     }
@@ -276,6 +305,7 @@ void resolve_services(Module &module, const Reporter &out, const std::size_t wor
     for (auto &function : module.functions) {
         function.services.clear();
         function.guard_filters.clear();
+        function.builtin_funs.clear();
         BindingAnalysis pattern_state{module, function, transactional, 0, work, limit};
         expressions(pattern_state, pattern_reads(module, function), true, false);
         const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
@@ -288,6 +318,12 @@ void resolve_services(Module &module, const Reporter &out, const std::size_t wor
         for (auto &function : module.functions) {
             function.services.clear();
             function.guard_filters.clear();
+            function.builtin_funs.clear();
+        }
+    }
+    for (const auto &function : module.functions) {
+        for (const auto &[expression, key] : function.builtin_funs) {
+            add_builtin_fun(module, *expression, key);
         }
     }
 }

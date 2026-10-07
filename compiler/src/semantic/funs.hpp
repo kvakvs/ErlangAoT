@@ -19,6 +19,8 @@ external_fun(const ast::RemoteFunReference &reference);
 // Number the fun values of every function, in declaration and source order (an anonymous fun before the funs inside
 // it); run after binding analysis, which records what anonymous funs capture.
 void index_funs(Module &module);
+// Make a local fun naming the erlang builtin `key` the external fun erlang:F/A, sharing an equal entry.
+void add_builtin_fun(Module &module, const ast::Expression &expression, const FunctionKey &key);
 // The entry a fun expression creates.
 const FunEntry &fun_entry(const Module &module, const ast::Expression &expression);
 } // namespace erlang_aot::semantic

@@ -35,14 +35,15 @@ std::string_view ExpressionCapability::operator()(const ast::UnaryExpression &va
     return immediate_unary(value.operation) ? "" : "arithmetic";
 }
 
-// A fun of an erlang builtin needs builtins callable as values; fun M:F/A with variables needs dynamic lookup.
+// A fun of an erlang builtin needs a bridge builtin (resolved with services); other guard builtins stay unavailable.
 std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &value) const {
     const auto count = arity(value.arity);
     const FunctionKey key{value.name.name, count.value_or(0)};
-    return count && !module.lookup.contains(key) && guard_signature(key) ? "dynamic calls" : "";
+    const bool builtin = module.fun_entries.contains(&syntax.expression(id));
+    return count && !module.lookup.contains(key) && guard_signature(key) && !builtin ? "dynamic calls" : "";
 }
 
-// fun M:F/A with variables is built at run time; a literal fun erlang:F/A needs builtins callable as values.
+// fun M:F/A with variables is built at run time; a literal fun erlang:F/A needs a bridge builtin of that name.
 std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference &value) const {
     if (dynamic_fun(value)) {
         const auto *count = std::get_if<Integer>(&value.arity);
@@ -50,7 +51,11 @@ std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference 
         return valid && *valid <= 255 ? "" : "dynamic calls";
     }
     const auto names = external_fun(value);
-    return names && std::get<0>(*names) != U"erlang" ? "" : "dynamic calls";
+    if (!names) {
+        return "dynamic calls";
+    }
+    const auto &[owner, name, count] = *names;
+    return owner != U"erlang" || bridge_builtin({name, count}) ? "" : "dynamic calls";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {

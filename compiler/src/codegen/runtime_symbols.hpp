@@ -33,6 +33,8 @@ using Bits = Function<"erlang_aot_bits_v1", UInt8, Context, UInt8, Words, Size, 
 using Map = Function<"erlang_aot_map_v1", UInt8, Context, UInt8, Words, Size, Slot>;
 using Record = Function<"erlang_aot_record_v1", UInt8, Context, UInt8, UInt8, Descriptor, Words, Size, Slot>;
 using Display = Function<"erlang_aot_display_v1", UInt8, Context, Size, Slot>;
+// Bridge builtins (abi/builtins.hpp): the builtin's bridge index, its arguments and the output slot.
+using Builtin = Function<"erlang_aot_builtin_v1", UInt8, Context, Size, Words, Slot>;
 using Halt = Function<"erlang_aot_halt_v1", UInt8, Context, Size>;
 using Exact = Function<"erlang_aot_exact_v1", UInt8, Context, Size, Size>;
 using CallFailed = Function<"erlang_aot_call_failed_v2", UInt8, Context>;

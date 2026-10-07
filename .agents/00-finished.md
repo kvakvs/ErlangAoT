@@ -270,14 +270,15 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - [x] **More Erlang semantics:** maybe, comprehensions, exceptions and
   handlers, recursion and tail calls (plan 11 phases D and E); record updates,
   `record_info/2` and native records (steps 29–31E); function values,
-  closures, named funs and dynamic calls (steps 32–35; builtins as values and
-  dynamic calls of builtins wait for the bridge, step 36).
+  closures, named funs and dynamic calls (steps 32–35); builtins as values and
+  through dynamic calls via the production builtin bridge (step 36).
 - [ ] **Identities and atoms:** pid/port/reference services; synchronized atom
   access before workers; atom collection is a scope decision (D02).
 - [ ] **Processes and scheduling:** cooperative execution, reductions, workers,
   signals, send and selective receive (all messages enter the signal inbox).
-- [ ] **Runtime services:** generic production builtin registration and
-  families, typed callables, concurrent code server; dynamic loading is D01.
+- [ ] **Runtime services:** builtin families, typed callables, concurrent code
+  server (generic production builtin registration done in plan 11 step 36);
+  dynamic loading is D01.
 - [ ] **Tooling:** source-driven specialization, debug info, profiling, LTO.
 - [ ] **Native platform validation:** Linux x86/x64/ARM/AArch64, macOS Apple
   Silicon, Windows x86.

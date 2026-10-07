@@ -128,6 +128,16 @@
   `erlang_aot_apply_list_v1`/`erlang_aot_call_list_v1` unpack the list into a 256-word register array), then the
   apply marker. `fun M:F/A` with variables: binding reads in `Function::fun_operands`, built by
   `erlang_aot_make_external_fun_v1` over `CodeServer::external_fun` (interned, `owns()` admits it).
+  Builtin bridge (step 36, `docs/builtins.md`): append-only ABI catalog `abi::v1::bridge_builtins` shared by compiler
+  and runtime; `CodeServer::builtins()` (`BuiltinRegistry`, transactional batches, registered at runtime startup
+  from `erlang_builtins()`, adapters over the inline services) maps names to `BuiltinFrame`s = `FrameDescriptor`
+  with null body + `BuiltinBody`. `ProcessStack::enter` runs a null-body frame at once on the registers and returns
+  into the caller's body. Lookups: `CodeServer::function_frame` (exports, then builtins by atom spelling) for
+  `M:F(Args)`/`apply/3`/runtime `fun M:F/A`; registration binds external `FunDescriptor`s without a frame to the
+  builtin of their name. Compiler: catalog builtins without an inline operation (`function_exported/3`) are body
+  builtins with `ServiceResolution::builtin` lowered to `erlang_aot_builtin_v1`; `fun F/A` of an auto-imported
+  catalog builtin is recorded by `resolve_services` (`Function::builtin_funs`) and becomes the external entry
+  `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

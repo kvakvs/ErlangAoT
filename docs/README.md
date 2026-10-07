@@ -18,6 +18,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Term representations (atoms, numbers, containers, maps, bits, records) and printing | [terms.md](terms.md) |
 | Native, qualified and anonymous records (OTP 29) | [native-records.md](native-records.md) |
 | Function values: `fun F/A`, `fun M:F/A`, calls of funs | [funs.md](funs.md) |
+| Production builtins: catalog, bridge calls, builtin funs, registration | [builtins.md](builtins.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |

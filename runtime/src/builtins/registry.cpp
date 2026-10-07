@@ -1,3 +1,5 @@
+#include <erlang_aot/abi/frames.hpp>
+#include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/callable.hpp>
 
 namespace erlang_aot::runtime {
@@ -54,4 +56,72 @@ std::vector<FunctionKey> ModuleRegistry::keys() const {
 bool ModuleRegistry::frozen() const noexcept { return frozen_; }
 
 void ModuleRegistry::freeze() noexcept { frozen_ = true; }
+} // namespace erlang_aot::runtime
+
+namespace erlang_aot::runtime {
+namespace {
+// A registrable builtin names its module and function, takes at most 255 arguments and has an implementation.
+bool valid(const BuiltinEntry &entry) {
+    return !entry.module.empty() && !entry.function.empty() && entry.arity < abi::v1::register_count && entry.body;
+}
+
+// The frame calls of a builtin enter: its arity and a null body; it has no name descriptor and no slots.
+BuiltinFrame builtin(const BuiltinEntry &entry) {
+    return {.frame = {.module = nullptr,
+                      .module_atom = 0,
+                      .function_atom = 0,
+                      .arity = entry.arity,
+                      .body = nullptr,
+                      .slots = 0,
+                      .roots = 0},
+            .body = entry.body};
+}
+} // namespace
+
+RegistryResult<void> BuiltinRegistry::add(std::span<const BuiltinEntry> entries) {
+    std::vector<std::map<Key, BuiltinFrame>::iterator> added;
+    const auto rollback = [&](RegistryError error) {
+        for (const auto &item : added) {
+            entries_.erase(item);
+        }
+        return std::unexpected(error);
+    };
+    try {
+        added.reserve(entries.size());
+        for (const auto &entry : entries) {
+            if (!valid(entry)) {
+                return rollback(RegistryError::invalid_entry);
+            }
+            const auto [item, fresh] =
+                entries_.try_emplace({entry.module, entry.function, entry.arity}, builtin(entry));
+            if (!fresh) {
+                return rollback(RegistryError::duplicate_key);
+            }
+            added.push_back(item);
+        }
+    } catch (const std::bad_alloc &) {
+        return rollback(RegistryError::resource_limit);
+    }
+    for (const auto &item : added) {
+        link_bridge(item->first, item->second);
+    }
+    return {};
+}
+
+void BuiltinRegistry::link_bridge(const Key &key, const BuiltinFrame &frame) noexcept {
+    const auto &[module, function, arity] = key;
+    if (const auto index = abi::v1::find_bridge_builtin(module, function, arity)) {
+        bridge_[*index] = &frame;
+    }
+}
+
+const BuiltinFrame *BuiltinRegistry::find(std::string_view module, std::string_view function,
+                                          std::size_t arity) const noexcept {
+    const auto found = entries_.find({module, function, arity});
+    return found == entries_.end() ? nullptr : &found->second;
+}
+
+const BuiltinFrame *BuiltinRegistry::bridge(std::size_t index) const noexcept {
+    return index < bridge_.size() ? bridge_[index] : nullptr;
+}
 } // namespace erlang_aot::runtime

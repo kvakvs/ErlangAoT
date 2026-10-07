@@ -1,6 +1,7 @@
 #include "capabilities.hpp"
 #include "services.hpp"
 #include <array>
+#include <erlang_aot/abi/builtins.hpp>
 
 namespace erlang_aot::semantic {
 using Op = abi::v1::ImmediateOperation;
@@ -110,6 +111,10 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
                                                       {{U"raise", 3}, Op::raise}};
     const auto found = signatures.find(key);
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
+}
+
+std::optional<std::size_t> bridge_builtin(const FunctionKey &key) {
+    return abi::v1::find_bridge_builtin("erlang", utf8(key.name), key.arity);
 }
 
 std::optional<Op> immediate_unary(const ast::UnaryOperator operation) {

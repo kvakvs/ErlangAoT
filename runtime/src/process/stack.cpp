@@ -1,6 +1,7 @@
 #include "../memory/runtime_memory.hpp"
 #include <algorithm>
 #include <bit>
+#include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <new>
 
@@ -89,6 +90,11 @@ bool ProcessStack::safepoint(std::size_t live) noexcept {
 
 abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
     safepoint(function.arity);
+    if (!function.body) {
+        // A builtin runs at once on the registers; its result returns into the current frame's body.
+        registers_[0] = call_builtin(owner_, builtin_frame(function), registers_.data());
+        return descriptor(frame_).body;
+    }
     if (!push(function)) {
         registers_[0] = 0;
         return descriptor(frame_).body;

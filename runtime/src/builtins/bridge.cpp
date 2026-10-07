@@ -1,5 +1,6 @@
 #include <array>
 #include <erlang_aot/abi/builtins.hpp>
+#include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/builtins.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 
@@ -104,4 +105,54 @@ Status dispatch_builtin(Context *context, const char *module, std::size_t module
                                             status == Status::not_implemented || status == Status::diagnostic_failure);
     return status;
 }
+
+namespace {
+// Call a bridge builtin from generated code once the invocation, index and pointers are checked.
+Status bridge_call(runtime::ProcessContext &context, std::size_t index, const TermWord *arguments, TermWord *output) {
+    auto &calls = context.generated_calls();
+    if (!calls.active() || calls.failure()) {
+        return Status::invalid_argument;
+    }
+    const auto *builtin = context.code_server().builtins().bridge(index);
+    if (!builtin || !output || (builtin->frame.arity != 0 && !arguments)) {
+        calls.fail_service(Status::invalid_argument);
+        return Status::invalid_argument;
+    }
+    const auto result = runtime::call_builtin(context, *builtin, arguments);
+    if (const auto &failure = calls.failure()) {
+        return failure->status.value_or(call_status(failure->code));
+    }
+    *output = result;
+    return Status::ok;
+}
+} // namespace
 } // namespace erlang_aot::abi::v1
+
+namespace erlang_aot::runtime {
+Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept {
+    auto &calls = context.generated_calls();
+    try {
+        const auto result = builtin.body(context, {arguments, builtin.frame.arity});
+        return calls.failure() ? Word{0} : result;
+    } catch (const std::bad_alloc &) {
+        calls.fail_service(abi::v1::Status::out_of_memory);
+    } catch (...) {
+        calls.fail_service(abi::v1::Status::internal_error);
+    }
+    return 0;
+}
+} // namespace erlang_aot::runtime
+
+std::uint8_t erlang_aot_builtin_v1(void *context, std::size_t builtin, const erlang_aot::abi::v1::TermWord *arguments,
+                                   erlang_aot::abi::v1::TermWord *output) noexcept {
+    using erlang_aot::abi::v1::Status;
+    if (!context) {
+        return static_cast<std::uint8_t>(Status::invalid_argument);
+    }
+    try {
+        return static_cast<std::uint8_t>(erlang_aot::abi::v1::bridge_call(
+            *static_cast<erlang_aot::runtime::ProcessContext *>(context), builtin, arguments, output));
+    } catch (...) {
+        return static_cast<std::uint8_t>(Status::internal_error);
+    }
+}

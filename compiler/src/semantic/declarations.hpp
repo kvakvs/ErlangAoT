@@ -55,6 +55,8 @@ struct ServiceResolution {
     bool legacy_test;
     // Missing operations denote legal signatures whose numeric/container/process owner is still deferred.
     std::optional<abi::v1::ImmediateOperation> operation;
+    // A body builtin without an inline operation calls this bridge builtin (abi::v1::bridge_builtins index).
+    std::optional<std::size_t> builtin = {};
 
     // Whether this is apply/2,3: a dynamic call, lowered as a transfer rather than an immediate operation.
     [[nodiscard]] bool apply() const { return identity.name == U"apply"; }
@@ -79,6 +81,8 @@ struct Function {
     std::map<const ast::Expression *, ServiceResolution> services = {};
     // Comprehension filters that are guard tests: they reject the element on failure instead of raising.
     std::set<const ast::Expression *> guard_filters = {};
+    // Local funs F/A naming auto-imported bridge builtins, found with services; the module makes them erlang:F/A.
+    std::map<const ast::Expression *, FunctionKey> builtin_funs = {};
     // The definitions each anonymous fun uses from outside itself (its captured values), in definition order.
     std::map<const ast::Expression *, std::vector<BindingId>> captures = {};
     // The binding each named fun's clauses see for its own name.
