@@ -30,7 +30,7 @@ Keys in the last column are relative to the directory column.
 | `parser/` | Erlang grammar, recovery, budgets | `parser`, `forms`, `diagnostics`; `expressions`, `clauses`, `literals`, `aggregates`, `maps`, `records`, `structural`, `binaries`, `control`, `funs`, `exceptions`, `comprehensions` |
 | `parser/` | Attributes, records, literal terms, types/specs | `attributes`, `declarations`, `documentation`, `attribute_*`, `term_*`, `types`, `type_*`, `specifications` |
 | `printing/` | Source/token/AST output | `source`, `token_text`, `printable`, `tree*` |
-| `driver/` | CLI, frontend, analysis/backend, entry resolution, escript headers, publication | `command`, `options`, `frontend`, `analysis`, `entry`, `escript`, `backend*`, `project_backend`, `publication`; `C/main.cpp`: entry/failure boundary |
+| `driver/` | CLI, frontend (library modules added to a batch: `add_library`), analysis/backend, entry resolution, escript headers, publication | `command`, `options`, `frontend`, `analysis`, `entry`, `escript`, `backend*`, `project_backend`, `publication`; `C/main.cpp`: entry/failure boundary |
 | `driver/` | Progress, IR/type inspection, debug options | `progress`, `display`, `inspection`, `type_*`, `implementation_debug`; shared selector: `C/implementation_debug.hpp` |
 | `project/` | TOML/schema; discovery/options; target execution | `model`, `loader`, `diagnostics`, `decode*`, `schema`; `paths`, `glob*`, `discovery`, `sources`, `identity`, `selection`, `options`; `entry` (MODULE[:FUNCTION] spelling), `plan`, `execution`, `cli`, `command`, `template`, `create`; `cmake/Dependencies.cmake`: toml++ |
 | `semantic/` | Symbols, calls (`calls`: SCC components callee-first), executable admission (`literals`: children and the case/if/try `branch_clauses` view; `comprehensions`: qualifier/generator/template views), escript rules | `declarations`, `escript`, `symbols`, `calls`, `capabilities`, `expression_capability`, `literals`, `comprehensions`, `features` |
@@ -45,7 +45,7 @@ Keys in the last column are relative to the directory column.
 | `codegen/` | Atom slots / registration; startup module (`main` → `erlang_aot_main_v1`); guarded variants | `module_{atoms,registration}`, `startup`; `specialization*`, `integer_guards` |
 | `codegen/` | Verify/optimize/emit; limits/reporting; provenance | `verification`, `optimization`, `emission`, `serialization`; `limits`, `bounded_stream`, `features`, `progress`; `source_{locations,annotations}` |
 | `artifacts/` | Staged writes, safe names, file replacement | `artifacts`, `paths`, `replace` |
-| `linking/` | Executable linking: staged link (`StagedExecutable`) and deferred publication, Clang discovery/run, runtime archive lookup and target check | `link`, `toolchain`, `runtime_library` |
+| `linking/` | Executable linking: staged link (`StagedExecutable`) and deferred publication, Clang discovery/run, runtime archive lookup and target check, library directory (`library_directory`) | `link`, `toolchain`, `runtime_library` |
 
 ## Runtime — R
 
@@ -82,8 +82,9 @@ Keys are relative to the directory column. Stable backing and roots are implemen
 | `cmake/` checks | `Check{Complexity,ClangTidy}.cmake` (changed or all scope via `QualityScope.cmake` + `quality_scope.py`), `{QualityToolchain,TestHost}.cmake.in`; `modules/Find{ZLIB,zstd}.cmake`; `probes/{windows,llvm}.cpp`; `tools/requirements-quality.txt` |
 | `.agents/`, root guidance | Plans/map/history; `AGENTS.md`: instructions; `README.md`: usage; `.agents/aimemory.md`: AI notes |
 | `runtime/design/` | `{terms,processes,atom_storage,code_server}.md`: design contracts/proposals |
-| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `executables`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`, `native-records`, `funs`, `builtins`), `runtime.md`, `runtime-heap.md` (heap contract), `execution-model.md` (step-17 frame/continuation decision), `differences.md` (known OTP differences), `otp-reference.md`, `validation.md` (baseline, test design, history) |
+| `docs/` | Brief reference notes indexed by `docs/README.md`: frontend (`preprocessor`, `parser`, `projects`), compiler (`compile`, `executables`, `semantic`, `specialization`, `abi`, `features`), language (`patterns`, `guards`, `terms`, `native-records`, `funs`, `builtins`, `library`), `runtime.md`, `runtime-heap.md` (heap contract), `execution-model.md` (step-17 frame/continuation decision), `differences.md` (known OTP differences), `otp-reference.md`, `validation.md` (baseline, test design, history) |
 | `references/` | `otp-pin.cmake`: maint-29 revision; ignored `otp/`: checkout and generated OTP headers; procedure: `docs/otp-reference.md`; gate: `tests/compiler/parser/pinned.cmake`. Preserve historical evidence revisions. |
+| `library/` | `stdlib/{lists,maps}.erl`: project-owned library modules compiled into programs that name them (`docs/library.md`) |
 | `examples/` | `compile/`: remote scalar/container/record classification and native harness; `project/src/`: manifest example; future runnable demos: `<feature>/` |
 | Local/generated | `build/`: outputs/logs; `thirdparty/`: SDK/dependencies and `tools/erlfmt/` formatter; `.venv-quality/`: quality tools; editor state stays local |
 

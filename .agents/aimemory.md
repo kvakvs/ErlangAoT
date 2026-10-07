@@ -303,6 +303,9 @@ Step facts beyond the plan record:
   list_to_integer: OTP size check (system_limit) precedes digit validation only once the first ~18 digits are valid;
   chars > 255 use the low byte (difference recorded). Building a 1.3M-element list in Debug costs ~2.5 s
   (2 us per cons): build long strings by binary doubling + binary_to_list.
+- 39: OTP lists:map/foldl raise {case_clause, X} for a non-list (case at top, function_clause in the helper),
+  nth has is_integer(N). programs.py --update-diagnostics must get an uppercase absolute work dir (F:/...):
+  a lowercase f: cwd breaks the <fixture> substitution. Library added only for literal module names.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

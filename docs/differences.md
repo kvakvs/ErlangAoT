@@ -45,7 +45,8 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | --- | --- | --- | --- |
 | Integer segment wider than the integer limit, value past it (`<<V:4194241>>` of all ones) | The x86 JIT matches with an invalid term; using it crashes the VM | No match | [terms](terms.md#integers) |
 | Zip group whose relaxed and strict generators share a variable | Skip test keeps strict-pattern variables in the relaxed patterns | A rejected step is skipped whenever the strict patterns match on their own | [patterns](patterns.md#comprehensions) |
-| Calling an external fun, `M:F(Args)` or `apply/3` of a module outside the program | Loads the module from the code path, `undef` when absent | `undef` | [funs](funs.md#dynamic-calls) |
+| Calling an external fun, `M:F(Args)` or `apply/3` of a module outside the program | Loads the module from the code path, `undef` when absent | `undef`; library modules join the program only when it names them with a literal atom | [funs](funs.md#dynamic-calls), [library](library.md#how-programs-get-them) |
+| `lists` and `maps` | The full modules; `maps:keys/1`, `values/1`, `to_list/1`, `fold/3` follow the map's internal order (atom-table order for atom keys, hash order above 32 keys) | The [library subset](library.md); map functions follow key order | [library](library.md) |
 | Files without `#!` given as escripts | `escript file.erl` skips the first line | Compiled as ordinary modules | [executables](executables.md) |
 | Precompiled beam and archive escripts | Run | Not supported | [executables](executables.md) |
 

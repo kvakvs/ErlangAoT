@@ -1,25 +1,12 @@
 exit 1
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:16:26: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:16:50: unknown module lists
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:27:14: unknown module io
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:28:24: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:30:26: unknown module lists
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:31:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:43:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:48:14: unknown module io
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:50:22: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:51:29: unknown module lists
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:52:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:53:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:54:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:55:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:56:14: unknown module io
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:58:14: unknown module io
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:58:52: unknown module lists
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:83:14: unknown module io
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:19:18: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:21:18: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:21:33: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:29:35: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:33:16: unknown module lists
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/words.erl:36:19: unknown module maps

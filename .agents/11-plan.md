@@ -849,10 +849,31 @@ map, foldl, foldr, filter, member, keyfind, sort, seq, nth, append` and
 `maps:get, put, find, keys, values, fold, from_list, to_list`.
 
 - Success criteria
-  - [ ] Library modules build with the compiler and link automatically into
+  - [x] Library modules build with the compiler and link automatically into
     executables; results match OTP.
 - Tests
-  - [ ] Golden call/result corpus regenerated from OTP for every function.
+  - [x] Golden call/result corpus regenerated from OTP for every function.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Original Erlang
+  sources `library/stdlib/lists.erl` (`append/1,2`, `filter/2`, `foldl/3`,
+  `foldr/3`, `keyfind/3`, `map/2`, `member/2`, `nth/2`, `reverse/1,2`,
+  `seq/2,3`, `sort/1`) and `maps.erl` (`find/2`, `fold/3`, `from_list/1`,
+  `get/2`, `keys/1`, `put/3`, `to_list/1`, `values/1`), written from OTP's
+  documented behavior with its error shapes (OTP probes: `map`/`foldl`
+  `{case_clause, X}` for a non-list, `nth` `is_integer` guard, `seq/3`
+  `badarg`); contract `docs/library.md`. The driver adds them to a batch
+  (`frontend` `add_library`, positional and project) when a module names them
+  with a literal atom (`semantic::referenced_modules`) and no input declares
+  them; the directory is `library/stdlib` relative to `erlangaot`
+  (`linking::library_directory`, `ERLANG_AOT_DEFAULT_LIBRARY`). Interruptible
+  by construction (Erlang code). Differences recorded: subset only, key-order
+  iteration, no code-path loading for runtime-only names. OTP golden
+  `executables_library` (101 apply/3 cases with valid, boundary and invalid
+  arguments, fun application order, library funs/apply/dynamic calls, a
+  32-key `from_list`/`to_list` round trip, 10,000-element lists) passes all 8
+  combinations; program diagnostics refreshed (`lists`/`maps` resolve). Fresh
+  Windows x64 Debug: fast 177/177, full `-j 12` 181/181; Lizard 0 warnings;
+  tidy 294 units pass (rerun with one job after a clang-tidy crash). Logs
+  `build/plan11-step39/`.
 
 <a id="step-40"></a>
 

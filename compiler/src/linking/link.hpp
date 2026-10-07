@@ -62,4 +62,6 @@ StagedExecutable stage_executable(const LinkRequest &request);
 void publish_executable(const StagedExecutable &executable);
 // Stage and immediately publish one executable; returns linker warnings.
 std::string link_executable(const LinkRequest &request);
+// The project library sources (library/stdlib of this build tree), relative to this compiler.
+std::filesystem::path library_directory();
 } // namespace erlang_aot::linking

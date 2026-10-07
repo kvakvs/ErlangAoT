@@ -129,7 +129,9 @@ Plan: [23](11-plan.md#step-23), [27B](11-plan.md#step-27b), [27C](11-plan.md#ste
 - [x] GC/copying integration (F04/F05, 28).
 - [x] `++`/`--`, `tuple_to_list`/`list_to_tuple`, `setelement`, `make_tuple`
   (step 37).
-- [ ] More list operations via F26 (`lists` subset, step 39).
+- [x] `lists` subset (step 39): `append`, `filter`, `foldl`, `foldr`,
+  `keyfind`, `map`, `member`, `nth`, `reverse`, `seq`, `sort`; `maps`
+  subset.
 
 ### F09 — Binaries and bitstrings
 
@@ -327,7 +329,9 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)�
   `is_map_key` in bodies.
 - [x] Conversion family (step 38): atoms, integers (bases 2..36), floats
   (`float_to_list/1,2` formats), binaries and iolists; atom-table limit.
-- [ ] Remaining families (`lists`/`maps` subset, `io`).
+- [x] Project-owned `lists`/`maps` subsets compiled with programs that name
+  them (step 39, `library/stdlib`).
+- [ ] Remaining family (`io`).
 - [ ] Interruptible long-running builtins once the scheduler exists (step 43A).
 
 ### F27 — Typed/native callables and conversions

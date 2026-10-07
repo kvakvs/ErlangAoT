@@ -142,7 +142,10 @@
   bridge (`binary_value`), so the `arithmetic` capability is implemented. Long-running builtins run to completion
   until plan step 43A adds traps (`TODO(step 43A)`). Step 38: conversions (`conversion_builtins()`, float text in
   `builtins/float_text`: printf for `%.*e`, OTP's own fixed rounding, shortest digits from `std::to_chars` placed by
-  OTP's Ryu notation rules).
+  OTP's Ryu notation rules). Step 39: library modules (`library/stdlib/{lists,maps}.erl`, original Erlang) join a
+  batch in `driver/frontend` `add_library`: modules named by literal atoms (`semantic::referenced_modules`) that no
+  input declares (`semantic::declared_module`) are parsed from `linking::library_directory()` (relative to
+  `erlangaot`, `ERLANG_AOT_DEFAULT_LIBRARY`) until closed; they compile, link and publish like inputs.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

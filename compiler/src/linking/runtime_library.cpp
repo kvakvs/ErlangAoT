@@ -27,6 +27,13 @@ std::filesystem::path compiler_directory() {
     return project::native_path(llvm::sys::fs::getMainExecutable(nullptr, &anchor)).parent_path();
 }
 
+} // namespace
+
+std::filesystem::path library_directory() {
+    return (compiler_directory() / project::native_path(ERLANG_AOT_DEFAULT_LIBRARY)).lexically_normal();
+}
+
+namespace {
 // Classify a member as a native object; bitcode, import and other members are skipped.
 std::optional<ObjectKind> member_kind(const llvm::object::Archive::Child &child) {
     auto binary = child.getAsBinary();

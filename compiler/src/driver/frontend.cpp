@@ -1,11 +1,16 @@
 #include "frontend.hpp"
 #include "../codegen/limits.hpp"
 #include "../codegen/request.hpp"
+#include "../linking/link.hpp"
+#include "../project/paths.hpp"
+#include "../semantic/calls.hpp"
 #include "backend.hpp"
 #include "escript.hpp"
 #include "options.hpp"
+#include <algorithm>
 #include <erlang_aot/compiler/parser.hpp>
 #include <erlang_aot/compiler/printing.hpp>
+#include <erlang_aot/compiler/source.hpp>
 #include <fstream>
 #include <iostream>
 
@@ -142,6 +147,28 @@ bool process_file(const std::filesystem::path &path, const FrontendRequest &requ
     return true;
 }
 
+// Whether a module of the batch declares `name`.
+bool defined(const Inputs &inputs, const std::u32string &name) {
+    return std::ranges::any_of(inputs,
+                               [&](const auto &input) { return semantic::declared_module(input.syntax) == name; });
+}
+
+// Add the library modules the batch references but does not define, including those they reference in turn.
+bool add_library(const FrontendRequest &request, const DiagnosticSink &sink, Inputs &inputs) {
+    const auto directory = linking::library_directory();
+    std::set<std::u32string> added;
+    bool failed = false;
+    for (std::size_t scanned = 0; scanned < inputs.size(); ++scanned) {
+        for (const auto &name : semantic::referenced_modules(inputs[scanned].syntax)) {
+            const auto path = directory / project::native_path(utf8(name) + ".erl");
+            if (defined(inputs, name) || !added.insert(name).second || !std::filesystem::is_regular_file(path)) {
+                continue;
+            }
+            failed = process_file(path, request, sink, inputs) || failed;
+        }
+    }
+    return failed;
+}
 } // namespace
 
 bool process_files(const std::span<const std::filesystem::path> paths, const FrontendRequest &request,
@@ -154,6 +181,9 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
     bool failed = false;
     for (const auto &path : paths) {
         failed = process_file(path, request, sink, inputs) || failed;
+    }
+    if (request.compile && !failed) {
+        failed = add_library(request, sink, inputs);
     }
     if (request.compile && !failed) {
         failed = compile_batch(std::move(inputs), request, sink);

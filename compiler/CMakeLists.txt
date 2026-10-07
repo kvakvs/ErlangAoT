@@ -101,4 +101,7 @@ else()
     set(default_runtime "../lib/${CMAKE_STATIC_LIBRARY_PREFIX}erlang_runtime${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 target_compile_definitions(erlang_linking PRIVATE "ERLANG_AOT_DEFAULT_RUNTIME=\"${default_runtime}\"")
+# Library modules (lists, maps) compile from source with the programs that call them.
+set(default_library "$<PATH:RELATIVE_PATH,${PROJECT_SOURCE_DIR}/library/stdlib,$<TARGET_FILE_DIR:erlang_aot>>")
+target_compile_definitions(erlang_linking PRIVATE "ERLANG_AOT_DEFAULT_LIBRARY=\"${default_library}\"")
 target_link_libraries(erlang_aot PRIVATE erlang_linking)

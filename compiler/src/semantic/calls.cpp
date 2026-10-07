@@ -234,6 +234,70 @@ void order(CallGraph &graph, const std::vector<FunctionRef> &functions) {
 
 } // namespace
 
+namespace {
+// The atom an expression is, after parentheses.
+const ast::Atom *literal_atom(const ast::Module &syntax, const ast::ExprId &id) {
+    return std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, id)).value);
+}
+
+// The module apply(M, F, Args) or erlang:apply(M, F, Args) names with a literal atom.
+const ast::Atom *applied_module(const ast::Module &syntax, const ast::CallExpression &call) {
+    const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
+    const auto *name = std::get_if<ast::Atom>(&target);
+    const auto *remote = std::get_if<ast::RemoteExpression>(&target);
+    if (remote) {
+        const auto *owner = literal_atom(syntax, remote->module);
+        name = owner && owner->name == U"erlang" ? literal_atom(syntax, remote->function) : nullptr;
+    }
+    const bool apply = name && name->name == U"apply" && call.arguments.size() == 3;
+    return apply ? literal_atom(syntax, call.arguments.front()) : nullptr;
+}
+
+// The module one expression names with a literal atom, if any.
+const ast::Atom *named_module(const ast::Module &syntax, const ast::Expression &expression) {
+    if (const auto *reference = std::get_if<ast::RemoteFunReference>(&expression.value)) {
+        return std::get_if<ast::Atom>(&reference->module);
+    }
+    const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+    if (!call) {
+        return nullptr;
+    }
+    if (const auto *remote =
+            std::get_if<ast::RemoteExpression>(&syntax.expression(ungroup(syntax, call->target)).value);
+        remote && !applied_module(syntax, *call)) {
+        return literal_atom(syntax, remote->module);
+    }
+    return applied_module(syntax, *call);
+}
+} // namespace
+
+std::optional<std::u32string> declared_module(const ast::Module &syntax) {
+    for (const auto &id : syntax.forms()) {
+        if (const auto *attribute = std::get_if<ast::ModuleAttribute>(&syntax.form(id).value)) {
+            return attribute->name.name;
+        }
+    }
+    return std::nullopt;
+}
+
+std::set<std::u32string> referenced_modules(const ast::Module &syntax) {
+    std::set<std::u32string> result;
+    for (const auto &id : syntax.forms()) {
+        const auto *function = std::get_if<ast::Function>(&syntax.form(id).value);
+        auto pending = function ? function_roots(*function) : std::vector<ast::ExprId>{};
+        while (!pending.empty()) {
+            const auto &expression = syntax.expression(pending.back());
+            pending.pop_back();
+            if (const auto *module = named_module(syntax, expression)) {
+                result.insert(module->name);
+            }
+            const auto children = expression_children(expression);
+            pending.insert(pending.end(), children.begin(), children.end());
+        }
+    }
+    return result;
+}
+
 CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     const auto names = module_index(modules, out);
     for (const auto &module : modules) {
