@@ -167,6 +167,7 @@ void clear_bindings(Module &module) {
         function.exports.clear();
         function.patterns.clear();
         function.captures.clear();
+        function.fun_names.clear();
     }
     module.funs.clear();
     module.fun_entries.clear();

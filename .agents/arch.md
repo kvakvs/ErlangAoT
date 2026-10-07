@@ -117,6 +117,10 @@
   `index_funs` names lambdas `-f/A-fun-N-`, symbol arity = arity + captures; `lower_lambda` lowers the clauses into
   that private native function (`ExpressionLowering::lambda` picks clause plans, frame names and arity) with the
   captured values loaded from the arguments after the fun's own; `lower_fun` roots captures for the make service.
+  Named funs (step 34): `FunScope::inside` = scope at the fun + the name (a definition anchored on the fun
+  expression, no binding event, `Function::fun_names` -> `FunEntry::self`); `name_self` in `lower_clauses` builds
+  the fun from its own descriptor and captured arguments once on entry when a clause reads the name and keeps it
+  rooted like an argument; `Name(...)` is a plain fun call (tail call in tail position).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

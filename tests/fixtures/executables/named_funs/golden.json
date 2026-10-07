@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "entry": "named_funs",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[1,120,15511210043330985984000000]\n{20000,20000,1}\n6765\n[true,true,true,false]\n[true,true,false]\n{1,done}\n{0,0}\n106\n[4,3,2,1]\n{bottom,0}\n[1,4,9,16]\n62\n[-5,-6]\n[true,false]\n{error,function_clause}\n{badarity,true,[1,2]}\n"
+    },
+    {
+      "args": [
+        "loop"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{loop,10000}\n"
+    },
+    {
+      "args": [
+        "captured_loop"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{captured_loop,30000}\n"
+    },
+    {
+      "args": [
+        "clause"
+      ],
+      "stderr": "^uncaught exception error: function_clause\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "loop"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{loop,10000}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "captured_loop"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{captured_loop,30000}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "named_funs.erl": "16d7759fd9d80be542777fe2379abd6fc7c18d7886df998763ec23bf8d710437"
+  }
+}

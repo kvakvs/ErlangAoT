@@ -51,7 +51,7 @@ struct CaseScope {
 };
 
 struct FunScope {
-    // The scope at an anonymous fun: every clause starts from it and it comes back after the fun.
+    // The scope at a fun, which comes back after it.
     BindingEnvironment incoming;
     // Clause names of enclosing cases do not reach into the fun; they come back after it.
     std::vector<std::map<std::u32string, BindingId>> branch_names;
@@ -59,6 +59,8 @@ struct FunScope {
     // definition captures it.
     std::size_t first_local;
     std::size_t first_binding;
+    // The scope every clause starts from: the scope at the fun plus a named fun's own name.
+    BindingEnvironment inside = {};
 };
 
 struct Scopes {
@@ -397,7 +399,7 @@ void match(const BindingAnalysis &state, const ast::ExprId &id, const ast::Match
     pending.push_back({value.right});
 }
 
-// An anonymous fun binds nothing outside itself: its clauses are analyzed one after the other, then the scope at
+// A fun binds nothing outside itself: its clauses are analyzed one after the other, then the scope at
 // the fun comes back.
 bool fun_scope(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
     if (!fun_clauses(value)) {
@@ -473,13 +475,30 @@ void scope(BindingAnalysis &state, const Visit &visit, BindingEnvironment &envir
     }
 }
 
+// A named fun's name is a new definition every clause sees, shadowing an outer name; it is never captured.
+void name_fun(BindingAnalysis &state, const ast::ExprId &id, BindingEnvironment &incoming) {
+    const auto &fun = std::get<ast::FunExpression>(state.module.syntax->expression(id).value);
+    if (!fun.name || fun.name->name == U"_") {
+        return;
+    }
+    auto &definitions = state.function.clause_bindings.at(state.clause).definitions;
+    const BindingId identity{state.clause, definitions.size()};
+    definitions.push_back({fun.name->name, id, std::nullopt});
+    incoming.names.insert_or_assign(fun.name->name, identity);
+    incoming.unsafe.erase(fun.name->name);
+    state.function.fun_names.insert_or_assign(&state.module.syntax->expression(id), identity);
+}
+
 // Open the fun's scope before its first clause: sibling checks and case-clause names stay outside.
-FunScope &open_fun(BindingAnalysis &state, const BindingEnvironment &environment, Scopes &scopes) {
+FunScope &open_fun(BindingAnalysis &state, const ast::ExprId &id, const BindingEnvironment &environment,
+                   Scopes &scopes) {
     auto scope = std::make_unique<FunScope>(environment, std::move(state.branch_names),
                                             state.function.clause_bindings.at(state.clause).definitions.size(),
                                             state.function.bindings.size());
     scope->incoming.checks.clear();
     state.branch_names.clear();
+    scope->inside = scope->incoming;
+    name_fun(state, id, scope->inside);
     scopes.funs.push_back(std::move(scope));
     return *scopes.funs.back();
 }
@@ -487,10 +506,10 @@ FunScope &open_fun(BindingAnalysis &state, const BindingEnvironment &environment
 // Bind one fun clause's head (new names shadow the scope at the fun) and guard, then schedule its body.
 void fun_clause(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
                 std::vector<Visit> &pending, Scopes &scopes) {
-    const auto &scope = visit.clause == 0 ? open_fun(state, environment, scopes) : *scopes.funs.back();
+    const auto &scope = visit.clause == 0 ? open_fun(state, visit.id, environment, scopes) : *scopes.funs.back();
     const auto &clause = fun_clauses(state.module.syntax->expression(visit.id).value)->at(visit.clause);
-    environment = scope.incoming;
-    BindingCandidate head{scope.incoming, {}};
+    environment = scope.inside;
+    BindingCandidate head{scope.inside, {}};
     head.fresh = true;
     for (const auto &argument : clause.arguments) {
         bind_pattern(state, argument, head, BindingContext::head);
@@ -511,7 +530,7 @@ void fun_clause(BindingAnalysis &state, const Visit &visit, BindingEnvironment &
 // Start the next clause from the scope at the fun.
 void fun_clause_end(const BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
                     std::vector<Visit> &pending, const Scopes &scopes) {
-    environment = scopes.funs.back()->incoming;
+    environment = scopes.funs.back()->inside;
     if (visit.clause + 1 < fun_clauses(state.module.syntax->expression(visit.id).value)->size()) {
         pending.push_back({visit.id, Action::fun_clause, visit.clause + 1});
     }

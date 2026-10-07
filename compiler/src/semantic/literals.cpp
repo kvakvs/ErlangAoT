@@ -125,7 +125,7 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
 
 const std::vector<ast::FunctionClause> *fun_clauses(const ast::ExprValue &value) {
     const auto *fun = std::get_if<ast::FunExpression>(&value);
-    return fun && !fun->name ? &fun->clauses : nullptr;
+    return fun ? &fun->clauses : nullptr;
 }
 
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value) {

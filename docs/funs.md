@@ -1,9 +1,8 @@
 # Function values
 
-Plan 11 steps 32 and 33 (2026-10-07): `fun F/A`, `fun M:F/A`, anonymous funs
-with captured variables (closures) and calls of function values (`F(Args)`).
-Named funs (`fun Name(...) -> ... end`) report the unavailable `closures`
-capability until step 34. Facts come from the pinned `maint-29` sources
+Plan 11 steps 32–34 (2026-10-07): `fun F/A`, `fun M:F/A`, anonymous funs
+with captured variables (closures), named funs (`fun Name(...) -> ... end`)
+and calls of function values (`F(Args)`). Facts come from the pinned `maint-29` sources
 (`erts/emulator/beam/utils.c` `erts_cmp`, `erl_printf_term.c`, `erl_lint`)
 and probes on OTP 29.1.1.
 
@@ -14,6 +13,7 @@ and probes on OTP 29.1.1.
 | `fun f/1` | Local fun of this module; every `fun f/1` of a module is the same value | `f/1` of this module, exported or not |
 | `fun m:f/1` | External fun naming `m:f/1`, also for the current module | `m:f/1` when a module of the program exports it |
 | `fun(X) -> ... end` | Local fun capturing the variables it reads from its creator; each evaluation builds a new value | The fun's own generated function |
+| `fun Name(X) -> ... end` | The same, with `Name` bound to the fun inside its clauses | The fun's own generated function |
 
 - `fun F/A` must name a function of the module (`function F/A undefined`).
   Naming an auto-imported builtin (`fun is_atom/1`), `fun erlang:F/A` and
@@ -42,6 +42,12 @@ and probes on OTP 29.1.1.
   traces show that name with the combined arity, as OTP's do. No clause
   matching raises `function_clause`.
 - Arguments plus captured values are limited to 255.
+- A named fun's clauses see `Name` as the fun itself: a new name shadowing an
+  outer one (OTP warns), never captured and not visible after the fun. A head
+  variable of the same name shadows it in turn. When a clause reads `Name`, the
+  fun's code builds the value on entry from its captured values, so it is equal
+  (`=:=`) to the fun being called, and `Name(...)` is an ordinary fun call:
+  in tail position it is a tail call and runs in constant stack.
 - An anonymous fun in a record field default is one fun for every
   construction that uses the default (OTP expands a copy per site).
 

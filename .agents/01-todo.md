@@ -231,7 +231,8 @@ Plan: [32](11-plan.md#step-32), [33](11-plan.md#step-33),
   invocation lowering (step 33).
 - [x] Verify captures after return/GC, wrong arity, copies, module lifetime
   (step 33: `executables_closures`, `runtime_funs`).
-- [ ] Named funs (step 34).
+- [x] Named funs, recursion and tail recursion through the name (step 34:
+  `executables_named_funs`).
 
 ### F19 — Dynamic calls
 
@@ -268,6 +269,7 @@ Plan: [17](11-plan.md#step-17)–[20](11-plan.md#step-20), [34](11-plan.md#step-
 - [x] Deep tail and non-tail recursion, local/remote/mutual (steps 19, 20):
   body recursion grows the process stack until the host refuses memory
   (`out_of_memory`, exit 70); a per-process stack cap is opt-in.
+- [x] Recursion and constant-stack tail recursion through named funs (step 34).
 
 ## Processes and runtime services
 

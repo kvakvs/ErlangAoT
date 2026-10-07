@@ -61,7 +61,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::RemoteFunReference &) const;
 
-    std::string_view operator()(const ast::FunExpression &value) const { return value.name ? "closures" : ""; }
+    std::string_view operator()(const ast::FunExpression &) const { return {}; }
 
     std::string_view operator()(const ast::TryExpression &) const;
 

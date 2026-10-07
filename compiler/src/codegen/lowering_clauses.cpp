@@ -2,6 +2,7 @@
 #include "../semantic/funs.hpp"
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
+#include <algorithm>
 
 namespace erlang_aot::codegen {
 namespace {
@@ -95,6 +96,18 @@ std::map<semantic::BindingId, llvm::Value *> captured(ExpressionLowering &state)
     return result;
 }
 
+// A named fun reads its own name as the fun itself: built once from its captured values and kept rooted like an
+// argument; nothing is built when no clause reads the name.
+void name_self(ExpressionLowering &initial) {
+    const auto self = initial.lambda ? initial.lambda->self : std::nullopt;
+    const auto read = [&](const auto &entry) { return entry.second == self; };
+    if (!self || !std::ranges::any_of(*initial.reads, read)) {
+        return;
+    }
+    initial.bindings.emplace(*self, lower_fun(initial, *initial.lambda->expression));
+    initial.roots->arguments = initial.roots->next;
+}
+
 // Lower every candidate of `clauses` into the entry `initial` names, each seeing the captured values; exhaustion
 // raises function_clause.
 void lower_clauses(ExpressionLowering &initial, const std::vector<ast::FunctionClause> &clauses) {
@@ -104,7 +117,9 @@ void lower_clauses(ExpressionLowering &initial, const std::vector<ast::FunctionC
     auto roots = begin_roots(initial);
     initial.roots = &roots;
     root_arguments(initial);
-    const auto captures = captured(initial);
+    initial.bindings = captured(initial);
+    name_self(initial);
+    const auto captures = initial.bindings;
     auto *exhausted = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
     llvm::BasicBlock *failure = initial.failure;
     for (std::size_t index = 0; index < clauses.size(); ++index) {

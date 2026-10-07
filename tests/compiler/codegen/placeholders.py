@@ -9,7 +9,6 @@ CASES = {
     "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
     "dynamic calls": "f(M) -> M:f().",
-    "closures": "f() -> fun F(X) -> F(X) end.",
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
     "send expressions": "f(X) -> X ! 1.",

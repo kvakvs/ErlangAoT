@@ -69,7 +69,9 @@ semantic_case(if_in_guard "-module(a). f(X) when if true -> true end -> X." 1 "i
 semantic_case(receive_expr "-module(a). f() -> receive X -> X end." 1 "receive")
 semantic_case(send "-module(a). f(X) -> X ! 1." 1 "send expressions")
 semantic_case(closure "-module(a). f() -> fun(X) -> X end." 0 "^$")
-semantic_case(named_fun "-module(a). f() -> fun F(X) -> F(X) end." 1 "closures")
+semantic_case(named_fun "-module(a). f() -> fun F(X) -> F(X) end." 0 "^$")
+semantic_case(named_fun_scope "-module(a). f() -> G = fun F(X) -> F(X) end, {G, F}." 1
+    "named_fun_scope.erl:1:50: unbound variable F")
 semantic_case(closure_unbound "-module(a). f() -> fun() -> Y end." 1 "closure_unbound.erl:1:29: unbound variable Y")
 semantic_case(closure_scope "-module(a). f() -> F = fun() -> Y = 1 end, {F, Y}." 1 "closure_scope.erl:1:48: unbound variable Y")
 semantic_case(closure_shadow "-module(a). -export([f/1]). f(X) -> G = fun(X) -> X end, G(X)." 0 "^$")

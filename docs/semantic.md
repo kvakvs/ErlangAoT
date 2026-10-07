@@ -69,8 +69,9 @@ context. Analysis is deterministic.
 - An anonymous fun's clauses each start from the scope at the fun: head
   names are new and shadow outer ones, guards read them, and nothing bound
   inside is visible after the fun. Every outer definition read inside is
-  recorded as a capture (`Function::captures`, definition order). Named funs
-  stay behind capability diagnostics.
+  recorded as a capture (`Function::captures`, definition order). A named
+  fun's name is one more definition every clause starts with
+  (`Function::fun_names`); it is never captured.
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
 any semantic error clears the module's binding and normalization tables.

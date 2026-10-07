@@ -965,10 +965,30 @@ Backlog: F03, F18. Depends on: [32](#step-32), [26](#step-26).
 Backlog: F18, F21. Depends on: [33](#step-33).
 
 - Success criteria
-  - [ ] `fun Name(…) -> … Name(…) end` recurses, including tail recursion in
+  - [x] `fun Name(…) -> … Name(…) end` recurses, including tail recursion in
     constant stack.
 - Tests
-  - [ ] Golden programs for recursive and tail-recursive named funs.
+  - [x] Golden programs for recursive and tail-recursive named funs.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP 29.1.1
+  probes: the name is visible in every clause (heads and guards included),
+  shadows an outer variable (warning only) and is not bound after the fun; a
+  head variable of the same name shadows it; `Self(...) =:= Self`; tail
+  recursion runs in constant stack. Semantic: named funs go through
+  `fun_clauses`; `FunScope::inside` starts each clause with the name as a new
+  definition (`Function::fun_names`, `FunEntry::self`), never captured; the
+  `closures` capability is implemented (no deferred use left). Codegen:
+  `name_self` builds the fun from its descriptor and captured arguments on
+  entry when a clause reads the name; `Name(...)` is a fun call (tail call in
+  tail position). OTP golden `executables_named_funs` (factorial with bignums,
+  20,000-deep sequence/length, fib, self identity and equality, captures,
+  shadowing both ways, nested funs calling the outer name, guards reading the
+  name, higher-order use, caught `function_clause`/`badarity`, one uncaught
+  `function_clause`, two 10,000-step tail loops also run under
+  `--max-stack 4096 --max-heap 65536`) passes all 8 combinations; semantic
+  cases `named_fun`, `named_fun_scope`; programs `compile.txt` refreshed.
+  Fresh Windows x64 Debug (clang-cl): fast 172/172, full `-j 12` 176/176 in
+  152 s, Lizard 0 warnings (9 files), tidy 132 changed units pass. Logs
+  `build/plan11-step34/`.
 
 <a id="step-35"></a>
 

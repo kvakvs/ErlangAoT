@@ -76,6 +76,8 @@ struct Function {
     std::set<const ast::Expression *> guard_filters = {};
     // The definitions each anonymous fun uses from outside itself (its captured values), in definition order.
     std::map<const ast::Expression *, std::vector<BindingId>> captures = {};
+    // The binding each named fun's clauses see for its own name.
+    std::map<const ast::Expression *, BindingId> fun_names = {};
 };
 
 struct RecordLayout {
@@ -107,6 +109,8 @@ struct FunEntry {
     const ast::Expression *expression = nullptr;
     const Function *owner = nullptr;
     std::vector<BindingId> captures = {};
+    // A named fun's own name, read inside its clauses as the fun itself.
+    std::optional<BindingId> self = {};
 };
 
 struct Module {

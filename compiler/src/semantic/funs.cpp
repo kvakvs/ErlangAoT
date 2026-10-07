@@ -85,6 +85,9 @@ class FunIndexer {
         if (const auto found = owner.captures.find(&expression); found != owner.captures.end()) {
             entry.captures = found->second;
         }
+        if (const auto found = owner.fun_names.find(&expression); found != owner.fun_names.end()) {
+            entry.self = found->second;
+        }
         if (arity + entry.captures.size() <= 255) {
             entry.symbol = encode_symbol({utf8(module_.name), utf8(entry.function), arity + entry.captures.size()});
         }

@@ -20,7 +20,7 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value);
 std::size_t first_handler(const ast::ExprValue &value);
 // The expressions a maybe body evaluates in order: plain expressions and the values of its ?= matches.
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value);
-// The clauses of an anonymous fun; null for every other expression, including a named fun (plan step 34).
+// The clauses of an anonymous or named fun; null for every other expression.
 const std::vector<ast::FunctionClause> *fun_clauses(const ast::ExprValue &value);
 // The qualifiers of a list, binary or map comprehension; null for every other expression.
 const std::vector<ast::ComprehensionQualifier> *comprehension_qualifiers(const ast::ExprValue &value);

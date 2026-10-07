@@ -1,2 +1,18 @@
 exit 1
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:34:12: [closures] notimpl [module="avltree"]
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avl.erl:101:28: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:8:23: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:9:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:10:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:12:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:13:34: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:14:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:15:25: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:17:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:20:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:20:68: undefined function avltree:apply/3
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:21:25: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:21:85: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:23:26: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:23:62: unknown module lists
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:28:14: unknown module io
+erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:36:26: unknown module lists
