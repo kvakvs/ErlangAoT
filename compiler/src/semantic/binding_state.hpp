@@ -22,6 +22,12 @@ struct BindingAnalysis {
     bool spend(const ast::ExprId &id, std::size_t amount = 1);
     // Resolve a read or diagnose wildcard, unsafe and unbound names at their own source anchors.
     void read(const ast::ExprId &id, BindingCandidate &scope, BindingContext context);
+    // Resolve one variable name read at `id`; none after diagnosing it.
+    std::optional<BindingId> read_name(const ast::ExprId &id, const std::u32string &name, BindingCandidate &scope,
+                                       BindingContext context);
+    // Resolve the variables of fun M:F/A, recorded in Function::fun_operands.
+    void read_operands(const ast::ExprId &id, const ast::RemoteFunReference &reference, BindingCandidate &scope,
+                       BindingContext context);
     // Add a fresh identity or record an exact check without assigning over an existing name.
     void define(const ast::ExprId &id, BindingCandidate &scope, BindingContext context,
                 std::optional<std::size_t> argument);

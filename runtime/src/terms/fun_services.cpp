@@ -12,15 +12,19 @@
 
 // erlang_aot_make_fun_v1 and erlang_aot_apply_v1: building funs and preparing their calls (docs/funs.md).
 namespace erlang_aot::runtime::detail {
-namespace {
 using abi::v1::ErrorReason;
 using abi::v1::Status;
 
-// Whether a service may run: an active invocation without a pending failure.
-bool ready(ProcessContext &context) {
+bool service_ready(ProcessContext &context) {
     const auto &calls = context.generated_calls();
     return calls.active() && !calls.failure();
 }
+
+void raise_call_error(ProcessContext &context, ErrorReason reason, std::optional<Term> value) {
+    context.generated_calls().fail({.code = CallError::erlang_exception, .reason = reason, .value = std::move(value)});
+}
+
+namespace {
 
 // Build a fun of a registered descriptor from rooted captured values.
 Status make(ProcessContext &context, const void *descriptor, std::span<const Word> captures, Word &output) {
@@ -34,11 +38,6 @@ Status make(ProcessContext &context, const void *descriptor, std::span<const Wor
     }
     output = fun->word();
     return Status::ok;
-}
-
-// Record the Erlang error a failed call raises: {badfun, Value}, {badarity, {Fun, Args}} or undef.
-void raise(ProcessContext &context, ErrorReason reason, std::optional<Term> value = std::nullopt) {
-    context.generated_calls().fail({.code = CallError::erlang_exception, .reason = reason, .value = std::move(value)});
 }
 
 // The {Fun, Args} payload of badarity, with the arguments in the registers.
@@ -57,35 +56,37 @@ TermResult<Term> bad_arity(ProcessContext &context, const Term &fun, std::span<c
     return list.and_then([&](const Term &args) { return factory.tuple(std::array{fun, args}); });
 }
 
-// Check a called fun and append its captured values after the arguments; null when the call raised or failed.
-const void *prepare(ProcessContext &context, const Term &fun, std::size_t arity, Word *arguments) {
+} // namespace
+
+const void *prepare_fun_call(ProcessContext &context, const Term &fun, std::size_t arity, Word *arguments) {
     const auto view = fun_view(fun);
     if (!view) {
-        raise(context, ErrorReason::badfun, fun);
+        raise_call_error(context, ErrorReason::badfun, fun);
         return nullptr;
     }
     const auto &definition = *view->definition;
     if (definition.arity != arity) {
         const auto payload = bad_arity(context, fun, {arguments, arity});
         if (payload) {
-            raise(context, ErrorReason::badarity, *payload);
+            raise_call_error(context, ErrorReason::badarity, *payload);
         } else {
             context.generated_calls().fail_service(term_status(payload.error()));
         }
         return nullptr;
     }
     if (!definition.frame) {
-        raise(context, ErrorReason::undef);
+        raise_call_error(context, ErrorReason::undef);
         return nullptr;
     }
     std::ranges::copy(view->captures, arguments + arity);
     return definition.frame;
 }
 
+namespace {
 // Check the invocation and pointers, then build the fun; any failure is recorded in the channel.
 std::uint8_t make_service(ProcessContext &context, const void *descriptor, const Word *captures, std::size_t count,
                           Word *output) noexcept {
-    if (!ready(context)) {
+    if (!service_ready(context)) {
         return static_cast<std::uint8_t>(Status::invalid_argument);
     }
     auto status = Status::invalid_argument;
@@ -106,7 +107,7 @@ std::uint8_t make_service(ProcessContext &context, const void *descriptor, const
 
 // Admit the called value and check the register bounds before reading any argument.
 const void *apply(ProcessContext &context, Word fun, Word *arguments, std::size_t arity) noexcept {
-    if (!ready(context)) {
+    if (!service_ready(context)) {
         return nullptr;
     }
     auto &calls = context.generated_calls();
@@ -122,7 +123,7 @@ const void *apply(ProcessContext &context, Word fun, Word *arguments, std::size_
             calls.fail_service(Status::invalid_argument);
             return nullptr;
         }
-        return prepare(context, *value, arity, arguments);
+        return prepare_fun_call(context, *value, arity, arguments);
     } catch (const std::bad_alloc &) {
         calls.fail_service(Status::out_of_memory);
     } catch (...) {

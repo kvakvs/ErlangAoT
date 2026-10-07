@@ -7,6 +7,10 @@ namespace erlang_aot::semantic {
 bool fun_value(const ast::ExprValue &value);
 // Whether a call applies a value (F(Args), (fun f/1)(Args)) instead of naming a function or Module:Function.
 bool fun_call(const ast::Module &syntax, const ast::CallExpression &call);
+// Whether a call names its module or function with a runtime value: M:F(Args), m:F(Args) or M:f(Args).
+bool dynamic_call(const ast::Module &syntax, const ast::CallExpression &call);
+// Whether fun M:F/A names its module, function or arity with a variable.
+bool dynamic_fun(const ast::RemoteFunReference &reference);
 // The function a local fun F/A names, when the module defines it.
 const Function *fun_target(const Module &module, const ast::LocalFunReference &reference);
 // The module, function and arity of fun M:F/A when all three are literals and the arity is valid.

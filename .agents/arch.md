@@ -121,6 +121,13 @@
   expression, no binding event, `Function::fun_names` -> `FunEntry::self`); `name_self` in `lower_clauses` builds
   the fun from its own descriptor and captured arguments once on entry when a clause reads the name and keeps it
   rooted like an argument; `Name(...)` is a plain fun call (tail call in tail position).
+  Dynamic calls (step 35, ABI 8): `ExportDescriptor::frame`; registration binds `ModuleAtoms::module/exports`.
+  `semantic::dynamic_call` (non-literal module or function) is no direct call; its children are module, function,
+  arguments. `apply/2,3` resolve as body builtins (`ServiceResolution::apply()`, no immediate operation). Codegen
+  `transfer` shares the fun-call path: a preparation service returns the frame (`erlang_aot_call_v1`,
+  `erlang_aot_apply_list_v1`/`erlang_aot_call_list_v1` unpack the list into a 256-word register array), then the
+  apply marker. `fun M:F/A` with variables: binding reads in `Function::fun_operands`, built by
+  `erlang_aot_make_external_fun_v1` over `CodeServer::external_fun` (interned, `owns()` admits it).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

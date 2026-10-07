@@ -1,5 +1,6 @@
 #pragma once
 #include "term_text.hpp"
+#include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/terms.hpp>
 #include <span>
@@ -18,4 +19,10 @@ struct FunView {
 TermResult<FunView> fun_view(const Term &value) noexcept;
 // Print `fun M:F/A` for an external fun and #Fun<M.Index.Uniq> for a local one.
 TermResult<void> print_fun(const Term &value, TermStyle style, TextOutput &out);
+// Whether a call service may run: an active invocation without a pending failure.
+bool service_ready(ProcessContext &context);
+// Record the Erlang error a failed call raises, with its payload if it has one.
+void raise_call_error(ProcessContext &context, abi::v1::ErrorReason reason, std::optional<Term> value = std::nullopt);
+// Check a called fun and append its captured values after the `arity` arguments; null when the call raised or failed.
+const void *prepare_fun_call(ProcessContext &context, const Term &fun, std::size_t arity, Word *arguments);
 } // namespace erlang_aot::runtime::detail

@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "entry": "dynamic_calls",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[42,8,10,6]\n[6,{a,b},none]\n6\n[2,4,6]\n1000\n{hidden,x}\nmodule\nfunction\nargument\n14\n[8,7,101,{x,y},none]\n[12,21,16]\n3628800\n3\n{1,2}\n[10,true,true]\nfun dynpeer:double/1\n[true,true]\n[{1,2},none]\n[badarg,badarg,undef,undef,undef,undef,badarg,badarg,{badfun,1},badarg,badarg,{badfun,{dynpeer,double}},undef,undef,badarg,badarg,badarg,badarg,badarg,badarg]\n{badarity,true,[1,2]}\n{badarity,true,256}\n"
+    },
+    {
+      "args": [
+        "loop"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{loop,10000}\n"
+    },
+    {
+      "args": [
+        "apply_loop"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{apply_loop,10000}\n"
+    },
+    {
+      "args": [
+        "undef"
+      ],
+      "stderr": "^uncaught exception error: undef\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "badarg"
+      ],
+      "stderr": "^uncaught exception error: badarg\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "loop"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{loop,10000}\n"
+    },
+    {
+      "args": [
+        "--max-stack",
+        "4096",
+        "--max-heap",
+        "65536",
+        "apply_loop"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{apply_loop,10000}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "dynamic_calls.erl": "3f58c01afc3e54df96cd31e935b1fbf934480e7f4ef876781cdcb745bb60d448",
+    "dynpeer.erl": "d6e7d679ebb9c581fb17b88a09898a90ec740e512e538dd803a175db92c2b629"
+  }
+}

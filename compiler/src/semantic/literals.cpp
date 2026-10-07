@@ -204,13 +204,21 @@ std::vector<ast::ExprId> update_children(const Module &module, const ast::Record
     return result;
 }
 
-// The operands of a call: a called value before the arguments (OTP); a named function is not a value.
+// The operands of a call: a called value, or a runtime module and function, before the arguments (OTP); a named
+// function is not a value.
 std::vector<ast::ExprId> call_children(const Module &module, const ast::Expression &expression,
                                        const ast::CallExpression &call) {
-    if (record_info_call(*module.syntax, expression.value)) {
+    const auto &syntax = *module.syntax;
+    if (record_info_call(syntax, expression.value)) {
         return {};
     }
-    return fun_call(*module.syntax, call) ? binding_children(expression.value) : call.arguments;
+    if (dynamic_call(syntax, call)) {
+        const auto &remote = std::get<ast::RemoteExpression>(syntax.expression(ungroup(syntax, call.target)).value);
+        std::vector<ast::ExprId> result{remote.module, remote.function};
+        result.insert(result.end(), call.arguments.begin(), call.arguments.end());
+        return result;
+    }
+    return fun_call(syntax, call) ? binding_children(expression.value) : call.arguments;
 }
 } // namespace
 

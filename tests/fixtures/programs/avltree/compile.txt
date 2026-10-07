@@ -9,7 +9,6 @@ erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:15:25: unknown module lists
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:17:14: unknown module io
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:20:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:20:68: undefined function avltree:apply/3
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:21:25: unknown module lists
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:21:85: unknown module lists
 erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:23:26: unknown module lists

@@ -178,6 +178,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-07 | Plan 11 step 32 function values `fun F/A`, `fun M:F/A` (ABI 7) | 173 (169 fast) | 289 changed | Fast 169/169; full `-j 12` 173/173 in 122 s; Lizard and tidy passed after complexity fixes |
 | 2026-10-07 | Plan 11 step 33 closures with captured variables | 175 (171 fast) | 134 changed | Fast 171/171; full `-j 12` 175/175 in 126 s; Lizard and tidy passed after complexity fixes |
 | 2026-10-07 | Plan 11 step 34 named funs | 176 (172 fast) | 132 changed | Fast 172/172; full `-j 12` 176/176 in 152 s; Lizard 0 warnings; tidy passed |
+| 2026-10-07 | Plan 11 step 35 dynamic calls `M:F(Args)`, `apply/2,3`, runtime `fun M:F/A` (ABI 8) | 177 (173 fast) | 290 (analyzer config changed) | Fast 173/173; full `-j 12` 177/177 in 142 s; Lizard 0 warnings and tidy passed after one complexity and three tidy fixes |
 | 2026-10-06 | Plan 11 step 27E ERTS big integer limit, `error:system_limit` | 165 (161 fast) | 157 changed | Fast 161/161; full `-j 12` 165/165 in 130 s; Lizard 0 warnings; tidy passed; 21 executable goldens reproduce under OTP |
 | 2026-10-06 | Plan 11 step 27D no map size or key-work caps | 164 (160 fast) | 13 changed | Fast 160/160; full `-j 12` 164/164 in 115 s; after a tidy fix in `bit_order`, 35 affected tests pass; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |

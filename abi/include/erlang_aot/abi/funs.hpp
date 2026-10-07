@@ -42,3 +42,24 @@ std::uint8_t erlang_aot_make_fun_v1(void *context, const void *descriptor,
 // arity {badarity, {Fun, Args}} and an external fun outside the program undef; the result is then null.
 const void *erlang_aot_apply_v1(void *context, erlang_aot::abi::v1::TermWord fun, std::size_t arity,
                                 erlang_aot::abi::v1::TermWord *arguments) noexcept;
+// Prepare calling Module:Function with `arity` arguments already in the registers (M:F(Args) with runtime operands):
+// return the FrameDescriptor of the function a module of the program exports. A non-atom module or function raises
+// badarg, anything else undef; the result is then null.
+const void *erlang_aot_call_v1(void *context, erlang_aot::abi::v1::TermWord module,
+                               erlang_aot::abi::v1::TermWord function, std::size_t arity) noexcept;
+// erlang:apply(Fun, Args): copy the proper list `list` into `registers` and prepare the call as erlang_aot_apply_v1
+// does. An improper list raises badarg, before the fun is checked; badarity carries {Fun, Args}.
+const void *erlang_aot_apply_list_v1(void *context, erlang_aot::abi::v1::TermWord fun,
+                                     erlang_aot::abi::v1::TermWord list,
+                                     erlang_aot::abi::v1::TermWord *registers) noexcept;
+// erlang:apply(Module, Function, Args): copy the proper list `list` into `registers` and prepare the call as
+// erlang_aot_call_v1 does; an improper list raises badarg.
+const void *erlang_aot_call_list_v1(void *context, erlang_aot::abi::v1::TermWord module,
+                                    erlang_aot::abi::v1::TermWord function, erlang_aot::abi::v1::TermWord list,
+                                    erlang_aot::abi::v1::TermWord *registers) noexcept;
+// Build the external fun Module:Function/Arity from runtime operands (fun M:F/A with variables) in `output`. A
+// non-atom module or function, or an arity outside 0..255, raises badarg; returns a Status byte.
+std::uint8_t erlang_aot_make_external_fun_v1(void *context, erlang_aot::abi::v1::TermWord module,
+                                             erlang_aot::abi::v1::TermWord function,
+                                             erlang_aot::abi::v1::TermWord arity,
+                                             erlang_aot::abi::v1::TermWord *output) noexcept;

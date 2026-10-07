@@ -64,27 +64,47 @@ void BindingAnalysis::read(const ast::ExprId &id, BindingCandidate &scope, const
         return;
     }
     validate_record(module, expression, out);
-    const auto *variable = std::get_if<ast::Variable>(&expression.value);
-    if (!variable) {
-        return;
+    if (const auto *reference = std::get_if<ast::RemoteFunReference>(&expression.value)) {
+        read_operands(id, *reference, scope, context);
+    } else if (const auto *variable = std::get_if<ast::Variable>(&expression.value)) {
+        read_name(id, variable->name, scope, context);
     }
-    if (guard_stack == variable->name) {
-        report(module, &expression.source,
-               "stacktrace variable " + utf8(variable->name) + " must not be used in a guard", out);
+}
+
+std::optional<BindingId> BindingAnalysis::read_name(const ast::ExprId &id, const std::u32string &name,
+                                                    BindingCandidate &scope, const BindingContext context) {
+    const auto &expression = module.syntax->expression(id);
+    if (guard_stack == name) {
+        report(module, &expression.source, "stacktrace variable " + utf8(name) + " must not be used in a guard", out);
         scope.valid = false;
-        return;
+        return {};
     }
-    const auto identity = scope.find(variable->name);
-    const bool shadowed = scope.fresh && scope.tentative.contains(variable->name);
-    if (identity && (shadowed || !scope.incoming.unsafe.contains(variable->name))) {
+    const auto identity = scope.find(name);
+    const bool shadowed = scope.fresh && scope.tentative.contains(name);
+    if (identity && (shadowed || !scope.incoming.unsafe.contains(name))) {
         function.bindings.push_back({id, *identity, BindingUse::read, context});
-        return;
+        return identity;
     }
-    const auto message = variable->name == U"_"                           ? "wildcard '_' cannot be read"
-                         : scope.incoming.unsafe.contains(variable->name) ? "unsafe variable " + utf8(variable->name)
-                                                                          : "unbound variable " + utf8(variable->name);
+    const auto message = name == U"_"                           ? "wildcard '_' cannot be read"
+                         : scope.incoming.unsafe.contains(name) ? "unsafe variable " + utf8(name)
+                                                                : "unbound variable " + utf8(name);
     report(module, &expression.source, message, out);
     scope.valid = false;
+    return {};
+}
+
+void BindingAnalysis::read_operands(const ast::ExprId &id, const ast::RemoteFunReference &reference,
+                                    BindingCandidate &scope, const BindingContext context) {
+    if (!dynamic_fun(reference)) {
+        return;
+    }
+    const auto operand = [&](const auto &part) -> std::optional<BindingId> {
+        const auto *variable = std::get_if<ast::Variable>(&part);
+        return variable ? read_name(id, variable->name, scope, context) : std::nullopt;
+    };
+    function.fun_operands.insert_or_assign(
+        &module.syntax->expression(id),
+        std::array{operand(reference.module), operand(reference.name), operand(reference.arity)});
 }
 
 void BindingAnalysis::define(const ast::ExprId &id, BindingCandidate &scope, const BindingContext context,
@@ -168,6 +188,7 @@ void clear_bindings(Module &module) {
         function.patterns.clear();
         function.captures.clear();
         function.fun_names.clear();
+        function.fun_operands.clear();
     }
     module.funs.clear();
     module.fun_entries.clear();

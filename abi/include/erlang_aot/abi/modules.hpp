@@ -7,6 +7,7 @@
 namespace erlang_aot::abi::v1 {
 struct RecordDescriptor;
 struct FunDescriptor;
+struct FrameDescriptor;
 
 struct AtomDescriptor {
     // Borrow exact UTF-8 bytes; empty atoms may use a null pointer with zero length.
@@ -21,6 +22,8 @@ struct ExportDescriptor {
     // Resolve the generic entry's fixed Erlang arity independently of its machine signature.
     std::size_t arity;
     GeneratedFunction *entry;
+    // The FrameDescriptor dynamic calls (M:F(Args), apply/3) enter; null for a host-only export.
+    const FrameDescriptor *frame = nullptr;
 };
 
 struct ModuleDescriptor {
@@ -61,7 +64,7 @@ struct FrameDescriptor {
 using GeneratedRegistration = std::uint8_t(void *);
 static_assert(std::is_standard_layout_v<ExportDescriptor>);
 static_assert(std::is_standard_layout_v<ModuleDescriptor>);
-static_assert(sizeof(ExportDescriptor) == 4 * sizeof(TermWord));
+static_assert(sizeof(ExportDescriptor) == 5 * sizeof(TermWord));
 static_assert(offsetof(ExportDescriptor, entry) == 3 * sizeof(TermWord));
 static_assert(sizeof(AtomDescriptor) == 2 * sizeof(TermWord));
 static_assert(sizeof(ModuleDescriptor) == 8 + 10 * sizeof(TermWord));

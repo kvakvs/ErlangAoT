@@ -38,7 +38,7 @@ TermResult<Term> fun_cell(ProcessHeap &heap, const std::shared_ptr<detail::HeapS
 
 // Only a definition this runtime registered may be used, with exactly its captured value count.
 TermResult<void> registered(ProcessContext &context, const FunDefinition &definition, std::size_t captures) {
-    if (context.code_server().fun_definition(definition.descriptor) != &definition) {
+    if (!context.code_server().owns(definition)) {
         return std::unexpected(TermError::wrong_owner);
     }
     return captures == definition.captures ? TermResult<void>{} : std::unexpected(TermError::invalid_argument);

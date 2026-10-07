@@ -71,6 +71,17 @@ int main() {
                                   "_Z22erlang_aot_make_fun_v1PvPKvPKmmPm", "_Z22erlang_aot_make_fun_v1PvPKvPKjjPj"});
         check<services::Apply>({"?erlang_aot_apply_v1@@YAPEBXPEAX_K1PEA_K@Z", "?erlang_aot_apply_v1@@YAPBXPAXIIPAI@Z",
                                 "_Z19erlang_aot_apply_v1PvmmPm", "_Z19erlang_aot_apply_v1PvjjPj"});
+        check<services::Call>({"?erlang_aot_call_v1@@YAPEBXPEAX_K11@Z", "?erlang_aot_call_v1@@YAPBXPAXIII@Z",
+                               "_Z18erlang_aot_call_v1Pvmmm", "_Z18erlang_aot_call_v1Pvjjj"});
+        check<services::ApplyList>({"?erlang_aot_apply_list_v1@@YAPEBXPEAX_K1PEA_K@Z",
+                                    "?erlang_aot_apply_list_v1@@YAPBXPAXIIPAI@Z", "_Z24erlang_aot_apply_list_v1PvmmPm",
+                                    "_Z24erlang_aot_apply_list_v1PvjjPj"});
+        check<services::CallList>({"?erlang_aot_call_list_v1@@YAPEBXPEAX_K11PEA_K@Z",
+                                   "?erlang_aot_call_list_v1@@YAPBXPAXIIIPAI@Z", "_Z23erlang_aot_call_list_v1PvmmmPm",
+                                   "_Z23erlang_aot_call_list_v1PvjjjPj"});
+        check<services::MakeExternalFun>(
+            {"?erlang_aot_make_external_fun_v1@@YAEPEAX_K11PEA_K@Z", "?erlang_aot_make_external_fun_v1@@YAEPAXIIIPAI@Z",
+             "_Z31erlang_aot_make_external_fun_v1PvmmmPm", "_Z31erlang_aot_make_external_fun_v1PvjjjPj"});
         check<services::Display>({"?erlang_aot_display_v1@@YAEPEAX_KPEA_K@Z", "?erlang_aot_display_v1@@YAEPAXIPAI@Z",
                                   "_Z21erlang_aot_display_v1PvmPm", "_Z21erlang_aot_display_v1PvjPj"});
         check<services::Halt>({"?erlang_aot_halt_v1@@YAEPEAX_K@Z", "?erlang_aot_halt_v1@@YAEPAXI@Z",

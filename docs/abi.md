@@ -42,7 +42,8 @@ are external, others internal.
 ## Module registration
 
 Each module emits `eav1_<hex module>__0.descriptor` and `.register`. The
-descriptor holds ABI version, term width, export table, atom spellings
+descriptor holds ABI version, term width, export table (name, arity, host
+entry and the `FrameDescriptor` dynamic calls enter), atom spellings
 (UTF-8 pointer/size pairs), native record descriptors (module, name and field
 atom slots, export flag; [native records](native-records.md#representation)) in
 an external `<prefix>.records` table that other modules of a batch reference,
@@ -79,6 +80,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Native record field missing | `ErrorReason::badfield` (20), payload `{{Module, Name}, Field}` |
 | Calling a value (`F(Args)`) | `ErrorReason::badfun` (22, payload the value), `badarity` (23, payload `{Fun, Args}`), `undef` (24), recorded by `erlang_aot_apply_v1` ([funs](funs.md)) |
+| Dynamic calls (`M:F(Args)`, `apply/2,3`, `fun M:F/A` with variables) | `badarg` for a non-atom module or function, an improper argument list or an invalid arity; `undef` when no module of the program exports the function; `badfun`/`badarity` as above ([funs](funs.md#dynamic-calls)) |
 | External native construction without a value | `ErrorReason::novalue` (21), payload `{{Module, Name}, Field}` |
 | Integer result past the size limit | Service outcome `ValueOutcome::system_limit` (3): a guard rejects, a body raises `error:system_limit` (`ErrorReason` 19) |
 | Invalid lazy left operand | `{badarg, Value}` |
@@ -263,3 +265,4 @@ success.
 | 5 | Explicit process frames and transfers |
 | 6 | Native record descriptors in module descriptors, `erlang_aot_record_v1` |
 | 7 | Fun descriptors in module descriptors, `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1` |
+| 8 | Export descriptors name their `FrameDescriptor`; dynamic call services `erlang_aot_call_v1`, `erlang_aot_apply_list_v1`, `erlang_aot_call_list_v1`, `erlang_aot_make_external_fun_v1` |

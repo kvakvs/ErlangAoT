@@ -1,6 +1,8 @@
 #pragma once
 #include "callable.hpp"
 #include "features.hpp"
+#include <compare>
+#include <memory>
 
 namespace erlang_aot::runtime {
 enum class CodeError : std::uint8_t {
@@ -57,6 +59,23 @@ struct FunDefinition final {
     const void *frame = nullptr;
 };
 
+// A function named by runtime atom words of its module and name, and its arity; the key of dynamic calls.
+struct FunctionAtoms final {
+    Word module = 0;
+    Word function = 0;
+    std::size_t arity = 0;
+    auto operator<=>(const FunctionAtoms &) const = default;
+};
+
+// One exported function a dynamic call can enter, bound to runtime atoms.
+struct ExportFrame final {
+    // Atom word of the function name and its arity.
+    Word function = 0;
+    std::size_t arity = 0;
+    // The FrameDescriptor a call enters; null for a host-only export.
+    const void *frame = nullptr;
+};
+
 struct ModuleAtoms final {
     // Explicit empty construction keeps Debug STL bookkeeping failures inside registration's catch boundary.
     ModuleAtoms() : slots(0) {}
@@ -69,6 +88,9 @@ struct ModuleAtoms final {
     std::vector<RecordDefinition> records;
     // The module's fun definitions in descriptor order; never resized after registration.
     std::vector<FunDefinition> funs;
+    // Atom word of the module name and its exports, which dynamic calls look up.
+    Word module = 0;
+    std::vector<ExportFrame> exports;
 };
 
 struct ModuleDefinition final {
@@ -154,11 +176,20 @@ class CodeServer final {
     const RecordDefinition *record_definition(const void *descriptor) const noexcept;
     // Find the bound definition of a registered module's fun descriptor; null when none is registered.
     const FunDefinition *fun_definition(const void *descriptor) const noexcept;
+    // The FrameDescriptor of Module:Function/Arity exported by a registered module; null when none exports it.
+    const void *export_frame(const FunctionAtoms &name) const noexcept;
+    // The definition of external fun Module:Function/Arity built at run time (fun M:F/A with variables), created on
+    // first use and kept for the server's lifetime; may throw std::bad_alloc.
+    const FunDefinition &external_fun(const FunctionAtoms &name);
+    // Whether `definition` is a registered module's fun definition or an external fun this server built.
+    bool owns(const FunDefinition &definition) const noexcept;
 
   private:
     // Find the immutable descriptor key without dereferencing image-owned storage.
     const ModuleAtoms *find_atoms(const void *descriptor) const noexcept;
     // One registry per exact module spelling; no secondary BIF overload table exists.
     std::map<std::string, std::shared_ptr<const LoadedModule>, std::less<>> modules_;
+    // External funs built from runtime operands, by module, function and arity; fun cells point at them.
+    std::map<FunctionAtoms, std::unique_ptr<FunDefinition>> external_funs_;
 };
 } // namespace erlang_aot::runtime

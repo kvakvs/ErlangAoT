@@ -17,6 +17,19 @@ BindingReads read_bindings(const semantic::Module &module, const semantic::Funct
     return result;
 }
 
+// Whether a call transfers to Erlang code: a named function, a value, a runtime module or function, or apply/2,3.
+bool transfers(const ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
+    const auto &syntax = *state.module.syntax;
+    if (state.inferred.callees.contains(&expression)) {
+        return true;
+    }
+    const auto service = state.function.services.find(&expression);
+    if (service != state.function.services.end()) {
+        return service->second.apply();
+    }
+    return semantic::fun_call(syntax, call) || semantic::dynamic_call(syntax, call);
+}
+
 // Follow one tail position: blocks and groups end in their last expression, case and if in each clause's.
 void tail_position(const ExpressionLowering &state, const ast::Expression &expression,
                    std::vector<ast::ExprId> &pending, std::set<const ast::Expression *> &calls) {
@@ -30,9 +43,7 @@ void tail_position(const ExpressionLowering &state, const ast::Expression &expre
             pending.push_back(clause.body->back());
         }
     } else if (const auto *call = std::get_if<ast::CallExpression>(&expression.value);
-               call &&
-               (state.inferred.callees.contains(&expression) ||
-                (!state.function.services.contains(&expression) && semantic::fun_call(*state.module.syntax, *call)))) {
+               call && transfers(state, expression, *call)) {
         calls.insert(&expression);
     }
 }

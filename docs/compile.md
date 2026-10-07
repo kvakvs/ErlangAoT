@@ -28,9 +28,9 @@ by the process stack (uncapped by default), not the native stack. Guards support
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
 Function values `fun F/A`, `fun M:F/A`, anonymous and named funs with
-captured variables and calls of funs run ([funs](funs.md)). Rejected with
-diagnostics even in unused functions: `receive`, dynamic `M:F(...)` calls and
-funs of builtins,
+captured variables, calls of funs and dynamic calls (`M:F(...)`, `apply/2,3`)
+run ([funs](funs.md)). Rejected with diagnostics even in unused functions:
+`receive`, funs of builtins,
 processes and messaging.
 Accepted attributes: `module`, `export`, `file`, tuple and native `record`,
 `export_record`, `import_record`, type/spec

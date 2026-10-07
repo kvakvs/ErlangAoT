@@ -1,9 +1,11 @@
 #pragma once
 #include "patterns.hpp"
+#include <array>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/compiler/ast/module.hpp>
 #include <functional>
 #include <map>
+#include <optional>
 #include <set>
 
 namespace erlang_aot::semantic {
@@ -53,6 +55,9 @@ struct ServiceResolution {
     bool legacy_test;
     // Missing operations denote legal signatures whose numeric/container/process owner is still deferred.
     std::optional<abi::v1::ImmediateOperation> operation;
+
+    // Whether this is apply/2,3: a dynamic call, lowered as a transfer rather than an immediate operation.
+    [[nodiscard]] bool apply() const { return identity.name == U"apply"; }
 };
 
 struct Function {
@@ -78,6 +83,8 @@ struct Function {
     std::map<const ast::Expression *, std::vector<BindingId>> captures = {};
     // The binding each named fun's clauses see for its own name.
     std::map<const ast::Expression *, BindingId> fun_names = {};
+    // The definitions fun M:F/A with variables reads for its module, function and arity (none for a literal part).
+    std::map<const ast::Expression *, std::array<std::optional<BindingId>, 3>> fun_operands = {};
 };
 
 struct RecordLayout {

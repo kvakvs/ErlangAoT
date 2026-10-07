@@ -11,7 +11,7 @@ std::optional<abi::v1::ImmediateOperation> immediate_unary(ast::UnaryOperator op
 // Map only resolved erlang name/arity identities to executable service operations.
 std::optional<abi::v1::ImmediateOperation> immediate_service(const FunctionKey &key);
 // Identify erlang body-only builtins, never guard-legal: explicit display/1 and halt/0,1, and the raising
-// error/1,2,3, exit/1 and throw/1, also unqualified through auto-import.
+// error/1,2,3, exit/1 and throw/1 and the dynamic apply/2,3, also unqualified through auto-import.
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call);
 // Resolve legal guard calls using the same imports/suppression rules as embedded pattern expressions.
 std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::ExprId &id,

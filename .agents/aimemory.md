@@ -279,6 +279,12 @@ Step facts beyond the plan record:
 - 34: named fun name lives only in FunScope::inside (putting it into `incoming` leaked it after the fun: outer
   `F = fun F(...)` became an exact check -> codegen "invalid map<K, T> key"). OTP oracle warns unused fun name
   (`fun F(F) -> F end`) and shadowing (-compile(nowarn_shadow_vars)). cmd: pattern file build/plan11-step34/pattern.txt.
+- 35: OTP: M:F non-atom -> badarg, missing -> undef ({M,F,Args,[]} top frame, ours caller), apply list checked
+  first (apply(1, foo) badarg, apply(1,[1]) {badfun,1}), >255 args -> undef / badarity with the whole list, fun M:F/A
+  bad operands -> badarg. erlfmt cannot parse `f(...)(2)`: parenthesize. "dynamic calls" capability now only builtin
+  funs (catalog plan_step 36). Service resolutions without an operation report `guards` notimpl unless apply().
+  TermFactory::fun_words checks CodeServer::owns (descriptor-less definitions = interned external funs).
+  Bash heredoc with many quotes fails ("unexpected EOF"): write edit scripts with Write into scratchpad.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

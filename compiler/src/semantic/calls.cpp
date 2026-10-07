@@ -66,7 +66,7 @@ bool direct_call(const FunctionRef caller, const ast::Expression &expression) {
     const auto &syntax = *caller.module->syntax;
     const auto *call = std::get_if<ast::CallExpression>(&expression.value);
     return call && !caller.function->services.contains(&expression) && !record_info_call(syntax, expression.value) &&
-           !fun_call(syntax, *call);
+           !fun_call(syntax, *call) && !dynamic_call(syntax, *call);
 }
 
 // A local fun F/A must name a function of its module (erl_lint undefined_function).

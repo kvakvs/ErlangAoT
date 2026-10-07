@@ -20,7 +20,9 @@ struct ExpressionCapability {
     std::string_view operator()(const ast::IntegerLiteral &) const;
     std::string_view operator()(const ast::CharacterLiteral &) const;
     std::string_view operator()(const ast::UnaryExpression &) const;
-    std::string_view operator()(const ast::CallExpression &) const;
+
+    std::string_view operator()(const ast::CallExpression &) const { return {}; }
+
     std::string_view operator()(const ast::BinaryExpression &) const;
 
     std::string_view operator()(const ast::Atom &) const { return {}; }

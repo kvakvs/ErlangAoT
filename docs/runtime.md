@@ -120,9 +120,13 @@ auto fn = context.code_server().resolve({.module = "native_demo", .function = "i
 - Native bodies must be synchronous, non-blocking and must not retain the
   context or argument span.
 - A bounded catalog of known deferred BIFs (`self/0`, `length/1`, `spawn/3`,
-  `spawn_link/3`, `send/2`, `make_ref/0`, `garbage_collect/0`, `apply/3`,
+  `spawn_link/3`, `send/2`, `make_ref/0`, `garbage_collect/0`, `apply/3` (generated
+  code calls `apply/2,3` through the dynamic call services instead, [funs](funs.md#dynamic-calls)),
   `tuple_size/1`, `+/2`) reports `not_implemented`; other unregistered names
   return `unknown_builtin` silently. No production BIFs are registered yet.
+- `CodeServer::export_frame` finds the `FrameDescriptor` of an export by module,
+  function atom and arity for dynamic calls; `external_fun` interns the
+  definitions of external funs built at run time.
 - `CodeServer::unload` is deferred; dynamic loading is not supported.
 
 ## Scheduler bookkeeping

@@ -1,8 +1,9 @@
 # Function values
 
-Plan 11 steps 32–34 (2026-10-07): `fun F/A`, `fun M:F/A`, anonymous funs
-with captured variables (closures), named funs (`fun Name(...) -> ... end`)
-and calls of function values (`F(Args)`). Facts come from the pinned `maint-29` sources
+Plan 11 steps 32–35 (2026-10-07): `fun F/A`, `fun M:F/A`, anonymous funs
+with captured variables (closures), named funs (`fun Name(...) -> ... end`),
+calls of function values (`F(Args)`) and dynamic calls (`M:F(Args)`,
+`apply/2,3`). Facts come from the pinned `maint-29` sources
 (`erts/emulator/beam/utils.c` `erts_cmp`, `erl_printf_term.c`, `erl_lint`)
 and probes on OTP 29.1.1.
 
@@ -14,17 +15,53 @@ and probes on OTP 29.1.1.
 | `fun m:f/1` | External fun naming `m:f/1`, also for the current module | `m:f/1` when a module of the program exports it |
 | `fun(X) -> ... end` | Local fun capturing the variables it reads from its creator; each evaluation builds a new value | The fun's own generated function |
 | `fun Name(X) -> ... end` | The same, with `Name` bound to the fun inside its clauses | The fun's own generated function |
+| `fun M:F/A` with variables | External fun built when evaluated; equal to the literal `fun m:f/1` it names | `m:f/1` when a module of the program exports it |
 
 - `fun F/A` must name a function of the module (`function F/A undefined`).
-  Naming an auto-imported builtin (`fun is_atom/1`), `fun erlang:F/A` and
-  `fun M:F/A` with variables report the unavailable `dynamic calls`
-  capability (plan step 35): builtins are not callable as values yet.
+  Naming an auto-imported builtin (`fun is_atom/1`) or a literal
+  `fun erlang:F/A` reports the unavailable `dynamic calls` capability (plan
+  step 36): builtins are not callable as values yet.
 - `F(Args)` evaluates `F`, then the arguments left to right, then checks the
   value: a non-function raises `{badfun, F}`, another arity
   `{badarity, {F, Args}}` (checked before the module), an external fun whose
   function nothing in the program exports `undef`. A call in tail position is
   a tail call, as for named functions.
 - `is_function/1,2` are true for funs in bodies and guards.
+
+## Dynamic calls
+
+- `M:F(Args)` with a variable (or any expression) as module or function
+  evaluates the module, then the function, then the arguments left to right.
+  A non-atom module or function raises `badarg`; a function no module of the
+  program exports with that arity raises `undef`. A call in tail position is a
+  tail call.
+- `apply(Fun, Args)` and `apply(M, F, Args)` (auto-imported unless the module
+  defines `apply/2,3` or suppresses the import; also `erlang:apply/2,3`)
+  evaluate their arguments, then require `Args` to be a proper list
+  (`badarg`). `apply/2` then calls `Fun` as `F(Args)` does (`{badfun, Fun}`,
+  `{badarity, {Fun, Args}}`); `apply/3` looks up `M:F/length(Args)` as above,
+  so more than 255 arguments raise `undef`. Both are tail calls in tail
+  position and never legal in guards.
+- `fun M:F/A` with variables raises `badarg` unless `M` and `F` are atoms and
+  `A` is an integer in 0..255; the function need not exist until the fun is
+  called.
+- Lookup uses the export tables of the program's modules, which stay
+  registered for the program's lifetime, so a found function cannot go away
+  during the call. It scans the modules and their exports, comparing atom
+  words; hash-map indexes are plan step 62A. Builtins are not in them yet:
+  `M:F(...)`, `apply/3` and
+  runtime `fun M:F/A` naming an `erlang` builtin raise `undef` until the
+  builtin bridge (plan step 36).
+- **Services.** `erlang_aot_call_v1(context, module, function, arity)` checks
+  the names and returns the `FrameDescriptor` of the export (ABI revision 8
+  adds it to `ExportDescriptor`); the arguments are already in the registers.
+  `erlang_aot_apply_list_v1(context, fun, list, registers)` and
+  `erlang_aot_call_list_v1(context, module, function, list, registers)` copy
+  the list into the registers first. All three return null after recording
+  the error, and generated code then transfers through the `erlang_aot.apply`
+  marker as for `F(Args)`. `erlang_aot_make_external_fun_v1` builds the fun of
+  an external `FunDefinition` the code server creates once per `M:F/A`
+  (`CodeServer::external_fun`).
 
 ## Closures
 
@@ -97,7 +134,10 @@ Recorded in [differences](differences.md):
   ErlangAoT numbers local funs in source order, so the order of two local funs
   of different functions of a module can also differ.
 - Calling an external fun of a module outside the program raises `undef`; OTP
-  would first try to load the module from the code path.
+  would first try to load the module from the code path. The same holds for
+  `M:F(Args)` and `apply/3`.
+- An `undef` stack trace starts with the caller's frame; OTP's starts with
+  `{M, F, Args, []}` for the missing function.
 - Anonymous fun names (`-f/1-fun-0-`, seen in stack traces) count funs in source
   order; OTP's compiler numbers them in its own order. Funs created inside
   comprehensions may also capture their values in another order than OTP's,

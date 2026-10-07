@@ -238,8 +238,11 @@ Plan: [32](11-plan.md#step-32), [33](11-plan.md#step-33),
 
 Plan: [35](11-plan.md#step-35).
 
-- [ ] Supported forms, arity checks and missing-function outcomes.
-- [ ] Generic lookup/invocation with module pins; verify failures.
+- [x] Supported forms (`M:F(Args)`, `apply/2,3`, `fun M:F/A` with
+  variables), arity checks and missing-function outcomes (step 35).
+- [x] Generic lookup/invocation with module pins (export frames, modules stay
+  registered); verify failures (step 35: `executables_dynamic_calls`,
+  `runtime_funs`). Builtins reached dynamically wait for step 36.
 
 ### F20 — Erlang exceptions
 
@@ -337,6 +340,9 @@ Plan: [55](11-plan.md#step-55).
   attribution with deliberate enablement.
 - **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [ ] LTO modes
   preserving descriptors, startup and exports.
+- **F33 — Indexed code lookups** ([62A](11-plan.md#step-62a)): [ ] hash maps
+  for module/function name lookups of dynamic calls and descriptor lookups,
+  replacing the linear scans of `CodeServer`.
 
 ## Validation obligations
 

@@ -97,11 +97,14 @@ llvm::Value *body_builtin_value(ExpressionLowering &state, const semantic::Servi
     return lower_raise(state, service.identity.name, argument(0));
 }
 
-// A call that is no service: a call of a value or of a named function.
+// A call that is no service: a call of a value, of a runtime module or function, or of a named function.
 llvm::Value *generated_call(ExpressionLowering &state, const ast::Expression &expression,
                             const ast::CallExpression &call) {
-    return semantic::fun_call(*state.module.syntax, call) ? lower_fun_call(state, expression, call)
-                                                          : lower_call(state, expression, call);
+    if (semantic::fun_call(*state.module.syntax, call)) {
+        return lower_fun_call(state, expression, call);
+    }
+    return semantic::dynamic_call(*state.module.syntax, call) ? lower_dynamic_call(state, expression, call)
+                                                              : lower_call(state, expression, call);
 }
 
 // Keep resolved runtime services and generated calls on their existing checked boundaries.
@@ -112,6 +115,9 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     const auto service = state.function.services.find(&expression);
     if (service == state.function.services.end()) {
         return generated_call(state, expression, call);
+    }
+    if (service->second.apply()) {
+        return lower_apply(state, expression, call);
     }
     if (service->second.operation == abi::v1::ImmediateOperation::is_integer_range) {
         return lower_integer_range(state, call);

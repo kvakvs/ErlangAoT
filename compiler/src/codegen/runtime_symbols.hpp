@@ -44,6 +44,11 @@ using Error = Function<"erlang_aot_error_v1", UInt8, Context, Size, Size>;
 // Function values (abi/funs.hpp): build a fun, and check a called one, returning the FrameDescriptor to enter.
 using MakeFun = Function<"erlang_aot_make_fun_v1", UInt8, Context, Descriptor, Words, Size, Slot>;
 using Apply = Function<"erlang_aot_apply_v1", Descriptor, Context, Size, Size, Slot>;
+// Dynamic calls: M:F(Args), apply/2,3 (arguments unpacked into the registers) and fun M:F/A with variables.
+using Call = Function<"erlang_aot_call_v1", Descriptor, Context, Size, Size, Size>;
+using ApplyList = Function<"erlang_aot_apply_list_v1", Descriptor, Context, Size, Size, Slot>;
+using CallList = Function<"erlang_aot_call_list_v1", Descriptor, Context, Size, Size, Size, Slot>;
+using MakeExternalFun = Function<"erlang_aot_make_external_fun_v1", UInt8, Context, Size, Size, Size, Slot>;
 // Frame transfers (abi/frames.hpp): each returns the continuation code generated code tail-calls next.
 using Code = Pointer<Void>;
 using Enter = Function<"erlang_aot_enter_v1", Code, Context, Descriptor>;

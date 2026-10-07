@@ -31,15 +31,22 @@ bool valid_spellings(const abi::v1::ModuleDescriptor &descriptor) {
     return true;
 }
 
-// Metadata spellings share the same bounded runtime table as executable literals.
-CodeResult<void> bind_metadata(AtomStorage &storage, const abi::v1::ModuleDescriptor &descriptor) {
-    if (!storage.intern({descriptor.name, descriptor.name_size})) {
+// Metadata spellings share the same bounded runtime table as executable literals; the module and export names
+// are bound for dynamic calls.
+CodeResult<void> bind_metadata(AtomStorage &storage, const abi::v1::ModuleDescriptor &descriptor,
+                               ModuleAtoms &bindings) {
+    const auto module = storage.intern({descriptor.name, descriptor.name_size});
+    if (!module) {
         return std::unexpected(CodeError::resource_limit);
     }
+    bindings.module = module->word();
+    bindings.exports.reserve(descriptor.export_count);
     for (const auto &item : std::span(descriptor.exports, descriptor.export_count)) {
-        if (!storage.intern({item.name, item.name_size})) {
+        const auto name = storage.intern({item.name, item.name_size});
+        if (!name) {
             return std::unexpected(CodeError::resource_limit);
         }
+        bindings.exports.push_back({name->word(), item.arity, item.frame});
     }
     return {};
 }
@@ -114,11 +121,11 @@ CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
     if (!valid_spellings(descriptor)) {
         return std::unexpected(CodeError::invalid_module);
     }
-    const auto metadata = bind_metadata(storage, descriptor);
+    auto bindings = std::make_shared<ModuleAtoms>();
+    const auto metadata = bind_metadata(storage, descriptor, *bindings);
     if (!metadata) {
         return std::unexpected(metadata.error());
     }
-    auto bindings = std::make_shared<ModuleAtoms>();
     bindings->descriptor = &descriptor;
     bindings->slots.reserve(descriptor.atom_count);
     for (const auto &atom : std::span(descriptor.atoms, descriptor.atom_count)) {

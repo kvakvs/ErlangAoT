@@ -64,6 +64,41 @@ const FunDefinition *CodeServer::fun_definition(const void *descriptor) const no
     return nullptr;
 }
 
+const void *CodeServer::export_frame(const FunctionAtoms &name) const noexcept {
+    for (const auto &[spelling, loaded] : modules_) {
+        const auto *atoms = loaded->atoms();
+        if (!atoms || atoms->module != name.module) {
+            continue;
+        }
+        for (const auto &item : atoms->exports) {
+            if (item.function == name.function && item.arity == name.arity) {
+                return item.frame;
+            }
+        }
+    }
+    return nullptr;
+}
+
+const FunDefinition &CodeServer::external_fun(const FunctionAtoms &name) {
+    auto &definition = external_funs_[name];
+    if (!definition) {
+        definition = std::make_unique<FunDefinition>(FunDefinition{.module = name.module,
+                                                                   .function = name.function,
+                                                                   .arity = name.arity,
+                                                                   .external = true,
+                                                                   .frame = export_frame(name)});
+    }
+    return *definition;
+}
+
+bool CodeServer::owns(const FunDefinition &definition) const noexcept {
+    if (definition.descriptor) {
+        return fun_definition(definition.descriptor) == &definition;
+    }
+    const auto found = external_funs_.find({definition.module, definition.function, definition.arity});
+    return found != external_funs_.end() && found->second.get() == &definition;
+}
+
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);

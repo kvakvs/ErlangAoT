@@ -1,17 +1,22 @@
+#include "terms/funs.hpp"
 #include "terms.hpp"
 #include "terms/structural_order.hpp"
 #include <array>
+#include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/funs.hpp>
 #include <erlang_aot/abi/modules.hpp>
 #include <erlang_aot/runtime/modules.hpp>
 #include <erlang_aot/runtime/output.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
-// Fun cells, erlang_aot_make_fun_v1 and erlang_aot_apply_v1 over hand-written descriptors (docs/funs.md).
+// Fun cells, erlang_aot_make_fun_v1, erlang_aot_apply_v1 and the dynamic call services over hand-written
+// descriptors (docs/funs.md).
 namespace {
 using namespace erlang_aot;
 using namespace erlang_aot::runtime;
@@ -35,8 +40,13 @@ const FrameDescriptor LAMBDA{&fm, 0, 1, 3, nullptr, 3, 3};
 const FrameDescriptor LOCAL{&fm, 0, 2, 1, nullptr, 1, 1};
 const std::array<FunDescriptor, 3> FUNS{
     {{&fm, 0, 1, 1, 0, 0, &LAMBDA}, {&fm, 0, 2, 1, 1, 0, &LOCAL}, {&fm, 3, 4, 2, 0, 1, nullptr}}};
-const abi::v1::ModuleDescriptor fm{abi::v1::version, sizeof(Word) * 8, "fm",    2, nullptr,     0,
-                                   ATOMS.data(),     ATOMS.size(),     nullptr, 0, FUNS.data(), FUNS.size()};
+
+// The host entry of the export g/1; never called here.
+abi::v1::TermWord entry(abi::v1::Context *, const abi::v1::TermWord *) { return 0; }
+
+const std::array EXPORTS{abi::v1::ExportDescriptor{"g", 1, 1, &entry, &LOCAL}};
+const abi::v1::ModuleDescriptor fm{abi::v1::version, sizeof(Word) * 8, "fm",    2, EXPORTS.data(), EXPORTS.size(),
+                                   ATOMS.data(),     ATOMS.size(),     nullptr, 0, FUNS.data(),    FUNS.size()};
 
 // Build a fun of a descriptor inside a generated invocation; the status of a refused build.
 TermResult<Term> make(ProcessContext &context, const FunDescriptor &descriptor, std::span<const Term> captures) {
@@ -144,6 +154,59 @@ void calls(ProcessContext &context) {
     require(!missing.frame && missing.error == "24", "undef differs");
 }
 
+// The pending error of the current invocation as text: the reason ID, then its payload.
+std::string pending(ProcessContext &context) {
+    const auto &failure = context.generated_calls().failure();
+    if (!failure || !failure->reason) {
+        return failure ? "failure" : "";
+    }
+    const auto name = std::to_string(static_cast<int>(*failure->reason));
+    return failure->value ? name + ":" + format_term(*failure->value, TermStyle::write).value() : name;
+}
+
+// Look up Module:Function/Arity as M:F(Args) does; the frame and the error raised.
+std::pair<const void *, std::string> lookup(ProcessContext &context, const Term &module, const Term &function,
+                                            std::size_t arity) {
+    GeneratedInvocation scope(context.generated_calls());
+    const auto *frame = erlang_aot_call_v1(&context, module.word(), function.word(), arity);
+    return {frame, pending(context)};
+}
+
+// Build fun M:F/A from runtime operands; the fun, or the error raised.
+std::pair<std::optional<Term>, std::string> external(ProcessContext &context, const Term &module, const Term &function,
+                                                     const Term &arity) {
+    GeneratedInvocation scope(context.generated_calls());
+    Word output = 0;
+    erlang_aot_make_external_fun_v1(&context, module.word(), function.word(), arity.word(), &output);
+    if (const auto error = pending(context); !error.empty()) {
+        return {std::nullopt, error};
+    }
+    return {Term::from_word(output, context).value(), ""};
+}
+
+// Dynamic calls find exported frames by name; external funs built at run time are interned per M:F/A.
+void dynamic(ProcessContext &context) {
+    TermFactory factory(context);
+    const auto module = factory.atom("fm").value();
+    const auto g = factory.atom("g").value();
+    const auto one = factory.integer(1).value();
+    require(lookup(context, module, g, 1) == std::pair<const void *, std::string>{&LOCAL, ""}, "export not found");
+    require(lookup(context, module, g, 2).second == "24" && lookup(context, one, g, 1).second == "3",
+            "lookup errors differ");
+    const auto first = external(context, module, g, one).first.value();
+    const auto second = external(context, module, g, one).first.value();
+    require(detail::fun_view(first)->definition == detail::fun_view(second)->definition && text(first) == "fun fm:g/1",
+            "external fun not interned");
+    require(apply(context, first, std::array{one}).frame == &LOCAL, "external fun does not enter its export");
+    require(external(context, module, g, factory.integer(256).value()).second == "3" &&
+                external(context, module, one, one).second == "3",
+            "invalid external fun accepted");
+    GeneratedInvocation scope(context.generated_calls());
+    require(!erlang_aot_apply_list_v1(&context, first.word(), abi::v1::empty_list, nullptr) &&
+                pending(context) == "failure",
+            "missing registers accepted");
+}
+
 // Captured values survive collections and copies between heaps.
 void memory(Runtime &runtime) {
     auto &source = *runtime.create_context().value();
@@ -184,6 +247,7 @@ int main() {
         construction(context);
         order(context);
         calls(context);
+        dynamic(context);
         memory(*runtime);
         std::cout << "funs passed\n";
         return 0;

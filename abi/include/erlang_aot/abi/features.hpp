@@ -107,7 +107,7 @@ inline constexpr std::array feature_catalog{
                 .owner = FeatureOwner::compiler,
                 .boundary = "call capability analysis",
                 .status = FeatureStatus::deferred,
-                .plan_step = 35,
+                .plan_step = 36,
                 .failure_test = "codegen_placeholders"},
     FeatureInfo{.id = FeatureId::recursive_calls,
                 .name = "recursive calls",

@@ -205,10 +205,12 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 }
 
 namespace {
-// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's.
-bool raising(const FunctionKey &key) {
+// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's, as are the
+// dynamic calls apply/2,3.
+bool auto_imported(const FunctionKey &key) {
     return (key.name == U"error" && key.arity >= 1 && key.arity <= 3) ||
-           ((key.name == U"exit" || key.name == U"throw") && key.arity == 1);
+           ((key.name == U"exit" || key.name == U"throw") && key.arity == 1) ||
+           (key.name == U"apply" && (key.arity == 2 || key.arity == 3));
 }
 
 // Explicit erlang:display/1 and erlang:halt/0,1 wait for the builtin bridge (step 36) to resolve unqualified;
@@ -221,8 +223,8 @@ std::optional<FunctionKey> qualified_builtin(const ast::Module &syntax, const as
         return {};
     }
     const FunctionKey key{name->name, count};
-    const bool builtin = raising(key) || key == FunctionKey{U"display", 1} || (key.name == U"halt" && count <= 1) ||
-                         key == FunctionKey{U"raise", 3};
+    const bool builtin = auto_imported(key) || key == FunctionKey{U"display", 1} ||
+                         (key.name == U"halt" && count <= 1) || key == FunctionKey{U"raise", 3};
     return builtin ? std::optional{key} : std::nullopt;
 }
 } // namespace
@@ -240,7 +242,7 @@ std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprI
     }
     // A local definition or no_auto_import keeps the unqualified name an ordinary local call.
     const FunctionKey key{name->name, call.arguments.size()};
-    const bool imported = raising(key) && !state.module.lookup.contains(key) && auto_import(state, id, key);
+    const bool imported = auto_imported(key) && !state.module.lookup.contains(key) && auto_import(state, id, key);
     return imported ? std::optional{key} : std::nullopt;
 }
 } // namespace erlang_aot::semantic

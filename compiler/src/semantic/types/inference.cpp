@@ -56,17 +56,21 @@ template <typename Clauses> Fact joined(Inference &inference, const ast::Module 
     return result;
 }
 
+// Whether a call's result is unknown: a service, record_info/2, a call of a value or a dynamic call.
+bool opaque_call(const FunctionRef function, const ast::Expression &expression, const ast::CallExpression &call) {
+    const auto &syntax = *function.module->syntax;
+    return function.function->services.contains(&expression) || record_info_call(syntax, expression.value) ||
+           fun_call(syntax, call) || dynamic_call(syntax, call);
+}
+
 // Evaluate a postorder node only after all source-order argument facts are available.
 Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
               std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
-        if (function.function->services.contains(&expression) || record_info_call(syntax, expression.value) ||
-            fun_call(syntax, *call)) {
-            return {inference.graph.top()};
-        }
-        return call_result(inference, syntax, expression, *call);
+        return opaque_call(function, expression, *call) ? Fact{inference.graph.top()}
+                                                        : call_result(inference, syntax, expression, *call);
     }
     if (const auto *group = std::get_if<ast::Group>(&syntax.expression(id).value)) {
         return inference.expressions.at(&syntax.expression(group->expression));

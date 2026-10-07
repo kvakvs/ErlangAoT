@@ -234,6 +234,11 @@ llvm::Value *lower_fun(ExpressionLowering &state, const ast::Expression &express
 // Call the value of the call's target with its arguments (F(Args)); badfun, badarity and undef raise.
 llvm::Value *lower_fun_call(ExpressionLowering &state, const ast::Expression &expression,
                             const ast::CallExpression &call);
+// Call M:F(Args) with a runtime module or function; badarg and undef raise.
+llvm::Value *lower_dynamic_call(ExpressionLowering &state, const ast::Expression &expression,
+                                const ast::CallExpression &call);
+// Call apply(Fun, Args) or apply(M, F, Args) with the list unpacked into the registers at run time.
+llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
 } // namespace erlang_aot::codegen

@@ -170,6 +170,15 @@ void imported_test_atoms(const semantic::Module &module, const ast::ExprValue &v
     }
 }
 
+// The literal module and function of fun M:F/A built at run time.
+void reference_atoms(const ast::RemoteFunReference &reference, std::set<std::string> &result) {
+    for (const auto *part : {&reference.module, &reference.name}) {
+        if (const auto *atom = std::get_if<ast::Atom>(part)) {
+            result.insert(utf8(atom->name));
+        }
+    }
+}
+
 // Collect the atoms one expression needs: its literal, record names and the atoms its lowering produces.
 void expression_atoms(const semantic::Module &module, const ast::Expression &expression,
                       std::set<std::string> &result) {
@@ -181,6 +190,9 @@ void expression_atoms(const semantic::Module &module, const ast::Expression &exp
     }
     if (const auto *atom = std::get_if<ast::Atom>(&value)) {
         result.insert(utf8(atom->name));
+    }
+    if (const auto *reference = std::get_if<ast::RemoteFunReference>(&value)) {
+        reference_atoms(*reference, result);
     }
     if (implicit_throw(value)) {
         result.insert("throw");

@@ -71,7 +71,8 @@ context. Analysis is deterministic.
   inside is visible after the fun. Every outer definition read inside is
   recorded as a capture (`Function::captures`, definition order). A named
   fun's name is one more definition every clause starts with
-  (`Function::fun_names`); it is never captured.
+  (`Function::fun_names`); it is never captured. The variables of
+  `fun M:F/A` are reads of the fun expression (`Function::fun_operands`).
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
 any semantic error clears the module's binding and normalization tables.

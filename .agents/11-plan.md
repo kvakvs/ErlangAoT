@@ -118,7 +118,7 @@ CTests (123 fast) and 258 production quality units.
 | I. Processes and messaging | [42](#step-42)–[53](#step-53) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [59](#step-59)–[62](#step-62) | F29–F32 |
+| L. Optimization and tooling | [59](#step-59)–[62](#step-62), [62A](#step-62a) | F29–F33 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -1000,10 +1000,38 @@ Support `Fun(Args)`, `Mod:Fun(Args)` with runtime operands, and
 `erlang:apply/2,3`.
 
 - Success criteria
-  - [ ] Lookup pins the module for the call; missing targets raise `undef`;
+  - [x] Lookup pins the module for the call; missing targets raise `undef`;
     non-atom operands raise `badarg`/`badfun` as OTP.
 - Tests
-  - [ ] Golden programs for each call form and failure.
+  - [x] Golden programs for each call form and failure.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP 29.1.1
+  probes: `M:F(Args)` evaluates module, function, then arguments; non-atom
+  module or function `badarg`, missing or unexported `undef`; `apply/2,3`
+  check the list first (`badarg`), then `{badfun, V}` / `{badarity, {F, Args}}`
+  with the whole list, more than 255 arguments `undef`/`badarity`; `fun M:F/A`
+  with a non-atom or an arity outside 0..255 `badarg`. ABI revision 8:
+  `ExportDescriptor::frame`; runtime `ModuleAtoms::module/exports`,
+  `CodeServer::export_frame`, interned `CodeServer::external_fun` (`owns`
+  admits them in `fun_words`), services `erlang_aot_call_v1`,
+  `erlang_aot_apply_list_v1`, `erlang_aot_call_list_v1`,
+  `erlang_aot_make_external_fun_v1` (`runtime/src/terms/dynamic_calls.cpp`).
+  Semantic: `dynamic_call` (children module, function, arguments),
+  `apply/2,3` body builtins (`ServiceResolution::apply()`), `fun M:F/A`
+  variable reads (`Function::fun_operands`); `dynamic calls` capability now
+  only funs of builtins (catalog owner step 36). Codegen: shared `transfer`
+  (service returns the frame, then the apply marker; tail transfer in tail
+  position), `apply` unpacks into a 256-word register array. Builtins reached
+  dynamically raise `undef` until step 36; the `undef` top frame difference is
+  recorded. OTP golden `executables_dynamic_calls` (all call forms, evaluation
+  order, closures returned by dynamic calls, 1,000-deep dynamic recursion,
+  runtime `fun M:F/A` equality and printing, 20 caught errors, two uncaught
+  runs, two 10,000-step tail loops also under `--max-stack 4096`) passes all 8
+  combinations; `runtime_funs` dynamic lookups/interning/invalid registers;
+  mangling spellings for four targets; semantic cases; avltree diagnostics.
+  Fresh Windows x64 Debug (clang-cl): fast 173/173, full `-j 12` 177/177;
+  after Lizard (`evaluate`) and tidy fixes fast 173/173, full 177/177 in
+  142 s, Lizard 0 warnings (31 files), tidy 290 units pass. Logs
+  `build/plan11-step35/`.
 
 ## H. Builtins and libraries
 
@@ -1408,6 +1436,34 @@ Backlog: F32. Depends on: [7](#step-7), [58](#step-58).
     intact on supported toolchains; unsupported targets report it.
 - Tests
   - [ ] Fixture goldens pass with LTO; size/build time recorded.
+
+<a id="step-62a"></a>
+
+### 62A. Index code server lookups with hash maps
+
+Backlog: F33. Depends on: [35](#step-35); independent of the other phase L
+steps, so it may move earlier. Added 2026-10-07 after step 35.
+
+`CodeServer::export_frame` (dynamic calls, runtime `fun M:F/A`) scans every
+registered module and then its export list; `fun_definition`,
+`record_definition` and `atom_word` scan modules by descriptor. Replace the
+scans with hash maps built at registration: module atom word to its module,
+`(function atom, arity)` to the export frame, and descriptor address to its
+bindings.
+
+- Success criteria
+  - [ ] Dynamic call, apply/3 and runtime `fun M:F/A` lookups take constant
+    expected time in the number of modules and exports; descriptor lookups
+    likewise.
+  - [ ] Maps are built inside the registration transaction (a failed
+    registration publishes none of them) and stay valid while modules stay
+    registered; when the code server becomes concurrent (phase J), lookups
+    stay safe under its synchronization.
+- Tests
+  - [ ] Existing goldens (`executables_dynamic_calls`, `runtime_funs`) pass
+    unchanged; a focused runtime test registers many modules with many
+    exports and checks lookups of present, missing and wrong-arity names.
+  - [ ] Lookup cost with many modules recorded descriptively, not gated.
 
 ## M. Validation closure
 

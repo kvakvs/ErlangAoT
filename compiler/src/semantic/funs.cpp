@@ -14,6 +14,20 @@ bool fun_call(const ast::Module &syntax, const ast::CallExpression &call) {
     return !std::holds_alternative<ast::Atom>(target) && !std::holds_alternative<ast::RemoteExpression>(target);
 }
 
+bool dynamic_call(const ast::Module &syntax, const ast::CallExpression &call) {
+    const auto *remote = std::get_if<ast::RemoteExpression>(&syntax.expression(ungroup(syntax, call.target)).value);
+    const auto literal = [&](const ast::ExprId &id) {
+        return std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, id)).value);
+    };
+    return remote && (!literal(remote->module) || !literal(remote->function));
+}
+
+bool dynamic_fun(const ast::RemoteFunReference &reference) {
+    return std::holds_alternative<ast::Variable>(reference.module) ||
+           std::holds_alternative<ast::Variable>(reference.name) ||
+           std::holds_alternative<ast::Variable>(reference.arity);
+}
+
 const Function *fun_target(const Module &module, const ast::LocalFunReference &reference) {
     const auto count = arity(reference.arity);
     if (!count) {

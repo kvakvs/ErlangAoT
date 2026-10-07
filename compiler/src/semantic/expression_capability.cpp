@@ -42,22 +42,15 @@ std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &
     return count && !module.lookup.contains(key) && guard_signature(key) ? "dynamic calls" : "";
 }
 
+// fun M:F/A with variables is built at run time; a literal fun erlang:F/A needs builtins callable as values.
 std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference &value) const {
+    if (dynamic_fun(value)) {
+        const auto *count = std::get_if<Integer>(&value.arity);
+        const auto valid = count ? arity(*count) : std::optional<std::size_t>{0};
+        return valid && *valid <= 255 ? "" : "dynamic calls";
+    }
     const auto names = external_fun(value);
     return names && std::get<0>(*names) != U"erlang" ? "" : "dynamic calls";
-}
-
-std::string_view ExpressionCapability::operator()(const ast::CallExpression &value) const {
-    const auto &target = syntax.expression(ungroup(syntax, value.target)).value;
-    if (std::holds_alternative<ast::Atom>(target) || fun_call(syntax, value)) {
-        return {};
-    }
-    const auto &remote = std::get<ast::RemoteExpression>(target);
-    const bool literal_module =
-        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote.module)).value);
-    const bool literal_function =
-        std::holds_alternative<ast::Atom>(syntax.expression(ungroup(syntax, remote.function)).value);
-    return literal_module && literal_function ? "" : "dynamic calls";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {
