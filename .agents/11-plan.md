@@ -115,7 +115,7 @@ CTests (123 fast) and 258 production quality units.
 | F. Memory management | [23](#step-23)–[28](#step-28) | F02–F05, F08–F11 |
 | G. Records, function values, dynamic calls | [29](#step-29)–[35](#step-35) | F03, F12, F14, F17–F19, F21 |
 | H. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
-| I. Processes and messaging | [42](#step-42)–[53](#step-53) | F02, F04, F05, F07, F14, F22, F24–F26 |
+| I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [59](#step-59)–[62](#step-62), [62A](#step-62a) | F29–F33 |
@@ -761,22 +761,46 @@ code with checked status and owned results.
 
 Backlog: F26. Depends on: [36](#step-36).
 
+Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
+
 `element/2`, `setelement/3`, `tuple_size/1`, `make_tuple/2,3`,
 `tuple_to_list/1`, `list_to_tuple/1`, `hd/1`, `tl/1`, `length/1`, `map_get/2`,
 `map_size/1` and `is_map_key/2` in body context, plus the list operators
 `++`/`--` (`erlang:'++'/2`, `erlang:'--'/2`).
 
 - Success criteria
-  - [ ] Results and `badarg` errors match OTP.
+  - [x] Results and `badarg` errors match OTP.
 - Tests
-  - [ ] Golden call/result corpus regenerated from OTP with boundary and invalid
+  - [x] Golden call/result corpus regenerated from OTP with boundary and invalid
     arguments.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. New bridge entries
+  (catalog appended) in `runtime/src/builtins/term_access.cpp`
+  (`term_access_builtins()`, registered through `production_builtins()`):
+  `setelement/3`, `make_tuple/2,3`, `tuple_to_list/1`, `list_to_tuple/1`,
+  `'++'/2`, `'--'/2` with OTP's `bif.c`/`erl_bif_lists.c` rules (`--` by exact
+  order, O((n + m) log m)); shared helpers `builtins/support.hpp`. `A ++ B` and
+  `A -- B` lower to the bridge, so the `arithmetic` capability is implemented
+  (removed from `codegen_placeholders`). Auto-import follows
+  `erl_internal:bif/2`: `setelement`, `tuple_to_list`, `list_to_tuple` yes,
+  `make_tuple` no. `element`, `tuple_size`, `hd`, `tl`, `length`, `map_get`,
+  `map_size`, `is_map_key` already ran in bodies (inline services, bridge since
+  step 36). Interruptibility (user note): every builtin still runs to
+  completion; `TODO(step 43A)` markers and new plan step 43A convert them once
+  the scheduler exists. OTP golden `executables_term_access` (76 apply/3 cases
+  with boundary and invalid arguments, direct and qualified calls, operator
+  evaluation order, builtin funs, 100,000-element `++`/`--`/tuples) passes all
+  8 combinations; semantic cases; textstats diagnostics refreshed (now stops
+  at `lists`/`io`). Fresh Windows x64 Debug (clang-cl): fast 175/175, full
+  `-j 12` 179/179; Lizard 0 warnings, tidy pass after replacing a constexpr
+  optional dereference (analyzer false positive). Logs `build/plan11-step37/`.
 
 <a id="step-38"></a>
 
 ### 38. Add the conversion builtin family
 
 Backlog: F11, F26. Depends on: [36](#step-36).
+
+Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
 
 Atom, integer, float, list, binary and string conversions
 (`atom_to_list/1`, `list_to_atom/1`, `integer_to_list/1,2`,
@@ -794,6 +818,8 @@ selected).
 ### 39. Ship a project-owned library subset for `lists` and `maps`
 
 Backlog: F08, F26. Depends on: [21](#step-21), [35](#step-35).
+
+Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
 
 Write original Erlang implementations (not OTP copies) of commonly used
 functions, compiled and linked with user programs. Start with `lists:reverse,
@@ -873,6 +899,30 @@ it finishes.
   - [ ] Golden programs spawning 10k processes and long-running busy loops
     that must interleave.
   - [ ] Teardown with live processes releases every heap.
+
+<a id="step-43a"></a>
+
+### 43A. Make long-running builtins interruptible
+
+Backlog: F22, F26. Depends on: [43](#step-43). Added 2026-10-07 during step 37.
+
+Builtins whose work grows with their input run to completion today because no
+scheduler exists. Once reductions and yields exist, give them BEAM-style traps:
+a builtin does a bounded portion of work, keeps its state rooted (registers or
+a heap/off-heap state term), and continues through its builtin frame after the
+scheduler may have switched processes. Candidates are marked `TODO(step 43A)`
+in `runtime/src/builtins/`: `'++'/2`, `'--'/2`, `list_to_tuple/1`,
+`tuple_to_list/1`, `make_tuple/2,3`, `setelement/3`, the step-38 conversions,
+plus the inline `length/1` and long list services.
+
+- Success criteria
+  - [ ] A process running a long builtin cannot starve others; results, errors
+    and evaluation order stay as before; state survives collections between
+    portions.
+- Tests
+  - [ ] Existing builtin goldens pass unchanged; an interleaving golden runs a
+    huge `++`/`--` beside a busy process; a collection between portions keeps
+    the state.
 
 <a id="step-44"></a>
 

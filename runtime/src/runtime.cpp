@@ -26,10 +26,11 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
 Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
     : atom_storage(options.max_atoms), scheduler(identity), options(options), identity(identity),
       memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))), contexts(0) {
-    const auto builtins = code_server.builtins().add(erlang_builtins());
-    if (!builtins) {
-        // Only allocation can fail for the fixed production table.
-        throw std::bad_alloc();
+    for (const auto family : production_builtins()) {
+        if (!code_server.builtins().add(family)) {
+            // Only allocation can fail for the fixed production tables.
+            throw std::bad_alloc();
+        }
     }
 }
 

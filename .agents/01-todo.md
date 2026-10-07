@@ -127,7 +127,9 @@ Plan: [23](11-plan.md#step-23), [27B](11-plan.md#step-27b), [27C](11-plan.md#ste
 - [x] Tuple arity limit of OTP, 16,777,215 (27C).
 - [x] No map size or key-work caps; O(n log n) map construction (27D).
 - [x] GC/copying integration (F04/F05, 28).
-- [ ] More list operations via F26.
+- [x] `++`/`--`, `tuple_to_list`/`list_to_tuple`, `setelement`, `make_tuple`
+  (step 37).
+- [ ] More list operations via F26 (`lists` subset, step 39).
 
 ### F09 — Binaries and bitstrings
 
@@ -319,8 +321,12 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)�
   `bridge_builtins` catalog, `erlang_aot_builtin_v1`, builtin frames entered
   by dynamic calls and funs; guard BIFs, operators, `display`, `halt`, the
   raise family and `function_exported/3` registered.
-- [ ] Selected families (term access, conversions, `lists`/`maps` subset,
-  `io`, `++`/`--`).
+- [x] Term access family (step 37): `setelement/3`, `make_tuple/2,3`,
+  `tuple_to_list/1`, `list_to_tuple/1`, `++`/`--` operators and functions;
+  `element`, `tuple_size`, `hd`, `tl`, `length`, `map_get`, `map_size`,
+  `is_map_key` in bodies.
+- [ ] Remaining families (conversions, `lists`/`maps` subset, `io`).
+- [ ] Interruptible long-running builtins once the scheduler exists (step 43A).
 
 ### F27 — Typed/native callables and conversions
 

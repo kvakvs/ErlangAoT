@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "term_access",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[{ok,a},{ok,b},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{ok,{x,b}},{ok,{a,x}},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{ok,0},{ok,3},{error,badarg},{ok,{}},{ok,{x,x,x}},{error,badarg},{error,badarg},{error,badarg},{ok,{d,d,d}},{ok,{a,d,c}},{ok,{b,d}},{ok,{}},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{error,badarg},{ok,[]},{ok,[a,{b},[c]]},{error,badarg},{ok,{}},{ok,{a,b}},{error,badarg},{error,badarg},{ok,a},{ok,a},{error,badarg},{error,badarg},{ok,[b]},{ok,b},{error,badarg},{ok,0},{ok,3},{error,badarg},{error,badarg},{ok,one},{error,{badkey,2}},{error,{badmap,[x]}},{ok,0},{ok,2},{error,{badmap,{}}},{ok,true},{ok,false},{error,{badmap,x}},{ok,[1,2,3]},{ok,x},{ok,[1|x]},{ok,[1,2|3]},{error,badarg},{error,badarg},{ok,[3,2,1]},{ok,[1,1]},{ok,[b]},{ok,[]},{ok,[a,{b}]},{error,badarg},{error,badarg},{error,badarg},{error,badarg}]\n[{a,x,c},{a,b,y},{z,z},{d,m,d},[a,b,c],{1,2},{error,badarg},{error,badarg},{error,badarg},{error,badarg}]\n[[1,2,2,3],[1],[1,2],[],tail]\n[{error,badarg},{error,badarg},{error,badarg}]\na\nb\nc\nd\n[[a,b],[c]]\n[{b},[1,2],[2],[[a],[b,c]],true,fun erlang:list_to_tuple/1]\n[50000,2,100000,100000,100000,100000,200000,[],mid]\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "term_access.erl": "9164ae72aae3f3e8be591fad965e2689aa2679ca4b44cce822c65d2726daccac"
+  }
+}

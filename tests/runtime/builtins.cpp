@@ -116,7 +116,10 @@ void check_builtin_registry() {
     }
     require(!production.bridge(erlang_aot::abi::v1::bridge_builtins.size()), "bridge index out of range found");
     BuiltinRegistry registry;
-    require(registry.add(erlang_builtins()).has_value() && registry.size() == production.size(), "table rejected");
+    for (const auto family : production_builtins()) {
+        require(registry.add(family).has_value(), "family rejected");
+    }
+    require(registry.size() == production.size(), "families differ from startup registration");
     require(registry.add(erlang_builtins()).error() == RegistryError::duplicate_key, "duplicate table accepted");
     require(registry.size() == production.size(), "duplicate table changed the registry");
     const std::array fresh{BuiltinEntry{"extra", "first", 0, unused}, BuiltinEntry{"extra", "second", 1, unused}};

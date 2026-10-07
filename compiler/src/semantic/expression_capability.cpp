@@ -31,10 +31,6 @@ std::string_view ExpressionCapability::operator()(const ast::CharacterLiteral &)
     return integer_literal(syntax, id, word_bits) ? "" : "bignum expressions";
 }
 
-std::string_view ExpressionCapability::operator()(const ast::UnaryExpression &value) const {
-    return immediate_unary(value.operation) ? "" : "arithmetic";
-}
-
 // A fun of an erlang builtin needs a bridge builtin (resolved with services); other guard builtins stay unavailable.
 std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &value) const {
     const auto count = arity(value.arity);
@@ -58,13 +54,8 @@ std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference 
     return owner != U"erlang" || bridge_builtin({name, count}) ? "" : "dynamic calls";
 }
 
+// Every binary operator but send lowers: through the checked services, lazily, or (++, --) through the bridge.
 std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {
-    if (immediate_operator(value.operation)) {
-        return {};
-    }
-    if (value.operation == ast::BinaryOperator::and_also || value.operation == ast::BinaryOperator::or_else) {
-        return {};
-    }
-    return value.operation == ast::BinaryOperator::send ? "send expressions" : "arithmetic";
+    return value.operation == ast::BinaryOperator::send ? "send expressions" : "";
 }
 } // namespace erlang_aot::semantic

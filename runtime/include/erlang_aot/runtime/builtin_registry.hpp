@@ -70,6 +70,11 @@ inline const BuiltinFrame &builtin_frame(const abi::v1::FrameDescriptor &frame) 
 // checked channel. Host exceptions become failures.
 Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept;
 
-// The production builtins of module erlang that runtime startup registers.
+// The erlang builtins of the original bridge catalog: guard BIFs, operators, display, halt, raising and
+// function_exported/3.
 std::span<const BuiltinEntry> erlang_builtins() noexcept;
+// The term-access builtins: setelement/3, make_tuple/2,3, tuple_to_list/1, list_to_tuple/1, '++'/2, '--'/2.
+std::span<const BuiltinEntry> term_access_builtins() noexcept;
+// Every production builtin family runtime startup registers, together covering abi::v1::bridge_builtins.
+std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept;
 } // namespace erlang_aot::runtime

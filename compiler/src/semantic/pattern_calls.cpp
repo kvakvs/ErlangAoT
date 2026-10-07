@@ -205,11 +205,12 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 }
 
 namespace {
-// Raising builtins (error/1,2,3, exit/1, throw/1) never return; they are auto-imported like OTP's, as are halt/0,1
-// and the dynamic calls apply/2,3.
+// Body builtins auto-imported like OTP's (erl_internal:bif/2): the raising error/1,2,3, exit/1 and throw/1, halt/0,1,
+// the dynamic calls apply/2,3 and setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not).
 bool auto_imported(const FunctionKey &key) {
-    static const std::set<FunctionKey> names{{U"error", 1}, {U"error", 2}, {U"error", 3}, {U"exit", 1}, {U"throw", 1},
-                                             {U"halt", 0},  {U"halt", 1},  {U"apply", 2}, {U"apply", 3}};
+    static const std::set<FunctionKey> names{
+        {U"error", 1}, {U"error", 2}, {U"error", 3}, {U"exit", 1},       {U"throw", 1},         {U"halt", 0},
+        {U"halt", 1},  {U"apply", 2}, {U"apply", 3}, {U"setelement", 3}, {U"tuple_to_list", 1}, {U"list_to_tuple", 1}};
     return names.contains(key);
 }
 

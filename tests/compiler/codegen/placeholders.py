@@ -6,7 +6,6 @@ import sys
 
 CASES = {
     "guards": "f(X) when self() =:= X -> X.",
-    "arithmetic": "f(X) -> X ++ [].",
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
     "dynamic calls": "f() -> fun erlang:self/0.",
     "receive": "f() -> receive X -> X end.",

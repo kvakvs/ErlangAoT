@@ -101,6 +101,14 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "throw", 1},
     BuiltinName{"erlang", "raise", 3},
     BuiltinName{"erlang", "function_exported", 3},
+    // Term access (plan step 37).
+    BuiltinName{"erlang", "setelement", 3},
+    BuiltinName{"erlang", "make_tuple", 2},
+    BuiltinName{"erlang", "make_tuple", 3},
+    BuiltinName{"erlang", "tuple_to_list", 1},
+    BuiltinName{"erlang", "list_to_tuple", 1},
+    BuiltinName{"erlang", "++", 2},
+    BuiltinName{"erlang", "--", 2},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

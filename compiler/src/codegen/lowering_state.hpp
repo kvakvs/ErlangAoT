@@ -239,8 +239,8 @@ llvm::Value *lower_dynamic_call(ExpressionLowering &state, const ast::Expression
                                 const ast::CallExpression &call);
 // Call apply(Fun, Args) or apply(M, F, Args) with the list unpacked into the registers at run time.
 llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
-// Call bridge builtin `builtin` (abi::v1::bridge_builtins index) with the call's arguments through the bridge service.
-llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, const ast::CallExpression &call);
+// Call bridge builtin `builtin` (abi::v1::bridge_builtins index) on `values` through the bridge service.
+llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::span<llvm::Value *const> values);
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
 } // namespace erlang_aot::codegen

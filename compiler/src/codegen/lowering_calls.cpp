@@ -39,22 +39,31 @@ void propagate_failure(ExpressionLowering &state) {
 }
 
 namespace {
-// Allocate a word-aligned borrowed argument array; zero arity passes an unused null pointer.
-llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &call) {
+// Store `values` in a word-aligned borrowed array of their count (at least one).
+llvm::Value *word_array(ExpressionLowering &state, std::span<llvm::Value *const> values) {
     auto &builder = state.builder;
-    if (call.arguments.empty()) {
-        return llvm::ConstantPointerNull::get(builder.getPtrTy());
-    }
-    auto *count = llvm::ConstantInt::get(state.word, call.arguments.size());
+    auto *count = llvm::ConstantInt::get(state.word, values.size());
     auto *array = builder.CreateAlloca(state.word, count, "call.arguments");
     const llvm::Align alignment(state.word->getBitWidth() / 8);
     array->setAlignment(alignment);
-    for (std::size_t i = 0; i < call.arguments.size(); ++i) {
-        auto *value = state.values.at(&state.module.syntax->expression(call.arguments[i]));
+    for (std::size_t i = 0; i < values.size(); ++i) {
         auto *slot = builder.CreateGEP(state.word, array, llvm::ConstantInt::get(state.word, i));
-        builder.CreateAlignedStore(value, slot, alignment);
+        builder.CreateAlignedStore(values[i], slot, alignment);
     }
     return array;
+}
+
+// Allocate a word-aligned borrowed argument array; zero arity passes an unused null pointer.
+llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &call) {
+    if (call.arguments.empty()) {
+        return llvm::ConstantPointerNull::get(state.builder.getPtrTy());
+    }
+    std::vector<llvm::Value *> values;
+    values.reserve(call.arguments.size());
+    for (const auto &id : call.arguments) {
+        values.push_back(state.values.at(&state.module.syntax->expression(id)));
+    }
+    return word_array(state, values);
 }
 
 // Import only batch-resolved exported entries, using exactly the current generic ABI signature.
@@ -77,17 +86,17 @@ llvm::Function *callee_declaration(ExpressionLowering &state, const semantic::Fu
 }
 } // namespace
 
-llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, const ast::CallExpression &call) {
+llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::span<llvm::Value *const> values) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
+    auto *array = values.empty() ? llvm::ConstantPointerNull::get(builder.getPtrTy()) : word_array(state, values);
     auto *slot = root_slot(state);
     auto service = output.getOrInsertFunction(
         services::symbol<services::Builtin>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(),
                                 {builder.getPtrTy(), state.word, builder.getPtrTy(), builder.getPtrTy()}, false));
-    builder.CreateCall(
-        service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, builtin), arguments(state, call), slot},
-        "builtin.outcome");
+    builder.CreateCall(service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, builtin), array, slot},
+                       "builtin.outcome");
     // Every error and failure is in the checked channel: the builtin has no semantic rejection of its own.
     propagate_failure(state);
     return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "builtin.value");

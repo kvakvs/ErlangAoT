@@ -137,7 +137,10 @@
   builtin of their name. Compiler: catalog builtins without an inline operation (`function_exported/3`) are body
   builtins with `ServiceResolution::builtin` lowered to `erlang_aot_builtin_v1`; `fun F/A` of an auto-imported
   catalog builtin is recorded by `resolve_services` (`Function::builtin_funs`) and becomes the external entry
-  `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported.
+  `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported. Step 37: term-access family (`term_access_builtins()`:
+  `setelement`, `make_tuple/2,3`, `tuple_to_list`, `list_to_tuple`, `'++'`, `'--'`); `A ++ B`/`A -- B` lower to the
+  bridge (`binary_value`), so the `arithmetic` capability is implemented. Long-running builtins run to completion
+  until plan step 43A adds traps (`TODO(step 43A)`).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

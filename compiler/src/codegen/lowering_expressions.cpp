@@ -6,6 +6,7 @@
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
+#include <erlang_aot/abi/builtins.hpp>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <stdexcept>
@@ -107,6 +108,16 @@ llvm::Value *generated_call(ExpressionLowering &state, const ast::Expression &ex
                                                               : lower_call(state, expression, call);
 }
 
+// The evaluated values of a call's arguments, in order.
+std::vector<llvm::Value *> call_arguments(ExpressionLowering &state, const ast::CallExpression &call) {
+    std::vector<llvm::Value *> arguments;
+    arguments.reserve(call.arguments.size());
+    for (const auto &id : call.arguments) {
+        arguments.push_back(state.values.at(&state.module.syntax->expression(id)));
+    }
+    return arguments;
+}
+
 // Lower services with lowerings of their own: apply/2,3, bridge builtins and compound guard tests; null for others.
 llvm::Value *special_service(ExpressionLowering &state, const ast::Expression &expression,
                              const semantic::ServiceResolution &service, const ast::CallExpression &call) {
@@ -114,7 +125,7 @@ llvm::Value *special_service(ExpressionLowering &state, const ast::Expression &e
         return lower_apply(state, expression, call);
     }
     if (service.builtin) {
-        return lower_builtin(state, *service.builtin, call);
+        return lower_builtin(state, *service.builtin, call_arguments(state, call));
     }
     if (service.operation == abi::v1::ImmediateOperation::is_integer_range) {
         return lower_integer_range(state, call);
@@ -138,17 +149,27 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
         return value;
     }
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
-        std::vector<llvm::Value *> arguments;
-        arguments.reserve(call.arguments.size());
-        for (const auto &id : call.arguments) {
-            arguments.push_back(state.values.at(&state.module.syntax->expression(id)));
-        }
-        return lower_binary_part(state, arguments);
+        return lower_binary_part(state, call_arguments(state, call));
     }
     auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
     auto *right =
         call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
     return lower_operation(state, operation(service->second.operation), left, right);
+}
+
+// Bridge indexes of the list operators' builtins.
+constexpr auto APPEND = abi::v1::find_bridge_builtin("erlang", "++", 2).value_or(0);
+constexpr auto SUBTRACT = abi::v1::find_bridge_builtin("erlang", "--", 2).value_or(0);
+static_assert(abi::v1::find_bridge_builtin("erlang", "++", 2) && abi::v1::find_bridge_builtin("erlang", "--", 2));
+
+// List operators call their bridge builtins; every other binary operator uses the shared checked services.
+llvm::Value *binary_value(ExpressionLowering &state, const ast::BinaryExpression &binary) {
+    const std::array values{state.values.at(&state.module.syntax->expression(binary.left)),
+                            state.values.at(&state.module.syntax->expression(binary.right))};
+    if (binary.operation == ast::BinaryOperator::append || binary.operation == ast::BinaryOperator::subtract_list) {
+        return lower_builtin(state, binary.operation == ast::BinaryOperator::append ? APPEND : SUBTRACT, values);
+    }
+    return lower_operation(state, operation(semantic::immediate_operator(binary.operation)), values[0], values[1]);
 }
 
 // Parentheses and begin/end blocks yield the value of their (last) inner expression.
@@ -176,9 +197,7 @@ llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
         return lower_body_match(state, *match);
     }
     if (const auto *binary = std::get_if<ast::BinaryExpression>(&expression.value)) {
-        return lower_operation(state, operation(semantic::immediate_operator(binary->operation)),
-                               state.values.at(&state.module.syntax->expression(binary->left)),
-                               state.values.at(&state.module.syntax->expression(binary->right)));
+        return binary_value(state, *binary);
     }
     if (const auto inner = forwarded(expression.value)) {
         return state.values.at(&state.module.syntax->expression(*inner));

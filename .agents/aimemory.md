@@ -294,6 +294,10 @@ Step facts beyond the plan record:
   (builtin_funs) applied after the loop. Capability "guards" notimpl fires for services without operation unless
   apply()/builtin. OTP oracle constant-folds apply(erlang, abs, [a]) with literals -> warnings_as_errors failure:
   route via id(). erlfmt beams live in thirdparty/tools/erlfmt/_build/local.
+- 37: OTP auto-imports setelement/3, tuple_to_list/1, list_to_tuple/1 but NOT make_tuple/2,3 (oracle lint
+  undefined_function). `--` uses exact order (CMP_TERM = erts_cmp exact): [1,1.0,1]--[1.0] = [1,1]. Term::list_elements
+  and with_tuple_element are unimplemented (link errors): walk head/tail, rebuild via tuple(). User: long-running
+  builtins must later run in interruptible portions -> TODO(step 43A) markers + plan step 43A, not now.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

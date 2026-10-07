@@ -1,3 +1,4 @@
+#include "support.hpp"
 #include <array>
 #include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/calls.hpp>
@@ -17,16 +18,9 @@ namespace erlang_aot::runtime {
 namespace {
 using abi::v1::ErrorReason;
 using Op = abi::v1::ImmediateOperation;
-using Arguments = std::span<const Word>;
-
-// Record an Erlang error with an optional payload, as generated code does.
-Word raise(ProcessContext &context, ErrorReason reason, Word payload = 0) {
-    erlang_aot_raise_v2(&context, reason, payload);
-    return 0;
-}
-
-// Whether a service already recorded a failure; its outcome then needs no error of its own.
-bool failed(ProcessContext &context) { return context.generated_calls().failure().has_value(); }
+using builtins::Arguments;
+using builtins::failed;
+using builtins::raise;
 
 // The true or false atom.
 Word boolean(ProcessContext &context, bool value) {
@@ -149,7 +143,7 @@ Word function_exported(ProcessContext &context, Arguments arguments) {
         context.generated_calls().fail_service(abi::v1::Status::invalid_argument);
         return 0;
     }
-    const auto arity = abi::v1::NativeIntegerEncoding::decode(arguments[2]);
+    const auto arity = builtins::small(arguments[2]);
     if (!module->is_atom() || !function->is_atom() || !arity) {
         return raise(context, ErrorReason::badarg);
     }
@@ -236,8 +230,12 @@ constexpr std::array ERLANG_BUILTINS{
     BuiltinEntry{"erlang", "raise", 3, raise_stack},
     BuiltinEntry{"erlang", "function_exported", 3, function_exported},
 };
-static_assert(ERLANG_BUILTINS.size() == abi::v1::bridge_builtins.size());
 } // namespace
 
 std::span<const BuiltinEntry> erlang_builtins() noexcept { return ERLANG_BUILTINS; }
+
+std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept {
+    static const std::array families{erlang_builtins(), term_access_builtins()};
+    return families;
+}
 } // namespace erlang_aot::runtime

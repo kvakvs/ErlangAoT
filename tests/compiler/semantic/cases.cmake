@@ -88,6 +88,9 @@ semantic_case(bridge_call "-module(a). f() -> {halt(), erlang:function_exported(
 semantic_case(bridge_unqualified "-module(a). f() -> function_exported(a, f, 0)." 1
     "undefined function a:function_exported/3")
 semantic_case(bridge_unknown "-module(a). f() -> erlang:no_such_builtin(1)." 1 "unknown module erlang")
+semantic_case(list_operators "-module(a). f(X) -> {X ++ [1], X -- [1], setelement(1, {a}, X), tuple_to_list({X})}." 0 "^$")
+semantic_case(list_operator_guard "-module(a). f(X) when X ++ [] =:= [] -> X." 1 "illegal guard expression")
+semantic_case(make_tuple_unqualified "-module(a). f() -> make_tuple(1, a)." 1 "undefined function a:make_tuple/2")
 semantic_case(variable_fun "-module(a). f(M) -> fun M:f/0." 0 "^$")
 semantic_case(variable_fun_unbound "-module(a). f() -> fun M:f/0." 1 "variable_fun_unbound.erl:1:20: unbound variable M")
 semantic_case(catch_expr "-module(a). f() -> catch g(). g() -> 1." 0 "^$")

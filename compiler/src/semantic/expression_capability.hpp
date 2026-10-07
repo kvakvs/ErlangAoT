@@ -19,7 +19,9 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::IntegerLiteral &) const;
     std::string_view operator()(const ast::CharacterLiteral &) const;
-    std::string_view operator()(const ast::UnaryExpression &) const;
+
+    // Every unary operator lowers through the checked numeric/boolean services.
+    std::string_view operator()(const ast::UnaryExpression &) const { return {}; }
 
     std::string_view operator()(const ast::CallExpression &) const { return {}; }
 
