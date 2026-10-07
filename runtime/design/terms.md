@@ -75,7 +75,7 @@ Cons cells have no header; they contain exactly a head term and a tail term.
 | `RefcBinaryCell` | 6 words | Bit offset/length, `shared_ptr` to an off-heap buffer, off-heap list link; moved by its relocation hook |
 | `ExternalFunctionCell` | 4 words | Module/name terms traced; arity untraced |
 | `ClosureCell` | 3 words | Untraced callable registry ID and count, followed by traced capture slots |
-| `NativeRecordPrefix` | 3 words | Descriptor ID/count followed by traced field slots |
+| `NativeRecordCell` | 2 words | Runtime `RecordDefinition` address followed by traced field slots |
 
 All variable payloads follow fixed prefixes as separately allocated storage, without
 flexible arrays or fake `[1]` members. Future allocation must check count arithmetic,

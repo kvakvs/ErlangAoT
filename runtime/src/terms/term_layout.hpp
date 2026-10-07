@@ -11,6 +11,10 @@
 #include <type_traits>
 #include <vector>
 
+namespace erlang_aot::runtime {
+struct RecordDefinition;
+}
+
 namespace erlang_aot::runtime::detail::layout {
 using Bignum = boost::multiprecision::cpp_int;
 
@@ -139,12 +143,11 @@ struct alignas(Word) ClosureCell final {
     Word capture_count_;
 };
 
-struct alignas(Word) NativeRecordPrefix final {
-    // Identify the prefix followed by field_count_ Term slots.
+struct alignas(Word) NativeRecordCell final {
+    // The header count is 1 plus the field count; the field values follow in definition order.
     BoxHeader header_;
-    // Registry identity is untraced; each trailing field is traced.
-    Word descriptor_;
-    Word field_count_;
+    // Untraced address of the runtime's definition captured at construction (docs/native-records.md).
+    const RecordDefinition *definition_;
 };
 
 static_assert(static_cast<unsigned>(BoxedKind::empty_list) < (1U << BoxHeader::BOXED_KIND_BITS));
@@ -162,7 +165,7 @@ static_assert(offsetof(FloatCell, value_) == sizeof(Word));
 static_assert(sizeof(RemoteIdentityCell) == 3 * sizeof(Word));
 static_assert(sizeof(HeapBinaryCell) == 2 * sizeof(Word));
 static_assert(sizeof(ExternalFunctionCell) == 4 * sizeof(Word));
-static_assert(sizeof(NativeRecordPrefix) == 3 * sizeof(Word));
+static_assert(sizeof(NativeRecordCell) == 2 * sizeof(Word));
 static_assert(sizeof(BignumCell) % sizeof(Word) == 0);
 static_assert(alignof(BignumCell) >= alignof(Word));
 static_assert(sizeof(ClosureCell) == 3 * sizeof(Word));
@@ -179,5 +182,5 @@ static_assert(std::is_trivially_copyable_v<BoxHeader> && std::is_trivially_copya
               std::is_trivially_copyable_v<ConsCell> && std::is_trivially_copyable_v<TupleCell> &&
               std::is_trivially_copyable_v<KeyValuePair> && std::is_trivially_copyable_v<MapCell> &&
               std::is_trivially_copyable_v<HeapBinaryCell> && std::is_trivially_copyable_v<ExternalFunctionCell> &&
-              std::is_trivially_copyable_v<ClosureCell> && std::is_trivially_copyable_v<NativeRecordPrefix>);
+              std::is_trivially_copyable_v<ClosureCell> && std::is_trivially_copyable_v<NativeRecordCell>);
 } // namespace erlang_aot::runtime::detail::layout

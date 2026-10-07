@@ -42,8 +42,9 @@ are external, others internal.
 ## Module registration
 
 Each module emits `eav1_<hex module>__0.descriptor` and `.register`. The
-descriptor holds ABI version, term width, export table and atom spellings
-(UTF-8 pointer/size pairs). Registration calls
+descriptor holds ABI version, term width, export table, atom spellings
+(UTF-8 pointer/size pairs) and native record descriptors (module, name and field
+atom slots, export flag; [native records](native-records.md#representation)). Registration calls
 `erlang_aot_register_module_v4(Runtime*)`, which validates version/width and all
 exports, interns atoms, builds a frozen registry and publishes it with the code
 image in one transaction. Duplicate modules never replace code; any failure
@@ -211,7 +212,9 @@ const TermWord *)` signature as a host entry calling
 Generated code calls checked C++ services: `erlang_aot_exact_v1` (exact
 equality), `erlang_aot_immediate_v1` (immediate predicates/queries),
 `erlang_aot_construct_v1`, `erlang_aot_inspect_v1`, `erlang_aot_integer_v1`,
-`erlang_aot_float_v1`, `erlang_aot_map_v1`, `erlang_aot_bits_v1`. Each returns
+`erlang_aot_float_v1`, `erlang_aot_map_v1`, `erlang_aot_bits_v1`,
+`erlang_aot_record_v1` (native record make/get/update/match/test under a
+`RecordCheck`; outcomes `bad_record`, `bad_field`, `no_match`). Each returns
 success, semantic error (`badarg`/`badarith`/...) or infrastructure failure and
 writes output only on success. `erlang_aot_display_v1` ([output.hpp](../abi/include/erlang_aot/abi/output.hpp))
 prints one `erlang:display/1` line and yields `true`; it has no semantic error.
@@ -248,3 +251,5 @@ success.
 | 2 | Checked failure channel |
 | 3 | Atom spellings and slots in descriptors |
 | 4 | Mandatory generated root scopes |
+| 5 | Explicit process frames and transfers |
+| 6 | Native record descriptors in module descriptors, `erlang_aot_record_v1` |

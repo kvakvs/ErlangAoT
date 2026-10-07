@@ -1,4 +1,6 @@
 #include "atoms.hpp"
+#include <algorithm>
+#include <erlang_aot/abi/records.hpp>
 
 namespace erlang_aot::runtime {
 namespace {
@@ -40,6 +42,37 @@ CodeResult<void> bind_metadata(AtomStorage &storage, const abi::v1::ModuleDescri
     }
     return {};
 }
+
+// A record names only slots of its own module, so its atoms are bound before any cell can use them.
+bool valid_record(const abi::v1::ModuleDescriptor &module, const abi::v1::RecordDescriptor &record) {
+    const auto slot = [&](std::size_t index) { return index < module.atom_count; };
+    if (record.module != &module || !slot(record.module_atom) || !slot(record.name_atom) ||
+        (record.field_count && !record.fields)) {
+        return false;
+    }
+    return std::ranges::all_of(std::span(record.fields, record.field_count), slot);
+}
+
+// Bind every record definition to the module's atom words in descriptor order.
+CodeResult<void> bind_records(ModuleAtoms &bindings, const abi::v1::ModuleDescriptor &descriptor) {
+    if (descriptor.record_count && !descriptor.records) {
+        return std::unexpected(CodeError::invalid_module);
+    }
+    const auto word = [&](std::size_t slot) { return bindings.slots[slot].word(); };
+    bindings.records.reserve(descriptor.record_count);
+    for (const auto &record : std::span(descriptor.records, descriptor.record_count)) {
+        if (!valid_record(descriptor, record)) {
+            return std::unexpected(CodeError::invalid_module);
+        }
+        RecordDefinition bound{&record, word(record.module_atom), word(record.name_atom), record.exported != 0, {}};
+        bound.fields.reserve(record.field_count);
+        for (const auto slot : std::span(record.fields, record.field_count)) {
+            bound.fields.push_back(word(slot));
+        }
+        bindings.records.push_back(std::move(bound));
+    }
+    return {};
+}
 } // namespace
 
 CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
@@ -60,6 +93,9 @@ CodeResult<std::shared_ptr<const ModuleAtoms>> bind_atoms(AtomStorage &storage,
             return std::unexpected(CodeError::resource_limit);
         }
         bindings->slots.push_back(*term);
+    }
+    if (const auto records = bind_records(*bindings, descriptor); !records) {
+        return std::unexpected(records.error());
     }
     return bindings;
 }

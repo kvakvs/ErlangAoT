@@ -34,6 +34,21 @@ TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot)
     return atoms->slots[slot].word();
 }
 
+const RecordDefinition *CodeServer::record_definition(const void *descriptor) const noexcept {
+    for (const auto &[name, module] : modules_) {
+        const auto *atoms = module->atoms();
+        if (!atoms) {
+            continue;
+        }
+        for (const auto &record : atoms->records) {
+            if (record.descriptor == descriptor) {
+                return &record;
+            }
+        }
+    }
+    return nullptr;
+}
+
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);

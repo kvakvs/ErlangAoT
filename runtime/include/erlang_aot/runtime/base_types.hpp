@@ -66,6 +66,8 @@ enum class TermKind : std::uint8_t {
     map,
     // Immutable packed bits: an inline heap binary or a view of an off-heap buffer.
     bitstring,
+    // An OTP 29 native record: a captured definition and its field values.
+    native_record,
 };
 
 // Private object kinds distinguish layouts; these numeric IDs are provisional.

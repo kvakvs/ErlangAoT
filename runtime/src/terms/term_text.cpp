@@ -1,4 +1,5 @@
 #include "term_text.hpp"
+#include "records.hpp"
 #include <erlang_aot/abi/equality.hpp>
 #include <new>
 #include <optional>
@@ -17,16 +18,16 @@ void TextOutput::append(std::string_view text) {
 } // namespace detail
 
 namespace {
-enum class FrameKind : std::uint8_t { tuple, list, map };
+enum class FrameKind : std::uint8_t { tuple, list, map, record };
 
 struct Frame {
     // Tuple under traversal, or the unprinted remainder of a list spine.
     Term rest;
-    // Map associations in print order; empty for tuples and lists.
+    // Map associations or record fields in print order; empty for tuples and lists.
     std::vector<std::pair<Term, Term>> entries;
-    // Next tuple field or map position (keys even, values odd); lists count printed elements.
+    // Next tuple field, record field or map position (keys even, values odd); lists count printed elements.
     std::size_t next = 0;
-    // Tuple arity or twice the map size.
+    // Tuple arity, record field count or twice the map size.
     std::size_t count = 0;
     // Selects separators and how the next child is found.
     FrameKind kind = FrameKind::tuple;
@@ -98,7 +99,30 @@ class Renderer final {
             frames_.push_back(Frame{term, {}, 0, *size, FrameKind::tuple});
             return {};
         }
+        if (term.is_native_record()) {
+            return open_record(term);
+        }
         return term.is_map() ? open_map(term) : TermResult<void>{std::unexpected(TermError::not_implemented)};
+    }
+
+    // Native records print as #Module:Name{ with their fields in definition order.
+    TermResult<void> open_record(const Term &term) {
+        const auto identity = detail::record_identity(term);
+        auto fields = term.record_fields();
+        if (!identity || !fields) {
+            return std::unexpected(identity ? fields.error() : identity.error());
+        }
+        out_.append("#");
+        const auto module = detail::print_atom(identity->first, style_, out_);
+        out_.append(":");
+        const auto name = detail::print_atom(identity->second, style_, out_);
+        if (!module || !name) {
+            return std::unexpected(module ? name.error() : module.error());
+        }
+        out_.append("{");
+        const auto count = fields->size();
+        frames_.push_back(Frame{Term{}, std::move(*fields), 0, count, FrameKind::record});
+        return {};
     }
 
     // Display style prints printable byte lists as strings; otherwise elements follow '['.
@@ -135,7 +159,21 @@ class Renderer final {
             out_.append("}");
             return std::nullopt;
         }
+        if (frame.kind == FrameKind::record) {
+            return advance_record(frame);
+        }
         return frame.kind == FrameKind::tuple ? advance_tuple(frame) : advance_map(frame);
+    }
+
+    // Each field prints its name, then its value; io_lib pads the '=' with spaces, the emulator does not.
+    Child advance_record(Frame &frame) {
+        const auto &field = frame.entries[frame.next];
+        out_.append(frame.next++ == 0 ? "" : ",");
+        if (const auto name = detail::print_atom(field.first, style_, out_); !name) {
+            return std::unexpected(name.error());
+        }
+        out_.append(style_ == TermStyle::write ? " = " : "=");
+        return field.second;
     }
 
     // Tuple fields are comma separated.

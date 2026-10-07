@@ -1,7 +1,7 @@
 #pragma once
 
 // TermFactory constructs numeric values, atoms and immutable containers with checked ownership.
-// Identity/callable/native-record constructors remain explicit reporting placeholders.
+// Identity and callable constructors remain explicit reporting placeholders.
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +18,7 @@
 
 namespace erlang_aot::runtime {
 class ContextLifetime;
+struct RecordDefinition;
 
 // Largest tuple arity, OTP's MAX_ARITYVAL (2^24 - 1); builtins building larger tuples raise badarg (plan 11 steps
 // 37-38), constructors report resource_limit.
@@ -75,8 +76,10 @@ class TermFactory final {
     TermResult<Term> closure(const ClosureDescriptor &descriptor, std::span<const Term> captures);
     // Rewrap an extracted callable identity without losing its captured values.
     TermResult<Term> function(const FunctionIdentity &identity);
-    // Construct a registered native record with all fields in descriptor order.
-    TermResult<Term> native_record(const NativeRecordDescriptor &descriptor, std::span<const Term> fields);
+    // Construct a native record of a registered definition with every field value in definition order.
+    TermResult<Term> native_record(const RecordDefinition &definition, std::span<const Term> fields);
+    // The same from ABI words, admitting each like Term::from_word.
+    TermResult<Term> native_record_words(const RecordDefinition &definition, std::span<const Word> fields);
 
   private:
     // Reject expired or moved-from bindings before reporting an unavailable constructor.

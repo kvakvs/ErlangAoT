@@ -2,8 +2,9 @@
 
 Decision of plan 11 step 31A (2026-10-07). It scopes the OTP 29 record forms
 beyond ordinary tuple records and fixes their representation, operations and
-errors. Steps 31B–31E implement it; until then the forms keep the
-`[heap expressions] notimpl` diagnostic. Tuple records are in
+errors. Step 31B implemented the runtime cells and `erlang_aot_record_v1`;
+31C–31E compile the forms, which keep the `[heap expressions] notimpl`
+diagnostic until then. Tuple records are in
 [terms](terms.md#records).
 
 OTP 29 marks native records experimental. Facts below come from the pinned

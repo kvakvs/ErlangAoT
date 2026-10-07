@@ -8,7 +8,8 @@ struct HeapObject {
     // Decoded view of one admitted object, read from its header; borrows words while a Term pins the heap.
     Word value;
     TermKind kind;
-    // Every word of the object; count is tuple arity, map entries, cons fields, limbs, 1 for floats or bits.
+    // Every word of the object; count is tuple arity, record fields, map entries, cons fields, limbs, 1 for floats
+    // or bits.
     std::span<const Word> words;
     std::size_t count;
 };

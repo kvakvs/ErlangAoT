@@ -83,7 +83,6 @@ class PortIdentity;
 class ReferenceIdentity;
 class FunctionIdentity;
 class ClosureDescriptor;
-class NativeRecordDescriptor;
 class TermFactory;
 
 namespace detail {
@@ -152,7 +151,6 @@ class Term final {
     bool is_binary() const;
     // Distinguish native records from traditional tuple-backed records.
     bool is_native_record() const;
-    bool is_native_record(const NativeRecordDescriptor &descriptor) const;
 
     // Extract bounded or lossless decimal integer values; narrowing checks range.
     TermResult<std::int64_t> integer_value() const;
@@ -213,12 +211,10 @@ class Term final {
     TermResult<Term> bit_slice(std::size_t offset, std::size_t count) const;
     TermResult<Term> concat_bits(const Term &suffix) const;
 
-    // Inspect registered native-record identity and fields by atom name.
-    TermResult<NativeRecordDescriptor> record_descriptor() const;
+    // Read a native record's field by atom name (unknown_field when absent), or every field name and value in
+    // definition order.
     TermResult<Term> record_field(const Term &name) const;
     TermResult<std::vector<std::pair<Term, Term>>> record_fields() const;
-    // Replace an existing field, preserving the descriptor and other values.
-    TermResult<Term> with_record_field(const Term &name, const Term &value) const;
 
     // Compare values using Erlang exact equality, not C++ handle identity.
     TermResult<bool> exactly_equal(const Term &other) const;

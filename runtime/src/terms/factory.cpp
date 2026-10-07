@@ -41,8 +41,4 @@ TermResult<Term> TermFactory::closure(const ClosureDescriptor &, std::span<const
 }
 
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
-
-TermResult<Term> TermFactory::native_record(const NativeRecordDescriptor &, std::span<const Term>) {
-    return unavailable("TermFactory::native_record");
-}
 } // namespace erlang_aot::runtime

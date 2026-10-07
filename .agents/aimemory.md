@@ -248,6 +248,11 @@ Step facts beyond the plan record:
 - 31A: native records split into 31B runtime, 31C local, 31D qualified/imported, 31E anonymous (contract
   docs/native-records.md). OTP probe modules (scratchpad/native) are transient. Key OTP quirks kept: local `X#r.f`
   checks only the name, `X#_.f` skips export check, failed external construction -> {badrecord,{M,N}}.
+- 31B: RecordDefinition (code_server.hpp) lives in ModuleAtoms::records; cell word 1 is a typed
+  `const RecordDefinition *` (NativeRecordCell::definition_; tidy forbids int-to-ptr casts). Walker `untraced()`
+  returns the untraced payload prefix; HeapCell slots of untraced cells are an empty span at the cell end. ABI
+  version bump needs cross_targets.py and linking/startup.cmake descriptor strings updated. Full gate > 10 min
+  when runtime changes: run it with run_in_background.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

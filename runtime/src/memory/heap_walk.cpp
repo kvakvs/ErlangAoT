@@ -5,9 +5,9 @@ namespace {
 using layout::BoxHeader;
 using Shape = HeapCell::Shape;
 
-// Turn a size check into a parse result that says whether the payload holds terms.
-std::expected<bool, WalkError> sized(bool valid, bool traced) {
-    return valid ? std::expected<bool, WalkError>(traced) : std::unexpected(WalkError::bad_size);
+// Turn a size check into a parse result: how many payload words precede the term slots.
+std::expected<std::size_t, WalkError> sized(bool valid, std::size_t untraced) {
+    return valid ? std::expected<std::size_t, WalkError>(untraced) : std::unexpected(WalkError::bad_size);
 }
 
 // A heap binary's count must match the bit length stored in its first payload word.
@@ -16,23 +16,27 @@ bool heap_binary_sized(std::span<const Word> payload) {
            payload.size() == layout::heap_binary_payload_words(payload[0], sizeof(Word));
 }
 
-// Check the payload size each admitted kind requires and report whether its words are terms.
-std::expected<bool, WalkError> traced(BoxedKind kind, std::span<const Word> payload) {
+// Check the payload size each admitted kind requires and count the untraced words before its terms; a payload
+// without terms is untraced throughout. A native record's definition word precedes its field values.
+std::expected<std::size_t, WalkError> untraced(BoxedKind kind, std::span<const Word> payload) {
+    const auto all = payload.size();
     switch (kind) {
     case BoxedKind::tuple:
-        return true;
+        return 0;
+    case BoxedKind::native_record:
+        return sized(!payload.empty(), 1);
     case BoxedKind::map:
-        return sized(payload.size() % 2 == 0, true);
+        return sized(payload.size() % 2 == 0, 0);
     case BoxedKind::filler:
-        return false;
+        return all;
     case BoxedKind::bignum:
-        return sized(payload.size() >= 2, false);
+        return sized(payload.size() >= 2, all);
     case BoxedKind::floating:
-        return sized(payload.size() == layout::float_payload_words(sizeof(Word)), false);
+        return sized(payload.size() == layout::float_payload_words(sizeof(Word)), all);
     case BoxedKind::heap_binary:
-        return sized(heap_binary_sized(payload), false);
+        return sized(heap_binary_sized(payload), all);
     case BoxedKind::refc_binary:
-        return sized(payload.size() == layout::refc_payload_words(sizeof(Word)), false);
+        return sized(payload.size() == layout::refc_payload_words(sizeof(Word)), all);
     default:
         return std::unexpected(WalkError::unknown_kind);
     }
@@ -56,9 +60,8 @@ std::expected<HeapCell, WalkError> parse_cell(std::span<const Word> rest) noexce
     }
     const auto words = rest.first(count + 1);
     const auto kind = BoxHeader::kind(first);
-    return traced(kind, words.subspan(1)).transform([&](bool slots) {
-        return HeapCell{words, slots ? words.subspan(1) : std::span<const Word>{},
-                        kind == BoxedKind::filler ? Shape::filler : Shape::boxed};
+    return untraced(kind, words.subspan(1)).transform([&](std::size_t prefix) {
+        return HeapCell{words, words.subspan(1 + prefix), kind == BoxedKind::filler ? Shape::filler : Shape::boxed};
     });
 }
 } // namespace erlang_aot::runtime::detail

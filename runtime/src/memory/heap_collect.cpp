@@ -101,7 +101,7 @@ void Copier::evacuate_slots(std::span<Word> object, const HeapCell &cell) noexce
     if (cell.slots.empty()) {
         return;
     }
-    const std::size_t first = cell.shape == HeapCell::Shape::cons ? 0 : 1;
+    const auto first = static_cast<std::size_t>(cell.slots.data() - cell.words.data());
     for (auto &slot : object.subspan(first, cell.slots.size())) {
         slot = evacuate(slot);
     }

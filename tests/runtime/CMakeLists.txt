@@ -52,6 +52,13 @@ target_include_directories(runtime_collection PRIVATE "${PROJECT_SOURCE_DIR}/run
 add_test(NAME runtime_collection COMMAND runtime_collection)
 
 # Graph copies between heaps: equality, sharing, shared off-heap buffers, survival and failure rollback.
+# Native record cells and services over hand-written descriptors; order checks use the private comparator.
+add_executable(runtime_records records.cpp)
+erlang_aot_project_options(runtime_records)
+target_link_libraries(runtime_records PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_records PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_records COMMAND runtime_records)
+
 add_executable(runtime_copy copy.cpp)
 erlang_aot_project_options(runtime_copy)
 target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)

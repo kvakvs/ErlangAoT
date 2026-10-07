@@ -41,16 +41,17 @@ llvm::Constant *exports(llvm::Module &output, const semantic::Module &module, ll
 void emit_registration(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word) {
     llvm::IRBuilder<> builder(output.getContext());
     auto *ptr = builder.getPtrTy();
-    auto *type = llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word, ptr, word);
+    auto *type =
+        llvm::StructType::get(builder.getInt32Ty(), builder.getInt32Ty(), ptr, word, ptr, word, ptr, word, ptr, word);
     const auto name = utf8(module.name);
     std::size_t count = 0;
     auto *table = exports(output, module, word, count);
     std::size_t atom_count = 0;
     auto *atoms = emit_atom_table(output, module, word, atom_count);
-    auto *data =
-        llvm::ConstantStruct::get(type, builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()),
-                                  spelling(output, name), llvm::ConstantInt::get(word, name.size()), table,
-                                  llvm::ConstantInt::get(word, count), atoms, llvm::ConstantInt::get(word, atom_count));
+    auto *data = llvm::ConstantStruct::get(
+        type, builder.getInt32(abi::v1::version), builder.getInt32(word->getBitWidth()), spelling(output, name),
+        llvm::ConstantInt::get(word, name.size()), table, llvm::ConstantInt::get(word, count), atoms,
+        llvm::ConstantInt::get(word, atom_count), llvm::ConstantPointerNull::get(ptr), llvm::ConstantInt::get(word, 0));
     const auto prefix = semantic::encode_symbol({name, "", 0});
     auto *descriptor =
         new llvm::GlobalVariable(output, type, true, llvm::GlobalValue::ExternalLinkage, data, prefix + ".descriptor");

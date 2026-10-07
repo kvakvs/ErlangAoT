@@ -734,13 +734,33 @@ record tests, plus equality, order, `display` text, copying, collection,
 walking and verification.
 
 - Success criteria
-  - [ ] Services implement the 31A acceptance table and error terms.
-  - [ ] Cells survive collection and copies between heaps; forged descriptor
+  - [x] Services implement the 31A acceptance table and error terms.
+  - [x] Cells survive collection and copies between heaps; forged descriptor
     words are rejected.
 - Tests
-  - [ ] Runtime tests with registered hand-written descriptors: every
+  - [x] Runtime tests with registered hand-written descriptors: every
     operation and error, order against tuples/maps, printing, copy and
     collection.
+- Evidence (2026-10-07): no new OTP facts (31A table). ABI revision 6:
+  `ModuleDescriptor::records`/`record_count` (the compiler emits an empty
+  table until 31C) and `abi/records.hpp` (`RecordDescriptor`,
+  `erlang_aot_record_v1` with `RecordOperation` make/get/update/match/test,
+  `RecordCheck` any/name/module_name/exported_module_name/exported_or_module,
+  `RecordOutcome`). Registration binds descriptors to atom words in
+  `ModuleAtoms::records`; a descriptor naming another module is
+  `invalid_module`. Cell `native_record` = header, untraced
+  `const RecordDefinition *`, values in definition order; construction
+  refuses unregistered definitions (`wrong_owner`) and wrong field counts.
+  Walker slots skip the definition word (collector and verifier use the slot
+  span); term order tuple < native record < map; `display`/`~w` text
+  `#m:r{a=1}` / `#m:r{a = 1}`. New CTest `runtime_records` (every check,
+  `bad_record`/`bad_field` payloads, update immutability, match/test
+  `no_match`, numeric vs exact order, nested printing, copy, collection,
+  source teardown); `codegen_cross_targets` and `linking_startup` expect
+  revision 6. Fresh Windows x64 Debug (clang-cl): fast 165/165, full `-j 12`
+  169/169 in 122 s; after two tidy fixes (typed cell pointer, swappable
+  parameters) fast 165/165 again; Lizard 0 warnings; tidy 283 changed units
+  pass. Logs `build/plan11-step31/`.
 
 <a id="step-31c"></a>
 

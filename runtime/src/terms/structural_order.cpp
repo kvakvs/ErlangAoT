@@ -3,6 +3,7 @@
 #include "bitstrings.hpp"
 #include "floats.hpp"
 #include "maps.hpp"
+#include "records.hpp"
 #include <algorithm>
 #include <new>
 #include <stdexcept>
@@ -27,14 +28,16 @@ TermResult<unsigned> rank(const Term &term) {
     case TermKind::tuple:
     case TermKind::empty_tuple:
         return 2;
-    case TermKind::map:
+    case TermKind::native_record:
         return 3;
-    case TermKind::empty_list:
+    case TermKind::map:
         return 4;
-    case TermKind::list:
+    case TermKind::empty_list:
         return 5;
-    case TermKind::bitstring:
+    case TermKind::list:
         return 6;
+    case TermKind::bitstring:
+        return 7;
     default:
         return std::unexpected(TermError::invalid_encoding);
     }
@@ -102,6 +105,59 @@ TermResult<int> maps(const Pair &values, std::vector<Pair> &pending) {
     return 0;
 }
 
+// Order two atom words of records by spelling.
+int atom_words(const Pair &values, Word left, Word right) {
+    return atoms(TermAccess::child(values.left, left).value(), TermAccess::child(values.right, right).value(), false);
+}
+
+// Definitions order by module, name, export flag (false first), then field count.
+int identities(const Pair &values, const RecordDefinition &lhs, const RecordDefinition &rhs) {
+    if (const auto order = atom_words(values, lhs.module, rhs.module); order != 0) {
+        return order;
+    }
+    if (const auto order = atom_words(values, lhs.name, rhs.name); order != 0) {
+        return order;
+    }
+    if (lhs.exported != rhs.exported) {
+        return lhs.exported ? 1 : -1;
+    }
+    if (lhs.fields.size() != rhs.fields.size()) {
+        return lhs.fields.size() < rhs.fields.size() ? -1 : 1;
+    }
+    return 0;
+}
+
+// After their identities, definitions order by field names in definition order.
+int definitions(const Pair &values, const RecordDefinition &lhs, const RecordDefinition &rhs) {
+    if (const auto order = identities(values, lhs, rhs); order != 0) {
+        return order;
+    }
+    for (std::size_t i = 0; i < lhs.fields.size(); ++i) {
+        if (const auto order = atom_words(values, lhs.fields[i], rhs.fields[i]); order != 0) {
+            return order;
+        }
+    }
+    return 0;
+}
+
+// Records compare their captured definitions, then their values in definition order, first field first.
+TermResult<int> records(const Pair &values, std::vector<Pair> &pending) {
+    const auto lhs = record_view(values.left).value();
+    const auto rhs = record_view(values.right).value();
+    if (lhs.definition != rhs.definition) {
+        if (const auto order = definitions(values, *lhs.definition, *rhs.definition); order != 0) {
+            return order;
+        }
+    }
+    for (std::size_t i = lhs.values.size(); i > 0; --i) {
+        pending.push_back({TermAccess::child(values.left, lhs.values[i - 1]).value(),
+                           TermAccess::child(values.right, rhs.values[i - 1]).value(), values.exact});
+    }
+    return 0;
+}
+
+TermResult<int> same_rank(const Pair &values, std::vector<Pair> &pending);
+
 // Dispatch only validated parents; extracted children inherit their live owning storage. One word names one term,
 // so identical words are equal without a walk, as in ERTS.
 TermResult<int> step(const Pair &values, std::vector<Pair> &pending) {
@@ -116,6 +172,11 @@ TermResult<int> step(const Pair &values, std::vector<Pair> &pending) {
     if (*lhs != *rhs) {
         return *lhs < *rhs ? -1 : 1;
     }
+    return same_rank(values, pending);
+}
+
+// Same-category containers queue their children; bitstrings and scalars compare at once.
+TermResult<int> same_rank(const Pair &values, std::vector<Pair> &pending) {
     if (values.left.is_tuple()) {
         return tuples(values, pending);
     }
@@ -124,6 +185,9 @@ TermResult<int> step(const Pair &values, std::vector<Pair> &pending) {
     }
     if (values.left.is_map()) {
         return maps(values, pending);
+    }
+    if (values.left.is_native_record()) {
+        return records(values, pending);
     }
     if (values.left.is_bitstring()) {
         return bit_order(values.left, values.right);

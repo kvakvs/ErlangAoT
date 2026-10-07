@@ -44,6 +44,7 @@ copying its words.
 | cons (no header) | 2 words in total | head, tail |
 | `tuple` | n element slots | all |
 | `map` | 2n slots: keys in exact term order, each followed by its value | all |
+| `native_record` | address of the runtime's `RecordDefinition`, then n field values in definition order | values |
 | `bignum` | sign word, then magnitude limbs, least significant first | none |
 | `floating` | 8 bytes: 1 word (64-bit) or 2 words (32-bit) | none |
 | `heap_binary` | bit length, then data bytes rounded up to words (at most 64 bytes) | none |
@@ -51,7 +52,7 @@ copying its words.
 | `filler` | n unused words | none |
 
 The `map` count is in words (entries = count / 2). Kinds not yet admitted
-(references, funs, closures, native records, external identities) follow the
+(references, funs, closures, external identities) follow the
 same rules when they arrive: identities and descriptors are registry IDs in
 untraced words, never owning C++ pointers.
 

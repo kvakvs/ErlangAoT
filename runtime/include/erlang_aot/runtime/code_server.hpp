@@ -26,6 +26,19 @@ class CodeImage {
     virtual ~CodeImage() = default;
 };
 
+// A native record definition bound to runtime atoms; native record cells point at it (docs/native-records.md).
+struct RecordDefinition final {
+    // The compiler's RecordDescriptor this was built from; a lookup key, never dereferenced at use sites.
+    const void *descriptor = nullptr;
+    // Atom words of the defining module and the record name.
+    Word module = 0;
+    Word name = 0;
+    // Whether the defining module exported the record when it was compiled.
+    bool exported = false;
+    // Field-name atom words in definition order.
+    std::vector<Word> fields;
+};
+
 struct ModuleAtoms final {
     // Explicit empty construction keeps Debug STL bookkeeping failures inside registration's catch boundary.
     ModuleAtoms() : slots(0) {}
@@ -34,6 +47,8 @@ struct ModuleAtoms final {
     const void *descriptor = nullptr;
     // Pin every initialized spelling in compiler slot order, including duplicate slots.
     std::vector<Term> slots;
+    // The module's native record definitions in descriptor order; never resized after registration.
+    std::vector<RecordDefinition> records;
 };
 
 struct ModuleDefinition final {
@@ -115,6 +130,8 @@ class CodeServer final {
     CodeResult<std::shared_ptr<const LoadedModule>> find_module(std::string_view name) const;
     // Resolve an initialized atom slot without allocation or spelling interning.
     TermResult<Word> atom_word(const void *descriptor, std::size_t slot) const noexcept;
+    // Find the bound definition of a registered module's record descriptor; null when none is registered.
+    const RecordDefinition *record_definition(const void *descriptor) const noexcept;
 
   private:
     // Find the immutable descriptor key without dereferencing image-owned storage.

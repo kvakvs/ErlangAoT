@@ -162,7 +162,11 @@
   same-runtime graph (`memory/copy` `GraphCopy`: iterative discovery keyed by address keeps sharing, one
   reservation, refc cells share buffers and link after commit); factories use `retain` (foreign = wrong_owner).
   Buffers charge the runtime account once (deleter releases); each process counts cells per buffer
-  (`HeapStorage::buffers_`) and charges a buffer once to its own budget. Revision-5 generated frames
+  (`HeapStorage::buffers_`) and charges a buffer once to its own budget. Step 31B: native record cells
+  (`native_record`: header, untraced `const RecordDefinition *`, values in definition order); module
+  registration binds `abi::v1::RecordDescriptor`s into `ModuleAtoms::records` (code server
+  `record_definition`); `erlang_aot_record_v1` (`terms/record_services`) makes/gets/updates/matches/tests
+  under a `RecordCheck`; walker slots skip the definition word. Revision-6 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells
   transactionally; backing allocation failure rolls back. Rooted runtime scratch buffers keep wide
