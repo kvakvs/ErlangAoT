@@ -125,11 +125,12 @@ CTests (123 fast) and 258 production quality units.
 
 ---
 
-## Completed steps 1–27E (compact record)
+## Completed steps 1–35 (compact record)
 
 Full step texts, criteria and per-step evidence are in Git history (last full
-versions: steps 1–8G at `a4e07bb`, steps 8H–27E at `9decf7a`). Every step below
-passed the common gate; per-step logs are in `build/plan11-step*/`.
+versions: steps 1–8G at `a4e07bb`, steps 8H–27E at `9decf7a`, steps 28–35 at
+`c82066f`). Every step below passed the common gate; per-step logs are in
+`build/plan11-step*/`.
 
 ### A. Baseline and fixtures
 
@@ -559,479 +560,151 @@ match. Compiler: one `INTEGER_BIT_LIMIT`; the lexer rejects longer literals
 like OTP's scanner, constant patterns past it are illegal. OTP golden
 `executables_integer_limit`.
 
-## F. Memory management (remaining)
-
 <a id="step-28"></a>
 
 ### 28. Copy term graphs between heaps
 
-Backlog: F05, F08–F11. Depends on: [8H](#step-8h).
+Done 2026-10-06 (no OTP behavior). `ProcessHeap::add`/`Term::copy_to`
+(`memory/copy`, `GraphCopy`): one iterative walk keyed by object address
+copies a foreign same-runtime graph with its sharing kept (unlike ERTS's
+flattening `copy_struct`) into one reservation; another runtime is
+`wrong_owner`, stale/expired sources fail. Off-heap buffers are shared, charged
+once runtime-wide (`detail::make_buffer` deleter) and once per process
+(`HeapStorage::buffers_`). Factories admit inputs via `retain`. New
+`runtime_copy` (every layout, shared towers, 100,000-deep lists, injected
+exhaustion leaving both heaps unchanged); `runtime_lifecycle_failure`
+`check_graph_copy`.
 
-Extend `Term::copy_to` to compound terms: size the source graph with the 8C
-walker, then copy into a destination heap fragment (BEAM `size_object` and
-`copy_struct`) with preserved internal sharing, destination budgets and
-rollback. Off-heap binaries gain a reference instead of being copied.
-
-- Success criteria
-  - [x] Copies compare equal and survive destruction or collection of the source
-    process.
-  - [x] A failed copy leaves both heaps and resource counts unchanged.
-- Tests
-  - [x] Runtime tests copying nested/shared graphs, maps, large binaries and
-    partial-byte bitstrings between contexts.
-  - [x] Destination exhaustion injected mid-copy.
-- Evidence (2026-10-06): no OTP behavior involved (no golden; `maint-29` not
-  consulted). `ProcessHeap::add`/`Term::copy_to` (`memory/copy`, `GraphCopy`):
-  immediates and same-runtime atoms pass through, same-heap terms keep their
-  identity, a foreign same-runtime graph is copied; another runtime is
-  `wrong_owner`, an expired or stale source `expired_context`/`stale_term`.
-  One iterative walk keyed by object address finds each distinct object once
-  (sharing kept, unlike ERTS's flattening `copy_struct`), one reservation
-  holds them all, pointers are rewritten to the copies; refc cells share the
-  buffer and are linked only after commit. Factories now admit inputs with
-  `ProcessHeap::retain`, still refusing foreign graphs. Off-heap accounting
-  reworked for shared buffers: the runtime-wide account is charged once per
-  buffer at creation and released by the buffer's deleter
-  (`detail::make_buffer`); each process counts its cells per buffer
-  (`HeapStorage::buffers_`, `hold_off_heap`/`drop_off_heap`) and charges a
-  buffer once to its own budget; `verify()` checks the counts and charge.
-  Tests: new `runtime_copy` (every layout incl. map with compound keys,
-  bignum, float, improper list, inline/off-heap/partial-byte bitstrings and
-  an off-heap slice copies equal and survives source collection and
-  teardown and its own collection; a 64-level shared tower copies in
-  3 words per level with each level's two fields one word; a 100,000-deep
-  nested list copies without recursion; two copies of `{B, Slice, B}` share
-  one buffer charged once per process and once runtime-wide; same-heap
-  identity, atoms without storage, factories refusing foreign inputs;
-  destination exhaustion before the reservation, at the second buffer hold
-  and after the holds, each leaving both heaps, the runtime account and
-  buffer references unchanged; cross-runtime, stale and expired sources);
-  `runtime_lifecycle_failure` `check_graph_copy` fails every host allocation
-  of a copy in turn (out_of_memory, empty destination, no leak, retry
-  succeeds); `runtime_containers` `ownership` now expects a copy. Fresh
-  Windows x64 Debug (clang-cl): fast 162/162, full `-j 12` 166/166 (130 s);
-  Lizard 0 warnings; tidy 71 changed units pass. Logs `build/plan11-step28/`.
-
-## G. Records, function values, dynamic calls
+### G. Records, function values, dynamic calls
 
 <a id="step-29"></a>
 
 ### 29. Lower record updates
 
-Backlog: F17. Depends on: [9](#step-9).
-
-- Success criteria
-  - [x] `Expr#r{f = V}` checks the record shape and raises `{badrecord, Value}`
-    like OTP; evaluation order matches OTP.
-- Tests
-  - [x] Golden programs for single/multi-field updates, nested records and
-    wrong-record values.
-- Evidence (2026-10-07): `maint-29` re-fetched, unchanged at `21776803`.
-  OTP (`erl_expand_records:record_update/5`) binds the non-literal update
-  values in source order, then evaluates the record, then matches
-  `{Name, _...}` of the declared arity or raises `{badrecord, Record}`
-  (`Expr#r{}` too). `semantic::expression_children` orders update values
-  before the record; `lowering_records` checks shape and tag (shared
-  `check_record` with access), extracts only the fields not updated and builds
-  a new tuple. `R#r{_ = V}` reports OTP's `meaningless use of _ in update of
-  record r`; update values are siblings (`X#r{a = Y = 1, b = Y}` is unbound,
-  `Y` is visible after). Former `#r{}#r{a = 1}` "unsupported" placeholders now
-  use `receive` or a native record declaration; the records corpus row
-  `rec_update_gate` is accepted (input digest updated, OTP `--check`
-  reproduces). OTP golden `executables_record_update` (single/multi-field,
-  order trace, nested and chained updates, a record from another module,
-  bindings, a 100,000-update loop, seven caught `badrecord` values, three
-  uncaught runs) passes all 8 combinations; 7 CLI cases in
-  `semantic/cases.cmake`; `avltree` diagnostics refreshed. Fresh Windows x64
-  Debug (clang-cl): fast 163/163; Lizard 0 warnings; tidy 38 changed units
-  pass. Logs `build/plan11-step29/`.
+Done 2026-10-07. OTP order: update values in source order, then the record,
+then the shape check (`{badrecord, R}`, also `Expr#r{}`); `R#r{_ = V}` is
+OTP's "meaningless use of _" error. `lowering_records` shares `check_record`
+with access and copies only untouched fields. OTP golden
+`executables_record_update`; records corpus row `rec_update_gate` accepted.
 
 <a id="step-30"></a>
 
 ### 30. Implement `record_info/2`
 
-Backlog: F17. Depends on: [29](#step-29).
+Done 2026-10-07. Compile-time pseudo-function (`semantic::record_info_call`)
+with erl_lint's messages (illegal record info, selector, tuple records only,
+illegal in guards); `lower_record_info` emits the field list or size. OTP
+golden `executables_record_info`.
 
-- Success criteria
-  - [x] `record_info(fields | size, r)` resolves at compile time; invalid uses
-    are diagnosed like OTP.
-- Tests
-  - [x] Golden programs and CLI diagnostics for unknown records and non-literal
-    arguments.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP facts
-  (`erl_lint:check_record_info_call/4`, live OTP 29.1.1 probes): non-atom
-  arguments are `illegal record info` at the call, a selector other than
-  `fields`/`size` at the selector, any name that is not an earlier tuple
-  record (unknown, later or native) `record_info/2 is only supported for tuple
-  records`; illegal in guards; a local `record_info/2` is `already defined`;
-  `size` is the tuple arity. `semantic::record_info_call`/`record_info` resolve
-  every unqualified `record_info/2` call (parentheses ignored); it has no
-  executable children and is skipped by call resolution, inference and
-  specialization; `lower_record_info` emits the field-name list or the size
-  constant, `module_atoms` adds the field names. Defaults may use it. Not
-  matched: guard wording (`illegal guard call`), `fun record_info/2` is the
-  closures capability. OTP golden `executables_record_info` (empty record,
-  included record, defaults, parenthesized arguments, comparison with
-  `#r.f`, comprehension, case) passes all 8 combinations; 8 CLI cases in
-  `semantic/cases.cmake`. Fresh Windows x64 Debug (clang-cl): fast 164/164,
-  full `-j 12` 168/168 in 119 s; Lizard 0 warnings; tidy 42 changed units
-  pass. Logs `build/plan11-step29/*30*`.
- 
 <a id="step-31"></a>
 
 ### 31. Implement native, qualified and inferred record forms
 
-Backlog: F03, F12, F17. Depends on: [30](#step-30), [23](#step-23).
-
-Scope the OTP 29 record forms beyond ordinary tuple records first; split into
-sub-steps if more than one representation is needed.
-
-- Success criteria
-  - [x] Each selected form has construction, access, update, matching,
-    comparison, printing, tracing and copying rules.
-  - [x] Unselected forms keep explicit unavailable diagnostics.
-- Tests
-  - [x] Golden programs per selected form, including errors and cross-module
-    use.
-- Evidence: closed by 31E (2026-10-07). Every form was selected (31A); rules
-  in `docs/native-records.md`, runtime in 31B, goldens
-  `executables_native_records`, `executables_native_external`,
-  `executables_native_anonymous`. Not selected and still unavailable: the
-  `records` module (`unknown module records`), `RECORD_EXT`, upgrades.
-
-Split on 2026-10-07 into 31A–31E: the three forms share one representation,
-but runtime cells, local records, cross-module forms and anonymous forms are
-separate reviewable changes. The step closes when 31E passes.
+Done 2026-10-07 through 31A–31E: all three OTP 29 forms share one
+representation (contract `docs/native-records.md`). Not selected and still
+unavailable: the `records` module, `RECORD_EXT`, upgrades.
 
 <a id="step-31a"></a>
 
 ### 31A. Decide the native record contract
 
-**Decision.** Depends on: [30](#step-30).
-
-- Success criteria
-  - [x] `docs/native-records.md` selects the forms, the representation
-    (descriptor plus `native_record` cell), every operation's acceptance and
-    error terms, compile-time rules, printing and order, and the kept
-    differences.
-- Tests
-  - [x] None beyond the gate (decision only).
-- Evidence (2026-10-07): `maint-29` re-fetched, unchanged at `21776803`.
-  Facts from the pinned sources and OTP 29.1.1 probes (scratch modules outside
-  Git): error terms `{badrecord, X}`, `{badrecord, {M, N}}` for failed external
-  construction, `{badfield, {{M, N}, F}}`, `{novalue, {{M, N}, F}}`; local and
-  anonymous access skip the module/export checks while update and patterns do
-  not; term order tuple < native record < map; `display` prints fields in
-  atom-index order (not reproducible; definition order chosen). All three
-  forms selected; `records` module, `RECORD_EXT` and upgrades not selected.
-  Documentation only: no source, test or build file changed, so the build
-  and test gate was not rerun (last gate: step 30).
+Done 2026-10-07 (decision). Error terms `{badrecord, X}`,
+`{badrecord, {M, N}}` for failed external construction,
+`{badfield, {{M, N}, F}}`, `{novalue, {{M, N}, F}}`; local/anonymous access
+skip export checks, update and patterns do not; order tuple < native record <
+map; `display` field order kept as definition order (difference).
 
 <a id="step-31b"></a>
 
 ### 31B. Add native record cells and runtime services
 
-Backlog: F03, F05, F12, F17. Depends on: [31A](#step-31a), [28](#step-28).
-
-`abi::v1::RecordDescriptor`, the `native_record` heap cell, checked services
-for construction, field access, update, field extraction for patterns and the
-record tests, plus equality, order, `display` text, copying, collection,
-walking and verification.
-
-- Success criteria
-  - [x] Services implement the 31A acceptance table and error terms.
-  - [x] Cells survive collection and copies between heaps; forged descriptor
-    words are rejected.
-- Tests
-  - [x] Runtime tests with registered hand-written descriptors: every
-    operation and error, order against tuples/maps, printing, copy and
-    collection.
-- Evidence (2026-10-07): no new OTP facts (31A table). ABI revision 6:
-  `ModuleDescriptor::records`/`record_count` (the compiler emits an empty
-  table until 31C) and `abi/records.hpp` (`RecordDescriptor`,
-  `erlang_aot_record_v1` with `RecordOperation` make/get/update/match/test,
-  `RecordCheck` any/name/module_name/exported_module_name/exported_or_module,
-  `RecordOutcome`). Registration binds descriptors to atom words in
-  `ModuleAtoms::records`; a descriptor naming another module is
-  `invalid_module`. Cell `native_record` = header, untraced
-  `const RecordDefinition *`, values in definition order; construction
-  refuses unregistered definitions (`wrong_owner`) and wrong field counts.
-  Walker slots skip the definition word (collector and verifier use the slot
-  span); term order tuple < native record < map; `display`/`~w` text
-  `#m:r{a=1}` / `#m:r{a = 1}`. New CTest `runtime_records` (every check,
-  `bad_record`/`bad_field` payloads, update immutability, match/test
-  `no_match`, numeric vs exact order, nested printing, copy, collection,
-  source teardown); `codegen_cross_targets` and `linking_startup` expect
-  revision 6. Fresh Windows x64 Debug (clang-cl): fast 165/165, full `-j 12`
-  169/169 in 122 s; after two tidy fixes (typed cell pointer, swappable
-  parameters) fast 165/165 again; Lizard 0 warnings; tidy 283 changed units
-  pass. Logs `build/plan11-step31/`.
+Done 2026-10-07. ABI revision 6: `RecordDescriptor`,
+`ModuleDescriptor::records`, `erlang_aot_record_v1` (make/get/update/match/
+test with `RecordCheck` modes); `native_record` cell (header, untraced
+`const RecordDefinition *`, values); walking, collection, copying, order and
+printing. `runtime_records`.
 
 <a id="step-31c"></a>
 
 ### 31C. Compile local native records
 
-Backlog: F17, F14. Depends on: [31B](#step-31b).
-
-`-record #r{...}` with literal defaults, local construction, access, update,
-patterns, guard field access and `is_record/2,3` on native records.
-
-- Success criteria
-  - [x] Results and errors match OTP; 31A compile-time rules diagnosed.
-- Tests
-  - [x] OTP golden program for local native records, including errors and
-    printing; CLI diagnostics for each compile-time rule.
-- Evidence (2026-10-07): `maint-29` unchanged. New OTP 29.1.1 facts (probes):
-  native construction evaluates the given fields in source order, a native
-  update evaluates the record before its values (tuple updates do the
-  opposite), `display` prints fields in atom-index order and the compiler
-  folds `#r{a=1} == #r{a=1.0}` to false (both recorded in
-  `docs/differences.md`). Semantic: native declarations and expressions no
-  longer report capabilities; literal defaults, uninitialized fields, unknown
-  construction fields, `#r.a`, `_ =` and guard construction use OTP's
-  messages; unknown fields in access, update and patterns are accepted (OTP
-  warns); `semantic::record_order` and `expression_children` give the OTP
-  evaluation order. Patterns plan `record_test` (module and name) and
-  `record_field` nodes. Codegen: `<prefix>.records` descriptor table (export
-  flag 0 until 31D), `lowering_native_records` (make/get name check/update
-  module check/match), `is_record/2` with a native name, `is_record/3` with an
-  atom and dynamic `is_record/2` test native records; `ErrorReason::badfield`
-  (20); `services::Record` with Clang-checked spellings on 7 targets.
-  `is_record/1` stays with step 52. OTP golden `executables_native_records`
-  (construction and update order traces, defaults incl. keyword name `div`
-  and folded/map/binary defaults, patterns incl. missing fields and a foreign
-  same-name record, guard access, seven caught errors, `is_record` forms,
-  name-only local access, order, a 100,000-update loop, three uncaught runs)
-  passes all 8 combinations; 10 CLI cases; placeholder tests now use `X#_.a`.
-  erlfmt cannot parse native record declarations: the fixture keeps them
-  unformatted. Fresh Windows x64 Debug (clang-cl): fast 166/166, full `-j 12`
-  170/170 in 146 s; after complexity fixes (Lizard 1, tidy 5) fast
-  166/166 again, Lizard 0 warnings, tidy 285 changed units pass. Logs `build/plan11-step31/`.
+Done 2026-10-07. `-record #r{...}`, construction in source order, update
+record-first, patterns (`record_test`/`record_field` plan nodes), guard
+access, `is_record/2,3`; `ErrorReason::badfield` (20). OTP golden
+`executables_native_records`. erlfmt cannot parse native record declarations
+(fixture partly unformatted).
 
 <a id="step-31d"></a>
 
 ### 31D. Compile qualified and imported native records
 
-Backlog: F17. Depends on: [31C](#step-31c).
-
-`-export_record`, `-import_record`, `#m:r` construction, access, update and
-patterns with the export rules.
-
-- Success criteria
-  - [x] Cross-module results and errors match OTP, including non-exported
-    records and modules outside the batch.
-- Tests
-  - [x] Cross-module OTP golden program; CLI diagnostics for attribute errors.
-- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes and the 31A
-  report: failed external construction raises `{badrecord, {M, N}}` (also
-  for own-module qualified non-exported records), then `{badfield, ...}`
-  before `{novalue, ...}`; external access/update need the export; an
-  external pattern needs it only when a field is listed. Semantic:
-  `-export_record` (before functions, native only, proper list) and
-  `-import_record` (no double import, no local definition) with erl_lint
-  messages; `external_record` resolves `#m:r` and imported names;
-  `Module::peers` gives codegen the batch. Codegen: external construction
-  checks the definition at compile time, lowers the defining module's
-  literal defaults in place (`ExpressionLowering::atom_owner`) and makes
-  with that module's now external `<prefix>.records` entry (export flag
-  set); access/update use `exported_module_name`, patterns
-  `module_name`/`exported_module_name`; `is_record/2` with an imported name
-  tests the import's module; `ErrorReason::novalue` (21). OTP golden
-  `executables_native_external` (defaults of another module incl. tuple,
-  list, binary and map literals, imported construction/update, own-module
-  qualified exported record, same-name local and foreign records in one
-  clause list, private-record patterns, guard access, four caught errors,
-  five uncaught construction failures) passes all 8 combinations; 9 CLI
-  cases. Fresh Windows x64 Debug (clang-cl): fast 167/167, full `-j 12`
-  171/171 in 129 s; after three tidy fixes fast 167/167 again, Lizard 0
-  warnings, tidy changed units pass. Logs `build/plan11-step31/`.
+Done 2026-10-07. `-export_record`/`-import_record` with erl_lint messages,
+`#m:r` forms resolved over `Module::peers`; external construction lowers the
+defining module's literal defaults in place; `ErrorReason::novalue` (21). OTP
+golden `executables_native_external`.
 
 <a id="step-31e"></a>
 
 ### 31E. Compile anonymous native record forms
 
-Backlog: F17. Depends on: [31D](#step-31d).
-
-`X#_.f`, `X#_{...}` and `#_{...}` patterns; closes step 31.
-
-- Success criteria
-  - [x] Results and errors match OTP; `#_{...}` as an expression is rejected.
-- Tests
-  - [x] OTP golden program for anonymous forms on local and foreign records.
-- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes: `X#_.f`
-  reads any native record (no export check), `X#_{...}` evaluates the record
-  first and needs it exported or local, `#_{}` matches any native record but
-  not a tuple, `#_{...}` as an expression is `native record '_' undefined`.
-  `semantic::anonymous_record`; codegen `lower_anonymous_record` (get `any`,
-  update `exported_or_module`); patterns use `any` or
-  `exported_or_module`. "Unsupported" placeholders now use the experimental
-  `compr_assign` feature, the last `heap expressions` capability. OTP golden
-  `executables_native_anonymous` (reads of local, exported and private
-  foreign records, update order and export rule, empty update, pattern
-  rules, guard access, five caught errors, two uncaught runs) passes all 8
-  combinations; 2 CLI cases. Fresh Windows x64 Debug (clang-cl): fast
-  168/168, full `-j 12` 172/172 in 124 s; after splitting
-  `validate_record` (tidy) fast 168/168 again, Lizard 0 warnings, tidy
-  changed units pass. The feature catalog still names step 29 as owner of
-  `heap expressions`, now used only by `compr_assign` and undefined records.
-  Logs `build/plan11-step31/`.
+Done 2026-10-07. `X#_.f` (any native record), `X#_{...}` (record first,
+exported or local), `#_{...}` patterns; `#_{...}` as an expression is OTP's
+"native record '_' undefined". OTP golden `executables_native_anonymous`.
+The `heap expressions` capability now covers only `compr_assign` and
+undefined records.
 
 <a id="step-32"></a>
 
 ### 32. Implement function values without captures
 
-Backlog: F03, F12, F18. Depends on: [23](#step-23), [19](#step-19).
-
-Represent `fun F/A` and `fun M:F/A` with retained code ownership.
-
-- Success criteria
-  - [x] Values compare, print and pass `is_function/1,2` like OTP.
-  - [x] Calling with wrong arity raises `{badarity, …}`; a non-function raises
-    `{badfun, …}`.
-- Tests
-  - [x] Golden programs passing, storing and calling local and remote function
-    values.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP facts
-  (`utils.c` `erts_cmp`, `erl_printf_term.c`, OTP 29.1.1 probes): every
-  `fun f/1` of a module is one value; order number < atom < fun < tuple, local
-  funs before external, local by module/index/env, external by M/F/A;
-  `F(Args)` evaluates `F` first, `{badfun, V}`, `{badarity, {F, Args}}`
-  (checked before the module), `undef`; local funs print `#Fun<M.I.Uniq>`
-  (index/uniq not reproducible: `docs/differences.md`). ABI revision 7
-  (`abi/funs.hpp` `FunDescriptor`, `ModuleDescriptor::funs`,
-  `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1`, `ErrorReason` 22-24);
-  runtime `fun_closure` cells (untraced `FunDefinition *`, captured values),
-  `CodeServer::fun_definition`, ordering, printing, `is_function/1,2`;
-  semantic `index_funs`/`Module::funs`, `fun_call`, `function F/A undefined`,
-  builtin funs and variable `fun M:F/A` stay `dynamic calls`; codegen
-  `<prefix>.funs`, `lowering_funs`, `erlang_aot.apply` marker lowered by
-  `lower_frames` to enter/tail transfers (pre-declared `.frame` globals
-  reused). Contract `docs/funs.md`. OTP golden `executables_fun_values`
-  (local/remote/self/unknown funs, equality and order, `is_function` in bodies
-  and guards, maps/tuples holding funs, higher-order helpers, a 100,000-step
-  tail loop and 20,000-deep recursion through funs, 30,000 funs across
-  collections, eleven caught errors, three uncaught runs) passes all 8
-  combinations; 6 CLI cases; programs `compile.txt` refreshed. Fresh Windows
-  x64 Debug (clang-cl): fast 169/169, full `-j 12` 173/173 in 122 s; after
-  complexity/tidy fixes fast 169/169, Lizard 0 warnings, tidy 289 changed
-  units pass. Logs `build/plan11-step32/`.
+Done 2026-10-07 (contract `docs/funs.md`). ABI revision 7: `FunDescriptor`
+table `<prefix>.funs`, `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1`,
+`ErrorReason` 22-24 (`badfun`, `badarity` with `{F, Args}`, `undef`);
+`fun_closure` cells (untraced `FunDefinition *`, captured values). One value
+per `fun f/1`; order atom < fun < tuple, local before external; local funs
+print `#Fun<M.Index.0>` (difference). Calls go through the `erlang_aot.apply`
+marker, which `lower_frames` turns into enter/tail transfers. OTP golden
+`executables_fun_values`.
 
 <a id="step-33"></a>
 
 ### 33. Implement closures with captured variables
 
-Backlog: F03, F18. Depends on: [32](#step-32), [26](#step-26).
-
-- Success criteria
-  - [x] Anonymous funs with clauses and guards capture values that survive the
-    creator's return and collection.
-- Tests
-  - [x] Golden programs for captures, multi-clause funs, higher-order helpers
-    and closures created in loops.
-  - [x] Small-heap stress keeping closures alive across collections.
-- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes: fun heads
-  shadow outer names (warning only), nothing bound inside leaks, free
-  variables in definition order (`fun_info(F, env)`), `==` compares captured
-  values with `==`, no matching clause is `function_clause` in frame
-  `-f/A-fun-N-` with arity arguments + captures, mismatched clause arities are
-  OTP's `head mismatch`; a record default fun is a separate lambda per
-  construction site (kept difference). Semantic: binding walker fun scopes
-  (`FunScope`, `Function::captures`), `fun_clauses` (named funs stay
-  `closures`, step 34), guards/bodies in `expression_children`, guard analysis
-  and head plans (`make_match_plan` over a fun clause); `index_funs` names
-  lambdas. Codegen: private native `-f/A-fun-N-` functions (`lower_lambda`,
-  `ExpressionLowering::lambda`, captures loaded after the arguments, own debug
-  scope), `lower_fun` roots captures for `erlang_aot_make_fun_v1`; the codegen
-  walker never descends into a fun. Records corpus row
-  `rec_fun_default_gate` accepted (digest updated, OTP `--check` reproduces).
-  OTP golden `executables_closures` (captures, composition, self-returning
-  counters, nested closures, multi-clause funs with guards reading captures,
-  is_function in fun guards, equality/order of closures, 20,000 closures
-  holding tuples/binaries across collections, closures from comprehensions,
-  a 100,000-step tail loop through a closure, closures across modules with
-  records, case exports, try and map-key heads, four caught errors, one
-  uncaught `function_clause`) passes all 8 combinations; new `runtime_funs`
-  (printing, order, capture count, forged descriptors, call preparation,
-  badfun/badarity/undef, copy, collection, registration); 6 CLI cases;
-  programs `compile.txt` refreshed. Fresh Windows x64 Debug (clang-cl): full
-  `-j 12` 175/175 (records row and programs refreshed after the fresh run);
-  after complexity fixes fast 171/171, full 175/175 in 126 s, Lizard 0
-  warnings, tidy 134 changed units pass. Logs `build/plan11-step33/`.
+Done 2026-10-07. Binding walker fun scopes (`FunScope`; heads shadow, nothing
+leaks) record `Function::captures` in definition order (OTP's free-variable
+order); lambdas compile to private `-f/A-fun-N-` functions taking arguments
+then captures (`lower_lambda`); `lower_fun` roots captures. A record default
+fun is one value for all construction sites (difference). OTP golden
+`executables_closures` (20,000 closures across collections); new
+`runtime_funs`.
 
 <a id="step-34"></a>
 
 ### 34. Implement named funs
 
-Backlog: F18, F21. Depends on: [33](#step-33).
-
-- Success criteria
-  - [x] `fun Name(…) -> … Name(…) end` recurses, including tail recursion in
-    constant stack.
-- Tests
-  - [x] Golden programs for recursive and tail-recursive named funs.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP 29.1.1
-  probes: the name is visible in every clause (heads and guards included),
-  shadows an outer variable (warning only) and is not bound after the fun; a
-  head variable of the same name shadows it; `Self(...) =:= Self`; tail
-  recursion runs in constant stack. Semantic: named funs go through
-  `fun_clauses`; `FunScope::inside` starts each clause with the name as a new
-  definition (`Function::fun_names`, `FunEntry::self`), never captured; the
-  `closures` capability is implemented (no deferred use left). Codegen:
-  `name_self` builds the fun from its descriptor and captured arguments on
-  entry when a clause reads the name; `Name(...)` is a fun call (tail call in
-  tail position). OTP golden `executables_named_funs` (factorial with bignums,
-  20,000-deep sequence/length, fib, self identity and equality, captures,
-  shadowing both ways, nested funs calling the outer name, guards reading the
-  name, higher-order use, caught `function_clause`/`badarity`, one uncaught
-  `function_clause`, two 10,000-step tail loops also run under
-  `--max-stack 4096 --max-heap 65536`) passes all 8 combinations; semantic
-  cases `named_fun`, `named_fun_scope`; programs `compile.txt` refreshed.
-  Fresh Windows x64 Debug (clang-cl): fast 172/172, full `-j 12` 176/176 in
-  152 s, Lizard 0 warnings (9 files), tidy 132 changed units pass. Logs
-  `build/plan11-step34/`.
+Done 2026-10-07. The name starts every clause as a new definition
+(`FunScope::inside`, `Function::fun_names`, `FunEntry::self`), shadowing an
+outer name, never captured, not visible after the fun; `name_self` builds the
+fun on entry when read, so `Self =:= F`. `Name(...)` is a fun call (tail call
+in constant stack). The `closures` capability is implemented. OTP golden
+`executables_named_funs` (tail loops under `--max-stack 4096`).
 
 <a id="step-35"></a>
 
 ### 35. Implement dynamic calls
 
-Backlog: F19. Depends on: [32](#step-32).
-
-Support `Fun(Args)`, `Mod:Fun(Args)` with runtime operands, and
-`erlang:apply/2,3`.
-
-- Success criteria
-  - [x] Lookup pins the module for the call; missing targets raise `undef`;
-    non-atom operands raise `badarg`/`badfun` as OTP.
-- Tests
-  - [x] Golden programs for each call form and failure.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. OTP 29.1.1
-  probes: `M:F(Args)` evaluates module, function, then arguments; non-atom
-  module or function `badarg`, missing or unexported `undef`; `apply/2,3`
-  check the list first (`badarg`), then `{badfun, V}` / `{badarity, {F, Args}}`
-  with the whole list, more than 255 arguments `undef`/`badarity`; `fun M:F/A`
-  with a non-atom or an arity outside 0..255 `badarg`. ABI revision 8:
-  `ExportDescriptor::frame`; runtime `ModuleAtoms::module/exports`,
-  `CodeServer::export_frame`, interned `CodeServer::external_fun` (`owns`
-  admits them in `fun_words`), services `erlang_aot_call_v1`,
-  `erlang_aot_apply_list_v1`, `erlang_aot_call_list_v1`,
-  `erlang_aot_make_external_fun_v1` (`runtime/src/terms/dynamic_calls.cpp`).
-  Semantic: `dynamic_call` (children module, function, arguments),
-  `apply/2,3` body builtins (`ServiceResolution::apply()`), `fun M:F/A`
-  variable reads (`Function::fun_operands`); `dynamic calls` capability now
-  only funs of builtins (catalog owner step 36). Codegen: shared `transfer`
-  (service returns the frame, then the apply marker; tail transfer in tail
-  position), `apply` unpacks into a 256-word register array. Builtins reached
-  dynamically raise `undef` until step 36; the `undef` top frame difference is
-  recorded. OTP golden `executables_dynamic_calls` (all call forms, evaluation
-  order, closures returned by dynamic calls, 1,000-deep dynamic recursion,
-  runtime `fun M:F/A` equality and printing, 20 caught errors, two uncaught
-  runs, two 10,000-step tail loops also under `--max-stack 4096`) passes all 8
-  combinations; `runtime_funs` dynamic lookups/interning/invalid registers;
-  mangling spellings for four targets; semantic cases; avltree diagnostics.
-  Fresh Windows x64 Debug (clang-cl): fast 173/173, full `-j 12` 177/177;
-  after Lizard (`evaluate`) and tidy fixes fast 173/173, full 177/177 in
-  142 s, Lizard 0 warnings (31 files), tidy 290 units pass. Logs
-  `build/plan11-step35/`.
+Done 2026-10-07. ABI revision 8: `ExportDescriptor::frame`; registration binds
+module/export atoms (`ModuleAtoms::module/exports`); services
+`erlang_aot_call_v1` (`M:F(Args)`), `erlang_aot_apply_list_v1`/
+`erlang_aot_call_list_v1` (`apply/2,3`, list unpacked into the registers),
+`erlang_aot_make_external_fun_v1` (runtime `fun M:F/A`, definitions interned
+by `CodeServer::external_fun`). OTP order and errors: module, function,
+arguments; non-atom names, improper lists and bad arities `badarg`, missing
+exports `undef`, more than 255 arguments `undef`/`badarity`. Dynamic calls
+share the fun-call transfer (tail calls in tail position). Builtins reached
+dynamically raise `undef` and builtin funs keep the `dynamic calls` capability
+until step 36; the `undef` top frame differs from OTP. Lookups scan modules
+linearly (hash maps: step 62A). OTP golden `executables_dynamic_calls`.
 
 ## H. Builtins and libraries
 
