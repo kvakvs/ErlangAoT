@@ -17,6 +17,19 @@ std::vector<std::optional<ast::ExprId>> record_values(const Module &module, cons
 // Positions of record_values in evaluation order: declaration order for tuple records; for native records the
 // explicit fields in source order, then the defaulted ones (OTP v3_core).
 std::vector<std::size_t> record_order(const Module &module, const ast::RecordExpression &record);
+
+// A native record named by its defining module, as qualified (#m:r) and imported forms name it.
+struct RecordName {
+    std::u32string module;
+    std::u32string name;
+};
+
+// The record a qualified identity or an imported name refers to; nullopt for local and anonymous identities.
+std::optional<RecordName> external_record(const Module &module, const ast::RecordIdentity &identity);
+// The module an -import_record attribute imports a record name from, if any.
+const std::u32string *imported_module(const Module &module, const std::u32string &name);
+// The definition external construction uses: an exported native record of a batch module; null otherwise.
+const RecordLayout *external_layout(const Module &module, const RecordName &record);
 // Native record definitions of a module in descriptor order (record name order).
 std::vector<const RecordLayout *> native_layouts(const Module &module);
 // Values a record pattern matches: explicit native fields in source order (they may name fields the record lacks),

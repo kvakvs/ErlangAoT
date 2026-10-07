@@ -127,7 +127,7 @@ std::vector<ast::ExprId> binary_children(const ast::Module &syntax, const ast::B
 bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(id);
     const auto *record = std::get_if<ast::RecordExpression>(&expression.value);
-    if (!record || record->base) {
+    if (!record || record->base || semantic::external_record(state.module, record->identity)) {
         return false;
     }
     const auto fields = semantic::record_values(state.module, *record, false);

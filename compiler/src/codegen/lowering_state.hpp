@@ -1,5 +1,6 @@
 #pragma once
 #include "../semantic/match_plan.hpp"
+#include "../semantic/records.hpp"
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
 #include <array>
@@ -46,6 +47,9 @@ struct ExpressionLowering {
     llvm::BasicBlock *bad_arithmetic = nullptr;
     // Integer results beyond the size limit share a body exit raising system_limit; guards reject instead.
     llvm::BasicBlock *system_limit = nullptr;
+    // The module whose atom table and descriptor atom loads use, when module is another batch module whose
+    // literal record defaults are lowered here; null means module itself.
+    const semantic::Module *atom_owner = nullptr;
     // Capture each evaluated record field immediately, including repeated wildcard/default source nodes.
     std::map<const ast::Expression *, std::vector<llvm::Value *>> record_values = {};
 };
@@ -187,6 +191,9 @@ llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id);
 // Construct, update or read a field of a local native record through the record service.
 llvm::Value *lower_native_record(ExpressionLowering &state, const ast::Expression &expression,
                                  const semantic::RecordLayout &layout);
+// Construct, update or read a field of a qualified or imported native record.
+llvm::Value *lower_external_record(ExpressionLowering &state, const ast::Expression &expression,
+                                   const semantic::RecordName &name);
 // Test a native record pattern's identity or extract one of its fields; failures branch to mismatch.
 llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
                                   llvm::BasicBlock *mismatch);

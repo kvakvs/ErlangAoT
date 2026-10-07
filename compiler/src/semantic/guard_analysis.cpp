@@ -184,8 +184,11 @@ bool comprehension_guards(BindingAnalysis &state, const ast::Expression &express
 // Guards may build tuple records only; OTP names native construction separately.
 bool native_construction(const Module &module, const ast::ExprValue &value) {
     const auto *record = std::get_if<ast::RecordExpression>(&value);
-    const auto *layout = record && !record->base ? record_layout(module, record->identity) : nullptr;
-    return layout && layout->native;
+    if (!record || record->base) {
+        return false;
+    }
+    const auto *layout = record_layout(module, record->identity);
+    return (layout && layout->native) || external_record(module, record->identity);
 }
 
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.

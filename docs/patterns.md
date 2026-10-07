@@ -86,7 +86,8 @@ constant native and process stack.
 | Bitstrings | Validated type/size/unit; earlier segments may size later ones; unsized tail last | Invalid specifier semantic; short data mismatches |
 | Tuple records `#r{f = P}`, `#r.f` | Expanded to tuple constraints; omitted fields unconstrained | Unknown record/field semantic |
 | Local native records `#r{f = P}` | Record of this module named `r`, then each listed field (a field it lacks fails) | Unknown record semantic |
-| Qualified/anonymous records | Not implemented | Capability (F17) |
+| Qualified/imported native records `#m:r{f = P}` | Record of module `m` named `r`; exported when a field is listed; then each field | None at compile time |
+| Anonymous records `#_{...}` | Not implemented | Capability (F17) |
 | Calls, variable arithmetic, other expressions | Not patterns | Semantic |
 
 ## Scopes

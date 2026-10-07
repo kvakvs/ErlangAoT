@@ -4,6 +4,7 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include <algorithm>
+#include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/records.hpp>
 #include <llvm/IR/Module.h>
 #include <stdexcept>
@@ -64,16 +65,22 @@ ServiceOutput call(ExpressionLowering &state, Op operation, Check check, llvm::C
     return {outcome, slot};
 }
 
-// The descriptor of a native record of this module inside its module's record table.
-llvm::Constant *descriptor(ExpressionLowering &state, const semantic::RecordLayout &layout) {
-    const auto layouts = semantic::native_layouts(state.module);
+// The descriptor of a native record inside its defining module's record table, declared here when that module
+// is another one of the batch.
+llvm::Constant *descriptor(ExpressionLowering &state, const semantic::Module &owner,
+                           const semantic::RecordLayout &layout) {
+    const auto layouts = semantic::native_layouts(owner);
     const auto index = static_cast<std::size_t>(std::ranges::find(layouts, &layout) - layouts.begin());
-    auto &output = *state.entry.getParent();
-    const auto prefix = semantic::encode_symbol({utf8(state.module.name), "", 0});
-    auto *table = output.getNamedGlobal(prefix + ".records");
-    if (!table || index == layouts.size()) {
+    if (index == layouts.size()) {
         throw std::invalid_argument("lowering: native record descriptor is missing");
     }
+    auto &output = *state.entry.getParent();
+    const auto name = semantic::encode_symbol({utf8(owner.name), "", 0}) + ".records";
+    auto *ptr = state.builder.getPtrTy();
+    auto *entry = llvm::StructType::get(ptr, state.word, state.word, state.word, ptr, state.word);
+    // This module's own table exists already; another module's is declared as an external constant.
+    auto *table =
+        llvm::cast<llvm::GlobalVariable>(output.getOrInsertGlobal(name, llvm::ArrayType::get(entry, layouts.size())));
     return llvm::ConstantExpr::getInBoundsGetElementPtr(
         table->getValueType(), table,
         llvm::ArrayRef<llvm::Constant *>{llvm::ConstantInt::get(state.word, 0),
@@ -85,42 +92,147 @@ llvm::Value *value_of(ExpressionLowering &state, const ast::ExprId &id) {
     return state.values.at(&state.module.syntax->expression(id));
 }
 
+// The identity an access or update checks: module and name atoms under a check.
+struct Identity {
+    llvm::Value *module;
+    llvm::Value *name;
+    Check check;
+};
+
 // Local construction: every field value in definition order, explicit or default.
 llvm::Value *construct(ExpressionLowering &state, const ast::Expression &expression,
                        const semantic::RecordLayout &layout) {
     const auto &values = state.record_values.at(&expression);
-    const auto result = call(state, Op::make, Check::any, descriptor(state, layout), values);
+    const auto result = call(state, Op::make, Check::any, descriptor(state, state.module, layout), values);
     return checked_value(state, result, rejection(state, result));
 }
 
-// Local update: values in source order, then the record; the record must be this module's record of the name.
-llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &record,
-                    const semantic::RecordLayout &layout) {
-    std::vector<llvm::Value *> values{value_of(state, *record.base), lower_atom(state, ast::Atom{state.module.name}),
-                                      lower_atom(state, layout.name)};
+// Update: the record, then field/value pairs, under the identity check.
+llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &record, const Identity &identity) {
+    std::vector<llvm::Value *> values{value_of(state, *record.base), identity.module, identity.name};
     for (const auto &field : record.fields) {
         values.push_back(lower_atom(state, std::get<ast::Atom>(field.name)));
         values.push_back(value_of(state, field.value));
     }
-    const auto result = call(state, Op::update, Check::module_name, nullptr, values);
+    const auto result = call(state, Op::update, identity.check, nullptr, values);
     return checked_value(state, result, rejection(state, result));
 }
 
-// Local access checks only the record name, as OTP's runtime does.
-llvm::Value *access(ExpressionLowering &state, const ast::RecordAccess &access, const semantic::RecordLayout &layout) {
-    const std::array values{value_of(state, access.base), lower_atom(state, ast::Atom{state.module.name}),
-                            lower_atom(state, layout.name), lower_atom(state, access.field)};
-    const auto result = call(state, Op::get, Check::name, nullptr, values);
+// Field access under the identity check.
+llvm::Value *access(ExpressionLowering &state, const ast::RecordAccess &access, const Identity &identity) {
+    const std::array values{value_of(state, access.base), identity.module, identity.name,
+                            lower_atom(state, access.field)};
+    const auto result = call(state, Op::get, identity.check, nullptr, values);
+    return checked_value(state, result, rejection(state, result));
+}
+
+// Raise reason with payload where the expression stands; code after it is unreachable.
+llvm::Value *raise_here(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::Value *payload) {
+    raise_reason(state, reason, payload);
+    state.builder.SetInsertPoint(llvm::BasicBlock::Create(state.entry.getContext(), "record.raised", &state.entry));
+    return llvm::ConstantInt::get(state.word, abi::v1::empty_list);
+}
+
+// The {{Module, Name}, Field} payload of badfield and novalue.
+llvm::Value *field_payload(ExpressionLowering &state, const Identity &identity, const ast::Atom &field) {
+    auto *owner = lower_tuple(state, std::array{identity.module, identity.name});
+    return lower_tuple(state, std::array{owner, lower_atom(state, field)});
+}
+
+// Lower a literal default of another batch module here, loading its atoms from this module's table.
+llvm::Value *foreign_default(ExpressionLowering &state, const semantic::Module &owner, const ast::ExprId &id) {
+    ExpressionLowering foreign{state.builder, state.entry, owner, state.function, state.inferred, state.word, {}};
+    foreign.roots = state.roots;
+    foreign.failure = state.failure;
+    foreign.handler = state.handler;
+    foreign.bad_argument = state.bad_argument;
+    foreign.bad_arithmetic = state.bad_arithmetic;
+    foreign.system_limit = state.system_limit;
+    foreign.atom_owner = state.atom_owner ? state.atom_owner : &state.module;
+    auto *value = lower_body(foreign, id);
+    state.failure = foreign.failure;
+    state.bad_argument = foreign.bad_argument;
+    state.bad_arithmetic = foreign.bad_arithmetic;
+    state.system_limit = foreign.system_limit;
+    return value;
+}
+
+// The first given field the definition lacks, in source order.
+const ast::Atom *unknown_field(const ast::RecordExpression &record, const semantic::RecordLayout &layout) {
+    for (const auto &field : record.fields) {
+        const auto &name = std::get<ast::Atom>(field.name);
+        if (!semantic::record_field(layout, name)) {
+            return &name;
+        }
+    }
+    return nullptr;
+}
+
+// Every field value in definition order: given, or the definition's default; null names the first field with
+// neither.
+std::vector<llvm::Value *> external_values(ExpressionLowering &state, const ast::RecordExpression &record,
+                                           const semantic::Module &owner, const semantic::RecordLayout &layout,
+                                           const ast::Atom *&missing) {
+    std::vector<llvm::Value *> values;
+    for (const auto &declared : layout.fields) {
+        const auto given = std::ranges::find_if(record.fields, [&](const ast::RecordField &field) {
+            return std::get<ast::Atom>(field.name).name == declared.name.name;
+        });
+        if (given != record.fields.end()) {
+            values.push_back(value_of(state, given->value));
+        } else if (declared.default_value) {
+            values.push_back(foreign_default(state, owner, *declared.default_value));
+        } else {
+            missing = &declared.name;
+            return {};
+        }
+    }
+    return values;
+}
+
+// External construction: the record must be an exported native record of a batch module ({badrecord, {M, N}}
+// otherwise); an unknown field is badfield before a missing value is novalue.
+llvm::Value *construct_external(ExpressionLowering &state, const ast::RecordExpression &record,
+                                const semantic::RecordName &name, const Identity &identity) {
+    const auto *layout = semantic::external_layout(state.module, name);
+    if (!layout) {
+        return raise_here(state, abi::v1::ErrorReason::badrecord,
+                          lower_tuple(state, std::array{identity.module, identity.name}));
+    }
+    if (const auto *field = unknown_field(record, *layout)) {
+        return raise_here(state, abi::v1::ErrorReason::badfield, field_payload(state, identity, *field));
+    }
+    const auto &owner = *state.module.peers.at(name.module);
+    const ast::Atom *missing = nullptr;
+    const auto values = external_values(state, record, owner, *layout, missing);
+    if (missing) {
+        return raise_here(state, abi::v1::ErrorReason::novalue, field_payload(state, identity, *missing));
+    }
+    const auto result = call(state, Op::make, Check::any, descriptor(state, owner, *layout), values);
     return checked_value(state, result, rejection(state, result));
 }
 } // namespace
 
 llvm::Value *lower_native_record(ExpressionLowering &state, const ast::Expression &expression,
                                  const semantic::RecordLayout &layout) {
+    // Local forms check this module's record of the name; access checks only the name, as OTP's runtime does.
+    const Identity identity{lower_atom(state, ast::Atom{state.module.name}), lower_atom(state, layout.name),
+                            Check::module_name};
     if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
-        return record->base ? update(state, *record, layout) : construct(state, expression, layout);
+        return record->base ? update(state, *record, identity) : construct(state, expression, layout);
     }
-    return access(state, std::get<ast::RecordAccess>(expression.value), layout);
+    return access(state, std::get<ast::RecordAccess>(expression.value), {identity.module, identity.name, Check::name});
+}
+
+llvm::Value *lower_external_record(ExpressionLowering &state, const ast::Expression &expression,
+                                   const semantic::RecordName &name) {
+    // Qualified and imported forms need the record exported from the named module.
+    const Identity identity{lower_atom(state, ast::Atom{name.module}), lower_atom(state, ast::Atom{name.name}),
+                            Check::exported_module_name};
+    if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
+        return record->base ? update(state, *record, identity) : construct_external(state, *record, name, identity);
+    }
+    return access(state, std::get<ast::RecordAccess>(expression.value), identity);
 }
 
 llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,

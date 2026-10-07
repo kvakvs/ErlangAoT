@@ -42,7 +42,8 @@ void declaration(Module &module, const ast::Form &form, std::size_t order, const
 // Unknown ordinary names are errors; native and imported identities are resolved by their deferred owners.
 const RecordLayout *required(const Module &module, const ast::RecordIdentity &identity, const Reporter &out) {
     const auto *layout = record_layout(module, identity);
-    if (!layout && std::holds_alternative<ast::UnresolvedRecordName>(identity.value)) {
+    const auto *name = std::get_if<ast::UnresolvedRecordName>(&identity.value);
+    if (!layout && name && !imported_module(module, name->name.name)) {
         report(module, &identity.source, "undefined record", out);
     }
     return layout;
@@ -106,6 +107,17 @@ void fields(const Module &module, const ast::RecordExpression &record, const Rec
     if (layout.native && construction) {
         native_initialized(module, record, layout, names, out);
     }
+}
+
+// Values of the atom-named fields in source order; a native record pattern lists only those.
+std::vector<ast::ExprId> named_values(const ast::RecordExpression &record) {
+    std::vector<ast::ExprId> result;
+    for (const auto &field : record.fields) {
+        if (std::holds_alternative<ast::Atom>(field.name)) {
+            result.push_back(field.value);
+        }
+    }
+    return result;
 }
 
 // Append the declared positions of a record's explicit fields in source order, each once.
@@ -221,6 +233,7 @@ void index_records(Module &module, const Reporter &out) {
     for (const auto &id : module.syntax->forms()) {
         declaration(module, module.syntax->form(id), order++, out);
     }
+    index_record_attributes(module, out);
     for (const auto &[name, layout] : module.records) {
         (void)name;
         if (layout.native) {
@@ -278,7 +291,9 @@ std::vector<std::optional<ast::ExprId>> record_values(const Module &module, cons
 
 void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out, const bool pattern) {
     if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
-        if (const auto *layout = required(module, record->identity, out)) {
+        if (external_record(module, record->identity)) {
+            external_fields(module, *record, out);
+        } else if (const auto *layout = required(module, record->identity, out)) {
             fields(module, *record, *layout, pattern, out);
         }
     } else if (const auto *access = std::get_if<ast::RecordAccess>(&expression.value)) {
@@ -323,16 +338,11 @@ std::vector<const RecordLayout *> native_layouts(const Module &module) {
 }
 
 std::vector<ast::ExprId> pattern_fields(const Module &module, const ast::RecordExpression &record) {
-    std::vector<ast::ExprId> result;
     const auto *layout = record_layout(module, record.identity);
-    if (layout && layout->native) {
-        for (const auto &field : record.fields) {
-            if (std::holds_alternative<ast::Atom>(field.name)) {
-                result.push_back(field.value);
-            }
-        }
-        return result;
+    if (!layout || layout->native) {
+        return named_values(record);
     }
+    std::vector<ast::ExprId> result;
     for (const auto &field : record_values(module, record, true)) {
         if (field) {
             result.push_back(*field);
@@ -371,7 +381,8 @@ void validate_record_test(const Module &module, const ast::Expression &expressio
     if (guard && !name) {
         report(module, &tag.source, "record guard tag must be a literal atom", out);
     }
-    if (call.arguments.size() == 2 && name && !record_layout(module, *name, expression.source)) {
+    if (call.arguments.size() == 2 && name && !record_layout(module, *name, expression.source) &&
+        !imported_module(module, name->name)) {
         report(module, &tag.source, "undefined record", out);
     }
     if (guard && call.arguments.size() == 3) {

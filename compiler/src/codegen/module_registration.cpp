@@ -39,7 +39,7 @@ llvm::Constant *exports(llvm::Module &output, const semantic::Module &module, ll
 }
 
 // One abi::v1::RecordDescriptor per native record, in semantic::native_layouts order, naming atom slots of this
-// module; lowering addresses entries of this `<prefix>.records` table. Exports arrive with -export_record.
+// module; lowering addresses entries of this `<prefix>.records` table.
 llvm::GlobalVariable *records(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word,
                               llvm::GlobalVariable *descriptor, const std::string &prefix) {
     auto *ptr = llvm::PointerType::get(output.getContext(), 0);
@@ -55,12 +55,14 @@ llvm::GlobalVariable *records(llvm::Module &output, const semantic::Module &modu
         auto *array = llvm::ConstantArray::get(llvm::ArrayType::get(word, slots.size()), slots);
         auto *fields = new llvm::GlobalVariable(output, array->getType(), true, llvm::GlobalValue::PrivateLinkage,
                                                 array, "record.fields");
+        const bool exported = module.exported_records.contains(layout->name.name);
         entries.push_back(llvm::ConstantStruct::get(type, descriptor, slot(ast::Atom{module.name}), slot(layout->name),
-                                                    llvm::ConstantInt::get(word, 0), fields,
+                                                    llvm::ConstantInt::get(word, exported ? 1 : 0), fields,
                                                     llvm::ConstantInt::get(word, slots.size())));
     }
     auto *array = llvm::ConstantArray::get(llvm::ArrayType::get(type, entries.size()), entries);
-    return new llvm::GlobalVariable(output, array->getType(), true, llvm::GlobalValue::PrivateLinkage, array,
+    // Other modules of the batch construct exported records from this table.
+    return new llvm::GlobalVariable(output, array->getType(), true, llvm::GlobalValue::ExternalLinkage, array,
                                     prefix + ".records");
 }
 } // namespace

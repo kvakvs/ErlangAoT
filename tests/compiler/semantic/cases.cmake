@@ -158,7 +158,24 @@ semantic_case(native_guard "-module(a). -record #r{a = 1}. f(X) when X =:= #r{} 
     "creating a record in a guard is only supported for tuple records")
 semantic_case(native_guard_update "-module(a). -record #r{a = 1}. f(X) when X#r{a = 2} =:= X -> X." 1
     "illegal guard expression")
-semantic_case(record_info_guard"-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
+semantic_case(export_record_late "-module(a). f() -> 1. -export_record([r]). -record #r{}." 1
+    "attribute export_record after function definitions")
+semantic_case(export_record_undefined "-module(a). -export_record([nope])." 1 "native record nope undefined")
+semantic_case(export_record_tuple "-module(a). -export_record([t]). -record(t, {a})." 1
+    "tuple records cannot be exported; only native records can")
+semantic_case(export_record_form "-module(a). -export_record(foo)." 1
+    "badly formed -export_record\\(\\); expected a list of record names")
+semantic_case(import_record_defined "-module(a). -record #r{}. -import_record(m, [r])." 1
+    "record r is already defined locally")
+semantic_case(import_record_twice "-module(a). -import_record(m, [r]). -import_record(n, [r])." 1
+    "record r already imported from m")
+semantic_case(import_record_uses
+    "-module(a). -import_record(m, [r]). f(X) when X#r.a =:= 1, is_record(X, r) -> X#r{a = 2}." 0 "^$")
+semantic_case(qualified_wildcard "-module(a). f(X) -> X#m:r{_ = 1}." 1
+    "multi-field initialization \\(assigning to _\\) is only supported for tuple records")
+semantic_case(qualified_guard "-module(a). f(X) when X =:= #m:r{} -> X." 1
+    "creating a record in a guard is only supported for tuple records")
+semantic_case(record_info_guard "-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
     "illegal guard call")
 semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_info(A, B) -> {A, B}." 1
     "function record_info/2 already defined")

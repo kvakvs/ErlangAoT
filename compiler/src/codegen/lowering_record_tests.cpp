@@ -25,6 +25,17 @@ const semantic::RecordLayout *tagged(ExpressionLowering &state, const ast::Expre
     return name ? semantic::record_layout(state.module, *name, expression.source) : nullptr;
 }
 
+// The module a literal is_record/2 tag is imported from (-import_record); null otherwise.
+const std::u32string *imported_tag(ExpressionLowering &state, const ast::Expression &expression,
+                                   const ast::CallExpression &call) {
+    if (call.arguments.size() != 2 || tagged(state, expression, call)) {
+        return nullptr;
+    }
+    const auto &tag = state.module.syntax->expression(semantic::ungroup(*state.module.syntax, call.arguments[1]));
+    const auto *name = std::get_if<ast::Atom>(&tag.value);
+    return name ? semantic::imported_module(state.module, name->name) : nullptr;
+}
+
 // Literal tuple-record is_record/2 uses declaration arity; dynamic body tags retain the any-arity BIF behavior.
 llvm::Value *arity(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call) {
     if (call.arguments.size() == 3) {
@@ -102,6 +113,11 @@ llvm::Value *lower_record_test(ExpressionLowering &state, const ast::Expression 
         // A local native record name tests this module's record of that name.
         return boolean(state, lower_native_test(state, abi::v1::RecordCheck::module_name, value,
                                                 lower_atom(state, ast::Atom{state.module.name}), tag));
+    }
+    if (const auto *from = imported_tag(state, expression, call)) {
+        // An imported name tests the importing module's view: the record of that name in its module.
+        return boolean(state, lower_native_test(state, abi::v1::RecordCheck::module_name, value,
+                                                lower_atom(state, ast::Atom{*from}), tag));
     }
     auto *size = arity(state, expression, call);
     auto *truth = lower_atom(state, ast::Atom{U"true"});

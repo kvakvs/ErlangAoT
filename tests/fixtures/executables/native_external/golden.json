@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "entry": "app",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "radius\n{5,{0,0},[round,<<\"c\">>],#{kind=>shape}}\nneed\n{x,3}\n1\n#app:counter{n=0}\nbase\nradius\n{7,2}\n0\n[{circle,3},{local_circle,4},{request,n},secret,other]\n[true,false,true,true,false]\n[big,small,none,none]\n[{badrecord,#app:circle{radius=0}},{badrecord,7},{badrecord,#shapes:secret{code=42}},{badfield,{{shapes,circle},missing}}]\n"
+    },
+    {
+      "args": [
+        "private"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,\\{shapes,secret\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "unknown_module"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,\\{nowhere,circle\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "unknown_field"
+      ],
+      "stderr": "^uncaught exception error: \\{badfield,\\{\\{shapes,circle\\},depth\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "missing"
+      ],
+      "stderr": "^uncaught exception error: \\{novalue,\\{\\{shapes,request\\},need\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "own_private"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,\\{app,circle\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "app.erl": "8078a0e7b203e6dcde02a8ee1fbb3074681ab08c337bf3b66a5d94f1b111a8e7",
+    "shapes.erl": "766dac6f4e7162d73cb902b3c718b0b10511ed5f3b723adb0dcea21d9a8c64c7"
+  }
+}

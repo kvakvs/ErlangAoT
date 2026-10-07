@@ -95,8 +95,11 @@
   Updates evaluate values, then the record, check it, copy the other fields; `record_info/2` folds to
   constants. Local native records (31C) lower to `erlang_aot_record_v1` with the module's
   `<prefix>.records` descriptor table; patterns plan `record_test`/`record_field` nodes; construction
-  evaluates explicit fields in source order, native updates the record first. Qualified/inferred
-  records retain separate capability owners.
+  evaluates explicit fields in source order, native updates the record first. 31D: `-export_record`/
+  `-import_record` (`Module::exported_records`/`imported_records`), `semantic::external_record` resolves
+  qualified and imported names; `Module::peers` (set by call resolution) lets external construction find
+  the defining module, lower its literal defaults here (`ExpressionLowering::atom_owner`) and reference its
+  external `<prefix>.records`. Inferred (`#_`) records retain their capability owner.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

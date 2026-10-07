@@ -31,13 +31,13 @@ struct FormCapability {
 
     std::string_view operator()(const ast::ImportAttribute &) const { return "behavior-changing attributes"; }
 
-    std::string_view operator()(const ast::ImportRecordAttribute &) const { return "behavior-changing attributes"; }
+    std::string_view operator()(const ast::ImportRecordAttribute &) const { return {}; }
 
     std::string_view operator()(const ast::RecordDeclaration &) const { return {}; }
 
     std::string_view operator()(const ast::GenericAttribute &value) const {
-        constexpr std::array<std::u32string_view, 6> allowed{U"author",     U"vsn",         U"copyright",
-                                                             U"deprecated", U"export_type", U"optional_callbacks"};
+        constexpr std::array<std::u32string_view, 7> allowed{
+            U"author", U"vsn", U"copyright", U"deprecated", U"export_type", U"optional_callbacks", U"export_record"};
         const bool mode = escript && value.name.name == U"mode";
         return mode || std::ranges::contains(allowed, value.name.name) ? "" : "behavior-changing attributes";
     }

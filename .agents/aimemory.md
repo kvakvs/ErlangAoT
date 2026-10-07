@@ -257,6 +257,10 @@ Step facts beyond the plan record:
   `display` of multi-field native records is unstable vs OTP (atom index order): goldens display fields or
   single-field records. erlfmt cannot parse `-record #r{a, b}.` nor `#div`: fixture left partly unformatted
   (it rewrote parseable ones to `-record(#r{...}).`). Uncaught-exception report prints `~w` (`x = 1`).
+- 31D: external construction lowers the peer's default literals with a temporary ExpressionLowering bound to
+  the peer module (atom_owner = importing module for atom slots/descriptor); peer tables declared via
+  getOrInsertGlobal (tidy flags `new GlobalVariable` kept in a local as a leak). erlfmt also cannot parse
+  `#m:r` forms. The OTP oracle compiles with warnings as errors: avoid updating literals (`(#r{})#r{...}`).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

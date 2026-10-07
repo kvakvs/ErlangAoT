@@ -3,8 +3,9 @@
 Decision of plan 11 step 31A (2026-10-07). It scopes the OTP 29 record forms
 beyond ordinary tuple records and fixes their representation, operations and
 errors. Step 31B implemented the runtime cells and `erlang_aot_record_v1`;
-31C compiles local native records; qualified/imported (31D) and anonymous
-(31E) forms keep the `[heap expressions] notimpl` diagnostic until then. Tuple records are in
+31C compiles local native records, 31D qualified and imported forms with
+`-export_record`/`-import_record`; anonymous forms (31E) keep the
+`[heap expressions] notimpl` diagnostic until then. Tuple records are in
 [terms](terms.md#records).
 
 OTP 29 marks native records experimental. Facts below come from the pinned
@@ -97,7 +98,11 @@ Messages follow `erl_lint`:
   conflicts and bad `-export_record`/`-import_record` forms are errors.
   `-export_record` must precede function definitions.
 - External forms naming a module outside the batch, an undefined or a
-  non-exported record compile and fail at run time like OTP.
+  non-exported record compile and fail at run time like OTP. External
+  construction is resolved against the batch at compile time: the importing
+  module lowers the defining module's literal defaults itself and references
+  its exported descriptor; unknown fields raise `badfield` before a missing
+  value raises `novalue` (`ErrorReason` 21).
 
 ## Printing and order
 

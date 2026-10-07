@@ -1,4 +1,5 @@
 #include "module_atoms.hpp"
+#include "../semantic/binding_state.hpp"
 #include "../semantic/capabilities.hpp"
 #include "../semantic/records.hpp"
 #include "../semantic/services.hpp"
@@ -77,6 +78,40 @@ bool implicit_throw(const ast::ExprValue &value) {
                                [](const auto &clause) { return clause.handler && !clause.handler->exception_class; });
 }
 
+// Atoms of a literal default of another batch module, which this module lowers itself.
+void default_atoms(const ast::Module &syntax, const ast::ExprId &root, std::set<std::string> &result) {
+    std::vector<ast::ExprId> pending{root};
+    while (!pending.empty()) {
+        const auto &value = syntax.expression(pending.back()).value;
+        pending.pop_back();
+        if (const auto *atom = std::get_if<ast::Atom>(&value)) {
+            result.insert(utf8(atom->name));
+        }
+        const auto children = semantic::binding_children(value);
+        pending.insert(pending.end(), children.begin(), children.end());
+    }
+}
+
+// Module and record names of a qualified or imported form; a construction also lowers the defining module's
+// defaults of the fields it omits.
+void external_atoms(const semantic::Module &module, const ast::ExprValue &value, const semantic::RecordName &name,
+                    std::set<std::string> &result) {
+    result.insert(utf8(name.module));
+    result.insert(utf8(name.name));
+    const auto *record = std::get_if<ast::RecordExpression>(&value);
+    const auto *layout = semantic::external_layout(module, name);
+    if (!record || record->base || !layout) {
+        return;
+    }
+    const auto &syntax = *module.peers.at(name.module)->syntax;
+    for (const auto &field : layout->fields) {
+        result.insert(utf8(field.name.name));
+        if (field.default_value) {
+            default_atoms(syntax, *field.default_value, result);
+        }
+    }
+}
+
 // Record tags, the undefined default and the field names a record_info(fields, R) list holds.
 void record_atoms(const semantic::Module &module, const ast::Expression &expression, std::set<std::string> &result) {
     const auto &value = expression.value;
@@ -94,7 +129,12 @@ void record_atoms(const semantic::Module &module, const ast::Expression &express
         identity = &access->identity;
         result.insert(utf8(access->field.name));
     }
-    if (identity) {
+    if (!identity) {
+        return;
+    }
+    if (const auto external = semantic::external_record(module, *identity)) {
+        external_atoms(module, value, *external, result);
+    } else {
         result.insert(utf8(semantic::record_layout(module, *identity)->name.name));
     }
 }
@@ -111,6 +151,19 @@ bool raises_stack(const ast::Module &syntax, const ast::ExprValue &value) {
     const auto *owner = std::get_if<ast::Atom>(&syntax.expression(semantic::ungroup(syntax, remote->module)).value);
     const auto *name = std::get_if<ast::Atom>(&syntax.expression(semantic::ungroup(syntax, remote->function)).value);
     return owner && name && owner->name == U"erlang" && name->name == U"raise";
+}
+
+// is_record(X, r) with an imported r tests the record's module.
+void imported_test_atoms(const semantic::Module &module, const ast::ExprValue &value, std::set<std::string> &result) {
+    const auto *call = std::get_if<ast::CallExpression>(&value);
+    if (!call || call->arguments.size() != 2) {
+        return;
+    }
+    const auto &syntax = *module.syntax;
+    const auto *tag = std::get_if<ast::Atom>(&syntax.expression(semantic::ungroup(syntax, call->arguments[1])).value);
+    if (const auto *from = tag ? semantic::imported_module(module, tag->name) : nullptr) {
+        result.insert(utf8(*from));
+    }
 }
 
 // Collect the atoms one expression needs: its literal, record names and the atoms its lowering produces.
@@ -131,6 +184,7 @@ void expression_atoms(const semantic::Module &module, const ast::Expression &exp
     if (raises_stack(*module.syntax, value)) {
         result.insert("badarg");
     }
+    imported_test_atoms(module, value, result);
 }
 
 // Walk only admitted executable children; atom call targets are metadata rather than term expressions.
@@ -189,7 +243,8 @@ llvm::Value *lower_atom(ExpressionLowering &state, const ast::Atom &atom) {
     auto &output = *state.entry.getParent();
     auto &builder = state.builder;
     auto *slot = atom_slot(output, utf8(atom.name));
-    const auto prefix = semantic::encode_symbol({utf8(state.module.name), "", 0});
+    const auto &owner = state.atom_owner ? *state.atom_owner : state.module;
+    const auto prefix = semantic::encode_symbol({utf8(owner.name), "", 0});
     auto *descriptor = output.getNamedGlobal(prefix + ".descriptor");
     const auto symbol = services::symbol<services::Atom>(output.getTargetTriple());
     auto service = output.getOrInsertFunction(

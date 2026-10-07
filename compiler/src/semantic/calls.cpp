@@ -217,6 +217,9 @@ void order(CallGraph &graph, const std::vector<FunctionRef> &functions) {
 
 CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, const Reporter &out) {
     const auto names = module_index(modules, out);
+    for (const auto &module : modules) {
+        module->peers.insert(names.begin(), names.end());
+    }
     CallGraph graph;
     std::vector<FunctionRef> functions;
     for (const auto &module : modules) {

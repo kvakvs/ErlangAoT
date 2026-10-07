@@ -28,9 +28,10 @@ by the process stack (uncapped by default), not the native stack. Guards support
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
 Rejected with diagnostics even in unused functions: `receive`, funs and
-closures, dynamic calls, qualified/imported and anonymous records,
+closures, dynamic calls, anonymous native records,
 processes and messaging.
-Accepted attributes: `module`, `export`, `file`, ordinary `record`, type/spec
+Accepted attributes: `module`, `export`, `file`, tuple and native `record`,
+`export_record`, `import_record`, type/spec
 forms, `doc`/`moduledoc`, `author`, `vsn`, `copyright`, `deprecated`,
 `-compile` with `{no_auto_import, ...}` or warning-only `nowarn_*` options (for
 example `nowarn_deprecated_catch`) and `-import` of `erlang` guard BIFs. Other

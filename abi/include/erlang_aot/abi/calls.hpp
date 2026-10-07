@@ -30,7 +30,9 @@ enum class ErrorReason : std::uint8_t {
     // An integer result beyond the ERTS size limit (error:system_limit).
     system_limit = 19,
     // A native record lacks a field; the payload is {{Module, Name}, Field}.
-    badfield = 20
+    badfield = 20,
+    // An external native record construction gave no value to a field without default; same payload.
+    novalue = 21
 };
 } // namespace erlang_aot::abi::v1
 

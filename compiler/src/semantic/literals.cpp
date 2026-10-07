@@ -173,11 +173,11 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
 }
 
 namespace {
-// OTP evaluates tuple-record update values in source order before the record; a native update evaluates the
-// record first.
+// OTP evaluates tuple-record update values in source order before the record; a native update (local or
+// external) evaluates the record first.
 std::vector<ast::ExprId> update_children(const Module &module, const ast::RecordExpression &record) {
     const auto *layout = record_layout(module, record.identity);
-    const bool native = layout && layout->native;
+    const bool native = !layout || layout->native;
     std::vector<ast::ExprId> result;
     result.reserve(record.fields.size() + 1);
     for (const auto &field : record.fields) {
@@ -200,6 +200,13 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
         return update_children(module, *record);
     }
     std::vector<ast::ExprId> result;
+    if (external_record(module, record->identity)) {
+        // External construction evaluates the given fields in source order; defaults belong to the definition.
+        for (const auto &field : record->fields) {
+            result.push_back(field.value);
+        }
+        return result;
+    }
     const auto fields = record_values(module, *record, false);
     for (const auto position : record_order(module, *record)) {
         if (fields[position]) {

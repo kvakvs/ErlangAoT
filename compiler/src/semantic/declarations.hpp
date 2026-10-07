@@ -105,6 +105,11 @@ struct Module {
     // Origin-table identity preserves declaration-before-use across macro and include boundaries.
     std::map<const ast::TokenOrigin *, std::size_t> source_order = {};
     std::map<std::u32string, std::size_t> record_order = {};
+    // Native records listed in -export_record, and record names -import_record maps to their modules.
+    std::set<std::u32string> exported_records = {};
+    std::map<std::u32string, std::u32string> imported_records = {};
+    // Every module of the compilation batch by name, set once calls are resolved; external records read it.
+    std::map<std::u32string, const Module *> peers = {};
     // Escript sources implicitly export main/1, accept -mode and use escript exit semantics.
     bool escript = false;
 };

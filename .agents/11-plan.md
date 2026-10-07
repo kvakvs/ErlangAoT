@@ -813,10 +813,33 @@ Backlog: F17. Depends on: [31C](#step-31c).
 patterns with the export rules.
 
 - Success criteria
-  - [ ] Cross-module results and errors match OTP, including non-exported
+  - [x] Cross-module results and errors match OTP, including non-exported
     records and modules outside the batch.
 - Tests
-  - [ ] Cross-module OTP golden program; CLI diagnostics for attribute errors.
+  - [x] Cross-module OTP golden program; CLI diagnostics for attribute errors.
+- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes and the 31A
+  report: failed external construction raises `{badrecord, {M, N}}` (also
+  for own-module qualified non-exported records), then `{badfield, ...}`
+  before `{novalue, ...}`; external access/update need the export; an
+  external pattern needs it only when a field is listed. Semantic:
+  `-export_record` (before functions, native only, proper list) and
+  `-import_record` (no double import, no local definition) with erl_lint
+  messages; `external_record` resolves `#m:r` and imported names;
+  `Module::peers` gives codegen the batch. Codegen: external construction
+  checks the definition at compile time, lowers the defining module's
+  literal defaults in place (`ExpressionLowering::atom_owner`) and makes
+  with that module's now external `<prefix>.records` entry (export flag
+  set); access/update use `exported_module_name`, patterns
+  `module_name`/`exported_module_name`; `is_record/2` with an imported name
+  tests the import's module; `ErrorReason::novalue` (21). OTP golden
+  `executables_native_external` (defaults of another module incl. tuple,
+  list, binary and map literals, imported construction/update, own-module
+  qualified exported record, same-name local and foreign records in one
+  clause list, private-record patterns, guard access, four caught errors,
+  five uncaught construction failures) passes all 8 combinations; 9 CLI
+  cases. Fresh Windows x64 Debug (clang-cl): fast 167/167, full `-j 12`
+  171/171 in 129 s; after three tidy fixes fast 167/167 again, Lizard 0
+  warnings, tidy changed units pass. Logs `build/plan11-step31/`.
 
 <a id="step-31e"></a>
 

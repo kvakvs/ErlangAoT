@@ -59,6 +59,17 @@ llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &reco
     return lower_tuple(state, values);
 }
 
+// The qualified or imported record a record expression or field access names.
+std::optional<semantic::RecordName> external_name(ExpressionLowering &state, const ast::ExprValue &value) {
+    if (const auto *record = std::get_if<ast::RecordExpression>(&value)) {
+        return semantic::external_record(state.module, record->identity);
+    }
+    if (const auto *access = std::get_if<ast::RecordAccess>(&value)) {
+        return semantic::external_record(state.module, access->identity);
+    }
+    return std::nullopt;
+}
+
 // The local native record a record expression or field access names; null for tuple records and other syntax.
 const semantic::RecordLayout *native_layout(ExpressionLowering &state, const ast::ExprValue &value) {
     const semantic::RecordLayout *layout = nullptr;
@@ -73,6 +84,9 @@ const semantic::RecordLayout *native_layout(ExpressionLowering &state, const ast
 
 llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id) {
     const auto &expression = state.module.syntax->expression(id);
+    if (const auto external = external_name(state, expression.value)) {
+        return lower_external_record(state, expression, *external);
+    }
     if (const auto *layout = native_layout(state, expression.value)) {
         return lower_native_record(state, expression, *layout);
     }

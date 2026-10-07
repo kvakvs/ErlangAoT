@@ -44,7 +44,8 @@ are external, others internal.
 Each module emits `eav1_<hex module>__0.descriptor` and `.register`. The
 descriptor holds ABI version, term width, export table, atom spellings
 (UTF-8 pointer/size pairs) and native record descriptors (module, name and field
-atom slots, export flag; [native records](native-records.md#representation)). Registration calls
+atom slots, export flag; [native records](native-records.md#representation)) in
+an external `<prefix>.records` table that other modules of a batch reference. Registration calls
 `erlang_aot_register_module_v4(Runtime*)`, which validates version/width and all
 exports, interns atoms, builds a frozen registry and publishes it with the code
 image in one transaction. Duplicate modules never replace code; any failure
@@ -76,6 +77,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Comprehensions | `error:{bad_generator, Tail}`, `error:{bad_filter, Value}`, `error:{bad_generators, Inputs}` (`ErrorReason` 16-18); a strict generator's rejection is `{badmatch, Element}` |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Native record field missing | `ErrorReason::badfield` (20), payload `{{Module, Name}, Field}` |
+| External native construction without a value | `ErrorReason::novalue` (21), payload `{{Module, Name}, Field}` |
 | Integer result past the size limit | Service outcome `ValueOutcome::system_limit` (3): a guard rejects, a body raises `error:system_limit` (`ErrorReason` 19) |
 | Invalid lazy left operand | `{badarg, Value}` |
 | Infrastructure (OOM, limits, ownership, internal) | `CallError::runtime_failure` with exact `Status` |
