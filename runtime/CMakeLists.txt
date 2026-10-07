@@ -14,7 +14,7 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp
     src/terms/term_text.cpp src/terms/term_text_scalars.cpp
     src/terms/atoms.cpp src/terms/atom_spelling.cpp src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp src/terms/equality.cpp src/terms/immediate_order.cpp src/terms/immediate_services.cpp
-    src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp src/builtins/erlang.cpp src/builtins/term_access.cpp src/builtins/conversions.cpp src/builtins/float_text.cpp src/builtins/output.cpp
+    src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp src/builtins/erlang.cpp src/builtins/term_access.cpp src/builtins/conversions.cpp src/builtins/float_text.cpp src/builtins/text.cpp src/builtins/io.cpp src/builtins/io_format.cpp src/builtins/io_pretty.cpp src/builtins/output.cpp
     src/startup/startup.cpp src/startup/arguments.cpp src/startup/options.cpp
     src/startup/halt.cpp
     src/modules/atoms.cpp src/modules/services.cpp src/modules/code_server.cpp src/modules/registration.cpp)

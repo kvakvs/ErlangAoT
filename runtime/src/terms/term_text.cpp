@@ -176,7 +176,7 @@ class Renderer final {
         if (const auto name = detail::print_atom(field.first, style_, out_); !name) {
             return std::unexpected(name.error());
         }
-        out_.append(style_ == TermStyle::write ? " = " : "=");
+        out_.append(style_ != TermStyle::display ? " = " : "=");
         return field.second;
     }
 
@@ -193,7 +193,7 @@ class Renderer final {
         if (key) {
             out_.append(frame.next == 0 ? "" : ",");
         } else {
-            out_.append(style_ == TermStyle::write ? " => " : "=>");
+            out_.append(style_ != TermStyle::display ? " => " : "=>");
         }
         ++frame.next;
         return key ? entry.first : entry.second;

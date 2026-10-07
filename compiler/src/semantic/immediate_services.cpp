@@ -113,8 +113,10 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
     return found == signatures.end() ? std::nullopt : std::optional{found->second};
 }
 
-std::optional<std::size_t> bridge_builtin(const FunctionKey &key) {
-    return abi::v1::find_bridge_builtin("erlang", utf8(key.name), key.arity);
+std::optional<std::size_t> bridge_builtin(const FunctionKey &key) { return bridge_builtin(U"erlang", key); }
+
+std::optional<std::size_t> bridge_builtin(std::u32string_view module, const FunctionKey &key) {
+    return abi::v1::find_bridge_builtin(utf8(module), utf8(key.name), key.arity);
 }
 
 std::optional<Op> immediate_unary(const ast::UnaryOperator operation) {

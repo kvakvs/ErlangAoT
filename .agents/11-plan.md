@@ -884,11 +884,40 @@ Backlog: F26. Depends on: [4](#step-4), [36](#step-36).
 `io:put_chars/1`, `io:format/1,2` with `~w ~p ~s ~n ~b ~B ~c ~~`.
 
 - Success criteria
-  - [ ] Output matches OTP for the supported directives; unsupported directives
+  - [x] Output matches OTP for the supported directives; unsupported directives
     and bad arguments raise OTP-like errors.
 - Tests
-  - [ ] Golden programs printing each directive, nested terms with `~p` line
+  - [x] Golden programs printing each directive, nested terms with `~p` line
     breaking, and Unicode strings.
+- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Contract
+  `docs/io.md`. Catalog appended with module `io` (`format/1,2`,
+  `put_chars/1`); the compiler resolves qualified calls of another module's
+  catalog builtin as services (`semantic::module_builtin`), so `io:format`,
+  `fun io:format/2`, `apply(io, ...)` and `M:format` reach the bridge.
+  Runtime `builtins/io_format` (OTP `io_lib_format` scan and control
+  sequences `~w ~p ~s ~c ~b ~B ~i ~n ~~` with width, precision, pad, `*`,
+  `t`/`l`/`k`, column tracking with tabs, list formats passing nested
+  chardata through), `builtins/io_pretty` (OTP `io_lib_pretty` intermediate
+  form and pp/cind layout: tagged tuples, maps, native records, binaries
+  wrapping, improper tails; printable range latin1), shared `builtins/text`
+  (UTF-8, digits, from `conversions`); output is the device's UTF-8
+  (`unicode` encoding), nothing written on error; `TermStyle::write_unicode`
+  for `~tw` atoms. Differences recorded: `~e ~f ~g ~x ~X ~+ ~# ~W ~P` and `K`
+  are badarg; `~p` nesting over 256 is `system_limit` (layout recursion,
+  about 1.2 KiB per level in Debug, 800 levels overflowed); widths count code
+  points; negative counts badarg (OTP loops). OTP golden
+  `executables_console` (every directive with fields, 32 error cases, 23
+  `~p` layouts incl. columns, widths, precisions, tabs, binaries, nested
+  maps; Unicode `~ts`/`~tp`/`~tc`/atoms/binary formats; put_chars chardata
+  and 10 errors; funs and dynamic calls; 10,000-element `~w`, 2,000-element
+  `~p`; a depth-256 `~0p` run; authored runs for unsupported directives and
+  the depth-257 `system_limit`) passes all 8 combinations; semantic cases
+  `io_builtins`, `io_unknown`, `io_guard`. Program diagnostics refreshed:
+  `avltree`, `frames`, `textstats` now compile, and their linked executables
+  reproduce their OTP stdout and exit status (run by step 58). Fresh Windows
+  x64 Debug: fast 178/178, full `-j 12` 182/182; Lizard 0 warnings; tidy
+  findings (complexity splits, swappable parameters) fixed and rerun clean.
+  Logs `build/plan11-step40/`.
 
 <a id="step-41"></a>
 

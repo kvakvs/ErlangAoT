@@ -1,8 +1,1 @@
-exit 1
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:9:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:10:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:12:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:14:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:17:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:20:14: unknown module io
-erlangaot: <fixture>/project.toml [target avltree]: error: <fixture>/src/avltree.erl:28:14: unknown module io
+exit 0

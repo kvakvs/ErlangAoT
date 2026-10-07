@@ -306,6 +306,11 @@ Step facts beyond the plan record:
 - 39: OTP lists:map/foldl raise {case_clause, X} for a non-list (case at top, function_clause in the helper),
   nth has is_integer(N). programs.py --update-diagnostics must get an uppercase absolute work dir (F:/...):
   a lowercase f: cwd breaks the <fixture> substitution. Library added only for literal module names.
+- 40: io = bridge catalog entries of module io (no library file); OTP device = user/group, encoding unicode,
+  io_lib:format list path (not build_bin). ~p printable range latin1 even with t. Probes: ~.*c with -1 hangs OTP
+  (kill erl/beam.smp). Pretty layout recursion ~1.2 KiB/level Debug: 800 levels overflow 1 MiB main stack -> cap
+  256. ADL: local `advance`/`quoted` resolve to std:: -> renamed. avltree/frames/textstats now compile and their
+  linked executables match expected stdout (step 58 runs them). Fixture console: lists:duplicate not in library.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

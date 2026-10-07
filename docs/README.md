@@ -20,6 +20,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Function values: `fun F/A`, `fun M:F/A`, calls of funs | [funs.md](funs.md) |
 | Production builtins: catalog, bridge calls, builtin funs, registration | [builtins.md](builtins.md) |
 | Library modules (`lists`, `maps` subsets) compiled with programs | [library.md](library.md) |
+| Console output: `io:format/1,2`, `io:put_chars/1`, `~p` layout | [io.md](io.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |

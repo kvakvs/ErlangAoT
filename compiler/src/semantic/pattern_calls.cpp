@@ -262,6 +262,21 @@ std::optional<FunctionKey> builtin_fun(BindingAnalysis &state, const ast::ExprId
     return key;
 }
 
+std::optional<std::pair<FunctionKey, std::size_t>> module_builtin(const ast::Module &syntax,
+                                                                  const ast::CallExpression &call) {
+    const auto *remote = std::get_if<ast::RemoteExpression>(&syntax.expression(ungroup(syntax, call.target)).value);
+    const auto *owner =
+        remote ? std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->module)).value) : nullptr;
+    const auto *name =
+        remote ? std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, remote->function)).value) : nullptr;
+    if (!owner || !name || owner->name == U"erlang") {
+        return {};
+    }
+    FunctionKey key{name->name, call.arguments.size()};
+    const auto builtin = bridge_builtin(owner->name, key);
+    return builtin ? std::optional{std::pair{std::move(key), *builtin}} : std::nullopt;
+}
+
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id,
                                         const ast::CallExpression &call) {
     const auto &syntax = *state.module.syntax;

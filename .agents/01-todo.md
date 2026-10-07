@@ -331,7 +331,8 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)â€
   (`float_to_list/1,2` formats), binaries and iolists; atom-table limit.
 - [x] Project-owned `lists`/`maps` subsets compiled with programs that name
   them (step 39, `library/stdlib`).
-- [ ] Remaining family (`io`).
+- [x] Console output (step 40): `io:format/1,2` (`~w ~p ~s ~c ~b ~B ~i ~n ~~`,
+  widths, precisions, pads, `t`/`l`/`k`, OTP `~p` layout) and `io:put_chars/1`.
 - [ ] Interruptible long-running builtins once the scheduler exists (step 43A).
 
 ### F27 â€” Typed/native callables and conversions

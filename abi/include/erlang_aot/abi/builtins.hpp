@@ -121,6 +121,10 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "binary_to_list", 1},
     BuiltinName{"erlang", "list_to_binary", 1},
     BuiltinName{"erlang", "iolist_to_binary", 1},
+    // Console output (plan step 40).
+    BuiltinName{"io", "format", 1},
+    BuiltinName{"io", "format", 2},
+    BuiltinName{"io", "put_chars", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

@@ -25,7 +25,7 @@ bool upper(char32_t c) { return (c >= 'A' && c <= 'Z') || (c >= 0xC0 && c <= 0xD
 
 // io_lib accepts '@' inside unquoted atoms; the emulator printer quotes it.
 bool name_char(char32_t c, TermStyle style) {
-    return lower(c) || upper(c) || (c >= '0' && c <= '9') || c == '_' || (c == '@' && style == TermStyle::write);
+    return lower(c) || upper(c) || (c >= '0' && c <= '9') || c == '_' || (c == '@' && style != TermStyle::display);
 }
 
 // io_lib quotes erl_scan reserved words plus the keywords of features enabled by default (maybe_expr).
@@ -39,7 +39,7 @@ bool reserved(std::string_view spelling) {
 
 // Unquoted atoms start with a Latin-1 lowercase letter and continue with name characters.
 bool needs_quotes(std::string_view spelling, TermStyle style) {
-    if (spelling.empty() || (style == TermStyle::write && reserved(spelling))) {
+    if (spelling.empty() || (style != TermStyle::display && reserved(spelling))) {
         return true;
     }
     std::size_t position = 0;
@@ -66,7 +66,7 @@ std::string_view named_escape(char32_t c, TermStyle style) {
                                                                                   {'\f', "\\f"},
                                                                                   {0x1B, "\\e"},
                                                                                   {0x7F, "\\d"}}};
-    const auto rows = std::span(names).first(style == TermStyle::write ? names.size() : names.size() - 2);
+    const auto rows = std::span(names).first(style != TermStyle::display ? names.size() : names.size() - 2);
     const auto found = std::ranges::find_if(rows, [c](const auto &row) { return row.first == c; });
     return found == rows.end() ? std::string_view{} : found->second;
 }
@@ -79,7 +79,7 @@ void append_number(std::uint64_t value, int base, TextOutput &out) {
     out.append({digits.data(), end});
 }
 
-// Append one quoted-atom character: named escape, \x{H} (io_lib, beyond Latin-1), \ooo control, else raw.
+// Append one quoted-atom character: named escape, \x{H} (io_lib `~w`, beyond Latin-1), \ooo control, else raw.
 void print_char(char32_t c, std::string_view bytes, TermStyle style, TextOutput &out) {
     if (const auto name = named_escape(c, style); !name.empty()) {
         out.append(name);
@@ -227,7 +227,7 @@ TermResult<void> print_float(const Term &value, TermStyle style, TextOutput &out
     if (!number) {
         return std::unexpected(number.error());
     }
-    if (style == TermStyle::write) {
+    if (style != TermStyle::display) {
         print_short(*number, out);
         return {};
     }
@@ -252,7 +252,7 @@ TermResult<void> print_bits(const Term &value, TermStyle style, TextOutput &out)
         const auto c = std::to_integer<unsigned>(b);
         return c >= 0x20 && c < 0x7F;
     });
-    if (style == TermStyle::write || *size % 8 != 0 || bytes->empty() || !ascii) {
+    if (style != TermStyle::display || *size % 8 != 0 || bytes->empty() || !ascii) {
         numeric_bits(*bytes, *size, out);
         return {};
     }

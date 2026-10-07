@@ -5,8 +5,9 @@
 #include <string_view>
 
 namespace erlang_aot::runtime {
-// Select OTP io_lib `~w` rules or the emulator printer behind erlang:display/1.
-enum class TermStyle : std::uint8_t { write, display };
+// Select OTP io_lib `~w` rules, the emulator printer behind erlang:display/1, or io_lib `~tw` rules (quoted
+// atoms keep characters beyond Latin-1 instead of `\x{...}` escapes).
+enum class TermStyle : std::uint8_t { write, display, write_unicode };
 
 // Bound rendered text so shared subterms cannot expand into unbounded output or work.
 inline constexpr std::size_t default_text_limit = std::size_t{64} << 20;

@@ -53,11 +53,15 @@ struct GuardSyntax {
 
 // Record a body builtin: its inline operation, or else the bridge builtin it calls.
 void body_service(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call) {
+    const auto *expression = &state.module.syntax->expression(id);
     if (const auto builtin = body_builtin(state, id, call)) {
         const auto operation = immediate_service(*builtin);
         state.function.services.emplace(
-            &state.module.syntax->expression(id),
+            expression,
             ServiceResolution{*builtin, false, false, operation, operation ? std::nullopt : bridge_builtin(*builtin)});
+    } else if (const auto other = module_builtin(*state.module.syntax, call)) {
+        state.function.services.emplace(expression,
+                                        ServiceResolution{other->first, false, false, std::nullopt, other->second});
     }
 }
 

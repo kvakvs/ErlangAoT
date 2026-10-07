@@ -16,6 +16,12 @@ std::optional<abi::v1::ImmediateOperation> immediate_service(const FunctionKey &
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call);
 // The bridge index (abi::v1::bridge_builtins) of erlang:Name/Arity, when the runtime provides it as a builtin.
 std::optional<std::size_t> bridge_builtin(const FunctionKey &key);
+// The bridge index of Module:Name/Arity for any module, such as io:format/2.
+std::optional<std::size_t> bridge_builtin(std::u32string_view module, const FunctionKey &key);
+// A qualified call of a bridge builtin of a module other than erlang (io:format/2): its name and bridge index.
+// Such builtins take precedence over a batch module of the same name, as OTP's sticky modules cannot be replaced.
+std::optional<std::pair<FunctionKey, std::size_t>> module_builtin(const ast::Module &syntax,
+                                                                  const ast::CallExpression &call);
 // The erlang builtin a local fun F/A names: an auto-imported bridge builtin the module neither defines nor
 // suppresses (OTP makes fun abs/1 the external fun erlang:abs/1).
 std::optional<FunctionKey> builtin_fun(BindingAnalysis &state, const ast::ExprId &id,

@@ -235,7 +235,7 @@ constexpr std::array ERLANG_BUILTINS{
 std::span<const BuiltinEntry> erlang_builtins() noexcept { return ERLANG_BUILTINS; }
 
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept {
-    static const std::array families{erlang_builtins(), term_access_builtins(), conversion_builtins()};
+    static const std::array families{erlang_builtins(), term_access_builtins(), conversion_builtins(), io_builtins()};
     return families;
 }
 } // namespace erlang_aot::runtime

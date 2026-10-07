@@ -12,7 +12,7 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | --- | --- | --- | --- |
 | Map generator order (`K := V <- M`) | Flat maps (up to 32 keys) iterate in key order, but atom keys in atom-table order, which varies between VM runs; larger maps in hash order | Always canonical key order (term order) | [patterns](patterns.md#comprehensions) |
 | `bad_generators` payload of a map generator in a zip group | Its iterator: `{K, V, Next}` chain ending in `none`, in OTP's order | The same chain, built in canonical key order | [patterns](patterns.md#comprehensions) |
-| Map printing (`erlang:display/1`, `~w`) | Internal layout order (atom-table order for atom keys, hash order above 32 keys) | Map-key order, as OTP's `~kw` | [terms](terms.md#printing) |
+| Map printing (`erlang:display/1`, `~w`, `~p`) | Internal layout order (atom-table order for atom keys, hash order above 32 keys) | Map-key order, as OTP's `~kw` | [terms](terms.md#printing) |
 | Native record printing (`erlang:display/1`) | Fields in atom-table index order | Definition order, as `~w` | [native records](native-records.md#printing-and-order) |
 | `==` between native records whose fields differ only as integer/float | The compiler may fold it to `=:=` (false) | Numeric comparison (true) | [native records](native-records.md#printing-and-order) |
 | Local fun printing (`#Fun<M.Index.Uniq>`) | Index from the compiler's lambda numbering, `Uniq` a hash of the module code | Index of the module's local funs in source order, `Uniq` always 0 | [funs](funs.md#comparison-and-printing) |
@@ -49,4 +49,14 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | `lists` and `maps` | The full modules; `maps:keys/1`, `values/1`, `to_list/1`, `fold/3` follow the map's internal order (atom-table order for atom keys, hash order above 32 keys) | The [library subset](library.md); map functions follow key order | [library](library.md) |
 | Files without `#!` given as escripts | `escript file.erl` skips the first line | Compiled as ordinary modules | [executables](executables.md) |
 | Precompiled beam and archive escripts | Run | Not supported | [executables](executables.md) |
+
+## io
+
+| Difference | OTP | ErlangAoT | Owner |
+| --- | --- | --- | --- |
+| Control sequences `~e ~f ~g ~x ~X ~+ ~# ~W ~P`, modifier `K` | Formatted | `badarg` | [io](io.md#formats) |
+| `~p` of containers nested more than 256 deep | Printed | `system_limit` | [io](io.md#pretty-printing-p) |
+| Field widths and `~ts` precision with combining characters or `\r\n` | Count grapheme clusters | Count code points | [io](io.md#formats) |
+| Negative precision or pad count (`~.*c` with -1) | Loops forever | `badarg` | [io](io.md#formats) |
+| `io` functions other than `format/1,2`, `put_chars/1` | Exist | `unknown module io` | [io](io.md#calls) |
 

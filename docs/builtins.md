@@ -26,10 +26,14 @@ builtin both the compiler and the runtime know:
 - conversions (plan step 38): `atom_to_list/1`, `list_to_atom/1`,
   `integer_to_list/1,2`, `list_to_integer/1,2`, `float_to_list/1,2`,
   `binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1`
-  (`term_to_binary/1` is not selected).
+  (`term_to_binary/1` is not selected);
+- console output (plan step 40): `io:format/1,2` and `io:put_chars/1`, the
+  first builtins of another module ([io](io.md)).
 
 Entries are only appended: an entry's index is the number generated code
-passes to the bridge service. Other `erlang` functions keep their diagnostics:
+passes to the bridge service. A qualified call of a catalog builtin of another
+module (`io:format(F, A)`) also calls the bridge. Other `erlang` functions keep
+their diagnostics:
 a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
 `fun F/A` of a guard BIF outside the catalog (`self/0`, `node/0`) and
 `fun erlang:apply/2,3` report the unavailable `dynamic calls` capability.
@@ -99,7 +103,8 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   name already registered (or repeated in the batch) rejects the batch with
   nothing kept.
 - Runtime startup registers every table of `production_builtins()`
-  (`erlang_builtins()`, `term_access_builtins()`, `conversion_builtins()`),
+  (`erlang_builtins()`, `term_access_builtins()`, `conversion_builtins()`,
+  `io_builtins()`),
   which together cover the
   catalog; later families add their own tables.
 - A body reads exactly its arity of argument words and records errors in the

@@ -146,6 +146,12 @@
   batch in `driver/frontend` `add_library`: modules named by literal atoms (`semantic::referenced_modules`) that no
   input declares (`semantic::declared_module`) are parsed from `linking::library_directory()` (relative to
   `erlangaot`, `ERLANG_AOT_DEFAULT_LIBRARY`) until closed; they compile, link and publish like inputs.
+  Step 40 (`docs/io.md`): catalog entries of module `io` (`io_builtins()`); a qualified call of another module's
+  catalog builtin is a service (`semantic::module_builtin`) ahead of call resolution. Runtime `builtins/io_format`
+  (scan, control sequences, column tracking, chardata walks), `builtins/io_pretty` (OTP intermediate form with
+  one-line lengths, then pp/cind layout; sequences iterate, nesting recursion capped at 256 -> system_limit),
+  shared `builtins/text` (UTF-8, digits); text is built as `std::u32string`, validated, written as UTF-8.
+  `TermStyle::write_unicode` = `~tw` atoms.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

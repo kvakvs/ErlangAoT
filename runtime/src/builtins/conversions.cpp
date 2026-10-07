@@ -2,6 +2,7 @@
 #include "float_text.hpp"
 #include "support.hpp"
 #include "terms.hpp"
+#include "text.hpp"
 #include <algorithm>
 #include <array>
 #include <erlang_aot/abi/equality.hpp>
@@ -14,15 +15,11 @@ namespace erlang_aot::runtime::builtins {
 namespace {
 using detail::Integer;
 
-// Largest Unicode code point; surrogates are not characters.
-constexpr std::int64_t MAX_CODE_POINT = 0x10FFFF;
 // Atoms hold at most 255 characters.
 constexpr std::size_t MAX_ATOM_CHARACTERS = 255;
-// Digits of integer_to_list/2, uppercase like OTP's.
-constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 // A proper list of the given character codes.
-Word char_list(ProcessContext &context, std::span<const std::uint32_t> codes) {
+Word char_list(ProcessContext &context, std::u32string_view codes) {
     std::vector<Term> items;
     items.reserve(codes.size());
     for (const auto code : codes) {
@@ -33,47 +30,9 @@ Word char_list(ProcessContext &context, std::span<const std::uint32_t> codes) {
 
 // A proper list of the bytes of `text`.
 Word byte_list(ProcessContext &context, std::string_view text) {
-    std::vector<std::uint32_t> codes(text.begin(), text.end());
+    std::u32string codes(text.size(), 0);
     std::ranges::transform(text, codes.begin(), [](char c) { return static_cast<unsigned char>(c); });
     return char_list(context, codes);
-}
-
-// The byte count of a UTF-8 sequence from its lead byte.
-std::size_t sequence_length(unsigned char lead) {
-    if (lead < 0x80) {
-        return 1;
-    }
-    return lead < 0xE0 ? 2 : (lead < 0xF0 ? 3 : 4);
-}
-
-// The code points of valid UTF-8 text (atom spellings are validated when interned).
-std::vector<std::uint32_t> code_points(std::string_view text) {
-    std::vector<std::uint32_t> result;
-    for (std::size_t at = 0; at < text.size();) {
-        const auto lead = static_cast<unsigned char>(text[at]);
-        const auto length = sequence_length(lead);
-        std::uint32_t code = length == 1 ? lead : lead & (0x7FU >> length);
-        for (const char byte : text.substr(at + 1, length - 1)) {
-            code = (code << 6) | (static_cast<unsigned char>(byte) & 0x3FU);
-        }
-        result.push_back(code);
-        at += length;
-    }
-    return result;
-}
-
-// Append `code` to `text` as UTF-8.
-void encode(std::uint32_t code, std::string &text) {
-    if (code < 0x80) {
-        text.push_back(static_cast<char>(code));
-        return;
-    }
-    const std::size_t length = code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
-    static constexpr std::array<unsigned, 5> LEADS{0, 0, 0xC0, 0xE0, 0xF0};
-    text.push_back(static_cast<char>(LEADS.at(length) | (code >> (6 * (length - 1)))));
-    for (std::size_t i = length - 1; i > 0; --i) {
-        text.push_back(static_cast<char>(0x80U | ((code >> (6 * (i - 1))) & 0x3FU)));
-    }
 }
 
 // The head of a cons, advancing `list` to its tail.
@@ -107,10 +66,10 @@ std::expected<std::string, NameError> atom_name(Term list) {
             return std::unexpected(NameError::too_long);
         }
         const auto code = small(next(list).word());
-        if (!code || *code < 0 || *code > MAX_CODE_POINT || (*code >= 0xD800 && *code <= 0xDFFF)) {
+        if (!code || !unicode_character(*code)) {
             return std::unexpected(NameError::badarg);
         }
-        encode(static_cast<std::uint32_t>(*code), text);
+        encode(static_cast<char32_t>(*code), text);
     }
     return text;
 }
@@ -133,45 +92,6 @@ Word list_to_atom(ProcessContext &context, Arguments arguments) {
 std::optional<unsigned> base_of(Word word) {
     const auto base = small(word);
     return base && *base >= 2 && *base <= 36 ? std::optional{static_cast<unsigned>(*base)} : std::nullopt;
-}
-
-// The largest power of `base` used as a chunk of digits, and its digit count.
-std::pair<std::uint64_t, unsigned> chunk(unsigned base) {
-    std::uint64_t power = base;
-    unsigned digits = 1;
-    while (power <= (std::uint64_t{1} << 63) / base) {
-        power *= base;
-        ++digits;
-    }
-    return {power, digits};
-}
-
-// The digits of `value` in `base` (2..36), most significant first, with a leading '-' when negative.
-std::string integer_digits(const Integer &value, unsigned base) {
-    if (base == 10) {
-        return detail::integer_text(value);
-    }
-    const auto [power, width] = chunk(base);
-    Integer magnitude = boost::multiprecision::abs(value);
-    std::string reversed;
-    for (;;) {
-        Integer quotient;
-        Integer remainder;
-        boost::multiprecision::divide_qr(magnitude, Integer(power), quotient, remainder);
-        auto part = remainder.convert_to<std::uint64_t>();
-        for (unsigned i = 0; i < width && (quotient != 0 || part != 0 || i == 0); ++i) {
-            reversed.push_back(DIGITS[part % base]);
-            part /= base;
-        }
-        if (quotient == 0) {
-            break;
-        }
-        magnitude.swap(quotient);
-    }
-    if (value < 0) {
-        reversed.push_back('-');
-    }
-    return {reversed.rbegin(), reversed.rend()};
 }
 
 // integer_to_list(Integer) and integer_to_list(Integer, Base).
@@ -384,9 +304,9 @@ Word binary_to_list(ProcessContext &context, Arguments arguments) {
     if (!bytes) {
         return badarg(context);
     }
-    std::vector<std::uint32_t> codes;
+    std::u32string codes;
     codes.reserve(bytes->size());
-    std::ranges::transform(*bytes, std::back_inserter(codes), [](std::byte b) { return std::to_integer<unsigned>(b); });
+    std::ranges::transform(*bytes, std::back_inserter(codes), [](std::byte b) { return std::to_integer<char32_t>(b); });
     return char_list(context, codes);
 }
 
