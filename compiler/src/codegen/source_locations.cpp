@@ -17,18 +17,25 @@ unsigned line_number(const Span &site) {
     return static_cast<unsigned>(line);
 }
 
+struct Definition {
+    // The Erlang name, native symbol and source extent of a function or anonymous fun.
+    std::u32string name;
+    const std::string &symbol;
+    const ast::NodeSource &source;
+};
+
 // Preserve the original Erlang identity and physical declaration file in each definition's scope.
 void function_scope(llvm::DIBuilder &debug, llvm::Module &output, const semantic::Module &module,
-                    const semantic::Function &function, const bool optimized, SourceScopes &sources) {
-    const auto &site = source_site(module.syntax->anchor(module.syntax->form(function.form).source));
+                    const Definition &definition, const bool optimized, SourceScopes &sources) {
+    const auto &site = source_site(module.syntax->anchor(definition.source));
     auto *file = debug.createFile(site.source->name, "");
     auto *type = debug.createSubroutineType(debug.getOrCreateTypeArray({}));
     const auto line = line_number(site);
     const auto flags = llvm::DISubprogram::toSPFlags(false, true, optimized);
-    auto *scope = debug.createFunction(file, utf8(function.key.name), function.symbol, file, line, type, line,
+    auto *scope = debug.createFunction(file, utf8(definition.name), definition.symbol, file, line, type, line,
                                        llvm::DINode::FlagZero, flags);
-    output.getFunction(function.symbol)->setSubprogram(scope);
-    for (const auto &origin : module.syntax->extent(module.syntax->form(function.form).source)) {
+    output.getFunction(definition.symbol)->setSubprogram(scope);
+    for (const auto &origin : module.syntax->extent(definition.source)) {
         const auto &physical = source_site(origin);
         auto *source_file = debug.createFile(physical.source->name, "");
         auto *block = llvm::DILexicalBlockFile::get(output.getContext(), scope, source_file, 0);
@@ -54,7 +61,14 @@ void prepare_source_locations(llvm::Module &output, const semantic::Module &modu
                             llvm::DICompileUnit::LineTablesOnly);
     output.addModuleFlag(llvm::Module::Warning, "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
     for (const auto &function : module.functions) {
-        function_scope(debug, output, module, function, optimized, sources);
+        const auto &source = module.syntax->form(function.form).source;
+        function_scope(debug, output, module, {function.key.name, function.symbol, source}, optimized, sources);
+    }
+    for (const auto &fun : module.funs) {
+        if (fun.expression) {
+            function_scope(debug, output, module, {fun.function, fun.symbol, fun.expression->source}, optimized,
+                           sources);
+        }
     }
     debug.finalize();
 }

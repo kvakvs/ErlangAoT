@@ -76,6 +76,16 @@ std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std:
     return result;
 }
 
+// An anonymous fun's clause guard tests and bodies, clause by clause.
+std::vector<ast::ExprId> fun_children(const std::vector<ast::FunctionClause> &clauses) {
+    std::vector<ast::ExprId> result;
+    for (const auto &clause : clauses) {
+        append_guard(clause.guard ? &*clause.guard : nullptr, result);
+        result.insert(result.end(), clause.body.begin(), clause.body.end());
+    }
+    return result;
+}
+
 // Present branch clauses (case, or a try's of part) uniformly.
 void append_branches(const std::vector<ast::BranchClause> &clauses, std::vector<Branch> &result) {
     for (const auto &clause : clauses) {
@@ -111,6 +121,11 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
         append_branches(*conditional->otherwise, result);
     }
     return result;
+}
+
+const std::vector<ast::FunctionClause> *fun_clauses(const ast::ExprValue &value) {
+    const auto *fun = std::get_if<ast::FunExpression>(&value);
+    return fun && !fun->name ? &fun->clauses : nullptr;
 }
 
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value) {
@@ -170,7 +185,8 @@ std::vector<ast::ExprId> expression_children(const ast::Expression &expression) 
     if (comprehension_qualifiers(expression.value)) {
         return comprehension_children(expression.value);
     }
-    return binding_children(expression.value);
+    return fun_clauses(expression.value) ? fun_children(*fun_clauses(expression.value))
+                                         : binding_children(expression.value);
 }
 
 namespace {

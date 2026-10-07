@@ -3,6 +3,8 @@
 #include "pattern_state.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <set>
+#include <span>
 
 namespace erlang_aot::semantic {
 namespace {
@@ -18,7 +20,10 @@ enum class Action : std::uint8_t {
     branch_end,
     comprehension_enter,
     generator,
-    comprehension_exit
+    comprehension_exit,
+    fun_clause,
+    fun_clause_end,
+    fun_exit
 };
 
 struct Visit {
@@ -45,6 +50,17 @@ struct CaseScope {
     std::size_t first_handler = 0;
 };
 
+struct FunScope {
+    // The scope at an anonymous fun: every clause starts from it and it comes back after the fun.
+    BindingEnvironment incoming;
+    // Clause names of enclosing cases do not reach into the fun; they come back after it.
+    std::vector<std::map<std::u32string, BindingId>> branch_names;
+    // The clause's definition count and the binding events before the fun: an event inside it that uses an earlier
+    // definition captures it.
+    std::size_t first_local;
+    std::size_t first_binding;
+};
+
 struct Scopes {
     // Indirection avoids allocating map moves during Windows scope-stack relocation.
     std::vector<std::unique_ptr<BindingEnvironment>> conditional;
@@ -52,6 +68,8 @@ struct Scopes {
     std::vector<std::unique_ptr<CaseScope>> cases;
     // The scope before each enclosing comprehension, which binds nothing outside itself.
     std::vector<std::unique_ptr<BindingEnvironment>> comprehensions;
+    // The enclosing anonymous funs.
+    std::vector<std::unique_ptr<FunScope>> funs;
 };
 
 // Merge constraints without exposing an earlier sibling's new names to the next sibling's reads.
@@ -379,12 +397,23 @@ void match(const BindingAnalysis &state, const ast::ExprId &id, const ast::Match
     pending.push_back({value.right});
 }
 
+// An anonymous fun binds nothing outside itself: its clauses are analyzed one after the other, then the scope at
+// the fun comes back.
+bool fun_scope(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
+    if (!fun_clauses(value)) {
+        return false;
+    }
+    pending.push_back({id, Action::fun_exit});
+    pending.push_back({id, Action::fun_clause, 0});
+    return true;
+}
+
 // Schedule syntax that opens binding scopes of its own; ordinary value syntax returns false.
 bool scoped(const ast::Module &syntax, const ast::ExprId &id, const ast::ExprValue &value,
             std::vector<Visit> &pending) {
     return conditional(value, pending) || branches(id, value, pending) || protect(value, pending) ||
            attempt(id, value, pending) || conditional_block(syntax, id, value, pending) ||
-           comprehension(id, value, pending);
+           comprehension(id, value, pending) || fun_scope(id, value, pending);
 }
 
 // Ordinary value traversal never descends into deferred branch, exception or closure scopes.
@@ -444,6 +473,85 @@ void scope(BindingAnalysis &state, const Visit &visit, BindingEnvironment &envir
     }
 }
 
+// Open the fun's scope before its first clause: sibling checks and case-clause names stay outside.
+FunScope &open_fun(BindingAnalysis &state, const BindingEnvironment &environment, Scopes &scopes) {
+    auto scope = std::make_unique<FunScope>(environment, std::move(state.branch_names),
+                                            state.function.clause_bindings.at(state.clause).definitions.size(),
+                                            state.function.bindings.size());
+    scope->incoming.checks.clear();
+    state.branch_names.clear();
+    scopes.funs.push_back(std::move(scope));
+    return *scopes.funs.back();
+}
+
+// Bind one fun clause's head (new names shadow the scope at the fun) and guard, then schedule its body.
+void fun_clause(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
+                std::vector<Visit> &pending, Scopes &scopes) {
+    const auto &scope = visit.clause == 0 ? open_fun(state, environment, scopes) : *scopes.funs.back();
+    const auto &clause = fun_clauses(state.module.syntax->expression(visit.id).value)->at(visit.clause);
+    environment = scope.incoming;
+    BindingCandidate head{scope.incoming, {}};
+    head.fresh = true;
+    for (const auto &argument : clause.arguments) {
+        bind_pattern(state, argument, head, BindingContext::head);
+    }
+    head.shadow(environment);
+    if (clause.guard) {
+        for (const auto &alternative : clause.guard->alternatives) {
+            auto visible = environment;
+            bind_expressions(state, alternative.tests, visible, BindingContext::guard);
+        }
+    }
+    pending.push_back({visit.id, Action::fun_clause_end, visit.clause});
+    for (auto body = clause.body.rbegin(); body != clause.body.rend(); ++body) {
+        pending.push_back({*body});
+    }
+}
+
+// Start the next clause from the scope at the fun.
+void fun_clause_end(const BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment,
+                    std::vector<Visit> &pending, const Scopes &scopes) {
+    environment = scopes.funs.back()->incoming;
+    if (visit.clause + 1 < fun_clauses(state.module.syntax->expression(visit.id).value)->size()) {
+        pending.push_back({visit.id, Action::fun_clause, visit.clause + 1});
+    }
+}
+
+// Record the definitions the fun uses from outside it, in definition order, and restore the scope at the fun.
+void fun_exit(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, Scopes &scopes) {
+    auto &scope = *scopes.funs.back();
+    std::set<BindingId> captures;
+    const auto events = std::span(state.function.bindings).subspan(scope.first_binding);
+    for (const auto &event : events) {
+        if (event.use != BindingUse::definition && event.identity.local < scope.first_local) {
+            captures.insert(event.identity);
+        }
+    }
+    state.function.captures.insert_or_assign(&state.module.syntax->expression(visit.id),
+                                             std::vector(captures.begin(), captures.end()));
+    environment = std::move(scope.incoming);
+    state.branch_names = std::move(scope.branch_names);
+    scopes.funs.pop_back();
+}
+
+// Analyze one anonymous fun scope task; other actions return false.
+bool fun_task(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, std::vector<Visit> &pending,
+              Scopes &scopes) {
+    switch (visit.action) {
+    case Action::fun_clause:
+        fun_clause(state, visit, environment, pending, scopes);
+        return true;
+    case Action::fun_clause_end:
+        fun_clause_end(state, visit, environment, pending, scopes);
+        return true;
+    case Action::fun_exit:
+        fun_exit(state, visit, environment, scopes);
+        return true;
+    default:
+        return false;
+    }
+}
+
 // Task boundaries are the only publication points; no pattern walk mutates its incoming environment.
 bool execute(BindingAnalysis &state, const Visit &visit, BindingEnvironment &environment, const BindingContext context,
              std::vector<Visit> &pending, Scopes &scopes) {
@@ -456,7 +564,8 @@ bool execute(BindingAnalysis &state, const Visit &visit, BindingEnvironment &env
         candidate.commit(environment);
     } else if (visit.action == Action::expression) {
         expression(state, visit.id, environment, context, pending);
-    } else if (!comprehension_scope(state, visit, environment, scopes)) {
+    } else if (!comprehension_scope(state, visit, environment, scopes) &&
+               !fun_task(state, visit, environment, pending, scopes)) {
         scope(state, visit, environment, pending, scopes);
     }
     return true;

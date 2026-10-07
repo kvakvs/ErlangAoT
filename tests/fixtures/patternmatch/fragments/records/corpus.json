@@ -240,7 +240,7 @@
         "name": "rec_fun_default_gate",
         "body": "-record(r,{a=fun(X)->X end}). f() -> #r{}.",
         "diagnostic": "",
-        "capability": "closures",
+        "capability": "",
         "sha256": "d6edb3405ded0566ed5ce56718c78897c991d23bbd35a4f4f2fb246ab82a7d80"
       }
     ]

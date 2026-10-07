@@ -52,8 +52,7 @@ llvm::Value *leaf(ExpressionLowering &state, const ast::ExprId &expression) {
     if (const auto *map = std::get_if<ast::MapExpression>(&value)) {
         return lower_map(state, *map);
     }
-    if (std::holds_alternative<ast::LocalFunReference>(value) ||
-        std::holds_alternative<ast::RemoteFunReference>(value)) {
+    if (semantic::fun_value(value)) {
         return lower_fun(state, state.module.syntax->expression(expression));
     }
     if (auto *record = lower_record(state, expression)) {

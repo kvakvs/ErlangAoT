@@ -227,9 +227,10 @@ Plan: [32](11-plan.md#step-32), [33](11-plan.md#step-33),
 
 - [x] Representation, arity and code ownership; `fun F/A`, `fun M:F/A`, calls
   of function values with `badfun`/`badarity`/`undef` (step 32).
-- [ ] Captures: rooted traced environments; anonymous fun construction and
+- [x] Captures: rooted traced environments; anonymous fun construction and
   invocation lowering (step 33).
-- [ ] Verify captures after return/GC, wrong arity, copies, module lifetime.
+- [x] Verify captures after return/GC, wrong arity, copies, module lifetime
+  (step 33: `executables_closures`, `runtime_funs`).
 - [ ] Named funs (step 34).
 
 ### F19 — Dynamic calls

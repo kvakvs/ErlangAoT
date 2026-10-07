@@ -27,9 +27,10 @@ recursion on explicit process frames with proper tail calls
 by the process stack (uncapped by default), not the native stack. Guards support the full admitted
 catalog. See [patterns](patterns.md), [guards](guards.md) and [terms](terms.md).
 
-Function values `fun F/A`, `fun M:F/A` and calls of funs run
-([funs](funs.md)). Rejected with diagnostics even in unused functions:
-`receive`, anonymous funs, dynamic `M:F(...)` calls and funs of builtins,
+Function values `fun F/A`, `fun M:F/A`, anonymous funs with captured
+variables and calls of funs run ([funs](funs.md)). Rejected with diagnostics
+even in unused functions: `receive`, named funs, dynamic `M:F(...)` calls and
+funs of builtins,
 processes and messaging.
 Accepted attributes: `module`, `export`, `file`, tuple and native `record`,
 `export_record`, `import_record`, type/spec

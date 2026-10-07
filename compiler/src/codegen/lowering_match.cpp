@@ -1,3 +1,4 @@
+#include "../semantic/capabilities.hpp"
 #include "../semantic/match_plan.hpp"
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
@@ -143,12 +144,21 @@ void node(ExpressionLowering &state, const semantic::MatchNode &node, const std:
                                                                                : literal(state, *node.literal);
     state.builder.CreateCondBr(lower_exact(state, input, expected), blocks.at(node.success), blocks.at(node.mismatch));
 }
+
+// The head plan of the current candidate: a clause of the function, or of the anonymous fun being lowered.
+std::optional<semantic::MatchPlan> head_plan(const ExpressionLowering &state) {
+    const auto out = [](const Diagnostic &diagnostic) { throw std::invalid_argument(render(diagnostic)); };
+    const semantic::MatchOptions options{.clause = state.clause, .word_bits = state.word->getBitWidth()};
+    if (state.lambda) {
+        const auto &clauses = *semantic::fun_clauses(state.lambda->expression->value);
+        return semantic::make_match_plan(state.module, state.function, clauses.at(state.clause), out, options);
+    }
+    return semantic::make_match_plan(state.module, state.function, out, options);
+}
 } // namespace
 
 bool lower_unconditional_head(ExpressionLowering &state) {
-    const auto plan = semantic::make_match_plan(state.module, state.function,
-                                                [](const Diagnostic &d) { throw std::invalid_argument(render(d)); },
-                                                {.clause = state.clause, .word_bits = state.word->getBitWidth()});
+    const auto plan = head_plan(state);
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }
@@ -190,10 +200,7 @@ llvm::Value *lower_exact(ExpressionLowering &state, llvm::Value *left, llvm::Val
 }
 
 void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::BasicBlock *mismatch) {
-    const auto plan =
-        semantic::make_match_plan(state.module, state.function,
-                                  [](const Diagnostic &diagnostic) { throw std::invalid_argument(render(diagnostic)); },
-                                  {.clause = state.clause, .word_bits = state.word->getBitWidth()});
+    const auto plan = head_plan(state);
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }

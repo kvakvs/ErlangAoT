@@ -13,13 +13,17 @@ llvm::Constant *frame_descriptor(ExpressionLowering &state) {
     const auto module = utf8(state.module.name);
     auto *descriptor = output.getNamedGlobal(semantic::encode_symbol({module, "", 0}) + ".descriptor");
     auto *type = llvm::StructType::get(state.builder.getPtrTy(), state.word, state.word, state.word);
-    auto *data = llvm::ConstantStruct::get(type, descriptor, atom_slot(output, module),
-                                           atom_slot(output, utf8(state.function.key.name)),
-                                           llvm::ConstantInt::get(state.word, state.function.key.arity));
-    return new llvm::GlobalVariable(output, type, true, llvm::GlobalValue::PrivateLinkage, data,
-                                    "frame." + state.function.symbol);
+    const auto &name = state.lambda ? state.lambda->function : state.function.key.name;
+    auto *data = llvm::ConstantStruct::get(type, descriptor, atom_slot(output, module), atom_slot(output, utf8(name)),
+                                           llvm::ConstantInt::get(state.word, frame_arity(state)));
+    const auto &symbol = state.lambda ? state.lambda->symbol : state.function.symbol;
+    return new llvm::GlobalVariable(output, type, true, llvm::GlobalValue::PrivateLinkage, data, "frame." + symbol);
 }
 } // namespace
+
+std::size_t frame_arity(const ExpressionLowering &state) {
+    return state.lambda ? state.lambda->arity + state.lambda->captures.size() : state.function.key.arity;
+}
 
 FunctionRoots begin_roots(ExpressionLowering &state) {
     auto &builder = state.builder;
@@ -29,7 +33,7 @@ FunctionRoots begin_roots(ExpressionLowering &state) {
         llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy(), state.word, builder.getPtrTy()}, false));
     auto *buffer = builder.CreateCall(
         marker, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, 1), frame_descriptor(state)}, "roots");
-    return {buffer, state.word, state.function.key.arity};
+    return {buffer, state.word, frame_arity(state)};
 }
 
 llvm::Value *root_slot(ExpressionLowering &state) {

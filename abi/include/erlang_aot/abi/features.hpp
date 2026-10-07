@@ -121,7 +121,7 @@ inline constexpr std::array feature_catalog{
                 .owner = FeatureOwner::compiler,
                 .boundary = "fun capability analysis",
                 .status = FeatureStatus::deferred,
-                .plan_step = 33,
+                .plan_step = 34,
                 .failure_test = "codegen_placeholders"},
     FeatureInfo{.id = FeatureId::exceptions,
                 .name = "exceptions",

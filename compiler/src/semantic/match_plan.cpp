@@ -197,15 +197,20 @@ std::optional<MatchPlan> build_plan(const Module &module, const Function &functi
 }
 } // namespace
 
-std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
-                                         MatchOptions options) {
-    const auto &syntax = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(options.clause);
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function,
+                                         const ast::FunctionClause &clause, const Reporter &out, MatchOptions options) {
     std::vector<ast::ExprId> roots;
-    roots.reserve(syntax.arguments.size());
-    for (const auto &argument : syntax.arguments) {
+    roots.reserve(clause.arguments.size());
+    for (const auto &argument : clause.arguments) {
         roots.push_back(pattern_root(*module.syntax, argument));
     }
-    return build_plan(module, function, roots, syntax.body.at(0), out, options);
+    return build_plan(module, function, roots, clause.body.at(0), out, options);
+}
+
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
+                                         MatchOptions options) {
+    const auto &clause = std::get<ast::Function>(module.syntax->form(function.form).value).clauses.at(options.clause);
+    return make_match_plan(module, function, clause, out, options);
 }
 
 std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const ast::ExprId &pattern,

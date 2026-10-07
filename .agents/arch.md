@@ -111,6 +111,12 @@
   (badfun/badarity/undef, appends captures, returns the frame) and the `erlang_aot.apply` marker, which
   `lower_frames` turns into an enter/tail transfer with the array as the registers. Funs order after atoms;
   local < external. Builtin funs and `fun M:F/A` with variables stay `dynamic calls`.
+  Closures (step 33): binding analysis gives each anonymous fun clause the scope at the fun (fresh shadowing heads,
+  `FunScope` hides case branch names) and records `Function::captures` (outer identities used inside, definition
+  order); `expression_children` lists fun guards and bodies so all walks see them, except the codegen walker.
+  `index_funs` names lambdas `-f/A-fun-N-`, symbol arity = arity + captures; `lower_lambda` lowers the clauses into
+  that private native function (`ExpressionLowering::lambda` picks clause plans, frame names and arity) with the
+  captured values loaded from the arguments after the fun's own; `lower_fun` roots captures for the make service.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

@@ -48,9 +48,19 @@ llvm::Value *lower_fun(ExpressionLowering &state, const ast::Expression &express
     auto service = output.getOrInsertFunction(
         services::symbol<services::MakeFun>(output.getTargetTriple()),
         llvm::FunctionType::get(builder.getInt8Ty(), {ptr, ptr, ptr, state.word, ptr}, false));
+    // An anonymous fun's captured values go to consecutive rooted slots.
+    const auto &captures = state.module.funs.at(state.module.fun_entries.at(&expression)).captures;
+    llvm::Value *values = llvm::ConstantPointerNull::get(ptr);
+    if (!captures.empty()) {
+        values = builder.CreateGEP(state.word, state.roots->buffer,
+                                   llvm::ConstantInt::get(state.word, state.roots->next), "fun.captures");
+        for (const auto &identity : captures) {
+            root_value(state, state.bindings.at(identity));
+        }
+    }
     auto *slot = root_slot(state);
-    builder.CreateCall(service, {state.entry.getArg(0), descriptor(state, expression),
-                                 llvm::ConstantPointerNull::get(ptr), llvm::ConstantInt::get(state.word, 0), slot});
+    builder.CreateCall(service, {state.entry.getArg(0), descriptor(state, expression), values,
+                                 llvm::ConstantInt::get(state.word, captures.size()), slot});
     propagate_failure(state);
     return builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "fun.value");
 }

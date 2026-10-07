@@ -47,6 +47,9 @@ struct ExpressionLowering {
     llvm::BasicBlock *bad_arithmetic = nullptr;
     // Integer results beyond the size limit share a body exit raising system_limit; guards reject instead.
     llvm::BasicBlock *system_limit = nullptr;
+    // The anonymous fun lowered as its own function: its clauses, frame name and arity (arguments, then captured
+    // values); null while lowering the function itself.
+    const semantic::FunEntry *lambda = nullptr;
     // The module whose atom table and descriptor atom loads use, when module is another batch module whose
     // literal record defaults are lowered here; null means module itself.
     const semantic::Module *atom_owner = nullptr;
@@ -226,7 +229,7 @@ struct GuardEdges {
 // Preserve comma conjunctions and semicolon alternatives using canonical-true boundaries.
 void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, GuardEdges edges);
 
-// Build the value of fun F/A or fun M:F/A through the fun service.
+// Build the value of fun F/A, fun M:F/A or an anonymous fun (capturing its values) through the fun service.
 llvm::Value *lower_fun(ExpressionLowering &state, const ast::Expression &expression);
 // Call the value of the call's target with its arguments (F(Args)); badfun, badarity and undef raise.
 llvm::Value *lower_fun_call(ExpressionLowering &state, const ast::Expression &expression,

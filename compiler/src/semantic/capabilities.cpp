@@ -79,6 +79,14 @@ bool available(const Module &module, const Function &function, const ast::ExprId
     return true;
 }
 
+// Plan the head of every clause of an anonymous fun.
+void fun_patterns(const Module &module, const Function &function, const ast::ExprValue &value, const Reporter &out,
+                  const unsigned bits) {
+    for (const auto &clause : *fun_clauses(value)) {
+        (void)make_match_plan(module, function, clause, out, {.word_bits = bits});
+    }
+}
+
 // Plan the patterns of a maybe's ?= matches.
 void maybe_patterns(const Module &module, const Function &function, const ast::MaybeExpression &block,
                     const Reporter &out, const unsigned bits) {
@@ -103,6 +111,20 @@ void generator_patterns(const Module &module, const Function &function, const as
     }
 }
 
+// Plan the patterns of the scopes an expression opens: ?= matches, generators and anonymous fun heads.
+void scope_patterns(const Module &module, const Function &function, const ast::Expression &expression,
+                    const Reporter &out, const unsigned bits) {
+    if (const auto *block = std::get_if<ast::MaybeExpression>(&expression.value)) {
+        maybe_patterns(module, function, *block, out, bits);
+    }
+    if (comprehension_qualifiers(expression.value)) {
+        generator_patterns(module, function, expression.value, out, bits);
+    }
+    if (fun_clauses(expression.value)) {
+        fun_patterns(module, function, expression.value, out, bits);
+    }
+}
+
 // Plan body-match and case-clause patterns so unsupported pattern forms are diagnosed before lowering.
 // A failed binding pass discards every binding table, leaving nothing to plan.
 void patterns(const Module &module, const Function &function, const ast::Expression &expression, const Reporter &out,
@@ -113,12 +135,7 @@ void patterns(const Module &module, const Function &function, const ast::Express
     if (const auto *match = std::get_if<ast::MatchExpression>(&expression.value)) {
         (void)make_match_plan(module, function, match->left, out, {.word_bits = bits});
     }
-    if (const auto *block = std::get_if<ast::MaybeExpression>(&expression.value)) {
-        maybe_patterns(module, function, *block, out, bits);
-    }
-    if (comprehension_qualifiers(expression.value)) {
-        generator_patterns(module, function, expression.value, out, bits);
-    }
+    scope_patterns(module, function, expression, out, bits);
     for (const auto &clause : branch_clauses(expression.value)) {
         if (clause.handler && clause.handler->exception_class) {
             (void)make_match_plan(module, function, *clause.handler->exception_class, out, {.word_bits = bits});

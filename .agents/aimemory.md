@@ -270,6 +270,12 @@ Step facts beyond the plan record:
   OTP oracle: warnings_as_errors rejects `fun m:f/1` of own unexported f, calls with statically wrong arity
   (`F = fun(ok)..., F(nope)`: nomatch) -> route through a helper. tidy bugprone-easily-swappable-parameters: Word and
   size_t are the same type; parameters used together in one call expression are not flagged.
+- 33: closures = binding walker actions fun_clause/fun_clause_end/fun_exit (FunScope: incoming without checks, saved
+  branch_names, first_local/first_binding -> Function::captures = non-definition events on identities with local <
+  first_local). fun_clauses() hides named funs (step 34 stays `closures`); expression_children lists fun guards+bodies
+  (codegen walker skips them). Lambdas: FunEntry.expression/owner/captures, native `-f/A-fun-N-` arity+captures,
+  lower_lambda via ExpressionLowering::lambda; a record default fun is one entry (dedupe by expression).
+  ExpressionLowering positional init: 7th field is `values`, set bindings afterwards.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

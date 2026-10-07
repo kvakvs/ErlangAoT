@@ -78,28 +78,45 @@ void candidate(ExpressionLowering &state, const ast::FunctionClause &clause, llv
     locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(clause.body.back()).source);
     state.builder.CreateRet(result);
 }
-} // namespace
 
-void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
-                    const semantic::Function &function, llvm::IntegerType *word,
-                    const semantic::types::Inference &inferred) {
-    const auto &clauses = std::get<ast::Function>(module.syntax->form(function.form).value).clauses;
-    const auto reads = read_bindings(module, function);
-    ExpressionLowering initial{builder, entry, module, function, inferred, word, {}};
-    initial.reads = &reads;
+// An anonymous fun's captured values, read from the arguments after its own; none for a function.
+std::map<semantic::BindingId, llvm::Value *> captured(ExpressionLowering &state) {
+    std::map<semantic::BindingId, llvm::Value *> result;
+    if (!state.lambda) {
+        return result;
+    }
+    const auto &captures = state.lambda->captures;
+    for (std::size_t i = 0; i < captures.size(); ++i) {
+        auto *slot = state.builder.CreateGEP(state.word, state.entry.getArg(1),
+                                             llvm::ConstantInt::get(state.word, state.lambda->arity + i));
+        result.emplace(captures[i], state.builder.CreateAlignedLoad(
+                                        state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "captured"));
+    }
+    return result;
+}
+
+// Lower every candidate of `clauses` into the entry `initial` names, each seeing the captured values; exhaustion
+// raises function_clause.
+void lower_clauses(ExpressionLowering &initial, const std::vector<ast::FunctionClause> &clauses) {
+    auto &builder = initial.builder;
+    auto &entry = initial.entry;
     const auto tails = tail_calls(initial, clauses);
     auto roots = begin_roots(initial);
     initial.roots = &roots;
     root_arguments(initial);
+    const auto captures = captured(initial);
     auto *exhausted = llvm::BasicBlock::Create(entry.getContext(), "match.mismatch", &entry);
     llvm::BasicBlock *failure = initial.failure;
     for (std::size_t index = 0; index < clauses.size(); ++index) {
         auto *next = index + 1 == clauses.size() ? exhausted
                                                  : llvm::BasicBlock::Create(entry.getContext(), "clause.next", &entry);
-        ExpressionLowering state{builder, entry, module, function, inferred, word, {}, &reads, index};
+        ExpressionLowering state{
+            builder, entry, initial.module, initial.function, initial.inferred, initial.word, {}, initial.reads, index};
+        state.bindings = captures;
         state.roots = &roots;
         state.tail_calls = &tails;
         state.failure = failure;
+        state.lambda = initial.lambda;
         reset_candidate_roots(state);
         candidate(state, clauses[index], next);
         failure = state.failure;
@@ -112,5 +129,25 @@ void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const sem
         raise_function_clause(initial);
     }
     finish_roots(initial);
+}
+} // namespace
+
+void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
+                    const semantic::Function &function, llvm::IntegerType *word,
+                    const semantic::types::Inference &inferred) {
+    const auto reads = read_bindings(module, function);
+    ExpressionLowering initial{builder, entry, module, function, inferred, word, {}};
+    initial.reads = &reads;
+    lower_clauses(initial, std::get<ast::Function>(module.syntax->form(function.form).value).clauses);
+}
+
+void lower_lambda(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
+                  const semantic::FunEntry &lambda, llvm::IntegerType *word,
+                  const semantic::types::Inference &inferred) {
+    const auto reads = read_bindings(module, *lambda.owner);
+    ExpressionLowering initial{builder, entry, module, *lambda.owner, inferred, word, {}};
+    initial.reads = &reads;
+    initial.lambda = &lambda;
+    lower_clauses(initial, *semantic::fun_clauses(lambda.expression->value));
 }
 } // namespace erlang_aot::codegen

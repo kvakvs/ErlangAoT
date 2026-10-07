@@ -43,6 +43,21 @@ void declare(llvm::Module &output, const semantic::Module &module, llvm::Functio
     }
 }
 
+// Declare every anonymous fun's code, private, taking the fun's arguments and then its captured values.
+void declare_lambdas(llvm::Module &output, const semantic::Module &module, llvm::FunctionType *signature) {
+    for (const auto &fun : module.funs) {
+        if (!fun.expression) {
+            continue;
+        }
+        require(!fun.symbol.empty(), "lowering: an anonymous fun has more than 255 arguments and captured values");
+        auto *entry = llvm::Function::Create(signature, llvm::GlobalValue::InternalLinkage, fun.symbol, output);
+        entry->setCallingConv(llvm::CallingConv::C);
+        entry->addFnAttr(ARITY_ATTRIBUTE, std::to_string(fun.arity + fun.captures.size()));
+        entry->getArg(0)->setName("context");
+        entry->getArg(1)->setName("arguments");
+    }
+}
+
 // Keep generic bodies independent of declared types and inferred representation guesses.
 void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word,
             const semantic::types::Inference &inferred) {
@@ -50,6 +65,13 @@ void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerT
         auto *entry = output.getFunction(function.symbol);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
         lower_function(builder, *entry, module, function, word, inferred);
+    }
+    for (const auto &fun : module.funs) {
+        if (fun.expression) {
+            auto *entry = output.getFunction(fun.symbol);
+            llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
+            lower_lambda(builder, *entry, module, fun, word, inferred);
+        }
     }
 }
 
@@ -80,6 +102,7 @@ bool lower(Compilation &compilation, const std::span<const std::unique_ptr<seman
             progress(compilation.request(), "lowering", compilation.request().inputs[i].source_path,
                      utf8(modules[i]->name));
             declare(*outputs[i], *modules[i], signature, inferred);
+            declare_lambdas(*outputs[i], *modules[i], signature);
             if (compilation.request().annotate_source) {
                 prepare_source_locations(*outputs[i], *modules[i],
                                          compilation.request().optimization != OptimizationLevel::none,

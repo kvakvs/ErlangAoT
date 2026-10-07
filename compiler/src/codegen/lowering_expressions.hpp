@@ -7,4 +7,8 @@ namespace erlang_aot::codegen {
 void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
                     const semantic::Function &function, llvm::IntegerType *word,
                     const semantic::types::Inference &inferred);
+// Emit an anonymous fun's code: its clauses over its arguments, with its captured values after them.
+void lower_lambda(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
+                  const semantic::FunEntry &lambda, llvm::IntegerType *word,
+                  const semantic::types::Inference &inferred);
 } // namespace erlang_aot::codegen

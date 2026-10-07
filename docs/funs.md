@@ -1,7 +1,9 @@
 # Function values
 
-Plan 11 step 32 (2026-10-07): `fun F/A`, `fun M:F/A` and calls of function
-values (`F(Args)`). Facts come from the pinned `maint-29` sources
+Plan 11 steps 32 and 33 (2026-10-07): `fun F/A`, `fun M:F/A`, anonymous funs
+with captured variables (closures) and calls of function values (`F(Args)`).
+Named funs (`fun Name(...) -> ... end`) report the unavailable `closures`
+capability until step 34. Facts come from the pinned `maint-29` sources
 (`erts/emulator/beam/utils.c` `erts_cmp`, `erl_printf_term.c`, `erl_lint`)
 and probes on OTP 29.1.1.
 
@@ -11,6 +13,7 @@ and probes on OTP 29.1.1.
 | --- | --- | --- |
 | `fun f/1` | Local fun of this module; every `fun f/1` of a module is the same value | `f/1` of this module, exported or not |
 | `fun m:f/1` | External fun naming `m:f/1`, also for the current module | `m:f/1` when a module of the program exports it |
+| `fun(X) -> ... end` | Local fun capturing the variables it reads from its creator; each evaluation builds a new value | The fun's own generated function |
 
 - `fun F/A` must name a function of the module (`function F/A undefined`).
   Naming an auto-imported builtin (`fun is_atom/1`), `fun erlang:F/A` and
@@ -23,6 +26,25 @@ and probes on OTP 29.1.1.
   a tail call, as for named functions.
 - `is_function/1,2` are true for funs in bodies and guards.
 
+## Closures
+
+- Each clause starts from the scope at the fun. Head variables are new names
+  that shadow outer ones (OTP warns); a name repeated within one head must
+  match. Guards read the head's names. Nothing a fun binds is visible after
+  it, and case-clause names of the enclosing function do not reach into it.
+- A fun captures every outer definition its heads, guards or bodies read
+  (nested funs included), in definition order, as OTP orders a function's
+  free variables. Captured values are copied into the fun cell when the fun
+  expression is evaluated, so they survive the creator's return and
+  collections, and copy with the fun.
+- The code is a private function `-f/A-fun-N-` (N counts the funs of `f/A` in
+  source order) taking the fun's arguments, then its captured values; stack
+  traces show that name with the combined arity, as OTP's do. No clause
+  matching raises `function_clause`.
+- Arguments plus captured values are limited to 255.
+- An anonymous fun in a record field default is one fun for every
+  construction that uses the default (OTP expands a copy per site).
+
 ## Representation
 
 - **Descriptor.** Each distinct value a module creates compiles to one
@@ -34,7 +56,7 @@ and probes on OTP 29.1.1.
   (`ModuleAtoms::funs`, `CodeServer::fun_definition`); a local fun's captured
   value count is its code's arity minus the fun's.
 - **Cell.** Boxed kind `fun_closure`: header (count `1 + n`), an untraced
-  `const FunDefinition *`, then `n` captured values (none in step 32). Walking,
+  `const FunDefinition *`, then `n` captured values. Walking,
   collection, copying and verification skip the definition word, as for
   native records.
 - **Services.** `erlang_aot_make_fun_v1(context, descriptor, captures, count,
@@ -70,3 +92,7 @@ Recorded in [differences](differences.md):
   of different functions of a module can also differ.
 - Calling an external fun of a module outside the program raises `undef`; OTP
   would first try to load the module from the code path.
+- Anonymous fun names (`-f/1-fun-0-`, seen in stack traces) count funs in source
+  order; OTP's compiler numbers them in its own order. Funs created inside
+  comprehensions may also capture their values in another order than OTP's,
+  which only shows when two such funs are compared.

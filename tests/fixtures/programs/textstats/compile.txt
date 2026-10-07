@@ -1,5 +1,3 @@
 exit 1
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:21:38: [arithmetic] notimpl [module="textstats"]
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:58:53: [closures] notimpl [module="textstats"]
-erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:50:23: [closures] notimpl [module="textstats"]
 erlangaot: <fixture>/project.toml [target textstats]: error: <fixture>/src/textstats.erl:77:29: [arithmetic] notimpl [module="textstats"]

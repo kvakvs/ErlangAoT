@@ -923,12 +923,40 @@ Represent `fun F/A` and `fun M:F/A` with retained code ownership.
 Backlog: F03, F18. Depends on: [32](#step-32), [26](#step-26).
 
 - Success criteria
-  - [ ] Anonymous funs with clauses and guards capture values that survive the
+  - [x] Anonymous funs with clauses and guards capture values that survive the
     creator's return and collection.
 - Tests
-  - [ ] Golden programs for captures, multi-clause funs, higher-order helpers
+  - [x] Golden programs for captures, multi-clause funs, higher-order helpers
     and closures created in loops.
-  - [ ] Small-heap stress keeping closures alive across collections.
+  - [x] Small-heap stress keeping closures alive across collections.
+- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes: fun heads
+  shadow outer names (warning only), nothing bound inside leaks, free
+  variables in definition order (`fun_info(F, env)`), `==` compares captured
+  values with `==`, no matching clause is `function_clause` in frame
+  `-f/A-fun-N-` with arity arguments + captures, mismatched clause arities are
+  OTP's `head mismatch`; a record default fun is a separate lambda per
+  construction site (kept difference). Semantic: binding walker fun scopes
+  (`FunScope`, `Function::captures`), `fun_clauses` (named funs stay
+  `closures`, step 34), guards/bodies in `expression_children`, guard analysis
+  and head plans (`make_match_plan` over a fun clause); `index_funs` names
+  lambdas. Codegen: private native `-f/A-fun-N-` functions (`lower_lambda`,
+  `ExpressionLowering::lambda`, captures loaded after the arguments, own debug
+  scope), `lower_fun` roots captures for `erlang_aot_make_fun_v1`; the codegen
+  walker never descends into a fun. Records corpus row
+  `rec_fun_default_gate` accepted (digest updated, OTP `--check` reproduces).
+  OTP golden `executables_closures` (captures, composition, self-returning
+  counters, nested closures, multi-clause funs with guards reading captures,
+  is_function in fun guards, equality/order of closures, 20,000 closures
+  holding tuples/binaries across collections, closures from comprehensions,
+  a 100,000-step tail loop through a closure, closures across modules with
+  records, case exports, try and map-key heads, four caught errors, one
+  uncaught `function_clause`) passes all 8 combinations; new `runtime_funs`
+  (printing, order, capture count, forged descriptors, call preparation,
+  badfun/badarity/undef, copy, collection, registration); 6 CLI cases;
+  programs `compile.txt` refreshed. Fresh Windows x64 Debug (clang-cl): full
+  `-j 12` 175/175 (records row and programs refreshed after the fresh run);
+  after complexity fixes fast 171/171, full 175/175 in 126 s, Lizard 0
+  warnings, tidy 134 changed units pass. Logs `build/plan11-step33/`.
 
 <a id="step-34"></a>
 

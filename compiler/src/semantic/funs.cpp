@@ -1,8 +1,14 @@
 #include "funs.hpp"
 #include "capabilities.hpp"
+#include "symbols.hpp"
 #include <algorithm>
 
 namespace erlang_aot::semantic {
+bool fun_value(const ast::ExprValue &value) {
+    return std::holds_alternative<ast::LocalFunReference>(value) ||
+           std::holds_alternative<ast::RemoteFunReference>(value) || std::holds_alternative<ast::FunExpression>(value);
+}
+
 bool fun_call(const ast::Module &syntax, const ast::CallExpression &call) {
     const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
     return !std::holds_alternative<ast::Atom>(target) && !std::holds_alternative<ast::RemoteExpression>(target);
@@ -36,9 +42,17 @@ class FunIndexer {
     // Fill the tables of `module`, which start empty.
     explicit FunIndexer(Module &module) : module_(module) {}
 
+    // Start numbering the anonymous funs of `function`.
+    void begin(const Function &function) {
+        owner_ = &function;
+        lambdas_ = 0;
+    }
+
     // Record the entry of one fun expression; other expressions and unresolved funs are left alone.
     void visit(const ast::Expression &expression) {
-        if (const auto *local = std::get_if<ast::LocalFunReference>(&expression.value)) {
+        if (const auto *clauses = fun_clauses(expression.value)) {
+            lambda(expression, clauses->front().arguments.size());
+        } else if (const auto *local = std::get_if<ast::LocalFunReference>(&expression.value)) {
             if (const auto *target = fun_target(module_, *local)) {
                 add(expression, {false, module_.name, target->key.name, target->key.arity, 0, target->symbol});
             }
@@ -51,6 +65,35 @@ class FunIndexer {
     }
 
   private:
+    // An anonymous fun is a value of its own, named -Function/Arity-fun-N- after its function, like OTP's.
+    void lambda(const ast::Expression &expression, std::size_t arity) {
+        // A record default is one expression, expanded at every construction: it is one fun.
+        if (module_.fun_entries.contains(&expression)) {
+            return;
+        }
+        const auto &owner = *owner_;
+        const auto number = [](std::size_t value) {
+            const auto text = std::to_string(value);
+            return std::u32string(text.begin(), text.end());
+        };
+        FunEntry entry{false,
+                       module_.name,
+                       U"-" + owner.key.name + U"/" + number(owner.key.arity) + U"-fun-" + number(lambdas_++) + U"-",
+                       arity,
+                       locals_++,
+                       {}};
+        if (const auto found = owner.captures.find(&expression); found != owner.captures.end()) {
+            entry.captures = found->second;
+        }
+        if (arity + entry.captures.size() <= 255) {
+            entry.symbol = encode_symbol({utf8(module_.name), utf8(entry.function), arity + entry.captures.size()});
+        }
+        entry.expression = &expression;
+        entry.owner = &owner;
+        module_.fun_entries.emplace(&expression, module_.funs.size());
+        module_.funs.push_back(std::move(entry));
+    }
+
     // Reuse the entry of an equal value or append a new one; local funs take the next index.
     void add(const ast::Expression &expression, FunEntry entry) {
         const auto key = std::tuple{entry.external, entry.module, entry.function, entry.arity};
@@ -66,12 +109,16 @@ class FunIndexer {
     // Entries of the values seen so far, and the number of local funs among them.
     std::map<std::tuple<bool, std::u32string, std::u32string, std::size_t>, std::size_t> known_;
     std::size_t locals_ = 0;
+    // The function being walked and the number of its anonymous funs so far.
+    const Function *owner_ = nullptr;
+    std::size_t lambdas_ = 0;
 };
 } // namespace
 
 void index_funs(Module &module) {
     FunIndexer indexer(module);
     for (const auto &function : module.functions) {
+        indexer.begin(function);
         auto pending = function_roots(std::get<ast::Function>(module.syntax->form(function.form).value));
         std::ranges::reverse(pending);
         while (!pending.empty()) {

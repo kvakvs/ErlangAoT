@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <llvm/IR/IRBuilder.h>
 #include <string_view>
 
@@ -24,6 +25,8 @@ struct FunctionRoots {
     std::size_t capacity = 0;
 };
 
+// The generated function's argument count: an anonymous fun's code takes its captured values after its arguments.
+std::size_t frame_arity(const ExpressionLowering &state);
 // Name the frame slots before any source body or heap allocation can execute.
 FunctionRoots begin_roots(ExpressionLowering &state);
 // Retain original arguments before attempting any candidate.

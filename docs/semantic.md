@@ -66,8 +66,11 @@ context. Analysis is deterministic.
   (reads inside the pattern prefer names it already bound); a zip group binds
   all its patterns together. Templates read like siblings. The scope after the
   comprehension is the one before it: its names are unbound there.
-- Closure scopes are not analyzed yet; they stay behind capability
-  diagnostics.
+- An anonymous fun's clauses each start from the scope at the fun: head
+  names are new and shadow outer ones, guards read them, and nothing bound
+  inside is visible after the fun. Every outer definition read inside is
+  recorded as a capture (`Function::captures`, definition order). Named funs
+  stay behind capability diagnostics.
 
 Walks are iterative with a module budget of 1,000,000 work units. Exhaustion or
 any semantic error clears the module's binding and normalization tables.

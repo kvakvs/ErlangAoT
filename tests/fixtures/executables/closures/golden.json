@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "entry": "closures",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[3,4,14,3]\n[{first,5,1},{caught,badarith},{found,7},missing]\n[{other,7,1},{sum,8},{found,7},missing]\n[11,{10,{pair,2}}]\n[11,12]\n[0,1,2]\n\"efg\"\n[2,4,6,8,10]\n[c,b,a]\n{1,2,3,10}\n[zero,negative,big,small,big]\n[{2,1},{b,a}]\n{error,function_clause}\n5050\n[true,true,false,true,true,true,false]\n[true,true,false,true]\n[one,other,none]\n200030000\n{20000,[20000,20001],<<0,0,78,32>>}\n[1,4,9,16,25]\n5000050000\n{badarity,true,[1,2]}\n{badarity,true,[x]}\n{error,function_clause}\n{error,badarith}\n"
+    },
+    {
+      "args": [
+        "clause"
+      ],
+      "stderr": "^uncaught exception error: function_clause\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "clospeer.erl": "be411d7ff01c5497e28a51eca2dd872f2a842342423ec5da7cde8f262f514f86",
+    "closures.erl": "aa2e38e677d7e993a11229f8f0b6a7cf38980d260c89180154823ef0f4cef95f"
+  }
+}

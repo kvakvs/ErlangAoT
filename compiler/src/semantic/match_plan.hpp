@@ -77,6 +77,10 @@ struct MatchOptions {
 // Build a one-input body pattern with existing bindings preserved as exact constraints.
 std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const ast::ExprId &pattern,
                                          const Reporter &out, MatchOptions options = {});
+// Plan the head of one anonymous fun clause of `function`; options.clause is ignored.
+std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function,
+                                         const ast::FunctionClause &clause, const Reporter &out,
+                                         MatchOptions options = {});
 // Consume normalized semantics and binding events within explicit node/work ceilings.
 std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
                                          MatchOptions options = {});

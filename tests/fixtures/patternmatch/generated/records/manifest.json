@@ -21,7 +21,7 @@
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
-  "input_manifest_sha256": "95d670ab987eb699d1fe3dc2d266919fcf36232fdeb5e9f29dc69410633ed4fc",
+  "input_manifest_sha256": "5b5a8e6d45427d491b6c3e6f5b44412996410da6ae49cf1cdeb40465e3fdb2d6",
   "files": {
     "answer.erl": "2bcd098695de4ec30d37dd6ce7072a806e82487552a5616ab60d6d28deb6691f",
     "calls.term": "88b55e617becf96ca77143161390116a8026e138c81ac12d48eb161628d92e13",
@@ -264,7 +264,7 @@
         "name": "rec_fun_default_gate",
         "body": "-record(r,{a=fun(X)->X end}). f() -> #r{}.",
         "diagnostic": "",
-        "capability": "closures",
+        "capability": "",
         "sha256": "d6edb3405ded0566ed5ce56718c78897c991d23bbd35a4f4f2fb246ab82a7d80"
       }
     ],

@@ -59,6 +59,13 @@ target_link_libraries(runtime_records PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_records PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_records COMMAND runtime_records)
 
+# Fun cells and services over hand-written descriptors: printing, order, call preparation, copy and collection.
+add_executable(runtime_funs funs.cpp)
+erlang_aot_project_options(runtime_funs)
+target_link_libraries(runtime_funs PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_funs PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_funs COMMAND runtime_funs)
+
 add_executable(runtime_copy copy.cpp)
 erlang_aot_project_options(runtime_copy)
 target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)

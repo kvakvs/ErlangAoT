@@ -74,6 +74,8 @@ struct Function {
     std::map<const ast::Expression *, ServiceResolution> services = {};
     // Comprehension filters that are guard tests: they reject the element on failure instead of raising.
     std::set<const ast::Expression *> guard_filters = {};
+    // The definitions each anonymous fun uses from outside itself (its captured values), in definition order.
+    std::map<const ast::Expression *, std::vector<BindingId>> captures = {};
 };
 
 struct RecordLayout {
@@ -98,8 +100,13 @@ struct FunEntry {
     std::size_t arity = 0;
     // A local fun's index among the module's local funs in source order (OTP numbers them differently).
     std::size_t index = 0;
-    // The native symbol of a local fun's code; empty for an external fun.
+    // The native symbol of a local fun's code; empty for an external fun, and for an anonymous fun whose arguments
+    // and captured values exceed 255.
     std::string symbol;
+    // An anonymous fun: its syntax, the function it appears in and the definitions it captures, in capture order.
+    const ast::Expression *expression = nullptr;
+    const Function *owner = nullptr;
+    std::vector<BindingId> captures = {};
 };
 
 struct Module {

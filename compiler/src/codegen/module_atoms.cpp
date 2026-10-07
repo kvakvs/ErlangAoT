@@ -66,8 +66,12 @@ bool booleans(const ast::ExprValue &value) {
             binary->operation == ast::BinaryOperator::or_else);
 }
 
-// Case, if and try clause guards compare each test with the canonical true atom.
+// Case, if, try and anonymous fun clause guards compare each test with the canonical true atom.
 bool guarded(const ast::ExprValue &value) {
+    const auto *clauses = semantic::fun_clauses(value);
+    if (clauses) {
+        return std::ranges::any_of(*clauses, [](const auto &clause) { return clause.guard.has_value(); });
+    }
     return std::ranges::any_of(semantic::branch_clauses(value),
                                [](const auto &clause) { return clause.guard != nullptr; });
 }

@@ -168,6 +168,10 @@ void enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> 
         return;
     }
     pending.push_back({id, Action::value});
+    // An anonymous fun's clauses are lowered as a function of their own.
+    if (std::holds_alternative<ast::FunExpression>(expression.value)) {
+        return;
+    }
     if (semantic::integer_literal(*state.module.syntax, id, state.word->getBitWidth())) {
         return;
     }

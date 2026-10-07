@@ -20,6 +20,8 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value);
 std::size_t first_handler(const ast::ExprValue &value);
 // The expressions a maybe body evaluates in order: plain expressions and the values of its ?= matches.
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value);
+// The clauses of an anonymous fun; null for every other expression, including a named fun (plan step 34).
+const std::vector<ast::FunctionClause> *fun_clauses(const ast::ExprValue &value);
 // The qualifiers of a list, binary or map comprehension; null for every other expression.
 const std::vector<ast::ComprehensionQualifier> *comprehension_qualifiers(const ast::ExprValue &value);
 // The simple qualifiers of one comprehension qualifier: itself, or the members of a zip group.
@@ -39,8 +41,8 @@ void check_capabilities(const Module &module, const Reporter &out, unsigned word
 // Iterate accepted expression children without visiting literal call-target atoms as values.
 std::vector<ast::ExprId> expression_children(const ast::Expression &expression);
 // Include selected record defaults in the same bounded executable walks as explicit operands; update values
-// precede the updated record, record_info/2 has no executable children and a called value (F(Args)) precedes the
-// arguments.
+// precede the updated record, record_info/2 has no executable children, a called value (F(Args)) precedes the
+// arguments and an anonymous fun lists its clauses' guard tests and bodies.
 std::vector<ast::ExprId> expression_children(const Module &module, const ast::Expression &expression);
 // Return guard/body roots in source order across every candidate; heads use normalized pattern plans.
 std::vector<ast::ExprId> function_roots(const ast::Function &function);

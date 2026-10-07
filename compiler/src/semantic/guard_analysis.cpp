@@ -128,6 +128,23 @@ bool branch_guards(const ast::Expression &expression, const Visit &visit, std::v
     return true;
 }
 
+// An anonymous fun's clause guards are top-level guard tests and its bodies ordinary expressions.
+bool fun_guards(const ast::Expression &expression, std::vector<Visit> &pending) {
+    const auto *clauses = fun_clauses(expression.value);
+    if (!clauses) {
+        return false;
+    }
+    for (const auto &clause : *clauses) {
+        if (clause.guard) {
+            push_guard(*clause.guard, pending);
+        }
+        for (const auto &body : clause.body) {
+            pending.push_back({body, false, false});
+        }
+    }
+    return true;
+}
+
 // Whether a filter is a guard test (erl_lint:is_guard_test/3): guard syntax throughout, calling only guard BIFs
 // that no local function or import overrides; legacy type tests count at its top level.
 bool guard_test(BindingAnalysis &state, const ast::ExprId &root) {
@@ -191,6 +208,13 @@ bool native_construction(const Module &module, const ast::ExprValue &value) {
     return (layout && layout->native) || external_record(module, record->identity);
 }
 
+// Schedule the operands, clause guards and bodies of expressions with scopes of their own; false for others.
+bool scoped_guards(BindingAnalysis &state, const ast::Expression &expression, const Visit &visit,
+                   std::vector<Visit> &pending) {
+    return branch_guards(expression, visit, pending) || comprehension_guards(state, expression, visit, pending) ||
+           fun_guards(expression, pending);
+}
+
 // Node authorization and child scheduling remain independent so an invalid parent cannot hide operands.
 void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pending) {
     const auto &expression = state.module.syntax->expression(visit.id);
@@ -202,7 +226,7 @@ void visit(BindingAnalysis &state, const Visit &visit, std::vector<Visit> &pendi
     } else if (visit.guard && !std::visit(GuardSyntax{}, expression.value)) {
         report(state.module, &expression.source, "illegal guard expression", state.out);
     }
-    if (branch_guards(expression, visit, pending) || comprehension_guards(state, expression, visit, pending)) {
+    if (scoped_guards(state, expression, visit, pending)) {
         return;
     }
     const auto children = expression_children(state.module, expression);
