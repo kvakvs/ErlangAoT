@@ -52,12 +52,14 @@ foreach(scope IN ITEMS changed all)
         COMMAND "${CMAKE_COMMAND}" "-DQUALITY_SCOPE=${scope}" "-DQUALITY_BUILD_DIR=${PROJECT_BINARY_DIR}"
             "-DQUALITY_NINJA=${quality_ninja}" -P "${PROJECT_SOURCE_DIR}/cmake/CheckComplexity.cmake"
         COMMENT "Checking C++ cyclomatic complexity with Lizard (${scope} files)"
+        USES_TERMINAL
         VERBATIM
     )
     add_custom_target(check-clang-tidy${suffix}
         COMMAND "${CMAKE_COMMAND}" "-DQUALITY_SCOPE=${scope}" "-DQUALITY_BUILD_DIR=${PROJECT_BINARY_DIR}"
             "-DQUALITY_NINJA=${quality_ninja}" -P "${PROJECT_SOURCE_DIR}/cmake/CheckClangTidy.cmake"
         COMMENT "Checking C++ diagnostics and cognitive complexity with clang-tidy (${scope} files)"
+        USES_TERMINAL
         VERBATIM
     )
     add_custom_target(check-quality${suffix})

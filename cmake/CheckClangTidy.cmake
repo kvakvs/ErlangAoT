@@ -46,25 +46,35 @@ if(command_count EQUAL 0)
     message(FATAL_ERROR "The compilation database is empty.")
 endif()
 math(EXPR last_command "${command_count} - 1")
+# One compilation database entry per selected project source, in database order.
 set(sources)
-set(selected_commands "[")
-set(separator "")
+set(entries)
 foreach(index RANGE ${last_command})
     string(JSON source GET "${commands}" ${index} file)
     string(JSON directory GET "${commands}" ${index} directory)
     get_filename_component(source "${source}" ABSOLUTE BASE_DIR "${directory}")
     file(RELATIVE_PATH relative "${project_root}" "${source}")
-    if(relative MATCHES "^(compiler|runtime|abi)/"
+    if(relative MATCHES "^(compiler|runtime|abi)/" AND NOT source IN_LIST sources
         AND (QUALITY_SCOPE STREQUAL "all" OR relative IN_LIST scoped_sources))
         list(APPEND sources "${source}")
-        string(JSON entry GET "${commands}" ${index})
-        string(APPEND selected_commands "${separator}${entry}")
-        set(separator ",")
+        list(APPEND entries ${index})
     endif()
 endforeach()
-list(REMOVE_DUPLICATES sources)
 if(NOT sources)
     message(FATAL_ERROR "No project translation units found in ${database}.")
+endif()
+list(LENGTH sources source_count)
+
+# QUALITY_SHARD=K/N analyzes only the K-th of N contiguous slices, so one long run can be split into shorter
+# separate invocations; without it every selected unit is analyzed.
+set(first_unit 0)
+set(end_unit ${source_count})
+if(DEFINED QUALITY_SHARD AND NOT QUALITY_SHARD STREQUAL "")
+    if(NOT QUALITY_SHARD MATCHES "^([1-9][0-9]*)/([1-9][0-9]*)$" OR CMAKE_MATCH_1 GREATER CMAKE_MATCH_2)
+        message(FATAL_ERROR "QUALITY_SHARD must be K/N with 1 <= K <= N.")
+    endif()
+    math(EXPR first_unit "(${CMAKE_MATCH_1} - 1) * ${source_count} / ${CMAKE_MATCH_2}")
+    math(EXPR end_unit "${CMAKE_MATCH_1} * ${source_count} / ${CMAKE_MATCH_2}")
 endif()
 
 # Run the same translation units/flags independently with LLVM's bounded parallel runner.
@@ -91,19 +101,57 @@ endif()
 if(QUALITY_JOBS GREATER 6)
     set(QUALITY_JOBS 6)
 endif()
-# Preserve every selected command verbatim, including its original working directory.
+# QUALITY_BATCH units per runner invocation; each batch reports when it finishes, so long runs show progress.
+if(NOT DEFINED QUALITY_BATCH)
+    math(EXPR QUALITY_BATCH "${QUALITY_JOBS} * 4")
+endif()
+if(NOT QUALITY_BATCH MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "QUALITY_BATCH must be a positive integer.")
+endif()
+math(EXPR unit_count "${end_unit} - ${first_unit}")
+math(EXPR batch_count "(${unit_count} + ${QUALITY_BATCH} - 1) / ${QUALITY_BATCH}")
+math(EXPR shown_first "${first_unit} + 1")
+message(STATUS "Analyzing units ${shown_first}-${end_unit} of ${source_count} production translation units, "
+    "scope ${QUALITY_SCOPE}, in ${batch_count} batches (${QUALITY_JOBS} concurrent jobs)")
 set(selected_database "${QUALITY_BUILD_DIR}/quality")
 file(MAKE_DIRECTORY "${selected_database}")
-file(WRITE "${selected_database}/compile_commands.json" "${selected_commands}]")
 list(TRANSFORM toolchain_args REPLACE "^--extra-arg=" "-extra-arg=")
-list(LENGTH sources source_count)
-message(STATUS "Analyzing ${source_count} production translation units, scope ${QUALITY_SCOPE} (${QUALITY_JOBS} concurrent jobs)")
-execute_process(
-    COMMAND ${tidy_runner} "-p=${selected_database}" "-j=${QUALITY_JOBS}"
-        "-clang-tidy-binary=${CLANG_TIDY_EXECUTABLE}" "-config-file=${project_root}/.clang-tidy" ${toolchain_args}
-    WORKING_DIRECTORY "${project_root}"
-    RESULT_VARIABLE tidy_result
-)
-if(NOT tidy_result STREQUAL "0")
-    message(FATAL_ERROR "clang-tidy failed. Fix the diagnostics above before committing.")
+set(failed_batches)
+set(batch 0)
+set(start ${first_unit})
+while(start LESS end_unit)
+    math(EXPR batch "${batch} + 1")
+    math(EXPR stop "${start} + ${QUALITY_BATCH}")
+    if(stop GREATER end_unit)
+        set(stop ${end_unit})
+    endif()
+    # Preserve each selected command verbatim, including its original working directory.
+    set(selected_commands "[")
+    set(separator "")
+    math(EXPR last_unit "${stop} - 1")
+    foreach(unit RANGE ${start} ${last_unit})
+        list(GET entries ${unit} index)
+        string(JSON entry GET "${commands}" ${index})
+        string(APPEND selected_commands "${separator}${entry}")
+        set(separator ",")
+    endforeach()
+    file(WRITE "${selected_database}/compile_commands.json" "${selected_commands}]")
+    execute_process(
+        COMMAND ${tidy_runner} "-p=${selected_database}" "-j=${QUALITY_JOBS}" -quiet
+            "-clang-tidy-binary=${CLANG_TIDY_EXECUTABLE}" "-config-file=${project_root}/.clang-tidy" ${toolchain_args}
+        WORKING_DIRECTORY "${project_root}"
+        RESULT_VARIABLE tidy_result
+    )
+    math(EXPR shown_start "${start} + 1")
+    if(tidy_result STREQUAL "0")
+        message(STATUS "clang-tidy batch ${batch}/${batch_count} passed (units ${shown_start}-${stop})")
+    else()
+        list(APPEND failed_batches "${batch} (units ${shown_start}-${stop})")
+        message(STATUS "clang-tidy batch ${batch}/${batch_count} FAILED (units ${shown_start}-${stop})")
+    endif()
+    set(start ${stop})
+endwhile()
+if(failed_batches)
+    list(JOIN failed_batches ", " failed_text)
+    message(FATAL_ERROR "clang-tidy failed in batches ${failed_text}. Fix the diagnostics above before committing.")
 endif()

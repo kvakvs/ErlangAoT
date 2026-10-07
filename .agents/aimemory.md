@@ -330,6 +330,8 @@ Host and tool gotchas:
 - build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.
 - First run after runtime source edits can time out tests while native sub-builds recompile; rerun.
 - clang-tidy may crash (0xC0000005/0xC0000409) or exit 1 silently with 2 jobs; rerun with one job.
+  Tidy runs in batches (QUALITY_BATCH, default 4 x jobs) with per-batch pass/FAIL lines; split long runs with
+  -DQUALITY_SHARD=K/N (script build/plan11-step40/shard.cmd K/N BATCH). Root CMakeLists edits select all units.
   The check targets do not forward QUALITY_JOBS: run `cmake -DQUALITY_SCOPE=all
   -DQUALITY_BUILD_DIR=<build> -DQUALITY_NINJA=<ninja> -DQUALITY_JOBS=1 -P cmake/CheckClangTidy.cmake`
   (script build/plan11-step8i/rerun.cmd). codegen_dependency can time out (120 s) under full -j 16. Runtime CMake edits select all tidy units.

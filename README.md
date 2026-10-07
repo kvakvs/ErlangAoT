@@ -164,6 +164,11 @@ in the working tree, plus untracked files.
   production `CMakeLists.txt`, or missing dependency data, check every translation unit.
   Set `ERLANG_AOT_QUALITY_BASE` (for example `origin/master`) to compare with another base.
 - `check-quality-all` (and `check-complexity-all`, `check-clang-tidy-all`) check every file.
+- clang-tidy runs in batches of `4 x jobs` translation units and prints a passed/FAILED line
+  after each; every batch runs, then the check fails if any batch did. To split a long run
+  into shorter separate invocations, call the script directly with a shard, for example
+  `cmake -DQUALITY_SCOPE=all -DQUALITY_BUILD_DIR=build/debug -DQUALITY_SHARD=1/4 -P cmake/CheckClangTidy.cmake`
+  for the first quarter (`QUALITY_BATCH` and `QUALITY_JOBS` override the batch size and jobs).
 - `make format` / `make-format.bat` format changed C++ files; `make format-all` or
   `FORMAT_SCOPE=all make-format.bat` formats everything.
 
