@@ -138,8 +138,8 @@ Pids, ports, references and funs are not representable yet. Word encodings are i
   or the tuple size. Both arguments must be literal atoms and `r` a tuple record
   declared earlier; it is illegal in guards, and a local `record_info/2` is
   rejected as already defined.
-- Native records: [native records](native-records.md); local, qualified and
-  imported forms compile, anonymous forms do not yet.
+- Native records: [native records](native-records.md) (local, qualified,
+  imported and anonymous forms).
 
 ## Comparison and order
 

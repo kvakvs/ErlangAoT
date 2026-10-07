@@ -208,6 +208,10 @@ std::optional<RecordName> external_record(const Module &module, const ast::Recor
     return from ? std::optional{RecordName{*from, local->name.name}} : std::nullopt;
 }
 
+bool anonymous_record(const ast::RecordIdentity &identity) {
+    return std::holds_alternative<ast::InferredRecordName>(identity.value);
+}
+
 const std::u32string *imported_module(const Module &module, const std::u32string &name) {
     const auto found = module.imported_records.find(name);
     return found == module.imported_records.end() ? nullptr : &found->second;

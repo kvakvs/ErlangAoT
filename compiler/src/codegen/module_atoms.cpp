@@ -129,7 +129,7 @@ void record_atoms(const semantic::Module &module, const ast::Expression &express
         identity = &access->identity;
         result.insert(utf8(access->field.name));
     }
-    if (!identity) {
+    if (!identity || semantic::anonymous_record(*identity)) {
         return;
     }
     if (const auto external = semantic::external_record(module, *identity)) {

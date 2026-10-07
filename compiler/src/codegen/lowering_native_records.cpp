@@ -235,6 +235,16 @@ llvm::Value *lower_external_record(ExpressionLowering &state, const ast::Express
     return access(state, std::get<ast::RecordAccess>(expression.value), identity);
 }
 
+llvm::Value *lower_anonymous_record(ExpressionLowering &state, const ast::Expression &expression) {
+    // Anonymous access reads any native record (OTP's runtime checks no export); an update needs the record
+    // exported or defined here. The name operand is unused, so the module's name fills it.
+    auto *module = lower_atom(state, ast::Atom{state.module.name});
+    if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
+        return update(state, *record, {module, module, Check::exported_or_module});
+    }
+    return access(state, std::get<ast::RecordAccess>(expression.value), {module, module, Check::any});
+}
+
 llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
                                   llvm::BasicBlock *mismatch) {
     const auto &name = std::get<ast::Atom>(*node.literal);

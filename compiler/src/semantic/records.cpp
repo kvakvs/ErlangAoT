@@ -289,18 +289,34 @@ std::vector<std::optional<ast::ExprId>> record_values(const Module &module, cons
     return result;
 }
 
+namespace {
+// Anonymous records cannot be built; anonymous and external forms check only their field list.
+void validate_expression(const Module &module, const ast::RecordExpression &record, const bool pattern,
+                         const Reporter &out) {
+    const bool anonymous = anonymous_record(record.identity);
+    if (anonymous && !pattern && !record.base) {
+        report(module, &record.identity.source, "native record '_' undefined", out);
+    } else if (anonymous || external_record(module, record.identity)) {
+        external_fields(module, record, out);
+    } else if (const auto *layout = required(module, record.identity, out)) {
+        fields(module, record, *layout, pattern, out);
+    }
+}
+
+// Tuple-record access needs a declared field; native records carry their own.
+void validate_access(const Module &module, const ast::RecordAccess &access, const Reporter &out) {
+    const auto *layout = required(module, access.identity, out);
+    if (layout && !layout->native && !record_field(*layout, access.field)) {
+        report(module, &access.field_source, "undefined record field", out);
+    }
+}
+} // namespace
+
 void validate_record(const Module &module, const ast::Expression &expression, const Reporter &out, const bool pattern) {
     if (const auto *record = std::get_if<ast::RecordExpression>(&expression.value)) {
-        if (external_record(module, record->identity)) {
-            external_fields(module, *record, out);
-        } else if (const auto *layout = required(module, record->identity, out)) {
-            fields(module, *record, *layout, pattern, out);
-        }
+        validate_expression(module, *record, pattern, out);
     } else if (const auto *access = std::get_if<ast::RecordAccess>(&expression.value)) {
-        const auto *layout = required(module, access->identity, out);
-        if (layout && !layout->native && !record_field(*layout, access->field)) {
-            report(module, &access->field_source, "undefined record field", out);
-        }
+        validate_access(module, *access, out);
     } else if (const auto *index = std::get_if<ast::RecordIndex>(&expression.value)) {
         validate_index(module, *index, expression.source, out);
     } else if (record_info_call(*module.syntax, expression.value)) {

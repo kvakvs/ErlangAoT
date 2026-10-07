@@ -175,6 +175,8 @@ semantic_case(qualified_wildcard "-module(a). f(X) -> X#m:r{_ = 1}." 1
     "multi-field initialization \\(assigning to _\\) is only supported for tuple records")
 semantic_case(qualified_guard "-module(a). f(X) when X =:= #m:r{} -> X." 1
     "creating a record in a guard is only supported for tuple records")
+semantic_case(anonymous_construction "-module(a). f() -> #_{a = 1}." 1 "native record '_' undefined")
+semantic_case(anonymous_forms "-module(a). f(#_{a = A} = X) when X#_.a =:= 1 -> {A, X#_{a = 2}, X#_.b}." 0 "^$")
 semantic_case(record_info_guard "-module(a). -record(r, {a}). f(X) when record_info(size, r) =:= X -> X." 1
     "illegal guard call")
 semantic_case(record_info_defined "-module(a). -export([record_info/2]). record_info(A, B) -> {A, B}." 1

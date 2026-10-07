@@ -6,12 +6,14 @@
 namespace erlang_aot::semantic {
 std::string_view ExpressionCapability::operator()(const ast::RecordExpression &value) const {
     const auto *layout = record_layout(module, value.identity);
-    return layout || external_record(module, value.identity) ? "" : "heap expressions";
+    const bool native = anonymous_record(value.identity) || external_record(module, value.identity);
+    return layout || native ? "" : "heap expressions";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::RecordAccess &value) const {
     const auto *layout = record_layout(module, value.identity);
-    return layout || external_record(module, value.identity) ? "" : "heap expressions";
+    const bool native = anonymous_record(value.identity) || external_record(module, value.identity);
+    return layout || native ? "" : "heap expressions";
 }
 
 std::string_view ExpressionCapability::operator()(const ast::RecordIndex &value) const {

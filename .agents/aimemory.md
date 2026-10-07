@@ -261,6 +261,8 @@ Step facts beyond the plan record:
   the peer module (atom_owner = importing module for atom slots/descriptor); peer tables declared via
   getOrInsertGlobal (tidy flags `new GlobalVariable` kept in a local as a leak). erlfmt also cannot parse
   `#m:r` forms. The OTP oracle compiles with warnings as errors: avoid updating literals (`(#r{})#r{...}`).
+- 31E: step 31 closed. "Unsupported" test placeholders use `-feature(compr_assign, enable)` + `[Y || X <- L, Y = X]`
+  (last `heap expressions` capability). features.hpp heap_expressions still says plan_step 29 (stale).
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

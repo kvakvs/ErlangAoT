@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "entry": "anon",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[1,2,open,3]\nbase\nvalue\n{5,x}\n{1,changed}\ntrue\n[{value,7},{value,8},native,other,other]\n[yes,yes,no,no]\n[{badrecord,{local,1,2}},{badfield,{{kinds,open},missing}},{badrecord,#kinds:closed{value=1}},{badrecord,foo},{badfield,{{anon,local},missing}}]\n"
+    },
+    {
+      "args": [
+        "read"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,7\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "update"
+      ],
+      "stderr": "^uncaught exception error: \\{badrecord,#kinds:closed\\{value = 1\\}\\}\n$",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "anon.erl": "8ef29f0f93a63a435c6adad30e029dfc304b468db7397dcab8f2821e616e899c",
+    "kinds.erl": "1b4dadebea34cfb542119daa7526bf47af6c1d39f2098304587ae50069d9fa73"
+  }
+}

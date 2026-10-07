@@ -99,7 +99,8 @@
   `-import_record` (`Module::exported_records`/`imported_records`), `semantic::external_record` resolves
   qualified and imported names; `Module::peers` (set by call resolution) lets external construction find
   the defining module, lower its literal defaults here (`ExpressionLowering::atom_owner`) and reference its
-  external `<prefix>.records`. Inferred (`#_`) records retain their capability owner.
+  external `<prefix>.records`. 31E: anonymous `#_` access (check any), update (`exported_or_module`) and
+  patterns (`any` without fields, else `exported_or_module`); `#_{...}` as an expression is an error.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

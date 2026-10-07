@@ -47,6 +47,12 @@ bool expand_native(MatchPlanner &state, const PatternVisit &visit, const Normali
 // What a native pattern tests: a qualified or imported record needs an export only when it names a field; a
 // local one tests this module.
 std::optional<NativeIdentity> native_identity(const Module &module, const ast::RecordExpression &record) {
+    if (anonymous_record(record.identity)) {
+        // #_{} matches any native record; listing a field needs it exported or defined in this module. The
+        // name operand is unused, so the module's name fills it.
+        const auto check = record.fields.empty() ? abi::v1::RecordCheck::any : abi::v1::RecordCheck::exported_or_module;
+        return NativeIdentity{{module.name}, {module.name}, check};
+    }
     if (const auto external = external_record(module, record.identity)) {
         const auto check =
             record.fields.empty() ? abi::v1::RecordCheck::module_name : abi::v1::RecordCheck::exported_module_name;

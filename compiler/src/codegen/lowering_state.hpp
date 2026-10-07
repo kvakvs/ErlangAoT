@@ -194,6 +194,8 @@ llvm::Value *lower_native_record(ExpressionLowering &state, const ast::Expressio
 // Construct, update or read a field of a qualified or imported native record.
 llvm::Value *lower_external_record(ExpressionLowering &state, const ast::Expression &expression,
                                    const semantic::RecordName &name);
+// Update or read a field of a native record through the anonymous #_ form.
+llvm::Value *lower_anonymous_record(ExpressionLowering &state, const ast::Expression &expression);
 // Test a native record pattern's identity or extract one of its fields; failures branch to mismatch.
 llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
                                   llvm::BasicBlock *mismatch);

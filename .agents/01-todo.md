@@ -218,7 +218,7 @@ Plan: [29](11-plan.md#step-29), [30](11-plan.md#step-30),
 - [x] Record updates (step 29) and `record_info/2` (step 30).
 - [x] Local native records: runtime cells and services (31B), compilation (31C).
 - [x] Qualified/imported native records, `-export_record`, `-import_record` (31D).
-- [ ] Anonymous native records (31E).
+- [x] Anonymous native records (31E).
 
 ### F18 — Closures and function values
 

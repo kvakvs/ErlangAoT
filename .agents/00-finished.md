@@ -267,10 +267,10 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   between heaps, mailbox/transit roots (host-requested copying collection done
   in 8H; frame, register and failure-channel roots enumerated in plan 11
   step 23).
-- [ ] **More Erlang semantics:** native records, closures and dynamic calls
-  (maybe, comprehensions, exceptions and handlers, recursion and tail calls are
-  done: plan 11 phases D and E; record updates and `record_info/2`: steps
-  29–30).
+- [ ] **More Erlang semantics:** closures and dynamic calls (maybe,
+  comprehensions, exceptions and handlers, recursion and tail calls are done:
+  plan 11 phases D and E; record updates, `record_info/2` and native records:
+  steps 29–31E).
 - [ ] **Identities and atoms:** pid/port/reference services; synchronized atom
   access before workers; atom collection is a scope decision (D02).
 - [ ] **Processes and scheduling:** cooperative execution, reductions, workers,

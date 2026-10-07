@@ -26,6 +26,8 @@ struct RecordName {
 
 // The record a qualified identity or an imported name refers to; nullopt for local and anonymous identities.
 std::optional<RecordName> external_record(const Module &module, const ast::RecordIdentity &identity);
+// Whether an identity is the anonymous #_ form, which reads any native record's captured definition.
+bool anonymous_record(const ast::RecordIdentity &identity);
 // The module an -import_record attribute imports a record name from, if any.
 const std::u32string *imported_module(const Module &module, const std::u32string &name);
 // The definition external construction uses: an exported native record of a batch module; null otherwise.

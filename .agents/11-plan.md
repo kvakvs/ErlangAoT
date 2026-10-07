@@ -687,12 +687,17 @@ Scope the OTP 29 record forms beyond ordinary tuple records first; split into
 sub-steps if more than one representation is needed.
 
 - Success criteria
-  - [ ] Each selected form has construction, access, update, matching,
+  - [x] Each selected form has construction, access, update, matching,
     comparison, printing, tracing and copying rules.
-  - [ ] Unselected forms keep explicit unavailable diagnostics.
+  - [x] Unselected forms keep explicit unavailable diagnostics.
 - Tests
-  - [ ] Golden programs per selected form, including errors and cross-module
+  - [x] Golden programs per selected form, including errors and cross-module
     use.
+- Evidence: closed by 31E (2026-10-07). Every form was selected (31A); rules
+  in `docs/native-records.md`, runtime in 31B, goldens
+  `executables_native_records`, `executables_native_external`,
+  `executables_native_anonymous`. Not selected and still unavailable: the
+  `records` module (`unknown module records`), `RECORD_EXT`, upgrades.
 
 Split on 2026-10-07 into 31A–31E: the three forms share one representation,
 but runtime cells, local records, cross-module forms and anonymous forms are
@@ -850,9 +855,26 @@ Backlog: F17. Depends on: [31D](#step-31d).
 `X#_.f`, `X#_{...}` and `#_{...}` patterns; closes step 31.
 
 - Success criteria
-  - [ ] Results and errors match OTP; `#_{...}` as an expression is rejected.
+  - [x] Results and errors match OTP; `#_{...}` as an expression is rejected.
 - Tests
-  - [ ] OTP golden program for anonymous forms on local and foreign records.
+  - [x] OTP golden program for anonymous forms on local and foreign records.
+- Evidence (2026-10-07): `maint-29` unchanged. OTP 29.1.1 probes: `X#_.f`
+  reads any native record (no export check), `X#_{...}` evaluates the record
+  first and needs it exported or local, `#_{}` matches any native record but
+  not a tuple, `#_{...}` as an expression is `native record '_' undefined`.
+  `semantic::anonymous_record`; codegen `lower_anonymous_record` (get `any`,
+  update `exported_or_module`); patterns use `any` or
+  `exported_or_module`. "Unsupported" placeholders now use the experimental
+  `compr_assign` feature, the last `heap expressions` capability. OTP golden
+  `executables_native_anonymous` (reads of local, exported and private
+  foreign records, update order and export rule, empty update, pattern
+  rules, guard access, five caught errors, two uncaught runs) passes all 8
+  combinations; 2 CLI cases. Fresh Windows x64 Debug (clang-cl): fast
+  168/168, full `-j 12` 172/172 in 124 s; after splitting
+  `validate_record` (tidy) fast 168/168 again, Lizard 0 warnings, tidy
+  changed units pass. The feature catalog still names step 29 as owner of
+  `heap expressions`, now used only by `compr_assign` and undefined records.
+  Logs `build/plan11-step31/`.
 
 <a id="step-32"></a>
 
