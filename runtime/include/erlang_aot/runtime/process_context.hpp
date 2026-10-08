@@ -13,6 +13,7 @@ struct OutputSink;
 
 namespace detail {
 class RuntimeMemory;
+class ProcessNumbers;
 } // namespace detail
 
 // Keep control/creation failures separate from Erlang exceptions and exit reasons.
@@ -37,6 +38,7 @@ class ProcessIdentity final {
     friend class SchedulerPool;
     friend class SchedulerService;
     friend class Runtime;
+    friend class TermFactory;
 
     struct RuntimeKey {
         // Keep runtime identity distinct from the per-runtime process serial at construction.
@@ -47,7 +49,7 @@ class ProcessIdentity final {
     ProcessIdentity(RuntimeKey runtime, std::uint64_t serial);
     // Distinguish pools even when handles outlive pool destruction.
     std::uint64_t runtime_;
-    // Monotonically allocated identity within one runtime, never recycled.
+    // The pid number: allocated from one process-wide sequence, never recycled (docs/terms.md#pids-and-references).
     std::uint64_t serial_;
 };
 
@@ -138,9 +140,11 @@ class ProcessContext final {
     ProcessStack stack_;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options, StackOptions stack_options,
-                   std::shared_ptr<detail::RuntimeMemory> memory);
+                   std::shared_ptr<detail::RuntimeMemory> memory, const detail::ProcessNumbers &numbers);
     // The runtime-wide memory account that this process's heap and stack charge.
     const std::shared_ptr<detail::RuntimeMemory> &memory() const noexcept;
+    // The pid numbers the runtime issued, against which pid words are admitted.
+    const detail::ProcessNumbers &process_numbers() const noexcept;
 };
 
 } // namespace erlang_aot::runtime

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "identities",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[true,true,false,false,false,false,false]\n[true,true,true,true,false,same,different]\n[[60,78,46,78,46,78,62],[35,82,101,102,60,78,46,78,46,78,46,78,62],true]\n[{error,badarg},{error,badarg},{error,badarg}]\n[number,number,atom,ref,'fun',pid,tuple,map,nil,list,binary]\n[number,number,atom,ref,'fun',pid,tuple,map,nil,list,binary]\n[true,true,true,true,true,true]\n[200,true]\n[200,37,error]\n[self,first,pair,list]\n[first,list,pair,self]\n[true,true,true]\ntrue\n[ref,pid,true]\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "identities.erl": "152fcdb389c5f948477e8b82eecd673a2399e25105cebf6d3547f3bb7b51bb91"
+  }
+}

@@ -315,6 +315,14 @@ Step facts beyond the plan record:
   typed_entry<F>(module, name) derives arity. Tests reach private headers via target_include_directories
   runtime/src (runtime_typed_builtins). TermFactory: integer, integer_decimal, floating. term_status maps
   stale_term -> internal_error (use wrong_owner to distinguish). Reserve sweep (a2be154) measured no change.
+- 42: pid = immediate 0x3, number from process-wide atomic (never reused); Runtime::Impl::process_numbers runs;
+  ProcessIdentity::serial_ IS the pid number. HeapStorage::processes_ admits pids (TermAccess::pid); validate()
+  accepts pid Terms (retain re-admits). Ref cell = BoxedKind::reference + 8 bytes (program-wide counter). OTP
+  constant-folds pid_to_list(self) with literal atom -> route via id(). Golden prints identity text through
+  pid_to_list/ref_to_list with digits replaced by N. Body self() = guard sig + bridge builtin (guard_analysis
+  call()); guard self() still gated (step 52). Term-services deferral now only via TermFactory::port(PortIdentity{})
+  (PortIdentity became a complete empty class). Many files are CRLF in the worktree (autocrlf=input): python
+  edits must keep endings (scratchpad edtool.py). Background `cmd //c gate.cmd &` detaches: poll logs.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

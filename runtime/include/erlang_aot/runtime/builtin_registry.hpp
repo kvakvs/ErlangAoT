@@ -76,10 +76,12 @@ std::span<const BuiltinEntry> erlang_builtins() noexcept;
 // The term-access builtins: setelement/3, make_tuple/2,3, tuple_to_list/1, list_to_tuple/1, '++'/2, '--'/2.
 std::span<const BuiltinEntry> term_access_builtins() noexcept;
 // The conversion builtins: atom_to_list/1, list_to_atom/1, integer_to_list/1,2, list_to_integer/1,2,
-// float_to_list/1,2, binary_to_list/1, list_to_binary/1, iolist_to_binary/1.
+// float_to_list/1,2, binary_to_list/1, list_to_binary/1, iolist_to_binary/1, pid_to_list/1, ref_to_list/1.
 std::span<const BuiltinEntry> conversion_builtins() noexcept;
 // The io builtins: io:format/1,2 and io:put_chars/1 on standard output.
 std::span<const BuiltinEntry> io_builtins() noexcept;
+// The process builtins: self/0 and make_ref/0.
+std::span<const BuiltinEntry> process_builtins() noexcept;
 // Every production builtin family runtime startup registers, together covering abi::v1::bridge_builtins.
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept;
 } // namespace erlang_aot::runtime

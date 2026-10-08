@@ -156,6 +156,13 @@
   to a BuiltinBody (admit, convert via `Argument<T>`, mismatch -> badarg, publish Term/TermResult/BuiltinResult/Word;
   thrown `BuiltinFailure` recorded). term_access, conversions, io, binary_part/2, function_exported/3 use it;
   the other erlang adapters forward raw words to the inline services.
+  Step 42 (`docs/terms.md#pids-and-references`): pids are immediates (tag `0x3`, payload = process number from one
+  process-wide never-reused sequence; `detail::ProcessNumbers` in `Runtime::Impl` records issued numbers as runs,
+  `ProcessIdentity::serial_` is the number); admission (`TermAccess::pid`, `HeapStorage::processes_`) rejects
+  forged/foreign words, exited pids stay valid. References are `reference` heap cells (untraced 64-bit number from a
+  program-wide counter). Order: numbers < atoms < refs < funs < pids < tuples; print `<0.N.S>`/`#Ref<0.A.B.C>`.
+  Builtins `self/0`, `make_ref/0` (`builtins/processes`), `pid_to_list/1`, `ref_to_list/1` (conversions); body
+  `self()` resolves its guard signature to the bridge builtin (`guard_analysis` `call`), guard `self()` stays gated.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

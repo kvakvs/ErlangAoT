@@ -3,7 +3,9 @@
 Admitted kinds: atoms/booleans, arbitrary integers, finite binary64 floats,
 tuples, proper/improper lists and strings, maps, bitstrings and ordinary tuple
 records; native records ([native records](native-records.md)); funs
-([function values](funs.md)). Pids, ports and references are not representable yet. Word encodings are in [abi.md](abi.md#terms).
+([function values](funs.md)); local pids and references
+([below](#pids-and-references)). Ports do not exist yet. Word encodings are in
+[abi.md](abi.md#terms).
 
 ## Ownership
 
@@ -141,11 +143,34 @@ records; native records ([native records](native-records.md)); funs
 - Native records: [native records](native-records.md) (local, qualified,
   imported and anonymous forms).
 
+## Pids and references
+
+Plan 11 step 42. `self/0` returns the calling process's pid, `make_ref/0` a
+new reference; `pid_to_list/1` and `ref_to_list/1` return their text.
+
+- A pid is an immediate word (low four bits `0x3`) holding the process's
+  number. Numbers come from one process-wide sequence and are never reused,
+  so a runtime admits a pid word only when it issued that number: a forged
+  word (never issued) or another runtime's pid is `wrong_owner`. The pid of an
+  exited process stays a valid term, as in OTP. 32-bit targets have 2^28
+  numbers per program run, 64-bit targets 2^60; creating a process past them
+  fails with `resource_limit`.
+- A reference is a heap cell (`reference`: header plus an untraced 64-bit
+  number) admitted like every heap term: only in its own process, stale after
+  a collection of a host `Term`, copied by value between processes.
+  Numbers come from one process-wide counter, so every reference of a program
+  run is unique.
+- Printing follows OTP's local identities: a pid as `<0.N.S>` (N the low 28
+  bits of its number, S the rest), a reference as `#Ref<0.A.B.C>` (C the low
+  18 bits of its number, B the next 32, A the rest), in both `~w` and display
+  styles. Pids order by number, references by number, so later references of
+  a program order after earlier ones.
+
 ## Comparison and order
 
 Iterative with no work cap, as in OTP: only memory for pending pairs bounds a
 comparison, map key searches included, and identical words are equal without
-a walk. Byte-aligned bitstrings compare whole bytes at once. Order: numbers < atoms < funs < tuples < native records < maps < nil < lists <
+a walk. Byte-aligned bitstrings compare whole bytes at once. Order: numbers < atoms < references < funs < pids < tuples < native records < maps < nil < lists <
 bitstrings ([funs](funs.md#comparison-and-printing) order among themselves). Atoms compare by UTF-8 spelling (code-point order); tuples by arity
 then fields; maps by size, then keys, then values; bitstrings by logical bits.
 

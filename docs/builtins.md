@@ -28,14 +28,16 @@ builtin both the compiler and the runtime know:
   `binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1`
   (`term_to_binary/1` is not selected);
 - console output (plan step 40): `io:format/1,2` and `io:put_chars/1`, the
-  first builtins of another module ([io](io.md)).
+  first builtins of another module ([io](io.md));
+- process identities (plan step 42): `self/0`, `make_ref/0`, `pid_to_list/1`
+  and `ref_to_list/1` ([pids and references](terms.md#pids-and-references)).
 
 Entries are only appended: an entry's index is the number generated code
 passes to the bridge service. A qualified call of a catalog builtin of another
 module (`io:format(F, A)`) also calls the bridge. Other `erlang` functions keep
 their diagnostics:
 a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
-`fun F/A` of a guard BIF outside the catalog (`self/0`, `node/0`) and
+`fun F/A` of a guard BIF outside the catalog (`node/0`) and
 `fun erlang:apply/2,3` report the unavailable `dynamic calls` capability.
 
 ## How calls reach them
@@ -51,7 +53,8 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   suppresses (`-compile({no_auto_import, ...})`) is the external fun
   `erlang:F/A`, as in OTP: `fun abs/1 =:= fun erlang:abs/1` and it prints as
   `fun erlang:abs/1`. `halt/0,1`, `setelement/3`, `tuple_to_list/1`,
-  `list_to_tuple/1` and the conversions are auto-imported like OTP's; `display/1`, `raise/3`,
+  `list_to_tuple/1`, the conversions, `self/0` and `make_ref/0` are auto-imported like OTP's (`self()` in a guard
+  stays unavailable until plan step 52); `display/1`, `raise/3`,
   `function_exported/3` and `make_tuple/2,3` need the `erlang:` prefix.
 - A builtin has a `FrameDescriptor` with a null body (`BuiltinFrame`). Entering
   it (`erlang_aot_enter_v1`, `erlang_aot_tail_v1`) pushes no frame: the

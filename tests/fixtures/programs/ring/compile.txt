@@ -1,7 +1,6 @@
 exit 1
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:14:5: [receive] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:13:11: [send expressions] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:10:46: [guards] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:39:5: [receive] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:53:5: [receive] notimpl [module="ring"]
 erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:52:11: [send expressions] notimpl [module="ring"]

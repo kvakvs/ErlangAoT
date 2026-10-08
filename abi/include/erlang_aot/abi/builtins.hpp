@@ -125,6 +125,11 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"io", "format", 1},
     BuiltinName{"io", "format", 2},
     BuiltinName{"io", "put_chars", 1},
+    // Process identities (plan step 42).
+    BuiltinName{"erlang", "self", 0},
+    BuiltinName{"erlang", "make_ref", 0},
+    BuiltinName{"erlang", "pid_to_list", 1},
+    BuiltinName{"erlang", "ref_to_list", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

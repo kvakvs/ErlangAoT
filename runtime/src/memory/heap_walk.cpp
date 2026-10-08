@@ -1,4 +1,5 @@
 #include "heap_walk.hpp"
+#include <optional>
 
 namespace erlang_aot::runtime::detail {
 namespace {
@@ -16,10 +17,27 @@ bool heap_binary_sized(std::span<const Word> payload) {
            payload.size() == layout::heap_binary_payload_words(payload[0], sizeof(Word));
 }
 
+// The payload words of the fixed-size kinds without terms: floats, references and off-heap binaries.
+std::optional<std::size_t> fixed_payload(BoxedKind kind) {
+    switch (kind) {
+    case BoxedKind::floating:
+        return layout::float_payload_words(sizeof(Word));
+    case BoxedKind::reference:
+        return layout::reference_payload_words(sizeof(Word));
+    case BoxedKind::refc_binary:
+        return layout::refc_payload_words(sizeof(Word));
+    default:
+        return std::nullopt;
+    }
+}
+
 // Check the payload size each admitted kind requires and count the untraced words before its terms; a payload
 // without terms is untraced throughout. A native record's or fun's definition word precedes its values.
 std::expected<std::size_t, WalkError> untraced(BoxedKind kind, std::span<const Word> payload) {
     const auto all = payload.size();
+    if (const auto words = fixed_payload(kind)) {
+        return sized(all == *words, all);
+    }
     switch (kind) {
     case BoxedKind::tuple:
         return 0;
@@ -32,12 +50,8 @@ std::expected<std::size_t, WalkError> untraced(BoxedKind kind, std::span<const W
         return all;
     case BoxedKind::bignum:
         return sized(payload.size() >= 2, all);
-    case BoxedKind::floating:
-        return sized(payload.size() == layout::float_payload_words(sizeof(Word)), all);
     case BoxedKind::heap_binary:
         return sized(heap_binary_sized(payload), all);
-    case BoxedKind::refc_binary:
-        return sized(payload.size() == layout::refc_payload_words(sizeof(Word)), all);
     default:
         return std::unexpected(WalkError::unknown_kind);
     }

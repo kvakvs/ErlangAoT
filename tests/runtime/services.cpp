@@ -41,14 +41,14 @@ bool throwing(void *, std::string_view) { throw std::runtime_error("sink failure
 void check_factory(ProcessContext &context) {
     Reports reports;
     TermFactory factory(context, {&reports, record});
-    const std::array results{factory.pid(context.identity()), factory.make_reference()};
+    const std::array results{factory.port(PortIdentity{}), factory.port(PortIdentity{})};
     for (const auto &result : results) {
         require(result == std::unexpected(TermError::not_implemented), "factory fabricated a term");
     }
     require(reports.count == results.size() && reports.last.starts_with("[term services] notimpl"),
             "factory report count/feature wrong");
     TermFactory failed(context, {nullptr, reject});
-    require(failed.make_reference() == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
+    require(failed.port(PortIdentity{}) == std::unexpected(TermError::diagnostic_failure), "factory sink error lost");
 }
 
 // Moving/expiring a factory must not retain or dereference destroyed context storage.
@@ -164,7 +164,7 @@ void report_nested(ProcessContext &context) {
     require(registry
                 ->add("reference", 0,
                       [](ProcessContext &caller, std::span<const Term>) -> CallResult<Term> {
-                          const auto result = TermFactory(caller).make_reference();
+                          const auto result = TermFactory(caller).port(PortIdentity{});
                           const auto code = result.error() == TermError::not_implemented
                                                 ? CallError::not_implemented
                                                 : CallError::diagnostic_failure;
@@ -184,7 +184,7 @@ void report_nested(ProcessContext &context) {
 // Term/memory subprocess modes reach only one report owner.
 bool report_storage(std::string_view mode, ProcessContext &context) {
     if (mode == "term") {
-        require(TermFactory(context).make_reference() == std::unexpected(TermError::not_implemented),
+        require(TermFactory(context).port(PortIdentity{}) == std::unexpected(TermError::not_implemented),
                 "term status wrong");
     } else if (mode == "allocate") {
         require(context.heap().allocate(1).has_value(), "allocation status wrong");

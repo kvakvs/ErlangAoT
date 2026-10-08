@@ -11,7 +11,6 @@ erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/super
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:21:5: [receive] notimpl [module="supervise"]
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:20:9: [send expressions] notimpl [module="supervise"]
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:10:5: [receive] notimpl [module="supervise"]
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:8:50: [guards] notimpl [module="supervise"]
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:40:5: [receive] notimpl [module="supervise"]
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:39:10: [send expressions] notimpl [module="supervise"]
 erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:46:19: [send expressions] notimpl [module="supervise"]

@@ -48,12 +48,13 @@ copying its words.
 | `fun_closure` | address of the runtime's `FunDefinition`, then n captured values ([funs](funs.md)) | values |
 | `bignum` | sign word, then magnitude limbs, least significant first | none |
 | `floating` | 8 bytes: 1 word (64-bit) or 2 words (32-bit) | none |
+| `reference` | 8 bytes: the reference number ([pids and references](terms.md#pids-and-references)) | none |
 | `heap_binary` | bit length, then data bytes rounded up to words (at most 64 bytes) | none |
 | `refc_binary` | bit offset, bit length, `std::shared_ptr` (2 words), off-heap link: 5 words | none |
 | `filler` | n unused words | none |
 
-The `map` count is in words (entries = count / 2). Kinds not yet admitted
-(references, external identities) follow the
+The `map` count is in words (entries = count / 2). Pids are immediates, admitted against the runtime's issued
+numbers. Kinds not yet admitted (external identities) follow the
 same rules when they arrive: identities and descriptors are registry IDs in
 untraced words, never owning C++ pointers.
 

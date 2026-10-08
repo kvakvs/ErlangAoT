@@ -85,6 +85,8 @@ class Verifier final {
             return shape_at(value) == Shape::boxed;
         case TermKind::atom:
             return storage_.atoms_->lookup(value).has_value();
+        case TermKind::local_pid:
+            return storage_.processes_->issued(pid_number(value));
         default:
             return plain_immediate(value);
         }

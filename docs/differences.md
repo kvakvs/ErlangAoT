@@ -21,6 +21,13 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | An anonymous fun in a record field default | Each construction site expands its own copy: funs from two sites are unequal | One fun for the default: funs from any construction site are equal | [funs](funs.md#closures) |
 | Captured value order of funs created inside comprehensions | Free variables of the comprehension's generated function | Definition order in the enclosing function; visible only when comparing two such funs | [funs](funs.md#closures) |
 
+## Pids and references
+
+| Difference | OTP | ErlangAoT | Owner |
+| --- | --- | --- | --- |
+| Pid numbers | The first user process is about `<0.80.0>`; numbers are reused after the pid table wraps | The first process is `<0.1.0>`; numbers come from one sequence and are never reused | [terms](terms.md#pids-and-references) |
+| Reference numbers | Mix a scheduler identifier and per-scheduler counters (`#Ref<0.178111994.4235460610.214105>`) | One program-wide counter (`#Ref<0.0.0.1>`), so references order by creation | [terms](terms.md#pids-and-references) |
+
 ## Errors, stack traces and reports
 
 | Difference | OTP | ErlangAoT | Owner |

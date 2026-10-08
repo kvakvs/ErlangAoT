@@ -1,7 +1,6 @@
 #include "../memory/heap_policy.hpp"
 #include "../runtime_state.hpp"
 #include <algorithm>
-#include <limits>
 #include <new>
 #include <stdexcept>
 
@@ -23,16 +22,18 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
     if (!detail::valid_heap_options(options)) {
         return std::unexpected(Status::invalid_argument);
     }
-    // Process count is unlimited; only the never-recycled identity sequence can run out.
-    if (impl_->next_context == std::numeric_limits<std::uint64_t>::max()) {
-        return std::unexpected(Status::resource_limit);
+    // Process count is unlimited; only the never-recycled pid number sequence can run out.
+    const auto number = impl_->process_numbers.issue();
+    if (!number) {
+        return std::unexpected(number.error() == TermError::out_of_memory ? Status::out_of_memory
+                                                                          : Status::resource_limit);
     }
     try {
-        auto context = std::unique_ptr<ProcessContext>(new ProcessContext(
-            *this, ProcessIdentity({impl_->identity}, impl_->next_context), options, stack_options, impl_->memory));
+        auto context = std::unique_ptr<ProcessContext>(
+            new ProcessContext(*this, ProcessIdentity({impl_->identity}, *number), options, stack_options,
+                               impl_->memory, impl_->process_numbers));
         auto *borrowed = context.get();
         impl_->contexts.push_back(std::move(context));
-        ++impl_->next_context;
         return borrowed;
     } catch (const std::bad_alloc &) {
         return std::unexpected(Status::out_of_memory);

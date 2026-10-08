@@ -7,6 +7,7 @@
 #include <array>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/runtime/atoms.hpp>
+#include <erlang_aot/runtime/output.hpp>
 #include <vector>
 
 // The conversion builtins (docs/builtins.md): atoms, integers, floats, lists and binaries, with OTP's badarg and
@@ -358,6 +359,14 @@ TermResult<Term> iolist_to_binary(ProcessContext &context, const Term &root) {
     return root.is_binary() ? root : list_to_binary(context, root);
 }
 
+// The ~w text of an identity as a list: pid_to_list/1 accepts only pids, ref_to_list/1 only references.
+template <bool Pid> TermResult<Term> identity_to_list(ProcessContext &context, const Term &value) {
+    if (Pid ? !value.is_pid() : !value.is_reference()) {
+        bad_argument();
+    }
+    return byte_list(context, need(format_term(value, TermStyle::write)));
+}
+
 constexpr std::array CONVERSION_BUILTINS{
     typed_entry<atom_to_list>("erlang", "atom_to_list"),
     typed_entry<list_to_atom>("erlang", "list_to_atom"),
@@ -370,6 +379,8 @@ constexpr std::array CONVERSION_BUILTINS{
     typed_entry<binary_to_list>("erlang", "binary_to_list"),
     typed_entry<list_to_binary>("erlang", "list_to_binary"),
     typed_entry<iolist_to_binary>("erlang", "iolist_to_binary"),
+    typed_entry<identity_to_list<true>>("erlang", "pid_to_list"),
+    typed_entry<identity_to_list<false>>("erlang", "ref_to_list"),
 };
 } // namespace
 } // namespace erlang_aot::runtime::builtins

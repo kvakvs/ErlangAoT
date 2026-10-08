@@ -39,7 +39,8 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
 - `destroy_context(ctx)`, `shutdown()`: shutdown returns `busy` while contexts
   remain; after that it succeeds idempotently and later calls return `stopped`.
   The destructor cleans up remaining contexts.
-- Context and runtime identities are non-recycled; exhaustion fails. A context
+- Context and runtime identities are non-recycled; exhaustion fails. A
+  context's identity carries its pid number ([pids](terms.md#pids-and-references)). A context
   pointer is a borrow, not an identity. `lifetime()` gives a weak token that
   reports `alive() == false` before heap teardown.
 - Lifecycle calls never throw and are silent. Status values: [abi.md](abi.md#runtime-services).
@@ -184,7 +185,7 @@ state:
 
 | Boundary | Error |
 | --- | --- |
-| `TermFactory` pid/reference constructors and `function(FunctionIdentity)` | `TermError::not_implemented` |
+| `TermFactory::port` (no ports yet, plan step 53), `reference(ReferenceIdentity)` and `function(FunctionIdentity)` | `TermError::not_implemented` |
 | `ProcessContext::send` | `ProcessError::not_implemented` |
 | `SchedulerService::run` / `execute` | `SchedulerError::not_implemented` |
 | `CodeServer::unload` | `CodeError::not_implemented` |

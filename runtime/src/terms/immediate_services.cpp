@@ -31,22 +31,12 @@ Result boolean(ProcessContext &context, bool value) {
     return term->word();
 }
 
-// Predicates classify admitted representations; unavailable identities and later scalar families remain false.
+// Predicates classify admitted representations; ports do not exist, so is_port/1 is always false.
 bool predicate(Op operation, const Term &value) {
-    const std::array predicates{value.is_atom(),
-                                value.is_integer(),
-                                value.is_number(),
-                                value.is_boolean(),
-                                value.is_tuple(),
-                                value.is_list(),
-                                value.is_binary(),
-                                value.is_bitstring(),
-                                value.is_float(),
-                                value.is_map(),
-                                false,
-                                false,
-                                false,
-                                value.is_function()};
+    const std::array predicates{value.is_atom(),      value.is_integer(), value.is_number(), value.is_boolean(),
+                                value.is_tuple(),     value.is_list(),    value.is_binary(), value.is_bitstring(),
+                                value.is_float(),     value.is_map(),     value.is_pid(),    value.is_port(),
+                                value.is_reference(), value.is_function()};
     return predicates.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::is_atom));
 }
 

@@ -62,7 +62,7 @@ Plan: [8A](11-plan.md#step-8a)–[8I](11-plan.md#step-8i),
   range and header (8B–8D).
 - [x] One heap block per process plus heap fragments; word alignment only (8G).
 - [x] Close the heap rework with re-measurement and docs (8I).
-- [ ] Layouts for identities, closures and native records.
+- [x] Layouts for identities, closures and native records (steps 31B, 32, 42).
 
 ### F04 — Process garbage collection
 
@@ -110,10 +110,12 @@ Plan: [54](11-plan.md#step-54).
 Plan: [42](11-plan.md#step-42), [48](11-plan.md#step-48),
 [53](11-plan.md#step-53).
 
-- [ ] Uniqueness, ownership and stale-identity rules per kind; ports separate
-  from I/O services.
-- [ ] Owned constructors/lookups, then equality, host Terms, copying, routing.
-- [ ] Reject forged, stale and foreign identities.
+- [x] Uniqueness, ownership and stale-identity rules for pids and references
+  (step 42, [terms](../docs/terms.md#pids-and-references)).
+- [ ] Ports separate from I/O services (step 53).
+- [x] Owned constructors, equality, order, printing, host Terms, copying (step 42).
+- [ ] Routing by pid (steps 45, 48).
+- [x] Reject forged, stale and foreign identities (step 42).
 
 ### F08 — Lists, tuples, maps and strings
 
@@ -171,7 +173,7 @@ Plan: [31](11-plan.md#step-31), [32](11-plan.md#step-32),
 [42](11-plan.md#step-42).
 
 - [x] Exact/numeric equality and ordering for every admitted representation.
-- [ ] Extend as identities, callables and native records arrive.
+- [x] Extend as identities, callables and native records arrive (steps 31, 32, 42).
 
 ### F13 — Pattern matching and bindings
 

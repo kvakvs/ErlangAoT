@@ -5,8 +5,9 @@ namespace erlang_aot::runtime {
 class ProcessContext::Impl final {
   public:
     // Bind the runtime and identity once, issuing a separately retained token for future host bindings.
-    Impl(Runtime &runtime, ProcessIdentity identity, std::shared_ptr<detail::RuntimeMemory> memory)
-        : runtime(runtime), identity(identity), memory(std::move(memory)) {}
+    Impl(Runtime &runtime, ProcessIdentity identity, std::shared_ptr<detail::RuntimeMemory> memory,
+         const detail::ProcessNumbers &numbers)
+        : runtime(runtime), identity(identity), memory(std::move(memory)), numbers(numbers) {}
 
     // Runtime-wide service bindings will be resolved here once their owning services exist.
     Runtime &runtime;
@@ -14,6 +15,8 @@ class ProcessContext::Impl final {
     ProcessIdentity identity;
     // Charge this process's heap and stack growth to the runtime-wide account.
     std::shared_ptr<detail::RuntimeMemory> memory;
+    // Admit pid words of this runtime only; owned by the runtime, which outlives its contexts.
+    const detail::ProcessNumbers &numbers;
     // Outlive context storage when a host pins the token; invalidate before mailbox/heap destruction.
     std::shared_ptr<ContextLifetime> lifetime{new ContextLifetime};
 };
@@ -23,9 +26,10 @@ ProcessIdentity::ProcessIdentity(RuntimeKey runtime, std::uint64_t serial) : run
 bool ContextLifetime::alive() const noexcept { return alive_; }
 
 ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions options,
-                               StackOptions stack_options, std::shared_ptr<detail::RuntimeMemory> memory)
-    : impl_(std::make_unique<Impl>(runtime, identity, std::move(memory))), heap_(*this, options), mailbox_(*this),
-      generated_calls_(stack_), stack_(*this, stack_options) {}
+                               StackOptions stack_options, std::shared_ptr<detail::RuntimeMemory> memory,
+                               const detail::ProcessNumbers &numbers)
+    : impl_(std::make_unique<Impl>(runtime, identity, std::move(memory), numbers)), heap_(*this, options),
+      mailbox_(*this), generated_calls_(stack_), stack_(*this, stack_options) {}
 
 ProcessContext::~ProcessContext() { impl_->lifetime->alive_ = false; }
 
@@ -44,5 +48,7 @@ Mailbox &ProcessContext::mailbox() noexcept { return mailbox_; }
 std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept { return impl_->lifetime; }
 
 const std::shared_ptr<detail::RuntimeMemory> &ProcessContext::memory() const noexcept { return impl_->memory; }
+
+const detail::ProcessNumbers &ProcessContext::process_numbers() const noexcept { return impl_->numbers; }
 
 } // namespace erlang_aot::runtime

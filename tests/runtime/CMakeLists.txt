@@ -66,6 +66,14 @@ target_link_libraries(runtime_funs PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_funs PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_funs COMMAND runtime_funs)
 
+# Pid and reference identities: admission of issued, forged, foreign and exited pids; references through
+# collection, copying and teardown.
+add_executable(runtime_identities identities.cpp)
+erlang_aot_project_options(runtime_identities)
+target_link_libraries(runtime_identities PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_identities PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_identities COMMAND runtime_identities)
+
 add_executable(runtime_copy copy.cpp)
 erlang_aot_project_options(runtime_copy)
 target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)

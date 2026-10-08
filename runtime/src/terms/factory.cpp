@@ -24,13 +24,9 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
 
-TermResult<Term> TermFactory::pid(const ProcessIdentity &) { return unavailable("TermFactory::pid"); }
-
 TermResult<Term> TermFactory::port(const PortIdentity &) { return unavailable("TermFactory::port"); }
 
 TermResult<Term> TermFactory::reference(const ReferenceIdentity &) { return unavailable("TermFactory::reference"); }
-
-TermResult<Term> TermFactory::make_reference() { return unavailable("TermFactory::make_reference"); }
 
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
 } // namespace erlang_aot::runtime

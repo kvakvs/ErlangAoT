@@ -3,6 +3,7 @@
 #include "bitstrings.hpp"
 #include "floats.hpp"
 #include "funs.hpp"
+#include "identities.hpp"
 #include "maps.hpp"
 #include "records.hpp"
 #include <algorithm>
@@ -24,15 +25,17 @@ TermResult<unsigned> rank(const Term &term) {
     if (term.is_number()) {
         return 0;
     }
-    static constexpr std::array<std::pair<TermKind, unsigned>, 9> ranks{{{TermKind::atom, 1},
-                                                                         {TermKind::function, 2},
-                                                                         {TermKind::tuple, 3},
-                                                                         {TermKind::empty_tuple, 3},
-                                                                         {TermKind::native_record, 4},
-                                                                         {TermKind::map, 5},
-                                                                         {TermKind::empty_list, 6},
-                                                                         {TermKind::list, 7},
-                                                                         {TermKind::bitstring, 8}}};
+    static constexpr std::array<std::pair<TermKind, unsigned>, 11> ranks{{{TermKind::atom, 1},
+                                                                          {TermKind::local_reference, 2},
+                                                                          {TermKind::function, 3},
+                                                                          {TermKind::local_pid, 4},
+                                                                          {TermKind::tuple, 5},
+                                                                          {TermKind::empty_tuple, 5},
+                                                                          {TermKind::native_record, 6},
+                                                                          {TermKind::map, 7},
+                                                                          {TermKind::empty_list, 8},
+                                                                          {TermKind::list, 9},
+                                                                          {TermKind::bitstring, 10}}};
     const auto kind = term.kind();
     const auto found = std::ranges::find(ranks, kind, &std::pair<TermKind, unsigned>::first);
     if (found == ranks.end()) {
@@ -239,6 +242,9 @@ TermResult<int> same_rank(const Pair &values, std::vector<Pair> &pending) {
     }
     if (values.left.is_bitstring()) {
         return bit_order(values.left, values.right);
+    }
+    if (values.left.is_pid() || values.left.is_reference()) {
+        return identity_order(values.left, values.right);
     }
     return scalar(values);
 }

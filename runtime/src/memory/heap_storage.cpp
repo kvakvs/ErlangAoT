@@ -26,8 +26,9 @@ std::span<Word> HeapArea::bump(std::size_t words) noexcept {
 }
 
 HeapStorage::HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms,
-                         std::shared_ptr<RuntimeMemory> memory)
-    : options_(options), lifetime_(std::move(lifetime)), memory_(std::move(memory)), atoms_(&atoms) {}
+                         std::shared_ptr<RuntimeMemory> memory, const ProcessNumbers &processes)
+    : options_(options), lifetime_(std::move(lifetime)), memory_(std::move(memory)), atoms_(&atoms),
+      processes_(&processes) {}
 
 HeapStorage::~HeapStorage() {
     release_off_heap(*this);

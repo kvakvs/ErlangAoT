@@ -971,11 +971,39 @@ Backlog: F03, F07, F12. Depends on: [23](#step-23), [28](#step-28).
 tracing and copying.
 
 - Success criteria
-  - [ ] Identities are unique, compare and print like OTP; forged or stale
+  - [x] Identities are unique, compare and print like OTP; forged or stale
     words are rejected.
 - Tests
-  - [ ] Golden programs comparing, sorting and storing pids/references in maps.
-  - [ ] Runtime tests for forged, stale and foreign identities.
+  - [x] Golden programs comparing, sorting and storing pids/references in maps.
+  - [x] Runtime tests for forged, stale and foreign identities.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/terms.md#pids-and-references`. Pids are immediates (tag `0x3`)
+  carrying a process number from one process-wide, never-reused sequence;
+  `detail::ProcessNumbers` (`process/identities`) records each runtime's
+  issued numbers as runs and `ProcessIdentity` carries the number. Admission
+  (`TermAccess::pid` via `HeapStorage::processes_`, heap verify) rejects
+  forged and foreign pid words; exited pids stay valid. References are
+  `reference` heap cells (untraced 64-bit number from a program-wide
+  counter): walked, collected and copied like other untraced cells. Order
+  numbers < atoms < references < funs < pids < tuples (pids and references by
+  number); printing `<0.N.S>` and `#Ref<0.A.B.C>` with OTP's bit splits.
+  Catalog appended: `self/0`, `make_ref/0` (`builtins/processes`),
+  `pid_to_list/1`, `ref_to_list/1` (conversions), all auto-imported; a body
+  `self()` resolves its guard signature to the bridge builtin, `self()` in a
+  guard stays gated (step 52); `is_pid/1`/`is_reference/1` now return true
+  for these values. Differences recorded: pid and reference numbering. OTP
+  golden `executables_identities` (type tests, equality, head matching,
+  identity text shapes via `pid_to_list`/`ref_to_list`, their badarg cases,
+  term order of a mixed list, 200 distinct sorted references as map keys,
+  pid/reference/compound map keys, captures, exception payloads) passes all
+  8 combinations; `runtime_identities` (issued, forged, never-issued,
+  foreign-runtime and exited pids; references across collection, copy,
+  stale and expired terms; order); semantic cases `process_identities`,
+  `self_guard`; ring/supervise diagnostics lose their `self()` guards line.
+  The deferred term-services path moved to `TermFactory::port`
+  (`PortIdentity` placeholder). Fresh Windows x64 Debug: fast 181/181, full
+  `-j 12` 185/185; Lizard 0 warnings after splitting the walker's payload
+  check; tidy 302 units pass. Logs `build/plan11-step42/`.
 
 <a id="step-43"></a>
 

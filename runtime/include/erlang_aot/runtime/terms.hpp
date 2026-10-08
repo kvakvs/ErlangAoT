@@ -79,7 +79,9 @@ class ProcessHeap;
 class AtomStorage;
 struct AtomValue;
 class ProcessIdentity;
-class PortIdentity;
+
+// A port identity; no ports exist yet (plan step 53), so TermFactory::port reports term services unavailable.
+class PortIdentity final {};
 class ReferenceIdentity;
 class FunctionIdentity;
 class TermFactory;

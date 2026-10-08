@@ -56,6 +56,12 @@ struct alignas(Word) FloatCell final {
     std::array<std::byte, 8> value_;
 };
 
+struct alignas(Word) ReferenceCell final {
+    // Identify an untraced reference number (docs/terms.md#pids-and-references), unique within the program run.
+    BoxHeader header_;
+    std::array<std::byte, 8> number_;
+};
+
 struct alignas(Word) RemoteIdentityCell final {
     // Distinguish identity kinds; the registry key is not a pointer for the future GC.
     BoxHeader header_;
@@ -89,6 +95,9 @@ struct alignas(Word) MapCell final {
 
 // Words after the header of a float cell on a target with word_bytes-wide words.
 constexpr std::size_t float_payload_words(std::size_t word_bytes) noexcept { return 8 / word_bytes; }
+
+// Words after the header of a reference cell on a target with word_bytes-wide words.
+constexpr std::size_t reference_payload_words(std::size_t word_bytes) noexcept { return 8 / word_bytes; }
 
 // Words after the header of an off-heap binary: offset, bits, two-pointer shared_ptr, list link.
 constexpr std::size_t refc_payload_words(std::size_t) noexcept { return 5; }

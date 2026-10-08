@@ -34,6 +34,8 @@ HeapObject boxed(Word value, std::span<const Word> words) {
         return {value, TermKind::bignum, words, payload.size() - 1};
     case BoxedKind::floating:
         return {value, TermKind::floating, words, 1};
+    case BoxedKind::reference:
+        return {value, TermKind::local_reference, words, 1};
     case BoxedKind::heap_binary:
         return {value, TermKind::bitstring, words, payload[0]};
     case BoxedKind::refc_binary:
@@ -55,6 +57,15 @@ HeapObject decode(Word value, std::span<const Word> area) {
 }
 } // namespace
 
+TermResult<Term> TermAccess::pid(Word value, const HeapStorage &storage) noexcept {
+    if (!storage.processes_->issued(pid_number(value))) {
+        return std::unexpected(TermError::wrong_owner);
+    }
+    Term result;
+    result.value_ = value;
+    return result;
+}
+
 TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
     if (!storage.alive()) {
         return std::unexpected(TermError::expired_context);
@@ -62,6 +73,9 @@ TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
     const auto kind = TermTag{value}.get_kind();
     if (kind == TermKind::atom) {
         return storage.atoms_->lookup(value);
+    }
+    if (kind == TermKind::local_pid) {
+        return pid(value, storage);
     }
     if (kind != TermKind::boxed && kind != TermKind::list) {
         return Term::from_word(value);
@@ -104,7 +118,8 @@ TermResult<void> TermAccess::validate(const Term &value) noexcept {
     if (value.heap_) {
         return object(value).transform([](const HeapObject &) {});
     }
-    if (value.is_atom()) {
+    // Atoms and pids were admitted against their runtime; a destination re-admits them (ProcessHeap::retain).
+    if (value.is_atom() || value.is_pid()) {
         return {};
     }
     return Term::from_word(value.word()).transform([](const Term &) {});

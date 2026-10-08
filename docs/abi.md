@@ -20,6 +20,8 @@ from the configured LLVM target, so cross-target code uses target widths.
 - Atoms: low six bits `0x0b`, non-recycled process-wide payload. IDs are never
   serialized or used for ordering.
 - Empty tuple `0x2b` and nil `0x3b` exactly; other payload bits are invalid.
+- Local pids: low four bits `0x3`, payload the process number, admitted only
+  when the runtime issued it ([pids and references](terms.md#pids-and-references)).
 - Boxed and list words point into the owning process heap and are admitted only
   after the runtime proves ownership (see [terms](terms.md)).
 

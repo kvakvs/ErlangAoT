@@ -90,8 +90,10 @@ void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpressi
     if (resolved->name == U"is_record" && resolved->arity >= 2) {
         validate_record_test(state.module, expression, call, guard, state.out);
     }
-    state.function.services.emplace(&expression,
-                                    ServiceResolution{*resolved, true, legacy, immediate_service(*resolved)});
+    // A guard signature without an inline operation (self/0) runs as its bridge builtin in a body.
+    const auto operation = immediate_service(*resolved);
+    const auto builtin = guard || operation ? std::nullopt : bridge_builtin(*resolved);
+    state.function.services.emplace(&expression, ServiceResolution{*resolved, true, legacy, operation, builtin});
 }
 
 struct Visit {

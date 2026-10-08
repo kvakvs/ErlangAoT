@@ -206,8 +206,8 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 
 namespace {
 // Body builtins auto-imported like OTP's (erl_internal:bif/2): the raising error/1,2,3, exit/1 and throw/1, halt/0,1,
-// the dynamic calls apply/2,3, setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not) and the
-// conversions.
+// the dynamic calls apply/2,3, setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not), the
+// conversions, make_ref/0, pid_to_list/1 and ref_to_list/1.
 bool auto_imported(const FunctionKey &key) {
     static const std::set<FunctionKey> names{{U"error", 1},
                                              {U"error", 2},
@@ -231,7 +231,10 @@ bool auto_imported(const FunctionKey &key) {
                                              {U"float_to_list", 2},
                                              {U"binary_to_list", 1},
                                              {U"list_to_binary", 1},
-                                             {U"iolist_to_binary", 1}};
+                                             {U"iolist_to_binary", 1},
+                                             {U"make_ref", 0},
+                                             {U"pid_to_list", 1},
+                                             {U"ref_to_list", 1}};
     return names.contains(key);
 }
 
