@@ -4,16 +4,16 @@ Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
 selective receive; step 47: receive timeouts; step 48: links and exit
 signals; step 49: monitors; step 50: registered names; step 53: ports
-(none).
+(none); step 56: scheduler workers.
 
 ## Executor
 
-One runtime runs all its processes on the thread that started the program
-([execution model](execution-model.md)). Startup makes the entry function's
+One runtime runs its processes on its scheduler workers ([workers](#workers),
+[execution model](execution-model.md)). Startup makes the entry function's
 call the first process, the main process, and runs the executor until it
 ends:
 
-- Runnable processes wait in one first-in, first-out queue. The executor runs
+- Runnable processes wait in one first-in, first-out queue. A worker runs
   the first one for a time slice of 4,000 reductions (OTP's `CONTEXT_REDS`),
   then puts it back at the end of the queue, unless it ended.
 - Every function entry spends one reduction: calls, tail calls, fun and
@@ -46,6 +46,48 @@ ends:
   function in the calling context to completion, resuming it after each yield
   without running other processes; programs started by `erlang_aot_main_v1`
   use the executor.
+
+## Workers
+
+Plan step 56 (2026-10-08). The executor runs processes on
+`RuntimeOptions::schedulers` worker threads: the thread that started the
+program and one more thread per further worker. Programs take the count from
+`--schedulers N` (1 to 1,024, [runtime options](executables.md#runtime-options));
+the default is one worker per logical processor, as OTP's `+S`.
+
+- Every worker takes the first process of the one shared queue (the
+  documented alternative to per-worker queues with work stealing: one queue
+  keeps OTP's first-in, first-out order and needs no stealing). Idle workers
+  sleep until a process is queued or the earliest receive timeout expires.
+- One executor mutex guards the queue, the waiting processes, the timers, the
+  registered names, the links and monitors of every process, and every
+  process that is not running. A running process's heap, stack, mailbox and
+  failure channel belong to its worker alone; Erlang code runs without the
+  lock.
+- Links, monitors and names change under the lock at once, also for a process
+  running elsewhere. A send, or an exit signal of `exit/2` or
+  `exit_signal/2`, to a process running on another worker cannot touch its
+  heap: the builtin does nothing and its process ends its slice
+  (`builtins::Blocked`); it waits until the target's slice ends, then runs
+  first and repeats the builtin with the same arguments. The target is held
+  until then, so the repeated builtin cannot find it running again. A process
+  that ends with links or monitors whose processes run elsewhere is finished
+  likewise once their slices end.
+- So messages and exit signals still take effect when they are sent: a send
+  returns after the message is in the receiver's mailbox, and
+  `is_process_alive/1` after `exit(Pid, kill)` is false, as OTP promises
+  for signals from the caller.
+- A spawn links or monitors the new process (`spawn_link`, `spawn_monitor`)
+  before any worker can run it. A spawned process may run before its parent
+  goes on, so a program that monitors or links to a short-lived process after
+  `spawn/1` can see `noproc`, as on a multi-scheduler OTP.
+- The main process's end, a halt or a runtime failure stops the program once
+  every worker has finished its current slice; then the other processes are
+  released.
+- Shared runtime services are synchronized ([threads](runtime.md#threads)):
+  atoms, the code server, pid numbers and the memory account.
+- Output of different processes interleaves in the order their writes happen.
+  Each `io:format` and `erlang:display` call writes its text at once.
 
 ## Exits
 
@@ -205,10 +247,11 @@ process its own name (`Signals::name`).
 
 ## Exit signals
 
-Every exit signal comes from the running process (`exit/2`,
-`exit_signal/2`, `link/1`) or from the end of a process, so its target is
-never running. The executor acts on it at once (`scheduler/signals`): an
-ended target leaves the run queue or its wait and is finished (its links
+Every exit signal comes from a running process (`exit/2`,
+`exit_signal/2`, `link/1`) or from the end of a process. The executor acts on
+it at once when its target does not run on another worker, else once the
+target's slice ended ([workers](#workers), `scheduler/signals`): an ended
+target leaves the run queue or its wait and is finished (its links
 signalled, its error report written, its context released) before the
 sending builtin returns. A long linked chain ends process by process without
 recursion.

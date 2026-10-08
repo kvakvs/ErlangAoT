@@ -97,8 +97,11 @@ main(_) ->
     io:format("self named ~p~n", [whereis(self_named)]),
     Busy = spawn(fun echo/0),
     register(busy, Busy),
-    Dead = spawn(fun() -> ok end),
-    normal = stop(Dead),
+    % Monitored from the start: the process may end before a later monitor/2 on another scheduler.
+    {Dead, DeadRef} = spawn_monitor(fun() -> ok end),
+    receive
+        {'DOWN', DeadRef, process, Dead, normal} -> ok
+    end,
     io:format("~p~n", [
         [
             error_of(fun() -> register(busy, self()) end),

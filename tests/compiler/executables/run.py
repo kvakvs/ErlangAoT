@@ -60,6 +60,16 @@ def environment(run):
     return inherited | run.get('env', {})
 
 
+def variants(golden):
+    """Every run, once per scheduler count the golden lists under 'workers', else once with the default count."""
+    for run in golden['runs']:
+        if 'workers' not in golden:
+            yield run, ''
+        for count in golden.get('workers', []):
+            flags = ' '.join(filter(None, [run.get('env', {}).get('ERLANG_AOT_FLAGS'), f'--schedulers {count}']))
+            yield run | {'env': run.get('env', {}) | {'ERLANG_AOT_FLAGS': flags}}, f' workers={count}'
+
+
 def compare(executable, run):
     """Runs one golden invocation; returns readable mismatch descriptions (empty when it matches)."""
     try:
@@ -89,10 +99,10 @@ def check_policy(tool, work, case, golden, policy, suffix):
         return 1, [f'FAIL {case} [{label}]: compiler exited {result.returncode}\n{text(result.stderr)}']
     executable = work / f'{label}/{case}{suffix}'
     failures, lines = 0, []
-    for run in golden['runs']:
+    for run, variant in variants(golden):
         problems = compare(executable, run)
         status = 'FAIL' if problems else 'ok'
-        lines.append(f'{status} {case} [{label}] args={json.dumps(run["args"])}')
+        lines.append(f'{status} {case} [{label}] args={json.dumps(run["args"])}{variant}')
         lines.extend('    ' + problem.replace('\n', '\n    ') for problem in problems)
         failures += bool(problems)
     return failures, lines

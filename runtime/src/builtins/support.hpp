@@ -53,6 +53,10 @@ struct BuiltinFailure {
     Word payload = 0;
 };
 
+// Thrown by an executor operation whose target process runs on another scheduler worker: the builtin did nothing
+// and runs again, with the same arguments, once that process's time slice has ended (docs/processes.md#workers).
+struct Blocked {};
+
 // The value of a term access, or BuiltinFailure thrown with its error.
 template <typename T> T need(TermResult<T> result) {
     if (!result) {

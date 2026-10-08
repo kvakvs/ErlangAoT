@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <thread>
 #include <vector>
 
 namespace erlang_aot::runtime::detail {
@@ -71,6 +72,22 @@ std::expected<std::uint32_t, std::string> atom_limit(std::string_view text) {
     return static_cast<std::uint32_t>(value);
 }
 
+// Parse a scheduler count: a decimal from 1 to MAX_SCHEDULERS.
+std::expected<std::size_t, std::string> scheduler_count(std::string_view text) {
+    std::uint64_t value = 0;
+    const auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (error != std::errc{} || end != text.data() + text.size() || value == 0 || value > MAX_SCHEDULERS) {
+        return std::unexpected("invalid --schedulers value '" + std::string(text) + "' (1 to " +
+                               std::to_string(MAX_SCHEDULERS) + ")");
+    }
+    return static_cast<std::size_t>(value);
+}
+
+// The scheduler count of a program without --schedulers: one per logical processor, as OTP's default.
+std::size_t default_schedulers() noexcept {
+    return std::clamp<std::size_t>(std::thread::hardware_concurrency(), 1, MAX_SCHEDULERS);
+}
+
 // A memory cap given in bytes: its option name, smallest accepted value and the setting it writes.
 struct ByteOption {
     std::string_view name;
@@ -128,6 +145,14 @@ std::expected<std::size_t, std::string> apply(std::span<const std::string> args,
         options.max_atoms = *limit;
         return atoms->used;
     }
+    if (const auto schedulers = match(args, at, "--schedulers")) {
+        const auto count = scheduler_count(schedulers->value);
+        if (!count) {
+            return std::unexpected(count.error());
+        }
+        options.schedulers = *count;
+        return schedulers->used;
+    }
     // Entry point for a vm.args-like options file; reading it is not implemented yet.
     if (match(args, at, "--args-file")) {
         return std::unexpected(std::string("runtime option --args-file is not implemented"));
@@ -154,6 +179,7 @@ std::expected<std::size_t, std::string> apply_all(std::span<const std::string> a
 
 std::expected<ProgramOptions, std::string> program_options(int argc, char **argv) {
     ProgramOptions result;
+    result.runtime.schedulers = default_schedulers();
     const auto flags = words(environment(FLAGS_VARIABLE));
     const auto from_environment = apply_all(flags, result.runtime);
     if (!from_environment) {

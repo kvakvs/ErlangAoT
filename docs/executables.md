@@ -71,6 +71,7 @@ way; a value goes in the next argument or after `=`.
 | `--max-heap BYTES` | Cap on each process's heap block, fragments and off-heap binaries, at least the minimum heap (233 words); default uncapped |
 | `--max-stack BYTES` | Cap on each process's frame stack; default uncapped |
 | `--max-memory BYTES` | Cap on the memory of all processes together (heaps, off-heap binaries, stacks); default uncapped |
+| `--schedulers N` | Scheduler workers running processes, 1 to 1,024; default one per logical processor, like OTP's `+S` ([workers](processes.md#workers)) |
 | `--args-file FILE` | Options file like OTP's `vm.args`: reserved, reports `runtime option --args-file is not implemented` |
 | `--` | Ends the runtime options; the following arguments all go to `Entry` |
 

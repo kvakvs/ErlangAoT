@@ -20,6 +20,13 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
     } while (!next.compare_exchange_weak(candidate, candidate + 1, std::memory_order_relaxed));
     return candidate;
 }
+
+// Whether the configurable limits are in range: atom table size, process heap options and scheduler count.
+bool valid_options(const RuntimeOptions &options) noexcept {
+    return options.max_atoms != 0 && options.max_atoms <= AtomStorage::hard_limit &&
+           detail::valid_heap_options(options.process_heap) && options.schedulers != 0 &&
+           options.schedulers <= MAX_SCHEDULERS;
+}
 } // namespace
 
 // Construction runs inside Runtime::start's catch boundary, so container allocation failures stay contained.
@@ -44,8 +51,7 @@ std::expected<std::unique_ptr<Runtime>, Status> Runtime::start(RuntimeOptions op
     if (options.abi_version != abi::v1::version || options.term_bits != sizeof(abi::v1::TermWord) * 8) {
         return std::unexpected(Status::abi_mismatch);
     }
-    if (options.max_atoms == 0 || options.max_atoms > AtomStorage::hard_limit ||
-        !detail::valid_heap_options(options.process_heap)) {
+    if (!valid_options(options)) {
         return std::unexpected(Status::invalid_argument);
     }
     const auto identity = reserve_identity();

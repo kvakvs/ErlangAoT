@@ -52,7 +52,8 @@ def regenerate(escript, case_dir, work):
             continue
         result, version = observe(escript, staged, golden['entry'], run['args'], work)
         runs.append(generated_run(case_dir.name, run, result))
-    listed = {'sources': golden['sources']} if 'sources' in golden else {}
+    # Authored top-level fields: listed sources and the scheduler counts every run repeats with.
+    listed = {key: golden[key] for key in ('sources', 'workers') if key in golden}
     return golden, {'schema': 1, 'entry': golden['entry'], **listed, 'runs': runs, 'oracle_version': version,
                     'reference': reference(), 'inputs': cases.inputs(case_dir, golden)}
 

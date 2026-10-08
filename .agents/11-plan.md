@@ -1022,17 +1022,23 @@ destroyed the threads read and release their pinned modules.
 
 ### 56. Run processes on multiple scheduler workers
 
-Backlog: F23. Depends on: [54](#step-54), [55](#step-55), [51](#step-51).
-
-Per-worker run queues with work stealing (or the documented alternative) and a
-worker count option.
-
-- Success criteria
-  - [ ] Programs produce the same results with 1 and N workers; CPU-bound
-    processes use multiple cores.
-- Tests
-  - [ ] Existing process goldens run with several worker counts.
-  - [ ] Fairness check: a busy loop cannot starve a receiver.
+Done 2026-10-08 (contract `docs/processes.md#workers`). Documented
+alternative: one shared FIFO queue under one executor mutex, workers =
+`RuntimeOptions::schedulers` (host default 1; programs `--schedulers N`,
+1..1,024, default one per logical processor). A running process's heap/stack/
+mailbox/failure belong to its worker; links, monitors, names under the lock.
+A send or exit/2 to a process running elsewhere throws `builtins::Blocked`:
+the typed adapter traps to a retry continuation of itself, the sender waits
+among the target's blockers, then runs first and holds the target until its
+own slice ends; an ended process with busy peers is finished at their slice
+end. spawn_monitor monitors inside the spawn. Pid numbers and the memory
+account are thread-safe. Goldens: `"workers": [1, 4]` runs each run with
+`--schedulers 1` and `4` instead of the all-cores default (12 process cases; all
+other cases use the default); `names`
+fixture race fixed (spawn then monitor of a short-lived process), crash-report
+regex order-independent; new OTP golden `executables_fairness` (three
+spinners, 20 echo exchanges, kills). `runtime_processes` `workers`: four
+CPU-bound processes on four workers overlap.
 
 <a id="step-57"></a>
 

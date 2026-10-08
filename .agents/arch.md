@@ -221,6 +221,14 @@
   Step 54 (`docs/runtime.md#threads`): `AtomStorage` behind one shared mutex (shared lookups, exclusive insert
   with re-check); `runtime_concurrency` stresses it from 8 threads. Step 55: `CodeServer` likewise (modules_,
   external_funs_; private unlocked `find_*` helpers); modules never unloaded, so returned pointers stay valid.
+  Step 56 (`docs/processes.md#workers`): `Executor::run` starts `RuntimeOptions::schedulers - 1` threads and
+  runs `work()` on each (one shared FIFO queue, `mutex_`, `work_` condition variable, idle waits until the earliest
+  timer). Per-process `Schedule` (running, blocked_on, blockers, holds/holding, ready, ending) in `schedules_`;
+  thread_local `running_`. Signals' links/monitors/name are executor-guarded; heap/mailbox/failure of a process
+  running elsewhere are not touched: `send`/`exit` throw `builtins::Blocked`, the typed adapter traps to
+  `Adapter::RETRY` (itself) and `after()` parks the sender among the target's blockers; at the target's slice end
+  it is placed first, then blockers are held/queued at the front (`hold`, `place`, `resume`). `finish()` defers
+  an ended process with a busy peer (`busy_peer`). `RuntimeMemory` atomic, `ProcessNumbers` shared mutex.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

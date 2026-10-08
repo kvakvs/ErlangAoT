@@ -1,11 +1,15 @@
 #include "executor.hpp"
+#include "../builtins/support.hpp"
 #include "../process/exits.hpp"
 #include "../process/identities.hpp"
 #include "../runtime_state.hpp"
 #include "../terms/funs.hpp"
+#include <array>
 #include <chrono>
 #include <erlang_aot/abi/equality.hpp>
+#include <exception>
 #include <new>
+#include <optional>
 #include <thread>
 
 namespace erlang_aot::runtime::detail {
@@ -17,7 +21,6 @@ using abi::v1::Status;
 TermError creation_error(Status status) {
     return status == Status::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
 }
-
 } // namespace
 
 Word pid_of(ProcessContext &process) noexcept {
@@ -32,21 +35,25 @@ bool ends_program(ProcessContext &process) noexcept {
 Executor &Executor::of(ProcessContext &context) noexcept { return context.runtime().impl_->executor; }
 
 bool Executor::start(ProcessContext &process, const FrameDescriptor &function) noexcept {
+    const std::scoped_lock lock(mutex_);
     process.generated_calls().enter();
     if (!process.stack().start(function)) {
         return false;
     }
     try {
-        queue_.push_back(&process);
+        schedules_[&process] = {};
+        push(process);
         return true;
     } catch (const std::bad_alloc &) {
+        schedules_.erase(&process);
         process.generated_calls().fail_service(Status::out_of_memory);
         return false;
     }
 }
 
 template <typename Prepare>
-TermResult<Term> Executor::create(ProcessContext &parent, Prepare prepare, bool link) noexcept {
+TermResult<Term> Executor::create(ProcessContext &parent, Prepare prepare, SpawnOptions options) noexcept {
+    const std::scoped_lock lock(mutex_);
     auto &runtime = parent.runtime();
     const auto created = runtime.create_context();
     if (!created) {
@@ -63,25 +70,56 @@ TermResult<Term> Executor::create(ProcessContext &parent, Prepare prepare, bool 
         child.stack().start(*static_cast<const FrameDescriptor *>(*frame));
     }
     const auto pid = TermFactory(parent).pid(child.identity());
-    if (!pid) {
-        runtime.destroy_context(&child);
-        return pid;
-    }
     try {
-        if (link) {
-            parent.signals().link(pid->word());
-            child.signals().link(pid_of(parent));
+        auto result = pid ? adopt(parent, child, *pid, options) : pid;
+        if (!result) {
+            destroy(child);
         }
-        queue_.push_back(&child);
+        return result;
     } catch (const std::bad_alloc &) {
-        parent.signals().unlink(pid->word());
-        runtime.destroy_context(&child);
+        destroy(child);
         return std::unexpected(TermError::out_of_memory);
     }
-    return pid;
 }
 
-TermResult<Term> Executor::spawn(ProcessContext &parent, const Term &fun, bool link) noexcept {
+TermResult<Term> Executor::adopt(ProcessContext &parent, ProcessContext &child, const Term &pid, SpawnOptions options) {
+    auto result = TermResult<Term>(pid);
+    std::optional<ReferenceIdentity> monitor;
+    if (options.monitor) {
+        TermFactory factory(parent);
+        const auto reference = factory.make_reference();
+        const auto identity = reference.and_then([](const Term &term) { return term.reference_value(); });
+        if (!identity) {
+            return std::unexpected(identity.error());
+        }
+        result = factory.tuple(std::array{pid, *reference});
+        monitor = *identity;
+    }
+    if (!result) {
+        return result;
+    }
+    try {
+        schedules_[&child] = {};
+        if (options.link) {
+            parent.signals().link(pid.word());
+            child.signals().link(pid_of(parent));
+        }
+        if (monitor) {
+            parent.signals().monitor(*monitor, pid.word());
+            child.signals().watch(*monitor, {.pid = pid_of(parent)});
+        }
+        push(child);
+    } catch (...) {
+        parent.signals().unlink(pid.word());
+        if (monitor) {
+            parent.signals().demonitor(*monitor);
+        }
+        throw;
+    }
+    return result;
+}
+
+TermResult<Term> Executor::spawn(ProcessContext &parent, const Term &fun, SpawnOptions options) noexcept {
     return create(
         parent,
         [&](ProcessContext &child) -> TermResult<const void *> {
@@ -91,10 +129,10 @@ TermResult<Term> Executor::spawn(ProcessContext &parent, const Term &fun, bool l
             }
             return apply_list_service(child, copy->word(), abi::v1::empty_list, child.stack().registers());
         },
-        link);
+        options);
 }
 
-TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call, bool link) noexcept {
+TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call, SpawnOptions options) noexcept {
     return create(
         parent,
         [&](ProcessContext &child) -> TermResult<const void *> {
@@ -105,7 +143,7 @@ TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call
             return call_list_service(child, call.module.word(), call.function.word(), copy->word(),
                                      child.stack().registers());
         },
-        link);
+        options);
 }
 
 ProcessContext *Executor::find(ProcessContext &context, Word pid) noexcept {
@@ -114,20 +152,54 @@ ProcessContext *Executor::find(ProcessContext &context, Word pid) noexcept {
     return found == processes.end() ? nullptr : found->second;
 }
 
-bool Executor::alive(ProcessContext &context, Word pid) noexcept { return find(context, pid) != nullptr; }
+bool Executor::alive(ProcessContext &context, Word pid) noexcept {
+    const std::scoped_lock lock(of(context).mutex_);
+    return find(context, pid) != nullptr;
+}
 
 TermResult<void> Executor::send(ProcessContext &sender, Word pid, const Term &message) {
+    auto &executor = of(sender);
+    const std::scoped_lock lock(executor.mutex_);
     auto *found = find(sender, pid);
     if (!found) {
         return {};
     }
     auto &receiver = *found;
+    if (executor.busy(&receiver)) {
+        executor.block(sender, receiver);
+    }
     const auto copy = message.copy_to(receiver.heap());
     if (!copy) {
         return std::unexpected(copy.error());
     }
     receiver.mailbox().deliver(copy->word());
-    return of(sender).wake(receiver);
+    return executor.wake(receiver);
+}
+
+Executor::Schedule &Executor::schedule(ProcessContext &process) { return schedules_[&process]; }
+
+bool Executor::busy(ProcessContext *process) const noexcept {
+    const auto found = schedules_.find(process);
+    return process != running_ && found != schedules_.end() && found->second.running;
+}
+
+void Executor::block(ProcessContext &process, ProcessContext &target) {
+    schedule(process).blocked_on = &target;
+    throw builtins::Blocked{};
+}
+
+void Executor::push(ProcessContext &process, bool front) {
+    auto &state = schedule(process);
+    if (state.holds > 0) {
+        state.ready = true;
+        return;
+    }
+    if (front) {
+        queue_.push_front(&process);
+    } else {
+        queue_.push_back(&process);
+    }
+    work_.notify_one();
 }
 
 TermResult<void> Executor::wake(ProcessContext &receiver) {
@@ -135,7 +207,7 @@ TermResult<void> Executor::wake(ProcessContext &receiver) {
         return {};
     }
     try {
-        queue_.push_back(&receiver);
+        push(receiver);
     } catch (const std::bad_alloc &) {
         return std::unexpected(TermError::out_of_memory);
     }
@@ -158,103 +230,180 @@ void Executor::cancel(ProcessContext &process) noexcept {
     }
 }
 
-void Executor::expire() noexcept {
+void Executor::expire() {
     const auto now = std::chrono::steady_clock::now();
     while (!timers_.empty() && timers_.begin()->first <= now) {
         auto &process = *timers_.begin()->second;
-        if (!requeue(process)) {
-            return;
-        }
         timers_.erase(timers_.begin());
         parked_.erase(&process);
         process.stack().wake();
+        push(process);
     }
 }
 
-void Executor::idle() noexcept {
+void Executor::idle(std::unique_lock<std::mutex> &lock) {
     if (timers_.empty()) {
-        // Every process waits for a message no running process can send.
-        for (;;) {
-            std::this_thread::sleep_for(std::chrono::hours(1));
-        }
+        // Every process waits for a message; only a worker still running a process can queue one.
+        work_.wait(lock);
+        return;
     }
-    std::this_thread::sleep_until(timers_.begin()->first);
-    expire();
+    const auto deadline = timers_.begin()->first;
+    work_.wait_until(lock, deadline);
 }
 
-bool Executor::park(ProcessContext &process) noexcept {
-    try {
-        parked_.insert(&process);
-        if (const auto deadline = process.mailbox().deadline()) {
-            timers_.emplace(*deadline, &process);
-        }
-        return true;
-    } catch (const std::bad_alloc &) {
-        process.generated_calls().fail_service(Status::out_of_memory);
-        return false;
+void Executor::park(ProcessContext &process) {
+    parked_.insert(&process);
+    if (const auto deadline = process.mailbox().deadline()) {
+        timers_.emplace(*deadline, &process);
+        // An idle worker may sleep until a later deadline.
+        work_.notify_all();
     }
 }
 
-bool Executor::requeue(ProcessContext &process) noexcept {
-    try {
-        queue_.push_back(&process);
-        return true;
-    } catch (const std::bad_alloc &) {
-        process.generated_calls().fail_service(Status::out_of_memory);
-        return false;
+void Executor::work() noexcept {
+    std::unique_lock lock(mutex_);
+    while (!finished_) {
+        try {
+            expire();
+            if (queue_.empty()) {
+                idle(lock);
+                continue;
+            }
+            auto &process = *queue_.front();
+            queue_.pop_front();
+            schedule(process).running = true;
+            lock.unlock();
+            running_ = &process;
+            const bool ended = process.stack().run(SLICE_REDUCTIONS);
+            running_ = nullptr;
+            lock.lock();
+            after(process, ended);
+        } catch (const std::bad_alloc &) {
+            fail_program();
+        } catch (...) {
+            // A failing mutex or condition variable leaves the executor without a consistent state.
+            std::terminate();
+        }
+    }
+    work_.notify_all();
+}
+
+void Executor::after(ProcessContext &process, bool ended) {
+    auto &state = schedule(process);
+    state.running = false;
+    const auto blockers = std::exchange(state.blockers, {});
+    auto *blocked_on = std::exchange(state.blocked_on, nullptr);
+    release(process);
+    // The process is placed before its blockers act: a message they deliver must find it parked, not mid-way.
+    if (failed_ && &process == main_) {
+        fail_main();
+    } else if (ended) {
+        finish(process);
+    } else {
+        hold(blockers, process);
+        place(process, blocked_on);
+    }
+    resume(blockers);
+    drain();
+}
+
+void Executor::hold(const std::vector<ProcessContext *> &blockers, ProcessContext &holder) {
+    for (auto *blocker : blockers) {
+        auto &state = schedule(*blocker);
+        if (!state.ending) {
+            state.holding.push_back(pid_of(holder));
+            ++schedule(holder).holds;
+        }
     }
 }
 
-void Executor::slice() noexcept {
-    expire();
-    while (queue_.empty()) {
-        idle();
-    }
-    auto &process = *queue_.front();
-    queue_.pop_front();
-    running_ = &process;
-    const bool ended = process.stack().run(SLICE_REDUCTIONS);
-    running_ = nullptr;
-    try {
-        if (ended || !(process.stack().waiting() ? park(process) : requeue(process))) {
-            finish(process);
+void Executor::resume(const std::vector<ProcessContext *> &blockers) {
+    // Pushing to the front in reverse keeps the blockers in the order they blocked.
+    for (auto at = blockers.rbegin(); at != blockers.rend(); ++at) {
+        auto &blocker = **at;
+        auto &state = schedule(blocker);
+        state.blocked_on = nullptr;
+        if (std::exchange(state.ending, false)) {
+            finish(blocker);
+        } else {
+            push(blocker, true);
         }
-        drain();
-    } catch (const std::bad_alloc &) {
-        fail_program();
+    }
+}
+
+void Executor::place(ProcessContext &process, ProcessContext *blocked_on) {
+    // The process waited for may have ended since; its address is then only compared, never used.
+    if (blocked_on && busy(blocked_on)) {
+        schedule(*blocked_on).blockers.push_back(&process);
+        schedule(process).blocked_on = blocked_on;
+    } else if (process.stack().waiting()) {
+        park(process);
+    } else {
+        push(process);
+    }
+}
+
+void Executor::release(ProcessContext &process) {
+    for (const auto pid : std::exchange(schedule(process).holding, {})) {
+        auto *held = find(process, pid);
+        if (!held) {
+            continue;
+        }
+        auto &state = schedule(*held);
+        if (state.holds == 0) {
+            continue;
+        }
+        --state.holds;
+        if (state.holds == 0 && std::exchange(state.ready, false)) {
+            push(*held);
+        }
     }
 }
 
 ProcessContext &Executor::run(ProcessContext &main) noexcept {
-    main_ = &main;
-    finished_ = nullptr;
-    while (!finished_) {
-        slice();
+    {
+        const std::scoped_lock lock(mutex_);
+        main_ = &main;
+        finished_ = nullptr;
+        failed_ = false;
+    }
+    std::vector<std::thread> helpers;
+    const auto workers = main.runtime().impl_->options.schedulers;
+    for (std::size_t count = 1; count < workers; ++count) {
+        try {
+            helpers.emplace_back([this] { work(); });
+        } catch (const std::exception &) {
+            // Run on the workers started so far.
+            break;
+        }
+    }
+    work();
+    for (auto &helper : helpers) {
+        helper.join();
     }
     return *finished_;
 }
 
+void Executor::destroy(ProcessContext &process) noexcept {
+    schedules_.erase(&process);
+    process.runtime().destroy_context(&process);
+}
+
 void Executor::clear() noexcept {
-    for (auto *process : stopped_) {
-        process->runtime().destroy_context(process);
+    const std::scoped_lock lock(mutex_);
+    for (const auto &[process, state] : schedules_) {
+        if (process != finished_) {
+            process->runtime().destroy_context(process);
+        }
     }
-    stopped_.clear();
-    for (auto *process : ending_) {
-        process->runtime().destroy_context(process);
-    }
-    ending_.clear();
-    main_ = finished_ = nullptr;
-    names_.clear();
-    while (!queue_.empty()) {
-        auto &process = *queue_.back();
-        queue_.pop_back();
-        process.runtime().destroy_context(&process);
-    }
+    schedules_.clear();
+    queue_.clear();
+    parked_.clear();
     timers_.clear();
-    while (!parked_.empty()) {
-        auto *process = *parked_.begin();
-        parked_.erase(parked_.begin());
-        process->runtime().destroy_context(process);
-    }
+    ending_.clear();
+    stopped_.clear();
+    names_.clear();
+    main_ = finished_ = nullptr;
+    failed_ = false;
 }
 } // namespace erlang_aot::runtime::detail

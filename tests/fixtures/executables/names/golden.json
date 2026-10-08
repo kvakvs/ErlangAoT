@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "entry": "names",
+  "workers": [
+    1,
+    4
+  ],
   "runs": [
     {
       "args": [],
@@ -18,6 +22,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "names.erl": "76c2a7169925109d7b445d068859a958f9e9cb8549dcc9b4bff08a4a1a31455a"
+    "names.erl": "9bb4e696908a63195b4bb55a64966dcc8a72d7496c1f9795a57f9692d1dc7acd"
   }
 }

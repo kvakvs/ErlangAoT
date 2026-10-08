@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "entry": "monitors",
+  "workers": [
+    1,
+    4
+  ],
   "runs": [
     {
       "args": [],

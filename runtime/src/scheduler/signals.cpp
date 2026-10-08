@@ -1,3 +1,4 @@
+#include "../builtins/support.hpp"
 #include "../process/exits.hpp"
 #include "../terms/service_errors.hpp"
 #include "executor.hpp"
@@ -7,9 +8,10 @@
 #include <new>
 #include <utility>
 
-// Links, monitors and exit signals (docs/processes.md#links, #monitors). Only the running process sends signals, so
-// every other target is queued or waiting: the executor acts on a signal at once, and a process it ends is finished
-// before the sending builtin returns.
+// Links, monitors and exit signals (docs/processes.md#links, #monitors, #workers). The executor acts on a signal at
+// once under its lock: links, monitors and names of any process, exits and messages of a process that does not run
+// on another worker (a builtin aimed at one runs again after its slice). A process a signal ends is finished before
+// the sending builtin returns, or once the peers it must signal have left their slices.
 namespace erlang_aot::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
@@ -68,23 +70,21 @@ TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &
 
 class Executor::Running final {
   public:
-    // Make `process` the running one until the scope ends.
-    Running(Executor &executor, ProcessContext &process) noexcept
-        : executor_(executor), saved_(std::exchange(executor.running_, &process)) {}
+    // Make `process` this thread's running one until the scope ends.
+    explicit Running(ProcessContext &process) noexcept : saved_(std::exchange(running_, &process)) {}
 
-    ~Running() { executor_.running_ = saved_; }
+    ~Running() { running_ = saved_; }
 
     Running(const Running &) = delete;
     Running &operator=(const Running &) = delete;
 
   private:
-    // The executor whose running process this scope set.
-    Executor &executor_;
-    // The running process before the scope: itself under run(), none for a host invocation.
+    // The running process before the scope: itself on a worker, none for a host invocation.
     ProcessContext *saved_;
 };
 
 bool Executor::link(ProcessContext &process, Word pid) {
+    const std::scoped_lock lock(mutex_);
     const auto self = pid_of(process);
     if (pid == self) {
         return true;
@@ -94,7 +94,7 @@ bool Executor::link(ProcessContext &process, Word pid) {
         if (!process.signals().trap_exit()) {
             return false;
         }
-        const Running running(*this, process);
+        const Running running(process);
         deliver(process, exit_message(process, pid, atom(process, "noproc")));
         return true;
     }
@@ -104,6 +104,7 @@ bool Executor::link(ProcessContext &process, Word pid) {
 }
 
 void Executor::unlink(ProcessContext &process, Word pid) noexcept {
+    const std::scoped_lock lock(of(process).mutex_);
     process.signals().unlink(pid);
     if (auto *target = find(process, pid)) {
         target->signals().unlink(pid_of(process));
@@ -111,6 +112,8 @@ void Executor::unlink(ProcessContext &process, Word pid) noexcept {
 }
 
 Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
+    const std::scoped_lock lock(mutex_);
+    pid = name != 0 ? lookup(watcher, name) : pid;
     const auto reference = TermFactory(watcher).make_reference();
     const auto identity = reference.and_then([](const Term &term) { return term.reference_value(); });
     if (!identity) {
@@ -121,7 +124,7 @@ Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
         return *reference;
     }
     if (!target) {
-        const Running running(*this, watcher);
+        const Running running(watcher);
         deliver(watcher, down_message(watcher, *identity, {.pid = pid, .name = name}, atom(watcher, "noproc")));
         return *reference;
     }
@@ -131,6 +134,7 @@ Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
 }
 
 bool Executor::demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept {
+    const std::scoped_lock lock(of(watcher).mutex_);
     const auto pid = watcher.signals().demonitor(reference);
     if (!pid) {
         return false;
@@ -142,11 +146,15 @@ bool Executor::demonitor(ProcessContext &watcher, const ReferenceIdentity &refer
 }
 
 void Executor::exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal) {
+    const std::scoped_lock lock(mutex_);
     auto *target = find(sender, pid);
     if (!target) {
         return;
     }
-    const Running running(*this, sender);
+    if (busy(target)) {
+        block(sender, *target);
+    }
+    const Running running(sender);
     signal(*target, pid_of(sender), reason,
            self_normal && target == &sender ? SignalKind::self_exit : SignalKind::exit);
     drain();
@@ -195,20 +203,52 @@ void Executor::retire(ProcessContext &process) {
     }
 }
 
-void Executor::withdraw(ProcessContext &process) noexcept {
+void Executor::withdraw(ProcessContext &process) {
     std::erase(queue_, &process);
     if (parked_.erase(&process) != 0) {
         cancel(process);
     }
+    auto &state = schedule(process);
+    if (const auto waited = schedules_.find(std::exchange(state.blocked_on, nullptr)); waited != schedules_.end()) {
+        std::erase(waited->second.blockers, &process);
+    }
+    state.ready = false;
+    release(process);
 }
 
 void Executor::finish(ProcessContext &process) {
-    if (&process == main_ || ends_program(process) || !notify(process)) {
+    if (&process == main_ || ends_program(process)) {
+        stop(process);
+        return;
+    }
+    if (auto *peer = busy_peer(process)) {
+        // Signal the peer once its slice ended; until then the ended process waits among its blockers.
+        auto &state = schedule(process);
+        state.ending = true;
+        state.blocked_on = peer;
+        schedule(*peer).blockers.push_back(&process);
+        return;
+    }
+    if (!notify(process)) {
         stop(process);
         return;
     }
     report_exit(process);
-    process.runtime().destroy_context(&process);
+    destroy(process);
+}
+
+ProcessContext *Executor::busy_peer(ProcessContext &process) noexcept {
+    for (const auto pid : process.signals().links()) {
+        if (auto *peer = find(process, pid); peer && busy(peer)) {
+            return peer;
+        }
+    }
+    for (const auto &[reference, watcher] : process.signals().watchers()) {
+        if (auto *peer = find(process, watcher.pid); peer && busy(peer)) {
+            return peer;
+        }
+    }
+    return nullptr;
 }
 
 bool Executor::notify(ProcessContext &process) {
@@ -254,8 +294,9 @@ void Executor::notify(ProcessContext &process, const Term &reason, const std::ve
 }
 
 bool Executor::register_name(ProcessContext &context, Word name, Word pid) {
+    const std::scoped_lock lock(mutex_);
     auto *process = find(context, pid);
-    if (!process || process->signals().name() != 0 || whereis(context, name) != 0) {
+    if (!process || process->signals().name() != 0 || lookup(context, name) != 0) {
         return false;
     }
     names_.insert_or_assign(name, pid);
@@ -264,7 +305,8 @@ bool Executor::register_name(ProcessContext &context, Word name, Word pid) {
 }
 
 bool Executor::unregister(ProcessContext &context, Word name) noexcept {
-    const auto pid = whereis(context, name);
+    const std::scoped_lock lock(mutex_);
+    const auto pid = lookup(context, name);
     if (pid == 0) {
         return false;
     }
@@ -274,12 +316,18 @@ bool Executor::unregister(ProcessContext &context, Word name) noexcept {
 }
 
 Word Executor::whereis(ProcessContext &context, Word name) const noexcept {
+    const std::scoped_lock lock(mutex_);
+    return lookup(context, name);
+}
+
+Word Executor::lookup(ProcessContext &context, Word name) const noexcept {
     const auto found = names_.find(name);
     // A host may release a registered context outside the executor: only a live process counts.
     return found != names_.end() && find(context, found->second) ? found->second : 0;
 }
 
 std::vector<Word> Executor::registered(ProcessContext &context) const {
+    const std::scoped_lock lock(mutex_);
     std::vector<Word> names;
     for (const auto &[name, pid] : names_) {
         if (find(context, pid)) {
@@ -292,6 +340,7 @@ std::vector<Word> Executor::registered(ProcessContext &context) const {
 void Executor::stop(ProcessContext &process) {
     if (!finished_) {
         finished_ = &process;
+        work_.notify_all();
     } else {
         stopped_.push_back(&process);
     }
@@ -309,10 +358,23 @@ void Executor::fail_program() noexcept {
     if (finished_ || !main_) {
         return;
     }
-    withdraw(*main_);
+    failed_ = true;
+    if (!busy(main_)) {
+        fail_main();
+    }
+}
+
+void Executor::fail_main() noexcept {
+    try {
+        withdraw(*main_);
+    } catch (const std::bad_alloc &) {
+        // The main process ends the program now; queues are released by clear().
+        queue_.clear();
+    }
     auto &calls = main_->generated_calls();
     calls.clear();
     calls.fail_service(abi::v1::Status::out_of_memory);
     finished_ = main_;
+    work_.notify_all();
 }
 } // namespace erlang_aot::runtime::detail

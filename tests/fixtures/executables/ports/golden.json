@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "entry": "ports",
+  "workers": [
+    1,
+    4
+  ],
   "runs": [
     {
       "args": [],

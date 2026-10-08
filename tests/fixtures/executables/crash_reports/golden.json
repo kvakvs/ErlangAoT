@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "entry": "crash_reports",
+  "workers": [
+    1,
+    4
+  ],
   "runs": [
     {
       "args": [],

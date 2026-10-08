@@ -33,40 +33,31 @@ TermResult<Term> spawn_link_fun(ProcessContext &context, const Term &fun) {
     if (!fun.is_function()) {
         bad_argument();
     }
-    return detail::Executor::of(context).spawn(context, fun, true);
+    return detail::Executor::of(context).spawn(context, fun, {.link = true});
 }
 
 // spawn_link(Module, Function, Args): spawn(Module, Function, Args), linked to the caller.
 TermResult<Term> spawn_link_call(ProcessContext &context, const AtomArgument &module, const AtomArgument &function,
                                  const ListArgument &arguments) {
-    return detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term}, true);
+    return detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term}, {.link = true});
 }
 
 // The atom `name`.
 Term atom(ProcessContext &context, std::string_view name) { return need(TermFactory(context).atom(name)); }
 
-// {Pid, Ref} of a new process monitored by the caller before it runs.
-TermResult<Term> monitored(ProcessContext &context, const TermResult<Term> &pid) {
-    if (!pid) {
-        return pid;
-    }
-    const auto reference = detail::Executor::of(context).monitor(context, pid->word());
-    return TermFactory(context).tuple(std::array{*pid, reference});
-}
-
-// spawn_monitor(Fun): spawn(Fun), monitored by the caller.
+// spawn_monitor(Fun): {Pid, Ref} of spawn(Fun), monitored by the caller before it runs.
 TermResult<Term> spawn_monitor_fun(ProcessContext &context, const Term &fun) {
     if (!fun.is_function()) {
         bad_argument();
     }
-    return monitored(context, detail::Executor::of(context).spawn(context, fun));
+    return detail::Executor::of(context).spawn(context, fun, {.monitor = true});
 }
 
-// spawn_monitor(Module, Function, Args): spawn(Module, Function, Args), monitored by the caller.
+// spawn_monitor(Module, Function, Args): {Pid, Ref} of spawn(Module, Function, Args), monitored by the caller.
 TermResult<Term> spawn_monitor_call(ProcessContext &context, const AtomArgument &module, const AtomArgument &function,
                                     const ListArgument &arguments) {
-    return monitored(context,
-                     detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term}));
+    return detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term},
+                                               {.monitor = true});
 }
 
 // A {Name, Node} pair of two atoms, as sends and monitors accept.
@@ -103,8 +94,7 @@ TermResult<Term> monitor(ProcessContext &context, const AtomArgument &type, cons
     if (item.is_pid()) {
         return executor.monitor(context, item.word());
     }
-    const auto name = monitored_name(item);
-    return executor.monitor(context, executor.whereis(context, name), name);
+    return executor.monitor(context, 0, monitored_name(item));
 }
 
 // The options of demonitor/2: a proper list of flush and info.

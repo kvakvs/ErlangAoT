@@ -12,6 +12,9 @@ namespace detail {
 class Executor;
 } // namespace detail
 
+// Most scheduler workers a runtime runs processes on, OTP's +S limit.
+inline constexpr std::size_t MAX_SCHEDULERS = 1024;
+
 struct RuntimeOptions {
     // Bound retained UTF-8 atom entries (default 2^20, at most 2^26, programs set it with --max-atoms); no atom
     // garbage collection runs in this slice.
@@ -29,6 +32,9 @@ struct RuntimeOptions {
     // Optional cap on the memory of all processes together (heap blocks, fragments, off-heap buffers, stacks);
     // programs set it with --max-memory, uncapped by default.
     std::size_t memory_limit_bytes = UNLIMITED_HEAP_BYTES;
+    // Scheduler worker threads that run processes, 1 to MAX_SCHEDULERS (docs/processes.md#workers); programs set it
+    // with --schedulers and default to one per logical processor.
+    std::size_t schedulers = 1;
 };
 
 // Own stable process contexts and reserved runtime-wide services; calls require host-side serialization.

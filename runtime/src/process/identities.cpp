@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <atomic>
 #include <iterator>
+#include <mutex>
 #include <new>
 
 namespace erlang_aot::runtime::detail {
@@ -26,6 +27,8 @@ TermResult<Word> reserve_number() noexcept {
 } // namespace
 
 TermResult<Word> ProcessNumbers::issue() {
+    // Reserve under the lock so this runtime's runs stay ascending when several threads create processes.
+    const std::unique_lock lock(mutex_);
     const auto number = reserve_number();
     if (!number) {
         return number;
@@ -43,6 +46,7 @@ TermResult<Word> ProcessNumbers::issue() {
 }
 
 bool ProcessNumbers::issued(Word number) const noexcept {
+    const std::shared_lock lock(mutex_);
     const auto run = std::ranges::upper_bound(runs_, number, {}, &std::pair<Word, Word>::first);
     return run != runs_.begin() && number < std::prev(run)->second;
 }

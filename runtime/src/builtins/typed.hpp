@@ -134,9 +134,18 @@ Word call(ProcessContext &context, std::span<const Word> words, std::index_seque
 template <auto Function, typename Values> struct Adapter;
 
 template <auto Function, typename... Parameters> struct Adapter<Function, std::tuple<Parameters...>> {
+    // Run the builtin; when a process it acts on is busy on another worker, trap to run it again later.
     static Word body(ProcessContext &context, std::span<const Word> words) {
-        return call<Function, Parameters...>(context, words, std::index_sequence_for<Parameters...>{});
+        try {
+            return call<Function, Parameters...>(context, words, std::index_sequence_for<Parameters...>{});
+        } catch (const Blocked &) {
+            context.stack().trap(RETRY.frame, words);
+            return 0;
+        }
     }
+
+    // The continuation a blocked builtin traps to: the builtin itself on the same argument words.
+    static constexpr BuiltinFrame RETRY = continuation_frame(&body, sizeof...(Parameters));
 };
 } // namespace typed_detail
 

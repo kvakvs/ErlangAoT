@@ -1,10 +1,11 @@
 # Runtime
 
 `erlang_runtime` is an LLVM-free C++23 library. It owns contexts, process heaps,
-atoms, loaded modules and lifecycle bookkeeping. It does not yet run Erlang
-processes: no scheduler workers or messaging, and the heap is collected only on
-explicit host request. All APIs are
-project-internal; host calls must be serialized per runtime.
+atoms, loaded modules and lifecycle bookkeeping, and runs Erlang processes
+on scheduler workers ([processes](processes.md)). All APIs are
+project-internal; host calls must be serialized per runtime and not overlap
+a program run, whose workers synchronize among themselves
+([threads](#threads)).
 
 ## Linking
 
@@ -157,9 +158,10 @@ the message into the receiver's heap and appends it to its signal inbox
 
 ## Threads
 
-Scheduler workers (plan step 56) run processes on several threads of one
-runtime. Services they share are synchronized; everything else stays confined
-to the thread running its process.
+Scheduler workers (plan step 56, [workers](processes.md#workers)) run
+processes on several threads of one runtime. Services they share are
+synchronized; everything else stays confined to the thread running its
+process or guarded by the executor's mutex.
 
 - Atoms (step 54): `AtomStorage` guards both indexes with a shared mutex.
   Lookups (`lookup`, `boolean`, `size`) share it; `intern` looks up under the
@@ -179,6 +181,12 @@ to the thread running its process.
   frames and atom slots it returned stay valid for every invocation and every
   fun cell. `ResolvedFunction` and `find_module` handles also keep their
   module after the runtime is gone.
+- Pid numbers (step 56): `ProcessNumbers` issues numbers under an exclusive
+  lock and admits pid words under a shared one.
+- Memory (step 56): the runtime-wide account (`RuntimeMemory`) charges and
+  releases with atomic operations; a charge never takes the account past an
+  optional limit.
+- Linking: on Linux the runtime adds `-pthread` for its threads.
 
 ## Standard output
 

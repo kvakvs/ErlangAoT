@@ -1,4 +1,5 @@
 #include "scheduler/executor.hpp"
+#include <atomic>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <map>
@@ -7,7 +8,8 @@
 
 // The cooperative executor (docs/processes.md) over hand-written frames: processes interleave in time slices, an
 // Erlang exception ends only its process, a halt ends the program, host invocations resume their own yields, and
-// releasing processes that never ended returns every heap and stack word.
+// releasing processes that never ended returns every heap and stack word; with several scheduler workers, CPU-bound
+// processes run at the same time.
 namespace {
 using namespace erlang_aot::runtime;
 using erlang_aot::abi::v1::Code;
@@ -74,6 +76,31 @@ void halt_body(void *context) {
 const FrameDescriptor crash{nullptr, 0, 0, 0, &crash_body, 0, 0};
 const FrameDescriptor halt{nullptr, 0, 0, 0, &halt_body, 0, 0};
 
+// Processes running at once on the workers, and whether two ever did.
+std::atomic<std::size_t> active{0};
+std::atomic<bool> overlapped{false};
+// Nesting of hand-written bodies on this thread: a slice runs them as nested native calls.
+thread_local std::size_t depth = 0;
+
+// parallel/0: count the processes running at once and tail-call itself until two ran together, then return 0.
+void parallel_body(void *context);
+const FrameDescriptor parallel{nullptr, 0, 0, 0, &parallel_body, 0, 0};
+
+void parallel_body(void *context) {
+    if (depth++ == 0 && ++active >= 2) {
+        overlapped = true;
+    }
+    auto &process = stack(context);
+    if (overlapped) {
+        run(process.leave(encode_integer(0).value()), context);
+    } else {
+        run(process.tail(parallel), context);
+    }
+    if (--depth == 0) {
+        --active;
+    }
+}
+
 // A new process whose heap holds a list of `count` integers, queued to start with `function`.
 ProcessContext &process(Runtime &runtime, const FrameDescriptor &function, std::int64_t argument = 0) {
     auto &context = *runtime.create_context().value();
@@ -125,6 +152,22 @@ void endings(Runtime &runtime) {
     require(runtime.destroy_context(&halting) == Status::ok && runtime.memory_bytes() == 0, "halt teardown failed");
 }
 
+// Four workers run four CPU-bound processes until two ran at the same time (only then can they end, so a run
+// without overlap would time out), and the main process's end still stops the run.
+void workers() {
+    auto runtime = Runtime::start({.schedulers = 4}).value();
+    auto &main = process(*runtime, parallel);
+    for (int i = 0; i < 3; ++i) {
+        process(*runtime, parallel);
+    }
+    auto &executor = detail::Executor::of(main);
+    require(&executor.run(main) == &main && main.stack().registers()[0] == encode_integer(0).value(),
+            "the main process did not end with its result");
+    require(overlapped, "no two processes ran at the same time");
+    executor.clear();
+    require(runtime->destroy_context(&main) == Status::ok && runtime->context_count() == 0, "teardown failed");
+}
+
 // A host invocation resumes its own yields until the function returns.
 void invocation(Runtime &runtime) {
     auto &context = *runtime.create_context().value();
@@ -147,6 +190,7 @@ int main() {
         interleaving(*runtime);
         endings(*runtime);
         invocation(*runtime);
+        workers();
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

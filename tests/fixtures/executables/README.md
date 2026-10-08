@@ -15,6 +15,7 @@ is registered.
 | --- | --- | --- |
 | `schema` | author | Always 1 |
 | `entry` | author | Entry module; `main/1` receives argv strings ([contract](../../../docs/executables.md)) |
+| `workers` | author, optional | Scheduler counts: every run is made once per count with `ERLANG_AOT_FLAGS=--schedulers N`, instead of once with the default of one worker per logical processor ([workers](../../../docs/processes.md#workers)) |
 | `sources` | author, optional | Case-relative source paths instead of the directory's `.erl`/`.hrl` files (the `demo` case uses `examples/compile/`) |
 | `runs[].args` | author | Argument strings of one invocation |
 | `runs[].stderr` | author, or `^$` | Python regular expression searched in stderr; required when OTP writes stderr, because ErlangAoT's report text differs |

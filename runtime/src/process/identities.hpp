@@ -1,5 +1,6 @@
 #pragma once
 #include <erlang_aot/runtime/terms.hpp>
+#include <shared_mutex>
 #include <utility>
 #include <vector>
 
@@ -16,6 +17,8 @@ class ProcessNumbers final {
   private:
     // Issued numbers as ascending [first, end) runs: a single run while one runtime creates every process.
     std::vector<std::pair<Word, Word>> runs_;
+    // Workers admit pid words while a spawn issues a new number: shared for issued(), exclusive for issue().
+    mutable std::shared_mutex mutex_;
 };
 
 // The immediate pid word of a process number, and the number of a pid word.

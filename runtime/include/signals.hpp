@@ -2,7 +2,8 @@
 
 // The links, monitors, registered name and exit trapping of one process (docs/processes.md#links, #monitors,
 // #registered-names): the pids of the processes it is linked to, in the order the links were made, the monitors it
-// holds and those held on it, its name, and whether exit signals reach it as messages.
+// holds and those held on it, its name, and whether exit signals reach it as messages. Links, monitors and the name
+// change only under the executor's lock, also while the process runs; exit trapping only by the process itself.
 #include "terms.hpp"
 
 #include <algorithm>
@@ -36,6 +37,9 @@ class Signals final {
     // Remove the link to the process of `pid`, if there is one.
     void unlink(Word pid) noexcept { std::erase(links_, pid); }
 
+    // The pids of the linked processes, oldest link first.
+    const std::vector<Word> &links() const noexcept { return links_; }
+
     // Remove every link and return them, as the process ends.
     std::vector<Word> take_links() noexcept { return std::exchange(links_, {}); }
 
@@ -65,6 +69,9 @@ class Signals final {
 
     // Remove and return the monitors this process holds, as it ends; allocation failure throws.
     Monitors take_monitors() { return std::exchange(monitors_, {}); }
+
+    // The monitors held on this process.
+    const Monitors &watchers() const noexcept { return watchers_; }
 
     // Remove and return the monitors held on this process, as it ends: each gets a 'DOWN' message.
     Monitors take_watchers() { return std::exchange(watchers_, {}); }

@@ -48,12 +48,13 @@ else()
 endif()
 # Runtime headers use Multiprecision, so consumers need the same header-only dependency.
 target_include_directories(erlang_runtime PUBLIC include)
+# Scheduler workers are std::threads; glibc before 2.34 needs -pthread (a plain flag keeps the export self-contained).
 target_link_libraries(erlang_runtime
-    PUBLIC erlang_aot_multiprecision_dependency erlang_aot_abi
+    PUBLIC erlang_aot_multiprecision_dependency erlang_aot_abi $<$<PLATFORM_ID:Linux>:-pthread>
 )
 
 # Every generated-program consumer links one matching target runtime through this boundary.
-# Current lifecycle has no additional OS libraries; future platform dependencies belong here/runtime.
+# Platform dependencies (threads) come with erlang_runtime.
 add_library(erlang_generated_program INTERFACE)
 target_link_libraries(erlang_generated_program INTERFACE erlang_runtime)
 add_library(ErlangAoT::generated_program ALIAS erlang_generated_program)

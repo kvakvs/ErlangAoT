@@ -17,7 +17,7 @@ class Runtime::Impl final {
     ~Impl();
     // Own the bounded spelling table after contexts and module bindings are released.
     AtomStorage atom_storage;
-    // Own one host-serialized lifecycle service; no worker pool or process continuations exist yet.
+    // Own one host-serialized lifecycle record service; the executor below runs the processes.
     SchedulerService scheduler;
     // Own one server and destroy registrations before the future atom table.
     CodeServer code_server;
@@ -33,7 +33,7 @@ class Runtime::Impl final {
     std::unordered_map<const ProcessContext *, std::unique_ptr<ProcessContext>> contexts;
     // Live processes by pid number, for is_process_alive/1 and later routing.
     std::unordered_map<Word, ProcessContext *> processes;
-    // Run spawned processes cooperatively on the thread that runs the program.
+    // Run processes on the scheduler workers (RuntimeOptions::schedulers) while the program runs.
     detail::Executor executor;
 };
 } // namespace erlang_aot::runtime

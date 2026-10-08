@@ -353,6 +353,13 @@ Step facts beyond the plan record:
   (runtime_concurrency, links Threads::Threads) is the home of thread stress for 55/57.
 - 55: CodeServer shared_mutex; locked public lookups call private unlocked find_fun/find_export/find_function
   (never call a locking public method under the lock). concurrency.cpp needs <erlang_aot/runtime/code_server.hpp>.
+- 56: one shared queue + executor mutex (documented alternative to stealing); typed adapter catches builtins::Blocked
+  and traps to Adapter::RETRY. after() must place the process BEFORE resuming blockers (an ending blocker's 'DOWN'
+  woke+queued it, then place queued it again: double-queued -> resume_ null -> run() true -> main "ended", exit 0
+  with truncated stdout). Fixture races under N workers: spawn then monitor/link of a short-lived process (names
+  fixed with spawn_monitor); concurrent crash reports reorder (regex with lookaheads). Program default schedulers =
+  hardware_concurrency; host RuntimeOptions default 1 (runtime tests rely on round robin). build/plan11/repeat.cmd
+  NAME N repeats TESTRE tests until fail.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

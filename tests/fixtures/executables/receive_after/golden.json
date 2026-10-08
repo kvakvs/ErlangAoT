@@ -1,6 +1,10 @@
 {
   "schema": 1,
   "entry": "receive_after",
+  "workers": [
+    1,
+    4
+  ],
   "runs": [
     {
       "args": [],

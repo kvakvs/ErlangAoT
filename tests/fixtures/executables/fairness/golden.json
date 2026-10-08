@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "entry": "selective_receive",
+  "entry": "fairness",
   "workers": [
     1,
     4
@@ -10,7 +10,7 @@
       "args": [],
       "stderr": "^$",
       "exit_status": 0,
-      "stdout": "pong answered 1000\nfan-in [ok,ok,ok]\nselected [3,1,2]\nbound right wrong\njunk 10000 {junk,1} {junk,10000}\ntotal 5050\nmain done ok\n"
+      "stdout": "20 answers\n[false,false]\n"
     }
   ],
   "oracle_version": [
@@ -22,6 +22,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "selective_receive.erl": "d9122b549b16be45fc4eacd0bb5f8bc3f59137d394c286498ab8a3001e578654"
+    "fairness.erl": "b58749c93b5064e5a75034af1d4e3914f3c540027d086594fd4d6717905bf036"
   }
 }
