@@ -22,7 +22,8 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Library modules (`lists`, `maps` subsets) compiled with programs | [library.md](library.md) |
 | Console output: `io:format/1,2`, `io:put_chars/1`, `~p` layout | [io.md](io.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
-| Processes: cooperative executor, time slices, `spawn/1,3`, `is_process_alive/1`, links, exit signals, monitors, registered names and the no-ports decision | [processes.md](processes.md) |
+| Processes: scheduler workers, time slices, `spawn/1,3`, `is_process_alive/1`, links, exit signals, monitors, registered names | [processes.md](processes.md) |
+| Ports: identity, port table, drivers, data modes, the I/O thread, standard I/O, files and sockets (plan step 57A decision) | [ports.md](ports.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |
 | Deferred-feature (`notimpl`) reporting | [features.md](features.md) |

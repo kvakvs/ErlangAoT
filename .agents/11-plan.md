@@ -1072,23 +1072,24 @@ steps below implement each builtin.
 
 Backlog: F35. Depends on: [53](#step-53), [57](#step-57).
 
-Decision only: port identity representation (immediate like pids or a cell),
-owner/connected process, port table, links/monitors/exit signals of ports,
-message protocol (`{Port, {data, D}}`, `{Port, closed}`, `{Port, eof}`,
-`{Port, {exit_status, S}}`), `port_command/2,3`, `port_close/1`,
-`port_connect/2`, `port_control/3`, `port_call/3`, `port_info/1,2`, options
-(`binary`, `{packet, N}`, `{line, L}`, `stream`, `eof`, `exit_status`,
-`use_stdio`, `stderr_to_stdout`, `args`, `arg0`, `env`, `cd`, `hide`), the
-internal driver interface (C++ driver kinds: spawn, spawn_executable, fd,
-file, TCP/UDP socket) and the I/O poller (IOCP on Windows, epoll on Linux,
-kqueue on macOS) with its scheduler wakeups. Records the supported subset and
-OTP differences.
-
-- Success criteria
-  - [ ] Contract in `docs/ports.md`; step-53 decision text replaced; prototype
-    of the poller wakeup on Windows and Linux.
-- Tests
-  - [ ] None beyond the prototype (decision step).
+Done 2026-10-08 (decision `docs/ports.md`). Port = immediate tag 0x7
+(`TermKind2::port`), never-reused process-wide numbers, `#Port<0.N>`, order
+funs < ports < pids. Executor-owned port table (driver, connected pid, links,
+watchers, name, options, counters); opener linked; owner end closes the port;
+close reason to links/monitors. Drivers `fd` (57B output, 57C input), `spawn`
+(57D), `file` (57E, synchronous `port_control`), `tcp`/`udp` (57F, async),
+internal ones via `{spawn_driver, ErlangAoTName}`. One I/O thread per runtime:
+Windows IOCP (console stdin via a reader thread), POSIX `poll()` + wakeup pipe
+(epoll/kqueue later: deviation from this step's draft); events delivered under
+the executor mutex, deferred to the slice end of a running owner; output
+queued, `port_command` never suspends. io output stays direct; stdin via an fd
+port server; `file:open` returns an io-server pid. OTP probes (scratch, OTP
+29.1.1): close of a linked port -> `'EXIT'` normal, `{Pid, close}` -> exit then
+`closed`, `connected`, `enoent` error for a missing executable, `{packet,2}`
+and `{line,L}` framing, order fun < port < pid. Prototype
+`tests/prototypes/poller/` (`run.py --wsl`): Windows IOCP and WSL Linux poll()
+wake an idle scheduler (9-91 us) and stop on shutdown. maint-29 re-fetched:
+unchanged `21776803`.
 
 <a id="step-57b"></a>
 

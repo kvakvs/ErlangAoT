@@ -230,6 +230,8 @@
   it is placed first, then blockers are held/queued at the front (`hold`, `place`, `resume`). `finish()` defers
   an ended process with a busy peer (`busy_peer`). `RuntimeMemory` atomic, `ProcessNumbers` shared mutex.
   Step 57: no code; wakeup/shutdown argument in processes.md#workers, stress golden `executables_wakeups`.
+  Step 57A (decision `docs/ports.md`): port immediate 0x7, executor port table, drivers fd/spawn/file/tcp/udp, one
+  I/O thread per runtime (IOCP / poll()), events delivered under the executor mutex; prototype tests/prototypes/poller.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

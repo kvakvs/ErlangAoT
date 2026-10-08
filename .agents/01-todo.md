@@ -375,7 +375,7 @@ Plan: [55](11-plan.md#step-55).
 Plan: [57A](11-plan.md#step-57a)–[57F](11-plan.md#step-57f). Added
 2026-10-08 by user direction: sockets, file I/O and subprocesses are ports.
 
-- [ ] Port contract, driver interface and I/O poller decided (57A).
+- [x] Port contract, driver interface and I/O poller decided (57A, `docs/ports.md`).
 - [ ] Port identities, port table, links/monitors and port builtins (57B).
 - [ ] I/O poller with scheduler wakeups and shutdown (57C).
 - [ ] Subprocess ports with stdin/stdout, `os:cmd/1` (57D).

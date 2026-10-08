@@ -308,9 +308,9 @@ recursion.
 
 ## Ports
 
-Decision of plan step 53 (2026-10-08): **programs have no ports.** OTP uses
-ports for external programs, drivers and files; ErlangAoT programs reach the
-console through builtins ([io](io.md)), and other external I/O has no plan.
+Plan step 53 decided that programs have no ports; step 57A replaced that
+decision with the [port contract](ports.md), which steps 57B–57F implement.
+Until step 57B lands the step-53 behavior below still holds.
 
 - No port term can be made: `is_port/1` is false for every value, there is no
   port printing, ordering or copying, and `TermFactory::port` stays an
@@ -327,10 +327,8 @@ console through builtins ([io](io.md)), and other external I/O has no plan.
 - Operations that accept ports in OTP treat every argument as a non-port:
   `monitor(port, X)` and `link/1`, `exit/2` of a non-pid raise `badarg`.
 
-This is the current state, not the final one: ports are planned (plan 11
-phase J2, steps 57A–57F): port identities, a driver model with an I/O poller
-on the scheduler, subprocesses with their stdin/stdout, file and standard I/O,
-and TCP/UDP sockets, all as ports.
+See [ports](ports.md) for the identities, drivers, I/O thread, files and
+sockets that replace it.
 
 ## Builtins
 
