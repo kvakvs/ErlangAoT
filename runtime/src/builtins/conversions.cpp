@@ -1,5 +1,6 @@
 #include "../terms/integers.hpp"
 #include "float_text.hpp"
+#include "portions.hpp"
 #include "terms.hpp"
 #include "text.hpp"
 #include "typed.hpp"
@@ -11,7 +12,8 @@
 #include <vector>
 
 // The conversion builtins (docs/builtins.md): atoms, integers, floats, lists and binaries, with OTP's badarg and
-// system_limit rules. TODO(step 43A): conversions of long inputs should run in bounded portions.
+// system_limit rules. Binary and iolist conversions run in bounded portions (docs/builtins.md#portions); the others
+// read inputs bounded by the atom, integer and float limits and run to completion, as in OTP.
 namespace erlang_aot::runtime::builtins {
 namespace {
 using detail::Integer;
@@ -287,13 +289,51 @@ TermResult<Term> float_to_list1(ProcessContext &context, double number) {
     return float_to_list2(context, number, Term::from_word(abi::v1::empty_list).value());
 }
 
+// The bytes of binary_to_list/1's argument still to put in the list, consumed from the end.
+class ByteState final : public TrapState {
+  public:
+    std::vector<std::byte> bytes;
+};
+
+Word byte_list_continue(ProcessContext &context, Arguments state);
+
+// Continuation of binary_to_list/1: [Tail], the list built so far.
+constexpr BuiltinFrame BYTE_LIST_FRAME = continuation_frame(&guarded<byte_list_continue>, 1);
+
+// Cons the last bytes onto `tail` in portions.
+Word byte_list(ProcessContext &context, const Term &tail) {
+    auto &stack = context.stack();
+    auto &bytes = trap_state<ByteState>(context).bytes;
+    const auto count = std::min(bytes.size(), stack.budget());
+    std::vector<Word> words(count);
+    std::ranges::transform(std::span(bytes).last(count), words.begin(), [](std::byte b) {
+        return *abi::v1::NativeIntegerEncoding::encode(std::to_integer<std::int64_t>(b));
+    });
+    const auto list = need(TermFactory(context).list_words(words, tail));
+    bytes.resize(bytes.size() - count);
+    stack.spend(count);
+    if (!bytes.empty()) {
+        stack.trap(BYTE_LIST_FRAME.frame, std::array{list.word()});
+        return 0;
+    }
+    stack.drop_trap_state();
+    return list.word();
+}
+
+Word byte_list_continue(ProcessContext &context, Arguments state) {
+    return byte_list(context, term_of(context, state[0]));
+}
+
 // binary_to_list(Binary): its bytes; other bitstrings are badarg.
-TermResult<Term> binary_to_list(ProcessContext &context, const BinaryArgument &binary) {
-    std::u32string codes;
-    codes.reserve(binary.bytes.size());
-    std::ranges::transform(binary.bytes, std::back_inserter(codes),
-                           [](std::byte b) { return std::to_integer<char32_t>(b); });
-    return char_list(context, codes);
+Word binary_to_list(ProcessContext &context, Arguments arguments) {
+    const auto binary = term_of(context, arguments[0]);
+    if (!binary.is_binary()) {
+        bad_argument();
+    }
+    auto state = std::make_unique<ByteState>();
+    state->bytes = need(binary.binary_bytes());
+    context.stack().keep_trap_state(std::move(state));
+    return byte_list(context, need(Term::from_word(abi::v1::empty_list)));
 }
 
 // Append the bytes of a binary; false for any other term.
@@ -315,48 +355,78 @@ bool append_leaf(const Term &element, std::vector<std::byte> &bytes) {
     return append_binary(element, bytes);
 }
 
-// Read one list until its end or a nested list, which is queued to be read before the rest of this one.
-bool read_list(Term list, std::vector<std::byte> &bytes, std::vector<Term> &pending) {
-    while (list.is_cons()) {
-        auto element = next(list);
-        if (element.is_nil() || element.is_cons()) {
-            pending.push_back(std::move(list));
-            pending.push_back(std::move(element));
+// The bytes of an iolist read so far, and as words the lists still to read, the next one last.
+class IolistState final : public TrapState {
+  public:
+    std::vector<std::byte> bytes;
+    // Elements read in the current portion.
+    std::size_t read = 0;
+};
+
+// Read one list until its end, a nested list (queued to be read before the rest of this one) or the end of the
+// portion's `budget` (the rest is queued); false for an element or tail that is no iolist part.
+bool read_list(Term list, IolistState &state, std::size_t budget) {
+    for (; list.is_cons(); ++state.read) {
+        if (state.read == budget) {
+            state.words().push_back(list.word());
             return true;
         }
-        if (!append_leaf(element, bytes)) {
+        auto element = next(list);
+        if (element.is_nil() || element.is_cons()) {
+            state.words().push_back(list.word());
+            state.words().push_back(element.word());
+            ++state.read;
+            return true;
+        }
+        if (!append_leaf(element, state.bytes)) {
             return false;
         }
     }
-    return list.is_nil() || append_binary(list, bytes);
+    return list.is_nil() || append_binary(list, state.bytes);
 }
 
-// The bytes of an iolist: bytes, binaries and nested iolists, each list ending in [] or a binary.
-std::optional<std::vector<std::byte>> iolist_bytes(const Term &root) {
-    std::vector<std::byte> bytes;
-    std::vector<Term> pending{root};
-    while (!pending.empty()) {
-        auto list = std::move(pending.back());
-        pending.pop_back();
-        if (!read_list(std::move(list), bytes, pending)) {
-            return std::nullopt;
+Word iolist_continue(ProcessContext &context, Arguments state);
+
+// Continuation of list_to_binary/1 and iolist_to_binary/1; its state is in the IolistState.
+constexpr BuiltinFrame IOLIST_FRAME = continuation_frame(&guarded<iolist_continue>, 0);
+
+// Read the queued lists in portions, then make the binary; anything but an iolist is badarg.
+Word iolist_continue(ProcessContext &context, Arguments) {
+    auto &stack = context.stack();
+    auto &state = trap_state<IolistState>(context);
+    const auto budget = stack.budget();
+    state.read = 0;
+    while (!state.words().empty() && state.read < budget) {
+        const auto list = term_of(context, state.words().back());
+        state.words().pop_back();
+        if (!read_list(list, state, budget)) {
+            bad_argument();
         }
     }
-    return bytes;
+    stack.spend(state.read);
+    if (!state.words().empty()) {
+        stack.trap(IOLIST_FRAME.frame, {});
+        return 0;
+    }
+    const auto binary = need(TermFactory(context).binary(state.bytes));
+    stack.drop_trap_state();
+    return binary.word();
 }
 
 // list_to_binary(IoList): the argument must be a list.
-TermResult<Term> list_to_binary(ProcessContext &context, const Term &root) {
-    const auto bytes = root.is_list() ? iolist_bytes(root) : std::nullopt;
-    if (!bytes) {
+Word list_to_binary(ProcessContext &context, Arguments arguments) {
+    if (!term_of(context, arguments[0]).is_list()) {
         bad_argument();
     }
-    return TermFactory(context).binary(*bytes);
+    auto state = std::make_unique<IolistState>();
+    state->words().push_back(arguments[0]);
+    context.stack().keep_trap_state(std::move(state));
+    return iolist_continue(context, {});
 }
 
 // iolist_to_binary(IoListOrBinary): a binary is returned as it is.
-TermResult<Term> iolist_to_binary(ProcessContext &context, const Term &root) {
-    return root.is_binary() ? root : list_to_binary(context, root);
+Word iolist_to_binary(ProcessContext &context, Arguments arguments) {
+    return term_of(context, arguments[0]).is_binary() ? arguments[0] : list_to_binary(context, arguments);
 }
 
 // The ~w text of an identity as a list: pid_to_list/1 accepts only pids, ref_to_list/1 only references.
@@ -376,9 +446,9 @@ constexpr std::array CONVERSION_BUILTINS{
     typed_entry<list_to_integer2>("erlang", "list_to_integer"),
     typed_entry<float_to_list1>("erlang", "float_to_list"),
     typed_entry<float_to_list2>("erlang", "float_to_list"),
-    typed_entry<binary_to_list>("erlang", "binary_to_list"),
-    typed_entry<list_to_binary>("erlang", "list_to_binary"),
-    typed_entry<iolist_to_binary>("erlang", "iolist_to_binary"),
+    BuiltinEntry{"erlang", "binary_to_list", 1, &guarded<binary_to_list>},
+    BuiltinEntry{"erlang", "list_to_binary", 1, &guarded<list_to_binary>},
+    BuiltinEntry{"erlang", "iolist_to_binary", 1, &guarded<iolist_to_binary>},
     typed_entry<identity_to_list<true>>("erlang", "pid_to_list"),
     typed_entry<identity_to_list<false>>("erlang", "ref_to_list"),
 };

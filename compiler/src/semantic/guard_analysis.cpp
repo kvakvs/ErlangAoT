@@ -65,6 +65,17 @@ void body_service(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
     }
 }
 
+// Whether a body call of this guard signature runs as its bridge builtin in portions (docs/builtins.md#portions).
+bool portioned(const FunctionKey &key) { return key.name == U"length" && key.arity == 1; }
+
+// The resolution of an authorized guard signature: its inline operation, or in a body the bridge builtin of a
+// signature without one (self/0) or that runs in portions (length/1).
+ServiceResolution guard_service(const FunctionKey &key, const bool guard, const bool legacy) {
+    const auto operation = guard || !portioned(key) ? immediate_service(key) : std::nullopt;
+    const auto builtin = guard || operation ? std::nullopt : bridge_builtin(key);
+    return ServiceResolution{key, true, legacy, operation, builtin};
+}
+
 // A call that is no guard signature: illegal in a guard, else possibly a body builtin.
 void unresolved(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call, const bool guard) {
     if (guard) {
@@ -90,10 +101,7 @@ void call(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpressi
     if (resolved->name == U"is_record" && resolved->arity >= 2) {
         validate_record_test(state.module, expression, call, guard, state.out);
     }
-    // A guard signature without an inline operation (self/0) runs as its bridge builtin in a body.
-    const auto operation = immediate_service(*resolved);
-    const auto builtin = guard || operation ? std::nullopt : bridge_builtin(*resolved);
-    state.function.services.emplace(&expression, ServiceResolution{*resolved, true, legacy, operation, builtin});
+    state.function.services.emplace(&expression, guard_service(*resolved, guard, legacy));
 }
 
 struct Visit {

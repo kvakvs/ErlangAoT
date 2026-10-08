@@ -66,15 +66,32 @@ inline const BuiltinFrame &builtin_frame(const abi::v1::FrameDescriptor &frame) 
     return *reinterpret_cast<const BuiltinFrame *>(&frame);
 }
 
-// Run `builtin` on its arguments; returns the result, or 0 with an Erlang error or failure recorded in the
-// checked channel. Host exceptions become failures.
+// The frame of a trapping builtin's continuation (docs/builtins.md#portions), entered with `arity` state registers;
+// it has no name in the registry.
+constexpr BuiltinFrame continuation_frame(BuiltinBody body, std::size_t arity) noexcept {
+    return {.frame = {.module = nullptr,
+                      .module_atom = 0,
+                      .function_atom = 0,
+                      .arity = arity,
+                      .body = nullptr,
+                      .slots = 0,
+                      .roots = 0},
+            .body = body};
+}
+
+// Run one portion of `builtin` on its arguments; returns the result, or 0 with an Erlang error or failure recorded
+// in the checked channel or after the builtin trapped (ProcessStack::take_trap). Host exceptions become failures.
+Word call_builtin_portion(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept;
+// Run `builtin` to completion, continuing each of its traps at once without yielding.
 Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept;
 
 // The erlang builtins of the original bridge catalog: guard BIFs, operators, display, halt, raising and
 // function_exported/3.
 std::span<const BuiltinEntry> erlang_builtins() noexcept;
-// The term-access builtins: setelement/3, make_tuple/2,3, tuple_to_list/1, list_to_tuple/1, '++'/2, '--'/2.
+// The tuple builtins: setelement/3, make_tuple/2,3, tuple_to_list/1, list_to_tuple/1.
 std::span<const BuiltinEntry> term_access_builtins() noexcept;
+// The list builtins that run in portions: length/1, '++'/2, '--'/2.
+std::span<const BuiltinEntry> list_builtins() noexcept;
 // The conversion builtins: atom_to_list/1, list_to_atom/1, integer_to_list/1,2, list_to_integer/1,2,
 // float_to_list/1,2, binary_to_list/1, list_to_binary/1, iolist_to_binary/1, pid_to_list/1, ref_to_list/1.
 std::span<const BuiltinEntry> conversion_builtins() noexcept;

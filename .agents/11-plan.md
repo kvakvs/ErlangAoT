@@ -1071,13 +1071,39 @@ in `runtime/src/builtins/`: `'++'/2`, `'--'/2`, `list_to_tuple/1`,
 plus the inline `length/1` and long list services.
 
 - Success criteria
-  - [ ] A process running a long builtin cannot starve others; results, errors
+  - [x] A process running a long builtin cannot starve others; results, errors
     and evaluation order stay as before; state survives collections between
     portions.
 - Tests
-  - [ ] Existing builtin goldens pass unchanged; an interleaving golden runs a
+  - [x] Existing builtin goldens pass unchanged; an interleaving golden runs a
     huge `++`/`--` beside a busy process; a collection between portions keeps
     the state.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/builtins.md#portions`. Body bridge builtins are entered like functions
+  (`erlang_aot_builtin_frame_v1` replaces `erlang_aot_builtin_v1`; the apply
+  marker transfer), so each spends a reduction; body `length/1` resolves to
+  its bridge builtin, guards keep the inline service. A portion may do 16
+  units of work per reduction left (`ProcessStack::budget`/`spend`), then
+  `trap`s to a continuation frame with state terms in the registers; `enter`
+  suspends the process there and later resumes it. Native state lives in a
+  `TrapState` whose words are roots. In portions: `length/1`, `++` (collect,
+  then build onto the tail), `--` (collect, bottom-up merge sort by exact
+  order, binary-search scan charged per comparison, build; nothing removed
+  returns the left list), `binary_to_list/1`, `list_to_binary/1`,
+  `iolist_to_binary/1` (`builtins/lists`, `builtins/portions`,
+  `TermFactory::list_words`). As in OTP the tuple builtins and the bounded
+  conversions run to completion; io formatting also does (difference
+  recorded). Host `call_builtin` continues traps at once. OTP golden
+  `executables_portions` (each builtin beside a busy process that ends during
+  it, results, late improper-tail badargs) passes; `runtime_portions` runs
+  each as a process's first call with a collection between every two portions
+  (++/length/binary_to_list/list_to_binary over moving tuples, -- sorting and
+  scanning in more than four portions); all builtin goldens unchanged. Fresh
+  Windows x64 Debug: fast 185/185; full `-j 12` 188/189, the one failure a
+  `runtime_containers` SegFault not reproduced in 13 standalone or parallel
+  reruns (it passed in the same gate's fast run); Lizard 0 warnings after
+  extracting `guard_service`; tidy 39 batches pass after splitting the merge
+  (`close_runs`). Logs `build/plan11-step43a/`.
 
 <a id="step-44"></a>
 

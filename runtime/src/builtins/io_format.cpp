@@ -10,7 +10,7 @@
 
 // io_lib:format(Format, Args) for the control sequences ~w ~p ~s ~c ~b ~B ~i ~n ~~ with field width, precision,
 // pad character and the t, l and k modifiers. Format errors and unsupported sequences are badarg (docs/io.md).
-// TODO(step 43A): formatting a large term should run in bounded portions.
+// Formatting runs to completion, unlike OTP's io_lib in Erlang code (docs/builtins.md#portions).
 namespace erlang_aot::runtime::builtins {
 namespace {
 // Largest field width or precision accepted; larger values would only exhaust memory.

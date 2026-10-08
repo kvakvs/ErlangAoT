@@ -141,8 +141,7 @@
   catalog builtin is recorded by `resolve_services` (`Function::builtin_funs`) and becomes the external entry
   `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported. Step 37: term-access family (`term_access_builtins()`:
   `setelement`, `make_tuple/2,3`, `tuple_to_list`, `list_to_tuple`, `'++'`, `'--'`); `A ++ B`/`A -- B` lower to the
-  bridge (`binary_value`), so the `arithmetic` capability is implemented. Long-running builtins run to completion
-  until plan step 43A adds traps (`TODO(step 43A)`). Step 38: conversions (`conversion_builtins()`, float text in
+  bridge (`binary_value`), so the `arithmetic` capability is implemented. Step 38: conversions (`conversion_builtins()`, float text in
   `builtins/float_text`: printf for `%.*e`, OTP's own fixed rounding, shortest digits from `std::to_chars` placed by
   OTP's Ryu notation rules). Step 39: library modules (`library/stdlib/{lists,maps}.erl`, original Erlang) join a
   batch in `driver/frontend` `add_library`: modules named by literal atoms (`semantic::referenced_modules`) that no
@@ -172,6 +171,13 @@
   a context, copy the fun/args into it and prepare the first call in the child with the dynamic call services
   (`apply_list_service`/`call_list_service`), so badarity/undef crash the child. Startup queues the entry frame as
   the main process; host `invoke` resumes its own yields without running other processes.
+  Step 43A (`docs/builtins.md#portions`): body bridge builtins lower to `erlang_aot_builtin_frame_v1` + the apply
+  marker (entered like functions; body `length/1` too, `guard_analysis` `portioned`). A builtin portion spends
+  `ProcessStack::budget()` units (16 per reduction left), then `trap(continuation, state registers)`; `enter` takes
+  the trap, zeroes reductions and suspends at the continuation (`continuation_frame`). Native state = `TrapState`
+  (`words()` are roots in `ProcessStack::visit`). `call_builtin_portion` (enter) vs `call_builtin` (host: loops).
+  `builtins/lists` (`length`, `++`, `--`: collect, merge sort, binary-search scan, build) and the binary/iolist
+  conversions over `builtins/portions` (`walk`, `build_list`, `guarded`, `ListState`); `TermFactory::list_words`.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

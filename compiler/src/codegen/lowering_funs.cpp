@@ -56,9 +56,14 @@ llvm::Value *arguments(ExpressionLowering &state, const ast::CallExpression &cal
     return array;
 }
 
+// Whether a call expression is in tail position, so its callee's result is this function's.
+bool in_tail(const ExpressionLowering &state, const ast::Expression &expression) {
+    return state.tail_calls && state.tail_calls->contains(&expression);
+}
+
 // Call a preparation service returning the FrameDescriptor to enter (null after it raised), then transfer there with
-// the registers in `array`: a tail transfer in tail position.
-llvm::Value *transfer(ExpressionLowering &state, const ast::Expression &expression, llvm::FunctionCallee service,
+// the registers in `array`: a tail transfer when `tail` is set.
+llvm::Value *transfer(ExpressionLowering &state, bool tail, llvm::FunctionCallee service,
                       llvm::ArrayRef<llvm::Value *> operands, llvm::Value *array) {
     auto &builder = state.builder;
     auto &output = *state.entry.getParent();
@@ -67,7 +72,7 @@ llvm::Value *transfer(ExpressionLowering &state, const ast::Expression &expressi
     propagate_failure(state);
     auto marker = output.getOrInsertFunction(APPLY_MARKER, llvm::FunctionType::get(state.word, {ptr, ptr, ptr}, false));
     auto *result = builder.CreateCall(marker, {state.entry.getArg(0), array, frame}, "apply.result");
-    if (state.tail_calls && state.tail_calls->contains(&expression)) {
+    if (tail) {
         // The called function's result is this function's: lower_frames turns the return into a tail transfer.
         builder.CreateRet(result);
         builder.SetInsertPoint(llvm::BasicBlock::Create(state.entry.getContext(), "tail.dead", &state.entry));
@@ -176,7 +181,7 @@ llvm::Value *lower_fun_call(ExpressionLowering &state, const ast::Expression &ex
     auto *fun = value_of(state, call.target);
     auto *array = arguments(state, call);
     auto *count = llvm::ConstantInt::get(state.word, call.arguments.size());
-    return transfer(state, expression, frame_service<services::Apply>(state, 2, true),
+    return transfer(state, in_tail(state, expression), frame_service<services::Apply>(state, 2, true),
                     {state.entry.getArg(0), fun, count, array}, array);
 }
 
@@ -189,8 +194,24 @@ llvm::Value *lower_dynamic_call(ExpressionLowering &state, const ast::Expression
     auto *function = value_of(state, remote.function);
     auto *array = arguments(state, call);
     auto *count = llvm::ConstantInt::get(state.word, call.arguments.size());
-    return transfer(state, expression, frame_service<services::Call>(state, 3, false),
+    return transfer(state, in_tail(state, expression), frame_service<services::Call>(state, 3, false),
                     {state.entry.getArg(0), module, function, count}, array);
+}
+
+llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::span<llvm::Value *const> values) {
+    auto &builder = state.builder;
+    auto *array = registers(state, values.size());
+    const llvm::Align alignment(state.word->getBitWidth() / 8);
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        builder.CreateAlignedStore(
+            values[i], builder.CreateGEP(state.word, array, llvm::ConstantInt::get(state.word, i)), alignment);
+    }
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::BuiltinFrame>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy(), state.word}, false));
+    // The builtin is entered like a function, so it spends a reduction and may yield in portions.
+    return transfer(state, false, service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, builtin)}, array);
 }
 
 llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression,
@@ -205,6 +226,6 @@ llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expre
     operands.push_back(array);
     const auto service = call.arguments.size() == 2 ? frame_service<services::ApplyList>(state, 2, true)
                                                     : frame_service<services::CallList>(state, 3, true);
-    return transfer(state, expression, service, operands, array);
+    return transfer(state, in_tail(state, expression), service, operands, array);
 }
 } // namespace erlang_aot::codegen

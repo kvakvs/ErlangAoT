@@ -59,5 +59,5 @@ standard output. They are runtime builtins of module `io` in the bridge catalog
   line; long binaries wrap between bytes.
 - Containers nested more than 256 deep raise `system_limit` (the layout
   recurses on the native stack).
-- Every control sequence runs to completion; large terms become interruptible
-  with the scheduler (plan step 43A).
+- Formatting runs to completion, however large the term
+  ([portions](builtins.md#portions)).

@@ -82,6 +82,12 @@ target_link_libraries(runtime_processes PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_processes PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_processes COMMAND runtime_processes)
 
+# Builtins that run in portions as a process's first call, with a collection between every two portions.
+add_executable(runtime_portions portions.cpp)
+erlang_aot_project_options(runtime_portions)
+target_link_libraries(runtime_portions PRIVATE ErlangAoT::generated_program)
+add_test(NAME runtime_portions COMMAND runtime_portions)
+
 add_executable(runtime_copy copy.cpp)
 erlang_aot_project_options(runtime_copy)
 target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)

@@ -52,8 +52,9 @@ TermResult<Term> tuple(ProcessHeap &heap, const std::shared_ptr<detail::HeapStor
 }
 
 // Stage one complete cons spine before committing any of it; publication marks every cell start.
+template <typename Element>
 TermResult<Term> list(ProcessHeap &heap, const std::shared_ptr<detail::HeapStorage> &storage,
-                      std::span<const Term> elements, const Term &tail) {
+                      std::span<const Element> elements, const Term &tail) {
     auto reserved = heap.reserve(elements.size() * 2);
     if (!reserved) {
         return std::unexpected(heap_error(reserved.error()));
@@ -61,7 +62,7 @@ TermResult<Term> list(ProcessHeap &heap, const std::shared_ptr<detail::HeapStora
     auto *words = ::new (reserved->bytes().data()) Word[elements.size() * 2]{};
     for (std::size_t i = 0; i < elements.size(); ++i) {
         auto *cell = words + i * 2;
-        cell[0] = elements[i].word();
+        cell[0] = word_of(elements[i]);
         cell[1] = i + 1 == elements.size()
                       ? tail.word()
                       : reinterpret_cast<Word>(cell + 2) | static_cast<Word>(TermKindPrimary::list);
@@ -131,6 +132,27 @@ TermResult<Term> TermFactory::list_tail(std::span<const Term> elements, const Te
         return std::unexpected(TermError::out_of_memory);
     } catch (const std::length_error &) {
         return std::unexpected(TermError::resource_limit);
+    }
+}
+
+TermResult<Term> TermFactory::list_words(std::span<const Word> elements, const Term &tail) {
+    const auto owner = heap();
+    if (!owner) {
+        return std::unexpected(owner.error());
+    }
+    for (const auto element : elements) {
+        if (const auto admitted = Term::from_word(element, (*owner)->owner_); !admitted) {
+            return std::unexpected(admitted.error());
+        }
+    }
+    const auto checked_tail = (*owner)->retain(tail);
+    if (!checked_tail || elements.empty()) {
+        return checked_tail;
+    }
+    try {
+        return runtime::list(**owner, (*owner)->storage_, elements, *checked_tail);
+    } catch (const std::bad_alloc &) {
+        return std::unexpected(TermError::out_of_memory);
     }
 }
 

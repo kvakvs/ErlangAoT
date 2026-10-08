@@ -19,8 +19,9 @@ ends:
   its registers (they stay collection roots) and returns to the executor,
   which later resumes it by repeating the entry. A loop that makes no call
   (a comprehension over a list without calls in its body) runs to its end
-  before the process can yield; long builtins run to completion until plan
-  step 43A.
+  before the process can yield. Builtins whose work grows with a list or
+  binary argument run in portions and yield between them
+  ([portions](builtins.md#portions)).
 - Each process owns its heap and stack. Arguments of a new process are copied
   into its heap ([copying between heaps](runtime-heap.md#copying-between-heaps)).
 - A process ends when its first call returns or raises. An ended process's

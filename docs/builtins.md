@@ -47,7 +47,7 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
 | Source | Path |
 | --- | --- |
 | `abs(X)`, `X + Y`, `erlang:display(X)`, `halt()`, `error(R)` | Inline services, as before the bridge |
-| `erlang:function_exported(M, F, A)`, `setelement(I, T, V)`, `A ++ B`, `A -- B` (catalog builtins without an inline service) | `erlang_aot_builtin_v1(context, index, arguments, output)` |
+| `erlang:function_exported(M, F, A)`, `setelement(I, T, V)`, `A ++ B`, `A -- B`, `length(L)` in a body (catalog builtins without an inline service) | Entered like a function: `erlang_aot_builtin_frame_v1(context, index)` gives the builtin's frame, the arguments go in the registers ([portions](#portions)) |
 | `fun abs/1`, `fun erlang:'+'/2` | External fun `erlang:F/A`; registration binds it to the builtin |
 | `M:F(Args)`, `apply(M, F, Args)`, runtime `fun M:F/A` | The code server finds a module's export first, then a builtin |
 
@@ -93,11 +93,45 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   - `binary_to_list/1` needs a binary; `list_to_binary/1` a list and
     `iolist_to_binary/1` a list or binary of bytes, binaries and nested
     lists, each list ending in `[]` or a binary.
-- Every builtin runs to completion; work that grows with the input becomes
-  interruptible once the scheduler exists (plan step 43A).
 - `function_exported(M, F, A)` raises `badarg` unless `M` and `F` are atoms
   and `A` a small integer; it is true when a module of the program exports
   `M:F/A` or `M:F/A` is a registered builtin.
+
+## Portions
+
+Plan 11 step 43A (2026-10-08): builtins whose work grows with a list or binary
+argument run in bounded portions, like OTP's trapping BIFs, so a long builtin
+cannot keep other processes from running ([processes](processes.md)).
+
+- Every bridge builtin a body calls is entered like a function and spends a
+  reduction. A portion may do `WORK_PER_REDUCTION` (16) units of work per
+  reduction left in the time slice (at least one reduction's worth): list
+  cells walked or built, comparisons, bytes. It pays for them from the slice.
+- A builtin with work left traps: `ProcessStack::trap` names a continuation
+  frame and puts the builtin's state terms in the registers, which stay roots;
+  native state (bytes, sort positions, term words kept as roots) lives in the
+  process stack's `TrapState`. The process yields and resumes at the
+  continuation in a later slice. Collections between portions rewrite the
+  registers and state words like other roots.
+- Results, errors and evaluation order are the same as running to completion.
+  An error found late (an improper tail) is raised when the walk reaches it.
+- Host calls (`call_builtin`) continue every trap at once.
+
+| Builtin | Portions |
+| --- | --- |
+| `length/1` in a body | Counts cells; in a guard it stays the inline service, as OTP's guard BIF does not trap |
+| `A ++ B` | Collects `A`'s elements, then builds the copy onto `B` from its end |
+| `A -- B` | Collects `B`, sorts it by exact order (bottom-up merge sort), scans `A` with a binary search per element, then builds the kept elements; when nothing is removed the result is `A` itself |
+| `binary_to_list/1` | Builds the list from the binary's end |
+| `list_to_binary/1`, `iolist_to_binary/1` | Walks the iolist depth first, then makes the binary at once |
+
+Other builtins run to completion. The tuple builtins (`setelement/3`,
+`make_tuple/2,3`, `tuple_to_list/1`, `list_to_tuple/1`) do as in OTP: their
+work is bounded by the tuple arity limit. The remaining conversions read
+inputs bounded by the atom, integer and float limits. Formatting with
+`io:format/1,2` runs to completion ([differences](differences.md)). Inline
+services of loops (a comprehension's final reverse) run to completion as
+part of the loop.
 
 ## Typed builtins
 

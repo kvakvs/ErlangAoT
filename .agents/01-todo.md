@@ -319,12 +319,12 @@ Plan: [46](11-plan.md#step-46), [47](11-plan.md#step-47),
 ### F26 — Production builtin functions
 
 Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)–[40](11-plan.md#step-40),
-[50](11-plan.md#step-50).
+[43A](11-plan.md#step-43a), [50](11-plan.md#step-50).
 
 - [x] Guard catalog services; `erlang:display/1` and `erlang:halt/0,1`.
 - [x] Generic production registration bridge (step 36): `BuiltinRegistry`
   by module/name/arity with transactional batches, the append-only
-  `bridge_builtins` catalog, `erlang_aot_builtin_v1`, builtin frames entered
+  `bridge_builtins` catalog, the bridge service (frames since 43A), builtin frames entered
   by dynamic calls and funs; guard BIFs, operators, `display`, `halt`, the
   raise family and `function_exported/3` registered.
 - [x] Term access family (step 37): `setelement/3`, `make_tuple/2,3`,
@@ -337,7 +337,10 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)�
   them (step 39, `library/stdlib`).
 - [x] Console output (step 40): `io:format/1,2` (`~w ~p ~s ~c ~b ~B ~i ~n ~~`,
   widths, precisions, pads, `t`/`l`/`k`, OTP `~p` layout) and `io:put_chars/1`.
-- [ ] Interruptible long-running builtins once the scheduler exists (step 43A).
+- [x] Interruptible long-running builtins (step 43A): bridge builtins are
+  entered like functions (`erlang_aot_builtin_frame_v1`); `length/1` in bodies,
+  `++`, `--`, `binary_to_list/1`, `list_to_binary/1` and `iolist_to_binary/1`
+  run in portions with rooted state and yield between them.
 
 ### F27 — Typed/native callables and conversions
 

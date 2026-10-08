@@ -106,53 +106,43 @@ Status dispatch_builtin(Context *context, const char *module, std::size_t module
     return status;
 }
 
-namespace {
-// Call a bridge builtin from generated code once the invocation, index and pointers are checked.
-Status bridge_call(runtime::ProcessContext &context, std::size_t index, const TermWord *arguments, TermWord *output) {
-    auto &calls = context.generated_calls();
-    if (!calls.active() || calls.failure()) {
-        return Status::invalid_argument;
-    }
-    const auto *builtin = context.code_server().builtins().bridge(index);
-    if (!builtin || !output || (builtin->frame.arity != 0 && !arguments)) {
-        calls.fail_service(Status::invalid_argument);
-        return Status::invalid_argument;
-    }
-    const auto result = runtime::call_builtin(context, *builtin, arguments);
-    if (const auto &failure = calls.failure()) {
-        return failure->status.value_or(call_status(failure->code));
-    }
-    *output = result;
-    return Status::ok;
-}
-} // namespace
 } // namespace erlang_aot::abi::v1
 
 namespace erlang_aot::runtime {
-Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept {
+Word call_builtin_portion(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept {
     auto &calls = context.generated_calls();
     try {
         const auto result = builtin.body(context, {arguments, builtin.frame.arity});
-        return calls.failure() ? Word{0} : result;
+        if (!calls.failure()) {
+            return result;
+        }
     } catch (const std::bad_alloc &) {
         calls.fail_service(abi::v1::Status::out_of_memory);
     } catch (...) {
         calls.fail_service(abi::v1::Status::internal_error);
     }
+    // A failed builtin continues nowhere and keeps no state.
+    context.stack().take_trap();
+    context.stack().drop_trap_state();
     return 0;
+}
+
+Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept {
+    auto &stack = context.stack();
+    auto result = call_builtin_portion(context, builtin, arguments);
+    while (const auto *continuation = stack.take_trap()) {
+        result = call_builtin_portion(context, builtin_frame(*continuation), stack.registers());
+    }
+    return result;
 }
 } // namespace erlang_aot::runtime
 
-std::uint8_t erlang_aot_builtin_v1(void *context, std::size_t builtin, const erlang_aot::abi::v1::TermWord *arguments,
-                                   erlang_aot::abi::v1::TermWord *output) noexcept {
-    using erlang_aot::abi::v1::Status;
-    if (!context) {
-        return static_cast<std::uint8_t>(Status::invalid_argument);
+const void *erlang_aot_builtin_frame_v1(void *context, std::size_t builtin) noexcept {
+    auto &process = *static_cast<erlang_aot::runtime::ProcessContext *>(context);
+    const auto *frame = process.code_server().builtins().bridge(builtin);
+    if (!frame) {
+        process.generated_calls().fail_service(erlang_aot::abi::v1::Status::invalid_argument);
+        return nullptr;
     }
-    try {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::bridge_call(
-            *static_cast<erlang_aot::runtime::ProcessContext *>(context), builtin, arguments, output));
-    } catch (...) {
-        return static_cast<std::uint8_t>(Status::internal_error);
-    }
+    return &frame->frame;
 }

@@ -22,7 +22,7 @@ struct BuiltinName {
     std::size_t arity;
 };
 
-// Every bridge builtin. An entry's index is the `builtin` argument of erlang_aot_builtin_v1, so entries are only
+// Every bridge builtin. An entry's index is the `builtin` argument of erlang_aot_builtin_frame_v1, so entries are only
 // ever appended. The runtime registers an implementation for each; the compiler admits calls and funs of them.
 inline constexpr std::array bridge_builtins{
     // Type tests.
@@ -149,7 +149,6 @@ constexpr std::optional<std::size_t> find_bridge_builtin(std::string_view module
 }
 } // namespace erlang_aot::abi::v1
 
-// Call bridge builtin `builtin` (an index into bridge_builtins) with its arity of rooted `arguments` and write the
-// result to `output`. An Erlang error or a failure is recorded in the checked channel; returns a Status byte.
-std::uint8_t erlang_aot_builtin_v1(void *context, std::size_t builtin, const erlang_aot::abi::v1::TermWord *arguments,
-                                   erlang_aot::abi::v1::TermWord *output) noexcept;
+// The FrameDescriptor of bridge builtin `builtin` (an index into bridge_builtins), which generated code enters like
+// a function with the builtin's arguments in the registers; null after recording an unknown index as a failure.
+const void *erlang_aot_builtin_frame_v1(void *context, std::size_t builtin) noexcept;

@@ -235,11 +235,14 @@ prints one `erlang:display/1` line and yields `true`; it has no semantic error.
 (`CallError::halted` with the exit status) or `badarg`, so the caller unwinds.
 Linker spellings follow the target's Itanium or Microsoft C++ mangling.
 
-`erlang_aot_builtin_v1(context, builtin, arguments, output)` ([builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp))
-calls the production builtin with index `builtin` in `abi::v1::bridge_builtins`
-(append-only) on its arguments; errors and failures go to the checked channel
-([builtins](builtins.md)). A `FrameDescriptor` with a null body is a builtin:
-entering it runs the builtin on the registers and returns into the caller.
+`erlang_aot_builtin_frame_v1(context, builtin)` ([builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp))
+returns the `FrameDescriptor` of the production builtin with index `builtin` in
+`abi::v1::bridge_builtins` (append-only); generated code enters it like a
+function with the arguments in the registers, and errors and failures go to the
+checked channel ([builtins](builtins.md)). A `FrameDescriptor` with a null body
+is a builtin: entering it runs the builtin on the registers and returns into
+the caller, or suspends the process at the builtin's continuation when it
+trapped ([portions](builtins.md#portions)).
 
 `abi::v1::dispatch_builtin` calls host-registered builtins by module/function
 bytes, argument array and arity, returning a `Status`; output is written only on

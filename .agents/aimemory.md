@@ -329,6 +329,14 @@ Step facts beyond the plan record:
   first call prepared IN the child via apply_list_service/call_list_service (declared in terms/funs.hpp). OTP quirk:
   compiler drops code after spawn(fun/1) (type analysis) -> fixtures route the fun via remote processes:id/1 (local
   id/1 is still inferred). Crash run stderr authored ^$ until step 44 adds reports. OTP spawn/1 non-fun -> badarg.
+- 43A: enter() must call call_builtin_portion (call_builtin loops traps for host paths: using it in enter ran
+  builtins to completion). Python heredocs in bash turn "\n" into a real newline inside C++ literals: use Edit or
+  Write for C++ text. Single-file tidy: clang-tidy -p build/debug/quality works for runtime units only (compiler units
+  miss generated includes); official check-quality changed scope = 39 batches (~20 min). OTP: `{Name, Node}` sends
+  are silent, unregistered atom badarg, Dest evaluated before Msg; bad receive timeouts (foo, -1, 1.0, 2^32) raise
+  timeout_value only when no message matches. OTP crash reports go through async logger: the oracle usually halts
+  first, so goldens see no OTP stderr (author stderr). runtime_containers SegFaulted once in a full -j 12 run, not
+  reproduced.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.

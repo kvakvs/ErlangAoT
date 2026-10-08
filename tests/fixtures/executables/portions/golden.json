@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "portions",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "append {200001,last}, busy process ended: true\nsubtract {5000,25000000}, busy process ended: true\nlength 200000, busy process ended: true\nbinary_to_list 25493920, busy process ended: true\nlist_to_binary 400000, busy process ended: true\niolist_to_binary 400000, busy process ended: true\n[{error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg}]\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "portions.erl": "dd94201f332c1c726fdeb9ac3780050e49464ae86337a50f8591e3432b9eebd2"
+  }
+}

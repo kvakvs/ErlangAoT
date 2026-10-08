@@ -162,7 +162,6 @@ constexpr std::array ERLANG_BUILTINS{
     BuiltinEntry{"erlang", "float", 1, immediate<Op::to_float>},
     BuiltinEntry{"erlang", "floor", 1, immediate<Op::floor>},
     BuiltinEntry{"erlang", "hd", 1, immediate<Op::hd>},
-    BuiltinEntry{"erlang", "length", 1, immediate<Op::length>},
     BuiltinEntry{"erlang", "map_get", 2, map_query<M::get>},
     BuiltinEntry{"erlang", "map_size", 1, map_query<M::size>},
     BuiltinEntry{"erlang", "is_map_key", 2, map_query<M::contains>},
@@ -217,8 +216,8 @@ constexpr std::array ERLANG_BUILTINS{
 std::span<const BuiltinEntry> erlang_builtins() noexcept { return ERLANG_BUILTINS; }
 
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept {
-    static const std::array families{erlang_builtins(), term_access_builtins(), conversion_builtins(), io_builtins(),
-                                     process_builtins()};
+    static const std::array families{erlang_builtins(),     term_access_builtins(), list_builtins(),
+                                     conversion_builtins(), io_builtins(),          process_builtins()};
     return families;
 }
 } // namespace erlang_aot::runtime

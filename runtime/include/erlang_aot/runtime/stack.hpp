@@ -5,10 +5,32 @@
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/abi/modules.hpp>
 #include <limits>
+#include <memory>
+#include <utility>
 
 namespace erlang_aot::runtime {
 // Reductions of one time slice, OTP's CONTEXT_REDS: every function entry spends one (docs/processes.md).
 inline constexpr std::size_t SLICE_REDUCTIONS = 4000;
+// Units of builtin work (list cells walked or built, comparisons, bytes) one reduction pays for
+// (docs/builtins.md#portions).
+inline constexpr std::size_t WORK_PER_REDUCTION = 16;
+
+// Native state a trapping builtin keeps between its portions; derived states add their own fields.
+class TrapState {
+  public:
+    TrapState() = default;
+    virtual ~TrapState() = default;
+    TrapState(const TrapState &) = delete;
+    TrapState &operator=(const TrapState &) = delete;
+    TrapState(TrapState &&) = delete;
+    TrapState &operator=(TrapState &&) = delete;
+
+    // Term words kept between portions: roots, rewritten in place by collections.
+    std::vector<Word> &words() noexcept { return words_; }
+
+  private:
+    std::vector<Word> words_;
+};
 
 struct StackOptions {
     // Optional per-process cap on the words of all frames, headers included; by default body recursion grows until
@@ -65,6 +87,29 @@ class ProcessStack final {
     // Whether the process is suspended at a function entry, to be resumed by run().
     bool suspended() const noexcept { return resume_ != nullptr; }
 
+    // Called last by a builtin that did a portion of its work: once it returns, the process continues at
+    // `continuation` (a builtin frame) with `state` in its first registers, which stay roots meanwhile.
+    void trap(const abi::v1::FrameDescriptor &continuation, std::span<const Word> state) noexcept;
+
+    // The pending continuation of the builtin that just ran, cleared; null when it finished or failed.
+    const abi::v1::FrameDescriptor *take_trap() noexcept { return std::exchange(trap_, nullptr); }
+
+    // Units of work the running builtin may do in this portion: WORK_PER_REDUCTION per reduction left, at least
+    // one reduction's worth so every portion progresses.
+    std::size_t budget() const noexcept { return std::max<std::size_t>(reductions_, 1) * WORK_PER_REDUCTION; }
+
+    // Pay for `work` units of builtin work out of the reductions left.
+    void spend(std::size_t work) noexcept;
+
+    // The native state of the trapping builtin running in this process, if it is of type `State`.
+    template <typename State> State *trap_state() noexcept { return dynamic_cast<State *>(trap_state_.get()); }
+
+    // Keep `state` until the builtin finishes; it replaces any earlier state.
+    void keep_trap_state(std::unique_ptr<TrapState> state) noexcept { trap_state_ = std::move(state); }
+
+    // Release the state when the builtin finishes or fails.
+    void drop_trap_state() noexcept { trap_state_.reset(); }
+
     // Count live frames, bottom frames included, for leak checks.
     std::size_t depth() const noexcept;
 
@@ -79,7 +124,8 @@ class ProcessStack final {
     // Name the innermost named frames, up to the stack trace limit, for a newly raised exception.
     StackTrace trace() const noexcept;
 
-    // Visit every term slot of every frame, then the live registers, so a collector can rewrite them in place.
+    // Visit every term slot of every frame, then the live registers and a trapping builtin's state words, so a
+    // collector can rewrite them in place.
     template <typename Visitor> void visit(Visitor &&visit) {
         for (auto at = frame_; at != none; at = words_[at]) {
             for (auto &slot : std::span(words_).subspan(at + abi::v1::frame_header_words, descriptor(at).roots)) {
@@ -88,6 +134,11 @@ class ProcessStack final {
         }
         for (auto &word : std::span(registers_).first(live_registers_)) {
             visit(word);
+        }
+        if (trap_state_) {
+            for (auto &word : trap_state_->words()) {
+                visit(word);
+            }
         }
     }
 
@@ -125,5 +176,9 @@ class ProcessStack final {
     std::size_t reductions_ = SLICE_REDUCTIONS;
     // The function a suspended process enters when it resumes; null while it runs and once it has ended.
     const abi::v1::FrameDescriptor *resume_ = nullptr;
+    // The continuation a builtin trapped to, set by trap() until its caller takes it.
+    const abi::v1::FrameDescriptor *trap_ = nullptr;
+    // Native state of the trapping builtin between its portions.
+    std::unique_ptr<TrapState> trap_state_;
 };
 } // namespace erlang_aot::runtime

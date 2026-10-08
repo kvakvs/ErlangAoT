@@ -105,8 +105,15 @@ abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
     --reductions_;
     safepoint(function.arity);
     if (!function.body) {
-        // A builtin runs at once on the registers; its result returns into the current frame's body.
-        registers_[0] = call_builtin(owner_, builtin_frame(function), registers_.data());
+        // A builtin runs at once on the registers; its result returns into the current frame's body, unless it
+        // trapped: then the process suspends at its continuation until the next time slice.
+        const auto result = call_builtin_portion(owner_, builtin_frame(function), registers_.data());
+        if (const auto *continuation = take_trap()) {
+            reductions_ = 0;
+            suspend(*continuation);
+            return &pause;
+        }
+        registers_[0] = result;
         return descriptor(frame_).body;
     }
     if (!push(function)) {
@@ -116,6 +123,15 @@ abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
     std::copy_n(registers_.begin(), function.arity,
                 words_.begin() + static_cast<std::ptrdiff_t>(frame_ + frame_header_words));
     return function.body;
+}
+
+void ProcessStack::trap(const FrameDescriptor &continuation, std::span<const Word> state) noexcept {
+    std::ranges::copy(state, registers_.begin());
+    trap_ = &continuation;
+}
+
+void ProcessStack::spend(std::size_t work) noexcept {
+    reductions_ -= std::min(reductions_, (work + WORK_PER_REDUCTION - 1) / WORK_PER_REDUCTION);
 }
 
 abi::v1::Code *ProcessStack::tail(const FrameDescriptor &function) noexcept {
