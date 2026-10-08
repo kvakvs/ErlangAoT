@@ -931,16 +931,15 @@ noproc, two monitors, demonitor/info/flush, self, watcher end, badarg rows).
 
 ### 50. Implement registered process names
 
-Backlog: F26. Depends on: [45](#step-45).
-
-`register/2`, `unregister/1`, `whereis/1`, `registered/0`, send to a name.
-
-- Success criteria
-  - [ ] Name conflicts and sends to unknown names raise `badarg` as OTP; names
-    are released when the process exits.
-- Tests
-  - [ ] Golden programs for registration, re-registration after exit and
-    error cases.
+Done 2026-10-08 (contract `docs/processes.md#registered-names`).
+`register/2`, `unregister/1`, `whereis/1`, `registered/0`; sends to `Name`
+(badarg when unregistered) and `{Name, nonode@nohost}` (dropped when
+unregistered, other nodes dropped); `monitor(process, Name | {Name, Node})`
+with `{Name, nonode@nohost}` in `'DOWN'`. Executor `names_` table, name
+released before links/monitors are signalled (as OTP, probed 20,000 times).
+`kvstore`, `ring` and `supervise` now compile without diagnostics. OTP golden
+`executables_names` (every send form, conflicts, release, re-registration,
+name monitors, badarg rows).
 
 <a id="step-51"></a>
 

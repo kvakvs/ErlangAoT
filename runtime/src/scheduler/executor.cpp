@@ -244,6 +244,7 @@ void Executor::clear() noexcept {
     }
     ending_.clear();
     main_ = finished_ = nullptr;
+    names_.clear();
     while (!queue_.empty()) {
         auto &process = *queue_.back();
         queue_.pop_back();

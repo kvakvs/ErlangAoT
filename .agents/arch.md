@@ -206,6 +206,10 @@
   from `Term::reference_value`) rebuilt by `TermFactory::reference` (make_reference delegates). `Executor::monitor`
   / `demonitor`; `notify()` drops held monitors, then signals links and delivers 'DOWN' via `deliver()`;
   `Mailbox::remove(match)` for demonitor flush.
+  Step 50 (`docs/processes.md#registered-names`): executor `names_` (std::map atom word -> pid; `whereis` checks
+  liveness via `find`), `Signals::name_`; `notify()` erases the name first. `Signals::Monitor{pid, name}`: a name
+  monitor's 'DOWN' item is {Name, nonode@nohost} (`LOCAL_NODE`). Sends: `destination_pid` (pid, atom -> badarg if
+  unregistered, {Name, Node} -> local lookup or drop).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

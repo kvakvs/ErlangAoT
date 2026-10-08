@@ -151,6 +151,11 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "monitor", 2},
     BuiltinName{"erlang", "demonitor", 1},
     BuiltinName{"erlang", "demonitor", 2},
+    // Registered names (plan step 50).
+    BuiltinName{"erlang", "register", 2},
+    BuiltinName{"erlang", "unregister", 1},
+    BuiltinName{"erlang", "whereis", 1},
+    BuiltinName{"erlang", "registered", 0},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

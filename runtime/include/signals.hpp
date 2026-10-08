@@ -1,8 +1,8 @@
 #pragma once
 
-// The links, monitors and exit trapping of one process (docs/processes.md#links, #monitors): the pids of the
-// processes it is linked to, in the order the links were made, the monitors it holds and those held on it, and
-// whether exit signals reach it as messages.
+// The links, monitors, registered name and exit trapping of one process (docs/processes.md#links, #monitors,
+// #registered-names): the pids of the processes it is linked to, in the order the links were made, the monitors it
+// holds and those held on it, its name, and whether exit signals reach it as messages.
 #include "terms.hpp"
 
 #include <algorithm>
@@ -39,20 +39,26 @@ class Signals final {
     // Remove every link and return them, as the process ends.
     std::vector<Word> take_links() noexcept { return std::exchange(links_, {}); }
 
-    // The monitors of one side, by reference: the other process's pid. References order by creation.
-    using Monitors = std::map<ReferenceIdentity, Word>;
+    // The other side of a monitor: its pid, and the registered name (an atom word) the monitor was made with, or 0.
+    struct Monitor {
+        Word pid;
+        Word name = 0;
+    };
+
+    // The monitors of one side, by reference. References order by creation.
+    using Monitors = std::map<ReferenceIdentity, Monitor>;
 
     // Monitor the process of `pid` with `reference` (monitor/2). Allocation failure throws.
-    void monitor(const ReferenceIdentity &reference, Word pid) { monitors_.emplace(reference, pid); }
+    void monitor(const ReferenceIdentity &reference, Word pid) { monitors_.emplace(reference, Monitor{pid}); }
 
     // Stop the monitor `reference` this process holds; the monitored pid, or none when it is not active.
     std::optional<Word> demonitor(const ReferenceIdentity &reference) noexcept {
         const auto node = monitors_.extract(reference);
-        return node ? std::optional{node.mapped()} : std::nullopt;
+        return node ? std::optional{node.mapped().pid} : std::nullopt;
     }
 
-    // Record that the process of `pid` monitors this one with `reference`. Allocation failure throws.
-    void watch(const ReferenceIdentity &reference, Word pid) { watchers_.emplace(reference, pid); }
+    // Record that `watcher` monitors this process with `reference`. Allocation failure throws.
+    void watch(const ReferenceIdentity &reference, const Monitor &watcher) { watchers_.emplace(reference, watcher); }
 
     // Forget the monitor `reference` held on this process.
     void unwatch(const ReferenceIdentity &reference) noexcept { watchers_.erase(reference); }
@@ -62,6 +68,12 @@ class Signals final {
 
     // Remove and return the monitors held on this process, as it ends: each gets a 'DOWN' message.
     Monitors take_watchers() { return std::exchange(watchers_, {}); }
+
+    // The registered name of the process, an atom word, or 0 for none (register/2).
+    Word name() const noexcept { return name_; }
+
+    // Register or (with 0) unregister the process's name.
+    void set_name(Word name) noexcept { name_ = name; }
 
   private:
     friend class ProcessContext;
@@ -74,6 +86,8 @@ class Signals final {
     Monitors monitors_;
     // Monitors held on this process: reference to the monitoring pid.
     Monitors watchers_;
+    // The registered name, an atom word, or 0.
+    Word name_ = 0;
     // Turns exit signals other than kill into messages.
     bool trap_exit_ = false;
 };

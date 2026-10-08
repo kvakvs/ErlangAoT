@@ -3,7 +3,7 @@
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
 selective receive; step 47: receive timeouts; step 48: links and exit
-signals; step 49: monitors.
+signals; step 49: monitors; step 50: registered names.
 
 ## Executor
 
@@ -84,8 +84,10 @@ first and return `Msg`.
 | --- | --- |
 | A pid of a live process | `Msg` is copied into the receiver's heap ([copying between heaps](runtime-heap.md#copying-between-heaps)), keeping its sharing, and appended to its signal inbox |
 | A pid of a process that has ended | Nothing; the send succeeds |
-| `{Name, Node}` of two atoms | Nothing (no name is registered until plan step 50, and there are no other nodes) |
-| An atom, or anything else | `badarg` (an atom names no registered process yet) |
+| A [registered name](#registered-names) | As for its pid; `badarg` when no live process has the name |
+| `{Name, nonode@nohost}` of two atoms | As for the pid registered as `Name`; nothing when there is none |
+| `{Name, Node}` for any other node | Nothing (there are no other nodes) |
+| Anything else | `badarg` |
 
 - Messages of one sender arrive in the order it sent them; a self-send is a
   message like any other.
@@ -179,7 +181,25 @@ the monitoring pid, so it can send the message when it ends.
 - `spawn_monitor/1,3` return `{Pid, Ref}`, the monitor made before the new
   process runs.
 - A process that ends drops the monitors it holds.
-- Monitors of registered names arrive with names (plan step 50).
+- `monitor(process, Name)` and `monitor(process, {Name, nonode@nohost})`
+  monitor the process registered as `Name` (`noproc` at once when there is
+  none); its `'DOWN'` names `{Name, nonode@nohost}` instead of the pid.
+  `{Name, Node}` for another node is `badarg`.
+
+## Registered names
+
+Plan step 50. The executor keeps one table of names (atoms) to pids, and each
+process its own name (`Signals::name`).
+
+- `register(Name, Pid)` names a live process: `badarg` for `undefined`, a
+  name in use, a process that already has a name, a process that has ended,
+  or a `Pid` that is not a pid. A process may register itself.
+- `unregister(Name)` releases the name (`badarg` when no process has it);
+  `whereis(Name)` is the pid or `undefined`; `registered()` lists the names
+  in atom-table order (OTP's order is unspecified too).
+- A process's name is released as it ends, before its links and monitors are
+  signalled, so a `'DOWN'` or `'EXIT'` receiver can register the name again,
+  as in OTP.
 
 ## Exit signals
 
@@ -223,7 +243,8 @@ recursion.
 | `is_process_alive(Pid)` | `badarg` unless `Pid` is a pid; true while its process has not ended |
 | `spawn_monitor(Fun)`, `spawn_monitor(M, F, Args)` | As `spawn`, returning `{Pid, Ref}` of a new [monitor](#monitors) |
 | `link(Pid)`, `unlink(Pid)` | `badarg` unless `Pid` is a pid ([links](#links)) |
-| `monitor(process, Pid)` | `badarg` for another type or item; a reference ([monitors](#monitors)) |
+| `monitor(process, Item)` | `badarg` for another type or item; a reference ([monitors](#monitors)); `Item` is a pid or a registered name |
+| `register(Name, Pid)`, `unregister(Name)`, `whereis(Name)`, `registered()` | See [registered names](#registered-names); `Name` must be an atom |
 | `demonitor(Ref)`, `demonitor(Ref, Options)` | `badarg` unless `Ref` is a reference and `Options` a proper list of `flush` and `info` |
 | `exit(Dest, Reason)`, `exit_signal(Dest, Reason)` | `badarg` unless `Dest` is a pid or reference; `true` after the [exit signal](#exit-signals) |
 | `process_flag(trap_exit, Bool)` | The previous setting; `badarg` for another flag or a non-boolean |

@@ -91,6 +91,8 @@ semantic_case(link_builtins
     "-module(a). f(P) -> {spawn_link(fun() -> ok end), spawn_link(a, f, []), link(P), unlink(P), exit(P, x), exit_signal(P, x), process_flag(trap_exit, true), fun exit/2}." 0 "^$")
 semantic_case(monitor_builtins
     "-module(a). f(P) -> R = monitor(process, P), {spawn_monitor(fun() -> ok end), demonitor(R), demonitor(R, [])}." 0 "^$")
+semantic_case(name_builtins
+    "-module(a). f(P) -> register(a, P), a ! x, {a, node} ! y, {whereis(a), registered(), unregister(a)}." 0 "^$")
 semantic_case(self_guard "-module(a). f(X) when X =:= self() -> X." 1 "\\[guards\\] notimpl")
 semantic_case(erlang_fun_unbridged "-module(a). f() -> fun erlang:apply/2." 1 "dynamic calls")
 semantic_case(display_fun_local "-module(a). f() -> fun display/1." 1 "function display/1 undefined")

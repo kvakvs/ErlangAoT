@@ -343,6 +343,8 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)â€
   entered like functions (`erlang_aot_builtin_frame_v1`); `length/1` in bodies,
   `++`, `--`, `binary_to_list/1`, `list_to_binary/1` and `iolist_to_binary/1`
   run in portions with rooted state and yield between them.
+- [x] Registered process names (step 50): `register/2`, `unregister/1`,
+  `whereis/1`, `registered/0`, sends and monitors by name.
 
 ### F27 â€” Typed/native callables and conversions
 

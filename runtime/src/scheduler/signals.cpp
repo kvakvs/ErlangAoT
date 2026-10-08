@@ -40,12 +40,24 @@ TermResult<Term> exit_message(ProcessContext &process, Word from, const Term &re
     return factory.tuple(std::array{*tag, *pid, *copy});
 }
 
-// {'DOWN', Ref, process, Pid, Reason} built in the heap of `process`.
-TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &reference, Word from,
+// What a 'DOWN' message names, built in the heap of `process`: the pid, or {Name, nonode@nohost} for a monitor made
+// with a registered name.
+TermResult<Term> monitored_item(ProcessContext &process, const Signals::Monitor &item) {
+    if (item.name == 0) {
+        return Term::from_word(item.pid, process);
+    }
+    TermFactory factory(process);
+    const auto name = Term::from_word(item.name, process);
+    const auto node = factory.atom(LOCAL_NODE);
+    return name && node ? factory.tuple(std::array{*name, *node}) : (name ? node : name);
+}
+
+// {'DOWN', Ref, process, Item, Reason} built in the heap of `process`.
+TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &reference, const Signals::Monitor &item,
                               const Term &reason) {
     TermFactory factory(process);
     const std::array parts{factory.atom("DOWN"), factory.reference(reference), factory.atom("process"),
-                           Term::from_word(from, process), reason.copy_to(process.heap())};
+                           monitored_item(process, item), reason.copy_to(process.heap())};
     const auto failed = std::ranges::find_if(parts, [](const auto &part) { return !part.has_value(); });
     if (failed != parts.end()) {
         return *failed;
@@ -98,23 +110,23 @@ void Executor::unlink(ProcessContext &process, Word pid) noexcept {
     }
 }
 
-Term Executor::monitor(ProcessContext &watcher, Word pid) {
+Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
     const auto reference = TermFactory(watcher).make_reference();
     const auto identity = reference.and_then([](const Term &term) { return term.reference_value(); });
     if (!identity) {
         throw std::bad_alloc();
     }
-    auto *target = find(watcher, pid);
+    auto *target = pid != 0 ? find(watcher, pid) : nullptr;
     if (target == &watcher) {
         return *reference;
     }
     if (!target) {
         const Running running(*this, watcher);
-        deliver(watcher, down_message(watcher, *identity, pid, atom(watcher, "noproc")));
+        deliver(watcher, down_message(watcher, *identity, {.pid = pid, .name = name}, atom(watcher, "noproc")));
         return *reference;
     }
     watcher.signals().monitor(*identity, pid);
-    target->signals().watch(*identity, pid_of(watcher));
+    target->signals().watch(*identity, {.pid = pid_of(watcher), .name = name});
     return *reference;
 }
 
@@ -201,8 +213,9 @@ void Executor::finish(ProcessContext &process) {
 
 bool Executor::notify(ProcessContext &process) {
     auto &signals = process.signals();
-    for (const auto &[reference, pid] : signals.take_monitors()) {
-        if (auto *target = find(process, pid)) {
+    names_.erase(signals.name());
+    for (const auto &[reference, monitored] : signals.take_monitors()) {
+        if (auto *target = find(process, monitored.pid)) {
             target->signals().unwatch(reference);
         }
     }
@@ -231,13 +244,49 @@ void Executor::notify(ProcessContext &process, const Term &reason, const std::ve
             signal(*target, from, reason, SignalKind::link);
         }
     }
-    for (const auto &[reference, pid] : watchers) {
-        auto *watcher = find(process, pid);
+    for (const auto &[reference, monitor] : watchers) {
+        auto *watcher = find(process, monitor.pid);
         if (watcher && !watcher->generated_calls().failure()) {
             watcher->signals().demonitor(reference);
-            deliver(*watcher, down_message(*watcher, reference, from, reason));
+            deliver(*watcher, down_message(*watcher, reference, {.pid = from, .name = monitor.name}, reason));
         }
     }
+}
+
+bool Executor::register_name(ProcessContext &context, Word name, Word pid) {
+    auto *process = find(context, pid);
+    if (!process || process->signals().name() != 0 || whereis(context, name) != 0) {
+        return false;
+    }
+    names_.insert_or_assign(name, pid);
+    process->signals().set_name(name);
+    return true;
+}
+
+bool Executor::unregister(ProcessContext &context, Word name) noexcept {
+    const auto pid = whereis(context, name);
+    if (pid == 0) {
+        return false;
+    }
+    names_.erase(name);
+    find(context, pid)->signals().set_name(0);
+    return true;
+}
+
+Word Executor::whereis(ProcessContext &context, Word name) const noexcept {
+    const auto found = names_.find(name);
+    // A host may release a registered context outside the executor: only a live process counts.
+    return found != names_.end() && find(context, found->second) ? found->second : 0;
+}
+
+std::vector<Word> Executor::registered(ProcessContext &context) const {
+    std::vector<Word> names;
+    for (const auto &[name, pid] : names_) {
+        if (find(context, pid)) {
+            names.push_back(name);
+        }
+    }
+    return names;
 }
 
 void Executor::stop(ProcessContext &process) {

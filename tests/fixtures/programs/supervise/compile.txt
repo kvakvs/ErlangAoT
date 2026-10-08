@@ -1,6 +1,1 @@
-exit 1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:25:48: undefined function supervise:whereis/1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:34:45: undefined function supervise:whereis/1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:46:12: undefined function supervise:whereis/1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:51:17: undefined function supervise:whereis/1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/worker.erl:8:20: undefined function worker:register/2
+exit 0

@@ -4,7 +4,8 @@
 
 // The process builtins of the bridge (docs/builtins.md, docs/processes.md): self/0, make_ref/0, spawn/1,3,
 // spawn_link/1,3, spawn_monitor/1,3, is_process_alive/1, sends ('!'/2, send/2), links (link/1, unlink/1), monitors
-// (monitor/2, demonitor/1,2), exit signals (exit/2, exit_signal/2) and process_flag(trap_exit, Bool).
+// (monitor/2, demonitor/1,2), exit signals (exit/2, exit_signal/2), process_flag(trap_exit, Bool) and registered
+// names (register/2, unregister/1, whereis/1, registered/0).
 namespace erlang_aot::runtime::builtins {
 namespace {
 // self(): the pid of the calling process.
@@ -68,12 +69,42 @@ TermResult<Term> spawn_monitor_call(ProcessContext &context, const AtomArgument 
                      detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term}));
 }
 
-// monitor(process, Pid): a reference; the caller gets {'DOWN', Ref, process, Pid, Reason} when the process ends.
-TermResult<Term> monitor(ProcessContext &context, const AtomArgument &type, const Term &item) {
-    if (type.term.atom_spelling().value_or("") != "process" || !item.is_pid()) {
+// A {Name, Node} pair of two atoms, as sends and monitors accept.
+bool remote_name(const Term &destination) {
+    if (!destination.is_tuple() || destination.tuple_size().value_or(0) != 2) {
+        return false;
+    }
+    return need(destination.tuple_element(0)).is_atom() && need(destination.tuple_element(1)).is_atom();
+}
+
+// Whether {Name, Node} names a process of this node.
+bool local_name(const Term &destination) {
+    return need(destination.tuple_element(1)).atom_spelling().value_or("") == detail::LOCAL_NODE;
+}
+
+// The name (an atom word) a monitor item gives: an atom or {Name, nonode@nohost}; badarg for anything else.
+Word monitored_name(const Term &item) {
+    if (item.is_atom()) {
+        return item.word();
+    }
+    if (!remote_name(item) || !local_name(item)) {
         bad_argument();
     }
-    return detail::Executor::of(context).monitor(context, item.word());
+    return need(item.tuple_element(0)).word();
+}
+
+// monitor(process, Item): a reference; the caller gets {'DOWN', Ref, process, Item, Reason} when the process ends.
+// Item is a pid, or a registered name as Name or {Name, nonode@nohost}.
+TermResult<Term> monitor(ProcessContext &context, const AtomArgument &type, const Term &item) {
+    if (type.term.atom_spelling().value_or("") != "process") {
+        bad_argument();
+    }
+    auto &executor = detail::Executor::of(context);
+    if (item.is_pid()) {
+        return executor.monitor(context, item.word());
+    }
+    const auto name = monitored_name(item);
+    return executor.monitor(context, executor.whereis(context, name), name);
 }
 
 // The options of demonitor/2: a proper list of flush and info.
@@ -176,28 +207,70 @@ TermResult<Term> is_process_alive(ProcessContext &context, const Term &pid) {
     return TermFactory(context).boolean(detail::Executor::alive(context, pid.word()));
 }
 
-// A {Name, Node} destination: two atoms.
-bool remote_name(const Term &destination) {
-    if (!destination.is_tuple() || destination.tuple_size().value_or(0) != 2) {
-        return false;
-    }
-    return need(destination.tuple_element(0)).is_atom() && need(destination.tuple_element(1)).is_atom();
-}
-
-// Dest ! Msg and erlang:send(Dest, Msg): Msg, after delivering it to the process of a pid (nothing when that process
-// has ended). A {Name, Node} message is dropped: no name is registered (plan step 50), so a bare name is badarg, as
-// is every other destination.
-TermResult<Term> send(ProcessContext &context, const Term &destination, const Term &message) {
+// The pid a send goes to: a pid; the process registered as an atom (badarg when none is); for {Name, Node} the
+// process registered as Name on this node, or 0 to drop the message. Anything else is badarg.
+Word destination_pid(ProcessContext &context, const Term &destination) {
     if (destination.is_pid()) {
-        if (const auto sent = detail::Executor::send(context, destination.word(), message); !sent) {
-            throw BuiltinFailure{.term = sent.error()};
+        return destination.word();
+    }
+    const auto &executor = detail::Executor::of(context);
+    if (destination.is_atom()) {
+        const auto pid = executor.whereis(context, destination.word());
+        if (pid == 0) {
+            bad_argument();
         }
-        return message;
+        return pid;
     }
     if (!remote_name(destination)) {
         bad_argument();
     }
+    return local_name(destination) ? executor.whereis(context, need(destination.tuple_element(0)).word()) : 0;
+}
+
+// Deliver `message` to the process of `pid` unless it is 0; returns the message.
+Term send_to(ProcessContext &context, Word pid, const Term &message) {
+    if (pid != 0) {
+        if (const auto sent = detail::Executor::send(context, pid, message); !sent) {
+            throw BuiltinFailure{.term = sent.error()};
+        }
+    }
     return message;
+}
+
+// Dest ! Msg and erlang:send(Dest, Msg): Msg, after delivering it to the process Dest names (nothing when that
+// process has ended or a {Name, Node} names none).
+TermResult<Term> send(ProcessContext &context, const Term &destination, const Term &message) {
+    return send_to(context, destination_pid(context, destination), message);
+}
+
+// register(Name, Pid): true; badarg for the name undefined, a name in use, a process that has a name or has ended.
+TermResult<Term> register_name(ProcessContext &context, const AtomArgument &name, const Term &pid) {
+    if (name.term.atom_spelling().value_or("") == "undefined" || !pid.is_pid() ||
+        !detail::Executor::of(context).register_name(context, name.term.word(), pid.word())) {
+        bad_argument();
+    }
+    return atom(context, "true");
+}
+
+// unregister(Name): true; badarg when no process has the name.
+TermResult<Term> unregister(ProcessContext &context, const AtomArgument &name) {
+    if (!detail::Executor::of(context).unregister(context, name.term.word())) {
+        bad_argument();
+    }
+    return atom(context, "true");
+}
+
+// whereis(Name): the pid registered as Name, or undefined.
+TermResult<Term> whereis(ProcessContext &context, const AtomArgument &name) {
+    const auto pid = detail::Executor::of(context).whereis(context, name.term.word());
+    return pid != 0 ? Term::from_word(pid, context) : TermFactory(context).atom("undefined");
+}
+
+// registered(): the registered names.
+TermResult<Term> registered(ProcessContext &context) {
+    const auto names = detail::Executor::of(context).registered(context);
+    TermFactory factory(context);
+    return factory.list_words(names, need(factory.nil()));
 }
 
 constexpr std::array PROCESS_BUILTINS{
@@ -218,6 +291,10 @@ constexpr std::array PROCESS_BUILTINS{
     typed_entry<monitor>("erlang", "monitor"),
     typed_entry<demonitor>("erlang", "demonitor"),
     typed_entry<demonitor_options_call>("erlang", "demonitor"),
+    typed_entry<register_name>("erlang", "register"),
+    typed_entry<unregister>("erlang", "unregister"),
+    typed_entry<whereis>("erlang", "whereis"),
+    typed_entry<registered>("erlang", "registered"),
     typed_entry<send>("erlang", "!"),
     typed_entry<send>("erlang", "send"),
 };

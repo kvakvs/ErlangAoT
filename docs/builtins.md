@@ -36,7 +36,9 @@ builtin both the compiler and the runtime know:
   `spawn_link/1,3`, `link/1`, `unlink/1`, `exit/2`, `exit_signal/2`,
   `process_flag/2` ([links](processes.md#links)); monitors (step 49):
   `spawn_monitor/1,3`, `monitor/2`, `demonitor/1,2`
-  ([monitors](processes.md#monitors));
+  ([monitors](processes.md#monitors)); registered names (step 50):
+  `register/2`, `unregister/1`, `whereis/1`, `registered/0`
+  ([registered names](processes.md#registered-names));
 - messages (plan step 45): `'!'/2` (the `!` operator) and `send/2`
   ([messages](processes.md#messages)).
 

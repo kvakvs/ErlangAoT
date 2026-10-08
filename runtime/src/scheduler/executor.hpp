@@ -4,6 +4,7 @@
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <map>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -18,6 +19,9 @@ struct InitialCall final {
     // A proper list of the arguments.
     Term arguments;
 };
+
+// The name of the only node, as node/0 returns it.
+inline constexpr std::string_view LOCAL_NODE = "nonode@nohost";
 
 // The pid word of a process.
 Word pid_of(ProcessContext &process) noexcept;
@@ -53,10 +57,21 @@ class Executor final {
     // unlink(Pid) of `process`: the link has no effect from now on.
     static void unlink(ProcessContext &process, Word pid) noexcept;
     // monitor(process, Pid) of the running `watcher`: a new reference. For an ended process the watcher gets
-    // {'DOWN', Ref, process, Pid, noproc} at once; monitoring itself creates nothing. Allocation failure throws.
-    Term monitor(ProcessContext &watcher, Word pid);
+    // {'DOWN', Ref, process, Pid, noproc} at once; monitoring itself creates nothing. A monitor made with a
+    // registered `name` (an atom word; `pid` 0 when nothing has the name) names {Name, nonode@nohost} in its
+    // 'DOWN'. Allocation failure throws.
+    Term monitor(ProcessContext &watcher, Word pid, Word name = 0);
     // demonitor(Ref) of `watcher`: whether the monitor was active; no 'DOWN' of it arrives afterwards.
     static bool demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept;
+    // register(Name, Pid) (docs/processes.md#registered-names): false when the name is taken, or the process has a
+    // name or has ended. Allocation failure throws.
+    bool register_name(ProcessContext &context, Word name, Word pid);
+    // unregister(Name): false when no live process has the name.
+    bool unregister(ProcessContext &context, Word name) noexcept;
+    // The pid of the live process registered as `name` (an atom word), or 0.
+    Word whereis(ProcessContext &context, Word name) const noexcept;
+    // The registered names of live processes, in atom order. Allocation failure throws.
+    std::vector<Word> registered(ProcessContext &context) const;
     // An exit signal of exit/2 or exit_signal/2 from the running `sender` to the process of a pid word, acted on at
     // once; `self_normal` is exit/2's quirk: reason normal sent to itself ends the sender. Allocation failure throws.
     void exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal);
@@ -142,6 +157,8 @@ class Executor final {
     ProcessContext *running_ = nullptr;
     // The process whose outcome ends the program, once one ended; run() returns it.
     ProcessContext *finished_ = nullptr;
+    // Registered names (atom words) and their pids; a name is released when its process ends.
+    std::map<Word, Word> names_;
     // Further ended processes that would have ended the program, released by clear().
     std::vector<ProcessContext *> stopped_;
 };
