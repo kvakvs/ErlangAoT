@@ -115,7 +115,8 @@ messages of the mailbox:
   (`erlang_aot_wait_frame_v1`, a builtin entered like a call): it leaves the
   run queue until a send delivers a message to it, then the scan continues
   with the messages that arrived. Waiting processes keep their frames and
-  messages as collection roots.
+  messages as collection roots and collect when resumed
+  ([waiting processes](runtime-heap.md#waiting-and-suspended-processes)).
 - Names bound in every clause, and in the `after` body when there is one, are
   exported after the `receive`, as for `case`; a call in a clause or `after`
   body's tail position is a tail call, so a server loop runs in constant

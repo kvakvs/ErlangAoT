@@ -210,6 +210,8 @@
   liveness via `find`), `Signals::name_`; `notify()` erases the name first. `Signals::Monitor{pid, name}`: a name
   monitor's 'DOWN' item is {Name, nonode@nohost} (`LOCAL_NODE`). Sends: `destination_pid` (pid, atom -> badarg if
   unregistered, {Name, Node} -> local lookup or drop).
+  Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
+  entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

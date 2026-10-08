@@ -46,7 +46,8 @@ Plan: [8E](11-plan.md#step-8e), [8F](11-plan.md#step-8f),
   stack; values live across calls spill to raw frame slots (step 19).
 - [x] Continuation roots: frame term slots, live registers and the failure
   channel enumerated, collectable inside a declared `SafePoint` (step 23).
-- [ ] Mailbox and transit roots with concrete owners.
+- [x] Mailbox and transit roots with concrete owners (step 51: messages are
+  mailbox roots; delivery copies straight into the receiver).
 - [x] Generated-code safepoints (function entry, comprehension loop heads) with
   term spills reloaded from term slots after collection (steps 24, 26).
 
@@ -83,7 +84,8 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
 - [x] Optional runtime-wide memory limit (uncapped by default) and
   program-facing caps `--max-heap`, `--max-stack`, `--max-memory` (27A).
 - [ ] `erlang:garbage_collect/0` with the builtins.
-- [ ] Stress with continuations and mailbox roots as they arrive.
+- [x] Stress with continuations and mailbox roots as they arrive (step 51:
+  `executables_mailbox_collection`).
 - [ ] Optional later: generational old heap with minor collections.
 
 ### F05 — Graph copying and process isolation

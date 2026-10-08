@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "entry": "mailbox_collection",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "hoarder 2000\nmany []\nwaiter timeout 400\ndeep 4501500 300\n"
+    },
+    {
+      "args": [
+        "bounded"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "consumed 3000\n"
+    },
+    {
+      "args": [
+        "--max-heap",
+        "65536",
+        "bounded"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "consumed 3000\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "mailbox_collection.erl": "5666b8bd539f89390304b12389029dd4f5b847241f33154fe5a24396590f3904"
+  }
+}

@@ -945,17 +945,17 @@ name monitors, badarg rows).
 
 ### 51. Collect garbage with mailboxes and suspended processes
 
-Backlog: F02, F04. Depends on: [26](#step-26), [47](#step-47).
-
-Trace message queues, in-transit messages, receive cursors and suspended
-continuations as roots.
-
-- Success criteria
-  - [ ] Suspended and message-heavy processes survive collection with all
-    messages and cursor state intact.
-- Tests
-  - [ ] Small-heap stress: processes holding large mailboxes and suspended in
-    receive while collections run.
+Done 2026-10-08 (contract `docs/runtime-heap.md#waiting-and-suspended-processes`).
+No runtime change was needed: messages (inbox and queue, `'EXIT'`/`'DOWN'`
+too) are rewritten in place, so the list-position cursor and deadline stay
+valid; delivery copies straight into the receiver's fragments (no separate
+in-transit buffer); waiting/yielded processes keep frames and continuation
+registers as roots and collect at the resume entry safepoint. OTP golden
+`executables_mailbox_collection` (2,000-message hoarder, 40 hoarders, timeout
+waiter, 3,000-deep recursion under message load; messages with shared
+subterms and off-heap binaries, checked intact and in order) plus an authored
+`--max-heap 65536` run of an acknowledging consumer (about 1 MB through a
+64 KB cap).
 
 <a id="step-52"></a>
 

@@ -193,7 +193,7 @@ remains the full check that every slot names an object start, for tests.
 | Registers | `x[0..live)` (`ProcessStack::keep_registers`) | A suspended entry's arguments (step 43); every push and pop clears `live` |
 | Failure channel | Error payload (BEAM `fvalue`), `erlang:error/2,3` argument list, stack trace term | Rebound in place; captured trace frames are descriptor pointers into code |
 | Trap state | The term words of a trapping builtin's `TrapState` (step 43A) | Released when the builtin finishes or fails |
-| Mailbox | Every message in the signal inbox and the message queue (step 45) | Until a receive takes it |
+| Mailbox | Every message in the signal inbox and the message queue (step 45), including `'EXIT'` and `'DOWN'` messages | Until a receive takes it; rewritten in place, so the receive cursor (a list position) and timeout deadline stay valid |
 | Explicit roots | The span a host passes to `collect(roots)` (8E) | Read back after the call |
 | Off-heap list | None | Links are swept and relinked, not traced |
 
@@ -260,6 +260,22 @@ every other runtime service, including allocation, construction and matching
 services; `erlang_aot_return_v1`; exception propagation; and later message
 delivery (step 45). Services may therefore hold raw heap words in C++ for their
 whole run, and their input arrays and outputs need no reload.
+
+### Waiting and suspended processes
+
+Plan step 51. A process that is not running is never collected: it is waiting
+in a receive, queued after a yield or trap, or not yet started, and everything
+it holds is already a root (its frames, the registers of the entry or
+continuation it will resume at, trap state and its messages). Messages sent to
+it are copied into fragments of its heap. Every delivery wakes a waiting
+process, and resuming it repeats the entry of its continuation (the wait
+builtin, a trap continuation or the function it yielded at), which is a
+function-entry safepoint: the first thing a resumed process does is collect
+when its heap asks for it. A process waiting in a selective receive that
+skips many messages therefore collects as they arrive, as ERTS collects a
+process when it is next scheduled. `executables_mailbox_collection` checks
+hoarding, waiting with a timeout and deep recursion under message load, and
+that a consumer acknowledging 3,000 messages stays within `--max-heap 65536`.
 
 Rejected: allocation as a safepoint (BEAM `test_heap`). It would need every
 service input and every SSA term live across any allocation in a root, a reload
