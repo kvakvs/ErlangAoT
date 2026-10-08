@@ -40,13 +40,10 @@ std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &
 }
 
 namespace {
-// A literal fun M:F/A: an erlang port builtin is unavailable (no ports), another erlang one needs a bridge builtin.
+// A literal fun M:F/A: an erlang one needs a bridge builtin.
 std::string_view external_fun_capability(const std::u32string_view owner, const FunctionKey &key) {
     if (owner != U"erlang") {
         return "";
-    }
-    if (port_builtin(key)) {
-        return "ports";
     }
     return bridge_builtin(key) ? "" : "dynamic calls";
 }

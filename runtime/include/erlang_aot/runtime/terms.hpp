@@ -80,8 +80,23 @@ class AtomStorage;
 struct AtomValue;
 class ProcessIdentity;
 
-// A port identity; no ports exist yet (plan step 53), so TermFactory::port reports term services unavailable.
-class PortIdentity final {};
+// The identity of a port (docs/ports.md#identity): its number, kept outside any heap and rebuilt as a term by
+// TermFactory::port. Obtained only from a port term (Term::port_value).
+class PortIdentity final {
+  public:
+    // Order by number, as ports order.
+    auto operator<=>(const PortIdentity &) const noexcept = default;
+
+  private:
+    friend class Term;
+    friend class TermFactory;
+
+    // Wrap the number of an existing port.
+    explicit PortIdentity(Word number) noexcept : number_(number) {}
+
+    // The process-wide port number.
+    Word number_;
+};
 
 // The identity of a reference: the number make_reference/0 issued, kept outside any heap (monitor references) and
 // rebuilt as a term by TermFactory::reference. Obtained only from a reference term (Term::reference_value).
@@ -100,7 +115,9 @@ class ReferenceIdentity final {
     // The program-wide reference number.
     std::uint64_t number_;
 };
-class FunctionIdentity;
+
+// A function identity outside fun terms; none exist, so TermFactory::function reports term services unavailable.
+class FunctionIdentity final {};
 class TermFactory;
 
 namespace detail {

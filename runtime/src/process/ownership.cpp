@@ -22,7 +22,7 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
         return std::unexpected(Status::invalid_argument);
     }
     // Process count is unlimited; only the never-recycled pid number sequence can run out.
-    const auto number = impl_->process_numbers.issue();
+    const auto number = impl_->identity_numbers.issue_pid();
     if (!number) {
         return std::unexpected(number.error() == TermError::out_of_memory ? Status::out_of_memory
                                                                           : Status::resource_limit);
@@ -30,7 +30,7 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
     try {
         auto context = std::unique_ptr<ProcessContext>(
             new ProcessContext(*this, ProcessIdentity({impl_->identity}, *number), options, stack_options,
-                               impl_->memory, impl_->process_numbers));
+                               impl_->memory, impl_->identity_numbers));
         auto *borrowed = context.get();
         const auto process = impl_->processes.emplace(static_cast<Word>(*number), borrowed).first;
         try {

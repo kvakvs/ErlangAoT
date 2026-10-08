@@ -6,6 +6,11 @@ defines them, and external I/O goes through them. Steps 57B–57F implement
 it; each section names its step. This contract settles the representation,
 the driver model and the I/O thread before any source can open a port.
 
+Implemented: identities, the port table, the port builtins and messages,
+links, monitors, names and exit signals of ports, and output-only `fd` ports
+(step 57B, `runtime/src/scheduler/ports.cpp`, `runtime/src/builtins/ports.cpp`,
+`runtime/src/ports/`; OTP golden `executables_port_identities`).
+
 ## Identity
 
 - A port is an immediate word: tag `0x7` (`TermKind2::port` under the
@@ -34,8 +39,19 @@ the driver model and the I/O thread before any source can open a port.
   ends, its port closes; a port that closes sends exit signals to its links
   and `'DOWN'` messages to its monitors with its reason (`normal` for a close
   that is not an error, a POSIX atom such as `epipe` otherwise).
-- An exit signal to a port with a reason other than `normal` closes it
-  (`kill` too).
+- An exit signal reaching a port closes it with its reason (`kill` from
+  `exit/2` as `killed`), except `normal` through a link from a process other
+  than the connected one, which only removes the link. `exit(Port, normal)`
+  closes the port. A connected process that unlinked leaves its port open
+  when it ends.
+- A request message from a process other than the connected one, or a
+  malformed message, sends the connected process an exit signal `badsig`
+  from the port; the port stays open.
+- A port's exit signals and messages to a process running on another worker
+  wait for that process's time slice to end (they hold only atoms, pids and
+  ports); an `exit(Port, Reason)` with a reason term in the sender's heap
+  makes the builtin run again until no linked or monitoring process runs
+  elsewhere, as for process signals ([workers](processes.md#workers)).
 - Ports take registered names (`register/2`) and `monitor(port, Port)`;
   `link/1` and `unlink/1` accept them.
 

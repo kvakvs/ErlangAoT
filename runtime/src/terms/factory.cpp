@@ -24,7 +24,5 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
 
-TermResult<Term> TermFactory::port(const PortIdentity &) { return unavailable("TermFactory::port"); }
-
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
 } // namespace erlang_aot::runtime

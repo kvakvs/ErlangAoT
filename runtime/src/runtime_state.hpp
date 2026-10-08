@@ -28,7 +28,7 @@ class Runtime::Impl final {
     // storage owners, which may outlive a context.
     std::shared_ptr<detail::RuntimeMemory> memory;
     // Pid numbers of every context created here, from the process-wide sequence; never reused.
-    detail::ProcessNumbers process_numbers;
+    detail::IdentityNumbers identity_numbers;
     // Destroy process owners before the above service bindings; no signals or workers exist yet.
     std::unordered_map<const ProcessContext *, std::unique_ptr<ProcessContext>> contexts;
     // Live processes by pid number, for is_process_alive/1 and later routing.

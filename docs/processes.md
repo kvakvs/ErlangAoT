@@ -257,6 +257,9 @@ the monitoring pid, so it can send the message when it ends.
   monitor the process registered as `Name` (`noproc` at once when there is
   none); its `'DOWN'` names `{Name, nonode@nohost}` instead of the pid.
   `{Name, Node}` for another node is `badarg`.
+- `monitor(port, Port | Name)` monitors a port ([ports](ports.md#port-table-and-ownership)):
+  `{'DOWN', Ref, port, Port, Reason}` when it closes. A pid for `port`, or a
+  port for `process`, is `badarg`.
 
 ## Registered names
 
@@ -308,27 +311,11 @@ recursion.
 
 ## Ports
 
-Plan step 53 decided that programs have no ports; step 57A replaced that
-decision with the [port contract](ports.md), which steps 57B–57F implement.
-Until step 57B lands the step-53 behavior below still holds.
-
-- No port term can be made: `is_port/1` is false for every value, there is no
-  port printing, ordering or copying, and `TermFactory::port` stays an
-  unavailable term service.
-- A call of a port builtin is an explicit compile-time capability failure,
-  `[ports] notimpl` (feature `ports`, deferred): `open_port/2`,
-  `port_close/1`, `port_command/2,3`, `port_connect/2`, `port_control/3`,
-  `port_call/2,3`, `port_info/1,2`, `port_to_list/1`, `list_to_port/1` and
-  `ports/0`, called locally (auto-imported), as `erlang:F(...)` or named by
-  `fun F/A` or `fun erlang:F/A`. A module that defines the function itself
-  (with `no_auto_import`) calls its own.
-- A port builtin reached through a dynamic call (`apply/3`, `M:F(...)`) raises
-  `undef`, as for any function the program does not have.
-- Operations that accept ports in OTP treat every argument as a non-port:
-  `monitor(port, X)` and `link/1`, `exit/2` of a non-pid raise `badarg`.
-
-See [ports](ports.md) for the identities, drivers, I/O thread, files and
-sockets that replace it.
+Ports (plan steps 57A–57F) are specified in [ports](ports.md): a port is
+linked to its opener, takes part in links, monitors, exit signals and
+registered names like a process, and talks to its connected process with
+messages. Step 57B provides identities, the port table, the port builtins
+and output-only `{fd, In, Out}` ports.
 
 ## Builtins
 

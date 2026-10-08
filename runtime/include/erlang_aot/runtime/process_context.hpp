@@ -14,7 +14,7 @@ struct OutputSink;
 
 namespace detail {
 class RuntimeMemory;
-class ProcessNumbers;
+class IdentityNumbers;
 class Executor;
 } // namespace detail
 
@@ -148,11 +148,11 @@ class ProcessContext final {
     ProcessStack stack_;
     // Create only after runtime identity/ownership and heap limits are validated.
     ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions heap_options, StackOptions stack_options,
-                   std::shared_ptr<detail::RuntimeMemory> memory, const detail::ProcessNumbers &numbers);
+                   std::shared_ptr<detail::RuntimeMemory> memory, const detail::IdentityNumbers &numbers);
     // The runtime-wide memory account that this process's heap and stack charge.
     const std::shared_ptr<detail::RuntimeMemory> &memory() const noexcept;
     // The pid numbers the runtime issued, against which pid words are admitted.
-    const detail::ProcessNumbers &process_numbers() const noexcept;
+    const detail::IdentityNumbers &identity_numbers() const noexcept;
     // The runtime that owns this context; the executor creates and releases processes through it.
     Runtime &runtime() noexcept;
 };

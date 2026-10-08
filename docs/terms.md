@@ -3,9 +3,8 @@
 Admitted kinds: atoms/booleans, arbitrary integers, finite binary64 floats,
 tuples, proper/improper lists and strings, maps, bitstrings and ordinary tuple
 records; native records ([native records](native-records.md)); funs
-([function values](funs.md)); local pids and references
-([below](#pids-and-references)). Programs have no ports
-([decision](processes.md#ports)). Word encodings are in
+([function values](funs.md)); local pids, ports and references
+([below](#pids-and-references), [ports](ports.md#identity)). Word encodings are in
 [abi.md](abi.md#terms).
 
 ## Ownership
@@ -158,6 +157,10 @@ new reference; `pid_to_list/1` and `ref_to_list/1` return their text.
   exited process stays a valid term, as in OTP. 32-bit targets have 2^28
   numbers per program run, 64-bit targets 2^60; creating a process past them
   fails with `resource_limit`.
+- A port (plan step 57B) is an immediate word (low four bits `0x7`) holding
+  its number from its own never-reused sequence, admitted like a pid; it
+  prints as `#Port<0.N>` and orders between funs and pids
+  ([ports](ports.md#identity)).
 - A reference is a heap cell (`reference`: header plus an untraced 64-bit
   number) admitted like every heap term: only in its own process, stale after
   a collection of a host `Term`, copied by value between processes.

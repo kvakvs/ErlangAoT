@@ -6,7 +6,7 @@ class ProcessContext::Impl final {
   public:
     // Bind the runtime and identity once, issuing a separately retained token for future host bindings.
     Impl(Runtime &runtime, ProcessIdentity identity, std::shared_ptr<detail::RuntimeMemory> memory,
-         const detail::ProcessNumbers &numbers)
+         const detail::IdentityNumbers &numbers)
         : runtime(runtime), identity(identity), memory(std::move(memory)), numbers(numbers) {}
 
     // Runtime-wide service bindings will be resolved here once their owning services exist.
@@ -16,7 +16,7 @@ class ProcessContext::Impl final {
     // Charge this process's heap and stack growth to the runtime-wide account.
     std::shared_ptr<detail::RuntimeMemory> memory;
     // Admit pid words of this runtime only; owned by the runtime, which outlives its contexts.
-    const detail::ProcessNumbers &numbers;
+    const detail::IdentityNumbers &numbers;
     // Outlive context storage when a host pins the token; invalidate before mailbox/heap destruction.
     std::shared_ptr<ContextLifetime> lifetime{new ContextLifetime};
 };
@@ -27,7 +27,7 @@ bool ContextLifetime::alive() const noexcept { return alive_; }
 
 ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapOptions options,
                                StackOptions stack_options, std::shared_ptr<detail::RuntimeMemory> memory,
-                               const detail::ProcessNumbers &numbers)
+                               const detail::IdentityNumbers &numbers)
     : impl_(std::make_unique<Impl>(runtime, identity, std::move(memory), numbers)), heap_(*this, options),
       generated_calls_(stack_), stack_(*this, stack_options) {}
 
@@ -49,7 +49,7 @@ std::weak_ptr<const ContextLifetime> ProcessContext::lifetime() const noexcept {
 
 const std::shared_ptr<detail::RuntimeMemory> &ProcessContext::memory() const noexcept { return impl_->memory; }
 
-const detail::ProcessNumbers &ProcessContext::process_numbers() const noexcept { return impl_->numbers; }
+const detail::IdentityNumbers &ProcessContext::identity_numbers() const noexcept { return impl_->numbers; }
 
 Runtime &ProcessContext::runtime() noexcept { return impl_->runtime; }
 

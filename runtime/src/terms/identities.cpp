@@ -1,6 +1,7 @@
 #include "identities.hpp"
 #include "../memory/heap_object.hpp"
 #include "../memory/heap_storage.hpp"
+#include "../process/identities.hpp"
 #include "term_layout.hpp"
 #include <atomic>
 #include <cstring>
@@ -46,6 +47,21 @@ TermResult<Term> TermFactory::pid(const ProcessIdentity &identity) {
     return Term::from_word(detail::pid_word(static_cast<Word>(identity.serial_)), (*owner)->owner_);
 }
 
+TermResult<Term> TermFactory::port(const PortIdentity &identity) {
+    const auto owner = heap();
+    if (!owner) {
+        return std::unexpected(owner.error());
+    }
+    return Term::from_word(detail::port_word(identity.number_), (*owner)->owner_);
+}
+
+TermResult<PortIdentity> Term::port_value() const {
+    if (!is_port()) {
+        return std::unexpected(TermError::wrong_type);
+    }
+    return PortIdentity(detail::port_number(value_));
+}
+
 TermResult<Term> TermFactory::make_reference() { return reference(ReferenceIdentity(next_reference())); }
 
 TermResult<Term> TermFactory::reference(const ReferenceIdentity &identity) {
@@ -73,7 +89,7 @@ bool Term::is_pid() const { return !heap_ && !atom_ && TermTag{value_}.get_kind(
 
 bool Term::is_reference() const { return kind() == TermKind::local_reference; }
 
-bool Term::is_port() const { return false; }
+bool Term::is_port() const { return !heap_ && !atom_ && TermTag{value_}.get_kind() == TermKind::local_port; }
 
 namespace detail {
 TermResult<std::uint64_t> reference_number(const Term &value) noexcept {
@@ -90,7 +106,8 @@ TermResult<std::uint64_t> reference_number(const Term &value) noexcept {
 }
 
 TermResult<int> identity_order(const Term &left, const Term &right) noexcept {
-    if (left.is_pid()) {
+    if (left.is_pid() || left.is_port()) {
+        // Pid and port words keep their number above the same four tag bits.
         return numbers(pid_number(left.word()), pid_number(right.word()));
     }
     const auto lhs = reference_number(left);
@@ -102,6 +119,10 @@ TermResult<int> identity_order(const Term &left, const Term &right) noexcept {
 }
 
 TermResult<void> print_identity(const Term &value, TextOutput &out) {
+    if (value.is_port()) {
+        out.append("#Port<0." + std::to_string(port_number(value.word())) + ">");
+        return {};
+    }
     if (value.is_pid()) {
         const std::uint64_t number = pid_number(value.word());
         const auto serial = number >> PID_NUMBER_BITS;

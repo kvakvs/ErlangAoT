@@ -1,9 +1,11 @@
 #pragma once
+#include "../ports/port.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
+#include <erlang_aot/runtime/runtime.hpp>
 #include <map>
 #include <mutex>
 #include <string_view>
@@ -31,6 +33,62 @@ struct SpawnOptions final {
     bool monitor = false;
 };
 
+// A request sent to a port as a message (docs/ports.md#builtins-and-port-messages): {From, close},
+// {From, {command, Data}} or {From, {connect, Pid}}; anything else is malformed.
+struct PortRequest final {
+    enum class Kind : std::uint8_t { close, command, connect, malformed };
+    Kind kind = Kind::malformed;
+    // The pid the request names as its sender, which must be the port's connected process.
+    Word from = 0;
+    // The output of a command, its framing not yet applied.
+    std::vector<std::byte> data;
+    // The new connected process of a connect.
+    Word owner = 0;
+
+    // A request without data or a new owner.
+    static PortRequest of(Kind kind, Word from) { return {kind, from, {}, 0}; }
+};
+
+// What port_info/1,2 report of an open port, copied out of the port table.
+struct PortInfo final {
+    std::string name;
+    std::vector<Word> links;
+    Word id = 0;
+    Word connected = 0;
+    std::size_t input = 0;
+    std::size_t output = 0;
+    std::optional<std::int64_t> os_pid;
+    std::vector<Word> monitored_by;
+    Word registered = 0;
+};
+
+// A signal from a port to a process that holds no heap term, so it can wait while its target runs on another worker:
+// an exit signal or 'DOWN' with an atom reason, or a message of the port protocol.
+struct PortEvent final {
+    enum class Kind : std::uint8_t { exit, down, closed, connected };
+    Kind kind = Kind::exit;
+    // The port word, and the reason atom word of an exit signal or a 'DOWN'.
+    Word port = 0;
+    Word reason = 0;
+    // The monitor of a 'DOWN' and the registered name it was made with, or 0.
+    std::optional<ReferenceIdentity> reference;
+    Word name = 0;
+
+    // An exit signal with an atom reason.
+    static PortEvent exit(Word port, Word reason) noexcept { return {Kind::exit, port, reason, std::nullopt, 0}; }
+
+    // A message {Port, closed} or {Port, connected}.
+    static PortEvent message(Kind kind, Word port) noexcept { return {kind, port, 0, std::nullopt, 0}; }
+
+    // A 'DOWN' of `reference` with an atom reason.
+    static PortEvent down(Word port, Word reason, const ReferenceIdentity &reference, Word name) noexcept {
+        return {Kind::down, port, reason, reference, name};
+    }
+};
+
+// The outcome of port output: written, the port is not open, or the data does not fit the port's packet header.
+enum class PortOutcome : std::uint8_t { done, not_open, too_long };
+
 // The name of the only node, as node/0 returns it.
 inline constexpr std::string_view LOCAL_NODE = "nonode@nohost";
 
@@ -42,6 +100,9 @@ bool ends_program(ProcessContext &process) noexcept;
 
 class Executor final {
   public:
+    // Bind the executor to the runtime whose processes it runs.
+    explicit Executor(Runtime::Impl &runtime) : runtime_(runtime) {}
+
     // The executor of a context's runtime.
     static Executor &of(ProcessContext &context) noexcept;
 
@@ -68,11 +129,11 @@ class Executor final {
     bool link(ProcessContext &process, Word pid);
     // unlink(Pid) of `process`: the link has no effect from now on.
     static void unlink(ProcessContext &process, Word pid) noexcept;
-    // monitor(process, Item) of the running `watcher`: a new reference, for the pid, or for the process registered
-    // as `name` (an atom word; `pid` is then 0), whose 'DOWN' names {Name, nonode@nohost}. For an ended or
-    // unregistered process the watcher gets its 'DOWN' with noproc at once; monitoring itself creates nothing.
-    // Allocation failure throws.
-    Term monitor(ProcessContext &watcher, Word pid, Word name = 0);
+    // monitor(process, Item), or monitor(port, Item) with `port`, of the running `watcher`: a new reference, for the
+    // pid or port, or for what is registered as `name` (an atom word; `pid` is then 0), whose 'DOWN' names
+    // {Name, nonode@nohost}. For an ended, closed or unregistered target the watcher gets its 'DOWN' with noproc at
+    // once; monitoring itself creates nothing. Allocation failure throws.
+    Term monitor(ProcessContext &watcher, Word pid, Word name = 0, bool port = false);
     // demonitor(Ref) of `watcher`: whether the monitor was active; no 'DOWN' of it arrives afterwards.
     static bool demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept;
     // register(Name, Pid) (docs/processes.md#registered-names): false when the name is taken, or the process has a
@@ -88,6 +149,26 @@ class Executor final {
     // once; `self_normal` is exit/2's quirk: reason normal sent to itself ends the sender. Allocation failure throws,
     // builtins::Blocked while the target runs on another worker.
     void exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal);
+
+    // Ports (docs/ports.md). Open a port of `owner` running `driver`, linked to it; the port's word. Allocation failure
+    // throws.
+    Word open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driver, PortOptions options,
+                   std::string spelling);
+    // port_close(Port) of `caller`: false when the port is not open.
+    bool close_port(ProcessContext &caller, Word port);
+    // port_command(Port, Data): write `data` with the port's framing; a failed write closes the port.
+    PortOutcome command_port(ProcessContext &caller, Word port, std::vector<std::byte> data);
+    // port_connect(Port, Pid): false when the port is not open or Pid is not a live process; links Pid.
+    bool connect_port(Word port, const Term &owner_pid);
+    // Port ! Request from `sender`; a malformed request, or one naming another process than the connected one, sends
+    // the connected process an exit signal badsig. Nothing for a port that is not open.
+    void port_request(ProcessContext &sender, Word port, const PortRequest &request);
+    // What port_info/1,2 report; none for a port that is not open.
+    std::optional<PortInfo> port_info(Word port) const;
+    // The open ports, oldest first.
+    std::vector<Word> ports() const;
+    // Whether `port` is open and takes port_control/3.
+    bool controllable(Word port) const;
 
     // Run queued processes on RuntimeOptions::schedulers workers (this thread and more threads) until `main` ends
     // (also by an exit signal) or another process halts or fails outside Erlang; once every worker stopped, return
@@ -115,14 +196,58 @@ class Executor final {
         std::vector<ProcessContext *> blockers;
         // Pids of the processes this one holds until its next slice ends.
         std::vector<Word> holding;
+        // Port signals that wait for this running process's slice to end, oldest first.
+        std::vector<PortEvent> events;
     };
-
-    // The live process of a pid word this runtime issued, or null once it ended; the lock is held.
-    static ProcessContext *find(ProcessContext &context, Word pid) noexcept;
 
     // How an exit signal was sent (docs/processes.md#exit-signals): by a link, by exit_signal/2 or exit/2 to another
     // process, or by exit/2 to the sender itself, where reason normal ends it.
     enum class SignalKind : std::uint8_t { link, exit, self_exit };
+
+    // Whether `word` is a port word rather than a pid word.
+    static bool is_port_word(Word word) noexcept;
+    // The open port of a port word, or null.
+    Port *open(Word port) const noexcept;
+    // Close an open port with `reason`: unregister it, send exit signals to its links and 'DOWN' messages to its
+    // monitors, release its driver. A reason other than an atom requires that no linked or monitoring process runs
+    // elsewhere.
+    void close(Port &port, const Term &reason);
+    // An exit signal from `from` at an open port: a link's normal from another process than the connected one does
+    // nothing; anything else closes the port, kill as killed.
+    void port_exit(Port &port, Word from, const Term &reason, SignalKind kind);
+    // Write `data` to an open port with its framing; a failed write closes the port with the driver's reason.
+    PortOutcome write(ProcessContext &caller, Port &port, std::vector<std::byte> data);
+    // Act on a well-formed request of the connected process; false when it is not one (badsig).
+    bool serve(ProcessContext &sender, Port &port, const PortRequest &request);
+    // Close the port or connect it to the request's new owner, then tell the old connected process so.
+    void answer(ProcessContext &sender, Port &port, const PortRequest &request);
+    // Send the port's connected process an exit signal badsig.
+    void badsig(ProcessContext &sender, Port &port);
+    // Send a linked process the exit signal of a closing port, at once or when its slice ends.
+    void link_closed(ProcessContext &target, Word port, const Term &reason);
+    // Send a monitoring process the 'DOWN' of a closing port, at once or when its slice ends.
+    void monitor_closed(ProcessContext &target, Word port, const ReferenceIdentity &reference, Word name,
+                        const Term &reason);
+    // A process a linked pid or port leads to that runs on another worker, or null.
+    ProcessContext *busy_link(ProcessContext &process, Word link) noexcept;
+    // A process linked to or monitoring `port` that runs on another worker, or null.
+    ProcessContext *busy_peer(const Port &port) noexcept;
+    // Signal `target` from a port now, or when its slice ends while it runs elsewhere.
+    void post(ProcessContext &target, PortEvent event);
+    // Act on a port signal at a process that does not run elsewhere.
+    void apply(ProcessContext &target, const PortEvent &event);
+    // link(Port), unlink(Port), monitor(port, Port), demonitor of a port monitor and exit/2 to a port of `process`.
+    bool link_port(ProcessContext &process, Word port);
+    void unlink_port(ProcessContext &process, Word port) noexcept;
+    Term monitor_port(ProcessContext &watcher, Word port, Word name, const Term &reference);
+    void exit_port(ProcessContext &sender, Word port, const Term &reason);
+    // Drop the links and monitors an ended process had with ports, signalling the ports linked to it.
+    void notify_ports(ProcessContext &process, const Term &reason, const std::vector<Word> &links);
+
+    // The live process of a pid word of this executor's runtime, or null; the lock is held.
+    ProcessContext *process(Word pid) const noexcept;
+    // The live process of a pid word this runtime issued, or null once it ended; the lock is held.
+    static ProcessContext *find(ProcessContext &context, Word pid) noexcept;
 
     // Restore the running process after a signal operation of a builtin, which may run outside run().
     class Running;
@@ -205,6 +330,8 @@ class Executor final {
     // Fail the main process as out of memory and end the program with it.
     void fail_main() noexcept;
 
+    // The runtime whose processes and ports this executor runs.
+    Runtime::Impl &runtime_;
     // Guards everything below and every process that is not running.
     mutable std::mutex mutex_;
     // Wakes idle workers: a process was queued, a timer added, or the program ended.
@@ -225,8 +352,10 @@ class Executor final {
     static inline thread_local ProcessContext *running_ = nullptr;
     // The process whose outcome ends the program, once one ended; run() returns it.
     ProcessContext *finished_ = nullptr;
-    // Registered names (atom words) and their pids; a name is released when its process ends.
+    // Registered names (atom words) and their pid or port words; a name is released when its owner ends.
     std::map<Word, Word> names_;
+    // Open ports by number; a port leaves when it closes.
+    std::map<Word, std::unique_ptr<Port>> ports_;
     // Further ended processes that would have ended the program, released by clear().
     std::vector<ProcessContext *> stopped_;
     // The executor ran out of memory while the main process ran elsewhere; it fails when its slice ends.

@@ -63,8 +63,10 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   suppresses (`-compile({no_auto_import, ...})`) is the external fun
   `erlang:F/A`, as in OTP: `fun abs/1 =:= fun erlang:abs/1` and it prints as
   `fun erlang:abs/1`. `halt/0,1`, `setelement/3`, `tuple_to_list/1`,
-  `list_to_tuple/1`, the conversions and the process builtins are auto-imported like OTP's; `display/1`, `raise/3`,
-  `function_exported/3` and `make_tuple/2,3` need the `erlang:` prefix.
+  `list_to_tuple/1`, the conversions, the process builtins and the port builtins `open_port/2`, `port_close/1`,
+  `port_command/2,3`, `port_connect/2`, `port_control/3`, `port_to_list/1`, `list_to_port/1` are auto-imported like
+  OTP's; `display/1`, `raise/3`, `function_exported/3`, `make_tuple/2,3`, `port_info/1,2`, `port_call/2,3` and
+  `ports/0` need the `erlang:` prefix ([ports](ports.md#builtins-and-port-messages)).
 - A builtin has a `FrameDescriptor` with a null body (`BuiltinFrame`). Entering
   it (`erlang_aot_enter_v1`, `erlang_aot_tail_v1`) pushes no frame: the
   builtin runs on the registers and its result returns into the caller's

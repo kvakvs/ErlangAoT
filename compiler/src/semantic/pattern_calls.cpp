@@ -209,7 +209,9 @@ namespace {
 // the dynamic calls apply/2,3, setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not), the
 // conversions, make_ref/0, pid_to_list/1, ref_to_list/1, spawn/1,3, is_process_alive/1, spawn_link/1,3, link/1,
 // unlink/1, exit/2, exit_signal/2, process_flag/2, spawn_monitor/1,3, monitor/2, demonitor/1,2, register/2,
-// unregister/1, whereis/1 and registered/0.
+// unregister/1, whereis/1, registered/0, and the ports' open_port/2, port_close/1, port_command/2,3,
+// port_connect/2, port_control/3, port_to_list/1 and list_to_port/1 (port_info/1,2, port_call/2,3 and ports/0
+// are not).
 bool auto_imported(const FunctionKey &key) {
     static const std::set<FunctionKey> names{{U"error", 1},
                                              {U"error", 2},
@@ -255,7 +257,15 @@ bool auto_imported(const FunctionKey &key) {
                                              {U"register", 2},
                                              {U"unregister", 1},
                                              {U"whereis", 1},
-                                             {U"registered", 0}};
+                                             {U"registered", 0},
+                                             {U"open_port", 2},
+                                             {U"port_close", 1},
+                                             {U"port_command", 2},
+                                             {U"port_command", 3},
+                                             {U"port_connect", 2},
+                                             {U"port_control", 3},
+                                             {U"port_to_list", 1},
+                                             {U"list_to_port", 1}};
     return names.contains(key);
 }
 

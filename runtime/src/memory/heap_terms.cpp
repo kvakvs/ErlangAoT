@@ -57,8 +57,10 @@ HeapObject decode(Word value, std::span<const Word> area) {
 }
 } // namespace
 
-TermResult<Term> TermAccess::pid(Word value, const HeapStorage &storage) noexcept {
-    if (!storage.processes_->issued(pid_number(value))) {
+TermResult<Term> TermAccess::identity(Word value, const HeapStorage &storage) noexcept {
+    const auto &numbers = *storage.identities_;
+    const bool pid = TermTag{value}.get_kind() == TermKind::local_pid;
+    if (pid ? !numbers.issued_pid(pid_number(value)) : !numbers.issued_port(port_number(value))) {
         return std::unexpected(TermError::wrong_owner);
     }
     Term result;
@@ -74,8 +76,8 @@ TermResult<Term> TermAccess::admit(Word value, HeapStorage &storage) noexcept {
     if (kind == TermKind::atom) {
         return storage.atoms_->lookup(value);
     }
-    if (kind == TermKind::local_pid) {
-        return pid(value, storage);
+    if (kind == TermKind::local_pid || kind == TermKind::local_port) {
+        return identity(value, storage);
     }
     if (kind != TermKind::boxed && kind != TermKind::list) {
         return Term::from_word(value);
@@ -118,8 +120,8 @@ TermResult<void> TermAccess::validate(const Term &value) noexcept {
     if (value.heap_) {
         return object(value).transform([](const HeapObject &) {});
     }
-    // Atoms and pids were admitted against their runtime; a destination re-admits them (ProcessHeap::retain).
-    if (value.is_atom() || value.is_pid()) {
+    // Atoms, pids and ports were admitted against their runtime; a destination re-admits them (ProcessHeap::retain).
+    if (value.is_atom() || value.is_pid() || value.is_port()) {
         return {};
     }
     return Term::from_word(value.word()).transform([](const Term &) {});

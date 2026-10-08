@@ -222,7 +222,8 @@ std::span<const BuiltinEntry> erlang_builtins() noexcept { return ERLANG_BUILTIN
 
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept {
     static const std::array families{erlang_builtins(),     term_access_builtins(), list_builtins(),
-                                     conversion_builtins(), io_builtins(),          process_builtins()};
+                                     conversion_builtins(), io_builtins(),          process_builtins(),
+                                     port_builtins()};
     return families;
 }
 } // namespace erlang_aot::runtime

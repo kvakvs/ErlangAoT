@@ -160,6 +160,20 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "is_record", 1},
     BuiltinName{"erlang", "node", 0},
     BuiltinName{"erlang", "node", 1},
+    // Ports (plan step 57B).
+    BuiltinName{"erlang", "open_port", 2},
+    BuiltinName{"erlang", "port_close", 1},
+    BuiltinName{"erlang", "port_command", 2},
+    BuiltinName{"erlang", "port_command", 3},
+    BuiltinName{"erlang", "port_connect", 2},
+    BuiltinName{"erlang", "port_control", 3},
+    BuiltinName{"erlang", "port_call", 2},
+    BuiltinName{"erlang", "port_call", 3},
+    BuiltinName{"erlang", "port_info", 1},
+    BuiltinName{"erlang", "port_info", 2},
+    BuiltinName{"erlang", "port_to_list", 1},
+    BuiltinName{"erlang", "list_to_port", 1},
+    BuiltinName{"erlang", "ports", 0},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

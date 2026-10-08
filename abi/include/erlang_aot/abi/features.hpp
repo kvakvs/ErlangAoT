@@ -229,14 +229,14 @@ inline constexpr std::array feature_catalog{
                 .status = FeatureStatus::implemented,
                 .plan_step = 10,
                 .failure_test = "patternmatch_sequences"},
-    // Decision of plan step 53: programs have no ports (docs/processes.md#ports); port builtins stay unavailable.
+    // Ports (plan steps 57A-57F, docs/ports.md): the port builtins are bridge builtins.
     FeatureInfo{.id = FeatureId::ports,
                 .name = "ports",
                 .owner = FeatureOwner::compiler,
                 .boundary = "port builtin call analysis",
-                .status = FeatureStatus::deferred,
-                .plan_step = 53,
-                .failure_test = "codegen_placeholders"},
+                .status = FeatureStatus::implemented,
+                .plan_step = 57,
+                .failure_test = "executables_port_identities"},
 
 };
 

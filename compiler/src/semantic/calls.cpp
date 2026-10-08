@@ -17,19 +17,6 @@ bool removed_call(const ast::Module &syntax, const ast::RemoteExpression &remote
     return module == U"erlang" && function == U"get_stacktrace" && arity == 0;
 }
 
-// A call of a port builtin, erlang:F(...) or a local F(...) the module does not define: unavailable, as programs have
-// no ports (docs/processes.md#ports).
-bool port_call(const Module &module, const ast::RemoteExpression *remote, const FunctionKey &key) {
-    if (!port_builtin(key)) {
-        return false;
-    }
-    if (!remote) {
-        return !module.lookup.contains(key);
-    }
-    const auto &owner = std::get<ast::Atom>(module.syntax->expression(ungroup(*module.syntax, remote->module)).value);
-    return owner.name == U"erlang";
-}
-
 // Resolve literal remote names without ever falling back to another project target.
 Module *call_module(const FunctionRef caller, const ast::CallExpression &call, const ast::RemoteExpression &remote,
                     const Modules &modules, const ast::NodeSource &source, const Reporter &out) {
@@ -58,10 +45,6 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     const auto &name = remote ? std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote->function)).value)
                               : std::get<ast::Atom>(target);
     const FunctionKey key{name.name, call.arguments.size()};
-    if (port_call(*caller.module, remote, key)) {
-        reject_capability(*caller.module, source, "ports", out);
-        return {};
-    }
     auto *owner = remote ? call_module(caller, call, *remote, modules, source, out) : caller.module;
     if (!owner) {
         return {};
@@ -94,12 +77,8 @@ void check_reference(const Module &module, const ast::Expression &expression, co
     if (!reference || fun_target(module, *reference) || module.fun_entries.contains(&expression)) {
         return;
     }
-    if (const auto count = arity(reference->arity); count && port_builtin({reference->name.name, *count})) {
-        reject_capability(module, expression.source, "ports", out);
-    } else {
-        report(module, &expression.source,
-               "function " + utf8(reference->name.name) + "/" + reference->arity.decimal + " undefined", out);
-    }
+    report(module, &expression.source,
+           "function " + utf8(reference->name.name) + "/" + reference->arity.decimal + " undefined", out);
 }
 
 // Walk all accepted bodies iteratively; source-order dependencies remain deterministic.

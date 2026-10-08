@@ -42,7 +42,7 @@ class HeapStorage final {
     // Bind validated budgets, the runtime-wide account and a liveness token; the heap block is created by the first
     // reservation.
     HeapStorage(HeapOptions options, std::weak_ptr<const ContextLifetime> lifetime, AtomStorage &atoms,
-                std::shared_ptr<RuntimeMemory> memory, const ProcessNumbers &processes);
+                std::shared_ptr<RuntimeMemory> memory, const IdentityNumbers &identities);
     // Release every off-heap reference while all backing bytes still exist, and return the block charges; buffers
     // return their own when their last reference dies.
     ~HeapStorage();
@@ -99,8 +99,8 @@ class HeapStorage final {
     std::size_t collections_ = 0;
     // Borrow the runtime atom table only while the process lifetime token remains alive.
     AtomStorage *atoms_;
-    // Borrow the runtime's issued pid numbers, under the same lifetime rule as atoms_.
-    const ProcessNumbers *processes_;
+    // Borrow the runtime's issued pid and port numbers, under the same lifetime rule as atoms_.
+    const IdentityNumbers *identities_;
 
   private:
     // Choose the area for a validated request, creating the heap block or a fragment when needed.

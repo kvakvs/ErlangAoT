@@ -1,4 +1,4 @@
-#include "../scheduler/executor.hpp"
+#include "ports.hpp"
 #include "typed.hpp"
 #include <array>
 
@@ -84,17 +84,18 @@ Word monitored_name(const Term &item) {
     return need(item.tuple_element(0)).word();
 }
 
-// monitor(process, Item): a reference; the caller gets {'DOWN', Ref, process, Item, Reason} when the process ends.
-// Item is a pid, or a registered name as Name or {Name, nonode@nohost}.
+// monitor(process | port, Item): a reference; the caller gets {'DOWN', Ref, Type, Item, Reason} when the process
+// ends or the port closes. Item is a pid or port of the type, or a registered name as Name or {Name, nonode@nohost}.
 TermResult<Term> monitor(ProcessContext &context, const AtomArgument &type, const Term &item) {
-    if (type.term.atom_spelling().value_or("") != "process") {
+    const bool port = type.spelling == "port";
+    if ((!port && type.spelling != "process") || (port ? item.is_pid() : item.is_port())) {
         bad_argument();
     }
     auto &executor = detail::Executor::of(context);
-    if (item.is_pid()) {
-        return executor.monitor(context, item.word());
+    if (item.is_pid() || item.is_port()) {
+        return executor.monitor(context, item.word(), 0, port);
     }
-    return executor.monitor(context, 0, monitored_name(item));
+    return executor.monitor(context, 0, monitored_name(item), port);
 }
 
 // The options of demonitor/2: a proper list of flush and info.
@@ -150,7 +151,7 @@ TermResult<Term> demonitor(ProcessContext &context, const Term &reference) {
 
 // link(Pid): true once linked; error:noproc for an ended process unless the caller traps exits.
 TermResult<Term> link(ProcessContext &context, const Term &pid) {
-    if (!pid.is_pid()) {
+    if (!pid.is_pid() && !pid.is_port()) {
         bad_argument();
     }
     if (!detail::Executor::of(context).link(context, pid.word())) {
@@ -161,7 +162,7 @@ TermResult<Term> link(ProcessContext &context, const Term &pid) {
 
 // unlink(Pid): true; the link, if any, has no effect from now on.
 TermResult<Term> unlink(ProcessContext &context, const Term &pid) {
-    if (!pid.is_pid()) {
+    if (!pid.is_pid() && !pid.is_port()) {
         bad_argument();
     }
     detail::Executor::unlink(context, pid.word());
@@ -172,7 +173,7 @@ TermResult<Term> unlink(ProcessContext &context, const Term &pid) {
 // reference names no alias here, so nothing is sent. exit/2 to the caller itself with reason normal ends it.
 template <bool SelfNormal>
 TermResult<Term> exit_signal(ProcessContext &context, const Term &destination, const Term &reason) {
-    if (destination.is_pid()) {
+    if (destination.is_pid() || destination.is_port()) {
         detail::Executor::of(context).exit(context, destination.word(), reason, SelfNormal);
     } else if (!destination.is_reference()) {
         bad_argument();
@@ -200,7 +201,7 @@ TermResult<Term> is_process_alive(ProcessContext &context, const Term &pid) {
 // The pid a send goes to: a pid; the process registered as an atom (badarg when none is); for {Name, Node} the
 // process registered as Name on this node, or 0 to drop the message. Anything else is badarg.
 Word destination_pid(ProcessContext &context, const Term &destination) {
-    if (destination.is_pid()) {
+    if (destination.is_pid() || destination.is_port()) {
         return destination.word();
     }
     const auto &executor = detail::Executor::of(context);
@@ -219,7 +220,9 @@ Word destination_pid(ProcessContext &context, const Term &destination) {
 
 // Deliver `message` to the process of `pid` unless it is 0; returns the message.
 Term send_to(ProcessContext &context, Word pid, const Term &message) {
-    if (pid != 0) {
+    if (TermTag{pid}.get_kind() == TermKind::local_port) {
+        detail::Executor::of(context).port_request(context, pid, port_request(message));
+    } else if (pid != 0) {
         if (const auto sent = detail::Executor::send(context, pid, message); !sent) {
             throw BuiltinFailure{.term = sent.error()};
         }
@@ -235,7 +238,7 @@ TermResult<Term> send(ProcessContext &context, const Term &destination, const Te
 
 // register(Name, Pid): true; badarg for the name undefined, a name in use, a process that has a name or has ended.
 TermResult<Term> register_name(ProcessContext &context, const AtomArgument &name, const Term &pid) {
-    if (name.term.atom_spelling().value_or("") == "undefined" || !pid.is_pid() ||
+    if (name.term.atom_spelling().value_or("") == "undefined" || (!pid.is_pid() && !pid.is_port()) ||
         !detail::Executor::of(context).register_name(context, name.term.word(), pid.word())) {
         bad_argument();
     }

@@ -1,7 +1,7 @@
 #include "../builtins/support.hpp"
 #include "../process/exits.hpp"
 #include "../terms/service_errors.hpp"
-#include "executor.hpp"
+#include "signal_messages.hpp"
 #include <algorithm>
 #include <array>
 #include <erlang_aot/runtime/runtime.hpp>
@@ -16,12 +16,23 @@ namespace erlang_aot::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
 
-// Whether `term` is the atom spelled `name`.
+// What a 'DOWN' message names, built in the heap of `process`: the pid or port, or {Name, nonode@nohost} for a
+// monitor made with a registered name.
+TermResult<Term> monitored_item(ProcessContext &process, const Signals::Monitor &item) {
+    if (item.name == 0) {
+        return Term::from_word(item.pid, process);
+    }
+    TermFactory factory(process);
+    const auto name = Term::from_word(item.name, process);
+    const auto node = factory.atom(LOCAL_NODE);
+    return name && node ? factory.tuple(std::array{*name, *node}) : (name ? node : name);
+}
+} // namespace
+
 bool is_atom(const Term &term, std::string_view name) {
     return term.is_atom() && term.atom_spelling().value_or("") == name;
 }
 
-// The atom `name`; a full atom table fails like exhausted memory.
 Term atom(ProcessContext &process, std::string_view name) {
     auto atom = TermFactory(process).atom(name);
     if (!atom) {
@@ -30,7 +41,6 @@ Term atom(ProcessContext &process, std::string_view name) {
     return *atom;
 }
 
-// {'EXIT', From, Reason} built in the heap of `process`.
 TermResult<Term> exit_message(ProcessContext &process, Word from, const Term &reason) {
     TermFactory factory(process);
     const auto tag = factory.atom("EXIT");
@@ -42,23 +52,11 @@ TermResult<Term> exit_message(ProcessContext &process, Word from, const Term &re
     return factory.tuple(std::array{*tag, *pid, *copy});
 }
 
-// What a 'DOWN' message names, built in the heap of `process`: the pid, or {Name, nonode@nohost} for a monitor made
-// with a registered name.
-TermResult<Term> monitored_item(ProcessContext &process, const Signals::Monitor &item) {
-    if (item.name == 0) {
-        return Term::from_word(item.pid, process);
-    }
-    TermFactory factory(process);
-    const auto name = Term::from_word(item.name, process);
-    const auto node = factory.atom(LOCAL_NODE);
-    return name && node ? factory.tuple(std::array{*name, *node}) : (name ? node : name);
-}
-
-// {'DOWN', Ref, process, Item, Reason} built in the heap of `process`.
 TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &reference, const Signals::Monitor &item,
                               const Term &reason) {
     TermFactory factory(process);
-    const std::array parts{factory.atom("DOWN"), factory.reference(reference), factory.atom("process"),
+    const auto type = TermTag{item.pid}.get_kind() == TermKind::local_port ? "port" : "process";
+    const std::array parts{factory.atom("DOWN"), factory.reference(reference), factory.atom(type),
                            monitored_item(process, item), reason.copy_to(process.heap())};
     const auto failed = std::ranges::find_if(parts, [](const auto &part) { return !part.has_value(); });
     if (failed != parts.end()) {
@@ -66,25 +64,12 @@ TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &
     }
     return factory.tuple(std::array{*parts[0], *parts[1], *parts[2], *parts[3], *parts[4]});
 }
-} // namespace
-
-class Executor::Running final {
-  public:
-    // Make `process` this thread's running one until the scope ends.
-    explicit Running(ProcessContext &process) noexcept : saved_(std::exchange(running_, &process)) {}
-
-    ~Running() { running_ = saved_; }
-
-    Running(const Running &) = delete;
-    Running &operator=(const Running &) = delete;
-
-  private:
-    // The running process before the scope: itself on a worker, none for a host invocation.
-    ProcessContext *saved_;
-};
 
 bool Executor::link(ProcessContext &process, Word pid) {
     const std::scoped_lock lock(mutex_);
+    if (is_port_word(pid)) {
+        return link_port(process, pid);
+    }
     const auto self = pid_of(process);
     if (pid == self) {
         return true;
@@ -104,14 +89,19 @@ bool Executor::link(ProcessContext &process, Word pid) {
 }
 
 void Executor::unlink(ProcessContext &process, Word pid) noexcept {
-    const std::scoped_lock lock(of(process).mutex_);
+    auto &executor = of(process);
+    const std::scoped_lock lock(executor.mutex_);
+    if (is_port_word(pid)) {
+        executor.unlink_port(process, pid);
+        return;
+    }
     process.signals().unlink(pid);
     if (auto *target = find(process, pid)) {
         target->signals().unlink(pid_of(process));
     }
 }
 
-Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
+Term Executor::monitor(ProcessContext &watcher, Word pid, Word name, bool port) {
     const std::scoped_lock lock(mutex_);
     pid = name != 0 ? lookup(watcher, name) : pid;
     const auto reference = TermFactory(watcher).make_reference();
@@ -119,6 +109,10 @@ Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
     if (!identity) {
         throw std::bad_alloc();
     }
+    if (port) {
+        return monitor_port(watcher, is_port_word(pid) ? pid : 0, name, *reference);
+    }
+    pid = is_port_word(pid) ? 0 : pid;
     auto *target = pid != 0 ? find(watcher, pid) : nullptr;
     if (target == &watcher) {
         return *reference;
@@ -134,12 +128,15 @@ Term Executor::monitor(ProcessContext &watcher, Word pid, Word name) {
 }
 
 bool Executor::demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept {
-    const std::scoped_lock lock(of(watcher).mutex_);
+    auto &executor = of(watcher);
+    const std::scoped_lock lock(executor.mutex_);
     const auto pid = watcher.signals().demonitor(reference);
     if (!pid) {
         return false;
     }
-    if (auto *target = find(watcher, *pid)) {
+    if (auto *port = executor.open(*pid)) {
+        port->watchers.erase(reference);
+    } else if (auto *target = find(watcher, *pid)) {
         target->signals().unwatch(reference);
     }
     return true;
@@ -147,6 +144,10 @@ bool Executor::demonitor(ProcessContext &watcher, const ReferenceIdentity &refer
 
 void Executor::exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal) {
     const std::scoped_lock lock(mutex_);
+    if (is_port_word(pid)) {
+        exit_port(sender, pid, reason);
+        return;
+    }
     auto *target = find(sender, pid);
     if (!target) {
         return;
@@ -237,9 +238,17 @@ void Executor::finish(ProcessContext &process) {
     destroy(process);
 }
 
+ProcessContext *Executor::busy_link(ProcessContext &process, Word link) noexcept {
+    if (const auto *port = open(link)) {
+        return busy_peer(*port);
+    }
+    auto *peer = find(process, link);
+    return peer && busy(peer) ? peer : nullptr;
+}
+
 ProcessContext *Executor::busy_peer(ProcessContext &process) noexcept {
     for (const auto pid : process.signals().links()) {
-        if (auto *peer = find(process, pid); peer && busy(peer)) {
+        if (auto *peer = busy_link(process, pid)) {
             return peer;
         }
     }
@@ -255,7 +264,9 @@ bool Executor::notify(ProcessContext &process) {
     auto &signals = process.signals();
     names_.erase(signals.name());
     for (const auto &[reference, monitored] : signals.take_monitors()) {
-        if (auto *target = find(process, monitored.pid)) {
+        if (auto *port = open(monitored.pid)) {
+            port->watchers.erase(reference);
+        } else if (auto *target = find(process, monitored.pid)) {
             target->signals().unwatch(reference);
         }
     }
@@ -278,6 +289,7 @@ bool Executor::notify(ProcessContext &process) {
 void Executor::notify(ProcessContext &process, const Term &reason, const std::vector<Word> &links,
                       const Signals::Monitors &watchers) {
     const auto from = pid_of(process);
+    notify_ports(process, reason, links);
     for (const auto pid : links) {
         if (auto *target = find(process, pid)) {
             target->signals().unlink(from);
@@ -295,6 +307,14 @@ void Executor::notify(ProcessContext &process, const Term &reason, const std::ve
 
 bool Executor::register_name(ProcessContext &context, Word name, Word pid) {
     const std::scoped_lock lock(mutex_);
+    if (auto *port = open(pid)) {
+        if (port->name != 0 || lookup(context, name) != 0) {
+            return false;
+        }
+        names_.insert_or_assign(name, pid);
+        port->name = name;
+        return true;
+    }
     auto *process = find(context, pid);
     if (!process || process->signals().name() != 0 || lookup(context, name) != 0) {
         return false;
@@ -311,7 +331,11 @@ bool Executor::unregister(ProcessContext &context, Word name) noexcept {
         return false;
     }
     names_.erase(name);
-    find(context, pid)->signals().set_name(0);
+    if (auto *port = open(pid)) {
+        port->name = 0;
+    } else {
+        find(context, pid)->signals().set_name(0);
+    }
     return true;
 }
 
@@ -322,15 +346,18 @@ Word Executor::whereis(ProcessContext &context, Word name) const noexcept {
 
 Word Executor::lookup(ProcessContext &context, Word name) const noexcept {
     const auto found = names_.find(name);
-    // A host may release a registered context outside the executor: only a live process counts.
-    return found != names_.end() && find(context, found->second) ? found->second : 0;
+    // A host may release a registered context outside the executor: only a live process or open port counts.
+    if (found == names_.end()) {
+        return 0;
+    }
+    return find(context, found->second) || open(found->second) ? found->second : 0;
 }
 
 std::vector<Word> Executor::registered(ProcessContext &context) const {
     const std::scoped_lock lock(mutex_);
     std::vector<Word> names;
     for (const auto &[name, pid] : names_) {
-        if (find(context, pid)) {
+        if (find(context, pid) || open(pid)) {
             names.push_back(name);
         }
     }

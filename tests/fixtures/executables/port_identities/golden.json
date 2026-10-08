@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "entry": "port_identities",
+  "workers": [
+    1,
+    4
+  ],
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[true,false,false] #Port<N.N>\n[true,true]\n[integer,atom,reference,function,port,pid]\n[name,links,id,connected,input,output,os_pid]\n[{name,\"0/1\"},\n true,true,\n {input,0},\n {output,0},\n {os_pid,undefined},\n {monitors,[]},\n {monitored_by,[]},\n []]\nclose true [{'EXIT',#Port<0.1>,normal}]\nclosed [true,undefined,undefined,false,\n        {error,badarg},\n        {error,badarg},\n        {error,badarg}]\nmonitored_by true\nkill [killed] undefined\nnormal [normal] undefined\nterm [{some,reason}] undefined\nbadsig [badsig] true\nregister true true {registered_name,myport} true\nnamed close [{exit,normal},{down,normal},closed] undefined\nconnect [connected]\nnew owner true\nport_connect true true\nopener ended normal\nunlinked opener ended true true\nlinked normal true\nlinked boom undefined [boom]\nmonitor closed [{port,noproc},{{nobody,nonode@nohost},noproc}]\nlink closed true [noproc]\nlink closed {error,noproc}\n[{error,badarg},\n {error,badarg},\n {error,badarg},\n {ok,true},\n {error,notsup},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg}]\ndone\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "port_identities.erl": "b1613511a79d81aac7031f82b690a2f8bda8780ae3c3fae381f84968cfdc7e9d"
+  }
+}

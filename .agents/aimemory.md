@@ -363,6 +363,12 @@ Step facts beyond the plan record:
 - 57: no code; executables_wakeups stress (workers 1,2,4; runs [], teardown, halt). OTP races too when monitoring after
   spawn of a 0 ms process: use spawn_monitor in fixtures; check goldens with regenerate --check 3x. Phase J closed: full
   CTest 209/209 (102 s, -j 32), check-quality-all clean.
+- 57A-57B: WSL Ubuntu exists (g++14, clang20, no cmake): `wsl -e bash -c ...`; tests/prototypes/poller/run.py --wsl.
+  OTP port probes: erl.exe -noshell -eval 'c:c(m), m:main()' in scratchpad/probe (python helper.py there). ERTS
+  io.c holds port exit/badsig rules. fd ports in fixtures: [out], one open at a time (OTP logs driver_select
+  stealing reports otherwise). -Wmissing-designated-field-initializers: give structs static factory helpers.
+  Executor ctor not noexcept (MSVC unordered_map allocates; lifecycle_failure terminates). tidy: Term/Word params
+  used separately are "swappable" -> pass Word or use them in one call. erlfmt: scratchpad/fmt.escript FILE.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

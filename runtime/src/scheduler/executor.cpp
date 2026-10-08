@@ -146,8 +146,13 @@ TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call
         options);
 }
 
-ProcessContext *Executor::find(ProcessContext &context, Word pid) noexcept {
-    const auto &processes = context.runtime().impl_->processes;
+ProcessContext *Executor::find(ProcessContext &context, Word pid) noexcept { return of(context).process(pid); }
+
+ProcessContext *Executor::process(Word pid) const noexcept {
+    if (TermTag{pid}.get_kind() != TermKind::local_pid) {
+        return nullptr;
+    }
+    const auto &processes = runtime_.processes;
     const auto found = processes.find(pid_number(pid));
     return found == processes.end() ? nullptr : found->second;
 }
@@ -302,6 +307,9 @@ void Executor::after(ProcessContext &process, bool ended) {
     } else {
         hold(blockers, process);
         place(process, blocked_on);
+        for (const auto &event : std::exchange(state.events, {})) {
+            apply(process, event);
+        }
     }
     resume(blockers);
     drain();
@@ -403,6 +411,7 @@ void Executor::clear() noexcept {
     ending_.clear();
     stopped_.clear();
     names_.clear();
+    ports_.clear();
     main_ = finished_ = nullptr;
     failed_ = false;
 }

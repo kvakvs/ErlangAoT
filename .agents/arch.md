@@ -232,6 +232,11 @@
   Step 57: no code; wakeup/shutdown argument in processes.md#workers, stress golden `executables_wakeups`.
   Step 57A (decision `docs/ports.md`): port immediate 0x7, executor port table, drivers fd/spawn/file/tcp/udp, one
   I/O thread per runtime (IOCP / poll()), events delivered under the executor mutex; prototype tests/prototypes/poller.
+  Step 57B: port words (tag 0x7) from `IdentityNumbers` (pid + port sequences), executor `ports_` table of `Port`
+  (driver, connected, links, watchers, name, options, counters), `scheduler/ports.cpp` (open/close/command/connect/
+  request/info, port exit rules, `PortEvent` post/apply for running targets), `builtins/ports.cpp` (13 BIFs, iodata,
+  options, `port_request` parsing for sends), `ports/fd.cpp` (output-only fd driver, framing). Executor holds
+  `Runtime::Impl &runtime_` (`process(pid)`); `signal_messages.hpp` shares EXIT/DOWN builders and `Running`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

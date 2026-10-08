@@ -86,7 +86,9 @@ class Verifier final {
         case TermKind::atom:
             return storage_.atoms_->lookup(value).has_value();
         case TermKind::local_pid:
-            return storage_.processes_->issued(pid_number(value));
+            return storage_.identities_->issued_pid(pid_number(value));
+        case TermKind::local_port:
+            return storage_.identities_->issued_port(port_number(value));
         default:
             return plain_immediate(value);
         }

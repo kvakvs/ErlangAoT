@@ -8,7 +8,6 @@ CASES = {
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
     "dynamic calls": "f() -> fun erlang:apply/2.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
-    "ports": "f() -> open_port({spawn, \"cat\"}, []).",
 }
 
 

@@ -1097,18 +1097,23 @@ unchanged `21776803`.
 
 Backlog: F07, F35. Depends on: [57A](#step-57a).
 
-Port terms (construction, comparison, printing `#Port<0.N>`, tracing,
-copying, admission of forged/foreign/closed ports), per-runtime port table,
-owner links, `is_port/1` true for ports, `port_to_list/1`, `list_to_port/1`,
-`ports/0`, `port_info/1,2`, `port_close/1`, `port_connect/2`, links/monitors
-to ports and exit signals from a closing port; a closed port's identity stays
-valid. Feature `ports` becomes implemented.
-
-- Success criteria
-  - [ ] Port identities behave like OTP's for every builtin above, with a
-    test-only driver.
-- Tests
-  - [ ] OTP golden over port identities, order, printing, links and monitors.
+Done 2026-10-08 (contract `docs/ports.md`). `IdentityNumbers` (was
+ProcessNumbers) issues pid and port numbers from separate never-reused
+sequences; port words admitted in `TermAccess::identity`, printed `#Port<0.N>`,
+ordered between funs and pids. Executor port table (`scheduler/ports.cpp`,
+`Port`/`PortDriver` in `ports/port.hpp`, `ports/fd.cpp` output-only fd driver):
+opener linked, close -> links EXIT then monitors DOWN (then `{Port, closed}`
+for `{Pid, close}`), port exit-signal rules from ERTS io.c (link normal from a
+non-owner dropped, exit/2 always closes, kill -> killed), badsig to the
+connected process for malformed/foreign requests, `PortEvent`s (atom-only)
+posted to running targets and applied in `after()`. 13 bridge builtins
+(`builtins/ports.cpp`, auto-import as erl_internal), sends/link/monitor(port)/
+exit/register/whereis accept ports; compiler `[ports] notimpl` removed
+(feature implemented). Instead of a test-only driver the OTP golden
+`executables_port_identities` (renamed from `ports`) uses `{fd,0,1}` with `out`
+(never written; one open at a time to avoid OTP's driver_select reports);
+runtime test `identities` adds port admission, copy, order, close. Found:
+`Executor` ctor must not be noexcept (MSVC unordered_map allocates).
 
 <a id="step-57c"></a>
 

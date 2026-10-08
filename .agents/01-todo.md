@@ -116,7 +116,7 @@ Plan: [42](11-plan.md#step-42), [48](11-plan.md#step-48),
   (step 42, [terms](../docs/terms.md#pids-and-references)).
 - [x] Ports separate from I/O services (step 53: decided there are no ports;
   port builtins report `[ports] notimpl`; superseded, see F35).
-- [ ] Port identities: construction, order, printing, copying, admission
+- [x] Port identities: construction, order, printing, copying, admission
   (step 57B).
 - [x] Owned constructors, equality, order, printing, host Terms, copying (step 42).
 - [x] Routing by pid (steps 45, 48) and by registered name (step 50).
@@ -376,7 +376,7 @@ Plan: [57A](11-plan.md#step-57a)–[57F](11-plan.md#step-57f). Added
 2026-10-08 by user direction: sockets, file I/O and subprocesses are ports.
 
 - [x] Port contract, driver interface and I/O poller decided (57A, `docs/ports.md`).
-- [ ] Port identities, port table, links/monitors and port builtins (57B).
+- [x] Port identities, port table, links/monitors and port builtins (57B).
 - [ ] I/O poller with scheduler wakeups and shutdown (57C).
 - [ ] Subprocess ports with stdin/stdout, `os:cmd/1` (57D).
 - [ ] `fd`/file ports, `file` subset, standard I/O through ports (57E).

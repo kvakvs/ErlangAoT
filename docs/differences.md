@@ -31,8 +31,10 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 | `process_flag/2` flags | `trap_exit`, `priority`, `message_queue_data`, `min_heap_size` and others | Only `trap_exit`; every other flag raises `badarg` | [processes](processes.md#builtins) |
 | Error report order of processes crashing at the same time | Logger order | The order their workers finish them | [processes](processes.md#workers) |
 | Signals to a process running on another scheduler | Queued in its signal queue and handled later, while the sender goes on | The sender waits until the target's time slice ends, then acts at once; observable only as timing | [processes](processes.md#workers) |
-| Ports | `open_port/2` and the port builtins run external programs and drivers | No ports: port builtins are a compile-time `[ports] notimpl`, `undef` through dynamic calls; `is_port/1` is always false | [processes](processes.md#ports) |
-| `monitor/2` types | `process`, `port`, `time_offset` | Only `process`; the others raise `badarg` (no ports, no time offset changes) | [processes](processes.md#monitors) |
+| `list_to_port/1` of a number never issued | Returns a port term | `badarg`: only ports this program opened are admitted | [ports](ports.md#identity) |
+| `port_info/1,2` values | `id` is a table index; `memory`, `queue_size`, `locking` describe the driver | `id` is the port number; `memory` and `queue_size` are 0; `locking` is `port_level` | [ports](ports.md#builtins-and-port-messages) |
+| Busy ports | A port with too much queued output suspends senders; `port_command/3` `force` works on drivers that allow it | Output never suspends; `force` raises `notsup` on every driver | [ports](ports.md#io-thread) |
+| `monitor/2` types | `process`, `port`, `time_offset` | `process` and `port`; `time_offset` raises `badarg` (no time offset changes) | [processes](processes.md#monitors) |
 | `exit/2`, `exit_signal/2` to a reference | Sends to the process alias, if the reference is an active one | Nothing (no aliases) | [processes](processes.md#exit-signals) |
 | Reference numbers | Mix a scheduler identifier and per-scheduler counters (`#Ref<0.178111994.4235460610.214105>`) | One program-wide counter (`#Ref<0.0.0.1>`), so references order by creation | [terms](terms.md#pids-and-references) |
 
