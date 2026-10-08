@@ -158,9 +158,12 @@ mixed(X) ->
 - A `%% module` line names the module, its source, the project target and
   whether declared and inferred types completed or were widened by a limit.
 - Declarations (`-type`, `-spec`, `-callback`, records) appear as written.
-- Above each function, `%% inferred: f(Inputs) -> Result` gives its summary
-  and says when a `-spec` declares it. Inputs of exported functions and of
-  functions with specifications stay `term()`.
+- Above each function, `%% declared: f(Inputs) -> Result` gives each overload
+  of its `-spec` as resolved (with its `when` constraints), and
+  `%% inferred: f(Inputs) -> Result` what inference found, so the two can be
+  compared. Inputs of exported functions and of functions with
+  specifications stay `term()`. A `-spec` stays with the function right after
+  it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
   `Expression :: Type`: in parentheses inside other expressions, without them
   for a whole body expression. Literals and matches are not annotated (the

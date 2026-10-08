@@ -12,7 +12,7 @@ import sys
 
 EXPECT = re.compile(r'^%% expect: (.+)$')
 TODAY = re.compile(r'^%% today: (.+)$')
-INFERRED = re.compile(r'^%% inferred: (.+?)(?:  \(declared by -spec\))?$')
+INFERRED = re.compile(r'^%% inferred: (.+)$')
 
 
 def key(signature):

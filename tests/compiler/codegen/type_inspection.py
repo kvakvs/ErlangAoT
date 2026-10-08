@@ -54,7 +54,9 @@ for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, cha
                     '-spec id(T) -> T when T :: term().', '-callback cb(integer()) -> integer().',
                     '-optional_callbacks([cb/1]).', '-type remote_chain() :: owner:chain(integer()).'):
     assert declaration in text, declaration
-assert '%% inferred: run() -> 42  (declared by -spec)\nrun() ->\n' in text
+assert '-spec run() -> integer().\n%% declared: run() -> integer()\n%% inferred: run() -> 42\nrun() ->\n' in text
+assert '%% declared: id(T) -> T when T :: term()\n%% inferred: id(term()) -> argument 1\n' in text
+assert '%% declared: value() -> atom()\n%% inferred: value() -> 42\n' in text
 assert '%% inferred: local() -> 7\nlocal() ->\n    id(7) :: 7.\n' in text
 assert '%% inferred: id(term()) -> argument 1\n' in text
 assert '%% inferred: projection(term(), term()) -> argument 2\n' in text

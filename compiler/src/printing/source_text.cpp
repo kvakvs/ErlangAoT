@@ -6,8 +6,22 @@
 
 namespace erlang_aot::printing {
 namespace {
-// Whether a form is a function; functions are set apart from attributes by a blank line.
+// Whether a form is a function.
 bool function_form(const ast::Form &form) { return std::holds_alternative<ast::Function>(form.value); }
+
+// Whether a form is a -spec, which stays with the function after it.
+bool specification_form(const ast::Form &form) {
+    const auto *specification = std::get_if<ast::Specification>(&form.value);
+    return specification && !specification->callback;
+}
+
+// A blank line sets each function, with the -spec right before it, apart from other forms.
+bool blank_between(const ast::Form &previous, const ast::Form &form) {
+    if (function_form(previous)) {
+        return true;
+    }
+    return (function_form(form) || specification_form(form)) && !specification_form(previous);
+}
 
 // The code point of the valid UTF-8 sequence at `at`, advancing `at` past it.
 char32_t next_code(std::string_view text, std::size_t &at) {
@@ -75,7 +89,7 @@ void print_source(std::ostream &output, const ast::Module &module, const SourceN
         if (!previous && printing::preprocessor_start(form)) {
             continue;
         }
-        if (previous && (printing::function_form(form) || printing::function_form(*previous))) {
+        if (previous && printing::blank_between(*previous, form)) {
             output << '\n';
         }
         output << printing::comments(notes, form) << printer.form(form) << '\n';

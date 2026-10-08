@@ -3,21 +3,23 @@
 #include "display.hpp"
 #include <erlang_aot/compiler/printing.hpp>
 #include <iostream>
-#include <set>
+#include <map>
+#include <span>
 #include <stdexcept>
 
 // --print-types (docs/semantic.md#--print-types): each module as Erlang source, its functions headed by their
-// inferred signatures and its expressions annotated `Expression :: Type` where inference knows more than term().
+// declared and inferred signatures and its expressions annotated `Expression :: Type` where inference knows more than
+// term().
 namespace erlang_aot::cli {
 namespace {
 namespace types = semantic::types;
 
-// Functions with a specification of their own, by module, name and arity.
-std::set<types::Key> specified_functions(const types::Registry &registry) {
-    std::set<types::Key> result;
+// The specification of each function that has one, by module, name and arity.
+std::map<types::Key, const types::Contract *> specifications(const types::Registry &registry) {
+    std::map<types::Key, const types::Contract *> result;
     for (const auto &contract : registry.contracts) {
         if (!contract.callback) {
-            result.insert(contract.key);
+            result.emplace(contract.key, &contract);
         }
     }
     return result;
@@ -74,17 +76,45 @@ std::string signature(const types::Inference &inferred, const std::string &name,
     return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? "term()" : result);
 }
 
-// The comment above a function: its inferred signature, and whether a specification declares it.
-std::vector<std::string> function_note(const semantic::Module &module, const types::Inference &inferred,
-                                       const std::set<types::Key> &specified, const ast::Form &form) {
+// `name(Inputs) -> Result when Constraints` of one overload of a resolved specification.
+std::string declared_signature(const types::Graph &graph, const std::string &name, const types::Overload &overload) {
+    const auto &node = graph.get(overload.function);
+    if (node.kind != types::Kind::function || node.children.empty()) {
+        return atom_source(name) + "(...) -> term()";
+    }
+    std::string inputs = node.name == "any_arguments" ? "..." : "";
+    for (const auto input : std::span(node.children).first(node.children.size() - 1)) {
+        inputs += inputs.empty() ? "" : ", ";
+        inputs += types::type_source(graph, input);
+    }
+    auto text = atom_source(name) + '(' + inputs + ") -> " + types::type_source(graph, node.children.back());
+    std::string constraints;
+    for (const auto &[variable, bound] : overload.constraints) {
+        constraints += constraints.empty() ? " when " : ", ";
+        constraints += variable + " :: " + types::type_source(graph, bound);
+    }
+    return text + constraints;
+}
+
+// The comment above a function: its specification's overloads, if any, then its inferred signature.
+std::vector<std::string> function_note(const semantic::Module &module, const Analysis &analysis,
+                                       const std::map<types::Key, const types::Contract *> &specified,
+                                       const ast::Form &form) {
     for (const auto &function : module.functions) {
         if (&module.syntax->form(function.form) != &form) {
             continue;
         }
         const auto name = utf8(function.key.name);
-        const bool declared = specified.contains({utf8(module.name), name, function.key.arity});
-        return {"inferred: " + signature(inferred, name, inferred.functions.at(&function)) +
-                (declared ? "  (declared by -spec)" : "")};
+        std::vector<std::string> lines;
+        if (const auto found = specified.find({utf8(module.name), name, function.key.arity});
+            found != specified.end()) {
+            for (const auto &overload : found->second->overloads) {
+                lines.push_back("declared: " + declared_signature(analysis.declared->graph, name, overload));
+            }
+        }
+        const auto &inferred = *analysis.inferred;
+        lines.push_back("inferred: " + signature(inferred, name, inferred.functions.at(&function)));
+        return lines;
     }
     return {};
 }
@@ -98,7 +128,7 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
         throw std::logic_error("type inspection requires completed analysis");
     }
     const auto &inferred = *analysis.inferred;
-    const auto specified = specified_functions(*analysis.declared);
+    const auto specified = specifications(*analysis.declared);
     for (const auto &module : analysis.modules) {
         std::cout << "%% module " << quote_text(utf8(module->name)) << " source=" << quote_text(module->file)
                   << " target=" << quote_text(request.project_target)
@@ -109,7 +139,7 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
                 [&](const ast::Expression &expression) {
                     return expression_note(*module->syntax, inferred, expression);
                 },
-            .form = [&](const ast::Form &form) { return function_note(*module, inferred, specified, form); }};
+            .form = [&](const ast::Form &form) { return function_note(*module, analysis, specified, form); }};
         print_source(std::cout, *module->syntax, notes);
         std::cout << '\n';
     }
