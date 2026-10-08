@@ -126,12 +126,12 @@ CTests (123 fast) and 258 production quality units.
 
 ---
 
-## Completed steps 1–35 (compact record)
+## Completed steps 1–47 (compact record)
 
 Full step texts, criteria and per-step evidence are in Git history (last full
 versions: steps 1–8G at `a4e07bb`, steps 8H–27E at `9decf7a`, steps 28–35 at
-`c82066f`). Every step below passed the common gate; per-step logs are in
-`build/plan11-step*/`.
+`c82066f`, steps 36–47 at `b0e0f63`). Every step below passed the common gate;
+per-step logs are in `build/plan11-step*/`.
 
 ### A. Baseline and fixtures
 
@@ -707,549 +707,194 @@ dynamically raise `undef` and builtin funs keep the `dynamic calls` capability
 until step 36; the `undef` top frame differs from OTP. Lookups scan modules
 linearly (hash maps: step 62A). OTP golden `executables_dynamic_calls`.
 
-## H. Builtins and libraries
+### H. Builtins and libraries
 
 <a id="step-36"></a>
 
 ### 36. Implement the generic production builtin bridge
 
-Backlog: F26. Depends on: [11](#step-11).
-
-Register production builtins by module/name/arity and call them from generated
-code with checked status and owned results.
-
-- Success criteria
-  - [x] Generated code calls a registered builtin; unregistered names keep the
-    unavailable diagnostic; failures use the checked error channel.
-- Tests
-  - [x] Golden programs calling bridge builtins with valid and invalid
-    arguments.
-  - [x] Focused test for duplicate registration and failure rollback.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Contract
-  `docs/builtins.md`. ABI: append-only catalog `abi::v1::bridge_builtins`
-  (72 `erlang` entries: guard BIFs, operators, `display/1`, `halt/0,1`, the
-  raise family, `function_exported/3`) and service `erlang_aot_builtin_v1`
-  (index, arguments, output); no descriptor revision change. Runtime:
-  `BuiltinRegistry` in the `CodeServer` (all-or-none batches; invalid,
-  duplicate and in-batch duplicate entries and allocation failures roll
-  back), `erlang_builtins()` registered at startup as adapters over the
-  inline services; `BuiltinFrame` = `FrameDescriptor` with a null body that
-  `ProcessStack::enter` runs on the registers without a push;
-  `CodeServer::function_frame` (exports, then builtins) serves `M:F(Args)`,
-  `apply/3` and runtime `fun M:F/A`; registration binds external funs without
-  a frame to builtins. Compiler: catalog builtins without an inline service
-  are body builtins (`ServiceResolution::builtin`, `lower_builtin`); `fun F/A`
-  of an auto-imported catalog builtin becomes `erlang:F/A`
-  (`Function::builtin_funs`, `add_builtin_fun`); `halt/0,1` auto-imported;
-  other `erlang` names keep `unknown module erlang` / `dynamic calls`
-  (catalog owner now step 52). OTP golden `executables_builtin_bridge` (every
-  catalog builtin through `apply/3` with valid arguments, 46 error cases with
-  OTP classes/reasons, builtin funs: equality, printing, higher-order use,
-  runtime `fun M:F/A`, badarity; `function_exported/3`; `halt` through apply,
-  unqualified `halt()`, uncaught error through apply) passes all 8
-  combinations; `runtime_builtins` registry checks; `runtime_lifecycle_failure`
-  startup sweep raised to 256 allocations (registration rollback on every
-  failpoint); mangling spellings checked with Clang on four targets; semantic
-  cases. Difference recorded: `function_exported/3` is true only for the
-  builtins this runtime provides. Fresh Windows x64 Debug (clang-cl): fast
-  174/174, full `-j 12` 178/178; after complexity splits Lizard 0 warnings and
-  tidy 291 units pass (rerun with one job after clang-tidy crashed with two).
-  Logs `build/plan11-step36/`.
+Done 2026-10-07 (contract `docs/builtins.md`). Append-only catalog
+`abi::v1::bridge_builtins` (first 72 `erlang` entries: guard BIFs, operators,
+`display/1`, `halt/0,1`, raise family, `function_exported/3`). Runtime
+`BuiltinRegistry` in the `CodeServer` (all-or-none batches, rollback on
+invalid/duplicate entries and allocation failure); `BuiltinFrame` is a
+`FrameDescriptor` with a null body run on the registers;
+`CodeServer::function_frame` (exports, then builtins) serves `M:F(Args)`,
+`apply/3` and runtime `fun M:F/A`. Compiler: catalog builtins without an inline
+service are body builtins (`lower_builtin`); `fun F/A` of an auto-imported
+builtin becomes `erlang:F/A` (`Function::builtin_funs`). Difference:
+`function_exported/3` is true only for provided builtins. OTP golden
+`executables_builtin_bridge`; `runtime_builtins`; startup failure sweep 256
+allocations.
 
 <a id="step-37"></a>
 
 ### 37. Add the term-access builtin family
 
-Backlog: F26. Depends on: [36](#step-36).
-
-Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
-
-`element/2`, `setelement/3`, `tuple_size/1`, `make_tuple/2,3`,
-`tuple_to_list/1`, `list_to_tuple/1`, `hd/1`, `tl/1`, `length/1`, `map_get/2`,
-`map_size/1` and `is_map_key/2` in body context, plus the list operators
-`++`/`--` (`erlang:'++'/2`, `erlang:'--'/2`).
-
-- Success criteria
-  - [x] Results and `badarg` errors match OTP.
-- Tests
-  - [x] Golden call/result corpus regenerated from OTP with boundary and invalid
-    arguments.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. New bridge entries
-  (catalog appended) in `runtime/src/builtins/term_access.cpp`
-  (`term_access_builtins()`, registered through `production_builtins()`):
-  `setelement/3`, `make_tuple/2,3`, `tuple_to_list/1`, `list_to_tuple/1`,
-  `'++'/2`, `'--'/2` with OTP's `bif.c`/`erl_bif_lists.c` rules (`--` by exact
-  order, O((n + m) log m)); shared helpers `builtins/support.hpp`. `A ++ B` and
-  `A -- B` lower to the bridge, so the `arithmetic` capability is implemented
-  (removed from `codegen_placeholders`). Auto-import follows
-  `erl_internal:bif/2`: `setelement`, `tuple_to_list`, `list_to_tuple` yes,
-  `make_tuple` no. `element`, `tuple_size`, `hd`, `tl`, `length`, `map_get`,
-  `map_size`, `is_map_key` already ran in bodies (inline services, bridge since
-  step 36). Interruptibility (user note): every builtin still runs to
-  completion; `TODO(step 43A)` markers and new plan step 43A convert them once
-  the scheduler exists. OTP golden `executables_term_access` (76 apply/3 cases
-  with boundary and invalid arguments, direct and qualified calls, operator
-  evaluation order, builtin funs, 100,000-element `++`/`--`/tuples) passes all
-  8 combinations; semantic cases; textstats diagnostics refreshed (now stops
-  at `lists`/`io`). Fresh Windows x64 Debug (clang-cl): fast 175/175, full
-  `-j 12` 179/179; Lizard 0 warnings, tidy pass after replacing a constexpr
-  optional dereference (analyzer false positive). Logs `build/plan11-step37/`.
+Done 2026-10-07. `builtins/term_access.cpp`: `setelement/3`, `make_tuple/2,3`,
+`tuple_to_list/1`, `list_to_tuple/1`, `'++'/2`, `'--'/2` by OTP's
+`bif.c`/`erl_bif_lists.c` rules (`--` by exact order, O((n + m) log m));
+helpers `builtins/support.hpp`. `++`/`--` lower to the bridge (`arithmetic`
+capability implemented). Auto-import follows `erl_internal:bif/2`
+(`make_tuple` not). The other listed BIFs already ran through inline services.
+OTP golden `executables_term_access`.
 
 <a id="step-38"></a>
 
 ### 38. Add the conversion builtin family
 
-Backlog: F11, F26. Depends on: [36](#step-36).
-
-Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
-
-Atom, integer, float, list, binary and string conversions
-(`atom_to_list/1`, `list_to_atom/1`, `integer_to_list/1,2`,
-`list_to_integer/1,2`, `float_to_list/1,2`, `binary_to_list/1`,
-`list_to_binary/1`, `iolist_to_binary/1`, `term_to_binary/1` excluded unless
-selected).
-
-- Success criteria
-  - [x] Results and errors match OTP; atom-table limits fail as documented.
-- Tests
-  - [x] Golden call/result corpus regenerated from OTP.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Catalog appended;
-  `runtime/src/builtins/conversions.cpp` (`conversion_builtins()`) and
-  `float_text` implement `atom_to_list/1`, `list_to_atom/1`,
-  `integer_to_list/1,2`, `list_to_integer/1,2`, `float_to_list/1,2`,
-  `binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1` from OTP's
-  `bif.c`, `big.c`, `utils.c`, `erlang.erl` rules and probes (OTP 29.1.1):
-  255-character atoms with the length checked first (`system_limit`),
-  bases 2..36, OTP's list_to_integer size limits ahead of digit checks,
-  `float_to_list` default `%.20e`, `{scientific, D}` (negative is 6),
-  `{decimals, D}` with OTP's own rounding and `compact` (including its
-  integer-zero trimming), `short` via `std::to_chars` digits placed by OTP's
-  Ryu rules, 256-byte text limit; iolists walked iteratively. A full atom
-  table is a `resource_limit` runtime failure (exit 70); differences recorded
-  for that and for `list_to_integer` characters above 255. All auto-imported.
-  OTP golden `executables_conversions` (124 apply/3 cases, direct calls, funs,
-  round trips, 1000-digit integers in bases 2/10/36, a 100,000-deep iolist,
-  `system_limit`/`badarg` for 1,300,000-digit strings; `atoms` run, authored
-  `--max-atoms 300` run exiting 70) passes all 8 combinations; semantic case;
-  `textstats`/`frames` diagnostics refreshed. Fresh Windows x64 Debug: fast
-  176/176, full `-j 12` 180/180; Lizard 0 warnings and tidy pass after
-  complexity and swappable-parameter splits and a boost analyzer workaround
-  (`swap` instead of copy assignment). Logs `build/plan11-step38/`.
+Done 2026-10-07. `builtins/conversions.cpp` and `float_text`: atom, integer,
+float, list and binary conversions by OTP's `bif.c`/`big.c`/`utils.c` rules:
+255-character atoms (length checked first, `system_limit`), bases 2..36,
+`float_to_list` default `%.20e`, `scientific`/`decimals`/`compact`/`short`
+(`std::to_chars` digits placed by OTP's Ryu rules), 256-byte text limit;
+iolists walked iteratively. A full atom table is a `resource_limit` failure
+(exit 70); differences recorded for that and `list_to_integer` characters above
+255. OTP golden `executables_conversions` (with a `--max-atoms 300` run).
 
 <a id="step-39"></a>
 
 ### 39. Ship a project-owned library subset for `lists` and `maps`
 
-Backlog: F08, F26. Depends on: [21](#step-21), [35](#step-35).
-
-Potentially long running functions will need to be able to do work in interruptible portions to allow the scheduler on the same cpu core to switch to other tasks (continuations sort of thing)
-
-Write original Erlang implementations (not OTP copies) of commonly used
-functions, compiled and linked with user programs. Start with `lists:reverse,
-map, foldl, foldr, filter, member, keyfind, sort, seq, nth, append` and
-`maps:get, put, find, keys, values, fold, from_list, to_list`.
-
-- Success criteria
-  - [x] Library modules build with the compiler and link automatically into
-    executables; results match OTP.
-- Tests
-  - [x] Golden call/result corpus regenerated from OTP for every function.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Original Erlang
-  sources `library/stdlib/lists.erl` (`append/1,2`, `filter/2`, `foldl/3`,
-  `foldr/3`, `keyfind/3`, `map/2`, `member/2`, `nth/2`, `reverse/1,2`,
-  `seq/2,3`, `sort/1`) and `maps.erl` (`find/2`, `fold/3`, `from_list/1`,
-  `get/2`, `keys/1`, `put/3`, `to_list/1`, `values/1`), written from OTP's
-  documented behavior with its error shapes (OTP probes: `map`/`foldl`
-  `{case_clause, X}` for a non-list, `nth` `is_integer` guard, `seq/3`
-  `badarg`); contract `docs/library.md`. The driver adds them to a batch
-  (`frontend` `add_library`, positional and project) when a module names them
-  with a literal atom (`semantic::referenced_modules`) and no input declares
-  them; the directory is `library/stdlib` relative to `erlangaot`
-  (`linking::library_directory`, `ERLANG_AOT_DEFAULT_LIBRARY`). Interruptible
-  by construction (Erlang code). Differences recorded: subset only, key-order
-  iteration, no code-path loading for runtime-only names. OTP golden
-  `executables_library` (101 apply/3 cases with valid, boundary and invalid
-  arguments, fun application order, library funs/apply/dynamic calls, a
-  32-key `from_list`/`to_list` round trip, 10,000-element lists) passes all 8
-  combinations; program diagnostics refreshed (`lists`/`maps` resolve). Fresh
-  Windows x64 Debug: fast 177/177, full `-j 12` 181/181; Lizard 0 warnings;
-  tidy 294 units pass (rerun with one job after a clang-tidy crash). Logs
-  `build/plan11-step39/`.
+Done 2026-10-07 (contract `docs/library.md`). Original
+`library/stdlib/lists.erl` and `maps.erl` subsets with OTP's error shapes. The
+driver adds a library module to the batch when a module names it with a
+literal atom (`semantic::referenced_modules`, `frontend` `add_library`) and no
+input declares it; directory `library/stdlib` relative to `erlangaot`
+(`linking::library_directory`, `ERLANG_AOT_DEFAULT_LIBRARY`). Differences:
+subset only, key-order iteration, no code-path loading. OTP golden
+`executables_library`.
 
 <a id="step-40"></a>
 
 ### 40. Add console output through `io`
 
-Backlog: F26. Depends on: [4](#step-4), [36](#step-36).
-
-`io:put_chars/1`, `io:format/1,2` with `~w ~p ~s ~n ~b ~B ~c ~~`.
-
-- Success criteria
-  - [x] Output matches OTP for the supported directives; unsupported directives
-    and bad arguments raise OTP-like errors.
-- Tests
-  - [x] Golden programs printing each directive, nested terms with `~p` line
-    breaking, and Unicode strings.
-- Evidence (2026-10-07): `maint-29` unchanged at `21776803`. Contract
-  `docs/io.md`. Catalog appended with module `io` (`format/1,2`,
-  `put_chars/1`); the compiler resolves qualified calls of another module's
-  catalog builtin as services (`semantic::module_builtin`), so `io:format`,
-  `fun io:format/2`, `apply(io, ...)` and `M:format` reach the bridge.
-  Runtime `builtins/io_format` (OTP `io_lib_format` scan and control
-  sequences `~w ~p ~s ~c ~b ~B ~i ~n ~~` with width, precision, pad, `*`,
-  `t`/`l`/`k`, column tracking with tabs, list formats passing nested
-  chardata through), `builtins/io_pretty` (OTP `io_lib_pretty` intermediate
-  form and pp/cind layout: tagged tuples, maps, native records, binaries
-  wrapping, improper tails; printable range latin1), shared `builtins/text`
-  (UTF-8, digits, from `conversions`); output is the device's UTF-8
-  (`unicode` encoding), nothing written on error; `TermStyle::write_unicode`
-  for `~tw` atoms. Differences recorded: `~e ~f ~g ~x ~X ~+ ~# ~W ~P` and `K`
-  are badarg; `~p` nesting over 256 is `system_limit` (layout recursion,
-  about 1.2 KiB per level in Debug, 800 levels overflowed); widths count code
-  points; negative counts badarg (OTP loops). OTP golden
-  `executables_console` (every directive with fields, 32 error cases, 23
-  `~p` layouts incl. columns, widths, precisions, tabs, binaries, nested
-  maps; Unicode `~ts`/`~tp`/`~tc`/atoms/binary formats; put_chars chardata
-  and 10 errors; funs and dynamic calls; 10,000-element `~w`, 2,000-element
-  `~p`; a depth-256 `~0p` run; authored runs for unsupported directives and
-  the depth-257 `system_limit`) passes all 8 combinations; semantic cases
-  `io_builtins`, `io_unknown`, `io_guard`. Program diagnostics refreshed:
-  `avltree`, `frames`, `textstats` now compile, and their linked executables
-  reproduce their OTP stdout and exit status (run by step 58). Fresh Windows
-  x64 Debug: fast 178/178, full `-j 12` 182/182; Lizard 0 warnings; tidy
-  findings (complexity splits, swappable parameters) fixed and rerun clean.
-  Logs `build/plan11-step40/`.
+Done 2026-10-07 (contract `docs/io.md`). Catalog module `io` (`format/1,2`,
+`put_chars/1`); qualified calls of another module's catalog builtin resolve as
+services (`semantic::module_builtin`). Runtime `builtins/io_format`
+(`io_lib_format` directives `~w ~p ~s ~c ~b ~B ~i ~n ~~` with width,
+precision, pad, `*`, `t`/`l`/`k`), `builtins/io_pretty` (`io_lib_pretty`
+layout), `builtins/text`; UTF-8 output, nothing written on error. Differences:
+`~e ~f ~g ~x ~X ~+ ~# ~W ~P` and `K` are badarg, `~p` nesting over 256 is
+`system_limit`, widths count code points, negative counts badarg. OTP golden
+`executables_console`; `avltree`, `frames`, `textstats` now compile.
 
 <a id="step-41"></a>
 
 ### 41. Add typed native callables for builtin implementations
 
-Backlog: F27. Depends on: [37](#step-37), [38](#step-38).
+Done 2026-10-07 (`docs/builtins.md#typed-builtins`). `builtins/typed.hpp`:
+`typed<Function>` adapts `Result(ProcessContext &, Parameters...)` to a
+`BuiltinBody`, `typed_entry` takes the arity from the signature;
+`Argument<T>` conversions (`Term`, `std::int64_t`, `detail::Integer`,
+`double`, `List`/`Tuple`/`Binary`/`AtomArgument`) raise badarg before the body;
+a thrown `BuiltinFailure` is raised, other exceptions stay in `call_builtin`.
+Migrated: term access, conversions, io, `binary_part/2`,
+`function_exported/3`; other erlang adapters forward raw words.
+`runtime_typed_builtins`.
 
-Use the builtin families as the concrete use case: typed C++ signatures with
-checked argument conversion and generic Term fallback.
-
-- Success criteria
-  - [x] Existing builtins migrate to typed wrappers with identical behavior;
-    wrong types become `badarg`; C++ exceptions never cross the generated ABI.
-- Tests
-  - [x] Existing builtin goldens pass unchanged.
-  - [x] Focused tests for conversion failure, expired handles and a throwing
-    callback.
-- Evidence (2026-10-07): no OTP-dependent change. `runtime/src/builtins/typed.hpp`:
-  `typed<Function>` adapts `Result(ProcessContext &, Parameters...)` to a
-  `BuiltinBody`; `typed_entry<Function>(module, name)` takes the arity from
-  the signature. Arguments are admitted in order (unowned words are
-  failures), then converted by `Argument<T>` (`Term` fallback,
-  `std::int64_t` small, `detail::Integer`, `double`, `ListArgument`,
-  `TupleArgument`, `BinaryArgument`, `AtomArgument`); a mismatch raises
-  badarg without running the body. Results `Term`, `TermResult<Term>`,
-  `BuiltinResult<Term>` or a self-published `Word`; a thrown
-  `BuiltinFailure` (moved from io to `support.hpp`) is raised or recorded,
-  other exceptions stay in `call_builtin`. Migrated: term-access family,
-  conversions, io, `binary_part/2`, `function_exported/3`; the remaining
-  erlang adapters forward raw words to the inline services (documented in
-  `docs/builtins.md#typed-builtins`). Unchanged goldens
-  (`builtin_bridge`, `term_access`, `conversions`, `console`, `library`)
-  pass; new `runtime_typed_builtins` (conversion failures of every argument
-  type skip the body; foreign and destroyed-process words are service
-  failures; runtime_error, bad_alloc and thrown BuiltinFailure become
-  internal_error, out_of_memory, system_limit and the term status). Fresh
-  Windows x64 Debug: fast 179/179, full `-j 12` 183/183; Lizard 0 warnings;
-  tidy (now batched) flagged one swappable-parameter pair in `'++'/2`,
-  fixed (`ListArgument` left operand) and the affected shards rerun clean.
-  Logs `build/plan11-step41/`.
-
-## I. Processes and messaging
+### I. Processes and messaging (steps 42–47)
 
 <a id="step-42"></a>
 
 ### 42. Implement pid and reference identities
 
-Backlog: F03, F07, F12. Depends on: [23](#step-23), [28](#step-28).
-
-`self/0` (main process only) and `make_ref/0`, with comparison, printing,
-tracing and copying.
-
-- Success criteria
-  - [x] Identities are unique, compare and print like OTP; forged or stale
-    words are rejected.
-- Tests
-  - [x] Golden programs comparing, sorting and storing pids/references in maps.
-  - [x] Runtime tests for forged, stale and foreign identities.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/terms.md#pids-and-references`. Pids are immediates (tag `0x3`)
-  carrying a process number from one process-wide, never-reused sequence;
-  `detail::ProcessNumbers` (`process/identities`) records each runtime's
-  issued numbers as runs and `ProcessIdentity` carries the number. Admission
-  (`TermAccess::pid` via `HeapStorage::processes_`, heap verify) rejects
-  forged and foreign pid words; exited pids stay valid. References are
-  `reference` heap cells (untraced 64-bit number from a program-wide
-  counter): walked, collected and copied like other untraced cells. Order
-  numbers < atoms < references < funs < pids < tuples (pids and references by
-  number); printing `<0.N.S>` and `#Ref<0.A.B.C>` with OTP's bit splits.
-  Catalog appended: `self/0`, `make_ref/0` (`builtins/processes`),
-  `pid_to_list/1`, `ref_to_list/1` (conversions), all auto-imported; a body
-  `self()` resolves its guard signature to the bridge builtin, `self()` in a
-  guard stays gated (step 52); `is_pid/1`/`is_reference/1` now return true
-  for these values. Differences recorded: pid and reference numbering. OTP
-  golden `executables_identities` (type tests, equality, head matching,
-  identity text shapes via `pid_to_list`/`ref_to_list`, their badarg cases,
-  term order of a mixed list, 200 distinct sorted references as map keys,
-  pid/reference/compound map keys, captures, exception payloads) passes all
-  8 combinations; `runtime_identities` (issued, forged, never-issued,
-  foreign-runtime and exited pids; references across collection, copy,
-  stale and expired terms; order); semantic cases `process_identities`,
-  `self_guard`; ring/supervise diagnostics lose their `self()` guards line.
-  The deferred term-services path moved to `TermFactory::port`
-  (`PortIdentity` placeholder). Fresh Windows x64 Debug: fast 181/181, full
-  `-j 12` 185/185; Lizard 0 warnings after splitting the walker's payload
-  check; tidy 302 units pass. Logs `build/plan11-step42/`.
+Done 2026-10-08 (contract `docs/terms.md#pids-and-references`). Pids are
+immediates (tag `0x3`) with a never-reused process number
+(`detail::ProcessNumbers`, `process/identities`); admission rejects forged and
+foreign pid words, exited pids stay valid. References are untraced `reference`
+heap cells numbered program-wide. Order numbers < atoms < references < funs <
+pids < tuples; printing `<0.N.S>`, `#Ref<0.A.B.C>`. Builtins `self/0`,
+`make_ref/0` (`builtins/processes`), `pid_to_list/1`, `ref_to_list/1`; guard
+`self()` gated until step 52; ports moved to `TermFactory::port`
+(`PortIdentity` placeholder). Difference: numbering. OTP golden
+`executables_identities`; `runtime_identities`.
 
 <a id="step-43"></a>
 
 ### 43. Run spawned processes on a cooperative executor
 
-Backlog: F01, F22. Depends on: [42](#step-42), [33](#step-33).
-
-Implement `spawn/1,3` with per-process heaps, reduction counting and yields per
-the step-17 model; startup runs the entry as the first process and exits when
-it finishes.
-
-- Success criteria
-  - [x] Many processes interleave on one thread; each heap is isolated.
-  - [x] A crashing process does not affect others.
-- Tests
-  - [x] Golden programs spawning 10k processes and long-running busy loops
-    that must interleave.
-  - [x] Teardown with live processes releases every heap.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/processes.md`. Yields per the step-17 model: every function entry
-  (`ProcessStack::enter`, so calls, tail calls, fun/dynamic calls and
-  builtins) spends a reduction of a 4,000-reduction slice; at zero it records
-  the entered frame (`resume_`), keeps its argument registers as roots and
-  returns code that ends the slice, unwinding the `musttail` chain;
-  `ProcessStack::start`/`run` begin and resume a process; host `invoke`
-  resumes its own yields. `detail::Executor` (`scheduler/executor`, in
-  `Runtime::Impl`): FIFO run queue, round-robin slices until the main
-  process ends or another process halts or fails outside Erlang; ended
-  processes are released at once (contexts now keyed by pointer, live
-  processes by pid number). Catalog appended: `spawn/1,3`,
-  `is_process_alive/1` (auto-imported); spawn checks its arguments in the
-  parent (badarg), copies the fun or argument list into the new heap and
-  prepares the first call inside the child with the dynamic call services,
-  so badarity/undef crash only the child. Startup queues the entry frame as
-  the main process (host-only entry exports still run synchronously) and
-  releases every process at exit. Crash reports stay silent until step 44;
-  loops without calls and long builtins do not yield (step 43A). Difference
-  recorded: OTP's compiler may drop the code after `spawn` of a fun of
-  another arity. OTP golden `executables_processes` (a process spawned
-  first spinning on `is_process_alive/1` until a later one ends, 10,000
-  processes, captured and argument copies, spawn/is_process_alive badarg
-  cases, an endless process left running at exit; a `crash` run with an
-  exception, undef and badarity child beside a surviving main) passes all 8
-  combinations; `runtime_processes` (round-robin slices of spinning
-  processes, crash isolation, halt from another process, host-invocation
-  yields, releasing live processes returns all memory); semantic case
-  `spawn_builtins`. Fresh Windows x64 Debug: fast 183/183, full `-j 12`
-  187/187; Lizard 0 warnings; tidy 302 units pass after replacing two
-  swappable-parameter pairs (`InitialCall`, `entry_frame(startup)`). Logs
-  `build/plan11-step43/`.
+Done 2026-10-08 (contract `docs/processes.md`). Every function entry
+(`ProcessStack::enter`) spends a reduction of a 4,000 slice; at zero it records
+`resume_`, roots the argument registers and ends the slice by unwinding the
+`musttail` chain (`ProcessStack::start`/`run`). `detail::Executor`
+(`scheduler/executor`): FIFO run queue, round-robin slices until the main
+process ends or another halts or fails; ended processes are released at once.
+`spawn/1,3`, `is_process_alive/1`: badarg checked in the parent, fun/arguments
+copied into the new heap, first call prepared in the child (badarity/undef
+crash only the child). Startup runs the entry as the main process. Difference:
+OTP may drop code after `spawn` of a fun of another arity. OTP golden
+`executables_processes`; `runtime_processes`.
 
 <a id="step-43a"></a>
 
 ### 43A. Make long-running builtins interruptible
 
-Backlog: F22, F26. Depends on: [43](#step-43). Added 2026-10-07 during step 37.
-
-Builtins whose work grows with their input run to completion today because no
-scheduler exists. Once reductions and yields exist, give them BEAM-style traps:
-a builtin does a bounded portion of work, keeps its state rooted (registers or
-a heap/off-heap state term), and continues through its builtin frame after the
-scheduler may have switched processes. Candidates are marked `TODO(step 43A)`
-in `runtime/src/builtins/`: `'++'/2`, `'--'/2`, `list_to_tuple/1`,
-`tuple_to_list/1`, `make_tuple/2,3`, `setelement/3`, the step-38 conversions,
-plus the inline `length/1` and long list services.
-
-- Success criteria
-  - [x] A process running a long builtin cannot starve others; results, errors
-    and evaluation order stay as before; state survives collections between
-    portions.
-- Tests
-  - [x] Existing builtin goldens pass unchanged; an interleaving golden runs a
-    huge `++`/`--` beside a busy process; a collection between portions keeps
-    the state.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/builtins.md#portions`. Body bridge builtins are entered like functions
-  (`erlang_aot_builtin_frame_v1` replaces `erlang_aot_builtin_v1`; the apply
-  marker transfer), so each spends a reduction; body `length/1` resolves to
-  its bridge builtin, guards keep the inline service. A portion may do 16
-  units of work per reduction left (`ProcessStack::budget`/`spend`), then
-  `trap`s to a continuation frame with state terms in the registers; `enter`
-  suspends the process there and later resumes it. Native state lives in a
-  `TrapState` whose words are roots. In portions: `length/1`, `++` (collect,
-  then build onto the tail), `--` (collect, bottom-up merge sort by exact
-  order, binary-search scan charged per comparison, build; nothing removed
-  returns the left list), `binary_to_list/1`, `list_to_binary/1`,
-  `iolist_to_binary/1` (`builtins/lists`, `builtins/portions`,
-  `TermFactory::list_words`). As in OTP the tuple builtins and the bounded
-  conversions run to completion; io formatting also does (difference
-  recorded). Host `call_builtin` continues traps at once. OTP golden
-  `executables_portions` (each builtin beside a busy process that ends during
-  it, results, late improper-tail badargs) passes; `runtime_portions` runs
-  each as a process's first call with a collection between every two portions
-  (++/length/binary_to_list/list_to_binary over moving tuples, -- sorting and
-  scanning in more than four portions); all builtin goldens unchanged. Fresh
-  Windows x64 Debug: fast 185/185; full `-j 12` 188/189, the one failure a
-  `runtime_containers` SegFault not reproduced in 13 standalone or parallel
-  reruns (it passed in the same gate's fast run); Lizard 0 warnings after
-  extracting `guard_service`; tidy 39 batches pass after splitting the merge
-  (`close_runs`). Logs `build/plan11-step43a/`.
+Done 2026-10-08 (contract `docs/builtins.md#portions`). Body bridge builtins
+are entered like functions (`erlang_aot_builtin_frame_v1` replaced
+`erlang_aot_builtin_v1`) and spend a reduction; body `length/1` uses the
+bridge, guards the inline service. A portion does 16 work units per reduction
+left (`ProcessStack::budget`/`spend`), then `trap`s to a continuation frame
+with state in registers or a rooted `TrapState`. In portions: `length/1`,
+`++`, `--` (merge sort by exact order, binary-search scan),
+`binary_to_list/1`, `list_to_binary/1`, `iolist_to_binary/1`
+(`builtins/lists`, `builtins/portions`). Tuple builtins and bounded
+conversions run to completion as in OTP; io formatting too (difference). OTP
+golden `executables_portions`; `runtime_portions` (collection between
+portions). One `runtime_containers` SegFault in that full gate was not
+reproduced.
 
 <a id="step-44"></a>
 
 ### 44. Define process exit and crash reports
 
-Backlog: F22. Depends on: [43](#step-43).
-
-- Success criteria
-  - [x] Normal return, `exit/1` and uncaught errors terminate the process with
-    OTP-like reasons; non-normal termination writes an error report.
-- Tests
-  - [x] Golden programs for each termination kind with stderr checked.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/processes.md#exits`. `process/exits`: `exit_reason` gives `normal`,
-  the `exit/1` reason, `{Reason, Stack}` for errors and
-  `{{nocatch, V}, Stack}` for uncaught throws (OTP); `report_exit` writes
-  OTP's legacy report (`=ERROR REPORT==== D-Mon-YYYY::HH:MM:SS.uuuuuu ===`,
-  `Error in process <pid> with exit value:`, the reason as `~p`, blank line)
-  on stderr for error-class ends only, when the executor releases a non-main
-  process. OTP probes: no report for `exit/1` (incl. `normal`, `kill`), reports
-  for errors, `{nocatch, V}` and `undef`; OTP's logger writes them
-  asynchronously, so its oracle runs usually show none. Difference recorded
-  (report timing and stream). OTP golden `executables_crash_reports` (return,
-  exit normal/shutdown/kill/term, caught error, error, throw, badarith,
-  badmatch, undef via spawn/3; authored stderr pattern for exactly the five
-  reports); `executables_processes` crash run now expects its three reports.
-  Gate (after the gate-time commit): fast 189/189 in 46 s, full 193/193 in
-  106 s (separate check), check-quality all 306 units in 2 min 13 s (16
-  jobs) after replacing an empty catch. Logs `build/plan11-step44/`.
+Done 2026-10-08 (contract `docs/processes.md#exits`). `process/exits`:
+`exit_reason` gives `normal`, the `exit/1` reason, `{Reason, Stack}` for errors
+and `{{nocatch, V}, Stack}` for throws; `report_exit` writes OTP's legacy
+`=ERROR REPORT====` text to stderr for error-class ends of non-main processes
+only. Difference: report timing and stream (OTP's logger is asynchronous). OTP
+golden `executables_crash_reports`.
 
 <a id="step-45"></a>
 
 ### 45. Implement the signal inbox and message send
 
-Backlog: F05, F24. Depends on: [43](#step-43), [28](#step-28).
-
-`Pid ! Msg` and `erlang:send/2`; every message, including self-send, enters the
-signal inbox and is copied by the step-28 service into a heap fragment of the
-receiver, merged into its heap at the next collection.
-
-- Success criteria
-  - [x] Per-sender order is preserved; sending to a dead process succeeds
-    silently; invalid destinations raise `badarg`.
-- Tests
-  - [x] Golden programs for ping-pong, fan-in ordering and self-send: the
-    send semantics golden here; ping-pong and fan-in need receive and are
-    goldens of step 46.
-  - [x] Copy failure in the receiver is handled per contract.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/processes.md#messages`. Catalog appended `'!'/2` and `send/2`
-  (`send/2` not auto-imported); `A ! B` lowers to the `!` bridge builtin
-  (destination first, value is the message); `send expressions` and runtime
-  `message passing` features implemented (the `ProcessContext::send`
-  placeholder and its deferred-report tests removed). `Executor::send` copies
-  the message into the live receiver's heap (`Term::copy_to`, step 28) and
-  appends it to the signal inbox of the concrete `Mailbox` (inbox + queue +
-  saved position: `peek`/`skip`/`take`/`restart`, arrived messages join the
-  queue on `peek`); messages are roots (`visit_roots`). Ended pid: nothing;
-  `{Atom, Atom}`: dropped (no registry until step 50); other destinations
-  badarg; a refused copy fails the sender (runtime failure, exit 70). OTP
-  probes: Dest before Msg, `{name, nonode@nohost}`/remote node silent, bare
-  unregistered atom and `{name, 1}` badarg. OTP golden `executables_send`
-  (order of evaluation, return values, large messages to a busy process, dead
-  pid, self-send, `erlang:'!'/2`, every destination kind); `runtime_messages`
-  (per-sender order mixed with self-sends across a receiver collection,
-  receive positions and arrivals, ended receiver, a receiver heap cap refusing
-  the copy and delivering nothing, teardown releases everything);
-  programs kvstore/ring/supervise lose their send diagnostics. Fresh Windows
-  x64 Debug: fast 191/191 (62 s); check-quality (Lizard, tidy 305 units in 5
-  batches) passes. Logs `build/plan11-step45/`.
+Done 2026-10-08 (contract `docs/processes.md#messages`). Builtins `'!'/2` and
+`send/2` (not auto-imported); `A ! B` lowers to `!` (destination first).
+`Executor::send` copies into the live receiver's heap (`Term::copy_to`) and
+appends to its `Mailbox` inbox (inbox, queue, saved position:
+`peek`/`skip`/`take`/`restart`); messages are roots. Ended pids and
+`{Atom, Atom}` (until step 50) drop the message, other destinations badarg, a
+refused copy fails the sender (exit 70). OTP golden `executables_send`;
+`runtime_messages`.
 
 <a id="step-46"></a>
 
 ### 46. Implement selective receive without timeout
 
-Backlog: F13, F25. Depends on: [45](#step-45).
-
-- Success criteria
-  - [x] The first matching message (patterns and guards) is removed; unmatched
-    messages stay in order; a process with no match suspends and wakes on
-    arrival.
-- Tests
-  - [x] Golden programs for selective receive out of order, repeated scans and
-    many unmatched messages.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/processes.md#receive`. Semantic: `branch_clauses` lists receive
-  clauses (binding exports, guards, inference join, tail positions like
-  `case`); a receive with `after` stays opaque and reports `receive` notimpl
-  until step 47 (feature entry now plan step 47). Codegen walker `receive`: a
-  loop head peeks (`erlang_aot_receive_v1`, `ReceiveOperation` in new
-  `abi/messages.hpp`) into a root slot; matched clauses `take` before their
-  body, the last mismatch `skip`s and loops; with nothing left the loop enters
-  the wait builtin (`erlang_aot_wait_frame_v1`, timeout register `infinity`)
-  through the call transfer. Runtime `process/receive.cpp`: the wait returns
-  true when unexamined messages exist, else `ProcessStack::wait` (trap +
-  waiting flag); the executor parks waiting processes (`parked_`), a send
-  wakes the receiver to the queue's end, `clear` releases parked processes,
-  an empty queue blocks forever (OTP), and a host invocation that would wait
-  fails `busy`. Module atoms add `infinity` for receives. Unsupported-feature
-  test placeholders moved from `receive` to `fun erlang:node/0` (dynamic
-  calls); program diagnostics now list only receives with `after`. OTP golden
-  `executables_selective_receive` (1,000-round ping-pong, three-way fan-in in
-  order, self-sends selected out of order, bound-variable patterns and
-  exported names, 10,000 unmatched messages kept in order behind the wanted
-  one, a counter server tail loop, a process left waiting at exit) passes all
-  8 combinations (5 s). Fresh Windows x64 Debug: fast 192/192 (47 s);
-  check-quality passes after splitting `Executor::run` (`slice`) and a
-  non-throwing `clear`. Logs `build/plan11-step46/`.
+Done 2026-10-08 (contract `docs/processes.md#receive`). `branch_clauses` lists
+receive clauses like `case`. Codegen loop head peeks (`erlang_aot_receive_v1`,
+`ReceiveOperation` in `abi/messages.hpp`) into a root slot; a match `take`s,
+the last mismatch `skip`s; nothing left enters the wait builtin
+(`erlang_aot_wait_frame_v1`). Runtime `process/receive.cpp`:
+`ProcessStack::wait`; the executor parks waiting processes (`parked_`), a send
+wakes them; an empty queue blocks forever (OTP); a host invocation that would
+wait fails `busy`. OTP golden `executables_selective_receive`.
 
 <a id="step-47"></a>
 
 ### 47. Implement `receive … after` timeouts
 
-Backlog: F25. Depends on: [46](#step-46).
+Done 2026-10-08. The after body is a receive clause without pattern
+(`first_handler` = message clause count), its timeout evaluated first. The
+wait answers true/false; false branches to `receive.timeout`, which `restart`s
+the scan and starts the after clause (`CaseJoin::timeout`, `start_after`).
+`ErrorReason::timeout_value` (25): `infinity` or 0..4294967295 checked only
+when waiting; a finite deadline set at the first wait, cleared by
+`take`/`restart`; executor `timers_` by deadline, sleeping until the earliest
+(timer wheel: step 62B). OTP golden `executables_receive_after`.
 
-- Success criteria
-  - [x] `after 0`, finite and `infinity` timeouts behave as OTP; a message
-    arriving before expiry is taken, never lost.
-- Tests
-  - [x] Golden programs for each timeout kind and `timer`-style sleeps built on
-    `receive after`; no exact-time assertions.
-- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
-  `docs/processes.md#receive`. `branch_clauses(receive)` appends the after
-  body as a clause without pattern or guard (`first_handler` = message clause
-  count); the timeout is a child evaluated first (binding, guard, children
-  views); inference keeps top for receives with `after`; the `receive`
-  feature is implemented. Walker: the wait answers `true`/`false`; false
-  branches to `receive.timeout`, which `restart`s the scan and starts the
-  after clause (`CaseJoin::timeout`, `start_after`); after-only receives skip
-  every message; a clause without pattern or guard branches straight to its
-  body. Runtime: `ErrorReason::timeout_value` (25, plain), the wait validates
-  `infinity` or 0..4294967295 only when it would wait, `after 0` answers at
-  once, a finite timeout sets the mailbox deadline at the first wait (cleared
-  by `take`/`restart`, not by skipped messages); the executor keeps
-  `timers_` by deadline, expires them before each slice and sleeps until the
-  earliest when nothing runs (plan step 62B replaces this with a timer
-  wheel). OTP probes: bad timeouts raise only without a matching message.
-  OTP golden `executables_receive_after` (`after 0` polls and drains,
-  expiry with the bindings before the receive, early arrival taken,
-  `infinity`, sleeps ending in length order, timeout not restarted by
-  unmatched messages, exported names from clauses and after, timeout_value
-  cases) passes all 8 combinations; programs kvstore/supervise now stop at
-  the step 48–50 builtins. Fresh Windows x64 Debug: fast 193/193 (66 s);
-  check-quality passes after extracting `selection_fact` in inference. Logs
-  `build/plan11-step47/`.
+## I. Processes and messaging (steps 48–53)
 
 <a id="step-48"></a>
 
