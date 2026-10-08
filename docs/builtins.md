@@ -32,7 +32,9 @@ builtin both the compiler and the runtime know:
 - process identities (plan step 42): `self/0`, `make_ref/0`, `pid_to_list/1`
   and `ref_to_list/1` ([pids and references](terms.md#pids-and-references));
 - processes (plan step 43): `spawn/1,3` and `is_process_alive/1`
-  ([processes](processes.md));
+  ([processes](processes.md)); links and exit signals (step 48):
+  `spawn_link/1,3`, `link/1`, `unlink/1`, `exit/2`, `exit_signal/2`,
+  `process_flag/2` ([links](processes.md#links));
 - messages (plan step 45): `'!'/2` (the `!` operator) and `send/2`
   ([messages](processes.md#messages)).
 

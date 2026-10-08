@@ -49,6 +49,8 @@ struct BuiltinFailure {
     abi::v1::ErrorReason reason = abi::v1::ErrorReason::badarg;
     // A failed term access, reported as a service failure instead of an Erlang error.
     std::optional<TermError> term = std::nullopt;
+    // The term a raised reason carries (error:noproc raises the atom as raised_error).
+    Word payload = 0;
 };
 
 // The value of a term access, or BuiltinFailure thrown with its error.
@@ -69,7 +71,7 @@ inline Word fail(ProcessContext &context, const BuiltinFailure &failure) {
         context.generated_calls().fail_service(detail::term_status(*failure.term));
         return 0;
     }
-    return raise(context, failure.reason);
+    return raise(context, failure.reason, failure.payload);
 }
 
 // The value of a small integer word, as OTP's is_small; none for anything else.

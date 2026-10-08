@@ -21,7 +21,9 @@ enum class CallError : std::uint8_t {
     diagnostic_failure,
     erlang_exception,
     runtime_failure,
-    halted
+    halted,
+    // Ended by an exit signal (exit/2, a link): unwinds past every catch; the value is the exit reason.
+    exited
 };
 
 // Generated frames live when an Erlang exception was raised, innermost first (BEAM's raw StackTrace).

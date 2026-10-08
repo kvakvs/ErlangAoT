@@ -341,6 +341,10 @@ Step facts beyond the plan record:
   timeout_value only when no message matches. OTP crash reports go through async logger: the oracle usually halts
   first, so goldens see no OTP stderr (author stderr). runtime_containers SegFaulted once in a full -j 12 run, not
   reproduced.
+- 48: exit signals act at once (only the running process sends); `CallError::exited` (raised_exit + value) is
+  uncatchable; executor `running_`/`Running` scope, `ending_` drain, `finished_`/`stopped_`; run() resets finished_.
+  OTP -eval process traps exits (link to dead returned true there): probe inside spawned processes. Monitors (49):
+  demonitor flush only when the monitor was not found; monitor(process, self()) creates nothing (info false).
 User directions (keep):
 - Inference plan (2026-10-08): steps 58A-58G before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
@@ -361,6 +365,9 @@ Host and tool gotchas:
   vswhere.exe -latest -products * -property installationPath -> C:/Program Files/Microsoft Visual Studio/18/Community;
   vcvars64 = <that>/VC/Auxiliary/Build/vcvars64.bat. Copy build/plan11-step11/*.cmd (sed step dir) for new steps.
 - Gate: vcvars64 + PATH "C:\Program Files\LLVM\bin"; never pass LLVM_DIR (skips /MT+IDL0). Scripts
+  Configure with -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl: `--fresh` without it picks GNU-like
+  clang++ and nested test caches (clang-cl) fail ("cache to be deleted", missing match_consumer.cpp). Strawberry
+  cmake/ninja first on PATH is fine. Scripts build/plan11/{env,gate,build,test,fast}.cmd (test.cmd regex: TESTRE env).
   build/plan11-step8g/{gate,rt,quality,all}.cmd; cmd /c needs full .bat path; run .exe via PowerShell.
 - build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.
 - First run after runtime source edits can time out tests while native sub-builds recompile; rerun.

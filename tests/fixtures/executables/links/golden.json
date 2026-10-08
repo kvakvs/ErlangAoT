@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "entry": "links",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "(?s)Error in process .*boom.*Error in process .*nocatch,x",
+      "exit_status": 0,
+      "stdout": "trap_exit true false\nlink dead {error,noproc}\ntrap_exit false\nlink dead trapping true noproc\nreturned normal\nexited foo\nerror and throw reasons carry stacks\nexit kill kill\nmiddle kill\nchain gone\nkilled killed alive false\ntrapping killed killed\ntrapped {got,foo,normal}\nnormal ignored true\nended bye\nself normal normal\nexit_signal self normal survived\nself kill killed\nself foo foo\nself trapped killed\nunlink true true\nunlinked\nlinks true true true\nstopped normal\n[{error,badarg},\n {error,badarg},\n {error,badarg},\n {ok,true},\n {error,badarg},\n {ok,true},\n {ok,true},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg}]\ndone\n"
+    },
+    {
+      "args": [
+        "main_killed"
+      ],
+      "stderr": "exit: killed",
+      "exit_status": 1,
+      "stdout": ""
+    },
+    {
+      "args": [
+        "main_normal"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "before\n"
+    },
+    {
+      "args": [
+        "main_linked"
+      ],
+      "stderr": "exit: crashed",
+      "exit_status": 1,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "links.erl": "244df03b968473d2dbbfad7e825bb136b0174dbae3b0f763c83e0a7cd48a3c66"
+  }
+}

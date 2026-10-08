@@ -2,6 +2,7 @@
 #include "generated_calls.hpp"
 #include "mailbox.hpp"
 #include "process_heap.hpp"
+#include "signals.hpp"
 #include "stack.hpp"
 #include <erlang_aot/abi/v1.hpp>
 
@@ -91,6 +92,10 @@ class ProcessContext final {
     ProcessHeap &heap() noexcept;
     // The process's messages: its signal inbox and the queue receive scans (docs/processes.md#messages).
     Mailbox &mailbox() noexcept;
+
+    // The process's links and exit trapping (docs/processes.md#links).
+    Signals &signals() noexcept { return signals_; }
+
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
     // Share one runtime-owned atom identity/name table across every scheduler and process.
@@ -133,6 +138,8 @@ class ProcessContext final {
     ProcessHeap heap_;
     // Messages sent to this process, roots until received; released before the heap they live in.
     Mailbox mailbox_;
+    // Links and exit trapping; holds no heap words.
+    Signals signals_;
     // Retire scheduling identity on removal; successful registration may occur only once per context.
     bool scheduler_registered_once_ = false;
     // Destroy pending immediate payloads with the context; host invocation scopes normally clear them first.

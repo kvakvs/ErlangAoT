@@ -94,7 +94,7 @@ program reaching a cap fails with `resource_limit`, exit 70
 | `erlang:halt(Slogan)` with a string | Slogan on stderr, then 1 (no crash dump) |
 | `erlang:halt(abort)` | Native abort (no flushing) |
 | Any exception escaping the entry, including `throw` and `exit(normal)` | Report on stderr, 1 |
-| Entry process killed by an exit signal | Report on stderr, 1 |
+| Entry process ended by an exit signal ([processes](processes.md#exit-signals)) | Reported as an uncaught `exit`, 1; reason `normal`: 0 |
 | Runtime startup or infrastructure failure (ABI mismatch, registration, memory before entry) | Message on stderr, 70 |
 | Host memory exhausted (heap, off-heap binary or stack growth refused; no memory cap by default, [memory exhaustion](runtime-heap.md#failure-behavior)) | `erlangaot: runtime failure: entry call failed: out_of_memory`, 70 |
 

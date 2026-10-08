@@ -2,8 +2,8 @@
 
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
-selective receive; step 47: receive timeouts. Links and monitors arrive in
-later steps (48–49).
+selective receive; step 47: receive timeouts; step 48: links and exit
+signals. Monitors arrive in step 49.
 
 ## Executor
 
@@ -35,6 +35,8 @@ ends:
   ([executables](executables.md)): processes still queued or waiting are
   released without running further, as an OTP escript halts when `main/1`
   returns.
+- An exit signal that ends the main process ends the program
+  ([exit signals](#exit-signals)).
 - `erlang:halt/0,1` in any process ends the program with its status. A
   runtime failure in any process (memory exhausted, an optional cap exceeded,
   an internal error) ends the program as a runtime failure (exit 70). An
@@ -47,8 +49,8 @@ ends:
 ## Exits
 
 A process other than the main one ends with an exit reason, as in OTP
-(`detail::exit_reason`, `process/exits`). Links and monitors (plan steps 48,
-49) will carry it; today only error reports show it.
+(`detail::exit_reason`, `process/exits`). Exit signals carry it to linked
+processes ([links](#links)); error reports show it.
 
 | How the process ends | Exit reason | Error report |
 | --- | --- | --- |
@@ -56,6 +58,7 @@ A process other than the main one ends with an exit reason, as in OTP
 | `exit(Reason)` (also `normal`, `kill`) | `Reason` | None |
 | An error (`error/1,2,3`, `badarith`, `{badmatch, V}`, `undef`, ...) | `{Reason, Stack}` | Yes |
 | An uncaught `throw(Value)` | `{{nocatch, Value}, Stack}` | Yes |
+| An exit signal ends it ([exit signals](#exit-signals)) | The signal's reason, `killed` for `exit(Pid, kill)` | None |
 
 An error report is written on stderr when the process ends, after flushing
 standard output, in the format of OTP's default logger handler:
@@ -138,13 +141,65 @@ messages of the mailbox:
   the program waits forever, as OTP's does. A host invocation (`erlang_aot_invoke_v1`)
   that would wait fails with `busy` instead: no other process runs during it.
 
+## Links
+
+Plan step 48. A link connects two processes both ways (`Signals` in each
+context: the linked pids in link order and the `trap_exit` flag).
+
+- `link(Pid)` links the caller to a live process and returns `true`; linking
+  to itself or again does nothing. For a process that has ended it raises
+  `error:noproc`, or, when the caller traps exits, returns `true` and sends
+  the caller `{'EXIT', Pid, noproc}`, as OTP's local `link/1` does.
+- `unlink(Pid)` removes the link on both sides; the link has no effect after
+  it returns. `true` also when there was no link.
+- `spawn_link/1,3` link the new process to the caller before it runs.
+- When a process ends, every linked process gets an exit signal with its exit
+  reason ([exits](#exits)) and the link is gone. Linked processes are signalled
+  in the order the links were made.
+
+## Exit signals
+
+Every exit signal comes from the running process (`exit/2`,
+`exit_signal/2`, `link/1`) or from the end of a process, so its target is
+never running. The executor acts on it at once (`scheduler/signals`): an
+ended target leaves the run queue or its wait and is finished (its links
+signalled, its error report written, its context released) before the
+sending builtin returns. A long linked chain ends process by process without
+recursion.
+
+| Signal at a process | Not trapping exits | Trapping exits |
+| --- | --- | --- |
+| `exit(Pid, kill)`, `exit_signal(Pid, kill)` | Ends with reason `killed` | Ends with reason `killed` |
+| Reason `normal` (from a link, or sent to another process) | Nothing | `{'EXIT', From, normal}` message |
+| `exit(self(), normal)` | Ends with reason `normal` (OTP's quirk) | `{'EXIT', Self, normal}` message |
+| `exit_signal(self(), normal)` | Nothing | `{'EXIT', Self, normal}` message |
+| Any other reason, including `kill` from a link | Ends with that reason | `{'EXIT', From, Reason}` message |
+
+- `process_flag(trap_exit, Bool)` sets trapping and returns the previous
+  setting (initially `false`).
+- A process ended by a signal it sent itself (`exit(self(), kill)`) unwinds
+  past every `catch`, `try` handler and `after` body: the signal is not an
+  exception (`CallError::exited` in the failure channel).
+- `exit/2` and `exit_signal/2` return `true`; to a process that has ended they
+  do nothing. A reference destination does nothing either (there are no
+  process aliases).
+- An exit signal that ends the main process ends the program like an
+  uncaught `exit` ([exit status](executables.md#exit-status)): reason `normal`
+  exits 0.
+- When the receiver's heap refuses an exit reason or `'EXIT'` message, the
+  receiver fails as a runtime failure (exit 70).
+
 ## Builtins
 
 | Builtin | Behavior |
 | --- | --- |
 | `spawn(Fun)` | `badarg` unless `Fun` is a fun; otherwise a new process calls `Fun()`, raising `{badarity, {Fun, []}}` in that process for another arity |
 | `spawn(M, F, Args)` | `badarg` unless `M` and `F` are atoms and `Args` a proper list; otherwise a new process calls `M:F(Args...)`, raising `undef` in that process when no module exports it and no builtin has that name |
+| `spawn_link(Fun)`, `spawn_link(M, F, Args)` | As `spawn`, and the new process is linked to the caller ([links](#links)) |
 | `is_process_alive(Pid)` | `badarg` unless `Pid` is a pid; true while its process has not ended |
+| `link(Pid)`, `unlink(Pid)` | `badarg` unless `Pid` is a pid ([links](#links)) |
+| `exit(Dest, Reason)`, `exit_signal(Dest, Reason)` | `badarg` unless `Dest` is a pid or reference; `true` after the [exit signal](#exit-signals) |
+| `process_flag(trap_exit, Bool)` | The previous setting; `badarg` for another flag or a non-boolean |
 | `erlang:send(Dest, Msg)`, `Dest ! Msg` | `Msg`, after sending it ([messages](#messages)); `send/2` is not auto-imported |
 
 The new process is queued behind every runnable process; `spawn` returns its

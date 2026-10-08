@@ -97,7 +97,8 @@ std::span<const BuiltinEntry> list_builtins() noexcept;
 std::span<const BuiltinEntry> conversion_builtins() noexcept;
 // The io builtins: io:format/1,2 and io:put_chars/1 on standard output.
 std::span<const BuiltinEntry> io_builtins() noexcept;
-// The process builtins: self/0, make_ref/0, spawn/1,3, is_process_alive/1, '!'/2 and send/2.
+// The process builtins: self/0, make_ref/0, spawn/1,3, spawn_link/1,3, is_process_alive/1, '!'/2, send/2, link/1,
+// unlink/1, exit/2, exit_signal/2 and process_flag/2.
 std::span<const BuiltinEntry> process_builtins() noexcept;
 // Every production builtin family runtime startup registers, together covering abi::v1::bridge_builtins.
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept;

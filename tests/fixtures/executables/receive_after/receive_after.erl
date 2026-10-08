@@ -89,7 +89,8 @@ main(_) ->
                 Self ! {junk, I}
             end
          || I <- lists:seq(1, 10)
-        ]
+        ],
+        Self ! done
     end),
     Spammed =
         receive
@@ -97,7 +98,9 @@ main(_) ->
         after 100 -> {timeout, is_process_alive(Spammer)}
         end,
     io:format("~p~n", [Spammed]),
-    sleep(400),
+    receive
+        done -> ok
+    end,
     io:format("junk ~p~n", [length(drain([]))]),
     % Names bound in every clause and the after body are exported.
     self() ! {value, 1},

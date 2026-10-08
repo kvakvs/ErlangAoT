@@ -63,7 +63,14 @@ bool compatible(const StartupDescriptor &startup) {
     });
 }
 
-// Map a failed entry call to its report and exit status: halt request, uncaught exception or runtime failure.
+// Whether the entry process was ended by an exit signal with reason normal, which exits like a return.
+bool exited_normally(const CallFailure &failure) {
+    return failure.code == CallError::exited && failure.value && failure.value->is_atom() &&
+           failure.value->atom_spelling().value_or("") == "normal";
+}
+
+// Map a failed entry call to its report and exit status: halt request, uncaught exception, exit signal (reported as
+// an uncaught exit) or runtime failure.
 int failed_entry(const CallFailure &failure, bool escript) {
     if (failure.code == CallError::halted) {
         if (failure.value) {
@@ -71,7 +78,10 @@ int failed_entry(const CallFailure &failure, bool escript) {
         }
         return failure.halt_status.value_or(abi::v1::exit_uncaught);
     }
-    if (failure.code != CallError::erlang_exception) {
+    if (exited_normally(failure)) {
+        return 0;
+    }
+    if (failure.code != CallError::erlang_exception && failure.code != CallError::exited) {
         return runtime_failure("entry call failed: " + status_name(failure.status.value_or(Status::internal_error)));
     }
     const auto reason = exception_reason(failure);

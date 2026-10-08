@@ -18,12 +18,16 @@ TermError creation_error(Status status) {
     return status == Status::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
 }
 
-// Whether an ended process ends the whole program: a halt or a failure outside Erlang, not an Erlang exception.
-bool ends_program(ProcessContext &process) {
-    const auto &failure = process.generated_calls().failure();
-    return failure && failure->code != CallError::erlang_exception;
-}
 } // namespace
+
+Word pid_of(ProcessContext &process) noexcept {
+    return TermFactory(process).pid(process.identity()).transform(&Term::word).value_or(0);
+}
+
+bool ends_program(ProcessContext &process) noexcept {
+    const auto &failure = process.generated_calls().failure();
+    return failure && failure->code != CallError::erlang_exception && failure->code != CallError::exited;
+}
 
 Executor &Executor::of(ProcessContext &context) noexcept { return context.runtime().impl_->executor; }
 
@@ -41,7 +45,8 @@ bool Executor::start(ProcessContext &process, const FrameDescriptor &function) n
     }
 }
 
-template <typename Prepare> TermResult<Term> Executor::create(ProcessContext &parent, Prepare prepare) noexcept {
+template <typename Prepare>
+TermResult<Term> Executor::create(ProcessContext &parent, Prepare prepare, bool link) noexcept {
     auto &runtime = parent.runtime();
     const auto created = runtime.create_context();
     if (!created) {
@@ -57,47 +62,66 @@ template <typename Prepare> TermResult<Term> Executor::create(ProcessContext &pa
     if (*frame) {
         child.stack().start(*static_cast<const FrameDescriptor *>(*frame));
     }
+    const auto pid = TermFactory(parent).pid(child.identity());
+    if (!pid) {
+        runtime.destroy_context(&child);
+        return pid;
+    }
     try {
+        if (link) {
+            parent.signals().link(pid->word());
+            child.signals().link(pid_of(parent));
+        }
         queue_.push_back(&child);
     } catch (const std::bad_alloc &) {
+        parent.signals().unlink(pid->word());
         runtime.destroy_context(&child);
         return std::unexpected(TermError::out_of_memory);
     }
-    return TermFactory(parent).pid(child.identity());
+    return pid;
 }
 
-TermResult<Term> Executor::spawn(ProcessContext &parent, const Term &fun) noexcept {
-    return create(parent, [&](ProcessContext &child) -> TermResult<const void *> {
-        const auto copy = fun.copy_to(child.heap());
-        if (!copy) {
-            return std::unexpected(copy.error());
-        }
-        return apply_list_service(child, copy->word(), abi::v1::empty_list, child.stack().registers());
-    });
+TermResult<Term> Executor::spawn(ProcessContext &parent, const Term &fun, bool link) noexcept {
+    return create(
+        parent,
+        [&](ProcessContext &child) -> TermResult<const void *> {
+            const auto copy = fun.copy_to(child.heap());
+            if (!copy) {
+                return std::unexpected(copy.error());
+            }
+            return apply_list_service(child, copy->word(), abi::v1::empty_list, child.stack().registers());
+        },
+        link);
 }
 
-TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call) noexcept {
-    return create(parent, [&](ProcessContext &child) -> TermResult<const void *> {
-        const auto copy = call.arguments.copy_to(child.heap());
-        if (!copy) {
-            return std::unexpected(copy.error());
-        }
-        return call_list_service(child, call.module.word(), call.function.word(), copy->word(),
-                                 child.stack().registers());
-    });
+TermResult<Term> Executor::spawn(ProcessContext &parent, const InitialCall &call, bool link) noexcept {
+    return create(
+        parent,
+        [&](ProcessContext &child) -> TermResult<const void *> {
+            const auto copy = call.arguments.copy_to(child.heap());
+            if (!copy) {
+                return std::unexpected(copy.error());
+            }
+            return call_list_service(child, call.module.word(), call.function.word(), copy->word(),
+                                     child.stack().registers());
+        },
+        link);
 }
 
-bool Executor::alive(ProcessContext &context, Word pid) noexcept {
-    return context.runtime().impl_->processes.contains(pid_number(pid));
+ProcessContext *Executor::find(ProcessContext &context, Word pid) noexcept {
+    const auto &processes = context.runtime().impl_->processes;
+    const auto found = processes.find(pid_number(pid));
+    return found == processes.end() ? nullptr : found->second;
 }
+
+bool Executor::alive(ProcessContext &context, Word pid) noexcept { return find(context, pid) != nullptr; }
 
 TermResult<void> Executor::send(ProcessContext &sender, Word pid, const Term &message) {
-    const auto &processes = sender.runtime().impl_->processes;
-    const auto found = processes.find(pid_number(pid));
-    if (found == processes.end()) {
+    auto *found = find(sender, pid);
+    if (!found) {
         return {};
     }
-    auto &receiver = *found->second;
+    auto &receiver = *found;
     const auto copy = message.copy_to(receiver.heap());
     if (!copy) {
         return std::unexpected(copy.error());
@@ -181,34 +205,45 @@ bool Executor::requeue(ProcessContext &process) noexcept {
     }
 }
 
-ProcessContext *Executor::slice(ProcessContext &main) noexcept {
+void Executor::slice() noexcept {
     expire();
     while (queue_.empty()) {
         idle();
     }
     auto &process = *queue_.front();
     queue_.pop_front();
-    if (!process.stack().run(SLICE_REDUCTIONS)) {
-        const bool kept = process.stack().waiting() ? park(process) : requeue(process);
-        return kept ? nullptr : &process;
+    running_ = &process;
+    const bool ended = process.stack().run(SLICE_REDUCTIONS);
+    running_ = nullptr;
+    try {
+        if (ended || !(process.stack().waiting() ? park(process) : requeue(process))) {
+            finish(process);
+        }
+        drain();
+    } catch (const std::bad_alloc &) {
+        fail_program();
     }
-    if (&process == &main || ends_program(process)) {
-        return &process;
-    }
-    report_exit(process);
-    process.runtime().destroy_context(&process);
-    return nullptr;
 }
 
 ProcessContext &Executor::run(ProcessContext &main) noexcept {
-    for (;;) {
-        if (auto *ended = slice(main)) {
-            return *ended;
-        }
+    main_ = &main;
+    finished_ = nullptr;
+    while (!finished_) {
+        slice();
     }
+    return *finished_;
 }
 
 void Executor::clear() noexcept {
+    for (auto *process : stopped_) {
+        process->runtime().destroy_context(process);
+    }
+    stopped_.clear();
+    for (auto *process : ending_) {
+        process->runtime().destroy_context(process);
+    }
+    ending_.clear();
+    main_ = finished_ = nullptr;
     while (!queue_.empty()) {
         auto &process = *queue_.back();
         queue_.pop_back();

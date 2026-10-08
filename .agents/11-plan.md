@@ -900,17 +900,18 @@ when waiting; a finite deadline set at the first wait, cleared by
 
 ### 48. Implement links, exit signals and `trap_exit`
 
-Backlog: F07, F22. Depends on: [44](#step-44), [46](#step-46).
-
-`link/1`, `unlink/1`, `spawn_link/1,3`, `exit/2`,
-`process_flag(trap_exit, Bool)`.
-
-- Success criteria
-  - [ ] Exit propagation, `kill`, `normal` and trapped `{'EXIT', Pid, Reason}`
-    messages match OTP.
-- Tests
-  - [ ] Golden programs for linked crash chains, trapping supervisors and
-    `exit/2` variants.
+Done 2026-10-08 (contract `docs/processes.md#links`, `#exit-signals`).
+`link/1`, `unlink/1`, `spawn_link/1,3`, `exit/2`, `exit_signal/2` (OTP 29),
+`process_flag(trap_exit, Bool)`. Per-process `Signals` (link pids in order,
+`trap_exit`); `scheduler/signals`: only the running process sends signals, so
+targets are handled at once (end: `CallError::exited`, uncatchable; trapped:
+`{'EXIT', From, R}`; drop), ended processes drained without recursion, links
+signalled with `exit_reason`. Main ended by a signal: uncaught exit (normal:
+exit 0). link to an ended pid: `error:noproc`, or a noproc message when
+trapping. Differences: only `trap_exit` flag; no aliases for `exit/2` to a
+reference. OTP golden `executables_links` (chains of 100, kill/killed,
+trapped normal, self quirks past catch/after, unlink, badarg rows, main
+killed/normal/linked).
 
 <a id="step-49"></a>
 

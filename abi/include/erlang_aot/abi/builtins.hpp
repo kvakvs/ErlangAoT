@@ -137,6 +137,14 @@ inline constexpr std::array bridge_builtins{
     // Messages (plan step 45): the ! operator and erlang:send/2.
     BuiltinName{"erlang", "!", 2},
     BuiltinName{"erlang", "send", 2},
+    // Links and exit signals (plan step 48).
+    BuiltinName{"erlang", "spawn_link", 1},
+    BuiltinName{"erlang", "spawn_link", 3},
+    BuiltinName{"erlang", "link", 1},
+    BuiltinName{"erlang", "unlink", 1},
+    BuiltinName{"erlang", "exit", 2},
+    BuiltinName{"erlang", "exit_signal", 2},
+    BuiltinName{"erlang", "process_flag", 2},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

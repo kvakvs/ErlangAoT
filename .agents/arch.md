@@ -193,6 +193,14 @@
   evaluated first; wait -> true (scan) / false (`receive.timeout`: `restart`, after clause). Mailbox `deadline_`
   (first wait, cleared by take/restart); executor `timers_` multimap, `expire()` per slice, `idle()` sleeps;
   `ErrorReason::timeout_value`. Timer wheel planned (62B).
+  Step 48 (`docs/processes.md#links`): `Signals` (`runtime/include/signals.hpp`, `ProcessContext::signals()`): link
+  pid vector + `trap_exit`. Executor signal code in `scheduler/signals.cpp`: only the running process sends signals,
+  so targets are queued/parked and handled at once: `signal()` -> `end()` (copy reason, record
+  `CallError::exited` + raised_exit; running process unwinds past catch/after; others `withdraw` + `ending_`),
+  `deliver_exit()` ({'EXIT',From,R} + wake) or drop. `slice()` -> `finish()` (main/program-ending -> `stop`,
+  `finished_`; else `notify_links` with `exit_reason`, `report_exit`, destroy) then `drain()` the `ending_` deque.
+  `running_` (with `Running` scope for host invocations) marks the process that unwinds instead of being withdrawn.
+  `ends_program` excludes `exited`; startup reports an exited main as uncaught exit (normal -> 0).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
