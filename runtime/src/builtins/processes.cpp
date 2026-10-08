@@ -3,8 +3,8 @@
 #include <array>
 
 // The process builtins of the bridge (docs/builtins.md, docs/processes.md): self/0, make_ref/0, spawn/1,3,
-// spawn_link/1,3, is_process_alive/1, sends ('!'/2, send/2), links (link/1, unlink/1), exit signals (exit/2,
-// exit_signal/2) and process_flag(trap_exit, Bool).
+// spawn_link/1,3, spawn_monitor/1,3, is_process_alive/1, sends ('!'/2, send/2), links (link/1, unlink/1), monitors
+// (monitor/2, demonitor/1,2), exit signals (exit/2, exit_signal/2) and process_flag(trap_exit, Bool).
 namespace erlang_aot::runtime::builtins {
 namespace {
 // self(): the pid of the calling process.
@@ -43,6 +43,89 @@ TermResult<Term> spawn_link_call(ProcessContext &context, const AtomArgument &mo
 
 // The atom `name`.
 Term atom(ProcessContext &context, std::string_view name) { return need(TermFactory(context).atom(name)); }
+
+// {Pid, Ref} of a new process monitored by the caller before it runs.
+TermResult<Term> monitored(ProcessContext &context, const TermResult<Term> &pid) {
+    if (!pid) {
+        return pid;
+    }
+    const auto reference = detail::Executor::of(context).monitor(context, pid->word());
+    return TermFactory(context).tuple(std::array{*pid, reference});
+}
+
+// spawn_monitor(Fun): spawn(Fun), monitored by the caller.
+TermResult<Term> spawn_monitor_fun(ProcessContext &context, const Term &fun) {
+    if (!fun.is_function()) {
+        bad_argument();
+    }
+    return monitored(context, detail::Executor::of(context).spawn(context, fun));
+}
+
+// spawn_monitor(Module, Function, Args): spawn(Module, Function, Args), monitored by the caller.
+TermResult<Term> spawn_monitor_call(ProcessContext &context, const AtomArgument &module, const AtomArgument &function,
+                                    const ListArgument &arguments) {
+    return monitored(context,
+                     detail::Executor::of(context).spawn(context, {module.term, function.term, arguments.term}));
+}
+
+// monitor(process, Pid): a reference; the caller gets {'DOWN', Ref, process, Pid, Reason} when the process ends.
+TermResult<Term> monitor(ProcessContext &context, const AtomArgument &type, const Term &item) {
+    if (type.term.atom_spelling().value_or("") != "process" || !item.is_pid()) {
+        bad_argument();
+    }
+    return detail::Executor::of(context).monitor(context, item.word());
+}
+
+// The options of demonitor/2: a proper list of flush and info.
+struct DemonitorOptions {
+    bool flush = false;
+    bool info = false;
+};
+
+// Parse demonitor/2's options; badarg for any other option.
+DemonitorOptions demonitor_options(const ListArgument &options) {
+    DemonitorOptions parsed;
+    for (const auto &option : options.elements) {
+        const auto spelling = option.is_atom() ? option.atom_spelling().value_or("") : "";
+        if (spelling != "flush" && spelling != "info") {
+            bad_argument();
+        }
+        (spelling == "flush" ? parsed.flush : parsed.info) = true;
+    }
+    return parsed;
+}
+
+// Whether `message` is a 5-tuple whose second element is the reference `reference`, as a 'DOWN' message is.
+bool monitor_message(ProcessContext &context, Word message, const ReferenceIdentity &reference) {
+    const auto term = Term::from_word(message, context);
+    if (!term || !term->is_tuple() || term->tuple_size().value_or(0) != 5) {
+        return false;
+    }
+    const auto element = term->tuple_element(1);
+    return element && element->is_reference() && element->reference_value() == reference;
+}
+
+// demonitor(Ref, Options): stop the monitor; with flush, remove one {_, Ref, _, _, _} message when the monitor
+// was no longer active; with info, whether it was.
+TermResult<Term> demonitor_options_call(ProcessContext &context, const Term &reference, const ListArgument &options) {
+    const auto parsed = demonitor_options(options);
+    const auto identity =
+        reference.is_reference() ? reference.reference_value() : std::unexpected(TermError::wrong_type);
+    if (!identity) {
+        bad_argument();
+    }
+    const bool active = detail::Executor::demonitor(context, *identity);
+    if (!active && parsed.flush) {
+        context.mailbox().remove([&](Word message) { return monitor_message(context, message, *identity); });
+    }
+    return TermFactory(context).boolean(active || !parsed.info);
+}
+
+// demonitor(Ref): demonitor(Ref, []).
+TermResult<Term> demonitor(ProcessContext &context, const Term &reference) {
+    return demonitor_options_call(context, reference,
+                                  ListArgument{.term = need(TermFactory(context).nil()), .elements = {}});
+}
 
 // link(Pid): true once linked; error:noproc for an ended process unless the caller traps exits.
 TermResult<Term> link(ProcessContext &context, const Term &pid) {
@@ -130,6 +213,11 @@ constexpr std::array PROCESS_BUILTINS{
     typed_entry<exit_signal<true>>("erlang", "exit"),
     typed_entry<exit_signal<false>>("erlang", "exit_signal"),
     typed_entry<process_flag>("erlang", "process_flag"),
+    typed_entry<spawn_monitor_fun>("erlang", "spawn_monitor"),
+    typed_entry<spawn_monitor_call>("erlang", "spawn_monitor"),
+    typed_entry<monitor>("erlang", "monitor"),
+    typed_entry<demonitor>("erlang", "demonitor"),
+    typed_entry<demonitor_options_call>("erlang", "demonitor"),
     typed_entry<send>("erlang", "!"),
     typed_entry<send>("erlang", "send"),
 };

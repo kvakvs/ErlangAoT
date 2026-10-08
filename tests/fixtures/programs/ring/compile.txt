@@ -1,2 +1,1 @@
-exit 1
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:34:31: undefined function ring:spawn_monitor/1
+exit 0

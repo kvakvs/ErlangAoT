@@ -917,16 +917,15 @@ killed/normal/linked).
 
 ### 49. Implement monitors
 
-Backlog: F22. Depends on: [48](#step-48).
-
-`monitor/2` (process), `demonitor/1,2`, `spawn_monitor/1,3`.
-
-- Success criteria
-  - [ ] `'DOWN'` messages carry OTP reasons, including `noproc`; `flush`
-    removes a pending `'DOWN'`.
-- Tests
-  - [ ] Golden programs for monitored exits, already-dead targets and
-    demonitor races.
+Done 2026-10-08 (contract `docs/processes.md#monitors`). `monitor/2`
+(process, pid items; names in step 50), `demonitor/1,2` (flush/info),
+`spawn_monitor/1,3`. `Signals` keeps held monitors and watchers by
+`ReferenceIdentity` (now real: number, `TermFactory::reference`); ending
+processes drop held monitors and send `'DOWN'` with the exit reason; ended
+target: `noproc` at once; self-monitor creates nothing; flush only when the
+monitor was no longer active (OTP's bif.c). Difference: other monitor types
+badarg. OTP golden `executables_monitors` (reasons incl. killed/undef,
+noproc, two monitors, demonitor/info/flush, self, watcher end, badarg rows).
 
 <a id="step-50"></a>
 

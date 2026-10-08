@@ -82,7 +82,24 @@ class ProcessIdentity;
 
 // A port identity; no ports exist yet (plan step 53), so TermFactory::port reports term services unavailable.
 class PortIdentity final {};
-class ReferenceIdentity;
+
+// The identity of a reference: the number make_reference/0 issued, kept outside any heap (monitor references) and
+// rebuilt as a term by TermFactory::reference. Obtained only from a reference term (Term::reference_value).
+class ReferenceIdentity final {
+  public:
+    // Order by number, as references order.
+    auto operator<=>(const ReferenceIdentity &) const noexcept = default;
+
+  private:
+    friend class Term;
+    friend class TermFactory;
+
+    // Wrap the number of an existing reference.
+    explicit ReferenceIdentity(std::uint64_t number) noexcept : number_(number) {}
+
+    // The program-wide reference number.
+    std::uint64_t number_;
+};
 class FunctionIdentity;
 class TermFactory;
 

@@ -1,10 +1,13 @@
 #pragma once
 
-// The links and exit trapping of one process (docs/processes.md#links): the pids of the processes it is linked to,
-// in the order the links were made, and whether exit signals reach it as messages.
+// The links, monitors and exit trapping of one process (docs/processes.md#links, #monitors): the pids of the
+// processes it is linked to, in the order the links were made, the monitors it holds and those held on it, and
+// whether exit signals reach it as messages.
 #include "terms.hpp"
 
 #include <algorithm>
+#include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -36,6 +39,30 @@ class Signals final {
     // Remove every link and return them, as the process ends.
     std::vector<Word> take_links() noexcept { return std::exchange(links_, {}); }
 
+    // The monitors of one side, by reference: the other process's pid. References order by creation.
+    using Monitors = std::map<ReferenceIdentity, Word>;
+
+    // Monitor the process of `pid` with `reference` (monitor/2). Allocation failure throws.
+    void monitor(const ReferenceIdentity &reference, Word pid) { monitors_.emplace(reference, pid); }
+
+    // Stop the monitor `reference` this process holds; the monitored pid, or none when it is not active.
+    std::optional<Word> demonitor(const ReferenceIdentity &reference) noexcept {
+        const auto node = monitors_.extract(reference);
+        return node ? std::optional{node.mapped()} : std::nullopt;
+    }
+
+    // Record that the process of `pid` monitors this one with `reference`. Allocation failure throws.
+    void watch(const ReferenceIdentity &reference, Word pid) { watchers_.emplace(reference, pid); }
+
+    // Forget the monitor `reference` held on this process.
+    void unwatch(const ReferenceIdentity &reference) noexcept { watchers_.erase(reference); }
+
+    // Remove and return the monitors this process holds, as it ends; allocation failure throws.
+    Monitors take_monitors() { return std::exchange(monitors_, {}); }
+
+    // Remove and return the monitors held on this process, as it ends: each gets a 'DOWN' message.
+    Monitors take_watchers() { return std::exchange(watchers_, {}); }
+
   private:
     friend class ProcessContext;
     // Start without links, not trapping exits; the owning context holds it.
@@ -43,6 +70,10 @@ class Signals final {
 
     // Pid words of the linked processes, oldest link first, so exit signals go out in a stable order.
     std::vector<Word> links_;
+    // Monitors this process holds: reference to the monitored pid.
+    Monitors monitors_;
+    // Monitors held on this process: reference to the monitoring pid.
+    Monitors watchers_;
     // Turns exit signals other than kill into messages.
     bool trap_exit_ = false;
 };

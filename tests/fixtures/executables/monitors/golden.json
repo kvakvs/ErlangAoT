@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "monitors",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "(?s)Error in process .*boom.*Error in process .*undef",
+      "exit_status": 0,
+      "stdout": "returned normal\nexited bye\nerror reasons carry stacks\nkilled killed\nnoproc noproc\ntwo monitors true\ndemonitor true\nafter demonitor []\ninfo true false\nflush false []\nno flush false\nactive flush true\nself false []\nwatcher ended done []\n[{error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {ok,true},\n {ok,false},\n {ok,false},\n {ok,true},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg}]\ndone\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "monitors.erl": "6a3ec3c2650b81104e35738737a77d96ac96a7ffe2dccb7ad8b301164b8997d2"
+  }
+}

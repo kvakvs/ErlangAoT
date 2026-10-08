@@ -7,9 +7,9 @@
 #include <new>
 #include <utility>
 
-// Links and exit signals (docs/processes.md#links). Only the running process sends signals, so every other target
-// is queued or waiting: the executor acts on a signal at once, and a process it ends is finished before the
-// sending builtin returns.
+// Links, monitors and exit signals (docs/processes.md#links, #monitors). Only the running process sends signals, so
+// every other target is queued or waiting: the executor acts on a signal at once, and a process it ends is finished
+// before the sending builtin returns.
 namespace erlang_aot::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
@@ -38,6 +38,19 @@ TermResult<Term> exit_message(ProcessContext &process, Word from, const Term &re
         return !tag ? tag : (!pid ? pid : copy);
     }
     return factory.tuple(std::array{*tag, *pid, *copy});
+}
+
+// {'DOWN', Ref, process, Pid, Reason} built in the heap of `process`.
+TermResult<Term> down_message(ProcessContext &process, const ReferenceIdentity &reference, Word from,
+                              const Term &reason) {
+    TermFactory factory(process);
+    const std::array parts{factory.atom("DOWN"), factory.reference(reference), factory.atom("process"),
+                           Term::from_word(from, process), reason.copy_to(process.heap())};
+    const auto failed = std::ranges::find_if(parts, [](const auto &part) { return !part.has_value(); });
+    if (failed != parts.end()) {
+        return *failed;
+    }
+    return factory.tuple(std::array{*parts[0], *parts[1], *parts[2], *parts[3], *parts[4]});
 }
 } // namespace
 
@@ -70,7 +83,7 @@ bool Executor::link(ProcessContext &process, Word pid) {
             return false;
         }
         const Running running(*this, process);
-        deliver_exit(process, pid, atom(process, "noproc"));
+        deliver(process, exit_message(process, pid, atom(process, "noproc")));
         return true;
     }
     process.signals().link(pid);
@@ -83,6 +96,37 @@ void Executor::unlink(ProcessContext &process, Word pid) noexcept {
     if (auto *target = find(process, pid)) {
         target->signals().unlink(pid_of(process));
     }
+}
+
+Term Executor::monitor(ProcessContext &watcher, Word pid) {
+    const auto reference = TermFactory(watcher).make_reference();
+    const auto identity = reference.and_then([](const Term &term) { return term.reference_value(); });
+    if (!identity) {
+        throw std::bad_alloc();
+    }
+    auto *target = find(watcher, pid);
+    if (target == &watcher) {
+        return *reference;
+    }
+    if (!target) {
+        const Running running(*this, watcher);
+        deliver(watcher, down_message(watcher, *identity, pid, atom(watcher, "noproc")));
+        return *reference;
+    }
+    watcher.signals().monitor(*identity, pid);
+    target->signals().watch(*identity, pid_of(watcher));
+    return *reference;
+}
+
+bool Executor::demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept {
+    const auto pid = watcher.signals().demonitor(reference);
+    if (!pid) {
+        return false;
+    }
+    if (auto *target = find(watcher, *pid)) {
+        target->signals().unwatch(reference);
+    }
+    return true;
 }
 
 void Executor::exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal) {
@@ -104,14 +148,13 @@ void Executor::signal(ProcessContext &target, Word from, const Term &reason, Sig
     if (kind != SignalKind::link && is_atom(reason, "kill")) {
         end(target, atom(target, "killed"));
     } else if (target.signals().trap_exit()) {
-        deliver_exit(target, from, reason);
+        deliver(target, exit_message(target, from, reason));
     } else if (!is_atom(reason, "normal") || kind == SignalKind::self_exit) {
         end(target, reason);
     }
 }
 
-void Executor::deliver_exit(ProcessContext &process, Word from, const Term &reason) {
-    const auto message = exit_message(process, from, reason);
+void Executor::deliver(ProcessContext &process, const TermResult<Term> &message) {
     if (!message) {
         process.generated_calls().fail_service(term_status(message.error()));
         retire(process);
@@ -148,7 +191,7 @@ void Executor::withdraw(ProcessContext &process) noexcept {
 }
 
 void Executor::finish(ProcessContext &process) {
-    if (&process == main_ || ends_program(process) || !notify_links(process)) {
+    if (&process == main_ || ends_program(process) || !notify(process)) {
         stop(process);
         return;
     }
@@ -156,9 +199,16 @@ void Executor::finish(ProcessContext &process) {
     process.runtime().destroy_context(&process);
 }
 
-bool Executor::notify_links(ProcessContext &process) {
-    const auto links = process.signals().take_links();
-    if (links.empty()) {
+bool Executor::notify(ProcessContext &process) {
+    auto &signals = process.signals();
+    for (const auto &[reference, pid] : signals.take_monitors()) {
+        if (auto *target = find(process, pid)) {
+            target->signals().unwatch(reference);
+        }
+    }
+    const auto links = signals.take_links();
+    const auto watchers = signals.take_watchers();
+    if (links.empty() && watchers.empty()) {
         return true;
     }
     const auto reason = exit_reason(process);
@@ -168,14 +218,26 @@ bool Executor::notify_links(ProcessContext &process) {
         calls.fail_service(term_status(reason.error()));
         return false;
     }
+    notify(process, *reason, links, watchers);
+    return true;
+}
+
+void Executor::notify(ProcessContext &process, const Term &reason, const std::vector<Word> &links,
+                      const Signals::Monitors &watchers) {
     const auto from = pid_of(process);
     for (const auto pid : links) {
         if (auto *target = find(process, pid)) {
             target->signals().unlink(from);
-            signal(*target, from, *reason, SignalKind::link);
+            signal(*target, from, reason, SignalKind::link);
         }
     }
-    return true;
+    for (const auto &[reference, pid] : watchers) {
+        auto *watcher = find(process, pid);
+        if (watcher && !watcher->generated_calls().failure()) {
+            watcher->signals().demonitor(reference);
+            deliver(*watcher, down_message(*watcher, reference, from, reason));
+        }
+    }
 }
 
 void Executor::stop(ProcessContext &process) {

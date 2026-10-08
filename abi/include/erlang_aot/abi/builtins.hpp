@@ -145,6 +145,12 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "exit", 2},
     BuiltinName{"erlang", "exit_signal", 2},
     BuiltinName{"erlang", "process_flag", 2},
+    // Monitors (plan step 49).
+    BuiltinName{"erlang", "spawn_monitor", 1},
+    BuiltinName{"erlang", "spawn_monitor", 3},
+    BuiltinName{"erlang", "monitor", 2},
+    BuiltinName{"erlang", "demonitor", 1},
+    BuiltinName{"erlang", "demonitor", 2},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

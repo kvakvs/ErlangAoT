@@ -208,7 +208,7 @@ namespace {
 // Body builtins auto-imported like OTP's (erl_internal:bif/2): the raising error/1,2,3, exit/1 and throw/1, halt/0,1,
 // the dynamic calls apply/2,3, setelement/3, tuple_to_list/1, list_to_tuple/1 (make_tuple/2,3 are not), the
 // conversions, make_ref/0, pid_to_list/1, ref_to_list/1, spawn/1,3, is_process_alive/1, spawn_link/1,3, link/1,
-// unlink/1, exit/2, exit_signal/2 and process_flag/2.
+// unlink/1, exit/2, exit_signal/2, process_flag/2, spawn_monitor/1,3, monitor/2 and demonitor/1,2.
 bool auto_imported(const FunctionKey &key) {
     static const std::set<FunctionKey> names{{U"error", 1},
                                              {U"error", 2},
@@ -245,7 +245,12 @@ bool auto_imported(const FunctionKey &key) {
                                              {U"unlink", 1},
                                              {U"exit", 2},
                                              {U"exit_signal", 2},
-                                             {U"process_flag", 2}};
+                                             {U"process_flag", 2},
+                                             {U"spawn_monitor", 1},
+                                             {U"spawn_monitor", 3},
+                                             {U"monitor", 2},
+                                             {U"demonitor", 1},
+                                             {U"demonitor", 2}};
     return names.contains(key);
 }
 

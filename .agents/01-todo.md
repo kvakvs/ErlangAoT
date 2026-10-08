@@ -294,7 +294,7 @@ Plan: [17](11-plan.md#step-17), [43](11-plan.md#step-43), [44](11-plan.md#step-4
 - [x] Create/start/resume/finish and spawn/1,3 on one thread (step 43).
 - [x] Exit reasons and crash reports (step 44).
 - [x] Links, exit signals and `trap_exit` (step 48).
-- [ ] Monitors (step 49).
+- [x] Monitors (step 49).
 
 ### F23 — Scheduler workers and wakeups
 

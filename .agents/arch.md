@@ -201,6 +201,11 @@
   `finished_`; else `notify_links` with `exit_reason`, `report_exit`, destroy) then `drain()` the `ending_` deque.
   `running_` (with `Running` scope for host invocations) marks the process that unwinds instead of being withdrawn.
   `ends_program` excludes `exited`; startup reports an exited main as uncaught exit (normal -> 0).
+  Step 49 (`docs/processes.md#monitors`): `Signals::monitors_` (held: ref -> target pid) and `watchers_` (held on
+  it: ref -> watcher pid), `std::map<ReferenceIdentity, Word>` (ordered by creation). `ReferenceIdentity` (number,
+  from `Term::reference_value`) rebuilt by `TermFactory::reference` (make_reference delegates). `Executor::monitor`
+  / `demonitor`; `notify()` drops held monitors, then signals links and delivers 'DOWN' via `deliver()`;
+  `Mailbox::remove(match)` for demonitor flush.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

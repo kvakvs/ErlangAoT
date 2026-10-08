@@ -26,7 +26,5 @@ TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" :
 
 TermResult<Term> TermFactory::port(const PortIdentity &) { return unavailable("TermFactory::port"); }
 
-TermResult<Term> TermFactory::reference(const ReferenceIdentity &) { return unavailable("TermFactory::reference"); }
-
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
 } // namespace erlang_aot::runtime

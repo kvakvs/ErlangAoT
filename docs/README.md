@@ -22,7 +22,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Library modules (`lists`, `maps` subsets) compiled with programs | [library.md](library.md) |
 | Console output: `io:format/1,2`, `io:put_chars/1`, `~p` layout | [io.md](io.md) |
 | Runtime lifecycle, memory, standard output, code server, scheduler bookkeeping | [runtime.md](runtime.md) |
-| Processes: cooperative executor, time slices, `spawn/1,3`, `is_process_alive/1`, links and exit signals | [processes.md](processes.md) |
+| Processes: cooperative executor, time slices, `spawn/1,3`, `is_process_alive/1`, links, exit signals and monitors | [processes.md](processes.md) |
 | Process heap contract: word layout, areas, admission, roots, collection | [runtime-heap.md](runtime-heap.md) |
 | Execution model decision: frames, calls, tail calls, yield, exceptions | [execution-model.md](execution-model.md) |
 | Deferred-feature (`notimpl`) reporting | [features.md](features.md) |

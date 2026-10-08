@@ -46,7 +46,9 @@ TermResult<Term> TermFactory::pid(const ProcessIdentity &identity) {
     return Term::from_word(detail::pid_word(static_cast<Word>(identity.serial_)), (*owner)->owner_);
 }
 
-TermResult<Term> TermFactory::make_reference() {
+TermResult<Term> TermFactory::make_reference() { return reference(ReferenceIdentity(next_reference())); }
+
+TermResult<Term> TermFactory::reference(const ReferenceIdentity &identity) {
     const auto owner = heap();
     if (!owner) {
         return std::unexpected(owner.error());
@@ -58,10 +60,13 @@ TermResult<Term> TermFactory::make_reference() {
     }
     auto *cell = ::new (reserved->bytes().data()) detail::layout::ReferenceCell{};
     cell->header_.value_ = detail::layout::BoxHeader::make(BoxedKind::reference, payload);
-    const auto number = next_reference();
-    std::memcpy(cell->number_.data(), &number, sizeof(number));
+    std::memcpy(cell->number_.data(), &identity.number_, sizeof(identity.number_));
     return detail::publish((*owner)->storage_, *reserved,
                            reinterpret_cast<Word>(cell) | static_cast<Word>(TermKindPrimary::boxed));
+}
+
+TermResult<ReferenceIdentity> Term::reference_value() const {
+    return detail::reference_number(*this).transform([](std::uint64_t number) { return ReferenceIdentity(number); });
 }
 
 bool Term::is_pid() const { return !heap_ && !atom_ && TermTag{value_}.get_kind() == TermKind::local_pid; }

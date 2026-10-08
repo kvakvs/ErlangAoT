@@ -4,6 +4,7 @@
 // messages behind its message queue and scans that queue from a saved position.
 #include "terms.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <list>
@@ -29,6 +30,20 @@ class Mailbox final {
     void take() noexcept;
     // Start the next receive at the oldest message, as a receive that timed out does.
     void restart() noexcept;
+
+    // Remove the oldest message `match` accepts; false when none does. The current receive's position moves past a
+    // removed message.
+    template <typename Match> bool remove(Match &&match) {
+        for (auto *messages : {&queue_, &inbox_}) {
+            const auto found = std::ranges::find_if(*messages, match);
+            if (found != messages->end()) {
+                position_ = found == position_ ? std::next(found) : position_;
+                messages->erase(found);
+                return true;
+            }
+        }
+        return false;
+    }
 
     // When the current receive's timeout expires; none for no timeout yet or infinity. take and restart clear it.
     std::optional<std::chrono::steady_clock::time_point> deadline() const noexcept { return deadline_; }

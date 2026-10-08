@@ -3,7 +3,7 @@
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
 selective receive; step 47: receive timeouts; step 48: links and exit
-signals. Monitors arrive in step 49.
+signals; step 49: monitors.
 
 ## Executor
 
@@ -50,7 +50,8 @@ ends:
 
 A process other than the main one ends with an exit reason, as in OTP
 (`detail::exit_reason`, `process/exits`). Exit signals carry it to linked
-processes ([links](#links)); error reports show it.
+processes ([links](#links)) and `'DOWN'` messages to monitoring ones
+([monitors](#monitors)); error reports show it.
 
 | How the process ends | Exit reason | Error report |
 | --- | --- | --- |
@@ -157,6 +158,29 @@ context: the linked pids in link order and the `trap_exit` flag).
   reason ([exits](#exits)) and the link is gone. Linked processes are signalled
   in the order the links were made.
 
+## Monitors
+
+Plan step 49. A monitor is one-way: the monitoring process holds it (by
+reference, in `Signals`) and the monitored process keeps the reference and
+the monitoring pid, so it can send the message when it ends.
+
+- `monitor(process, Pid)` returns a new reference. When the process ends, the
+  caller gets `{'DOWN', Ref, process, Pid, Reason}` with its exit reason
+  ([exits](#exits)); for a process that has already ended it gets the message
+  at once with reason `noproc`. Monitoring itself creates nothing. Every call
+  makes a separate monitor with its own message; the messages of one process
+  go out in the order the monitors were made.
+- `demonitor(Ref)` stops the monitor: no `'DOWN'` of it arrives afterwards.
+  It returns `true`, also for a reference that is not an active monitor of
+  the caller.
+- `demonitor(Ref, Options)`: `info` returns whether the monitor was still
+  active; `flush` removes the oldest `{_, Ref, _, _, _}` message when it was
+  not (its `'DOWN'` is already in the mailbox), as OTP does.
+- `spawn_monitor/1,3` return `{Pid, Ref}`, the monitor made before the new
+  process runs.
+- A process that ends drops the monitors it holds.
+- Monitors of registered names arrive with names (plan step 50).
+
 ## Exit signals
 
 Every exit signal comes from the running process (`exit/2`,
@@ -197,7 +221,10 @@ recursion.
 | `spawn(M, F, Args)` | `badarg` unless `M` and `F` are atoms and `Args` a proper list; otherwise a new process calls `M:F(Args...)`, raising `undef` in that process when no module exports it and no builtin has that name |
 | `spawn_link(Fun)`, `spawn_link(M, F, Args)` | As `spawn`, and the new process is linked to the caller ([links](#links)) |
 | `is_process_alive(Pid)` | `badarg` unless `Pid` is a pid; true while its process has not ended |
+| `spawn_monitor(Fun)`, `spawn_monitor(M, F, Args)` | As `spawn`, returning `{Pid, Ref}` of a new [monitor](#monitors) |
 | `link(Pid)`, `unlink(Pid)` | `badarg` unless `Pid` is a pid ([links](#links)) |
+| `monitor(process, Pid)` | `badarg` for another type or item; a reference ([monitors](#monitors)) |
+| `demonitor(Ref)`, `demonitor(Ref, Options)` | `badarg` unless `Ref` is a reference and `Options` a proper list of `flush` and `info` |
 | `exit(Dest, Reason)`, `exit_signal(Dest, Reason)` | `badarg` unless `Dest` is a pid or reference; `true` after the [exit signal](#exit-signals) |
 | `process_flag(trap_exit, Bool)` | The previous setting; `badarg` for another flag or a non-boolean |
 | `erlang:send(Dest, Msg)`, `Dest ! Msg` | `Msg`, after sending it ([messages](#messages)); `send/2` is not auto-imported |

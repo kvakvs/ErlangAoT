@@ -52,6 +52,11 @@ class Executor final {
     bool link(ProcessContext &process, Word pid);
     // unlink(Pid) of `process`: the link has no effect from now on.
     static void unlink(ProcessContext &process, Word pid) noexcept;
+    // monitor(process, Pid) of the running `watcher`: a new reference. For an ended process the watcher gets
+    // {'DOWN', Ref, process, Pid, noproc} at once; monitoring itself creates nothing. Allocation failure throws.
+    Term monitor(ProcessContext &watcher, Word pid);
+    // demonitor(Ref) of `watcher`: whether the monitor was active; no 'DOWN' of it arrives afterwards.
+    static bool demonitor(ProcessContext &watcher, const ReferenceIdentity &reference) noexcept;
     // An exit signal of exit/2 or exit_signal/2 from the running `sender` to the process of a pid word, acted on at
     // once; `self_normal` is exit/2's quirk: reason normal sent to itself ends the sender. Allocation failure throws.
     void exit(ProcessContext &sender, Word pid, const Term &reason, bool self_normal);
@@ -97,8 +102,9 @@ class Executor final {
     // Act on an exit signal from `from` at `target`: end it, turn the signal into a message when it traps exits, or
     // drop it.
     void signal(ProcessContext &target, Word from, const Term &reason, SignalKind kind);
-    // Send `process` {'EXIT', From, Reason}, waking it when it waits; a failed copy ends it as a runtime failure.
-    void deliver_exit(ProcessContext &process, Word from, const Term &reason);
+    // Send `process` a message built in its heap, waking it when it waits; a failed build ends it as a runtime
+    // failure.
+    void deliver(ProcessContext &process, const TermResult<Term> &message);
     // End `target` with `reason` copied into its heap: the running process unwinds past every catch; any other
     // leaves the queue and is finished by drain().
     void end(ProcessContext &target, const Term &reason);
@@ -109,8 +115,12 @@ class Executor final {
     // Signal the links of an ended process with its exit reason, report it and release it. The main process and one
     // whose end ends the program are kept to end it.
     void finish(ProcessContext &process);
-    // Send the exit signals of an ended process's links; false after recording why its exit reason cannot be built.
-    bool notify_links(ProcessContext &process);
+    // Send the exit signals of an ended process's links and the 'DOWN' messages of its monitors, and drop the
+    // monitors it held; false after recording why its exit reason cannot be built.
+    bool notify(ProcessContext &process);
+    // Signal the links and monitors of an ended process with its exit reason.
+    void notify(ProcessContext &process, const Term &reason, const std::vector<Word> &links,
+                const Signals::Monitors &watchers);
     // Keep an ended process that ends the program: the first one is the program's outcome.
     void stop(ProcessContext &process);
     // Finish the processes exit signals ended, oldest first.
