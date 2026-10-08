@@ -108,6 +108,12 @@ std::string reason(const boost::system::error_code &error) {
     if (error == asio::error::eof || error == asio::error::operation_aborted) {
         return "closed";
     }
+#if defined(_WIN32)
+    // ConnectEx reports a local address that collides with one still in use as ERROR_DUP_NAME.
+    if (error.category() == boost::system::system_category() && error.value() == ERROR_DUP_NAME) {
+        return "eaddrinuse";
+    }
+#endif
     const auto condition = error.default_error_condition();
     const auto found = std::ranges::find_if(
         NAMES, [&](const auto &name) { return condition == std::make_error_condition(name.first); });

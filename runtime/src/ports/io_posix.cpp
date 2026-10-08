@@ -31,15 +31,24 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
         let_go();
     }
 
+    void pause(bool paused) override {
+        paused_ = paused;
+        if (!paused_ && !waiting_ && !stopped_ && stream_.is_open()) {
+            wait();
+        }
+    }
+
   private:
     // Wait until the descriptor has input or an end.
     void wait() {
+        waiting_ = true;
         stream_.async_wait(asio::posix::descriptor_base::wait_read,
                            [self = shared_from_this()](const boost::system::error_code &error) { self->ready(error); });
     }
 
     // The descriptor is readable, or cannot be waited for (a regular file, read at once).
     void ready(const boost::system::error_code &error) {
+        waiting_ = false;
         if (stopped_) {
             return;
         }
@@ -63,6 +72,9 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
         }
         const auto count = static_cast<std::size_t>(bytes);
         service_.deliver(port_, {PortInput::raw(std::span(buffer_).first(count))}, count);
+        if (paused_) {
+            return;
+        }
         if (file) {
             asio::post(service_.context,
                        [self = shared_from_this()] { self->ready(asio::error::operation_not_supported); });
@@ -92,8 +104,10 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
     asio::posix::stream_descriptor stream_;
     bool owned_;
     std::vector<std::byte> buffer_;
-    // Set when the port no longer wants input.
+    // Set when the port no longer wants input; while paused, no new wait starts; while a wait is pending.
     bool stopped_ = false;
+    bool paused_ = false;
+    bool waiting_ = false;
 };
 
 // Reaps the spawned programs of all ports on SIGCHLD and reports the status of those whose port still wants it.

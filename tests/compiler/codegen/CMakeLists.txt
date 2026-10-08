@@ -7,7 +7,8 @@ add_test(NAME codegen_dependency COMMAND "${CMAKE_COMMAND}"
     "-DHOST_CONFIG=$<CONFIG>"
     "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/dependency.cmake")
-set_tests_properties(codegen_dependency PROPERTIES TIMEOUT 120 LABELS full_only)
+# A nested CMake configure and build against the LLVM SDK takes minutes when every core is busy with other tests.
+set_tests_properties(codegen_dependency PROPERTIES TIMEOUT 300 LABELS full_only)
 
 foreach(suite IN ITEMS results ownership target verification emission term_abi features mangling)
     add_executable(codegen_${suite} ${suite}.cpp)

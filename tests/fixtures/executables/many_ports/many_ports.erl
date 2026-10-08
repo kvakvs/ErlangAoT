@@ -29,26 +29,36 @@ acceptor(Listen, Main) ->
     Main ! accepted,
     echo(Socket).
 
+% Echo one message, then close first, so the closing connection waits on the server's side and the host keeps the
+% clients' ports free.
 echo(Socket) ->
-    case gen_tcp:recv(Socket, 0) of
-        {ok, Data} ->
-            ok = gen_tcp:send(Socket, Data),
-            echo(Socket);
-        {error, closed} ->
-            ok
-    end.
+    {ok, Data} = gen_tcp:recv(Socket, 4),
+    ok = gen_tcp:send(Socket, Data),
+    ok = gen_tcp:close(Socket).
 
-% Connect, wait until every connection is open, then send N and check the echo.
+% Connect, wait until every connection is open, then send N, check the echo and see the server close.
 client(Port, N, Main) ->
-    {ok, Socket} = gen_tcp:connect({127, 0, 0, 1}, Port, [binary, {active, false}]),
+    {ok, Socket} = connect(Port, 100),
     Main ! connected,
     receive
         go -> ok
     end,
     ok = gen_tcp:send(Socket, <<N:32>>),
     {ok, <<N:32>>} = gen_tcp:recv(Socket, 4, 10000),
+    {error, closed} = gen_tcp:recv(Socket, 0, 10000),
     ok = gen_tcp:close(Socket),
     Main ! echoed.
+
+% Connect, trying again while a loaded host refuses a connection or runs short of local ports for a moment.
+connect(Port, Tries) ->
+    case gen_tcp:connect({127, 0, 0, 1}, Port, [binary, {active, false}]) of
+        {ok, Socket} ->
+            {ok, Socket};
+        {error, _} when Tries > 1 ->
+            receive
+            after 10 -> connect(Port, Tries - 1)
+            end
+    end.
 
 % Wait for Count messages Tag.
 wait(_, 0) ->

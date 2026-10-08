@@ -43,6 +43,8 @@ void require(bool condition, const char *message) {
 
 // Pipes open at once: thousands, within the descriptor limit of the host.
 constexpr std::size_t WANTED_PIPES = 2'000;
+// Threads the host may add meanwhile on its own (thread pool and loader workers).
+constexpr std::size_t SYSTEM_THREADS = 16;
 
 // A pipe: the end the service writes and the end it reads, both owned by the service.
 struct Pipe final {
@@ -140,7 +142,8 @@ void serve_many_pipes() {
         service.read_descriptor(2 * index + 1, Descriptor{.handle = pipe.read, .owned = true, .overlapped = true});
     }
     const auto during = thread_count();
-    require(before == 0 || during == before, "pipe ports started threads of their own");
+    // The system starts and retires a few pool threads of its own; a thread per port would add thousands.
+    require(before == 0 || during <= before + SYSTEM_THREADS, "pipe ports started threads of their own");
     for (std::size_t index = 0; index < pipes; ++index) {
         const auto text = text_of(index);
         const auto *begin = reinterpret_cast<const std::byte *>(text.data());

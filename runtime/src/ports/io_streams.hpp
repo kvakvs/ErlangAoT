@@ -22,6 +22,9 @@ class Channel {
     // The port no longer wants reports: an input stops reading, an output still writes what is queued, a watcher
     // stops reporting (a POSIX program is still reaped).
     virtual void stop() = 0;
+
+    // Stop reading more input until resumed, while the port holds too much it has not acted on; only inputs read.
+    virtual void pause(bool /*paused*/) {}
 };
 
 class IoService::Impl final {

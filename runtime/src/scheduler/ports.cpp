@@ -1,3 +1,4 @@
+#include "../builtins/support.hpp"
 #include "../process/identities.hpp"
 #include "../runtime_state.hpp"
 #include "signal_messages.hpp"
@@ -197,9 +198,21 @@ void Executor::input(Word port, std::vector<PortInput> units, std::size_t read) 
     open_port->input += read;
     try {
         for (auto &unit : units) {
+            if (unit.kind == PortInput::Kind::written) {
+                written(*open_port, static_cast<std::size_t>(unit.status));
+                continue;
+            }
+            open_port->held_bytes += unit.bytes.size();
             open_port->pending.emplace_back(std::move(unit));
         }
-        queue_port(*open_port);
+        if (open_port->held_bytes >= PORT_HELD_BYTES && !open_port->reading_paused) {
+            open_port->reading_paused = true;
+            io().pause(port, true);
+        }
+        if (!open_port->pending.empty()) {
+            queue_port(*open_port);
+        }
+        drain();
     } catch (...) {
         // Only exhausted memory can fail queueing input.
         fail_program();
@@ -242,8 +255,11 @@ void Executor::run_port(Word number) {
     while (reductions > 0 && port_step(*port, reductions)) {
     }
     // A step may have closed the port: look it up again.
-    if (auto *still = open(word); still && !(still->pending.empty() && still->units.empty())) {
-        queue_port(*still);
+    if (auto *still = open(word)) {
+        read_on(*still);
+        if (!still->throttled && !(still->pending.empty() && still->units.empty())) {
+            queue_port(*still);
+        }
     }
     drain();
 }
@@ -259,9 +275,14 @@ bool Executor::port_step(Port &port, std::size_t &reductions) {
             reductions -= std::min(reductions, PORT_MESSAGE_REDUCTIONS);
             socket_work(port, std::move(*event));
         } else {
-            frame(port, std::get<PortInput>(work));
+            const auto &raw = std::get<PortInput>(work);
+            port.held_bytes -= std::min(port.held_bytes, raw.bytes.size());
+            frame(port, raw);
         }
         return true;
+    }
+    if (owner_full(port)) {
+        return false;
     }
     auto unit = std::move(port.units.front());
     port.units.pop_front();
@@ -351,16 +372,81 @@ bool Executor::close_port(ProcessContext &caller, Word port) {
     return true;
 }
 
-PortOutcome Executor::command_port(ProcessContext &caller, Word port, std::vector<std::byte> data) {
+PortOutcome Executor::command_port(ProcessContext &caller, Word port, std::vector<std::byte> data, bool nosuspend) {
     const std::scoped_lock lock(mutex_);
     auto *open_port = open(port);
     if (!open_port || !open_port->options.output) {
         return PortOutcome::not_open;
     }
+    if (open_port->busy && !nosuspend) {
+        suspend(caller, *open_port);
+    }
     const Running running(caller);
     const auto outcome = write(caller, *open_port, std::move(data));
     drain();
     return outcome;
+}
+
+void Executor::suspend(ProcessContext &sender, Port &port) {
+    port.suspended.push_back(pid_of(sender));
+    schedule(sender).port_wait = detail::port_word(port.number);
+    throw builtins::Blocked{};
+}
+
+void Executor::resume_senders(Port &port) {
+    for (const auto pid : std::exchange(port.suspended, {})) {
+        auto *sender = process(pid);
+        if (!sender) {
+            continue;
+        }
+        auto &state = schedule(*sender);
+        // A sender whose slice has not ended yet is placed by after(), as it no longer waits.
+        if (std::exchange(state.port_wait, 0) != 0 && !state.running) {
+            push(*sender);
+        }
+    }
+}
+
+void Executor::written(Port &port, std::size_t bytes) {
+    port.queued_output -= std::min(port.queued_output, bytes);
+    if (port.busy && port.queued_output < port.options.busy_low) {
+        port.busy = false;
+        resume_senders(port);
+    }
+}
+
+bool Executor::owner_full(Port &port) {
+    auto *owner = process(port.connected);
+    if (!owner) {
+        return false;
+    }
+    auto &state = schedule(*owner);
+    // A suspended or blocked owner cannot take messages before the port acts, so it always gets them.
+    if (state.port_wait != 0 || state.blocked_on || (!state.running && owner->stack().waiting())) {
+        return false;
+    }
+    const auto waiting = state.running ? state.events.size() : owner->mailbox().size();
+    if (waiting < PORT_OWNER_MESSAGES) {
+        return false;
+    }
+    port.throttled = true;
+    state.throttling.push_back(port.number);
+    return true;
+}
+
+void Executor::unthrottle(const std::vector<Word> &numbers) {
+    for (const auto number : numbers) {
+        if (auto *port = open(detail::port_word(number)); port && std::exchange(port->throttled, false)) {
+            queue_port(*port);
+        }
+    }
+}
+
+void Executor::read_on(Port &port) {
+    if (port.reading_paused && port.held_bytes < PORT_HELD_BYTES / 2) {
+        port.reading_paused = false;
+        io().pause(detail::port_word(port.number), false);
+    }
 }
 
 PortOutcome Executor::write(ProcessContext &caller, Port &port, std::vector<std::byte> data) {
@@ -370,7 +456,12 @@ PortOutcome Executor::write(ProcessContext &caller, Port &port, std::vector<std:
         return PortOutcome::too_long;
     }
     if (port.driver->queued_output()) {
+        if (port.busy) {
+            return PortOutcome::busy;
+        }
+        port.queued_output += output->size();
         io().send(detail::port_word(port.number), *output);
+        port.busy = port.queued_output >= port.options.busy_high;
     } else if (const auto written = port.driver->write(*output); !written) {
         close(port, atom(caller, written.error().reason));
         return PortOutcome::done;
@@ -388,6 +479,7 @@ bool Executor::connect_port(Word port, const Term &owner_pid) {
         return false;
     }
     open_port->connected = pid;
+    unthrottle({open_port->number});
     if (!std::ranges::contains(open_port->links, pid)) {
         open_port->links.push_back(pid);
     }
@@ -413,6 +505,9 @@ bool Executor::serve(ProcessContext &sender, Port &port, const PortRequest &requ
         return false;
     }
     if (request.kind == PortRequest::Kind::command) {
+        if (port.options.output && port.busy) {
+            suspend(sender, port);
+        }
         return port.options.output && write(sender, port, request.data) == PortOutcome::done;
     }
     if (request.kind == PortRequest::Kind::connect && !process(request.owner)) {
@@ -458,7 +553,8 @@ std::optional<PortInfo> Executor::port_info(Word port) const {
                   .output = open_port->output,
                   .os_pid = open_port->driver->os_pid(),
                   .monitored_by = {},
-                  .registered = open_port->name};
+                  .registered = open_port->name,
+                  .queue_size = open_port->queued_output};
     for (const auto &[reference, watcher] : open_port->watchers) {
         info.monitored_by.push_back(watcher.pid);
     }
@@ -505,6 +601,8 @@ void Executor::close(Port &port, const Term &reason) {
     if (port.name != 0) {
         names_.erase(port.name);
     }
+    // Suspended senders run their builtin again and find the port closed.
+    resume_senders(port);
     for (const auto pid : port.links) {
         if (auto *target = process(pid)) {
             target->signals().unlink(word);

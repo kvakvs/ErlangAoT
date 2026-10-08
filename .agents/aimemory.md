@@ -394,6 +394,13 @@ Step facts beyond the plan record:
 - 57G2: TESTRE="a|b" cmd //c build/plan11/test.cmd (env var; `|` in cmd args breaks). Fairness goldens need more
   CPU-bound processes than workers (idle workers take port tasks freely) and must check state when the CPU work ends
   (ping-pong behind 8 hogs is slow by design). Validate such tests by breaking the scheduler on purpose.
+- 57G3: OTP resumes several senders of a busy port in any order (a fixture must wait for one before the next
+  command). Helpers whose writes may now block must exit via os._exit on OSError (Python's exit flush prints to
+  stderr). build/plan11/trace_57g3.py apply|restore shows how to trace the runtime temporarily.
+  Socket fixtures with ~1000 connections: let the server close first (TIME_WAIT on its side) and retry connect;
+  under parallel CTest load Windows ConnectEx fails with ERROR_DUP_NAME (now eaddrinuse). Reproduce load flakes by
+  running 6 instances at once (build/plan11/trace_eio.py names unmapped socket errors).
+  Phase J2 closed 2026-10-09: full CTest 218/218, check-quality-all clean (build/plan11/{phase,full_quality}.cmd).
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

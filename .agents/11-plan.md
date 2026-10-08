@@ -1236,12 +1236,13 @@ ports need no thread each. Busy ports suspend senders and `port_command/3`
 bounds input a slow owner has not taken.
 
 - Success criteria
-  - [ ] Port work is charged to schedulers fairly: a port flooding input
+  - [x] Port work is charged to schedulers fairly: a port flooding input
     cannot starve processes; output of a busy port suspends its senders.
-  - [ ] No per-port threads; the backend serves all port kinds on Windows,
-    Linux and macOS.
+  - [x] No per-port threads; the backend serves all port kinds on Windows,
+    Linux and macOS (Windows `fd` input excepted; Linux run under WSL,
+    macOS not run: gap).
 - Tests
-  - [ ] Fairness stress (flooding ports against CPU-bound and receiving
+  - [x] Fairness stress (flooding ports against CPU-bound and receiving
     processes), busy-port suspension golden, thousands of concurrent ports.
 
 Split 2026-10-09 before coding into three single-commit sub-steps; 57G closes
@@ -1336,10 +1337,37 @@ below its low limit (OTP's `busy_limits_port`): `port_command/2`,
 it. A port stops reading while its undelivered input exceeds a bound.
 
 - Success criteria
-  - [ ] Busy ports, `force` and `nosuspend` match OTP; a slow owner bounds a
+  - [x] Busy ports, `force` and `nosuspend` match OTP; a slow owner bounds a
     port's memory.
 - Tests
-  - [ ] Busy-port suspension golden; flooding into a slow owner.
+  - [x] Busy-port suspension golden; flooding into a slow owner.
+
+Done 2026-10-09 (contract `docs/ports.md#busy-ports`). Queued output is
+counted on `Port` (`queued_output`, `busy`, `suspended`); the I/O thread
+reports written bytes (`PortInput::Kind::written`, accounted at once in
+`Executor::input`, never queued behind input). `command_port`/`serve`
+suspend the sender (`Schedule::port_wait`, `builtins::Blocked`, kept out of
+the queue by `after()`) until `written` drops below the low limit or the port
+closes (`resume_senders`); `port_command/3` `nosuspend` answers `false`;
+`port_info(P, queue_size)`; option `busy_limits_port`. Input bounds: a port
+holding 64 KiB of raw input pauses its channel (`IoService::pause`,
+`Channel::pause` for overlapped, blocking and POSIX readers) until below
+32 KiB; a task stops delivering while a runnable owner holds 1,024 messages
+(`owner_full`, `Schedule::throttling`, released in `after()` and on
+connect). OTP probes: busy after the first 64 KiB chunk, `force` is
+`notsup`, a resumed writer races the owner's own command (fixture waits).
+OTP goldens `executables_busy_ports` and `executables_slow_owner` (100,000
+lines into an owner that computes first; traced: 360 throttles and 5 read
+pauses on 1 worker). `port_fairness`'s helper now exits quietly when its
+port closes mid-write (its writes now block). Difference recorded: OTP keeps
+reading input for a busy owner. Full-mode runs under load showed `many_ports`
+clients failing with Windows `ERROR_DUP_NAME` (52) from `ConnectEx`, local
+ports exhausted by TIME_WAIT: it now maps to `eaddrinuse`, the fixture's
+server closes first and clients retry a refused connect. `runtime_port_io` tolerates up to 16
+threads the host's pools add meanwhile; `codegen_dependency` (nested LLVM
+consumer build) timeout 120 -> 300 s under full load. Phase J2 closed: full
+CTest 218/218 (-j 32), `check-quality-all` clean (Lizard 0 of 3,558
+functions, clang-tidy 324 units).
 
 ## K. End-to-end projects
 

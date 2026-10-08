@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "entry": "port_fairness",
+  "entry": "busy_ports",
   "data": [
     "helper.py"
   ],
@@ -13,7 +13,7 @@
       "args": [],
       "stderr": "^$",
       "exit_status": 0,
-      "stdout": "cpu 23999984\nflooded true, still flooding true\nflooded true, still flooding true\npings 1000\n"
+      "stdout": "busy after writing true\nqueued true\nforce notsup\nwriter suspended\nreceived all true\n"
     }
   ],
   "oracle_version": [
@@ -25,7 +25,7 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "port_fairness.erl": "419abb31f5b55d4abd545662c74cf566491d45ae539c6f52063e944d300bb9f4",
-    "helper.py": "b923a2655993adf2d9d638a443b3d4bb1f51002f37d5a10c3a66058adb23ee64"
+    "busy_ports.erl": "a566a442c1df5dc7964693526cfd420dac5b5be5b72d1bad669a05b5e0a22bef",
+    "helper.py": "c95515c779a617ea1f30ced09aed6a73d9ff3568cf473b31ebd83aad9ad9995b"
   }
 }

@@ -176,10 +176,33 @@ bool framing_option(std::string_view name, const Term &value, PortOptions &optio
     return false;
 }
 
+// Apply {busy_limits_port, {Low, High} | disabled} (docs/ports.md#busy-ports): limits of at least 1, a low limit
+// above the high one lowered to it; disabled never makes the port busy. False for another value.
+bool busy_limits(const Term &value, PortOptions &options) {
+    if (value.is_atom() && value.atom_spelling().value_or("") == "disabled") {
+        options.busy_low = options.busy_high = SIZE_MAX;
+        return true;
+    }
+    if (!value.is_tuple() || value.tuple_size().value_or(0) != 2) {
+        return false;
+    }
+    const auto low = small(need(value.tuple_element(0)).word());
+    const auto high = small(need(value.tuple_element(1)).word());
+    if (!low || !high || *low < 1 || *high < 1) {
+        return false;
+    }
+    options.busy_high = static_cast<std::size_t>(*high);
+    options.busy_low = std::min(static_cast<std::size_t>(*low), options.busy_high);
+    return true;
+}
+
 // Apply a {Name, Value} option; false when it is none or its value is invalid.
 bool pair_option(std::string_view name, const Term &value, PortOptions &options) {
     if (name == "packet" || name == "line") {
         return framing_option(name, value, options);
+    }
+    if (name == "busy_limits_port") {
+        return busy_limits(value, options);
     }
     if (name == "args") {
         const auto list = strings(value);
@@ -295,17 +318,29 @@ TermResult<Term> port_close(ProcessContext &context, const Term &port) {
     return atom(context, "true");
 }
 
-// Write Data to the port of `word` as port_command/2,3 do; badarg for a closed port or data that is not iodata,
-// notsup when forced (no driver can be busy, so none takes force).
-TermResult<Term> command(ProcessContext &context, Word word, const Term &data, bool force = false) {
-    if (force) {
+// The options of port_command/3: force and nosuspend.
+struct CommandOptions final {
+    bool force = false;
+    bool nosuspend = false;
+};
+
+// Write Data to the port of `word` as port_command/2,3 do: true, or false for a busy port with nosuspend; a busy port
+// otherwise suspends the caller until it is not busy. badarg for a closed port or data that is not iodata, notsup
+// when forced (no driver allows force, as OTP's spawn and fd drivers do not).
+TermResult<Term> command(ProcessContext &context, Word word, const Term &data, CommandOptions options = {}) {
+    if (options.force) {
         raise_atom(context, "notsup");
     }
     auto bytes = iodata_bytes(data);
     if (!bytes) {
         bad_argument();
     }
-    if (detail::Executor::of(context).command_port(context, word, std::move(*bytes)) != detail::PortOutcome::done) {
+    const auto outcome =
+        detail::Executor::of(context).command_port(context, word, std::move(*bytes), options.nosuspend);
+    if (outcome == detail::PortOutcome::busy) {
+        return atom(context, "false");
+    }
+    if (outcome != detail::PortOutcome::done) {
         bad_argument();
     }
     return atom(context, "true");
@@ -316,24 +351,24 @@ TermResult<Term> port_command2(ProcessContext &context, const Term &port, const 
     return command(context, port_of(context, port), data);
 }
 
-// Whether port_command/3's options (force, nosuspend) contain force; badarg for any other option.
-bool forced(const ListArgument &options) {
-    bool force = false;
+// The options of port_command/3 (force, nosuspend); badarg for any other option.
+CommandOptions command_options(const ListArgument &options) {
+    CommandOptions result;
     for (const auto &option : options.elements) {
         const auto spelling = option.is_atom() ? option.atom_spelling().value_or("") : "";
         if (spelling != "force" && spelling != "nosuspend") {
             bad_argument();
         }
-        force |= spelling == "force";
+        (spelling == "force" ? result.force : result.nosuspend) = true;
     }
-    return force;
+    return result;
 }
 
-// port_command(Port, Data, Options): force is notsup on every driver; nosuspend writes.
+// port_command(Port, Data, Options): force is notsup on every driver; nosuspend answers false for a busy port.
 TermResult<Term> port_command3(ProcessContext &context, const Term &port, const Term &data,
                                const ListArgument &options) {
-    const bool force = forced(options);
-    return command(context, port_of(context, port), data, force);
+    const auto parsed = command_options(options);
+    return command(context, port_of(context, port), data, parsed);
 }
 
 // port_connect(Port, Pid): true; the new owner is linked to the port.
@@ -398,8 +433,11 @@ std::optional<std::size_t> info_count(std::string_view name, const detail::PortI
     if (name == "id" || name == "input" || name == "output") {
         return name == "id" ? info.id : (name == "input" ? info.input : info.output);
     }
-    // Nothing waits in a port: output is written at once and a port record has no Erlang heap.
-    return name == "memory" || name == "queue_size" ? std::optional<std::size_t>{0} : std::nullopt;
+    if (name == "queue_size") {
+        return info.queue_size;
+    }
+    // A port record has no Erlang heap.
+    return name == "memory" ? std::optional<std::size_t>{0} : std::nullopt;
 }
 
 // The value of a port_info item that is a constant atom (locking, parallelism) or [] (monitors: a port monitors

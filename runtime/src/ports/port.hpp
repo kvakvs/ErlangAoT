@@ -104,6 +104,16 @@ struct Port final {
     InputDecoder decoder{PortOptions{}};
     std::deque<PortInput> units;
     bool queued = false;
+    // Raw input bytes in `pending`, and whether the I/O thread was told to stop reading because they are too many.
+    std::size_t held_bytes = 0;
+    bool reading_paused = false;
+    // Set while the task waits for its connected process to take the messages it has (docs/ports.md#busy-ports).
+    bool throttled = false;
+    // Output queued for the I/O thread and not written yet; busy from the high limit until below the low one.
+    std::size_t queued_output = 0;
+    bool busy = false;
+    // Pids of the processes suspended until the port is no longer busy, oldest first.
+    std::vector<Word> suspended;
 };
 
 // Apply the output framing of `options` to `bytes`: a {packet, N} header; nothing for stream and line ports.

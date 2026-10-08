@@ -384,7 +384,7 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 - [x] One event-driven I/O thread for every port kind, no per-port threads (57G1; Windows fd input excepted; POSIX
   port I/O run under WSL by `runtime_port_io`).
 - [x] Port tasks on the scheduler workers with a reduction budget (57G2).
-- [ ] Busy ports suspend senders, `force`/`nosuspend`, bounded unread input (57G3).
+- [x] Busy ports suspend senders, `force`/`nosuspend`, bounded unread input (57G3).
 
 ## Optimization and developer tooling
 

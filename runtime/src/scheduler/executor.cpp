@@ -302,6 +302,7 @@ void Executor::after(ProcessContext &process, bool ended) {
     state.running = false;
     const auto blockers = std::exchange(state.blockers, {});
     auto *blocked_on = std::exchange(state.blocked_on, nullptr);
+    const auto throttled = std::exchange(state.throttling, {});
     release(process);
     // The process is placed before its blockers act: a message they deliver must find it parked, not mid-way.
     if (failed_ && &process == main_) {
@@ -310,12 +311,16 @@ void Executor::after(ProcessContext &process, bool ended) {
         finish(process);
     } else {
         hold(blockers, process);
-        place(process, blocked_on);
+        // A process suspended on a busy port stays out of the queue until the port lets it go.
+        if (state.port_wait == 0) {
+            place(process, blocked_on);
+        }
         for (const auto &event : std::exchange(state.events, {})) {
             apply(process, event);
         }
     }
     resume(blockers);
+    unthrottle(throttled);
     drain();
 }
 

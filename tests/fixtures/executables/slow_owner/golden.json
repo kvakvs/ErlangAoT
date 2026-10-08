@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "entry": "port_fairness",
+  "entry": "slow_owner",
   "data": [
     "helper.py"
   ],
@@ -13,7 +13,7 @@
       "args": [],
       "stderr": "^$",
       "exit_status": 0,
-      "stdout": "cpu 23999984\nflooded true, still flooding true\nflooded true, still flooding true\npings 1000\n"
+      "stdout": "computed 8999997\nin order true\n"
     }
   ],
   "oracle_version": [
@@ -25,7 +25,7 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "port_fairness.erl": "419abb31f5b55d4abd545662c74cf566491d45ae539c6f52063e944d300bb9f4",
-    "helper.py": "b923a2655993adf2d9d638a443b3d4bb1f51002f37d5a10c3a66058adb23ee64"
+    "slow_owner.erl": "77bfd1f53eff4677485f252d95d7b8b633367103c1efcee0d00c317f8774fd56",
+    "helper.py": "7cc5dac096528e76cc3ef30a6e3c898a6287e53fdc73e89a16b50435003bc6af"
   }
 }

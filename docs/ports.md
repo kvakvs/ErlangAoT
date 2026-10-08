@@ -21,7 +21,9 @@ standard input through `io:get_line`/`io:get_chars` (step 57E,
 one event-driven I/O thread for every port kind (step 57G1,
 `runtime/src/ports/reactor.cpp`; OTP golden `executables_many_ports`, runtime
 test `runtime_port_io`); port tasks on the scheduler workers (step 57G2,
-`runtime/src/scheduler/ports.cpp`; OTP golden `executables_port_fairness`).
+`runtime/src/scheduler/ports.cpp`; OTP golden `executables_port_fairness`);
+busy ports and bounded input (step 57G3; OTP goldens `executables_busy_ports`,
+`executables_slow_owner`).
 
 ## Identity
 
@@ -103,6 +105,7 @@ connect).
 | `exit_status` | `{Port, {exit_status, S}}` when the program exits (spawn ports) |
 | `use_stdio` (default), `nouse_stdio`, `stderr_to_stdout`, `in`, `out`, `hide` | As in OTP (`hide` has no effect) |
 | `{args, List}`, `{arg0, A}`, `{env, Env}`, `{cd, Dir}` | Spawn ports (57D) |
+| `{busy_limits_port, {Low, High} \| disabled}` | Queued output bytes that make the port busy ([busy ports](#busy-ports), 57G3) |
 
 Without `eof`, end of input closes the port with reason `normal`, after the
 `exit_status` message when one was asked for. Unknown options are `badarg`.
@@ -186,11 +189,10 @@ until a scheduler worker runs its task.
   not run on a worker (waking it like any message), else when its time slice
   ends, so a running process's heap is never touched by another thread.
 - Commands, closes, connects and exit signals sent to a port act at once on
-  the sender's worker, as ERTS does for a port that is not busy.
-  `port_command` never suspends the caller (OTP may suspend a caller on a
-  busy port): an `fd` port writes its output at once on the caller's worker;
-  the pipe and socket drivers queue output without a cap and let the I/O
-  thread write it (57D, 57F, 57G1).
+  the sender's worker, as ERTS does for a port that is not busy: an `fd` port
+  writes its output at once on the caller's worker; the pipe and socket
+  drivers queue output and let the I/O thread write it (57D, 57F, 57G1); a
+  busy port suspends the sender ([busy ports](#busy-ports)).
 
 The prototype `tests/prototypes/poller/` (`run.py --wsl`) shows the wakeup
 on Windows (completion port) and WSL Linux (`poll()`): an idle scheduler
@@ -202,6 +204,40 @@ are not killed, as in OTP) and the I/O thread stops: it is joined outside the
 executor mutex, because a delivery in progress takes it; a Windows `fd`
 reader blocked in a read that cannot be cancelled is detached and delivers
 nothing more.
+
+## Busy ports
+
+Step 57G3. Output a driver queues for the I/O thread (spawned programs'
+pipes) counts against the port's busy limits, OTP's `busy_limits_port`
+(defaults: high 8,192 bytes, low 4,096; `{busy_limits_port, {Low, High}}`
+or `disabled` as an `open_port/2` option, limits at least 1, a low limit
+above the high one lowered to it):
+
+- A write that takes the queued output to the high limit or above still
+  goes out and makes the port busy; it stays busy until the I/O thread has
+  written enough that less than the low limit is queued.
+- `port_command/2` and `Port ! {Pid, {command, Data}}` to a busy port
+  suspend the sender, which writes nothing; once the port is no longer busy,
+  or closes, the sender runs its builtin again (a closed port then gives
+  `badarg`, as in OTP). A suspended process still receives exit signals.
+- `port_command/3` with `nosuspend` returns `false` for a busy port and
+  writes nothing; `force` raises `notsup`, as OTP's spawn and `fd` drivers
+  do not allow it.
+- `port_info(P, queue_size)` is the output queued and not written yet.
+- `fd` ports write at once and socket output goes through `port_control/3`,
+  so neither is ever busy.
+
+A port also bounds the input it holds:
+
+- When more than 64 KiB of raw input waits for the port's task, the I/O
+  thread stops reading the port (a program writing to it then blocks, as on
+  a full pipe) until the task has taken it below 32 KiB.
+- While the connected process can run (it is running or queued, not waiting
+  in a `receive`, suspended or blocked) and already holds 1,024 messages
+  (or has that many port signals waiting for its time slice to end), the
+  port's task delivers nothing more until that process's slice has ended.
+  A process waiting in a `receive` always gets the input, so a receive for a
+  later message of the port cannot wait for ever.
 
 ## Subprocesses
 
@@ -222,8 +258,9 @@ stdout are pipes of the port:
 - A program that cannot be started raises `error:Reason` with the POSIX
   reason (`enoent`, `eacces`, `enoexec`); bad names and options raise
   `badarg`.
-- Output is queued and written by the I/O thread; closing the port lets it
-  finish what is queued, then closes the program's stdin. The program
+- Output is queued and written by the I/O thread, with the port's busy
+  limits ([busy ports](#busy-ports)); closing the port lets it finish what is
+  queued, then closes the program's stdin. The program
   is never killed; it usually ends at end of input.
 - Option `exit_status` sends `{Port, {exit_status, S}}` once the program has
   exited (its exit code; on Linux and macOS 128 plus the signal for a program
@@ -319,5 +356,5 @@ Implementation (`runtime/src/ports/sockets.cpp`):
 
 Linked-in drivers and NIFs, `erlang:open_port({spawn_driver, Name})` for OTP
 driver names, distribution ports, `port_call/3` on the provided drivers
-other than the library's own protocol, `busy` port suspension, and the
-`overlapped_io`, `parallelism` and `busy_limits_*` options.
+other than the library's own protocol, busy socket ports, and the
+`overlapped_io`, `parallelism` and `busy_limits_msgq` options.

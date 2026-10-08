@@ -36,6 +36,10 @@ struct PortOptions final {
     // Spawned programs: use stdin/stdout (use_stdio), merge stderr into stdout.
     bool use_stdio = true;
     bool stderr_to_stdout = false;
+    // Queued output bytes that make the port busy, and below which it is no longer busy (busy_limits_port; OTP's
+    // defaults). A driver that writes at once never queues.
+    std::size_t busy_low = 4096;
+    std::size_t busy_high = 8192;
     // Spawned programs: arguments, argv[0], environment changes (unset when the value is missing), directory.
     std::vector<std::string> args;
     std::optional<std::string> arg0;
@@ -44,10 +48,10 @@ struct PortOptions final {
 };
 
 // One unit of port input: raw bytes as read (data, before framing) or after framing (a stream chunk, a packet or a
-// whole line), a line part (eol, noeol), the end of input, a read or write error with its POSIX reason, or a
-// spawned program's exit status.
+// whole line), a line part (eol, noeol), the end of input, a read or write error with its POSIX reason, a spawned
+// program's exit status, or how many queued output bytes were written (status).
 struct PortInput final {
-    enum class Kind : std::uint8_t { data, eol, noeol, end, error, status };
+    enum class Kind : std::uint8_t { data, eol, noeol, end, error, status, written };
     Kind kind = Kind::data;
     std::vector<std::byte> bytes;
     std::string reason;

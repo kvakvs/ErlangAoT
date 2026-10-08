@@ -64,6 +64,8 @@ struct PortInfo final {
     std::optional<std::int64_t> os_pid;
     std::vector<Word> monitored_by;
     Word registered = 0;
+    // Output queued and not written yet.
+    std::size_t queue_size = 0;
 };
 
 // A signal from a port to a process that holds no heap term, so it can wait while its target runs on another worker:
@@ -117,8 +119,15 @@ struct PortEvent final {
     }
 };
 
-// The outcome of port output: written, the port is not open, or the data does not fit the port's packet header.
-enum class PortOutcome : std::uint8_t { done, not_open, too_long };
+// The outcome of port output: written, the port is not open, the data does not fit the port's packet header, or
+// the port is busy and nothing was written.
+enum class PortOutcome : std::uint8_t { done, not_open, too_long, busy };
+
+// Raw input bytes a port holds before it asks the I/O thread to stop reading; it reads again below half of them
+// (docs/ports.md#busy-ports).
+inline constexpr std::size_t PORT_HELD_BYTES = std::size_t{64} * 1024;
+// Messages waiting in a runnable connected process at which a port's task stops delivering until the process ran.
+inline constexpr std::size_t PORT_OWNER_MESSAGES = 1024;
 
 // The reductions of one port task (docs/ports.md#port-tasks), as many as a process's time slice; a message a task
 // delivers costs PORT_MESSAGE_REDUCTIONS and one more per PORT_BYTES_PER_REDUCTION bytes it carries.
@@ -200,8 +209,9 @@ class Executor final {
                    std::string spelling);
     // port_close(Port) of `caller`: false when the port is not open.
     bool close_port(ProcessContext &caller, Word port);
-    // port_command(Port, Data): write `data` with the port's framing; a failed write closes the port.
-    PortOutcome command_port(ProcessContext &caller, Word port, std::vector<std::byte> data);
+    // port_command(Port, Data): write `data` with the port's framing; a failed write closes the port. A busy port
+    // suspends the caller until it is no longer busy (builtins::Blocked), or with `nosuspend` answers busy.
+    PortOutcome command_port(ProcessContext &caller, Word port, std::vector<std::byte> data, bool nosuspend = false);
     // port_connect(Port, Pid): false when the port is not open or Pid is not a live process; links Pid.
     bool connect_port(Word port, const Term &owner_pid);
     // Port ! Request from `sender`; a malformed request, or one naming another process than the connected one, sends
@@ -253,6 +263,10 @@ class Executor final {
         std::vector<Word> holding;
         // Port signals that wait for this running process's slice to end, oldest first.
         std::vector<PortEvent> events;
+        // The busy port this process is suspended on until it is no longer busy, or 0.
+        Word port_wait = 0;
+        // Numbers of the ports whose tasks wait until this process's slice ends to deliver more.
+        std::vector<Word> throttling;
     };
 
     // How an exit signal was sent (docs/processes.md#exit-signals): by a link, by exit_signal/2 or exit/2 to another
@@ -303,6 +317,19 @@ class Executor final {
     static void frame(Port &port, const PortInput &raw);
     // Act on a socket event of an open port: deliver its message, or give an accepted connection a port.
     void socket_work(Port &port, SocketEvent event);
+    // Account for queued output the I/O thread wrote: a busy port below its low limit is no longer busy.
+    void written(Port &port, std::size_t bytes);
+    // Suspend the running `sender` on busy `port` until the port is no longer busy: throws Blocked.
+    [[noreturn]] void suspend(ProcessContext &sender, Port &port);
+    // Queue again the processes suspended on a port that is no longer busy or closed.
+    void resume_senders(Port &port);
+    // Whether the connected process of a port holds too many messages it has not taken while it can run; the task
+    // then waits for that process's slice to end.
+    bool owner_full(Port &port);
+    // Let the ports waiting for a process's slice deliver again.
+    void unthrottle(const std::vector<Word> &numbers);
+    // Tell the I/O thread to read a port's input again once the port holds few enough bytes.
+    void read_on(Port &port);
     // Act on one framed input unit of an open port; false once the unit closed the port.
     bool input(Port &port, PortInput unit);
     // Act on the end of an open port's input or a read error: {Port, eof} with option eof, else a close; with

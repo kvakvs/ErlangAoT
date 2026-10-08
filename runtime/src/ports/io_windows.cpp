@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <atomic>
 #include <bit>
+#include <condition_variable>
 #include <exception>
+#include <mutex>
 #include <thread>
 
 // Asio has included <windows.h> with WIN32_LEAN_AND_MEAN and NOMINMAX.
@@ -33,9 +35,17 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
         close();
     }
 
+    void pause(bool paused) override {
+        paused_ = paused;
+        if (!paused_ && !reading_ && !stopped_ && stream_.is_open()) {
+            next();
+        }
+    }
+
   private:
     // Read what the pipe has, up to the buffer size.
     void next() {
+        reading_ = true;
         stream_.async_read_some(asio::buffer(buffer_),
                                 [self = shared_from_this()](const boost::system::error_code &error, std::size_t bytes) {
                                     self->completed(error, bytes);
@@ -44,12 +54,15 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
 
     // Deliver what a read gave and read on; at end of input or an error deliver the last units and close.
     void completed(const boost::system::error_code &error, std::size_t bytes) {
+        reading_ = false;
         if (stopped_) {
             return;
         }
         if (!error) {
             service_.deliver(port_, {PortInput::raw(std::span(buffer_).first(bytes))}, bytes);
-            next();
+            if (!paused_) {
+                next();
+            }
             return;
         }
         const bool ended = error == asio::error::eof || error == asio::error::broken_pipe;
@@ -70,8 +83,10 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
     Word port_;
     asio::windows::stream_handle stream_;
     std::vector<std::byte> buffer_;
-    // Set when the port no longer wants input.
+    // Set when the port no longer wants input; while paused, no new read starts; while a read is pending.
     bool stopped_ = false;
+    bool paused_ = false;
+    bool reading_ = false;
 };
 
 // The state of a blocking reader thread, which may outlive its channel.
@@ -80,6 +95,24 @@ struct Reader final {
     HANDLE handle = nullptr;
     // Set when the port no longer wants input; the thread then delivers nothing more.
     std::atomic<bool> stopped{false};
+    // While paused the thread waits before its next read; `changed` wakes it.
+    std::mutex mutex;
+    std::condition_variable changed;
+    bool paused = false;
+
+    // Wait until not paused or stopped; false once stopped.
+    bool wait_unpaused() {
+        std::unique_lock lock(mutex);
+        changed.wait(lock, [this] { return !paused || stopped; });
+        return !stopped;
+    }
+
+    // Pause or resume reading.
+    void pause(bool now) {
+        const std::scoped_lock lock(mutex);
+        paused = now;
+        changed.notify_all();
+    }
 };
 
 // The last units of a read that returned no bytes: the end of input, or an error.
@@ -95,7 +128,7 @@ std::vector<PortInput> last_units(BOOL ok) {
 // and stays open.
 void read_loop(const std::shared_ptr<IoGate> &gate, const std::shared_ptr<Reader> &reader) {
     std::vector<std::byte> buffer(READ_BYTES);
-    for (;;) {
+    while (reader->wait_unpaused()) {
         DWORD read = 0;
         const BOOL ok = ReadFile(reader->handle, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr);
         if (reader->stopped) {
@@ -127,10 +160,13 @@ class BlockingInput final : public Channel {
 
     void stop() override { release(); }
 
+    void pause(bool paused) override { reader_->pause(paused); }
+
   private:
     // Stop the reader: cancel its blocking read and detach its thread, which keeps its own state alive.
     void release() noexcept {
         reader_->stopped = true;
+        reader_->pause(false);
         if (thread_.joinable()) {
             CancelSynchronousIo(thread_.native_handle());
             thread_.detach();

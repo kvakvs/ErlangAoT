@@ -55,6 +55,8 @@ class IoService final {
     void write_descriptor(Word port, Descriptor output);
     // Queue output of `port`.
     void send(Word port, std::vector<std::byte> bytes);
+    // Stop reading `port`'s input (`paused`), or read on.
+    void pause(Word port, bool paused);
     // Report the exit status of a spawned program of `port` when it exits.
     void watch_child(Word port, Child child);
     // Stop delivering input and errors of `port`; its queued output is still written, then its handle closed, and

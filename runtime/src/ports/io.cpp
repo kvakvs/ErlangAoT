@@ -44,10 +44,16 @@ class Output final : public Channel, public std::enable_shared_from_this<Output>
             [self = shared_from_this()](const boost::system::error_code &error, std::size_t) { self->written(error); });
     }
 
-    // A write completed: report a failure once, then go on with the queue.
+    // A write completed: report the bytes written, or a failure once, then go on with the queue.
     void written(const boost::system::error_code &error) {
         writing_ = false;
+        const auto bytes = queue_.front().size();
         queue_.pop_front();
+        if (!error && !stopped_) {
+            auto unit = PortInput::of(PortInput::Kind::written);
+            unit.status = static_cast<std::int64_t>(bytes);
+            service_.deliver(port_, {std::move(unit)}, 0);
+        }
         if (error) {
             if (!stopped_) {
                 service_.deliver(
@@ -120,6 +126,15 @@ void IoService::send(Word port, std::vector<std::byte> bytes) {
         const auto found = impl->ports.find(port);
         if (found != impl->ports.end() && found->second.output) {
             std::static_pointer_cast<Output>(found->second.output)->send(std::move(bytes));
+        }
+    });
+}
+
+void IoService::pause(Word port, bool paused) {
+    asio::post(impl_->context, [impl = impl_.get(), port, paused] {
+        const auto found = impl->ports.find(port);
+        if (found != impl->ports.end() && found->second.input) {
+            found->second.input->pause(paused);
         }
     });
 }

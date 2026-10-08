@@ -260,6 +260,10 @@
   `queue_port` -> `port_queue_`; `work()` alternates `next_port()` with process slices while both have work;
   `run_port` frames (`InputDecoder` now in `Port`) and delivers with a reduction budget under the mutex. Accepted
   sockets start serving in `SocketDriver::attach` (their port is created by the listening port's task).
+  Step 57G3: busy ports: `Port::queued_output/busy/suspended`, written-byte units from the I/O thread accounted at
+  once; busy senders `suspend()` (`Schedule::port_wait`, Blocked) and `resume_senders()`; input bounds pause the
+  channel at 64 KiB held and `owner_full()` throttles a task while a runnable owner holds 1,024 messages
+  (`Schedule::throttling`, released in `after()`).
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 
