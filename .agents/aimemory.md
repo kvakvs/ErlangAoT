@@ -342,6 +342,7 @@ Step facts beyond the plan record:
   first, so goldens see no OTP stderr (author stderr). runtime_containers SegFaulted once in a full -j 12 run, not
   reproduced.
 User directions (keep):
+- Inference plan (2026-10-08): steps 58A-58G before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

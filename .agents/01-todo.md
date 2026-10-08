@@ -360,6 +360,11 @@ Plan: [55](11-plan.md#step-55).
 
 ## Optimization and developer tooling
 
+- **F34 — Precise type inference** ([58A](11-plan.md#step-58a)–[58G](11-plan.md#step-58g)):
+  [ ] fact domain decision; [ ] literals; [ ] operators and builtins;
+  [ ] containers; [ ] funs; [ ] local inputs from callers; [ ] pattern and
+  guard narrowing. Expectations: `tests/fixtures/inference/values.erl`
+  (7 of 39 functions at their expected type on 2026-10-08).
 - **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [ ] remove
   real checks for new operations with generic fallback and existing caps.
 - **F30 — Debug information** ([60](11-plan.md#step-60)): [ ] LLVM debug

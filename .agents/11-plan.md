@@ -119,7 +119,7 @@ CTests (123 fast) and 258 production quality units.
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F33 |
+| L. Optimization and tooling | [58A](#step-58a)–[58G](#step-58g), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -1410,11 +1410,157 @@ Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57).
 
 ## L. Optimization and tooling
 
+Steps 58A–58G (added 2026-10-08, user request) make type inference precise
+enough that `tests/fixtures/inference/values.erl` reaches its `expect:`
+signatures: today only integer constants, integer joins and argument
+relations are inferred (7 of 39 functions). They depend only on the existing
+inference (steps 18, 21) and may move earlier. Each step removes the `today:`
+lines it closes, adds fixtures for its own cases, and keeps facts sound:
+specialization (step 59) may only rely on proven facts, and every widening,
+budget or unknown construct still yields `term()`.
+
+<a id="step-58a"></a>
+
+### 58A. Decide the inference fact domain
+
+Backlog: F34. Depends on: [18](#step-18). **Decision.**
+
+Publish `docs/semantic.md#inference-domain`: which facts exist (singleton
+atoms and integers, `float()`, integer ranges, `number()`, `boolean()`,
+tuples, lists with element and nonempty facts, maps with exact keys, funs
+with arity and result, bitstrings with size), when singleton unions become a
+range or a category (size thresholds), how containers widen (depth and
+element budgets), and how facts relate to specs (never trusted for
+representation).
+
+- Success criteria
+  - [ ] The contract names every fact kind, its join and widening rule and its
+    budget; `--print-types` text for each matches the `values.erl`
+    expectations or the expectations are updated with the contract.
+- Tests
+  - [ ] Focused unit tests of joins and widening at the documented thresholds
+    (`semantic_inference`).
+
+<a id="step-58b"></a>
+
+### 58B. Infer facts of all literals
+
+Backlog: F34. Depends on: [58A](#step-58a).
+
+Atoms, floats, characters, strings (`[97 | 98 | 99, ...]`), `[]` and
+literal binaries (`<<_:16>>`) get their facts; integer literals already do.
+
+- Success criteria
+  - [ ] Every literal and every function returning one infers its fact;
+    joins of mixed literals follow the 58A rules (`1 | float()`).
+- Tests
+  - [ ] `values.erl` literal rows (`float`, `atom`, `string`, `empty_list`,
+    `binary`, `integer_or_float`) reach `expect:`; new rows for characters,
+    negative floats and long strings at the widening threshold.
+
+<a id="step-58c"></a>
+
+### 58C. Infer operator and builtin results
+
+Backlog: F34. Depends on: [58B](#step-58b).
+
+Arithmetic on known integers folds within the integer limit and otherwise
+yields `integer()`, `float()` or `number()` by operand facts (`/` is always
+`float()`); comparisons, `andalso`/`orelse`/`not` and type tests yield `true`,
+`false` or `boolean()`; bridge builtins with fixed result categories
+(`length/1`, `tuple_size/1`, `atom_to_list/1`, ...) get them. Raising paths
+contribute nothing to a join.
+
+- Success criteria
+  - [ ] `sum() -> 3`, `product() -> 42`, `division() -> float()`,
+    `comparison() -> true`, `conjunction() -> false`; folding never changes
+    runtime behavior (overflow to bignums, badarith stay runtime outcomes).
+- Tests
+  - [ ] `values.erl` operator rows reach `expect:`; new rows for bignum
+    folding, `div`/`rem`, mixed integer/float arithmetic and builtin results.
+
+<a id="step-58d"></a>
+
+### 58D. Infer container facts
+
+Backlog: F34. Depends on: [58B](#step-58b).
+
+Tuples keep element facts; lists join element facts and know nonempty or
+empty; strings are lists of character facts; maps keep exact constant keys of
+any kind (atoms, integers, tuples, mixed) with value facts, and an update of
+an unknown map is `map()`; records keep their tuple shape. Element access
+(`element/2`, patterns, `hd/1`) reads element facts back.
+
+- Success criteria
+  - [ ] Same-type and mixed-type tuples, lists and maps, nested containers and
+    `{ok, 1} | {error, bad}` joins print as their `values.erl` expectations;
+    width and depth past the 58A budgets widen to the category.
+- Tests
+  - [ ] `values.erl` container rows reach `expect:`; new rows for records,
+    element access, cons cells and containers at the budget limits.
+
+<a id="step-58e"></a>
+
+### 58E. Infer fun facts
+
+Backlog: F34. Depends on: [58D](#step-58d), [35](#step-35).
+
+`fun F/A`, `fun M:F/A` and anonymous funs (closures included) get fun facts
+with their arity and the callee's or body's result fact; a call of a value
+whose fact is a known fun uses that result.
+
+- Success criteria
+  - [ ] `returns_fun() -> fun(() -> 42)`, `local_fun() -> fun(() -> 5)`,
+    `applies_fun() -> 6`, closures with captured facts; unknown funs and
+    `apply/2,3` stay `term()`.
+- Tests
+  - [ ] `values.erl` fun rows reach `expect:`; new rows for named funs,
+    funs passed to library functions and funs stored in containers.
+
+<a id="step-58f"></a>
+
+### 58F. Infer local function inputs from their callers
+
+Backlog: F34. Depends on: [58B](#step-58b), [18](#step-18).
+
+A function that is neither exported nor referenced by a fun gets the join of
+its call sites' argument facts as inputs, iterated with the recursive
+components of step 18 (inputs widen like results after the round limit);
+exported and fun-referenced functions keep `term()` inputs.
+
+- Success criteria
+  - [ ] `increment(3) -> 4` and `call_local() -> 4`; recursive local loops
+    converge or widen as results do; specialization profiles stay sound.
+- Tests
+  - [ ] `values.erl` local rows reach `expect:`; new rows for several call
+    sites, recursive locals, a local referenced by `fun f/1` and the widening
+    limit.
+
+<a id="step-58g"></a>
+
+### 58G. Narrow facts by patterns and guards
+
+Backlog: F34. Depends on: [58C](#step-58c), [58D](#step-58d).
+
+Inside a clause, a matched pattern and the guard refine the facts of the
+values they test: `is_integer(X), X >= 1, X =< 10` makes `X` the range
+`1..10`, `{ok, V}` makes the matched value a two-tuple, `is_float` /
+`is_integer` split number joins. Refinements apply only within the clause
+(and the guarded branch of `case`/`if`/`receive`).
+
+- Success criteria
+  - [ ] `bounded(term()) -> 1..10`, `scaled(term()) -> number()`; a refined
+    fact never escapes the clause that proved it.
+- Tests
+  - [ ] `values.erl` reaches `expect:` for every row (no `today:` lines
+    left); new rows for range guards, tuple and list patterns, map patterns
+    and refinements that must not leak.
+
 <a id="step-59"></a>
 
 ### 59. Make specialization remove real source checks
 
-Backlog: F29. Depends on: [58](#step-58).
+Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g).
 
 - Success criteria
   - [ ] Proven profiles remove tag/shape checks in new operations (arithmetic,
