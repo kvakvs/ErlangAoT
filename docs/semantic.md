@@ -167,6 +167,32 @@ mixed(X) ->
   inference proved; a variable shows only its type, its name already says
   which argument it is.
 
+### Inference expectations
+
+`tests/fixtures/inference/*.erl` record what inference should find for each
+function, and what it finds today. Each module becomes the CTest
+`inference_<module>` (`tests/compiler/inference/expectations.py`):
+
+```erlang
+%% expect: sum() -> 3
+%% today: sum() -> term()
+sum() -> 1 + 2.
+```
+
+- `expect:` is the signature `--print-types` should print in its
+  `%% inferred:` line; `today:`, present while inference falls short, is the
+  one it prints now.
+- The check compares the output with `today` when there is one, else with
+  `expect`; every function of the module needs an `expect` line. A `today`
+  line that inference has caught up with fails the check until it is removed.
+- `expectations.py <erlangaot> <fixture> --record` rewrites the `today`
+  lines from the current output (a maintainer action: review the diff).
+- `values.erl` covers literals, arithmetic and comparisons, calls of local and
+  other functions, integer joins and ranges, integers or floats, lists,
+  strings, tuples, maps with atom and other keys, funs returned and applied,
+  binaries and argument relations. Today inference finds integer constants,
+  integer joins and argument relations (7 of 39 functions).
+
 ### Printing types
 
 `semantic::types::type_source(graph, type)` (`semantic/types/printing`) renders
