@@ -240,6 +240,9 @@
   Step 57C: `IoService` (`ports/io.hpp`; `io_posix.cpp` poll thread, `io_windows.cpp` reader threads) with
   `InputDecoder` framing, delivering (port, bytes read, units) to `Executor::input` under the mutex; data becomes
   `PortEvent::data` messages; executor `io_` declared last, stopped outside the lock in `clear()`.
+  Step 57D: `IoService` base (io.cpp) adds detached writer threads (queued output) and child watchers (status units)
+  sharing an `IoGate`; `PortDriver::queued_output/child/owns_descriptors`; spawn driver (`ports/spawn*.cpp`);
+  executor `exited`/`finish_input` order exit_status before eof/close; `os` builtins + library `os:cmd/1`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

@@ -43,6 +43,19 @@ TermResult<Term> data_message(ProcessContext &process, const PortEvent &event) {
     return body ? factory.tuple(std::array{*from, *body}) : body;
 }
 
+// {Port, {exit_status, Status}} built in the heap of `process`.
+TermResult<Term> status_message(ProcessContext &process, const PortEvent &event) {
+    TermFactory factory(process);
+    const auto from = Term::from_word(event.port, process);
+    const auto tag = factory.atom("exit_status");
+    const auto status = encode_integer(event.status);
+    if (!from || !tag || !status) {
+        return std::unexpected(!from ? from.error() : (!tag ? tag.error() : TermError::out_of_range));
+    }
+    const auto body = factory.tuple(std::array{*tag, Term::from_word(*status).value()});
+    return body ? factory.tuple(std::array{*from, *body}) : body;
+}
+
 // {Port, Tag} built in the heap of `process`.
 TermResult<Term> port_message(ProcessContext &process, Word port, std::string_view tag) {
     TermFactory factory(process);
@@ -78,11 +91,22 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     port->driver = std::move(driver);
     const auto word = detail::port_word(*number);
     const auto input = port->options.input ? port->driver->input() : std::nullopt;
+    const auto output = port->driver->queued_output();
+    const auto child = port->driver->child();
+    const auto owned = port->driver->owns_descriptors();
+    // A port that reads nothing has no end of input to wait for.
+    port->input_ended = !input;
     owner.signals().link(word);
     try {
         const auto &options = ports_.emplace(*number, std::move(port)).first->second->options;
         if (input) {
-            io().read_descriptor(word, *input, options);
+            io().read_descriptor(word, {.fd = *input, .owned = owned}, options);
+        }
+        if (output) {
+            io().write_descriptor(word, {.fd = *output, .owned = owned});
+        }
+        if (child) {
+            io().watch_child(word, {.handle = *child});
         }
     } catch (...) {
         ports_.erase(*number);
@@ -120,6 +144,9 @@ void Executor::input(Word port, std::vector<PortInput> units, std::size_t read) 
 }
 
 bool Executor::input(Port &port, PortInput unit) {
+    if (unit.kind == PortInput::Kind::status) {
+        return exited(port, unit.status);
+    }
     if (unit.kind == PortInput::Kind::end || unit.kind == PortInput::Kind::error) {
         return input_end(port, unit);
     }
@@ -130,17 +157,40 @@ bool Executor::input(Port &port, PortInput unit) {
 }
 
 bool Executor::input_end(Port &port, const PortInput &unit) {
-    if (unit.kind == PortInput::Kind::end && port.options.eof) {
-        if (auto *connected = process(port.connected)) {
-            post(*connected, PortEvent::message(PortEvent::Kind::eof, detail::port_word(port.number)));
+    if (unit.kind == PortInput::Kind::error) {
+        auto reason = runtime_.atom_storage.intern(unit.reason);
+        if (!reason) {
+            throw std::bad_alloc();
+        }
+        close(port, *reason);
+        return false;
+    }
+    port.input_ended = true;
+    return port.options.exit_status && !port.exit_status ? true : finish_input(port);
+}
+
+bool Executor::exited(Port &port, std::int64_t status) {
+    port.exit_status = status;
+    return port.options.exit_status && port.input_ended ? finish_input(port) : true;
+}
+
+bool Executor::finish_input(Port &port) {
+    const auto word = detail::port_word(port.number);
+    auto *connected = process(port.connected);
+    if (port.options.exit_status && connected) {
+        post(*connected, PortEvent::exited(word, port.exit_status.value_or(0)));
+    }
+    if (port.options.eof) {
+        if (connected) {
+            post(*connected, PortEvent::message(PortEvent::Kind::eof, word));
         }
         return true;
     }
-    auto reason = runtime_.atom_storage.intern(unit.kind == PortInput::Kind::end ? "normal" : unit.reason);
-    if (!reason) {
+    auto normal = runtime_.atom_storage.intern("normal");
+    if (!normal) {
         throw std::bad_alloc();
     }
-    close(port, *reason);
+    close(port, *normal);
     return false;
 }
 
@@ -174,7 +224,9 @@ PortOutcome Executor::write(ProcessContext &caller, Port &port, std::vector<std:
     if (!output) {
         return PortOutcome::too_long;
     }
-    if (const auto written = port.driver->write(*output); !written) {
+    if (port.driver->queued_output()) {
+        io().send(detail::port_word(port.number), *output);
+    } else if (const auto written = port.driver->write(*output); !written) {
         close(port, atom(caller, written.error().reason));
         return PortOutcome::done;
     }
@@ -385,6 +437,9 @@ void Executor::apply(ProcessContext &target, const PortEvent &event) {
         break;
     case PortEvent::Kind::eof:
         deliver(target, port_message(target, event.port, "eof"));
+        break;
+    case PortEvent::Kind::exit_status:
+        deliver(target, status_message(target, event));
         break;
     case PortEvent::Kind::data:
         deliver(target, data_message(target, event));

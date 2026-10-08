@@ -63,6 +63,15 @@ class PortDriver {
     // The descriptor the I/O thread reads the port's input from, if the driver has one.
     virtual std::optional<int> input() const noexcept { return std::nullopt; }
 
+    // The descriptor the I/O thread writes queued output to; none when write() writes at once.
+    virtual std::optional<int> queued_output() const noexcept { return std::nullopt; }
+
+    // The spawned program whose exit the I/O thread reports (a process handle or pid), if any.
+    virtual std::optional<std::int64_t> child() const noexcept { return std::nullopt; }
+
+    // Whether the I/O thread closes the input and output descriptors when it is done with them.
+    virtual bool owns_descriptors() const noexcept { return false; }
+
     // The operating system process id of a spawned program, for port_info's os_pid.
     virtual std::optional<std::int64_t> os_pid() const noexcept { return std::nullopt; }
 
@@ -88,12 +97,29 @@ struct Port final {
     // Bytes read from and written to the port.
     std::size_t input = 0;
     std::size_t output = 0;
+    // Input ended (or the port reads none) while option exit_status waits for the program's status, which is kept
+    // here once it exited: {exit_status, S} goes out before the end of input is acted on.
+    bool input_ended = false;
+    std::optional<std::int64_t> exit_status;
     std::unique_ptr<PortDriver> driver;
 };
 
 // Apply the output framing of `options` to `bytes`: a {packet, N} header; nothing for stream and line ports.
 // Empty when the data is too long for the header.
 std::optional<std::vector<std::byte>> framed(const PortOptions &options, std::vector<std::byte> bytes);
+
+// A request to run a program: {spawn, Command} runs Command through the system's command processor rules (a
+// shell command line, or on Windows a command line CreateProcess searches), {spawn_executable, File} runs File
+// with the {args, ...} of the options.
+struct SpawnRequest final {
+    bool executable = false;
+    std::string command;
+};
+
+// The driver of a spawned program, its stdin and stdout pipes owned by the I/O thread once registered; the POSIX
+// reason (enoent, eacces, ...) when the program cannot be started (docs/ports.md#drivers).
+std::expected<std::unique_ptr<PortDriver>, DriverError> spawn_driver(const SpawnRequest &request,
+                                                                     const PortOptions &options);
 
 // The driver of an {fd, In, Out} port: input read from In by the I/O thread, output written at once to Out
 // (docs/ports.md#drivers).

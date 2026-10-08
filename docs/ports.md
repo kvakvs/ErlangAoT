@@ -11,7 +11,10 @@ links, monitors, names and exit signals of ports, and output-only `fd` ports
 (step 57B, `runtime/src/scheduler/ports.cpp`, `runtime/src/builtins/ports.cpp`,
 `runtime/src/ports/`; OTP golden `executables_port_identities`); the I/O
 thread and `fd` port input with stream, packet and line framing (step 57C,
-`runtime/src/ports/io*.cpp`; OTP golden `executables_port_input`).
+`runtime/src/ports/io*.cpp`; OTP golden `executables_port_input`);
+subprocess ports, `os:type/0`, `os:getenv/1` and `os:cmd/1` (step 57D,
+`runtime/src/ports/spawn*.cpp`, `library/stdlib/os.erl`; OTP golden
+`executables_port_spawn`).
 
 ## Identity
 
@@ -159,6 +162,40 @@ are not killed, as in OTP) and the I/O service stops: the poll thread is
 joined; a Windows reader blocked in a read that cannot be cancelled is
 detached and delivers nothing more. The service stops outside the executor
 mutex, because its threads take it to deliver input.
+
+## Subprocesses
+
+Step 57D. `open_port({spawn, Command}, Options)` and
+`open_port({spawn_executable, File}, Options)` start a program whose stdin and
+stdout are pipes of the port:
+
+- `{spawn, Command}`: on Linux and macOS `/bin/sh -c Command`; on Windows
+  `CreateProcessW` with `Command` as the command line (it finds the program
+  on the search path). `{spawn_executable, File}` runs `File` without a
+  shell, with argv[0] `{arg0, A}` (default `File`) and `{args, List}`; on
+  Windows arguments are quoted by the rules of `CommandLineToArgvW`.
+- `{env, [{Name, Value | false}]}` sets or removes variables of the child,
+  `{cd, Dir}` its directory, `stderr_to_stdout` merges stderr into the port;
+  otherwise the child shares the program's stderr. `in` opens no stdin pipe
+  and `out` no stdout pipe (the null device instead). `hide` and
+  `overlapped_io` have no effect.
+- A program that cannot be started raises `error:Reason` with the POSIX
+  reason (`enoent`, `eacces`, `enoexec`); bad names and options raise
+  `badarg`.
+- Output is queued and written by a writer thread; closing the port lets the
+  writer finish what is queued, then closes the program's stdin. The program
+  is never killed; it usually ends at end of input.
+- Option `exit_status` sends `{Port, {exit_status, S}}` once the program has
+  exited (its exit code; on Linux and macOS 128 plus the signal for a program
+  a signal ended) and before `{Port, eof}` or the close at end of input; a
+  port reading nothing reports it when the program exits, then closes.
+- `port_info(P, os_pid)` is the program's process id; `name` is the command or
+  file.
+- The library's `os:cmd/1` runs `Command` with `COMSPEC /c` on Windows (`cmd`
+  when unset) or `/bin/sh -c`, collects stdout and stderr until the program
+  closes them and returns the bytes as a list; `os:type/0` is `{win32, nt}`,
+  `{unix, linux}` or `{unix, darwin}`; `os:getenv/1` returns a string or
+  `false`.
 
 ## Standard I/O and files (57E)
 

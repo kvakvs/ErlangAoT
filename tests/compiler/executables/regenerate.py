@@ -1,6 +1,7 @@
 """Explicitly regenerate, or check, executable case goldens with an installed OTP."""
 import argparse
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -25,9 +26,10 @@ def observe(escript, staged, entry, run, work):
     args = run['args']
     version = work / 'version.txt'
     version.unlink(missing_ok=True)
+    environment = os.environ | {'ERLANG_AOT_TEST_PYTHON': sys.executable}
     result = subprocess.run([escript, str(ORACLE), str(version), str(staged), entry, *args],
-                            cwd=work, capture_output=True, timeout=300, check=False,
-                            input=run.get('stdin', '').encode())
+                            cwd=staged, capture_output=True, timeout=300, check=False,
+                            input=run.get('stdin', '').encode(), env=environment)
     if result.returncode == 125 or not version.exists():
         sys.exit(f'{staged.name}: oracle failed: {result.stderr.decode(errors="replace")}')
     return result, version.read_text().split()
@@ -57,7 +59,7 @@ def regenerate(escript, case_dir, work):
         result, version = observe(escript, staged, golden['entry'], run, work)
         runs.append(generated_run(case_dir.name, run, result))
     # Authored top-level fields: listed sources and the scheduler counts every run repeats with.
-    listed = {key: golden[key] for key in ('sources', 'workers') if key in golden}
+    listed = {key: golden[key] for key in ('sources', 'data', 'workers') if key in golden}
     return golden, {'schema': 1, 'entry': golden['entry'], **listed, 'runs': runs, 'oracle_version': version,
                     'reference': reference(), 'inputs': cases.inputs(case_dir, golden)}
 

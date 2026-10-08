@@ -66,7 +66,7 @@ struct PortInfo final {
 // A signal from a port to a process that holds no heap term, so it can wait while its target runs on another worker:
 // an exit signal or 'DOWN' with an atom reason, or a message of the port protocol or of its input.
 struct PortEvent final {
-    enum class Kind : std::uint8_t { exit, down, closed, connected, data, eof };
+    enum class Kind : std::uint8_t { exit, down, closed, connected, data, eof, exit_status };
     Kind kind = Kind::exit;
     // The port word, and the reason atom word of an exit signal or a 'DOWN'.
     Word port = 0;
@@ -78,6 +78,8 @@ struct PortEvent final {
     std::vector<std::byte> bytes;
     PortInput::Kind input = PortInput::Kind::data;
     bool binary = false;
+    // The status of {exit_status, S}.
+    std::int64_t status = 0;
 
     // An exit signal with an atom reason.
     static PortEvent exit(Word port, Word reason) noexcept { return {Kind::exit, port, reason, std::nullopt, 0, {}}; }
@@ -88,6 +90,13 @@ struct PortEvent final {
     // A 'DOWN' of `reference` with an atom reason.
     static PortEvent down(Word port, Word reason, const ReferenceIdentity &reference, Word name) noexcept {
         return {Kind::down, port, reason, reference, name, {}};
+    }
+
+    // A message {Port, {exit_status, Status}}.
+    static PortEvent exited(Word port, std::int64_t status) noexcept {
+        auto event = message(Kind::exit_status, port);
+        event.status = status;
+        return event;
     }
 
     // A message {Port, {data, Data}} of one input unit (data, eol or noeol).
@@ -249,8 +258,13 @@ class Executor final {
     void post(ProcessContext &target, PortEvent event);
     // Act on one input unit of an open port; false once the unit closed the port.
     bool input(Port &port, PortInput unit);
-    // Act on the end of an open port's input or a read error: {Port, eof} with option eof, else a close.
+    // Act on the end of an open port's input or a read error: {Port, eof} with option eof, else a close; with
+    // option exit_status only once the program's status is known.
     bool input_end(Port &port, const PortInput &unit);
+    // Keep the exit status of a port's program; act on the end of input waiting for it.
+    bool exited(Port &port, std::int64_t status);
+    // Send {exit_status, S} when asked for, then {Port, eof} or close the port; false once it closed.
+    bool finish_input(Port &port);
     // The runtime's I/O service, started by the first port that reads input.
     IoService &io();
     // Act on a port signal at a process that does not run elsewhere.

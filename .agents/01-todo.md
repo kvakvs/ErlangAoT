@@ -372,15 +372,16 @@ Plan: [55](11-plan.md#step-55).
 
 ### F35 — Ports and port I/O
 
-Plan: [57A](11-plan.md#step-57a)–[57F](11-plan.md#step-57f). Added
+Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 2026-10-08 by user direction: sockets, file I/O and subprocesses are ports.
 
 - [x] Port contract, driver interface and I/O poller decided (57A, `docs/ports.md`).
 - [x] Port identities, port table, links/monitors and port builtins (57B).
 - [x] I/O poller with scheduler wakeups and shutdown (57C: poll() thread on POSIX, reader threads on Windows).
-- [ ] Subprocess ports with stdin/stdout, `os:cmd/1` (57D).
+- [x] Subprocess ports with stdin/stdout, `os:cmd/1` (57D; POSIX compiled, not run).
 - [ ] `fd`/file ports, `file` subset, standard I/O through ports (57E).
-- [ ] TCP/UDP sockets as ports, `gen_tcp`/`gen_udp`/`inet` subsets (57F).
+- [ ] TCP/UDP sockets as ports, `gen_tcp`/`gen_udp`/`inet` subsets on Boost.Asio (57F).
+- [ ] Ports scheduled like processes (port tasks, reductions, busy ports) on one event-driven backend (57G).
 
 ## Optimization and developer tooling
 

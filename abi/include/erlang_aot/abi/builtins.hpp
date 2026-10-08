@@ -174,6 +174,9 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "port_to_list", 1},
     BuiltinName{"erlang", "list_to_port", 1},
     BuiltinName{"erlang", "ports", 0},
+    // Operating system queries (plan step 57D).
+    BuiltinName{"os", "type", 0},
+    BuiltinName{"os", "getenv", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

@@ -10,6 +10,7 @@ from OTP sources) and compiled with the programs that use it.
 | --- | --- |
 | [`lists`](../library/stdlib/lists.erl) | `append/1,2`, `filter/2`, `foldl/3`, `foldr/3`, `keyfind/3`, `map/2`, `member/2`, `nth/2`, `reverse/1,2`, `seq/2,3`, `sort/1` |
 | [`maps`](../library/stdlib/maps.erl) | `find/2`, `fold/3`, `from_list/1`, `get/2`, `keys/1`, `put/3`, `to_list/1`, `values/1` |
+| [`os`](../library/stdlib/os.erl) | `cmd/1` over a port ([subprocesses](ports.md#subprocesses)); `type/0` and `getenv/1` are runtime builtins |
 
 Results and error reasons match OTP 29, including the error shapes of OTP's
 Erlang implementations (`lists:map(F, x)` is `{case_clause, x}`,

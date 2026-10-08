@@ -104,6 +104,8 @@ std::span<const BuiltinEntry> process_builtins() noexcept;
 // The port builtins (docs/ports.md): open_port/2, port_close/1, port_command/2,3, port_connect/2, port_control/3,
 // port_call/2,3, port_info/1,2, port_to_list/1, list_to_port/1 and ports/0.
 std::span<const BuiltinEntry> port_builtins() noexcept;
+// The os builtins: os:type/0 and os:getenv/1.
+std::span<const BuiltinEntry> os_builtins() noexcept;
 // Every production builtin family runtime startup registers, together covering abi::v1::bridge_builtins.
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept;
 } // namespace erlang_aot::runtime

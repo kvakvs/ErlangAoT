@@ -372,6 +372,10 @@ Step facts beyond the plan record:
 - 57C: WSL syntax check of POSIX runtime files: wsl -e bash -c 'cd /mnt/f/Projects/ErlangAoT && clang++ -std=c++23
   -fsyntax-only -Wall -Wextra -Werror -Iruntime/include -Iruntime/src -Iabi/include -isystem thirdparty/boost_1_90_0 F'.
   Golden runs take authored "stdin". OTP port input counts raw bytes. build/plan11/{qonly,fastonly,repeat}.cmd.
+- 57D: golden `data` files + runs in staged dir + ERLANG_AOT_TEST_PYTHON env; OTP Windows drops empty spawn args
+  and gives eacces for an empty env name (left out of fixtures). User asked how ports get CPU (2026-10-08): answered
+  ports are not scheduled entities (I/O threads + synchronous port ops); offered an ERTS-like port-task redesign as a
+  later plan step if wanted.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

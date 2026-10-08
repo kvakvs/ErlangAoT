@@ -118,7 +118,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase J c
 | H. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
-| J2. Ports and port I/O | [57A](#step-57a)–[57F](#step-57f) | F07, F23, F26, F35 |
+| J2. Ports and port I/O | [57A](#step-57a)–[57G](#step-57g) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58H](#step-58h), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
@@ -1143,17 +1143,21 @@ port open; repeated 10 times with port_identities and wakeups.
 
 Backlog: F35. Depends on: [57C](#step-57c).
 
-`open_port({spawn, Command} | {spawn_executable, File}, Options)` with the
-child's stdin/stdout (and `stderr_to_stdout`) as the port, `{packet, N}`,
-`{line, L}`, `binary`, `eof`, `exit_status`, `args`, `arg0`, `env`, `cd`;
-`os:cmd/1` in the project library.
-
-- Success criteria
-  - [ ] Subprocess ports match OTP on Windows, Linux and macOS within the
-    recorded subset.
-- Tests
-  - [ ] OTP golden running owned helper programs: echo, line and packet
-    framing, exit status, closing, owner death.
+Done 2026-10-08 (contract `docs/ports.md#subprocesses`). `ports/spawn.cpp`
+driver + `spawn_windows.cpp` (CreateProcessW, anonymous pipes, handle list,
+NUL for unused directions, env block, CommandLineToArgvW quoting) and
+`spawn_posix.cpp` (posix_spawn, `/bin/sh -c`, addchdir_np, SIGPIPE ignored):
+compiled and run on Windows; POSIX compiled with WSL clang 20 only (macOS,
+Linux runs: gap). IoService base now owns writer threads (queued output,
+epipe as error unit) and child watchers (exit status units); readers close
+owned descriptors. Executor orders `{exit_status, S}` before eof/close
+(`input_ended`, `exit_status` on Port). `os:type/0`, `os:getenv/1` bridge
+builtins (`builtins/os.cpp`), `library/stdlib/os.erl` `cmd/1`. Runner: golden
+`data` files staged/hashed, runs start in the staged dir with
+`ERLANG_AOT_TEST_PYTHON`. OTP golden `executables_port_spawn` (Python
+`helper.py`: echo lines, packet, line framing, exit status, stderr_to_stdout,
+args/env, 200 KB queued write, close, owner end, enoent/badarg, os:cmd);
+OTP-only quirks left out (Windows drops empty args, empty env name eacces).
 
 <a id="step-57e"></a>
 
@@ -1179,8 +1183,10 @@ standard I/O port; `io:format` keeps its observable output.
 
 Backlog: F35. Depends on: [57C](#step-57c).
 
-A TCP/UDP socket driver and project-library `gen_tcp`, `gen_udp` and `inet`
-subsets over it (`connect`, `listen`, `accept`, `send`, `recv`, `close`,
+A TCP/UDP socket driver on an event-driven backend — Boost.Asio (`io_context`
+on the I/O thread: IOCP on Windows, epoll on Linux, kqueue on macOS), not a
+thread per socket (user direction 2026-10-08) — and project-library `gen_tcp`,
+`gen_udp` and `inet` subsets over it (`connect`, `listen`, `accept`, `send`, `recv`, `close`,
 `controlling_process`, active modes `true`/`false`/`once`, `{packet, N}`,
 `binary`/`list`, `inet:setopts/2`, `inet:port/1`, `inet:peername/1`) on IPv4
 and IPv6 loopback.
@@ -1191,6 +1197,33 @@ and IPv6 loopback.
   - [ ] OTP golden of an echo server and clients in one program over
     loopback (active and passive modes, packet framing, close from either
     side).
+
+<a id="step-57g"></a>
+
+### 57G. Schedule ports like processes on an event-driven backend
+
+Backlog: F23, F35. Depends on: [57F](#step-57f). Added 2026-10-08 by user
+direction: ports get CPU time the way ERTS gives it, and every port driver
+uses the event-driven backend sockets use.
+
+Ports become scheduled entities: port tasks (input ready, output queued,
+signals and commands from processes) wait in the scheduler run queues and
+workers run them with a reduction budget, as ERTS port tasks; the I/O thread
+only reports readiness/completion. Pipes, fd ports and child exit watching
+move from the 57C/57D threads (reader, writer and watcher threads per port)
+to the 57F backend (Boost.Asio, or native IOCP/epoll/kqueue), so thousands of
+ports need no thread each. Busy ports suspend senders and `port_command/3`
+`force`/`nosuspend` behave as in OTP; `{active, once}` style flow control
+bounds input a slow owner has not taken.
+
+- Success criteria
+  - [ ] Port work is charged to schedulers fairly: a port flooding input
+    cannot starve processes; output of a busy port suspends its senders.
+  - [ ] No per-port threads; the backend serves all port kinds on Windows,
+    Linux and macOS.
+- Tests
+  - [ ] Fairness stress (flooding ports against CPU-bound and receiving
+    processes), busy-port suspension golden, thousands of concurrent ports.
 
 ## K. End-to-end projects
 

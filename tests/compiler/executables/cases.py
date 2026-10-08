@@ -41,9 +41,15 @@ def sources(case_dir, golden):
     return {path.name: path for path in sorted(case_dir.iterdir()) if path.suffix in ('.erl', '.hrl')}
 
 
+def data(case_dir, golden):
+    """Files the program reads at run time (golden 'data'), staged beside the sources, keyed by case-relative path."""
+    return {name: case_dir / name for name in golden.get('data', [])}
+
+
 def inputs(case_dir, golden):
     """Hashes every input that determines the golden, keyed by its case-relative spelling."""
-    return {spelling: digest(path) for spelling, path in sources(case_dir, golden).items()}
+    files = sources(case_dir, golden) | data(case_dir, golden)
+    return {spelling: digest(path) for spelling, path in files.items()}
 
 
 def verify(case_dir):
@@ -61,6 +67,6 @@ def stage(case_dir, golden, destination):
     """Copies the case sources into one flat directory, as compiled by the runner and the oracle."""
     shutil.rmtree(destination, ignore_errors=True)
     destination.mkdir(parents=True)
-    for path in sources(case_dir, golden).values():
+    for path in (sources(case_dir, golden) | data(case_dir, golden)).values():
         shutil.copyfile(path, destination / path.name)
     return destination

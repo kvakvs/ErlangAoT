@@ -228,18 +228,34 @@ int descriptor(const Term &value) {
     return static_cast<int>(*number);
 }
 
-// open_port(PortName, Options): a new port linked to the caller (docs/ports.md#drivers); {fd, In, Out} here, the
-// other drivers in steps 57D-57F.
-TermResult<Term> open_port(ProcessContext &context, const TupleArgument &name, const ListArgument &list) {
+// The driver of an open_port/2 port name and the name port_info reports; badarg for an unknown or invalid name,
+// error:Reason (enoent, eacces, ...) when a program cannot be started.
+std::pair<std::unique_ptr<detail::PortDriver>, std::string> driver(ProcessContext &context, const TupleArgument &name,
+                                                                   const PortOptions &options) {
     const auto kind = name.elements.empty() ? std::string_view{} : name.elements[0].atom_spelling().value_or("");
-    if (kind != "fd" || name.elements.size() != 3) {
+    if (kind == "fd" && name.elements.size() == 3) {
+        const auto in = descriptor(name.elements[1]);
+        const auto out = descriptor(name.elements[2]);
+        return {detail::fd_driver(in, out), std::to_string(in) + "/" + std::to_string(out)};
+    }
+    const auto command = name.elements.size() == 2 ? text_of(name.elements[1]) : std::nullopt;
+    if ((kind != "spawn" && kind != "spawn_executable") || !command) {
         bad_argument();
     }
-    const auto in = descriptor(name.elements[1]);
-    const auto out = descriptor(name.elements[2]);
+    auto spawned = detail::spawn_driver({.executable = kind == "spawn_executable", .command = *command}, options);
+    if (!spawned) {
+        raise_atom(context, spawned.error().reason);
+    }
+    return {std::move(*spawned), *command};
+}
+
+// open_port(PortName, Options): a new port linked to the caller (docs/ports.md#drivers): {fd, In, Out},
+// {spawn, Command} or {spawn_executable, File}.
+TermResult<Term> open_port(ProcessContext &context, const TupleArgument &name, const ListArgument &list) {
     auto options = port_options(list);
-    const auto word = detail::Executor::of(context).open_port(context, detail::fd_driver(in, out), std::move(options),
-                                                              std::to_string(in) + "/" + std::to_string(out));
+    auto [port_driver, spelling] = driver(context, name, options);
+    const auto word =
+        detail::Executor::of(context).open_port(context, std::move(port_driver), std::move(options), spelling);
     return Term::from_word(word, context);
 }
 

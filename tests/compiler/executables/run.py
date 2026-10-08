@@ -55,9 +55,10 @@ def stdout_problem(expected, actual):
 
 
 def environment(run):
-    """The host environment without inherited runtime flags, plus the run's own 'env' entries."""
+    """The host environment without inherited runtime flags, plus the Python that runs helper programs
+    (ERLANG_AOT_TEST_PYTHON) and the run's own 'env' entries."""
     inherited = {name: value for name, value in os.environ.items() if name.upper() != 'ERLANG_AOT_FLAGS'}
-    return inherited | run.get('env', {})
+    return inherited | {'ERLANG_AOT_TEST_PYTHON': sys.executable} | run.get('env', {})
 
 
 def variants(golden):
@@ -70,11 +71,12 @@ def variants(golden):
             yield run | {'env': run.get('env', {}) | {'ERLANG_AOT_FLAGS': flags}}, f' workers={count}'
 
 
-def compare(executable, run):
-    """Runs one golden invocation; returns readable mismatch descriptions (empty when it matches)."""
+def compare(executable, run, staged):
+    """Runs one golden invocation in the staged source directory; returns readable mismatch descriptions (empty
+    when it matches)."""
     try:
         result = subprocess.run([executable, *run['args']], capture_output=True, timeout=60, check=False,
-                                env=environment(run), input=run.get('stdin', '').encode())
+                                env=environment(run), input=run.get('stdin', '').encode(), cwd=staged)
     except subprocess.TimeoutExpired:
         return ['timed out after 60 s']
     stdout, stderr = text(result.stdout), text(result.stderr)
@@ -100,7 +102,7 @@ def check_policy(tool, work, case, golden, policy, suffix):
     executable = work / f'{label}/{case}{suffix}'
     failures, lines = 0, []
     for run, variant in variants(golden):
-        problems = compare(executable, run)
+        problems = compare(executable, run, work / 'src')
         status = 'FAIL' if problems else 'ok'
         lines.append(f'{status} {case} [{label}] args={json.dumps(run["args"])}{variant}')
         lines.extend('    ' + problem.replace('\n', '\n    ') for problem in problems)

@@ -1,12 +1,11 @@
 #include "io.hpp"
 #include <array>
 #include <cerrno>
-#include <map>
-#include <mutex>
-#include <thread>
+#include <csignal>
 
 #include <fcntl.h>
 #include <poll.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 // The I/O service on Linux and macOS (docs/ports.md#io-thread): one thread polls every input descriptor and a wakeup
@@ -17,12 +16,15 @@ namespace {
 struct Source final {
     Word port = 0;
     int fd = -1;
+    bool owned = false;
     InputDecoder decoder;
 };
 
 class PosixIo final : public IoService {
   public:
-    explicit PosixIo(Deliver deliver) : deliver_(std::move(deliver)) {
+    explicit PosixIo(Deliver deliver) : IoService(std::move(deliver)) {
+        // A write to a pipe whose reader ended fails with EPIPE instead of ending the program, as in OTP.
+        static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
         if (pipe(wake_.data()) != 0) {
             throw std::bad_alloc();
         }
@@ -35,7 +37,7 @@ class PosixIo final : public IoService {
     PosixIo(PosixIo &&) = delete;
     PosixIo &operator=(PosixIo &&) = delete;
 
-    // Stop the thread after any delivery in progress; descriptors the program owns stay open.
+    // Stop the poll thread; owned descriptors still read are closed, the program's own stay open.
     ~PosixIo() override {
         {
             const std::scoped_lock lock(mutex_);
@@ -43,22 +45,33 @@ class PosixIo final : public IoService {
         }
         wake();
         thread_.join();
+        for (const auto &[port, source] : sources_) {
+            retire(*source);
+        }
+        close_retired();
         close(wake_[0]);
         close(wake_[1]);
     }
 
-    void read_descriptor(Word port, int fd, const PortOptions &options) override {
+    void read_descriptor(Word port, Descriptor input, const PortOptions &options) override {
         {
             const std::scoped_lock lock(mutex_);
-            sources_.insert_or_assign(port, std::make_shared<Source>(port, fd, InputDecoder(options)));
+            sources_.insert_or_assign(port,
+                                      std::make_shared<Source>(port, input.fd, input.owned, InputDecoder(options)));
         }
         wake();
     }
 
     void forget(Word port) override {
+        IoService::forget(port);
         {
             const std::scoped_lock lock(mutex_);
-            sources_.erase(port);
+            const auto found = sources_.find(port);
+            if (found == sources_.end()) {
+                return;
+            }
+            retire(*found->second);
+            sources_.erase(found);
         }
         wake();
     }
@@ -67,6 +80,20 @@ class PosixIo final : public IoService {
     // Make poll() return so the thread sees changed sources or the stop.
     void wake() noexcept { static_cast<void>(!write(wake_[1], "x", 1)); }
 
+    // Queue an owned descriptor to be closed by the poll thread, after poll() no longer uses it.
+    void retire(const Source &source) {
+        if (source.owned) {
+            retired_.push_back(source.fd);
+        }
+    }
+
+    // Close the retired descriptors; the lock is held or the thread has stopped.
+    void close_retired() noexcept {
+        for (const auto fd : std::exchange(retired_, {})) {
+            close_descriptor(fd);
+        }
+    }
+
     // Poll the sources until stopped, delivering what each read gives.
     void loop() {
         for (;;) {
@@ -74,6 +101,7 @@ class PosixIo final : public IoService {
             std::vector<std::shared_ptr<Source>> polled;
             {
                 const std::scoped_lock lock(mutex_);
+                close_retired();
                 if (stopping_) {
                     return;
                 }
@@ -103,25 +131,36 @@ class PosixIo final : public IoService {
 
     // Read once from a ready source and deliver its units; at end or error the source is forgotten.
     void read_ready(Source &source) {
-        std::array<std::byte, 64 * 1024> buffer{};
+        std::array<std::byte, std::size_t{64} * 1024> buffer{};
         const auto bytes = read(source.fd, buffer.data(), buffer.size());
         if (bytes < 0 && (errno == EINTR || errno == EAGAIN)) {
             return;
         }
         if (bytes <= 0) {
-            auto units = bytes == 0
-                             ? source.decoder.finish()
-                             : std::vector{PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio"}};
-            deliver(source, 0, std::move(units));
-            forget(source.port);
+            auto units =
+                bytes == 0
+                    ? source.decoder.finish()
+                    : std::vector{PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}};
+            deliver(source, std::move(units), 0);
+            end(source.port);
             return;
         }
         const auto read_bytes = static_cast<std::size_t>(bytes);
-        deliver(source, read_bytes, source.decoder.feed(std::span(buffer).first(read_bytes)));
+        deliver(source, source.decoder.feed(std::span(buffer).first(read_bytes)), read_bytes);
+    }
+
+    // Stop polling a source whose input ended.
+    void end(Word port) {
+        const std::scoped_lock lock(mutex_);
+        const auto found = sources_.find(port);
+        if (found != sources_.end()) {
+            retire(*found->second);
+            sources_.erase(found);
+        }
     }
 
     // Hand `read` bytes and their units to the executor unless the source was forgotten meanwhile.
-    void deliver(const Source &source, std::size_t read, std::vector<PortInput> units) {
+    void deliver(const Source &source, std::vector<PortInput> units, std::size_t read) {
         {
             const std::scoped_lock lock(mutex_);
             const auto found = sources_.find(source.port);
@@ -130,19 +169,46 @@ class PosixIo final : public IoService {
                 return;
             }
         }
-        deliver_(source.port, std::move(units), read);
+        gate_->deliver(source.port, std::move(units), read);
     }
 
-    Deliver deliver_;
     // The wakeup pipe: [0] polled, [1] written.
     std::array<int, 2> wake_{-1, -1};
-    // Guards sources_ and stopping_.
+    // Guards sources_, retired_ and stopping_.
     std::mutex mutex_;
     std::map<Word, std::shared_ptr<Source>> sources_;
+    // Owned descriptors no longer read, closed by the poll thread.
+    std::vector<int> retired_;
     bool stopping_ = false;
     std::thread thread_;
 };
 } // namespace
+
+std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> bytes) {
+    while (!bytes.empty()) {
+        const auto written = write(fd, bytes.data(), bytes.size());
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written < 0) {
+            return std::unexpected(DriverError{errno == EPIPE ? "epipe" : (errno == EBADF ? "ebadf" : "eio")});
+        }
+        bytes = bytes.subspan(static_cast<std::size_t>(written));
+    }
+    return {};
+}
+
+void close_descriptor(int fd) noexcept { close(fd); }
+
+std::int64_t wait_child(std::int64_t child) noexcept {
+    int status = 0;
+    while (waitpid(static_cast<pid_t>(child), &status, 0) < 0 && errno == EINTR) {
+    }
+    if (WIFSIGNALED(status)) {
+        return 128 + WTERMSIG(status);
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 0;
+}
 
 std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver) {
     return std::make_unique<PosixIo>(std::move(deliver));
