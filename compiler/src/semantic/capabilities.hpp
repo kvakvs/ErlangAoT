@@ -4,7 +4,8 @@
 
 namespace erlang_aot::semantic {
 struct Branch {
-    // One case, if or try clause seen uniformly: if clauses have no pattern, case clauses may omit the guard.
+    // One case, if, receive or try clause seen uniformly: if clauses have no pattern, case clauses may omit the
+    // guard.
     const ast::PatternSyntaxId *pattern;
     const ast::GuardSyntax *guard;
     const std::vector<ast::ExprId> *body;
@@ -12,8 +13,8 @@ struct Branch {
     const ast::CatchClause *handler = nullptr;
 };
 
-// List the clauses of a case or if expression, a try's of then catch clauses, or a maybe's else clauses, in source
-// order; every other expression has none.
+// List the clauses of a case, if or receive expression, a try's of then catch clauses, or a maybe's else clauses, in
+// source order; every other expression has none.
 std::vector<Branch> branch_clauses(const ast::ExprValue &value);
 // Index of a try's first catch clause in branch_clauses (0 for a maybe's else clauses, the clause count for case
 // and if).

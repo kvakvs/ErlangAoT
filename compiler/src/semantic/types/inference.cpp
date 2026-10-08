@@ -86,6 +86,9 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     if (const auto *choice = std::get_if<ast::IfExpression>(&expression.value)) {
         return joined(inference, syntax, choice->clauses);
     }
+    if (const auto *receive = std::get_if<ast::ReceiveExpression>(&expression.value); receive && !receive->after) {
+        return joined(inference, syntax, receive->clauses);
+    }
     if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
         return inference.expressions.at(&syntax.expression(block->body.back()));
     }

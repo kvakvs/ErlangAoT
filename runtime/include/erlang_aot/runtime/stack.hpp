@@ -91,6 +91,14 @@ class ProcessStack final {
     // `continuation` (a builtin frame) with `state` in its first registers, which stay roots meanwhile.
     void trap(const abi::v1::FrameDescriptor &continuation, std::span<const Word> state) noexcept;
 
+    // Like trap, and the process then waits: the executor runs it again only once it is woken (a message arrived).
+    void wait(const abi::v1::FrameDescriptor &continuation, std::span<const Word> state) noexcept;
+
+    // Whether the process waits for a message; wake() ends the wait.
+    bool waiting() const noexcept { return waiting_; }
+
+    void wake() noexcept { waiting_ = false; }
+
     // The pending continuation of the builtin that just ran, cleared; null when it finished or failed.
     const abi::v1::FrameDescriptor *take_trap() noexcept { return std::exchange(trap_, nullptr); }
 
@@ -180,5 +188,7 @@ class ProcessStack final {
     const abi::v1::FrameDescriptor *trap_ = nullptr;
     // Native state of the trapping builtin between its portions.
     std::unique_ptr<TrapState> trap_state_;
+    // Set by wait(): the suspended process is not runnable until woken.
+    bool waiting_ = false;
 };
 } // namespace erlang_aot::runtime

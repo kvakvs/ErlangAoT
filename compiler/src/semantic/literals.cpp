@@ -115,6 +115,9 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
         for (const auto &clause : choice->clauses) {
             result.push_back({nullptr, &clause.guard, &clause.body});
         }
+    } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value); receive && !receive->after) {
+        // A receive with an after part stays unanalyzed until timeouts lower (plan step 47).
+        append_branches(receive->clauses, result);
     } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
         append_try(*attempt, result);
     } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value);

@@ -8,7 +8,7 @@ CASES = {
     "guards": "f(X) when self() =:= X -> X.",
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
     "dynamic calls": "f() -> fun erlang:node/0.",
-    "receive": "f() -> receive X -> X end.",
+    "receive": "f() -> receive X -> X after 0 -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
 }
 

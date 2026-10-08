@@ -3,8 +3,10 @@
 #include "../process/identities.hpp"
 #include "../runtime_state.hpp"
 #include "../terms/funs.hpp"
+#include <chrono>
 #include <erlang_aot/abi/equality.hpp>
 #include <new>
+#include <thread>
 
 namespace erlang_aot::runtime::detail {
 namespace {
@@ -14,6 +16,13 @@ using abi::v1::Status;
 // The term error of a failed context creation.
 TermError creation_error(Status status) {
     return status == Status::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
+}
+
+// Wait forever: every process waits for a message no running process can send.
+[[noreturn]] void block_forever() noexcept {
+    for (;;) {
+        std::this_thread::sleep_for(std::chrono::hours(1));
+    }
 }
 
 // Whether an ended process ends the whole program: a halt or a failure outside Erlang, not an Erlang exception.
@@ -101,7 +110,31 @@ TermResult<void> Executor::send(ProcessContext &sender, Word pid, const Term &me
         return std::unexpected(copy.error());
     }
     receiver.mailbox().deliver(copy->word());
+    return of(sender).wake(receiver);
+}
+
+TermResult<void> Executor::wake(ProcessContext &receiver) {
+    if (!receiver.stack().waiting()) {
+        return {};
+    }
+    try {
+        queue_.push_back(&receiver);
+    } catch (const std::bad_alloc &) {
+        return std::unexpected(TermError::out_of_memory);
+    }
+    receiver.stack().wake();
+    parked_.erase(&receiver);
     return {};
+}
+
+bool Executor::park(ProcessContext &process) noexcept {
+    try {
+        parked_.insert(&process);
+        return true;
+    } catch (const std::bad_alloc &) {
+        process.generated_calls().fail_service(Status::out_of_memory);
+        return false;
+    }
 }
 
 bool Executor::requeue(ProcessContext &process) noexcept {
@@ -114,23 +147,30 @@ bool Executor::requeue(ProcessContext &process) noexcept {
     }
 }
 
-ProcessContext &Executor::run(ProcessContext &main) noexcept {
-    while (!queue_.empty()) {
-        auto &process = *queue_.front();
-        queue_.pop_front();
-        if (!process.stack().run(SLICE_REDUCTIONS)) {
-            if (!requeue(process)) {
-                return process;
-            }
-            continue;
-        }
-        if (&process == &main || ends_program(process)) {
-            return process;
-        }
-        report_exit(process);
-        process.runtime().destroy_context(&process);
+ProcessContext *Executor::slice(ProcessContext &main) noexcept {
+    if (queue_.empty()) {
+        block_forever();
     }
-    return main;
+    auto &process = *queue_.front();
+    queue_.pop_front();
+    if (!process.stack().run(SLICE_REDUCTIONS)) {
+        const bool kept = process.stack().waiting() ? park(process) : requeue(process);
+        return kept ? nullptr : &process;
+    }
+    if (&process == &main || ends_program(process)) {
+        return &process;
+    }
+    report_exit(process);
+    process.runtime().destroy_context(&process);
+    return nullptr;
+}
+
+ProcessContext &Executor::run(ProcessContext &main) noexcept {
+    for (;;) {
+        if (auto *ended = slice(main)) {
+            return *ended;
+        }
+    }
 }
 
 void Executor::clear() noexcept {
@@ -138,6 +178,11 @@ void Executor::clear() noexcept {
         auto &process = *queue_.back();
         queue_.pop_back();
         process.runtime().destroy_context(&process);
+    }
+    while (!parked_.empty()) {
+        auto *process = *parked_.begin();
+        parked_.erase(parked_.begin());
+        process->runtime().destroy_context(process);
     }
 }
 } // namespace erlang_aot::runtime::detail

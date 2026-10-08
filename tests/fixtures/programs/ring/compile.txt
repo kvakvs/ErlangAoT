@@ -1,6 +1,2 @@
 exit 1
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:14:5: [receive] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:39:5: [receive] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:53:5: [receive] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:60:5: [receive] notimpl [module="ring"]
-erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:65:5: [receive] notimpl [module="ring"]
+erlangaot: <fixture>/project.toml [target ring]: error: <fixture>/src/ring.erl:34:31: undefined function ring:spawn_monitor/1

@@ -30,7 +30,7 @@ bool transfers(const ExpressionLowering &state, const ast::Expression &expressio
     return semantic::fun_call(syntax, call) || semantic::dynamic_call(syntax, call);
 }
 
-// Follow one tail position: blocks and groups end in their last expression, case and if in each clause's.
+// Follow one tail position: blocks and groups end in their last expression, case, if and receive in each clause's.
 void tail_position(const ExpressionLowering &state, const ast::Expression &expression,
                    std::vector<ast::ExprId> &pending, std::set<const ast::Expression *> &calls) {
     if (const auto *group = std::get_if<ast::Group>(&expression.value)) {
@@ -38,7 +38,8 @@ void tail_position(const ExpressionLowering &state, const ast::Expression &expre
     } else if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
         pending.push_back(block->body.back());
     } else if (std::holds_alternative<ast::CaseExpression>(expression.value) ||
-               std::holds_alternative<ast::IfExpression>(expression.value)) {
+               std::holds_alternative<ast::IfExpression>(expression.value) ||
+               std::holds_alternative<ast::ReceiveExpression>(expression.value)) {
         for (const auto &clause : semantic::branch_clauses(expression.value)) {
             pending.push_back(clause.body->back());
         }

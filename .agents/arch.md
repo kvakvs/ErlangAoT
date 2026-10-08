@@ -184,6 +184,11 @@
   Step 45 (`docs/processes.md#messages`): `!`/`send/2` bridge builtins -> `Executor::send` (copy into the receiver's
   heap, `Mailbox::deliver`). `Mailbox` (`runtime/include/mailbox.hpp`, `process/storage.cpp`): `std::list` inbox and
   queue + saved position (`peek` splices arrivals, `skip`, `take`, `restart`, `unexamined`); words are roots.
+  Step 46 (`docs/processes.md#receive`): receive = `branch_clauses` case on the message; walker `receive()` builds
+  loop (peek into root slot) -> match (clauses; `take` before body; last mismatch `skip` + br loop, `CaseJoin::loop`)
+  / wait (`lower_wait` = call transfer into `erlang_aot_wait_frame_v1`'s builtin, then br loop). Runtime
+  `process/receive`: wait -> `ProcessStack::wait` (trap + waiting); executor `parked_`, send wakes, empty queue
+  blocks forever, `slice()` runs one process.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

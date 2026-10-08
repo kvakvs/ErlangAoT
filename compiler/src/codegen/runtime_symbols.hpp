@@ -51,6 +51,9 @@ using Call = Function<"erlang_aot_call_v1", Descriptor, Context, Size, Size, Siz
 using ApplyList = Function<"erlang_aot_apply_list_v1", Descriptor, Context, Size, Size, Slot>;
 using CallList = Function<"erlang_aot_call_list_v1", Descriptor, Context, Size, Size, Size, Slot>;
 using MakeExternalFun = Function<"erlang_aot_make_external_fun_v1", UInt8, Context, Size, Size, Size, Slot>;
+// Selective receive (abi/messages.hpp): one mailbox step, and the frame of the builtin a receive waits in.
+using Receive = Function<"erlang_aot_receive_v1", UInt8, Context, UInt8, Slot>;
+using WaitFrame = Function<"erlang_aot_wait_frame_v1", Descriptor, Context>;
 // Frame transfers (abi/frames.hpp): each returns the continuation code generated code tail-calls next.
 using Code = Pointer<Void>;
 using Enter = Function<"erlang_aot_enter_v1", Code, Context, Descriptor>;

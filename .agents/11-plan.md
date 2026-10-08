@@ -1183,12 +1183,36 @@ receiver, merged into its heap at the next collection.
 Backlog: F13, F25. Depends on: [45](#step-45).
 
 - Success criteria
-  - [ ] The first matching message (patterns and guards) is removed; unmatched
+  - [x] The first matching message (patterns and guards) is removed; unmatched
     messages stay in order; a process with no match suspends and wakes on
     arrival.
 - Tests
-  - [ ] Golden programs for selective receive out of order, repeated scans and
+  - [x] Golden programs for selective receive out of order, repeated scans and
     many unmatched messages.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/processes.md#receive`. Semantic: `branch_clauses` lists receive
+  clauses (binding exports, guards, inference join, tail positions like
+  `case`); a receive with `after` stays opaque and reports `receive` notimpl
+  until step 47 (feature entry now plan step 47). Codegen walker `receive`: a
+  loop head peeks (`erlang_aot_receive_v1`, `ReceiveOperation` in new
+  `abi/messages.hpp`) into a root slot; matched clauses `take` before their
+  body, the last mismatch `skip`s and loops; with nothing left the loop enters
+  the wait builtin (`erlang_aot_wait_frame_v1`, timeout register `infinity`)
+  through the call transfer. Runtime `process/receive.cpp`: the wait returns
+  true when unexamined messages exist, else `ProcessStack::wait` (trap +
+  waiting flag); the executor parks waiting processes (`parked_`), a send
+  wakes the receiver to the queue's end, `clear` releases parked processes,
+  an empty queue blocks forever (OTP), and a host invocation that would wait
+  fails `busy`. Module atoms add `infinity` for receives. Unsupported-feature
+  test placeholders moved from `receive` to `fun erlang:node/0` (dynamic
+  calls); program diagnostics now list only receives with `after`. OTP golden
+  `executables_selective_receive` (1,000-round ping-pong, three-way fan-in in
+  order, self-sends selected out of order, bound-variable patterns and
+  exported names, 10,000 unmatched messages kept in order behind the wanted
+  one, a counter server tail loop, a process left waiting at exit) passes all
+  8 combinations (5 s). Fresh Windows x64 Debug: fast 192/192 (47 s);
+  check-quality passes after splitting `Executor::run` (`slice`) and a
+  non-throwing `clear`. Logs `build/plan11-step46/`.
 
 <a id="step-47"></a>
 

@@ -200,6 +200,10 @@ void expression_atoms(const semantic::Module &module, const ast::Expression &exp
     if (raises_stack(*module.syntax, value)) {
         result.insert("badarg");
     }
+    if (std::holds_alternative<ast::ReceiveExpression>(value)) {
+        // A receive without an after part waits with the infinity timeout.
+        result.insert("infinity");
+    }
     imported_test_atoms(module, value, result);
 }
 

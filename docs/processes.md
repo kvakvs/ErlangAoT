@@ -1,8 +1,8 @@
 # Processes
 
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
-step 44: exit reasons and error reports; step 45: sending messages. Receive,
-links and monitors arrive in later steps (46–49).
+step 44: exit reasons and error reports; step 45: sending messages; step 46:
+selective receive. Timeouts, links and monitors arrive in later steps (47–49).
 
 ## Executor
 
@@ -28,9 +28,12 @@ ends:
 - A process ends when its first call returns or raises. An ended process's
   context, heap and stack are released at once; its pid stays a valid term
   and `is_process_alive/1` returns false for it.
+- A process waiting in a `receive` is not in the queue; a send to it puts it
+  back at the end ([receive](#receive)).
 - When the main process ends, the program ends with its outcome
-  ([executables](executables.md)): processes still queued are released
-  without running further, as an OTP escript halts when `main/1` returns.
+  ([executables](executables.md)): processes still queued or waiting are
+  released without running further, as an OTP escript halts when `main/1`
+  returns.
 - `erlang:halt/0,1` in any process ends the program with its status. A
   runtime failure in any process (memory exhausted, an optional cap exceeded,
   an internal error) ends the program as a runtime failure (exit 70). An
@@ -90,6 +93,32 @@ first and return `Msg`.
   `--max-heap`, or the host out of memory), nothing is delivered and the
   sending process fails as a runtime failure (exit 70), like any process that
   exceeds a cap.
+
+## Receive
+
+`receive` (plan step 46; `after` timeouts arrive in step 47) selects among
+its clauses like `case`, over the messages of the mailbox:
+
+- The mailbox scan starts at the oldest message. Each message is matched
+  against the clauses in order (patterns and guards, which may read bindings
+  from before the `receive`); the first message some clause matches is
+  removed and that clause's body runs. Messages no clause matches stay in the
+  mailbox in their order; the next receive starts at the oldest message again.
+- When every message has been examined, the process waits
+  (`erlang_aot_wait_frame_v1`, a builtin entered like a call): it leaves the
+  run queue until a send delivers a message to it, then the scan continues
+  with the messages that arrived. Waiting processes keep their frames and
+  messages as collection roots.
+- Names bound in every clause are exported after the `receive`, as for
+  `case`; a call in a clause body's tail position is a tail call, so a server
+  loop runs in constant stack.
+- Generated code: a loop head peeks at the next unexamined message
+  (`erlang_aot_receive_v1` `peek`, into a root slot), clause selection takes a
+  matched message (`take`) before its body or skips an unmatched one (`skip`)
+  and loops; with no message left the loop enters the wait.
+- When every process waits for a message nothing can send, the program
+  waits forever, as OTP's does. A host invocation (`erlang_aot_invoke_v1`)
+  that would wait fails with `busy` instead: no other process runs during it.
 
 ## Builtins
 

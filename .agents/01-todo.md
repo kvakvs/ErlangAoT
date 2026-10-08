@@ -314,7 +314,7 @@ Plan: [45](11-plan.md#step-45).
 Plan: [46](11-plan.md#step-46), [47](11-plan.md#step-47),
 [57](11-plan.md#step-57).
 
-- [ ] Rooted cursors, ordered pattern/guard selection, removal of only the match.
+- [x] Rooted cursors, ordered pattern/guard selection, removal of only the match (step 46).
 - [ ] Arrival handshake, suspension and timeouts compared with OTP.
 
 ### F26 — Production builtin functions

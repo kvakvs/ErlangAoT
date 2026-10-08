@@ -8,6 +8,7 @@
 #include <erlang_aot/abi/calls.hpp>
 #include <erlang_aot/abi/containers.hpp>
 #include <erlang_aot/abi/maps.hpp>
+#include <erlang_aot/abi/messages.hpp>
 #include <erlang_aot/abi/records.hpp>
 #include <map>
 #include <set>
@@ -239,6 +240,11 @@ llvm::Value *lower_dynamic_call(ExpressionLowering &state, const ast::Expression
                                 const ast::CallExpression &call);
 // Call apply(Fun, Args) or apply(M, F, Args) with the list unpacked into the registers at run time.
 llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
+// One receive step over the mailbox (abi/messages.hpp); peek writes the message to `slot` and yields nonzero when
+// there was one.
+llvm::Value *lower_receive(ExpressionLowering &state, abi::v1::ReceiveOperation operation, llvm::Value *slot);
+// Enter the wait builtin with `timeout`: the process waits until a message arrives; yields the builtin's result.
+llvm::Value *lower_wait(ExpressionLowering &state, llvm::Value *timeout);
 // Enter bridge builtin `builtin` (abi::v1::bridge_builtins index) with `values` in the registers, like a call.
 llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::span<llvm::Value *const> values);
 // Emit one resolved call after its arguments have been evaluated in source order.

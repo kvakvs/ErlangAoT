@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/frames.hpp>
+#include <erlang_aot/abi/messages.hpp>
 #include <erlang_aot/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <optional>
@@ -212,6 +213,30 @@ llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::
         llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy(), state.word}, false));
     // The builtin is entered like a function, so it spends a reduction and may yield in portions.
     return transfer(state, false, service, {state.entry.getArg(0), llvm::ConstantInt::get(state.word, builtin)}, array);
+}
+
+llvm::Value *lower_receive(ExpressionLowering &state, abi::v1::ReceiveOperation operation, llvm::Value *slot) {
+    auto &builder = state.builder;
+    auto &output = *state.entry.getParent();
+    auto *ptr = builder.getPtrTy();
+    auto service = output.getOrInsertFunction(
+        services::symbol<services::Receive>(output.getTargetTriple()),
+        llvm::FunctionType::get(builder.getInt8Ty(), {ptr, builder.getInt8Ty(), ptr}, false));
+    auto *target = slot ? slot : llvm::ConstantPointerNull::get(ptr);
+    return builder.CreateCall(service,
+                              {state.entry.getArg(0), builder.getInt8(static_cast<std::uint8_t>(operation)), target},
+                              "receive.step");
+}
+
+llvm::Value *lower_wait(ExpressionLowering &state, llvm::Value *timeout) {
+    auto &builder = state.builder;
+    auto *array = registers(state, 1);
+    builder.CreateAlignedStore(timeout, array, llvm::Align(state.word->getBitWidth() / 8));
+    auto &output = *state.entry.getParent();
+    auto service = output.getOrInsertFunction(services::symbol<services::WaitFrame>(output.getTargetTriple()),
+                                              llvm::FunctionType::get(builder.getPtrTy(), {builder.getPtrTy()}, false));
+    // The wait is entered like a function: the process may suspend there until a message arrives.
+    return transfer(state, false, service, {state.entry.getArg(0)}, array);
 }
 
 llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expression,

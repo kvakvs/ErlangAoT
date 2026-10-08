@@ -19,8 +19,8 @@ def rejection(tool, work):
             file.unlink()
     (directory / "out/sentinel").write_bytes(b"preserve")
     (directory / "client.erl").write_bytes(b"-module(client). -export([id/1]). id(X) -> X.\n")
-    cases = [("later_receive", "f(X) -> X; f(_) -> receive Y -> Y end.", "receive"),
-             ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> receive Y -> Y end.", "receive"),
+    cases = [("later_dynamic", "f(X) -> X; f(_) -> fun erlang:node/0.", "dynamic calls"),
+             ("unused", "f(X) -> X. unused(X) -> X; unused(_) -> fun erlang:node/0.", "dynamic calls"),
              ("later_guard", "f(X) -> X; f(X) when self() =:= X -> X.", "guards"),
              ("later_call", "f(X) -> X; f(_) -> missing().", "undefined function"),
              ("later_remote", "f(X) -> X; f(_) -> absent:f().", "unknown module"),

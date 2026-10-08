@@ -62,6 +62,8 @@ struct CaseJoin {
     std::vector<CaseIncoming> incoming = {};
     // A try's catch clauses match the caught class atom and reason.
     Exception exception = {};
+    // A receive's loop head: a message no clause matches is skipped and the scan continues there.
+    llvm::BasicBlock *loop = nullptr;
 };
 
 struct ProtectedScope {
@@ -143,10 +145,12 @@ bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<
     return true;
 }
 
-// A case evaluates its scrutinee first and clause selection starts once that value exists; an if selects at once.
+// A case evaluates its scrutinee first and clause selection starts once that value exists; an if or a receive
+// selects at once.
 bool case_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Visit> &pending) {
     const auto &value = state.module.syntax->expression(id).value;
-    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
+    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value) &&
+        !std::holds_alternative<ast::ReceiveExpression>(value)) {
         return false;
     }
     pending.push_back({id, Action::case_select});
@@ -548,10 +552,38 @@ struct Walk {
     // Open the case or if join and try its first clause.
     void select(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
+        if (std::holds_alternative<ast::ReceiveExpression>(expression.value)) {
+            receive(id);
+            return;
+        }
         const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
         auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "case.join");
         auto *value = selection ? state.values.at(&state.module.syntax->expression(selection->value)) : nullptr;
         cases.try_emplace(&expression, value, state.bindings, merge);
+        start_clause(id, 0);
+    }
+
+    // Loop over the mailbox (docs/processes.md#receive): the next message not yet examined is matched against the
+    // clauses; when every message has been examined the process waits for another, then the scan continues.
+    void receive(const ast::ExprId &id) {
+        const auto &expression = state.module.syntax->expression(id);
+        auto &context = state.entry.getContext();
+        auto *loop = llvm::BasicBlock::Create(context, "receive.loop", &state.entry);
+        auto *wait = llvm::BasicBlock::Create(context, "receive.wait", &state.entry);
+        auto *match = llvm::BasicBlock::Create(context, "receive.match", &state.entry);
+        state.builder.CreateBr(loop);
+        state.builder.SetInsertPoint(loop);
+        auto *slot = root_slot(state);
+        auto *found = lower_receive(state, abi::v1::ReceiveOperation::peek, slot);
+        state.builder.CreateCondBr(state.builder.CreateIsNotNull(found), match, wait);
+        state.builder.SetInsertPoint(wait);
+        lower_wait(state, lower_atom(state, ast::Atom{U"infinity"}));
+        state.builder.CreateBr(loop);
+        state.builder.SetInsertPoint(match);
+        auto *message =
+            state.builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "message");
+        auto *merge = llvm::BasicBlock::Create(context, "receive.join");
+        cases.try_emplace(&expression, message, state.bindings, merge).first->second.loop = loop;
         start_clause(id, 0);
     }
 
@@ -573,6 +605,10 @@ struct Walk {
             lower_guard(state, *clause.guard, {.success = body, .rejection = join.next});
         }
         state.builder.SetInsertPoint(body);
+        if (join.loop) {
+            // A matched message leaves the mailbox before the clause body runs.
+            lower_receive(state, abi::v1::ReceiveOperation::take, nullptr);
+        }
         pending.push_back({id, Action::case_clause_end, index});
         for (auto child = clause.body->rbegin(); child != clause.body->rend(); ++child) {
             pending.push_back({*child});
@@ -714,12 +750,17 @@ struct Walk {
         afters.erase(&expression);
     }
 
-    // Raise {case_clause, Value}, if_clause, {try_clause, Value} or {else_clause, Value}, or re-raise an unmatched
-    // exception, from the last clause's mismatch continuation; drop it when that clause always matches.
+    // Raise {case_clause, Value}, if_clause, {try_clause, Value} or {else_clause, Value}, re-raise an unmatched
+    // exception, or skip an unmatched message, from the last clause's mismatch continuation; drop it when that clause
+    // always matches.
     void no_match(const ast::Expression &expression, const CaseJoin &join, const semantic::Branch &last) {
         if (join.next->use_empty()) {
             state.builder.ClearInsertionPoint();
             join.next->eraseFromParent();
+        } else if (join.loop) {
+            // A message no clause matches stays in the mailbox; the receive goes on with the next one.
+            lower_receive(state, abi::v1::ReceiveOperation::skip, nullptr);
+            state.builder.CreateBr(join.loop);
         } else if (last.handler) {
             reraise(state, join.exception);
         } else if (std::holds_alternative<ast::TryExpression>(expression.value)) {

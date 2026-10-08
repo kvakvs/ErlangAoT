@@ -130,6 +130,11 @@ void ProcessStack::trap(const FrameDescriptor &continuation, std::span<const Wor
     trap_ = &continuation;
 }
 
+void ProcessStack::wait(const FrameDescriptor &continuation, std::span<const Word> state) noexcept {
+    trap(continuation, state);
+    waiting_ = true;
+}
+
 void ProcessStack::spend(std::size_t work) noexcept {
     reductions_ -= std::min(reductions_, (work + WORK_PER_REDUCTION - 1) / WORK_PER_REDUCTION);
 }
@@ -155,6 +160,13 @@ Word ProcessStack::invoke(const FrameDescriptor &function, const Word *arguments
     std::copy_n(arguments, function.arity, registers_.begin());
     if (start(function)) {
         while (!run(SLICE_REDUCTIONS)) {
+            if (waiting_) {
+                // No other process runs during a host invocation, so no message can ever arrive.
+                waiting_ = false;
+                resume_ = nullptr;
+                calls.fail_service(abi::v1::Status::busy);
+                break;
+            }
         }
     }
     const auto result = calls.failure() ? Word{0} : registers_[0];
