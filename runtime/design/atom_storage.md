@@ -7,8 +7,8 @@ is [runtime atoms](../../docs/terms.md#atoms); the public project API is
 
 This supersedes the 2026-09-20 review sketch. In particular, IDs use a process-wide
 non-recycled namespace to reject foreign raw words; they are not dense per runtime.
-Tables use spelling/word maps with immutable shared records and host serialization,
-not the proposed dense vector/hash table or a collector lock. Failed reservations
+Tables use spelling/word maps with immutable shared records behind one shared mutex
+(plan 11 step 54, [threads](../../docs/runtime.md#threads)), not the proposed dense vector/hash table or a collector lock. Failed reservations
 may consume IDs, while failed insertion leaves both indexes unchanged. No collector,
 compaction, scheduler workers or launcher option parser is implemented.
 

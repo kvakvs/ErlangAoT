@@ -105,17 +105,19 @@ Plan: [54](11-plan.md#step-54).
 
 - [x] One bounded table per runtime, stable non-recycled IDs, generated
   spelling/slot bindings before publication, atom/boolean literals.
-- [ ] Synchronized concurrent access before workers.
+- [x] Synchronized concurrent access before workers (step 54: shared mutex).
 
 ### F07 — Process, port and reference identities
 
 Plan: [42](11-plan.md#step-42), [48](11-plan.md#step-48),
-[53](11-plan.md#step-53).
+[53](11-plan.md#step-53), [57B](11-plan.md#step-57b).
 
 - [x] Uniqueness, ownership and stale-identity rules for pids and references
   (step 42, [terms](../docs/terms.md#pids-and-references)).
 - [x] Ports separate from I/O services (step 53: decided there are no ports;
-  port builtins report `[ports] notimpl`).
+  port builtins report `[ports] notimpl`; superseded, see F35).
+- [ ] Port identities: construction, order, printing, copying, admission
+  (step 57B).
 - [x] Owned constructors, equality, order, printing, host Terms, copying (step 42).
 - [x] Routing by pid (steps 45, 48) and by registered name (step 50).
 - [x] Reject forged, stale and foreign identities (step 42).
@@ -365,6 +367,18 @@ Plan: [55](11-plan.md#step-55).
 
 - [ ] Synchronized publication/lookup with pins through invocation; stress
   registration, lookup and teardown.
+
+### F35 — Ports and port I/O
+
+Plan: [57A](11-plan.md#step-57a)–[57F](11-plan.md#step-57f). Added
+2026-10-08 by user direction: sockets, file I/O and subprocesses are ports.
+
+- [ ] Port contract, driver interface and I/O poller decided (57A).
+- [ ] Port identities, port table, links/monitors and port builtins (57B).
+- [ ] I/O poller with scheduler wakeups and shutdown (57C).
+- [ ] Subprocess ports with stdin/stdout, `os:cmd/1` (57D).
+- [ ] `fd`/file ports, `file` subset, standard I/O through ports (57E).
+- [ ] TCP/UDP sockets as ports, `gen_tcp`/`gen_udp`/`inet` subsets (57F).
 
 ## Optimization and developer tooling
 

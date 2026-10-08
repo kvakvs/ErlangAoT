@@ -218,6 +218,8 @@
   Step 53 (decision, `docs/processes.md#ports`): no ports. Feature `ports` (id 26, deferred);
   `semantic::port_builtin` names the port BIFs; `calls.cpp` `port_call` (local undefined or erlang:F) and
   `check_reference` (fun F/A), `expression_capability` (fun erlang:F/A) report "ports". Dynamic calls: undef.
+  Step 54 (`docs/runtime.md#threads`): `AtomStorage` behind one shared mutex (shared lookups, exclusive insert
+  with re-check); `runtime_concurrency` stresses it from 8 threads.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

@@ -155,6 +155,18 @@ Messages are implemented ([processes](processes.md#messages)): a send copies
 the message into the receiver's heap and appends it to its signal inbox
 (`runtime/include/mailbox.hpp`).
 
+## Threads
+
+Scheduler workers (plan step 56) run processes on several threads of one
+runtime. Services they share are synchronized; everything else stays confined
+to the thread running its process.
+
+- Atoms (step 54): `AtomStorage` guards both indexes with a shared mutex.
+  Lookups (`lookup`, `boolean`, `size`) share it; `intern` looks up under the
+  shared lock and only a new spelling takes the exclusive lock, checks again
+  and publishes the entry, so racing interns of one spelling get one word.
+  Words stay stable: an entry is never changed or removed before teardown.
+
 ## Standard output
 
 `RuntimeOptions::standard_output` ([output.hpp](../runtime/include/erlang_aot/runtime/output.hpp))

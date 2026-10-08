@@ -118,6 +118,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase I c
 | H. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
+| J2. Ports and port I/O | [57A](#step-57a)–[57F](#step-57f) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58H](#step-58h), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
@@ -987,6 +988,8 @@ the same name wins; dynamic calls raise `undef`. Difference recorded. CLI
 cases in `semantic/cases.cmake` (local, qualified, funs, shadowed) and OTP
 golden `executables_ports` (is_port over real pids, references, funs;
 `monitor(port, _)`/`link/1` badarg) plus an authored `undef` run.
+Superseded 2026-10-08 by user direction: ports will exist (phase J2,
+[57A](#step-57a)–[57F](#step-57f)).
 
 ## J. Multi-worker scheduling
 
@@ -994,12 +997,12 @@ golden `executables_ports` (is_port over real pids, references, funs;
 
 ### 54. Synchronize the atom table
 
-Backlog: F06. Depends on: [43](#step-43).
-
-- Success criteria
-  - [ ] Concurrent intern and lookup are safe and keep stable identities.
-- Tests
-  - [ ] Multi-threaded runtime stress creating overlapping atoms.
+Done 2026-10-08 (contract `docs/runtime.md#threads`). `AtomStorage` guards
+both indexes with one `std::shared_mutex`: `lookup`/`boolean`/`size` share it,
+`intern` looks up shared and only a new spelling takes the exclusive lock,
+re-checks and publishes. Test `runtime_concurrency`: 8 threads intern 2,000
+overlapping spellings from different offsets and read them back by word; all
+get one word per spelling and the table grows by exactly 2,000.
 
 <a id="step-55"></a>
 
@@ -1042,13 +1045,135 @@ Backlog: F23, F25. Depends on: [56](#step-56).
   - [ ] Repeated stress for arrival-versus-timeout races and concurrent
     teardown (also used under ThreadSanitizer in step 68).
 
+## J2. Ports and port I/O
+
+Added 2026-10-08 by user direction: ports must exist. Sockets, file I/O and
+subprocesses with their stdin/stdout are ports, as are OTP's other port uses
+(`fd` ports, standard I/O). This supersedes the step-53 decision (no ports);
+the step-53 compile-time `[ports] notimpl` placeholders are removed as the
+steps below implement each builtin.
+
+<a id="step-57a"></a>
+
+### 57A. Decide the port contract
+
+Backlog: F35. Depends on: [53](#step-53), [57](#step-57).
+
+Decision only: port identity representation (immediate like pids or a cell),
+owner/connected process, port table, links/monitors/exit signals of ports,
+message protocol (`{Port, {data, D}}`, `{Port, closed}`, `{Port, eof}`,
+`{Port, {exit_status, S}}`), `port_command/2,3`, `port_close/1`,
+`port_connect/2`, `port_control/3`, `port_call/3`, `port_info/1,2`, options
+(`binary`, `{packet, N}`, `{line, L}`, `stream`, `eof`, `exit_status`,
+`use_stdio`, `stderr_to_stdout`, `args`, `arg0`, `env`, `cd`, `hide`), the
+internal driver interface (C++ driver kinds: spawn, spawn_executable, fd,
+file, TCP/UDP socket) and the I/O poller (IOCP on Windows, epoll on Linux,
+kqueue on macOS) with its scheduler wakeups. Records the supported subset and
+OTP differences.
+
+- Success criteria
+  - [ ] Contract in `docs/ports.md`; step-53 decision text replaced; prototype
+    of the poller wakeup on Windows and Linux.
+- Tests
+  - [ ] None beyond the prototype (decision step).
+
+<a id="step-57b"></a>
+
+### 57B. Add port identities and the port table
+
+Backlog: F07, F35. Depends on: [57A](#step-57a).
+
+Port terms (construction, comparison, printing `#Port<0.N>`, tracing,
+copying, admission of forged/foreign/closed ports), per-runtime port table,
+owner links, `is_port/1` true for ports, `port_to_list/1`, `list_to_port/1`,
+`ports/0`, `port_info/1,2`, `port_close/1`, `port_connect/2`, links/monitors
+to ports and exit signals from a closing port; a closed port's identity stays
+valid. Feature `ports` becomes implemented.
+
+- Success criteria
+  - [ ] Port identities behave like OTP's for every builtin above, with a
+    test-only driver.
+- Tests
+  - [ ] OTP golden over port identities, order, printing, links and monitors.
+
+<a id="step-57c"></a>
+
+### 57C. Run the I/O poller with scheduler wakeups
+
+Backlog: F23, F35. Depends on: [57B](#step-57b).
+
+Platform poller thread(s) (IOCP / epoll / kqueue) delivering port events as
+messages to the connected process and waking it on any worker; shutdown
+closes every port and stops the poller.
+
+- Success criteria
+  - [ ] No lost wakeups between port events, receives and timeouts; the
+    program ends with ports open as OTP's halts.
+- Tests
+  - [ ] Repeated stress of port events against receive timeouts and teardown.
+
+<a id="step-57d"></a>
+
+### 57D. Open subprocesses as ports
+
+Backlog: F35. Depends on: [57C](#step-57c).
+
+`open_port({spawn, Command} | {spawn_executable, File}, Options)` with the
+child's stdin/stdout (and `stderr_to_stdout`) as the port, `{packet, N}`,
+`{line, L}`, `binary`, `eof`, `exit_status`, `args`, `arg0`, `env`, `cd`;
+`os:cmd/1` in the project library.
+
+- Success criteria
+  - [ ] Subprocess ports match OTP on Windows, Linux and macOS within the
+    recorded subset.
+- Tests
+  - [ ] OTP golden running owned helper programs: echo, line and packet
+    framing, exit status, closing, owner death.
+
+<a id="step-57e"></a>
+
+### 57E. Implement file I/O and standard I/O through ports
+
+Backlog: F26, F35. Depends on: [57C](#step-57c).
+
+`{fd, In, Out}` ports, a file driver and a project-library `file` subset
+(`open/2`, `read/2`, `write/2`, `close/1`, `read_file/1`, `write_file/2`,
+`read_line/1`, `position/2`, `delete/1`, `rename/2`, `list_dir/1`) plus
+`io:get_line/1,2`, `io:get_chars/2,3` and `io` writes routed through the
+standard I/O port; `io:format` keeps its observable output.
+
+- Success criteria
+  - [ ] File and standard I/O results and errors (`{error, enoent}`, ...)
+    match OTP for the subset.
+- Tests
+  - [ ] OTP golden reading/writing temporary files and reading stdin.
+
+<a id="step-57f"></a>
+
+### 57F. Implement sockets as ports
+
+Backlog: F35. Depends on: [57C](#step-57c).
+
+A TCP/UDP socket driver and project-library `gen_tcp`, `gen_udp` and `inet`
+subsets over it (`connect`, `listen`, `accept`, `send`, `recv`, `close`,
+`controlling_process`, active modes `true`/`false`/`once`, `{packet, N}`,
+`binary`/`list`, `inet:setopts/2`, `inet:port/1`, `inet:peername/1`) on IPv4
+and IPv6 loopback.
+
+- Success criteria
+  - [ ] Socket messages, errors and closing match OTP within the subset.
+- Tests
+  - [ ] OTP golden of an echo server and clients in one program over
+    loopback (active and passive modes, packet framing, close from either
+    side).
+
 ## K. End-to-end projects
 
 <a id="step-58"></a>
 
 ### 58. Run the target fixture projects end to end
 
-Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57).
+Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57). Ports (J2) are not required by the step-2 fixtures.
 
 - Success criteria
   - [ ] Every step-2 fixture builds through its project manifest and matches

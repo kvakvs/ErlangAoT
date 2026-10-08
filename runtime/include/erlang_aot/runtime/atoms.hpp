@@ -1,6 +1,7 @@
 #pragma once
 #include "terms.hpp"
 #include <map>
+#include <shared_mutex>
 
 namespace erlang_aot::runtime {
 // Immutable host pin; spellings survive runtime teardown without retaining a process or code image.
@@ -14,7 +15,8 @@ struct AtomValue final {
     std::string spelling;
 };
 
-// Runtime-owned, host-serialized table; entries are retained until runtime teardown.
+// Runtime-owned table shared by every scheduler worker; entries are retained until runtime teardown.
+// Lookups take a shared lock, interning a new spelling an exclusive one (docs/terms.md#atoms).
 class AtomStorage final {
   public:
     static constexpr std::uint32_t hard_limit = std::uint32_t{1} << 26;
@@ -28,7 +30,7 @@ class AtomStorage final {
     TermResult<Term> boolean(bool value) const noexcept;
 
     // Observe retained entries for capacity accounting and registration diagnostics.
-    std::size_t size() const noexcept { return names_.size(); }
+    std::size_t size() const noexcept;
 
   private:
     friend class Runtime;
@@ -36,8 +38,13 @@ class AtomStorage final {
     // Only runtime startup may construct storage after validating the immutable entry ceiling.
     explicit AtomStorage(std::uint32_t limit) : limit_(limit) {}
 
+    // The atom Term of a stored entry, pinning its spelling.
+    static Term atom_term(const std::shared_ptr<const AtomValue> &value) noexcept;
+
     // Bound entries independently of the process-wide non-recycled word namespace.
     std::uint32_t limit_;
+    // Guards both indexes: concurrent readers, one writer publishing a new entry.
+    mutable std::shared_mutex mutex_;
     // Both indexes share immutable records; failed insertion rolls back the other index.
     std::map<std::string, std::shared_ptr<const AtomValue>, std::less<>> names_;
     std::map<Word, std::shared_ptr<const AtomValue>> words_;

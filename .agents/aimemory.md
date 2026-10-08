@@ -349,10 +349,14 @@ Step facts beyond the plan record:
   builtin fun left). Corpus edits: change fragments + generated calls, then fixtures.tsv hashes (guards.tsv,
   guard-resolution.json), then regenerate.py --corpus X (needs references/otp). linking_executable -Os size check
   tolerates one alignment unit (.reloc crossing 512 B made Os bigger than O2).
+- 54: AtomStorage shared_mutex; private static atom_term (Term fields are friend-only). tests/runtime/concurrency.cpp
+  (runtime_concurrency, links Threads::Threads) is the home of thread stress for 55/57.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.
 User directions (keep):
+- Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
+  57A-57F, backlog F35); step 53 decision superseded.
 - Inference plan (2026-10-08): steps 58A-58G before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and

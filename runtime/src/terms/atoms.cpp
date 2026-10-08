@@ -1,19 +1,9 @@
 #include <atomic>
 #include <erlang_aot/runtime/atoms.hpp>
 #include <limits>
+#include <mutex>
 
 namespace erlang_aot::runtime {
-TermResult<Term> AtomStorage::boolean(bool value) const noexcept {
-    const auto found = names_.find(value ? "true" : "false");
-    if (found == names_.end()) {
-        return std::unexpected(TermError::wrong_owner);
-    }
-    Term result;
-    result.value_ = found->second->word;
-    result.atom_ = found->second;
-    return result;
-}
-
 namespace {
 // Never reuse a raw atom word, even across destroyed runtimes or aborted registrations.
 TermResult<Word> reserve_word() noexcept {
@@ -29,13 +19,36 @@ TermResult<Word> reserve_word() noexcept {
 }
 } // namespace
 
+Term AtomStorage::atom_term(const std::shared_ptr<const AtomValue> &value) noexcept {
+    Term result;
+    result.value_ = value->word;
+    result.atom_ = value;
+    return result;
+}
+
+TermResult<Term> AtomStorage::boolean(bool value) const noexcept {
+    const std::shared_lock lock(mutex_);
+    const auto found = names_.find(value ? "true" : "false");
+    if (found == names_.end()) {
+        return std::unexpected(TermError::wrong_owner);
+    }
+    return atom_term(found->second);
+}
+
 TermResult<Term> AtomStorage::intern(std::string_view spelling) noexcept {
     if (!valid_atom_spelling(spelling)) {
         return std::unexpected(TermError::invalid_encoding);
     }
-    const auto found = names_.find(spelling);
-    if (found != names_.end()) {
-        return lookup(found->second->word);
+    {
+        const std::shared_lock lock(mutex_);
+        if (const auto found = names_.find(spelling); found != names_.end()) {
+            return atom_term(found->second);
+        }
+    }
+    const std::unique_lock lock(mutex_);
+    // Another worker may have interned the spelling between the two locks.
+    if (const auto found = names_.find(spelling); found != names_.end()) {
+        return atom_term(found->second);
     }
     if (names_.size() >= limit_) {
         return std::unexpected(TermError::resource_limit);
@@ -53,20 +66,23 @@ TermResult<Term> AtomStorage::intern(std::string_view spelling) noexcept {
             names_.erase(entry);
             throw;
         }
-        return lookup(*word);
+        return atom_term(value);
     } catch (...) {
         return std::unexpected(TermError::resource_limit);
     }
 }
 
 TermResult<Term> AtomStorage::lookup(Word word) const noexcept {
+    const std::shared_lock lock(mutex_);
     const auto found = words_.find(word);
     if (found == words_.end()) {
         return std::unexpected(TermError::wrong_owner);
     }
-    Term result;
-    result.value_ = word;
-    result.atom_ = found->second;
-    return result;
+    return atom_term(found->second);
+}
+
+std::size_t AtomStorage::size() const noexcept {
+    const std::shared_lock lock(mutex_);
+    return names_.size();
 }
 } // namespace erlang_aot::runtime

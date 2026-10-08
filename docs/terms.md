@@ -44,6 +44,8 @@ records; native records ([native records](native-records.md)); funs
 - Host atom Terms pin the spelling, surviving runtime teardown. Moving an atom
   between runtimes means interning `atom_utf8()` in the destination.
 - Booleans are the atoms `true`/`false`.
+- Interning and lookup are safe from concurrent scheduler workers
+  ([threads](runtime.md#threads)); a spelling keeps one word.
 
 ## Integers
 

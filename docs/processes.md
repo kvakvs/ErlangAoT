@@ -256,8 +256,10 @@ console through builtins ([io](io.md)), and other external I/O has no plan.
 - Operations that accept ports in OTP treat every argument as a non-port:
   `monitor(port, X)` and `link/1`, `exit/2` of a non-pid raise `badarg`.
 
-Revisiting this needs its own plan: port identities, a driver model and
-asynchronous I/O completion on the scheduler.
+This is the current state, not the final one: ports are planned (plan 11
+phase J2, steps 57A–57F): port identities, a driver model with an I/O poller
+on the scheduler, subprocesses with their stdin/stdout, file and standard I/O,
+and TCP/UDP sockets, all as ports.
 
 ## Builtins
 

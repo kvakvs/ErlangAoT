@@ -74,6 +74,13 @@ target_link_libraries(runtime_identities PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_identities PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_identities COMMAND runtime_identities)
 
+# Runtime services shared by scheduler workers, stressed from several threads: concurrent atom interning.
+find_package(Threads REQUIRED)
+add_executable(runtime_concurrency concurrency.cpp)
+erlang_aot_project_options(runtime_concurrency)
+target_link_libraries(runtime_concurrency PRIVATE ErlangAoT::generated_program Threads::Threads)
+add_test(NAME runtime_concurrency COMMAND runtime_concurrency)
+
 # Cooperative executor over hand-written frames: time slices, crash isolation, halts, host invocations and
 # releasing processes that never ended.
 add_executable(runtime_processes processes.cpp)
