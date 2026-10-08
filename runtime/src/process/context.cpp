@@ -51,4 +51,6 @@ const std::shared_ptr<detail::RuntimeMemory> &ProcessContext::memory() const noe
 
 const detail::ProcessNumbers &ProcessContext::process_numbers() const noexcept { return impl_->numbers; }
 
+Runtime &ProcessContext::runtime() noexcept { return impl_->runtime; }
+
 } // namespace erlang_aot::runtime

@@ -4,6 +4,7 @@
 #include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
 #include <new>
+#include <utility>
 
 namespace erlang_aot::runtime {
 namespace {
@@ -12,6 +13,9 @@ using abi::v1::FrameDescriptor;
 
 // Body of the runtime-owned bottom frame: returning into it ends the host invocation's native call.
 void finish(void *) noexcept {}
+
+// Code a suspended entry returns: it ends the time slice, so control returns to whoever ran the process.
+void pause(void *) noexcept {}
 
 // Descriptor of the bottom frame under each host invocation; it has no slots and no name.
 constexpr FrameDescriptor bottom{nullptr, 0, 0, 0, &finish, 0, 0};
@@ -88,7 +92,17 @@ bool ProcessStack::safepoint(std::size_t live) noexcept {
     return collected;
 }
 
+void ProcessStack::suspend(const FrameDescriptor &function) noexcept {
+    resume_ = &function;
+    keep_registers(function.arity);
+}
+
 abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
+    if (reductions_ == 0) {
+        suspend(function);
+        return &pause;
+    }
+    --reductions_;
     safepoint(function.arity);
     if (!function.body) {
         // A builtin runs at once on the registers; its result returns into the current frame's body.
@@ -122,20 +136,42 @@ Word ProcessStack::invoke(const FrameDescriptor &function, const Word *arguments
     }
     const auto base = words_.size();
     const auto caller = frame_;
-    if (push(bottom)) {
-        std::copy_n(arguments, function.arity, registers_.begin());
-        try {
-            enter(function)(&owner_);
-        } catch (const std::bad_alloc &) {
-            calls.fail({CallError::resource_limit});
-        } catch (...) {
-            calls.fail({CallError::native_exception});
+    std::copy_n(arguments, function.arity, registers_.begin());
+    if (start(function)) {
+        while (!run(SLICE_REDUCTIONS)) {
         }
     }
     const auto result = calls.failure() ? Word{0} : registers_[0];
     truncate(base);
     frame_ = caller;
     return result;
+}
+
+bool ProcessStack::start(const FrameDescriptor &function) noexcept {
+    if (!push(bottom)) {
+        return false;
+    }
+    suspend(function);
+    return true;
+}
+
+bool ProcessStack::run(std::size_t reductions) noexcept {
+    const auto *function = std::exchange(resume_, nullptr);
+    if (!function) {
+        return true;
+    }
+    reductions_ = reductions;
+    auto &calls = owner_.generated_calls();
+    try {
+        enter (*function)(&owner_);
+    } catch (const std::bad_alloc &) {
+        calls.fail({CallError::resource_limit});
+        resume_ = nullptr;
+    } catch (...) {
+        calls.fail({CallError::native_exception});
+        resume_ = nullptr;
+    }
+    return resume_ == nullptr;
 }
 
 std::size_t ProcessStack::depth() const noexcept {

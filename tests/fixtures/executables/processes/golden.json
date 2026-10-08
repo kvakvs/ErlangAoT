@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "entry": "processes",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "short done\nlong saw short end\nlong done\n[false,false,true]\n10000 processes ended, 0 alive\nsum 500500, self differs true\n{args,true} done\n[{error,badarg},{error,badarg},{error,badarg},{error,badarg},true]\nmain done\n"
+    },
+    {
+      "args": [
+        "crash"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[false,false,false]\nsurvivor done\nmain survived\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "processes.erl": "bdb272317b058a480ab863dc5c325992448549b421830027461faa48b986c7ec"
+  }
+}

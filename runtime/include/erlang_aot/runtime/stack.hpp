@@ -7,6 +7,9 @@
 #include <limits>
 
 namespace erlang_aot::runtime {
+// Reductions of one time slice, OTP's CONTEXT_REDS: every function entry spends one (docs/processes.md).
+inline constexpr std::size_t SLICE_REDUCTIONS = 4000;
+
 struct StackOptions {
     // Optional per-process cap on the words of all frames, headers included; by default body recursion grows until
     // the host refuses memory.
@@ -28,6 +31,7 @@ class ProcessStack final {
 
     // Push a frame for `function` and return its body, or record the budget failure and return the caller's body.
     // A builtin's frame (null body) runs the builtin instead and returns the caller's body with the result.
+    // With no reduction left, suspend at this entry instead and return code that ends the time slice.
     abi::v1::Code *enter(const abi::v1::FrameDescriptor &function) noexcept;
     // Collect when the heap asks for it, keeping the first `live` registers as roots: the safepoint of a function
     // entry or loop head (docs/runtime-heap.md#collection-in-generated-code). Return whether it collected; a failed
@@ -47,8 +51,19 @@ class ProcessStack final {
     // Keep the first `count` registers as roots until the next push or pop, as a suspended entry's arguments.
     void keep_registers(std::size_t count) noexcept { live_registers_ = std::min(count, registers_.size()); }
 
-    // Run `function` to completion above a bottom frame; frames left by native exceptions are released.
+    // Run `function` to completion above a bottom frame, resuming it after every yield; frames left by native
+    // exceptions are released.
     Word invoke(const abi::v1::FrameDescriptor &function, const Word *arguments) noexcept;
+
+    // Begin a process: push its bottom frame and suspend at `function`, whose arguments the caller has put in the
+    // registers. False records the failure; the process then has nothing to run.
+    bool start(const abi::v1::FrameDescriptor &function) noexcept;
+    // Run the suspended process for one time slice of `reductions` function entries. True once it returned into
+    // its bottom frame (its result in the first register, or a failure in the channel); false when it yielded.
+    bool run(std::size_t reductions) noexcept;
+
+    // Whether the process is suspended at a function entry, to be resumed by run().
+    bool suspended() const noexcept { return resume_ != nullptr; }
 
     // Count live frames, bottom frames included, for leak checks.
     std::size_t depth() const noexcept;
@@ -86,6 +101,8 @@ class ProcessStack final {
     bool grow(std::size_t size) noexcept;
     // Release the current frame.
     void pop() noexcept;
+    // Record `function` as the entry to repeat on resumption, keeping its arguments as register roots.
+    void suspend(const abi::v1::FrameDescriptor &function) noexcept;
     // Drop every word from `size` on; shrinking never allocates.
     void truncate(std::size_t size) noexcept;
     // The descriptor named by the header at offset `at`.
@@ -104,5 +121,9 @@ class ProcessStack final {
     std::array<Word, abi::v1::register_count> registers_{};
     // Leading registers that are roots: set by keep_registers, cleared by every push and pop.
     std::size_t live_registers_ = 0;
+    // Function entries left in the current time slice; at zero the next entry suspends the process.
+    std::size_t reductions_ = SLICE_REDUCTIONS;
+    // The function a suspended process enters when it resumes; null while it runs and once it has ended.
+    const abi::v1::FrameDescriptor *resume_ = nullptr;
 };
 } // namespace erlang_aot::runtime

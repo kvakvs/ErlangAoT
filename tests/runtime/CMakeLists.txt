@@ -74,6 +74,14 @@ target_link_libraries(runtime_identities PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_identities PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_identities COMMAND runtime_identities)
 
+# Cooperative executor over hand-written frames: time slices, crash isolation, halts, host invocations and
+# releasing processes that never ended.
+add_executable(runtime_processes processes.cpp)
+erlang_aot_project_options(runtime_processes)
+target_link_libraries(runtime_processes PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_processes PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_processes COMMAND runtime_processes)
+
 add_executable(runtime_copy copy.cpp)
 erlang_aot_project_options(runtime_copy)
 target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)

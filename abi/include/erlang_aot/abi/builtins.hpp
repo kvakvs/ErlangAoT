@@ -130,6 +130,10 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "make_ref", 0},
     BuiltinName{"erlang", "pid_to_list", 1},
     BuiltinName{"erlang", "ref_to_list", 1},
+    // Processes (plan step 43).
+    BuiltinName{"erlang", "spawn", 1},
+    BuiltinName{"erlang", "spawn", 3},
+    BuiltinName{"erlang", "is_process_alive", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

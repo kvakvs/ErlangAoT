@@ -178,8 +178,12 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   cursors and accumulator live in term slots, so no SSA value is carried
   around a loop and a resume point inside it needs nothing beyond the usual
   spills.
-- **No yield yet.** Reductions and `resume_at` arrive with the scheduler
-  (step 43). The collector enumerates frame term slots, the registers a
+- **Yields** (step 43, [processes](processes.md)). `erlang_aot_enter_v1` and
+  `erlang_aot_tail_v1` spend one of the process's reductions; with none left
+  they record the entered function (`ProcessStack::resume_`, the model's
+  `resume_at`), keep its arguments as register roots and return code that
+  ends the time slice, so the native stack unwinds to the executor, which
+  later repeats the entry. Loop heads do not yield. The collector enumerates frame term slots, the registers a
   suspension keeps live (`ProcessStack::keep_registers`) and the failure
   channel (step 23, [roots](runtime-heap.md#roots-and-safe-points)). Function
   entries and comprehension loop heads are safepoints that collect when the

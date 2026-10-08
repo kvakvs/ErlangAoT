@@ -100,7 +100,10 @@ program reaching a cap fails with `resource_limit`, exit 70
 
 Invalid `halt/1` arguments raise `badarg` in the caller. When the entry
 finishes, the program exits: other processes are stopped without running
-further, as with OTP's `halt/1` after `escript` returns.
+further, as with OTP's `halt/1` after `escript` returns. A halt in any
+process ends the program with its status, and a runtime failure in any
+process ends it with 70; an exception in a spawned process ends only that
+process ([processes](processes.md)).
 
 `halt/0,1`, `error/1,2,3`, `exit/1` and `throw/1` are callable with or
 without the `erlang:` prefix; a local definition or
@@ -137,10 +140,12 @@ calls the runtime's `erlang_aot_main_v1`, which:
 2. Starts the runtime and registers all modules; any failure stops before the
    entry and discards the runtime (exit 70), so no Erlang code runs against a
    partial batch.
-3. Creates the entry process, builds argv and calls `M:F/1`.
+3. Creates the entry process, builds argv and queues the call of `M:F/1` as
+   the main process, then runs it and every process it spawns on the
+   cooperative executor ([processes](processes.md)) until it ends.
 4. Maps the outcome to the exit status above, printing reports after flushing
-   stdout, then destroys the process and shuts the runtime down on every path
-   (except `halt(abort)`).
+   stdout, then releases every process and shuts the runtime down on every
+   path (except `halt(abort)`).
 
 `erlangaot -o` links these objects itself ([linking](#linking)). Manual
 linking (the [native harness recipe](compile.md#run-the-compiled-module-example)

@@ -30,7 +30,9 @@ builtin both the compiler and the runtime know:
 - console output (plan step 40): `io:format/1,2` and `io:put_chars/1`, the
   first builtins of another module ([io](io.md));
 - process identities (plan step 42): `self/0`, `make_ref/0`, `pid_to_list/1`
-  and `ref_to_list/1` ([pids and references](terms.md#pids-and-references)).
+  and `ref_to_list/1` ([pids and references](terms.md#pids-and-references));
+- processes (plan step 43): `spawn/1,3` and `is_process_alive/1`
+  ([processes](processes.md)).
 
 Entries are only appended: an entry's index is the number generated code
 passes to the bridge service. A qualified call of a catalog builtin of another
@@ -53,7 +55,7 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   suppresses (`-compile({no_auto_import, ...})`) is the external fun
   `erlang:F/A`, as in OTP: `fun abs/1 =:= fun erlang:abs/1` and it prints as
   `fun erlang:abs/1`. `halt/0,1`, `setelement/3`, `tuple_to_list/1`,
-  `list_to_tuple/1`, the conversions, `self/0` and `make_ref/0` are auto-imported like OTP's (`self()` in a guard
+  `list_to_tuple/1`, the conversions and the process builtins are auto-imported like OTP's (`self()` in a guard
   stays unavailable until plan step 52); `display/1`, `raise/3`,
   `function_exported/3` and `make_tuple/2,3` need the `erlang:` prefix.
 - A builtin has a `FrameDescriptor` with a null body (`BuiltinFrame`). Entering

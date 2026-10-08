@@ -83,6 +83,8 @@ semantic_case(builtin_fun "-module(a). f() -> {fun is_atom/1, fun halt/1}." 0 "^
 semantic_case(erlang_fun "-module(a). f() -> {fun erlang:abs/1, fun erlang:'+'/2, fun erlang:display/1}." 0 "^$")
 semantic_case(builtin_fun_unbridged "-module(a). f() -> fun node/0." 1 "dynamic calls")
 semantic_case(process_identities "-module(a). f() -> {self(), make_ref(), fun self/0, pid_to_list(self())}." 0 "^$")
+semantic_case(spawn_builtins
+    "-module(a). f() -> {spawn(fun() -> ok end), spawn(a, f, []), is_process_alive(self()), fun spawn/3}." 0 "^$")
 semantic_case(self_guard "-module(a). f(X) when X =:= self() -> X." 1 "\\[guards\\] notimpl")
 semantic_case(erlang_fun_unbridged "-module(a). f() -> fun erlang:apply/2." 1 "dynamic calls")
 semantic_case(display_fun_local "-module(a). f() -> fun display/1." 1 "function display/1 undefined")

@@ -1,10 +1,11 @@
 #pragma once
 #include "memory/runtime_memory.hpp"
 #include "process/identities.hpp"
+#include "scheduler/executor.hpp"
 #include <erlang_aot/runtime/code_server.hpp>
 #include <erlang_aot/runtime/runtime.hpp>
 #include <erlang_aot/runtime/scheduler.hpp>
-#include <vector>
+#include <unordered_map>
 
 namespace erlang_aot::runtime {
 // Contexts die before code registrations and runtime-owned atom storage.
@@ -29,6 +30,10 @@ class Runtime::Impl final {
     // Pid numbers of every context created here, from the process-wide sequence; never reused.
     detail::ProcessNumbers process_numbers;
     // Destroy process owners before the above service bindings; no signals or workers exist yet.
-    std::vector<std::unique_ptr<ProcessContext>> contexts;
+    std::unordered_map<const ProcessContext *, std::unique_ptr<ProcessContext>> contexts;
+    // Live processes by pid number, for is_process_alive/1 and later routing.
+    std::unordered_map<Word, ProcessContext *> processes;
+    // Run spawned processes cooperatively on the thread that runs the program.
+    detail::Executor executor;
 };
 } // namespace erlang_aot::runtime

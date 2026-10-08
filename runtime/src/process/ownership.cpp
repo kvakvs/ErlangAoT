@@ -1,6 +1,5 @@
 #include "../memory/heap_policy.hpp"
 #include "../runtime_state.hpp"
-#include <algorithm>
 #include <new>
 #include <stdexcept>
 
@@ -33,7 +32,13 @@ std::expected<ProcessContext *, Status> Runtime::create_context(HeapOptions opti
             new ProcessContext(*this, ProcessIdentity({impl_->identity}, *number), options, stack_options,
                                impl_->memory, impl_->process_numbers));
         auto *borrowed = context.get();
-        impl_->contexts.push_back(std::move(context));
+        const auto process = impl_->processes.emplace(static_cast<Word>(*number), borrowed).first;
+        try {
+            impl_->contexts.emplace(borrowed, std::move(context));
+        } catch (...) {
+            impl_->processes.erase(process);
+            throw;
+        }
         return borrowed;
     } catch (const std::bad_alloc &) {
         return std::unexpected(Status::out_of_memory);
@@ -51,8 +56,7 @@ Status Runtime::destroy_context(ProcessContext *context) noexcept {
     if (context == nullptr) {
         return Status::invalid_argument;
     }
-    const auto found =
-        std::ranges::find_if(impl_->contexts, [context](const auto &owner) { return owner.get() == context; });
+    const auto found = impl_->contexts.find(context);
     if (found == impl_->contexts.end()) {
         return Status::wrong_owner;
     }
@@ -60,6 +64,7 @@ Status Runtime::destroy_context(ProcessContext *context) noexcept {
     if (!removed && removed.error() != SchedulerError::unknown_process) {
         return Status::busy;
     }
+    impl_->processes.erase(static_cast<Word>(context->identity().serial_));
     impl_->contexts.erase(found);
     return Status::ok;
 }

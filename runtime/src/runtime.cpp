@@ -22,10 +22,10 @@ std::expected<std::uint64_t, Status> reserve_identity() noexcept {
 }
 } // namespace
 
-// Explicit count construction keeps Debug STL proxy allocation failures catchable during startup.
+// Construction runs inside Runtime::start's catch boundary, so container allocation failures stay contained.
 Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
     : atom_storage(options.max_atoms), scheduler(identity), options(options), identity(identity),
-      memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))), contexts(0) {
+      memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))) {
     for (const auto family : production_builtins()) {
         if (!code_server.builtins().add(family)) {
             // Only allocation can fail for the fixed production tables.

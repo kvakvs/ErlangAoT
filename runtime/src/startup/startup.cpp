@@ -1,5 +1,6 @@
 #include "startup.hpp"
 #include "../process/exceptions.hpp"
+#include "../scheduler/executor.hpp"
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -83,21 +84,71 @@ int failed_entry(const CallFailure &failure, bool escript) {
     return escript ? abi::v1::exit_escript_uncaught : abi::v1::exit_uncaught;
 }
 
-// Build argv without the runtime options, resolve the arity-1 entry and run it to completion in the first context.
-int call_entry(ProcessContext &context, const StartupDescriptor &startup, int argc, char **argv, std::size_t skip) {
-    const auto arguments = program_arguments(context, argc, argv, skip);
-    if (!arguments) {
-        return runtime_failure("cannot build the argument list");
+// Whether the program is an escript, whose uncaught exceptions report and exit differently.
+bool is_escript(const StartupDescriptor &startup) { return (startup.flags & abi::v1::startup_escript) != 0; }
+
+// Release a context the program no longer needs; a teardown failure replaces `status`.
+int released(Runtime &runtime, ProcessContext &context, int status) {
+    const auto destroyed = runtime.destroy_context(&context);
+    return destroyed == Status::ok ? status : runtime_failure("process teardown: " + status_name(destroyed));
+}
+
+// The frame of the exported arity-1 entry function; null when no registered module exports it with a frame.
+const abi::v1::FrameDescriptor *entry_frame(ProcessContext &context, const StartupDescriptor &startup) {
+    TermFactory factory(context);
+    const auto module_atom = factory.atom({startup.entry_module, startup.entry_module_size});
+    const auto function_atom = factory.atom({startup.entry_function, startup.entry_function_size});
+    if (!module_atom || !function_atom) {
+        return nullptr;
     }
+    return static_cast<const abi::v1::FrameDescriptor *>(
+        context.code_server().function_frame(*module_atom, *function_atom, 1));
+}
+
+// Call an entry export without a frame (a host function) to completion in the main process.
+int call_host_entry(ProcessContext &main, const StartupDescriptor &startup, const Term &arguments) {
     const std::string_view module(startup.entry_module, startup.entry_module_size);
     const std::string_view function(startup.entry_function, startup.entry_function_size);
-    const auto entry = context.code_server().resolve({module, function, 1});
+    const auto entry = main.code_server().resolve({module, function, 1});
     if (!entry) {
         return runtime_failure("entry function " + std::string(module) + ":" + std::string(function) +
                                "/1 is not registered");
     }
-    const auto result = entry->call(context, std::array{*arguments});
-    return result ? 0 : failed_entry(result.error(), (startup.flags & abi::v1::startup_escript) != 0);
+    const auto result = entry->call(main, std::array{arguments});
+    return result ? 0 : failed_entry(result.error(), is_escript(startup));
+}
+
+// Run the main process and every process it spawns until the program ends, then release them all; the exit status
+// comes from the process whose outcome ended the program (docs/processes.md).
+int run_processes(Runtime &runtime, ProcessContext &main, const StartupDescriptor &startup) {
+    auto &executor = detail::Executor::of(main);
+    auto &ended = executor.run(main);
+    const auto &failure = ended.generated_calls().failure();
+    const int status = failure ? failed_entry(*failure, is_escript(startup)) : 0;
+    // The main process is still queued when another process ended the program.
+    executor.clear();
+    return released(runtime, ended, status);
+}
+
+// Build argv without the runtime options and run the arity-1 entry as the main process; no context remains after.
+int run_entry(Runtime &runtime, ProcessContext &main, const StartupDescriptor &startup, int argc, char **argv,
+              std::size_t skip) {
+    const auto arguments = program_arguments(main, argc, argv, skip);
+    if (!arguments) {
+        return released(runtime, main, runtime_failure("cannot build the argument list"));
+    }
+    const auto *frame = entry_frame(main, startup);
+    if (!frame) {
+        return released(runtime, main, call_host_entry(main, startup, *arguments));
+    }
+    main.stack().registers()[0] = arguments->word();
+    if (!detail::Executor::of(main).start(main, *frame)) {
+        const auto &failure = main.generated_calls().failure();
+        const int status =
+            failure ? failed_entry(*failure, is_escript(startup)) : runtime_failure("cannot start the entry process");
+        return released(runtime, main, status);
+    }
+    return run_processes(runtime, main, startup);
 }
 
 // Register every module before the entry runs; a failure discards the whole runtime before entry.
@@ -111,9 +162,7 @@ int run_program(Runtime &runtime, const StartupDescriptor &startup, int argc, ch
     if (!context) {
         return runtime_failure("cannot create the entry process: " + status_name(context.error()));
     }
-    const int status = call_entry(**context, startup, argc, argv, skip);
-    const auto destroyed = runtime.destroy_context(*context);
-    return destroyed == Status::ok ? status : runtime_failure("entry process teardown: " + status_name(destroyed));
+    return run_entry(runtime, **context, startup, argc, argv, skip);
 }
 
 // Own the runtime for one program run and shut it down in order on every path.

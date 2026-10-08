@@ -14,6 +14,7 @@ struct OutputSink;
 namespace detail {
 class RuntimeMemory;
 class ProcessNumbers;
+class Executor;
 } // namespace detail
 
 // Keep control/creation failures separate from Erlang exceptions and exit reasons.
@@ -125,6 +126,7 @@ class ProcessContext final {
     friend class ProcessHeap;
     friend class ProcessStack;
     friend class Mailbox;
+    friend class detail::Executor;
     // Keep runtime binding and lifetime token alive through mailbox and heap teardown.
     class Impl;
     std::unique_ptr<Impl> impl_;
@@ -145,6 +147,8 @@ class ProcessContext final {
     const std::shared_ptr<detail::RuntimeMemory> &memory() const noexcept;
     // The pid numbers the runtime issued, against which pid words are admitted.
     const detail::ProcessNumbers &process_numbers() const noexcept;
+    // The runtime that owns this context; the executor creates and releases processes through it.
+    Runtime &runtime() noexcept;
 };
 
 } // namespace erlang_aot::runtime

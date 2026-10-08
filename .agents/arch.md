@@ -87,7 +87,9 @@
   body, slots, roots); exported `<sym>` = host wrapper over `erlang_aot_invoke_v1`. Runtime `ProcessStack`
   (`process/stack`): flat `std::vector<Word>`, 4-word headers linked by offsets, 256 X registers, uncapped
   by default (opt-in `StackOptions::limit_words` -> `resource_limit`; host refusal `out_of_memory` -> exit 70), bottom frame per invocation contains native exceptions. Exceptions still return
-  through callers (channel check); no yield/reductions until step 43. Prototype `tests/prototypes/execution_model/`.
+  through callers (channel check). Step 43 yields: `ProcessStack::enter` spends a reduction per entry (4,000 per
+  slice); at zero it records `resume_` = the entered frame, keeps its argument registers and returns `pause`, so
+  the musttail chain unwinds to whoever ran the slice (`ProcessStack::run`). Prototype `tests/prototypes/execution_model/`.
 
 - Ordinary record layouts retain declaration order, defaults and source provenance.
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
@@ -163,6 +165,13 @@
   program-wide counter). Order: numbers < atoms < refs < funs < pids < tuples; print `<0.N.S>`/`#Ref<0.A.B.C>`.
   Builtins `self/0`, `make_ref/0` (`builtins/processes`), `pid_to_list/1`, `ref_to_list/1` (conversions); body
   `self()` resolves its guard signature to the bridge builtin (`guard_analysis` `call`), guard `self()` stays gated.
+  Step 43 (`docs/processes.md`): `detail::Executor` (`scheduler/executor`, member of `Runtime::Impl`, reached by
+  `Executor::of(context)`) = FIFO deque of runnable contexts; `run(main)` runs slices round robin until main ends or
+  another process halts/fails outside Erlang, releasing other ended processes at once. `Runtime::Impl::contexts` is a
+  map by pointer, `processes` a map by pid number (`is_process_alive/1`). `spawn/1,3` (`builtins/processes`) create
+  a context, copy the fun/args into it and prepare the first call in the child with the dynamic call services
+  (`apply_list_service`/`call_list_service`), so badarity/undef crash the child. Startup queues the entry frame as
+  the main process; host `invoke` resumes its own yields without running other processes.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

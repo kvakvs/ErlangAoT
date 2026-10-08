@@ -25,4 +25,8 @@ bool service_ready(ProcessContext &context);
 void raise_call_error(ProcessContext &context, abi::v1::ErrorReason reason, std::optional<Term> value = std::nullopt);
 // Check a called fun and append its captured values after the `arity` arguments; null when the call raised or failed.
 const void *prepare_fun_call(ProcessContext &context, const Term &fun, std::size_t arity, Word *arguments);
+// apply(Fun, List) and apply(M, F, List) (dynamic_calls.cpp): unpack List into the registers and return the frame the
+// call enters, or null after recording the error or failure.
+const void *apply_list_service(ProcessContext &context, Word fun, Word list, Word *registers) noexcept;
+const void *call_list_service(ProcessContext &context, Word module, Word function, Word list, Word *registers) noexcept;
 } // namespace erlang_aot::runtime::detail

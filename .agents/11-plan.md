@@ -1016,12 +1016,44 @@ the step-17 model; startup runs the entry as the first process and exits when
 it finishes.
 
 - Success criteria
-  - [ ] Many processes interleave on one thread; each heap is isolated.
-  - [ ] A crashing process does not affect others.
+  - [x] Many processes interleave on one thread; each heap is isolated.
+  - [x] A crashing process does not affect others.
 - Tests
-  - [ ] Golden programs spawning 10k processes and long-running busy loops
+  - [x] Golden programs spawning 10k processes and long-running busy loops
     that must interleave.
-  - [ ] Teardown with live processes releases every heap.
+  - [x] Teardown with live processes releases every heap.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/processes.md`. Yields per the step-17 model: every function entry
+  (`ProcessStack::enter`, so calls, tail calls, fun/dynamic calls and
+  builtins) spends a reduction of a 4,000-reduction slice; at zero it records
+  the entered frame (`resume_`), keeps its argument registers as roots and
+  returns code that ends the slice, unwinding the `musttail` chain;
+  `ProcessStack::start`/`run` begin and resume a process; host `invoke`
+  resumes its own yields. `detail::Executor` (`scheduler/executor`, in
+  `Runtime::Impl`): FIFO run queue, round-robin slices until the main
+  process ends or another process halts or fails outside Erlang; ended
+  processes are released at once (contexts now keyed by pointer, live
+  processes by pid number). Catalog appended: `spawn/1,3`,
+  `is_process_alive/1` (auto-imported); spawn checks its arguments in the
+  parent (badarg), copies the fun or argument list into the new heap and
+  prepares the first call inside the child with the dynamic call services,
+  so badarity/undef crash only the child. Startup queues the entry frame as
+  the main process (host-only entry exports still run synchronously) and
+  releases every process at exit. Crash reports stay silent until step 44;
+  loops without calls and long builtins do not yield (step 43A). Difference
+  recorded: OTP's compiler may drop the code after `spawn` of a fun of
+  another arity. OTP golden `executables_processes` (a process spawned
+  first spinning on `is_process_alive/1` until a later one ends, 10,000
+  processes, captured and argument copies, spawn/is_process_alive badarg
+  cases, an endless process left running at exit; a `crash` run with an
+  exception, undef and badarity child beside a surviving main) passes all 8
+  combinations; `runtime_processes` (round-robin slices of spinning
+  processes, crash isolation, halt from another process, host-invocation
+  yields, releasing live processes returns all memory); semantic case
+  `spawn_builtins`. Fresh Windows x64 Debug: fast 183/183, full `-j 12`
+  187/187; Lizard 0 warnings; tidy 302 units pass after replacing two
+  swappable-parameter pairs (`InitialCall`, `entry_frame(startup)`). Logs
+  `build/plan11-step43/`.
 
 <a id="step-43a"></a>
 

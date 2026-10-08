@@ -8,6 +8,10 @@
 namespace erlang_aot::runtime {
 class SchedulerService;
 
+namespace detail {
+class Executor;
+} // namespace detail
+
 struct RuntimeOptions {
     // Bound retained UTF-8 atom entries (default 2^20, at most 2^26, programs set it with --max-atoms); no atom
     // garbage collection runs in this slice.
@@ -63,6 +67,7 @@ class Runtime final {
     OutputSink standard_output() const noexcept;
 
   private:
+    friend class detail::Executor;
     // Retain contexts and service reservations independently of the public C++/generated ABI layout.
     class Impl;
     std::unique_ptr<Impl> impl_;

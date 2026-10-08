@@ -323,6 +323,12 @@ Step facts beyond the plan record:
   call()); guard self() still gated (step 52). Term-services deferral now only via TermFactory::port(PortIdentity{})
   (PortIdentity became a complete empty class). Many files are CRLF in the worktree (autocrlf=input): python
   edits must keep endings (scratchpad edtool.py). Background `cmd //c gate.cmd &` detaches: poll logs.
+- 43: yield = enter() with reductions_ 0 -> resume_ = frame, keep_registers(arity), return `pause` (empty body);
+  ProcessStack::start pushes bottom + suspends, run(reductions) resumes; invoke loops run() (host never runs other
+  processes). Executor (scheduler/executor) in Runtime::Impl; friend of Runtime/ProcessContext (runtime()). Child
+  first call prepared IN the child via apply_list_service/call_list_service (declared in terms/funs.hpp). OTP quirk:
+  compiler drops code after spawn(fun/1) (type analysis) -> fixtures route the fun via remote processes:id/1 (local
+  id/1 is still inferred). Crash run stderr authored ^$ until step 44 adds reports. OTP spawn/1 non-fun -> badarg.
 User directions (keep):
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
