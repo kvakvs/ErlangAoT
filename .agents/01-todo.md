@@ -114,9 +114,10 @@ Plan: [42](11-plan.md#step-42), [48](11-plan.md#step-48),
 
 - [x] Uniqueness, ownership and stale-identity rules for pids and references
   (step 42, [terms](../docs/terms.md#pids-and-references)).
-- [ ] Ports separate from I/O services (step 53).
+- [x] Ports separate from I/O services (step 53: decided there are no ports;
+  port builtins report `[ports] notimpl`).
 - [x] Owned constructors, equality, order, printing, host Terms, copying (step 42).
-- [ ] Routing by pid (steps 45, 48).
+- [x] Routing by pid (steps 45, 48) and by registered name (step 50).
 - [x] Reject forged, stale and foreign identities (step 42).
 
 ### F08 — Lists, tuples, maps and strings

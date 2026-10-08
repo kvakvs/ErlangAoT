@@ -39,6 +39,19 @@ std::string_view ExpressionCapability::operator()(const ast::LocalFunReference &
     return count && !module.lookup.contains(key) && guard_signature(key) && !builtin ? "dynamic calls" : "";
 }
 
+namespace {
+// A literal fun M:F/A: an erlang port builtin is unavailable (no ports), another erlang one needs a bridge builtin.
+std::string_view external_fun_capability(const std::u32string_view owner, const FunctionKey &key) {
+    if (owner != U"erlang") {
+        return "";
+    }
+    if (port_builtin(key)) {
+        return "ports";
+    }
+    return bridge_builtin(key) ? "" : "dynamic calls";
+}
+} // namespace
+
 // fun M:F/A with variables is built at run time; a literal fun erlang:F/A needs a bridge builtin of that name.
 std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference &value) const {
     if (dynamic_fun(value)) {
@@ -51,6 +64,6 @@ std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference 
         return "dynamic calls";
     }
     const auto &[owner, name, count] = *names;
-    return owner != U"erlang" || bridge_builtin({name, count}) ? "" : "dynamic calls";
+    return external_fun_capability(owner, {name, count});
 }
 } // namespace erlang_aot::semantic

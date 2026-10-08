@@ -5,7 +5,7 @@
 using namespace erlang_aot::abi::v1;
 
 // Check the catalog as a compatibility snapshot, not only against its own lookup implementation.
-constexpr std::array<std::string_view, 25> names{"pattern matching",
+constexpr std::array<std::string_view, 26> names{"pattern matching",
                                                  "guards",
                                                  "multiple clauses",
                                                  "arithmetic",
@@ -29,7 +29,8 @@ constexpr std::array<std::string_view, 25> names{"pattern matching",
                                                  "dynamic modules",
                                                  "executable linking",
                                                  "send expressions",
-                                                 "expression sequences"};
+                                                 "expression sequences",
+                                                 "ports"};
 
 // Keep assertions active under NDEBUG.
 void require(bool condition, const char *message) {

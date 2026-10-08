@@ -4,7 +4,8 @@ Admitted kinds: atoms/booleans, arbitrary integers, finite binary64 floats,
 tuples, proper/improper lists and strings, maps, bitstrings and ordinary tuple
 records; native records ([native records](native-records.md)); funs
 ([function values](funs.md)); local pids and references
-([below](#pids-and-references)). Ports do not exist yet. Word encodings are in
+([below](#pids-and-references)). Programs have no ports
+([decision](processes.md#ports)). Word encodings are in
 [abi.md](abi.md#terms).
 
 ## Ownership

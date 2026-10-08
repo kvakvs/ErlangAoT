@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "entry": "ports",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[not_port,not_port,not_port,not_port,not_port,not_port,not_port]\n[false,false,false,false,false,false,false]\n[{error,badarg},{error,badarg}]\n"
+    },
+    {
+      "args": [
+        "dynamic"
+      ],
+      "authored": true,
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{error,undef}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "ports.erl": "ea8b9082d2a4c4511f5e9b04ca2532022c6bb70f1883ef391d1af52de4dcd2fc"
+  }
+}

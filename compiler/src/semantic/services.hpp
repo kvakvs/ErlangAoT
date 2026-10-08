@@ -16,6 +16,9 @@ std::optional<abi::v1::ImmediateOperation> immediate_service(const FunctionKey &
 std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprId &id, const ast::CallExpression &call);
 // The bridge index (abi::v1::bridge_builtins) of erlang:Name/Arity, when the runtime provides it as a builtin.
 std::optional<std::size_t> bridge_builtin(const FunctionKey &key);
+// Whether erlang:Name/Arity is a port builtin (open_port/2, port_command/2,3, ...): programs have no ports, so these
+// report the ports capability (docs/processes.md#ports).
+bool port_builtin(const FunctionKey &key);
 // The bridge index of Module:Name/Arity for any module, such as io:format/2.
 std::optional<std::size_t> bridge_builtin(std::u32string_view module, const FunctionKey &key);
 // A qualified call of a bridge builtin of a module other than erlang (io:format/2): its name and bridge index.

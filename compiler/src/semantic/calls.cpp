@@ -1,7 +1,9 @@
 #include "calls.hpp"
 #include "capabilities.hpp"
+#include "features.hpp"
 #include "funs.hpp"
 #include "records.hpp"
+#include "services.hpp"
 #include <algorithm>
 
 namespace erlang_aot::semantic {
@@ -13,6 +15,19 @@ bool removed_call(const ast::Module &syntax, const ast::RemoteExpression &remote
     const auto &module = std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote.module)).value).name;
     const auto &function = std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote.function)).value).name;
     return module == U"erlang" && function == U"get_stacktrace" && arity == 0;
+}
+
+// A call of a port builtin, erlang:F(...) or a local F(...) the module does not define: unavailable, as programs have
+// no ports (docs/processes.md#ports).
+bool port_call(const Module &module, const ast::RemoteExpression *remote, const FunctionKey &key) {
+    if (!port_builtin(key)) {
+        return false;
+    }
+    if (!remote) {
+        return !module.lookup.contains(key);
+    }
+    const auto &owner = std::get<ast::Atom>(module.syntax->expression(ungroup(*module.syntax, remote->module)).value);
+    return owner.name == U"erlang";
 }
 
 // Resolve literal remote names without ever falling back to another project target.
@@ -40,13 +55,17 @@ std::optional<FunctionRef> callee(const FunctionRef caller, const ast::CallExpre
     const auto &syntax = *caller.module->syntax;
     const auto &target = syntax.expression(ungroup(syntax, call.target)).value;
     const auto *remote = std::get_if<ast::RemoteExpression>(&target);
+    const auto &name = remote ? std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote->function)).value)
+                              : std::get<ast::Atom>(target);
+    const FunctionKey key{name.name, call.arguments.size()};
+    if (port_call(*caller.module, remote, key)) {
+        reject_capability(*caller.module, source, "ports", out);
+        return {};
+    }
     auto *owner = remote ? call_module(caller, call, *remote, modules, source, out) : caller.module;
     if (!owner) {
         return {};
     }
-    const auto &name = remote ? std::get<ast::Atom>(syntax.expression(ungroup(syntax, remote->function)).value)
-                              : std::get<ast::Atom>(target);
-    const FunctionKey key{name.name, call.arguments.size()};
     const auto found = owner->lookup.find(key);
     if (found == owner->lookup.end()) {
         report(*caller.module, &source,
@@ -72,7 +91,12 @@ bool direct_call(const FunctionRef caller, const ast::Expression &expression) {
 // A local fun F/A must name a function of its module or an auto-imported builtin (erl_lint undefined_function).
 void check_reference(const Module &module, const ast::Expression &expression, const Reporter &out) {
     const auto *reference = std::get_if<ast::LocalFunReference>(&expression.value);
-    if (reference && !fun_target(module, *reference) && !module.fun_entries.contains(&expression)) {
+    if (!reference || fun_target(module, *reference) || module.fun_entries.contains(&expression)) {
+        return;
+    }
+    if (const auto count = arity(reference->arity); count && port_builtin({reference->name.name, *count})) {
+        reject_capability(module, expression.source, "ports", out);
+    } else {
         report(module, &expression.source,
                "function " + utf8(reference->name.name) + "/" + reference->arity.decimal + " undefined", out);
     }

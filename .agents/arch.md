@@ -215,6 +215,9 @@
   pass the empty list as operand. Bridge builtins is_record/1, node/0,1 (funs, apply). The `guards` notimpl path
   (services without lowering) is gone; feature `guards` implemented. Test placeholders for "dynamic calls" use
   `fun erlang:apply/2`.
+  Step 53 (decision, `docs/processes.md#ports`): no ports. Feature `ports` (id 26, deferred);
+  `semantic::port_builtin` names the port BIFs; `calls.cpp` `port_call` (local undefined or erlang:F) and
+  `check_reference` (fun F/A), `expression_capability` (fun erlang:F/A) report "ports". Dynamic calls: undef.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

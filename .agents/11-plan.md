@@ -101,8 +101,8 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate: 126
-CTests (123 fast) and 258 production quality units.
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase I close, step 53,
+2026-10-08): 206 full-mode CTests and 311 production quality units.
 
 ## Step overview
 
@@ -978,13 +978,15 @@ funs of `node/0`, `is_record/1`). `fun erlang:node/0` placeholders became
 
 ### 53. Decide port identity scope
 
-Backlog: F07. Depends on: [42](#step-42). **Decision.**
-
-- Success criteria
-  - [ ] Document whether ports exist (likely: no external ports; `is_port/1`
-    is always false; `open_port/2` reports unavailable).
-- Tests
-  - [ ] CLI/golden checks for the documented boundary.
+Done 2026-10-08 (decision `docs/processes.md#ports`): no ports. `is_port/1`
+always false; the thirteen port builtins (`open_port/2`, `port_*`,
+`port_to_list/1`, `list_to_port/1`, `ports/0`) are compile-time
+`[ports] notimpl` in every call and fun form (new compiler feature `ports`,
+id 26, deferred, `codegen_placeholders` case); a locally defined function of
+the same name wins; dynamic calls raise `undef`. Difference recorded. CLI
+cases in `semantic/cases.cmake` (local, qualified, funs, shadowed) and OTP
+golden `executables_ports` (is_port over real pids, references, funs;
+`monitor(port, _)`/`link/1` badarg) plus an authored `undef` run.
 
 ## J. Multi-worker scheduling
 

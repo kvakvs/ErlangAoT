@@ -119,6 +119,14 @@ std::optional<Op> immediate_service(const FunctionKey &key) {
 
 std::optional<std::size_t> bridge_builtin(const FunctionKey &key) { return bridge_builtin(U"erlang", key); }
 
+bool port_builtin(const FunctionKey &key) {
+    static const std::set<FunctionKey> ports{
+        {U"open_port", 2},    {U"port_close", 1},   {U"port_command", 2}, {U"port_command", 3}, {U"port_connect", 2},
+        {U"port_control", 3}, {U"port_call", 2},    {U"port_call", 3},    {U"port_info", 1},    {U"port_info", 2},
+        {U"port_to_list", 1}, {U"list_to_port", 1}, {U"ports", 0}};
+    return ports.contains(key);
+}
+
 std::optional<std::size_t> bridge_builtin(std::u32string_view module, const FunctionKey &key) {
     return abi::v1::find_bridge_builtin(utf8(module), utf8(key.name), key.arity);
 }

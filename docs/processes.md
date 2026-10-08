@@ -3,7 +3,8 @@
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
 selective receive; step 47: receive timeouts; step 48: links and exit
-signals; step 49: monitors; step 50: registered names.
+signals; step 49: monitors; step 50: registered names; step 53: ports
+(none).
 
 ## Executor
 
@@ -233,6 +234,30 @@ recursion.
   exits 0.
 - When the receiver's heap refuses an exit reason or `'EXIT'` message, the
   receiver fails as a runtime failure (exit 70).
+
+## Ports
+
+Decision of plan step 53 (2026-10-08): **programs have no ports.** OTP uses
+ports for external programs, drivers and files; ErlangAoT programs reach the
+console through builtins ([io](io.md)), and other external I/O has no plan.
+
+- No port term can be made: `is_port/1` is false for every value, there is no
+  port printing, ordering or copying, and `TermFactory::port` stays an
+  unavailable term service.
+- A call of a port builtin is an explicit compile-time capability failure,
+  `[ports] notimpl` (feature `ports`, deferred): `open_port/2`,
+  `port_close/1`, `port_command/2,3`, `port_connect/2`, `port_control/3`,
+  `port_call/2,3`, `port_info/1,2`, `port_to_list/1`, `list_to_port/1` and
+  `ports/0`, called locally (auto-imported), as `erlang:F(...)` or named by
+  `fun F/A` or `fun erlang:F/A`. A module that defines the function itself
+  (with `no_auto_import`) calls its own.
+- A port builtin reached through a dynamic call (`apply/3`, `M:F(...)`) raises
+  `undef`, as for any function the program does not have.
+- Operations that accept ports in OTP treat every argument as a non-port:
+  `monitor(port, X)` and `link/1`, `exit/2` of a non-pid raise `badarg`.
+
+Revisiting this needs its own plan: port identities, a driver model and
+asynchronous I/O completion on the scheduler.
 
 ## Builtins
 

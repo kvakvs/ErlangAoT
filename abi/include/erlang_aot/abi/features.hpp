@@ -32,7 +32,8 @@ enum class FeatureId : std::uint8_t {
     dynamic_modules = 22,
     executable_linking = 23,
     send_expressions = 24,
-    expression_sequences = 25
+    expression_sequences = 25,
+    ports = 26
 };
 enum class FeatureOwner : std::uint8_t { compiler, runtime, driver };
 enum class FeatureStatus : std::uint8_t { deferred, implemented };
@@ -228,6 +229,14 @@ inline constexpr std::array feature_catalog{
                 .status = FeatureStatus::implemented,
                 .plan_step = 10,
                 .failure_test = "patternmatch_sequences"},
+    // Decision of plan step 53: programs have no ports (docs/processes.md#ports); port builtins stay unavailable.
+    FeatureInfo{.id = FeatureId::ports,
+                .name = "ports",
+                .owner = FeatureOwner::compiler,
+                .boundary = "port builtin call analysis",
+                .status = FeatureStatus::deferred,
+                .plan_step = 53,
+                .failure_test = "codegen_placeholders"},
 
 };
 

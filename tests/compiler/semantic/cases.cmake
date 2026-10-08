@@ -93,6 +93,10 @@ semantic_case(monitor_builtins
 semantic_case(name_builtins
     "-module(a). f(P) -> register(a, P), a ! x, {a, node} ! y, {whereis(a), registered(), unregister(a)}." 0 "^$")
 semantic_case(identity_guards "-module(a). f(X) when X =:= self(), node(X) =:= node(); is_record(X) -> X." 0 "^$")
+semantic_case(open_port "-module(a). f() -> open_port({spawn, \"cat\"}, [])." 1 "open_port.erl:1:29: \\[ports\\] notimpl")
+semantic_case(port_qualified "-module(a). f(P) -> {erlang:port_close(P), fun erlang:ports/0}." 1 "\\[ports\\] notimpl")
+semantic_case(port_local_fun "-module(a). f() -> fun port_info/1." 1 "\\[ports\\] notimpl")
+semantic_case(port_shadowed "-module(a). -compile({no_auto_import, [ports/0]}). f() -> ports(). ports() -> []." 0 "^$")
 semantic_case(erlang_fun_unbridged "-module(a). f() -> fun erlang:apply/2." 1 "dynamic calls")
 semantic_case(display_fun_local "-module(a). f() -> fun display/1." 1 "function display/1 undefined")
 semantic_case(bridge_call "-module(a). f() -> {halt(), erlang:function_exported(a, f, 0)}." 0 "^$")
