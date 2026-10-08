@@ -16,10 +16,10 @@ guard_bif	map_size	1	15+18	implemented on admitted values; reached semantic erro
 guard_bif	map_get	2	15+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	max	2	7+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	min	2	7+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
-guard_bif	node	0	F07+F22+F26 (outside plan)	legal signature; explicit unavailable-service capability diagnostic
-guard_bif	node	1	F07+F22+F26 (outside plan)	legal signature; explicit unavailable-service capability diagnostic
+guard_bif	node	0	52	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
+guard_bif	node	1	52	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	round	1	14+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
-guard_bif	self	0	F07+F22+F26 (outside plan)	legal signature; explicit unavailable-service capability diagnostic
+guard_bif	self	0	52	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	size	1	12+16+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	tl	1	12+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 guard_bif	trunc	1	14+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
@@ -40,7 +40,7 @@ new_type_test	is_port	1	7+18	implemented on admitted values; reached semantic er
 new_type_test	is_record	2	17+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 new_type_test	is_record	3	17+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 new_type_test	is_reference	1	7+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
-new_type_test	is_record	1	F17 native records (outside expanded-record scope)	legal signature; explicit unavailable-service capability diagnostic
+new_type_test	is_record	1	52	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 new_type_test	is_tuple	1	7+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate
 old_type_test	integer	1	7+8+17+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate; top-level alias rules apply
 old_type_test	float	1	7+8+14+18	implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate; top-level alias rules apply

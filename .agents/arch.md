@@ -210,6 +210,11 @@
   liveness via `find`), `Signals::name_`; `notify()` erases the name first. `Signals::Monitor{pid, name}`: a name
   monitor's 'DOWN' item is {Name, nonode@nohost} (`LOCAL_NODE`). Sends: `destination_pid` (pid, atom -> badarg if
   unregistered, {Name, Node} -> local lookup or drop).
+  Step 52 (`docs/guards.md#catalog`): immediate ops `is_native_record` (after `is_function`, predicate range),
+  `self`, `node`, `node_of` (after `maximum`, `identity()` in runtime `immediate_services`); zero-arity service calls
+  pass the empty list as operand. Bridge builtins is_record/1, node/0,1 (funs, apply). The `guards` notimpl path
+  (services without lowering) is gone; feature `guards` implemented. Test placeholders for "dynamic calls" use
+  `fun erlang:apply/2`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

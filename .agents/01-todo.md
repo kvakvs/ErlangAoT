@@ -196,10 +196,12 @@ Contract: [patterns](../docs/patterns.md).
 Plan: [9](11-plan.md#step-9), [10](11-plan.md#step-10),
 [52](11-plan.md#step-52). Contract: [guards](../docs/guards.md).
 
-- [x] Audited catalog (77 of 81 rows) and grouped/strict/lazy clause guards.
-- [ ] `self/0`, `node/0,1`, native `is_record/1` with F07/F17/F22/F26.
+- [x] Audited catalog (all 81 rows) and grouped/strict/lazy clause guards.
+- [x] `self/0`, `node/0,1`, native `is_record/1` (step 52).
 - [x] `case` clause guards (step 9) and `if` guards (step 10).
-- [ ] Other guards outside function clauses; identity/function type tests.
+- [x] Other guards outside function clauses (case, if, receive, fun and catch
+  clauses); identity/function type tests on real pids, references and funs
+  (step 52: `executables_identity_guards`).
 
 ### F15 — Multiple function clauses
 

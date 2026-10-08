@@ -60,18 +60,11 @@ bool literal_limit(const Module &module, const ast::Expression &expression, cons
     return false;
 }
 
-// Resolve local capability and service limits before scheduling an expression's children.
-bool available(const Module &module, const Function &function, const ast::ExprId &id, const Reporter &out,
-               const unsigned bits) {
+// Resolve local capability and literal limits before scheduling an expression's children.
+bool available(const Module &module, const ast::ExprId &id, const Reporter &out, const unsigned bits) {
     const auto &expression = module.syntax->expression(id);
     if (literal_limit(module, expression, out)) {
         return false;
-    }
-    const auto service = function.services.find(&expression);
-    const bool lowered = service != function.services.end() &&
-                         (service->second.operation || service->second.apply() || service->second.builtin);
-    if (service != function.services.end() && !lowered) {
-        unsupported(module, expression.source, "guards", out);
     }
     const auto reason = std::visit(ExpressionCapability{*module.syntax, id, bits, module}, expression.value);
     if (!reason.empty()) {
@@ -205,7 +198,7 @@ void expressions(const Module &module, const Function &function, std::vector<ast
         const auto id = pending.back();
         pending.pop_back();
         const auto &expression = module.syntax->expression(id);
-        if (!available(module, function, id, out, bits)) {
+        if (!available(module, id, out, bits)) {
             continue;
         }
         if (integer_literal(*module.syntax, id, bits)) {

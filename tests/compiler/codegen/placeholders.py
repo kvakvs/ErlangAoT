@@ -5,9 +5,8 @@ import subprocess
 import sys
 
 CASES = {
-    "guards": "f(X) when self() =:= X -> X.",
     "heap expressions": "-feature(compr_assign, enable). f(L) -> [Y || X <- L, Y = X].",
-    "dynamic calls": "f() -> fun erlang:node/0.",
+    "dynamic calls": "f() -> fun erlang:apply/2.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
 }
 

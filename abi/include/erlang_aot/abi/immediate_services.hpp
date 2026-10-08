@@ -28,6 +28,8 @@ enum class ImmediateOperation : std::uint8_t {
     is_port,
     is_reference,
     is_function,
+    // Native is_record/1: whether the value is a native record.
+    is_native_record,
     is_function_arity,
     tuple_size,
     length,
@@ -37,6 +39,10 @@ enum class ImmediateOperation : std::uint8_t {
     tl,
     minimum,
     maximum,
+    // self/0 and node/0 take no operand; node/1 takes a pid, reference or port (else bad_argument).
+    self,
+    node,
+    node_of,
     logical_not,
     logical_and,
     logical_or,

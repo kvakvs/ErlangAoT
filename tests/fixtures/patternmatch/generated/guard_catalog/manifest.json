@@ -11,7 +11,7 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
+    "fixtures_manifest_sha256": "cda30e0f0eaa5d7f81fc6b2f924399519a11e9ba4c6b12fdc451953ca13c642b"
   },
   "generator_sha256": {
     "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
@@ -21,13 +21,13 @@
     "patterns.escript": "d5d1ee3d84283b6975e3063bb6518afc8225b71f97e4902ad96de4fc5aeff3cb",
     "../codegen/execution_oracle.escript": "bbb98c84a6ad148d6b9342da8b1984644f3e7903f4bb817187fd2c9a767290ee"
   },
-  "input_manifest_sha256": "930696816d4f192a94351e0fedb6bfd953ef24bdd1519af4fe339844839dac26",
+  "input_manifest_sha256": "e9f9394325da2aa40fe738a99aab8069ef8f6db3301208c0ce2e102257a73635",
   "files": {
-    "answer.erl": "83a2776a41cb8ab83471d91455eee5860fba0619f12ff85a799b60888988ab56",
-    "calls.term": "05420397a82fd062a63382b230937cb8c02c17d8e1a3aff3f7b0abd8544275b9",
-    "calls.txt": "1908f12c54644200dd72abeb1d0adb3ec9c5268dcac8542a570c7813eb15da0f",
+    "answer.erl": "4220ed0ac76ede52c94d17d2dea6b051883049dffb8d07d7d01168804bfc9d6c",
+    "calls.term": "f7926b5dd2328bbf02ef00e3fe2c0ef64c8ca621c4b2182f3f5afc896e43982e",
+    "calls.txt": "7c7bdb75793f3711fea5d791da0c016d28a6abaa8fd10444c493224b28e09c94",
     "client.erl": "8efee35c86c7a2601e7a2a5bd5436371c5d6df30e4c9db3fd0e7cf2128608259",
-    "expected.txt": "d84ecdd1411980a7e57c023be21c5c2d69794f18409dbe4b978106b47ba95a6c",
+    "expected.txt": "7f67444985093c9af16e418b96deb79f2662508a719cb609f84bb02577559f97",
     "gate_is_record_1_0_0.erl": "83b20440272dedd47d752ba1f848e59863249261764c0b9ac3f7f89ae5deaff9",
     "gate_is_record_1_0_1.erl": "0ab3a410a739861064e40b7cddd67291cc221224fecd6a7ca9eb42df223b9c98",
     "gate_is_record_1_1_0.erl": "9ab24896133e88954ffa2427ad2a481a25a5fa6742ce62d7add3f1d568d76907",
@@ -54,134 +54,118 @@
     "wrong_range_arity.erl": "57e5e5eac4e7d08555ab9eb26a81ec81be4b268c1cfd35785e08001aeaf54fd6"
   },
   "evidence": {
-    "calls": 5033,
+    "calls": 5147,
     "cases": [
       {
         "name": "gate_node_0_0_0",
         "body": "f(X) when node() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "af3dcda338f5326aee4c2d49997a075acfc3ff4e9c39c0e6ff3a8d4d3cd2b306"
       },
       {
         "name": "gate_node_0_0_1",
         "body": "f(X) when true orelse node() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "52799090ca40458004e6ca8d4b50d9b2abd869cc9fe9ff045b2109af08cab102"
       },
       {
         "name": "gate_node_0_1_0",
         "body": "f(X) when erlang:node() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "e61613d910eda5c472541d093fef79f5fd1c4f64a855254e51343b34539ef384"
       },
       {
         "name": "gate_node_0_1_1",
         "body": "f(X) when true orelse erlang:node() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "0e7c28975d8805c1c3548c39812401b4ea07ddb5ef7b9168d86cb28b64da8667"
       },
       {
         "name": "gate_node_1_0_0",
         "body": "f(X) when node(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "f528eab87b00193fabf0e8c14381538e4a511bec045c1fe1b704df7a5b3ba863"
       },
       {
         "name": "gate_node_1_0_1",
         "body": "f(X) when true orelse node(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "d41dda143dae5100d24ddc65665d4107ebfe4085cf539555337fa18e5a528550"
       },
       {
         "name": "gate_node_1_1_0",
         "body": "f(X) when erlang:node(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "63d918ce83e7ecf78250b926bc6180693bfc277155022c800c7a5e4c71f2ef75"
       },
       {
         "name": "gate_node_1_1_1",
         "body": "f(X) when true orelse erlang:node(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "b279aa545a2f42ed488ce665d7c05d7c96dc4a6ec1e85327ef7904ddac9d8ba8"
       },
       {
         "name": "gate_self_0_0_0",
         "body": "f(X) when self() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "521f7b1eee717215025337e1414b762e3e08aa85af6481b53b1e2a602f703af0"
       },
       {
         "name": "gate_self_0_0_1",
         "body": "f(X) when true orelse self() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "36b9b3ac923ed2630f311dc4c8592004ebe928ae9fec12e54bac4a0092ef4233"
       },
       {
         "name": "gate_self_0_1_0",
         "body": "f(X) when erlang:self() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "32dfc9f5209ca4a5365a68b1eee4140270c19e9512dab5d6ad80b2b0e839de7f"
       },
       {
         "name": "gate_self_0_1_1",
         "body": "f(X) when true orelse erlang:self() -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F07/F22/F26",
+        "capability": null,
         "sha256": "f54dc140db3d8b6a4a7451d043c9657a6e9213e2bf4b3c72bfe9d008cfa448af"
       },
       {
         "name": "gate_is_record_1_0_0",
         "body": "f(X) when is_record(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F17 native records",
+        "capability": null,
         "sha256": "83b20440272dedd47d752ba1f848e59863249261764c0b9ac3f7f89ae5deaff9"
       },
       {
         "name": "gate_is_record_1_0_1",
         "body": "f(X) when true orelse is_record(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F17 native records",
+        "capability": null,
         "sha256": "0ab3a410a739861064e40b7cddd67291cc221224fecd6a7ca9eb42df223b9c98"
       },
       {
         "name": "gate_is_record_1_1_0",
         "body": "f(X) when erlang:is_record(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F17 native records",
+        "capability": null,
         "sha256": "9ab24896133e88954ffa2427ad2a481a25a5fa6742ce62d7add3f1d568d76907"
       },
       {
         "name": "gate_is_record_1_1_1",
         "body": "f(X) when true orelse erlang:is_record(X) -> X.",
         "diagnostic": "",
-        "capability": "guards",
-        "owner": "F17 native records",
+        "capability": null,
         "sha256": "1402e1338bbb0be4dd497f3b18118d564dae64e17d86c5b9e7996028a7c84e57"
       },
       {
@@ -555,27 +539,39 @@
         "category": "guard_bif",
         "name": "node",
         "arity": "0",
-        "owner": "F07+F22+F26 (outside plan)",
-        "rejection": "legal signature; explicit unavailable-service capability diagnostic",
+        "owner": "52",
+        "rejection": "implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate",
         "fixture": "generated/guard_catalog",
         "resolver": "semantic/pattern_calls.cpp",
         "lowering": "codegen/lowering_immediates.cpp",
         "runtime_owner": "runtime/src/terms/{immediate_services,container_services,structural_order}.cpp",
-        "status": "dependency-blocked",
-        "dependency": "F07/F22/F26"
+        "status": "implemented",
+        "functions": [
+          "catalog_17_body",
+          "catalog_17_qualified",
+          "catalog_17_guard"
+        ],
+        "calls_per_function": 1,
+        "domain": "admitted values; pids from self/0, the node name nonode@nohost"
       },
       {
         "category": "guard_bif",
         "name": "node",
         "arity": "1",
-        "owner": "F07+F22+F26 (outside plan)",
-        "rejection": "legal signature; explicit unavailable-service capability diagnostic",
+        "owner": "52",
+        "rejection": "implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate",
         "fixture": "generated/guard_catalog",
         "resolver": "semantic/pattern_calls.cpp",
         "lowering": "codegen/lowering_immediates.cpp",
         "runtime_owner": "runtime/src/terms/{immediate_services,container_services,structural_order}.cpp",
-        "status": "dependency-blocked",
-        "dependency": "F07/F22/F26"
+        "status": "implemented",
+        "functions": [
+          "catalog_18_body",
+          "catalog_18_qualified",
+          "catalog_18_guard"
+        ],
+        "calls_per_function": 16,
+        "domain": "admitted values; pids from self/0, the node name nonode@nohost"
       },
       {
         "category": "guard_bif",
@@ -600,14 +596,20 @@
         "category": "guard_bif",
         "name": "self",
         "arity": "0",
-        "owner": "F07+F22+F26 (outside plan)",
-        "rejection": "legal signature; explicit unavailable-service capability diagnostic",
+        "owner": "52",
+        "rejection": "implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate",
         "fixture": "generated/guard_catalog",
         "resolver": "semantic/pattern_calls.cpp",
         "lowering": "codegen/lowering_immediates.cpp",
         "runtime_owner": "runtime/src/terms/{immediate_services,container_services,structural_order}.cpp",
-        "status": "dependency-blocked",
-        "dependency": "F07/F22/F26"
+        "status": "implemented",
+        "functions": [
+          "catalog_20_body",
+          "catalog_20_qualified",
+          "catalog_20_guard"
+        ],
+        "calls_per_function": 1,
+        "domain": "admitted values; pids from self/0, the node name nonode@nohost"
       },
       {
         "category": "guard_bif",
@@ -993,14 +995,20 @@
         "category": "new_type_test",
         "name": "is_record",
         "arity": "1",
-        "owner": "F17 native records (outside expanded-record scope)",
-        "rejection": "legal signature; explicit unavailable-service capability diagnostic",
+        "owner": "52",
+        "rejection": "implemented on admitted values; reached semantic errors reject guards; infrastructure failures terminate",
         "fixture": "generated/guard_catalog",
         "resolver": "semantic/pattern_calls.cpp",
         "lowering": "codegen/lowering_immediates.cpp",
         "runtime_owner": "runtime/src/terms/{immediate_services,container_services,structural_order}.cpp",
-        "status": "dependency-blocked",
-        "dependency": "F17 native records"
+        "status": "implemented",
+        "functions": [
+          "catalog_41_body",
+          "catalog_41_qualified",
+          "catalog_41_guard"
+        ],
+        "calls_per_function": 20,
+        "domain": "admitted values; pids from self/0, the node name nonode@nohost"
       },
       {
         "category": "new_type_test",
@@ -1744,10 +1752,10 @@
         "domain": "admitted values only; unavailable function/pid/port/reference classes always false"
       }
     ],
-    "catalog_sha256": "3385528fe17e87183ccc4a79591aea9d8788d5713d61e14c1b4e89400a21dc68",
+    "catalog_sha256": "bf852fc5681dfd255a041027dd486755792927ea75ee391a91cbe2234b70f493",
     "source_origin": "locally authored fragments; OTP supplies observations only",
     "source_sha256": {
-      "answer.erl": "83a2776a41cb8ab83471d91455eee5860fba0619f12ff85a799b60888988ab56",
+      "answer.erl": "4220ed0ac76ede52c94d17d2dea6b051883049dffb8d07d7d01168804bfc9d6c",
       "client.erl": "8efee35c86c7a2601e7a2a5bd5436371c5d6df30e4c9db3fd0e7cf2128608259",
       "gate_is_record_1_0_0.erl": "83b20440272dedd47d752ba1f848e59863249261764c0b9ac3f7f89ae5deaff9",
       "gate_is_record_1_0_1.erl": "0ab3a410a739861064e40b7cddd67291cc221224fecd6a7ca9eb42df223b9c98",

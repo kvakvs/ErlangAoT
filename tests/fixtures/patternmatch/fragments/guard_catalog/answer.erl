@@ -51,9 +51,18 @@
     catalog_16_body/2,
     catalog_16_qualified/2,
     catalog_16_guard/2,
+    catalog_17_body/0,
+    catalog_17_qualified/0,
+    catalog_17_guard/0,
+    catalog_18_body/1,
+    catalog_18_qualified/1,
+    catalog_18_guard/1,
     catalog_19_body/1,
     catalog_19_qualified/1,
     catalog_19_guard/1,
+    catalog_20_body/0,
+    catalog_20_qualified/0,
+    catalog_20_guard/0,
     catalog_21_body/1,
     catalog_21_qualified/1,
     catalog_21_guard/1,
@@ -114,6 +123,9 @@
     catalog_40_body/1,
     catalog_40_qualified/1,
     catalog_40_guard/1,
+    catalog_41_body/1,
+    catalog_41_qualified/1,
+    catalog_41_guard/1,
     catalog_42_body/1,
     catalog_42_qualified/1,
     catalog_42_guard/1,
@@ -337,10 +349,22 @@ catalog_16_body(X, Y) -> min(X, Y).
 catalog_16_qualified(X, Y) -> erlang:'min'(X, Y).
 catalog_16_guard(X, Y) when erlang:'min'(X, Y) -> ok;
 catalog_16_guard(X, Y) -> no.
+catalog_17_body() -> node().
+catalog_17_qualified() -> erlang:'node'().
+catalog_17_guard() when erlang:'node'() =:= nonode@nohost -> ok;
+catalog_17_guard() -> no.
+catalog_18_body(X) -> node(X).
+catalog_18_qualified(X) -> erlang:'node'(X).
+catalog_18_guard(X) when erlang:'node'(X) =:= nonode@nohost -> ok;
+catalog_18_guard(X) -> no.
 catalog_19_body(X) -> round(X).
 catalog_19_qualified(X) -> erlang:'round'(X).
 catalog_19_guard(X) when erlang:'round'(X) -> ok;
 catalog_19_guard(X) -> no.
+catalog_20_body() -> is_pid(self()).
+catalog_20_qualified() -> is_pid(erlang:'self'()).
+catalog_20_guard() when is_pid(erlang:'self'()) -> ok;
+catalog_20_guard() -> no.
 catalog_21_body(X) -> size(X).
 catalog_21_qualified(X) -> erlang:'size'(X).
 catalog_21_guard(X) when erlang:'size'(X) -> ok;
@@ -421,6 +445,10 @@ catalog_40_body(X) -> is_reference(X).
 catalog_40_qualified(X) -> erlang:'is_reference'(X).
 catalog_40_guard(X) when erlang:'is_reference'(X) -> ok;
 catalog_40_guard(X) -> no.
+catalog_41_body(X) -> is_record(X).
+catalog_41_qualified(X) -> erlang:'is_record'(X).
+catalog_41_guard(X) when erlang:'is_record'(X) -> ok;
+catalog_41_guard(X) -> no.
 catalog_42_body(X) -> is_tuple(X).
 catalog_42_qualified(X) -> erlang:'is_tuple'(X).
 catalog_42_guard(X) when erlang:'is_tuple'(X) -> ok;

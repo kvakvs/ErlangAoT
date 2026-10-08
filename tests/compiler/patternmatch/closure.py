@@ -37,7 +37,7 @@ def reconcile(source):
                          expected_rows=len((path.parent/'expected.txt').read_text(encoding='utf8').splitlines()),
                          revision=manifest['provenance']['revision'] if 'revision' in manifest['provenance'] else manifest['provenance']))
     audit=json.loads((root/'guard_catalog/manifest.json').read_text(encoding='utf8'))['evidence']['catalog']
-    assert len(audit)==81 and sum(r['status']=='dependency-blocked' for r in audit)==4
+    assert len(audit)==81 and sum(r['status']=='dependency-blocked' for r in audit)==0
     answer=fixture_path(source, 'guard_catalog', 'answer.erl').read_text(encoding='utf8')
     for row in audit:
         if row['status']=='implemented':

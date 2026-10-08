@@ -135,7 +135,7 @@ for flag in ('--print-ir', '--print-optimized-ir'):
     assert not run(flag, '--new-project', 'new', expected=2).stdout
     invalid = run(flag, '--target-triple', 'invalid', 'answer.erl', expected=1)
     assert not invalid.stdout
-    (work / 'bad.erl').write_text('-module(bad). value() -> fun erlang:node/0.\n', encoding='utf-8')
+    (work / 'bad.erl').write_text('-module(bad). value() -> fun erlang:apply/2.\n', encoding='utf-8')
     assert not run(flag, 'answer.erl', 'bad.erl', expected=1).stdout
 assert 'Usage:' in run('--help', '--print-ir', '--target-triple', 'invalid', 'missing.erl').stdout
 assert not (work / 'build').exists() and not (work / 'out').exists() and not (work / 'new.toml').exists()

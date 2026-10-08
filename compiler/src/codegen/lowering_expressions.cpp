@@ -151,7 +151,9 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     if (service->second.operation == abi::v1::ImmediateOperation::binary_part) {
         return lower_binary_part(state, call_arguments(state, call));
     }
-    auto *left = state.values.at(&state.module.syntax->expression(call.arguments.at(0)));
+    // self/0 and node/0 pass the empty list as their unused operand.
+    auto *left = call.arguments.empty() ? llvm::ConstantInt::get(state.word, abi::v1::empty_list)
+                                        : state.values.at(&state.module.syntax->expression(call.arguments[0]));
     auto *right =
         call.arguments.size() == 2 ? state.values.at(&state.module.syntax->expression(call.arguments[1])) : nullptr;
     return lower_operation(state, operation(service->second.operation), left, right);

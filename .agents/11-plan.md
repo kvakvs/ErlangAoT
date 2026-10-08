@@ -961,15 +961,18 @@ subterms and off-heap binaries, checked intact and in order) plus an authored
 
 ### 52. Enable identity-dependent guards
 
-Backlog: F14. Depends on: [42](#step-42), [31](#step-31), [32](#step-32).
-
-`self/0` in guards, `node/0,1` (returning `nonode@nohost`), native
-`is_record/1`, and positive `is_pid/1`, `is_reference/1`, `is_function/1,2`.
-
-- Success criteria
-  - [ ] The four gated catalog signatures become available; results match OTP.
-- Tests
-  - [ ] Guard golden corpus extended with the new rows.
+Done 2026-10-08 (contract `docs/guards.md#catalog`). Immediate operations
+`self`, `node`, `node_of` and `is_native_record` serve guards and bodies;
+bridge builtins `node/0,1` and `is_record/1` serve funs and dynamic calls. All
+81 catalog signatures implemented; the `guards` notimpl path and its
+placeholder are gone (feature implemented). The guard_catalog corpus gained
+114 OTP rows (node/0,1, self/0 via `is_pid(self())`, is_record/1; 16 gate
+cases now accepted), services' guard-resolution rows accept `self()`; corpora
+regenerated (67,748 native results). OTP golden `executables_identity_guards`
+(positive `is_pid`/`is_reference`/`is_function`/`is_record/1` on real pids,
+references, funs and native records, `node/1`, `self()` in a receive guard,
+funs of `node/0`, `is_record/1`). `fun erlang:node/0` placeholders became
+`fun erlang:apply/2`.
 
 <a id="step-53"></a>
 

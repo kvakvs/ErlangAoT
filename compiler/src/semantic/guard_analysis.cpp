@@ -69,7 +69,7 @@ void body_service(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
 bool portioned(const FunctionKey &key) { return key.name == U"length" && key.arity == 1; }
 
 // The resolution of an authorized guard signature: its inline operation, or in a body the bridge builtin of a
-// signature without one (self/0) or that runs in portions (length/1).
+// signature without one or that runs in portions (length/1).
 ServiceResolution guard_service(const FunctionKey &key, const bool guard, const bool legacy) {
     const auto operation = guard || !portioned(key) ? immediate_service(key) : std::nullopt;
     const auto builtin = guard || operation ? std::nullopt : bridge_builtin(key);

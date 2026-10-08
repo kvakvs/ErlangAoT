@@ -48,7 +48,7 @@ cmake --build build/debug --target check-quality-all  # whole tree
 - Normal builds and tests need neither OTP nor its source checkout. Goldens were
   generated once from OTP and are committed with hashes; hash checks run before
   any fixture is used.
-- Nineteen pattern/guard corpora hold 67,634 native expected values/errors and
+- Nineteen pattern/guard corpora hold 67,748 native expected values/errors and
   106 semantic acceptance rows. Each native corpus runs positional and project
   drivers at O0/O2 with specialization on/off, local and remote calls.
 - Committed Erlang inputs are locally authored

@@ -345,6 +345,10 @@ Step facts beyond the plan record:
   uncatchable; executor `running_`/`Running` scope, `ending_` drain, `finished_`/`stopped_`; run() resets finished_.
   OTP -eval process traps exits (link to dead returned true there): probe inside spawned processes. Monitors (49):
   demonitor flush only when the monitor was not found; monitor(process, self()) creates nothing (info false).
+- 52: all 81 guard signatures lower; "dynamic calls" placeholders now `fun erlang:apply/2` (no local unbridged
+  builtin fun left). Corpus edits: change fragments + generated calls, then fixtures.tsv hashes (guards.tsv,
+  guard-resolution.json), then regenerate.py --corpus X (needs references/otp). linking_executable -Os size check
+  tolerates one alignment unit (.reloc crossing 512 B made Os bigger than O2).
 User directions (keep):
 - Inference plan (2026-10-08): steps 58A-58G before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.

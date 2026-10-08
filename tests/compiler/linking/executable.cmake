@@ -35,8 +35,10 @@ foreach(level IN ITEMS O0 O2 Os)
     run(demo-${level} 0 "42\n-7\n{record,map,binary,list,integer,other}\n")
     file(SIZE "${WORK}/demo-${level}${HOST_SUFFIX}" size_${level})
 endforeach()
-# Size mode strips unreferenced generated and runtime sections at link time.
-if(NOT size_Os LESS size_O0 OR size_Os GREATER size_O2)
+# Size mode strips unreferenced generated and runtime sections at link time. Sections are rounded up to the file
+# alignment (512 bytes on PE, up to a page elsewhere), so a smaller -Os image may still round one unit above -O2.
+math(EXPR size_O2_aligned "${size_O2} + 4096")
+if(NOT size_Os LESS size_O0 OR size_Os GREATER size_O2_aligned)
     message(FATAL_ERROR "-Os executable is not smaller: O0=${size_O0} O2=${size_O2} Os=${size_Os}")
 endif()
 # Arguments and exit statuses reach the linked startup; escripts keep exit 127.

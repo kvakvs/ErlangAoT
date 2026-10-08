@@ -146,16 +146,16 @@
     "capability": ""
   },
   {
-    "name": "unavailable",
+    "name": "self_guard",
     "body": "f(X) when self() =:= X -> X.",
     "diagnostic": "",
-    "capability": "guards"
+    "capability": ""
   },
   {
-    "name": "hidden_unavailable",
+    "name": "hidden_self_guard",
     "body": "f(X) when false andalso self() =:= X -> X.",
     "diagnostic": "",
-    "capability": "guards"
+    "capability": ""
   },
   {
     "name": "integer3",

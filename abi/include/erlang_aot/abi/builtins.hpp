@@ -156,6 +156,10 @@ inline constexpr std::array bridge_builtins{
     BuiltinName{"erlang", "unregister", 1},
     BuiltinName{"erlang", "whereis", 1},
     BuiltinName{"erlang", "registered", 0},
+    // Identity-dependent guard BIFs (plan step 52); self/0 is above.
+    BuiltinName{"erlang", "is_record", 1},
+    BuiltinName{"erlang", "node", 0},
+    BuiltinName{"erlang", "node", 1},
 };
 
 // The bridge index of Module:Function/Arity, if it is a bridge builtin.

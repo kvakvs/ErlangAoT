@@ -33,10 +33,10 @@ Result boolean(ProcessContext &context, bool value) {
 
 // Predicates classify admitted representations; ports do not exist, so is_port/1 is always false.
 bool predicate(Op operation, const Term &value) {
-    const std::array predicates{value.is_atom(),      value.is_integer(), value.is_number(), value.is_boolean(),
-                                value.is_tuple(),     value.is_list(),    value.is_binary(), value.is_bitstring(),
-                                value.is_float(),     value.is_map(),     value.is_pid(),    value.is_port(),
-                                value.is_reference(), value.is_function()};
+    const std::array predicates{
+        value.is_atom(), value.is_integer(), value.is_number(),    value.is_boolean(),  value.is_tuple(),
+        value.is_list(), value.is_binary(),  value.is_bitstring(), value.is_float(),    value.is_map(),
+        value.is_pid(),  value.is_port(),    value.is_reference(), value.is_function(), value.is_native_record()};
     return predicates.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::is_atom));
 }
 
@@ -150,6 +150,18 @@ Result select(Op operation, const Term &left, const Term &right) {
     return lhs ? left.word() : right.word();
 }
 
+// self/0, node/0 and node/1: the caller's pid, or the name of the only node (node/1 of a pid, reference or port).
+Result identity(ProcessContext &context, Op operation, const Term &operand) {
+    if (operation == Op::self) {
+        return checked(
+            TermFactory(context).pid(context.identity()).transform([](const Term &pid) { return pid.word(); }));
+    }
+    if (operation == Op::node_of && !operand.is_pid() && !operand.is_reference() && !operand.is_port()) {
+        return std::unexpected(Fault{Outcome::bad_argument});
+    }
+    return checked(TermFactory(context).atom("nonode@nohost").transform([](const Term &node) { return node.word(); }));
+}
+
 // Boolean operators validate admitted terms; lazy lowering checks only the reached left operand here.
 Result logical(ProcessContext &context, Op operation, const Term &left, const Term &right) {
     if (!left.is_boolean()) {
@@ -170,6 +182,21 @@ Result logical(ProcessContext &context, Op operation, const Term &left, const Te
     return boolean(context, results.at(static_cast<unsigned>(operation) - static_cast<unsigned>(Op::logical_and)));
 }
 
+// The operations between the type tests and the boolean operators: queries, min/max, self/0 and node/0,1.
+Result inspect(ProcessContext &context, Op operation, const Term &left, const Term &right) {
+    if (operation == Op::minimum || operation == Op::maximum) {
+        return select(operation, left, right);
+    }
+    if (operation >= Op::self) {
+        return identity(context, operation, left);
+    }
+    const auto result = query(left, operation, right);
+    if (result && operation == Op::is_function_arity) {
+        return boolean(context, *result != 0);
+    }
+    return result;
+}
+
 // Dispatch only semantically authorized opcodes; later representation services extend this boundary.
 Result evaluate(ProcessContext &context, Op operation, const Term &left, const Term &right) {
     if (operation >= Op::bit_size) {
@@ -185,17 +212,10 @@ Result evaluate(ProcessContext &context, Op operation, const Term &left, const T
     if (operation <= Op::greater_equal) {
         return comparison(context, operation, left, right);
     }
-    if (operation <= Op::is_function) {
+    if (operation <= Op::is_native_record) {
         return boolean(context, predicate(operation, left));
     }
-    if (operation == Op::minimum || operation == Op::maximum) {
-        return select(operation, left, right);
-    }
-    const auto result = query(left, operation, right);
-    if (result && operation == Op::is_function_arity) {
-        return boolean(context, *result != 0);
-    }
-    return result;
+    return inspect(context, operation, left, right);
 }
 
 // A unary service never tries to admit its unused placeholder operand.

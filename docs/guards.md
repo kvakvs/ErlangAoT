@@ -31,9 +31,12 @@ operand raises `{badarg, Value}`, as in OTP.
 signatures from the pinned `guard_bif`, `new_type_test`, `old_type_test`,
 `arith_op`, `bool_op` and `comp_op` tables, and a test enforces exact set
 equality with upstream. [The audit manifest](../tests/fixtures/patternmatch/generated/guard_catalog/manifest.json)
-maps each to resolver, lowering and runtime owner. 77 are implemented on admitted
-terms; four are legal but unavailable in guards: `self/0` (a body builtin
-since step 42), `node/0,1` and native `is_record/1` (F17, step 52). `is_record/2` with a local
+maps each to resolver, lowering and runtime owner. All 81 are implemented (the
+identity-dependent `self/0`, `node/0,1` and native `is_record/1` since plan
+step 52): `self()` is the calling process's pid, `node()` and `node/1` of a
+pid, reference or port are `nonode@nohost` (there is one node; any other
+`node/1` argument fails the guard, `badarg` in a body), and `is_record/1` tests
+for a native record. `is_record/2` with a local
 native record name tests module and name; `is_record/3` with an atom third
 argument tests a native record's module and name; native field access fails
 the guard on any mismatch.

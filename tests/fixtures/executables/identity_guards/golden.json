@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "identity_guards",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[self,pid,reference,function,fun2,function,native_record,other,other,other]\n[named,named,named,unnamed,unnamed,unnamed,unnamed,unnamed,unnamed,unnamed]\n{mine,hello}\n{nonode@nohost,nonode@nohost,nonode@nohost,true,false}\n{nonode@nohost,nonode@nohost,true}\n[{error,badarg},{error,badarg},{error,badarg}]\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "identity_guards.erl": "f2988ce5fcf8f022e05c51b767dc13a571d14ff1a13eb22a8aa147e12e7a0314"
+  }
+}

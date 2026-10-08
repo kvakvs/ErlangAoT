@@ -2,6 +2,7 @@
 #include <array>
 #include <erlang_aot/abi/bits.hpp>
 #include <erlang_aot/abi/calls.hpp>
+#include <erlang_aot/abi/equality.hpp>
 #include <erlang_aot/abi/immediate_services.hpp>
 #include <erlang_aot/abi/maps.hpp>
 #include <erlang_aot/abi/output.hpp>
@@ -38,9 +39,10 @@ Word boolean(ProcessContext &context, bool value) {
 template <Op operation, ErrorReason rejected = ErrorReason::badarg>
 Word immediate(ProcessContext &context, Arguments arguments) {
     Word result = 0;
+    const auto left = arguments.empty() ? Word{abi::v1::empty_list} : arguments[0];
     const auto right = arguments.size() > 1 ? arguments[1] : Word{0};
     const auto outcome = static_cast<abi::v1::ValueOutcome>(
-        erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(operation), arguments[0], right, &result));
+        erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(operation), left, right, &result));
     if (failed(context) || outcome == abi::v1::ValueOutcome::success) {
         return result;
     }
@@ -153,6 +155,9 @@ constexpr std::array ERLANG_BUILTINS{
     BuiltinEntry{"erlang", "is_pid", 1, immediate<Op::is_pid>},
     BuiltinEntry{"erlang", "is_port", 1, immediate<Op::is_port>},
     BuiltinEntry{"erlang", "is_reference", 1, immediate<Op::is_reference>},
+    BuiltinEntry{"erlang", "is_record", 1, immediate<Op::is_native_record>},
+    BuiltinEntry{"erlang", "node", 0, immediate<Op::node>},
+    BuiltinEntry{"erlang", "node", 1, immediate<Op::node_of>},
     BuiltinEntry{"erlang", "is_tuple", 1, immediate<Op::is_tuple>},
     BuiltinEntry{"erlang", "abs", 1, immediate<Op::absolute>},
     BuiltinEntry{"erlang", "bit_size", 1, immediate<Op::bit_size>},
