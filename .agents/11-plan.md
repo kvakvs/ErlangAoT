@@ -1113,10 +1113,27 @@ plus the inline `length/1` and long list services.
 Backlog: F22. Depends on: [43](#step-43).
 
 - Success criteria
-  - [ ] Normal return, `exit/1` and uncaught errors terminate the process with
+  - [x] Normal return, `exit/1` and uncaught errors terminate the process with
     OTP-like reasons; non-normal termination writes an error report.
 - Tests
-  - [ ] Golden programs for each termination kind with stderr checked.
+  - [x] Golden programs for each termination kind with stderr checked.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/processes.md#exits`. `process/exits`: `exit_reason` gives `normal`,
+  the `exit/1` reason, `{Reason, Stack}` for errors and
+  `{{nocatch, V}, Stack}` for uncaught throws (OTP); `report_exit` writes
+  OTP's legacy report (`=ERROR REPORT==== D-Mon-YYYY::HH:MM:SS.uuuuuu ===`,
+  `Error in process <pid> with exit value:`, the reason as `~p`, blank line)
+  on stderr for error-class ends only, when the executor releases a non-main
+  process. OTP probes: no report for `exit/1` (incl. `normal`, `kill`), reports
+  for errors, `{nocatch, V}` and `undef`; OTP's logger writes them
+  asynchronously, so its oracle runs usually show none. Difference recorded
+  (report timing and stream). OTP golden `executables_crash_reports` (return,
+  exit normal/shutdown/kill/term, caught error, error, throw, badarith,
+  badmatch, undef via spawn/3; authored stderr pattern for exactly the five
+  reports); `executables_processes` crash run now expects its three reports.
+  Gate (after the gate-time commit): fast 189/189 in 46 s, full 193/193 in
+  106 s (separate check), check-quality all 306 units in 2 min 13 s (16
+  jobs) after replacing an empty catch. Logs `build/plan11-step44/`.
 
 <a id="step-45"></a>
 

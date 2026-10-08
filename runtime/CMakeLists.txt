@@ -9,7 +9,7 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/terms/integer_service.cpp src/terms/integer_decimal.cpp src/terms/integer_sum.cpp src/terms/integer_words.cpp
     src/memory/heap_terms.cpp src/memory/heap_publication.cpp
     src/terms/container_access.cpp src/terms/container_factory.cpp src/terms/container_services.cpp src/terms/structural_order.cpp
-    src/process/generated_calls.cpp src/process/exceptions.cpp src/process/stack.cpp src/process/services.cpp src/process/context.cpp src/process/identities.cpp src/process/ownership.cpp src/process/storage.cpp
+    src/process/generated_calls.cpp src/process/exceptions.cpp src/process/exits.cpp src/process/stack.cpp src/process/services.cpp src/process/context.cpp src/process/identities.cpp src/process/ownership.cpp src/process/storage.cpp
     src/memory/heap.cpp src/memory/heap_storage.cpp src/memory/heap_reservation.cpp src/memory/off_heap.cpp src/memory/heap_collect.cpp src/memory/heap_walk.cpp src/memory/heap_verify.cpp src/memory/copy.cpp
     src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp src/scheduler/executor.cpp
     src/terms/term_text.cpp src/terms/term_text_scalars.cpp

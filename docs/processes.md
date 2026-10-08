@@ -1,7 +1,8 @@
 # Processes
 
-Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor.
-Messages, receive, links and monitors arrive in later steps (45–49).
+Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
+step 44: exit reasons and error reports. Messages, receive, links and monitors
+arrive in later steps (45–49).
 
 ## Executor
 
@@ -33,12 +34,38 @@ ends:
 - `erlang:halt/0,1` in any process ends the program with its status. A
   runtime failure in any process (memory exhausted, an optional cap exceeded,
   an internal error) ends the program as a runtime failure (exit 70). An
-  Erlang exception ends only the process that raised it; nothing is printed
-  yet (crash reports: plan step 44).
+  Erlang exception ends only the process that raised it ([exits](#exits)).
 - Host invocations of exported functions (`erlang_aot_invoke_v1`) run their
   function in the calling context to completion, resuming it after each yield
   without running other processes; programs started by `erlang_aot_main_v1`
   use the executor.
+
+## Exits
+
+A process other than the main one ends with an exit reason, as in OTP
+(`detail::exit_reason`, `process/exits`). Links and monitors (plan steps 48,
+49) will carry it; today only error reports show it.
+
+| How the process ends | Exit reason | Error report |
+| --- | --- | --- |
+| Its first call returns | `normal` | None |
+| `exit(Reason)` (also `normal`, `kill`) | `Reason` | None |
+| An error (`error/1,2,3`, `badarith`, `{badmatch, V}`, `undef`, ...) | `{Reason, Stack}` | Yes |
+| An uncaught `throw(Value)` | `{{nocatch, Value}, Stack}` | Yes |
+
+An error report is written on stderr when the process ends, after flushing
+standard output, in the format of OTP's default logger handler:
+
+```text
+=ERROR REPORT==== 8-Oct-2026::03:42:15.983000 ===
+Error in process <0.8.0> with exit value:
+{boom,[{crash_reports,'-main/1-fun-6-',0,[]}]}
+
+```
+
+The header has the local time; the reason is laid out as `~p` does. The main
+process does not write one: its uncaught exception is the program's
+([executables](executables.md)).
 
 ## Builtins
 

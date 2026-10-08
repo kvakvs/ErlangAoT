@@ -292,7 +292,8 @@ Plan: [17](11-plan.md#step-17), [43](11-plan.md#step-43), [44](11-plan.md#step-4
 - [x] Entry/return/yield/exit protocol with rooted continuations and bounded work
   (step 43: yields at function entries; builtins bounded in step 43A).
 - [x] Create/start/resume/finish and spawn/1,3 on one thread (step 43).
-- [ ] Exit reasons and crash reports (step 44); links and monitors (steps 48, 49).
+- [x] Exit reasons and crash reports (step 44).
+- [ ] Links and monitors (steps 48, 49).
 
 ### F23 — Scheduler workers and wakeups
 

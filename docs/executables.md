@@ -119,7 +119,8 @@ only after generated cleanup.
 - stdout: `standard_io` output (`io:format/1,2`, `io:put_chars/1`,
   `erlang:display/1`). Buffered; flushed on every exit path except `abort`.
 - stderr: the uncaught-exception report, `standard_error` output, runtime
-  failures and crash reports of other processes.
+  failures and the error reports of other processes that crash
+  ([processes](processes.md#exits)).
 - The report is one line `uncaught exception <class>: <reason in ~w form>`,
   later followed by stack frames (step 15). Its exact text is not a stable
   interface; tests match it by pattern.

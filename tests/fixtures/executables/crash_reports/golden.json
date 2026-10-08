@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "crash_reports",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "\\A=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{boom,\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{\\{nocatch,ball\\},\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{badarith,\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{\\{badmatch,nope\\},\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{undef,\\[[^\\n]*\\]\\}\\n\\n\\Z",
+      "exit_status": 0,
+      "stdout": "returned ended\nexit_normal ended\nexit_shutdown ended\nexit_kill ended\nexit_term ended\ncaught ended\nerror ended\nthrow ended\nbadarith ended\nbadmatch ended\nundef ended\nmain done\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "crash_reports.erl": "70861f62bb2bd36a703d5bbd1233aa8b42bff9270adab55ae351f29770262a75"
+  }
+}

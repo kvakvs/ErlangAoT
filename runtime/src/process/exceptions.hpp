@@ -9,4 +9,7 @@ std::string_view exception_class(const CallFailure &failure);
 std::string_view error_name(abi::v1::ErrorReason reason) noexcept;
 // Build the Erlang reason of a pending exception: the raised term, the error atom or {Atom, Value}.
 TermResult<Term> exception_reason_term(ProcessContext &context, const CallFailure &failure);
+// The stack trace term of an exception: the given stack, or the captured frames innermost first, where the top
+// frame shows the erlang:error/2,3 arguments when present.
+TermResult<Term> stack_term(ProcessContext &context, const CallFailure &failure);
 } // namespace erlang_aot::runtime::detail

@@ -12,7 +12,7 @@
       "args": [
         "crash"
       ],
-      "stderr": "^$",
+      "stderr": "\\A=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{boom,\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{undef,\\[[^\\n]*\\]\\}\\n\\n=ERROR REPORT==== \\d{1,2}-[A-Z][a-z]{2}-\\d{4}::\\d\\d:\\d\\d:\\d\\d\\.\\d{6} ===\\nError in process <0\\.\\d+\\.0> with exit value:\\n\\{\\{badarity,\\{[^\\n]*\\}\\},\\[[^\\n]*\\]\\}\\n\\n\\Z",
       "exit_status": 0,
       "stdout": "[false,false,false]\nsurvivor done\nmain survived\n"
     }

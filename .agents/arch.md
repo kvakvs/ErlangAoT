@@ -178,6 +178,9 @@
   (`words()` are roots in `ProcessStack::visit`). `call_builtin_portion` (enter) vs `call_builtin` (host: loops).
   `builtins/lists` (`length`, `++`, `--`: collect, merge sort, binary-search scan, build) and the binary/iolist
   conversions over `builtins/portions` (`walk`, `build_list`, `guarded`, `ListState`); `TermFactory::list_words`.
+  Step 44 (`docs/processes.md#exits`): `process/exits` `exit_reason` (normal, exit reason, {R, Stack},
+  {{nocatch, V}, Stack}) and `report_exit` (OTP legacy `=ERROR REPORT====` text on stderr, `~p` via
+  `builtins::pretty`), called by the executor for an ended non-main process; `stack_term` is public in exceptions.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

@@ -1,4 +1,5 @@
 #include "executor.hpp"
+#include "../process/exits.hpp"
 #include "../process/identities.hpp"
 #include "../runtime_state.hpp"
 #include "../terms/funs.hpp"
@@ -111,6 +112,7 @@ ProcessContext &Executor::run(ProcessContext &main) noexcept {
         if (&process == &main || ends_program(process)) {
             return process;
         }
+        report_exit(process);
         process.runtime().destroy_context(&process);
     }
     return main;

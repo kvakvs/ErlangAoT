@@ -39,22 +39,6 @@ TermResult<Term> frame_term(ProcessContext &context, const FrameDescriptor &fram
     return factory.tuple(std::array{*module, *function, *third, *location});
 }
 
-// The stack trace term of an exception: the given stack, or the captured frames innermost first, where the top
-// frame shows the erlang:error/2,3 arguments when present.
-TermResult<Term> stack_term(ProcessContext &context, const CallFailure &failure) {
-    if (failure.stack) {
-        return *failure.stack;
-    }
-    TermFactory factory(context);
-    auto stack = factory.nil();
-    for (auto index = failure.trace.depth; stack && index > 0; --index) {
-        const auto &arguments = index == 1 ? failure.arguments : std::nullopt;
-        const auto entry = frame_term(context, *failure.trace.frames.at(index - 1), arguments);
-        stack = entry ? factory.cons(*entry, *stack) : entry;
-    }
-    return stack;
-}
-
 // How erlang:raise/3 treats one stack entry (BEAM raise_3): rejected, kept, or completed with a [] location.
 enum class EntryShape : std::uint8_t { invalid, complete, short_form };
 
@@ -289,6 +273,20 @@ std::string_view error_name(const ErrorReason reason) noexcept {
                                                             "undef"};
     const auto index = static_cast<std::size_t>(reason);
     return index < names.size() ? names[index] : std::string_view{};
+}
+
+TermResult<Term> stack_term(ProcessContext &context, const CallFailure &failure) {
+    if (failure.stack) {
+        return *failure.stack;
+    }
+    TermFactory factory(context);
+    auto stack = factory.nil();
+    for (auto index = failure.trace.depth; stack && index > 0; --index) {
+        const auto &arguments = index == 1 ? failure.arguments : std::nullopt;
+        const auto entry = frame_term(context, *failure.trace.frames.at(index - 1), arguments);
+        stack = entry ? factory.cons(*entry, *stack) : entry;
+    }
+    return stack;
 }
 
 TermResult<Term> exception_reason_term(ProcessContext &context, const CallFailure &failure) {
