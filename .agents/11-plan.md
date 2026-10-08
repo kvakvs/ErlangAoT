@@ -119,7 +119,7 @@ CTests (123 fast) and 258 production quality units.
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [59](#step-59)–[62](#step-62), [62A](#step-62a) | F29–F33 |
+| L. Optimization and tooling | [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F33 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -1464,6 +1464,37 @@ bindings.
     unchanged; a focused runtime test registers many modules with many
     exports and checks lookups of present, missing and wrong-arity names.
   - [ ] Lookup cost with many modules recorded descriptively, not gated.
+
+<a id="step-62b"></a>
+
+### 62B. Keep receive timers in a timer wheel
+
+Backlog: F23, F25. Depends on: [47](#step-47), [57](#step-57). Added
+2026-10-08 during step 47 (user request).
+
+Step 47 keeps one ordered map of deadlines and reads the monotonic clock
+before every time slice to find expired receive timeouts. Replace it with a
+runtime timer wheel (hashed, hierarchical slots of millisecond ticks, as ERTS
+`erl_time_sup`/`erl_hl_timer` do): arming and cancelling a timer is constant
+time, the scheduler advances the wheel from a coarse clock reading taken at
+most once per tick (not per slice), and only the slots whose time has come
+are consulted when a scheduled timer must fire; waiting processes are never
+scanned for deadlines.
+
+- Success criteria
+  - [ ] Arming, cancelling (a message arrives first) and firing timers cost
+    constant expected time per timer; the clock is read at most once per tick
+    while processes run, and an idle scheduler sleeps exactly until the next
+    occupied slot.
+  - [ ] Timeouts never fire early and fire within one tick of their deadline;
+    `after 0`, `infinity` and the 0..4294967295 range keep their step-47
+    behavior; with multiple workers (phase J) each worker's wheel, or a shared
+    one under its synchronization, keeps these guarantees.
+- Tests
+  - [ ] Existing goldens (`executables_receive_after`,
+    `executables_selective_receive`) pass unchanged; a focused runtime test arms
+    many timers, cancels most, and checks firing order and that cancelled ones
+    never fire; clock readings per slice recorded descriptively, not gated.
 
 ## M. Validation closure
 

@@ -297,7 +297,7 @@ Plan: [17](11-plan.md#step-17), [43](11-plan.md#step-43), [44](11-plan.md#step-4
 
 ### F23 — Scheduler workers and wakeups
 
-Plan: [56](11-plan.md#step-56), [57](11-plan.md#step-57).
+Plan: [56](11-plan.md#step-56), [57](11-plan.md#step-57), [62B](11-plan.md#step-62b).
 
 - [ ] Queue ownership, workers, reductions, wakeups, synchronized shutdown;
   verify fairness and lost-wakeup races.
@@ -312,7 +312,7 @@ Plan: [45](11-plan.md#step-45).
 ### F25 — Selective receive and timeouts
 
 Plan: [46](11-plan.md#step-46), [47](11-plan.md#step-47),
-[57](11-plan.md#step-57).
+[57](11-plan.md#step-57), [62B](11-plan.md#step-62b) (timer wheel).
 
 - [x] Rooted cursors, ordered pattern/guard selection, removal of only the match (step 46).
 - [ ] Arrival handshake, suspension and timeouts compared with OTP.
