@@ -1,6 +1,61 @@
 # Keep pinned dependency archives and extracted installations independent of build directories.
 include_guard(GLOBAL)
 
+# Verify a fetched archive against its pinned digest; reports an empty error on success.
+function(erlang_aot_verify_archive archive sha256 error)
+    file(SHA256 "${archive}" actual)
+    string(TOLOWER "${sha256}" expected)
+    if(actual STREQUAL expected)
+        set(${error} "" PARENT_SCOPE)
+    else()
+        set(${error} "SHA256 mismatch: expected ${expected}, got ${actual}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+# Retry through the host curl, whose TLS backend trusts the system certificate store.
+# Reports an empty error on success and a reason otherwise.
+function(erlang_aot_fetch_with_curl url archive error)
+    find_program(ERLANG_AOT_CURL_EXECUTABLE curl HINTS "$ENV{SystemRoot}/System32")
+    if(NOT ERLANG_AOT_CURL_EXECUTABLE)
+        set(${error} "curl was not found" PARENT_SCOPE)
+        return()
+    endif()
+    execute_process(COMMAND "${ERLANG_AOT_CURL_EXECUTABLE}" --fail --location --silent --show-error
+            --retry 3 --connect-timeout 60 --output "${archive}" "${url}"
+        RESULT_VARIABLE result ERROR_VARIABLE message TIMEOUT 1800)
+    if(result EQUAL 0)
+        set(${error} "" PARENT_SCOPE)
+    else()
+        set(${error} "curl failed (${result}): ${message}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+# Download and verify an archive; fall back to curl when CMake's own TLS stack cannot verify
+# certificates (e.g. the GnuTLS CMake bundled with Strawberry Perl).
+function(erlang_aot_fetch_archive name url archive sha256)
+    if(EXISTS "${archive}")
+        erlang_aot_verify_archive("${archive}" "${sha256}" fetch_error)
+        if(fetch_error STREQUAL "")
+            return()
+        endif()
+    endif()
+    file(DOWNLOAD "${url}" "${archive}" TLS_VERIFY ON STATUS download_status
+        TIMEOUT 1800 INACTIVITY_TIMEOUT 60)
+    list(GET download_status 0 download_result)
+    set(fetch_error "")
+    if(NOT download_result EQUAL 0)
+        message(STATUS "CMake could not download ${name} (${download_status}); retrying with curl")
+        erlang_aot_fetch_with_curl("${url}" "${archive}" fetch_error)
+    endif()
+    if(fetch_error STREQUAL "")
+        erlang_aot_verify_archive("${archive}" "${sha256}" fetch_error)
+    endif()
+    if(NOT fetch_error STREQUAL "")
+        file(REMOVE "${archive}")
+        message(FATAL_ERROR "Cannot download ${name}: ${fetch_error}. Set the dependency's ERLANG_AOT_*_ROOT (LLVM_DIR for LLVM) to an existing installation for offline configuration.")
+    endif()
+endfunction()
+
 # Download once, verify the archive, and retain its upstream top-level directory.
 function(erlang_aot_download_dependency name url sha256 required_file output)
     get_filename_component(repository "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/.." ABSOLUTE)
@@ -12,12 +67,7 @@ function(erlang_aot_download_dependency name url sha256 required_file output)
         get_filename_component(archive_name "${url}" NAME)
         set(archive "${dependencies}/${archive_name}")
         message(STATUS "Downloading ${name} to ${dependencies}")
-        file(DOWNLOAD "${url}" "${archive}" EXPECTED_HASH "SHA256=${sha256}"
-            TLS_VERIFY ON STATUS download_status TIMEOUT 1800 INACTIVITY_TIMEOUT 60)
-        list(GET download_status 0 download_result)
-        if(NOT download_result EQUAL 0)
-            message(FATAL_ERROR "Cannot download ${name}: ${download_status}. Set the dependency's ERLANG_AOT_*_ROOT (LLVM_DIR for LLVM) to an existing installation for offline configuration.")
-        endif()
+        erlang_aot_fetch_archive("${name}" "${url}" "${archive}" "${sha256}")
         file(ARCHIVE_EXTRACT INPUT "${archive}" DESTINATION "${dependencies}")
         if(NOT EXISTS "${source}/${required_file}")
             message(FATAL_ERROR "${name} archive is missing ${required_file}")

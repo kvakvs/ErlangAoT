@@ -70,6 +70,8 @@ CMake downloads Boost 1.90.0 and toml++ 3.4.0 into the ignored `thirdparty/`
 directory on first use, verifies their SHA-256 checksums, and retains both archives
 and extracted sources. Subsequent configurations, including fresh build directories,
 reuse those files without network access. Removing `build/` does not remove dependencies.
+When CMake's own TLS stack cannot verify certificates (for example the CMake bundled
+with Strawberry Perl), downloads are retried with the host `curl` and still verified.
 Runtime-only builds download only Boost. Explicit dependency roots below take
 precedence and allow offline setup; an invalid explicit root fails without downloading.
 Linux and macOS continue to use installed dependencies or local `thirdparty/` sources.
