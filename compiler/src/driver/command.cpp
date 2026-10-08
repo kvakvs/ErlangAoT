@@ -24,12 +24,13 @@ Options:
       -O0 | -O2 | -Os    Select generic O0 (default), speed (specialization, LLVM O2) or size (LLVM Os, unused code stripped at link).
       --no-type-specialization  Disable variants regardless of optimization option order.
       --print-ir          Print verified IR with Erlang source comments before LLVM optimization.
-      --print-types       Report declared/inferred types; stop before LLVM lowering.
+      --print-types       Print each module as source annotated with inferred types; stop before LLVM lowering.
       --print-optimized-ir  Print verified IR with Erlang source comments after the selected pipeline.
       --preprocess-check  Preprocess each module and report diagnostics only.
       --parse-check      Preprocess and parse; report syntax diagnostics only.
       --print-pp         Print preprocessed Erlang source to stdout.
       --print-ast        Parse and print an indented syntax tree to stdout.
+      --print-source     Parse and print each module as Erlang source to stdout.
   -I, --include <dir>  Add an include directory (last supplied is searched first).
   -D, --define <name[=term]>  Predefine a macro (default value: true).
       --app-dir <app=dir>  Map an include_lib application to a directory.

@@ -1,4 +1,5 @@
-"""Inspect real source contracts and inferred facts without entering LLVM lowering."""
+"""--print-types: each module printed as source with its declarations, inferred function signatures and
+`Expression :: Type` annotations, without entering LLVM lowering."""
 from pathlib import Path
 import re
 import shutil
@@ -47,16 +48,17 @@ result = run(*args)
 assert result.stdout == run(*args).stdout
 assert 'warning:' in result.stderr and 'contradicts specification' in result.stderr
 text = result.stdout
-assert text.index('module "user"') < text.index('module "owner"')
-assert 'declared type "chain"/1 exported=true' in text
-assert 'declared opaque "secret"/0' in text and 'declared nominal "nominal_id"/0' in text
-assert 'declared callback "cb"/1 optional=true' in text
-assert 'owner:chain(erlang:integer())' in text
-assert re.search(r'function "run"/0[^\n]*declared=spec[^\n]*result=42', text)
-assert re.search(r'function "local"/0[^\n]*declared=none[^\n]*result=7', text)
-assert re.search(r'function "id"/1[^\n]*term\(\) \[unknown\][^\n]*argument\[0\]', text)
-assert re.search(r'function "projection"/2[^\n]*argument\[1\]', text)
-assert re.search(r'expression "user.erl":5:\d+ inferred=42', text)
+assert text.index('%% module "user"') < text.index('%% module "owner"')
+for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, chain(T)}.',
+                    '-opaque secret() :: integer().', '-nominal nominal_id() :: integer().',
+                    '-spec id(T) -> T when T :: term().', '-callback cb(integer()) -> integer().',
+                    '-optional_callbacks([cb/1]).', '-type remote_chain() :: owner:chain(integer()).'):
+    assert declaration in text, declaration
+assert '%% inferred: run() -> 42  (declared by -spec)\nrun() ->\n' in text
+assert '%% inferred: local() -> 7\nlocal() ->\n    id(7) :: 7.\n' in text
+assert '%% inferred: id(term()) -> argument 1\n' in text
+assert '%% inferred: projection(term(), term()) -> argument 2\n' in text
+assert '    owner:id((owner:value() :: 42)) :: 42.\n' in text
 assert 'target datalayout' not in text and 'define i' not in text
 verbose = run('--verbose', *args)
 assert verbose.stdout == text and 'phase=inference' in verbose.stderr
@@ -75,13 +77,12 @@ alike(X) -> if is_atom(X) -> X; true -> X end.
 bound(X) -> if X > 0 -> Y = 5; true -> Y = 6 end, Y.
 ''', encoding='utf-8')
 facts = run('--print-types', 'branches.erl').stdout
-assert re.search(r'function "pick"/1[^\n]*result=7\n', facts), facts
-assert re.search(r'function "same"/1[^\n]*argument\[0\]', facts), facts
-assert re.search(r'function "mixed"/1[^\n]*result=union\(1, 2\)\n', facts), facts
-assert re.search(r'function "shared"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
-assert re.search(r'function "guarded"/1[^\n]*result=union\(1, 2\)\n', facts), facts
-assert re.search(r'function "alike"/1[^\n]*argument\[0\]', facts), facts
-assert re.search(r'function "bound"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
+for signature in ('pick(term()) -> 7', 'same(term()) -> argument 1', 'mixed(term()) -> 1 | 2',
+                  'shared(term()) -> term()', 'guarded(term()) -> 1 | 2', 'alike(term()) -> argument 1',
+                  'bound(term()) -> term()'):
+    assert f'%% inferred: {signature}\n' in facts, (signature, facts)
+# The case value joins its clauses, though the name its clauses bind stays unknown.
+assert '    end :: 5 | 6,\n    Y.\n' in facts, facts
 
 # Recursive components iterate from none() to a fixed point; pending recursive calls add nothing to a join.
 (work / 'recursive.erl').write_text('''-module(recursive).
@@ -97,16 +98,13 @@ outer(X) -> case X of 0 -> 5; _ -> zero(X) end.
 ''', encoding='utf-8')
 facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
-assert re.search(r'function "zero"/1[^\n]*result=0\n', facts), facts
-assert re.search(r'function "keep"/2[^\n]*result=[^\n]*\[argument\[0\] relation\]\n', facts), facts
-assert re.search(r'function "swap"/2[^\n]*result=term\(\) \[unknown\]\n', facts), facts
-assert re.search(r'function "forever"/0[^\n]*result=none\(\)\n', facts), facts
-assert re.search(r'function "even"/1[^\n]*result=union\(0, 1\)\n', facts), facts
-assert re.search(r'function "odd"/1[^\n]*result=union\(0, 1\)\n', facts), facts
-assert re.search(r'function "fact"/1[^\n]*result=term\(\) \[unknown\]\n', facts), facts
-assert re.search(r'function "outer"/1[^\n]*result=union\(0, 5\)\n', facts), facts
+assert re.search(r'%% inferred: keep\(term\(\), term\(\)\) -> [^\n]*argument 1\n', facts), facts
+for signature in ('zero(term()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
+                  'even(term()) -> 0 | 1', 'odd(term()) -> 0 | 1', 'fact(term()) -> term()',
+                  'outer(term()) -> 0 | 5'):
+    assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
-assert re.search(r'expression "recursive.erl":7:\d+ inferred=union\(0, 1\)\n', facts), facts
+assert '    odd(N - 1) :: 0 | 1.\n' in facts, facts
 
 
 # A cycle of n functions gains one result member per round: 15 converge, 16 hit the round limit and widen.
@@ -119,9 +117,9 @@ def ring(size):
 
 
 converged, widened = ring(15), ring(16)
-assert 'inferred=complete' in converged and 'union(1, 2, 3, ' in converged and ', 15)\n' in converged, converged
+assert 'inferred=complete' in converged and '-> 1 | 2 | 3 | ' in converged and ' | 15\n' in converged, converged
 assert 'inferred=widened' in widened, widened
-assert re.search(r'function "w1"/1[^\n]*result=term\(\) \[unknown\]\n', widened), widened
+assert '%% inferred: w1(term()) -> term()\n' in widened, widened
 
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')
@@ -141,7 +139,8 @@ defines=["VALUE=2"]
 ''', encoding='utf-8')
 project = run('--print-types', '--project', 'project.toml', '--target', 'two', '--target', 'one', '--verbose')
 assert project.stdout.index('target="two"') < project.stdout.index('target="one"')
-assert re.search(r'target="two"[\s\S]*result=2[\s\S]*target="one"[\s\S]*result=1', project.stdout)
+assert re.search(r'target="two"[\s\S]*value\(\) -> 2\n[\s\S]*target="one"[\s\S]*value\(\) -> 1\n',
+                 project.stdout)
 assert 'phase=lowering' not in project.stderr
 assert not (work / 'reserved').exists() and not (work / 'build').exists()
 

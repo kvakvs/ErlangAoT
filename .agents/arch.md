@@ -333,6 +333,10 @@
   (`--runtime-library`, else the build's own path relative to `erlangaot`, checked member by member
   for arch/object format via LLVM Object), then replaces the output. Project builds (step 7) stage every executable target (manifest `output`/`entry`, CLI `-o`/`--entry`; planner `project/plan`) via `linking::stage_executable`, queue `PendingExecutable`s and `publish_executable` them only after all targets succeed; library targets compile in memory.
 
+- Source printing (`docs/compile.md#source-printing`): frontend `print_source` prints parsed syntax as Erlang source
+  (`--print-source`), with `SourceNotes` hooks for `Expression :: Text` annotations and comments above forms; it
+  round-trips to the same tree (`printing_source`). `--print-types` = source + `%% inferred:` signatures + type
+  annotations from `semantic::types::type_source` (graph types in Erlang type syntax).
 - Term printing: runtime `format_term` renders `~w` or emulator display text iteratively under a
   byte cap (maps in map-key order); `erlang:display/1` is a body-only service writing to
   `RuntimeOptions::standard_output`. Goldens in `tests/fixtures/printing/`.

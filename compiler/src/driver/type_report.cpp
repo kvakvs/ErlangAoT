@@ -1,18 +1,18 @@
 #include "type_report.hpp"
-#include "../semantic/capabilities.hpp"
+#include "../semantic/types/printing.hpp"
 #include "display.hpp"
-#include "type_declarations.hpp"
-#include "type_format.hpp"
-#include <algorithm>
+#include <erlang_aot/compiler/printing.hpp>
 #include <iostream>
 #include <set>
 #include <stdexcept>
 
+// --print-types (docs/semantic.md#--print-types): each module as Erlang source, its functions headed by their
+// inferred signatures and its expressions annotated `Expression :: Type` where inference knows more than term().
 namespace erlang_aot::cli {
 namespace {
 namespace types = semantic::types;
 
-// Index contract presence once without changing the source-ordered function report.
+// Functions with a specification of their own, by module, name and arity.
 std::set<types::Key> specified_functions(const types::Registry &registry) {
     std::set<types::Key> result;
     for (const auto &contract : registry.contracts) {
@@ -23,84 +23,95 @@ std::set<types::Key> specified_functions(const types::Registry &registry) {
     return result;
 }
 
-// Keep original logical locations, including includes and file attributes, attached to each fact.
-std::string location(const ast::Module &syntax, const ast::NodeSource &source) {
-    const auto &anchor = syntax.anchor(source).location;
-    return quote_text(anchor.file) + ':' + std::to_string(anchor.line) + ':' + std::to_string(anchor.column);
-}
-
-// External inputs remain conservative even when a user specification describes a narrower type.
-std::string input_text(const types::Inference &inferred, const types::Summary &summary) {
-    std::string text = "[";
-    for (std::size_t i = 0; i < summary.inputs.size(); ++i) {
-        if (i != 0) {
-            text += ", ";
-        }
-        text += fact_text(inferred, {summary.inputs[i], {}});
+// Literals, signed numbers included, already show their type; a match's value is its right side's, which carries
+// the annotation.
+bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
+    if (const auto *unary = std::get_if<ast::UnaryExpression>(&value)) {
+        const auto &operand = syntax.expression(unary->operand).value;
+        return std::holds_alternative<ast::IntegerLiteral>(operand) ||
+               std::holds_alternative<ast::FloatLiteral>(operand);
     }
-    return text + ']';
+    return std::holds_alternative<ast::Atom>(value) || std::holds_alternative<ast::IntegerLiteral>(value) ||
+           std::holds_alternative<ast::FloatLiteral>(value) || std::holds_alternative<ast::CharacterLiteral>(value) ||
+           std::holds_alternative<ast::StringLiteral>(value) || std::holds_alternative<ast::MatchExpression>(value);
 }
 
-// Identify read facts by stable clause-local slots rather than by variable spelling.
-std::string binding_text(const semantic::Function &function, const ast::ExprId &id) {
-    const auto found = std::ranges::find(function.bindings, id, &semantic::Binding::expression);
-    if (found == function.bindings.end() || found->use != semantic::BindingUse::read) {
-        return {};
+// A fact as annotation text: its type, and the argument it equals (1-based) when inference proved one.
+std::string fact_source(const types::Inference &inferred, const types::Fact &fact) {
+    const bool known = inferred.graph.get(fact.type).kind != types::Kind::top;
+    auto type = known ? types::type_source(inferred.graph, fact.type) : std::string();
+    if (!fact.argument) {
+        return type;
     }
-    return " binding=clause[" + std::to_string(found->identity.clause) + "].local[" +
-           std::to_string(found->identity.local) + ']';
+    const auto argument = "argument " + std::to_string(*fact.argument + 1);
+    return known ? type + " (" + argument + ')' : argument;
 }
 
-// Traverse each supported expression in source order instead of iterating pointer-keyed inference maps.
-void expressions(const semantic::Module &module, const semantic::Function &function, const types::Inference &inferred) {
-    const auto &syntax = *module.syntax;
-    const auto &definition = std::get<ast::Function>(syntax.form(function.form).value);
-    auto pending = semantic::function_roots(definition);
-    std::ranges::reverse(pending);
-    while (!pending.empty()) {
-        const auto id = pending.back();
-        pending.pop_back();
-        const auto &expression = syntax.expression(id);
-        const auto found = inferred.expressions.find(&expression);
-        if (found != inferred.expressions.end()) {
-            std::cout << "    expression " << location(syntax, expression.source)
-                      << " inferred=" << fact_text(inferred, found->second) << binding_text(function, id) << '\n';
-        }
-        const auto children = semantic::expression_children(module, expression);
-        pending.insert(pending.end(), children.rbegin(), children.rend());
+// The annotation of an expression: none for literals, for facts that say nothing, and for the argument relation of
+// a variable, which its name already shows.
+std::optional<std::string> expression_note(const ast::Module &syntax, const types::Inference &inferred,
+                                           const ast::Expression &expression) {
+    const auto found = inferred.expressions.find(&expression);
+    if (found == inferred.expressions.end() || self_describing(syntax, expression.value)) {
+        return std::nullopt;
     }
+    auto fact = found->second;
+    if (std::holds_alternative<ast::Variable>(expression.value)) {
+        fact.argument.reset();
+    }
+    auto text = fact_source(inferred, fact);
+    return text.empty() ? std::nullopt : std::optional{std::move(text)};
 }
 
-// Keep declaration provenance alongside independent inferred inputs/results and exact parameter relations.
-void functions(const semantic::Module &module, const types::Inference &inferred,
-               const std::set<types::Key> &specified) {
-    const auto owner = utf8(module.name);
+// `name(Inputs) -> Result` of a function summary.
+std::string signature(const types::Inference &inferred, const std::string &name, const types::Summary &summary) {
+    std::string inputs;
+    for (const auto input : summary.inputs) {
+        inputs += inputs.empty() ? "" : ", ";
+        inputs += types::type_source(inferred.graph, input);
+    }
+    const auto result = fact_source(inferred, summary.result);
+    return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? "term()" : result);
+}
+
+// The comment above a function: its inferred signature, and whether a specification declares it.
+std::vector<std::string> function_note(const semantic::Module &module, const types::Inference &inferred,
+                                       const std::set<types::Key> &specified, const ast::Form &form) {
     for (const auto &function : module.functions) {
-        const auto &summary = inferred.functions.at(&function);
+        if (&module.syntax->form(function.form) != &form) {
+            continue;
+        }
         const auto name = utf8(function.key.name);
-        const bool declared = specified.contains({owner, name, function.key.arity});
-        std::cout << "  function " << quote_text(name) << '/' << function.key.arity << " at "
-                  << location(*module.syntax, module.syntax->form(function.form).source)
-                  << " declared=" << (declared ? "spec" : "none")
-                  << " inferred inputs=" << input_text(inferred, summary)
-                  << " result=" << fact_text(inferred, summary.result) << '\n';
-        expressions(module, function, inferred);
+        const bool declared = specified.contains({utf8(module.name), name, function.key.arity});
+        return {"inferred: " + signature(inferred, name, inferred.functions.at(&function)) +
+                (declared ? "  (declared by -spec)" : "")};
     }
+    return {};
 }
+
+// "complete", or "widened" when a limit made the analysis give up precision.
+std::string_view completeness(const types::Graph &graph) { return graph.widened() ? "widened" : "complete"; }
 } // namespace
 
 void print_types(const Analysis &analysis, const codegen::CompilationRequest &request) {
     if (!analysis.declared || !analysis.inferred) {
         throw std::logic_error("type inspection requires completed analysis");
     }
+    const auto &inferred = *analysis.inferred;
     const auto specified = specified_functions(*analysis.declared);
     for (const auto &module : analysis.modules) {
-        std::cout << "module " << quote_text(utf8(module->name)) << " source=" << quote_text(module->file)
-                  << " target=" << quote_text(request.project_target) << '\n';
-        std::cout << "  analysis declared=" << (analysis.declared->graph.widened() ? "widened" : "complete")
-                  << " inferred=" << (analysis.inferred->graph.widened() ? "widened" : "complete") << '\n';
-        print_declared_types(std::cout, *analysis.declared, *module);
-        functions(*module, *analysis.inferred, specified);
+        std::cout << "%% module " << quote_text(utf8(module->name)) << " source=" << quote_text(module->file)
+                  << " target=" << quote_text(request.project_target)
+                  << " declared=" << completeness(analysis.declared->graph)
+                  << " inferred=" << completeness(inferred.graph) << '\n';
+        const SourceNotes notes{
+            .expression =
+                [&](const ast::Expression &expression) {
+                    return expression_note(*module->syntax, inferred, expression);
+                },
+            .form = [&](const ast::Form &form) { return function_note(*module, inferred, specified, form); }};
+        print_source(std::cout, *module->syntax, notes);
+        std::cout << '\n';
     }
     if (!std::cout) {
         throw std::runtime_error("cannot write type inspection output");

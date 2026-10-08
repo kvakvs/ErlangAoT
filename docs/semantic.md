@@ -133,10 +133,48 @@ shape checks dominate extraction. Specialization policy:
 
 ## `--print-types`
 
-Reports declarations and inferred facts per module (input/target order), with
-logical locations and `binding=clause[N].local[M]` for reads. Unknown facts print
-as `term() [unknown]`; widening and display truncation are labeled. Output is on
-stdout and is human-readable, not an interchange format. Warnings stay on stderr.
+Prints each module of the batch (input/target order, library modules after
+them) as Erlang source ([source printing](compile.md#source-printing)) with what
+type inference found. Output is on stdout and is human-readable, not Erlang and
+not an interchange format. Warnings stay on stderr.
+
+```erlang
+%% module "branches" source="branches.erl" target="" declared=complete inferred=complete
+-module(branches).
+-export([mixed/1]).
+
+%% inferred: mixed(term()) -> 1 | 2
+mixed(X) ->
+    case X of
+        1 ->
+            1;
+        _ ->
+            2
+    end :: 1 | 2.
+```
+
+- A `%% module` line names the module, its source, the project target and
+  whether declared and inferred types completed or were widened by a limit.
+- Declarations (`-type`, `-spec`, `-callback`, records) appear as written.
+- Above each function, `%% inferred: f(Inputs) -> Result` gives its summary
+  and says when a `-spec` declares it. Inputs of exported functions and of
+  functions with specifications stay `term()`.
+- Expressions whose fact says more than `term()` are annotated
+  `Expression :: Type`: in parentheses inside other expressions, without them
+  for a whole body expression. Literals and matches are not annotated (the
+  right side of a match is).
+- `argument N` means the value is the function's N-th argument (1-based), as
+  inference proved; a variable shows only its type, its name already says
+  which argument it is.
+
+### Printing types
+
+`semantic::types::type_source(graph, type)` (`semantic/types/printing`) renders
+a type of the type graph in Erlang type syntax: `term()`, `none()`, atoms and
+integers, `1..5`, `{ok, T}`, `tuple()`, `[T]`, `[T, ...]`, `#{K => V, K := V}`,
+`#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. Predefined `erlang`
+types drop their module; references to declared types stay named. A budget of
+nodes bounds the text; past it, and below 32 levels of nesting, `...` stands in.
 
 ```sh
 erlangaot --print-types answer.erl client.erl

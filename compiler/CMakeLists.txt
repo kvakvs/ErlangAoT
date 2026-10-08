@@ -14,7 +14,9 @@ add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_curso
     src/ast/comprehensions.cpp src/parser/comprehensions.cpp src/printing/tree_comprehensions.cpp
     src/parser/parser.cpp src/parser/forms.cpp src/parser/literals.cpp src/parser/aggregates.cpp src/parser/expressions.cpp src/parser/clauses.cpp src/parser/maps.cpp src/parser/records.cpp src/parser/structural.cpp src/parser/binaries.cpp
     src/source/source.cpp src/diagnostics/diagnostic.cpp
-    src/printing/source.cpp src/printing/token_text.cpp src/printing/printable.cpp
+    src/printing/source.cpp src/printing/token_text.cpp src/printing/printable.cpp src/printing/source_text.cpp
+    src/printing/source_forms.cpp src/printing/source_expressions.cpp src/printing/source_control.cpp
+    src/printing/source_types.cpp
     src/printing/tree.cpp src/printing/tree_forms.cpp src/printing/tree_expressions.cpp src/printing/tree_structural.cpp
     src/lexer/lexer.cpp src/lexer/numbers.cpp src/lexer/literals.cpp
     src/preprocessor/directives.cpp src/preprocessor/preprocessor.cpp
@@ -28,7 +30,7 @@ target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
 target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
 
 add_executable(erlang_aot src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
-    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_format.cpp src/driver/type_declarations.cpp src/driver/type_report.cpp)
+    src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
     target_sources(erlang_aot PRIVATE erlangaot.manifest)
@@ -76,7 +78,7 @@ add_library(erlang_semantic STATIC
     src/semantic/types/resolver.cpp src/semantic/types/traversal.cpp
     src/semantic/types/constants.cpp src/semantic/types/expansion.cpp
     src/semantic/types/inference.cpp src/semantic/types/inference_bindings.cpp src/semantic/types/contracts.cpp
-    src/semantic/types/membership.cpp src/semantic/types/trace.cpp)
+    src/semantic/types/membership.cpp src/semantic/types/trace.cpp src/semantic/types/printing.cpp)
 erlang_aot_project_options(erlang_semantic)
 target_include_directories(erlang_semantic PRIVATE src)
 target_link_libraries(erlang_semantic PUBLIC erlang_frontend erlang_aot_abi)

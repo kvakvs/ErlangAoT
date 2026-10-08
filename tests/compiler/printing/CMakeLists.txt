@@ -7,6 +7,11 @@ if(ERLANG_AOT_BUILD_RUNTIME)
     set_tests_properties(printing_display PROPERTIES TIMEOUT 600)
 endif()
 
+# Erlang source printing: every parseable fixture module prints, parses back to the same tree and prints the same.
+add_test(NAME printing_source COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/source_roundtrip.py"
+    "$<TARGET_FILE:erlang_aot>" "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/source")
+set_tests_properties(printing_source PROPERTIES TIMEOUT 300)
+
 # Live OTP reproduction of the printing goldens; opt-in like other audits.
 if(ERLANG_AOT_OTP_AUDITS)
     add_test(NAME printing_oracle COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/regenerate.py"

@@ -110,6 +110,7 @@ int run_project(const Options &options) {
                                 options.implementation_debug,
                                 target_options(options, invocation, target)};
         request.project_target = target.name;
+        request.print_source = options.print_source;
         request.executable_output = target.output;
         request.create_output_directory = !options.output_explicit;
         request.entry = target.entry;

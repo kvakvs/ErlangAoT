@@ -44,7 +44,7 @@ attributes (`on_load`, parse transforms, other
 Sources starting with `#!` follow [escript rules](executables.md#escripts)
 (implicit module and `main/1` export, `-mode` accepted).
 Type/spec forms are analyzed but never change generated code. Syntax-only modes
-(`--parse-check`, `--print-ast`, ...) accept the full grammar.
+(`--parse-check`, `--print-ast`, `--print-source`, ...) accept the full grammar.
 
 ## Run the compiled-module example
 
@@ -81,6 +81,28 @@ Other actions on the same sources:
 & $tool -O2 --no-type-specialization --verbose examples/compile/answer.erl examples/compile/client.erl
 ```
 
+## Source printing
+
+`--print-source` (a frontend action, like `--print-ast`) prints each parsed
+module as Erlang source; `--print-types` prints the same text with type
+annotations. The printer (`print_source`, `expression_source`, `type_source`
+in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
+
+- Forms follow each other in source order, a blank line around each function;
+  the `-file` form the preprocessor adds before a module is left out, those
+  around included files are kept.
+- The text is the parsed syntax: macros are expanded, includes inlined, and
+  comments, original spelling and layout are gone. Clauses and block
+  expressions (`case`, `if`, `receive`, `try`, `maybe`, `begin`, funs with
+  more than one line) take indented lines of four columns; everything else is
+  on one line. Parentheses come only from the source's own groups.
+- Printed text parses back to the same syntax tree, and printing it again
+  gives the same text (CTest `printing_source` over the parseable fixtures).
+- `SourceNotes` adds an annotation to an expression, printed as
+  `Expression :: Text` (in parentheses unless it is a whole body expression;
+  not Erlang), and comment lines above a form. Patterns, guards and the left
+  side of a match carry none.
+
 ## Options
 
 | Option | Behavior |
@@ -94,7 +116,7 @@ Other actions on the same sources:
 | `-O0` / `-O2` / `-Os` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 / LLVM Os, no specialization, one section per symbol and linker dead-stripping of unreferenced code and data |
 | `--no-type-specialization` | Disable variants regardless of option order |
 | `--print-ir` / `--print-optimized-ir` | Verified IR before/after LLVM passes, with Erlang source lines as comments |
-| `--print-types` | Declared and inferred type report; stops before LLVM |
+| `--print-types` | Each module as Erlang source annotated with inferred types ([semantic](semantic.md#--print-types)); stops before LLVM |
 | `--verbose` | `[pp]`, `[parse]` and `[comp]` phase events on stderr |
 | `--impldebug n[,n...]` | Implementation-step debug output on stderr (e.g. `23`: inference summaries) |
 

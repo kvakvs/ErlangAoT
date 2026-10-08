@@ -51,8 +51,8 @@ def cli(tool, work, rows):
     assert (out / "sentinel").read_bytes() == b"preserve"
     compile_case(tool, work, rows[0], ["-O2"], False)
     report = run([tool, "--print-types", str(work / "identity.erl")])
-    assert "binding=clause[0].local[0]" in report and "argument[0]" in report
-    assert "term() [unknown]" in report
+    # _Name is an ordinary variable: the result is the first argument.
+    assert "%% inferred: f(term(), term()) -> argument 1\n" in report, report
 
 
 def locations(tool, work):

@@ -33,6 +33,8 @@ struct FrontendRequest {
     std::vector<Publication> *pending_publications = nullptr;
     // Preserve unambiguous inspection headers across independently processed project targets.
     bool multiple_targets = false;
+    // Print each parsed module as Erlang source (--print-source).
+    bool print_source = false;
     // Executable destination (--output or a project target's output); present only when linking is requested.
     std::optional<std::filesystem::path> executable_output = {};
     // Create a missing executable directory; set for manifest outputs, never for an explicit --output.

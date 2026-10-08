@@ -88,14 +88,14 @@ def main():
     evidence=load(source,'facts',work)
     types=run([tool,'--print-types',str(work/'answer.erl'),str(work/'client.erl')])
     for label in ['constant_plain','constant_spec']:
-        assert re.search(r'function "'+label+r'"/0[^\n]*result=42',types),types
+        assert re.search(r'%% inferred: '+label+r'\(\) -> 42',types),types
     for label in ['identity_plain','identity_spec']:
-        assert re.search(r'function "'+label+r'"/1[^\n]*argument\[0\]',types),types
+        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> argument 1',types),types
     for label in ['projected_plain','projected_spec']:
-        assert re.search(r'function "'+label+r'"/2[^\n]*argument\[1\]',types),types
+        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> argument 2',types),types
     for label in ['joined_plain','joined_spec','extracted_plain','record_spec']:
-        line=next(line for line in types.splitlines() if 'function "'+label+'"/' in line)
-        assert 'argument[' not in line,line
+        line=next(line for line in types.splitlines() if line.startswith('%% inferred: '+label+'('))
+        assert 'argument' not in line,line
     checks=[]
     for triple in ['x86_64-pc-windows-msvc','i686-pc-windows-msvc']:
         for flags in dict.fromkeys(tuple(flags) for flags,_ in option_lists()):

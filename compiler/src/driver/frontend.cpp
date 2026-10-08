@@ -59,6 +59,16 @@ void print_form(const PreprocessorEvent &event) {
 // Own syntax for the entire batch before borrowing it in semantic side tables.
 using Inputs = std::vector<codegen::CompilationInput>;
 
+// Print a parsed module as the request asks: as a syntax tree, as source, or both.
+void print_parsed(const FrontendRequest &request, const ast::Module &module) {
+    if (request.print_ast) {
+        print_ast(std::cout, module);
+    }
+    if (request.print_source) {
+        print_source(std::cout, module);
+    }
+}
+
 // Consume a parsing pass and dispatch successful modules to the requested final stage.
 bool parse_and_print(PreprocessorSession &session, const FrontendRequest &request, const DiagnosticSink &sink,
                      const std::filesystem::path &path, Inputs &inputs) {
@@ -77,9 +87,7 @@ bool parse_and_print(PreprocessorSession &session, const FrontendRequest &reques
     for (const auto &diagnostic : result.diagnostics) {
         print_diagnostic(diagnostic, sink);
     }
-    if (request.print_ast) {
-        print_ast(std::cout, result.module);
-    }
+    print_parsed(request, result.module);
     if (result.failed || session.failed()) {
         return true;
     }
@@ -114,7 +122,7 @@ bool process_module(const std::filesystem::path &path, const FrontendRequest &re
     const auto source = read_source(sources, path, sink, escript);
     trace_ingestion(request.verbose, "pp", path);
     PreprocessorSession session(source, preprocessing_options(request));
-    if (request.parse_check || request.print_ast || request.compile) {
+    if (request.parse_check || request.print_ast || request.print_source || request.compile) {
         trace_ingestion(request.verbose, "parse", path);
         const auto before = inputs.size();
         const bool failed = parse_and_print(session, request, sink, path, inputs);
@@ -195,6 +203,7 @@ bool process_files(const std::span<const std::filesystem::path> paths, const Fro
 int process_inputs(const Options &options) {
     FrontendRequest request{options.print_pp, options.print_ast,     options.parse_check,          !options.preprocess,
                             options.verbose,  options.preprocessing, options.implementation_debug, options.backend};
+    request.print_source = options.print_source;
     if (options.output_explicit) {
         request.executable_output = options.output;
     }

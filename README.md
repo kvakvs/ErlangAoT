@@ -264,7 +264,8 @@ erlangaot [options] <source.erl>...
   --parse-check            Preprocess and check syntax
   --print-pp               Print expanded Erlang source
   --print-ast              Print an indented syntax tree
-  --print-types            Report declared/inferred types before LLVM lowering
+  --print-source           Print each module as Erlang source
+  --print-types            Print each module as source annotated with inferred types
   --print-ir               Print verified IR with Erlang source comments before LLVM optimization
   --print-optimized-ir     Print verified IR with Erlang source comments after LLVM optimization
   --emit obj|llvm-ir|llvm-bc  Write one artifact per module
@@ -316,8 +317,8 @@ erlangaot --print-types answer.erl client.erl
 
 IR inspection allows both stages together and stops before object emission. Multiple
 snapshots are separate modules; use `--emit llvm-ir` for individual assembly files.
-Type inspection stops before LLVM and distinguishes contracts, inferred facts and
-unknown inputs. It accepts preprocessing/project/verbosity options, but rejects other
+Type inspection stops before LLVM and prints each module as source with inferred
+function signatures and `Expression :: Type` annotations. It accepts preprocessing/project/verbosity options, but rejects other
 actions, output destinations and backend policy. See [compilation options](docs/compile.md).
 
 `--verbose` prints `[pp] <filename>` for source files and resolved preprocessor
