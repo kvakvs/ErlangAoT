@@ -360,10 +360,11 @@ Plan: [55](11-plan.md#step-55).
 
 ## Optimization and developer tooling
 
-- **F34 — Precise type inference** ([58A](11-plan.md#step-58a)–[58G](11-plan.md#step-58g)):
+- **F34 — Precise type inference** ([58A](11-plan.md#step-58a)–[58H](11-plan.md#step-58h)):
   [ ] fact domain decision; [ ] literals; [ ] operators and builtins;
   [ ] containers; [ ] funs; [ ] local inputs from callers; [ ] pattern and
-  guard narrowing. Expectations: `tests/fixtures/inference/values.erl` and
+  guard narrowing; [ ] specs that contradict inferred types are errors
+  (58H). Expectations: `tests/fixtures/inference/values.erl` and
   `base_types.erl` (7 of 39 and 3 of 46 functions at their expected type on
   2026-10-08).
 - **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [ ] remove

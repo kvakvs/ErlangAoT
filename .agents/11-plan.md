@@ -119,7 +119,7 @@ CTests (123 fast) and 258 production quality units.
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58G](#step-58g), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58H](#step-58h), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -1578,6 +1578,49 @@ values they test: `is_integer(X), X >= 1, X =< 10` makes `X` the range
     `neg_integer()`, `infinity | non_neg_integer()`); new rows for range
     guards, tuple and list patterns, map patterns and refinements that must
     not leak.
+
+<a id="step-58h"></a>
+
+### 58H. Reject specifications that contradict inferred types
+
+Backlog: F34. Depends on: [58A](#step-58a), [58G](#step-58g). Added
+2026-10-08 (user request).
+
+A `-spec` must not contradict what inference proves: a function's inferred
+result must be a subtype of (equal to or narrower than) the union of its
+overloads' declared results, and a call whose inferred arguments fit no
+overload's declared arguments contradicts the callee's spec. Today
+`types/contracts.cpp` only warns, and only for known integer singletons.
+Replace it with a subtype relation over the whole 58A fact domain
+(`semantic::types::subtype(declared_graph, declared, inferred_graph,
+inferred)`) and make a contradiction a compile error at the `-spec`.
+
+- Rules: unknown facts (`term()`, widened or over budget) never contradict;
+  `dynamic()`, `any()` and `term()` admit everything; `none()` /
+  `no_return()` admits only a function that never returns, and a function
+  that never returns fits any result; type variables and `when` constraints
+  are checked through their bounds (an unconstrained variable admits
+  everything); opaque and nominal types compare by their own identity outside
+  their module and by definition inside it; remote types resolve through the
+  batch (unresolved remote types admit everything); `-callback` specs are
+  not checked against implementations (behaviours, step 73).
+- OTP's compiler does not check specs (Dialyzer does, as warnings): record
+  the error in `docs/differences.md`; keep the check sound (no false error is
+  acceptable) and report the declared and inferred types in the diagnostic.
+
+- Success criteria
+  - [ ] Every inferred result and every call with known arguments that
+    contradicts a spec is a compile error naming the function, the declared
+    type and the inferred type; a narrower inferred type, an unknown fact and
+    every construct in the rules above compile without one.
+- Tests
+  - [ ] Fixtures (`tests/fixtures/inference/contracts/`) with one
+    contradiction per fact kind of 58A (literal, operator result, container,
+    fun, range, union, overloads, constraints, opaque/nominal, remote type,
+    `no_return()`) each fail with the expected diagnostic; `values.erl`,
+    `base_types.erl` and every existing program and fixture compile without
+    one (their specs hold); `codegen_types`' deliberate `value() -> 42` vs
+    `atom()` case becomes an error test.
 
 <a id="step-59"></a>
 

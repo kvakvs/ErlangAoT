@@ -124,7 +124,9 @@ Inference is separate from declared types and never trusts specs.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
 - Specs are checked only for provable contradictions with known integer
-  results/arguments, producing warnings. This is not success typing.
+  results/arguments, producing warnings. This is not success typing. Plan
+  step 58H makes any contradiction between a `-spec` and the inferred types an
+  error (inferred must be the declared type or narrower).
 
 Lowering consumes these facts. Generated IR never converts an integer to a heap
 pointer; each fallible service result is loaded only on its success path, and
