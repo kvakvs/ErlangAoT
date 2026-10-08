@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "entry": "wakeups",
+  "workers": [
+    1,
+    2,
+    4
+  ],
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "{6,16,20,1}\n{6,16,20,2}\n{6,16,20,3}\n{6,16,20,4}\ndone\n"
+    },
+    {
+      "args": [
+        "teardown"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "main ends\n"
+    },
+    {
+      "args": [
+        "halt"
+      ],
+      "stderr": "^$",
+      "exit_status": 3,
+      "stdout": ""
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "wakeups.erl": "f35cc192cbd5cf9981e21a5f193dc3058aeb7c789c9715675e21cae81b7811ed"
+  }
+}

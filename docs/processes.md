@@ -4,7 +4,8 @@ Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
 selective receive; step 47: receive timeouts; step 48: links and exit
 signals; step 49: monitors; step 50: registered names; step 53: ports
-(none); step 56: scheduler workers.
+(none); step 56: scheduler workers; step 57: cross-worker wakeups and
+shutdown.
 
 ## Executor
 
@@ -88,6 +89,33 @@ the default is one worker per logical processor, as OTP's `+S`.
   atoms, the code server, pid numbers and the memory account.
 - Output of different processes interleaves in the order their writes happen.
   Each `io:format` and `erlang:display` call writes its text at once.
+
+Wakeups and shutdown (plan step 57) need no further mechanism, because every
+change of a process's scheduling state happens under the executor mutex:
+
+- A message, `'EXIT'` or `'DOWN'` for a waiting process queues it in the same
+  critical section that delivers it, and wakes one idle worker. A process
+  that is still in the slice in which it began to wait cannot get a message
+  then (its senders wait for the slice to end), so the delivery always finds
+  it parked.
+- A worker that finds no runnable process sleeps until another worker queues
+  one, the earliest receive timeout, or the program's end; parking a process
+  with a timeout wakes every idle worker so they wait for the new deadline.
+  Busy workers check the timers before every slice.
+- A message and an expiring timeout of one receive may race: whichever comes
+  first queues the process and cancels the other, and the receive takes a
+  message that arrived before it resumed, as OTP's does.
+- An exit signal to a waiting, queued, held or blocked process takes it out
+  of wherever it is before it is finished.
+- When the program ends, every worker finishes its current slice and stops;
+  `run()` returns after joining them, and every other process the executor
+  started is released, so the runtime shuts down with no context left.
+- The OTP golden `executables_wakeups` stresses this with 1, 2, 4 and all
+  workers: receivers whose 0–2 ms timeouts race their senders' messages, a
+  chain of 16 linked spinning processes ended by one exit signal with every
+  member monitored, monitored processes ending as their watcher wakes, a
+  program ending while processes spin, wait and flood each other, and a halt
+  in another process.
 
 ## Exits
 

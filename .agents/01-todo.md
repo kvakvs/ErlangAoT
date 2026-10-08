@@ -309,8 +309,8 @@ Plan: [56](11-plan.md#step-56), [57](11-plan.md#step-57), [62B](11-plan.md#step-
 
 - [x] Queue ownership, workers, reductions and fairness (step 56: one shared
   queue under the executor mutex, `--schedulers`, blocked-signal retry).
-- [ ] Cross-worker wakeups, timers and synchronized shutdown; verify
-  lost-wakeup races (step 57).
+- [x] Cross-worker wakeups, timers and synchronized shutdown; verify
+  lost-wakeup races (step 57: `executables_wakeups` stress).
 
 ### F24 — Signals and message sending
 

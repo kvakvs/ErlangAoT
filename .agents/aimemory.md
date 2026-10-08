@@ -360,6 +360,9 @@ Step facts beyond the plan record:
   fixed with spawn_monitor); concurrent crash reports reorder (regex with lookaheads). Program default schedulers =
   hardware_concurrency; host RuntimeOptions default 1 (runtime tests rely on round robin). build/plan11/repeat.cmd
   NAME N repeats TESTRE tests until fail.
+- 57: no code; executables_wakeups stress (workers 1,2,4; runs [], teardown, halt). OTP races too when monitoring after
+  spawn of a 0 ms process: use spawn_monitor in fixtures; check goldens with regenerate --check 3x. Phase J closed: full
+  CTest 209/209 (102 s, -j 32), check-quality-all clean.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

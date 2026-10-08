@@ -229,6 +229,7 @@
   `Adapter::RETRY` (itself) and `after()` parks the sender among the target's blockers; at the target's slice end
   it is placed first, then blockers are held/queued at the front (`hold`, `place`, `resume`). `finish()` defers
   an ended process with a busy peer (`busy_peer`). `RuntimeMemory` atomic, `ProcessNumbers` shared mutex.
+  Step 57: no code; wakeup/shutdown argument in processes.md#workers, stress golden `executables_wakeups`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

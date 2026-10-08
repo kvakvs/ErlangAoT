@@ -101,8 +101,8 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase I close, step 53,
-2026-10-08): 206 full-mode CTests and 311 production quality units.
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase J close, step 57,
+2026-10-08): 209 full-mode CTests and 311 production quality units.
 
 ## Step overview
 
@@ -1044,14 +1044,19 @@ CPU-bound processes on four workers overlap.
 
 ### 57. Handle cross-worker wakeups, timers and shutdown
 
-Backlog: F23, F25. Depends on: [56](#step-56).
-
-- Success criteria
-  - [ ] No lost wakeups for messages, exit signals or timeouts across workers;
-    shutdown stops workers and releases every process.
-- Tests
-  - [ ] Repeated stress for arrival-versus-timeout races and concurrent
-    teardown (also used under ThreadSanitizer in step 68).
+Done 2026-10-08 (contract `docs/processes.md#workers`). No runtime change was
+needed: every scheduling state change happens under the executor mutex, a
+waiting process cannot get a message during the slice it began to wait in,
+parking with a timeout wakes all idle workers, busy workers expire timers
+before every slice, and `run()` joins every worker before `clear()` releases
+the processes. OTP golden `executables_wakeups` (`workers` 1, 2, 4; runs:
+4 rounds of arrivals against 0-2 ms timeouts, a 16-process linked spinning
+chain killed by one signal with every member monitored, spawn_monitored
+processes ending as their watcher wakes; `teardown` ending while processes
+spin, wait and flood; `halt` from another process, exit 3). The first OTP
+draft raced itself (monitor after spawn of a process ending after 0 ms):
+spawn_monitor. Repeated 20 times (1,440 executions) with no failure; it is the
+step-68 ThreadSanitizer workload.
 
 ## J2. Ports and port I/O
 
