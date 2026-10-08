@@ -1,8 +1,8 @@
 # Processes
 
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
-step 44: exit reasons and error reports. Messages, receive, links and monitors
-arrive in later steps (45–49).
+step 44: exit reasons and error reports; step 45: sending messages. Receive,
+links and monitors arrive in later steps (46–49).
 
 ## Executor
 
@@ -67,6 +67,30 @@ The header has the local time; the reason is laid out as `~p` does. The main
 process does not write one: its uncaught exception is the program's
 ([executables](executables.md)).
 
+## Messages
+
+`Dest ! Msg` and `erlang:send(Dest, Msg)` (plan step 45) evaluate `Dest`
+first and return `Msg`.
+
+| `Dest` | Effect |
+| --- | --- |
+| A pid of a live process | `Msg` is copied into the receiver's heap ([copying between heaps](runtime-heap.md#copying-between-heaps)), keeping its sharing, and appended to its signal inbox |
+| A pid of a process that has ended | Nothing; the send succeeds |
+| `{Name, Node}` of two atoms | Nothing (no name is registered until plan step 50, and there are no other nodes) |
+| An atom, or anything else | `badarg` (an atom names no registered process yet) |
+
+- Messages of one sender arrive in the order it sent them; a self-send is a
+  message like any other.
+- Every message is a collection root of its receiver until a receive takes it
+  ([runtime heap](runtime-heap.md#roots-and-safe-points)).
+- The receiver's mailbox (`Mailbox`) keeps a signal inbox, where sends append,
+  and a message queue that receive scans from a saved position: arrived
+  messages move behind the queue when a receive examines them.
+- When the receiver's heap refuses the copy (an optional cap such as
+  `--max-heap`, or the host out of memory), nothing is delivered and the
+  sending process fails as a runtime failure (exit 70), like any process that
+  exceeds a cap.
+
 ## Builtins
 
 | Builtin | Behavior |
@@ -74,6 +98,7 @@ process does not write one: its uncaught exception is the program's
 | `spawn(Fun)` | `badarg` unless `Fun` is a fun; otherwise a new process calls `Fun()`, raising `{badarity, {Fun, []}}` in that process for another arity |
 | `spawn(M, F, Args)` | `badarg` unless `M` and `F` are atoms and `Args` a proper list; otherwise a new process calls `M:F(Args...)`, raising `undef` in that process when no module exports it and no builtin has that name |
 | `is_process_alive(Pid)` | `badarg` unless `Pid` is a pid; true while its process has not ended |
+| `erlang:send(Dest, Msg)`, `Dest ! Msg` | `Msg`, after sending it ([messages](#messages)); `send/2` is not auto-imported |
 
 The new process is queued behind every runnable process; `spawn` returns its
 pid at once.

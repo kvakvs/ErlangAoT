@@ -1,17 +1,33 @@
 #include <erlang_aot/runtime/process_context.hpp>
 
 namespace erlang_aot::runtime {
-// Empty mailbox ownership only; message/cursor storage awaits receive and scheduler implementation.
-class Mailbox::Impl final {
-  public:
-    // Retain a process-local binding without fabricating messages, cursors or scheduler state.
-    explicit Impl(ProcessContext &owner) : owner(owner) {}
+void Mailbox::deliver(Word message) { inbox_.push_back(message); }
 
-    // The owning context outlives this binding and its future receiver-owned roots.
-    ProcessContext &owner;
-};
+std::optional<Word> Mailbox::peek() noexcept {
+    if (!inbox_.empty()) {
+        // Arrived messages join the queue behind those already seen; a receive past the end examines them next.
+        const auto first = inbox_.begin();
+        const bool at_end = position_ == queue_.end();
+        queue_.splice(queue_.end(), inbox_);
+        if (at_end) {
+            position_ = first;
+        }
+    }
+    return position_ == queue_.end() ? std::nullopt : std::optional{*position_};
+}
 
-Mailbox::Mailbox(ProcessContext &owner) : impl_(std::make_unique<Impl>(owner)) {}
+void Mailbox::skip() noexcept {
+    if (position_ != queue_.end()) {
+        ++position_;
+    }
+}
 
-Mailbox::~Mailbox() = default;
+void Mailbox::take() noexcept {
+    if (position_ != queue_.end()) {
+        queue_.erase(position_);
+    }
+    restart();
+}
+
+void Mailbox::restart() noexcept { position_ = queue_.begin(); }
 } // namespace erlang_aot::runtime

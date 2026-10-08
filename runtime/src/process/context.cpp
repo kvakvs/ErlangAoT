@@ -29,7 +29,7 @@ ProcessContext::ProcessContext(Runtime &runtime, ProcessIdentity identity, HeapO
                                StackOptions stack_options, std::shared_ptr<detail::RuntimeMemory> memory,
                                const detail::ProcessNumbers &numbers)
     : impl_(std::make_unique<Impl>(runtime, identity, std::move(memory), numbers)), heap_(*this, options),
-      mailbox_(*this), generated_calls_(stack_), stack_(*this, stack_options) {}
+      generated_calls_(stack_), stack_(*this, stack_options) {}
 
 ProcessContext::~ProcessContext() { impl_->lifetime->alive_ = false; }
 

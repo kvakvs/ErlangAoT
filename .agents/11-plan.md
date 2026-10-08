@@ -1146,11 +1146,35 @@ signal inbox and is copied by the step-28 service into a heap fragment of the
 receiver, merged into its heap at the next collection.
 
 - Success criteria
-  - [ ] Per-sender order is preserved; sending to a dead process succeeds
+  - [x] Per-sender order is preserved; sending to a dead process succeeds
     silently; invalid destinations raise `badarg`.
 - Tests
-  - [ ] Golden programs for ping-pong, fan-in ordering and self-send.
-  - [ ] Copy failure in the receiver is handled per contract.
+  - [x] Golden programs for ping-pong, fan-in ordering and self-send: the
+    send semantics golden here; ping-pong and fan-in need receive and are
+    goldens of step 46.
+  - [x] Copy failure in the receiver is handled per contract.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/processes.md#messages`. Catalog appended `'!'/2` and `send/2`
+  (`send/2` not auto-imported); `A ! B` lowers to the `!` bridge builtin
+  (destination first, value is the message); `send expressions` and runtime
+  `message passing` features implemented (the `ProcessContext::send`
+  placeholder and its deferred-report tests removed). `Executor::send` copies
+  the message into the live receiver's heap (`Term::copy_to`, step 28) and
+  appends it to the signal inbox of the concrete `Mailbox` (inbox + queue +
+  saved position: `peek`/`skip`/`take`/`restart`, arrived messages join the
+  queue on `peek`); messages are roots (`visit_roots`). Ended pid: nothing;
+  `{Atom, Atom}`: dropped (no registry until step 50); other destinations
+  badarg; a refused copy fails the sender (runtime failure, exit 70). OTP
+  probes: Dest before Msg, `{name, nonode@nohost}`/remote node silent, bare
+  unregistered atom and `{name, 1}` badarg. OTP golden `executables_send`
+  (order of evaluation, return values, large messages to a busy process, dead
+  pid, self-send, `erlang:'!'/2`, every destination kind); `runtime_messages`
+  (per-sender order mixed with self-sends across a receiver collection,
+  receive positions and arrivals, ended receiver, a receiver heap cap refusing
+  the copy and delivering nothing, teardown releases everything);
+  programs kvstore/ring/supervise lose their send diagnostics. Fresh Windows
+  x64 Debug: fast 191/191 (62 s); check-quality (Lizard, tidy 305 units in 5
+  batches) passes. Logs `build/plan11-step45/`.
 
 <a id="step-46"></a>
 

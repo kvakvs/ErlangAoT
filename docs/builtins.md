@@ -32,7 +32,9 @@ builtin both the compiler and the runtime know:
 - process identities (plan step 42): `self/0`, `make_ref/0`, `pid_to_list/1`
   and `ref_to_list/1` ([pids and references](terms.md#pids-and-references));
 - processes (plan step 43): `spawn/1,3` and `is_process_alive/1`
-  ([processes](processes.md)).
+  ([processes](processes.md));
+- messages (plan step 45): `'!'/2` (the `!` operator) and `send/2`
+  ([messages](processes.md#messages)).
 
 Entries are only appended: an entry's index is the number generated code
 passes to the bridge service. A qualified call of a catalog builtin of another

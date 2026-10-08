@@ -1,10 +1,6 @@
 exit 1
-erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kv_server.erl:25:15: [send expressions] notimpl [module="kv_server"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kv_server.erl:34:5: [receive] notimpl [module="kv_server"]
-erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kv_server.erl:33:15: [send expressions] notimpl [module="kv_server"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kv_server.erl:41:5: [receive] notimpl [module="kv_server"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:34:5: [receive] notimpl [module="kvstore"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:29:5: [receive] notimpl [module="kvstore"]
-erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:25:12: [send expressions] notimpl [module="kvstore"]
-erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:24:12: [send expressions] notimpl [module="kvstore"]
 erlangaot: <fixture>/project.toml [target kvstore]: error: <fixture>/src/kvstore.erl:45:5: [receive] notimpl [module="kvstore"]

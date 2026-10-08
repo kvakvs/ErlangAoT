@@ -306,8 +306,8 @@ Plan: [56](11-plan.md#step-56), [57](11-plan.md#step-57).
 
 Plan: [45](11-plan.md#step-45).
 
-- [ ] Ordered signal inbox for every message (including self-send), F05 copying
-  before mailbox insertion, rooted messages in transit; lower send.
+- [x] Ordered signal inbox for every message (including self-send), F05 copying
+  before mailbox insertion, rooted messages in transit; lower send (step 45).
 
 ### F25 — Selective receive and timeouts
 

@@ -69,29 +69,24 @@ bool calls(Runtime &runtime, ProcessContext &context) {
     return std::cin.eof();
 }
 
-// Preserve generated calls and explicit teardown even when a reached service returns deferred failure.
-int execute(Runtime &runtime, bool deferred) {
+// Run the generated calls, then tear the context and runtime down explicitly.
+int execute(Runtime &runtime) {
     auto *context = runtime.create_context().value();
-    const auto message = Term::from_word(encode_integer(1).value()).value();
-    if (deferred && (context->send(context->identity(), message) != std::unexpected(ProcessError::not_implemented) ||
-                     context->heap().used_words() != 0 || context->heap().capacity_words() != 0)) {
-        return 4;
-    }
     const bool success = identity_boundaries(runtime, *context) && calls(runtime, *context);
     if (runtime.destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
         runtime.shutdown() != erlang_aot::abi::v1::Status::ok) {
         return 2;
     }
-    return success ? static_cast<int>(deferred) : 3;
+    return success ? 0 : 3;
 }
 } // namespace
 
 // Own explicit startup and registration around real CLI-generated objects.
-int main(int argc, char **argv) {
+int main() {
     using namespace erlang_aot::runtime;
     auto runtime = Runtime::start().value();
     if (!rejects_incompatible(*runtime) || register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;
     }
-    return execute(*runtime, argc == 2 && std::string_view(argv[1]) == "--deferred-send");
+    return execute(*runtime);
 }

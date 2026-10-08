@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "send",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "destination\nmessage\n{hello,[1,2,3]}\n[true,true,\n {ok,gone},\n {ok,self},\n {ok,operator},\n {ok,dropped},\n {ok,dropped},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg},\n {error,badarg}]\ndone\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "send.erl": "8e0542dc615fcc28d62e4fffd715fca26af40ac3792973021ea5d7774533dcac"
+  }
+}

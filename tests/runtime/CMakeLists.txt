@@ -82,6 +82,13 @@ target_link_libraries(runtime_processes PRIVATE ErlangAoT::generated_program)
 target_include_directories(runtime_processes PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_processes COMMAND runtime_processes)
 
+# Messages between contexts: order, self-send, ended receivers, collections, receive positions, refused copies.
+add_executable(runtime_messages messages.cpp)
+erlang_aot_project_options(runtime_messages)
+target_link_libraries(runtime_messages PRIVATE ErlangAoT::generated_program)
+target_include_directories(runtime_messages PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_messages COMMAND runtime_messages)
+
 # Builtins that run in portions as a process's first call, with a collection between every two portions.
 add_executable(runtime_portions portions.cpp)
 erlang_aot_project_options(runtime_portions)

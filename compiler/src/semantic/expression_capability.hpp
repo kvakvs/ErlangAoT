@@ -25,7 +25,8 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::CallExpression &) const { return {}; }
 
-    std::string_view operator()(const ast::BinaryExpression &) const;
+    // Every binary operator lowers: through the checked services, lazily, or (++, --, !) through the bridge.
+    std::string_view operator()(const ast::BinaryExpression &) const { return {}; }
 
     std::string_view operator()(const ast::Atom &) const { return {}; }
 

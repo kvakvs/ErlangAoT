@@ -53,9 +53,4 @@ std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference 
     const auto &[owner, name, count] = *names;
     return owner != U"erlang" || bridge_builtin({name, count}) ? "" : "dynamic calls";
 }
-
-// Every binary operator but send lowers: through the checked services, lazily, or (++, --) through the bridge.
-std::string_view ExpressionCapability::operator()(const ast::BinaryExpression &value) const {
-    return value.operation == ast::BinaryOperator::send ? "send expressions" : "";
-}
 } // namespace erlang_aot::semantic

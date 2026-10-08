@@ -192,14 +192,16 @@ remains the full check that every slot names an object start, for tests.
 | Raw frame slots | None | Spilled native values; generated code keeps no heap word there at a safe point (step 24 reload rule) |
 | Registers | `x[0..live)` (`ProcessStack::keep_registers`) | A suspended entry's arguments (step 43); every push and pop clears `live` |
 | Failure channel | Error payload (BEAM `fvalue`), `erlang:error/2,3` argument list, stack trace term | Rebound in place; captured trace frames are descriptor pointers into code |
+| Trap state | The term words of a trapping builtin's `TrapState` (step 43A) | Released when the builtin finishes or fails |
+| Mailbox | Every message in the signal inbox and the message queue (step 45) | Until a receive takes it |
 | Explicit roots | The span a host passes to `collect(roots)` (8E) | Read back after the call |
 | Off-heap list | None | Links are swept and relinked, not traced |
 
 No heap cell holds a pin. Atoms are immediates and the atom table is never
 collected. Fun cells name code through their untraced `FunDefinition`, which
 lives as long as the runtime; loaded modules are never unloaded, so neither
-funs nor trace descriptors need a pin. Mailbox terms join the inventory with
-messages (step 45). Small immediates are not roots.
+funs nor trace descriptors need a pin. Small immediates are not
+roots.
 
 As in ERTS C code, a host `Term` is a raw tagged word valid until the next safe
 point of its heap. It does not pin heap storage; it keeps a weak context

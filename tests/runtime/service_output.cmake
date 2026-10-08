@@ -1,6 +1,6 @@
 # Every reachable service owner emits exactly one stderr line; lifecycle and tests using sinks stay silent.
-set(modes quiet term allocate collect send run execute unload builtin nested)
-set(features "" "term services" "allocation" "garbage collection" "message passing"
+set(modes quiet term allocate collect run execute unload builtin nested)
+set(features "" "term services" "allocation" "garbage collection"
     "scheduling" "process execution" "dynamic modules" "builtins" "term services")
 foreach(mode feature IN ZIP_LISTS modes features)
     execute_process(COMMAND "${PROGRAM}" "${mode}" RESULT_VARIABLE result

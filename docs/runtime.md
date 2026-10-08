@@ -149,11 +149,11 @@ records process lifecycle only; it runs no code.
   inspection and returns stay available for draining.
 - `run` and `execute` report `not_implemented`.
 
-Design sketches for workers, processes and mailboxes live in
-[runtime/design/](../runtime/design/) and `runtime/include/{scheduler,process,mailbox}.hpp`.
-Key intent: messages, including self-sends, enter the receiver's signal inbox
-and are copied into its heap only when the owner handles signals; reductions
-bound each resume.
+Design sketches for workers and processes live in
+[runtime/design/](../runtime/design/) and `runtime/include/{scheduler,process}.hpp`.
+Messages are implemented ([processes](processes.md#messages)): a send copies
+the message into the receiver's heap and appends it to its signal inbox
+(`runtime/include/mailbox.hpp`).
 
 ## Standard output
 
@@ -186,7 +186,6 @@ state:
 | Boundary | Error |
 | --- | --- |
 | `TermFactory::port` (no ports yet, plan step 53), `reference(ReferenceIdentity)` and `function(FunctionIdentity)` | `TermError::not_implemented` |
-| `ProcessContext::send` | `ProcessError::not_implemented` |
 | `SchedulerService::run` / `execute` | `SchedulerError::not_implemented` |
 | `CodeServer::unload` | `CodeError::not_implemented` |
 | `dispatch_builtin` on a catalogued BIF | `Status::not_implemented` |

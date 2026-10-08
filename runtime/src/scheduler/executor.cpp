@@ -89,6 +89,21 @@ bool Executor::alive(ProcessContext &context, Word pid) noexcept {
     return context.runtime().impl_->processes.contains(pid_number(pid));
 }
 
+TermResult<void> Executor::send(ProcessContext &sender, Word pid, const Term &message) {
+    const auto &processes = sender.runtime().impl_->processes;
+    const auto found = processes.find(pid_number(pid));
+    if (found == processes.end()) {
+        return {};
+    }
+    auto &receiver = *found->second;
+    const auto copy = message.copy_to(receiver.heap());
+    if (!copy) {
+        return std::unexpected(copy.error());
+    }
+    receiver.mailbox().deliver(copy->word());
+    return {};
+}
+
 bool Executor::requeue(ProcessContext &process) noexcept {
     try {
         queue_.push_back(&process);

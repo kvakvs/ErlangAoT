@@ -34,9 +34,6 @@ bool record(void *state, std::string_view message) {
 // Exercise delivery rejection through real service calls, not only the reporter utility.
 bool reject(void *, std::string_view) { return false; }
 
-// Exercise a throwing delivery callback without allowing exceptions through service boundaries.
-bool throwing(void *, std::string_view) { throw std::runtime_error("sink failure"); }
-
 // Deferred factory constructors must fail once without manufacturing a value or root.
 void check_factory(ProcessContext &context) {
     Reports reports;
@@ -102,22 +99,6 @@ void check_execution(Runtime &runtime, ProcessContext &context) {
     require(scheduler.execute(identity, sink) == std::unexpected(SchedulerError::stopped),
             "stopped execution admitted");
     require(reports.count == 2, "ordinary lifecycle failures reported deferred work");
-}
-
-// Self-send is still a signal operation; it must fail instead of silently delivering or dropping a message.
-void check_send(ProcessContext &context) {
-    Reports reports;
-    const auto term = *Term::from_word(*encode_integer(1));
-    require(context.send(context.identity(), term, {&reports, record}) ==
-                std::unexpected(ProcessError::not_implemented),
-            "send fabricated acceptance");
-    require(reports.count == 1 && reports.last.starts_with("[message passing] notimpl"), "send report wrong");
-    require(context.send(context.identity(), term, {nullptr, reject}) ==
-                std::unexpected(ProcessError::diagnostic_failure),
-            "send sink error lost");
-    require(context.send(context.identity(), term, {nullptr, throwing}) ==
-                std::unexpected(ProcessError::diagnostic_failure),
-            "send sink exception escaped");
 }
 
 // Publish a harmless linked module so unload rejection can be checked against real retained ownership.
@@ -199,11 +180,7 @@ bool report_storage(std::string_view mode, ProcessContext &context) {
 // Process/scheduler subprocess modes never execute user code or mutate dispatch state.
 bool report_execution(std::string_view mode, Runtime &runtime, ProcessContext &context) {
     auto &scheduler = *runtime.scheduler();
-    if (mode == "send") {
-        require(context.send(context.identity(), *Term::from_word(*encode_integer(1))) ==
-                    std::unexpected(ProcessError::not_implemented),
-                "send status wrong");
-    } else if (mode == "run") {
+    if (mode == "run") {
         require(scheduler.run() == std::unexpected(SchedulerError::not_implemented), "worker status wrong");
     } else if (mode == "execute") {
         require(scheduler.execute(context.identity()) == std::unexpected(SchedulerError::not_implemented),
@@ -249,7 +226,6 @@ int main(int argc, char **argv) {
             check_factory(*context);
             check_factory_lifetime();
             check_memory(*context);
-            check_send(*context);
             check_execution(*runtime, *context);
             check_unload(context->code_server());
             check_builtin_identity(*context);

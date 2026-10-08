@@ -157,17 +157,33 @@ llvm::Value *call_value(ExpressionLowering &state, const ast::Expression &expres
     return lower_operation(state, operation(service->second.operation), left, right);
 }
 
-// Bridge indexes of the list operators' builtins.
+// Bridge indexes of the builtins of the list and send operators.
 constexpr auto APPEND = abi::v1::find_bridge_builtin("erlang", "++", 2).value_or(0);
 constexpr auto SUBTRACT = abi::v1::find_bridge_builtin("erlang", "--", 2).value_or(0);
-static_assert(abi::v1::find_bridge_builtin("erlang", "++", 2) && abi::v1::find_bridge_builtin("erlang", "--", 2));
+constexpr auto SEND = abi::v1::find_bridge_builtin("erlang", "!", 2).value_or(0);
+static_assert(abi::v1::find_bridge_builtin("erlang", "++", 2) && abi::v1::find_bridge_builtin("erlang", "--", 2) &&
+              abi::v1::find_bridge_builtin("erlang", "!", 2));
 
-// List operators call their bridge builtins; every other binary operator uses the shared checked services.
+// The bridge builtin of an operator that has one: ++, -- and !.
+std::optional<std::size_t> operator_builtin(ast::BinaryOperator operation) {
+    switch (operation) {
+    case ast::BinaryOperator::append:
+        return APPEND;
+    case ast::BinaryOperator::subtract_list:
+        return SUBTRACT;
+    case ast::BinaryOperator::send:
+        return SEND;
+    default:
+        return std::nullopt;
+    }
+}
+
+// List and send operators call their bridge builtins; every other binary operator uses the shared checked services.
 llvm::Value *binary_value(ExpressionLowering &state, const ast::BinaryExpression &binary) {
     const std::array values{state.values.at(&state.module.syntax->expression(binary.left)),
                             state.values.at(&state.module.syntax->expression(binary.right))};
-    if (binary.operation == ast::BinaryOperator::append || binary.operation == ast::BinaryOperator::subtract_list) {
-        return lower_builtin(state, binary.operation == ast::BinaryOperator::append ? APPEND : SUBTRACT, values);
+    if (const auto builtin = operator_builtin(binary.operation)) {
+        return lower_builtin(state, *builtin, values);
     }
     return lower_operation(state, operation(semantic::immediate_operator(binary.operation)), values[0], values[1]);
 }

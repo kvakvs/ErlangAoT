@@ -10,7 +10,6 @@ CASES = {
     "dynamic calls": "f() -> fun erlang:node/0.",
     "receive": "f() -> receive X -> X end.",
     "behavior-changing attributes": "-on_load(f/0). f() -> 1.",
-    "send expressions": "f(X) -> X ! 1.",
 }
 
 

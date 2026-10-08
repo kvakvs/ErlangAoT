@@ -30,6 +30,9 @@ class Executor final {
     TermResult<Term> spawn(ProcessContext &parent, const InitialCall &call) noexcept;
     // Whether the process of a pid word this runtime issued has not ended.
     static bool alive(ProcessContext &context, Word pid) noexcept;
+    // Deliver `message` of `sender` to the process of a pid word this runtime issued: copied into the receiver's
+    // heap and appended to its signal inbox. A process that has ended gets nothing; the error is a failed copy.
+    static TermResult<void> send(ProcessContext &sender, Word pid, const Term &message);
 
     // Run queued processes until `main` ends or another process halts or fails outside Erlang; return the process
     // whose outcome ends the program. Processes ending before it are released.

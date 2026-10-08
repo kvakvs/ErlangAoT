@@ -89,7 +89,7 @@ class ProcessContext final {
     const ProcessIdentity &identity() const noexcept;
     // Allocate only on this context's owning scheduler thread.
     ProcessHeap &heap() noexcept;
-    // Start selective receive through mailbox().begin_receive() on this process's owner thread.
+    // The process's messages: its signal inbox and the queue receive scans (docs/processes.md#messages).
     Mailbox &mailbox() noexcept;
     // Resolve loaded code through the runtime-wide server shared by scheduler workers.
     CodeServer &code_server() noexcept;
@@ -97,8 +97,6 @@ class ProcessContext final {
     AtomStorage &atom_storage() noexcept;
     // Borrow the runtime's standard output sink for erlang:display/1 and later io services.
     OutputSink standard_output() const noexcept;
-    // Reserve signal sending; currently report message_passing without claiming acceptance or delivery.
-    ProcessResult<void> send(ProcessIdentity recipient, const Term &value, DiagnosticSink sink = {}) noexcept;
 
     // Share failure state across a synchronous generated invocation and its runtime services.
     GeneratedCallState &generated_calls() noexcept { return generated_calls_; }
@@ -106,12 +104,13 @@ class ProcessContext final {
     // The process stack of explicit generated frames and its argument/result registers.
     ProcessStack &stack() noexcept { return stack_; }
 
-    // Visit every root word (frame term slots, live registers, the failure channel's terms), then the host's
-    // explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe point
-    // (docs/runtime-heap.md#roots-and-safe-points).
+    // Visit every root word (frame term slots, live registers, the failure channel's terms, messages), then the
+    // host's explicit roots, so a collector can rewrite them in place. Nothing else holds heap words across a safe
+    // point (docs/runtime-heap.md#roots-and-safe-points).
     template <typename Visitor> void visit_roots(std::span<Word> explicit_roots, Visitor &&visit) {
         stack_.visit(visit);
         generated_calls_.visit(visit);
+        mailbox_.visit(visit);
         for (auto &word : explicit_roots) {
             visit(word);
         }
@@ -132,7 +131,7 @@ class ProcessContext final {
     std::unique_ptr<Impl> impl_;
     // Own process term storage; destroy the mailbox before releasing heap-backed values.
     ProcessHeap heap_;
-    // Retain future messages/receive state within this same owner; currently empty and lazy.
+    // Messages sent to this process, roots until received; released before the heap they live in.
     Mailbox mailbox_;
     // Retire scheduling identity on removal; successful registration may occur only once per context.
     bool scheduler_registered_once_ = false;

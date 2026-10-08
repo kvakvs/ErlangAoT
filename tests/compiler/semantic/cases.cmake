@@ -67,7 +67,7 @@ semantic_case(if_expr "-module(a). f() -> if true -> 1 end." 0 "^$")
 semantic_case(if_guard_call "-module(a). f(X) -> if g(X) -> X end. g(Z) -> Z." 1 "illegal guard call")
 semantic_case(if_in_guard "-module(a). f(X) when if true -> true end -> X." 1 "illegal guard expression")
 semantic_case(receive_expr "-module(a). f() -> receive X -> X end." 1 "receive")
-semantic_case(send "-module(a). f(X) -> X ! 1." 1 "send expressions")
+semantic_case(send "-module(a). f(X) -> X ! 1." 0 "^$")
 semantic_case(closure "-module(a). f() -> fun(X) -> X end." 0 "^$")
 semantic_case(named_fun "-module(a). f() -> fun F(X) -> F(X) end." 0 "^$")
 semantic_case(named_fun_scope "-module(a). f() -> G = fun F(X) -> F(X) end, {G, F}." 1

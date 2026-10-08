@@ -181,6 +181,9 @@
   Step 44 (`docs/processes.md#exits`): `process/exits` `exit_reason` (normal, exit reason, {R, Stack},
   {{nocatch, V}, Stack}) and `report_exit` (OTP legacy `=ERROR REPORT====` text on stderr, `~p` via
   `builtins::pretty`), called by the executor for an ended non-main process; `stack_term` is public in exceptions.
+  Step 45 (`docs/processes.md#messages`): `!`/`send/2` bridge builtins -> `Executor::send` (copy into the receiver's
+  heap, `Mailbox::deliver`). `Mailbox` (`runtime/include/mailbox.hpp`, `process/storage.cpp`): `std::list` inbox and
+  queue + saved position (`peek` splices arrivals, `skip`, `take`, `restart`, `unexamined`); words are roots.
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import
