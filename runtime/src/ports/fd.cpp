@@ -10,7 +10,10 @@ class FdDriver final : public PortDriver {
     // Keep the descriptors; they belong to the program, not to the port, and stay open after it closes.
     explicit FdDriver(std::pair<int, int> descriptors) noexcept : in_(descriptors.first), out_(descriptors.second) {}
 
-    std::optional<int> input() const noexcept override { return in_; }
+    // The program's own descriptor: never closed by the port, and not overlapped on Windows.
+    std::optional<Descriptor> input() const noexcept override {
+        return Descriptor{.handle = native_descriptor(in_), .owned = false, .overlapped = false};
+    }
 
     // Flush buffered standard output and error first, so bytes keep the order in which they were written.
     std::expected<void, DriverError> write(std::span<const std::byte> bytes) override {

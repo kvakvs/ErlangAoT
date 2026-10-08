@@ -1,5 +1,6 @@
-#include "io.hpp"
+#include "io_streams.hpp"
 #include <algorithm>
+#include <deque>
 
 // Input framing of ports (docs/ports.md#data-modes-and-options).
 namespace clause::runtime::detail {
@@ -72,36 +73,75 @@ void InputDecoder::lines(std::vector<PortInput> &units) {
 
 namespace clause::runtime::detail {
 namespace {
-// Write a port's queue until the port closed and the queue is empty; a failed write reports the error once and
-// drops the rest. An owned descriptor is closed at the end.
-void write_loop(const std::shared_ptr<IoGate> &gate, const std::shared_ptr<Writer> &writer) {
-    bool failed = false;
-    for (;;) {
-        std::vector<std::byte> bytes;
-        {
-            std::unique_lock lock(writer->mutex);
-            writer->ready.wait(lock, [&] { return !writer->queue.empty() || writer->closing; });
-            if (writer->queue.empty()) {
-                break;
+// Writes a port's queued output to a pipe in order; once stopped it writes what is queued, then closes the pipe. A
+// failed write reports the error once and drops the rest.
+class Output final : public Channel, public std::enable_shared_from_this<Output> {
+  public:
+    Output(IoService::Impl &service, Word port, PipeStream stream)
+        : service_(service), port_(port), stream_(std::move(stream)) {}
+
+    // Queue `bytes` after the output before them.
+    void send(std::vector<std::byte> bytes) {
+        if (failed_) {
+            return;
+        }
+        queue_.push_back(std::move(bytes));
+        if (!writing_) {
+            next();
+        }
+    }
+
+    void stop() override {
+        stopped_ = true;
+        if (!writing_) {
+            next();
+        }
+    }
+
+  private:
+    // Start writing the oldest queued output; close the pipe once stopped with nothing queued.
+    void next() {
+        if (queue_.empty()) {
+            if (stopped_) {
+                boost::system::error_code ignored;
+                stream_.close(ignored);
             }
-            bytes = std::move(writer->queue.front());
-            writer->queue.pop_front();
+            return;
         }
-        if (failed) {
-            continue;
-        }
-        if (const auto written = write_all(writer->fd, bytes); !written && !writer->stopped) {
-            failed = true;
-            gate->deliver(
-                writer->port,
-                {PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = written.error().reason, .status = 0}},
-                0);
-        }
+        writing_ = true;
+        asio::async_write(
+            stream_, asio::buffer(queue_.front()),
+            [self = shared_from_this()](const boost::system::error_code &error, std::size_t) { self->written(error); });
     }
-    if (writer->owned) {
-        close_descriptor(writer->fd);
+
+    // A write completed: report a failure once, then go on with the queue.
+    void written(const boost::system::error_code &error) {
+        writing_ = false;
+        queue_.pop_front();
+        if (error) {
+            if (!stopped_) {
+                service_.deliver(
+                    port_,
+                    {PortInput{
+                        .kind = PortInput::Kind::error, .bytes = {}, .reason = write_reason(error), .status = 0}},
+                    0);
+            }
+            failed_ = true;
+            queue_.clear();
+        }
+        next();
     }
-}
+
+    IoService::Impl &service_;
+    Word port_;
+    PipeStream stream_;
+    // Output not written yet, oldest first; the front is being written while writing_ is set.
+    std::deque<std::vector<std::byte>> queue_;
+    bool writing_ = false;
+    // Set when the port was forgotten, and after a failed write.
+    bool stopped_ = false;
+    bool failed_ = false;
+};
 } // namespace
 
 void IoGate::deliver(Word port, std::vector<PortInput> units, std::size_t read) {
@@ -111,71 +151,67 @@ void IoGate::deliver(Word port, std::vector<PortInput> units, std::size_t read) 
     }
 }
 
-IoService::IoService(Deliver deliver) : gate_(std::make_shared<IoGate>()) { gate_->receiver = std::move(deliver); }
+void IoGate::close() {
+    const std::scoped_lock lock(mutex);
+    open = false;
+}
+
+IoService::Impl::Impl(asio::io_context &io, Deliver deliver) : context(io), gate(std::make_shared<IoGate>()) {
+    gate->receiver = std::move(deliver);
+}
+
+IoService::IoService(Reactor &reactor, Deliver deliver)
+    : impl_(std::make_unique<Impl>(reactor.context(), std::move(deliver))) {
+    prepare_io();
+}
 
 IoService::~IoService() {
-    {
-        const std::scoped_lock lock(gate_->mutex);
-        gate_->open = false;
-    }
-    const std::scoped_lock lock(mutex_);
-    for (auto &[port, writer] : writers_) {
-        const std::scoped_lock writing(writer->mutex);
-        writer->closing = true;
-        writer->ready.notify_one();
-    }
+    impl_->gate->close();
+    // The reactor has stopped, so no handler runs while the channels go.
+    impl_->ports.clear();
+    impl_->shared.reset();
+}
+
+void IoService::close() { impl_->gate->close(); }
+
+void IoService::read_descriptor(Word port, Descriptor input, const PortOptions &options) {
+    asio::post(impl_->context, [impl = impl_.get(), port, input, decoder = InputDecoder(options)]() mutable {
+        impl->ports[port].input = start_input(*impl, port, input, std::move(decoder));
+    });
 }
 
 void IoService::write_descriptor(Word port, Descriptor output) {
-    auto writer = std::make_shared<Writer>();
-    writer->port = port;
-    writer->fd = output.fd;
-    writer->owned = output.owned;
-    std::thread([gate = gate_, writer] { write_loop(gate, writer); }).detach();
-    const std::scoped_lock lock(mutex_);
-    writers_.insert_or_assign(port, std::move(writer));
+    asio::post(impl_->context, [impl = impl_.get(), port, output] {
+        impl->ports[port].output = std::make_shared<Output>(*impl, port, pipe_stream(impl->context, output.handle));
+    });
 }
 
 void IoService::send(Word port, std::vector<std::byte> bytes) {
-    std::shared_ptr<Writer> writer;
-    {
-        const std::scoped_lock lock(mutex_);
-        const auto found = writers_.find(port);
-        if (found == writers_.end()) {
-            return;
+    asio::post(impl_->context, [impl = impl_.get(), port, bytes = std::move(bytes)]() mutable {
+        const auto found = impl->ports.find(port);
+        if (found != impl->ports.end() && found->second.output) {
+            std::static_pointer_cast<Output>(found->second.output)->send(std::move(bytes));
         }
-        writer = found->second;
-    }
-    const std::scoped_lock lock(writer->mutex);
-    writer->queue.push_back(std::move(bytes));
-    writer->ready.notify_one();
+    });
 }
 
 void IoService::watch_child(Word port, Child child) {
-    auto reporting = std::make_shared<std::atomic<bool>>(true);
-    std::thread([gate = gate_, port, child, reporting] {
-        const auto status = wait_child(child.handle);
-        if (*reporting) {
-            gate->deliver(port,
-                          {PortInput{.kind = PortInput::Kind::status, .bytes = {}, .reason = {}, .status = status}}, 0);
-        }
-    }).detach();
-    const std::scoped_lock lock(mutex_);
-    watchers_.insert_or_assign(port, std::move(reporting));
+    asio::post(impl_->context,
+               [impl = impl_.get(), port, child] { impl->ports[port].child = start_child(*impl, port, child); });
 }
 
 void IoService::forget(Word port) {
-    const std::scoped_lock lock(mutex_);
-    if (const auto writer = writers_.find(port); writer != writers_.end()) {
-        writer->second->stopped = true;
-        const std::scoped_lock writing(writer->second->mutex);
-        writer->second->closing = true;
-        writer->second->ready.notify_one();
-        writers_.erase(writer);
-    }
-    if (const auto watcher = watchers_.find(port); watcher != watchers_.end()) {
-        *watcher->second = false;
-        watchers_.erase(watcher);
-    }
+    asio::post(impl_->context, [impl = impl_.get(), port] {
+        const auto found = impl->ports.find(port);
+        if (found == impl->ports.end()) {
+            return;
+        }
+        for (const auto &channel : {found->second.input, found->second.output, found->second.child}) {
+            if (channel) {
+                channel->stop();
+            }
+        }
+        impl->ports.erase(found);
+    });
 }
 } // namespace clause::runtime::detail

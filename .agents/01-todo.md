@@ -381,7 +381,10 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 - [x] Subprocess ports with stdin/stdout, `os:cmd/1` (57D; POSIX compiled, not run).
 - [x] `fd`/file ports, `file` subset, standard input through ports (57E; output stays direct).
 - [x] TCP/UDP sockets as ports, `gen_tcp`/`gen_udp`/`inet` subsets on Boost.Asio (57F).
-- [ ] Ports scheduled like processes (port tasks, reductions, busy ports) on one event-driven backend (57G).
+- [x] One event-driven I/O thread for every port kind, no per-port threads (57G1; Windows fd input excepted; POSIX
+  port I/O run under WSL by `runtime_port_io`).
+- [ ] Port tasks on the scheduler workers with a reduction budget (57G2).
+- [ ] Busy ports suspend senders, `force`/`nosuspend`, bounded unread input (57G3).
 
 ## Optimization and developer tooling
 

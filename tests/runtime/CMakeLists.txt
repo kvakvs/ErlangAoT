@@ -82,6 +82,14 @@ clause_project_options(runtime_concurrency)
 target_link_libraries(runtime_concurrency PRIVATE Clause::generated_program Threads::Threads)
 add_test(NAME runtime_concurrency COMMAND runtime_concurrency)
 
+# Port I/O on the reactor: thousands of pipe ports open at once start no thread of their own, and each pipe's
+# queued output reaches its reader before the end of input.
+add_executable(runtime_port_io port_io.cpp)
+clause_project_options(runtime_port_io)
+target_link_libraries(runtime_port_io PRIVATE Clause::generated_program)
+target_include_directories(runtime_port_io PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_port_io COMMAND runtime_port_io)
+
 # Cooperative executor over hand-written frames: time slices, crash isolation, halts, host invocations and
 # releasing processes that never ended.
 add_executable(runtime_processes processes.cpp)

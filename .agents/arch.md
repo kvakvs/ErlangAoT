@@ -250,6 +250,12 @@
   post port_control ops and wait; async replies/active messages are `PortValue`s (`ports/value.*`) delivered as
   `PortEvent::Kind::value` via `Executor::socket_event`; accepts create ports (`accept_connection`); drivers learn
   their port word through `PortDriver::attach`. Library `clause_socket.erl` + `gen_tcp`/`gen_udp`/`inet`.
+  Step 57G1: one `Reactor` (`ports/reactor.*`, Asio io_context thread) per runtime serves pipes, fd input, program
+  exits and sockets; `IoService` (`io.hpp`, state `IoService::Impl` + `Channel`s in private `io_streams.hpp`) only
+  posts to it. Windows: overlapped named pipes (`spawn_windows`) as `stream_handle`, wait-pool exits (`RegisterWaitForSingleObject`), blocking
+  thread only for fd input; POSIX: `async_wait` + `read()`, `SIGCHLD` `Reaper`. Drivers return `Descriptor`
+  (native handle, owned, overlapped). Executor `reactor_` declared before ports/services; `clear()` stops it first
+  (outside the lock), drops ports, services, then the io_context.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

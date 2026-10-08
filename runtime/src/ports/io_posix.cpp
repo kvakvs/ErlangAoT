@@ -1,193 +1,231 @@
-#include "io.hpp"
+#include "io_streams.hpp"
 #include <array>
 #include <cerrno>
 #include <csignal>
 
-#include <fcntl.h>
 #include <poll.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-// The I/O service on Linux and macOS (docs/ports.md#io-thread): one thread polls every input descriptor and a wakeup
-// pipe, reads what is ready and hands framed input to the executor.
+// Port I/O on Linux and macOS (docs/ports.md#io-thread): the reactor (epoll, kqueue) waits until a descriptor can be
+// read, then one read() takes what is there, so the program's own descriptors keep their blocking mode. A regular
+// file cannot be waited for and is read at once. Programs are reaped on SIGCHLD.
 namespace clause::runtime::detail {
 namespace {
-// One input being read.
-struct Source final {
-    Word port = 0;
-    int fd = -1;
-    bool owned = false;
-    InputDecoder decoder;
-};
+// Bytes one read asks for.
+constexpr std::size_t READ_BYTES = std::size_t{64} * 1024;
 
-class PosixIo final : public IoService {
+// Reads one descriptor until end of input, an error or a stop; an owned descriptor is then closed, the program's own
+// are only let go.
+class DescriptorInput final : public Channel, public std::enable_shared_from_this<DescriptorInput> {
   public:
-    explicit PosixIo(Deliver deliver) : IoService(std::move(deliver)) {
-        // A write to a pipe whose reader ended fails with EPIPE instead of ending the program, as in OTP.
-        static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
-        if (pipe(wake_.data()) != 0) {
-            throw std::bad_alloc();
-        }
-        fcntl(wake_[0], F_SETFL, fcntl(wake_[0], F_GETFL) | O_NONBLOCK);
-        thread_ = std::thread([this] { loop(); });
-    }
+    DescriptorInput(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder)
+        : service_(service), port_(port), stream_(service.context, static_cast<int>(input.handle)), owned_(input.owned),
+          decoder_(std::move(decoder)), buffer_(READ_BYTES) {}
 
-    PosixIo(const PosixIo &) = delete;
-    PosixIo &operator=(const PosixIo &) = delete;
-    PosixIo(PosixIo &&) = delete;
-    PosixIo &operator=(PosixIo &&) = delete;
+    // Start waiting for the first input.
+    void start() { wait(); }
 
-    // Stop the poll thread; owned descriptors still read are closed, the program's own stay open.
-    ~PosixIo() override {
-        {
-            const std::scoped_lock lock(mutex_);
-            stopping_ = true;
-        }
-        wake();
-        thread_.join();
-        for (const auto &[port, source] : sources_) {
-            retire(*source);
-        }
-        close_retired();
-        close(wake_[0]);
-        close(wake_[1]);
-    }
-
-    void read_descriptor(Word port, Descriptor input, const PortOptions &options) override {
-        {
-            const std::scoped_lock lock(mutex_);
-            sources_.insert_or_assign(port,
-                                      std::make_shared<Source>(port, input.fd, input.owned, InputDecoder(options)));
-        }
-        wake();
-    }
-
-    void forget(Word port) override {
-        IoService::forget(port);
-        {
-            const std::scoped_lock lock(mutex_);
-            const auto found = sources_.find(port);
-            if (found == sources_.end()) {
-                return;
-            }
-            retire(*found->second);
-            sources_.erase(found);
-        }
-        wake();
+    void stop() override {
+        stopped_ = true;
+        let_go();
     }
 
   private:
-    // Make poll() return so the thread sees changed sources or the stop.
-    void wake() noexcept { static_cast<void>(!write(wake_[1], "x", 1)); }
-
-    // Queue an owned descriptor to be closed by the poll thread, after poll() no longer uses it.
-    void retire(const Source &source) {
-        if (source.owned) {
-            retired_.push_back(source.fd);
-        }
+    // Wait until the descriptor has input or an end.
+    void wait() {
+        stream_.async_wait(asio::posix::descriptor_base::wait_read,
+                           [self = shared_from_this()](const boost::system::error_code &error) { self->ready(error); });
     }
 
-    // Close the retired descriptors; the lock is held or the thread has stopped.
-    void close_retired() noexcept {
-        for (const auto fd : std::exchange(retired_, {})) {
-            close_descriptor(fd);
+    // The descriptor is readable, or cannot be waited for (a regular file, read at once).
+    void ready(const boost::system::error_code &error) {
+        if (stopped_) {
+            return;
         }
+        if (error && error != asio::error::operation_not_supported) {
+            end({PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}});
+            return;
+        }
+        read_once(error == asio::error::operation_not_supported);
     }
 
-    // Poll the sources until stopped, delivering what each read gives.
-    void loop() {
-        for (;;) {
-            std::vector<pollfd> fds{{wake_[0], POLLIN, 0}};
-            std::vector<std::shared_ptr<Source>> polled;
-            {
-                const std::scoped_lock lock(mutex_);
-                close_retired();
-                if (stopping_) {
-                    return;
-                }
-                for (const auto &[port, source] : sources_) {
-                    fds.push_back({source->fd, POLLIN, 0});
-                    polled.push_back(source);
-                }
-            }
-            if (poll(fds.data(), fds.size(), -1) < 0 && errno != EINTR) {
-                return;
-            }
-            drain_wake(fds[0]);
-            for (std::size_t index = 0; index < polled.size(); ++index) {
-                if (fds[index + 1].revents != 0) {
-                    read_ready(*polled[index]);
-                }
-            }
-        }
-    }
-
-    // Empty the wakeup pipe.
-    void drain_wake(const pollfd &wake_fd) const noexcept {
-        std::array<char, 64> bytes{};
-        while (wake_fd.revents != 0 && read(wake_[0], bytes.data(), bytes.size()) > 0) {
-        }
-    }
-
-    // Read once from a ready source and deliver its units; at end or error the source is forgotten.
-    void read_ready(Source &source) {
-        std::array<std::byte, std::size_t{64} * 1024> buffer{};
-        const auto bytes = read(source.fd, buffer.data(), buffer.size());
+    // Read what is there and deliver it, then wait again (or, for a file, read again after other work).
+    void read_once(bool file) {
+        const auto bytes = ::read(stream_.native_handle(), buffer_.data(), buffer_.size());
         if (bytes < 0 && (errno == EINTR || errno == EAGAIN)) {
+            wait();
             return;
         }
         if (bytes <= 0) {
-            auto units =
-                bytes == 0
-                    ? source.decoder.finish()
-                    : std::vector{PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}};
-            deliver(source, std::move(units), 0);
-            end(source.port);
+            end(bytes == 0 ? decoder_.finish()
+                           : std::vector{
+                                 PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}});
             return;
         }
-        const auto read_bytes = static_cast<std::size_t>(bytes);
-        deliver(source, source.decoder.feed(std::span(buffer).first(read_bytes)), read_bytes);
-    }
-
-    // Stop polling a source whose input ended.
-    void end(Word port) {
-        const std::scoped_lock lock(mutex_);
-        const auto found = sources_.find(port);
-        if (found != sources_.end()) {
-            retire(*found->second);
-            sources_.erase(found);
+        const auto count = static_cast<std::size_t>(bytes);
+        service_.deliver(port_, decoder_.feed(std::span(buffer_).first(count)), count);
+        if (file) {
+            asio::post(service_.context,
+                       [self = shared_from_this()] { self->ready(asio::error::operation_not_supported); });
+        } else {
+            wait();
         }
     }
 
-    // Hand `read` bytes and their units to the executor unless the source was forgotten meanwhile.
-    void deliver(const Source &source, std::vector<PortInput> units, std::size_t read) {
-        {
-            const std::scoped_lock lock(mutex_);
-            const auto found = sources_.find(source.port);
-            const bool current = found != sources_.end() && found->second.get() == &source;
-            if (stopping_ || !current || (units.empty() && read == 0)) {
-                return;
+    // Deliver the last units, then let the descriptor go.
+    void end(std::vector<PortInput> units) {
+        service_.deliver(port_, std::move(units), 0);
+        let_go();
+    }
+
+    // Close an owned descriptor; release the program's own without closing it.
+    void let_go() noexcept {
+        boost::system::error_code ignored;
+        if (owned_) {
+            stream_.close(ignored);
+        } else if (stream_.is_open()) {
+            static_cast<void>(stream_.release());
+        }
+    }
+
+    IoService::Impl &service_;
+    Word port_;
+    asio::posix::stream_descriptor stream_;
+    bool owned_;
+    InputDecoder decoder_;
+    std::vector<std::byte> buffer_;
+    // Set when the port no longer wants input.
+    bool stopped_ = false;
+};
+
+// Reaps the spawned programs of all ports on SIGCHLD and reports the status of those whose port still wants it.
+class Reaper final : public Channel, public std::enable_shared_from_this<Reaper> {
+  public:
+    explicit Reaper(asio::io_context &context) : signals_(context, SIGCHLD) {}
+
+    // Watch `pid` for `port`; it may have exited already.
+    void add(IoService::Impl &service, pid_t pid, Word port) {
+        service_ = &service;
+        children_.insert_or_assign(pid, Watched{.port = port, .reporting = true});
+        if (!waiting_) {
+            waiting_ = true;
+            wait();
+        }
+        reap();
+    }
+
+    // Stop reporting the program of `pid`; it is still reaped.
+    void forget(pid_t pid) noexcept {
+        if (const auto found = children_.find(pid); found != children_.end()) {
+            found->second.reporting = false;
+        }
+    }
+
+    void stop() override {}
+
+  private:
+    // A watched program: its port and whether that port still wants the status.
+    struct Watched final {
+        Word port = 0;
+        bool reporting = true;
+    };
+
+    // Wait for the next SIGCHLD.
+    void wait() {
+        signals_.async_wait([self = shared_from_this()](const boost::system::error_code &error, int) {
+            if (!error) {
+                self->reap();
+                self->wait();
             }
-        }
-        gate_->deliver(source.port, std::move(units), read);
+        });
     }
 
-    // The wakeup pipe: [0] polled, [1] written.
-    std::array<int, 2> wake_{-1, -1};
-    // Guards sources_, retired_ and stopping_.
-    std::mutex mutex_;
-    std::map<Word, std::shared_ptr<Source>> sources_;
-    // Owned descriptors no longer read, closed by the poll thread.
-    std::vector<int> retired_;
-    bool stopping_ = false;
-    std::thread thread_;
+    // Reap every watched program that exited.
+    void reap() {
+        for (auto at = children_.begin(); at != children_.end();) {
+            int status = 0;
+            if (waitpid(at->first, &status, WNOHANG) <= 0) {
+                ++at;
+                continue;
+            }
+            if (at->second.reporting) {
+                service_->deliver(
+                    at->second.port,
+                    {PortInput{
+                        .kind = PortInput::Kind::status, .bytes = {}, .reason = {}, .status = exit_status(status)}},
+                    0);
+            }
+            at = children_.erase(at);
+        }
+    }
+
+    // The status as OTP reports it: the exit code, or 128 plus the signal that ended the program.
+    static std::int64_t exit_status(int status) noexcept {
+        if (WIFSIGNALED(status)) {
+            return 128 + WTERMSIG(status);
+        }
+        return WIFEXITED(status) ? WEXITSTATUS(status) : 0;
+    }
+
+    asio::signal_set signals_;
+    IoService::Impl *service_ = nullptr;
+    std::map<pid_t, Watched> children_;
+    bool waiting_ = false;
+};
+
+// A port's watch of its program in the shared reaper.
+class ChildWatch final : public Channel {
+  public:
+    ChildWatch(std::shared_ptr<Reaper> reaper, pid_t pid) noexcept : reaper_(std::move(reaper)), pid_(pid) {}
+
+    void stop() override { reaper_->forget(pid_); }
+
+  private:
+    std::shared_ptr<Reaper> reaper_;
+    pid_t pid_;
 };
 } // namespace
+
+NativeHandle native_descriptor(int fd) noexcept { return fd; }
+
+PipeStream pipe_stream(asio::io_context &context, NativeHandle handle) { return {context, static_cast<int>(handle)}; }
+
+std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder) {
+    auto channel = std::make_shared<DescriptorInput>(service, port, input, std::move(decoder));
+    channel->start();
+    return channel;
+}
+
+std::shared_ptr<Channel> start_child(IoService::Impl &service, Word port, Child child) {
+    if (!service.shared) {
+        service.shared = std::make_shared<Reaper>(service.context);
+    }
+    auto reaper = std::static_pointer_cast<Reaper>(service.shared);
+    const auto pid = static_cast<pid_t>(child.handle);
+    reaper->add(service, pid, port);
+    return std::make_shared<ChildWatch>(std::move(reaper), pid);
+}
+
+std::string write_reason(const boost::system::error_code &error) {
+    return error == asio::error::broken_pipe ? "epipe" : "eio";
+}
+
+void prepare_io() noexcept {
+    // A write to a pipe whose reader ended fails with EPIPE instead of ending the program, as in OTP.
+    static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
+}
 
 std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> bytes) {
     while (!bytes.empty()) {
         const auto written = write(fd, bytes.data(), bytes.size());
         if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written < 0 && errno == EAGAIN) {
+            // Another holder of the descriptor made it non-blocking: wait until it takes more.
+            pollfd ready{fd, POLLOUT, 0};
+            static_cast<void>(poll(&ready, 1, -1));
             continue;
         }
         if (written < 0) {
@@ -196,21 +234,5 @@ std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> by
         bytes = bytes.subspan(static_cast<std::size_t>(written));
     }
     return {};
-}
-
-void close_descriptor(int fd) noexcept { close(fd); }
-
-std::int64_t wait_child(std::int64_t child) noexcept {
-    int status = 0;
-    while (waitpid(static_cast<pid_t>(child), &status, 0) < 0 && errno == EINTR) {
-    }
-    if (WIFSIGNALED(status)) {
-        return 128 + WTERMSIG(status);
-    }
-    return WIFEXITED(status) ? WEXITSTATUS(status) : 0;
-}
-
-std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver) {
-    return std::make_unique<PosixIo>(std::move(deliver));
 }
 } // namespace clause::runtime::detail

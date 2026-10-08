@@ -94,17 +94,16 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     const auto input = port->options.input ? port->driver->input() : std::nullopt;
     const auto output = port->driver->queued_output();
     const auto child = port->driver->child();
-    const auto owned = port->driver->owns_descriptors();
     // A port that reads nothing has no end of input to wait for.
     port->input_ended = !input;
     owner.signals().link(word);
     try {
         const auto &options = ports_.emplace(*number, std::move(port)).first->second->options;
         if (input) {
-            io().read_descriptor(word, {.fd = *input, .owned = owned}, options);
+            io().read_descriptor(word, *input, options);
         }
         if (output) {
-            io().write_descriptor(word, {.fd = *output, .owned = owned});
+            io().write_descriptor(word, *output);
         }
         if (child) {
             io().watch_child(word, {.handle = *child});
@@ -121,7 +120,7 @@ std::unique_ptr<PortDriver> Executor::socket_driver(bool udp) {
     const std::scoped_lock lock(mutex_);
     if (!sockets_) {
         sockets_ = std::make_unique<SocketService>(
-            [this](Word port, SocketEvent event) { socket_event(port, std::move(event)); });
+            reactor(), [this](Word port, SocketEvent event) { socket_event(port, std::move(event)); });
     }
     return sockets_->driver(udp);
 }
@@ -172,10 +171,18 @@ void Executor::accept_connection(Word listen, SocketEvent event) {
     post(*owner, PortEvent::term(listen, std::move(event.value)));
 }
 
+Reactor &Executor::reactor() {
+    if (!reactor_) {
+        reactor_ = std::make_unique<Reactor>();
+    }
+    return *reactor_;
+}
+
 IoService &Executor::io() {
     if (!io_) {
-        io_ = make_io_service(
-            [this](Word port, std::vector<PortInput> units, std::size_t read) { input(port, std::move(units), read); });
+        io_ = std::make_unique<IoService>(reactor(), [this](Word port, std::vector<PortInput> units, std::size_t read) {
+            input(port, std::move(units), read);
+        });
     }
     return *io_;
 }

@@ -1,17 +1,16 @@
 #include "spawn.hpp"
 #include <algorithm>
+#include <atomic>
 #include <bit>
 #include <cwctype>
-#include <fcntl.h>
 #include <map>
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#include <io.h>
 #include <windows.h>
 
-// Spawned programs on Windows (docs/ports.md#drivers): CreateProcessW with anonymous pipes for stdin and stdout; the
-// child inherits exactly its three standard handles.
+// Spawned programs on Windows (docs/ports.md#drivers): CreateProcessW with pipes for stdin and stdout; the child
+// inherits exactly its three standard handles.
 namespace clause::runtime::detail {
 namespace {
 // A handle closed when it goes out of scope unless released.
@@ -144,24 +143,39 @@ std::string reason(DWORD error) {
     }
 }
 
-// A pipe whose child end is inheritable and whose parent end is not.
+// A pipe whose child end is an inheritable synchronous handle and whose parent end the I/O thread serves with
+// overlapped I/O; it is a named pipe, as anonymous pipes cannot be overlapped.
 struct Pipe {
     Handle child;
     Handle parent;
 };
 
+// The unique name of a new pipe of this program.
+std::wstring pipe_name() {
+    static std::atomic<std::uint64_t> serial{0};
+    return L"\\\\.\\pipe\\clause-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(++serial);
+}
+
 // A pipe for the child's stdin (`to_child`) or stdout.
 std::optional<Pipe> make_pipe(bool to_child) {
-    SECURITY_ATTRIBUTES security{
-        .nLength = sizeof(SECURITY_ATTRIBUTES), .lpSecurityDescriptor = nullptr, .bInheritHandle = TRUE};
-    HANDLE read = nullptr;
-    HANDLE write = nullptr;
-    if (!CreatePipe(&read, &write, &security, 0)) {
+    constexpr DWORD BUFFER_BYTES = 64 * 1024;
+    const auto name = pipe_name();
+    const DWORD direction = to_child ? PIPE_ACCESS_OUTBOUND : PIPE_ACCESS_INBOUND;
+    Handle parent(CreateNamedPipeW(name.c_str(), direction | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,
+                                   PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS, 1,
+                                   BUFFER_BYTES, BUFFER_BYTES, 0, nullptr));
+    if (parent.get() == INVALID_HANDLE_VALUE) {
         return std::nullopt;
     }
-    Pipe pipe{Handle(to_child ? read : write), Handle(to_child ? write : read)};
-    SetHandleInformation(pipe.parent.get(), HANDLE_FLAG_INHERIT, 0);
-    return pipe;
+    SECURITY_ATTRIBUTES security{
+        .nLength = sizeof(SECURITY_ATTRIBUTES), .lpSecurityDescriptor = nullptr, .bInheritHandle = TRUE};
+    // The child may change its end's pipe state, so it gets the attributes right of the other direction.
+    const DWORD access = to_child ? GENERIC_READ | FILE_WRITE_ATTRIBUTES : GENERIC_WRITE | FILE_READ_ATTRIBUTES;
+    Handle child(CreateFileW(name.c_str(), access, 0, &security, OPEN_EXISTING, 0, nullptr));
+    if (child.get() == INVALID_HANDLE_VALUE) {
+        return std::nullopt;
+    }
+    return Pipe{std::move(child), std::move(parent)};
 }
 
 // An inheritable handle of the null device, for a direction the port does not use.
@@ -283,9 +297,9 @@ std::expected<PROCESS_INFORMATION, DriverError> create(const SpawnRequest &reque
     return process;
 }
 
-// A C runtime descriptor owning the parent end of a pipe, or -1 without one.
-int descriptor(std::optional<Pipe> &pipe, int flags) {
-    return pipe ? _open_osfhandle(std::bit_cast<std::intptr_t>(pipe->parent.release()), flags | _O_BINARY) : -1;
+// The parent end of a pipe, now owned by the caller, or -1 without one.
+NativeHandle parent_end(std::optional<Pipe> &pipe) noexcept {
+    return pipe ? std::bit_cast<NativeHandle>(pipe->parent.release()) : -1;
 }
 } // namespace
 
@@ -298,8 +312,8 @@ std::expected<Spawned, DriverError> spawn_program(const SpawnRequest &request, c
     if (!process) {
         return std::unexpected(process.error());
     }
-    return Spawned{.input = descriptor(handles->output, _O_RDONLY),
-                   .output = descriptor(handles->input, _O_WRONLY),
+    return Spawned{.input = parent_end(handles->output),
+                   .output = parent_end(handles->input),
                    .child = std::bit_cast<std::intptr_t>(process->hProcess),
                    .os_pid = process->dwProcessId};
 }

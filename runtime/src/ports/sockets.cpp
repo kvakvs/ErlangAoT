@@ -1,16 +1,17 @@
-// Synchronous Asio operations that take an error_code return nothing (the deprecated overloads return it too).
-#define BOOST_ASIO_NO_DEPRECATED
+// Synchronous Asio operations that take an error_code return nothing (BOOST_ASIO_NO_DEPRECATED, set by CMake, removes
+// the deprecated overloads that return it too).
 #include "sockets.hpp"
 #include "io.hpp"
 #include <array>
 #include <boost/asio.hpp>
+#include <cstring>
 #include <deque>
 #include <exception>
 #include <future>
 #include <mutex>
 #include <thread>
 
-// Sockets as ports (docs/ports.md#sockets). Every socket's state lives on the socket thread: port_control/3
+// Sockets as ports (docs/ports.md#sockets). Every socket's state lives on the I/O thread: port_control/3
 // operations run there (the calling worker waits for their reply), completions continue there and report through
 // the executor. Replies of operations start with a status byte: 0 ok, then the result; 1 error, then its reason.
 namespace clause::runtime::detail {
@@ -18,10 +19,10 @@ namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 using udp = asio::ip::udp;
 
-// The socket thread: its io_context, kept running by a work guard, and the gate deliveries pass.
+// The sockets' share of the reactor: its io_context and the gate deliveries pass.
 class SocketService::Impl final {
   public:
-    explicit Impl(Deliver deliver) : deliver_(std::move(deliver)) {}
+    Impl(asio::io_context &io, Deliver deliver) : context(io), deliver_(std::move(deliver)) {}
 
     // Hand an event to the executor unless the service stopped.
     void deliver(Word port, SocketEvent event) {
@@ -37,7 +38,7 @@ class SocketService::Impl final {
         open_ = false;
     }
 
-    asio::io_context context;
+    asio::io_context &context;
 
   private:
     std::mutex mutex_;
@@ -221,7 +222,7 @@ class Socket;
 // The driver of a socket port.
 std::shared_ptr<PortDriver> socket_driver(const std::shared_ptr<Socket> &socket);
 
-// A socket's state on the socket thread.
+// A socket's state on the I/O thread.
 class Socket final : public std::enable_shared_from_this<Socket> {
   public:
     Socket(std::shared_ptr<Service> service, bool udp) : service_(std::move(service)), udp_(udp) {}
@@ -238,7 +239,7 @@ class Socket final : public std::enable_shared_from_this<Socket> {
         decoder_ = InputDecoder(mode_.framing());
     }
 
-    // Run operation `operation` of `caller` on the socket thread; the reply, or none for an unknown operation.
+    // Run operation `operation` of `caller` on the I/O thread; the reply, or none for an unknown operation.
     std::optional<Bytes> operate(Word caller, SocketOperation operation, std::span<const std::byte> data);
 
     // The port closed: answer waiting callers with closed and close the socket once its queued output is sent.
@@ -789,12 +790,29 @@ void Socket::release() {
     }
 }
 
-// Run `work` on the socket thread and wait for its result; the caller is a worker without the executor's lock.
+// Run `work` on the I/O thread and wait for its result; the caller is a worker without the executor's lock.
 template <typename Work> auto on_socket_thread(asio::io_context &context, Work work) {
     std::packaged_task<decltype(work())()> task(std::move(work));
     auto result = task.get_future();
     asio::post(context, [&task] { task(); });
     return result.get();
+}
+
+// Append the family byte (4 or 6) and the address bytes of one address name lookup found.
+void append_address(Bytes &addresses, const addrinfo &entry) {
+    const bool v6 = entry.ai_family == AF_INET6;
+    std::array<std::byte, 16> bytes{};
+    if (v6) {
+        sockaddr_in6 address{};
+        std::memcpy(&address, entry.ai_addr, sizeof(address));
+        std::memcpy(bytes.data(), &address.sin6_addr, 16);
+    } else {
+        sockaddr_in address{};
+        std::memcpy(&address, entry.ai_addr, sizeof(address));
+        std::memcpy(bytes.data(), &address.sin_addr, 4);
+    }
+    addresses.push_back(static_cast<std::byte>(v6 ? 6 : 4));
+    addresses.insert(addresses.end(), bytes.begin(), bytes.begin() + (v6 ? 16 : 4));
 }
 
 // resolve: the addresses of a host name of the family byte (4 or 6), each encoded as family and bytes. It runs on
@@ -806,19 +824,19 @@ Bytes resolve(std::span<const std::byte> data) {
     const auto family = std::to_integer<int>(data[0]);
     std::string host(data.size() - 1, '\0');
     std::ranges::transform(data.subspan(1), host.begin(), [](std::byte b) { return static_cast<char>(b); });
-    asio::io_context context;
-    tcp::resolver resolver(context);
-    boost::system::error_code error;
-    const auto results = resolver.resolve(family == 6 ? tcp::v6() : tcp::v4(), host, "", error);
-    if (error) {
+    addrinfo hints{};
+    hints.ai_family = family == 6 ? AF_INET6 : AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    addrinfo *found = nullptr;
+    if (getaddrinfo(host.c_str(), nullptr, &hints, &found) != 0) {
         return failure("nxdomain");
     }
+    const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> entries(found, &freeaddrinfo);
     Bytes addresses;
-    for (const auto &entry : results) {
-        const auto encoded = endpoint_bytes(entry.endpoint());
-        // Skip the port bytes: only the family and the address.
-        addresses.push_back(encoded[0]);
-        addresses.insert(addresses.end(), encoded.begin() + 3, encoded.end());
+    for (const auto *entry = entries.get(); entry != nullptr; entry = entry->ai_next) {
+        if (entry->ai_family == hints.ai_family) {
+            append_address(addresses, *entry);
+        }
     }
     return addresses.empty() ? failure("nxdomain") : ok(addresses);
 }
@@ -870,23 +888,10 @@ std::shared_ptr<PortDriver> socket_driver(const std::shared_ptr<Socket> &socket)
 }
 } // namespace
 
-SocketService::SocketService(Deliver deliver) : impl_(std::make_shared<Impl>(std::move(deliver))) {
-    thread_ = std::thread([impl = impl_] {
-        const auto guard = asio::make_work_guard(impl->context);
-        impl->context.run();
-    });
-}
+SocketService::SocketService(Reactor &reactor, Deliver deliver)
+    : impl_(std::make_shared<Impl>(reactor.context(), std::move(deliver))) {}
 
-SocketService::~SocketService() {
-    try {
-        impl_->close();
-        impl_->context.stop();
-        thread_.join();
-    } catch (...) {
-        // A failing mutex or join would leave the socket thread delivering to a destroyed executor.
-        std::terminate();
-    }
-}
+SocketService::~SocketService() { impl_->close(); }
 
 std::unique_ptr<PortDriver> SocketService::driver(bool udp) {
     return std::make_unique<SocketDriver>(std::make_shared<Socket>(impl_, udp));

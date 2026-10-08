@@ -11,7 +11,7 @@ add_library(clause_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/terms/container_access.cpp src/terms/container_factory.cpp src/terms/container_services.cpp src/terms/structural_order.cpp
     src/process/generated_calls.cpp src/process/exceptions.cpp src/process/exits.cpp src/process/receive.cpp src/process/stack.cpp src/process/context.cpp src/process/identities.cpp src/process/ownership.cpp src/process/storage.cpp
     src/memory/heap.cpp src/memory/heap_storage.cpp src/memory/heap_reservation.cpp src/memory/off_heap.cpp src/memory/heap_collect.cpp src/memory/heap_walk.cpp src/memory/heap_verify.cpp src/memory/copy.cpp
-    src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp src/scheduler/executor.cpp src/scheduler/signals.cpp src/scheduler/ports.cpp src/ports/fd.cpp src/ports/io.cpp src/ports/spawn.cpp src/ports/file.cpp src/ports/value.cpp src/ports/sockets.cpp
+    src/scheduler/services.cpp src/scheduler/registry.cpp src/scheduler/transitions.cpp src/scheduler/executor.cpp src/scheduler/signals.cpp src/scheduler/ports.cpp src/ports/fd.cpp src/ports/io.cpp src/ports/spawn.cpp src/ports/file.cpp src/ports/value.cpp src/ports/sockets.cpp src/ports/reactor.cpp
     src/terms/term_text.cpp src/terms/term_text_scalars.cpp
     src/terms/atoms.cpp src/terms/atom_spelling.cpp src/terms/factory.cpp src/terms/immediate.cpp src/terms/term.cpp src/terms/equality.cpp src/terms/immediate_order.cpp src/terms/immediate_services.cpp
     src/builtins/registry.cpp src/builtins/invocation.cpp src/builtins/bridge.cpp src/builtins/erlang.cpp src/builtins/term_access.cpp src/builtins/lists.cpp src/builtins/portions.cpp src/builtins/conversions.cpp src/builtins/float_text.cpp src/builtins/text.cpp src/builtins/typed.cpp src/builtins/io.cpp src/builtins/io_format.cpp src/builtins/io_pretty.cpp src/builtins/processes.cpp src/builtins/ports.cpp src/builtins/os.cpp src/builtins/output.cpp
@@ -56,6 +56,8 @@ if(WIN32)
 else()
     target_sources(clause_runtime PRIVATE src/ports/io_posix.cpp src/ports/spawn_posix.cpp)
 endif()
+# Every source that includes Boost.Asio sees the same configuration (one definition of each inline function).
+target_compile_definitions(clause_runtime PRIVATE BOOST_ASIO_NO_DEPRECATED)
 # Scheduler workers are std::threads; glibc before 2.34 needs -pthread (a plain flag keeps the export self-contained).
 # Sockets use Boost.Asio (header-only, from the same Boost), which needs Winsock on Windows.
 target_link_libraries(clause_runtime

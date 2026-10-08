@@ -118,7 +118,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase J c
 | H. Builtins and libraries | [36](#step-36)–[41](#step-41) | F26, F27 |
 | I. Processes and messaging | [42](#step-42)–[53](#step-53), [43A](#step-43a) | F02, F04, F05, F07, F14, F22, F24–F26 |
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
-| J2. Ports and port I/O | [57A](#step-57a)–[57G](#step-57g) | F07, F23, F26, F35 |
+| J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
 | L. Optimization and tooling | [58A](#step-58a)–[58H](#step-58h), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
@@ -1243,6 +1243,87 @@ bounds input a slow owner has not taken.
 - Tests
   - [ ] Fairness stress (flooding ports against CPU-bound and receiving
     processes), busy-port suspension golden, thousands of concurrent ports.
+
+Split 2026-10-09 before coding into three single-commit sub-steps; 57G closes
+with 57G3.
+
+<a id="step-57g1"></a>
+
+### 57G1. Serve every port kind from one event-driven I/O thread
+
+Backlog: F35. Depends on: [57F](#step-57f).
+
+One Boost.Asio `io_context` thread per runtime serves pipes, `fd` input,
+child exits and sockets (the 57F socket thread becomes it). Spawned programs'
+pipes are overlapped named pipes on Windows (`windows::stream_handle`) and
+`posix::stream_descriptor`s elsewhere; output is written by asynchronous
+writes in order; child exits are waited by the Windows wait thread pool and
+`SIGCHLD` (`signal_set` + `waitpid(WNOHANG)`). Framing stays on the I/O side
+until 57G2. Exception: an `fd` input handle Windows cannot overlap (console,
+inherited anonymous pipe) keeps one blocking reader thread, as libuv and
+ERTS do.
+
+- Success criteria
+  - [x] No reader, writer or watcher thread per port except the Windows
+    `fd` input exception; all existing port goldens pass unchanged.
+- Tests
+  - [x] Thousands of concurrent ports in one program (sockets and spawned
+    programs) and a runtime test that the thread count stays constant while
+    thousands of pipe ports are open.
+
+Done 2026-10-09 (contract `docs/ports.md#io-thread`). `ports/reactor.*` (one
+io_context thread, started by the first port that needs it) serves
+`IoService` (`io.cpp`: channels on the reactor thread, queued `Output`;
+`io_windows.cpp`: overlapped `PipeInput`, `ProcessWatch` on the wait thread
+pool, blocking fd reader;
+`io_posix.cpp`: `async_wait` + `read()`, shared `SIGCHLD` `Reaper`) and the
+sockets (`SocketService` lost its thread; name lookup now calls
+`getaddrinfo`). Asio's `object_handle` and resolver were dropped: the
+analyzer reports false positives inside Asio (`win_thread`,
+`resolver_thread_pool`) for them. Spawn pipes on Windows are
+overlapped named pipes; drivers return `Descriptor`s (native handle, owned,
+overlapped). Shutdown: reactor stopped outside the executor lock, ports, then
+services, then the io_context. OTP golden `executables_many_ports` (workers
+1, 4): 1,000 TCP connections open at once (2,000+ ports) and 32 concurrent
+programs. Runtime test `runtime_port_io`: 2,000 pipes (4,000 ports), thread
+count unchanged (Windows 5/5); also built with WSL clang 20 and run on Linux
+(2/2 threads): the first run of the POSIX port I/O. maint-29 re-fetched:
+unchanged `21776803`.
+
+<a id="step-57g2"></a>
+
+### 57G2. Run port tasks on the scheduler workers
+
+Backlog: F23, F35. Depends on: [57G1](#step-57g1).
+
+Ports are entities of the run queue: the I/O thread only hands raw input,
+end of input, errors and exit statuses to the port and queues the port; a
+worker runs the port's task (framing and delivery of its pending input) with
+a reduction budget and queues it again when work remains.
+
+- Success criteria
+  - [ ] A port flooding input cannot starve CPU-bound or receiving processes.
+- Tests
+  - [ ] Fairness stress golden: flooding ports against CPU-bound and
+    receiving processes on 1 and N workers.
+
+<a id="step-57g3"></a>
+
+### 57G3. Suspend senders on busy ports and bound unread input
+
+Backlog: F35. Depends on: [57G2](#step-57g2).
+
+A port whose queued output exceeds its high limit is busy until it drains
+below its low limit (OTP's `busy_limits_port`): `port_command/2`,
+`Port ! {Pid, {command, D}}` suspend the sender, `port_command/3` with
+`nosuspend` returns `false`, `force` writes anyway where OTP's driver allows
+it. A port stops reading while its undelivered input exceeds a bound.
+
+- Success criteria
+  - [ ] Busy ports, `force` and `nosuspend` match OTP; a slow owner bounds a
+    port's memory.
+- Tests
+  - [ ] Busy-port suspension golden; flooding into a slow owner.
 
 ## K. End-to-end projects
 

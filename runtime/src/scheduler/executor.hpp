@@ -1,6 +1,7 @@
 #pragma once
 #include "../ports/io.hpp"
 #include "../ports/port.hpp"
+#include "../ports/reactor.hpp"
 #include "../ports/sockets.hpp"
 #include "../ports/value.hpp"
 #include <chrono>
@@ -133,6 +134,13 @@ class Executor final {
     // Bind the executor to the runtime whose processes it runs.
     explicit Executor(Runtime::Impl &runtime) : runtime_(runtime) {}
 
+    Executor(const Executor &) = delete;
+    Executor &operator=(const Executor &) = delete;
+    Executor(Executor &&) = delete;
+    Executor &operator=(Executor &&) = delete;
+    // Stop the I/O thread before the port drivers and services that its handlers use go.
+    ~Executor();
+
     // The executor of a context's runtime.
     static Executor &of(ProcessContext &context) noexcept;
 
@@ -205,9 +213,9 @@ class Executor final {
     // executor's lock.
     std::optional<std::pair<std::vector<std::byte>, bool>>
     control_port(ProcessContext &caller, Word port, std::span<const std::byte> data, std::uint32_t operation);
-    // A new socket port's driver ({spawn_driver, "tcp_inet" | "udp_inet"}), starting the socket thread on first use.
+    // A new socket port's driver ({spawn_driver, "tcp_inet" | "udp_inet"}), starting the I/O thread on first use.
     std::unique_ptr<PortDriver> socket_driver(bool udp);
-    // An event of a socket port from the socket thread: a message, or a connection accepted for a process.
+    // An event of a socket port from the I/O thread: a message, or a connection accepted for a process.
     void socket_event(Word port, SocketEvent event) noexcept;
 
     // Run queued processes on RuntimeOptions::schedulers workers (this thread and more threads) until `main` ends
@@ -283,7 +291,9 @@ class Executor final {
     bool exited(Port &port, std::int64_t status);
     // Send {exit_status, S} when asked for, then {Port, eof} or close the port; false once it closed.
     bool finish_input(Port &port);
-    // The runtime's I/O service, started by the first port that reads input.
+    // The runtime's I/O thread, started by the first port that needs it.
+    Reactor &reactor();
+    // The runtime's port I/O on the I/O thread, created by the first port that reads, queues output or has a program.
     IoService &io();
     // Give a connection a listening socket accepted to `event.target` as a new port linked to it, and tell it so.
     void accept_connection(Word listen, SocketEvent event);
@@ -407,11 +417,13 @@ class Executor final {
     ProcessContext *finished_ = nullptr;
     // Registered names (atom words) and their pid or port words; a name is released when its owner ends.
     std::map<Word, Word> names_;
+    // The I/O thread; declared before the ports and services, so its io_context is destroyed after them.
+    std::unique_ptr<Reactor> reactor_;
     // Open ports by number; a port leaves when it closes.
     std::map<Word, std::unique_ptr<Port>> ports_;
-    // Reads port input on its own threads; declared last so it stops first, before the state its deliveries use.
+    // Pipes, descriptors and programs of ports on the I/O thread.
     std::unique_ptr<IoService> io_;
-    // Runs the sockets; stopped first too.
+    // The sockets on the I/O thread.
     std::unique_ptr<SocketService> sockets_;
     // Further ended processes that would have ended the program, released by clear().
     std::vector<ProcessContext *> stopped_;

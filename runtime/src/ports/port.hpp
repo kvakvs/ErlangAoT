@@ -47,6 +47,20 @@ struct DriverError final {
     std::string reason;
 };
 
+// An operating system handle: a HANDLE on Windows, a file descriptor elsewhere; -1 is none.
+using NativeHandle = std::intptr_t;
+
+// A handle the I/O thread reads or writes for a port: whether it closes it when done, and whether Windows can
+// overlap its I/O (pipes the runtime created); a handle it cannot overlap is read by a blocking thread.
+struct Descriptor final {
+    NativeHandle handle = -1;
+    bool owned = false;
+    bool overlapped = false;
+};
+
+// The native handle of a C runtime descriptor (the descriptor itself outside Windows).
+NativeHandle native_descriptor(int fd) noexcept;
+
 // The resource behind one port. The executor calls a driver under its mutex; a driver never calls back into it.
 class PortDriver {
   public:
@@ -60,17 +74,14 @@ class PortDriver {
     // Write one output of the port (port_command, {command, Data}), framing already applied.
     virtual std::expected<void, DriverError> write(std::span<const std::byte> bytes) = 0;
 
-    // The descriptor the I/O thread reads the port's input from, if the driver has one.
-    virtual std::optional<int> input() const noexcept { return std::nullopt; }
+    // The handle the I/O thread reads the port's input from, if the driver has one.
+    virtual std::optional<Descriptor> input() const noexcept { return std::nullopt; }
 
-    // The descriptor the I/O thread writes queued output to; none when write() writes at once.
-    virtual std::optional<int> queued_output() const noexcept { return std::nullopt; }
+    // The handle the I/O thread writes queued output to; none when write() writes at once.
+    virtual std::optional<Descriptor> queued_output() const noexcept { return std::nullopt; }
 
     // The spawned program whose exit the I/O thread reports (a process handle or pid), if any.
     virtual std::optional<std::int64_t> child() const noexcept { return std::nullopt; }
-
-    // Whether the I/O thread closes the input and output descriptors when it is done with them.
-    virtual bool owns_descriptors() const noexcept { return false; }
 
     // The operating system process id of a spawned program, for port_info's os_pid.
     virtual std::optional<std::int64_t> os_pid() const noexcept { return std::nullopt; }

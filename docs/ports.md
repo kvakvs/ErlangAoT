@@ -17,7 +17,10 @@ subprocess ports, `os:type/0`, `os:getenv/1` and `os:cmd/1` (step 57D,
 `executables_port_spawn`); the file driver, the library `file` subset and
 standard input through `io:get_line`/`io:get_chars` (step 57E,
 `runtime/src/ports/file.cpp`, `library/stdlib/{file,io}.erl`; OTP golden
-`executables_file_io`).
+`executables_file_io`); sockets (step 57F, OTP golden `executables_sockets`);
+one event-driven I/O thread for every port kind (step 57G1,
+`runtime/src/ports/reactor.cpp`; OTP golden `executables_many_ports`, runtime
+test `runtime_port_io`).
 
 ## Identity
 
@@ -127,22 +130,38 @@ OTP's `prim_inet`/`efile` protocols.
 
 ## I/O thread
 
-The first port that reads input starts the runtime's I/O service
-(`detail::IoService`, `runtime/src/ports/io.hpp`); it reads every port's
-input and hands it, framed, to the executor:
+One I/O thread per runtime (`detail::Reactor`, `runtime/src/ports/reactor.hpp`,
+step 57G1) runs a Boost.Asio `io_context`: an I/O completion port on Windows,
+`epoll` on Linux, `kqueue` on macOS. The first port that needs it starts it;
+it serves every port kind, so a port costs no thread of its own:
 
-- Linux and macOS: one thread polls (`poll()`) every input descriptor and a
-  wakeup pipe; `epoll`/`kqueue` are a later optimization behind the same
-  interface. The POSIX service compiles with clang 20 under WSL; no Linux
-  host has run it yet.
-- Windows: each input gets a reader thread blocked in `ReadFile`, as
-  console and anonymous-pipe handles cannot be overlapped; closing the port
-  cancels the read (`CancelSynchronousIo`) and lets the thread go. Sockets
-  have their own thread ([sockets](#sockets-57f)).
+- Pipes of spawned programs: overlapped named pipes on Windows
+  (`windows::stream_handle`; anonymous pipes cannot be overlapped), plain
+  pipes elsewhere (`posix::stream_descriptor`). Output is queued and written
+  in order by asynchronous writes.
+- `fd` input on Linux and macOS: the thread waits until the descriptor is
+  readable, then one `read()` takes what is there, so the program's own
+  descriptors keep their blocking mode; a regular file, which cannot be
+  waited for, is read at once.
+- Program exits: on Windows the system's wait thread pool
+  (`RegisterWaitForSingleObject`, as Asio's `object_handle` uses) waits for
+  the process handle and the exit is reported on the I/O thread; on Linux and
+  macOS a `SIGCHLD` handler (`signal_set`) and `waitpid(WNOHANG)` reap every
+  watched program, also after its port closed.
+- Sockets ([sockets](#sockets-57f)).
+- Exception: an `fd` input handle on Windows (a console or an inherited
+  anonymous pipe) cannot be overlapped, so it is read by a blocking thread of
+  its own, as libuv and ERTS do; closing the port cancels the read
+  (`CancelSynchronousIo`) and lets the thread go.
+
+`runtime/src/ports/io*.cpp` hold the port I/O (`detail::IoService`): its
+methods only post work to the I/O thread, where all I/O state lives.
+
 - Framing happens on the I/O side (`InputDecoder`): stream input arrives in
   the chunks reads return; `{packet, N}` holds bytes until a whole packet
   arrived (an incomplete packet at end of input is dropped, as in OTP);
-  `{line, L}` splits at `\n`, sends a line longer than `L` as `{noeol, Part}`
+  `{line, L}` splits at `
+`, sends a line longer than `L` as `{noeol, Part}`
   pieces and an unterminated end as `{noeol, Rest}`. `port_info(P, input)`
   counts every byte read, newlines and packet headers included.
 - End of input sends `{Port, eof}` with option `eof`, else closes the port
@@ -154,17 +173,17 @@ any message), else when its time slice ends, so a running process's heap is
 never touched by another thread. `port_command` never suspends the caller
 (OTP may suspend a caller on a busy port): an `fd` port writes its output
 at once on the caller's worker; the pipe and socket drivers queue output
-without a cap and let their I/O threads write it (57D, 57F).
+without a cap and let the I/O thread write it (57D, 57F, 57G1).
 The prototype `tests/prototypes/poller/` (`run.py --wsl`) shows the wakeup
 on Windows (completion port) and WSL Linux (`poll()`): an idle scheduler
 thread wakes 9–91 µs after input, and shutdown stops the I/O thread without
 input.
 
 At program end every port is closed (child programs see end of input; they
-are not killed, as in OTP) and the I/O service stops: the poll thread is
-joined; a Windows reader blocked in a read that cannot be cancelled is
-detached and delivers nothing more. The service stops outside the executor
-mutex, because its threads take it to deliver input.
+are not killed, as in OTP) and the I/O thread stops: it is joined outside the
+executor mutex, because a delivery in progress takes it; a Windows `fd`
+reader blocked in a read that cannot be cancelled is detached and delivers
+nothing more.
 
 ## Subprocesses
 
@@ -185,8 +204,8 @@ stdout are pipes of the port:
 - A program that cannot be started raises `error:Reason` with the POSIX
   reason (`enoent`, `eacces`, `enoexec`); bad names and options raise
   `badarg`.
-- Output is queued and written by a writer thread; closing the port lets the
-  writer finish what is queued, then closes the program's stdin. The program
+- Output is queued and written by the I/O thread; closing the port lets it
+  finish what is queued, then closes the program's stdin. The program
   is never killed; it usually ends at end of input.
 - Option `exit_status` sends `{Port, {exit_status, S}}` once the program has
   exited (its exit code; on Linux and macOS 128 plus the signal for a program
@@ -252,11 +271,10 @@ option is `exit(badarg)`, as for an invalid one in OTP.
 
 Implementation (`runtime/src/ports/sockets.cpp`):
 
-- One socket thread runs a Boost.Asio `io_context` (an I/O completion port on
-  Windows, `epoll` on Linux, `kqueue` on macOS), started by the first socket.
-  Every socket's state lives on that thread. The library opens a port with
+- The runtime's I/O thread ([I/O thread](#io-thread)) serves the sockets;
+  every socket's state lives on that thread. The library opens a port with
   `{spawn_driver, "tcp_inet" | "udp_inet"}` and drives it with
-  `port_control/3`; the calling worker posts the operation to the socket
+  `port_control/3`; the calling worker posts the operation to the I/O
   thread and waits for its synchronous reply (status byte 0 and a result, or
   1 and a POSIX reason).
 - Operations that wait (connect, accept, recv) answer later with a message
@@ -272,12 +290,12 @@ Implementation (`runtime/src/ports/sockets.cpp`):
 - `controlling_process/2` stops active delivery, moves the socket's messages
   already sent to the old owner to the new one, then reconnects the port, as
   OTP's `inet` does; only the owner may call it (`{error, not_owner}`).
-- Output is queued without a cap and written in order on the socket thread.
+- Output is queued without a cap and written in order on the I/O thread.
   Closing a port sends what is queued, then closes the connection gracefully
   (FIN); a closed port answers every waiting caller `{error, closed}`. Name
   lookup runs on the caller's worker, as it blocks.
-- Socket ports are scheduled like other ports: they are not entities with
-  their own time slices (plan step 57G).
+- Socket ports are handled like other ports: they are not entities with
+  their own time slices yet (plan step 57G2).
 
 ## Not provided
 

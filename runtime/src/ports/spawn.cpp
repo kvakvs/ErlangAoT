@@ -13,21 +13,23 @@ class SpawnDriver final : public PortDriver {
         return std::unexpected(DriverError{"einval"});
     }
 
-    std::optional<int> input() const noexcept override {
-        return spawned_.input >= 0 ? std::optional{spawned_.input} : std::nullopt;
-    }
+    std::optional<Descriptor> input() const noexcept override { return pipe(spawned_.input); }
 
-    std::optional<int> queued_output() const noexcept override {
-        return spawned_.output >= 0 ? std::optional{spawned_.output} : std::nullopt;
-    }
+    std::optional<Descriptor> queued_output() const noexcept override { return pipe(spawned_.output); }
 
     std::optional<std::int64_t> child() const noexcept override { return spawned_.child; }
-
-    bool owns_descriptors() const noexcept override { return true; }
 
     std::optional<std::int64_t> os_pid() const noexcept override { return spawned_.os_pid; }
 
   private:
+    // A pipe end the I/O thread owns, or none for a direction the port does not use.
+    static std::optional<Descriptor> pipe(NativeHandle handle) noexcept {
+        if (handle == -1) {
+            return std::nullopt;
+        }
+        return Descriptor{.handle = handle, .owned = true, .overlapped = true};
+    }
+
     // The started program and its pipes.
     Spawned spawned_;
 };

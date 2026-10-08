@@ -397,17 +397,28 @@ void Executor::destroy(ProcessContext &process) noexcept {
     process.runtime().destroy_context(&process);
 }
 
+Executor::~Executor() {
+    if (reactor_) {
+        reactor_->stop();
+    }
+}
+
 void Executor::clear() noexcept {
-    // The I/O service stops outside the lock: its threads may wait for the lock to deliver input.
-    auto io = std::unique_ptr<IoService>{};
-    auto sockets = std::unique_ptr<SocketService>{};
+    // The I/O thread and the Windows blocking readers stop outside the lock: a delivery in progress waits for it.
+    // Workers have stopped, so nothing else creates or replaces the services meanwhile.
+    Reactor *reactor = nullptr;
+    IoService *io = nullptr;
     {
         const std::scoped_lock lock(mutex_);
-        io = std::move(io_);
-        sockets = std::move(sockets_);
+        reactor = reactor_.get();
+        io = io_.get();
     }
-    io.reset();
-    sockets.reset();
+    if (reactor) {
+        reactor->stop();
+    }
+    if (io) {
+        io->close();
+    }
     const std::scoped_lock lock(mutex_);
     for (const auto &[process, state] : schedules_) {
         if (process != finished_) {
@@ -421,7 +432,11 @@ void Executor::clear() noexcept {
     ending_.clear();
     stopped_.clear();
     names_.clear();
+    // Drivers go before the services, and the reactor's io_context last.
     ports_.clear();
+    io_.reset();
+    sockets_.reset();
+    reactor_.reset();
     main_ = finished_ = nullptr;
     failed_ = false;
 }

@@ -1,19 +1,15 @@
 #pragma once
 #include "port.hpp"
-#include <atomic>
-#include <condition_variable>
-#include <deque>
+#include "reactor.hpp"
 #include <functional>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <span>
 #include <string>
-#include <thread>
 #include <vector>
 
-// The I/O service of a runtime (docs/ports.md#io-thread): it reads the input of ports and hands it, framed, to the
-// executor, writes queued port output, and reports the exit status of spawned programs.
+// The port I/O of a runtime (docs/ports.md#io-thread): reads the input of ports and hands it, framed, to the
+// executor, writes queued port output and reports the exit status of spawned programs, all on the reactor's thread.
 namespace clause::runtime::detail {
 // One unit of port input after framing: data (a stream chunk, a packet or a whole line), a line part (eol, noeol),
 // the end of input, a read or write error with its POSIX reason, or a spawned program's exit status.
@@ -49,90 +45,62 @@ class InputDecoder final {
     std::vector<std::byte> pending_;
 };
 
-// Platform primitives the service builds on: blocking whole writes, closing a descriptor, and waiting for a
-// spawned program (a process handle on Windows, a pid elsewhere) to exit, reaping it; its status as OTP reports
-// it (the exit code, or 128 plus the signal that ended it).
+// Blocking whole writes to a C runtime descriptor, as the fd driver writes its output.
 std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> bytes);
-void close_descriptor(int fd) noexcept;
-std::int64_t wait_child(std::int64_t child) noexcept;
-
-// A descriptor the I/O service reads or writes, and whether it closes it when done.
-struct Descriptor final {
-    int fd = -1;
-    bool owned = false;
-};
 
 // A spawned program the I/O service waits for: a process handle on Windows, a pid elsewhere.
 struct Child final {
     std::int64_t handle = 0;
 };
 
-// Lets I/O threads hand input to the executor until the service stops; stopping waits for a delivery in progress.
-// I/O threads share it, so it outlives a service whose threads were let go.
+// Lets the I/O thread (and Windows blocking readers) hand input to the executor until the service stops; stopping
+// waits for a delivery in progress. Readers share it, so it outlives a service whose readers were let go.
 struct IoGate final {
     // Receives the input of a port: the units completed and the bytes read.
     using Deliver = std::function<void(Word port, std::vector<PortInput> units, std::size_t read)>;
 
     // Hand units over unless the service stopped.
     void deliver(Word port, std::vector<PortInput> units, std::size_t read);
+    // Deliver nothing more; waits for a delivery in progress.
+    void close();
 
     std::mutex mutex;
     bool open = true;
     Deliver receiver;
 };
 
-// A writer thread of one port: writes queued output in order, then closes an owned descriptor once closed.
-struct Writer final {
-    Word port = 0;
-    int fd = -1;
-    bool owned = false;
-    std::mutex mutex;
-    std::condition_variable ready;
-    std::deque<std::vector<std::byte>> queue;
-    // Set when the port closed: the queue is still written, then the thread ends.
-    bool closing = false;
-    // Set when the port no longer wants error reports.
-    std::atomic<bool> stopped{false};
-};
-
-// Reads port input on threads of its own and hands every unit to the executor, in order per port; writes queued
-// output; reports exit statuses. The readers are platform specific: a poll() thread on POSIX hosts, a reader thread
-// per input on Windows.
-class IoService {
+// The port I/O of the reactor: every method only posts work to the reactor's thread, so the executor may call it
+// under its lock; all I/O state lives on that thread.
+class IoService final {
   public:
     using Deliver = IoGate::Deliver;
 
-    explicit IoService(Deliver deliver);
+    IoService(Reactor &reactor, Deliver deliver);
     IoService(const IoService &) = delete;
     IoService &operator=(const IoService &) = delete;
     IoService(IoService &&) = delete;
     IoService &operator=(IoService &&) = delete;
-    // Stop delivering; writers finish their queues and readers and watchers are let go.
-    virtual ~IoService();
+    // Stop delivering. The reactor must have stopped: the remaining I/O objects are destroyed here.
+    ~IoService();
 
-    // Read descriptor `fd` for `port`, framed as `options` says; an owned descriptor is closed when reading ends.
-    virtual void read_descriptor(Word port, Descriptor input, const PortOptions &options) = 0;
-    // Write the port's queued output to `output` on a writer thread.
+    // Read `input` for `port`, framed as `options` says; an owned handle is closed when reading ends.
+    void read_descriptor(Word port, Descriptor input, const PortOptions &options);
+    // Write the port's queued output to `output`.
     void write_descriptor(Word port, Descriptor output);
     // Queue output of `port`.
     void send(Word port, std::vector<std::byte> bytes);
     // Report the exit status of a spawned program of `port` when it exits.
     void watch_child(Word port, Child child);
-    // Stop delivering input and errors of `port`; its writer still writes what is queued, its program is reaped.
-    virtual void forget(Word port);
+    // Stop delivering input and errors of `port`; its queued output is still written, then its handle closed, and
+    // its program is still reaped.
+    void forget(Word port);
+    // Deliver nothing more (before the reactor stops); waits for a delivery in progress.
+    void close();
 
-  protected:
-    // Shared with the I/O threads, which may outlive the service.
-    std::shared_ptr<IoGate> gate_;
+    class Impl;
 
   private:
-    // Guards writers_ and watchers_.
-    std::mutex mutex_;
-    std::map<Word, std::shared_ptr<Writer>> writers_;
-    // Whether each port's program watcher may still report.
-    std::map<Word, std::shared_ptr<std::atomic<bool>>> watchers_;
+    // The state the reactor's thread works on; handlers reach it only while the reactor runs.
+    std::unique_ptr<Impl> impl_;
 };
-
-// The I/O service of this platform.
-std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver);
 } // namespace clause::runtime::detail
