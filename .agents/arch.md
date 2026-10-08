@@ -256,6 +256,10 @@
   thread only for fd input; POSIX: `async_wait` + `read()`, `SIGCHLD` `Reaper`. Drivers return `Descriptor`
   (native handle, owned, overlapped). Executor `reactor_` declared before ports/services; `clear()` stops it first
   (outside the lock), drops ports, services, then the io_context.
+  Step 57G2: ports are run-queue entities: I/O thread and sockets hand raw `PortWork` to `Port::pending`,
+  `queue_port` -> `port_queue_`; `work()` alternates `next_port()` with process slices while both have work;
+  `run_port` frames (`InputDecoder` now in `Port`) and delivers with a reduction budget under the mutex. Accepted
+  sockets start serving in `SocketDriver::attach` (their port is created by the listening port's task).
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

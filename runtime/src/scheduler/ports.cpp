@@ -88,6 +88,7 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     port->links.push_back(port->connected);
     port->spelling = std::move(spelling);
     port->options = std::move(options);
+    port->decoder = InputDecoder(port->options);
     port->driver = std::move(driver);
     const auto word = detail::port_word(*number);
     port->driver->attach(word);
@@ -98,9 +99,9 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     port->input_ended = !input;
     owner.signals().link(word);
     try {
-        const auto &options = ports_.emplace(*number, std::move(port)).first->second->options;
+        ports_.emplace(*number, std::move(port));
         if (input) {
-            io().read_descriptor(word, *input, options);
+            io().read_descriptor(word, *input);
         }
         if (output) {
             io().write_descriptor(word, *output);
@@ -128,14 +129,14 @@ std::unique_ptr<PortDriver> Executor::socket_driver(bool udp) {
 void Executor::socket_event(Word port, SocketEvent event) noexcept {
     const std::scoped_lock lock(mutex_);
     try {
-        if (event.kind == SocketEvent::Kind::accepted) {
+        if (auto *open_port = open(port)) {
+            open_port->pending.emplace_back(std::move(event));
+            queue_port(*open_port);
+        } else if (event.kind == SocketEvent::Kind::accepted) {
             accept_connection(port, std::move(event));
-        } else {
-            const auto *open_port = event.target == 0 ? open(port) : nullptr;
-            auto *target = process(open_port ? open_port->connected : event.target);
-            if (target) {
-                post(*target, PortEvent::term(port, std::move(event.value)));
-            }
+        } else if (auto *target = process(event.target)) {
+            // A closed socket still answers the callers that waited on it.
+            post(*target, PortEvent::term(port, std::move(event.value)));
         }
         drain();
     } catch (...) {
@@ -189,20 +190,101 @@ IoService &Executor::io() {
 
 void Executor::input(Word port, std::vector<PortInput> units, std::size_t read) noexcept {
     const std::scoped_lock lock(mutex_);
-    if (auto *open_port = open(port)) {
-        open_port->input += read;
+    auto *open_port = open(port);
+    if (!open_port) {
+        return;
     }
+    open_port->input += read;
     try {
         for (auto &unit : units) {
-            auto *open_port = open(port);
-            if (!open_port || !input(*open_port, std::move(unit))) {
-                break;
-            }
+            open_port->pending.emplace_back(std::move(unit));
         }
-        drain();
+        queue_port(*open_port);
     } catch (...) {
-        // Only exhausted memory can fail a delivery of atoms, bytes and port words.
+        // Only exhausted memory can fail queueing input.
         fail_program();
+    }
+}
+
+void Executor::queue_port(Port &port) {
+    if (port.queued) {
+        return;
+    }
+    port_queue_.push_back(port.number);
+    port.queued = true;
+    work_.notify_one();
+}
+
+std::optional<Word> Executor::next_port() noexcept {
+    if (port_queue_.empty()) {
+        return std::nullopt;
+    }
+    if (!queue_.empty()) {
+        // Processes and ports take turns, so neither can starve the other.
+        port_turn_ = !port_turn_;
+        if (port_turn_) {
+            return std::nullopt;
+        }
+    }
+    const auto number = port_queue_.front();
+    port_queue_.pop_front();
+    return number;
+}
+
+void Executor::run_port(Word number) {
+    const auto word = detail::port_word(number);
+    auto *port = open(word);
+    if (!port) {
+        return;
+    }
+    port->queued = false;
+    auto reductions = PORT_TASK_REDUCTIONS;
+    while (reductions > 0 && port_step(*port, reductions)) {
+    }
+    // A step may have closed the port: look it up again.
+    if (auto *still = open(word); still && !(still->pending.empty() && still->units.empty())) {
+        queue_port(*still);
+    }
+    drain();
+}
+
+bool Executor::port_step(Port &port, std::size_t &reductions) {
+    if (port.units.empty()) {
+        if (port.pending.empty()) {
+            return false;
+        }
+        auto work = std::move(port.pending.front());
+        port.pending.pop_front();
+        if (auto *event = std::get_if<SocketEvent>(&work)) {
+            reductions -= std::min(reductions, PORT_MESSAGE_REDUCTIONS);
+            socket_work(port, std::move(*event));
+        } else {
+            frame(port, std::get<PortInput>(work));
+        }
+        return true;
+    }
+    auto unit = std::move(port.units.front());
+    port.units.pop_front();
+    reductions -= std::min(reductions, PORT_MESSAGE_REDUCTIONS + unit.bytes.size() / PORT_BYTES_PER_REDUCTION);
+    return input(port, std::move(unit));
+}
+
+void Executor::frame(Port &port, const PortInput &raw) {
+    if (raw.kind == PortInput::Kind::data || raw.kind == PortInput::Kind::end) {
+        auto units = raw.kind == PortInput::Kind::data ? port.decoder.feed(raw.bytes) : port.decoder.finish();
+        port.units.insert(port.units.end(), std::make_move_iterator(units.begin()),
+                          std::make_move_iterator(units.end()));
+    } else {
+        port.units.push_back(raw);
+    }
+}
+
+void Executor::socket_work(Port &port, SocketEvent event) {
+    const auto word = detail::port_word(port.number);
+    if (event.kind == SocketEvent::Kind::accepted) {
+        accept_connection(word, std::move(event));
+    } else if (auto *target = process(event.target == 0 ? port.connected : event.target)) {
+        post(*target, PortEvent::term(word, std::move(event.value)));
     }
 }
 

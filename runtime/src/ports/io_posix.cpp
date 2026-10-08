@@ -19,9 +19,9 @@ constexpr std::size_t READ_BYTES = std::size_t{64} * 1024;
 // are only let go.
 class DescriptorInput final : public Channel, public std::enable_shared_from_this<DescriptorInput> {
   public:
-    DescriptorInput(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder)
+    DescriptorInput(IoService::Impl &service, Word port, Descriptor input)
         : service_(service), port_(port), stream_(service.context, static_cast<int>(input.handle)), owned_(input.owned),
-          decoder_(std::move(decoder)), buffer_(READ_BYTES) {}
+          buffer_(READ_BYTES) {}
 
     // Start waiting for the first input.
     void start() { wait(); }
@@ -44,7 +44,7 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
             return;
         }
         if (error && error != asio::error::operation_not_supported) {
-            end({PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}});
+            end({PortInput::of(PortInput::Kind::error, "eio")});
             return;
         }
         read_once(error == asio::error::operation_not_supported);
@@ -58,13 +58,11 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
             return;
         }
         if (bytes <= 0) {
-            end(bytes == 0 ? decoder_.finish()
-                           : std::vector{
-                                 PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}});
+            end({bytes == 0 ? PortInput::of(PortInput::Kind::end) : PortInput::of(PortInput::Kind::error, "eio")});
             return;
         }
         const auto count = static_cast<std::size_t>(bytes);
-        service_.deliver(port_, decoder_.feed(std::span(buffer_).first(count)), count);
+        service_.deliver(port_, {PortInput::raw(std::span(buffer_).first(count))}, count);
         if (file) {
             asio::post(service_.context,
                        [self = shared_from_this()] { self->ready(asio::error::operation_not_supported); });
@@ -93,7 +91,6 @@ class DescriptorInput final : public Channel, public std::enable_shared_from_thi
     Word port_;
     asio::posix::stream_descriptor stream_;
     bool owned_;
-    InputDecoder decoder_;
     std::vector<std::byte> buffer_;
     // Set when the port no longer wants input.
     bool stopped_ = false;
@@ -191,8 +188,8 @@ NativeHandle native_descriptor(int fd) noexcept { return fd; }
 
 PipeStream pipe_stream(asio::io_context &context, NativeHandle handle) { return {context, static_cast<int>(handle)}; }
 
-std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder) {
-    auto channel = std::make_shared<DescriptorInput>(service, port, input, std::move(decoder));
+std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input) {
+    auto channel = std::make_shared<DescriptorInput>(service, port, input);
     channel->start();
     return channel;
 }

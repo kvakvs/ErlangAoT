@@ -391,6 +391,9 @@ Step facts beyond the plan record:
   BOOST_ASIO_NO_DEPRECATED is a runtime CMake definition (ODR). Asio objects must die before their io_context: executor
   `reactor_` declared before ports/services, clear() stops it first. OTP escript: "C:/Program Files/Erlang OTP/bin/
   escript.exe" works for regenerate.py now. make-test.bat now selects clang-cl + Ninja Multi-Config itself.
+- 57G2: TESTRE="a|b" cmd //c build/plan11/test.cmd (env var; `|` in cmd args breaks). Fairness goldens need more
+  CPU-bound processes than workers (idle workers take port tasks freely) and must check state when the CPU work ends
+  (ping-pong behind 8 hogs is slow by design). Validate such tests by breaking the scheduler on purpose.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

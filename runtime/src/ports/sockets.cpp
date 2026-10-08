@@ -232,12 +232,16 @@ class Socket final : public std::enable_shared_from_this<Socket> {
     // Learn the port's word.
     void attach(Word port) noexcept { port_ = port; }
 
-    // Adopt an accepted connection with the listening socket's mode.
+    // Adopt an accepted connection with the listening socket's mode; it serves once its port exists.
     void adopt(tcp::socket socket, const Mode &mode) {
         stream_.emplace(std::move(socket));
         mode_ = mode;
         decoder_ = InputDecoder(mode_.framing());
+        adopted_ = true;
     }
+
+    // Whether this is an accepted connection, which starts serving when it learns its port.
+    bool adopted() const noexcept { return adopted_; }
 
     // Run operation `operation` of `caller` on the I/O thread; the reply, or none for an unknown operation.
     std::optional<Bytes> operate(Word caller, SocketOperation operation, std::span<const std::byte> data);
@@ -303,6 +307,8 @@ class Socket final : public std::enable_shared_from_this<Socket> {
     std::optional<tcp::socket> stream_;
     std::optional<tcp::acceptor> listener_;
     std::optional<udp::socket> datagram_;
+    // An accepted connection, set before its port exists and read by the executor once it does.
+    bool adopted_ = false;
     Mode mode_;
     InputDecoder decoder_{PortOptions{}};
     // Stream bytes and packets read but not delivered yet.
@@ -485,11 +491,11 @@ void Socket::accepted(const boost::system::error_code &error, tcp::socket socket
         auto connection = std::make_shared<Socket>(service_, false);
         connection->adopt(std::move(socket), mode_);
         auto driver = socket_driver(connection);
+        // The connection starts serving once the listening port's task gave it a port (SocketDriver::attach).
         service_->deliver(port_, SocketEvent{.kind = SocketEvent::Kind::accepted,
                                              .target = caller,
                                              .value = answer(PortValue::of_atom("ok")),
                                              .driver = std::move(driver)});
-        connection->start();
     }
     start_accept();
 }
@@ -877,7 +883,19 @@ class SocketDriver final : public PortDriver {
                                 [socket = socket_, caller, kind, copy] { return socket->operate(caller, kind, copy); });
     }
 
-    void attach(Word port) noexcept override { socket_->attach(port); }
+    // Learn the port's word; an accepted connection then starts serving on the I/O thread.
+    void attach(Word port) noexcept override {
+        socket_->attach(port);
+        if (!socket_->adopted()) {
+            return;
+        }
+        try {
+            asio::post(socket_->context(), [socket = socket_] { socket->start(); });
+        } catch (...) {
+            // Only exhausted memory fails posting; as in ERTS, the program cannot go on without memory.
+            std::terminate();
+        }
+    }
 
   private:
     std::shared_ptr<Socket> socket_;

@@ -1,7 +1,9 @@
 #pragma once
+#include "input.hpp"
 #include <clause/runtime/terms.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <expected>
 #include <memory>
 #include <optional>
@@ -11,37 +13,9 @@
 #include <utility>
 #include <vector>
 
-// Ports (docs/ports.md): the port record the executor keeps in its port table, the options open_port/2 accepts and
-// the interface of the drivers behind ports.
+// Ports (docs/ports.md): the port record the executor keeps in its port table and the interface of the drivers
+// behind ports.
 namespace clause::runtime::detail {
-// How a port's data is framed, in both directions.
-enum class Framing : std::uint8_t { stream, packet, line };
-
-// The options of open_port/2 (docs/ports.md#data-modes-and-options).
-struct PortOptions final {
-    Framing framing = Framing::stream;
-    // Header bytes of {packet, N} (1, 2 or 4), or the line length L of {line, L}.
-    std::size_t packet_bytes = 0;
-    std::size_t line_length = 0;
-    // Data as binaries instead of byte lists.
-    bool binary = false;
-    // Send {Port, eof} at end of input and stay open, instead of closing.
-    bool eof = false;
-    // Send {Port, {exit_status, S}} when a spawned program exits.
-    bool exit_status = false;
-    // The directions the port is opened for (options in and out).
-    bool input = true;
-    bool output = true;
-    // Spawned programs: use stdin/stdout (use_stdio), merge stderr into stdout.
-    bool use_stdio = true;
-    bool stderr_to_stdout = false;
-    // Spawned programs: arguments, argv[0], environment changes (unset when the value is missing), directory.
-    std::vector<std::string> args;
-    std::optional<std::string> arg0;
-    std::vector<std::pair<std::string, std::optional<std::string>>> env;
-    std::optional<std::string> cd;
-};
-
 // A failed driver operation: the POSIX error name a port closes with or an operation reports (epipe, enoent, ...).
 struct DriverError final {
     std::string reason;
@@ -124,6 +98,12 @@ struct Port final {
     std::optional<std::int64_t> exit_status;
     // Shared so port_control/3 can run outside the executor's lock while the port may close meanwhile.
     std::shared_ptr<PortDriver> driver;
+    // The port's task (docs/ports.md#port-tasks): input and events handed over but not acted on yet, oldest first;
+    // the framing of its input; units framed but not delivered yet; and whether it waits in the port queue.
+    std::deque<PortWork> pending;
+    InputDecoder decoder{PortOptions{}};
+    std::deque<PortInput> units;
+    bool queued = false;
 };
 
 // Apply the output framing of `options` to `bytes`: a {packet, N} header; nothing for stream and line ports.

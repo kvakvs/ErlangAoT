@@ -22,9 +22,8 @@ HANDLE handle_of(NativeHandle handle) noexcept { return std::bit_cast<HANDLE>(ha
 // Reads an overlapped pipe end until end of input, an error or a stop, then closes it.
 class PipeInput final : public Channel, public std::enable_shared_from_this<PipeInput> {
   public:
-    PipeInput(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder)
-        : service_(service), port_(port), stream_(service.context, handle_of(input.handle)),
-          decoder_(std::move(decoder)), buffer_(READ_BYTES) {}
+    PipeInput(IoService::Impl &service, Word port, Descriptor input)
+        : service_(service), port_(port), stream_(service.context, handle_of(input.handle)), buffer_(READ_BYTES) {}
 
     // Start the first read.
     void start() { next(); }
@@ -49,16 +48,15 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
             return;
         }
         if (!error) {
-            service_.deliver(port_, decoder_.feed(std::span(buffer_).first(bytes)), bytes);
+            service_.deliver(port_, {PortInput::raw(std::span(buffer_).first(bytes))}, bytes);
             next();
             return;
         }
         const bool ended = error == asio::error::eof || error == asio::error::broken_pipe;
-        service_.deliver(
-            port_,
-            ended ? decoder_.finish()
-                  : std::vector{PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}},
-            0);
+        service_.deliver(port_,
+                         ended ? std::vector{PortInput::of(PortInput::Kind::end)}
+                               : std::vector{PortInput::of(PortInput::Kind::error, "eio")},
+                         0);
         close();
     }
 
@@ -71,7 +69,6 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
     IoService::Impl &service_;
     Word port_;
     asio::windows::stream_handle stream_;
-    InputDecoder decoder_;
     std::vector<std::byte> buffer_;
     // Set when the port no longer wants input.
     bool stopped_ = false;
@@ -81,18 +78,17 @@ class PipeInput final : public Channel, public std::enable_shared_from_this<Pipe
 struct Reader final {
     Word port = 0;
     HANDLE handle = nullptr;
-    InputDecoder decoder;
     // Set when the port no longer wants input; the thread then delivers nothing more.
     std::atomic<bool> stopped{false};
 };
 
 // The last units of a read that returned no bytes: the end of input, or an error.
-std::vector<PortInput> last_units(Reader &reader, BOOL ok) {
+std::vector<PortInput> last_units(BOOL ok) {
     const auto error = GetLastError();
     if (ok || error == ERROR_BROKEN_PIPE || error == ERROR_HANDLE_EOF) {
-        return reader.decoder.finish();
+        return {PortInput::of(PortInput::Kind::end)};
     }
-    return {PortInput{.kind = PortInput::Kind::error, .bytes = {}, .reason = "eio", .status = 0}};
+    return {PortInput::of(PortInput::Kind::error, "eio")};
 }
 
 // Read until end of input, an error or a stop; the end or error is the last unit. The handle is the program's own
@@ -106,10 +102,10 @@ void read_loop(const std::shared_ptr<IoGate> &gate, const std::shared_ptr<Reader
             return;
         }
         if (!ok || read == 0) {
-            gate->deliver(reader->port, last_units(*reader, ok), 0);
+            gate->deliver(reader->port, last_units(ok), 0);
             return;
         }
-        gate->deliver(reader->port, reader->decoder.feed(std::span(buffer).first(read)), read);
+        gate->deliver(reader->port, {PortInput::raw(std::span(buffer).first(read))}, read);
     }
 }
 
@@ -117,8 +113,8 @@ void read_loop(const std::shared_ptr<IoGate> &gate, const std::shared_ptr<Reader
 // read that cannot be cancelled, a console with no input, delivers nothing more).
 class BlockingInput final : public Channel {
   public:
-    BlockingInput(const IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder)
-        : reader_(std::make_shared<Reader>(port, handle_of(input.handle), std::move(decoder))) {
+    BlockingInput(const IoService::Impl &service, Word port, Descriptor input)
+        : reader_(std::make_shared<Reader>(port, handle_of(input.handle))) {
         thread_ = std::thread([gate = service.gate, reader = reader_] { read_loop(gate, reader); });
     }
 
@@ -226,11 +222,11 @@ NativeHandle native_descriptor(int fd) noexcept { return _get_osfhandle(fd); }
 
 PipeStream pipe_stream(asio::io_context &context, NativeHandle handle) { return {context, handle_of(handle)}; }
 
-std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder) {
+std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input) {
     if (!input.overlapped) {
-        return std::make_shared<BlockingInput>(service, port, input, std::move(decoder));
+        return std::make_shared<BlockingInput>(service, port, input);
     }
-    auto channel = std::make_shared<PipeInput>(service, port, input, std::move(decoder));
+    auto channel = std::make_shared<PipeInput>(service, port, input);
     channel->start();
     return channel;
 }

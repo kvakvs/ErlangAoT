@@ -60,8 +60,8 @@ using PipeStream = asio::posix::stream_descriptor;
 
 // Platform parts, run on the reactor's thread. The stream of a pipe end the runtime created, owning it.
 PipeStream pipe_stream(asio::io_context &context, NativeHandle handle);
-// Start reading `input` for `port`, framed by `decoder`.
-std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input, InputDecoder decoder);
+// Start reading `input` for `port`.
+std::shared_ptr<Channel> start_input(IoService::Impl &service, Word port, Descriptor input);
 // Start waiting for the exit of the spawned program `child` of `port`.
 std::shared_ptr<Channel> start_child(IoService::Impl &service, Word port, Child child);
 // The POSIX reason a failed pipe write closes its port with.

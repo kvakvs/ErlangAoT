@@ -1302,10 +1302,26 @@ worker runs the port's task (framing and delivery of its pending input) with
 a reduction budget and queues it again when work remains.
 
 - Success criteria
-  - [ ] A port flooding input cannot starve CPU-bound or receiving processes.
+  - [x] A port flooding input cannot starve CPU-bound or receiving processes.
 - Tests
-  - [ ] Fairness stress golden: flooding ports against CPU-bound and
+  - [x] Fairness stress golden: flooding ports against CPU-bound and
     receiving processes on 1 and N workers.
+
+Done 2026-10-09 (contract `docs/ports.md#port-tasks`). The I/O thread hands
+raw input, ends, errors, statuses and socket events to `Port::pending`
+(`ports/input.hpp`: `PortOptions`, `PortInput`, `InputDecoder`,
+`SocketEvent`, `PortWork`); `queue_port` puts the port in the executor's
+`port_queue_`; `work()` takes `next_port()` every other pick while processes
+are runnable; `run_port` frames (`frame`) and delivers (`port_step`) under the
+mutex for `PORT_TASK_REDUCTIONS` (a message costs 100 + bytes/64) and queues
+the port again while work remains. Socket events of a closed port still
+reach their explicit target at once. Found: an accepted socket used to start
+serving right after reporting the accept, which created its port
+synchronously; it now starts when `SocketDriver::attach` gives it its port.
+OTP golden `executables_port_fairness` (workers 1, 4): two programs flood
+400,000 lines while eight CPU-bound processes (more than workers) finish
+their loops before the floods are delivered, then 1,000 ping-pongs; a
+ports-first scheduler fails every run of it (checked by hand).
 
 <a id="step-57g3"></a>
 

@@ -9,19 +9,6 @@
 // completion port on Windows, epoll on Linux, kqueue on macOS). The library modules gen_tcp,
 // gen_udp and inet drive a socket port through port_control/3 operations (SocketOperation in sockets.cpp).
 namespace clause::runtime::detail {
-// Something a socket reports to the executor from the I/O thread.
-struct SocketEvent final {
-    enum class Kind : std::uint8_t { message, accepted };
-    Kind kind = Kind::message;
-    // The process the message goes to; 0 for the port's connected process.
-    Word target = 0;
-    // The message ({tcp, S, Data}, {clause_socket, S, Reply}, ...); for accepted, the reply without the new
-    // socket, which the executor adds once it has a port.
-    PortValue value;
-    // A connection a listening socket accepted for `target`, to become a new port it is connected to.
-    std::shared_ptr<PortDriver> driver;
-};
-
 // The sockets of a runtime on the reactor's thread.
 class SocketService final {
   public:

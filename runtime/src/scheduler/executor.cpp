@@ -270,6 +270,10 @@ void Executor::work() noexcept {
     while (!finished_) {
         try {
             expire();
+            if (const auto port = next_port()) {
+                run_port(*port);
+                continue;
+            }
             if (queue_.empty()) {
                 idle(lock);
                 continue;
@@ -427,6 +431,7 @@ void Executor::clear() noexcept {
     }
     schedules_.clear();
     queue_.clear();
+    port_queue_.clear();
     parked_.clear();
     timers_.clear();
     ending_.clear();

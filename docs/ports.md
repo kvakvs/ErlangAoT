@@ -20,7 +20,8 @@ standard input through `io:get_line`/`io:get_chars` (step 57E,
 `executables_file_io`); sockets (step 57F, OTP golden `executables_sockets`);
 one event-driven I/O thread for every port kind (step 57G1,
 `runtime/src/ports/reactor.cpp`; OTP golden `executables_many_ports`, runtime
-test `runtime_port_io`).
+test `runtime_port_io`); port tasks on the scheduler workers (step 57G2,
+`runtime/src/scheduler/ports.cpp`; OTP golden `executables_port_fairness`).
 
 ## Identity
 
@@ -157,23 +158,40 @@ it serves every port kind, so a port costs no thread of its own:
 `runtime/src/ports/io*.cpp` hold the port I/O (`detail::IoService`): its
 methods only post work to the I/O thread, where all I/O state lives.
 
-- Framing happens on the I/O side (`InputDecoder`): stream input arrives in
-  the chunks reads return; `{packet, N}` holds bytes until a whole packet
-  arrived (an incomplete packet at end of input is dropped, as in OTP);
-  `{line, L}` splits at `
-`, sends a line longer than `L` as `{noeol, Part}`
-  pieces and an unterminated end as `{noeol, Rest}`. `port_info(P, input)`
-  counts every byte read, newlines and packet headers included.
+- The I/O thread hands input over as it was read: raw bytes, the end of
+  input, a read error, a program's exit status. Socket events (messages,
+  accepted connections) are handed over the same way.
+
+## Port tasks
+
+Step 57G2. A port is scheduled like a process: what the I/O thread hands
+over waits in the port, and the port waits in the executor's port queue
+until a scheduler worker runs its task.
+
+- Workers take a port task and a process time slice in turn while both
+  queues have work, so a port flooding input cannot starve processes, and
+  processes cannot starve ports; an idle worker takes whatever is queued.
+- A task runs under the executor mutex for `PORT_TASK_REDUCTIONS` (a time
+  slice's 4,000): each message it delivers costs 100 reductions plus one per
+  64 bytes it carries. A port with work left is queued again at the back.
+- The task frames input (`InputDecoder`): stream input arrives in the chunks
+  reads return; `{packet, N}` holds bytes until a whole packet arrived (an
+  incomplete packet at end of input is dropped, as in OTP); `{line, L}`
+  splits at `\n`, sends a line longer than `L` as `{noeol, Part}` pieces and
+  an unterminated end as `{noeol, Rest}`. `port_info(P, input)` counts every
+  byte read, newlines and packet headers included, when it is read.
 - End of input sends `{Port, eof}` with option `eof`, else closes the port
   with reason `normal`; a read error closes it with `eio`.
+- A message becomes a message to its process at once when that process does
+  not run on a worker (waking it like any message), else when its time slice
+  ends, so a running process's heap is never touched by another thread.
+- Commands, closes, connects and exit signals sent to a port act at once on
+  the sender's worker, as ERTS does for a port that is not busy.
+  `port_command` never suspends the caller (OTP may suspend a caller on a
+  busy port): an `fd` port writes its output at once on the caller's worker;
+  the pipe and socket drivers queue output without a cap and let the I/O
+  thread write it (57D, 57F, 57G1).
 
-An event becomes a message to the connected process under the executor
-mutex: at once when that process does not run on a worker (waking it like
-any message), else when its time slice ends, so a running process's heap is
-never touched by another thread. `port_command` never suspends the caller
-(OTP may suspend a caller on a busy port): an `fd` port writes its output
-at once on the caller's worker; the pipe and socket drivers queue output
-without a cap and let the I/O thread write it (57D, 57F, 57G1).
 The prototype `tests/prototypes/poller/` (`run.py --wsl`) shows the wakeup
 on Windows (completion port) and WSL Linux (`poll()`): an idle scheduler
 thread wakes 9–91 µs after input, and shutdown stops the I/O thread without
@@ -294,8 +312,8 @@ Implementation (`runtime/src/ports/sockets.cpp`):
   Closing a port sends what is queued, then closes the connection gracefully
   (FIN); a closed port answers every waiting caller `{error, closed}`. Name
   lookup runs on the caller's worker, as it blocks.
-- Socket ports are handled like other ports: they are not entities with
-  their own time slices yet (plan step 57G2).
+- Socket ports are scheduled like other ports ([port tasks](#port-tasks)): a
+  socket's messages wait in its port until the port's task delivers them.
 
 ## Not provided
 

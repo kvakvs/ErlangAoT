@@ -120,6 +120,12 @@ struct PortEvent final {
 // The outcome of port output: written, the port is not open, or the data does not fit the port's packet header.
 enum class PortOutcome : std::uint8_t { done, not_open, too_long };
 
+// The reductions of one port task (docs/ports.md#port-tasks), as many as a process's time slice; a message a task
+// delivers costs PORT_MESSAGE_REDUCTIONS and one more per PORT_BYTES_PER_REDUCTION bytes it carries.
+inline constexpr std::size_t PORT_TASK_REDUCTIONS = SLICE_REDUCTIONS;
+inline constexpr std::size_t PORT_MESSAGE_REDUCTIONS = 100;
+inline constexpr std::size_t PORT_BYTES_PER_REDUCTION = 64;
+
 // The name of the only node, as node/0 returns it.
 inline constexpr std::string_view LOCAL_NODE = "nonode@nohost";
 
@@ -201,8 +207,8 @@ class Executor final {
     // Port ! Request from `sender`; a malformed request, or one naming another process than the connected one, sends
     // the connected process an exit signal badsig. Nothing for a port that is not open.
     void port_request(ProcessContext &sender, Word port, const PortRequest &request);
-    // The input of a port read by the I/O thread: data becomes messages to its connected process, end of input
-    // {Port, eof} or a normal close, a read error a close with its reason. Nothing for a port that closed.
+    // Input of a port read by the I/O thread (raw bytes, the end, an error, a program's status): queued for the
+    // port's task, which frames and delivers it. Nothing for a port that closed.
     void input(Word port, std::vector<PortInput> units, std::size_t read) noexcept;
     // What port_info/1,2 report; none for a port that is not open.
     std::optional<PortInfo> port_info(Word port) const;
@@ -215,7 +221,8 @@ class Executor final {
     control_port(ProcessContext &caller, Word port, std::span<const std::byte> data, std::uint32_t operation);
     // A new socket port's driver ({spawn_driver, "tcp_inet" | "udp_inet"}), starting the I/O thread on first use.
     std::unique_ptr<PortDriver> socket_driver(bool udp);
-    // An event of a socket port from the I/O thread: a message, or a connection accepted for a process.
+    // An event of a socket port from the I/O thread: a message, or a connection accepted for a process; queued for
+    // the port's task while the port is open, acted on at once after it closed.
     void socket_event(Word port, SocketEvent event) noexcept;
 
     // Run queued processes on RuntimeOptions::schedulers workers (this thread and more threads) until `main` ends
@@ -282,7 +289,21 @@ class Executor final {
     ProcessContext *busy_peer(const Port &port) noexcept;
     // Signal `target` from a port now, or when its slice ends while it runs elsewhere.
     void post(ProcessContext &target, PortEvent event);
-    // Act on one input unit of an open port; false once the unit closed the port.
+    // Port tasks (docs/ports.md#port-tasks). Queue an open port's task unless it waits already.
+    void queue_port(Port &port);
+    // The port whose task runs next, taken from the port queue: every other pick while processes are runnable too.
+    std::optional<Word> next_port() noexcept;
+    // Run the task of the port numbered `number`, if still open, for PORT_TASK_REDUCTIONS; queue it again while work
+    // remains.
+    void run_port(Word number);
+    // Act on the next item of an open port's task, paying its reductions; false when nothing is left or the port
+    // closed.
+    bool port_step(Port &port, std::size_t &reductions);
+    // Frame raw input of a port into its units; the end of input completes an unterminated line.
+    static void frame(Port &port, const PortInput &raw);
+    // Act on a socket event of an open port: deliver its message, or give an accepted connection a port.
+    void socket_work(Port &port, SocketEvent event);
+    // Act on one framed input unit of an open port; false once the unit closed the port.
     bool input(Port &port, PortInput unit);
     // Act on the end of an open port's input or a read error: {Port, eof} with option eof, else a close; with
     // option exit_status only once the program's status is known.
@@ -403,6 +424,10 @@ class Executor final {
     std::unordered_map<ProcessContext *, Schedule> schedules_;
     // Runnable processes in the order they run; a running process is in none of them.
     std::deque<ProcessContext *> queue_;
+    // Numbers of ports whose tasks wait to run, oldest first; a closed port's number is skipped.
+    std::deque<Word> port_queue_;
+    // Whether the next pick goes to the port queue while both queues have work.
+    bool port_turn_ = false;
     // Processes waiting for a message.
     std::unordered_set<ProcessContext *> parked_;
     // Parked processes whose receive has a finite timeout, by its deadline.

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "entry": "port_fairness",
+  "data": [
+    "helper.py"
+  ],
+  "workers": [
+    1,
+    4
+  ],
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "cpu 23999984\nflooded true, still flooding true\nflooded true, still flooding true\npings 1000\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "port_fairness.erl": "419abb31f5b55d4abd545662c74cf566491d45ae539c6f52063e944d300bb9f4",
+    "helper.py": "9d02ee43eea5a7620a348bbba4a5e39da884f7c8cbd70a9f9534dbcca8e99b64"
+  }
+}

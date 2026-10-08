@@ -32,7 +32,6 @@ using detail::Descriptor;
 using detail::IoService;
 using detail::NativeHandle;
 using detail::PortInput;
-using detail::PortOptions;
 using detail::Reactor;
 
 // Keep every check active in optimized builds.
@@ -138,8 +137,7 @@ void serve_many_pipes() {
     for (std::size_t index = 0; index < pipes; ++index) {
         const auto pipe = make_pipe(index);
         service.write_descriptor(2 * index, Descriptor{.handle = pipe.write, .owned = true, .overlapped = true});
-        service.read_descriptor(2 * index + 1, Descriptor{.handle = pipe.read, .owned = true, .overlapped = true},
-                                PortOptions{});
+        service.read_descriptor(2 * index + 1, Descriptor{.handle = pipe.read, .owned = true, .overlapped = true});
     }
     const auto during = thread_count();
     require(before == 0 || during == before, "pipe ports started threads of their own");
