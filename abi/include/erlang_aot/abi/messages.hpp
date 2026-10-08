@@ -11,6 +11,8 @@ enum class ReceiveOperation : std::uint8_t {
     skip = 1,
     // Remove the examined message, which a clause matched; the next receive starts at the oldest message.
     take = 2,
+    // The timeout expired: the next receive starts at the oldest message.
+    restart = 3,
 };
 } // namespace erlang_aot::abi::v1
 
@@ -19,5 +21,6 @@ enum class ReceiveOperation : std::uint8_t {
 std::uint8_t erlang_aot_receive_v1(void *context, std::uint8_t operation,
                                    erlang_aot::abi::v1::TermWord *output) noexcept;
 // The FrameDescriptor of the builtin a receive enters when it has examined every message, with its timeout in the
-// first register: the process waits until a message arrives, then the builtin returns true.
+// first register: true once a message arrives, false once the timeout expired (at once for 0); the process waits in
+// between. A timeout other than infinity or an integer in 0..4294967295 raises timeout_value.
 const void *erlang_aot_wait_frame_v1(void *context) noexcept;

@@ -64,6 +64,8 @@ struct CaseJoin {
     Exception exception = {};
     // A receive's loop head: a message no clause matches is skipped and the scan continues there.
     llvm::BasicBlock *loop = nullptr;
+    // A receive's expired timeout: its after body starts here.
+    llvm::BasicBlock *timeout = nullptr;
 };
 
 struct ProtectedScope {
@@ -156,6 +158,9 @@ bool case_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<Vi
     pending.push_back({id, Action::case_select});
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         pending.push_back({selection->value});
+    } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value); receive && receive->after) {
+        // OTP evaluates the timeout before scanning the mailbox.
+        pending.push_back({receive->after->timeout});
     }
     return true;
 }
@@ -564,27 +569,61 @@ struct Walk {
     }
 
     // Loop over the mailbox (docs/processes.md#receive): the next message not yet examined is matched against the
-    // clauses; when every message has been examined the process waits for another, then the scan continues.
+    // clauses; when every message has been examined the process waits for another, then the scan continues. An
+    // expired timeout runs the after body instead.
     void receive(const ast::ExprId &id) {
         const auto &expression = state.module.syntax->expression(id);
+        const auto &after = std::get<ast::ReceiveExpression>(expression.value).after;
         auto &context = state.entry.getContext();
         auto *loop = llvm::BasicBlock::Create(context, "receive.loop", &state.entry);
         auto *wait = llvm::BasicBlock::Create(context, "receive.wait", &state.entry);
         auto *match = llvm::BasicBlock::Create(context, "receive.match", &state.entry);
+        auto *timeout = after ? state.values.at(&state.module.syntax->expression(after->timeout))
+                              : lower_atom(state, {U"infinity"});
         state.builder.CreateBr(loop);
         state.builder.SetInsertPoint(loop);
         auto *slot = root_slot(state);
         auto *found = lower_receive(state, abi::v1::ReceiveOperation::peek, slot);
         state.builder.CreateCondBr(state.builder.CreateIsNotNull(found), match, wait);
-        state.builder.SetInsertPoint(wait);
-        lower_wait(state, lower_atom(state, ast::Atom{U"infinity"}));
-        state.builder.CreateBr(loop);
         state.builder.SetInsertPoint(match);
         auto *message =
             state.builder.CreateAlignedLoad(state.word, slot, llvm::Align(state.word->getBitWidth() / 8), "message");
-        auto *merge = llvm::BasicBlock::Create(context, "receive.join");
-        cases.try_emplace(&expression, message, state.bindings, merge).first->second.loop = loop;
-        start_clause(id, 0);
+        auto &join =
+            cases.try_emplace(&expression, message, state.bindings, llvm::BasicBlock::Create(context, "receive.join"))
+                .first->second;
+        join.loop = loop;
+        state.builder.SetInsertPoint(wait);
+        join.timeout = wait_for(timeout, loop, after.has_value());
+        if (semantic::first_handler(expression.value) != 0) {
+            state.builder.SetInsertPoint(match);
+            start_clause(id, 0);
+            return;
+        }
+        // An after-only receive leaves every message in place.
+        state.builder.SetInsertPoint(match);
+        lower_receive(state, abi::v1::ReceiveOperation::skip, nullptr);
+        state.builder.CreateBr(loop);
+        start_after(id, join);
+    }
+
+    // Wait for a message, then continue the scan at `loop`; with an after part, an expired timeout continues at the
+    // returned block instead (null without one).
+    llvm::BasicBlock *wait_for(llvm::Value *timeout, llvm::BasicBlock *loop, bool after) {
+        auto *arrived = lower_wait(state, timeout);
+        if (!after) {
+            state.builder.CreateBr(loop);
+            return nullptr;
+        }
+        auto *expired = llvm::BasicBlock::Create(state.entry.getContext(), "receive.timeout", &state.entry);
+        state.builder.CreateCondBr(lower_exact(state, arrived, lower_atom(state, ast::Atom{U"true"})), loop, expired);
+        return expired;
+    }
+
+    // Start a receive's after body once its timeout expired, from the bindings before the receive.
+    void start_after(const ast::ExprId &id, const CaseJoin &join) {
+        state.builder.SetInsertPoint(join.timeout);
+        lower_receive(state, abi::v1::ReceiveOperation::restart, nullptr);
+        start_clause(id, semantic::first_handler(state.module.syntax->expression(id).value));
     }
 
     // Match one clause pattern (case only) and guard from the entry bindings, then schedule its body.
@@ -603,9 +642,12 @@ struct Walk {
         }
         if (clause.guard) {
             lower_guard(state, *clause.guard, {.success = body, .rejection = join.next});
+        } else if (!clause.pattern) {
+            // A receive's after body is a clause without pattern or guard: it always runs once reached.
+            state.builder.CreateBr(body);
         }
         state.builder.SetInsertPoint(body);
-        if (join.loop) {
+        if (join.loop && index < semantic::first_handler(expression.value)) {
             // A matched message leaves the mailbox before the clause body runs.
             lower_receive(state, abi::v1::ReceiveOperation::take, nullptr);
         }
@@ -682,6 +724,10 @@ struct Walk {
             return;
         }
         no_match(expression, join, clauses.at(visit.field));
+        if (join.timeout && visit.field < first) {
+            start_after(visit.id, join);
+            return;
+        }
         if (std::holds_alternative<ast::TryExpression>(expression.value) && visit.field < first) {
             handlers(visit.id);
             return;

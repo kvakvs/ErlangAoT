@@ -2,7 +2,8 @@
 
 Plan 11 step 43 (2026-10-08): spawned processes on a cooperative executor;
 step 44: exit reasons and error reports; step 45: sending messages; step 46:
-selective receive. Timeouts, links and monitors arrive in later steps (47–49).
+selective receive; step 47: receive timeouts. Links and monitors arrive in
+later steps (48–49).
 
 ## Executor
 
@@ -96,8 +97,8 @@ first and return `Msg`.
 
 ## Receive
 
-`receive` (plan step 46; `after` timeouts arrive in step 47) selects among
-its clauses like `case`, over the messages of the mailbox:
+`receive` (plan steps 46–47) selects among its clauses like `case`, over the
+messages of the mailbox:
 
 - The mailbox scan starts at the oldest message. Each message is matched
   against the clauses in order (patterns and guards, which may read bindings
@@ -109,15 +110,32 @@ its clauses like `case`, over the messages of the mailbox:
   run queue until a send delivers a message to it, then the scan continues
   with the messages that arrived. Waiting processes keep their frames and
   messages as collection roots.
-- Names bound in every clause are exported after the `receive`, as for
-  `case`; a call in a clause body's tail position is a tail call, so a server
-  loop runs in constant stack.
+- Names bound in every clause, and in the `after` body when there is one, are
+  exported after the `receive`, as for `case`; a call in a clause or `after`
+  body's tail position is a tail call, so a server loop runs in constant
+  stack.
+- `after T -> Body`: `T` is evaluated first, before the scan. When the
+  receive would wait, `T` must be `infinity` or an integer in
+  0..4294967295 (milliseconds), else `error:timeout_value`; a message that
+  matches at once never checks it, as in OTP. `after 0` runs `Body` as soon as
+  every message has been examined. A finite timeout starts when the receive
+  first waits and is not restarted by messages that match no clause; when it
+  expires, `Body` runs from the bindings before the receive and the next
+  receive scans from the oldest message. A message that arrives before the
+  timeout expires is taken. A receive with only `after` is a sleep
+  (`timer:sleep/1`'s idiom).
 - Generated code: a loop head peeks at the next unexamined message
   (`erlang_aot_receive_v1` `peek`, into a root slot), clause selection takes a
   matched message (`take`) before its body or skips an unmatched one (`skip`)
-  and loops; with no message left the loop enters the wait.
-- When every process waits for a message nothing can send, the program
-  waits forever, as OTP's does. A host invocation (`erlang_aot_invoke_v1`)
+  and loops; with no message left the loop enters the wait with the timeout,
+  which answers `true` (scan again) or `false` (timed out: `restart`, then the
+  `after` body).
+- The executor keeps a timer per waiting process with a finite timeout: an
+  expired one puts the process back in the queue, and when no process can run
+  the executor sleeps until the earliest timer. Timeouts are measured on a
+  monotonic clock in milliseconds and never fire early.
+- When every process waits without a timeout for a message nothing can send,
+  the program waits forever, as OTP's does. A host invocation (`erlang_aot_invoke_v1`)
   that would wait fails with `busy` instead: no other process runs during it.
 
 ## Builtins

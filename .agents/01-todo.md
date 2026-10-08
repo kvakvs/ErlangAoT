@@ -315,7 +315,7 @@ Plan: [46](11-plan.md#step-46), [47](11-plan.md#step-47),
 [57](11-plan.md#step-57), [62B](11-plan.md#step-62b) (timer wheel).
 
 - [x] Rooted cursors, ordered pattern/guard selection, removal of only the match (step 46).
-- [ ] Arrival handshake, suspension and timeouts compared with OTP.
+- [x] Arrival handshake, suspension and timeouts compared with OTP (step 47; timer wheel: 62B).
 
 ### F26 — Production builtin functions
 

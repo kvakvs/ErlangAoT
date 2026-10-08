@@ -54,13 +54,16 @@ void append_guard(const ast::GuardSyntax *guard, std::vector<ast::ExprId> &resul
     }
 }
 
-// A case reads its scrutinee and a try or maybe its body first; every branch then reads each clause's guard tests
-// and body, and a try's after body comes last. Patterns stay with match plans.
+// A case reads its scrutinee, a receive its timeout and a try or maybe its body first; every branch then reads each
+// clause's guard tests and body, and a try's after body comes last. Patterns stay with match plans.
 std::vector<ast::ExprId> branch_children(const ast::ExprValue &value, const std::vector<Branch> &clauses) {
     std::vector<ast::ExprId> result;
     const auto *attempt = std::get_if<ast::TryExpression>(&value);
+    const auto *receive = std::get_if<ast::ReceiveExpression>(&value);
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         result.push_back(selection->value);
+    } else if (receive && receive->after) {
+        result.push_back(receive->after->timeout);
     } else if (attempt) {
         result = attempt->body;
     } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value)) {
@@ -115,9 +118,12 @@ std::vector<Branch> branch_clauses(const ast::ExprValue &value) {
         for (const auto &clause : choice->clauses) {
             result.push_back({nullptr, &clause.guard, &clause.body});
         }
-    } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value); receive && !receive->after) {
-        // A receive with an after part stays unanalyzed until timeouts lower (plan step 47).
+    } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         append_branches(receive->clauses, result);
+        if (receive->after) {
+            // The after body is the last clause: it runs when the timeout expires.
+            result.push_back({nullptr, nullptr, &receive->after->body});
+        }
     } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
         append_try(*attempt, result);
     } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
@@ -148,6 +154,9 @@ std::size_t first_handler(const ast::ExprValue &value) {
     }
     if (std::holds_alternative<ast::MaybeExpression>(value)) {
         return 0;
+    }
+    if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
+        return receive->clauses.size();
     }
     return branch_clauses(value).size();
 }

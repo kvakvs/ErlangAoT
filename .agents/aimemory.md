@@ -329,6 +329,10 @@ Step facts beyond the plan record:
   first call prepared IN the child via apply_list_service/call_list_service (declared in terms/funs.hpp). OTP quirk:
   compiler drops code after spawn(fun/1) (type analysis) -> fixtures route the fun via remote processes:id/1 (local
   id/1 is still inferred). Crash run stderr authored ^$ until step 44 adds reports. OTP spawn/1 non-fun -> badarg.
+- 45-47: `receive` is a reserved word (fixture module names!). Unsupported-feature placeholders in tests now use
+  `fun erlang:node/0` ([dynamic calls]); swap again when step 52 admits node/0. A clause with neither pattern nor
+  guard needs an explicit br to its body (start_clause). Module atoms must include atoms codegen lowers implicitly
+  (infinity/true for receive) or lower_atom crashes. Old test placeholders also in patternmatch/clauses.py.
 - 43A: enter() must call call_builtin_portion (call_builtin loops traps for host paths: using it in enter ran
   builtins to completion). Python heredocs in bash turn "\n" into a real newline inside C++ literals: use Edit or
   Write for C++ text. Single-file tidy: clang-tidy -p build/debug/quality works for runtime units only (compiler units

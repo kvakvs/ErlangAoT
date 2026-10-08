@@ -37,7 +37,9 @@ enum class ErrorReason : std::uint8_t {
     // {Fun, Args}), or of an external fun whose function the program does not export (no payload).
     badfun = 22,
     badarity = 23,
-    undef = 24
+    undef = 24,
+    // A receive timeout that is neither infinity nor an integer in 0..4294967295.
+    timeout_value = 25
 };
 } // namespace erlang_aot::abi::v1
 

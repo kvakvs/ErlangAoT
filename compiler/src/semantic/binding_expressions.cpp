@@ -256,17 +256,19 @@ bool comprehension_scope(BindingAnalysis &state, const Visit &visit, BindingEnvi
     }
 }
 
-// A case evaluates its scrutinee in the enclosing scope before any clause is bound; an if or a receive starts with
-// its clauses.
+// A case evaluates its scrutinee and a receive its timeout in the enclosing scope before any clause is bound; an if
+// starts with its clauses. A receive's after body is its last clause.
 bool branches(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
     const auto *receive = std::get_if<ast::ReceiveExpression>(&value);
     if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value) &&
-        (!receive || receive->after)) {
+        !receive) {
         return false;
     }
     pending.push_back({id, Action::branch});
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         pending.push_back({selection->value});
+    } else if (receive && receive->after) {
+        pending.push_back({receive->after->timeout});
     }
     return true;
 }

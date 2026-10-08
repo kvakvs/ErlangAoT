@@ -29,5 +29,8 @@ void Mailbox::take() noexcept {
     restart();
 }
 
-void Mailbox::restart() noexcept { position_ = queue_.begin(); }
+void Mailbox::restart() noexcept {
+    position_ = queue_.begin();
+    deadline_.reset();
+}
 } // namespace erlang_aot::runtime

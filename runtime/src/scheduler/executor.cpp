@@ -18,13 +18,6 @@ TermError creation_error(Status status) {
     return status == Status::out_of_memory ? TermError::out_of_memory : TermError::resource_limit;
 }
 
-// Wait forever: every process waits for a message no running process can send.
-[[noreturn]] void block_forever() noexcept {
-    for (;;) {
-        std::this_thread::sleep_for(std::chrono::hours(1));
-    }
-}
-
 // Whether an ended process ends the whole program: a halt or a failure outside Erlang, not an Erlang exception.
 bool ends_program(ProcessContext &process) {
     const auto &failure = process.generated_calls().failure();
@@ -124,12 +117,53 @@ TermResult<void> Executor::wake(ProcessContext &receiver) {
     }
     receiver.stack().wake();
     parked_.erase(&receiver);
+    cancel(receiver);
     return {};
+}
+
+void Executor::cancel(ProcessContext &process) noexcept {
+    const auto deadline = process.mailbox().deadline();
+    if (!deadline) {
+        return;
+    }
+    for (auto [at, end] = timers_.equal_range(*deadline); at != end; ++at) {
+        if (at->second == &process) {
+            timers_.erase(at);
+            return;
+        }
+    }
+}
+
+void Executor::expire() noexcept {
+    const auto now = std::chrono::steady_clock::now();
+    while (!timers_.empty() && timers_.begin()->first <= now) {
+        auto &process = *timers_.begin()->second;
+        if (!requeue(process)) {
+            return;
+        }
+        timers_.erase(timers_.begin());
+        parked_.erase(&process);
+        process.stack().wake();
+    }
+}
+
+void Executor::idle() noexcept {
+    if (timers_.empty()) {
+        // Every process waits for a message no running process can send.
+        for (;;) {
+            std::this_thread::sleep_for(std::chrono::hours(1));
+        }
+    }
+    std::this_thread::sleep_until(timers_.begin()->first);
+    expire();
 }
 
 bool Executor::park(ProcessContext &process) noexcept {
     try {
         parked_.insert(&process);
+        if (const auto deadline = process.mailbox().deadline()) {
+            timers_.emplace(*deadline, &process);
+        }
         return true;
     } catch (const std::bad_alloc &) {
         process.generated_calls().fail_service(Status::out_of_memory);
@@ -148,8 +182,9 @@ bool Executor::requeue(ProcessContext &process) noexcept {
 }
 
 ProcessContext *Executor::slice(ProcessContext &main) noexcept {
-    if (queue_.empty()) {
-        block_forever();
+    expire();
+    while (queue_.empty()) {
+        idle();
     }
     auto &process = *queue_.front();
     queue_.pop_front();
@@ -179,6 +214,7 @@ void Executor::clear() noexcept {
         queue_.pop_back();
         process.runtime().destroy_context(&process);
     }
+    timers_.clear();
     while (!parked_.empty()) {
         auto *process = *parked_.begin();
         parked_.erase(parked_.begin());

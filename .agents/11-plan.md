@@ -1221,11 +1221,35 @@ Backlog: F13, F25. Depends on: [45](#step-45).
 Backlog: F25. Depends on: [46](#step-46).
 
 - Success criteria
-  - [ ] `after 0`, finite and `infinity` timeouts behave as OTP; a message
+  - [x] `after 0`, finite and `infinity` timeouts behave as OTP; a message
     arriving before expiry is taken, never lost.
 - Tests
-  - [ ] Golden programs for each timeout kind and `timer`-style sleeps built on
+  - [x] Golden programs for each timeout kind and `timer`-style sleeps built on
     `receive after`; no exact-time assertions.
+- Evidence (2026-10-08): `maint-29` unchanged at `21776803`. Contract
+  `docs/processes.md#receive`. `branch_clauses(receive)` appends the after
+  body as a clause without pattern or guard (`first_handler` = message clause
+  count); the timeout is a child evaluated first (binding, guard, children
+  views); inference keeps top for receives with `after`; the `receive`
+  feature is implemented. Walker: the wait answers `true`/`false`; false
+  branches to `receive.timeout`, which `restart`s the scan and starts the
+  after clause (`CaseJoin::timeout`, `start_after`); after-only receives skip
+  every message; a clause without pattern or guard branches straight to its
+  body. Runtime: `ErrorReason::timeout_value` (25, plain), the wait validates
+  `infinity` or 0..4294967295 only when it would wait, `after 0` answers at
+  once, a finite timeout sets the mailbox deadline at the first wait (cleared
+  by `take`/`restart`, not by skipped messages); the executor keeps
+  `timers_` by deadline, expires them before each slice and sleeps until the
+  earliest when nothing runs (plan step 62B replaces this with a timer
+  wheel). OTP probes: bad timeouts raise only without a matching message.
+  OTP golden `executables_receive_after` (`after 0` polls and drains,
+  expiry with the bindings before the receive, early arrival taken,
+  `infinity`, sleeps ending in length order, timeout not restarted by
+  unmatched messages, exported names from clauses and after, timeout_value
+  cases) passes all 8 combinations; programs kvstore/supervise now stop at
+  the step 48–50 builtins. Fresh Windows x64 Debug: fast 193/193 (66 s);
+  check-quality passes after extracting `selection_fact` in inference. Logs
+  `build/plan11-step47/`.
 
 <a id="step-48"></a>
 

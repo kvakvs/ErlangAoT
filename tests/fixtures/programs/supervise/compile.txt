@@ -1,4 +1,18 @@
 exit 1
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:82:5: [receive] notimpl [module="supervise"]
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:68:9: [receive] notimpl [module="supervise"]
-erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:90:5: [receive] notimpl [module="supervise"]
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/sup_tree.erl:12:17: undefined function sup_tree:process_flag/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/sup_tree.erl:45:10: undefined function sup_tree:exit/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:9:22: undefined function supervise:monitor/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:25:48: undefined function supervise:whereis/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:34:45: undefined function supervise:whereis/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:46:12: undefined function supervise:whereis/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:51:9: undefined function supervise:exit/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:51:17: undefined function supervise:whereis/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:62:23: undefined function supervise:process_flag/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:63:23: undefined function supervise:spawn_link/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:67:22: undefined function supervise:spawn_link/1
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:72:9: undefined function supervise:exit/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:76:18: undefined function supervise:monitor/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:81:19: undefined function supervise:monitor/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/supervise.erl:85:50: undefined function supervise:demonitor/2
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/worker.erl:7:21: undefined function worker:spawn_link/3
+erlangaot: <fixture>/project.toml [target supervise]: error: <fixture>/src/worker.erl:8:20: undefined function worker:register/2

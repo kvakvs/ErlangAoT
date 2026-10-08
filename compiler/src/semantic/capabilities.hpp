@@ -16,8 +16,8 @@ struct Branch {
 // List the clauses of a case, if or receive expression, a try's of then catch clauses, or a maybe's else clauses, in
 // source order; every other expression has none.
 std::vector<Branch> branch_clauses(const ast::ExprValue &value);
-// Index of a try's first catch clause in branch_clauses (0 for a maybe's else clauses, the clause count for case
-// and if).
+// Index of a try's first catch clause in branch_clauses (0 for a maybe's else clauses, of a receive's after clause,
+// the clause count for case and if).
 std::size_t first_handler(const ast::ExprValue &value);
 // The expressions a maybe body evaluates in order: plain expressions and the values of its ?= matches.
 std::vector<ast::ExprId> maybe_operands(const ast::MaybeExpression &value);

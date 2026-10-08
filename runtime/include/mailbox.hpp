@@ -4,6 +4,7 @@
 // messages behind its message queue and scans that queue from a saved position.
 #include "terms.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <list>
 #include <optional>
@@ -28,6 +29,11 @@ class Mailbox final {
     void take() noexcept;
     // Start the next receive at the oldest message, as a receive that timed out does.
     void restart() noexcept;
+
+    // When the current receive's timeout expires; none for no timeout yet or infinity. take and restart clear it.
+    std::optional<std::chrono::steady_clock::time_point> deadline() const noexcept { return deadline_; }
+
+    void set_deadline(std::chrono::steady_clock::time_point deadline) noexcept { deadline_ = deadline; }
 
     // Whether a message arrived that the current receive has not examined.
     bool unexamined() const noexcept { return !inbox_.empty() || position_ != queue_.end(); }
@@ -56,5 +62,7 @@ class Mailbox final {
     std::list<Word> queue_;
     // The next message of the queue the current receive examines; end() when it has examined all.
     std::list<Word>::iterator position_ = queue_.end();
+    // The current receive's timeout, set when it first waits with a finite one.
+    std::optional<std::chrono::steady_clock::time_point> deadline_;
 };
 } // namespace erlang_aot::runtime

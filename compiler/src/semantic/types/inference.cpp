@@ -5,6 +5,7 @@
 #include "../records.hpp"
 #include "inference_bindings.hpp"
 #include <algorithm>
+#include <optional>
 
 namespace erlang_aot::semantic::types {
 namespace {
@@ -63,6 +64,21 @@ bool opaque_call(const FunctionRef function, const ast::Expression &expression, 
            fun_call(syntax, call) || dynamic_call(syntax, call);
 }
 
+// The joined clause values of a case, if or receive; none for other expressions.
+std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value) {
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        return joined(inference, syntax, selection->clauses);
+    }
+    if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
+        return joined(inference, syntax, choice->clauses);
+    }
+    if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
+        // The after body is no BranchClause: a receive with one keeps no common fact.
+        return receive->after ? Fact{inference.graph.top()} : joined(inference, syntax, receive->clauses);
+    }
+    return std::nullopt;
+}
+
 // Evaluate a postorder node only after all source-order argument facts are available.
 Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
               std::size_t &work) {
@@ -80,14 +96,8 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
         bindings.publish(match->left, fact, work);
         return fact;
     }
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&expression.value)) {
-        return joined(inference, syntax, selection->clauses);
-    }
-    if (const auto *choice = std::get_if<ast::IfExpression>(&expression.value)) {
-        return joined(inference, syntax, choice->clauses);
-    }
-    if (const auto *receive = std::get_if<ast::ReceiveExpression>(&expression.value); receive && !receive->after) {
-        return joined(inference, syntax, receive->clauses);
+    if (const auto fact = selection_fact(inference, syntax, expression.value)) {
+        return *fact;
     }
     if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
         return inference.expressions.at(&syntax.expression(block->body.back()));

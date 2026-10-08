@@ -60,8 +60,7 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::IfExpression &) const { return {}; }
 
-    // Selective receive lowers; its after part (timeouts) is still deferred.
-    std::string_view operator()(const ast::ReceiveExpression &value) const { return value.after ? "receive" : ""; }
+    std::string_view operator()(const ast::ReceiveExpression &) const { return {}; }
 
     std::string_view operator()(const ast::LocalFunReference &) const;
 

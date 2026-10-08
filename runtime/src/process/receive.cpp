@@ -1,4 +1,5 @@
 #include "../builtins/portions.hpp"
+#include <chrono>
 #include <erlang_aot/abi/messages.hpp>
 #include <erlang_aot/runtime/builtin_registry.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
@@ -7,15 +8,46 @@
 // having examined every message, enters the wait builtin until another message arrives.
 namespace erlang_aot::runtime {
 namespace {
+using Clock = std::chrono::steady_clock;
+
+// Largest receive timeout in milliseconds, OTP's.
+constexpr std::int64_t MAX_TIMEOUT = 4'294'967'295;
+
 Word wait(ProcessContext &context, builtins::Arguments state);
 
-// The wait builtin; its register holds the receive's timeout (infinity until timeouts exist).
+// The wait builtin; its register holds the receive's timeout.
 constexpr BuiltinFrame WAIT_FRAME = continuation_frame(&builtins::guarded<wait>, 1);
 
-// true once a message the receive has not examined arrived; until then the process waits, resuming here.
+// A receive timeout in milliseconds, none for infinity; anything else raises timeout_value.
+std::optional<std::int64_t> milliseconds(ProcessContext &context, Word word) {
+    const auto timeout = builtins::term_of(context, word);
+    if (timeout.is_atom() && timeout.atom_spelling().value_or("") == "infinity") {
+        return std::nullopt;
+    }
+    const auto value = timeout.is_integer() ? timeout.integer_value() : std::unexpected(TermError::wrong_type);
+    if (!value || *value < 0 || *value > MAX_TIMEOUT) {
+        throw builtins::BuiltinFailure{.reason = abi::v1::ErrorReason::timeout_value};
+    }
+    return *value;
+}
+
+// Whether the receive's timeout has expired; its first wait with a finite timeout sets the deadline.
+bool expired(ProcessContext &context, std::optional<std::int64_t> timeout) {
+    auto &mailbox = context.mailbox();
+    if (timeout && !mailbox.deadline()) {
+        mailbox.set_deadline(Clock::now() + std::chrono::milliseconds(*timeout));
+    }
+    return timeout == 0 || (mailbox.deadline() && Clock::now() >= *mailbox.deadline());
+}
+
+// true once a message the receive has not examined arrived, false once the timeout expired; until then the process
+// waits, resuming here.
 Word wait(ProcessContext &context, builtins::Arguments state) {
     if (context.mailbox().unexamined()) {
         return builtins::need(TermFactory(context).boolean(true)).word();
+    }
+    if (expired(context, milliseconds(context, state[0]))) {
+        return builtins::need(TermFactory(context).boolean(false)).word();
     }
     context.stack().wait(WAIT_FRAME.frame, state);
     return 0;
@@ -40,6 +72,9 @@ std::uint8_t erlang_aot_receive_v1(void *context, std::uint8_t operation,
         return 0;
     case ReceiveOperation::take:
         mailbox.take();
+        return 0;
+    case ReceiveOperation::restart:
+        mailbox.restart();
         return 0;
     }
     return 0;

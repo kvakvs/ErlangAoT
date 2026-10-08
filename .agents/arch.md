@@ -189,6 +189,10 @@
   / wait (`lower_wait` = call transfer into `erlang_aot_wait_frame_v1`'s builtin, then br loop). Runtime
   `process/receive`: wait -> `ProcessStack::wait` (trap + waiting); executor `parked_`, send wakes, empty queue
   blocks forever, `slice()` runs one process.
+  Step 47: after body = last `branch_clauses` clause (no pattern/guard; `first_handler` = message clauses); timeout
+  evaluated first; wait -> true (scan) / false (`receive.timeout`: `restart`, after clause). Mailbox `deadline_`
+  (first wait, cleared by take/restart); executor `timers_` multimap, `expire()` per slice, `idle()` sleeps;
+  `ErrorReason::timeout_value`. Timer wheel planned (62B).
 
 - Guard authorization uses the fully audited pinned legal name/arity/operator catalog, separately
   from availability. Explicit erlang calls, local shadowing, imports, no_auto_import

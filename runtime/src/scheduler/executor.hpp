@@ -1,7 +1,9 @@
 #pragma once
+#include <chrono>
 #include <deque>
 #include <erlang_aot/abi/frames.hpp>
 #include <erlang_aot/runtime/process_context.hpp>
+#include <map>
 #include <unordered_set>
 
 // The cooperative executor of one runtime (docs/processes.md): a first-in, first-out queue of runnable processes,
@@ -37,8 +39,9 @@ class Executor final {
     static TermResult<void> send(ProcessContext &sender, Word pid, const Term &message);
 
     // Run queued processes until `main` ends or another process halts or fails outside Erlang; return the process
-    // whose outcome ends the program. Processes ending before it are released. When every process waits for a
-    // message that nothing can send, the program blocks forever, as OTP's does.
+    // whose outcome ends the program. Processes ending before it are released. Waiting processes whose receive
+    // timeout expires are queued again; when every process waits without one, the program blocks forever, as OTP's
+    // does.
     ProcessContext &run(ProcessContext &main) noexcept;
     // Release every queued and waiting process without running it further.
     void clear() noexcept;
@@ -56,10 +59,18 @@ class Executor final {
     bool park(ProcessContext &process) noexcept;
     // Run a parked receiver again after a message arrived for it.
     TermResult<void> wake(ProcessContext &receiver);
+    // Queue the parked processes whose receive timeout has expired.
+    void expire() noexcept;
+    // Wait until the earliest receive timeout when no process can run; with none, wait forever.
+    void idle() noexcept;
+    // Forget a parked process's timer.
+    void cancel(ProcessContext &process) noexcept;
 
     // Runnable processes in the order they run; a running process is in none of them.
     std::deque<ProcessContext *> queue_;
     // Processes waiting for a message.
     std::unordered_set<ProcessContext *> parked_;
+    // Parked processes whose receive has a finite timeout, by its deadline.
+    std::multimap<std::chrono::steady_clock::time_point, ProcessContext *> timers_;
 };
 } // namespace erlang_aot::runtime::detail
