@@ -1,6 +1,8 @@
 #pragma once
 #include "../ports/io.hpp"
 #include "../ports/port.hpp"
+#include "../ports/sockets.hpp"
+#include "../ports/value.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -66,7 +68,7 @@ struct PortInfo final {
 // A signal from a port to a process that holds no heap term, so it can wait while its target runs on another worker:
 // an exit signal or 'DOWN' with an atom reason, or a message of the port protocol or of its input.
 struct PortEvent final {
-    enum class Kind : std::uint8_t { exit, down, closed, connected, data, eof, exit_status };
+    enum class Kind : std::uint8_t { exit, down, closed, connected, data, eof, exit_status, value };
     Kind kind = Kind::exit;
     // The port word, and the reason atom word of an exit signal or a 'DOWN'.
     Word port = 0;
@@ -80,6 +82,8 @@ struct PortEvent final {
     bool binary = false;
     // The status of {exit_status, S}.
     std::int64_t status = 0;
+    // A message described by a driver (sockets), shared as events are copied.
+    std::shared_ptr<const PortValue> value = nullptr;
 
     // An exit signal with an atom reason.
     static PortEvent exit(Word port, Word reason) noexcept { return {Kind::exit, port, reason, std::nullopt, 0, {}}; }
@@ -90,6 +94,13 @@ struct PortEvent final {
     // A 'DOWN' of `reference` with an atom reason.
     static PortEvent down(Word port, Word reason, const ReferenceIdentity &reference, Word name) noexcept {
         return {Kind::down, port, reason, reference, name, {}};
+    }
+
+    // A message a driver described.
+    static PortEvent term(Word port, PortValue described) {
+        auto event = message(Kind::value, port);
+        event.value = std::make_shared<const PortValue>(std::move(described));
+        return event;
     }
 
     // A message {Port, {exit_status, Status}}.
@@ -189,10 +200,15 @@ class Executor final {
     std::optional<PortInfo> port_info(Word port) const;
     // The open ports, oldest first.
     std::vector<Word> ports() const;
-    // port_control(Port, Operation, Data): the driver's answer and whether the port is in binary mode; none when the
-    // port is not open or its driver has no such operation. The driver runs without the executor's lock.
-    std::optional<std::pair<std::vector<std::byte>, bool>> control_port(Word port, std::span<const std::byte> data,
-                                                                        std::uint32_t operation);
+    // port_control(Port, Operation, Data) of the process `caller`: the driver's answer and whether the port is in
+    // binary mode; none when the port is not open or its driver has no such operation. The driver runs without the
+    // executor's lock.
+    std::optional<std::pair<std::vector<std::byte>, bool>>
+    control_port(ProcessContext &caller, Word port, std::span<const std::byte> data, std::uint32_t operation);
+    // A new socket port's driver ({spawn_driver, "tcp_inet" | "udp_inet"}), starting the socket thread on first use.
+    std::unique_ptr<PortDriver> socket_driver(bool udp);
+    // An event of a socket port from the socket thread: a message, or a connection accepted for a process.
+    void socket_event(Word port, SocketEvent event) noexcept;
 
     // Run queued processes on RuntimeOptions::schedulers workers (this thread and more threads) until `main` ends
     // (also by an exit signal) or another process halts or fails outside Erlang; once every worker stopped, return
@@ -269,6 +285,8 @@ class Executor final {
     bool finish_input(Port &port);
     // The runtime's I/O service, started by the first port that reads input.
     IoService &io();
+    // Give a connection a listening socket accepted to `event.target` as a new port linked to it, and tell it so.
+    void accept_connection(Word listen, SocketEvent event);
     // Act on a port signal at a process that does not run elsewhere.
     void apply(ProcessContext &target, const PortEvent &event);
     // link(Port), unlink(Port), monitor(port, Port), demonitor of a port monitor and exit/2 to a port of `process`.
@@ -393,6 +411,8 @@ class Executor final {
     std::map<Word, std::unique_ptr<Port>> ports_;
     // Reads port input on its own threads; declared last so it stops first, before the state its deliveries use.
     std::unique_ptr<IoService> io_;
+    // Runs the sockets; stopped first too.
+    std::unique_ptr<SocketService> sockets_;
     // Further ended processes that would have ended the program, released by clear().
     std::vector<ProcessContext *> stopped_;
     // The executor ran out of memory while the main process ran elsewhere; it fails when its slice ends.

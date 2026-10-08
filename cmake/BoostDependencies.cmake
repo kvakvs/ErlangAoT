@@ -55,6 +55,10 @@ if(NOT ERLANG_AOT_BOOST_INCLUDE)
     message(FATAL_ERROR "Boost.Multiprecision is required. Install Boost 1.90 or newer (brew install boost on macOS), or set ERLANG_AOT_BOOST_ROOT.")
 endif()
 erlang_aot_check_boost_version("${ERLANG_AOT_BOOST_INCLUDE}")
+# The runtime's sockets use header-only Boost.Asio from the same installation.
+if(NOT EXISTS "${ERLANG_AOT_BOOST_INCLUDE}/boost/asio.hpp")
+    message(FATAL_ERROR "Boost.Asio headers are missing from ${ERLANG_AOT_BOOST_INCLUDE}; install the full Boost.")
+endif()
 message(STATUS "Boost.Multiprecision headers: ${ERLANG_AOT_BOOST_INCLUDE}")
 set(ERLANG_AOT_BOOST_SYSTEM_INCLUDES "${ERLANG_AOT_BOOST_INCLUDE}")
 # Homebrew's linked headers can shadow the formula path through inherited -I flags.

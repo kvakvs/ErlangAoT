@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "entry": "sockets",
+  "workers": [
+    1,
+    4
+  ],
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "is_port true\necho <<\"hello world\">>\nrecv timeout {error,timeout}\naddresses {{127,0,0,1},{127,0,0,1}}\nsend closed {error,closed}\nrecv closed {error,closed}\nactive once {<<\"one\">>,none,[<<\"two\">>,<<\"three\">>],[tcp_closed]}\nserver got \"ping\"\nclient got [{tcp,\"pong\"},tcp_closed]\ncontrolling_process ok\nowner got <<\"to the new owner\">>\nnot owner {true,{error,not_owner}}\nold owner {error,not_owner}\naccept timeout {error,timeout}\nlisten in use {error,eaddrinuse}\naccept closed {error,closed}\nbad option {exit,badarg}\nudp {<<\"to b\">>,<<\"to a\">>,true,{error,timeout}}\nipv6 {<<\"six\">>,{0,0,0,0,0,0,0,1}}\ndone\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "sockets.erl": "edb7accad1df97f2d1191f40bec89212f610f58aa79a64ecb1f1ee66c38ebff7"
+  }
+}

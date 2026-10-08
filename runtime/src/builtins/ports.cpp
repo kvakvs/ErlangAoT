@@ -246,6 +246,17 @@ spawned(ProcessContext &context, bool executable, const std::string &command, co
     return {std::move(*driver), command};
 }
 
+// The project library's driver {spawn_driver, Name} (files, sockets); badarg for any other name.
+std::unique_ptr<detail::PortDriver> internal_driver(ProcessContext &context, const std::string &name) {
+    if (name == "erlang_aot_file") {
+        return detail::file_driver();
+    }
+    if (name != "tcp_inet" && name != "udp_inet") {
+        bad_argument();
+    }
+    return detail::Executor::of(context).socket_driver(name == "udp_inet");
+}
+
 // The driver of an open_port/2 port name and the name port_info reports; badarg for an unknown or invalid name.
 std::pair<std::unique_ptr<detail::PortDriver>, std::string> driver(ProcessContext &context, const TupleArgument &name,
                                                                    const PortOptions &options) {
@@ -257,8 +268,8 @@ std::pair<std::unique_ptr<detail::PortDriver>, std::string> driver(ProcessContex
     if (!command) {
         bad_argument();
     }
-    if (kind == "spawn_driver" && *command == "erlang_aot_file") {
-        return {detail::file_driver(), *command};
+    if (kind == "spawn_driver") {
+        return {internal_driver(context, *command), *command};
     }
     if (kind != "spawn" && kind != "spawn_executable") {
         bad_argument();
@@ -340,7 +351,8 @@ TermResult<Term> control(ProcessContext &context, Word port, std::optional<std::
     if (!code || *code < 0 || *code > 0xffffffff || !bytes) {
         bad_argument();
     }
-    const auto answer = detail::Executor::of(context).control_port(port, *bytes, static_cast<std::uint32_t>(*code));
+    const auto answer =
+        detail::Executor::of(context).control_port(context, port, *bytes, static_cast<std::uint32_t>(*code));
     if (!answer) {
         bad_argument();
     }

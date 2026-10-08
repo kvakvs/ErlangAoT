@@ -116,8 +116,9 @@ supports control, reports input and errors as events and closes. Drivers:
   are synchronous `port_control/3` calls that may block the worker running
   the caller for the duration of the disk I/O, as OTP's dirty I/O schedulers
   do (57E).
-- `tcp`, `udp`: sockets of the project library's `gen_tcp`, `gen_udp` and
-  `inet`; connects, accepts and receives are asynchronous (57F).
+- `tcp_inet`, `udp_inet`: sockets of the project library's `gen_tcp`,
+  `gen_udp` and `inet` on Boost.Asio; connects, accepts and receives are
+  asynchronous (57F, [sockets](#sockets-57f)).
 
 The internal drivers of `file` and the sockets are opened with
 `{spawn_driver, Name}` under ErlangAoT names, and their `port_control/3`
@@ -136,9 +137,8 @@ input and hands it, framed, to the executor:
   host has run it yet.
 - Windows: each input gets a reader thread blocked in `ReadFile`, as
   console and anonymous-pipe handles cannot be overlapped; closing the port
-  cancels the read (`CancelSynchronousIo`) and lets the thread go. An I/O
-  completion port joins for overlapped pipes and sockets with the drivers
-  that need them (57D, 57F).
+  cancels the read (`CancelSynchronousIo`) and lets the thread go. Sockets
+  have their own thread ([sockets](#sockets-57f)).
 - Framing happens on the I/O side (`InputDecoder`): stream input arrives in
   the chunks reads return; `{packet, N}` holds bytes until a whole packet
   arrived (an incomplete packet at end of input is dropped, as in OTP);
@@ -154,7 +154,7 @@ any message), else when its time slice ends, so a running process's heap is
 never touched by another thread. `port_command` never suspends the caller
 (OTP may suspend a caller on a busy port): an `fd` port writes its output
 at once on the caller's worker; the pipe and socket drivers queue output
-without a cap and let the I/O service write it (57D, 57F).
+without a cap and let their I/O threads write it (57D, 57F).
 The prototype `tests/prototypes/poller/` (`run.py --wsl`) shows the wakeup
 on Windows (completion port) and WSL Linux (`poll()`): an idle scheduler
 thread wakes 9–91 µs after input, and shutdown stops the I/O thread without
@@ -243,8 +243,41 @@ true and active-mode messages are `{tcp, Socket, Data}`,
 `controlling_process/2`, `shutdown/2`; `gen_udp:open/1,2`, `send/4`,
 `recv/2,3`, `close/1`; `inet:setopts/2`, `inet:port/1`, `inet:peername/1`,
 `inet:sockname/1`; modes `{active, true | false | once}`, `binary`/`list`,
-`{packet, 0 | 1 | 2 | 4}`, `{reuseaddr, Bool}`; IPv4 and IPv6 addresses
-as tuples and `localhost`/`loopback`.
+`{packet, 0 | 1 | 2 | 4 | raw}`, `{reuseaddr, Bool}`, `{backlog, N}`,
+`{ip, Address}`/`{ifaddr, Address}`, `inet`/`inet6`; IPv4 and IPv6 addresses
+as tuples, host names as strings or atoms (`loopback` included). The tuning
+options `nodelay`, `keepalive`, `send_timeout`, `send_timeout_close`,
+`delay_send` and `exit_on_close` are accepted and not applied; any other
+option is `exit(badarg)`, as for an invalid one in OTP.
+
+Implementation (`runtime/src/ports/sockets.cpp`):
+
+- One socket thread runs a Boost.Asio `io_context` (an I/O completion port on
+  Windows, `epoll` on Linux, `kqueue` on macOS), started by the first socket.
+  Every socket's state lives on that thread. The library opens a port with
+  `{spawn_driver, "tcp_inet" | "udp_inet"}` and drives it with
+  `port_control/3`; the calling worker posts the operation to the socket
+  thread and waits for its synchronous reply (status byte 0 and a result, or
+  1 and a POSIX reason).
+- Operations that wait (connect, accept, recv) answer later with a message
+  `{erlang_aot_socket, Socket, Reply}` to their caller, so the caller blocks in
+  an ordinary `receive` and other processes keep running. A timeout cancels
+  the request; the cancellation itself answers `cancelled` after anything
+  the socket sent before, so a reply that won the race is returned instead
+  of lost.
+- Socket messages are described off-heap (`ports/value.hpp`) and built in the
+  receiver's heap when delivered, under the executor rules of
+  [I/O thread](#io-thread). An accepted connection becomes a new port owned
+  by and linked to the caller of `accept`, with the listening socket's mode.
+- `controlling_process/2` stops active delivery, moves the socket's messages
+  already sent to the old owner to the new one, then reconnects the port, as
+  OTP's `inet` does; only the owner may call it (`{error, not_owner}`).
+- Output is queued without a cap and written in order on the socket thread.
+  Closing a port sends what is queued, then closes the connection gracefully
+  (FIN); a closed port answers every waiting caller `{error, closed}`. Name
+  lookup runs on the caller's worker, as it blocks.
+- Socket ports are scheduled like other ports: they are not entities with
+  their own time slices (plan step 57G).
 
 ## Not provided
 

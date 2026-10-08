@@ -186,7 +186,11 @@ process or guarded by the executor's mutex.
 - Memory (step 56): the runtime-wide account (`RuntimeMemory`) charges and
   releases with atomic operations; a charge never takes the account past an
   optional limit.
-- Linking: on Linux the runtime adds `-pthread` for its threads.
+- Port I/O (steps 57C–57F): the I/O service's reader, writer and watcher
+  threads and the socket thread ([ports](ports.md#io-thread)) touch process
+  state only through the executor's mutex.
+- Linking: on Linux the runtime adds `-pthread` for its threads; on Windows
+  it links Winsock (`ws2_32`, `mswsock`) for sockets.
 
 ## Standard output
 

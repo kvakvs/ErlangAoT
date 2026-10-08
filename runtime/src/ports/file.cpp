@@ -332,7 +332,7 @@ class FileDriver final : public PortDriver {
 
     bool controllable() const noexcept override { return true; }
 
-    std::optional<Bytes> control(std::uint32_t operation, std::span<const std::byte> bytes) override {
+    std::optional<Bytes> control(std::uint32_t operation, std::span<const std::byte> bytes, Word) override {
         const std::scoped_lock lock(mutex_);
         const auto kind = static_cast<FileOperation>(operation);
         if (operation >= static_cast<std::uint32_t>(FileOperation::read_file) &&

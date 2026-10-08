@@ -90,6 +90,7 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     port->options = std::move(options);
     port->driver = std::move(driver);
     const auto word = detail::port_word(*number);
+    port->driver->attach(word);
     const auto input = port->options.input ? port->driver->input() : std::nullopt;
     const auto output = port->driver->queued_output();
     const auto child = port->driver->child();
@@ -114,6 +115,61 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
         throw;
     }
     return word;
+}
+
+std::unique_ptr<PortDriver> Executor::socket_driver(bool udp) {
+    const std::scoped_lock lock(mutex_);
+    if (!sockets_) {
+        sockets_ = std::make_unique<SocketService>(
+            [this](Word port, SocketEvent event) { socket_event(port, std::move(event)); });
+    }
+    return sockets_->driver(udp);
+}
+
+void Executor::socket_event(Word port, SocketEvent event) noexcept {
+    const std::scoped_lock lock(mutex_);
+    try {
+        if (event.kind == SocketEvent::Kind::accepted) {
+            accept_connection(port, std::move(event));
+        } else {
+            const auto *open_port = event.target == 0 ? open(port) : nullptr;
+            auto *target = process(open_port ? open_port->connected : event.target);
+            if (target) {
+                post(*target, PortEvent::term(port, std::move(event.value)));
+            }
+        }
+        drain();
+    } catch (...) {
+        // Only exhausted memory can fail building a port or a message of atoms, bytes and identities.
+        fail_program();
+    }
+}
+
+void Executor::accept_connection(Word listen, SocketEvent event) {
+    auto *owner = process(event.target);
+    if (!owner) {
+        // The caller of accept has ended: the connection closes with its driver.
+        return;
+    }
+    const auto number = runtime_.identity_numbers.issue_port();
+    if (!number) {
+        throw std::bad_alloc();
+    }
+    auto port = std::make_unique<Port>();
+    port->number = *number;
+    port->connected = event.target;
+    port->links.push_back(event.target);
+    port->spelling = "tcp_inet";
+    port->options.binary = true;
+    port->input_ended = true;
+    port->driver = std::move(event.driver);
+    const auto word = detail::port_word(*number);
+    port->driver->attach(word);
+    ports_.emplace(*number, std::move(port));
+    owner->signals().link(word);
+    // {erlang_aot_socket, Listen, ok} becomes {erlang_aot_socket, Listen, {ok, Socket}}.
+    event.value.elements.back() = PortValue::of_tuple({PortValue::of_atom("ok"), PortValue::of_identity(word)});
+    post(*owner, PortEvent::term(listen, std::move(event.value)));
 }
 
 IoService &Executor::io() {
@@ -331,7 +387,7 @@ std::vector<Word> Executor::ports() const {
 }
 
 std::optional<std::pair<std::vector<std::byte>, bool>>
-Executor::control_port(Word port, std::span<const std::byte> data, std::uint32_t operation) {
+Executor::control_port(ProcessContext &caller, Word port, std::span<const std::byte> data, std::uint32_t operation) {
     std::shared_ptr<PortDriver> driver;
     bool binary = false;
     {
@@ -343,7 +399,7 @@ Executor::control_port(Word port, std::span<const std::byte> data, std::uint32_t
         driver = open_port->driver;
         binary = open_port->options.binary;
     }
-    auto answer = driver->control(operation, data);
+    auto answer = driver->control(operation, data, pid_of(caller));
     if (!answer) {
         return std::nullopt;
     }
@@ -454,6 +510,9 @@ void Executor::apply(ProcessContext &target, const PortEvent &event) {
         break;
     case PortEvent::Kind::exit_status:
         deliver(target, status_message(target, event));
+        break;
+    case PortEvent::Kind::value:
+        deliver(target, build_value(target, *event.value));
         break;
     case PortEvent::Kind::data:
         deliver(target, data_message(target, event));

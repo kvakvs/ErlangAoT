@@ -379,6 +379,10 @@ Step facts beyond the plan record:
 - 57E: library modules io.erl/file.erl exist now; referenced_modules skips catalog builtin calls (io:format) so
   they join only programs that call their Erlang functions. Runner runs each combination in work/<label> (data files
   copied) so file-writing tests do not collide. Lizard/tidy: use dispatch tables for op switches.
+- 57F: sockets: one Asio thread; PortDriver::attach must be called for every port (open_port too; missing it made
+  replies carry port 0 -> invalid_argument). Closing a socket with an in-flight async write resets the peer on
+  Windows: close after queued writes drain. Library has no maps:get/3, lists:all/2, binary_to_atom/1. Timeout
+  races: cancel op posts `cancelled` after earlier messages (barrier). build/plan11/sock.cmd, rep.cmd.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

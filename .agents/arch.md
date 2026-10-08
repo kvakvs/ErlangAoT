@@ -246,6 +246,10 @@
   Step 57E: file driver (`ports/file.cpp`, port_control protocol) run outside the executor mutex via
   `control_port` (shared_ptr drivers); library `file.erl` (io servers) and `io.erl` (stdin server);
   `semantic::referenced_modules` skips catalog builtin calls.
+  Step 57F: `SocketService` (`ports/sockets.*`) runs one Boost.Asio io_context thread owning every socket; workers
+  post port_control ops and wait; async replies/active messages are `PortValue`s (`ports/value.*`) delivered as
+  `PortEvent::Kind::value` via `Executor::socket_event`; accepts create ports (`accept_connection`); drivers learn
+  their port word through `PortDriver::attach`. Library `erlang_aot_socket.erl` + `gen_tcp`/`gen_udp`/`inet`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

@@ -1196,11 +1196,26 @@ thread per socket (user direction 2026-10-08) — and project-library `gen_tcp`,
 and IPv6 loopback.
 
 - Success criteria
-  - [ ] Socket messages, errors and closing match OTP within the subset.
+  - [x] Socket messages, errors and closing match OTP within the subset.
 - Tests
-  - [ ] OTP golden of an echo server and clients in one program over
+  - [x] OTP golden of an echo server and clients in one program over
     loopback (active and passive modes, packet framing, close from either
     side).
+
+Done 2026-10-08 (contract `docs/ports.md#sockets-57f`). Runtime
+`ports/sockets.cpp`: one Boost.Asio socket thread (`SocketService`), all socket
+state on it; workers post `port_control` operations there and wait
+(`on_socket_thread`); connect/accept/recv answer `{erlang_aot_socket, S, Reply}`
+messages, cancel answers `cancelled` (timeout barrier); active messages and
+replies are off-heap `PortValue`s (`ports/value.*`) built at delivery
+(`PortEvent::Kind::value`); accepted connections become ports in
+`Executor::accept_connection`; `PortDriver::attach` gives drivers their port
+word; graceful close after queued output (an aborted write reset the peer on
+Windows). Winsock linked explicitly; configure requires `boost/asio.hpp`.
+Library `erlang_aot_socket.erl` (protocol, options, controlling_process with
+message move as OTP inet), `gen_tcp.erl`, `gen_udp.erl`, `inet.erl`. OTP golden
+`executables_sockets` (workers 1, 4): passive/active/once, packet 2, list mode,
+controlling_process, errors (timeout, eaddrinuse, closed, badarg), UDP, IPv6.
 
 <a id="step-57g"></a>
 

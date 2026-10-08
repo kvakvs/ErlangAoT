@@ -78,11 +78,15 @@ class PortDriver {
     // Whether port_control/3 works on this driver; others make it badarg.
     virtual bool controllable() const noexcept { return false; }
 
-    // Answer port_control(Port, Operation, Data); none for an operation the driver does not have (badarg). Called
-    // without the executor's lock, possibly from two workers at once.
-    virtual std::optional<std::vector<std::byte>> control(std::uint32_t, std::span<const std::byte>) {
+    // Answer port_control(Port, Operation, Data) of the process `caller` (a pid word); none for an operation the
+    // driver does not have (badarg). Called without the executor's lock, possibly from two workers at once.
+    virtual std::optional<std::vector<std::byte>> control(std::uint32_t /*operation*/, std::span<const std::byte>,
+                                                          Word /*caller*/) {
         return std::nullopt;
     }
+
+    // Learn the port's word once the port exists; drivers that report events need it.
+    virtual void attach(Word /*port*/) noexcept {}
 };
 
 // One open port of the executor's port table.
