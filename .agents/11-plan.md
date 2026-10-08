@@ -1121,15 +1121,21 @@ runtime test `identities` adds port admission, copy, order, close. Found:
 
 Backlog: F23, F35. Depends on: [57B](#step-57b).
 
-Platform poller thread(s) (IOCP / epoll / kqueue) delivering port events as
-messages to the connected process and waking it on any worker; shutdown
-closes every port and stops the poller.
-
-- Success criteria
-  - [ ] No lost wakeups between port events, receives and timeouts; the
-    program ends with ports open as OTP's halts.
-- Tests
-  - [ ] Repeated stress of port events against receive timeouts and teardown.
+Done 2026-10-08 (contract `docs/ports.md#io-thread`). `detail::IoService`
+(`ports/io.hpp`), started by the first port with input: POSIX one poll()
+thread + wakeup pipe (`io_posix.cpp`, compiled with WSL clang 20, not run);
+Windows a ReadFile reader thread per input (`io_windows.cpp`; console/anonymous
+pipes cannot be overlapped; IOCP comes with 57D/57F), cancelled with
+CancelSynchronousIo and detached on close/stop, a gate stops deliveries.
+`InputDecoder` frames stream/packet/line on the I/O side; `Executor::input`
+(under the mutex) counts raw bytes (OTP's `input` includes newlines),
+posts `{Port, {data, D}}`/`{eol|noeol}`, eof or a normal/eio close. The service
+is declared last in the executor and stopped outside the lock in clear().
+Runner: authored `stdin` per golden run (run.py, regenerate.py; others get
+empty stdin). OTP golden `executables_port_input` (`workers` 1, 4): lines
+(long/empty/unterminated), packets (empty, dropped partial), 5,000-byte stream
+total, close without eof, 300 lines racing 0-1 ms timeouts, teardown with the
+port open; repeated 10 times with port_identities and wakeups.
 
 <a id="step-57d"></a>
 

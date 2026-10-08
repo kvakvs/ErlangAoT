@@ -1,4 +1,5 @@
 #pragma once
+#include "../ports/io.hpp"
 #include "../ports/port.hpp"
 #include <chrono>
 #include <condition_variable>
@@ -63,9 +64,9 @@ struct PortInfo final {
 };
 
 // A signal from a port to a process that holds no heap term, so it can wait while its target runs on another worker:
-// an exit signal or 'DOWN' with an atom reason, or a message of the port protocol.
+// an exit signal or 'DOWN' with an atom reason, or a message of the port protocol or of its input.
 struct PortEvent final {
-    enum class Kind : std::uint8_t { exit, down, closed, connected };
+    enum class Kind : std::uint8_t { exit, down, closed, connected, data, eof };
     Kind kind = Kind::exit;
     // The port word, and the reason atom word of an exit signal or a 'DOWN'.
     Word port = 0;
@@ -73,16 +74,25 @@ struct PortEvent final {
     // The monitor of a 'DOWN' and the registered name it was made with, or 0.
     std::optional<ReferenceIdentity> reference;
     Word name = 0;
+    // The input of a data message, how it is framed, and whether it is a binary (else a byte list).
+    std::vector<std::byte> bytes;
+    PortInput::Kind input = PortInput::Kind::data;
+    bool binary = false;
 
     // An exit signal with an atom reason.
-    static PortEvent exit(Word port, Word reason) noexcept { return {Kind::exit, port, reason, std::nullopt, 0}; }
+    static PortEvent exit(Word port, Word reason) noexcept { return {Kind::exit, port, reason, std::nullopt, 0, {}}; }
 
-    // A message {Port, closed} or {Port, connected}.
-    static PortEvent message(Kind kind, Word port) noexcept { return {kind, port, 0, std::nullopt, 0}; }
+    // A message {Port, closed}, {Port, connected} or {Port, eof}.
+    static PortEvent message(Kind kind, Word port) noexcept { return {kind, port, 0, std::nullopt, 0, {}}; }
 
     // A 'DOWN' of `reference` with an atom reason.
     static PortEvent down(Word port, Word reason, const ReferenceIdentity &reference, Word name) noexcept {
-        return {Kind::down, port, reason, reference, name};
+        return {Kind::down, port, reason, reference, name, {}};
+    }
+
+    // A message {Port, {data, Data}} of one input unit (data, eol or noeol).
+    static PortEvent data(Word port, PortInput unit, bool binary) noexcept {
+        return {Kind::data, port, 0, std::nullopt, 0, std::move(unit.bytes), unit.kind, binary};
     }
 };
 
@@ -163,6 +173,9 @@ class Executor final {
     // Port ! Request from `sender`; a malformed request, or one naming another process than the connected one, sends
     // the connected process an exit signal badsig. Nothing for a port that is not open.
     void port_request(ProcessContext &sender, Word port, const PortRequest &request);
+    // The input of a port read by the I/O thread: data becomes messages to its connected process, end of input
+    // {Port, eof} or a normal close, a read error a close with its reason. Nothing for a port that closed.
+    void input(Word port, std::vector<PortInput> units, std::size_t read) noexcept;
     // What port_info/1,2 report; none for a port that is not open.
     std::optional<PortInfo> port_info(Word port) const;
     // The open ports, oldest first.
@@ -234,6 +247,12 @@ class Executor final {
     ProcessContext *busy_peer(const Port &port) noexcept;
     // Signal `target` from a port now, or when its slice ends while it runs elsewhere.
     void post(ProcessContext &target, PortEvent event);
+    // Act on one input unit of an open port; false once the unit closed the port.
+    bool input(Port &port, PortInput unit);
+    // Act on the end of an open port's input or a read error: {Port, eof} with option eof, else a close.
+    bool input_end(Port &port, const PortInput &unit);
+    // The runtime's I/O service, started by the first port that reads input.
+    IoService &io();
     // Act on a port signal at a process that does not run elsewhere.
     void apply(ProcessContext &target, const PortEvent &event);
     // link(Port), unlink(Port), monitor(port, Port), demonitor of a port monitor and exit/2 to a port of `process`.
@@ -356,6 +375,8 @@ class Executor final {
     std::map<Word, Word> names_;
     // Open ports by number; a port leaves when it closes.
     std::map<Word, std::unique_ptr<Port>> ports_;
+    // Reads port input on its own threads; declared last so it stops first, before the state its deliveries use.
+    std::unique_ptr<IoService> io_;
     // Further ended processes that would have ended the program, released by clear().
     std::vector<ProcessContext *> stopped_;
     // The executor ran out of memory while the main process ran elsewhere; it fails when its slice ends.

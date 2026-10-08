@@ -398,6 +398,13 @@ void Executor::destroy(ProcessContext &process) noexcept {
 }
 
 void Executor::clear() noexcept {
+    // The I/O service stops outside the lock: its threads may wait for the lock to deliver input.
+    auto io = std::unique_ptr<IoService>{};
+    {
+        const std::scoped_lock lock(mutex_);
+        io = std::move(io_);
+    }
+    io.reset();
     const std::scoped_lock lock(mutex_);
     for (const auto &[process, state] : schedules_) {
         if (process != finished_) {

@@ -10,6 +10,39 @@
 // another worker, so they wait for its slice to end (post) instead of making a builtin run again.
 namespace erlang_aot::runtime::detail {
 namespace {
+// The data of an input message, a byte list or a binary, built in the heap of `process`; {eol, D} or {noeol, D} for
+// a line or a line part.
+TermResult<Term> input_data(ProcessContext &process, const PortEvent &event) {
+    TermFactory factory(process);
+    std::vector<Word> bytes;
+    if (!event.binary) {
+        bytes.reserve(event.bytes.size());
+        for (const auto byte : event.bytes) {
+            bytes.push_back(encode_integer(std::to_integer<std::int64_t>(byte)).value_or(0));
+        }
+    }
+    const auto nil = factory.nil();
+    const auto data = event.binary ? factory.binary(event.bytes) : (nil ? factory.list_words(bytes, *nil) : nil);
+    if (!data || event.input == PortInput::Kind::data) {
+        return data;
+    }
+    const auto tag = factory.atom(event.input == PortInput::Kind::eol ? "eol" : "noeol");
+    return tag ? factory.tuple(std::array{*tag, *data}) : tag;
+}
+
+// {Port, {data, Data}} built in the heap of `process`.
+TermResult<Term> data_message(ProcessContext &process, const PortEvent &event) {
+    TermFactory factory(process);
+    const auto from = Term::from_word(event.port, process);
+    const auto tag = factory.atom("data");
+    const auto data = input_data(process, event);
+    if (!from || !tag || !data) {
+        return !from ? from : (!tag ? tag : data);
+    }
+    const auto body = factory.tuple(std::array{*tag, *data});
+    return body ? factory.tuple(std::array{*from, *body}) : body;
+}
+
 // {Port, Tag} built in the heap of `process`.
 TermResult<Term> port_message(ProcessContext &process, Word port, std::string_view tag) {
     TermFactory factory(process);
@@ -44,14 +77,71 @@ Word Executor::open_port(ProcessContext &owner, std::unique_ptr<PortDriver> driv
     port->options = std::move(options);
     port->driver = std::move(driver);
     const auto word = detail::port_word(*number);
+    const auto input = port->options.input ? port->driver->input() : std::nullopt;
     owner.signals().link(word);
     try {
-        ports_.emplace(*number, std::move(port));
+        const auto &options = ports_.emplace(*number, std::move(port)).first->second->options;
+        if (input) {
+            io().read_descriptor(word, *input, options);
+        }
     } catch (...) {
+        ports_.erase(*number);
         owner.signals().unlink(word);
         throw;
     }
     return word;
+}
+
+IoService &Executor::io() {
+    if (!io_) {
+        io_ = make_io_service(
+            [this](Word port, std::vector<PortInput> units, std::size_t read) { input(port, std::move(units), read); });
+    }
+    return *io_;
+}
+
+void Executor::input(Word port, std::vector<PortInput> units, std::size_t read) noexcept {
+    const std::scoped_lock lock(mutex_);
+    if (auto *open_port = open(port)) {
+        open_port->input += read;
+    }
+    try {
+        for (auto &unit : units) {
+            auto *open_port = open(port);
+            if (!open_port || !input(*open_port, std::move(unit))) {
+                break;
+            }
+        }
+        drain();
+    } catch (...) {
+        // Only exhausted memory can fail a delivery of atoms, bytes and port words.
+        fail_program();
+    }
+}
+
+bool Executor::input(Port &port, PortInput unit) {
+    if (unit.kind == PortInput::Kind::end || unit.kind == PortInput::Kind::error) {
+        return input_end(port, unit);
+    }
+    if (auto *connected = process(port.connected)) {
+        post(*connected, PortEvent::data(detail::port_word(port.number), std::move(unit), port.options.binary));
+    }
+    return true;
+}
+
+bool Executor::input_end(Port &port, const PortInput &unit) {
+    if (unit.kind == PortInput::Kind::end && port.options.eof) {
+        if (auto *connected = process(port.connected)) {
+            post(*connected, PortEvent::message(PortEvent::Kind::eof, detail::port_word(port.number)));
+        }
+        return true;
+    }
+    auto reason = runtime_.atom_storage.intern(unit.kind == PortInput::Kind::end ? "normal" : unit.reason);
+    if (!reason) {
+        throw std::bad_alloc();
+    }
+    close(port, *reason);
+    return false;
 }
 
 bool Executor::close_port(ProcessContext &caller, Word port) {
@@ -198,6 +288,9 @@ void Executor::close(Port &port, const Term &reason) {
     // The port leaves the table first; its record and driver live until the signals went out.
     auto node = ports_.extract(port.number);
     const auto word = detail::port_word(port.number);
+    if (io_) {
+        io_->forget(word);
+    }
     if (port.name != 0) {
         names_.erase(port.name);
     }
@@ -264,7 +357,7 @@ ProcessContext *Executor::busy_peer(const Port &port) noexcept {
 
 void Executor::post(ProcessContext &target, PortEvent event) {
     if (busy(&target)) {
-        schedule(target).events.push_back(event);
+        schedule(target).events.push_back(std::move(event));
     } else {
         apply(target, event);
     }
@@ -289,6 +382,12 @@ void Executor::apply(ProcessContext &target, const PortEvent &event) {
         break;
     case PortEvent::Kind::connected:
         deliver(target, port_message(target, event.port, "connected"));
+        break;
+    case PortEvent::Kind::eof:
+        deliver(target, port_message(target, event.port, "eof"));
+        break;
+    case PortEvent::Kind::data:
+        deliver(target, data_message(target, event));
         break;
     }
 }

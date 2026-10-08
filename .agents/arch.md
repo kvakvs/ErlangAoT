@@ -237,6 +237,9 @@
   request/info, port exit rules, `PortEvent` post/apply for running targets), `builtins/ports.cpp` (13 BIFs, iodata,
   options, `port_request` parsing for sends), `ports/fd.cpp` (output-only fd driver, framing). Executor holds
   `Runtime::Impl &runtime_` (`process(pid)`); `signal_messages.hpp` shares EXIT/DOWN builders and `Running`.
+  Step 57C: `IoService` (`ports/io.hpp`; `io_posix.cpp` poll thread, `io_windows.cpp` reader threads) with
+  `InputDecoder` framing, delivering (port, bytes read, units) to `Executor::input` under the mutex; data becomes
+  `PortEvent::data` messages; executor `io_` declared last, stopped outside the lock in `clear()`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

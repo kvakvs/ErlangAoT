@@ -9,7 +9,9 @@ the driver model and the I/O thread before any source can open a port.
 Implemented: identities, the port table, the port builtins and messages,
 links, monitors, names and exit signals of ports, and output-only `fd` ports
 (step 57B, `runtime/src/scheduler/ports.cpp`, `runtime/src/builtins/ports.cpp`,
-`runtime/src/ports/`; OTP golden `executables_port_identities`).
+`runtime/src/ports/`; OTP golden `executables_port_identities`); the I/O
+thread and `fd` port input with stream, packet and line framing (step 57C,
+`runtime/src/ports/io*.cpp`; OTP golden `executables_port_input`).
 
 ## Identity
 
@@ -118,29 +120,45 @@ OTP's `prim_inet`/`efile` protocols.
 
 ## I/O thread
 
-Each runtime that opens a port starts one I/O thread; it waits for every
-port's input, output completion and child exit at once:
+The first port that reads input starts the runtime's I/O service
+(`detail::IoService`, `runtime/src/ports/io.hpp`); it reads every port's
+input and hands it, framed, to the executor:
 
-- Windows: an I/O completion port with overlapped I/O (named pipes for
-  child programs, sockets); console standard input, which cannot be
-  overlapped, gets a reader thread that posts its reads to the completion
-  port.
-- Linux and macOS: `poll()` over nonblocking descriptors plus a wakeup pipe.
-  `epoll`/`kqueue` are a later optimization behind the same interface.
+- Linux and macOS: one thread polls (`poll()`) every input descriptor and a
+  wakeup pipe; `epoll`/`kqueue` are a later optimization behind the same
+  interface. The POSIX service compiles with clang 20 under WSL; no Linux
+  host has run it yet.
+- Windows: each input gets a reader thread blocked in `ReadFile`, as
+  console and anonymous-pipe handles cannot be overlapped; closing the port
+  cancels the read (`CancelSynchronousIo`) and lets the thread go. An I/O
+  completion port joins for overlapped pipes and sockets with the drivers
+  that need them (57D, 57F).
+- Framing happens on the I/O side (`InputDecoder`): stream input arrives in
+  the chunks reads return; `{packet, N}` holds bytes until a whole packet
+  arrived (an incomplete packet at end of input is dropped, as in OTP);
+  `{line, L}` splits at `\n`, sends a line longer than `L` as `{noeol, Part}`
+  pieces and an unterminated end as `{noeol, Rest}`. `port_info(P, input)`
+  counts every byte read, newlines and packet headers included.
+- End of input sends `{Port, eof}` with option `eof`, else closes the port
+  with reason `normal`; a read error closes it with `eio`.
 
 An event becomes a message to the connected process under the executor
 mutex: at once when that process does not run on a worker (waking it like
 any message), else when its time slice ends, so a running process's heap is
-never touched by another thread. Output is queued on the port and written by
-the I/O thread; `port_command` returns at once and never suspends the caller
-(OTP may suspend a caller on a busy port; ErlangAoT queues without a cap).
+never touched by another thread. `port_command` never suspends the caller
+(OTP may suspend a caller on a busy port): an `fd` port writes its output
+at once on the caller's worker; the pipe and socket drivers queue output
+without a cap and let the I/O service write it (57D, 57F).
 The prototype `tests/prototypes/poller/` (`run.py --wsl`) shows the wakeup
 on Windows (completion port) and WSL Linux (`poll()`): an idle scheduler
 thread wakes 9–91 µs after input, and shutdown stops the I/O thread without
 input.
 
 At program end every port is closed (child programs see end of input; they
-are not killed, as in OTP) and the I/O thread is stopped and joined.
+are not killed, as in OTP) and the I/O service stops: the poll thread is
+joined; a Windows reader blocked in a read that cannot be cancelled is
+detached and delivers nothing more. The service stops outside the executor
+mutex, because its threads take it to deliver input.
 
 ## Standard I/O and files (57E)
 

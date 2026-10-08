@@ -377,7 +377,7 @@ Plan: [57A](11-plan.md#step-57a)–[57F](11-plan.md#step-57f). Added
 
 - [x] Port contract, driver interface and I/O poller decided (57A, `docs/ports.md`).
 - [x] Port identities, port table, links/monitors and port builtins (57B).
-- [ ] I/O poller with scheduler wakeups and shutdown (57C).
+- [x] I/O poller with scheduler wakeups and shutdown (57C: poll() thread on POSIX, reader threads on Windows).
 - [ ] Subprocess ports with stdin/stdout, `os:cmd/1` (57D).
 - [ ] `fd`/file ports, `file` subset, standard I/O through ports (57E).
 - [ ] TCP/UDP sockets as ports, `gen_tcp`/`gen_udp`/`inet` subsets (57F).

@@ -369,6 +369,9 @@ Step facts beyond the plan record:
   stealing reports otherwise). -Wmissing-designated-field-initializers: give structs static factory helpers.
   Executor ctor not noexcept (MSVC unordered_map allocates; lifecycle_failure terminates). tidy: Term/Word params
   used separately are "swappable" -> pass Word or use them in one call. erlfmt: scratchpad/fmt.escript FILE.
+- 57C: WSL syntax check of POSIX runtime files: wsl -e bash -c 'cd /mnt/f/Projects/ErlangAoT && clang++ -std=c++23
+  -fsyntax-only -Wall -Wextra -Werror -Iruntime/include -Iruntime/src -Iabi/include -isystem thirdparty/boost_1_90_0 F'.
+  Golden runs take authored "stdin". OTP port input counts raw bytes. build/plan11/{qonly,fastonly,repeat}.cmd.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

@@ -52,8 +52,10 @@ std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> by
 
 class FdDriver final : public PortDriver {
   public:
-    // Keep the output descriptor; it belongs to the program, not to the port, and stays open after it closes.
-    explicit FdDriver(int out) noexcept : out_(out) {}
+    // Keep the descriptors; they belong to the program, not to the port, and stay open after it closes.
+    explicit FdDriver(std::pair<int, int> descriptors) noexcept : in_(descriptors.first), out_(descriptors.second) {}
+
+    std::optional<int> input() const noexcept override { return in_; }
 
     // Flush buffered standard output and error first, so bytes keep the order in which they were written.
     std::expected<void, DriverError> write(std::span<const std::byte> bytes) override {
@@ -63,12 +65,13 @@ class FdDriver final : public PortDriver {
     }
 
   private:
-    // The output descriptor; input is read from step 57C on.
+    // The input and output descriptors.
+    int in_;
     int out_;
 };
 } // namespace
 
-std::unique_ptr<PortDriver> fd_driver(int /*in*/, int out) { return std::make_unique<FdDriver>(out); }
+std::unique_ptr<PortDriver> fd_driver(int in, int out) { return std::make_unique<FdDriver>(std::pair{in, out}); }
 
 std::optional<std::vector<std::byte>> framed(const PortOptions &options, std::vector<std::byte> bytes) {
     if (options.framing != Framing::packet) {

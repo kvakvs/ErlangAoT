@@ -19,12 +19,15 @@ def reference():
     return {'branch': branch, 'revision': re.search(r'REFERENCE_REVISION "([0-9a-f]{40})"', text).group(1)}
 
 
-def observe(escript, staged, entry, args, work):
-    """Runs the entry with one argv under OTP; returns the completed process and the oracle version."""
+def observe(escript, staged, entry, run, work):
+    """Runs the entry with one run's argv and standard input under OTP; returns the completed process and the oracle
+    version."""
+    args = run['args']
     version = work / 'version.txt'
     version.unlink(missing_ok=True)
     result = subprocess.run([escript, str(ORACLE), str(version), str(staged), entry, *args],
-                            cwd=work, capture_output=True, timeout=300, check=False)
+                            cwd=work, capture_output=True, timeout=300, check=False,
+                            input=run.get('stdin', '').encode())
     if result.returncode == 125 or not version.exists():
         sys.exit(f'{staged.name}: oracle failed: {result.stderr.decode(errors="replace")}')
     return result, version.read_text().split()
@@ -37,7 +40,8 @@ def generated_run(case, run, result):
         sys.exit(f'{case}: OTP wrote stderr for args {run["args"]}; author a "stderr" pattern for '
                  f'the ErlangAoT report:\n{result.stderr.decode(errors="replace")}')
     stdout = result.stdout.replace(b'\r\n', b'\n').decode('utf8')
-    return {'args': run['args'], 'stderr': pattern or '^$', 'exit_status': result.returncode, 'stdout': stdout}
+    stdin = {'stdin': run['stdin']} if 'stdin' in run else {}
+    return {'args': run['args'], **stdin, 'stderr': pattern or '^$', 'exit_status': result.returncode, 'stdout': stdout}
 
 
 def regenerate(escript, case_dir, work):
@@ -50,7 +54,7 @@ def regenerate(escript, case_dir, work):
             # ErlangAoT-only behavior OTP cannot show: kept as written.
             runs.append(run)
             continue
-        result, version = observe(escript, staged, golden['entry'], run['args'], work)
+        result, version = observe(escript, staged, golden['entry'], run, work)
         runs.append(generated_run(case_dir.name, run, result))
     # Authored top-level fields: listed sources and the scheduler counts every run repeats with.
     listed = {key: golden[key] for key in ('sources', 'workers') if key in golden}

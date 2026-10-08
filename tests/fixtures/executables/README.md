@@ -18,6 +18,7 @@ is registered.
 | `workers` | author, optional | Scheduler counts: every run is made once per count with `ERLANG_AOT_FLAGS=--schedulers N`, instead of once with the default of one worker per logical processor ([workers](../../../docs/processes.md#workers)) |
 | `sources` | author, optional | Case-relative source paths instead of the directory's `.erl`/`.hrl` files (the `demo` case uses `examples/compile/`) |
 | `runs[].args` | author | Argument strings of one invocation |
+| `runs[].stdin` | author, optional | Text written to standard input, which is then closed; empty when missing |
 | `runs[].stderr` | author, or `^$` | Python regular expression searched in stderr; required when OTP writes stderr, because ErlangAoT's report text differs |
 | `runs[].exit_status`, `runs[].stdout` | OTP | Observed under the pinned OTP with the program-fixture [oracle](../../compiler/programs/oracle.escript) |
 | `runs[].env` | author, optional (authored runs only) | Environment entries for the run, such as `ERLANG_AOT_FLAGS`; the runner always drops an inherited `ERLANG_AOT_FLAGS` |

@@ -60,6 +60,9 @@ class PortDriver {
     // Write one output of the port (port_command, {command, Data}), framing already applied.
     virtual std::expected<void, DriverError> write(std::span<const std::byte> bytes) = 0;
 
+    // The descriptor the I/O thread reads the port's input from, if the driver has one.
+    virtual std::optional<int> input() const noexcept { return std::nullopt; }
+
     // The operating system process id of a spawned program, for port_info's os_pid.
     virtual std::optional<std::int64_t> os_pid() const noexcept { return std::nullopt; }
 
@@ -92,6 +95,7 @@ struct Port final {
 // Empty when the data is too long for the header.
 std::optional<std::vector<std::byte>> framed(const PortOptions &options, std::vector<std::byte> bytes);
 
-// The driver of an {fd, In, Out} port: output written at once to Out (docs/ports.md#drivers).
+// The driver of an {fd, In, Out} port: input read from In by the I/O thread, output written at once to Out
+// (docs/ports.md#drivers).
 std::unique_ptr<PortDriver> fd_driver(int in, int out);
 } // namespace erlang_aot::runtime::detail
