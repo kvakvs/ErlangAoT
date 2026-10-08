@@ -4,6 +4,7 @@
 #include "features.hpp"
 #include <compare>
 #include <memory>
+#include <shared_mutex>
 
 namespace erlang_aot::runtime {
 enum class CodeError : std::uint8_t {
@@ -155,7 +156,9 @@ struct FunctionRequest final {
     std::size_t arity;
 };
 
-// Runtime-owned publication service; mutation and lookup require host serialization for now.
+// Runtime-owned publication service shared by scheduler workers (docs/runtime.md#threads): lookups run concurrently
+// under a shared lock, publication takes it exclusively. Modules are never removed before the server is destroyed,
+// after every context, so definitions and frames it returns stay valid while any process can use them.
 class CodeServer final {
   public:
     // Create an empty registry; native registration never loads files or performs hot upgrades.
@@ -188,14 +191,24 @@ class CodeServer final {
     // Whether `definition` is a registered module's fun definition or an external fun this server built.
     bool owns(const FunDefinition &definition) const noexcept;
 
-    // The production builtins calls reach besides the modules' exports.
+    // The production builtins calls reach besides the modules' exports; registered at runtime startup, before any
+    // worker runs, and read-only afterwards.
     BuiltinRegistry &builtins() noexcept { return builtins_; }
 
     const BuiltinRegistry &builtins() const noexcept { return builtins_; }
 
   private:
+    // The lookups below run with the lock already held.
     // Find the immutable descriptor key without dereferencing image-owned storage.
     const ModuleAtoms *find_atoms(const void *descriptor) const noexcept;
+    // Find a registered module's fun definition by descriptor.
+    const FunDefinition *find_fun(const void *descriptor) const noexcept;
+    // Find an export's frame by module, function atom and arity.
+    const void *find_export(const FunctionAtoms &name) const noexcept;
+    // Find an export's frame, else a builtin's.
+    const void *find_function(const Term &module, const Term &function, std::size_t arity) const noexcept;
+    // Guards modules_ and external_funs_: shared for lookups, exclusive for publication.
+    mutable std::shared_mutex mutex_;
     // One registry per exact module spelling; no secondary BIF overload table exists.
     std::map<std::string, std::shared_ptr<const LoadedModule>, std::less<>> modules_;
     // External funs built from runtime operands, by module, function and arity; fun cells point at them.

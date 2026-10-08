@@ -1008,13 +1008,15 @@ get one word per spelling and the table grows by exactly 2,000.
 
 ### 55. Synchronize code-server publication and lookup
 
-Backlog: F28. Depends on: [43](#step-43).
-
-- Success criteria
-  - [ ] Lookups and calls run concurrently with publication; module pins last
-    through invocation and closure lifetime.
-- Tests
-  - [ ] Multi-threaded stress for duplicate registration, lookup and teardown.
+Done 2026-10-08 (contract `docs/runtime.md#threads`). `CodeServer` guards
+`modules_` and `external_funs_` with one `std::shared_mutex`: lookups shared,
+`load` and a new `external_fun` exclusive (re-check after the shared miss);
+private unlocked helpers `find_fun`/`find_export`/`find_function` serve the
+locked entry points. Builtins stay read-only after startup. Pins: no module is
+removed before the server dies, after every context. `runtime_concurrency`:
+8 threads publish 200 modules in different orders (each exactly once) while
+resolving and calling them and building one external fun; after the runtime is
+destroyed the threads read and release their pinned modules.
 
 <a id="step-56"></a>
 

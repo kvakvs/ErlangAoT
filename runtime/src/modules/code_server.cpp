@@ -1,4 +1,5 @@
 #include <erlang_aot/runtime/code_server.hpp>
+#include <mutex>
 
 namespace erlang_aot::runtime {
 std::shared_ptr<const CodeImage> CodeImage::linked() { return std::make_shared<CodeImage>(); }
@@ -24,6 +25,7 @@ const ModuleAtoms *CodeServer::find_atoms(const void *descriptor) const noexcept
 }
 
 TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot) const noexcept {
+    const std::shared_lock lock(mutex_);
     const auto *atoms = find_atoms(descriptor);
     if (!atoms) {
         return std::unexpected(TermError::wrong_owner);
@@ -35,6 +37,7 @@ TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot)
 }
 
 const RecordDefinition *CodeServer::record_definition(const void *descriptor) const noexcept {
+    const std::shared_lock lock(mutex_);
     for (const auto &[name, module] : modules_) {
         const auto *atoms = module->atoms();
         if (!atoms) {
@@ -50,6 +53,11 @@ const RecordDefinition *CodeServer::record_definition(const void *descriptor) co
 }
 
 const FunDefinition *CodeServer::fun_definition(const void *descriptor) const noexcept {
+    const std::shared_lock lock(mutex_);
+    return find_fun(descriptor);
+}
+
+const FunDefinition *CodeServer::find_fun(const void *descriptor) const noexcept {
     for (const auto &[name, module] : modules_) {
         const auto *atoms = module->atoms();
         if (!atoms) {
@@ -65,6 +73,11 @@ const FunDefinition *CodeServer::fun_definition(const void *descriptor) const no
 }
 
 const void *CodeServer::export_frame(const FunctionAtoms &name) const noexcept {
+    const std::shared_lock lock(mutex_);
+    return find_export(name);
+}
+
+const void *CodeServer::find_export(const FunctionAtoms &name) const noexcept {
     for (const auto &[spelling, loaded] : modules_) {
         const auto *atoms = loaded->atoms();
         if (!atoms || atoms->module != name.module) {
@@ -80,7 +93,12 @@ const void *CodeServer::export_frame(const FunctionAtoms &name) const noexcept {
 }
 
 const void *CodeServer::function_frame(const Term &module, const Term &function, std::size_t arity) const noexcept {
-    if (const auto *frame = export_frame({module.word(), function.word(), arity})) {
+    const std::shared_lock lock(mutex_);
+    return find_function(module, function, arity);
+}
+
+const void *CodeServer::find_function(const Term &module, const Term &function, std::size_t arity) const noexcept {
+    if (const auto *frame = find_export({module.word(), function.word(), arity})) {
         return frame;
     }
     const auto module_name = module.atom_spelling();
@@ -89,20 +107,30 @@ const void *CodeServer::function_frame(const Term &module, const Term &function,
 }
 
 const FunDefinition &CodeServer::external_fun(const Term &module, const Term &function, std::size_t arity) {
-    auto &definition = external_funs_[{module.word(), function.word(), arity}];
+    const FunctionAtoms key{module.word(), function.word(), arity};
+    {
+        const std::shared_lock lock(mutex_);
+        if (const auto found = external_funs_.find(key); found != external_funs_.end()) {
+            return *found->second;
+        }
+    }
+    const std::unique_lock lock(mutex_);
+    // Another worker may have built the definition between the two locks.
+    auto &definition = external_funs_[key];
     if (!definition) {
-        definition = std::make_unique<FunDefinition>(FunDefinition{.module = module.word(),
-                                                                   .function = function.word(),
+        definition = std::make_unique<FunDefinition>(FunDefinition{.module = key.module,
+                                                                   .function = key.function,
                                                                    .arity = arity,
                                                                    .external = true,
-                                                                   .frame = function_frame(module, function, arity)});
+                                                                   .frame = find_function(module, function, arity)});
     }
     return *definition;
 }
 
 bool CodeServer::owns(const FunDefinition &definition) const noexcept {
+    const std::shared_lock lock(mutex_);
     if (definition.descriptor) {
-        return fun_definition(definition.descriptor) == &definition;
+        return find_fun(definition.descriptor) == &definition;
     }
     const auto found = external_funs_.find({definition.module, definition.function, definition.arity});
     return found != external_funs_.end() && found->second.get() == &definition;
@@ -112,6 +140,7 @@ CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinitio
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);
     }
+    const std::unique_lock lock(mutex_);
     if (modules_.contains(definition.name)) {
         return std::unexpected(CodeError::duplicate_module);
     }
@@ -129,6 +158,7 @@ CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinitio
 }
 
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::find_module(std::string_view name) const {
+    const std::shared_lock lock(mutex_);
     const auto found = modules_.find(name);
     if (found == modules_.end()) {
         return std::unexpected(CodeError::module_not_found);

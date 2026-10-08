@@ -3,8 +3,9 @@
 Status: generic native skeleton implemented in compilation step 11, 2026-09-25.
 See [runtime builtin dispatch](../../docs/runtime.md#code-server-and-builtins) for the implemented
 boundary. The remaining sections describe the wider proposed contract: typed
-registrations, atom names/bindings, concurrent publication, export listings and
-unload are not implemented. Native typed sketches are retained under
+registrations, export listings and unload are not implemented; atom bindings
+exist and publication/lookup is synchronized (plan 11 step 55,
+[threads](../../docs/runtime.md#threads)). Native typed sketches are retained under
 `runtime/include/unverified/`; there is no implemented `native_callable.hpp`.
 
 - [callable.hpp](../include/erlang_aot/runtime/callable.hpp): generic targets,

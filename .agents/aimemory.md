@@ -351,6 +351,8 @@ Step facts beyond the plan record:
   tolerates one alignment unit (.reloc crossing 512 B made Os bigger than O2).
 - 54: AtomStorage shared_mutex; private static atom_term (Term fields are friend-only). tests/runtime/concurrency.cpp
   (runtime_concurrency, links Threads::Threads) is the home of thread stress for 55/57.
+- 55: CodeServer shared_mutex; locked public lookups call private unlocked find_fun/find_export/find_function
+  (never call a locking public method under the lock). concurrency.cpp needs <erlang_aot/runtime/code_server.hpp>.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

@@ -365,8 +365,8 @@ Plan: [41](11-plan.md#step-41).
 
 Plan: [55](11-plan.md#step-55).
 
-- [ ] Synchronized publication/lookup with pins through invocation; stress
-  registration, lookup and teardown.
+- [x] Synchronized publication/lookup with pins through invocation; stress
+  registration, lookup and teardown (step 55: shared mutex).
 
 ### F35 — Ports and port I/O
 

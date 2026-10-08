@@ -166,6 +166,19 @@ to the thread running its process.
   shared lock and only a new spelling takes the exclusive lock, checks again
   and publishes the entry, so racing interns of one spelling get one word.
   Words stay stable: an entry is never changed or removed before teardown.
+- Code (step 55): `CodeServer` guards its modules and external fun
+  definitions with a shared mutex. Lookups (`find_module`, `resolve`,
+  `atom_word`, `record_definition`, `fun_definition`, `export_frame`,
+  `function_frame`, `owns`) share it; `load` and building a new external fun
+  definition take it exclusively, so concurrent registrations of one name
+  publish one module (the others get `duplicate_module`) and racing
+  `external_fun` calls get one definition. The builtin registry is filled at
+  runtime startup, before any worker runs, and only read afterwards.
+- Pins: modules are never removed while the runtime lives (unloading is
+  deferred) and the server is destroyed after every context, so definitions,
+  frames and atom slots it returned stay valid for every invocation and every
+  fun cell. `ResolvedFunction` and `find_module` handles also keep their
+  module after the runtime is gone.
 
 ## Standard output
 
