@@ -1,5 +1,6 @@
 """Link one executable golden case under every test policy, run it and compare with its OTP golden."""
 import argparse
+import concurrent.futures
 import difflib
 import json
 import os
@@ -12,6 +13,9 @@ import cases
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'patternmatch'))
 import matrix  # noqa: E402  (shared fast/full policy selection)
+
+# Policy combinations linked and run at once; each is independent, so a case takes about one combination's time.
+COMBINATION_JOBS = 4
 
 
 def manifest(case, entry, output):
@@ -77,22 +81,21 @@ def compare(executable, run):
 
 
 def check_policy(tool, work, case, golden, policy, suffix):
-    """Links the case under one policy and runs every golden invocation; returns the failure count."""
+    """Links the case under one policy and runs every golden invocation; returns the failure count and the report
+    lines, printed by the caller so concurrent combinations do not interleave."""
     label, arguments = command(tool, work, case, golden, policy)
     result = subprocess.run(arguments, cwd=work, capture_output=True, timeout=300, check=False)
     if result.returncode != 0:
-        print(f'FAIL {case} [{label}]: compiler exited {result.returncode}\n{text(result.stderr)}')
-        return 1
+        return 1, [f'FAIL {case} [{label}]: compiler exited {result.returncode}\n{text(result.stderr)}']
     executable = work / f'{label}/{case}{suffix}'
-    failures = 0
+    failures, lines = 0, []
     for run in golden['runs']:
         problems = compare(executable, run)
         status = 'FAIL' if problems else 'ok'
-        print(f'{status} {case} [{label}] args={json.dumps(run["args"])}')
-        for problem in problems:
-            print('    ' + problem.replace('\n', '\n    '))
+        lines.append(f'{status} {case} [{label}] args={json.dumps(run["args"])}')
+        lines.extend('    ' + problem.replace('\n', '\n    ') for problem in problems)
         failures += bool(problems)
-    return failures
+    return failures, lines
 
 
 def main():
@@ -107,8 +110,14 @@ def main():
     golden = cases.verify(case_dir)
     shutil.rmtree(work, ignore_errors=True)
     cases.stage(case_dir, golden, work / 'src')
-    failures = sum(check_policy(tool, work, case_dir.name, golden, policy, options.suffix)
-                   for policy in matrix.combinations())
+    policies = matrix.combinations()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(COMBINATION_JOBS, len(policies))) as pool:
+        outcomes = list(pool.map(lambda policy: check_policy(tool, work, case_dir.name, golden, policy, options.suffix),
+                                 policies))
+    failures = 0
+    for count, lines in outcomes:
+        print('\n'.join(lines))
+        failures += count
     print(f'{case_dir.name}: {failures} failure(s)')
     sys.exit(1 if failures else 0)
 

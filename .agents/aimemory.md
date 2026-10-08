@@ -338,6 +338,9 @@ Step facts beyond the plan record:
   first, so goldens see no OTP stderr (author stderr). runtime_containers SegFaulted once in a full -j 12 run, not
   reproduced.
 User directions (keep):
+- Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
+  then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel
+  (executables run.py runs 4 combinations at once; parser_mutations sharded 0..3).
 - No hard memory cap by default, per process or runtime; caps only as options (step 27 correction).
 - Test iteration counts: just large enough to prove the property (exceed native stack / stack budget), no more.
 - All ABI symbol/namespace versions collapse to v1 in plan step 78A (never released; no compatibility).
@@ -360,6 +363,7 @@ Host and tool gotchas:
   -DQUALITY_SHARD=K/N (script build/plan11-step40/shard.cmd K/N BATCH). Root CMakeLists edits select all units.
   The check targets do not forward QUALITY_JOBS: run `cmake -DQUALITY_SCOPE=all
   -DQUALITY_BUILD_DIR=<build> -DQUALITY_NINJA=<ninja> -DQUALITY_JOBS=1 -P cmake/CheckClangTidy.cmake`
+  (default jobs = half the logical cores since 2026-10-08, user request; was 2 on Windows, cap 6).
   (script build/plan11-step8i/rerun.cmd). codegen_dependency can time out (120 s) under full -j 16. Runtime CMake edits select all tidy units.
 - MSVC C4554 false positive on static_cast<Word>(n - 1) << shift: hoist to a local.
 - Bash heredocs mangle non-ASCII, `\n` and `\`, and many quotes break them: write files with Write

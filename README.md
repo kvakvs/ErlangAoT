@@ -168,7 +168,8 @@ in the working tree, plus untracked files.
   after each; every batch runs, then the check fails if any batch did. To split a long run
   into shorter separate invocations, call the script directly with a shard, for example
   `cmake -DQUALITY_SCOPE=all -DQUALITY_BUILD_DIR=build/debug -DQUALITY_SHARD=1/4 -P cmake/CheckClangTidy.cmake`
-  for the first quarter (`QUALITY_BATCH` and `QUALITY_JOBS` override the batch size and jobs).
+  for the first quarter (`QUALITY_BATCH` and `QUALITY_JOBS` override the batch size and jobs;
+  jobs default to half of the logical cores).
 - `make format` / `make-format.bat` format changed C++ files; `make format-all` or
   `FORMAT_SCOPE=all make-format.bat` formats everything.
 

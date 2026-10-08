@@ -92,19 +92,22 @@ void long_lists(Runtime &runtime) {
     require(built.list_length() == length, "long list length failed");
     std::vector<Word> words(length + 1, factory.integer(7)->word());
     words.back() = factory.nil()->word();
-    GeneratedInvocation invocation(context.generated_calls());
-    Word constructed = 0;
-    require(erlang_aot_construct_v1(&context,
-                                    static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::list),
-                                    words.data(), words.size(), &constructed) == 0,
-            "construction service refused a long list");
-    const std::array reverse{constructed, factory.nil()->word()};
-    Word reversed = 0;
-    require(erlang_aot_construct_v1(&context,
-                                    static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::reverse),
-                                    reverse.data(), reverse.size(), &reversed) == 0,
-            "reverse service refused a long list");
-    require(Term::from_word(reversed, context)->exactly_equal(built) == true, "long lists compared unequal");
+    {
+        // The invocation scope ends before its context is destroyed.
+        GeneratedInvocation invocation(context.generated_calls());
+        Word constructed = 0;
+        require(erlang_aot_construct_v1(&context,
+                                        static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::list),
+                                        words.data(), words.size(), &constructed) == 0,
+                "construction service refused a long list");
+        const std::array reverse{constructed, factory.nil()->word()};
+        Word reversed = 0;
+        require(erlang_aot_construct_v1(&context,
+                                        static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::reverse),
+                                        reverse.data(), reverse.size(), &reversed) == 0,
+                "reverse service refused a long list");
+        require(Term::from_word(reversed, context)->exactly_equal(built) == true, "long lists compared unequal");
+    }
     require(runtime.destroy_context(&context) == Status::ok, "long list context teardown failed");
 }
 

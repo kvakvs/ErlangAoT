@@ -50,11 +50,14 @@ add_test(NAME parser_consumer COMMAND "${CMAKE_COMMAND}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/consumer.cmake")
 # Separate CMake consumer projects and timing measurements run only in full mode (label full_only).
 set_tests_properties(parser_consumer PROPERTIES TIMEOUT 180 LABELS full_only)
-add_test(NAME parser_mutations COMMAND "${CMAKE_COMMAND}"
-    "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
-    "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-mutations"
-    -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/mutations.cmake")
-set_tests_properties(parser_mutations PROPERTIES TIMEOUT 180)
+# The mutation corpus runs as four shards (every fourth case each) so CTest can run them in parallel.
+foreach(shard RANGE 0 3)
+    add_test(NAME parser_mutations_${shard} COMMAND "${CMAKE_COMMAND}"
+        "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DFIXTURES=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/parser"
+        "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-mutations/${shard}" -DSHARD=${shard} -DSHARDS=4
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/mutations.cmake")
+    set_tests_properties(parser_mutations_${shard} PROPERTIES TIMEOUT 180)
+endforeach()
 add_test(NAME parser_stress COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:erlang_aot>" "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/parser-stress"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/compiler/parser/stress.cmake")

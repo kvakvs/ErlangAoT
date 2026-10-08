@@ -128,12 +128,15 @@ void endings(Runtime &runtime) {
 // A host invocation resumes its own yields until the function returns.
 void invocation(Runtime &runtime) {
     auto &context = *runtime.create_context().value();
-    GeneratedInvocation scope(context.generated_calls());
-    const auto steps = encode_integer(5 * SLICE_REDUCTIONS).value();
-    entries[&context] = 0;
-    require(context.stack().invoke(countdown, &steps) == encode_integer(0).value() &&
-                entries[&context] == 5 * SLICE_REDUCTIONS + 1,
-            "a host invocation stopped at a yield");
+    {
+        // The invocation scope ends before its context is destroyed.
+        GeneratedInvocation scope(context.generated_calls());
+        const auto steps = encode_integer(5 * SLICE_REDUCTIONS).value();
+        entries[&context] = 0;
+        require(context.stack().invoke(countdown, &steps) == encode_integer(0).value() &&
+                    entries[&context] == 5 * SLICE_REDUCTIONS + 1,
+                "a host invocation stopped at a yield");
+    }
     require(runtime.destroy_context(&context) == Status::ok, "teardown failed");
 }
 } // namespace

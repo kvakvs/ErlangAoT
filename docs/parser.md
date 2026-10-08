@@ -84,5 +84,5 @@ wall-clock guarantees. Resource exhaustion stops the session.
   compiler `beam_ssa`, `beam_asm` and four headers, using `-I`/`--app-dir`
   mappings, `maybe_expr` on, `compr_assign` off and
   `-DCOMPILER_VSN='"parser-compatibility"'`.
-- `parser_stress` (12,000-operator chain), `parser_mutations` (900 seeded
+- `parser_stress` (12,000-operator chain), `parser_mutations_0`..`3` (shards of 900 seeded
   mutations, seed `0x29a016`, run twice) and `parser_hardening` bound behavior.
