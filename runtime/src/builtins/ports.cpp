@@ -228,25 +228,42 @@ int descriptor(const Term &value) {
     return static_cast<int>(*number);
 }
 
-// The driver of an open_port/2 port name and the name port_info reports; badarg for an unknown or invalid name,
-// error:Reason (enoent, eacces, ...) when a program cannot be started.
+// The driver and name of {fd, In, Out}.
+std::pair<std::unique_ptr<detail::PortDriver>, std::string> fd(const TupleArgument &name) {
+    const auto in = descriptor(name.elements[1]);
+    const auto out = descriptor(name.elements[2]);
+    return {detail::fd_driver(in, out), std::to_string(in) + "/" + std::to_string(out)};
+}
+
+// The driver and name of {spawn, Command} or {spawn_executable, File}; error:Reason (enoent, eacces, ...) when the
+// program cannot be started.
+std::pair<std::unique_ptr<detail::PortDriver>, std::string>
+spawned(ProcessContext &context, bool executable, const std::string &command, const PortOptions &options) {
+    auto driver = detail::spawn_driver({.executable = executable, .command = command}, options);
+    if (!driver) {
+        raise_atom(context, driver.error().reason);
+    }
+    return {std::move(*driver), command};
+}
+
+// The driver of an open_port/2 port name and the name port_info reports; badarg for an unknown or invalid name.
 std::pair<std::unique_ptr<detail::PortDriver>, std::string> driver(ProcessContext &context, const TupleArgument &name,
                                                                    const PortOptions &options) {
     const auto kind = name.elements.empty() ? std::string_view{} : name.elements[0].atom_spelling().value_or("");
     if (kind == "fd" && name.elements.size() == 3) {
-        const auto in = descriptor(name.elements[1]);
-        const auto out = descriptor(name.elements[2]);
-        return {detail::fd_driver(in, out), std::to_string(in) + "/" + std::to_string(out)};
+        return fd(name);
     }
     const auto command = name.elements.size() == 2 ? text_of(name.elements[1]) : std::nullopt;
-    if ((kind != "spawn" && kind != "spawn_executable") || !command) {
+    if (!command) {
         bad_argument();
     }
-    auto spawned = detail::spawn_driver({.executable = kind == "spawn_executable", .command = *command}, options);
-    if (!spawned) {
-        raise_atom(context, spawned.error().reason);
+    if (kind == "spawn_driver" && *command == "erlang_aot_file") {
+        return {detail::file_driver(), *command};
     }
-    return {std::move(*spawned), *command};
+    if (kind != "spawn" && kind != "spawn_executable") {
+        bad_argument();
+    }
+    return spawned(context, kind == "spawn_executable", *command, options);
 }
 
 // open_port(PortName, Options): a new port linked to the caller (docs/ports.md#drivers): {fd, In, Out},
@@ -316,10 +333,30 @@ TermResult<Term> port_connect(ProcessContext &context, const Term &port, const T
     return atom(context, "true");
 }
 
-// port_control(Port, Operation, Data): badarg on drivers without control, which are all of this step's.
-TermResult<Term> port_control(ProcessContext &context, const Term &port, const Term &, const Term &) {
-    port_of(context, port);
-    bad_argument();
+// port_control(Port, Operation, Data): the driver's answer, a binary for a binary port, else a byte list; badarg for
+// a closed port, a driver without control or an operation it does not have.
+TermResult<Term> control(ProcessContext &context, Word port, std::optional<std::int64_t> code,
+                         const std::optional<std::vector<std::byte>> &bytes) {
+    if (!code || *code < 0 || *code > 0xffffffff || !bytes) {
+        bad_argument();
+    }
+    const auto answer = detail::Executor::of(context).control_port(port, *bytes, static_cast<std::uint32_t>(*code));
+    if (!answer) {
+        bad_argument();
+    }
+    TermFactory factory(context);
+    if (answer->second) {
+        return factory.binary(answer->first);
+    }
+    std::vector<Word> list;
+    for (const auto byte : answer->first) {
+        list.push_back(need(encode_integer(std::to_integer<std::int64_t>(byte))));
+    }
+    return factory.list_words(list, need(factory.nil()));
+}
+
+TermResult<Term> port_control(ProcessContext &context, const Term &port, const Term &operation, const Term &data) {
+    return control(context, port_of(context, port), small(operation.word()), iodata_bytes(data));
 }
 
 // port_call(Port, Data) and port_call(Port, Operation, Data): no driver answers calls.

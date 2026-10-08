@@ -376,6 +376,9 @@ Step facts beyond the plan record:
   and gives eacces for an empty env name (left out of fixtures). User asked how ports get CPU (2026-10-08): answered
   ports are not scheduled entities (I/O threads + synchronous port ops); offered an ERTS-like port-task redesign as a
   later plan step if wanted.
+- 57E: library modules io.erl/file.erl exist now; referenced_modules skips catalog builtin calls (io:format) so
+  they join only programs that call their Erlang functions. Runner runs each combination in work/<label> (data files
+  copied) so file-writing tests do not collide. Lizard/tidy: use dispatch tables for op switches.
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.

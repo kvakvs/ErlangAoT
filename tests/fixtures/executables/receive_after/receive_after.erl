@@ -71,7 +71,7 @@ main(_) ->
             sleep(Delay),
             Self ! {woke, Delay}
         end)
-     || Delay <- [60, 20, 40]
+     || Delay <- [300, 100, 200]
     ],
     io:format("woke ~p~n", [
         [

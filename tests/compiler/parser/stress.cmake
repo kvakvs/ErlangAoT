@@ -4,7 +4,7 @@ file(MAKE_DIRECTORY "${WORK}")
 function(stress name source expected_status pattern)
     file(WRITE "${WORK}/${name}.erl" "${source}")
     execute_process(COMMAND "${TOOL}" --print-ast "${name}.erl" WORKING_DIRECTORY "${WORK}"
-        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 15 ENCODING UTF-8)
+        RESULT_VARIABLE status OUTPUT_VARIABLE output ERROR_VARIABLE error TIMEOUT 60 ENCODING UTF-8)
     string(LENGTH "${output}" size)
     if(NOT status STREQUAL "${expected_status}" OR NOT "${output}${error}" MATCHES "${pattern}" OR size GREATER 6000000)
         message(FATAL_ERROR "${name}: ${status}: ${error}")

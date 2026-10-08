@@ -77,6 +77,12 @@ class PortDriver {
 
     // Whether port_control/3 works on this driver; others make it badarg.
     virtual bool controllable() const noexcept { return false; }
+
+    // Answer port_control(Port, Operation, Data); none for an operation the driver does not have (badarg). Called
+    // without the executor's lock, possibly from two workers at once.
+    virtual std::optional<std::vector<std::byte>> control(std::uint32_t, std::span<const std::byte>) {
+        return std::nullopt;
+    }
 };
 
 // One open port of the executor's port table.
@@ -101,7 +107,8 @@ struct Port final {
     // here once it exited: {exit_status, S} goes out before the end of input is acted on.
     bool input_ended = false;
     std::optional<std::int64_t> exit_status;
-    std::unique_ptr<PortDriver> driver;
+    // Shared so port_control/3 can run outside the executor's lock while the port may close meanwhile.
+    std::shared_ptr<PortDriver> driver;
 };
 
 // Apply the output framing of `options` to `bytes`: a {packet, N} header; nothing for stream and line ports.
@@ -120,6 +127,10 @@ struct SpawnRequest final {
 // reason (enoent, eacces, ...) when the program cannot be started (docs/ports.md#drivers).
 std::expected<std::unique_ptr<PortDriver>, DriverError> spawn_driver(const SpawnRequest &request,
                                                                      const PortOptions &options);
+
+// The driver of {spawn_driver, "erlang_aot_file"}: files of the project library's file module, through the
+// port_control/3 protocol of ports/file.cpp.
+std::unique_ptr<PortDriver> file_driver();
 
 // The driver of an {fd, In, Out} port: input read from In by the I/O thread, output written at once to Out
 // (docs/ports.md#drivers).

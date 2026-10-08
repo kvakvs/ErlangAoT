@@ -10,6 +10,8 @@ from OTP sources) and compiled with the programs that use it.
 | --- | --- |
 | [`lists`](../library/stdlib/lists.erl) | `append/1,2`, `filter/2`, `foldl/3`, `foldr/3`, `keyfind/3`, `map/2`, `member/2`, `nth/2`, `reverse/1,2`, `seq/2,3`, `sort/1` |
 | [`maps`](../library/stdlib/maps.erl) | `find/2`, `fold/3`, `from_list/1`, `get/2`, `keys/1`, `put/3`, `to_list/1`, `values/1` |
+| [`file`](../library/stdlib/file.erl) | `open/2`, `read/2`, `write/2`, `read_line/1`, `position/2`, `close/1`, `read_file/1`, `write_file/2`, `delete/1`, `rename/2`, `list_dir/1`, `make_dir/1`, `del_dir/1` over the file driver ([files](ports.md#standard-io-and-files)) |
+| [`io`](../library/stdlib/io.erl) | `get_line/1,2`, `get_chars/2,3` (standard input server or an open file); `format/1,2` and `put_chars/1` are runtime builtins |
 | [`os`](../library/stdlib/os.erl) | `cmd/1` over a port ([subprocesses](ports.md#subprocesses)); `type/0` and `getenv/1` are runtime builtins |
 
 Results and error reasons match OTP 29, including the error shapes of OTP's
@@ -26,7 +28,9 @@ sort. Stack traces name the library functions, not OTP's.
   a literal atom — `M:F(...)` with literal `M`, `fun M:F/A`, or
   `apply(M, F, Args)` with literal `M` — that no input defines, and
   `<library>/M.erl` exists, the compiler parses and compiles that file into
-  the batch, then repeats for the modules the added files name.
+  the batch, then repeats for the modules the added files name. A call
+  `M:F(...)` of a catalog builtin (`io:format/2`, `os:type/0`) names no
+  module.
 - `<library>` is `library/stdlib` of the build tree, found relative to
   `erlangaot` like the runtime archive.
 - A module of the batch with the same name replaces the library module.

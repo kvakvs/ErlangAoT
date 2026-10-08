@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "entry": "file_io",
+  "workers": [
+    1,
+    4
+  ],
+  "runs": [
+    {
+      "args": [
+        "files"
+      ],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "write_file ok\nread_file {ok,<<\"abc\\ndef\\nghi\">>}\nread_file missing {error,enoent}\nis_pid true\nread {ok,\"ab\"}\nread_line [{ok,\"c\\n\"},{ok,\"def\\n\"},{ok,\"ghi\"},eof]\nread at eof eof\nposition [{ok,0},{ok,4},{ok,3},{ok,11},{error,einval}]\nread after position {ok,\"def\"}\nget_line of a file \"\\n\"\nclose ok\nread closed {error,terminated}\nclose again ok\nwrite ok\nread write-only {error,ebadf}\nappended {ok,<<\"one\\ntwo\\nthree\\n\">>}\nbinary read [{ok,<<\"one\">>},{ok,<<\"\\n\">>}]\nopen errors [{error,enoent},{error,eexist},{error,eisdir},{error,badarg}]\nrename [ok,{error,enoent}]\ndelete [ok,{error,enoent}]\nmake_dir [ok,{error,eexist}]\nlist_dir [[\"a\",\"b\"],{error,enoent}]\ndel_dir ok\nread_file directory {error,eisdir}\nwrite_file bad data {error,badarg}\n"
+    },
+    {
+      "args": [
+        "input"
+      ],
+      "stdin": "first line\nsecond\nabcdefg\nlast",
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "prompt> get_line \"first line\\n\"\nget_line \"second\\n\"\nget_chars \"abc\"\nget_line \"defg\\n\"\nget_line at the end \"last\"\nget_chars at eof eof\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "file_io.erl": "ed2682c89faa73bca4317e4b8d901c14df83fc1228e69899e8d694e2e0acbc74"
+  }
+}

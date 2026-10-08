@@ -10,7 +10,7 @@
       "args": [],
       "stderr": "^$",
       "exit_status": 0,
-      "stdout": "poll none, drained [a,b]\n{expired,before}\nearly\neventually\nwoke [20,40,60]\n{timeout,true}\njunk 10\nexported 1 none\n[{ok,got},\n {error,timeout_value},\n {error,timeout_value},\n {error,timeout_value},\n {error,timeout_value},\n {ok,zero}]\n"
+      "stdout": "poll none, drained [a,b]\n{expired,before}\nearly\neventually\nwoke [100,200,300]\n{timeout,true}\njunk 10\nexported 1 none\n[{ok,got},\n {error,timeout_value},\n {error,timeout_value},\n {error,timeout_value},\n {error,timeout_value},\n {ok,zero}]\n"
     }
   ],
   "oracle_version": [
@@ -22,6 +22,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "receive_after.erl": "d8b6045e4e7808252a7b75e5274f4abad0c9196ae426e3d7deb5139c02a6a8a8"
+    "receive_after.erl": "3f69052fff02fa3e6b905e4c2eeb330893e5629829c99883fd499787be66ea2f"
   }
 }

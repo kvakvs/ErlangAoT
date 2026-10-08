@@ -189,8 +189,10 @@ class Executor final {
     std::optional<PortInfo> port_info(Word port) const;
     // The open ports, oldest first.
     std::vector<Word> ports() const;
-    // Whether `port` is open and takes port_control/3.
-    bool controllable(Word port) const;
+    // port_control(Port, Operation, Data): the driver's answer and whether the port is in binary mode; none when the
+    // port is not open or its driver has no such operation. The driver runs without the executor's lock.
+    std::optional<std::pair<std::vector<std::byte>, bool>> control_port(Word port, std::span<const std::byte> data,
+                                                                        std::uint32_t operation);
 
     // Run queued processes on RuntimeOptions::schedulers workers (this thread and more threads) until `main` ends
     // (also by an exit signal) or another process halts or fails outside Erlang; once every worker stopped, return

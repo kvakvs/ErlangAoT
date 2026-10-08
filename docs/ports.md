@@ -14,7 +14,10 @@ thread and `fd` port input with stream, packet and line framing (step 57C,
 `runtime/src/ports/io*.cpp`; OTP golden `executables_port_input`);
 subprocess ports, `os:type/0`, `os:getenv/1` and `os:cmd/1` (step 57D,
 `runtime/src/ports/spawn*.cpp`, `library/stdlib/os.erl`; OTP golden
-`executables_port_spawn`).
+`executables_port_spawn`); the file driver, the library `file` subset and
+standard input through `io:get_line`/`io:get_chars` (step 57E,
+`runtime/src/ports/file.cpp`, `library/stdlib/{file,io}.erl`; OTP golden
+`executables_file_io`).
 
 ## Identity
 
@@ -197,17 +200,38 @@ stdout are pipes of the port:
   `{unix, linux}` or `{unix, darwin}`; `os:getenv/1` returns a string or
   `false`.
 
-## Standard I/O and files (57E)
+## Standard I/O and files
+
+Step 57E.
 
 - `io:format`, `io:put_chars` and `erlang:display` keep writing standard
-  output directly ([io](io.md)); their output is unchanged. Standard input is
-  read through an `{fd, 0, 1}` port owned by a library server process:
-  `io:get_line/1,2` and `io:get_chars/2,3` ask it and wait for the answer.
-- `file` is a project-library module: `open/2` returns an I/O server pid
-  that owns a `file` port; `read/2`, `write/2`, `read_line/1`,
-  `position/2`, `close/1` talk to it. `read_file/1`, `write_file/2`,
-  `delete/1`, `rename/2`, `list_dir/1` use a port directly. Results and
-  errors (`{error, enoent}`, ...) follow OTP for this subset.
+  output directly ([io](io.md)). Standard input is read by one library
+  server process, registered as `erlang_aot_stdin` and started on first use,
+  which owns an `{fd, 0, 1}` port: `io:get_line/1,2` writes the prompt, then
+  returns the next line with its newline, the rest of the input without one
+  at its end, then `eof`; `io:get_chars/2,3` returns up to `N` characters,
+  then `eof`. Requests of several processes are answered in arrival order.
+  Input is returned as bytes (one list element per byte).
+- The library's `file` module drives the runtime's file driver,
+  `{spawn_driver, "erlang_aot_file"}`, with `port_control/3`. Its operations
+  (`ports/file.cpp`: open, read, write, position, read_line, close, and the
+  path operations read_file, write_file, delete, rename, list_dir, make_dir,
+  del_dir) are synchronous system calls on the caller's worker, outside the
+  executor mutex; their replies start with a status byte (0 ok, 1 error and
+  its POSIX reason, 2 end of file). The protocol is ErlangAoT's own.
+- `file:open/2` returns an I/O server pid that owns a file port and is linked
+  to the opener (modes `read`, `write`, `append`, `exclusive`, `binary`;
+  other modes are ignored, as OTP ignores options it does not use).
+  `read/2`, `read_line/1`, `write/2`, `position/2` and `io:get_line/2`,
+  `io:get_chars/3` on it are requests to that server; after `close/1`
+  requests return `{error, terminated}` and `close/1` stays `ok`.
+- Errors follow OTP: `{error, enoent}`, `eexist`, `eisdir` (a directory
+  opened or read as a file), `einval` (a negative position), `ebadf`
+  (reading a write-only or writing a read-only file), `badarg` for bad names
+  and data. File names are strings, binaries or atoms, encoded as UTF-8.
+- A program-referenced module that is a builtin of the catalog (`io:format`)
+  no longer pulls the library module of that name into the program; only a
+  call of one of its Erlang functions does.
 
 ## Sockets (57F)
 

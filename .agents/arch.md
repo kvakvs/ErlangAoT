@@ -243,6 +243,9 @@
   Step 57D: `IoService` base (io.cpp) adds detached writer threads (queued output) and child watchers (status units)
   sharing an `IoGate`; `PortDriver::queued_output/child/owns_descriptors`; spawn driver (`ports/spawn*.cpp`);
   executor `exited`/`finish_input` order exit_status before eof/close; `os` builtins + library `os:cmd/1`.
+  Step 57E: file driver (`ports/file.cpp`, port_control protocol) run outside the executor mutex via
+  `control_port` (shared_ptr drivers); library `file.erl` (io servers) and `io.erl` (stdin server);
+  `semantic::referenced_modules` skips catalog builtin calls.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

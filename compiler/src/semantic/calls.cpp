@@ -257,7 +257,15 @@ const ast::Atom *applied_module(const ast::Module &syntax, const ast::CallExpres
     return apply ? literal_atom(syntax, call.arguments.front()) : nullptr;
 }
 
-// The module one expression names with a literal atom, if any.
+// Whether a literal M:F(...) call is a builtin of the runtime's catalog (io:format/2, os:type/0), which needs no
+// library module.
+bool builtin_call(const ast::Module &syntax, const ast::RemoteExpression &remote, std::size_t arity) {
+    const auto *module = literal_atom(syntax, remote.module);
+    const auto *function = literal_atom(syntax, remote.function);
+    return module && function && bridge_builtin(module->name, FunctionKey{function->name, arity});
+}
+
+// The module one expression names with a literal atom, if any; calls of catalog builtins name none.
 const ast::Atom *named_module(const ast::Module &syntax, const ast::Expression &expression) {
     if (const auto *reference = std::get_if<ast::RemoteFunReference>(&expression.value)) {
         return std::get_if<ast::Atom>(&reference->module);
@@ -269,7 +277,7 @@ const ast::Atom *named_module(const ast::Module &syntax, const ast::Expression &
     if (const auto *remote =
             std::get_if<ast::RemoteExpression>(&syntax.expression(ungroup(syntax, call->target)).value);
         remote && !applied_module(syntax, *call)) {
-        return literal_atom(syntax, remote->module);
+        return builtin_call(syntax, *remote, call->arguments.size()) ? nullptr : literal_atom(syntax, remote->module);
     }
     return applied_module(syntax, *call);
 }

@@ -330,10 +330,24 @@ std::vector<Word> Executor::ports() const {
     return words;
 }
 
-bool Executor::controllable(Word port) const {
-    const std::scoped_lock lock(mutex_);
-    const auto *open_port = open(port);
-    return open_port && open_port->driver->controllable();
+std::optional<std::pair<std::vector<std::byte>, bool>>
+Executor::control_port(Word port, std::span<const std::byte> data, std::uint32_t operation) {
+    std::shared_ptr<PortDriver> driver;
+    bool binary = false;
+    {
+        const std::scoped_lock lock(mutex_);
+        const auto *open_port = open(port);
+        if (!open_port || !open_port->driver->controllable()) {
+            return std::nullopt;
+        }
+        driver = open_port->driver;
+        binary = open_port->options.binary;
+    }
+    auto answer = driver->control(operation, data);
+    if (!answer) {
+        return std::nullopt;
+    }
+    return std::pair{std::move(*answer), binary};
 }
 
 void Executor::close(Port &port, const Term &reason) {

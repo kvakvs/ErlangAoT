@@ -1165,17 +1165,21 @@ OTP-only quirks left out (Windows drops empty args, empty env name eacces).
 
 Backlog: F26, F35. Depends on: [57C](#step-57c).
 
-`{fd, In, Out}` ports, a file driver and a project-library `file` subset
-(`open/2`, `read/2`, `write/2`, `close/1`, `read_file/1`, `write_file/2`,
-`read_line/1`, `position/2`, `delete/1`, `rename/2`, `list_dir/1`) plus
-`io:get_line/1,2`, `io:get_chars/2,3` and `io` writes routed through the
-standard I/O port; `io:format` keeps its observable output.
-
-- Success criteria
-  - [ ] File and standard I/O results and errors (`{error, enoent}`, ...)
-    match OTP for the subset.
-- Tests
-  - [ ] OTP golden reading/writing temporary files and reading stdin.
+Done 2026-10-08 (contract `docs/ports.md#standard-io-and-files`). Runtime
+file driver `ports/file.cpp` (`{spawn_driver, "erlang_aot_file"}`,
+`PortDriver::control`, status-byte replies, C runtime fds with UTF-8 paths,
+std::filesystem path operations, eisdir/ebadf checks); `Executor::control_port`
+runs drivers outside the mutex (`Port::driver` shared_ptr); `port_control/3`
+answers lists or binaries. Library `file.erl` (io server per open file, linked)
+and `io.erl` (`erlang_aot_stdin` server over `{fd,0,1}`; get_line/get_chars on
+stdin or a file). io writes stay direct (57A decision). Compiler: calls of
+catalog builtins no longer pull a library module (`builtin_call` in
+`referenced_modules`), so io.erl joins only programs using get_line/chars;
+CLI case `io_unknown` now reports `undefined function io:fwrite/1`. Runner: each
+policy combination runs in its own directory (file tests do not collide).
+OTP golden `executables_file_io` (files, input with stdin). Also: receive_after
+sleeper delays widened to 100/200/300 ms (4-worker order flaked under load),
+parser_stress per-case timeout 15 -> 60 s (load-only timeouts).
 
 <a id="step-57f"></a>
 

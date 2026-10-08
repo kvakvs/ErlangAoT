@@ -1,0 +1,474 @@
+#include "port.hpp"
+#include <algorithm>
+#include <array>
+#include <bit>
+#include <cerrno>
+#include <cstring>
+#include <filesystem>
+#include <mutex>
+#include <system_error>
+
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#include <sys/stat.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
+// The file driver (docs/ports.md#standard-io-and-files): the project library's file module opens it with
+// {spawn_driver, "erlang_aot_file"} and works through port_control/3 operations, each a synchronous system call on
+// the caller's worker. The operations and their replies are an ErlangAoT protocol (FileOperation): a reply starts
+// with 0 (ok, then the result), 1 (error, then the POSIX reason) or 2 (end of file).
+namespace erlang_aot::runtime::detail {
+namespace {
+using Bytes = std::vector<std::byte>;
+
+// The operations of port_control/3 on a file port.
+enum class FileOperation : std::uint8_t {
+    open = 1,
+    read = 2,
+    write = 3,
+    position = 4,
+    read_line = 5,
+    close = 6,
+    read_file = 10,
+    write_file = 11,
+    remove = 12,
+    rename = 13,
+    list_dir = 14,
+    make_dir = 15,
+    delete_dir = 16,
+};
+
+// Bits of the open operation's mode byte.
+constexpr unsigned MODE_READ = 1;
+constexpr unsigned MODE_WRITE = 2;
+constexpr unsigned MODE_APPEND = 4;
+constexpr unsigned MODE_EXCLUSIVE = 8;
+
+// Bytes one read of a whole file or of a line asks for.
+constexpr std::size_t CHUNK = 4096;
+
+// A reply of success with `result`.
+Bytes ok(std::span<const std::byte> result = {}) {
+    Bytes reply{std::byte{0}};
+    reply.insert(reply.end(), result.begin(), result.end());
+    return reply;
+}
+
+// A reply of end of file.
+Bytes end_of_file() { return {std::byte{2}}; }
+
+// A reply of an error with its POSIX reason.
+Bytes failure(std::string_view reason) {
+    Bytes reply{std::byte{1}};
+    std::ranges::transform(reason, std::back_inserter(reply), [](char c) { return static_cast<std::byte>(c); });
+    return reply;
+}
+
+// The POSIX reason of an error code, as OTP names it.
+std::string_view reason(std::error_code code) {
+    static constexpr std::array<std::pair<std::errc, std::string_view>, 12> NAMES{{
+        {std::errc::no_such_file_or_directory, "enoent"},
+        {std::errc::permission_denied, "eacces"},
+        {std::errc::file_exists, "eexist"},
+        {std::errc::is_a_directory, "eisdir"},
+        {std::errc::not_a_directory, "enotdir"},
+        {std::errc::bad_file_descriptor, "ebadf"},
+        {std::errc::invalid_argument, "einval"},
+        {std::errc::no_space_on_device, "enospc"},
+        {std::errc::too_many_files_open, "emfile"},
+        {std::errc::directory_not_empty, "eexist"},
+        {std::errc::operation_not_permitted, "eperm"},
+        {std::errc::filename_too_long, "enametoolong"},
+    }};
+    const auto found = std::ranges::find_if(NAMES, [&](const auto &name) { return code == name.first; });
+    return found == NAMES.end() ? std::string_view{"eio"} : found->second;
+}
+
+// The error reply of the C runtime's errno.
+Bytes errno_failure() { return failure(reason(std::error_code(errno, std::generic_category()))); }
+
+// A path from UTF-8 bytes.
+std::filesystem::path path_of(std::span<const std::byte> bytes) {
+    std::u8string text(bytes.size(), u8'\0');
+    std::memcpy(text.data(), bytes.data(), bytes.size());
+    return {text};
+}
+
+// The UTF-8 bytes of a path.
+Bytes bytes_of(const std::filesystem::path &path) {
+    const auto text = path.u8string();
+    Bytes result(text.size());
+    std::memcpy(result.data(), text.data(), text.size());
+    return result;
+}
+
+// A big-endian integer of `size` bytes at `at`.
+std::uint64_t number(std::span<const std::byte> bytes, std::size_t at, std::size_t size) {
+    std::uint64_t value = 0;
+    for (std::size_t index = 0; index < size && at + index < bytes.size(); ++index) {
+        value = (value << 8) | std::to_integer<std::uint64_t>(bytes[at + index]);
+    }
+    return value;
+}
+
+// Two paths of an operation: a 32-bit length, the first path, then the second (or the data) to the end.
+std::pair<std::span<const std::byte>, std::span<const std::byte>> split(std::span<const std::byte> bytes) {
+    const auto length =
+        std::min<std::size_t>(number(bytes, 0, 4), bytes.size() - std::min<std::size_t>(4, bytes.size()));
+    const auto rest = bytes.subspan(std::min<std::size_t>(4, bytes.size()));
+    return {rest.first(length), rest.subspan(length)};
+}
+
+// The access flags of a mode byte: read is the default, write and append write.
+int access_flags(unsigned mode) {
+    const bool read = (mode & MODE_READ) != 0 || (mode & (MODE_WRITE | MODE_APPEND)) == 0;
+    const bool write = (mode & (MODE_WRITE | MODE_APPEND)) != 0;
+    return read && write ? O_RDWR : (write ? O_WRONLY : O_RDONLY);
+}
+
+// Open flags of the open operation's mode byte: writing creates; write alone truncates; append appends; exclusive
+// creates a new file only.
+int open_flags(unsigned mode) {
+    const auto access = access_flags(mode);
+    int flags = access | (access != O_RDONLY ? O_CREAT : 0);
+    flags |= access == O_WRONLY && (mode & MODE_WRITE) != 0 ? O_TRUNC : 0;
+    flags |= (mode & MODE_APPEND) != 0 ? O_APPEND : 0;
+    flags |= (mode & MODE_EXCLUSIVE) != 0 ? O_EXCL | O_CREAT : 0;
+#ifdef _WIN32
+    flags |= _O_BINARY;
+#endif
+    return flags;
+}
+
+// Open a file with C runtime flags; -1 with errno set on failure.
+int open_file(const std::filesystem::path &path, int flags) {
+#ifdef _WIN32
+    int fd = -1;
+    const auto error = _wsopen_s(&fd, path.c_str(), flags, _SH_DENYNO, _S_IREAD | _S_IWRITE);
+    errno = error;
+    return error == 0 ? fd : -1;
+#else
+    return ::open(path.c_str(), flags | O_CLOEXEC, 0666);
+#endif
+}
+
+// The C runtime's read, write, seek and close of a descriptor.
+std::int64_t read_fd(int fd, std::span<std::byte> buffer) {
+#ifdef _WIN32
+    return _read(fd, buffer.data(), static_cast<unsigned>(buffer.size()));
+#else
+    return ::read(fd, buffer.data(), buffer.size());
+#endif
+}
+
+std::int64_t write_fd(int fd, std::span<const std::byte> bytes) {
+#ifdef _WIN32
+    return _write(fd, bytes.data(), static_cast<unsigned>(bytes.size()));
+#else
+    return ::write(fd, bytes.data(), bytes.size());
+#endif
+}
+
+std::int64_t seek_fd(int fd, std::int64_t offset, int whence) {
+#ifdef _WIN32
+    return _lseeki64(fd, offset, whence);
+#else
+    return ::lseek(fd, offset, whence);
+#endif
+}
+
+void close_fd(int fd) {
+#ifdef _WIN32
+    _close(fd);
+#else
+    ::close(fd);
+#endif
+}
+
+// Write all of `bytes`; false with errno set on failure.
+bool write_all(int fd, std::span<const std::byte> bytes) {
+    while (!bytes.empty()) {
+        const auto written = write_fd(fd, bytes);
+        if (written < 0) {
+            return false;
+        }
+        bytes = bytes.subspan(static_cast<std::size_t>(written));
+    }
+    return true;
+}
+
+// Read the whole of an open descriptor.
+std::optional<Bytes> read_all(int fd) {
+    Bytes content;
+    std::array<std::byte, CHUNK> buffer{};
+    for (;;) {
+        const auto read = read_fd(fd, buffer);
+        if (read < 0) {
+            return std::nullopt;
+        }
+        if (read == 0) {
+            return content;
+        }
+        content.insert(content.end(), buffer.begin(), buffer.begin() + read);
+    }
+}
+
+// The error reply of a path that names a directory where a file is needed, if it does.
+std::optional<Bytes> directory(const std::filesystem::path &path) {
+    std::error_code code;
+    return std::filesystem::is_directory(path, code) ? std::optional{failure("eisdir")} : std::nullopt;
+}
+
+// read_file: the whole file.
+Bytes read_file(std::span<const std::byte> bytes) {
+    const auto path = path_of(bytes);
+    if (auto refused = directory(path)) {
+        return *refused;
+    }
+    const auto fd = open_file(path, open_flags(MODE_READ));
+    if (fd < 0) {
+        return errno_failure();
+    }
+    const auto content = read_all(fd);
+    const auto reply = content ? ok(*content) : errno_failure();
+    close_fd(fd);
+    return reply;
+}
+
+// write_file: replace the file's content.
+Bytes write_file(std::span<const std::byte> bytes) {
+    const auto [name, data] = split(bytes);
+    const auto path = path_of(name);
+    if (auto refused = directory(path)) {
+        return *refused;
+    }
+    const auto fd = open_file(path, open_flags(MODE_WRITE));
+    if (fd < 0) {
+        return errno_failure();
+    }
+    const auto reply = write_all(fd, data) ? ok() : errno_failure();
+    close_fd(fd);
+    return reply;
+}
+
+// The reply of a filesystem operation's error code.
+Bytes done(std::error_code code) { return code ? failure(reason(code)) : ok(); }
+
+// list_dir: the names of a directory's entries, each followed by a zero byte.
+Bytes list_dir(std::span<const std::byte> bytes) {
+    std::error_code code;
+    Bytes names;
+    for (std::filesystem::directory_iterator entry(path_of(bytes), code), end; !code && entry != end;
+         entry.increment(code)) {
+        const auto name = bytes_of(entry->path().filename());
+        names.insert(names.end(), name.begin(), name.end());
+        names.push_back(std::byte{0});
+    }
+    return code ? failure(reason(code)) : ok(names);
+}
+
+// delete: a file, never a directory (eperm, as OTP).
+Bytes remove_file(std::span<const std::byte> bytes) {
+    std::error_code code;
+    if (std::filesystem::is_directory(path_of(bytes), code)) {
+        return failure("eperm");
+    }
+    return std::filesystem::remove(path_of(bytes), code) || code ? done(code) : failure("enoent");
+}
+
+// rename: the old path, then the new one.
+Bytes rename_path(std::span<const std::byte> bytes) {
+    std::error_code code;
+    const auto [from, to] = split(bytes);
+    std::filesystem::rename(path_of(from), path_of(to), code);
+    return done(code);
+}
+
+// make_dir: a new directory; eexist when the path exists.
+Bytes make_dir(std::span<const std::byte> bytes) {
+    std::error_code code;
+    return std::filesystem::create_directory(path_of(bytes), code) || code ? done(code) : failure("eexist");
+}
+
+// del_dir: an empty directory.
+Bytes delete_dir(std::span<const std::byte> bytes) {
+    std::error_code code;
+    std::filesystem::remove(path_of(bytes), code);
+    return done(code);
+}
+
+// The path operations, which need no open file, from read_file on in FileOperation order.
+constexpr std::array<Bytes (*)(std::span<const std::byte>), 7> PATH_OPERATIONS{
+    read_file, write_file, remove_file, rename_path, list_dir, make_dir, delete_dir};
+
+// Run a path operation.
+Bytes path_operation(FileOperation operation, std::span<const std::byte> bytes) {
+    const auto index = static_cast<std::size_t>(operation) - static_cast<std::size_t>(FileOperation::read_file);
+    return PATH_OPERATIONS.at(index)(bytes);
+}
+
+class FileDriver final : public PortDriver {
+  public:
+    FileDriver() = default;
+    FileDriver(const FileDriver &) = delete;
+    FileDriver &operator=(const FileDriver &) = delete;
+    FileDriver(FileDriver &&) = delete;
+    FileDriver &operator=(FileDriver &&) = delete;
+
+    // Close a file still open when the port closes.
+    ~FileDriver() override {
+        if (fd_ >= 0) {
+            close_fd(fd_);
+        }
+    }
+
+    std::expected<void, DriverError> write(std::span<const std::byte>) override {
+        return std::unexpected(DriverError{"einval"});
+    }
+
+    bool controllable() const noexcept override { return true; }
+
+    std::optional<Bytes> control(std::uint32_t operation, std::span<const std::byte> bytes) override {
+        const std::scoped_lock lock(mutex_);
+        const auto kind = static_cast<FileOperation>(operation);
+        if (operation >= static_cast<std::uint32_t>(FileOperation::read_file) &&
+            operation <= static_cast<std::uint32_t>(FileOperation::delete_dir)) {
+            return path_operation(kind, bytes);
+        }
+        return file_operation(kind, bytes);
+    }
+
+  private:
+    // An operation on the open file; none for an unknown operation.
+    std::optional<Bytes> file_operation(FileOperation operation, std::span<const std::byte> bytes) {
+        switch (operation) {
+        case FileOperation::open:
+            return open(bytes);
+        case FileOperation::read:
+            return read(static_cast<std::size_t>(number(bytes, 0, 8)));
+        case FileOperation::write:
+            return mode_allows(MODE_WRITE | MODE_APPEND) ? (write_all(fd_, bytes) ? ok() : errno_failure())
+                                                         : failure("ebadf");
+        case FileOperation::position:
+            return position(bytes);
+        case FileOperation::read_line:
+            return mode_allows(MODE_READ) ? read_line() : failure("ebadf");
+        case FileOperation::close:
+            close_fd(std::exchange(fd_, -1));
+            return ok();
+        default:
+            return std::nullopt;
+        }
+    }
+
+    // open: the mode byte, then the path.
+    Bytes open(std::span<const std::byte> bytes) {
+        if (bytes.empty() || fd_ >= 0) {
+            return failure("einval");
+        }
+        mode_ = std::to_integer<unsigned>(bytes[0]);
+        const auto path = path_of(bytes.subspan(1));
+        if (auto refused = directory(path)) {
+            return *refused;
+        }
+        fd_ = open_file(path, open_flags(mode_));
+        return fd_ < 0 ? errno_failure() : ok();
+    }
+
+    // Whether the file was opened for one of the `modes`; reading is the default mode.
+    bool mode_allows(unsigned modes) const noexcept {
+        const auto mode = (mode_ & (MODE_READ | MODE_WRITE | MODE_APPEND)) == 0 ? MODE_READ : mode_;
+        return (mode & modes) != 0;
+    }
+
+    // read: up to `size` bytes, or end of file.
+    Bytes read(std::size_t size) {
+        if (!mode_allows(MODE_READ)) {
+            return failure("ebadf");
+        }
+        Bytes buffer(size);
+        const auto read = read_fd(fd_, buffer);
+        if (read < 0) {
+            return errno_failure();
+        }
+        buffer.resize(static_cast<std::size_t>(read));
+        return read == 0 && size > 0 ? end_of_file() : ok(buffer);
+    }
+
+    // read_line: the next line with its newline, the rest of the file without one, or end of file. The file
+    // position moves to just past the line.
+    Bytes read_line() {
+        Bytes line;
+        std::array<std::byte, CHUNK> buffer{};
+        for (;;) {
+            const auto read = read_fd(fd_, buffer);
+            if (read < 0) {
+                return errno_failure();
+            }
+            if (append_line(line, std::span(buffer).first(static_cast<std::size_t>(read)))) {
+                return ok(line);
+            }
+            if (read == 0) {
+                return line.empty() ? end_of_file() : ok(line);
+            }
+        }
+    }
+
+    // Append `chunk` to `line` up to and including a newline; true once the line ended, giving back to the file what
+    // was read past it.
+    bool append_line(Bytes &line, std::span<const std::byte> chunk) {
+        const auto newline = std::ranges::find(chunk, std::byte{'\n'});
+        if (newline == chunk.end()) {
+            line.insert(line.end(), chunk.begin(), chunk.end());
+            return false;
+        }
+        line.insert(line.end(), chunk.begin(), newline + 1);
+        seek_fd(fd_, -static_cast<std::int64_t>(chunk.end() - newline - 1), SEEK_CUR);
+        return true;
+    }
+
+    // position: the whence byte (0 from the start, 1 from the current position, 2 from the end) and a signed
+    // 64-bit offset; the new position.
+    Bytes position(std::span<const std::byte> bytes) {
+        const auto whence = bytes.empty() ? 0 : std::to_integer<int>(bytes[0]);
+        const auto offset = std::bit_cast<std::int64_t>(number(bytes, 1, 8));
+        const auto current = seek_fd(fd_, 0, SEEK_CUR);
+        const auto base = origin(whence, current);
+        if (current < 0 || base + offset < 0) {
+            return failure("einval");
+        }
+        const auto moved = seek_fd(fd_, base + offset, SEEK_SET);
+        if (moved < 0) {
+            return errno_failure();
+        }
+        std::array<std::byte, 8> result{};
+        for (std::size_t index = 0; index < result.size(); ++index) {
+            result[7 - index] = static_cast<std::byte>((static_cast<std::uint64_t>(moved) >> (8 * index)) & 0xff);
+        }
+        return ok(result);
+    }
+
+    // The position a whence byte counts from: 0 the start, 1 `current`, 2 the end; the file stays at `current`.
+    std::int64_t origin(int whence, std::int64_t current) {
+        if (whence != 2) {
+            return whence == 1 ? current : 0;
+        }
+        const auto end = seek_fd(fd_, 0, SEEK_END);
+        seek_fd(fd_, current, SEEK_SET);
+        return end;
+    }
+
+    // Guards the descriptor against two processes using the port at once.
+    std::mutex mutex_;
+    // The open file, or -1, and the mode byte it was opened with.
+    int fd_ = -1;
+    unsigned mode_ = 0;
+};
+} // namespace
+
+std::unique_ptr<PortDriver> file_driver() { return std::make_unique<FileDriver>(); }
+} // namespace erlang_aot::runtime::detail
