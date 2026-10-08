@@ -1,6 +1,6 @@
 # Erlang/OTP source reference
 
-ErlangAoT tracks the official `maint-29` branch. The reviewed pin lives in
+Clause tracks the official `maint-29` branch. The reviewed pin lives in
 [`references/otp-pin.cmake`](../references/otp-pin.cmake):
 
 - Revision `21776803ecd11f5fa948732c0ec66b8f325dedfc` (upstream commit dated
@@ -10,7 +10,7 @@ ErlangAoT tracks the official `maint-29` branch. The reviewed pin lives in
 `references/otp` is an ignored checkout. Normal builds and tests use
 project-owned goldens and need neither the checkout nor installed OTP.
 Configuration and tests never fetch or advance the reference. Live audits are
-opt-in with `-DERLANG_AOT_OTP_AUDITS=ON`; see
+opt-in with `-DCLAUSE_OTP_AUDITS=ON`; see
 [fixture regeneration](../tests/fixtures/patternmatch/generated/README.md).
 
 OTP source, copied helpers and OTP-generated headers never enter Git. Committed
@@ -37,7 +37,7 @@ Run at the start of OTP-dependent work.
    Refresh hashes only after reviewing real upstream changes. If `erl_parse.yrl`
    changes, review `tests/fixtures/parser/grammar.tsv`, its fixtures and
    `phase6/coverage.tsv`; every ordinary production needs a measured witness.
-5. Configure with `ERLANG_AOT_OTP_AUDITS=ON` and `ERLANG_AOT_OTP_SOURCE_ROOT` set
+5. Configure with `CLAUSE_OTP_AUDITS=ON` and `CLAUSE_OTP_SOURCE_ROOT` set
    to the checkout. Run the audit tests and
    `tests/compiler/patternmatch/regenerate.py --corpus all --check`. Record the
    revision and outcomes below; report drift instead of regenerating to hide it.

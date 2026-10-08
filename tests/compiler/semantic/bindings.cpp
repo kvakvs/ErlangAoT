@@ -1,12 +1,12 @@
 #include "semantic/bindings.hpp"
 #include <algorithm>
+#include <clause/compiler/parser.hpp>
 #include <cstdio>
-#include <erlang_aot/compiler/parser.hpp>
 #include <source_location>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::semantic;
+using namespace clause;
+using namespace clause::semantic;
 
 // Clause identities and tentative rollback cannot be observed through execution until step 9.
 void require(const bool value, const std::source_location site = std::source_location::current()) {

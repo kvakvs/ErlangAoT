@@ -1,7 +1,7 @@
 #include "decode_options.hpp"
 #include <set>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Retain application root spelling and reject empty application identifiers.
 std::map<std::string, Text> applications(const toml::table &values, const schema::Context &context) {
@@ -50,4 +50,4 @@ TargetOptions decode_options(const toml::node &node, const schema::Context &cont
     check_features(result);
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

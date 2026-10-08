@@ -3,13 +3,13 @@
 #include "text.hpp"
 #include "typed.hpp"
 #include <array>
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/output.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/output.hpp>
 
 // The io builtins (docs/io.md): io:format/1,2 and io:put_chars/1 write UTF-8 to standard output and return ok.
 // Text the standard output device rejects raises badarg (a thrown BuiltinFailure), writing nothing.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // Write `text` as UTF-8 and return ok; a rejected write is the output_failure runtime failure.
 Word emit(ProcessContext &context, std::u32string_view text) {
@@ -37,8 +37,8 @@ constexpr std::array IO_BUILTINS{
     typed_entry<put_chars>("io", "put_chars"),
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> io_builtins() noexcept { return builtins::IO_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

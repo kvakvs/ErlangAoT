@@ -4,7 +4,7 @@ Parses the full OTP 29 grammar from preprocessed tokens into an owned AST.
 
 ## CLI
 
-`erlangaot --parse-check -I include -DDEBUG module.erl` preprocesses and parses,
+`clau --parse-check -I include -DDEBUG module.erl` preprocesses and parses,
 writing diagnostics to stderr and nothing to stdout on success. All
 preprocessing options apply. `--print-pp` and `--print-ast` print expanded
 source or the tree from the same pass. Output-path options are usage errors in
@@ -27,13 +27,13 @@ labels. AST text is for inspection only; there is no reader.
 
 ## API
 
-Header `erlang_aot/compiler/parser.hpp`, CMake target `erlang_frontend`:
+Header `clause/compiler/parser.hpp`, CMake target `clause_frontend`:
 
 ```cpp
-erlang_aot::ParseResult load(const std::filesystem::path &path) {
-    erlang_aot::SourceManager sources;
-    erlang_aot::PreprocessorSession pp(sources.read(path));
-    return erlang_aot::parse_module(pp);
+clause::ParseResult load(const std::filesystem::path &path) {
+    clause::SourceManager sources;
+    clause::PreprocessorSession pp(sources.read(path));
+    return clause::parse_module(pp);
 }
 auto result = load("module.erl"); // Sources and session are gone; AST owns its data.
 for (const auto &id : result.module.forms()) {

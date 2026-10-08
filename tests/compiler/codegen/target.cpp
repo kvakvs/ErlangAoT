@@ -8,8 +8,8 @@
 #include <string>
 #include <utility>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
+using namespace clause;
+using namespace clause::codegen;
 
 // Keep target-contract checks active in release builds as well as debug builds.
 void require(bool condition, const char *message) {
@@ -116,7 +116,7 @@ void check_failure(const std::string &triple, TargetFailure failure) {
 
 // Exercise each configured backend without claiming foreign object emission or execution.
 void check_cross_targets() {
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
     check_foreign("i686-unknown-linux-gnu", 32, llvm::Triple::ELF);
     check_foreign("x86_64-unknown-linux-gnu", 64, llvm::Triple::ELF);
     check_foreign("x86_64-linux-gnu", 64, llvm::Triple::ELF);
@@ -125,12 +125,12 @@ void check_cross_targets() {
 #else
     check_failure("x86_64-unknown-linux-gnu", TargetFailure::unavailable_backend);
 #endif
-#ifdef ERLANG_AOT_LLVM_ARM
+#ifdef CLAUSE_LLVM_ARM
     check_foreign("armv7-unknown-linux-gnueabihf", 32, llvm::Triple::ELF);
 #else
     check_failure("armv7-unknown-linux-gnueabihf", TargetFailure::unavailable_backend);
 #endif
-#ifdef ERLANG_AOT_LLVM_AArch64
+#ifdef CLAUSE_LLVM_AArch64
     check_foreign("aarch64-unknown-linux-gnu", 64, llvm::Triple::ELF);
 #else
     check_failure("aarch64-unknown-linux-gnu", TargetFailure::unavailable_backend);

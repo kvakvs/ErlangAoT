@@ -1,6 +1,6 @@
 #include "binding_state.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Ordinary children retain source evaluation order; branch/closure scopes are deliberately opaque here.
 struct Children {
@@ -83,4 +83,4 @@ struct Children {
 } // namespace
 
 std::vector<ast::ExprId> binding_children(const ast::ExprValue &value) { return std::visit(Children{}, value); }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

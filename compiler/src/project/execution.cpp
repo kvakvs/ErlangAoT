@@ -1,7 +1,7 @@
 #include "execution.hpp"
 #include "diagnostics.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Attach project/target context; the shared frontend retains each diagnostic's source.
 bool process(const Invocation &invocation, const PlannedTarget &target, const TargetExecutor &executor,
@@ -25,4 +25,4 @@ int execute(const Invocation &invocation, const TargetExecutor &executor, const 
     }
     return failed ? 1 : 0;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

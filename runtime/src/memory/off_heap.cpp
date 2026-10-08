@@ -4,7 +4,7 @@
 #include <memory>
 #include <utility>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BinaryBuffer;
 
@@ -97,4 +97,4 @@ void release_off_heap(HeapStorage &storage) noexcept {
     storage.buffers_.clear();
     storage.off_heap_words_ = 0;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

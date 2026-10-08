@@ -1,9 +1,9 @@
 #include "../semantic/records.hpp"
 #include "lowering_state.hpp"
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Body access owns its offending value before cleanup; the same mismatch silently rejects a guard.
 llvm::BasicBlock *bad_record(ExpressionLowering &state, llvm::Value *payload) {
@@ -145,4 +145,4 @@ llvm::Value *lower_record_info(ExpressionLowering &state, const ast::Expression 
     values.push_back(empty);
     return lower_list(state, values);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

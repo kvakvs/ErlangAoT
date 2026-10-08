@@ -5,7 +5,7 @@
 #include "template.hpp"
 #include <algorithm>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Fold only ASCII suffix letters without locale-sensitive filename changes.
 char lower(const char value) { return value >= 'A' && value <= 'Z' ? static_cast<char>(value - 'A' + 'a') : value; }
@@ -90,4 +90,4 @@ std::filesystem::path create_project(const std::filesystem::path &base, const Ne
     }
     return path;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

@@ -31,6 +31,6 @@ limits, builder checks and public printing.
 OTP's `record type_spec` action calls `build_type_spec` with an unsupported helper
 kind, and a first `(...)` signature fails the builder's product match. These raise
 exceptions rather than yielding abstract forms. `.builder-reject` cases run raw
-`erl_parse:parse_form` and explicitly verify `function_clause`/`badmatch`; ErlangAoT
+`erl_parse:parse_form` and explicitly verify `function_clause`/`badmatch`; Clause
 reports a normal parser diagnostic and continues. They are not counted as accepted
 OTP syntax or silently treated as ordinary OTP error tuples.

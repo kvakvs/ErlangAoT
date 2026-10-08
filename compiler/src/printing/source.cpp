@@ -1,9 +1,9 @@
 #include "token_text.hpp"
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/printing.hpp>
 #include <ostream>
 #include <stdexcept>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Sigil bodies survive preprocessing unchanged; retain raw/triple delimiters and escapes.
 void print_sigil(std::ostream &output, const std::span<const Token> tokens) {
@@ -36,4 +36,4 @@ void print_preprocessed(std::ostream &output, const OrdinaryForm &form) {
     }
     output << '\n';
 }
-} // namespace erlang_aot
+} // namespace clause

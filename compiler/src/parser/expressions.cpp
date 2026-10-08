@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::ExprId FormParser::make(ast::ExprValue value, const std::size_t begin, const std::size_t anchor) {
     node();
     return builder_.expression(std::move(value), builder_.source(begin, cursor_.offset(), anchor));
@@ -89,4 +89,4 @@ void FormParser::nonassociative(const OperatorInfo &info, const OperatorContext 
         fail(DiagnosticCode::parser_syntax, "nonassociative operators require parentheses");
     }
 }
-} // namespace erlang_aot
+} // namespace clause

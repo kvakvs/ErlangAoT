@@ -1,7 +1,7 @@
 #include <algorithm>
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/preprocessor.hpp>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Recognize line-leading attribute syntax without matching literal contents.
 bool line_leading(const Token &token) {
@@ -14,7 +14,9 @@ bool line_leading(const Token &token) {
 
 // Unary error/warning calls are expressions; leave their interpretation to the
 // parser.
-bool structural_directive(const DirectiveKind kind) { return kind != DirectiveKind::error && kind != DirectiveKind::warning; }
+bool structural_directive(const DirectiveKind kind) {
+    return kind != DirectiveKind::error && kind != DirectiveKind::warning;
+}
 
 // Flag line-leading preprocessing envelopes in a function body, without an AST.
 std::optional<Span> misplaced(std::span<const Token> tokens) {
@@ -89,4 +91,4 @@ std::optional<PreprocessorEvent> DirectiveReader::next() {
     }
     return classify(std::move(tokens));
 }
-} // namespace erlang_aot
+} // namespace clause

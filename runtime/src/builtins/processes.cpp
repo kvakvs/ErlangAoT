@@ -6,7 +6,7 @@
 // spawn_link/1,3, spawn_monitor/1,3, is_process_alive/1, sends ('!'/2, send/2), links (link/1, unlink/1), monitors
 // (monitor/2, demonitor/1,2), exit signals (exit/2, exit_signal/2), process_flag(trap_exit, Bool) and registered
 // names (register/2, unregister/1, whereis/1, registered/0).
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // self(): the pid of the calling process.
 TermResult<Term> self(ProcessContext &context) { return TermFactory(context).pid(context.identity()); }
@@ -292,8 +292,8 @@ constexpr std::array PROCESS_BUILTINS{
     typed_entry<send>("erlang", "send"),
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> process_builtins() noexcept { return builtins::PROCESS_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,8 +1,8 @@
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/preprocessor.hpp>
 #include <iostream>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 struct Result {
     // Capture forms and errors separately while checking the session's final status.

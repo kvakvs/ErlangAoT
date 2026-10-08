@@ -9,7 +9,7 @@
 #include <optional>
 #include <string_view>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Sources = std::map<std::string, SourcePtr, std::less<>>;
 
@@ -134,4 +134,4 @@ void SourceAnnotations::printInfoComment(const llvm::Value &value, llvm::formatt
         stream.write(reinterpret_cast<const char *>(bytes.data()), bytes.size());
     }
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

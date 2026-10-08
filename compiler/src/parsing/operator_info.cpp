@@ -4,7 +4,7 @@
 #include <array>
 #include <stdexcept>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 struct Entry {
     // Share expression binding metadata while explicitly restricting condition/type use.
@@ -174,4 +174,4 @@ std::u32string_view operator_spelling(ast::UnaryOperator operation) {
     }
     return found->first;
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -4,7 +4,7 @@
 #include <set>
 #include <tuple>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 struct Budget {
     // Charge additional code independently of the mandatory generic baseline.
@@ -131,4 +131,4 @@ SpecializationPlan plan_specializations(const CompilationRequest &request,
     }
     return result;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

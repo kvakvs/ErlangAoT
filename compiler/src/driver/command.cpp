@@ -3,9 +3,9 @@
 #include "options.hpp"
 #include <iostream>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 
-constexpr std::string_view help = R"(Usage: erlangaot [options] <source.erl>...
+constexpr std::string_view help = R"(Usage: clau [options] <source.erl>...
 
 Ahead-of-time compiler for Erlang/OTP 29.
 
@@ -17,7 +17,7 @@ Options:
   -o, --output <path>  Link an executable (Windows targets add .exe when no extension is given).
       --entry <module[:function]>  Select the executable entry function/1 (default function: main).
       --linker <path>   Clang driver used to link executables (default: clang++ or clang on PATH).
-      --runtime-library <path>  Runtime archive linked into executables (default: the one built with erlangaot).
+      --runtime-library <path>  Runtime archive linked into executables (default: the one built with clau).
       --emit <obj|llvm-ir|llvm-bc>  Select one artifact per module (default: in memory).
       --artifact-dir <dir>  Override artifact root; requires --emit.
       --target-triple <triple>  Select machine/OS/ABI, independently of --target.
@@ -55,29 +55,29 @@ Input paths may contain spaces when quoted by the shell.
 
 // Validate the request and dispatch explicit actions or the default compiler pipeline.
 int run_command(const std::span<char *> arguments) {
-    erlang_aot::cli::Options options;
-    if (const auto error = erlang_aot::cli::parse_options(arguments, options)) {
-        std::cerr << "erlangaot: error: " << *error << "\nTry 'erlangaot --help' for usage.\n";
+    clause::cli::Options options;
+    if (const auto error = clause::cli::parse_options(arguments, options)) {
+        std::cerr << "clau: error: " << *error << "\nTry 'clau --help' for usage.\n";
         return 2;
     }
     if (options.show_help) {
-        std::cout << help << erlang_aot::project::help();
+        std::cout << help << clause::project::help();
         return 0;
     }
     if (options.show_version) {
-        std::cout << "erlangaot " << ERLANG_AOT_VERSION << '\n';
+        std::cout << "clau " << CLAUSE_VERSION << '\n';
         return 0;
     }
 
-    if (erlang_aot::project::active(options.project)) {
+    if (clause::project::active(options.project)) {
         return run_project(options);
     }
 
-    if (!erlang_aot::cli::validate_inputs(options.inputs)) {
+    if (!clause::cli::validate_inputs(options.inputs)) {
         return 1;
     }
 
-    return erlang_aot::cli::process_inputs(options);
+    return clause::cli::process_inputs(options);
 }
 
-} // namespace erlang_aot::cli
+} // namespace clause::cli

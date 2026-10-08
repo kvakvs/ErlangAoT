@@ -1,7 +1,7 @@
 #include "children.hpp"
 #include "storage.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 TermId Builder::term(TermValue value, NodeSource source) const {
     if (!active_) {
         throw std::logic_error("literal term requires active transaction");
@@ -55,4 +55,4 @@ void Children::operator()(const DocumentationAttribute &value) const {
         std::visit([this](const auto &id) { child(id); }, entry.value);
     }
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

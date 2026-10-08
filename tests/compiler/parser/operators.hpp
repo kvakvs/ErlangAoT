@@ -1,11 +1,11 @@
 #pragma once
-#include <erlang_aot/compiler/ast/operators.hpp>
+#include <clause/compiler/ast/operators.hpp>
 #include <stdexcept>
 #include <string_view>
 
 // Test-only spellings keep structural records independent of production operator lookup.
-inline std::string_view spelling(erlang_aot::ast::BinaryOperator operation) {
-    using enum erlang_aot::ast::BinaryOperator;
+inline std::string_view spelling(clause::ast::BinaryOperator operation) {
+    using enum clause::ast::BinaryOperator;
     switch (operation) {
     case send:
         return "!";
@@ -65,8 +65,8 @@ inline std::string_view spelling(erlang_aot::ast::BinaryOperator operation) {
     throw std::runtime_error("unmapped binary operator");
 }
 
-inline std::string_view spelling(erlang_aot::ast::UnaryOperator operation) {
-    using enum erlang_aot::ast::UnaryOperator;
+inline std::string_view spelling(clause::ast::UnaryOperator operation) {
+    using enum clause::ast::UnaryOperator;
     switch (operation) {
     case positive:
         return "+";

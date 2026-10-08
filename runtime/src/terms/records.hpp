@@ -1,12 +1,12 @@
 #pragma once
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/terms.hpp>
 #include <optional>
 #include <span>
 #include <utility>
 
 // Native record cells (docs/native-records.md): a captured definition followed by field values.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // A decoded native record, borrowing the cell's words while its Term is current.
 struct RecordView {
     // The definition captured when the record was built; it lives as long as the runtime.
@@ -21,4 +21,4 @@ TermResult<RecordView> record_view(const Term &value) noexcept;
 TermResult<std::pair<Term, Term>> record_identity(const Term &value) noexcept;
 // Zero-based position of a field-name atom word in a definition.
 std::optional<std::size_t> record_position(const RecordDefinition &definition, Word field) noexcept;
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

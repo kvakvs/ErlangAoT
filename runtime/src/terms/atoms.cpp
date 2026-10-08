@@ -1,9 +1,9 @@
 #include <atomic>
-#include <erlang_aot/runtime/atoms.hpp>
+#include <clause/runtime/atoms.hpp>
 #include <limits>
 #include <mutex>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Never reuse a raw atom word, even across destroyed runtimes or aborted registrations.
 TermResult<Word> reserve_word() noexcept {
@@ -85,4 +85,4 @@ std::size_t AtomStorage::size() const noexcept {
     const std::shared_lock lock(mutex_);
     return names_.size();
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

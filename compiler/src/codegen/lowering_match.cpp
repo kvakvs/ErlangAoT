@@ -4,13 +4,13 @@
 #include "runtime_symbols.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Load canonical target-width literals; atom words always come from runtime module bindings.
 llvm::Value *literal(ExpressionLowering &state, const semantic::MatchLiteral &literal) {
@@ -253,7 +253,7 @@ void raise_reason(ExpressionLowering &state, abi::v1::ErrorReason reason, llvm::
 }
 
 namespace {
-// Declare erlang_aot_reraise_v2, shared by unmatched try handlers and erlang:raise/3.
+// Declare CLAUSE_reraise_v2, shared by unmatched try handlers and erlang:raise/3.
 llvm::FunctionCallee reraise_service(ExpressionLowering &state) {
     auto &output = *state.entry.getParent();
     return output.getOrInsertFunction(
@@ -288,4 +288,4 @@ llvm::Value *lower_error(ExpressionLowering &state, llvm::Value *reason, llvm::V
 }
 
 void raise_function_clause(ExpressionLowering &state) { raise_reason(state, abi::v1::ErrorReason::function_clause); }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -1,8 +1,8 @@
 #include "bitstrings.hpp"
 #include "terms.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Unicode scalar validity excludes surrogate code points and values above the Unicode range.
 bool scalar(std::uint32_t value) { return value <= 0x10ffff && (value < 0xd800 || value > 0xdfff); }
@@ -125,4 +125,4 @@ TermResult<BitExtract> bit_utf_extract(ProcessContext &context, const BitView &v
     return TermFactory(context).integer(*value).transform(
         [&](Term term) { return BitExtract{std::move(term), cursor}; });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

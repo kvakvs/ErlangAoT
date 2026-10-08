@@ -1,7 +1,7 @@
 #include "integers.hpp"
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 Integer integer_words(std::span<const Word> words, bool negative) {
     constexpr auto limit = (integer_bit_limit + sizeof(Word) * 8 - 1) / (sizeof(Word) * 8) + 1;
     if (words.size() > limit) {
@@ -18,4 +18,4 @@ Integer integer_words(std::span<const Word> words, bool negative) {
     }
     return result;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -1,11 +1,11 @@
 #include "parsing/boost_parser.hpp"
 #include "preprocessor/value.hpp"
+#include <clause/compiler/lexer.hpp>
 #include <cmath>
-#include <erlang_aot/compiler/lexer.hpp>
 #include <locale>
 #include <sstream>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 namespace bp = boost::parser;
 
@@ -221,4 +221,4 @@ Token Lexer::floating_number(const std::size_t begin) {
     return token(TokenKind::floating, floating(std::u32string_view(source_->text).substr(begin, cursor_ - begin)),
                  begin, cursor_);
 }
-} // namespace erlang_aot
+} // namespace clause

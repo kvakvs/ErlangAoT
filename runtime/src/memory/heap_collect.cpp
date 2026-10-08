@@ -5,7 +5,7 @@
 #include <limits>
 #include <utility>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BoxHeader;
 
@@ -112,4 +112,4 @@ void Copier::finish() noexcept {
     sweep_off_heap(storage_, to_);
     storage_.replace(std::move(to_));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

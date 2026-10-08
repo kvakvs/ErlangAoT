@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 struct RecordName {
     // Keep identity kind and decoded names together on their owning node's line.
@@ -74,4 +74,4 @@ void TreePrinter::operator()(const ast::BinaryModifier &value) const {
     output_ << "BinaryModifier name=" << atom(value.name)
             << " parameter=" << (value.parameter ? value.parameter->decimal : "none");
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

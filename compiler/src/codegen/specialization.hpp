@@ -3,7 +3,7 @@
 #include <map>
 #include <span>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 enum class Representation : std::uint8_t { generic, small_integer };
 using TypeProfile = std::vector<Representation>;
 enum class SpecializationReason : std::uint8_t {
@@ -49,4 +49,4 @@ struct SpecializationPlan {
 
 // Plan deterministically within 3/function, 32/module, 128/target and 2x instruction/work budgets.
 SpecializationPlan plan_specializations(const CompilationRequest &request, std::span<const SpecializationInput> inputs);
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

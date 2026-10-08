@@ -7,7 +7,7 @@
 #include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
 
-namespace erlang_aot::linking {
+namespace clause::linking {
 namespace {
 struct ObjectKind {
     // Architecture and container format of one native archive member.
@@ -30,7 +30,7 @@ std::filesystem::path compiler_directory() {
 } // namespace
 
 std::filesystem::path library_directory() {
-    return (compiler_directory() / project::native_path(ERLANG_AOT_DEFAULT_LIBRARY)).lexically_normal();
+    return (compiler_directory() / project::native_path(CLAUSE_DEFAULT_LIBRARY)).lexically_normal();
 }
 
 namespace {
@@ -77,13 +77,13 @@ std::string describe(const ObjectKind &kind) {
 } // namespace
 
 std::filesystem::path find_runtime_library(const std::optional<std::filesystem::path> &library) {
-    const auto path =
-        library ? project::absolute_path(std::filesystem::current_path(), *library)
-                : (compiler_directory() / project::native_path(ERLANG_AOT_DEFAULT_RUNTIME)).lexically_normal();
+    const auto path = library
+                          ? project::absolute_path(std::filesystem::current_path(), *library)
+                          : (compiler_directory() / project::native_path(CLAUSE_DEFAULT_RUNTIME)).lexically_normal();
     std::error_code error;
     if (!std::filesystem::is_regular_file(path, error)) {
         throw std::runtime_error("runtime library not found: " + project::path_text(path) +
-                                 "; build the erlang_runtime target or pass --runtime-library");
+                                 "; build the clause_runtime target or pass --runtime-library");
     }
     return path;
 }
@@ -109,4 +109,4 @@ void check_runtime_target(const std::filesystem::path &library, const std::strin
                                  "; pass --runtime-library built for that target");
     }
 }
-} // namespace erlang_aot::linking
+} // namespace clause::linking

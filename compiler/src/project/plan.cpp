@@ -6,7 +6,7 @@
 #include "sources.hpp"
 #include <unordered_set>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Reserve the native platform's default executable spelling without creating it.
 std::filesystem::path default_output(const Target &target) {
@@ -100,4 +100,4 @@ Invocation prepare(const Manifest &manifest, const PlanOptions &options) {
     outputs(result);
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

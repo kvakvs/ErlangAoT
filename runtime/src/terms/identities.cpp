@@ -4,11 +4,11 @@
 #include "../process/identities.hpp"
 #include "term_layout.hpp"
 #include <atomic>
+#include <clause/runtime/process_context.hpp>
 #include <cstring>
-#include <erlang_aot/runtime/process_context.hpp>
 #include <string>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // OTP splits a pid's data into a 28-bit number and the serial above it.
 constexpr unsigned PID_NUMBER_BITS = 28;
@@ -141,4 +141,4 @@ TermResult<void> print_identity(const Term &value, TextOutput &out) {
     return {};
 }
 } // namespace detail
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

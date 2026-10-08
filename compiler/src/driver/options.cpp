@@ -2,10 +2,10 @@
 #include "implementation_debug.hpp"
 #include <map>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 // Apply validated preprocessing operands to the per-module configuration.
 static std::optional<std::string> apply_pp_option(const int kind, const std::string &value,
-                                                  erlang_aot::PreprocessorOptions &settings) {
+                                                  clause::PreprocessorOptions &settings) {
     switch (kind) {
     case 0:
         settings.include_paths.insert(settings.include_paths.begin(), value);
@@ -177,4 +177,4 @@ std::optional<std::string> parse_options(std::span<char *> remaining, Options &o
     }
     return validate_options(options);
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

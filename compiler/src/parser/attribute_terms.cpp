@@ -1,7 +1,7 @@
 #include "forms.hpp"
 #include "term_value.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::TermId FormParser::term(const ast::ExprId &expression, const bool farity) {
     const auto source = builder_.view().expression(expression).source;
     return term_value(TermNormalizer(builder_.view(), work_).read(expression, farity), source);
@@ -59,4 +59,4 @@ ast::TermValue FormParser::term_sequence(const Value &value, const ast::NodeSour
     }
     return ast::TermList{.elements = std::move(elements), .tail = std::move(tail)};
 }
-} // namespace erlang_aot
+} // namespace clause

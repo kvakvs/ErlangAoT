@@ -16,7 +16,7 @@
 ]).
 
 % The project-owned file module (docs/library.md, docs/ports.md#standard-io-and-files): files are ports of the
-% runtime's file driver ({spawn_driver, "erlang_aot_file"}), driven with port_control/3. An open file is an I/O
+% runtime's file driver ({spawn_driver, "clause_file"}), driven with port_control/3. An open file is an I/O
 % server process that owns its port and is linked to the opener, as in OTP.
 
 -define(OPEN, 1).
@@ -108,7 +108,7 @@ call(_, _) ->
 
 % The I/O server of one open file.
 serve(Opener, Name, Modes) ->
-    Port = open_port({spawn_driver, "erlang_aot_file"}, [binary]),
+    Port = open_port({spawn_driver, "clause_file"}, [binary]),
     case reply(port_control(Port, ?OPEN, [mode_byte(Modes), Name])) of
         {ok, _} ->
             Opener ! {self(), opened, {ok, self()}},
@@ -187,7 +187,7 @@ path_call(File, Operation, Encode, Decode) ->
         error ->
             {error, badarg};
         Name ->
-            Port = open_port({spawn_driver, "erlang_aot_file"}, [binary]),
+            Port = open_port({spawn_driver, "clause_file"}, [binary]),
             Reply = reply(port_control(Port, Operation, Encode(Name))),
             port_close(Port),
             case Reply of

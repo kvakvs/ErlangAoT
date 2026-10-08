@@ -7,7 +7,7 @@
 // Helpers of builtins that run in bounded portions (docs/builtins.md#portions): a portion does at most the process
 // stack's budget of work, then traps to a continuation frame with its state in registers and a TrapState, which
 // collections between portions rewrite like other roots.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 // Run a raw builtin body, recording the BuiltinFailure it throws.
 template <Word (*Body)(ProcessContext &, Arguments)> Word guarded(ProcessContext &context, Arguments arguments) {
     try {
@@ -54,4 +54,4 @@ class ListState : public TrapState {
 // Build the list of the ListState's elements onto `tail` in portions, from the last element; the state is released
 // with the result.
 Word build_list(ProcessContext &context, const Term &tail);
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

@@ -3,7 +3,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 SchedulerService::SchedulerService(std::uint64_t runtime_identity) : impl_(std::make_unique<Impl>(runtime_identity)) {}
 
 SchedulerService::~SchedulerService() = default;
@@ -70,4 +70,4 @@ void SchedulerService::clear() noexcept {
     request_shutdown();
     impl_->entries.clear();
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

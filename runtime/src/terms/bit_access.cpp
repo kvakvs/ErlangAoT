@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 TermResult<BitView> bit_view(const Term &term) {
     const auto object = TermAccess::object(term);
     if (!object) {
@@ -64,9 +64,9 @@ TermResult<int> bit_order(const Term &left, const Term &right) {
     }
     return static_cast<int>(lhs.length > rhs.length) - static_cast<int>(lhs.length < rhs.length);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 bool Term::is_bitstring() const { return kind() == TermKind::bitstring; }
 
 bool Term::is_binary() const {
@@ -102,4 +102,4 @@ TermResult<std::vector<std::byte>> Term::binary_bytes() const {
     return *count % 8 == 0 ? bitstring_bytes()
                            : TermResult<std::vector<std::byte>>(std::unexpected(TermError::wrong_type));
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

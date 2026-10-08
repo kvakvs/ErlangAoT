@@ -3,11 +3,11 @@
 #include "terms.hpp"
 #include <algorithm>
 #include <bit>
+#include <clause/runtime/process_context.hpp>
 #include <cmath>
-#include <erlang_aot/runtime/process_context.hpp>
 #include <limits>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Grow packed staging storage; only a bit count past the address range is refused (no size cap).
 TermResult<void> grow(BitWriter &writer, std::size_t count) {
@@ -188,4 +188,4 @@ TermResult<BitExtract> bit_extract(ProcessContext &context, const Term &source, 
     const auto result = numeric_extract(context, *view, cursor, *width, segment);
     return result.transform([&](Term value) { return BitExtract{std::move(value), cursor + *width}; });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

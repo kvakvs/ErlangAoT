@@ -2,12 +2,12 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include <array>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Op = abi::v1::MapOperation;
 
@@ -111,4 +111,4 @@ llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchN
     state.rejection = saved;
     return value;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

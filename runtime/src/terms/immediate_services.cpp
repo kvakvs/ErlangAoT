@@ -3,13 +3,13 @@
 #include "service_errors.hpp"
 #include "structural_order.hpp"
 #include <array>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::ImmediateOperation;
 using Outcome = abi::v1::ValueOutcome;
@@ -267,14 +267,13 @@ std::uint8_t immediate_service(ProcessContext &context, std::uint8_t operation, 
         return static_cast<std::uint8_t>(Outcome::failure);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_immediate_v1(void *context, std::uint8_t operation, erlang_aot::abi::v1::TermWord left,
-                                     erlang_aot::abi::v1::TermWord right,
-                                     erlang_aot::abi::v1::TermWord *output) noexcept {
+std::uint8_t CLAUSE_immediate_v1(void *context, std::uint8_t operation, clause::abi::v1::TermWord left,
+                                 clause::abi::v1::TermWord right, clause::abi::v1::TermWord *output) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::ValueOutcome::failure);
+        return static_cast<std::uint8_t>(clause::abi::v1::ValueOutcome::failure);
     }
-    return erlang_aot::runtime::detail::immediate_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                          operation, left, right, output);
+    return clause::runtime::detail::immediate_service(*static_cast<clause::runtime::ProcessContext *>(context),
+                                                      operation, left, right, output);
 }

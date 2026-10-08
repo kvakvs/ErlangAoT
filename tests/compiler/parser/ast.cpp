@@ -1,11 +1,11 @@
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/preprocessor.hpp>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot;
-namespace ast = erlang_aot::ast;
+using namespace clause;
+namespace ast = clause::ast;
 static_assert(!std::is_default_constructible_v<ast::ExprId>);
 static_assert(!std::is_convertible_v<ast::ExprId, ast::FormId>);
 static_assert(!std::is_convertible_v<ast::PatternSyntaxId, ast::ExprId>);

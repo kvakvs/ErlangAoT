@@ -1,7 +1,7 @@
 #include "children.hpp"
 #include "storage.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 TypeId Builder::type(TypeValue value, NodeSource source) const {
     if (!active_) {
         throw std::logic_error("type requires active transaction");
@@ -98,4 +98,4 @@ void Children::operator()(const FunType &value) const {
 }
 
 void Children::operator()(const TypeDeclaration &value) const { child(value.type); }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

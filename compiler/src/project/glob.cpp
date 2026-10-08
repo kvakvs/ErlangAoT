@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 struct ComponentPattern {
     // Distinguish wildcard syntax from filename text at the matching boundary.
@@ -109,4 +109,4 @@ bool matches_with_budget(const Glob &glob, const std::string_view path, std::siz
 bool matches(const Glob &glob, const std::string_view path, GlobLimits limits) {
     return matches_with_budget(glob, path, limits.work);
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

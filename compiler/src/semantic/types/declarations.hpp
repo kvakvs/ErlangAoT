@@ -2,7 +2,7 @@
 #include "../declarations.hpp"
 #include "syntax.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 struct Key {
     // Name/arity is scoped to an exact decoded module identity.
     std::string module;
@@ -66,4 +66,4 @@ std::unique_ptr<Registry> resolve_declarations(std::span<const std::unique_ptr<M
                                                Limits limits = {});
 // Reveal one alias layer with actual substitution; nominal identities and external opaques stay closed.
 std::optional<Id> expand_reference(Registry &registry, Id reference, std::string_view requesting_module);
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

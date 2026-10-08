@@ -24,7 +24,7 @@ def run(*args, expected=0):
 
 
 def snapshots(text):
-    headers = list(re.finditer(r'^; erlangaot .* stage=(before|after)\n', text, re.MULTILINE))
+    headers = list(re.finditer(r'^; clau .* stage=(before|after)\n', text, re.MULTILINE))
     if not headers:
         return [('', text)]
     return [(header.group(0), text[header.end():headers[i + 1].start() if i + 1 < len(headers) else len(text)])
@@ -45,11 +45,11 @@ def round_trip(text):
 for level in ('-O0', '-O2'):
     for flag in ('--print-ir', '--print-optimized-ir'):
         result = run(level, flag, '--verbose', 'answer.erl')
-        assert not result.stdout.startswith('; erlangaot '), result.stdout
+        assert not result.stdout.startswith('; clau '), result.stdout
         assert len(round_trip(result.stdout)) == 1
         assert 'phase=lowering' in result.stderr and 'phase=emission' not in result.stderr
         assert ('phase=optimization' in result.stderr) == (flag == '--print-optimized-ir')
-        assert re.search(r'define[^\n]*@eav1_616e73776572_6964656e74697479_1\(', result.stdout)
+        assert re.search(r'define[^\n]*@clausev1_616e73776572_6964656e74697479_1\(', result.stdout)
         assert '.register' in result.stdout
         assert re.search(r'  [^\n]+ ; value\(\) -> 42\.', result.stdout)
         assert re.search(r'(?:getelementptr|load|store) [^\n]*; identity\(X\) -> X\.', result.stdout)
@@ -62,8 +62,8 @@ parts = round_trip(both.stdout)
 assert len(parts) == 4
 assert [re.search(r'module="([^"]+)"', head)[1] for head, _ in parts] == ['client', 'client', 'answer', 'answer']
 assert [re.search(r'stage=(\w+)', head)[1] for head, _ in parts] == ['before', 'after', 'before', 'after']
-assert 'eav1_616e73776572_70726976617465_0' in parts[2][1]
-assert 'eav1_616e73776572_70726976617465_0' not in parts[3][1]
+assert 'clausev1_616e73776572_70726976617465_0' in parts[2][1]
+assert 'clausev1_616e73776572_70726976617465_0' not in parts[3][1]
 assert not both.stderr
 normal = run('-O2', '--print-ir', '--print-optimized-ir', 'answer.erl').stdout
 disabled = run('--no-type-specialization', '-O2', '--print-ir', '--print-optimized-ir', 'answer.erl').stdout
@@ -87,7 +87,7 @@ assert re.search(r'store [^\n]*ptr %register[^\n]*;     answer:identity\(', befo
 assert re.search(r'  [^\n]+ ;     7\. % original literal line', after)
 assert ';     answer:identity(' in after
 # Frame transfers keep the helper out of line; the transfer into it retains provenance.
-assert 'inlinedAt:' in after or re.search(r'call[^\n]*@eav1_736f757263655f636f6d6d656e7473_68656c706572_1[^\n]*!dbg', after)
+assert 'inlinedAt:' in after or re.search(r'call[^\n]*@clausev1_736f757263655f636f6d6d656e7473_68656c706572_1[^\n]*!dbg', after)
 for assembly in (before, after):
     assert assembly.count('; "source_comments.erl"') == 1
     assert len(re.findall(r'^; "[^"\n]*source_comments.hrl"$', assembly, re.MULTILINE)) == 1

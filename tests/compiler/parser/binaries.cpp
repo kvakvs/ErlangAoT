@@ -1,9 +1,9 @@
 // Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Check syntax structure and metadata independently of runtime bitstring evaluation.
 void require(bool condition) {

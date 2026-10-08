@@ -1,6 +1,6 @@
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 void Mailbox::deliver(Word message) { inbox_.push_back(message); }
 
 std::optional<Word> Mailbox::peek() noexcept {
@@ -33,4 +33,4 @@ void Mailbox::restart() noexcept {
     position_ = queue_.begin();
     deadline_.reset();
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -47,7 +47,7 @@
         "67108865"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: invalid --max-atoms value '67108865' \\(1 to 67108864\\)\n$",
+      "stderr": "^clau: runtime failure: invalid --max-atoms value '67108865' \\(1 to 67108864\\)\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -57,7 +57,7 @@
         "3"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: cannot register module runtime_options\n$",
+      "stderr": "^clau: runtime failure: cannot register module runtime_options\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -67,7 +67,7 @@
         "vm.args"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: runtime option --args-file is not implemented\n$",
+      "stderr": "^clau: runtime failure: runtime option --args-file is not implemented\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -76,10 +76,10 @@
         "c"
       ],
       "env": {
-        "ERLANG_AOT_FLAGS": "--max-atoms 3"
+        "CLAUSE_FLAGS": "--max-atoms 3"
       },
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: cannot register module runtime_options\n$",
+      "stderr": "^clau: runtime failure: cannot register module runtime_options\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -90,7 +90,7 @@
         "d"
       ],
       "env": {
-        "ERLANG_AOT_FLAGS": "--max-atoms 3"
+        "CLAUSE_FLAGS": "--max-atoms 3"
       },
       "authored": true,
       "stderr": "^$",
@@ -102,10 +102,10 @@
         "e"
       ],
       "env": {
-        "ERLANG_AOT_FLAGS": "--max-atoms 4194304 e"
+        "CLAUSE_FLAGS": "--max-atoms 4194304 e"
       },
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: ERLANG_AOT_FLAGS: not a runtime option: e\n$",
+      "stderr": "^clau: runtime failure: CLAUSE_FLAGS: not a runtime option: e\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -117,7 +117,7 @@
         "f"
       ],
       "env": {
-        "ERLANG_AOT_FLAGS": "--max-memory 1073741824"
+        "CLAUSE_FLAGS": "--max-memory 1073741824"
       },
       "authored": true,
       "stderr": "^$",
@@ -130,7 +130,7 @@
         "1000"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: invalid --max-heap value '1000' \\(bytes, at least [0-9]+\\)\n$",
+      "stderr": "^clau: runtime failure: invalid --max-heap value '1000' \\(bytes, at least [0-9]+\\)\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -139,7 +139,7 @@
         "--max-memory=1M"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: invalid --max-memory value '1M' \\(bytes, at least [0-9]+\\)\n$",
+      "stderr": "^clau: runtime failure: invalid --max-memory value '1M' \\(bytes, at least [0-9]+\\)\n$",
       "exit_status": 70,
       "stdout": ""
     },
@@ -150,7 +150,7 @@
         "g"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "stderr": "^clau: runtime failure: entry call failed: resource_limit\n$",
       "exit_status": 70,
       "stdout": ""
     }
@@ -164,6 +164,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "runtime_options.erl": "838c815caba02292aeb64921f63d5dac535a48ebcc24d6a10c2cb3f50e229d24"
+    "runtime_options.erl": "a06f6be99fcde80a3ac47c985e9ae38c5f97e8eb33e323866d5bc8f2bac3e75f"
   }
 }

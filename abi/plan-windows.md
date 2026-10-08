@@ -37,6 +37,6 @@ Remaining work before claiming full Windows support:
   program/runtime integration tests. Audit test execution for cross-builds.
 
 Project APIs use C++23 and C++ linkage. Generated entries follow the word/pointer
-contract in [v1.hpp](include/erlang_aot/abi/v1.hpp) and the native free-function
+contract in [v1.hpp](include/clause/abi/v1.hpp) and the native free-function
 calling convention. Validate that agreement on Windows before claiming support;
 C-compatible headers and wrappers remain deferred until needed.

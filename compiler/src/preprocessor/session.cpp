@@ -4,7 +4,7 @@
 #include <fstream>
 #include <memory>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Read optional includes without conflating an empty file with a missing path.
 std::optional<std::string> read_file(const std::filesystem::path &path) {
@@ -240,4 +240,4 @@ bool PreprocessorSession::failed() const { return state_->failed; }
 FeatureSnapshot PreprocessorSession::features() const { return state_->feature_snapshot; }
 
 std::optional<PreprocessorEvent> PreprocessorSession::next() { return state_->next(); }
-} // namespace erlang_aot
+} // namespace clause

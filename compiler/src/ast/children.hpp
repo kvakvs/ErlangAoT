@@ -1,7 +1,7 @@
 #pragma once
 #include "builder.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 // Enumerate every child-bearing payload; scalar overloads explicitly have no children.
 struct Children {
     const Builder &builder;
@@ -216,4 +216,4 @@ struct Children {
         }
     }
 };
-} // namespace erlang_aot::ast
+} // namespace clause::ast

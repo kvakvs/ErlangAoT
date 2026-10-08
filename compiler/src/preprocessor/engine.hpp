@@ -2,7 +2,7 @@
 #include "expression.hpp"
 #include "macros.hpp"
 
-namespace erlang_aot {
+namespace clause {
 struct PreprocessorSession::State {
     struct Branch {
         // Branch activity remains local to an include file; its opener survives errors.
@@ -86,4 +86,4 @@ struct PreprocessorSession::State {
     void feature_macros();
     void keywords();
 };
-} // namespace erlang_aot
+} // namespace clause

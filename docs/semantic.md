@@ -190,7 +190,7 @@ sum() -> 1 + 2.
 - The check compares the output with `today` when there is one, else with
   `expect`; every function of the module needs an `expect` line. A `today`
   line that inference has caught up with fails the check until it is removed.
-- `expectations.py <erlangaot> <fixture> --record` rewrites the `today`
+- `expectations.py <clau> <fixture> --record` rewrites the `today`
   lines from the current output (a maintainer action: review the diff).
 - `values.erl` covers literals, arithmetic and comparisons, calls of local and
   other functions, integer joins and ranges, integers or floats, lists,
@@ -216,6 +216,6 @@ types drop their module; references to declared types stay named. A budget of
 nodes bounds the text; past it, and below 32 levels of nesting, `...` stands in.
 
 ```sh
-erlangaot --print-types answer.erl client.erl
-erlangaot --print-types --project project.toml --target demo --verbose
+clau --print-types answer.erl client.erl
+clau --print-types --project project.toml --target demo --verbose
 ```

@@ -3,9 +3,9 @@
 #include <sstream>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
-using namespace erlang_aot::abi::v1;
+using namespace clause;
+using namespace clause::codegen;
+using namespace clause::abi::v1;
 
 // Preserve assertions in release builds.
 void require(bool condition, const char *message) {

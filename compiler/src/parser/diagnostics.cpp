@@ -2,7 +2,7 @@
 #include "parsing/delimiters.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 void FormParser::work(const std::size_t amount) const {
     if (amount > work_) {
         fail(DiagnosticCode::resource_limit, "parser work budget exhausted");
@@ -38,4 +38,4 @@ void FormParser::enrich(Diagnostic &diagnostic) const {
     diagnostic.related.push_back(open->spelling);
     diagnostic.related.insert(diagnostic.related.end(), open->origins.begin(), open->origins.end());
 }
-} // namespace erlang_aot
+} // namespace clause

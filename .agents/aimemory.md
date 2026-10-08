@@ -74,14 +74,14 @@ grammar/corpus pass; maint29+pin unchanged21776803. Audit summary docs/validatio
 logs build/otp-cleanup*. Existing dated validation evidence not rewritten.
 
 MSVC cl (non-clang-cl) 2026-10-03: /external:W0 misses codegen C4702 (Boost.Parser) and STL pair
-narrowing C4244/C4267 from LLVM headers; disabled only on erlang_aot_parser_dependency and
-erlang_llvm_sdk interfaces for cl. erlang_aot builds under cl; runtime still fails cl C4554
+narrowing C4244/C4267 from LLVM headers; disabled only on clause_parser_dependency and
+clause_llvm_sdk interfaces for cl. clau builds under cl; runtime still fails cl C4554
 (float_factory.cpp/bit_factory.cpp:23, project code, already parenthesized).
 
 Plan11 steps 1-8I done 2026-10-03..04 (compact record in .agents/11-plan.md; logs build/plan11-step*).
 Step facts beyond the plan record:
 - 1/1A/1B: maint29 21776803 unchanged. Fast mode = matrix.py O0 positional + O2-off project, mutations
-  once, LABELS full_only excluded. ERLANG_AOT_QUALITY_BASE overrides HEAD for changed-scope quality.
+  once, LABELS full_only excluded. CLAUSE_QUALITY_BASE overrides HEAD for changed-scope quality.
 - 2: fixture layout project.toml, src, fixture.json entry+argv, expected/{stdout.txt,golden.json},
   compile.txt exact stderr; oracle tests/compiler/programs/oracle.escript (main/1 in spawn_monitor).
 - 3/3A: project/entry parse_entry, manifest decode entry(); driver/entry resolve_entry after
@@ -91,8 +91,8 @@ Step facts beyond the plan record:
   AtomStorage::boolean needs "true" pre-interned (registration does it).
 - 5: startup llvm module appended after inputs (index >= inputs = startup). Windows argv via
   _configure_wide_argv + __wargv (no shell32). halt -> CallFailure{halted, halt_status, slogan}.
-- 6/6A/7: linking lib erlang_linking; default runtime = ERLANG_AOT_DEFAULT_RUNTIME relative to
-  erlangaot; clang found via --linker, PATH, $ProgramFiles/LLVM/bin; works outside vcvars (lld-link).
+- 6/6A/7: linking lib clause_linking; default runtime = CLAUSE_DEFAULT_RUNTIME relative to
+  clau; clang found via --linker, PATH, $ProgramFiles/LLVM/bin; works outside vcvars (lld-link).
   Project rule: link iff not frontend action AND (manifest output|entry or CLI -o|--entry); else
   in-memory library compile. -Os = O2 pipeline + optsize attr (LLVM 23 has no Os level).
 - 8: run.py uses matrix.combinations() (8 full / 2 fast), ~3 s per case. Pass --suffix=... as one token.
@@ -108,7 +108,7 @@ Step facts beyond the plan record:
 - 8H: Copier ctor allocates to-space then ++collections_ (GeneratedCallState::visit rebinds payload with the
   new count). First block = policy(used words); shrink = second full copy when <25% live (no offsetting).
   collect() never touches the generated failure channel; native/failure consumers now use deferred send
-  and heap reservation faults. Term::bit_slice is unimplemented (link error): slice via erlang_aot_bits_v1.
+  and heap reservation faults. Term::bit_slice is unimplemented (link error): slice via CLAUSE_bits_v1.
   Python Path.read_text defaults to cp1252 here: always read_text(encoding="utf-8") or use Edit.
 - 9: case = one-input body plan per clause (`body_pattern_plan`, `semantic::pattern_root`); exported names share one
   BindingId across clauses (first clause allocates, later reuse via branch_names stack), so lowering PHIs only
@@ -118,22 +118,22 @@ Step facts beyond the plan record:
   Bindings corpus: 8 case_* rows, OTP classes via regenerate --corpus bindings; sibling_local now compiles.
   Old step-9 attempt (pre phase C) sources reused for executables case_select/case_scope.
 - 10: if = case without scrutinee/pattern via semantic::branch_clauses (Branch{pattern*, guard*, body*}); CaseJoin.value
-  null for if. Runtime erlang_aot_raise_v2 whitelists atom-only reasons (plain_reason) -> new plain reasons need it.
+  null for if. Runtime CLAUSE_raise_v2 whitelists atom-only reasons (plain_reason) -> new plain reasons need it.
   OTP lint rejects `X =:= 0.0` in fixtures (match_float_zero). bindings.term rows are authored expectations; OTP
   regenerate only verifies them (fill corpus.json row sha256 = LF digest). Edit tool may write CRLF into .py: normalize.
-- 11: raise = ErrorReason raised_error/exit/throw (11-13) via existing erlang_aot_raise_v2 (no new symbol/ABI rev);
+- 11: raise = ErrorReason raised_error/exit/throw (11-13) via existing CLAUSE_raise_v2 (no new symbol/ABI rev);
   payload_reason range covers them; startup exception_class(). body_builtin moved to pattern_calls.cpp (needs
   auto_import); unqualified only for the raise family, display/halt stay erlang:-qualified until step 36. Oracle stderr
   prints `uncaught <class>: ~p` (compare class/reason manually; not stored).
 - 12: catch = ExpressionLowering::handler (innermost catch); failure_exit and raise_reason branch there; cached
-  bad_argument/bad_arithmetic exits reset inside the catch. Runtime erlang_aot_catch_v1 in process/exceptions
+  bad_argument/bad_arithmetic exits reset inside the catch. Runtime CLAUSE_catch_v1 in process/exceptions
   (error_name shared with startup); stack placeholder []. binding_children lacked CatchExpression (semantic walks
   skipped catch bodies: segfault / "invalid map<K, T> key") - fixed. OTP 29 warns deprecated_catch by default and
   the oracle uses warnings_as_errors: fixtures need -compile(nowarn_deprecated_catch); nowarn_* options admitted.
   Program fixtures hide stacks with show({'EXIT',{R,S}}) when is_list(S).
 - 13: CatchClause class/stacktrace are ExprIds (parser make()). Branch::handler + first_handler: try = of clauses then
   catch clauses. Walker ProtectedScope (catches map) protects only the body; handlers() takes {class, reason} via
-  erlang_aot_exception_v1, catch clauses start from pre-try bindings; unmatched -> erlang_aot_reraise_v1 (raised_*
+  CLAUSE_exception_v1, catch clauses start from pre-try bindings; unmatched -> CLAUSE_reraise_v1 (raised_*
   reason, observably identical). Walk::visit split (visit/branch) for Lizard CCN. Bindings OTP regenerate: use
   "C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe" directly (otp-launch shim gone). Atoms > numbers in term order:
   `zero > 0` is true in guards.
@@ -172,7 +172,7 @@ Step facts beyond the plan record:
   needs rm -rf build/debug (nested native consumer caches). Scripts build/plan11-step19/*.cmd.
   Debug runtime makes services ~0.1-0.5 us: 2M-step tail loop ~1 s, 200k-deep list build+len+sum ~1.3 s.
 - 20: user asked for minimal iteration counts (just exceed the limit), not plan's 10M/1M. Golden runs may be
-  `"authored": true` (regenerate.py keeps them) for ErlangAoT-only outcomes (none left since the step-27 correction).
+  `"authored": true` (regenerate.py keeps them) for Clause-only outcomes (none left since the step-27 correction).
 - 21: comprehension = loops in the body (codegen/lowering_comprehensions), loop state in term slots (root_slot), no PHIs;
   result reversed once (ContainerConstruction::reverse=2). Generator patterns bind via BindingCandidate::fresh
   (define_fresh, shadow()); find() prefers tentative names when fresh. Guard-test filters classified in guard_analysis
@@ -196,7 +196,7 @@ Step facts beyond the plan record:
   Raw spill slots may hold stale term copies after a call: generated code is NOT a safe point until 24/26.
   build/debug Ninja may skip test targets (stale BUILD_TESTING): always run the fresh gate first.
 - 24: decision only. Safepoints = entry (in enter/tail before push, keep_registers(arity)) + comprehension loop heads
-  (erlang_aot_safepoint_v1); services are critical sections (fragments). Prototype tests/prototypes/safepoint/run.py
+  (CLAUSE_safepoint_v1); services are critical sections (fragments). Prototype tests/prototypes/safepoint/run.py
   (clang on PATH or ProgramFiles/LLVM); O2 GEPs print as `getelementptr inbounds nuw i8`.
 - 26: safepoints collect when ProcessHeap::wants_collection(); host Terms held across generated calls go stale
   once any call collects: native consumers that keep Terms use HeapOptions{1 << 16 / 1 << 20} min heap
@@ -214,7 +214,7 @@ Step facts beyond the plan record:
   erlfmt: escript with code:add_path + erlfmt:format_file returns {ok, IoData, []}: write it back yourself
   (scratch fmt.escript). Never `cat > file` without heredoc: hangs on stdin.
 - 27 follow-up: no binary size cap, no context-count cap, atoms 2^20 default / --max-atoms <= 2^26 via
-  startup/options (argv + ERLANG_AOT_FLAGS, `--` ends, --args-file notimpl). RuntimeOptions{2} positional init
+  startup/options (argv + CLAUSE_FLAGS, `--` ends, --args-file notimpl). RuntimeOptions{2} positional init
   now means max_atoms (max_contexts field removed): use designated initializers. Golden runs may set `env`.
 - 27A: RuntimeMemory (memory/runtime_memory.hpp) shared_ptr in Runtime::Impl, ProcessContext::Impl (memory()),
   HeapStorage::memory_; charges mirror capacity_words_ + off_heap_words_ (replace(), rollback, dtor) + Copier
@@ -264,8 +264,8 @@ Step facts beyond the plan record:
 - 31E: step 31 closed. "Unsupported" test placeholders use `-feature(compr_assign, enable)` + `[Y || X <- L, Y = X]`
   (last `heap expressions` capability). features.hpp heap_expressions still says plan_step 29 (stale).
 - 32: funs = Module::funs (index_funs at end of bind_parameters) + <prefix>.funs FunDescriptor table; cells
-  fun_closure {hdr, FunDefinition*, captures}. Fun call = args alloca (>=1 word) + erlang_aot_apply_v1 (writes captures
-  after args, returns frame or raises) + `erlang_aot.apply` marker; frames.cpp ErlangCall{call, descriptor, arity}
+  fun_closure {hdr, FunDefinition*, captures}. Fun call = args alloca (>=1 word) + CLAUSE_apply_v1 (writes captures
+  after args, returns frame or raises) + `clause.apply` marker; frames.cpp ErlangCall{call, descriptor, arity}
   treats it as an Erlang call (alloca -> registers). lower_module reuses `.frame` globals the fun table declared.
   OTP oracle: warnings_as_errors rejects `fun m:f/1` of own unexported f, calls with statically wrong arity
   (`F = fun(ok)..., F(nope)`: nomatch) -> route through a helper. tidy bugprone-easily-swappable-parameters: Word and
@@ -285,10 +285,10 @@ Step facts beyond the plan record:
   funs (catalog plan_step 36). Service resolutions without an operation report `guards` notimpl unless apply().
   TermFactory::fun_words checks CodeServer::owns (descriptor-less definitions = interned external funs).
   Bash heredoc with many quotes fails ("unexpected EOF"): write edit scripts with Write into scratchpad.
-- 36: bridge = ABI catalog abi::v1::bridge_builtins (append-only, index = erlang_aot_builtin_v1 arg) + runtime
+- 36: bridge = ABI catalog abi::v1::bridge_builtins (append-only, index = CLAUSE_builtin_v1 arg) + runtime
   BuiltinRegistry in CodeServer (names are string_views: static storage). Builtin frame = FrameDescriptor with null
   body (BuiltinFrame, reinterpret via builtin_frame); ProcessStack::enter runs it and returns the caller's body (no
-  push). erlang builtins are adapters over the C ABI services (erlang_aot_immediate_v1, _map_v1, _bits_v1 ...):
+  push). erlang builtins are adapters over the C ABI services (CLAUSE_immediate_v1, _map_v1, _bits_v1 ...):
   bits service `part` writes TWO output words (value + cursor) -> 1-word output = /GS fail-fast 0xC0000409 (exit 127
   in bash). BindingAnalysis::module is const: module-level effects of resolve_services go through Function fields
   (builtin_funs) applied after the loop. Capability "guards" notimpl fires for services without operation unless
@@ -352,7 +352,7 @@ Step facts beyond the plan record:
 - 54: AtomStorage shared_mutex; private static atom_term (Term fields are friend-only). tests/runtime/concurrency.cpp
   (runtime_concurrency, links Threads::Threads) is the home of thread stress for 55/57.
 - 55: CodeServer shared_mutex; locked public lookups call private unlocked find_fun/find_export/find_function
-  (never call a locking public method under the lock). concurrency.cpp needs <erlang_aot/runtime/code_server.hpp>.
+  (never call a locking public method under the lock). concurrency.cpp needs <clause/runtime/code_server.hpp>.
 - 56: one shared queue + executor mutex (documented alternative to stealing); typed adapter catches builtins::Blocked
   and traps to Adapter::RETRY. after() must place the process BEFORE resuming blockers (an ending blocker's 'DOWN'
   woke+queued it, then place queued it again: double-queued -> resume_ null -> run() true -> main "ended", exit 0
@@ -369,10 +369,10 @@ Step facts beyond the plan record:
   stealing reports otherwise). -Wmissing-designated-field-initializers: give structs static factory helpers.
   Executor ctor not noexcept (MSVC unordered_map allocates; lifecycle_failure terminates). tidy: Term/Word params
   used separately are "swappable" -> pass Word or use them in one call. erlfmt: scratchpad/fmt.escript FILE.
-- 57C: WSL syntax check of POSIX runtime files: wsl -e bash -c 'cd /mnt/f/Projects/ErlangAoT && clang++ -std=c++23
+- 57C: WSL syntax check of POSIX runtime files: wsl -e bash -c 'cd /mnt/f/Projects/Clause && clang++ -std=c++23
   -fsyntax-only -Wall -Wextra -Werror -Iruntime/include -Iruntime/src -Iabi/include -isystem thirdparty/boost_1_90_0 F'.
   Golden runs take authored "stdin". OTP port input counts raw bytes. build/plan11/{qonly,fastonly,repeat}.cmd.
-- 57D: golden `data` files + runs in staged dir + ERLANG_AOT_TEST_PYTHON env; OTP Windows drops empty spawn args
+- 57D: golden `data` files + runs in staged dir + CLAUSE_TEST_PYTHON env; OTP Windows drops empty spawn args
   and gives eacces for an empty env name (left out of fixtures). User asked how ports get CPU (2026-10-08): answered
   ports are not scheduled entities (I/O threads + synchronous port ops); offered an ERTS-like port-task redesign as a
   later plan step if wanted.

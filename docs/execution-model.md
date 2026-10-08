@@ -92,7 +92,7 @@ under the first call of every process: continuation 1 is a normal exit
   enclosing index, both known statically within one function. Halts and
   infrastructure failures skip every handler and unwind straight to the bottom
   frame, as they skip handlers today. The handler takes the exception with
-  today's services (`erlang_aot_catch_v1`, `erlang_aot_exception_v2`) and
+  today's services (`CLAUSE_catch_v1`, `CLAUSE_exception_v2`) and
   re-raises through the unwinder.
 - **Host invocation.** The runtime pushes a bottom frame, loads `x[]` and runs
   the scheduler loop until that frame is reached. Runtime services remain
@@ -154,7 +154,7 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
 
 - **Two stages.** Lowering still emits *native form*: one
   `TermWord(context, arguments)` function per Erlang function, ordinary calls
-  between them, a placeholder `erlang_aot.frame` call naming the term slots,
+  between them, a placeholder `clause.frame` call naming the term slots,
   and `ret` of a call's result in tail position. `lower_frames`
   (`compiler/src/codegen/frames.cpp`) then moves each body into
   `<symbol>.body`, adds the prologue (frame header, registers, resume
@@ -165,9 +165,9 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   specialization and test seams work on native form; the backend runs
   `lower_frames` before IR inspection and `optimize` runs it if still needed.
 - **Entry and body.** There is no separate entry function: the caller calls
-  `erlang_aot_enter_v1(context, callee.frame)`, which pushes the frame, copies
+  `CLAUSE_enter_v1(context, callee.frame)`, which pushes the frame, copies
   the arguments and returns the callee's body. A tail call uses
-  `erlang_aot_tail_v1`, which first releases the caller's frame.
+  `CLAUSE_tail_v1`, which first releases the caller's frame.
 - **Tail positions** are the last expression of a clause body, followed
   through blocks, parentheses, `case` and `if` clause bodies. Calls in
   `catch`, `try`, `maybe` and `andalso`/`orelse` operands are not tail calls.
@@ -178,8 +178,8 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   cursors and accumulator live in term slots, so no SSA value is carried
   around a loop and a resume point inside it needs nothing beyond the usual
   spills.
-- **Yields** (step 43, [processes](processes.md)). `erlang_aot_enter_v1` and
-  `erlang_aot_tail_v1` spend one of the process's reductions; with none left
+- **Yields** (step 43, [processes](processes.md)). `CLAUSE_enter_v1` and
+  `CLAUSE_tail_v1` spend one of the process's reductions; with none left
   they record the entered function (`ProcessStack::resume_`, the model's
   `resume_at`), keep its arguments as register roots and return code that
   ends the time slice, so the native stack unwinds to the executor, which
@@ -196,7 +196,7 @@ Step 19 (2026-10-05) implements the model with these choices and gaps:
   (separate from the optional heap budget) fails a push beyond it with
   `resource_limit`. Frames take 4 header words plus 1-40 slots today.
 - **Host entry.** An exported symbol keeps the native signature and runs its
-  function above a runtime bottom frame with `erlang_aot_invoke_v1`; native
+  function above a runtime bottom frame with `CLAUSE_invoke_v1`; native
   exceptions thrown by services are contained there.
 
 ## Alternatives compared

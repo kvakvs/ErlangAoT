@@ -14,10 +14,10 @@ if(NOT DEFINED QUALITY_PYTHON)
 endif()
 
 # Store the changed files of one check kind (tidy or lizard) in output, relative to the project root.
-function(erlang_aot_quality_scope kind output)
+function(clause_quality_scope kind output)
     set(base HEAD)
-    if(DEFINED ENV{ERLANG_AOT_QUALITY_BASE})
-        set(base "$ENV{ERLANG_AOT_QUALITY_BASE}")
+    if(DEFINED ENV{CLAUSE_QUALITY_BASE})
+        set(base "$ENV{CLAUSE_QUALITY_BASE}")
     endif()
     set(list_file "${QUALITY_BUILD_DIR}/quality/${kind}-scope.txt")
     file(MAKE_DIRECTORY "${QUALITY_BUILD_DIR}/quality")

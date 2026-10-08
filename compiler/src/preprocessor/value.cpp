@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace erlang_aot {
+namespace clause {
 Value integer(BigInt number) {
     const BigInt magnitude = number < 0 ? -number : number;
     if (magnitude != 0 && boost::multiprecision::msb(magnitude) >= INTEGER_BIT_LIMIT) {
@@ -199,4 +199,4 @@ int compare(const Value &left, const Value &right, const bool exact) {
     }
 }
 
-} // namespace erlang_aot
+} // namespace clause

@@ -2,7 +2,7 @@
 #include "model.hpp"
 #include <stdexcept>
 
-namespace erlang_aot::project {
+namespace clause::project {
 // Format a manifest location as file:line:column [target name] (key).
 std::string where(const Site &site);
 // Format project errors without writing to a global output stream.
@@ -18,4 +18,4 @@ class Failure : public std::runtime_error {
 
 // Stop the current project operation with owned diagnostic context.
 [[noreturn]] void fail(const Site &site, std::string message, int exit_code = 1);
-} // namespace erlang_aot::project
+} // namespace clause::project

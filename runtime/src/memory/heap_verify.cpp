@@ -2,11 +2,11 @@
 #include "heap_walk.hpp"
 #include "off_heap.hpp"
 #include <algorithm>
-#include <erlang_aot/runtime/atoms.hpp>
+#include <clause/runtime/atoms.hpp>
 #include <new>
 #include <vector>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Shape = HeapCell::Shape;
 
@@ -128,9 +128,9 @@ class Verifier final {
     HeapCensus census_;
 };
 } // namespace
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::expected<HeapCensus, HeapError> ProcessHeap::verify() const noexcept {
     if (!storage_->alive()) {
         return std::unexpected(HeapError::expired_context);
@@ -143,4 +143,4 @@ std::expected<HeapCensus, HeapError> ProcessHeap::verify() const noexcept {
         return std::unexpected(HeapError::out_of_memory);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

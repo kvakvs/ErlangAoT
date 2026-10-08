@@ -1,12 +1,12 @@
 #include "../builtins/portions.hpp"
 #include <chrono>
-#include <erlang_aot/abi/messages.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/messages.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/process_context.hpp>
 
-// Selective receive (docs/processes.md#receive): generated code scans the mailbox with erlang_aot_receive_v1 and,
+// Selective receive (docs/processes.md#receive): generated code scans the mailbox with CLAUSE_receive_v1 and,
 // having examined every message, enters the wait builtin until another message arrives.
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 using Clock = std::chrono::steady_clock;
 
@@ -53,12 +53,11 @@ Word wait(ProcessContext &context, builtins::Arguments state) {
     return 0;
 }
 } // namespace
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-std::uint8_t erlang_aot_receive_v1(void *context, std::uint8_t operation,
-                                   erlang_aot::abi::v1::TermWord *output) noexcept {
-    using erlang_aot::abi::v1::ReceiveOperation;
-    auto &mailbox = static_cast<erlang_aot::runtime::ProcessContext *>(context)->mailbox();
+std::uint8_t CLAUSE_receive_v1(void *context, std::uint8_t operation, clause::abi::v1::TermWord *output) noexcept {
+    using clause::abi::v1::ReceiveOperation;
+    auto &mailbox = static_cast<clause::runtime::ProcessContext *>(context)->mailbox();
     switch (static_cast<ReceiveOperation>(operation)) {
     case ReceiveOperation::peek: {
         const auto message = mailbox.peek();
@@ -80,4 +79,4 @@ std::uint8_t erlang_aot_receive_v1(void *context, std::uint8_t operation,
     return 0;
 }
 
-const void *erlang_aot_wait_frame_v1(void *) noexcept { return &erlang_aot::runtime::WAIT_FRAME.frame; }
+const void *CLAUSE_wait_frame_v1(void *) noexcept { return &clause::runtime::WAIT_FRAME.frame; }

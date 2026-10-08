@@ -2,7 +2,7 @@
 #include "diagnostics.hpp"
 #include <fstream>
 
-namespace erlang_aot::project {
+namespace clause::project {
 std::filesystem::path native_path(std::string_view text) {
     return std::filesystem::path(std::u8string(text.begin(), text.end()));
 }
@@ -77,4 +77,4 @@ std::filesystem::path source_directory(const std::filesystem::path &base, const 
     }
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

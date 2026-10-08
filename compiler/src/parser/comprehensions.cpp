@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 void FormParser::require_comprehension(const bool allowed) const {
     if (!allowed) {
         fail(DiagnosticCode::parser_syntax, "comprehension is not allowed in this grammar context");
@@ -135,4 +135,4 @@ ast::Qualifier FormParser::generator(ast::ExprId left, const std::size_t begin) 
             ast::ListGenerator{.pattern = std::move(pattern), .input = std::move(input), .strict = operation->strict},
         .source = source};
 }
-} // namespace erlang_aot
+} // namespace clause

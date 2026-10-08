@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/compiler/ast/expressions.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/compiler/ast/expressions.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct BinaryOptions {
     // Canonical defaults are target-independent; native endian is resolved during target lowering.
     abi::v1::BitType type = abi::v1::BitType::integer;
@@ -16,4 +16,4 @@ struct BinaryOptions {
 
 // Normalize already validated modifiers once for construction and pattern-plan consumers.
 BinaryOptions binary_options(const ast::BinarySegment &segment);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

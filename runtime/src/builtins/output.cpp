@@ -1,12 +1,12 @@
 #include "../terms/service_errors.hpp"
+#include <clause/abi/output.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/output.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
 #include <new>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 using abi::v1::Status;
 
 bool write_output(const OutputSink &sink, std::string_view bytes) noexcept {
@@ -66,13 +66,13 @@ std::uint8_t display_service(ProcessContext &context, Word word, Word *output) n
 }
 } // namespace
 } // namespace detail
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-std::uint8_t erlang_aot_display_v1(void *context, erlang_aot::abi::v1::TermWord term,
-                                   erlang_aot::abi::v1::TermWord *output) noexcept {
+std::uint8_t CLAUSE_display_v1(void *context, clause::abi::v1::TermWord term,
+                               clause::abi::v1::TermWord *output) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::ValueOutcome::failure);
+        return static_cast<std::uint8_t>(clause::abi::v1::ValueOutcome::failure);
     }
-    return erlang_aot::runtime::detail::display_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                        term, output);
+    return clause::runtime::detail::display_service(*static_cast<clause::runtime::ProcessContext *>(context), term,
+                                                    output);
 }

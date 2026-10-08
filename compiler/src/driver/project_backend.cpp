@@ -6,7 +6,7 @@
 #include "publication.hpp"
 #include <iostream>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Resolve artifact roots independently of the target's executable output.
 BackendOptions target_options(const Options &options, const project::Invocation &invocation,
@@ -30,7 +30,7 @@ std::vector<std::filesystem::path> protected_inputs(const project::Invocation &i
 
 // Report a publication failure with the target that produced the output.
 int publication_failure(const std::string &target, const std::string_view message) {
-    std::cerr << "erlangaot: error: target " << target << ": " << message << '\n';
+    std::cerr << "clau: error: target " << target << ": " << message << '\n';
     return 1;
 }
 
@@ -127,4 +127,4 @@ int run_project(const Options &options) {
     const int published = publish_targets(pending);
     return published == 0 ? publish_executables(executables) : published;
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

@@ -1,11 +1,11 @@
 #pragma once
 #include <cassert>
-#include <erlang_aot/compiler/ast/ids.hpp>
+#include <clause/compiler/ast/ids.hpp>
 #include <limits>
 #include <stdexcept>
 #include <vector>
 
-namespace erlang_aot::ast::detail {
+namespace clause::ast::detail {
 // An owned identity token distinguishes independent modules even after one is destroyed.
 struct Owner {};
 
@@ -59,4 +59,4 @@ template <typename Value, typename Tag> class Arena {
     std::uint64_t next_ = 1;
     std::vector<Entry> entries_;
 };
-} // namespace erlang_aot::ast::detail
+} // namespace clause::ast::detail

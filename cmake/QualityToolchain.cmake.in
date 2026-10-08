@@ -3,5 +3,5 @@ set(quality_implicit_includes [==[@CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES@]==])
 set(quality_apple_sysroot [==[@CMAKE_CXX_COMPILER_APPLE_SYSROOT@]==])
 set(quality_frontend [==[@CMAKE_CXX_COMPILER_FRONTEND_VARIANT@]==])
 # MSVC exposes SDK/STL paths through the developer shell instead of implicit include detection.
-set(quality_msvc_includes [==[@ERLANG_AOT_MSVC_INCLUDES@]==])
-set(quality_clang [==[@ERLANG_AOT_CLANG_EXECUTABLE@]==])
+set(quality_msvc_includes [==[@CLAUSE_MSVC_INCLUDES@]==])
+set(quality_clang [==[@CLAUSE_CLANG_EXECUTABLE@]==])

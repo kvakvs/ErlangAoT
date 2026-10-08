@@ -3,7 +3,7 @@
 #include "parsing/operator_info.hpp"
 #include "parsing/token_cursor.hpp"
 
-namespace erlang_aot {
+namespace clause {
 struct Value;
 
 struct GrammarBudget {
@@ -172,4 +172,4 @@ class FormParser {
         return *result;
     }
 };
-} // namespace erlang_aot
+} // namespace clause

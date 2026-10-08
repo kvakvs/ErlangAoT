@@ -1,11 +1,11 @@
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
 #include <source_location>
 #include <sstream>
 #include <type_traits>
 
-using namespace erlang_aot;
+using namespace clause;
 static_assert(!std::is_convertible_v<ast::ExprId, ast::TypeId>);
 static_assert(!std::is_convertible_v<ast::TermId, ast::TypeId>);
 

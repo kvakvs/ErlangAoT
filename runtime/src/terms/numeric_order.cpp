@@ -1,7 +1,7 @@
 #include "floats.hpp"
 #include <cmath>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Integer comparison against the exact truncation preserves neighbors beyond binary64 precision.
 int mixed(const Integer &integer, double real) {
@@ -42,4 +42,4 @@ TermResult<int> numeric_order(const Term &left, const Term &right, bool exact) {
     return left.is_integer() ? mixed(integer_read(left).value(), right.float_value().value())
                              : -mixed(integer_read(right).value(), left.float_value().value());
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

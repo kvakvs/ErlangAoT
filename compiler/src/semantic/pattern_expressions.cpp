@@ -2,7 +2,7 @@
 #include "pattern_state.hpp"
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 struct ReadExpression {
     // Embedded keys/sizes use guard expression legality, without enabling executable guards.
@@ -71,4 +71,4 @@ std::vector<ast::ExprId> pattern_expression(BindingAnalysis &state, const ast::E
     }
     return expression_children(state.module, state.module.syntax->expression(id));
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

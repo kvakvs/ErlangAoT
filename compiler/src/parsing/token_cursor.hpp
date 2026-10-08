@@ -2,7 +2,7 @@
 #include "token_syntax.hpp"
 #include <span>
 
-namespace erlang_aot {
+namespace clause {
 // Borrow stable tokens while owning the EOF location; grammar-specific errors stay outside.
 class TokenCursor {
   public:
@@ -29,4 +29,4 @@ class TokenCursor {
     // EOF carries source ownership independently of the borrowed input.
     Token end_;
 };
-} // namespace erlang_aot
+} // namespace clause

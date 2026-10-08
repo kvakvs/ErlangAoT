@@ -1,7 +1,7 @@
 #pragma once
 #include "declarations.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 using Uses = std::map<std::string, std::size_t>;
 
 struct Scope {
@@ -38,4 +38,4 @@ void collect(Registry &registry, std::span<const std::unique_ptr<Module>> module
 void contracts(Registry &registry, const Reporter &out);
 // Preserve exact constant arithmetic in type bounds with a finite allocation budget.
 Id constant_node(Resolver &resolver, Node node, const ast::NodeSource &source);
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

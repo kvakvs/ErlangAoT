@@ -1,14 +1,14 @@
 #include "terms.hpp"
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/runtime/builtins.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
-#include <erlang_aot/runtime/scheduler.hpp>
+#include <clause/abi/builtins.hpp>
+#include <clause/runtime/builtins.hpp>
+#include <clause/runtime/runtime.hpp>
+#include <clause/runtime/scheduler.hpp>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Retain behavioral checks in optimized builds.
 void require(bool condition, const char *message) {
@@ -131,10 +131,10 @@ void check_builtin_identity(ProcessContext &context) {
         require(!is_deferred_builtin({"other", entry.function, entry.arity}), "wrong module recognized");
     }
     Word output = 123;
-    require(erlang_aot::abi::v1::dispatch_builtin(&context, "erlang", 6, "missing", 7, nullptr, 0, &output) ==
+    require(clause::abi::v1::dispatch_builtin(&context, "erlang", 6, "missing", 7, nullptr, 0, &output) ==
                 Status::unknown_builtin,
             "unknown BIF mislabeled deferred");
-    require(erlang_aot::abi::v1::dispatch_builtin(&context, "erlang", 6, "self", 4, &output, 1, &output) ==
+    require(clause::abi::v1::dispatch_builtin(&context, "erlang", 6, "self", 4, &output, 1, &output) ==
                 Status::unknown_builtin,
             "wrong BIF arity recognized");
     require(output == 123, "unknown BIF changed output");
@@ -157,7 +157,7 @@ void report_nested(ProcessContext &context) {
     require(context.code_server().load({"wrapper", CodeImage::linked(), std::move(registry)}).has_value(),
             "nested service publication failed");
     Word output = 123;
-    require(erlang_aot::abi::v1::dispatch_builtin(&context, "wrapper", 7, "reference", 9, nullptr, 0, &output) ==
+    require(clause::abi::v1::dispatch_builtin(&context, "wrapper", 7, "reference", 9, nullptr, 0, &output) ==
                 Status::not_implemented,
             "nested service failure lost");
     require(output == 123, "nested service fabricated result");
@@ -204,7 +204,7 @@ void report_one(std::string_view mode, Runtime &runtime, ProcessContext &context
                 "unload status wrong");
     } else if (mode == "builtin") {
         Word output = 123;
-        require(erlang_aot::abi::v1::dispatch_builtin(&context, "erlang", 6, "self", 4, nullptr, 0, &output) ==
+        require(clause::abi::v1::dispatch_builtin(&context, "erlang", 6, "self", 4, nullptr, 0, &output) ==
                     Status::not_implemented,
                 "known BIF status wrong");
         require(output == 123, "known deferred BIF wrote a result");

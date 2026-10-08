@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <array>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Bound trace work even for synthetic profiles rejected before the planner can inspect their elements.
 std::string profile_text(const TypeProfile &profile) {
@@ -35,4 +35,4 @@ void record_decision(const CompilationRequest &request, SpecializationPlan &plan
              "function=" + input.symbol + " profile=" + profile_text(profile) + decision +
                  names.at(static_cast<std::size_t>(reason)));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

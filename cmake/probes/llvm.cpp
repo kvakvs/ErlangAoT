@@ -4,7 +4,7 @@
 #include <string>
 
 #if !defined(__cpp_exceptions)
-#error "ErlangAoT requires C++ exceptions in its host toolchain"
+#error "Clause requires C++ exceptions in its host toolchain"
 #endif
 
 #if LLVM_VERSION_MAJOR != 23 || LLVM_VERSION_MINOR != 1 || LLVM_VERSION_PATCH < 1

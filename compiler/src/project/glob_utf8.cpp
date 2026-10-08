@@ -2,7 +2,7 @@
 #include "diagnostics.hpp"
 #include <array>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Determine the canonical UTF-8 sequence width from its leading byte.
 std::size_t width(const unsigned char byte, const Site &site) {
@@ -55,4 +55,4 @@ std::u32string filename_scalars(const std::string_view text, const Site &site) {
     }
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

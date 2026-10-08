@@ -1,6 +1,6 @@
 #include "engine.hpp"
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Structural branches share directive-envelope validation and move diagnostic ownership.
 Directive checked_directive(const std::span<const Token> tokens) {
@@ -98,4 +98,4 @@ bool PreprocessorSession::State::conditional(const DirectiveKind kind, const std
     }
     return false;
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -1,21 +1,21 @@
 #include "terms.hpp"
 #include "terms/structural_order.hpp"
 #include <array>
-#include <erlang_aot/abi/modules.hpp>
-#include <erlang_aot/abi/records.hpp>
-#include <erlang_aot/runtime/modules.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/modules.hpp>
+#include <clause/abi/records.hpp>
+#include <clause/runtime/modules.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-// Native record cells and erlang_aot_record_v1 over hand-written descriptors (docs/native-records.md).
+// Native record cells and CLAUSE_record_v1 over hand-written descriptors (docs/native-records.md).
 namespace {
-using namespace erlang_aot;
-using namespace erlang_aot::runtime;
+using namespace clause;
+using namespace clause::runtime;
 using abi::v1::RecordCheck;
 using abi::v1::RecordDescriptor;
 using abi::v1::RecordOperation;
@@ -65,9 +65,9 @@ Call call(ProcessContext &context, RecordOperation operation, RecordCheck check,
     }
     std::vector<Word> output(std::max<std::size_t>(outputs, 1), 0);
     GeneratedInvocation scope(context.generated_calls());
-    const auto outcome = static_cast<RecordOutcome>(erlang_aot_record_v1(&context, static_cast<std::uint8_t>(operation),
-                                                                         static_cast<std::uint8_t>(check), descriptor,
-                                                                         words.data(), words.size(), output.data()));
+    const auto outcome = static_cast<RecordOutcome>(CLAUSE_record_v1(&context, static_cast<std::uint8_t>(operation),
+                                                                     static_cast<std::uint8_t>(check), descriptor,
+                                                                     words.data(), words.size(), output.data()));
     const auto &failure = context.generated_calls().failure();
     Call result{outcome, {}, failure ? failure->status : std::nullopt};
     if (outcome == RecordOutcome::success || outcome == RecordOutcome::bad_record ||

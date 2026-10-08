@@ -1,7 +1,7 @@
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <utility>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class ProcessContext::Impl final {
   public:
     // Bind the runtime and identity once, issuing a separately retained token for future host bindings.
@@ -53,4 +53,4 @@ const detail::IdentityNumbers &ProcessContext::identity_numbers() const noexcept
 
 Runtime &ProcessContext::runtime() noexcept { return impl_->runtime; }
 
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

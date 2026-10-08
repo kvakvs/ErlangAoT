@@ -1,14 +1,14 @@
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
-using Op = erlang_aot::abi::v1::BitOperation;
-using Status = erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using Op = clause::abi::v1::BitOperation;
+using Status = clause::abi::v1::Status;
 
 // Keep lifetime, publication and malformed-input checks active in optimized consumers.
 void require(bool condition, const char *message) {
@@ -25,8 +25,8 @@ Term slice(ProcessContext &context, const Term &value, std::size_t offset, std::
                            factory.integer(static_cast<std::int64_t>(count))->word(), factory.integer(0)->word()};
     std::array<Word, 2> output{};
     GeneratedInvocation call(context.generated_calls());
-    require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(Op::extract), input.data(), input.size(),
-                               output.data()) == 0,
+    require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(Op::extract), input.data(), input.size(),
+                           output.data()) == 0,
             "checked slice failed");
     require(decode_integer(output[1]) == offset + count, "slice cursor changed incorrectly");
     return Term::from_word(output[0], context).value();
@@ -69,14 +69,14 @@ void malformed() {
         GeneratedInvocation call(context.generated_calls());
         const Word invalid = 0;
         std::array<Word, 2> output{123, 456};
-        require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(operation), &invalid, 1, output.data()) == 2,
+        require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(operation), &invalid, 1, output.data()) == 2,
                 "malformed binary service admitted");
         require(output == std::array<Word, 2>{123, 456} && context.generated_calls().failure(),
                 "fault published output");
     }
     std::array<Word, 2> output{123, 456};
     GeneratedInvocation retry(context.generated_calls());
-    require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(Op::make), nullptr, 0, output.data()) == 0,
+    require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(Op::make), nullptr, 0, output.data()) == 0,
             "malformed call poisoned retry");
     require(Term::from_word(output[0], context)->bit_size() == 0 && decode_integer(output[1]) == 0,
             "empty binary result incorrect");

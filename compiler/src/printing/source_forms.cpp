@@ -1,7 +1,7 @@
 #include "source_printer.hpp"
 #include <array>
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // Body expressions start four columns right of their clause head.
 constexpr std::size_t STEP = 4;
@@ -229,4 +229,4 @@ std::string SourcePrinter::list(const std::vector<ast::ExprId> &items, Place pla
     }
     return result;
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

@@ -1,9 +1,9 @@
 #include "printing.hpp"
 #include <algorithm>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/printing.hpp>
 #include <span>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Deeper nesting than this prints as `...`, like an exhausted budget.
 constexpr std::size_t MAX_DEPTH = 32;
@@ -173,4 +173,4 @@ class Printer final {
 std::string type_source(const Graph &graph, Id type, std::size_t budget) {
     return Printer(graph, budget).text(type, 0);
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

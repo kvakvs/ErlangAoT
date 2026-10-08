@@ -1,4 +1,4 @@
-# ErlangAoT
+# Clause
 
 An ahead-of-time compiler project for Erlang/OTP 29. It preprocesses, parses,
 analyzes and compiles a subset of Erlang to LLVM IR, bitcode and native objects:
@@ -14,7 +14,7 @@ validated on Windows x64; objects are inspected for seven targets. See the
 [runtime](docs/runtime.md) and [validation status](docs/validation.md).
 
 The [compiled-module example](examples/compile/) contains two Erlang modules
-(`erlangaot -o demo answer.erl client.erl` builds a program from them),
+(`clau -o demo answer.erl client.erl` builds a program from them),
 a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 [emission, inspection and native execution commands](docs/compile.md#run-the-compiled-module-example).
 
@@ -28,8 +28,8 @@ a C++ harness and an LLVM-free CMake runtime link recipe. Follow the
 - Compilation subset checks, parameter bindings, batch call resolution and declared
   type/specification analysis; see [semantic analysis](docs/semantic.md).
 - LLVM O0/O2/Os compilation, explicit per-module artifacts, IR snapshots and declared/inferred type reports.
-- Native executables from positional inputs (`erlangaot -o app a.erl b.erl`) or project
-  targets (`erlangaot --project app.toml`), linked by Clang with the runtime library; see
+- Native executables from positional inputs (`clau -o app a.erl b.erl`) or project
+  targets (`clau --project app.toml`), linked by Clang with the runtime library; see
   [executables](docs/executables.md).
 - TOML projects with named targets, source discovery, per-target frontend options,
   and annotated starter files.
@@ -85,7 +85,7 @@ libraries. On Windows, missing libraries trigger SHA-256-verified downloads of
 zlib 1.3.2 and zstd 1.5.7, followed by static Debug/Release builds under `thirdparty/`.
 These builds are reused across build directories and match the host compiler,
 architecture and CRT. Set `ZLIB_ROOT` or `zstd_ROOT` to prefer an installed library;
-`ERLANG_AOT_DOWNLOAD_ZLIB=OFF` and `ERLANG_AOT_DOWNLOAD_ZSTD=OFF` disable the respective
+`CLAUSE_DOWNLOAD_ZLIB=OFF` and `CLAUSE_DOWNLOAD_ZSTD=OFF` disable the respective
 fallbacks. MSVC SDK discovery rejects cached MinGW `.a` libraries such as those
 bundled with Strawberry Perl. Linux and macOS use installed development packages.
 
@@ -122,7 +122,7 @@ cmake --build --preset windows-release
 ctest --preset windows-release --no-tests=error
 ```
 
-Tests have two modes, selected by `ERLANG_AOT_TEST_MODE`:
+Tests have two modes, selected by `CLAUSE_TEST_MODE`:
 
 - `fast` for development: golden corpora run two policy/driver combinations
   (O0 positional and O2 without specialization through a project) instead of all
@@ -148,8 +148,12 @@ for testing. CMake caches this setting; pass `-DBUILD_TESTING=OFF` when reusing 
 directory for ordinary builds. The normal presets and build wrappers set it to `OFF`.
 
 The batch scripts mirror the Makefile's `build`, `format`, and `clean` targets:
-`make-build.bat`, `make-test.bat`, `make-format.bat`, and `make-clean.bat`. Run them from a Visual
-Studio developer shell with CMake and Clang available. Build defaults are
+`make-build.bat`, `make-test.bat`, `make-format.bat`, and `make-clean.bat`. The build and test
+scripts configure clang-cl with Ninja Multi-Config, like the `windows` preset, entering the
+Visual Studio x64 environment themselves when the shell is not a developer shell and adding
+`%ProgramFiles%\LLVM\bin` to `PATH` when `clang-cl` is missing. A build directory configured
+with another generator or compiler is reconfigured from scratch; set `CLAUSE_TOOLCHAIN=default`
+to keep CMake's own choice (for example MSVC `cl` in a separate directory). Build defaults are
 `BUILD_DIR=build/debug`, `BUILD_TYPE=Debug`, and native build tool parallelism
 (override with `JOBS=N`); environment variables
 `CMAKE`, `CTEST`, `CMAKE_ARGS`, and `CLANG_FORMAT` also override the corresponding tools/options.
@@ -160,11 +164,16 @@ Clean removes repository-local `build/` and `cmake-build*/` directories.
 Quality checks and formatting default to changed files: everything differing from `HEAD`
 in the working tree, plus untracked files.
 
+The quality tools live in the ignored `.venv-quality/` environment, pinned by
+`tools/requirements-quality.txt`:
+`python -m venv .venv-quality` then `.venv-quality/Scripts/python -m pip install -r tools/requirements-quality.txt`
+(`.venv-quality/bin/python` outside Windows).
+
 - `cmake --build build/debug --target check-quality` runs Lizard on changed production
   C++ files and clang-tidy on changed translation units plus those including a changed
   header (from Ninja's recorded dependencies). Changes to `.clang-tidy`, `cmake/` or
   production `CMakeLists.txt`, or missing dependency data, check every translation unit.
-  Set `ERLANG_AOT_QUALITY_BASE` (for example `origin/master`) to compare with another base.
+  Set `CLAUSE_QUALITY_BASE` (for example `origin/master`) to compare with another base.
 - `check-quality-all` (and `check-complexity-all`, `check-clang-tidy-all`) check every file.
 - clang-tidy runs in batches of `4 x jobs` translation units and prints a passed/FAILED line
   after each; every batch runs, then the check fails if any batch did. To split a long run
@@ -175,12 +184,12 @@ in the working tree, plus untracked files.
 - `make format` / `make-format.bat` format changed C++ files; `make format-all` or
   `FORMAT_SCOPE=all make-format.bat` formats everything.
 
-`erlangaot.bat --help` builds first, then forwards all arguments to the selected
+`clau.bat --help` builds first, then forwards all arguments to the selected
 configuration's executable. Build failures stop execution; compiler input paths
 remain relative to the caller's working directory, and its exit code is preserved.
 
 For runtime development without downloading or using the LLVM C++ SDK, configure with
-`cmake --preset windows -DERLANG_AOT_BUILD_COMPILER=OFF`; the same build/test presets
+`cmake --preset windows -DCLAUSE_BUILD_COMPILER=OFF`; the same build/test presets
 apply. Set the option back to `ON` when the SDK is available. MSVC `cl` is also
 accepted in a separate build directory; MinGW is not supported for native Windows
 development builds. Select x86 or x64 through the developer environment (or `-A`
@@ -193,15 +202,15 @@ all linked C++ libraries. Avoid mixing Debug and Release STL/CRT artifacts.
 Windows project sources and CLI/path fixtures use UTF-8.
 
 All project targets use C++23 and treat compiler warnings as errors.
-The executable is `build/debug/bin/erlangaot`. Build presets and wrappers request
+The executable is `build/debug/bin/clau`. Build presets and wrappers request
 parallel builds on Windows, Linux, and macOS using the native build tool's default
 job count (`jobs: 0` in presets, `--parallel` in wrappers). Set an explicit limit
 with `cmake --build --preset debug --parallel 8` or `JOBS=8` for the wrappers.
 For a build directory without a preset, use `cmake --build <dir> --parallel`.
-The Windows preset places the executable in `build/windows/bin/<Config>/erlangaot.exe`
-and the runtime in `build/windows/lib/<Config>/erlang_runtime.lib`.
+The Windows preset places the executable in `build/windows/bin/<Config>/clau.exe`
+and the runtime in `build/windows/lib/<Config>/clause_runtime.lib`.
 
-Alternatively, use `make build` to build only `erlangaot` and its dependencies,
+Alternatively, use `make build` to build only `clau` and its dependencies,
 or `make test` to build and run the full test suite. For a different configuration:
 
 ```sh
@@ -213,16 +222,16 @@ Pass these options when configuring to override defaults:
 
 | Option                                      | Purpose                                                       |
 |---------------------------------------------|---------------------------------------------------------------|
-| `-DERLANG_AOT_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
-| `-DERLANG_AOT_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
-| `-DERLANG_AOT_OTP_AUDITS=ON` | Enable optional live OTP/reference audits; default is OFF |
-| `-DERLANG_AOT_ESCRIPT=/path/to/bin/escript` | Select OTP 29+ for optional audits; unused by normal tests |
-| `-DERLANG_AOT_CLANG_EXECUTABLE=C:/path/to/clang.exe` | Select an installed Windows Clang executable |
+| `-DCLAUSE_BOOST_ROOT=/path/to/boost`    | Select a Boost installation or full source tree               |
+| `-DCLAUSE_TOML_ROOT=/path/to/tomlplusplus-3.4.0` | Select the pinned TOML dependency |
+| `-DCLAUSE_OTP_AUDITS=ON` | Enable optional live OTP/reference audits; default is OFF |
+| `-DCLAUSE_ESCRIPT=/path/to/bin/escript` | Select OTP 29+ for optional audits; unused by normal tests |
+| `-DCLAUSE_CLANG_EXECUTABLE=C:/path/to/clang.exe` | Select an installed Windows Clang executable |
 | `-DLLVM_DIR=/prefix/lib/cmake/llvm` | Select an existing LLVM 23.1.x SDK (invalid explicit paths fail) |
-| `-DERLANG_AOT_DOWNLOAD_LLVM=OFF` | Require an installed SDK; disable automatic LLVM downloads |
+| `-DCLAUSE_DOWNLOAD_LLVM=OFF` | Require an installed SDK; disable automatic LLVM downloads |
 | `-DBUILD_TESTING=ON`                        | Enable tests, helper executables and their Erlang dependency (default: OFF) |
-| `-DERLANG_AOT_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
-| `-DERLANG_AOT_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
+| `-DCLAUSE_BUILD_COMPILER=OFF`           | Build only the runtime library                                |
+| `-DCLAUSE_BUILD_RUNTIME=OFF`            | Build only the compiler                                       |
 
 For multi-configuration generators, add `--config Debug` when building and
 `-C Debug` when testing. CMake-aware IDEs can open the repository using the
@@ -248,9 +257,9 @@ installations instead of adding global include flags.
 ## Usage
 
 ```sh
-./build/debug/bin/erlangaot --parse-check examples/project/src/main.erl
-./build/debug/bin/erlangaot --print-pp -I include -DDEBUG examples/project/src/main.erl
-./build/debug/bin/erlangaot --print-ast examples/project/src/main.erl
+./build/debug/bin/clau --parse-check examples/project/src/main.erl
+./build/debug/bin/clau --print-pp -I include -DDEBUG examples/project/src/main.erl
+./build/debug/bin/clau --print-ast examples/project/src/main.erl
 ```
 
 On macOS, `./run-macos.sh --parse-check examples/project/src/main.erl` builds first
@@ -258,7 +267,7 @@ and runs the latest executable, passing all arguments unchanged. It accepts `BUI
 `BUILD_TYPE` and `JOBS` environment overrides.
 
 ```text
-erlangaot [options] <source.erl>...
+clau [options] <source.erl>...
   --project <path>        Read a TOML project instead of positional sources
   --target <name>         Select a target; repeat for more (default: all)
   --new-project <filename>  Create an annotated starter; append .toml when needed
@@ -290,7 +299,7 @@ erlangaot [options] <source.erl>...
 Quote paths containing spaces and macro values containing shell punctuation:
 
 ```sh
-./build/debug/bin/erlangaot --parse-check -I include '-DVERSION={1,0}' \
+./build/debug/bin/clau --parse-check -I include '-DVERSION={1,0}' \
   --app-dir myapp=examples/project examples/project/src/main.erl
 ```
 
@@ -311,10 +320,10 @@ selected project target, into an executable with Clang and the runtime library (
 See [executables](docs/executables.md) for the entry, argument and exit-status contract.
 
 ```sh
-erlangaot -O2 -o demo answer.erl client.erl && ./demo
-erlangaot -O2 --emit obj answer.erl client.erl
-erlangaot --print-ir --print-optimized-ir -O2 answer.erl
-erlangaot --print-types answer.erl client.erl
+clau -O2 -o demo answer.erl client.erl && ./demo
+clau -O2 --emit obj answer.erl client.erl
+clau --print-ir --print-optimized-ir -O2 answer.erl
+clau --print-types answer.erl client.erl
 ```
 
 IR inspection allows both stages together and stops before object emission. Multiple
@@ -356,19 +365,19 @@ See [preprocessing](docs/preprocessor.md), [parser usage](docs/parser.md) and
 Run the included two-target example:
 
 ```sh
-./build/debug/bin/erlangaot --parse-check --project examples/project/project.toml
-./build/debug/bin/erlangaot --print-ast --project examples/project/project.toml --target app
-./build/debug/bin/erlangaot --preprocess-check --project examples/project/project.toml --target tests --target app
+./build/debug/bin/clau --parse-check --project examples/project/project.toml
+./build/debug/bin/clau --print-ast --project examples/project/project.toml --target app
+./build/debug/bin/clau --preprocess-check --project examples/project/project.toml --target tests --target app
 ```
 
 Create an annotated project in an existing directory:
 
 ```sh
 mkdir -p build/project-demo
-./build/debug/bin/erlangaot --new-project build/project-demo/demo
+./build/debug/bin/clau --new-project build/project-demo/demo
 mkdir -p build/project-demo/src
 cp examples/project/src/main.erl build/project-demo/src/main.erl
-./build/debug/bin/erlangaot --parse-check --project build/project-demo/demo.toml
+./build/debug/bin/clau --parse-check --project build/project-demo/demo.toml
 ```
 
 Creation writes only the requested TOML file and refuses existing destinations.

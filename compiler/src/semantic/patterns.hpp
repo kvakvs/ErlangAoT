@@ -1,7 +1,7 @@
 #pragma once
-#include <erlang_aot/compiler/ast/expressions.hpp>
+#include <clause/compiler/ast/expressions.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 enum class PatternKind : std::uint8_t {
     variable,
     wildcard,
@@ -26,4 +26,4 @@ struct NormalizedPattern {
     // Folded constants are owned, target-independent values; no runtime representation is implied.
     std::optional<PatternLiteral> literal = {};
 };
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

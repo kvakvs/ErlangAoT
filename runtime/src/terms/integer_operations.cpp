@@ -1,8 +1,8 @@
 #include "integers.hpp"
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::ImmediateOperation;
 
@@ -93,4 +93,4 @@ TermResult<Integer> integer_unary(Op operation, const Integer &value) {
     }
 }
 
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -1,8 +1,8 @@
 #include <algorithm>
-#include <erlang_aot/compiler/lexer.hpp>
+#include <clause/compiler/lexer.hpp>
 #include <utility>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Accept Unicode scalar values for both ordinary and escaped characters.
 bool valid_scalar(const char32_t value) { return value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff); }
@@ -282,4 +282,4 @@ Token Lexer::literal() {
     }
     return punctuation();
 }
-} // namespace erlang_aot
+} // namespace clause

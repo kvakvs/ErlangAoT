@@ -12,7 +12,7 @@ function(compile name code stderr)
     if(NOT result STREQUAL "${code}" OR NOT out STREQUAL "" OR NOT err MATCHES "${stderr}")
         message(FATAL_ERROR "${name}: exit=${result} stdout=[${out}] stderr=[${err}]")
     endif()
-    file(GLOB staging "${WORK}/.erlangaot-link*")
+    file(GLOB staging "${WORK}/.clause-link*")
     if(staging)
         message(FATAL_ERROR "${name}: link staging left behind: ${staging}")
     endif()
@@ -66,7 +66,7 @@ function(failure name stderr)
         message(FATAL_ERROR "${name}: existing output was modified")
     endif()
 endfunction()
-failure(absent_runtime "^error: runtime library not found: [^\n]*absent\\.lib; build the erlang_runtime target"
+failure(absent_runtime "^error: runtime library not found: [^\n]*absent\\.lib; build the clause_runtime target"
     --runtime-library absent.lib -o kept.bin)
 failure(not_archive "^error: runtime library is not a static library: [^\n]*app\\.erl"
     --runtime-library app.erl -o kept.bin)

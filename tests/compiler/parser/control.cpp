@@ -1,11 +1,11 @@
 // Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
 #include <sstream>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Keep contract checks active across optimized and sanitizer builds.
 void require(bool condition) {

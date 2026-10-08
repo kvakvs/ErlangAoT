@@ -4,7 +4,7 @@
 #include <map>
 #include <set>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Give every value-bearing switch the same absent/empty operand diagnostic.
 std::optional<std::string> operand(const std::string_view option, std::span<char *> &remaining, std::string &value) {
@@ -181,4 +181,4 @@ std::optional<std::string> validate_backend_options(const Options &options) {
     }
     return output_conflict(options);
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

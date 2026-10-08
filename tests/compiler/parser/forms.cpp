@@ -1,12 +1,12 @@
 // Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include <algorithm>
 #include <bit>
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <source_location>
 #include <stdexcept>
 
-using namespace erlang_aot;
-namespace ast = erlang_aot::ast;
+using namespace clause;
+namespace ast = clause::ast;
 
 // Keep API regressions active in every build configuration.
 void require(bool condition, std::source_location location = std::source_location::current()) {

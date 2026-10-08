@@ -6,7 +6,7 @@
 #include <exception>
 #include <llvm/Passes/PassBuilder.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Select the standard LLVM pipeline; like Clang -Os, size mode is O2 over definitions marked optsize.
 llvm::ModulePassManager pipeline(llvm::PassBuilder &builder, llvm::Module &module, const OptimizationLevel level) {
@@ -60,4 +60,4 @@ bool optimize(Compilation &compilation) {
     }
     return verify_ir(compilation);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

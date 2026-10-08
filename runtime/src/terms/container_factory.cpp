@@ -1,12 +1,12 @@
 #include "../memory/heap_storage.hpp"
 #include "term_layout.hpp"
 #include "terms.hpp"
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/term.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Validate every child before reservation; lists have no length cap beyond memory.
 TermResult<void> validate(ProcessHeap &heap, std::span<const Term> values) {
@@ -165,4 +165,4 @@ TermResult<Term> TermFactory::list(std::span<const Term> elements) {
 TermResult<Term> TermFactory::list(std::span<const Term> elements, const Term &tail) {
     return list_tail(elements, tail);
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

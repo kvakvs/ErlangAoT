@@ -3,13 +3,13 @@
 #include "../scheduler/executor.hpp"
 #include <algorithm>
 #include <array>
+#include <clause/abi/startup.hpp>
+#include <clause/runtime/modules.hpp>
+#include <clause/runtime/output.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/startup.hpp>
-#include <erlang_aot/runtime/modules.hpp>
-#include <erlang_aot/runtime/output.hpp>
 #include <span>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::StartupDescriptor;
 using abi::v1::Status;
@@ -46,7 +46,7 @@ void report(std::string_view prefix, std::string_view text) noexcept {
 // Report a failure outside Erlang code (startup, registration, infrastructure) and select its exit status.
 // Writing never allocates, so allocation-failure handlers can use it too.
 int runtime_failure(std::string_view what) noexcept {
-    report("erlangaot: runtime failure: ", what);
+    report("clau: runtime failure: ", what);
     return abi::v1::exit_runtime_failure;
 }
 
@@ -211,10 +211,10 @@ TermResult<std::string> exception_reason(const CallFailure &failure) {
         return "{" + std::string(name) + "," + value + "}";
     });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-int erlang_aot_main_v1(int argc, char **argv, const void *startup) noexcept {
-    using namespace erlang_aot;
+int CLAUSE_main_v1(int argc, char **argv, const void *startup) noexcept {
+    using namespace clause;
     if (!startup) {
         return runtime::detail::runtime_failure("missing startup descriptor");
     }

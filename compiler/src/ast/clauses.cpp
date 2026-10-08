@@ -1,7 +1,7 @@
 #include "children.hpp"
 #include "storage.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 // Store a category-safe pattern wrapper only after validating its expression owner.
 PatternSyntaxId Builder::pattern(PatternValue value, NodeSource source) const {
     validate(source);
@@ -17,4 +17,4 @@ void Builder::validate(const FormValue &value) const {
     }
     std::visit(Children{.builder = *this, .form = *active_}, value);
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

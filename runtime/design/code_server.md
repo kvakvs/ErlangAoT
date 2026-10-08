@@ -8,9 +8,9 @@ exist and publication/lookup is synchronized (plan 11 step 55,
 [threads](../../docs/runtime.md#threads)). Native typed sketches are retained under
 `runtime/include/unverified/`; there is no implemented `native_callable.hpp`.
 
-- [callable.hpp](../include/erlang_aot/runtime/callable.hpp): generic targets,
+- [callable.hpp](../include/clause/runtime/callable.hpp): generic targets,
   exact signature keys and one frozen `ModuleRegistry` per module.
-- [code_server.hpp](../include/erlang_aot/runtime/code_server.hpp): native module
+- [code_server.hpp](../include/clause/runtime/code_server.hpp): native module
   publication, pinned generic resolution and code-image lifetime.
 
 ## Function registration
@@ -140,7 +140,7 @@ roots while handles pin the code, as described in the
 This illustrates the future atom/typed API, not the implemented string-name skeleton:
 
 ```cpp
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 CallResult<Term> generic_size(ProcessContext &, std::span<const Term>);
 CallResult<Term> native_size(ProcessContext &, std::vector<std::int64_t>);

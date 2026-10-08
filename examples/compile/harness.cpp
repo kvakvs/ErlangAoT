@@ -1,12 +1,12 @@
 #include <array>
 #include <cstdio>
-#include <erlang_aot/runtime/modules.hpp>
+#include <clause/runtime/modules.hpp>
 #include <stdexcept>
 #include <utility>
 
 // Match ABI v1's reversible registration symbols; these are project C++ machine interfaces.
-extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
-extern erlang_aot::abi::v1::GeneratedRegistration register_client asm("eav1_636c69656e74__0.register");
+extern clause::abi::v1::GeneratedRegistration register_answer asm("clausev1_616e73776572__0.register");
+extern clause::abi::v1::GeneratedRegistration register_client asm("clausev1_636c69656e74__0.register");
 
 // Convert failed host operations into one contained example error before accessing their values.
 template <class Result> auto checked(Result result) {
@@ -17,7 +17,7 @@ template <class Result> auto checked(Result result) {
 }
 
 // Execute each supported pattern family through the separately compiled remote demo.
-void demonstrate(erlang_aot::runtime::ProcessContext &context) {
+void demonstrate(clause::runtime::ProcessContext &context) {
     const auto entry = checked(context.code_server().resolve({"client", "demo", 0}));
     const auto labels = checked(checked(entry.call(context, {})).tuple_elements());
     for (const auto &label : labels) {
@@ -28,7 +28,7 @@ void demonstrate(erlang_aot::runtime::ProcessContext &context) {
 
 // Initialize one real runtime, register separate objects, decode results and shut down explicitly.
 int execute() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     auto runtime = checked(Runtime::start());
     if (register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;
@@ -42,8 +42,8 @@ int execute() {
     std::printf("%lld\n%lld\n", static_cast<long long>(checked(value.integer_value())),
                 static_cast<long long>(checked(copied.integer_value())));
     demonstrate(*context);
-    if (runtime->destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
-        runtime->shutdown() != erlang_aot::abi::v1::Status::ok) {
+    if (runtime->destroy_context(context) != clause::abi::v1::Status::ok ||
+        runtime->shutdown() != clause::abi::v1::Status::ok) {
         return 2;
     }
     return 0;

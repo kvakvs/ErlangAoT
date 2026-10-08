@@ -7,7 +7,7 @@
 #include <limits>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 TermResult<Term> FloatAccess::make(ProcessHeap &heap, double value) {
     static_assert(sizeof(double) == 8 && std::numeric_limits<double>::is_iec559);
     if (!std::isfinite(value)) {
@@ -24,9 +24,9 @@ TermResult<Term> FloatAccess::make(ProcessHeap &heap, double value) {
     std::memcpy(words + 1, &value, sizeof(value));
     return publish(heap.storage_, *reserved, reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 bool Term::is_float() const { return kind() == TermKind::floating; }
 
 TermResult<double> Term::float_value() const {
@@ -53,4 +53,4 @@ TermResult<Term> TermFactory::floating(double value) {
         return std::unexpected(TermError::out_of_memory);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,9 +1,9 @@
 #include "atoms.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/funs.hpp>
-#include <erlang_aot/abi/records.hpp>
+#include <clause/abi/funs.hpp>
+#include <clause/abi/records.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Normalize the one permitted null spelling pointer without hiding invalid nonempty descriptors.
 bool valid_atom(const abi::v1::AtomDescriptor &atom) {
@@ -155,10 +155,10 @@ bind_atoms(AtomStorage &storage, const abi::v1::ModuleDescriptor &descriptor, co
     }
     return bindings;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-erlang_aot::abi::v1::TermWord erlang_aot_atom_v3(void *context, std::size_t slot, const void *descriptor) noexcept {
-    using namespace erlang_aot;
+clause::abi::v1::TermWord CLAUSE_atom_v3(void *context, std::size_t slot, const void *descriptor) noexcept {
+    using namespace clause;
     if (!context) {
         return 0;
     }

@@ -1,12 +1,12 @@
 #include <array>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/compiler/source.hpp>
 #include <fstream>
 #include <iterator>
 #include <optional>
 #include <regex>
 #include <utility>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Match a coding marker only in the comment portion of a physical line.
 std::optional<Encoding> encoding_comment(std::string_view line) {
@@ -153,4 +153,4 @@ std::string utf8(const std::u32string_view text) {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

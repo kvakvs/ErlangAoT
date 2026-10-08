@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/compiler/ast/operators.hpp>
-#include <erlang_aot/compiler/lexer.hpp>
+#include <clause/compiler/ast/operators.hpp>
+#include <clause/compiler/lexer.hpp>
 
-namespace erlang_aot {
+namespace clause {
 enum class Associativity : std::uint8_t { left, right, none };
 enum class OperatorContext : std::uint8_t { expression, pattern, condition, type };
 
@@ -30,4 +30,4 @@ std::optional<OperatorInfo> infix_operator(const Token &token, OperatorContext c
 // Render typed operators from the same spelling tables used by the parser.
 std::u32string_view operator_spelling(ast::BinaryOperator operation);
 std::u32string_view operator_spelling(ast::UnaryOperator operation);
-} // namespace erlang_aot
+} // namespace clause

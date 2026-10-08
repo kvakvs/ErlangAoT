@@ -2,7 +2,7 @@
 #include <array>
 #include <charconv>
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // Match io_lib:printable_unicode_list/1's non-ASCII ranges, excluding surrogates and FFFE/FFFF.
 bool printable_unicode(const char32_t value) {
@@ -44,4 +44,4 @@ std::optional<char32_t> printable_character(const Integer &value) {
     }
     return character;
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

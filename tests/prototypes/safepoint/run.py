@@ -43,7 +43,7 @@ def run(command):
 
 def reloads_after_safepoint(ir, word):
     """Whether a load of Y's frame word follows the safepoint call (O0 keeps the named GEP, O2 a byte offset)."""
-    after = ir.split("call void @erlang_aot_safepoint_v1", 1)
+    after = ir.split("call void @CLAUSE_safepoint_v1", 1)
     if len(after) != 2:
         return False
     offset = Y_WORD * (8 if word == "i64" else 4)

@@ -33,7 +33,7 @@ def main():
                        'aarch64-unknown-linux-gnu':('aarch64','64bit')}[triple]
         reports = [run([str(readobj),'--file-headers','--symbols',str(obj)]) for obj in objects]
         assert all('Arch: ' + arch in report and 'AddressSize: ' + width in report for report in reports)
-        assert any('erlang_aot_bits_v1' in report for report in reports)
+        assert any('CLAUSE_bits_v1' in report for report in reports)
         target_reports.append({'triple':triple,'execution':'not attempted','header_and_symbols':'checked'})
     records['targets'] = target_reports
     run([tool,'--print-types',str(work/'answer.erl'),str(work/'client.erl')])

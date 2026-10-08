@@ -1,13 +1,13 @@
 #include "service_errors.hpp"
 #include "terms.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/containers.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/containers.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <span>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Outcome = abi::v1::ValueOutcome;
 using Inspect = abi::v1::ContainerInspection;
@@ -156,19 +156,19 @@ std::uint8_t inspect_service(ProcessContext &context, InspectionRequest request,
     }
     return publish_result(context, inspect(*value, request.operation, request.index), output);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_construct_v1(void *context, std::uint8_t operation, const erlang_aot::abi::v1::TermWord *values,
-                                     std::size_t count, erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_construct_v1(void *context, std::uint8_t operation, const clause::abi::v1::TermWord *values,
+                                 std::size_t count, clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause;
     return context ? runtime::detail::construct_service(*static_cast<runtime::ProcessContext *>(context), operation,
                                                         values, count, output)
                    : static_cast<std::uint8_t>(abi::v1::ValueOutcome::failure);
 }
 
-std::uint8_t erlang_aot_inspect_v1(void *context, std::uint8_t operation, erlang_aot::abi::v1::TermWord value,
-                                   std::size_t index, erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_inspect_v1(void *context, std::uint8_t operation, clause::abi::v1::TermWord value,
+                               std::size_t index, clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause;
     return context
                ? runtime::detail::inspect_service(*static_cast<runtime::ProcessContext *>(context),
                                                   {static_cast<abi::v1::ContainerInspection>(operation), value, index},

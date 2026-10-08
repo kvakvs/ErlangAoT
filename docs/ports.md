@@ -121,8 +121,8 @@ supports control, reports input and errors as events and closes. Drivers:
   asynchronous (57F, [sockets](#sockets-57f)).
 
 The internal drivers of `file` and the sockets are opened with
-`{spawn_driver, Name}` under ErlangAoT names, and their `port_control/3`
-operations are an ErlangAoT protocol: programs use the library modules, not
+`{spawn_driver, Name}` under Clause names, and their `port_control/3`
+operations are a Clause protocol: programs use the library modules, not
 OTP's `prim_inet`/`efile` protocols.
 
 ## I/O thread
@@ -206,19 +206,19 @@ Step 57E.
 
 - `io:format`, `io:put_chars` and `erlang:display` keep writing standard
   output directly ([io](io.md)). Standard input is read by one library
-  server process, registered as `erlang_aot_stdin` and started on first use,
+  server process, registered as `clause_stdin` and started on first use,
   which owns an `{fd, 0, 1}` port: `io:get_line/1,2` writes the prompt, then
   returns the next line with its newline, the rest of the input without one
   at its end, then `eof`; `io:get_chars/2,3` returns up to `N` characters,
   then `eof`. Requests of several processes are answered in arrival order.
   Input is returned as bytes (one list element per byte).
 - The library's `file` module drives the runtime's file driver,
-  `{spawn_driver, "erlang_aot_file"}`, with `port_control/3`. Its operations
+  `{spawn_driver, "clause_file"}`, with `port_control/3`. Its operations
   (`ports/file.cpp`: open, read, write, position, read_line, close, and the
   path operations read_file, write_file, delete, rename, list_dir, make_dir,
   del_dir) are synchronous system calls on the caller's worker, outside the
   executor mutex; their replies start with a status byte (0 ok, 1 error and
-  its POSIX reason, 2 end of file). The protocol is ErlangAoT's own.
+  its POSIX reason, 2 end of file). The protocol is Clause's own.
 - `file:open/2` returns an I/O server pid that owns a file port and is linked
   to the opener (modes `read`, `write`, `append`, `exclusive`, `binary`;
   other modes are ignored, as OTP ignores options it does not use).
@@ -260,7 +260,7 @@ Implementation (`runtime/src/ports/sockets.cpp`):
   thread and waits for its synchronous reply (status byte 0 and a result, or
   1 and a POSIX reason).
 - Operations that wait (connect, accept, recv) answer later with a message
-  `{erlang_aot_socket, Socket, Reply}` to their caller, so the caller blocks in
+  `{clause_socket, Socket, Reply}` to their caller, so the caller blocks in
   an ordinary `receive` and other processes keep running. A timeout cancels
   the request; the cancellation itself answers `cancelled` after anything
   the socket sent before, so a reply that won the race is returned instead

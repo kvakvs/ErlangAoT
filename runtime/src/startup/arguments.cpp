@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #endif
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Unicode code points of one argument, in order.
 using Points = std::vector<std::uint32_t>;
@@ -141,4 +141,4 @@ TermResult<Term> program_arguments(ProcessContext &context, int argc, char **arg
     }
     return factory.list(strings);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

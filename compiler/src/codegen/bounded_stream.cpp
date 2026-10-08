@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 BoundedStream::BoundedStream(const std::size_t limit) : raw_pwrite_stream(true), limit_(limit) {}
 
 void BoundedStream::write_impl(const char *data, const std::size_t size) {
@@ -60,4 +60,4 @@ std::vector<std::byte> BoundedStream::take_bytes() {
     }
     return std::move(bytes_);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -1,9 +1,9 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <llvm/IR/Module.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 // Semantic rejection targets the entire enclosing guard; ordinary bodies use one shared badarg exit.
 llvm::BasicBlock *bad_argument_exit(ExpressionLowering &state, llvm::Value *payload) {
     if (state.rejection) {
@@ -137,4 +137,4 @@ llvm::Value *checked_value(ExpressionLowering &state, const ServiceOutput result
     return builder.CreateAlignedLoad(state.word, result.slot, llvm::Align(state.word->getBitWidth() / 8),
                                      "service.value");
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

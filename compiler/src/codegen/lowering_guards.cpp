@@ -1,6 +1,6 @@
 #include "lowering_state.hpp"
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Comma boundaries require canonical true and share one rejection edge for the complete alternative.
 void conjunction(ExpressionLowering &state, const ast::GuardConjunction &guard, const GuardEdges edges) {
@@ -31,4 +31,4 @@ void lower_guard(ExpressionLowering &state, const ast::GuardSyntax &guard, const
     }
     state.rejection = nullptr;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

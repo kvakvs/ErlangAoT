@@ -3,7 +3,7 @@
 #include "../semantic/types/contracts.hpp"
 #include "entry.hpp"
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct Analysis {
     // Own side tables while the input batch retains every borrowed AST and source location.
     std::vector<std::unique_ptr<semantic::Module>> modules;
@@ -17,4 +17,4 @@ struct Analysis {
 // Run declaration, binding, call, declared-type and inference phases without creating LLVM state.
 bool analyze(const codegen::CompilationRequest &request, const EntryRequest &entry, Analysis &analysis,
              const DiagnosticSink &sink);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

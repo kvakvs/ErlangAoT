@@ -6,7 +6,7 @@
 #include <windows.h>
 #endif
 
-namespace erlang_aot::artifacts::detail {
+namespace clause::artifacts::detail {
 void replace(const std::filesystem::path &from, const std::filesystem::path &to) {
 #ifdef _WIN32
     if (!MoveFileExW(from.c_str(), to.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
@@ -18,4 +18,4 @@ void replace(const std::filesystem::path &from, const std::filesystem::path &to)
     std::filesystem::rename(from, to);
 #endif
 }
-} // namespace erlang_aot::artifacts::detail
+} // namespace clause::artifacts::detail

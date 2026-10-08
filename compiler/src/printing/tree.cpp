@@ -1,9 +1,9 @@
 #include "tree.hpp"
 #include "token_text.hpp"
 #include <algorithm>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/printing.hpp>
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 std::string literal(const TokenKind kind, const TokenValue &value) { return utf8(token_text(kind, value)); }
 
 std::string atom(const ast::Atom &value) { return literal(TokenKind::atom, value.name); }
@@ -80,10 +80,10 @@ void TreePrinter::run() {
     }
     close_objects(0);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing
 
-namespace erlang_aot {
+namespace clause {
 void print_ast(std::ostream &output, const ast::Module &module, const std::size_t visits) {
     printing::TreePrinter(output, module, visits).run();
 }
-} // namespace erlang_aot
+} // namespace clause

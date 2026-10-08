@@ -2,7 +2,7 @@
 -export([main/1]).
 
 %% Binaries have no size cap beyond an optional process heap budget: these
-%% exceed the 1,000,000 bits ErlangAoT used to allow per value.
+%% exceed the 1,000,000 bits Clause used to allow per value.
 main([]) ->
     Big = double(<<1, 0:65528>>, 7),
     show(byte_size(Big)),

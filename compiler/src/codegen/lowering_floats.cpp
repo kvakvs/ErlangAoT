@@ -4,7 +4,7 @@
 #include <bit>
 #include <llvm/IR/Module.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 llvm::Value *lower_float(ExpressionLowering &state, const double value) {
     const auto bits = std::bit_cast<std::uint64_t>(value);
     std::array<char, 8> encoded{};
@@ -28,4 +28,4 @@ llvm::Value *lower_float(ExpressionLowering &state, const double value) {
     return checked_value(state, {outcome, slot}, bad_arithmetic_exit(state));
 }
 
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

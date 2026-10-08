@@ -1,15 +1,15 @@
 #include "../compiler/codegen/match_wire.hpp"
-#include <erlang_aot/abi/output.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/output.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Retain behavioral checks in optimized builds.
 void require(bool condition, const std::string &message) {
@@ -155,8 +155,8 @@ bool capture(void *state, std::string_view bytes) {
 }
 
 // Call the generated-code display service as compiled code does, inside one host invocation.
-std::uint8_t display(ProcessContext &context, const Term &value, erlang_aot::abi::v1::TermWord *output) {
-    return erlang_aot_display_v1(&context, value.word(), output);
+std::uint8_t display(ProcessContext &context, const Term &value, clause::abi::v1::TermWord *output) {
+    return CLAUSE_display_v1(&context, value.word(), output);
 }
 
 // The service writes exactly one line and returns true; a rejected write becomes output_failure.
@@ -169,7 +169,7 @@ void service() {
     // Module registration interns the canonical true/false atoms before generated code runs.
     require(context.atom_storage().intern("true").has_value(), "true atom");
     const auto value = TermFactory(context).tuple(std::array{context.atom_storage().intern("a").value()}).value();
-    erlang_aot::abi::v1::TermWord result = 0;
+    clause::abi::v1::TermWord result = 0;
     {
         GeneratedInvocation scope(context.generated_calls());
         require(display(context, value, &result) == 0 && captured.bytes == "{a}\n", "display line");
@@ -190,7 +190,7 @@ void misuse() {
     auto runtime = Runtime::start(options).value();
     auto &context = *runtime->create_context().value();
     const auto value = context.atom_storage().intern("a").value();
-    erlang_aot::abi::v1::TermWord result = 0;
+    clause::abi::v1::TermWord result = 0;
     require(display(context, value, &result) != 0 && captured.bytes.empty(), "display ran outside an invocation");
     GeneratedInvocation scope(context.generated_calls());
     require(display(context, value, nullptr) != 0 && captured.bytes.empty(), "display accepted a null output");

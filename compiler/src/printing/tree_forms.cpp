@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 void TreePrinter::operator()(const ast::ModuleAttribute &value) const {
     output_ << "ModuleAttribute name=" << atom(value.name);
     if (value.parameters) {
@@ -50,4 +50,4 @@ void TreePrinter::operator()(const ast::PatternCandidate &value) {
     output_ << "PatternCandidate";
     child("expression", value.expression);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

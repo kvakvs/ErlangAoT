@@ -1,9 +1,9 @@
 #include "heap_object.hpp"
 #include "heap_storage.hpp"
 #include "heap_walk.hpp"
-#include <erlang_aot/runtime/atoms.hpp>
+#include <clause/runtime/atoms.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BoxHeader;
 
@@ -126,4 +126,4 @@ TermResult<void> TermAccess::validate(const Term &value) noexcept {
     }
     return Term::from_word(value.word()).transform([](const Term &) {});
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

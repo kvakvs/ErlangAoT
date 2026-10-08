@@ -1,5 +1,5 @@
 #include "codegen/llvm_state.hpp"
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <iostream>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/DiagnosticInfo.h>
@@ -8,8 +8,8 @@
 #include <stdexcept>
 #include <utility>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
+using namespace clause;
+using namespace clause::codegen;
 
 // Keep lifetime and diagnostic checks active independently of LLVM/build assertions.
 void require(bool condition, const char *message) {

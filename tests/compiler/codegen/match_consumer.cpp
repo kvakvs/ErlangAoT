@@ -1,17 +1,17 @@
 #include "match_wire.hpp"
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/modules.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/modules.hpp>
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 
-extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
-extern erlang_aot::abi::v1::GeneratedRegistration register_client asm("eav1_636c69656e74__0.register");
+extern clause::abi::v1::GeneratedRegistration register_answer asm("clausev1_616e73776572__0.register");
+extern clause::abi::v1::GeneratedRegistration register_client asm("clausev1_636c69656e74__0.register");
 
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Retain readable test failures in optimized native builds.
 void require(bool condition, const char *message) {
@@ -42,29 +42,28 @@ void print(const CallResult<Term> &result) {
     }
     require(result.error().code == CallError::erlang_exception, "unexpected infrastructure failure");
     const auto reason = result.error().reason;
-    if (reason == erlang_aot::abi::v1::ErrorReason::badarg_value ||
-        reason == erlang_aot::abi::v1::ErrorReason::badmatch || reason == erlang_aot::abi::v1::ErrorReason::badmap ||
-        reason == erlang_aot::abi::v1::ErrorReason::badkey || reason == erlang_aot::abi::v1::ErrorReason::badrecord) {
+    if (reason == clause::abi::v1::ErrorReason::badarg_value || reason == clause::abi::v1::ErrorReason::badmatch ||
+        reason == clause::abi::v1::ErrorReason::badmap || reason == clause::abi::v1::ErrorReason::badkey ||
+        reason == clause::abi::v1::ErrorReason::badrecord) {
         require(result.error().value.has_value(), "missing error payload");
-        const std::map<erlang_aot::abi::v1::ErrorReason, std::string_view> names{
-            {erlang_aot::abi::v1::ErrorReason::badmatch, "badmatch"},
-            {erlang_aot::abi::v1::ErrorReason::badarg_value, "badarg_value"},
-            {erlang_aot::abi::v1::ErrorReason::badmap, "badmap"},
-            {erlang_aot::abi::v1::ErrorReason::badkey, "badkey"},
-            {erlang_aot::abi::v1::ErrorReason::badrecord, "badrecord"}};
+        const std::map<clause::abi::v1::ErrorReason, std::string_view> names{
+            {clause::abi::v1::ErrorReason::badmatch, "badmatch"},
+            {clause::abi::v1::ErrorReason::badarg_value, "badarg_value"},
+            {clause::abi::v1::ErrorReason::badmap, "badmap"},
+            {clause::abi::v1::ErrorReason::badkey, "badkey"},
+            {clause::abi::v1::ErrorReason::badrecord, "badrecord"}};
         std::cout << "error:" << names.at(*reason) << ':';
         print_value(*result.error().value);
         return;
     }
-    require(reason == erlang_aot::abi::v1::ErrorReason::function_clause ||
-                reason == erlang_aot::abi::v1::ErrorReason::badarg ||
-                reason == erlang_aot::abi::v1::ErrorReason::badarith,
+    require(reason == clause::abi::v1::ErrorReason::function_clause || reason == clause::abi::v1::ErrorReason::badarg ||
+                reason == clause::abi::v1::ErrorReason::badarith,
             "unexpected Erlang reason");
-    if (reason == erlang_aot::abi::v1::ErrorReason::badarith) {
+    if (reason == clause::abi::v1::ErrorReason::badarith) {
         std::cout << "error:badarith\n";
         return;
     }
-    std::cout << (reason == erlang_aot::abi::v1::ErrorReason::badarg ? "error:badarg\n" : "error:function_clause\n");
+    std::cout << (reason == clause::abi::v1::ErrorReason::badarg ? "error:badarg\n" : "error:function_clause\n");
 }
 
 // Runtime-only invalid word/foreign ownership checks cannot be expressed as legal Erlang source.
@@ -74,11 +73,11 @@ void equality_failures(ProcessContext &context) {
     const auto atom = foreign.atom_storage().intern("owned").value();
     for (const auto invalid : {Word{0}, Word{0x6b}, atom.word()}) {
         GeneratedInvocation scope(context.generated_calls());
-        require(erlang_aot_exact_v1(&context, invalid, invalid) == 2, "invalid equality fabricated success");
+        require(CLAUSE_exact_v1(&context, invalid, invalid) == 2, "invalid equality fabricated success");
         require(context.generated_calls().failure().has_value(), "invalid equality lost failure");
     }
     GeneratedInvocation scope(context.generated_calls());
-    require(erlang_aot_exact_v1(&context, erlang_aot::abi::v1::empty_list, erlang_aot::abi::v1::empty_tuple) == 0,
+    require(CLAUSE_exact_v1(&context, clause::abi::v1::empty_list, clause::abi::v1::empty_tuple) == 0,
             "equality did not recover");
 }
 
@@ -145,8 +144,8 @@ int main() {
         auto *context = runtime->create_context(HeapOptions{std::size_t{1} << 20}).value();
         equality_failures(*context);
         calls(*context);
-        require(runtime->destroy_context(context) == erlang_aot::abi::v1::Status::ok, "context teardown failed");
-        require(runtime->shutdown() == erlang_aot::abi::v1::Status::ok, "runtime teardown failed");
+        require(runtime->destroy_context(context) == clause::abi::v1::Status::ok, "context teardown failed");
+        require(runtime->shutdown() == clause::abi::v1::Status::ok, "runtime teardown failed");
         return 0;
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';

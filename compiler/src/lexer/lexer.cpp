@@ -1,10 +1,10 @@
 #include "parsing/boost_parser.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/compiler/lexer.hpp>
+#include <clause/compiler/lexer.hpp>
 #include <utility>
 
-namespace erlang_aot {
+namespace clause {
 namespace bp = boost::parser;
 
 bool atom_start(const char32_t value) {
@@ -194,4 +194,4 @@ void Lexer::recover_form() {
         }
     }
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <format>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Return zero-based line `number` without its terminator; empty past the end.
 std::string_view line(const std::string_view bytes, const std::size_t number) {
@@ -92,4 +92,4 @@ std::optional<EscriptSource> escript_source(const std::filesystem::path &path, s
         declares_module(rest) ? std::string{} : "-module(" + atom_literal(escript_module_name(path)) + ").";
     return EscriptSource{header + std::string(rest), emulator_line(bytes)};
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

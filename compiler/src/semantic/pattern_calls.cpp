@@ -4,7 +4,7 @@
 #include "services.hpp"
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // This legality catalog follows maint-29 erl_internal:guard_bif/2 and new_type_test/2, not PP evaluation.
 bool guard_bif(const std::u32string &name, const std::size_t arity) {
@@ -327,4 +327,4 @@ std::optional<FunctionKey> body_builtin(BindingAnalysis &state, const ast::ExprI
     const bool imported = auto_imported(key) && !state.module.lookup.contains(key) && auto_import(state, id, key);
     return imported ? std::optional{key} : std::nullopt;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

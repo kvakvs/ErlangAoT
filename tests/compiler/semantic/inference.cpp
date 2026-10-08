@@ -3,13 +3,13 @@
 #include "semantic/capabilities.hpp"
 #include "semantic/services.hpp"
 #include "semantic/types/declarations.hpp"
+#include <clause/compiler/parser.hpp>
 #include <cstdio>
-#include <erlang_aot/compiler/parser.hpp>
 #include <source_location>
 #include <stdexcept>
-using namespace erlang_aot;
-using namespace erlang_aot::semantic;
-namespace t = erlang_aot::semantic::types;
+using namespace clause;
+using namespace clause::semantic;
+namespace t = clause::semantic::types;
 
 // Keep these relational and budget invariants until public type inspection replaces them.
 void require(bool value, const std::source_location site = std::source_location::current()) {

@@ -8,7 +8,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Most entries a map header can count: key and value words; on 32-bit targets 2^24 - 1, on 64-bit beyond memory.
 constexpr std::size_t MAX_MAP_SIZE = (static_cast<Word>(~Word{0}) >> layout::BoxHeader::CONTENT_SHIFT) / 2;
@@ -157,10 +157,10 @@ MapResult MapAccess::update(ProcessHeap &heap, const Term &map, std::span<const 
         return std::unexpected(MapFault{TermError::resource_limit, map});
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<Term> TermFactory::map(std::span<const std::pair<Term, Term>> entries) {
     return heap().and_then([&](ProcessHeap *owner) { return detail::MapAccess::make(*owner, entries); });
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

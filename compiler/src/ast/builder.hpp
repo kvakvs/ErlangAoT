@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 #include <optional>
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 // Internal mutable construction API; consumers receive only the finished Module.
 class Builder {
   public:
@@ -59,4 +59,4 @@ class Builder {
     void validate(const FormValue &value) const;
     void validate(const ExprValue &value) const;
 };
-} // namespace erlang_aot::ast
+} // namespace clause::ast

@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct SymbolIdentity {
     // UTF-8 bytes are length-independent components; arity belongs to the same identity.
     std::string module;
@@ -16,4 +16,4 @@ struct SymbolIdentity {
 // Encode/decode the private ABI v1 symbol using disjoint separators and hexadecimal UTF-8 bytes.
 std::string encode_symbol(const SymbolIdentity &identity);
 std::optional<SymbolIdentity> decode_symbol(std::string_view symbol);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

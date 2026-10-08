@@ -1,6 +1,6 @@
 #include "scheduler/executor.hpp"
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -9,8 +9,8 @@
 // self-sends and sends to ended processes behave as in OTP, messages are roots of the receiver until received, the
 // receive position survives arrivals, and a copy the receiver's heap refuses delivers nothing.
 namespace {
-using namespace erlang_aot::runtime;
-using Status = erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {

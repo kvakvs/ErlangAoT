@@ -1,15 +1,15 @@
 #include "terms.hpp"
 #include <array>
 #include <bit>
+#include <clause/abi/floats.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <cmath>
-#include <erlang_aot/abi/floats.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Retain host-invariant checks in optimized consumer builds.
 void require(bool condition, const char *message) {
@@ -41,7 +41,7 @@ void ownership() {
         require(factory.tuple(std::array{value, second}).has_value(), "growth failed");
     }
     require(std::signbit(value.float_value().value()), "growth damaged retained float");
-    require(runtime->destroy_context(&context) == erlang_aot::abi::v1::Status::ok, "teardown failed");
+    require(runtime->destroy_context(&context) == clause::abi::v1::Status::ok, "teardown failed");
     require(value.float_value() == std::unexpected(TermError::expired_context), "expired float dereferenced");
     require(factory.floating(1) == std::unexpected(TermError::expired_context), "expired factory used");
 }
@@ -54,13 +54,13 @@ void service() {
     Word output = 123;
     {
         GeneratedInvocation scope(context.generated_calls());
-        require(erlang_aot_float_v1(&context, one.data(), 7, &output) == 2 && output == 123,
+        require(CLAUSE_float_v1(&context, one.data(), 7, &output) == 2 && output == 123,
                 "invalid literal published output");
         require(context.generated_calls().failure().has_value(), "literal failure lost");
     }
     {
         GeneratedInvocation scope(context.generated_calls());
-        require(erlang_aot_float_v1(&context, one.data(), 8, &output) == 0, "literal recovery failed");
+        require(CLAUSE_float_v1(&context, one.data(), 8, &output) == 0, "literal recovery failed");
         require(Term::from_word(output, context)->float_value() == 1.0, "literal byte order wrong");
     }
 }

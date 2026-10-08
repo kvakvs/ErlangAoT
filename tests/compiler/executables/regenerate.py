@@ -26,7 +26,7 @@ def observe(escript, staged, entry, run, work):
     args = run['args']
     version = work / 'version.txt'
     version.unlink(missing_ok=True)
-    environment = os.environ | {'ERLANG_AOT_TEST_PYTHON': sys.executable}
+    environment = os.environ | {'CLAUSE_TEST_PYTHON': sys.executable}
     result = subprocess.run([escript, str(ORACLE), str(version), str(staged), entry, *args],
                             cwd=staged, capture_output=True, timeout=300, check=False,
                             input=run.get('stdin', '').encode(), env=environment)
@@ -40,7 +40,7 @@ def generated_run(case, run, result):
     pattern = run.get('stderr')
     if pattern is None and result.stderr:
         sys.exit(f'{case}: OTP wrote stderr for args {run["args"]}; author a "stderr" pattern for '
-                 f'the ErlangAoT report:\n{result.stderr.decode(errors="replace")}')
+                 f'the Clause report:\n{result.stderr.decode(errors="replace")}')
     stdout = result.stdout.replace(b'\r\n', b'\n').decode('utf8')
     stdin = {'stdin': run['stdin']} if 'stdin' in run else {}
     return {'args': run['args'], **stdin, 'stderr': pattern or '^$', 'exit_status': result.returncode, 'stdout': stdout}
@@ -53,7 +53,7 @@ def regenerate(escript, case_dir, work):
     runs, version = [], None
     for run in golden['runs']:
         if run.get('authored'):
-            # ErlangAoT-only behavior OTP cannot show: kept as written.
+            # Clause-only behavior OTP cannot show: kept as written.
             runs.append(run)
             continue
         result, version = observe(escript, staged, golden['entry'], run, work)

@@ -4,10 +4,10 @@
 #include "term_layout.hpp"
 #include "terms.hpp"
 #include <algorithm>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Keep allocation failures distinct from the configured backing ceiling.
 TermError heap_error(HeapError error) {
@@ -147,4 +147,4 @@ std::optional<std::size_t> record_position(const RecordDefinition &definition, W
     return static_cast<std::size_t>(found - definition.fields.begin());
 }
 } // namespace detail
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

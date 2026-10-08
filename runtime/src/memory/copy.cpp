@@ -4,13 +4,13 @@
 #include "off_heap.hpp"
 #include "process_heap.hpp"
 #include <algorithm>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <unordered_map>
 #include <vector>
 
 // Copy a term graph between process heaps of one runtime (docs/runtime-heap.md#copying-between-heaps).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BoxHeader;
 using layout::RefcBinaryCell;
@@ -146,9 +146,9 @@ class GraphCopy final {
     // Sum of the words of objects_.
     std::size_t words_ = 0;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<Term> ProcessHeap::add(const Term &value) noexcept {
     if (const auto checked = detail::TermAccess::validate(value); !checked) {
         return std::unexpected(checked.error());
@@ -208,4 +208,4 @@ TermResult<Term> ProcessHeap::publish_copy(const detail::GraphCopy &graph, Word 
 }
 
 TermResult<Term> Term::copy_to(ProcessHeap &destination) const noexcept { return destination.add(*this); }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

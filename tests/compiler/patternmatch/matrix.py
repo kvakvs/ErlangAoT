@@ -7,10 +7,10 @@ POLICIES = [("O0", "", "O0"), ("O0", "--no-type-specialization", "O0-off"),
 
 
 def fast():
-    """Development runs opt into ERLANG_AOT_TEST_MODE=fast; unset or full keeps every combination."""
-    mode = os.environ.get("ERLANG_AOT_TEST_MODE", "full")
+    """Development runs opt into CLAUSE_TEST_MODE=fast; unset or full keeps every combination."""
+    mode = os.environ.get("CLAUSE_TEST_MODE", "full")
     if mode not in ("fast", "full"):
-        raise SystemExit(f"ERLANG_AOT_TEST_MODE must be fast or full, not {mode!r}")
+        raise SystemExit(f"CLAUSE_TEST_MODE must be fast or full, not {mode!r}")
     return mode == "fast"
 
 

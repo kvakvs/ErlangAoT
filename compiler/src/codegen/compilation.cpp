@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace detail {
 CompilationState &state(Compilation &compilation) {
     if (!compilation.state_) {
@@ -56,4 +56,4 @@ CompilationResult Compilation::take_result() && {
     state_.reset();
     return result;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

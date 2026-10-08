@@ -1,13 +1,13 @@
+#include <clause/abi/builtins.hpp>
+#include <clause/runtime/modules.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/runtime/modules.hpp>
 #include <limits>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::runtime;
-extern abi::v1::GeneratedRegistration register_answer asm("eav1_6661696c7572655f616e73776572__0.register");
-extern abi::v1::GeneratedRegistration register_client asm("eav1_6661696c7572655f636c69656e74__0.register");
+using namespace clause;
+using namespace clause::runtime;
+extern abi::v1::GeneratedRegistration register_answer asm("clausev1_6661696c7572655f616e73776572__0.register");
+extern abi::v1::GeneratedRegistration register_client asm("clausev1_6661696c7572655f636c69656e74__0.register");
 extern abi::v1::GeneratedFunction leaf asm("step2_leaf");
 extern abi::v1::GeneratedFunction later asm("step2_later");
 extern abi::v1::GeneratedFunction take asm("step2_take");
@@ -100,7 +100,7 @@ void failure_case(ProcessContext &context, const ResolvedFunction &entry, unsign
 Word leaf(ProcessContext *context, const Word *) {
     if (mode >= 9) {
         if (mode == 9) {
-            (void)erlang_aot_raise_v2(context, abi::v1::ErrorReason::badmatch, integer(-42));
+            (void)CLAUSE_raise_v2(context, abi::v1::ErrorReason::badmatch, integer(-42));
         }
         throw std::runtime_error("injected generated-entry exception");
     }
@@ -113,7 +113,7 @@ Word leaf(ProcessContext *context, const Word *) {
         (void)context->heap().allocate(1);
     } else if (mode >= 2 && mode <= 4) {
         const auto reason = mode == 2 ? abi::v1::ErrorReason::function_clause : abi::v1::ErrorReason::badmatch;
-        (void)erlang_aot_raise_v2(context, reason, mode == 4 ? Word{1} : integer(-42));
+        (void)CLAUSE_raise_v2(context, reason, mode == 4 ? Word{1} : integer(-42));
         // First failure wins even if a buggy service attempts to overwrite it.
         context->generated_calls().fail_service(abi::v1::Status::out_of_memory);
     } else if (mode >= 6) {

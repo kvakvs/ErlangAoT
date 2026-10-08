@@ -2,7 +2,7 @@
 
 // The driver of spawned programs (docs/ports.md#drivers): the I/O thread reads the program's stdout, writes queued
 // output to its stdin, closes both pipes when done and reports the program's exit status.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 class SpawnDriver final : public PortDriver {
   public:
@@ -41,4 +41,4 @@ std::expected<std::unique_ptr<PortDriver>, DriverError> spawn_driver(const Spawn
     }
     return std::make_unique<SpawnDriver>(*spawned);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

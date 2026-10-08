@@ -2,12 +2,12 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include "source_locations.hpp"
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 enum class Source : std::uint8_t { list, binary, map };
 
@@ -388,4 +388,4 @@ llvm::Value *finish_comprehension(ExpressionLowering &state, Comprehension &comp
     }
     return result;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

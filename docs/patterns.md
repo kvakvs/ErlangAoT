@@ -38,7 +38,7 @@ follow OTP 29:
   fails, or fewer bits remain, the generator ends. A map generator walks the
   map in key order (OTP also iterates up to 32 keys in key order, except atom
   keys, which it orders by atom index; larger maps follow OTP's hash order,
-  which ErlangAoT does not reproduce).
+  which Clause does not reproduce).
 - A generator pattern binds new names: it shadows outer names, and nothing a
   comprehension binds is visible after it. A relaxed generator skips
   elements its pattern rejects; a strict one raises `error:{badmatch, E}` with

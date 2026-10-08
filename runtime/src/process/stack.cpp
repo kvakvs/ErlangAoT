@@ -1,12 +1,12 @@
 #include "../memory/runtime_memory.hpp"
 #include <algorithm>
 #include <bit>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <utility>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 using abi::v1::frame_header_words;
 using abi::v1::FrameDescriptor;
@@ -228,37 +228,37 @@ StackTrace ProcessStack::trace() const noexcept {
     }
     return result;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
 namespace {
 // Generated code receives continuation code as an untyped pointer.
-void *code(erlang_aot::abi::v1::Code *body) noexcept { return reinterpret_cast<void *>(body); }
+void *code(clause::abi::v1::Code *body) noexcept { return reinterpret_cast<void *>(body); }
 
 // The stack of a context passed to a generated-code service.
-erlang_aot::runtime::ProcessStack &stack(void *context) noexcept {
-    return static_cast<erlang_aot::runtime::ProcessContext *>(context)->stack();
+clause::runtime::ProcessStack &stack(void *context) noexcept {
+    return static_cast<clause::runtime::ProcessContext *>(context)->stack();
 }
 } // namespace
 
-void *erlang_aot_enter_v1(void *context, const void *frame) noexcept {
-    return code(stack(context).enter(*static_cast<const erlang_aot::abi::v1::FrameDescriptor *>(frame)));
+void *CLAUSE_enter_v1(void *context, const void *frame) noexcept {
+    return code(stack(context).enter(*static_cast<const clause::abi::v1::FrameDescriptor *>(frame)));
 }
 
-void *erlang_aot_tail_v1(void *context, const void *frame) noexcept {
-    return code(stack(context).tail(*static_cast<const erlang_aot::abi::v1::FrameDescriptor *>(frame)));
+void *CLAUSE_tail_v1(void *context, const void *frame) noexcept {
+    return code(stack(context).tail(*static_cast<const clause::abi::v1::FrameDescriptor *>(frame)));
 }
 
-void *erlang_aot_return_v1(void *context, erlang_aot::abi::v1::TermWord result) noexcept {
+void *CLAUSE_return_v1(void *context, clause::abi::v1::TermWord result) noexcept {
     return code(stack(context).leave(result));
 }
 
-void erlang_aot_safepoint_v1(void *context) noexcept { stack(context).safepoint(0); }
+void CLAUSE_safepoint_v1(void *context) noexcept { stack(context).safepoint(0); }
 
-erlang_aot::abi::v1::TermWord *erlang_aot_frame_v1(void *context) noexcept { return stack(context).frame(); }
+clause::abi::v1::TermWord *CLAUSE_frame_v1(void *context) noexcept { return stack(context).frame(); }
 
-erlang_aot::abi::v1::TermWord *erlang_aot_registers_v1(void *context) noexcept { return stack(context).registers(); }
+clause::abi::v1::TermWord *CLAUSE_registers_v1(void *context) noexcept { return stack(context).registers(); }
 
-erlang_aot::abi::v1::TermWord erlang_aot_invoke_v1(void *context, const void *frame,
-                                                   const erlang_aot::abi::v1::TermWord *arguments) noexcept {
-    return stack(context).invoke(*static_cast<const erlang_aot::abi::v1::FrameDescriptor *>(frame), arguments);
+clause::abi::v1::TermWord CLAUSE_invoke_v1(void *context, const void *frame,
+                                           const clause::abi::v1::TermWord *arguments) noexcept {
+    return stack(context).invoke(*static_cast<const clause::abi::v1::FrameDescriptor *>(frame), arguments);
 }

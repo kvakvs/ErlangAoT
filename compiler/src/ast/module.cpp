@@ -1,6 +1,6 @@
 #include "storage.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 namespace detail {
 const OriginTable &source_table(const Storage &storage, const NodeSource &source) {
     const auto &table = storage.origins.get(source.form);
@@ -65,4 +65,4 @@ std::span<const TokenOrigin> Module::extent(const NodeSource &source) const {
     const auto &table = detail::source_table(storage(), source);
     return std::span(table.tokens).subspan(source.begin, source.end - source.begin);
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

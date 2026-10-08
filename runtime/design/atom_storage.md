@@ -3,7 +3,7 @@
 Pattern/guard step 3 implements runtime-owned storage, validated UTF-8 spellings,
 limits, deduplication, host ownership and module bindings. The authoritative contract
 is [runtime atoms](../../docs/terms.md#atoms); the public project API is
-[atoms.hpp](../include/erlang_aot/runtime/atoms.hpp).
+[atoms.hpp](../include/clause/runtime/atoms.hpp).
 
 This supersedes the 2026-09-20 review sketch. In particular, IDs use a process-wide
 non-recycled namespace to reject foreign raw words; they are not dense per runtime.

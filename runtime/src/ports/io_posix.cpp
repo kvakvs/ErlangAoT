@@ -10,7 +10,7 @@
 
 // The I/O service on Linux and macOS (docs/ports.md#io-thread): one thread polls every input descriptor and a wakeup
 // pipe, reads what is ready and hands framed input to the executor.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // One input being read.
 struct Source final {
@@ -213,4 +213,4 @@ std::int64_t wait_child(std::int64_t child) noexcept {
 std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver) {
     return std::make_unique<PosixIo>(std::move(deliver));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

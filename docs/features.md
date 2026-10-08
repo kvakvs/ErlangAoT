@@ -10,7 +10,7 @@ example skipped specialization) is silent and not a failure.
 
 ## Catalog
 
-[features.hpp](../abi/include/erlang_aot/abi/features.hpp) assigns stable,
+[features.hpp](../abi/include/clause/abi/features.hpp) assigns stable,
 never-reused IDs and diagnostic names, with owner and status per entry. Retire
 or refine an entry when its feature lands; keep its ID reserved.
 
@@ -23,14 +23,14 @@ or refine an entry when its feature lands; keep its ID reserved.
 
 ## Message rules
 
-- The shared [formatter](../abi/include/erlang_aot/abi/feature_diagnostic.hpp)
+- The shared [formatter](../abi/include/clause/abi/feature_diagnostic.hpp)
   omits unknown context, escapes control bytes as `\xHH` and escapes quotes and
   backslashes so context cannot inject lines. UTF-8 is kept.
 - Exactly one message per failed operation, independent of `--verbose`.
 - Compiler: [reject_feature](../compiler/src/codegen/features.hpp) reports the
   first failure of a batch, latches failure, discards staged output and marks the
   diagnostic `reported` so drivers do not print it again.
-- Runtime: [FeatureFailure](../runtime/include/erlang_aot/runtime/features.hpp)
+- Runtime: [FeatureFailure](../runtime/include/clause/runtime/features.hpp)
   reports once per operation through a borrowed sink (null → stderr). Later calls
   return the latched status. Sink or formatting failures become
   `diagnostic_failure`; exceptions are contained.

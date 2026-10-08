@@ -15,7 +15,7 @@ from OTP sources) and compiled with the programs that use it.
 | [`gen_tcp`](../library/stdlib/gen_tcp.erl) | `listen/2`, `accept/1,2`, `connect/3,4`, `send/2`, `recv/2,3`, `shutdown/2`, `controlling_process/2`, `close/1` over socket ports ([sockets](ports.md#sockets-57f)) |
 | [`gen_udp`](../library/stdlib/gen_udp.erl) | `open/1,2`, `send/4`, `recv/2,3`, `controlling_process/2`, `close/1` |
 | [`inet`](../library/stdlib/inet.erl) | `port/1`, `sockname/1`, `peername/1`, `setopts/2`, `close/1` |
-| [`erlang_aot_socket`](../library/stdlib/erlang_aot_socket.erl) | ErlangAoT's own: the socket driver protocol the three modules above share |
+| [`clause_socket`](../library/stdlib/clause_socket.erl) | Clause's own: the socket driver protocol the three modules above share |
 | [`os`](../library/stdlib/os.erl) | `cmd/1` over a port ([subprocesses](ports.md#subprocesses)); `type/0` and `getenv/1` are runtime builtins |
 
 Results and error reasons match OTP 29, including the error shapes of OTP's
@@ -36,7 +36,7 @@ sort. Stack traces name the library functions, not OTP's.
   `M:F(...)` of a catalog builtin (`io:format/2`, `os:type/0`) names no
   module.
 - `<library>` is `library/stdlib` of the build tree, found relative to
-  `erlangaot` like the runtime archive.
+  `clau` like the runtime archive.
 - A module of the batch with the same name replaces the library module.
 - Library modules are ordinary batch modules: they link into executables and,
   for object or IR output, produce their own artifacts.

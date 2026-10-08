@@ -13,7 +13,7 @@
 // Sockets as ports (docs/ports.md#sockets). Every socket's state lives on the socket thread: port_control/3
 // operations run there (the calling worker waits for their reply), completions continue there and report through
 // the executor. Replies of operations start with a status byte: 0 ok, then the result; 1 error, then its reason.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 using udp = asio::ip::udp;
@@ -285,12 +285,12 @@ class Socket final : public std::enable_shared_from_this<Socket> {
     void receive_done(const boost::system::error_code &error, std::size_t size);
     // The next unit of TCP data for a recv of `length` bytes (0: what there is), if there is one.
     std::optional<Bytes> take(std::size_t length);
-    // Send {erlang_aot_socket, Port, Reply} to `target`, or a message to the connected process (target 0).
+    // Send {clause_socket, Port, Reply} to `target`, or a message to the connected process (target 0).
     void reply(Word target, PortValue value);
 
     void message(PortValue value) { reply(0, std::move(value)); }
 
-    // {erlang_aot_socket, Port, Reply}.
+    // {clause_socket, Port, Reply}.
     PortValue answer(PortValue reply_value) const;
 
     // Data as the mode's binary or list.
@@ -327,7 +327,7 @@ class Socket final : public std::enable_shared_from_this<Socket> {
 
 PortValue Socket::answer(PortValue reply_value) const {
     return PortValue::of_tuple(
-        {PortValue::of_atom("erlang_aot_socket"), PortValue::of_identity(port_), std::move(reply_value)});
+        {PortValue::of_atom("clause_socket"), PortValue::of_identity(port_), std::move(reply_value)});
 }
 
 void Socket::reply(Word target, PortValue value) {
@@ -891,4 +891,4 @@ SocketService::~SocketService() {
 std::unique_ptr<PortDriver> SocketService::driver(bool udp) {
     return std::make_unique<SocketDriver>(std::make_shared<Socket>(impl_, udp));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

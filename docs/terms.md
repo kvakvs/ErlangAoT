@@ -182,7 +182,7 @@ then fields; maps by size, then keys, then values; bitstrings by logical bits.
 
 ## Printing
 
-`format_term` ([output.hpp](../runtime/include/erlang_aot/runtime/output.hpp))
+`format_term` ([output.hpp](../runtime/include/clause/runtime/output.hpp))
 renders any admitted term in one of two OTP styles. Integers, tuples (records
 are tuples) and nesting look the same in both.
 
@@ -197,7 +197,7 @@ are tuples) and nesting look the same in both.
 - Maps print in map-key order (`maps:iterator(M, ordered)`, as OTP `~kw`). OTP's
   default `~w` and `erlang:display/1` follow its internal layout instead:
   atom-table order for atom keys of small maps (it varies between VM runs) and
-  hash order above 32 keys. ErlangAoT does not reproduce that order.
+  hash order above 32 keys. Clause does not reproduce that order.
 - Rendering is iterative, so depth is limited only by the term. Text is capped
   at 64 MiB by default; exceeding it (for example a widely shared subterm) fails
   with `resource_limit` and returns no partial text.

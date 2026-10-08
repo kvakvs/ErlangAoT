@@ -1,5 +1,5 @@
 include(${PROJECT_SOURCE_DIR}/cmake/CompilerDependencies.cmake)
-add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
+add_library(clause_frontend STATIC src/parsing/probe.cpp src/parsing/token_cursor.cpp
     src/parsing/token_syntax.cpp src/parsing/operator_info.cpp
     src/parsing/delimiters.cpp src/parser/diagnostics.cpp
     src/ast/module.cpp src/ast/builder.cpp src/ast/children.cpp src/ast/clauses.cpp
@@ -25,45 +25,45 @@ add_library(erlang_frontend STATIC src/parsing/probe.cpp src/parsing/token_curso
     src/preprocessor/operators.cpp src/preprocessor/guards.cpp src/preprocessor/bits.cpp
     src/preprocessor/session.cpp src/preprocessor/conditions.cpp src/preprocessor/includes.cpp
     src/preprocessor/builtins.cpp src/preprocessor/features.cpp)
-erlang_aot_project_options(erlang_frontend)
-target_include_directories(erlang_frontend PUBLIC include PRIVATE src)
-target_link_libraries(erlang_frontend PRIVATE erlang_aot_parser_dependency)
+clause_project_options(clause_frontend)
+target_include_directories(clause_frontend PUBLIC include PRIVATE src)
+target_link_libraries(clause_frontend PRIVATE clause_parser_dependency)
 
-add_executable(erlang_aot src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
+add_executable(clau src/main.cpp src/driver/command.cpp src/driver/options.cpp src/driver/frontend.cpp
     src/driver/implementation_debug.cpp src/driver/backend_options.cpp src/driver/analysis.cpp src/driver/entry.cpp src/driver/escript.cpp src/driver/backend.cpp src/driver/publication.cpp src/driver/project_backend.cpp src/driver/progress.cpp src/driver/display.cpp src/driver/inspection.cpp src/driver/type_report.cpp)
 if(WIN32 AND MSVC)
     # Keep narrow argv and filesystem conversions consistent with UTF-8 project paths.
-    target_sources(erlang_aot PRIVATE erlangaot.manifest)
+    target_sources(clau PRIVATE clau.manifest)
 endif()
-set_target_properties(erlang_aot PROPERTIES
-    OUTPUT_NAME erlangaot
+set_target_properties(clau PROPERTIES
+    OUTPUT_NAME clau
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
-erlang_aot_project_options(erlang_aot)
-target_compile_definitions(erlang_aot PRIVATE ERLANG_AOT_VERSION="${PROJECT_VERSION}")
-target_link_libraries(erlang_aot PRIVATE erlang_aot_abi)
+clause_project_options(clau)
+target_compile_definitions(clau PRIVATE CLAUSE_VERSION="${PROJECT_VERSION}")
+target_link_libraries(clau PRIVATE clause_abi)
 
 add_subdirectory(src/project)
 
-target_link_libraries(erlang_aot PRIVATE erlang_project)
+target_link_libraries(clau PRIVATE clause_project)
 
 # Keep LLVM headers and representation private behind the shared compilation backend.
-add_library(erlang_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/startup.cpp src/codegen/lowering_match.cpp src/codegen/lowering_immediates.cpp src/codegen/lowering_walk.cpp src/codegen/lowering_comprehensions.cpp src/codegen/lowering_guards.cpp
+add_library(clause_codegen STATIC src/codegen/sdk.cpp src/codegen/compilation.cpp src/codegen/module_atoms.cpp src/codegen/module_registration.cpp src/codegen/startup.cpp src/codegen/lowering_match.cpp src/codegen/lowering_immediates.cpp src/codegen/lowering_walk.cpp src/codegen/lowering_comprehensions.cpp src/codegen/lowering_guards.cpp
     src/codegen/specialization.cpp src/codegen/specialization_analysis.cpp src/codegen/integer_guards.cpp
     src/codegen/specialization_cloning.cpp src/codegen/specialization_dispatch.cpp src/codegen/specialization_lowering.cpp
     src/codegen/result.cpp src/codegen/diagnostics.cpp src/codegen/target.cpp
     src/codegen/target_backends.cpp src/codegen/verification.cpp src/codegen/emission.cpp src/codegen/optimization.cpp src/codegen/serialization.cpp src/codegen/progress.cpp src/codegen/specialization_trace.cpp src/codegen/term_abi.cpp src/codegen/features.cpp src/codegen/lowering_boundaries.cpp src/codegen/lowering.cpp src/codegen/lowering_expressions.cpp src/codegen/lowering_containers.cpp src/codegen/lowering_records.cpp src/codegen/lowering_native_records.cpp src/codegen/lowering_record_tests.cpp src/codegen/lowering_integers.cpp src/codegen/lowering_floats.cpp src/codegen/lowering_bits.cpp src/codegen/lowering_maps.cpp src/codegen/lowering_roots.cpp src/codegen/lowering_clauses.cpp src/codegen/lowering_body_match.cpp src/codegen/lowering_calls.cpp src/codegen/lowering_funs.cpp src/codegen/frames.cpp
     src/codegen/limits.cpp src/codegen/bounded_stream.cpp src/codegen/source_annotations.cpp src/codegen/source_locations.cpp)
-erlang_aot_project_options(erlang_codegen)
-target_link_libraries(erlang_codegen PRIVATE erlang_llvm_sdk erlang_frontend erlang_aot_abi)
-get_target_property(codegen_backends erlang_llvm_sdk ERLANG_AOT_LLVM_BACKENDS)
+clause_project_options(clause_codegen)
+target_link_libraries(clause_codegen PRIVATE clause_llvm_sdk clause_frontend clause_abi)
+get_target_property(codegen_backends clause_llvm_sdk CLAUSE_LLVM_BACKENDS)
 foreach(backend IN LISTS codegen_backends)
-    target_compile_definitions(erlang_codegen PRIVATE "ERLANG_AOT_LLVM_${backend}=1")
+    target_compile_definitions(clause_codegen PRIVATE "CLAUSE_LLVM_${backend}=1")
 endforeach()
-target_link_libraries(erlang_aot PRIVATE erlang_codegen)
+target_link_libraries(clau PRIVATE clause_codegen)
 
 # Semantic analysis owns language identities without depending on LLVM representations.
-add_library(erlang_semantic STATIC
+add_library(clause_semantic STATIC
     src/semantic/declarations.cpp src/semantic/escript.cpp src/semantic/records.cpp src/semantic/native_records.cpp src/semantic/funs.cpp src/semantic/symbols.cpp
     src/semantic/bindings.cpp src/semantic/calls.cpp src/semantic/match_plan.cpp src/semantic/match_plan_containers.cpp src/semantic/match_plan_records.cpp src/semantic/match_plan_bits.cpp src/semantic/binary_options.cpp src/semantic/match_plan_maps.cpp src/semantic/pattern_reads.cpp
     src/semantic/binding_patterns.cpp src/semantic/binding_expressions.cpp
@@ -79,31 +79,31 @@ add_library(erlang_semantic STATIC
     src/semantic/types/constants.cpp src/semantic/types/expansion.cpp
     src/semantic/types/inference.cpp src/semantic/types/inference_bindings.cpp src/semantic/types/contracts.cpp
     src/semantic/types/membership.cpp src/semantic/types/trace.cpp src/semantic/types/printing.cpp)
-erlang_aot_project_options(erlang_semantic)
-target_include_directories(erlang_semantic PRIVATE src)
-target_link_libraries(erlang_semantic PUBLIC erlang_frontend erlang_aot_abi)
-target_link_libraries(erlang_aot PRIVATE erlang_semantic)
-target_link_libraries(erlang_codegen PRIVATE erlang_semantic)
+clause_project_options(clause_semantic)
+target_include_directories(clause_semantic PRIVATE src)
+target_link_libraries(clause_semantic PUBLIC clause_frontend clause_abi)
+target_link_libraries(clau PRIVATE clause_semantic)
+target_link_libraries(clause_codegen PRIVATE clause_semantic)
 
-add_library(erlang_artifacts STATIC src/artifacts/artifacts.cpp src/artifacts/paths.cpp src/artifacts/replace.cpp)
-erlang_aot_project_options(erlang_artifacts)
-target_include_directories(erlang_artifacts PRIVATE src)
-target_link_libraries(erlang_artifacts PRIVATE erlang_project erlang_semantic)
-target_link_libraries(erlang_aot PRIVATE erlang_artifacts)
+add_library(clause_artifacts STATIC src/artifacts/artifacts.cpp src/artifacts/paths.cpp src/artifacts/replace.cpp)
+clause_project_options(clause_artifacts)
+target_include_directories(clause_artifacts PRIVATE src)
+target_link_libraries(clause_artifacts PRIVATE clause_project clause_semantic)
+target_link_libraries(clau PRIVATE clause_artifacts)
 
 # Executable linking drives Clang with the module/startup objects and the matching runtime archive.
-add_library(erlang_linking STATIC src/linking/link.cpp src/linking/toolchain.cpp src/linking/runtime_library.cpp)
-erlang_aot_project_options(erlang_linking)
-target_include_directories(erlang_linking PRIVATE src)
-target_link_libraries(erlang_linking PRIVATE erlang_llvm_sdk erlang_artifacts erlang_project)
-# The default runtime archive path is relative to erlangaot and follows this build tree's layout.
-if(ERLANG_AOT_BUILD_RUNTIME)
-    set(default_runtime "$<PATH:RELATIVE_PATH,$<TARGET_FILE:erlang_runtime>,$<TARGET_FILE_DIR:erlang_aot>>")
+add_library(clause_linking STATIC src/linking/link.cpp src/linking/toolchain.cpp src/linking/runtime_library.cpp)
+clause_project_options(clause_linking)
+target_include_directories(clause_linking PRIVATE src)
+target_link_libraries(clause_linking PRIVATE clause_llvm_sdk clause_artifacts clause_project)
+# The default runtime archive path is relative to clau and follows this build tree's layout.
+if(CLAUSE_BUILD_RUNTIME)
+    set(default_runtime "$<PATH:RELATIVE_PATH,$<TARGET_FILE:clause_runtime>,$<TARGET_FILE_DIR:clau>>")
 else()
-    set(default_runtime "../lib/${CMAKE_STATIC_LIBRARY_PREFIX}erlang_runtime${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set(default_runtime "../lib/${CMAKE_STATIC_LIBRARY_PREFIX}clause_runtime${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
-target_compile_definitions(erlang_linking PRIVATE "ERLANG_AOT_DEFAULT_RUNTIME=\"${default_runtime}\"")
+target_compile_definitions(clause_linking PRIVATE "CLAUSE_DEFAULT_RUNTIME=\"${default_runtime}\"")
 # Library modules (lists, maps) compile from source with the programs that call them.
-set(default_library "$<PATH:RELATIVE_PATH,${PROJECT_SOURCE_DIR}/library/stdlib,$<TARGET_FILE_DIR:erlang_aot>>")
-target_compile_definitions(erlang_linking PRIVATE "ERLANG_AOT_DEFAULT_LIBRARY=\"${default_library}\"")
-target_link_libraries(erlang_aot PRIVATE erlang_linking)
+set(default_library "$<PATH:RELATIVE_PATH,${PROJECT_SOURCE_DIR}/library/stdlib,$<TARGET_FILE_DIR:clau>>")
+target_compile_definitions(clause_linking PRIVATE "CLAUSE_DEFAULT_LIBRARY=\"${default_library}\"")
+target_link_libraries(clau PRIVATE clause_linking)

@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <optional>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Infer only implementation syntax; specifications never narrow an input or result.
 Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &id, const BindingFacts &bindings) {
@@ -201,4 +201,4 @@ std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
     }
     return result;
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #endif
 
-namespace erlang_aot::project {
+namespace clause::project {
 #ifdef _WIN32
 namespace {
 struct Handle {
@@ -51,4 +51,4 @@ std::string file_identity(const std::filesystem::path &path, const Site &site) {
     return std::to_string(info.st_dev) + ":" + std::to_string(info.st_ino);
 }
 #endif
-} // namespace erlang_aot::project
+} // namespace clause::project

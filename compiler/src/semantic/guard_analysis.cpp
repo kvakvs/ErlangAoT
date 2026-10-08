@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 struct GuardSyntax {
     // Closed syntax allowlist checks legality independently of executable support.
@@ -343,4 +343,4 @@ void resolve_services(Module &module, const Reporter &out, const std::size_t wor
         }
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

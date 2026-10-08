@@ -1,13 +1,13 @@
 #pragma once
+#include <clause/compiler/printing.hpp>
 #include <cstddef>
-#include <erlang_aot/compiler/printing.hpp>
 #include <string>
 #include <vector>
 
 // Erlang source text of parsed syntax (docs/compile.md#source-printing): forms one after another, clauses and
 // block expressions on indented lines, everything else on one line. Parentheses come only from the syntax's own
 // groups, so the printed text parses back to the same tree.
-namespace erlang_aot::printing {
+namespace clause::printing {
 // Where an expression is printed: its line indentation, and whether it is a whole body expression or may carry an
 // annotation at all (patterns and guards do not).
 struct Place {
@@ -69,4 +69,4 @@ std::string control_text(const SourcePrinter &printer, const ast::ExprValue &val
 bool control(const ast::ExprValue &value);
 // The text of a comprehension.
 std::string comprehension_text(const SourcePrinter &printer, const ast::ExprValue &value, std::size_t indent);
-} // namespace erlang_aot::printing
+} // namespace clause::printing

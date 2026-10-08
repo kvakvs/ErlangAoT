@@ -1,13 +1,13 @@
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/builtins.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::dispatch_builtin;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::dispatch_builtin;
+using clause::abi::v1::Status;
 
 // Keep tests independent of assertion build flags.
 void require(bool value, const char *message) {

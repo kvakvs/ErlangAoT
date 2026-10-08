@@ -8,14 +8,14 @@
 // TCP and UDP sockets as ports (docs/ports.md#sockets) on Boost.Asio: one io_context runs on the runtime's socket
 // thread (an I/O completion port on Windows, epoll on Linux, kqueue on macOS). The library modules gen_tcp,
 // gen_udp and inet drive a socket port through port_control/3 operations (SocketOperation in sockets.cpp).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Something a socket reports to the executor from the socket thread.
 struct SocketEvent final {
     enum class Kind : std::uint8_t { message, accepted };
     Kind kind = Kind::message;
     // The process the message goes to; 0 for the port's connected process.
     Word target = 0;
-    // The message ({tcp, S, Data}, {erlang_aot_socket, S, Reply}, ...); for accepted, the reply without the new
+    // The message ({tcp, S, Data}, {clause_socket, S, Reply}, ...); for accepted, the reply without the new
     // socket, which the executor adds once it has a port.
     PortValue value;
     // A connection a listening socket accepted for `target`, to become a new port it is connected to.
@@ -47,4 +47,4 @@ class SocketService final {
     // Runs the io_context.
     std::thread thread_;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

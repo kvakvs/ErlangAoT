@@ -1,14 +1,14 @@
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/containers.hpp>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/containers.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 namespace {
 // Public host invariants complement source execution for ownership and forged-word cases.
@@ -51,7 +51,7 @@ void failure_payload(ProcessContext &context, const Term &value) {
     std::optional<CallFailure> retained;
     {
         GeneratedInvocation call(context.generated_calls());
-        require(erlang_aot_raise_v2(&context, erlang_aot::abi::v1::ErrorReason::badmatch, value.word()) == 0,
+        require(CLAUSE_raise_v2(&context, clause::abi::v1::ErrorReason::badmatch, value.word()) == 0,
                 "compound error rejected");
         retained = context.generated_calls().failure();
     }
@@ -76,8 +76,8 @@ void unbounded_comparison(ProcessContext &context) {
     require(left.exactly_equal(right) == true, "shared graph comparison failed");
     require(left.exactly_equal(other) == false, "different leaf compared equal");
     GeneratedInvocation invocation(context.generated_calls());
-    require(erlang_aot_exact_v1(&context, left.word(), right.word()) ==
-                static_cast<std::uint8_t>(erlang_aot::abi::v1::Equality::equal),
+    require(CLAUSE_exact_v1(&context, left.word(), right.word()) ==
+                static_cast<std::uint8_t>(clause::abi::v1::Equality::equal),
             "generated comparison stopped on a large graph");
 }
 
@@ -96,15 +96,14 @@ void long_lists(Runtime &runtime) {
         // The invocation scope ends before its context is destroyed.
         GeneratedInvocation invocation(context.generated_calls());
         Word constructed = 0;
-        require(erlang_aot_construct_v1(&context,
-                                        static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::list),
-                                        words.data(), words.size(), &constructed) == 0,
+        require(CLAUSE_construct_v1(&context, static_cast<std::uint8_t>(clause::abi::v1::ContainerConstruction::list),
+                                    words.data(), words.size(), &constructed) == 0,
                 "construction service refused a long list");
         const std::array reverse{constructed, factory.nil()->word()};
         Word reversed = 0;
-        require(erlang_aot_construct_v1(&context,
-                                        static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::reverse),
-                                        reverse.data(), reverse.size(), &reversed) == 0,
+        require(CLAUSE_construct_v1(&context,
+                                    static_cast<std::uint8_t>(clause::abi::v1::ContainerConstruction::reverse),
+                                    reverse.data(), reverse.size(), &reversed) == 0,
                 "reverse service refused a long list");
         require(Term::from_word(reversed, context)->exactly_equal(built) == true, "long lists compared unequal");
     }
@@ -118,9 +117,9 @@ void tuple_arity(Runtime &runtime) {
     std::vector<Word> words(MAX_TUPLE_ARITY + 1, encode_integer(5).value());
     const auto construct = [&](std::size_t count, Word &output) {
         GeneratedInvocation invocation(context.generated_calls());
-        const auto outcome = erlang_aot_construct_v1(
-            &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ContainerConstruction::tuple), words.data(), count,
-            &output);
+        const auto outcome =
+            CLAUSE_construct_v1(&context, static_cast<std::uint8_t>(clause::abi::v1::ContainerConstruction::tuple),
+                                words.data(), count, &output);
         const auto failure = context.generated_calls().failure();
         return outcome == 0 ? Status::ok : failure ? failure->status.value_or(Status::internal_error) : Status::busy;
     };

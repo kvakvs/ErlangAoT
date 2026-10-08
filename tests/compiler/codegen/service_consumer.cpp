@@ -1,20 +1,20 @@
 #include <array>
+#include <clause/abi/bits.hpp>
+#include <clause/abi/containers.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/modules.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/abi/containers.hpp>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/modules.hpp>
 #include <limits>
 #include <stdexcept>
 #include <terms.hpp>
 
-using namespace erlang_aot;
-using namespace erlang_aot::runtime;
-extern abi::v1::GeneratedRegistration register_answer asm("eav1_736572766963655f616e73776572__0.register");
-extern abi::v1::GeneratedRegistration register_client asm("eav1_736572766963655f636c69656e74__0.register");
+using namespace clause;
+using namespace clause::runtime;
+extern abi::v1::GeneratedRegistration register_answer asm("clausev1_736572766963655f616e73776572__0.register");
+extern abi::v1::GeneratedRegistration register_client asm("clausev1_736572766963655f636c69656e74__0.register");
 extern std::uint8_t injected(void *, std::uint8_t, Word, Word, Word *) noexcept asm("step7_service");
 extern std::uint8_t injected_construct(void *, std::uint8_t, const Word *, std::size_t, Word *) noexcept
     asm("step12_construct");
@@ -135,15 +135,15 @@ void checked_arguments(ProcessContext &context) {
     for (Word value : {Word{0}, atom.word()}) {
         GeneratedInvocation invocation(context.generated_calls());
         Word output = 123;
-        require(erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(abi::v1::ImmediateOperation::is_atom),
-                                        value, 0, &output) == 2,
+        require(CLAUSE_immediate_v1(&context, static_cast<std::uint8_t>(abi::v1::ImmediateOperation::is_atom), value, 0,
+                                    &output) == 2,
                 "malformed/foreign service input admitted");
         require(output == 123 && context.generated_calls().failure(), "failure published output or lost channel");
     }
     GeneratedInvocation invocation(context.generated_calls());
     Word output = 123;
-    require(erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(abi::v1::ImmediateOperation::hd),
-                                    abi::v1::empty_list, 0, &output) == 1,
+    require(CLAUSE_immediate_v1(&context, static_cast<std::uint8_t>(abi::v1::ImmediateOperation::hd),
+                                abi::v1::empty_list, 0, &output) == 1,
             "semantic badarg lost");
     require(output == 123 && !context.generated_calls().failure(), "semantic rejection polluted channel");
 }
@@ -268,7 +268,7 @@ std::uint8_t injected_construct(void *opaque, std::uint8_t operation, const Word
         context.generated_calls().fail_service(fault);
         return 2;
     }
-    const auto result = erlang_aot_construct_v1(opaque, operation, values, count, output);
+    const auto result = CLAUSE_construct_v1(opaque, operation, values, count, output);
     unrooted |= result == 0 && !context.stack().contains(*output);
     return result;
 }
@@ -286,7 +286,7 @@ std::uint8_t injected_bits(void *opaque, std::uint8_t operation, const Word *val
         context.generated_calls().fail_service(fault);
         return 2;
     }
-    const auto result = erlang_aot_bits_v1(opaque, operation, values, count, output);
+    const auto result = CLAUSE_bits_v1(opaque, operation, values, count, output);
     unrooted |= result == 0 && (!context.stack().contains(output[0]) || !context.stack().contains(output[1]));
     return result;
 }
@@ -303,7 +303,7 @@ std::uint8_t injected_map(void *opaque, std::uint8_t operation, const Word *valu
         context.generated_calls().fail_service(fault);
         return 3;
     }
-    const auto result = erlang_aot_map_v1(opaque, operation, values, count, output);
+    const auto result = CLAUSE_map_v1(opaque, operation, values, count, output);
     unrooted |= result != 3 && !context.stack().contains(*output);
     return result;
 }
@@ -318,7 +318,7 @@ std::uint8_t injected_inspect(void *opaque, std::uint8_t operation, Word value, 
         context.generated_calls().fail_service(fault);
         return 2;
     }
-    const auto result = erlang_aot_inspect_v1(opaque, operation, value, index, output);
+    const auto result = CLAUSE_inspect_v1(opaque, operation, value, index, output);
     unrooted |= result == 0 && !context.stack().contains(*output);
     return result;
 }
@@ -337,7 +337,7 @@ std::uint8_t injected(void *context, std::uint8_t operation, Word left, Word rig
         static_cast<ProcessContext *>(context)->generated_calls().fail_service(fault);
         return 2;
     }
-    const auto result = erlang_aot_immediate_v1(context, operation, left, right, output);
+    const auto result = CLAUSE_immediate_v1(context, operation, left, right, output);
     unrooted |= result == 0 && !roots.contains(*output);
     return result;
 }

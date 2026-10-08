@@ -3,12 +3,12 @@
 #include <algorithm>
 #include <array>
 #include <bit>
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <span>
 
 // The list builtins that run in bounded portions (docs/builtins.md#portions): length/1, '++'/2 and '--'/2. Each
 // portion does at most the process stack's budget of work and traps to a continuation, keeping its state rooted.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 Word length_continue(ProcessContext &context, Arguments state);
 Word append_continue(ProcessContext &context, Arguments state);
@@ -281,8 +281,8 @@ constexpr std::array LIST_BUILTINS{
     BuiltinEntry{"erlang", "--", 2, &guarded<subtract>},
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> list_builtins() noexcept { return builtins::LIST_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

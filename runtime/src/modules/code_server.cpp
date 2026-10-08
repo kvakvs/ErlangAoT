@@ -1,7 +1,7 @@
-#include <erlang_aot/runtime/code_server.hpp>
+#include <clause/runtime/code_server.hpp>
 #include <mutex>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::shared_ptr<const CodeImage> CodeImage::linked() { return std::make_shared<CodeImage>(); }
 
 // Copy spelling inside the caller's failure boundary; Debug STL string moves may allocate in noexcept code.
@@ -180,4 +180,4 @@ CodeResult<ResolvedFunction> CodeServer::resolve(FunctionRequest request) const 
     }
     return ResolvedFunction(*found, *target, request.arity);
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

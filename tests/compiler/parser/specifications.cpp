@@ -1,10 +1,10 @@
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
 #include <source_location>
 #include <sstream>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Retain precise assertion locations in optimized as well as debug test builds.
 void require(bool value, std::source_location location = std::source_location::current()) {

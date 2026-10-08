@@ -6,7 +6,7 @@
 #include <array>
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // An explicit allowlist keeps executable or unknown attributes from silently changing semantics.
 struct FormCapability {
@@ -255,4 +255,4 @@ void check_capabilities(const Module &module, const Reporter &out, const unsigne
         }
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

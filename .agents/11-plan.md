@@ -145,7 +145,7 @@ Done 2026-10-03. `maint-29` unchanged at `21776803`; fresh full gate 125/125,
 
 ### 1A. Tests run time too long
 
-Done 2026-10-03. `ERLANG_AOT_TEST_MODE=fast|full` (unset = full), presets
+Done 2026-10-03. `CLAUSE_TEST_MODE=fast|full` (unset = full), presets
 `debug-fast`/`windows-debug-fast`, `make test`/`make test-full`; label
 `full_only`. Fast mode (O0 positional + O2-off project) about 60 s; full
 `-j 16` about 85 s.
@@ -192,7 +192,7 @@ exits 127. CTest `linking_escript`.
 
 Done 2026-10-03. `format_term` (`runtime/src/terms/term_text*.cpp`) prints `~w`
 and display text iteratively under a 64 MiB cap; `erlang:display/1` lowers to
-`erlang_aot_display_v1` (status `output_failure`). Maps print in key order (OTP
+`CLAUSE_display_v1` (status `output_failure`). Maps print in key order (OTP
 order is not reproducible). Goldens `tests/fixtures/printing/` (9,542 values);
 CTests `runtime_printing`, `printing_display`.
 
@@ -201,9 +201,9 @@ CTests `runtime_printing`, `printing_display`.
 ### 5. Generate the startup object
 
 Done 2026-10-04. An explicit entry adds startup module `codegen/startup`
-(`eav1_start`) whose `main` calls `erlang_aot_main_v1` with an
+(`clausev1_start`) whose `main` calls `CLAUSE_main_v1` with an
 `abi::v1::StartupDescriptor`; ordered teardown on every path.
-`erlang:halt/0,1` is a body builtin (`erlang_aot_halt_v1`). CTests
+`erlang:halt/0,1` is a body builtin (`CLAUSE_halt_v1`). CTests
 `linking_startup`, `runtime_startup`.
 
 <a id="step-6"></a>
@@ -347,7 +347,7 @@ bindings corpus +4 rows.
 ### 11. Raise exceptions from source
 
 Done 2026-10-05. `error/1,2,3`, `exit/1`, `throw/1` as body builtins
-(`semantic::body_builtin`, auto-import rules) through `erlang_aot_raise_v2`
+(`semantic::body_builtin`, auto-import rules) through `CLAUSE_raise_v2`
 with `ErrorReason` 11-13 (whole-reason payload); startup prints
 `uncaught exception <class>: <reason>`. OTP golden `executables_raise_classes`.
 
@@ -356,7 +356,7 @@ with `ErrorReason` 11-13 (whole-reason payload); startup prints
 ### 12. Lower `catch Expr`
 
 Done 2026-10-05. `ExpressionLowering::handler` while the protected expression
-lowers (fresh badarg/badarith exits); `erlang_aot_catch_v1` builds the value
+lowers (fresh badarg/badarith exits); `CLAUSE_catch_v1` builds the value
 and clears the channel, halts and runtime failures continue outward; inner
 bindings unsafe. OTP golden `executables_catch_values`; bindings corpus +4
 rows.
@@ -366,8 +366,8 @@ rows.
 ### 13. Lower `try … of … catch`
 
 Done 2026-10-05. Only the body is protected; the handler takes class and
-reason (`erlang_aot_exception_v*`), catch clauses match from pre-try bindings,
-no match re-raises (`erlang_aot_reraise_v*`), `of` exhaustion raises
+reason (`clause_exception_v*`), catch clauses match from pre-try bindings,
+no match re-raises (`clause_reraise_v*`), `of` exhaustion raises
 `try_clause` (14). OTP golden `executables_try_catch`; bindings corpus +6
 rows.
 
@@ -427,7 +427,7 @@ Done 2026-10-05. Calls ordered by strongly connected components
 
 Done 2026-10-05. Post-pass `codegen/frames` (`lower_frames`) turns native form
 into `<sym>.body` code with resume switches, spills and `musttail` transfers
-via `erlang_aot_enter/tail/return_v1`; descriptors `<sym>.frame`; runtime
+via `clause_enter/tail/return_v1`; descriptors `<sym>.frame`; runtime
 `ProcessStack` (flat vector, 256 registers, bottom frame per invocation); ABI
 version 5. OTP golden `executables_tail_calls` (2,000,000 iterations, reduced
 on user request); `codegen_cross_targets` checks `musttail` on 7 targets.
@@ -477,7 +477,7 @@ collection inside generated code. `runtime_collection` `root_owners`.
 
 Done 2026-10-06 (decision, `docs/runtime-heap.md#collection-in-generated-code`).
 Safepoints only at function entry and comprehension loop heads
-(`erlang_aot_safepoint_v1`); every service is a critical section using
+(`CLAUSE_safepoint_v1`); every service is a critical section using
 fragments. Triggers: a fragment exists, or off-heap words reach the virtual
 binary heap. Prototype `tests/prototypes/safepoint/`.
 
@@ -508,7 +508,7 @@ default: heap and stack grow until the host refuses (`out_of_memory`, exit
 collection (`block_limit` keeps half of the free budget for fragments, capped
 `binary_limit_words_`). No binary size or process-count caps; atoms 2^20 by
 default, `--max-atoms` up to 2^26; runtime options from leading arguments and
-`ERLANG_AOT_FLAGS` (`startup/options`, `--`, reserved `--args-file`). OTP
+`CLAUSE_FLAGS` (`startup/options`, `--`, reserved `--args-file`). OTP
 goldens `executables_heap_growth`, `executables_runtime_options`,
 `executables_large_binaries`; golden runs may set `env`.
 
@@ -621,7 +621,7 @@ map; `display` field order kept as definition order (difference).
 ### 31B. Add native record cells and runtime services
 
 Done 2026-10-07. ABI revision 6: `RecordDescriptor`,
-`ModuleDescriptor::records`, `erlang_aot_record_v1` (make/get/update/match/
+`ModuleDescriptor::records`, `CLAUSE_record_v1` (make/get/update/match/
 test with `RecordCheck` modes); `native_record` cell (header, untraced
 `const RecordDefinition *`, values); walking, collection, copying, order and
 printing. `runtime_records`.
@@ -660,11 +660,11 @@ undefined records.
 ### 32. Implement function values without captures
 
 Done 2026-10-07 (contract `docs/funs.md`). ABI revision 7: `FunDescriptor`
-table `<prefix>.funs`, `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1`,
+table `<prefix>.funs`, `CLAUSE_make_fun_v1`, `CLAUSE_apply_v1`,
 `ErrorReason` 22-24 (`badfun`, `badarity` with `{F, Args}`, `undef`);
 `fun_closure` cells (untraced `FunDefinition *`, captured values). One value
 per `fun f/1`; order atom < fun < tuple, local before external; local funs
-print `#Fun<M.Index.0>` (difference). Calls go through the `erlang_aot.apply`
+print `#Fun<M.Index.0>` (difference). Calls go through the `clause.apply`
 marker, which `lower_frames` turns into enter/tail transfers. OTP golden
 `executables_fun_values`.
 
@@ -697,9 +697,9 @@ in constant stack). The `closures` capability is implemented. OTP golden
 
 Done 2026-10-07. ABI revision 8: `ExportDescriptor::frame`; registration binds
 module/export atoms (`ModuleAtoms::module/exports`); services
-`erlang_aot_call_v1` (`M:F(Args)`), `erlang_aot_apply_list_v1`/
-`erlang_aot_call_list_v1` (`apply/2,3`, list unpacked into the registers),
-`erlang_aot_make_external_fun_v1` (runtime `fun M:F/A`, definitions interned
+`CLAUSE_call_v1` (`M:F(Args)`), `CLAUSE_apply_list_v1`/
+`CLAUSE_call_list_v1` (`apply/2,3`, list unpacked into the registers),
+`CLAUSE_make_external_fun_v1` (runtime `fun M:F/A`, definitions interned
 by `CodeServer::external_fun`). OTP order and errors: module, function,
 arguments; non-atom names, improper lists and bad arities `badarg`, missing
 exports `undef`, more than 255 arguments `undef`/`badarity`. Dynamic calls
@@ -761,8 +761,8 @@ Done 2026-10-07 (contract `docs/library.md`). Original
 `library/stdlib/lists.erl` and `maps.erl` subsets with OTP's error shapes. The
 driver adds a library module to the batch when a module names it with a
 literal atom (`semantic::referenced_modules`, `frontend` `add_library`) and no
-input declares it; directory `library/stdlib` relative to `erlangaot`
-(`linking::library_directory`, `ERLANG_AOT_DEFAULT_LIBRARY`). Differences:
+input declares it; directory `library/stdlib` relative to `clau`
+(`linking::library_directory`, `CLAUSE_DEFAULT_LIBRARY`). Differences:
 subset only, key-order iteration, no code-path loading. OTP golden
 `executables_library`.
 
@@ -832,8 +832,8 @@ OTP may drop code after `spawn` of a fun of another arity. OTP golden
 ### 43A. Make long-running builtins interruptible
 
 Done 2026-10-08 (contract `docs/builtins.md#portions`). Body bridge builtins
-are entered like functions (`erlang_aot_builtin_frame_v1` replaced
-`erlang_aot_builtin_v1`) and spend a reduction; body `length/1` uses the
+are entered like functions (`CLAUSE_builtin_frame_v1` replaced
+`CLAUSE_builtin_v1`) and spend a reduction; body `length/1` uses the
 bridge, guards the inline service. A portion does 16 work units per reduction
 left (`ProcessStack::budget`/`spend`), then `trap`s to a continuation frame
 with state in registers or a rooted `TrapState`. In portions: `length/1`,
@@ -874,10 +874,10 @@ refused copy fails the sender (exit 70). OTP golden `executables_send`;
 ### 46. Implement selective receive without timeout
 
 Done 2026-10-08 (contract `docs/processes.md#receive`). `branch_clauses` lists
-receive clauses like `case`. Codegen loop head peeks (`erlang_aot_receive_v1`,
+receive clauses like `case`. Codegen loop head peeks (`CLAUSE_receive_v1`,
 `ReceiveOperation` in `abi/messages.hpp`) into a root slot; a match `take`s,
 the last mismatch `skip`s; nothing left enters the wait builtin
-(`erlang_aot_wait_frame_v1`). Runtime `process/receive.cpp`:
+(`CLAUSE_wait_frame_v1`). Runtime `process/receive.cpp`:
 `ProcessStack::wait`; the executor parks waiting processes (`parked_`), a send
 wakes them; an empty queue blocks forever (OTP); a host invocation that would
 wait fails `busy`. OTP golden `executables_selective_receive`.
@@ -1078,7 +1078,7 @@ funs < ports < pids. Executor-owned port table (driver, connected pid, links,
 watchers, name, options, counters); opener linked; owner end closes the port;
 close reason to links/monitors. Drivers `fd` (57B output, 57C input), `spawn`
 (57D), `file` (57E, synchronous `port_control`), `tcp`/`udp` (57F, async),
-internal ones via `{spawn_driver, ErlangAoTName}`. One I/O thread per runtime:
+internal ones via `{spawn_driver, ClauseName}`. One I/O thread per runtime:
 Windows IOCP (console stdin via a reader thread), POSIX `poll()` + wakeup pipe
 (epoll/kqueue later: deviation from this step's draft); events delivered under
 the executor mutex, deferred to the slice end of a running owner; output
@@ -1154,7 +1154,7 @@ owned descriptors. Executor orders `{exit_status, S}` before eof/close
 (`input_ended`, `exit_status` on Port). `os:type/0`, `os:getenv/1` bridge
 builtins (`builtins/os.cpp`), `library/stdlib/os.erl` `cmd/1`. Runner: golden
 `data` files staged/hashed, runs start in the staged dir with
-`ERLANG_AOT_TEST_PYTHON`. OTP golden `executables_port_spawn` (Python
+`CLAUSE_TEST_PYTHON`. OTP golden `executables_port_spawn` (Python
 `helper.py`: echo lines, packet, line framing, exit status, stderr_to_stdout,
 args/env, 200 KB queued write, close, owner end, enoent/badarg, os:cmd);
 OTP-only quirks left out (Windows drops empty args, empty env name eacces).
@@ -1166,12 +1166,12 @@ OTP-only quirks left out (Windows drops empty args, empty env name eacces).
 Backlog: F26, F35. Depends on: [57C](#step-57c).
 
 Done 2026-10-08 (contract `docs/ports.md#standard-io-and-files`). Runtime
-file driver `ports/file.cpp` (`{spawn_driver, "erlang_aot_file"}`,
+file driver `ports/file.cpp` (`{spawn_driver, "clause_file"}`,
 `PortDriver::control`, status-byte replies, C runtime fds with UTF-8 paths,
 std::filesystem path operations, eisdir/ebadf checks); `Executor::control_port`
 runs drivers outside the mutex (`Port::driver` shared_ptr); `port_control/3`
 answers lists or binaries. Library `file.erl` (io server per open file, linked)
-and `io.erl` (`erlang_aot_stdin` server over `{fd,0,1}`; get_line/get_chars on
+and `io.erl` (`clause_stdin` server over `{fd,0,1}`; get_line/get_chars on
 stdin or a file). io writes stay direct (57A decision). Compiler: calls of
 catalog builtins no longer pull a library module (`builtin_call` in
 `referenced_modules`), so io.erl joins only programs using get_line/chars;
@@ -1205,14 +1205,14 @@ and IPv6 loopback.
 Done 2026-10-08 (contract `docs/ports.md#sockets-57f`). Runtime
 `ports/sockets.cpp`: one Boost.Asio socket thread (`SocketService`), all socket
 state on it; workers post `port_control` operations there and wait
-(`on_socket_thread`); connect/accept/recv answer `{erlang_aot_socket, S, Reply}`
+(`on_socket_thread`); connect/accept/recv answer `{clause_socket, S, Reply}`
 messages, cancel answers `cancelled` (timeout barrier); active messages and
 replies are off-heap `PortValue`s (`ports/value.*`) built at delivery
 (`PortEvent::Kind::value`); accepted connections become ports in
 `Executor::accept_connection`; `PortDriver::attach` gives drivers their port
 word; graceful close after queued output (an aborted write reset the peer on
 Windows). Winsock linked explicitly; configure requires `boost/asio.hpp`.
-Library `erlang_aot_socket.erl` (protocol, options, controlling_process with
+Library `clause_socket.erl` (protocol, options, controlling_process with
 message move as OTP inet), `gen_tcp.erl`, `gen_udp.erl`, `inet.erl`. OTP golden
 `executables_sockets` (workers 1, 4): passive/active/once, packet 2, list mode,
 controlling_process, errors (timeout, eaddrinuse, closed, badarg), UDP, IPv6.
@@ -1666,7 +1666,7 @@ Backlog: V03. Depends on: [58](#step-58).
 
 - Success criteria
   - [ ] Selected applicable upstream Common Test suites run against a matching
-    built OTP, kept separate from ErlangAoT differential comparisons.
+    built OTP, kept separate from Clause differential comparisons.
   - [ ] Differential goldens cover every feature enabled by this plan;
     exclusions are published.
 - Tests
@@ -1782,12 +1782,12 @@ Backlog: all. Depends on: steps 1–70 and any selected optional work. Inserted
 
 The project has never been released, so no earlier generated-code contract has
 to stay loadable. Collapse every version marker to v1: runtime service symbols
-(`erlang_aot_roots_enter_v5`, `erlang_aot_roots_leave_v4`,
-`erlang_aot_raise_v2`, `erlang_aot_call_failed_v2`,
-`erlang_aot_register_module_v4`, `erlang_aot_atom_v3`,
-`erlang_aot_exception_v2`, `erlang_aot_reraise_v2` and the rest), C++
+(`CLAUSE_roots_enter_v5`, `CLAUSE_roots_leave_v4`,
+`CLAUSE_raise_v2`, `CLAUSE_call_failed_v2`,
+`CLAUSE_register_module_v4`, `CLAUSE_atom_v3`,
+`CLAUSE_exception_v2`, `CLAUSE_reraise_v2` and the rest), C++
 namespaces such as `abi::v1`/`v2`, `abi::v1::version` and descriptor revision
-numbers, the generated `eav1_` prefixes if any other revision exists, and the
+numbers, the generated `clausev1_` prefixes if any other revision exists, and the
 revision tables in the docs.
 
 - Success criteria

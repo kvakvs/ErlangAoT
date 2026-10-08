@@ -83,6 +83,6 @@ either(_) -> neither.
 match(<<Value:4194240>>) -> Value.
 
 %% An unsigned segment one bit wider than the limit, all ones, does not match
-%% in ErlangAoT; OTP 29's JIT builds an invalid term from it.
+%% in Clause; OTP 29's JIT builds an invalid term from it.
 over(<<Value:4194241>>) -> Value;
 over(_) -> none.

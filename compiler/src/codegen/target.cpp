@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Serialize explicit enabled/disabled host features in stable order for reproducible IR later.
 std::string host_features() {
@@ -116,4 +116,4 @@ std::string target_triple(const Compilation &compilation) {
     }
     return machine->getTargetTriple().str();
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

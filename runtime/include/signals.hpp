@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class Signals final {
   public:
     Signals(const Signals &) = delete;
@@ -98,4 +98,4 @@ class Signals final {
     // Turns exit signals other than kill into messages.
     bool trap_exit_ = false;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

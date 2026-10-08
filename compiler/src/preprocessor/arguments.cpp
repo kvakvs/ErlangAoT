@@ -3,7 +3,7 @@
 #include "token_utils.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 
 // Publish an argument at a top-level separator, retaining the special zero-arity case.
@@ -39,4 +39,4 @@ Arguments collect_arguments(const std::span<const Token> input, const Token &cal
     }
     pp_fail(DiagnosticCode::macro_arguments, "unterminated macro arguments", call);
 }
-} // namespace erlang_aot
+} // namespace clause

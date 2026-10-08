@@ -2,25 +2,25 @@
 #include <llvm/Support/TargetSelect.h>
 #include <mutex>
 
-namespace erlang_aot::codegen::detail {
+namespace clause::codegen::detail {
 namespace {
 // Keep registry initialization matched to SDK availability, including component-library builds.
 void register_backends() {
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
     LLVMInitializeX86TargetInfo();
     LLVMInitializeX86Target();
     LLVMInitializeX86TargetMC();
     LLVMInitializeX86AsmPrinter();
     LLVMInitializeX86AsmParser();
 #endif
-#ifdef ERLANG_AOT_LLVM_ARM
+#ifdef CLAUSE_LLVM_ARM
     LLVMInitializeARMTargetInfo();
     LLVMInitializeARMTarget();
     LLVMInitializeARMTargetMC();
     LLVMInitializeARMAsmPrinter();
     LLVMInitializeARMAsmParser();
 #endif
-#ifdef ERLANG_AOT_LLVM_AArch64
+#ifdef CLAUSE_LLVM_AArch64
     LLVMInitializeAArch64TargetInfo();
     LLVMInitializeAArch64Target();
     LLVMInitializeAArch64TargetMC();
@@ -34,4 +34,4 @@ void initialize_target_backends() {
     static std::once_flag initialized;
     std::call_once(initialized, register_backends);
 }
-} // namespace erlang_aot::codegen::detail
+} // namespace clause::codegen::detail

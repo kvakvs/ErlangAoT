@@ -248,8 +248,8 @@ rescanning the whole stack every few hundred words.
 
 | Point | Where | Live outside frame term slots |
 | --- | --- | --- |
-| Function entry | In `erlang_aot_enter_v1` / `erlang_aot_tail_v1` (and so host invocation), before the callee frame is pushed | The callee's arguments `x[0..arity)`, kept as roots (`keep_registers`) |
-| Loop head | A call of `erlang_aot_safepoint_v1(context)` at the head of every comprehension generator loop | Nothing |
+| Function entry | In `CLAUSE_enter_v1` / `CLAUSE_tail_v1` (and so host invocation), before the callee frame is pushed | The callee's arguments `x[0..arity)`, kept as roots (`keep_registers`) |
+| Loop head | A call of `CLAUSE_safepoint_v1(context)` at the head of every comprehension generator loop | Nothing |
 
 Every Erlang loop is either recursion, which passes a function entry per
 step, or a comprehension, which passes its loop head, so garbage between two
@@ -257,7 +257,7 @@ safepoints is bounded by straight-line code and single service results.
 
 Not safepoints (critical sections, which keep allocating into fragments):
 every other runtime service, including allocation, construction and matching
-services; `erlang_aot_return_v1`; exception propagation; and later message
+services; `CLAUSE_return_v1`; exception propagation; and later message
 delivery (step 45). Services may therefore hold raw heap words in C++ for their
 whole run, and their input arrays and outputs need no reload.
 
@@ -302,7 +302,7 @@ safepoint, and no native pointer crosses one at all (already an error in
   collection rewrites stack words in place and never moves the stack; every
   transfer re-reads it in the body prologue as before.
 - Optimization runs after `lower_frames` and cannot replace a reload by the
-  older SSA value: the frame address comes from `erlang_aot_frame_v1`, so the
+  older SSA value: the frame address comes from `CLAUSE_frame_v1`, so the
   safepoint call may write every slot (prototype below).
 
 ### Failure behavior
@@ -316,7 +316,7 @@ safepoint, and no native pointer crosses one at all (already an error in
   [runtime-wide limit](#runtime-memory-limit) set, a request beyond it is
   `limit_exceeded`, reported as `resource_limit`. Both are infrastructure
   failures: no handler runs, the frames unwind to the bottom frame and a
-  program prints `erlangaot: runtime failure: entry call failed: <status>`
+  program prints `clau: runtime failure: entry call failed: <status>`
   and exits with status 70 after flushing stdout and destroying the process
   ([executables](executables.md#exit-status), [differences](differences.md)).
   Because every collection keeps half of the budget left after its survivors
@@ -332,8 +332,8 @@ Step 26 (2026-10-06):
   fragment exists, or off-heap words reached `binary_limit_words_`), keeps
   `x[0..live)` as roots, opens a `SafePoint` and collects; a failed collection
   is ignored. `enter` (and so `tail` and `invoke`) calls it with the callee's
-  arity before pushing; `erlang_aot_safepoint_v1` calls it with 0.
-- Comprehension lowering emits `erlang_aot_safepoint_v1` at the head of every
+  arity before pushing; `CLAUSE_safepoint_v1` calls it with 0.
+- Comprehension lowering emits `CLAUSE_safepoint_v1` at the head of every
   generator loop (`lowering_comprehensions`).
 - `lower_frames` splits each body after a safepoint call and spills crossing
   values as after a call. `home()` keeps the argument slot or a same-block
@@ -400,7 +400,7 @@ slot reload and never reuses the register that held `Y`:
 ```text
 LBB0_2:                     # loop head
     pushl  %edi
-    calll  _erlang_aot_safepoint_v1
+    calll  _clause_safepoint_v1
     pushl  20(%esi)         # cursor reloaded from its term slot
     ...
     pushl  24(%esi)         # accumulator

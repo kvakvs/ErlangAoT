@@ -3,7 +3,7 @@
 #include "term_value.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 std::vector<ast::ExprId> attribute_list(const ast::Module &module, const ast::ExprId &id) {
     std::vector<ast::ExprId> result;
     auto current = id;
@@ -109,4 +109,4 @@ ast::FormValue FormParser::checked_attribute(ast::Atom name, const std::vector<a
     }
     return ast::GenericAttribute{.name = std::move(name), .value = term(arguments.front())};
 }
-} // namespace erlang_aot
+} // namespace clause

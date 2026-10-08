@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct EscriptSource {
     // Source bytes with the "#!" line replaced (by -module when missing); later line numbers are unchanged.
     std::string bytes;
@@ -16,4 +16,4 @@ struct EscriptSource {
 std::optional<EscriptSource> escript_source(const std::filesystem::path &path, std::string_view bytes);
 // Module name for escripts without a leading -module: file name with '.' replaced by '_', plus "__escript".
 std::u32string escript_module_name(const std::filesystem::path &path);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

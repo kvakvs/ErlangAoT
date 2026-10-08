@@ -1,8 +1,8 @@
 #pragma once
 #include "../implementation_debug.hpp"
 #include "output.hpp"
+#include <clause/compiler/ast/module.hpp>
 #include <cstdint>
-#include <erlang_aot/compiler/ast/module.hpp>
 #include <filesystem>
 #include <functional>
 #include <optional>
@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 // Generic O0, speed (O2 with specialization) or size (Os with dead-stripped executables).
 enum class OptimizationLevel : std::uint8_t { none, speed, size };
 
@@ -93,4 +93,4 @@ struct CompilationRequest {
     // Add a startup module with a native `main` after the batch's modules when an entry is selected.
     std::optional<StartupRequest> startup;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

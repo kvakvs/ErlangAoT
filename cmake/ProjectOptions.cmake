@@ -1,7 +1,7 @@
 # Drop debug information from targets created after this call in the calling directory and its later
-# subdirectories (test programs) unless ERLANG_AOT_TEST_DEBUG_INFO is set.
-macro(erlang_aot_test_debug_info)
-    if(NOT ERLANG_AOT_TEST_DEBUG_INFO)
+# subdirectories (test programs) unless CLAUSE_TEST_DEBUG_INFO is set.
+macro(clause_test_debug_info)
+    if(NOT CLAUSE_TEST_DEBUG_INFO)
         set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "")
         if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
             string(REGEX REPLACE "/[Dd][Ee][Bb][Uu][Gg]( |$)" "" CMAKE_EXE_LINKER_FLAGS_DEBUG
@@ -13,7 +13,7 @@ macro(erlang_aot_test_debug_info)
 endmacro()
 
 # Apply project diagnostics and source encoding without changing dependency targets.
-function(erlang_aot_project_options target)
+function(clause_project_options target)
     set_target_properties(${target} PROPERTIES
         COMPILE_WARNING_AS_ERROR ON
     )
@@ -24,7 +24,7 @@ function(erlang_aot_project_options target)
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
-    if(MSVC AND NOT ERLANG_AOT_MSVC_ITERATOR_DEBUG_LEVEL STREQUAL "")
-        target_compile_definitions(${target} PRIVATE "_ITERATOR_DEBUG_LEVEL=${ERLANG_AOT_MSVC_ITERATOR_DEBUG_LEVEL}")
+    if(MSVC AND NOT CLAUSE_MSVC_ITERATOR_DEBUG_LEVEL STREQUAL "")
+        target_compile_definitions(${target} PRIVATE "_ITERATOR_DEBUG_LEVEL=${CLAUSE_MSVC_ITERATOR_DEBUG_LEVEL}")
     endif()
 endfunction()

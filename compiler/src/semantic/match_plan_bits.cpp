@@ -2,7 +2,7 @@
 #include "capabilities.hpp"
 #include "match_plan_internal.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Resolve the normalized literal without converting through host-width integers.
 std::optional<MatchLiteral> float_literal(const MatchPlanner &state, const ast::BinarySegment &segment);
@@ -110,4 +110,4 @@ bool expand_bits(MatchPlanner &state, const PatternVisit &visit, const Normalize
     pending.insert(pending.end(), forward.rbegin(), forward.rend());
     return true;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

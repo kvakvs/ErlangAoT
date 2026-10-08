@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     try {
         require(argc == 2 || argc == 3, "expected output directory and optional policy");
         const std::string_view mode = argc == 3 ? argv[2] : "O2";
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
         (void)exercise("i686-unknown-linux-gnu", mode);
 #endif
         const auto compilation = exercise({}, mode);

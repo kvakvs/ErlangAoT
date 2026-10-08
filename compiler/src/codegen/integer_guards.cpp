@@ -2,7 +2,7 @@
 #include <llvm/IR/Module.h>
 #include <set>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Users = std::set<const llvm::User *>;
 
@@ -105,4 +105,4 @@ IntegerGuards integer_guards(llvm::Function &function, const std::size_t arity) 
     }
     return result;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

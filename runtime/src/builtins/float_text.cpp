@@ -7,7 +7,7 @@
 
 // float_to_list/1,2 text, reproducing OTP's formatting (erts sys_double_to_chars_ext/_fast and its Ryu shortest
 // output) from its documented behavior.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // OTP formats into a 256-byte buffer: text of 256 bytes or more is badarg.
 constexpr std::size_t BUFFER_SIZE = 256;
@@ -160,4 +160,4 @@ std::optional<std::string> float_text(double value, const FloatFormat &format) {
         return printed(value, "%.*e", format.decimals);
     }
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

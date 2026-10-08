@@ -40,7 +40,7 @@ def streams():
 def info():
     """Write the arguments and two environment variables."""
     out.write(('|'.join(sys.argv[2:]) + '\n').encode())
-    out.write(f"{os.environ.get('ERLANG_AOT_PROBE')} {os.environ.get('ERLANG_AOT_UNSET')}\n".encode())
+    out.write(f"{os.environ.get('CLAUSE_PROBE')} {os.environ.get('CLAUSE_UNSET')}\n".encode())
 
 
 def count():

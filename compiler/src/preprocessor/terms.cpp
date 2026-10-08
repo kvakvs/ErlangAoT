@@ -1,7 +1,7 @@
 #include "value.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Append punctuation and recursively normalized term tokens at one definition site.
 void symbol(std::vector<Token> &output, const Token &site, const std::u32string_view text) {
@@ -143,4 +143,4 @@ std::string display(const Value &value) {
     const auto tokens = term_tokens(value, Token{});
     return utf8(stringify(tokens));
 }
-} // namespace erlang_aot
+} // namespace clause

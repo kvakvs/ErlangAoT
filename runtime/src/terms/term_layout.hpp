@@ -5,18 +5,18 @@
 #include "terms.hpp"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <clause/runtime/base_types.hpp>
 #include <cstddef>
-#include <erlang_aot/runtime/base_types.hpp>
 #include <memory>
 #include <type_traits>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 struct RecordDefinition;
 struct FunDefinition;
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-namespace erlang_aot::runtime::detail::layout {
+namespace clause::runtime::detail::layout {
 using Bignum = boost::multiprecision::cpp_int;
 
 struct alignas(Word) BoxHeader final {
@@ -183,4 +183,4 @@ static_assert(std::is_trivially_copyable_v<BoxHeader> && std::is_trivially_copya
               std::is_trivially_copyable_v<KeyValuePair> && std::is_trivially_copyable_v<MapCell> &&
               std::is_trivially_copyable_v<HeapBinaryCell> && std::is_trivially_copyable_v<FunCell> &&
               std::is_trivially_copyable_v<NativeRecordCell>);
-} // namespace erlang_aot::runtime::detail::layout
+} // namespace clause::runtime::detail::layout

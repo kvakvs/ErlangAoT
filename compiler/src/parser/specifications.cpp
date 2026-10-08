@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::Specification FormParser::specification(const bool callback) {
     const auto enclosed = cursor_.take_syntax(U"(");
     auto name = ast::Atom{value<std::u32string>(category(TokenKind::atom, "specification function name"))};
@@ -81,4 +81,4 @@ ast::TypeConstraint FormParser::legacy_constraint(const std::size_t begin) {
             .legacy = true,
             .source = builder_.source(begin, cursor_.offset(), begin)};
 }
-} // namespace erlang_aot
+} // namespace clause

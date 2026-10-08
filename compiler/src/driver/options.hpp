@@ -3,10 +3,10 @@
 #include "backend_options.hpp"
 #include "project/cli.hpp"
 #include "project/entry.hpp"
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/preprocessor.hpp>
 #include <span>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct Options {
     // Select informational output after validating all command-line arguments.
     bool show_help = false;
@@ -26,7 +26,7 @@ struct Options {
     // Retain backend policy independently of frontend and project selection.
     BackendOptions backend;
     // Delegate project selection data and policy to the project component.
-    erlang_aot::project::Request project;
+    clause::project::Request project;
     // Preserve source order for input validation and future compilation.
     std::vector<std::filesystem::path> inputs;
     // Select an explicit check/print action instead of the default compiler pipeline.
@@ -40,7 +40,7 @@ struct Options {
     // Request syntax diagnostics without requiring tree output.
     bool parse_check = false;
     // Recreate preprocessing options independently for every input module.
-    erlang_aot::PreprocessorOptions preprocessing;
+    clause::PreprocessorOptions preprocessing;
 };
 
 // Parse and validate usage independently of reading source files.
@@ -51,4 +51,4 @@ int process_inputs(const Options &options);
 int run_project(const Options &options);
 // Check physical input paths before running the selected frontend mode.
 bool validate_inputs(const std::vector<std::filesystem::path> &inputs);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

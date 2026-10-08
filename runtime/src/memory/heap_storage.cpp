@@ -5,7 +5,7 @@
 #include <memory>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 std::span<const Word> HeapArea::used() const noexcept { return {words_.get(), top_}; }
 
 std::span<Word> HeapArea::from(std::uintptr_t address) noexcept {
@@ -164,4 +164,4 @@ void HeapStorage::replace(HeapArea heap) noexcept {
     used_words_ = heap_.top_;
     capacity_words_ = heap_.capacity_;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

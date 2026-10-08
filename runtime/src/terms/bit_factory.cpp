@@ -7,7 +7,7 @@
 #include <limits>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BinaryBuffer;
 using layout::BoxHeader;
@@ -118,9 +118,9 @@ TermResult<Term> BitAccess::slice(ProcessHeap &heap, const Term &source, std::si
     }
     return make(heap, writer.bytes, count);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<Term> TermFactory::binary(std::span<const std::byte> bytes) {
     // Only a size whose bit count leaves the address range is refused; there is no size cap.
     if (bytes.size() > std::numeric_limits<std::size_t>::max() / 8) {
@@ -132,4 +132,4 @@ TermResult<Term> TermFactory::binary(std::span<const std::byte> bytes) {
 TermResult<Term> TermFactory::bitstring(std::span<const std::byte> bytes, std::size_t count) {
     return heap().and_then([&](ProcessHeap *owner) { return detail::BitAccess::make(*owner, bytes, count); });
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

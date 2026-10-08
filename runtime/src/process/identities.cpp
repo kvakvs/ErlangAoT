@@ -5,7 +5,7 @@
 #include <mutex>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Low four bits of an immediate pid and port (TermKind2::pid and ::port under the see_termkind2 primary tag).
 constexpr Word PID_TAG = 0x3;
@@ -68,4 +68,4 @@ Word pid_number(Word word) noexcept { return word >> IDENTITY_TAG_BITS; }
 Word port_word(Word number) noexcept { return (number << IDENTITY_TAG_BITS) | PORT_TAG; }
 
 Word port_number(Word word) noexcept { return word >> IDENTITY_TAG_BITS; }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

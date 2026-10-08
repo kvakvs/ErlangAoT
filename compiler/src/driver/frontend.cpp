@@ -8,13 +8,13 @@
 #include "escript.hpp"
 #include "options.hpp"
 #include <algorithm>
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
+#include <clause/compiler/source.hpp>
 #include <fstream>
 #include <iostream>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Retain native filename text in encoding, I/O, and ingestion messages.
 std::string filename(const std::filesystem::path &path) {
@@ -46,7 +46,7 @@ PreprocessorOptions preprocessing_options(const FrontendRequest &request) {
 // Preserve severity and existing logical/physical source rendering in every caller.
 void print_diagnostic(const Diagnostic &diagnostic, const DiagnosticSink &sink) {
     const auto prefix = diagnostic.severity == Severity::warning ? "warning: " : "error: ";
-    sink(prefix + erlang_aot::render(diagnostic));
+    sink(prefix + clause::render(diagnostic));
 }
 
 // Emit expanded source without adding project-specific stdout banners.
@@ -220,19 +220,19 @@ bool validate_inputs(const std::vector<std::filesystem::path> &inputs) {
         std::error_code error;
         const bool regular = std::filesystem::is_regular_file(input, error);
         if (error) {
-            std::cerr << "erlangaot: error: cannot access " << input << ": " << error.message() << '\n';
+            std::cerr << "clau: error: cannot access " << input << ": " << error.message() << '\n';
             return false;
         }
         if (!regular) {
-            std::cerr << "erlangaot: error: input is not a regular file: " << input << '\n';
+            std::cerr << "clau: error: input is not a regular file: " << input << '\n';
             return false;
         }
         if (!std::ifstream{input, std::ios::binary}) {
-            std::cerr << "erlangaot: error: cannot read input: " << input << '\n';
+            std::cerr << "clau: error: cannot read input: " << input << '\n';
             return false;
         }
     }
     return true;
 }
 
-} // namespace erlang_aot::cli
+} // namespace clause::cli

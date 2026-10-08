@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::TypeValue FormParser::hash_type() {
     if (cursor_.take_syntax(U"{")) {
         ast::MapType result{.any = false, .fields = {}};
@@ -97,4 +97,4 @@ ast::BitstringType FormParser::bitstring_type() {
     expect(U">>");
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

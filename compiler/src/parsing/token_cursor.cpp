@@ -1,7 +1,7 @@
 #include "token_cursor.hpp"
 #include <stdexcept>
 
-namespace erlang_aot {
+namespace clause {
 TokenCursor::TokenCursor(const std::span<const Token> tokens, Token end) : tokens_(tokens), end_(std::move(end)) {}
 
 const Token *TokenCursor::peek(const std::size_t lookahead) const {
@@ -50,4 +50,4 @@ bool TokenCursor::empty() const { return offset_ == tokens_.size(); }
 std::span<const Token> TokenCursor::remaining() const { return tokens_.subspan(offset_); }
 
 const Token &TokenCursor::anchor() const { return empty() ? end_ : tokens_[offset_]; }
-} // namespace erlang_aot
+} // namespace clause

@@ -3,7 +3,7 @@
 #include <cstdio>
 
 // The fd driver (docs/ports.md#drivers): an {fd, In, Out} port writes its output to descriptor Out at once.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 class FdDriver final : public PortDriver {
   public:
@@ -43,4 +43,4 @@ std::optional<std::vector<std::byte>> framed(const PortOptions &options, std::ve
     result.insert(result.end(), bytes.begin(), bytes.end());
     return result;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

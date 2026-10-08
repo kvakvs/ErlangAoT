@@ -2,7 +2,7 @@
 #include "binary_options.hpp"
 #include "declarations.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 enum class MatchOperation : std::uint8_t {
     bind,
     exact_binding,
@@ -84,4 +84,4 @@ std::optional<MatchPlan> make_match_plan(const Module &module, const Function &f
 // Consume normalized semantics and binding events within explicit node/work ceilings.
 std::optional<MatchPlan> make_match_plan(const Module &module, const Function &function, const Reporter &out,
                                          MatchOptions options = {});
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

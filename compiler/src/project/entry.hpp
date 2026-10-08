@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace erlang_aot::project {
+namespace clause::project {
 struct EntryName {
     // Decoded atom text of the entry module and function; the entry arity is always 1 (argv list).
     std::u32string module;
@@ -20,4 +20,4 @@ struct SelectedEntry {
 std::optional<EntryName> parse_entry(std::string_view text);
 // Render an entry as MODULE:FUNCTION/1 for diagnostics.
 std::string entry_text(const EntryName &entry);
-} // namespace erlang_aot::project
+} // namespace clause::project

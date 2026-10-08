@@ -2,7 +2,7 @@
 #include "model.hpp"
 #include <span>
 
-namespace erlang_aot::project {
+namespace clause::project {
 // Convert manifest UTF-8 to native paths without locale-dependent narrowing.
 std::filesystem::path native_path(std::string_view text);
 // Produce portable UTF-8 display and sorting spelling from a native path.
@@ -16,4 +16,4 @@ std::filesystem::path literal_source(const std::filesystem::path &base, const Te
 void require_source(const std::filesystem::path &path, const Site &site);
 // Resolve and require an explicitly named directory, following its root symlink.
 std::filesystem::path source_directory(const std::filesystem::path &base, const Text &directory);
-} // namespace erlang_aot::project
+} // namespace clause::project

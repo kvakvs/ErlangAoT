@@ -5,7 +5,7 @@
 #include "verification.hpp"
 #include <algorithm>
 #include <charconv>
-#include <erlang_aot/abi/frames.hpp>
+#include <clause/abi/frames.hpp>
 #include <iterator>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstIterator.h>
@@ -15,7 +15,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using abi::v1::frame_header_words;
 using abi::v1::frame_resume_word;
@@ -680,4 +680,4 @@ bool lower_frames(Compilation &compilation) {
     }
     return verify_ir(compilation);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

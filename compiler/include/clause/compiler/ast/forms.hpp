@@ -1,0 +1,126 @@
+#pragma once
+#include <clause/compiler/ast/patterns.hpp>
+#include <clause/compiler/ast/terms.hpp>
+#include <clause/compiler/ast/types.hpp>
+
+namespace clause::ast {
+struct ModuleAttribute {
+    // Preserve the declared name without enforcing module-level semantic rules.
+    Atom name;
+    // Legacy parameterized modules remain distinguishable from an ordinary declaration.
+    std::optional<std::vector<Variable>> parameters = {};
+};
+
+struct FileAttribute {
+    // Retain explicit and preprocessor-generated file mappings without applying them again.
+    std::u32string name;
+    Integer line;
+};
+
+struct Function {
+    // All clauses share the name and first clause's arity; the builder checks this invariant.
+    Atom name;
+    std::vector<FunctionClause> clauses;
+};
+
+struct NameArity {
+    // Parser syntax accepts arbitrary integer arities; semantic bounds are deferred.
+    Atom name;
+    Integer arity;
+};
+
+struct ExportAttribute {
+    // Preserve export order and duplicates for later validation.
+    std::vector<NameArity> functions;
+};
+
+struct ImportAttribute {
+    // Module qualification applies to the complete ordered import list.
+    Atom module;
+    std::vector<NameArity> functions;
+};
+
+struct ImportRecordAttribute {
+    // Imported native record names remain unresolved.
+    Atom module;
+    std::vector<Atom> names;
+};
+
+struct GenericAttribute {
+    // Includes compile, behaviour, export_type and other attributes that OTP treats as literal data.
+    Atom name;
+    TermId value;
+};
+
+struct RecordDeclarationField {
+    // Keep default expressions unevaluated and preserve declaration order.
+    Atom name;
+    std::optional<ExprId> default_value;
+    NodeSource source;
+    // Mixed declarations preserve omitted type annotations.
+    std::optional<TypeId> type = {};
+};
+
+struct RecordDeclaration {
+    // Native and tuple records share fields but retain their distinct declaration category.
+    Atom name;
+    bool native;
+    std::vector<RecordDeclarationField> fields;
+};
+
+struct DocumentationEntry {
+    // Only doc metadata's equiv call may contain executable syntax.
+    TermId key;
+    std::variant<TermId, ExprId> value;
+};
+
+struct DocumentationAttribute {
+    // File references remain literal tuples; no documentation files are opened here.
+    bool module;
+    std::variant<TermId, std::vector<DocumentationEntry>> value;
+};
+
+enum class TypeDeclarationKind : std::uint8_t { alias, opaque, nominal };
+
+struct TypeDeclaration {
+    // Preserve category, parameter names and body without alias resolution.
+    TypeDeclarationKind kind;
+    Atom name;
+    std::vector<Variable> parameters;
+    TypeId type;
+};
+
+struct TypeConstraint {
+    // Modern and legacy subtype constraints normalize to a variable and bound.
+    Variable variable;
+    TypeId bound;
+    bool legacy;
+    NodeSource source;
+};
+
+struct SpecificationSignature {
+    // Each overload owns its function product/result and ordered when constraints.
+    FunType function;
+    std::vector<TypeConstraint> constraints;
+    NodeSource source;
+};
+
+struct Specification {
+    // First-signature arity is retained; overload agreement belongs to later lint.
+    bool callback;
+    std::optional<Atom> module;
+    Atom name;
+    std::size_t arity;
+    std::vector<SpecificationSignature> signatures;
+};
+
+using FormValue =
+    std::variant<Specification, TypeDeclaration, ModuleAttribute, FileAttribute, Function, ExportAttribute,
+                 ImportAttribute, ImportRecordAttribute, GenericAttribute, RecordDeclaration, DocumentationAttribute>;
+
+struct Form {
+    // Keep form identity, ordered syntax, and provenance together.
+    FormValue value;
+    NodeSource source;
+};
+} // namespace clause::ast

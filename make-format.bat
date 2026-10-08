@@ -1,6 +1,6 @@
 @echo off
 setlocal DisableDelayedExpansion
-set "ERLANG_AOT_SCRIPT_ROOT=%~dp0"
+set "CLAUSE_SCRIPT_ROOT=%~dp0"
 rem FORMAT_SCOPE=changed (default) formats C++ files changed since HEAD plus untracked files; all formats every file.
 rem Enumerate only project source trees, preserving spaces and special characters in paths.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
@@ -11,7 +11,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
     "if ($command) { $formatter = $command.Source }" ^
     "else { $formatter = Join-Path $env:ProgramFiles 'LLVM/bin/clang-format.exe' }" ^
     "};" ^
-    "$root = $env:ERLANG_AOT_SCRIPT_ROOT;" ^
+    "$root = $env:CLAUSE_SCRIPT_ROOT;" ^
     "$scope = if ($env:FORMAT_SCOPE) { $env:FORMAT_SCOPE } else { 'changed' };" ^
     "if ($scope -eq 'all') {" ^
     "$paths = foreach ($tree in 'compiler', 'runtime', 'abi', 'tests') {" ^

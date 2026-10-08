@@ -4,7 +4,7 @@
 #include <limits>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Keep checks active in all build modes.
 void require(bool condition) {

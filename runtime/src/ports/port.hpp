@@ -1,7 +1,7 @@
 #pragma once
+#include <clause/runtime/terms.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <erlang_aot/runtime/terms.hpp>
 #include <expected>
 #include <memory>
 #include <optional>
@@ -13,7 +13,7 @@
 
 // Ports (docs/ports.md): the port record the executor keeps in its port table, the options open_port/2 accepts and
 // the interface of the drivers behind ports.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // How a port's data is framed, in both directions.
 enum class Framing : std::uint8_t { stream, packet, line };
 
@@ -132,11 +132,11 @@ struct SpawnRequest final {
 std::expected<std::unique_ptr<PortDriver>, DriverError> spawn_driver(const SpawnRequest &request,
                                                                      const PortOptions &options);
 
-// The driver of {spawn_driver, "erlang_aot_file"}: files of the project library's file module, through the
+// The driver of {spawn_driver, "clause_file"}: files of the project library's file module, through the
 // port_control/3 protocol of ports/file.cpp.
 std::unique_ptr<PortDriver> file_driver();
 
 // The driver of an {fd, In, Out} port: input read from In by the I/O thread, output written at once to Out
 // (docs/ports.md#drivers).
 std::unique_ptr<PortDriver> fd_driver(int in, int out);
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

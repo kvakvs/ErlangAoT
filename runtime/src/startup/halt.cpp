@@ -1,11 +1,11 @@
 #include "../terms/integers.hpp"
 #include "startup.hpp"
 #include <array>
+#include <clause/abi/startup.hpp>
 #include <climits>
 #include <cstdlib>
-#include <erlang_aot/abi/startup.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // OTP truncates longer halt/1 slogans with badarg; keep the same bound.
 inline constexpr std::size_t slogan_limit = 1023;
@@ -77,10 +77,10 @@ std::optional<std::string> slogan_text(const Term &value) {
     }
     return current.is_nil() ? std::optional{text} : std::nullopt;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_halt_v1(void *context, erlang_aot::abi::v1::TermWord status) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_halt_v1(void *context, clause::abi::v1::TermWord status) noexcept {
+    using namespace clause;
     constexpr auto failure = static_cast<std::uint8_t>(abi::v1::ValueOutcome::failure);
     if (!context) {
         return failure;

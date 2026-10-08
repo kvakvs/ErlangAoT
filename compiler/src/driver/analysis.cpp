@@ -6,7 +6,7 @@
 #include "../semantic/capabilities.hpp"
 #include "../semantic/services.hpp"
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Establish all owned declaration tables before resolving inter-module references.
 void index_inputs(const codegen::CompilationRequest &request, Analysis &analysis, const semantic::Reporter &report) {
@@ -70,4 +70,4 @@ bool analyze(const codegen::CompilationRequest &request, const EntryRequest &ent
     debug_inference(analysis, request.implementation_debug, sink);
     return !failed;
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

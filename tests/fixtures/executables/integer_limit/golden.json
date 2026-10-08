@@ -53,6 +53,6 @@
     "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
   },
   "inputs": {
-    "integer_limit.erl": "639820c19e34c14c893b07e9e456ac88d08781387554bb6190ac2ac8365884f2"
+    "integer_limit.erl": "9214b694a81489f4cbac95daa8a6d63d3c112b12596f5c86f2d0f39311710fb1"
   }
 }

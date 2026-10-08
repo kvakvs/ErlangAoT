@@ -3,7 +3,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 bool Term::is_integer() const { return kind() == TermKind::smallint || kind() == TermKind::bignum; }
 
 bool Term::is_number() const { return is_integer() || is_float(); }
@@ -35,4 +35,4 @@ TermResult<std::string> Term::integer_decimal() const {
         return std::unexpected(TermError::resource_limit);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

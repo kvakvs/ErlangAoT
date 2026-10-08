@@ -1,7 +1,7 @@
 #include "engine.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 std::string PreprocessorSession::State::expand_environment(std::string name) const {
     if (name.empty() || name.front() != '$') {
         return name;
@@ -98,4 +98,4 @@ void PreprocessorSession::State::include(const Directive &directive, const Token
     }
     pp_fail(DiagnosticCode::include_not_found, "cannot find include " + filename, site);
 }
-} // namespace erlang_aot
+} // namespace clause

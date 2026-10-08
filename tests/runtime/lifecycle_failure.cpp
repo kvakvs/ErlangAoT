@@ -1,13 +1,13 @@
 #include "terms.hpp"
 #include <array>
+#include <clause/abi/bits.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/modules.hpp>
+#include <clause/runtime/runtime.hpp>
+#include <clause/runtime/scheduler.hpp>
 #include <cstdio>
 #include <cstdlib>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/modules.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
-#include <erlang_aot/runtime/scheduler.hpp>
 #include <iostream>
 #include <limits>
 #include <new>
@@ -15,8 +15,8 @@
 #include <stdexcept>
 #include <vector>
 
-using erlang_aot::abi::v1::Status;
-using erlang_aot::runtime::Runtime;
+using clause::abi::v1::Status;
+using clause::runtime::Runtime;
 
 namespace {
 // Only this isolated test executable replaces allocation; production has no failpoint hooks.
@@ -60,7 +60,7 @@ void require(bool condition, const char *message) {
 }
 
 // A failed construction followed by a retry must leave a heap whose every area parses and resolves.
-void require_walkable(erlang_aot::runtime::ProcessContext &context) {
+void require_walkable(clause::runtime::ProcessContext &context) {
     require(context.heap().verify().has_value(), "failed construction left an unparseable heap");
 }
 
@@ -85,8 +85,8 @@ void check_startup() {
 }
 
 // Memory service rejection and immediate copying must work even when host allocation is exhausted.
-void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
-    using namespace erlang_aot::runtime;
+void check_heap_without_allocation(clause::runtime::ProcessHeap &heap) {
+    using namespace clause::runtime;
     const auto baseline = live_allocations;
     remaining = 0;
     const auto allocation = heap.allocate(1);
@@ -102,8 +102,8 @@ void check_heap_without_allocation(erlang_aot::runtime::ProcessHeap &heap) {
 }
 
 // A collection whose new heap block cannot be allocated fails with every word, count and host Term intact.
-void check_collection_without_allocation(erlang_aot::runtime::ProcessContext &context) {
-    using namespace erlang_aot::runtime;
+void check_collection_without_allocation(clause::runtime::ProcessContext &context) {
+    using namespace clause::runtime;
     TermFactory factory(context);
     const auto value = factory.tuple(std::array{factory.integer(5).value()}).value();
     std::array roots{value.word()};
@@ -153,7 +153,7 @@ void check_context_creation() {
 
 // Fail registry key/type-vector/node allocations without disturbing existing signatures.
 void check_registry_creation() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -180,7 +180,7 @@ void check_registry_creation() {
 
 // Sweep publication allocations, proving neither partial modules nor leaked captures survive failure.
 void check_module_publication() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -212,7 +212,7 @@ void check_module_publication() {
 
 // Failed registry growth must leave both the entry and the once-only context marker unpublished.
 void check_scheduler_registration() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     const auto baseline = live_allocations;
     auto runtime = Runtime::start();
     require(runtime.has_value(), "scheduler fixture startup failed");
@@ -234,7 +234,7 @@ void check_scheduler_registration() {
 
 // Both spelling/word indexes must roll back together at every allocation ordinal.
 void check_atom_interning() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 32 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -261,8 +261,8 @@ void check_atom_interning() {
 
 // Registration may retain valid atoms after failure, but never exposes draft slots or callable modules.
 void check_atom_registration() {
-    using namespace erlang_aot::runtime;
-    using namespace erlang_aot::abi::v1;
+    using namespace clause::runtime;
+    using namespace clause::abi::v1;
     bool succeeded = false;
     const AtomDescriptor atom{"registered_atom_literal", 23};
     const ModuleDescriptor descriptor{version, sizeof(Word) * 8, "atom_module", 11, nullptr, 0, &atom, 1};
@@ -289,7 +289,7 @@ void check_atom_registration() {
 
 // Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
 void check_integer_construction() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     // MSVC initializes two process-wide stream locale facets on first use; exclude those caches from heap accounting.
     {
         std::ostringstream warmup;
@@ -323,7 +323,7 @@ void check_integer_construction() {
 
 // Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
 void check_map_construction() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     const auto key = Term::from_word(encode_integer(42).value()).value();
     const auto value = Term::from_word(encode_integer(7).value()).value();
     const std::array entries{std::pair{key, value}, std::pair{value, key}};
@@ -353,7 +353,7 @@ void check_map_construction() {
 
 // Integer temporaries, backing and publication all fail transactionally before an ordinary retry.
 void check_float_construction() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -380,7 +380,7 @@ void check_float_construction() {
 
 // Sweep inline/shared binary publication and checked tail extraction without adding production failpoint hooks.
 void check_bitstrings(bool extraction, bool large) {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -402,7 +402,7 @@ void check_bitstrings(bool extraction, bool large) {
                 remaining = ordinal;
                 const auto result =
                     extraction
-                        ? erlang_aot_bits_v1(&context, 1, input.data(), input.size(), output.data())
+                        ? CLAUSE_bits_v1(&context, 1, input.data(), input.size(), output.data())
                         : factory.binary(bytes).transform([](const Term &) { return std::uint8_t{0}; }).value_or(2);
                 remaining = std::numeric_limits<std::size_t>::max();
                 succeeded = result == 0;
@@ -425,14 +425,14 @@ void check_bitstrings(bool extraction, bool large) {
 
 // Body of the frame pushed under allocation faults: return the argument.
 void identity_body(void *context) {
-    auto &stack = static_cast<erlang_aot::runtime::ProcessContext *>(context)->stack();
-    stack.leave(stack.frame()[erlang_aot::abi::v1::frame_header_words])(context);
+    auto &stack = static_cast<clause::runtime::ProcessContext *>(context)->stack();
+    stack.leave(stack.frame()[clause::abi::v1::frame_header_words])(context);
 }
 
 // An isolated allocator override verifies real failure cleanup without adding production test switches.
 void check_root_allocation() {
-    using namespace erlang_aot::runtime;
-    const erlang_aot::abi::v1::FrameDescriptor identity{nullptr, 0, 0, 1, &identity_body, 4, 4};
+    using namespace clause::runtime;
+    const clause::abi::v1::FrameDescriptor identity{nullptr, 0, 0, 1, &identity_body, 4, 4};
     const auto argument = encode_integer(5).value();
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
@@ -459,7 +459,7 @@ void check_root_allocation() {
 
 // Sweep heap block allocation; a failed reservation keeps no backing and allows retry.
 void check_heap_construction() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 8 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -482,7 +482,7 @@ void check_heap_construction() {
 
 // Every failed tuple/list publication restores its entire reservation and index before a successful retry.
 void check_container_construction(bool list) {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -513,7 +513,7 @@ void check_container_construction(bool list) {
 // A copy failing at any host allocation, while discovering the graph or holding its binary buffer, leaves the
 // destination empty and the source intact; a retry succeeds.
 void check_graph_copy() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 64 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -547,7 +547,7 @@ void check_graph_copy() {
 
 // Sweep temporary arithmetic limbs and final publication through the real checked fallback boundary.
 void check_integer_arithmetic() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     bool succeeded = false;
     for (std::size_t ordinal = 0; ordinal < 256 && !succeeded; ++ordinal) {
         const auto baseline = live_allocations;
@@ -561,9 +561,9 @@ void check_integer_arithmetic() {
             {
                 GeneratedInvocation call(context.generated_calls());
                 remaining = ordinal;
-                const auto result = erlang_aot_immediate_v1(
-                    &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ImmediateOperation::multiply),
-                    value.word(), value.word(), &output);
+                const auto result = CLAUSE_immediate_v1(
+                    &context, static_cast<std::uint8_t>(clause::abi::v1::ImmediateOperation::multiply), value.word(),
+                    value.word(), &output);
                 remaining = std::numeric_limits<std::size_t>::max();
                 succeeded = result == 0;
                 if (!succeeded) {
@@ -575,9 +575,9 @@ void check_integer_arithmetic() {
                 }
             }
             GeneratedInvocation retry(context.generated_calls());
-            require(erlang_aot_immediate_v1(
-                        &context, static_cast<std::uint8_t>(erlang_aot::abi::v1::ImmediateOperation::subtract),
-                        value.word(), value.word(), &output) == 0 &&
+            require(CLAUSE_immediate_v1(&context,
+                                        static_cast<std::uint8_t>(clause::abi::v1::ImmediateOperation::subtract),
+                                        value.word(), value.word(), &output) == 0 &&
                         output == encode_integer(0).value(),
                     "arithmetic allocation failure poisoned exact retry");
             require_walkable(context);

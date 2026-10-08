@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::TypeValue FormParser::type_primary() {
     if (cursor_.take_syntax(U"(")) {
         auto type = top_type();
@@ -55,4 +55,4 @@ ast::FunType FormParser::fun_type() {
     expect(U"->");
     return {.arguments = std::move(arguments), .result = top_type()};
 }
-} // namespace erlang_aot
+} // namespace clause

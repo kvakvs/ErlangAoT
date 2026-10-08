@@ -2,7 +2,7 @@
 #include "pattern_state.hpp"
 #include "records.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 enum class Action : std::uint8_t { pattern, read, segment, publish_segment };
 
@@ -288,4 +288,4 @@ void bind_pattern(BindingAnalysis &state, const ast::ExprId &id, BindingCandidat
     }
     scope.valid = scope.valid && !state.invalid_pattern && state.work <= state.limit;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

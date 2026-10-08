@@ -18,7 +18,7 @@ endif()
 # Limit discovery to project C++ sources; exclude reference and build trees.
 set(complexity_inputs compiler runtime abi)
 if(QUALITY_SCOPE STREQUAL "changed")
-    erlang_aot_quality_scope(lizard complexity_inputs)
+    clause_quality_scope(lizard complexity_inputs)
     if(NOT complexity_inputs)
         message(STATUS "No changed production C++ files; Lizard skipped.")
         return()

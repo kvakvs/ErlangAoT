@@ -3,7 +3,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 using abi::v1::Status;
 
 std::expected<ProcessContext *, Status> Runtime::create_context() noexcept {
@@ -68,4 +68,4 @@ Status Runtime::destroy_context(ProcessContext *context) noexcept {
     impl_->contexts.erase(found);
     return Status::ok;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

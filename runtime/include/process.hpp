@@ -5,15 +5,15 @@
 #include "mailbox.hpp"
 #include "process_heap.hpp"
 #include "terms.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
-#include <erlang_aot/runtime/process_state.hpp>
+#include <clause/runtime/process_context.hpp>
+#include <clause/runtime/process_state.hpp>
 
 #include <cstdint>
 #include <deque>
 #include <memory>
 #include <optional>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class Scheduler;
 class SchedulerPool;
 class CodeServer;
@@ -122,4 +122,4 @@ class Process final {
 
 // TODO(threads): reserve a backend location; no OS-thread process class or launcher yet.
 class OsThreadProcess;
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

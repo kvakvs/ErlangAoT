@@ -1,12 +1,12 @@
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 static_assert(!std::is_move_constructible_v<ProcessHeap>);
 static_assert(!std::is_copy_constructible_v<ProcessHeap>);

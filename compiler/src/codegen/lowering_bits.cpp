@@ -2,12 +2,12 @@
 #include "../semantic/capabilities.hpp"
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Op = abi::v1::BitOperation;
 
@@ -138,4 +138,4 @@ llvm::Value *lower_binary_part(ExpressionLowering &state, const std::span<llvm::
     auto *length = lower_inspection(state, abi::v1::ContainerInspection::tuple_element, tuple, 1, rejection);
     return service(state, Op::part, std::array{values[0], start, length}).value;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

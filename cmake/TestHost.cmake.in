@@ -17,22 +17,22 @@ set(host_CMAKE_EXE_LINKER_FLAGS [==[@CMAKE_EXE_LINKER_FLAGS@]==])
 set(host_CMAKE_TOOLCHAIN_FILE [==[@CMAKE_TOOLCHAIN_FILE@]==])
 set(host_CMAKE_GENERATOR_INSTANCE [==[@CMAKE_GENERATOR_INSTANCE@]==])
 set(host_CMAKE_MSVC_RUNTIME_LIBRARY [==[@CMAKE_MSVC_RUNTIME_LIBRARY@]==])
-set(host_ERLANG_AOT_MSVC_ITERATOR_DEBUG_LEVEL [==[@ERLANG_AOT_MSVC_ITERATOR_DEBUG_LEVEL@]==])
-set(host_ERLANG_AOT_CLANG_EXECUTABLE [==[@ERLANG_AOT_CLANG_EXECUTABLE@]==])
-set(host_ERLANG_AOT_BOOST_ROOT [==[@ERLANG_AOT_BOOST_INCLUDE@]==])
+set(host_CLAUSE_MSVC_ITERATOR_DEBUG_LEVEL [==[@CLAUSE_MSVC_ITERATOR_DEBUG_LEVEL@]==])
+set(host_CLAUSE_CLANG_EXECUTABLE [==[@CLAUSE_CLANG_EXECUTABLE@]==])
+set(host_CLAUSE_BOOST_ROOT [==[@CLAUSE_BOOST_INCLUDE@]==])
 foreach(variable IN ITEMS CMAKE_MAKE_PROGRAM CMAKE_C_COMPILER CMAKE_CXX_COMPILER
         CMAKE_C_FLAGS CMAKE_CXX_FLAGS CMAKE_EXE_LINKER_FLAGS
         CMAKE_TOOLCHAIN_FILE CMAKE_GENERATOR_INSTANCE CMAKE_MSVC_RUNTIME_LIBRARY
-        ERLANG_AOT_CLANG_EXECUTABLE ERLANG_AOT_BOOST_ROOT ERLANG_AOT_MSVC_ITERATOR_DEBUG_LEVEL)
+        CLAUSE_CLANG_EXECUTABLE CLAUSE_BOOST_ROOT CLAUSE_MSVC_ITERATOR_DEBUG_LEVEL)
     if(NOT host_${variable} STREQUAL "")
         list(APPEND host_configure_args "-D${variable}=${host_${variable}}")
     endif()
 endforeach()
 # Nested test programs link the parent build's runtime (`include("${RUNTIME_TARGETS}")` gives
-# ErlangAoT::generated_program) and, like the parent's tests, carry debug information only on request.
-set(host_runtime_targets [==[@PROJECT_BINARY_DIR@/ErlangAoTRuntimeTargets.cmake]==])
+# Clause::generated_program) and, like the parent's tests, carry debug information only on request.
+set(host_runtime_targets [==[@PROJECT_BINARY_DIR@/ClauseRuntimeTargets.cmake]==])
 list(APPEND host_configure_args "-DRUNTIME_TARGETS=${host_runtime_targets}")
-set(host_test_debug_info [==[@ERLANG_AOT_TEST_DEBUG_INFO@]==])
+set(host_test_debug_info [==[@CLAUSE_TEST_DEBUG_INFO@]==])
 set(host_frontend [==[@CMAKE_CXX_COMPILER_FRONTEND_VARIANT@]==])
 if(NOT host_test_debug_info)
     list(APPEND host_configure_args "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=")

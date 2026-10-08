@@ -68,6 +68,6 @@ the guard on any mismatch.
 ## Oracle limitations
 
 Installed OTP 29.1.1 crashes in SSA conversion for some unrelated modern imports
-behind legacy scalar aliases; ErlangAoT rejects that unauthorized owner
+behind legacy scalar aliases; Clause rejects that unauthorized owner
 explicitly. OTP's loader also rejects a guard with a huge literal record arity
 despite lint accepting it; that case has semantic evidence only.

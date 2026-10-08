@@ -2,7 +2,7 @@
 #include <array>
 #include <set>
 #include <stdexcept>
-using namespace erlang_aot::semantic;
+using namespace clause::semantic;
 
 // Symbols cannot be inspected through emitted Erlang objects until lowering is implemented.
 int main() {
@@ -19,8 +19,8 @@ int main() {
             }
         }
     }
-    for (const auto invalid :
-         {"other_61_62_0", "eav1_6_62_0", "eav1_61_62_256", "eav1_61_62_00", "eav1_zz_62_0", "eav1_61_62_-1"}) {
+    for (const auto invalid : {"other_61_62_0", "clausev1_6_62_0", "clausev1_61_62_256", "clausev1_61_62_00",
+                               "clausev1_zz_62_0", "clausev1_61_62_-1"}) {
         if (decode_symbol(invalid)) {
             throw std::runtime_error("accepted malformed symbol");
         }

@@ -1,7 +1,7 @@
 #pragma once
 #include "binding_state.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Normalize one scalar arithmetic tree with iterative traversal and the shared semantic work budget.
 std::optional<PatternLiteral> pattern_constant(BindingAnalysis &state, const ast::ExprId &root);
 // Validate a read-only map key or segment-size node and return its executable children.
@@ -12,4 +12,4 @@ bool pattern_call(BindingAnalysis &state, const ast::ExprId &id, const ast::Call
 void pattern_binary(BindingAnalysis &state, const ast::ExprId &id, const ast::Bitstring &binary, bool pattern = true);
 // Emit a located semantic error and invalidate the enclosing analysis transaction.
 void pattern_error(BindingAnalysis &state, const ast::ExprId &id, std::string message = "illegal pattern");
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

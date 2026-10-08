@@ -1,8 +1,8 @@
 #include "lowering_roots.hpp"
 #include "specialization_lowering.hpp"
-#include <erlang_aot/abi/v1.hpp>
+#include <clause/abi/v1.hpp>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Test only implemented low tags; no heap access, narrowing, specification promises or unchecked unboxing.
 llvm::Value *guard(llvm::IRBuilder<> &builder, llvm::Function &entry, const TypeProfile &profile) {
@@ -48,4 +48,4 @@ SpecializedDispatch create_dispatch(llvm::Function &generic, const std::span<con
     }
     return {entry, return_call(builder, *entry, generic)};
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

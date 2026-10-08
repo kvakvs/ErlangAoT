@@ -4,7 +4,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 TermResult<MapPosition> map_position(std::span<const MapEntry> entries, const Term &key) {
     std::size_t first = 0;
     std::size_t last = entries.size();
@@ -71,9 +71,9 @@ TermResult<std::optional<Term>> find(const Term &map, const Term &key, std::size
     return std::nullopt;
 }
 } // namespace
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 bool Term::is_map() const { return kind() == TermKind::map; }
 
 TermResult<std::size_t> Term::map_size() const {
@@ -113,4 +113,4 @@ TermResult<std::vector<std::pair<Term, Term>>> Term::map_entries() const {
         return std::unexpected(TermError::resource_limit);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

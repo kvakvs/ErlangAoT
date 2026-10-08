@@ -2,7 +2,7 @@
 #include "token_utils.hpp"
 #include <boost/multiprecision/cpp_int.hpp>
 
-namespace erlang_aot {
+namespace clause {
 // Eager arithmetic keeps intermediate values owned, avoiding borrowed expression-template lifetimes.
 using BigInt = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 enum class ValueKind : std::uint8_t {
@@ -69,4 +69,4 @@ class EvaluationFailure : public std::exception {};
 
 // Distinguish implementation budgets from Erlang evaluation failures.
 class EvaluationLimit : public std::exception {};
-} // namespace erlang_aot
+} // namespace clause

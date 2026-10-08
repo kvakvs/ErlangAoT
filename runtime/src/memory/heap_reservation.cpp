@@ -1,7 +1,7 @@
 #include "heap_storage.hpp"
 #include <utility>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 HeapReservation::HeapReservation(std::shared_ptr<detail::HeapStorage> storage, std::span<std::byte> bytes,
                                  HeapMark mark) noexcept
     : storage_(std::move(storage)), bytes_(bytes), mark_(mark) {}
@@ -35,4 +35,4 @@ std::expected<void, HeapError> HeapReservation::commit() noexcept {
     active_ = false;
     return {};
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

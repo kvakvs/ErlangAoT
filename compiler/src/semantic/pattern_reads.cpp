@@ -1,6 +1,6 @@
 #include "capabilities.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Embedded sizes retain their analyzed preceding-segment scope without revisiting segment definitions.
 void binary_reads(const Module &module, const NormalizedPattern &pattern, std::vector<ast::ExprId> &result) {
@@ -33,4 +33,4 @@ std::vector<ast::ExprId> pattern_reads(const Module &module, const Function &fun
     }
     return result;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

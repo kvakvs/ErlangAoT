@@ -6,12 +6,12 @@
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/builtins.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/term.hpp>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Checked canonical decimal parsing rejects arbitrary-size values before LLVM sees them.
 llvm::Value *literal(ExpressionLowering &state, const ast::ExprId &expression) {
@@ -227,4 +227,4 @@ llvm::Value *lower_value(ExpressionLowering &state, const ast::ExprId &id) {
     return leaf(state, id);
 }
 
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

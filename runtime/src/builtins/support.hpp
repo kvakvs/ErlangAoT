@@ -1,19 +1,19 @@
 #pragma once
 #include "../terms/service_errors.hpp"
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <optional>
 #include <utility>
 
 // Helpers shared by builtin implementations: argument admission, error raising and result publication.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 using Arguments = std::span<const Word>;
 
 // Record an Erlang error with an optional payload, as generated code does; returns the unused result word.
 inline Word raise(ProcessContext &context, abi::v1::ErrorReason reason, Word payload = 0) {
-    erlang_aot_raise_v2(&context, reason, payload);
+    CLAUSE_raise_v2(&context, reason, payload);
     return 0;
 }
 
@@ -83,4 +83,4 @@ inline std::optional<std::int64_t> small(Word word) {
     const auto value = abi::v1::NativeIntegerEncoding::decode(word);
     return value ? std::optional{*value} : std::nullopt;
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

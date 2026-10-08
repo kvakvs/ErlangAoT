@@ -3,7 +3,7 @@
 #include <array>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Subtract before accumulating so even injected size_t ceilings cannot overflow.
 void consume(const std::size_t size, std::size_t &remaining, const char *message) {
@@ -45,4 +45,4 @@ std::size_t output_capacity(const CompilationLimits &limits, const std::span<con
     }
     return std::min(limits.module_bytes, remaining);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -2,12 +2,12 @@
 #include "memory/runtime_memory.hpp"
 #include "process/identities.hpp"
 #include "scheduler/executor.hpp"
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
-#include <erlang_aot/runtime/scheduler.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
+#include <clause/runtime/scheduler.hpp>
 #include <unordered_map>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 // Contexts die before code registrations and runtime-owned atom storage.
 class Runtime::Impl final {
   public:
@@ -36,4 +36,4 @@ class Runtime::Impl final {
     // Run processes on the scheduler workers (RuntimeOptions::schedulers) while the program runs.
     detail::Executor executor;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

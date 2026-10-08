@@ -1,7 +1,7 @@
 #pragma once
 #include "binding_state.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Keep the semantic catalog available to metadata validation without consulting runtime registration.
 bool guard_signature(const FunctionKey &key);
 // Classify supported immediate operators without widening guard legality or numeric representation support.
@@ -33,4 +33,4 @@ std::optional<FunctionKey> guard_identity(BindingAnalysis &state, const ast::Exp
 void resolve_services(Module &module, const Reporter &out, std::size_t work_limit = 1'000'000);
 // Admit only inert no_auto_import compile options and explicit erlang guard-signature imports.
 bool service_metadata(const ast::Module &syntax, const ast::FormValue &value);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

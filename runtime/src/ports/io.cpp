@@ -2,7 +2,7 @@
 #include <algorithm>
 
 // Input framing of ports (docs/ports.md#data-modes-and-options).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 std::vector<PortInput> InputDecoder::feed(std::span<const std::byte> bytes) {
     std::vector<PortInput> units;
     if (framing_ == Framing::stream) {
@@ -68,9 +68,9 @@ void InputDecoder::lines(std::vector<PortInput> &units) {
         pending_.erase(pending_.begin(), newline + 1);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Write a port's queue until the port closed and the queue is empty; a failed write reports the error once and
 // drops the rest. An owned descriptor is closed at the end.
@@ -178,4 +178,4 @@ void IoService::forget(Word port) {
         watchers_.erase(watcher);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -23,6 +23,6 @@
   },
   "inputs": {
     "../../../../examples/compile/answer.erl": "5457902612ccb5b75cf4e682c16ea866984c95615b84e53f4be216e01a578cec",
-    "../../../../examples/compile/client.erl": "8fe6c2e7a66e0b81ac8ab65e201978916224dcb6316ac2a25d88805731241bbb"
+    "../../../../examples/compile/client.erl": "4108d67dfd0f6ae17dbba2d2dccf0502a46aa74cbc0fd5ee320db1fc167dc8f9"
   }
 }

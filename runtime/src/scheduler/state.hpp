@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/runtime/scheduler.hpp>
+#include <clause/runtime/scheduler.hpp>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class SchedulerService::Impl final {
   public:
     // Fix ownership; empty-range construction lets Debug STL proxy allocation failures propagate.
@@ -25,4 +25,4 @@ class SchedulerService::Impl final {
     // Own bounded-by-context-count records; allocation failure never publishes a partial entry.
     std::vector<Entry> entries;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

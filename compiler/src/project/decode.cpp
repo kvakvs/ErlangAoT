@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <set>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Recognize the portable first character of a target name without locale rules.
 bool initial(const char value) {
@@ -94,4 +94,4 @@ Manifest decode(const Document &document, const Limits &limits) {
     }
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

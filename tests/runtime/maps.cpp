@@ -1,16 +1,16 @@
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
 namespace {
-using namespace erlang_aot::runtime;
-using Op = erlang_aot::abi::v1::MapOperation;
-using Outcome = erlang_aot::abi::v1::MapOutcome;
-using Status = erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using Op = clause::abi::v1::MapOperation;
+using Outcome = clause::abi::v1::MapOutcome;
+using Status = clause::abi::v1::Status;
 
 // Keep ownership/publication assertions active in optimized native builds.
 void require(bool condition, const char *message) {
@@ -28,7 +28,7 @@ std::pair<Outcome, Term> invoke(ProcessContext &context, Op operation, std::span
     GeneratedInvocation scope(context.generated_calls());
     Word output = 0;
     const auto result = static_cast<Outcome>(
-        erlang_aot_map_v1(&context, static_cast<std::uint8_t>(operation), words.data(), words.size(), &output));
+        CLAUSE_map_v1(&context, static_cast<std::uint8_t>(operation), words.data(), words.size(), &output));
     require(!context.generated_calls().failure(), "unexpected map infrastructure failure");
     return {result, Term::from_word(output, context).value()};
 }
@@ -93,7 +93,7 @@ void malformed() {
     Word output = 123;
     {
         GeneratedInvocation scope(context.generated_calls());
-        require(erlang_aot_map_v1(&context, static_cast<std::uint8_t>(Op::make), &one, 1, &output) ==
+        require(CLAUSE_map_v1(&context, static_cast<std::uint8_t>(Op::make), &one, 1, &output) ==
                     static_cast<std::uint8_t>(Outcome::failure),
                 "odd map array accepted");
         require(output == 123 && context.generated_calls().failure().has_value(), "invalid map array published output");

@@ -4,7 +4,7 @@
 #include <set>
 #include <stdexcept>
 
-namespace erlang_aot::artifacts {
+namespace clause::artifacts {
 std::string encoded_name(const std::string_view identity) {
     return semantic::encode_symbol({std::string(identity), "", 0});
 }
@@ -62,8 +62,8 @@ std::vector<Destination> plan(const std::span<const codegen::OutputBuffer> outpu
     std::set<std::filesystem::path> names;
     const auto base = project::absolute_path(std::filesystem::current_path(), root);
     for (const auto &output : outputs) {
-        // "eav1_start" never decodes as a module symbol, so it cannot collide with module artifacts.
-        const auto name = output.startup ? std::string("eav1_start") : encoded_name(output.module_name);
+        // "clausev1_start" never decodes as a module symbol, so it cannot collide with module artifacts.
+        const auto name = output.startup ? std::string("clausev1_start") : encoded_name(output.module_name);
         const auto path = base / (name + extension(output.kind, object_extension));
         if (!names.insert(path).second) {
             throw std::runtime_error("duplicate artifact destination: " + project::path_text(path));
@@ -79,4 +79,4 @@ std::vector<Destination> plan(const std::span<const codegen::OutputBuffer> outpu
     return destinations;
 }
 } // namespace detail
-} // namespace erlang_aot::artifacts
+} // namespace clause::artifacts

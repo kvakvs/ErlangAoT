@@ -1,10 +1,10 @@
 #include <array>
+#include <clause/runtime/modules.hpp>
 #include <cstdio>
-#include <erlang_aot/runtime/modules.hpp>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::runtime;
+using namespace clause;
+using namespace clause::runtime;
 
 // Keep lifetime/transaction checks active in release consumers.
 void require(bool value, const char *message) {
@@ -61,7 +61,7 @@ void publication() {
 // Validate the service boundary and real module publication without exposing registry implementation details.
 int main() {
     try {
-        require(erlang_aot_register_module_v4(nullptr, nullptr) ==
+        require(CLAUSE_register_module_v4(nullptr, nullptr) ==
                     static_cast<std::uint8_t>(abi::v1::Status::invalid_argument),
                 "null service input accepted");
         publication();

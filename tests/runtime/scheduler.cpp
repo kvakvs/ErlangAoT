@@ -1,12 +1,12 @@
 #include <bit>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
-#include <erlang_aot/runtime/scheduler.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
+#include <clause/runtime/scheduler.hpp>
 #include <iostream>
 #include <stdexcept>
 
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 namespace {
 // Keep lifecycle assertions active in Release as well as sanitizer builds.

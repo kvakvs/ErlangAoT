@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Export absolute magnitude without borrowing Boost's platform-specific limb representation.
 std::vector<Word> magnitude(const Integer &value) {
@@ -63,4 +63,4 @@ Integer integer_sum(const Integer &left, const Integer &right, bool subtracting)
     }
     return combine(std::move(lhs), rhs, addition, negative);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

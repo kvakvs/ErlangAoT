@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 enum class Kind : std::uint8_t {
     top,
     bottom,
@@ -91,4 +91,4 @@ class Graph {
     std::vector<Node> nodes_;
     std::map<Node, std::size_t> identities_;
 };
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

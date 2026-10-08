@@ -196,7 +196,7 @@ void remote_calls() {
 int main() {
     try {
         constants(sizeof(void *) == 8 ? "constants64.erl" : "constants32.erl", "", sizeof(void *) * 8);
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
         constants("constants32.erl", "i686-unknown-linux-gnu", 32);
         constants("constants64.erl", "x86_64-unknown-linux-gnu", 64);
         target_overflow();

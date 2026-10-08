@@ -1,7 +1,7 @@
 #include "printable.hpp"
 #include "source_printer.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // A record type name: `#r` or `#m:r`.
 std::string record_type_name(const ast::RecordType &value) {
@@ -189,4 +189,4 @@ std::string SourcePrinter::types(const std::vector<ast::TypeId> &items) const {
 }
 
 std::string SourcePrinter::term(const ast::TermId &id) const { return std::visit(Term{*this}, syntax_.term(id).value); }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

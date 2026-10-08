@@ -1,7 +1,7 @@
 #include "integers.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 using Op = abi::v1::ImmediateOperation;
 
 TermResult<Term> integer_service(ProcessContext &context, Op operation, const Term &left, const Term &right) {
@@ -21,4 +21,4 @@ TermResult<Term> integer_service(ProcessContext &context, Op operation, const Te
     }
     return result.and_then([&](const auto &value) { return IntegerAccess::make(context.heap(), value); });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

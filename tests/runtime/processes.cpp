@@ -1,6 +1,6 @@
 #include "scheduler/executor.hpp"
 #include <atomic>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -11,11 +11,11 @@
 // releasing processes that never ended returns every heap and stack word; with several scheduler workers, CPU-bound
 // processes run at the same time.
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Code;
-using erlang_aot::abi::v1::frame_header_words;
-using erlang_aot::abi::v1::FrameDescriptor;
-using Status = erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Code;
+using clause::abi::v1::frame_header_words;
+using clause::abi::v1::FrameDescriptor;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {
@@ -64,7 +64,7 @@ void countdown_body(void *context) {
 // crash/0 and halt/0: end their process with an Erlang exception or a halt request.
 void crash_body(void *context) {
     static_cast<ProcessContext *>(context)->generated_calls().fail(
-        {.code = CallError::erlang_exception, .reason = erlang_aot::abi::v1::ErrorReason::badarg});
+        {.code = CallError::erlang_exception, .reason = clause::abi::v1::ErrorReason::badarg});
     run(stack(context).leave(0), context);
 }
 

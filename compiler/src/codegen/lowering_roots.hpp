@@ -3,15 +3,15 @@
 #include <llvm/IR/IRBuilder.h>
 #include <string_view>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 struct ExpressionLowering;
 
 // Placeholder for a native-form function's frame slots: (context, slot count, name descriptor) -> slots.
 // lower_frames replaces it; it never reaches emitted objects.
-inline constexpr std::string_view FRAME_MARKER = "erlang_aot.frame";
+inline constexpr std::string_view FRAME_MARKER = "clause.frame";
 // Placeholder for a call of a function value: (context, arguments, FrameDescriptor) -> result, where `arguments`
-// already holds the arguments and the fun's captured values (erlang_aot_apply_v1). lower_frames replaces it.
-inline constexpr std::string_view APPLY_MARKER = "erlang_aot.apply";
+// already holds the arguments and the fun's captured values (CLAUSE_apply_v1). lower_frames replaces it.
+inline constexpr std::string_view APPLY_MARKER = "clause.apply";
 // Marks native-form Erlang function definitions and declarations with their arity.
 inline constexpr std::string_view ARITY_ATTRIBUTE = "erlang-arity";
 
@@ -39,4 +39,4 @@ llvm::Value *root_slot(ExpressionLowering &state);
 void reset_candidate_roots(ExpressionLowering &state);
 // Fix the frame's term slot count once every candidate has been lowered.
 void finish_roots(ExpressionLowering &state);
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

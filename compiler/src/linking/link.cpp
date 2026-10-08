@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace erlang_aot::linking {
+namespace clause::linking {
 namespace {
 // Remove a staging tree; a failure (even allocation) during cleanup only leaves the directory behind.
 bool remove_tree(const std::filesystem::path &directory) noexcept {
@@ -113,7 +113,7 @@ std::runtime_error link_failure(const std::filesystem::path &output, const std::
 
 StagingDirectory::StagingDirectory(const std::filesystem::path &parent) {
     llvm::SmallString<256> created;
-    if (const auto error = llvm::sys::fs::createUniqueDirectory(utf8_path(parent / ".erlangaot-link"), created)) {
+    if (const auto error = llvm::sys::fs::createUniqueDirectory(utf8_path(parent / ".clause-link"), created)) {
         throw std::runtime_error("cannot create link staging directory in " + project::path_text(parent) + ": " +
                                  error.message());
     }
@@ -162,4 +162,4 @@ std::string link_executable(const LinkRequest &request) {
     publish_executable(executable);
     return executable.warnings;
 }
-} // namespace erlang_aot::linking
+} // namespace clause::linking

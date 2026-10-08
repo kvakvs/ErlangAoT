@@ -1,8 +1,8 @@
 #include "codegen/compilation.hpp"
 #include "codegen/target.hpp"
 #include "codegen/term_abi.hpp"
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/terms.hpp>
 #include <iostream>
 #include <llvm/IR/Constants.h>
 #include <stdexcept>
@@ -17,11 +17,11 @@ void require(bool condition, const char *message) {
 
 // Construct constants independently with LLVM's signed shifts, then cross the runtime word boundary.
 void check_constants() {
-    using Encoding = erlang_aot::abi::v1::NativeIntegerEncoding;
-    namespace runtime = erlang_aot::runtime;
-    namespace codegen = erlang_aot::codegen;
+    using Encoding = clause::abi::v1::NativeIntegerEncoding;
+    namespace runtime = clause::runtime;
+    namespace codegen = clause::codegen;
     codegen::CompilationRequest request;
-    request.inputs.emplace_back("runtime-terms.erl", erlang_aot::ast::Module{});
+    request.inputs.emplace_back("runtime-terms.erl", clause::ast::Module{});
     codegen::Compilation compilation(std::move(request));
     require(codegen::configure_target(compilation), "native target setup failed");
     auto *type = codegen::term_type(compilation);
@@ -40,7 +40,7 @@ void check_constants() {
 }
 } // namespace
 
-// LLVM is a test-only producer; erlang_runtime itself remains independently linkable without the SDK.
+// LLVM is a test-only producer; clause_runtime itself remains independently linkable without the SDK.
 int main() {
     try {
         check_constants();

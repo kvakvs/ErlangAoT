@@ -1,15 +1,15 @@
 #pragma once
 #include <bit>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <terms.hpp>
 
 namespace wire {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Leave room for generated result wrappers around the corpus's 255-cell lists while bounding test recursion.
 inline constexpr unsigned transport_depth_limit = 512;
@@ -69,8 +69,7 @@ inline Term read(ProcessContext &context, std::string_view &input, unsigned dept
     const auto scalar = input.substr(0, end);
     input.remove_prefix(scalar.size());
     if (scalar == "nil" || scalar == "tuple") {
-        return Term::from_word(scalar == "nil" ? erlang_aot::abi::v1::empty_list : erlang_aot::abi::v1::empty_tuple)
-            .value();
+        return Term::from_word(scalar == "nil" ? clause::abi::v1::empty_list : clause::abi::v1::empty_tuple).value();
     }
     if (scalar.starts_with('b')) {
         const auto colon = scalar.find(':');

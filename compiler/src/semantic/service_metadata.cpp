@@ -1,7 +1,7 @@
 #include "services.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // no_auto_import selectors contain literal names/arities; dynamic or malformed metadata stays unavailable.
 bool selector(const ast::Module &syntax, const ast::TermId &id) {
@@ -67,4 +67,4 @@ bool service_metadata(const ast::Module &syntax, const ast::FormValue &value) {
                return count && guard_signature({entry.name.name, *count});
            });
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

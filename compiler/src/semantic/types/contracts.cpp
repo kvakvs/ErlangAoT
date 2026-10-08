@@ -2,7 +2,7 @@
 #include "../features.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Compare only precise implementation singletons; top and parameter relations are inconclusive here.
 bool excludes(Registry &declared, const Inference &inferred, const Fact fact, const Id expected,
@@ -90,4 +90,4 @@ void check_contracts(Registry &declared, const Inference &inferred, const CallGr
         call_contract(declared, inferred, call, out);
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

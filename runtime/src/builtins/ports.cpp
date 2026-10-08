@@ -9,7 +9,7 @@
 // The port builtins of the bridge (docs/ports.md#builtins-and-port-messages): open_port/2, port_close/1,
 // port_command/2,3, port_connect/2, port_control/3, port_call/2,3, port_info/1,2, port_to_list/1, list_to_port/1 and
 // ports/0, plus the data and option conversions they share.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 using detail::Framing;
 using detail::PortOptions;
@@ -248,7 +248,7 @@ spawned(ProcessContext &context, bool executable, const std::string &command, co
 
 // The project library's driver {spawn_driver, Name} (files, sockets); badarg for any other name.
 std::unique_ptr<detail::PortDriver> internal_driver(ProcessContext &context, const std::string &name) {
-    if (name == "erlang_aot_file") {
+    if (name == "clause_file") {
         return detail::file_driver();
     }
     if (name != "tcp_inet" && name != "udp_inet") {
@@ -572,8 +572,8 @@ detail::PortRequest port_request(const Term &message) {
     }
     return tagged_request(outer->first.word(), request);
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> port_builtins() noexcept { return builtins::PORT_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -2,7 +2,7 @@
 #include "declarations.hpp"
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct BindingEnvironment {
     // Only committed names are readable; conditional definitions remain explicitly unsafe.
     std::map<std::u32string, BindingId> names;
@@ -32,4 +32,4 @@ struct BindingCandidate {
 void bind_parameters(Module &module, const Reporter &out, std::size_t work_limit = 1'000'000);
 // Return projection provenance only for a validated read, never for an equality obligation.
 std::optional<std::size_t> binding_argument(const Function &function, const ast::ExprId &expression);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

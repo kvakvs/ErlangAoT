@@ -3,9 +3,9 @@ include("${CMAKE_CURRENT_LIST_DIR}/../../../references/otp-pin.cmake")
 find_package(Git REQUIRED)
 execute_process(COMMAND "${GIT_EXECUTABLE}" -C "${OTP_ROOT}" rev-parse HEAD
     OUTPUT_VARIABLE revision OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE status)
-if(NOT status STREQUAL "0" OR NOT revision STREQUAL ERLANG_AOT_OTP_REFERENCE_REVISION)
-    message(FATAL_ERROR "Parser corpus requires OTP ${ERLANG_AOT_OTP_REFERENCE_BRANCH} at "
-        "${ERLANG_AOT_OTP_REFERENCE_REVISION}; see docs/otp-reference.md")
+if(NOT status STREQUAL "0" OR NOT revision STREQUAL CLAUSE_OTP_REFERENCE_REVISION)
+    message(FATAL_ERROR "Parser corpus requires OTP ${CLAUSE_OTP_REFERENCE_BRANCH} at "
+        "${CLAUSE_OTP_REFERENCE_REVISION}; see docs/otp-reference.md")
 endif()
 execute_process(COMMAND "${GIT_EXECUTABLE}" -C "${OTP_ROOT}" diff --quiet HEAD --
     lib/stdlib/src lib/compiler/src lib/stdlib/include lib/kernel/include

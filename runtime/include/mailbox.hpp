@@ -10,7 +10,7 @@
 #include <list>
 #include <optional>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class Mailbox final {
   public:
     Mailbox(const Mailbox &) = delete;
@@ -80,4 +80,4 @@ class Mailbox final {
     // The current receive's timeout, set when it first waits with a finite one.
     std::optional<std::chrono::steady_clock::time_point> deadline_;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

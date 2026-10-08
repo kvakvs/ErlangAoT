@@ -3,10 +3,10 @@
 // TermFactory constructs numeric values, atoms and immutable containers with checked ownership.
 // Identity and callable constructors remain explicit reporting placeholders.
 #include <array>
+#include <clause/runtime/features.hpp>
+#include <clause/runtime/terms.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <erlang_aot/runtime/features.hpp>
-#include <erlang_aot/runtime/terms.hpp>
 #include <expected>
 #include <memory>
 #include <optional>
@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class ContextLifetime;
 struct RecordDefinition;
 struct FunDefinition;
@@ -100,4 +100,4 @@ class TermFactory final {
     // Borrow stable backing only while the process token is alive; moves leave source tokens empty.
     ProcessHeap *heap_;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

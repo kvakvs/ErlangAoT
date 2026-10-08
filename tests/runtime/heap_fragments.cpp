@@ -1,5 +1,5 @@
 #include "terms.hpp"
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -7,8 +7,8 @@
 // The process heap is one block; while it may not move, requests that do not fit go to fragments
 // chained to the same process. Fragments obey the shared budget, admission, the walker and rollback.
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {

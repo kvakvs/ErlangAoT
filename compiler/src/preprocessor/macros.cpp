@@ -2,7 +2,7 @@
 #include "token_utils.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // These variable spellings bypass ordinary table dispatch in epp, even after undef.
 bool special_context(const Token &name) {
@@ -265,4 +265,4 @@ std::vector<Token> MacroExpander::rescan(std::span<const Token> input) {
     }
     return output;
 }
-} // namespace erlang_aot
+} // namespace clause

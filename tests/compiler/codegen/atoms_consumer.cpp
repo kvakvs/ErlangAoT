@@ -1,18 +1,18 @@
 #include <array>
+#include <clause/abi/builtins.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/runtime/modules.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/runtime/modules.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <terms.hpp>
 
-extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
-extern erlang_aot::abi::v1::GeneratedRegistration register_client asm("eav1_636c69656e74__0.register");
+extern clause::abi::v1::GeneratedRegistration register_answer asm("clausev1_616e73776572__0.register");
+extern clause::abi::v1::GeneratedRegistration register_client asm("clausev1_636c69656e74__0.register");
 
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Keep behavioral assertions enabled in every native optimization configuration.
 void require(bool condition, const char *message) {
@@ -46,7 +46,7 @@ const Term &payload(const CallFailure &failure) {
 // Return through the real native error service and retain the offending atom beyond invocation cleanup.
 CallFailure error_payload(ProcessContext &context, const Term &atom) {
     GeneratedInvocation invocation(context.generated_calls());
-    require(erlang_aot_raise_v2(&context, erlang_aot::abi::v1::ErrorReason::badmatch, atom.word()) == 0,
+    require(CLAUSE_raise_v2(&context, clause::abi::v1::ErrorReason::badmatch, atom.word()) == 0,
             "atom error payload rejected");
     const auto failure = context.generated_calls().failure();
     if (!failure) {
@@ -73,7 +73,7 @@ Term execution(Runtime &runtime, ProcessContext &context) {
     require(identity.call(context, arguments)->word() == yes.word(), "host argument atom lost");
     Word result = 0;
     const auto word = yes.word();
-    require(erlang_aot::abi::v1::dispatch_builtin(&context, "answer", 6, "id", 2, &word, 1, &result) == Status::ok &&
+    require(clause::abi::v1::dispatch_builtin(&context, "answer", 6, "id", 2, &word, 1, &result) == Status::ok &&
                 result == word,
             "builtin atom bridge failed");
     require(yes.copy_to(context.heap())->word() == word, "same-runtime atom copy failed");
@@ -88,7 +88,7 @@ void native_payloads(ProcessContext &local, ProcessContext &foreign, const Term 
                 ->add("fail", 0,
                       [atom](ProcessContext &, std::span<const Term>) -> CallResult<Term> {
                           return std::unexpected(CallFailure{.code = CallError::erlang_exception,
-                                                             .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
+                                                             .reason = clause::abi::v1::ErrorReason::badmatch,
                                                              .value = atom});
                       })
                 .has_value(),
@@ -127,7 +127,7 @@ void foreign(Runtime &runtime, ProcessContext &context, const Term &atom) {
             "explicit spelling remap failed");
     {
         GeneratedInvocation invocation(second.generated_calls());
-        require(erlang_aot_raise_v2(&second, erlang_aot::abi::v1::ErrorReason::badmatch, atom.word()) != 0,
+        require(CLAUSE_raise_v2(&second, clause::abi::v1::ErrorReason::badmatch, atom.word()) != 0,
                 "foreign error payload admitted");
     }
     require(call(context, "answer", "truth").boolean_value() == true, "foreign failure poisoned local calls");
@@ -162,11 +162,11 @@ void spelling(ProcessContext &context) {
 }
 
 // A simple native export lets malformed/capacity descriptors exercise the production registration path.
-Word entry(erlang_aot::abi::v1::Context *, const Word *) { return encode_integer(1).value(); }
+Word entry(clause::abi::v1::Context *, const Word *) { return encode_integer(1).value(); }
 
 // Failed initialization publishes neither a module nor slots; retained valid prefixes count toward the cap.
 void capacity() {
-    using namespace erlang_aot::abi::v1;
+    using namespace clause::abi::v1;
     require(!Runtime::start({.max_atoms = 0}) && !Runtime::start({.max_atoms = AtomStorage::hard_limit + 1}),
             "invalid atom limits admitted");
     auto runtime = Runtime::start({.max_atoms = 3}).value();

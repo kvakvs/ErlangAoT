@@ -1,6 +1,6 @@
 #include "token_utils.hpp"
 
-namespace erlang_aot {
+namespace clause {
 Token generated(const Token &origin, const TokenKind kind, TokenValue value) {
     Token result = origin;
     result.kind = kind;
@@ -21,4 +21,4 @@ std::vector<Token> fragment(std::string text) {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

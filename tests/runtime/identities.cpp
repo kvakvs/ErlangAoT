@@ -2,8 +2,8 @@
 #include "terms.hpp"
 #include "terms/structural_order.hpp"
 #include <array>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <regex>
 #include <stdexcept>
@@ -12,8 +12,8 @@
 // Pid and reference identities (docs/terms.md#pids-and-references): admission accepts only pids this runtime issued
 // and references in the process's own heap; forged, foreign and stale words are rejected, exited pids stay valid.
 namespace {
-using namespace erlang_aot::runtime;
-using Status = erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {

@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 // Parse ordered segments after the opening delimiter, including the empty binary.
 ast::ExprValue FormParser::binary(const bool comprehension) {
     std::vector<ast::BinarySegment> segments;
@@ -96,4 +96,4 @@ ast::Bitstring FormParser::binary_sigil(std::u32string content, const std::size_
               .modifiers = std::move(modifiers),
               .source = builder_.source(begin, cursor_.offset(), begin + 1)}}};
 }
-} // namespace erlang_aot
+} // namespace clause

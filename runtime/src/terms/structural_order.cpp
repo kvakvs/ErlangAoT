@@ -11,7 +11,7 @@
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 struct Pair {
     // Each queued comparison owns its children; map keys always use exact ordering independently of values.
@@ -286,4 +286,4 @@ TermResult<int> structural_order(const Term &left, const Term &right, bool exact
     }
 }
 
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

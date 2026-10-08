@@ -1,16 +1,16 @@
 #include <array>
-#include <erlang_aot/runtime/modules.hpp>
-#include <erlang_aot/runtime/output.hpp>
+#include <clause/runtime/modules.hpp>
+#include <clause/runtime/output.hpp>
 #include <iostream>
 #include <process_heap.hpp>
 #include <stdexcept>
 #include <string>
 
-extern erlang_aot::abi::v1::GeneratedRegistration register_cleanup asm("eav1_636c65616e7570__0.register");
+extern clause::abi::v1::GeneratedRegistration register_cleanup asm("clausev1_636c65616e7570__0.register");
 
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Keep behavioral assertions enabled in every native optimization configuration.
 void require(bool condition, const char *message) {

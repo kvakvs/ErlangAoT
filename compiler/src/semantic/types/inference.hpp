@@ -2,7 +2,7 @@
 #include "../calls.hpp"
 #include "domain.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 struct Fact {
     // A top-valued parameter may still carry an exact input/result relation.
     Id type;
@@ -31,4 +31,4 @@ struct Inference {
 // Infer supported bodies iteratively; recursive components iterate from bottom to a fixed point and widen
 // to top after a bounded number of rounds. Budget exhaustion conservatively loses precision.
 std::unique_ptr<Inference> infer(const CallGraph &calls, Limits limits = {});
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

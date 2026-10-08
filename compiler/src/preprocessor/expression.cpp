@@ -1,7 +1,7 @@
 #include "expression.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 
 // Literal token conversion shares scanner precision and decoded Unicode semantics.
 Value literal_value(const Token &token) {
@@ -234,4 +234,4 @@ Value parse_term(const std::span<const Token> input, const std::size_t depth) {
         pp_fail(DiagnosticCode::malformed_directive, "invalid Erlang term", expression.token);
     }
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -7,7 +7,7 @@
 // The tuple builtins of the bridge without an inline service (docs/builtins.md): setelement/3, make_tuple/2,3,
 // tuple_to_list/1 and list_to_tuple/1, with OTP's badarg rules. As in OTP they run to completion: their work is
 // bounded by MAX_TUPLE_ARITY (docs/builtins.md#portions).
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // A tuple size argument of make_tuple: a small integer in 0..MAX_TUPLE_ARITY.
 std::size_t arity(std::int64_t size) {
@@ -76,8 +76,8 @@ constexpr std::array TERM_ACCESS_BUILTINS{
     typed_entry<list_to_tuple>("erlang", "list_to_tuple"),
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> term_access_builtins() noexcept { return builtins::TERM_ACCESS_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

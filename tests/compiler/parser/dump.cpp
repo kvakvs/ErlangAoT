@@ -2,11 +2,11 @@
 #include "operators.hpp"
 #include "terms_dump.hpp"
 #include "types_dump.hpp"
+#include <clause/compiler/parser.hpp>
 #include <cstdio>
-#include <erlang_aot/compiler/parser.hpp>
 #include <iostream>
 
-using namespace erlang_aot;
+using namespace clause;
 using test_records::hex;
 
 // Exhaustive visitors expose the implemented syntax projection shared with the OTP adapter.

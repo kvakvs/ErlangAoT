@@ -1,7 +1,7 @@
 #include "resolver.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Substitute this declaration's quantified formals; repeated names follow OTP's last-position mapping.
 std::optional<Id> replacement(const Node &node, const Declaration &decl, const std::span<const Id> arguments) {
@@ -95,4 +95,4 @@ std::optional<Id> expand_reference(Registry &registry, const Id reference, const
     registry.expansions.emplace(reference, result);
     return result;
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

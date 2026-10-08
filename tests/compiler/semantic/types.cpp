@@ -1,12 +1,12 @@
 #include "semantic/types/syntax.hpp"
 #include <array>
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <iostream>
 #include <set>
 #include <source_location>
 #include <stdexcept>
-using namespace erlang_aot;
-using namespace erlang_aot::semantic::types;
+using namespace clause;
+using namespace clause::semantic::types;
 
 // Locate the source declaration after preprocessing has inserted file provenance forms.
 const ast::TypeDeclaration &first_type(const ast::Module &module) {

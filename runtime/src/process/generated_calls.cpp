@@ -1,6 +1,6 @@
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Payload-bearing language failures must retain their offending term before generated root cleanup.
 bool payload_reason(abi::v1::ErrorReason reason) {
@@ -54,19 +54,19 @@ const std::optional<CallFailure> &GeneratedCallState::failure() const noexcept {
 GeneratedInvocation::GeneratedInvocation(GeneratedCallState &state) noexcept : state_(state), outer_(state.enter()) {}
 
 GeneratedInvocation::~GeneratedInvocation() { state_.leave(outer_); }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-std::uint8_t erlang_aot_call_failed_v2(void *context) noexcept {
+std::uint8_t CLAUSE_call_failed_v2(void *context) noexcept {
     if (!context) {
         return 1;
     }
-    const auto &state = static_cast<erlang_aot::runtime::ProcessContext *>(context)->generated_calls();
+    const auto &state = static_cast<clause::runtime::ProcessContext *>(context)->generated_calls();
     return !state.active() || state.failure().has_value();
 }
 
-std::uint8_t erlang_aot_raise_v2(void *context, erlang_aot::abi::v1::ErrorReason reason,
-                                 erlang_aot::abi::v1::TermWord value) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_raise_v2(void *context, clause::abi::v1::ErrorReason reason,
+                             clause::abi::v1::TermWord value) noexcept {
+    using namespace clause;
     using namespace runtime;
     if (!context) {
         return static_cast<std::uint8_t>(abi::v1::Status::invalid_argument);

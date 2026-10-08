@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 RecordLayout::RecordLayout(const ast::RecordDeclaration &declaration)
     : name(declaration.name), native(declaration.native), fields(declaration.fields) {
     for (std::size_t i = 0; i < fields.size(); ++i) {
@@ -410,4 +410,4 @@ void validate_record_test(const Module &module, const ast::Expression &expressio
         }
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

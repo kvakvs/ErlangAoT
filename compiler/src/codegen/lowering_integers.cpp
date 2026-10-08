@@ -1,10 +1,10 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Op = abi::v1::ImmediateOperation;
 
@@ -170,4 +170,4 @@ llvm::Value *lower_operation(ExpressionLowering &state, const Op operation, llvm
     builder.SetInsertPoint(join);
     return joined(state, fast, encoded, slow, promoted);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

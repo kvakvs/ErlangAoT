@@ -1,6 +1,6 @@
 #include "source_printer.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // A record name as written: `r`, `m:r` or the anonymous `_`.
 std::string record_name(const ast::RecordIdentity &identity) {
@@ -161,4 +161,4 @@ std::string SourcePrinter::expression(const ast::ExprId &id, Place place) const 
     }
     return place.statement ? text + " :: " + *note : '(' + text + " :: " + *note + ')';
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

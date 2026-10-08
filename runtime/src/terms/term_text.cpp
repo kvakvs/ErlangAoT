@@ -2,13 +2,13 @@
 #include "funs.hpp"
 #include "identities.hpp"
 #include "records.hpp"
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <new>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace detail {
 void TextOutput::append(std::string_view text) {
     if (overflowed_ || text.size() > limit_ - text_.size()) {
@@ -243,4 +243,4 @@ TermResult<std::string> format_term(const Term &value, TermStyle style, std::siz
         return std::unexpected(TermError::invalid_argument);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

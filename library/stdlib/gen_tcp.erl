@@ -14,7 +14,7 @@
 ]).
 
 % The project-owned gen_tcp module (docs/library.md, docs/ports.md#sockets): TCP sockets are ports of the runtime's
-% socket driver, driven through erlang_aot_socket.
+% socket driver, driven through clause_socket.
 
 -define(CONNECT, 1).
 -define(LISTEN, 2).
@@ -29,15 +29,15 @@ defaults() ->
 
 % A socket listening on Port (0 for any free port) of its ip option, or {error, Reason}.
 listen(Port, Options) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    Map = erlang_aot_socket:options(Options, defaults()),
+    Map = clause_socket:options(Options, defaults()),
     #{reuseaddr := Reuse, backlog := Backlog} = Map,
-    Socket = erlang_aot_socket:open("tcp_inet"),
-    Data = [erlang_aot_socket:local(Map), <<Port:16, Backlog:32, (flag(Reuse))>>, mode(Map)],
-    case erlang_aot_socket:control(Socket, ?LISTEN, Data) of
+    Socket = clause_socket:open("tcp_inet"),
+    Data = [clause_socket:local(Map), <<Port:16, Backlog:32, (flag(Reuse))>>, mode(Map)],
+    case clause_socket:control(Socket, ?LISTEN, Data) of
         {ok, _} ->
             {ok, Socket};
         Error ->
-            erlang_aot_socket:close(Socket),
+            clause_socket:close(Socket),
             Error
     end;
 listen(_, _) ->
@@ -46,29 +46,29 @@ listen(_, _) ->
 accept(Listen) -> accept(Listen, infinity).
 
 % The next connection of Listen as a new socket owned by the caller, waiting at most Timeout.
-accept(Listen, Timeout) -> erlang_aot_socket:request(Listen, ?ACCEPT, <<>>, Timeout).
+accept(Listen, Timeout) -> clause_socket:request(Listen, ?ACCEPT, <<>>, Timeout).
 
 connect(Address, Port, Options) -> connect(Address, Port, Options, infinity).
 
 % A socket connected to Port at Address (a tuple, a host name string or an atom), or {error, Reason}.
 connect(Address, Port, Options, Timeout) when is_integer(Port), Port >= 0, Port =< 65535 ->
-    Map = erlang_aot_socket:options(Options, defaults()),
-    Socket = erlang_aot_socket:open("tcp_inet"),
+    Map = clause_socket:options(Options, defaults()),
+    Socket = clause_socket:open("tcp_inet"),
     case connect_to(Socket, Address, Port, Map, Timeout) of
         ok ->
             {ok, Socket};
         Error ->
-            erlang_aot_socket:close(Socket),
+            clause_socket:close(Socket),
             Error
     end;
 connect(_, _, _, _) ->
     exit(badarg).
 
 connect_to(Socket, Address, Port, #{family := Family} = Map, Timeout) ->
-    case erlang_aot_socket:resolve(Socket, Address, Family) of
+    case clause_socket:resolve(Socket, Address, Family) of
         {ok, Target} ->
-            Data = [erlang_aot_socket:address(Target), <<Port:16>>, mode(Map)],
-            erlang_aot_socket:request(Socket, ?CONNECT, Data, Timeout);
+            Data = [clause_socket:address(Target), <<Port:16>>, mode(Map)],
+            clause_socket:request(Socket, ?CONNECT, Data, Timeout);
         Error ->
             Error
     end.
@@ -76,7 +76,7 @@ connect_to(Socket, Address, Port, #{family := Family} = Map, Timeout) ->
 % Send Data (iodata) on Socket.
 send(Socket, Data) ->
     try iolist_to_binary(Data) of
-        Bytes -> ok(erlang_aot_socket:control(Socket, ?SEND, Bytes))
+        Bytes -> ok(clause_socket:control(Socket, ?SEND, Bytes))
     catch
         error:badarg -> {error, einval}
     end.
@@ -85,20 +85,20 @@ recv(Socket, Length) -> recv(Socket, Length, infinity).
 
 % Length bytes of a passive socket (0: what there is, or one packet), waiting at most Timeout.
 recv(Socket, Length, Timeout) when is_integer(Length), Length >= 0 ->
-    erlang_aot_socket:request(Socket, ?RECV, <<Length:32>>, Timeout);
+    clause_socket:request(Socket, ?RECV, <<Length:32>>, Timeout);
 recv(_, _, _) ->
     exit(badarg).
 
 % Shut down reading, writing or both of a connected socket.
-shutdown(Socket, read) -> ok(erlang_aot_socket:control(Socket, ?SHUTDOWN, <<0>>));
-shutdown(Socket, write) -> ok(erlang_aot_socket:control(Socket, ?SHUTDOWN, <<1>>));
-shutdown(Socket, read_write) -> ok(erlang_aot_socket:control(Socket, ?SHUTDOWN, <<2>>)).
+shutdown(Socket, read) -> ok(clause_socket:control(Socket, ?SHUTDOWN, <<0>>));
+shutdown(Socket, write) -> ok(clause_socket:control(Socket, ?SHUTDOWN, <<1>>));
+shutdown(Socket, read_write) -> ok(clause_socket:control(Socket, ?SHUTDOWN, <<2>>)).
 
-controlling_process(Socket, Owner) -> erlang_aot_socket:controlling_process(Socket, Owner).
+controlling_process(Socket, Owner) -> clause_socket:controlling_process(Socket, Owner).
 
-close(Socket) -> erlang_aot_socket:close(Socket).
+close(Socket) -> clause_socket:close(Socket).
 
-mode(Map) -> erlang_aot_socket:mode(Map).
+mode(Map) -> clause_socket:mode(Map).
 
 flag(true) -> 1;
 flag(false) -> 0.

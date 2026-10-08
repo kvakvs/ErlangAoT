@@ -1,6 +1,6 @@
 # Runtime
 
-`erlang_runtime` is an LLVM-free C++23 library. It owns contexts, process heaps,
+`clause_runtime` is an LLVM-free C++23 library. It owns contexts, process heaps,
 atoms, loaded modules and lifecycle bookkeeping, and runs Erlang processes
 on scheduler workers ([processes](processes.md)). All APIs are
 project-internal; host calls must be serialized per runtime and not overlap
@@ -9,11 +9,11 @@ a program run, whose workers synchronize among themselves
 
 ## Linking
 
-Link exactly one runtime built for the target through `ErlangAoT::generated_program`:
+Link exactly one runtime built for the target through `Clause::generated_program`:
 
 ```cmake
 add_executable(harness harness.cpp)
-target_link_libraries(harness PRIVATE ErlangAoT::generated_program)
+target_link_libraries(harness PRIVATE Clause::generated_program)
 ```
 
 It brings the archive, ABI/runtime headers and C++23, but not LLVM.
@@ -21,7 +21,7 @@ It brings the archive, ABI/runtime headers and C++23, but not LLVM.
 
 ## Lifecycle
 
-[runtime.hpp](../runtime/include/erlang_aot/runtime/runtime.hpp):
+[runtime.hpp](../runtime/include/clause/runtime/runtime.hpp):
 
 - `Runtime::start(options)` → `std::expected<std::unique_ptr<Runtime>, Status>`.
   Defaults: current ABI version and native term width, `max_atoms` 2^20
@@ -103,8 +103,8 @@ is its contract (layout, areas, sizing, admission, roots, collection).
 
 ## Code server and builtins
 
-Each runtime owns one `CodeServer` ([code_server.hpp](../runtime/include/erlang_aot/runtime/code_server.hpp),
-[callable.hpp](../runtime/include/erlang_aot/runtime/callable.hpp)):
+Each runtime owns one `CodeServer` ([code_server.hpp](../runtime/include/clause/runtime/code_server.hpp),
+[callable.hpp](../runtime/include/clause/runtime/callable.hpp)):
 
 ```cpp
 auto functions = std::make_unique<ModuleRegistry>();
@@ -138,7 +138,7 @@ auto fn = context.code_server().resolve({.module = "native_demo", .function = "i
 
 ## Scheduler bookkeeping
 
-`SchedulerService` ([scheduler.hpp](../runtime/include/erlang_aot/runtime/scheduler.hpp))
+`SchedulerService` ([scheduler.hpp](../runtime/include/clause/runtime/scheduler.hpp))
 records process lifecycle only; it runs no code.
 
 - `register_process(context)` once per context (same runtime); duplicates return
@@ -194,7 +194,7 @@ process or guarded by the executor's mutex.
 
 ## Standard output
 
-`RuntimeOptions::standard_output` ([output.hpp](../runtime/include/erlang_aot/runtime/output.hpp))
+`RuntimeOptions::standard_output` ([output.hpp](../runtime/include/clause/runtime/output.hpp))
 receives `erlang:display/1` and later `standard_io` bytes. The default writes to
 process `stdout` through C stdio (buffered); a host sink returns `false` to
 report a failed write.
@@ -206,13 +206,13 @@ and rejected writes become infrastructure statuses (`resource_limit`,
 
 ## Program startup
 
-`erlang_aot_main_v1` ([startup.hpp](../abi/include/erlang_aot/abi/startup.hpp),
+`CLAUSE_main_v1` ([startup.hpp](../abi/include/clause/abi/startup.hpp),
 `runtime/src/startup/`) runs a whole program for the generated `main`: it
 checks every descriptor's ABI, starts a default runtime, registers all modules
 before any entry code, builds argv in the entry context, calls the entry and
 maps the result to the exit status of [executables](executables.md#exit-status).
 Reports go to stderr after stdout is flushed; the context and runtime are torn
-down in order on every path. `erlang_aot_halt_v1` implements `erlang:halt/0,1`
+down in order on every path. `CLAUSE_halt_v1` implements `erlang:halt/0,1`
 (`abort` calls `std::abort`).
 
 ## Deferred services

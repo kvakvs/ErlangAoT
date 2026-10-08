@@ -1,9 +1,9 @@
 #pragma once
 #include <boost/multiprecision/cpp_int.hpp>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/runtime/terms.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Eager owned intermediates avoid expression-template references surviving a checked-result boundary.
 using Integer = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>, boost::multiprecision::et_off>;
 // Largest magnitude in bits, as ERTS: BIG_ARITY_MAX words (65,535 of 64 bits, 131,071 of 32 bits); a larger result is
@@ -37,4 +37,4 @@ struct IntegerAccess {
     // Normalize small values and publish larger immutable sign/magnitude words transactionally.
     static TermResult<Term> make(ProcessHeap &heap, const Integer &value);
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

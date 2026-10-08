@@ -52,9 +52,9 @@ my_dependency = "vendor/my_dependency"
 ## CLI and target selection
 
 ```text
-erlangaot [options] <source.erl>...
-erlangaot [options] --project <path> [--target <name>]...
-erlangaot --new-project <filename>
+clau [options] <source.erl>...
+clau [options] --project <path> [--target <name>]...
+clau --new-project <filename>
 ```
 
 - Positional sources and `--project` are mutually exclusive. One `--project`,
@@ -80,13 +80,13 @@ latches failures. Payload output goes to stdout in target/file order without
 banners; context and diagnostics go to stderr.
 
 ```sh
-./build/debug/bin/erlangaot --parse-check --project examples/project/project.toml
-./build/debug/bin/erlangaot --print-ast --project examples/project/project.toml --target tests --target app
+./build/debug/bin/clau --parse-check --project examples/project/project.toml
+./build/debug/bin/clau --print-ast --project examples/project/project.toml --target tests --target app
 ```
 
 ## Executables
 
-`erlangaot --project FILE [--target T]...` (no `--emit`, no check/print action)
+`clau --project FILE [--target T]...` (no `--emit`, no check/print action)
 links every selected target that has an `output` or `entry` key, or that CLI
 `-o`/`--entry` addresses, into one executable per target:
 
@@ -109,7 +109,7 @@ links every selected target that has an `output` or `entry` key, or that CLI
   ([linking](executables.md#linking)).
 
 ```sh
-./build/debug/bin/erlangaot --project tests/fixtures/linking/project/project.toml
+./build/debug/bin/clau --project tests/fixtures/linking/project/project.toml
 ```
 
 ## Creating a project
@@ -169,7 +169,7 @@ syntax disabled. Archive SHA-256
 - macOS: `brew install tomlplusplus` (formula 3.4.0) is detected.
 - Windows: CMake downloads and verifies the release into `thirdparty/`.
 - Elsewhere: install it, extract to `thirdparty/tomlplusplus-3.4.0`, or pass
-  `-DERLANG_AOT_TOML_ROOT=<path>` (takes precedence, disables download).
+  `-DCLAUSE_TOML_ROOT=<path>` (takes precedence, disables download).
 - Runtime-only builds do not look for it.
 
 ## Limits

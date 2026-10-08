@@ -1,8 +1,8 @@
 #include "forms.hpp"
 #include <algorithm>
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 
-namespace erlang_aot {
+namespace clause {
 struct ParserSession::State {
     // All work, results, and failure state belong to this one module.
     ParserLimits limits;
@@ -135,4 +135,4 @@ ParseResult parse_module(PreprocessorSession &preprocessor, ParserLimits limits)
     result.failed = result.failed || preprocessor.failed();
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

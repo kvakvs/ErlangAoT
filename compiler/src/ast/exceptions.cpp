@@ -1,6 +1,6 @@
 #include "children.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 void Children::function_clause(const FunctionClause &value) const {
     source(value.source);
     for (const auto &argument : value.arguments) {
@@ -85,4 +85,4 @@ void Children::operator()(const MaybeExpression &value) const {
         branches(*value.otherwise);
     }
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

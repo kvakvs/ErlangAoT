@@ -1,7 +1,7 @@
 #include "parsing/operator_info.hpp"
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // Keep declaration categories readable without exposing enum ordinals.
 std::string_view declaration_kind(const ast::TypeDeclarationKind kind) {
@@ -123,4 +123,4 @@ void TreePrinter::operator()(const ast::TypeDeclaration &value) {
     }
     child("type", value.type);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

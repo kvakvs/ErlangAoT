@@ -3,7 +3,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 struct SpecializedVariant {
     // Borrow a module-owned clone and the entry proofs required to invoke it safely.
     llvm::Function *function;
@@ -22,4 +22,4 @@ llvm::Function *clone_variant(llvm::Function &generic, const TypeProfile &profil
 SpecializedDispatch create_dispatch(llvm::Function &generic, std::span<const SpecializedVariant> variants);
 // Measure actual added IR before replacing public entries; reject excess growth without failing compilation.
 void lower_specializations(llvm::Module &module, SpecializationPlan &plan);
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

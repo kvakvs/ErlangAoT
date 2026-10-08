@@ -1,6 +1,6 @@
 #include "lowering_boundaries.hpp"
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Use compiler-owned syntax features rather than misreporting runtime service failures.
 abi::v1::FeatureId feature(const DeferredOperation operation) noexcept {
@@ -30,4 +30,4 @@ bool reject_lowering_operation(CompilationResult &result, const DeferredOperatio
                                const abi::v1::FeatureContext &context, std::ostream &errors) noexcept {
     return reject_feature(result, feature(operation), context, errors);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

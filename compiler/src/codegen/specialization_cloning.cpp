@@ -4,7 +4,7 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/Local.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Track deletion separately from RAUW while LLVM simplifies dependent expressions.
 std::vector<llvm::WeakVH> proven_checks(llvm::Function &clone, const TypeProfile &profile) {
@@ -52,4 +52,4 @@ llvm::Function *clone_variant(llvm::Function &generic, const TypeProfile &profil
     simplify(*clone, checks);
     return clone;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

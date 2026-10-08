@@ -2,7 +2,7 @@
 #include "create.hpp"
 #include "paths.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Keep standalone creation conflict policy out of generic driver validation.
 bool creation_conflict(const Request &request, const Usage &usage) {
@@ -20,7 +20,8 @@ bool is_option(const std::string_view argument) {
     return argument == "--project" || argument == "--target" || argument == "--new-project";
 }
 
-std::optional<std::string> parse_option(const std::string_view argument, std::span<char *> &remaining, Request &request) {
+std::optional<std::string> parse_option(const std::string_view argument, std::span<char *> &remaining,
+                                        Request &request) {
     if (repeated(argument, request)) {
         return std::string(argument) + " specified more than once";
     }
@@ -61,8 +62,8 @@ bool active(const Request &request) { return request.file.has_value() || request
 std::string_view help() {
     return R"(
 Project commands:
-  erlangaot [options] --project <path> [--target <name>]...
-  erlangaot --new-project <filename>
+  clau [options] --project <path> [--target <name>]...
+  clau --new-project <filename>
       --project <path>  Read a TOML project instead of positional source inputs.
                         Try appending .toml if the path is missing that suffix and absent.
       --target <name>   Select a target; repeat to select more (default: all).
@@ -73,4 +74,4 @@ Without --emit or a check/print action, each selected target with an output or e
 an executable to its output (default build/<target>); outputs are replaced only after all succeed.
 )";
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

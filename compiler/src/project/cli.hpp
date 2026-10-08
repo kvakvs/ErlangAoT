@@ -6,7 +6,7 @@
 #include <string_view>
 #include <vector>
 
-namespace erlang_aot::project {
+namespace clause::project {
 struct Request {
     // Preserve explicit project selection separately from positional driver inputs.
     std::optional<std::filesystem::path> file;
@@ -34,4 +34,4 @@ std::optional<std::string> validate(const Request &request, const Usage &usage);
 bool active(const Request &request);
 // Keep project-specific help alongside the implementation that owns its behavior.
 std::string_view help();
-} // namespace erlang_aot::project
+} // namespace clause::project

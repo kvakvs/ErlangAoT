@@ -1,4 +1,4 @@
-# ErlangAoT documentation
+# Clause documentation
 
 Short reference notes for the current implementation. Each file states behavior
 and limits that exist today; plans and step history live in `.agents/`.

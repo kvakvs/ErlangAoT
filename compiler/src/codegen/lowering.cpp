@@ -14,7 +14,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Reject malformed phase inputs before generating a body or narrowing a literal.
 void require(const bool condition, const char *message) {
@@ -132,4 +132,4 @@ bool lower(Compilation &compilation, const std::span<const std::unique_ptr<seman
         return false;
     }
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

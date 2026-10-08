@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::ExprValue FormParser::primary(const OperatorContext context) {
     if (auto value = control(context)) {
         return std::move(*value);
@@ -65,4 +65,4 @@ ast::ExprValue FormParser::list(const bool comprehension) {
     expect(U"]");
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

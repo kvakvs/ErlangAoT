@@ -1,8 +1,8 @@
 // Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Keep structural and provenance checks active in every build configuration.
 void require(bool condition) {

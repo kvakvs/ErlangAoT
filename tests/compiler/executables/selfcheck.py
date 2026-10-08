@@ -29,7 +29,7 @@ def broken_case(work):
 
 def run_runner(tool, work, case_dir, suffix):
     """Runs the real runner in fast mode (two policies) and returns its exit status and output."""
-    environment = dict(os.environ, ERLANG_AOT_TEST_MODE='fast')
+    environment = dict(os.environ, CLAUSE_TEST_MODE='fast')
     result = subprocess.run([sys.executable, str(RUNNER), tool, str(work), str(case_dir), f'--suffix={suffix}'],
                             capture_output=True, text=True, env=environment, timeout=600, check=False)
     return result.returncode, result.stdout + result.stderr
@@ -46,7 +46,7 @@ def expect(name, status, output, fragments):
 def main():
     """Checks both failure reports against a disposable copy of the demo case."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('tool', help='erlangaot executable')
+    parser.add_argument('tool', help='clau executable')
     parser.add_argument('work', type=pathlib.Path, help='scratch directory')
     parser.add_argument('--suffix', default='', help='host executable suffix appended by the linker')
     options = parser.parse_args()

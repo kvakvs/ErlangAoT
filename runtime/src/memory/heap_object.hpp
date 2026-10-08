@@ -1,7 +1,7 @@
 #pragma once
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/terms.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 class HeapStorage;
 
 struct HeapObject {
@@ -29,4 +29,4 @@ struct TermAccess {
     // The heap holding a compound term's object; null for immediates and atoms.
     static HeapStorage *storage(const Term &value) noexcept { return value.heap_; }
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

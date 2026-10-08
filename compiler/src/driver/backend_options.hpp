@@ -3,7 +3,7 @@
 #include <optional>
 #include <span>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct Options;
 
 struct BackendOptions {
@@ -38,4 +38,4 @@ std::optional<std::string> parse_backend_option(std::string_view option, std::sp
                                                 BackendOptions &options);
 // Reject action conflicts before informational dispatch or source/path access.
 std::optional<std::string> validate_backend_options(const Options &options);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

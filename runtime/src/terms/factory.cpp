@@ -1,8 +1,8 @@
 #include "terms.hpp"
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermFactory::TermFactory(ProcessContext &context, DiagnosticSink sink) noexcept
     : lifetime_(context.lifetime()), sink_(sink), atoms_(&context.atom_storage()), heap_(&context.heap()) {}
 
@@ -25,4 +25,4 @@ TermResult<Term> TermFactory::atom(std::string_view spelling) {
 TermResult<Term> TermFactory::boolean(bool value) { return atom(value ? "true" : "false"); }
 
 TermResult<Term> TermFactory::function(const FunctionIdentity &) { return unavailable("TermFactory::function"); }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -3,7 +3,7 @@
 #include "loader.hpp"
 #include <span>
 
-namespace erlang_aot::project::schema {
+namespace clause::project::schema {
 struct Context {
     // Associate every decoded value with the owning manifest and target.
     std::filesystem::path file;
@@ -22,4 +22,4 @@ std::vector<Text> strings(const toml::table &table, std::string_view key, const 
 const toml::table &table(const toml::node &node, const Context &context, std::string key);
 // Bound total decoded input entries before allocating the manifest model.
 void budget(const toml::node &node, std::size_t &remaining, const Context &context);
-} // namespace erlang_aot::project::schema
+} // namespace clause::project::schema

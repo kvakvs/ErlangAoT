@@ -1,11 +1,11 @@
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/terms.hpp>
 
 #include <array>
 #include <cstddef>
 #include <iostream>
 
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Rows enumerate (primary, secondary); columns enumerate tertiary, all in numeric tag order.
 constexpr std::array<std::array<TermKind, 4>, 16> expected{{

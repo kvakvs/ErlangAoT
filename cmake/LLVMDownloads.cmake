@@ -3,7 +3,7 @@ include_guard(GLOBAL)
 include("${CMAKE_CURRENT_LIST_DIR}/ThirdPartyDependencies.cmake")
 
 # Select the SDK for the compiler executable's architecture, never the Erlang output target.
-function(erlang_aot_llvm_archive system processor name_output hash_output)
+function(clause_llvm_archive system processor name_output hash_output)
     string(TOLOWER "${processor}" architecture)
     if(architecture MATCHES "^(amd64|x86_64|x64)$")
         set(architecture x64)
@@ -29,7 +29,7 @@ function(erlang_aot_llvm_archive system processor name_output hash_output)
 endfunction()
 
 # Reuse the same verified SDK across build directories, including offline reconfiguration.
-function(erlang_aot_download_llvm output)
+function(clause_download_llvm output)
     if(CMAKE_CROSSCOMPILING)
         message(FATAL_ERROR "Automatic LLVM SDK downloads require a native compiler build. Set LLVM_DIR to an SDK matching the compiler toolchain for cross-builds.")
     endif()
@@ -42,8 +42,8 @@ function(erlang_aot_download_llvm output)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
         set(processor "32-bit-${processor}")
     endif()
-    erlang_aot_llvm_archive("${CMAKE_SYSTEM_NAME}" "${processor}" name sha256)
-    erlang_aot_download_dependency("${name}"
+    clause_llvm_archive("${CMAKE_SYSTEM_NAME}" "${processor}" name sha256)
+    clause_download_dependency("${name}"
         "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/${name}.tar.xz"
         "${sha256}" "lib/cmake/llvm/LLVMConfig.cmake" prefix)
     set(${output} "${prefix}/lib/cmake/llvm" PARENT_SCOPE)

@@ -1,11 +1,11 @@
 #include <array>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Keep validation active in optimized standalone runtime builds.
 void require(bool value, const char *message) {
@@ -108,13 +108,13 @@ Word unused(ProcessContext &, std::span<const Word>) { return 0; }
 void check_builtin_registry() {
     auto runtime = Runtime::start().value();
     const auto &production = runtime->code_server()->builtins();
-    for (std::size_t index = 0; index < erlang_aot::abi::v1::bridge_builtins.size(); ++index) {
-        const auto &name = erlang_aot::abi::v1::bridge_builtins[index];
+    for (std::size_t index = 0; index < clause::abi::v1::bridge_builtins.size(); ++index) {
+        const auto &name = clause::abi::v1::bridge_builtins[index];
         const auto *frame = production.bridge(index);
         require(frame && frame == production.find(name.module, name.function, name.arity), "bridge builtin missing");
         require(!frame->frame.body && frame->frame.arity == name.arity, "builtin frame malformed");
     }
-    require(!production.bridge(erlang_aot::abi::v1::bridge_builtins.size()), "bridge index out of range found");
+    require(!production.bridge(clause::abi::v1::bridge_builtins.size()), "bridge index out of range found");
     BuiltinRegistry registry;
     for (const auto family : production_builtins()) {
         require(registry.add(family).has_value(), "family rejected");

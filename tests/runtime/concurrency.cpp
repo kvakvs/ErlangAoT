@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -13,7 +13,7 @@
 // atom table interns overlapping spellings concurrently and keeps one stable word per spelling; the code server
 // publishes, finds and calls modules concurrently, and published modules outlive the runtime through their pins.
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {
@@ -139,7 +139,7 @@ void modules(std::unique_ptr<Runtime> runtime) {
     require(std::ranges::all_of(funs, [&](const auto *fun) { return fun == funs[0]; }),
             "threads built different definitions of one external fun");
     for (auto *context : contexts) {
-        require(runtime->destroy_context(context) == erlang_aot::abi::v1::Status::ok, "context teardown failed");
+        require(runtime->destroy_context(context) == clause::abi::v1::Status::ok, "context teardown failed");
     }
     runtime.reset();
     require(parallel([&](std::size_t thread) {

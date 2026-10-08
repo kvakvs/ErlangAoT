@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace erlang_aot::linking {
+namespace clause::linking {
 namespace {
 // Keep linker output in diagnostics readable even when a broken link reports every symbol.
 constexpr std::size_t output_limit = std::size_t{64} * 1024;
@@ -88,4 +88,4 @@ LinkerRun run_linker(const std::string &program, std::span<const std::string> ar
     }
     return {status, read_output(log)};
 }
-} // namespace erlang_aot::linking
+} // namespace clause::linking

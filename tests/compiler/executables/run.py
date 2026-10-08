@@ -56,9 +56,9 @@ def stdout_problem(expected, actual):
 
 def environment(run):
     """The host environment without inherited runtime flags, plus the Python that runs helper programs
-    (ERLANG_AOT_TEST_PYTHON) and the run's own 'env' entries."""
-    inherited = {name: value for name, value in os.environ.items() if name.upper() != 'ERLANG_AOT_FLAGS'}
-    return inherited | {'ERLANG_AOT_TEST_PYTHON': sys.executable} | run.get('env', {})
+    (CLAUSE_TEST_PYTHON) and the run's own 'env' entries."""
+    inherited = {name: value for name, value in os.environ.items() if name.upper() != 'CLAUSE_FLAGS'}
+    return inherited | {'CLAUSE_TEST_PYTHON': sys.executable} | run.get('env', {})
 
 
 def variants(golden):
@@ -67,8 +67,8 @@ def variants(golden):
         if 'workers' not in golden:
             yield run, ''
         for count in golden.get('workers', []):
-            flags = ' '.join(filter(None, [run.get('env', {}).get('ERLANG_AOT_FLAGS'), f'--schedulers {count}']))
-            yield run | {'env': run.get('env', {}) | {'ERLANG_AOT_FLAGS': flags}}, f' workers={count}'
+            flags = ' '.join(filter(None, [run.get('env', {}).get('CLAUSE_FLAGS'), f'--schedulers {count}']))
+            yield run | {'env': run.get('env', {}) | {'CLAUSE_FLAGS': flags}}, f' workers={count}'
 
 
 def compare(executable, run, directory):
@@ -117,7 +117,7 @@ def check_policy(tool, work, case, golden, policy, suffix):
 def main():
     """Checks one case directory against its golden under the fast or full policy matrix."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('tool', help='erlangaot executable')
+    parser.add_argument('tool', help='clau executable')
     parser.add_argument('work', type=pathlib.Path, help='scratch directory, recreated')
     parser.add_argument('case', type=pathlib.Path, help='case directory holding golden.json')
     parser.add_argument('--suffix', default='', help='host executable suffix appended by the linker')

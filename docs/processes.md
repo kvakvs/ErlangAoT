@@ -43,9 +43,9 @@ ends:
   runtime failure in any process (memory exhausted, an optional cap exceeded,
   an internal error) ends the program as a runtime failure (exit 70). An
   Erlang exception ends only the process that raised it ([exits](#exits)).
-- Host invocations of exported functions (`erlang_aot_invoke_v1`) run their
+- Host invocations of exported functions (`CLAUSE_invoke_v1`) run their
   function in the calling context to completion, resuming it after each yield
-  without running other processes; programs started by `erlang_aot_main_v1`
+  without running other processes; programs started by `CLAUSE_main_v1`
   use the executor.
 
 ## Workers
@@ -183,7 +183,7 @@ messages of the mailbox:
   removed and that clause's body runs. Messages no clause matches stay in the
   mailbox in their order; the next receive starts at the oldest message again.
 - When every message has been examined, the process waits
-  (`erlang_aot_wait_frame_v1`, a builtin entered like a call): it leaves the
+  (`CLAUSE_wait_frame_v1`, a builtin entered like a call): it leaves the
   run queue until a send delivers a message to it, then the scan continues
   with the messages that arrived. Waiting processes keep their frames and
   messages as collection roots and collect when resumed
@@ -203,7 +203,7 @@ messages of the mailbox:
   timeout expires is taken. A receive with only `after` is a sleep
   (`timer:sleep/1`'s idiom).
 - Generated code: a loop head peeks at the next unexamined message
-  (`erlang_aot_receive_v1` `peek`, into a root slot), clause selection takes a
+  (`CLAUSE_receive_v1` `peek`, into a root slot), clause selection takes a
   matched message (`take`) before its body or skips an unmatched one (`skip`)
   and loops; with no message left the loop enters the wait with the timeout,
   which answers `true` (scan again) or `false` (timed out: `restart`, then the
@@ -213,7 +213,7 @@ messages of the mailbox:
   the executor sleeps until the earliest timer. Timeouts are measured on a
   monotonic clock in milliseconds and never fire early.
 - When every process waits without a timeout for a message nothing can send,
-  the program waits forever, as OTP's does. A host invocation (`erlang_aot_invoke_v1`)
+  the program waits forever, as OTP's does. A host invocation (`CLAUSE_invoke_v1`)
   that would wait fails with `busy` instead: no other process runs during it.
 
 ## Links

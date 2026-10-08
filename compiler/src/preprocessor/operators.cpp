@@ -2,7 +2,7 @@
 #include <cmath>
 #include <map>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Erlang boolean operators require the atoms true/false, including non-short-circuit forms.
 bool boolean_value(const Value &value) {
@@ -148,4 +148,4 @@ Value evaluate_operator(const std::u32string_view name, const std::vector<Value>
     }
     return comparison(name, a, b);
 }
-} // namespace erlang_aot
+} // namespace clause

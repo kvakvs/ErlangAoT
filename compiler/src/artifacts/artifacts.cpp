@@ -4,14 +4,14 @@
 #include <random>
 #include <stdexcept>
 
-namespace erlang_aot::artifacts {
+namespace clause::artifacts {
 namespace {
 // Reserve a private staging directory atomically so concurrent compiler invocations never share files.
 std::filesystem::path staging_directory(const std::filesystem::path &root) {
     std::filesystem::create_directories(root);
     std::random_device random;
     for (int attempt = 0; attempt < 32; ++attempt) {
-        const auto path = root / (".erlangaot-stage-" + std::to_string(random()) + "-" + std::to_string(random()));
+        const auto path = root / (".clause-stage-" + std::to_string(random()) + "-" + std::to_string(random()));
         if (std::filesystem::create_directory(path)) {
             return path;
         }
@@ -85,4 +85,4 @@ void publish(const std::span<const codegen::OutputBuffer> outputs, const std::fi
         detail::replace(staging.files[i], destinations[i].path);
     }
 }
-} // namespace erlang_aot::artifacts
+} // namespace clause::artifacts

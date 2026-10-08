@@ -1,14 +1,14 @@
 #include "memory/heap_walk.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 // Heap parsing invariants that source cannot reach: every admitted layout walks, untraced payload is
 // never a term, malformed areas are rejected and the verifier catches pointers to non-objects.
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 using detail::HeapCell;
 using detail::WalkError;
 using detail::layout::BoxHeader;
@@ -101,7 +101,7 @@ void corrupt() {
         require(context.heap().verify() == std::unexpected(HeapError::corrupt_heap), "corrupt slot accepted");
         slots[1] = target.word();
         require(context.heap().verify().has_value(), "repaired heap rejected");
-        require(runtime->destroy_context(&context) == erlang_aot::abi::v1::Status::ok, "teardown failed");
+        require(runtime->destroy_context(&context) == clause::abi::v1::Status::ok, "teardown failed");
     }
 }
 } // namespace

@@ -2,7 +2,7 @@
 #include "match_plan_internal.hpp"
 #include "records.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Charge every scheduled operation before growing either the task stack or the candidate-slot table.
 bool charge(MatchPlanner &state, const ast::ExprId &site, const std::size_t count) {
@@ -126,4 +126,4 @@ bool expand_container(MatchPlanner &state, const PatternVisit &visit, const Norm
     }
     return chain(state, visit, pattern, pending);
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -6,15 +6,15 @@
 #include "typed.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/output.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/output.hpp>
 #include <vector>
 
 // The conversion builtins (docs/builtins.md): atoms, integers, floats, lists and binaries, with OTP's badarg and
 // system_limit rules. Binary and iolist conversions run in bounded portions (docs/builtins.md#portions); the others
 // read inputs bounded by the atom, integer and float limits and run to completion, as in OTP.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 using detail::Integer;
 
@@ -453,8 +453,8 @@ constexpr std::array CONVERSION_BUILTINS{
     typed_entry<identity_to_list<false>>("erlang", "ref_to_list"),
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> conversion_builtins() noexcept { return builtins::CONVERSION_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

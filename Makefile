@@ -19,19 +19,19 @@ CLANG_FORMAT ?= $(shell command -v clang-format 2>/dev/null || xcrun --find clan
 build:
 	$(CMAKE) -S . -B "$(BUILD_DIR)" $(CMAKE_ARGS) \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DBUILD_TESTING=OFF \
-		-DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
-	+MAKEFLAGS= $(CMAKE) --build "$(BUILD_DIR)" --config "$(BUILD_TYPE)" --target erlang_aot --parallel $(if $(strip $(JOBS)),"$(JOBS)")
+		-DCLAUSE_BUILD_COMPILER=ON -DCLAUSE_BUILD_RUNTIME=ON
+	+MAKEFLAGS= $(CMAKE) --build "$(BUILD_DIR)" --config "$(BUILD_TYPE)" --target clau --parallel $(if $(strip $(JOBS)),"$(JOBS)")
 
 # Build all executables including those for testing
 build_test:
 	$(CMAKE) -S . -B "$(BUILD_DIR)" $(CMAKE_ARGS) \
 		-DCMAKE_BUILD_TYPE="$(BUILD_TYPE)" -DBUILD_TESTING=ON \
-		-DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
+		-DCLAUSE_BUILD_COMPILER=ON -DCLAUSE_BUILD_RUNTIME=ON
 	+MAKEFLAGS= $(CMAKE) --build "$(BUILD_DIR)" --config "$(BUILD_TYPE)" --parallel $(if $(strip $(JOBS)),"$(JOBS)")
 
 # Build first, propagate failures, and show diagnostics for failing tests.
 test: build_test
-	ERLANG_AOT_TEST_MODE="$(TEST_MODE)" $(CTEST) --test-dir "$(BUILD_DIR)" -C "$(BUILD_TYPE)" \
+	CLAUSE_TEST_MODE="$(TEST_MODE)" $(CTEST) --test-dir "$(BUILD_DIR)" -C "$(BUILD_TYPE)" \
 		--output-on-failure --no-tests=error --parallel "$(TEST_JOBS)" $(if $(filter fast,$(TEST_MODE)),-LE full_only)
 
 # Run every policy/driver combination and full-only tests, e.g. at feature completion.

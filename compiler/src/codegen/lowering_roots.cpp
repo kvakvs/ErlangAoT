@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <llvm/IR/Module.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Name this function in stack traces (abi::v1::FrameDescriptor): module descriptor, module and function name
 // atom slots, and arity.
@@ -73,4 +73,4 @@ void finish_roots(ExpressionLowering &state) {
     auto &roots = *state.roots;
     roots.buffer->setArgOperand(1, llvm::ConstantInt::get(roots.word, std::max(roots.capacity, std::size_t{1})));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -4,7 +4,7 @@
 #include "records.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // A binary default may hold only string segments, as erl_lint's is_literal-binary rule.
 bool string_binary(const ast::Module &syntax, const ast::Bitstring &binary) {
@@ -86,9 +86,9 @@ void native_initialized(const Module &module, const ast::RecordExpression &recor
         }
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // The names of an -export_record list; nullopt unless it is a proper list of atoms.
 std::optional<std::vector<std::u32string>> export_names(const ast::Module &syntax, const ast::TermId &id) {
@@ -230,4 +230,4 @@ const RecordLayout *external_layout(const Module &module, const RecordName &reco
     }
     return &found->second;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

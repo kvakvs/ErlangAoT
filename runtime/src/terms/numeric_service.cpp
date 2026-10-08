@@ -1,8 +1,8 @@
 #include "floats.hpp"
+#include <clause/runtime/process_context.hpp>
 #include <cmath>
-#include <erlang_aot/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::ImmediateOperation;
 
@@ -60,4 +60,4 @@ TermResult<Term> numeric_service(ProcessContext &context, Op operation, const Te
         return FloatAccess::make(context.heap(), value);
     });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

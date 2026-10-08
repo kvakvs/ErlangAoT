@@ -3,7 +3,7 @@
 #include <cmath>
 #include <map>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 using Values = std::vector<Value>;
 using Guard = Value (*)(const Values &);
@@ -245,4 +245,4 @@ Value guard_call(std::u32string_view name, const std::vector<Value> &arguments) 
     }
     return found->second(arguments);
 }
-} // namespace erlang_aot
+} // namespace clause

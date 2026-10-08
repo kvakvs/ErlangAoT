@@ -1,7 +1,7 @@
 #include "binary_options.hpp"
 #include <map>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Canonical type aliases retain their distinct default unit without repeating legality validation.
 void modifier(BinaryOptions &options, const ast::BinaryModifier &modifier) {
@@ -54,4 +54,4 @@ BinaryOptions binary_options(const ast::BinarySegment &segment) {
     }
     return result;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

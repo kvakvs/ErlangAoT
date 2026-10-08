@@ -1,8 +1,8 @@
-#include <erlang_aot/abi/feature_diagnostic.hpp>
+#include <clause/abi/feature_diagnostic.hpp>
 #include <iostream>
 #include <stdexcept>
 
-using namespace erlang_aot::abi::v1;
+using namespace clause::abi::v1;
 
 // Check the catalog as a compatibility snapshot, not only against its own lookup implementation.
 constexpr std::array<std::string_view, 26> names{"pattern matching",

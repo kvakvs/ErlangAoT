@@ -7,8 +7,8 @@
 #include <string>
 #include <utility>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
+using namespace clause;
+using namespace clause::codegen;
 
 // Keep verifier assertions active in both debug and release test builds.
 void require(bool condition, const char *message) {

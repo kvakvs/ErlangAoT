@@ -9,7 +9,7 @@
 
 // The I/O service on Windows (docs/ports.md#io-thread): each input descriptor gets a reader thread that blocks in
 // ReadFile, as console and anonymous-pipe handles cannot be overlapped, and hands framed input to the executor.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Bytes one read asks for.
 constexpr std::size_t READ_BYTES = std::size_t{64} * 1024;
@@ -145,4 +145,4 @@ std::int64_t wait_child(std::int64_t child) noexcept {
 std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver) {
     return std::make_unique<WindowsIo>(std::move(deliver));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

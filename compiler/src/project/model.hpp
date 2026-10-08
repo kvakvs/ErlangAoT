@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace erlang_aot::project {
+namespace clause::project {
 struct Site {
     // Own the manifest filename and key context for diagnostics after TOML destruction.
     std::filesystem::path file;
@@ -67,4 +67,4 @@ struct Error {
     std::string message;
     int exit_code = 1;
 };
-} // namespace erlang_aot::project
+} // namespace clause::project

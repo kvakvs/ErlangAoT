@@ -1,6 +1,6 @@
 include(${PROJECT_SOURCE_DIR}/cmake/BoostDependencies.cmake)
 
-add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
+add_library(clause_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/terms/bit_factory.cpp src/terms/bit_access.cpp src/terms/bit_float.cpp src/terms/bit_numeric.cpp src/terms/bit_utf.cpp src/terms/bit_services.cpp
     src/terms/map_factory.cpp src/terms/map_access.cpp src/terms/map_services.cpp
     src/terms/records.cpp src/terms/record_services.cpp src/terms/funs.cpp src/terms/fun_services.cpp src/terms/identities.cpp src/terms/dynamic_calls.cpp
@@ -19,7 +19,7 @@ add_library(erlang_runtime STATIC src/runtime.cpp src/diagnostics/features.cpp
     src/startup/halt.cpp
     src/modules/atoms.cpp src/modules/services.cpp src/modules/code_server.cpp src/modules/registration.cpp)
 # List review headers for IDE navigation; they are not separate compilation units.
-target_sources(erlang_runtime PRIVATE
+target_sources(clause_runtime PRIVATE
     include/atom_storage.hpp
     include/base_types.hpp
     include/callable.hpp
@@ -30,44 +30,44 @@ target_sources(erlang_runtime PRIVATE
     include/process_heap.hpp
     include/scheduler.hpp
     src/terms/term_layout.hpp
-    include/erlang_aot/runtime/base_types.hpp
-    include/erlang_aot/runtime/terms.hpp
-    include/erlang_aot/runtime/process_state.hpp
-    include/erlang_aot/runtime/scheduler.hpp
+    include/clause/runtime/base_types.hpp
+    include/clause/runtime/terms.hpp
+    include/clause/runtime/process_state.hpp
+    include/clause/runtime/scheduler.hpp
     include/terms.hpp
 )
-set_target_properties(erlang_runtime PROPERTIES
+set_target_properties(clause_runtime PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
-erlang_aot_project_options(erlang_runtime)
+clause_project_options(clause_runtime)
 # One section per function/object lets -Os executables drop unused runtime code at link time.
 if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-    target_compile_options(erlang_runtime PRIVATE /Gy /Gw)
+    target_compile_options(clause_runtime PRIVATE /Gy /Gw)
 else()
-    target_compile_options(erlang_runtime PRIVATE -ffunction-sections -fdata-sections)
+    target_compile_options(clause_runtime PRIVATE -ffunction-sections -fdata-sections)
 endif()
 # Runtime headers use Multiprecision, so consumers need the same header-only dependency.
-target_include_directories(erlang_runtime PUBLIC include)
+target_include_directories(clause_runtime PUBLIC include)
 # The I/O service of ports is platform specific (docs/ports.md#io-thread).
 if(WIN32)
-    target_sources(erlang_runtime PRIVATE src/ports/io_windows.cpp src/ports/spawn_windows.cpp)
+    target_sources(clause_runtime PRIVATE src/ports/io_windows.cpp src/ports/spawn_windows.cpp)
     # Windows 10 is the oldest supported version; Asio asks for it explicitly.
-    target_compile_definitions(erlang_runtime PRIVATE _WIN32_WINNT=0x0A00)
+    target_compile_definitions(clause_runtime PRIVATE _WIN32_WINNT=0x0A00)
 else()
-    target_sources(erlang_runtime PRIVATE src/ports/io_posix.cpp src/ports/spawn_posix.cpp)
+    target_sources(clause_runtime PRIVATE src/ports/io_posix.cpp src/ports/spawn_posix.cpp)
 endif()
 # Scheduler workers are std::threads; glibc before 2.34 needs -pthread (a plain flag keeps the export self-contained).
 # Sockets use Boost.Asio (header-only, from the same Boost), which needs Winsock on Windows.
-target_link_libraries(erlang_runtime
-    PUBLIC erlang_aot_multiprecision_dependency erlang_aot_abi $<$<PLATFORM_ID:Linux>:-pthread>
+target_link_libraries(clause_runtime
+    PUBLIC clause_multiprecision_dependency clause_abi $<$<PLATFORM_ID:Linux>:-pthread>
     $<$<PLATFORM_ID:Windows>:ws2_32> $<$<PLATFORM_ID:Windows>:mswsock>
 )
 
 # Every generated-program consumer links one matching target runtime through this boundary.
-# Platform dependencies (threads) come with erlang_runtime.
-add_library(erlang_generated_program INTERFACE)
-target_link_libraries(erlang_generated_program INTERFACE erlang_runtime)
-add_library(ErlangAoT::generated_program ALIAS erlang_generated_program)
-# Exported for nested test programs as ErlangAoT::generated_program and ErlangAoT::runtime.
-set_target_properties(erlang_generated_program PROPERTIES EXPORT_NAME generated_program)
-set_target_properties(erlang_runtime PROPERTIES EXPORT_NAME runtime)
+# Platform dependencies (threads) come with clause_runtime.
+add_library(clause_generated_program INTERFACE)
+target_link_libraries(clause_generated_program INTERFACE clause_runtime)
+add_library(Clause::generated_program ALIAS clause_generated_program)
+# Exported for nested test programs as Clause::generated_program and Clause::runtime.
+set_target_properties(clause_generated_program PROPERTIES EXPORT_NAME generated_program)
+set_target_properties(clause_runtime PROPERTIES EXPORT_NAME runtime)

@@ -262,7 +262,7 @@ main(["halt"]) ->
 main(Args) ->
     erlang:display(Args).
 
-%% Hide the stack of an error, which ErlangAoT leaves empty until stack traces exist.
+%% Hide the stack of an error, which Clause leaves empty until stack traces exist.
 show({'EXIT', {Reason, Stack}}) when is_list(Stack) -> erlang:display({'EXIT', {Reason, stack}});
 show(Value) -> erlang:display({value, Value}).
 

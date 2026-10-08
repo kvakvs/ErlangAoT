@@ -1,10 +1,10 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <llvm/IR/Module.h>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Reuse one terminal exit (or the enclosing catch handler); callers must inspect the channel before
 // interpreting its invalid word.
@@ -105,4 +105,4 @@ llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expres
     propagate_failure(state);
     return result;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

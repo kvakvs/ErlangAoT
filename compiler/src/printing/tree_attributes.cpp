@@ -1,7 +1,7 @@
 #include "printable.hpp"
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 std::optional<char32_t> TreePrinter::string_character(const ast::TermId &id) const {
     const auto *integer = std::get_if<ast::IntegerLiteral>(&module_.term(id).value);
     return integer ? printable_character(integer->value) : std::nullopt;
@@ -99,4 +99,4 @@ void TreePrinter::operator()(const ast::TermBits &value) const {
 void TreePrinter::operator()(const ast::TermFunction &value) const {
     output_ << "TermFunction target=" << atom(value.module) << ':' << atom(value.name) << '/' << value.arity.decimal;
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

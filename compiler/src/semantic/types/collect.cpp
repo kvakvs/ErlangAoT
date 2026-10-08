@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <set>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Preserve all formal positions; OTP substitution uses the last occurrence of a repeated name.
 std::vector<std::string> parameters(const ast::TypeDeclaration &decl) {
@@ -169,4 +169,4 @@ void collect(Registry &registry, const std::span<const std::unique_ptr<Module>> 
         }
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

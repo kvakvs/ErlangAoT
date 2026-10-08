@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 std::optional<ast::ExprValue> FormParser::control(const OperatorContext context) {
     if (context == OperatorContext::pattern) {
         return std::nullopt;
@@ -95,4 +95,4 @@ ast::ReceiveExpression FormParser::receive_expression() {
     expect(U"end");
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -17,10 +17,10 @@ while IFS= read -r -d '' candidate; do
     if [[ -x "$candidate" && ( -z "$executable" || "$candidate" -nt "$executable" ) ]]; then
         executable=$candidate
     fi
-done < <(find "$build_dir/bin" -type f -name erlangaot -print0)
+done < <(find "$build_dir/bin" -type f -name clau -print0)
 
 if [[ -z "$executable" ]]; then
-    printf 'No executable erlangaot found under %s/bin\n' "$build_dir" >&2
+    printf 'No executable clau found under %s/bin\n' "$build_dir" >&2
     exit 1
 fi
 

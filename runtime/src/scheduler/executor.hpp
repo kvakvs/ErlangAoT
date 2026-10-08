@@ -4,11 +4,11 @@
 #include "../ports/sockets.hpp"
 #include "../ports/value.hpp"
 #include <chrono>
+#include <clause/abi/frames.hpp>
+#include <clause/runtime/process_context.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <condition_variable>
 #include <deque>
-#include <erlang_aot/abi/frames.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
 #include <map>
 #include <mutex>
 #include <string_view>
@@ -19,7 +19,7 @@
 // The executor of one runtime (docs/processes.md#workers): a first-in, first-out queue of runnable processes, each run
 // for a time slice of reductions by one of the scheduler workers. One mutex guards the queue and every process that is
 // not running; a running process's heap, stack and mailbox belong to its worker alone.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // The call a process spawned by spawn/3 starts with: Module:Function(Arguments...).
 struct InitialCall final {
     // Atoms naming the function the new process calls.
@@ -418,4 +418,4 @@ class Executor final {
     // The executor ran out of memory while the main process ran elsewhere; it fails when its slice ends.
     bool failed_ = false;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

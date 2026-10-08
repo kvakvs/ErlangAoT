@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 struct Component {
     // Compact reference components still distinguish atoms, variables and integers.
@@ -87,4 +87,4 @@ void TreePrinter::operator()(const ast::MaybeMatch &value) {
     child("pattern", value.pattern);
     child("value", value.value);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

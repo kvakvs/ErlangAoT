@@ -5,7 +5,7 @@
 #include <functional>
 #include <span>
 
-namespace erlang_aot::artifacts {
+namespace clause::artifacts {
 struct PublicationIO {
     // Inject deterministic write/close failures while retaining real staging and replacement behavior.
     std::function<void(std::ofstream &, std::span<const std::byte>)> write;
@@ -19,4 +19,4 @@ std::string encoded_name(std::string_view identity);
 void publish(std::span<const codegen::OutputBuffer> outputs, const std::filesystem::path &root,
              std::span<const std::filesystem::path> inputs, std::string_view object_extension,
              const PublicationIO &io = {});
-} // namespace erlang_aot::artifacts
+} // namespace clause::artifacts

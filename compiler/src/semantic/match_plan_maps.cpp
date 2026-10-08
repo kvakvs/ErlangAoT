@@ -1,6 +1,6 @@
 #include "match_plan_internal.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 bool expand_map(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
                 std::vector<MatchTask> &pending) {
     const auto &map = std::get<ast::MapExpression>(state.module.syntax->expression(pattern.expression).value);
@@ -21,4 +21,4 @@ bool expand_map(MatchPlanner &state, const PatternVisit &visit, const Normalized
     pending.emplace_back(MatchNode{pattern.origin, MatchOperation::map_shape, visit.input});
     return true;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

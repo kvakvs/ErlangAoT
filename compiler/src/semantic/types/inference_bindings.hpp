@@ -2,7 +2,7 @@
 #include "inference.hpp"
 #include <set>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 struct BindingFacts {
     // Borrow one function's semantic identities; each clause has disjoint local slots.
     FunctionRef function;
@@ -21,4 +21,4 @@ struct BindingFacts {
     // Publish only whole-value definitions after a body match's successful continuation.
     void publish(const ast::ExprId &pattern, Fact fact, std::size_t &work);
 };
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

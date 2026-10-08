@@ -1,7 +1,7 @@
 #include "forms.hpp"
 #include <charconv>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Character tokens use the lexer's arbitrary integer representation, not text values.
 ast::CharacterLiteral character(const Integer &integer, const Token &token) {
@@ -62,4 +62,4 @@ ast::ExprValue FormParser::sigil() {
     }
     throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "illegal sigil prefix", prefix));
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -2,7 +2,7 @@
 #include "project/diagnostics.hpp"
 #include "support.hpp"
 #include <cstdio>
-using namespace erlang_aot::project;
+using namespace clause::project;
 
 // Deterministic write/close faults cannot be requested through the CLI or ordinary filesystems.
 void fails(const std::filesystem::path &root, const CreationIO &io) {

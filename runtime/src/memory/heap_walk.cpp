@@ -1,7 +1,7 @@
 #include "heap_walk.hpp"
 #include <optional>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using layout::BoxHeader;
 using Shape = HeapCell::Shape;
@@ -79,4 +79,4 @@ std::expected<HeapCell, WalkError> parse_cell(std::span<const Word> rest) noexce
         return HeapCell{words, words.subspan(1 + prefix), kind == BoxedKind::filler ? Shape::filler : Shape::boxed};
     });
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

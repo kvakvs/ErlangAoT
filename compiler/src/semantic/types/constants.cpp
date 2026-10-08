@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <charconv>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Decode closed operator identities retained in symbolic syntax nodes.
 unsigned operation(const Node &node) {
@@ -96,4 +96,4 @@ Id constant_node(Resolver &r, Node node, const ast::NodeSource &source) {
     }
     return r.registry.graph.intern(std::move(node));
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

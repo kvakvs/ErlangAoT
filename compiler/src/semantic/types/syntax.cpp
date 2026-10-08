@@ -1,6 +1,6 @@
 #include "syntax.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Every AST category has an explicit description; adding syntax requires updating this visitor.
 struct Describe {
@@ -133,4 +133,4 @@ Id translate(Graph &graph, const ast::Module &syntax, const ast::TypeId &root) {
     }
     return graph.bottom();
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

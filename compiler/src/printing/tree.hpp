@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 #include <ostream>
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 // Reuse canonical Erlang spelling for scalar values, including escaped strings.
 std::string literal(TokenKind kind, const TokenValue &value);
 std::string atom(const ast::Atom &value);
@@ -195,4 +195,4 @@ class TreePrinter {
         }
     }
 };
-} // namespace erlang_aot::printing
+} // namespace clause::printing

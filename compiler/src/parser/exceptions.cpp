@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 ast::CatchClause FormParser::catch_clause() {
     const auto begin = cursor_.offset();
     std::optional<ast::ExprId> exception_class;
@@ -76,4 +76,4 @@ ast::MaybeExpression FormParser::maybe_expression() {
     expect(U"end");
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

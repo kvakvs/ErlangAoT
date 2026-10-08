@@ -1,6 +1,6 @@
 # Differences from Erlang/OTP
 
-Observable behavior where ErlangAoT knowingly differs from the pinned OTP 29
+Observable behavior where Clause knowingly differs from the pinned OTP 29
 (`maint-29`, see [otp-reference.md](otp-reference.md)). Each entry links to the
 contract that owns it. Remove an entry once the difference is fixed. Features
 not implemented yet (reported as `notimpl`) are not listed here; see
@@ -8,7 +8,7 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 
 ## Maps
 
-| Difference | OTP | ErlangAoT | Owner |
+| Difference | OTP | Clause | Owner |
 | --- | --- | --- | --- |
 | Map generator order (`K := V <- M`) | Flat maps (up to 32 keys) iterate in key order, but atom keys in atom-table order, which varies between VM runs; larger maps in hash order | Always canonical key order (term order) | [patterns](patterns.md#comprehensions) |
 | `bad_generators` payload of a map generator in a zip group | Its iterator: `{K, V, Next}` chain ending in `none`, in OTP's order | The same chain, built in canonical key order | [patterns](patterns.md#comprehensions) |
@@ -23,7 +23,7 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 
 ## Pids, references and processes
 
-| Difference | OTP | ErlangAoT | Owner |
+| Difference | OTP | Clause | Owner |
 | --- | --- | --- | --- |
 | Pid numbers | The first user process is about `<0.80.0>`; numbers are reused after the pid table wraps | The first process is `<0.1.0>`; numbers come from one sequence and are never reused | [terms](terms.md#pids-and-references) |
 | Code after `spawn(Fun)` of a fun of another arity | The compiler's type analysis may treat the code after the call as unreachable and drop it, so the caller returns the pid at once | The caller goes on; only the new process fails with `{badarity, {Fun, []}}` | [processes](processes.md#builtins) |
@@ -49,26 +49,26 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 
 ## Errors, stack traces and reports
 
-| Difference | OTP | ErlangAoT | Owner |
+| Difference | OTP | Clause | Owner |
 | --- | --- | --- | --- |
 | Stack trace locations | `[{file, F}, {line, L}]`, `error_info` for `error/3` | Always `[]`; no `error_info` | [ABI](abi.md#stack-traces) |
 | `function_clause` top frame | Argument list | Arity | [ABI](abi.md#stack-traces) |
 | `undef` top frame | `{M, F, Args, []}` of the missing function | The calling function's frame | [funs](funs.md#dynamic-calls) |
 | Failing BIF/operator frames | Present (`{erlang, '+', Args, ...}`) | Absent; nothing below the entry function | [ABI](abi.md#stack-traces) |
-| Atom table full (`list_to_atom/1`) | The emulator aborts (`no more index entries in atom_tab`) and writes a crash dump | `erlangaot: runtime failure: entry call failed: resource_limit`, exit 70 | [builtins](builtins.md#how-calls-reach-them) |
+| Atom table full (`list_to_atom/1`) | The emulator aborts (`no more index entries in atom_tab`) and writes a crash dump | `clau: runtime failure: entry call failed: resource_limit`, exit 70 | [builtins](builtins.md#how-calls-reach-them) |
 | `list_to_integer/1,2` with characters above 255 | Its first digits use only each character's low byte (`[16#131]` is 1) | `badarg` | [builtins](builtins.md#how-calls-reach-them) |
 | `erlang:function_exported/3` of a BIF | True for every BIF of the emulator | True only for the builtins this runtime provides | [builtins](builtins.md#how-calls-reach-them) |
 | Error reports of crashed processes | Sent to the logger, written later by its default handler (on standard output under `erl`, often lost when an escript halts first) | Written on stderr when the process ends, before any later output | [processes](processes.md#exits) |
 | Calls to functions that never return | Compiled as tail calls (caller missing from the trace) | Ordinary calls (caller present) | [ABI](abi.md#stack-traces) |
-| Host memory exhausted | The emulator reports that it cannot allocate memory, writes a crash dump and stops | `erlangaot: runtime failure: entry call failed: out_of_memory`, exit 70, no dump | [runtime heap](runtime-heap.md#failure-behavior) |
-| Process memory cap | `max_heap_size` (in words, heap and stack) kills the process with reason `killed` and logs an error report | `--max-heap` / `--max-stack` (bytes) and the runtime-wide `--max-memory` fail the requesting process as `resource_limit`: `erlangaot: runtime failure: entry call failed: resource_limit`, exit 70 | [runtime heap](runtime-heap.md#runtime-memory-limit) |
-| Program arguments | `escript` passes every argument to `main/1`; emulator flags (`+t`) come from `%%!` or `ERL_FLAGS` | Leading runtime options (`--max-atoms`, `--max-heap`, `--max-stack`, `--max-memory`, `--args-file`, `--`) are taken out first; `ERLANG_AOT_FLAGS` holds the same options | [executables](executables.md#runtime-options) |
+| Host memory exhausted | The emulator reports that it cannot allocate memory, writes a crash dump and stops | `clau: runtime failure: entry call failed: out_of_memory`, exit 70, no dump | [runtime heap](runtime-heap.md#failure-behavior) |
+| Process memory cap | `max_heap_size` (in words, heap and stack) kills the process with reason `killed` and logs an error report | `--max-heap` / `--max-stack` (bytes) and the runtime-wide `--max-memory` fail the requesting process as `resource_limit`: `clau: runtime failure: entry call failed: resource_limit`, exit 70 | [runtime heap](runtime-heap.md#runtime-memory-limit) |
+| Program arguments | `escript` passes every argument to `main/1`; emulator flags (`+t`) come from `%%!` or `ERL_FLAGS` | Leading runtime options (`--max-atoms`, `--max-heap`, `--max-stack`, `--max-memory`, `--args-file`, `--`) are taken out first; `CLAUSE_FLAGS` holds the same options | [executables](executables.md#runtime-options) |
 | Uncaught exception in an ordinary entry module | `escript` exits 127 | Exits 1 with one `uncaught exception <class>: <reason>` line (escript sources keep 127) | [executables](executables.md) |
 | Compiler diagnostics | `erl_lint` wording (`variable 'X' is unbound`) and warnings | Own wording (`unbound variable X`); OTP lint warnings are mostly not emitted (also unknown native record fields in access, update and patterns) | [semantic](semantic.md#bindings) |
 
 ## Language edge cases
 
-| Difference | OTP | ErlangAoT | Owner |
+| Difference | OTP | Clause | Owner |
 | --- | --- | --- | --- |
 | Integer segment wider than the integer limit, value past it (`<<V:4194241>>` of all ones) | The x86 JIT matches with an invalid term; using it crashes the VM | No match | [terms](terms.md#integers) |
 | Zip group whose relaxed and strict generators share a variable | Skip test keeps strict-pattern variables in the relaxed patterns | A rejected step is skipped whenever the strict patterns match on their own | [patterns](patterns.md#comprehensions) |
@@ -79,7 +79,7 @@ not implemented yet (reported as `notimpl`) are not listed here; see
 
 ## io
 
-| Difference | OTP | ErlangAoT | Owner |
+| Difference | OTP | Clause | Owner |
 | --- | --- | --- | --- |
 | Control sequences `~e ~f ~g ~x ~X ~+ ~# ~W ~P`, modifier `K` | Formatted | `badarg` | [io](io.md#formats) |
 | `~p` of containers nested more than 256 deep | Printed | `system_limit` | [io](io.md#pretty-printing-p) |

@@ -1,7 +1,7 @@
 #include "floats.hpp"
 #include <cmath>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 TermResult<double> float_operation(abi::v1::ImmediateOperation operation, double left, double right) {
     using Op = abi::v1::ImmediateOperation;
     switch (operation) {
@@ -26,4 +26,4 @@ TermResult<double> float_operation(abi::v1::ImmediateOperation operation, double
         return std::unexpected(TermError::wrong_type);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

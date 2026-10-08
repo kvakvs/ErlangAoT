@@ -2,7 +2,7 @@
 #include "diagnostics.hpp"
 #include "paths.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Preserve last-CLI-first include order, followed by manifest declaration order.
 void includes(PreprocessorOptions &result, const TargetOptions &target, const std::filesystem::path &base,
@@ -63,7 +63,7 @@ void validate(const PreprocessorOptions &options, const Site &site) {
     while (const auto event = session.next()) {
         const auto *diagnostic = std::get_if<Diagnostic>(&*event);
         if (diagnostic && diagnostic->severity == Severity::error) {
-            fail(site, erlang_aot::render(*diagnostic));
+            fail(site, clause::render(*diagnostic));
         }
     }
 }
@@ -80,4 +80,4 @@ PreprocessorOptions compose_options(const Target &target, const std::filesystem:
     validate(result, target.name.site);
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

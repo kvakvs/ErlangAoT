@@ -1,7 +1,7 @@
 #pragma once
 #include "parsing/token_cursor.hpp"
 
-namespace erlang_aot {
+namespace clause {
 // A bounded token cursor keeps lexical categories intact during envelope
 // parsing.
 class DirectiveCursor {
@@ -71,4 +71,4 @@ class DirectiveCursor {
     // Remaining borrowed tokens and the closing delimiter's owned source span.
     TokenCursor cursor_;
 };
-} // namespace erlang_aot
+} // namespace clause

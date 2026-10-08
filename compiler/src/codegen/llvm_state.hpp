@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-namespace erlang_aot::codegen::detail {
+namespace clause::codegen::detail {
 // Backend-only storage; field order is part of the module/context/callback lifetime contract.
 struct CompilationState {
     // Initialize a separate context and one empty IR module for each owned syntax input.
@@ -33,4 +33,4 @@ struct CompilationState {
 void capture_diagnostic(const llvm::DiagnosticInfo *diagnostic, void *destination) noexcept;
 // Register only CMake-selected SDK backends once, safely across compilation instances.
 void initialize_target_backends();
-} // namespace erlang_aot::codegen::detail
+} // namespace clause::codegen::detail

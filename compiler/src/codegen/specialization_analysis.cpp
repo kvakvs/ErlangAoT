@@ -6,9 +6,9 @@
 #include "progress.hpp"
 #include <algorithm>
 #include <charconv>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Prove only bounded implementation singletons; broad integer types and unions stay generic.
 Representation representation(const semantic::types::Graph &graph, const semantic::types::Id id, const unsigned bits) {
@@ -134,4 +134,4 @@ SpecializationPlan analyze_specializations(Compilation &compilation,
     }
     return plan_specializations(compilation.request(), ordered);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

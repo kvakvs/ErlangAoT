@@ -5,7 +5,7 @@
 % framing, exit status, standard error, arguments and environment, a large write, closing, owner ends, errors and
 % os:cmd/1.
 
-python() -> os:getenv("ERLANG_AOT_TEST_PYTHON").
+python() -> os:getenv("CLAUSE_TEST_PYTHON").
 
 % A port running helper.py in Mode.
 helper(Mode, Args, Options) ->
@@ -58,7 +58,7 @@ framing() ->
 
 environment() ->
     io:format("streams ~p~n", [messages(helper("streams", [], [{line, 80}, stderr_to_stdout, eof]))]),
-    Env = [{"ERLANG_AOT_PROBE", "probe value"}, {"ERLANG_AOT_UNSET", false}],
+    Env = [{"CLAUSE_PROBE", "probe value"}, {"CLAUSE_UNSET", false}],
     Info = helper("info", ["a b", "c\"d", "e\\"], [{line, 80}, eof, {env, Env}]),
     io:format("info ~p~n", [messages(Info)]),
     Bytes = 200000,

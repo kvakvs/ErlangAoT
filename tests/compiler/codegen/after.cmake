@@ -12,10 +12,10 @@ file(GLOB objects "${object_dir}/*.o" "${object_dir}/*.obj")
 file(WRITE "${TEST_DIR}/source/CMakeLists.txt" [=[
 cmake_minimum_required(VERSION 3.28)
 project(GeneratedConsumer LANGUAGES CXX)
-# Link the runtime the parent build already compiled (ErlangAoT::generated_program).
+# Link the runtime the parent build already compiled (Clause::generated_program).
 include("${RUNTIME_TARGETS}")
 add_executable(linked "${SOURCE_ROOT}/tests/compiler/codegen/after_consumer.cpp" ${OBJECTS})
-target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
+target_link_libraries(linked PRIVATE Clause::generated_program)
 set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 ]=])
 execute_process(COMMAND "${CMAKE_COMMAND}" -S "${TEST_DIR}/source" -B "${TEST_DIR}/build"

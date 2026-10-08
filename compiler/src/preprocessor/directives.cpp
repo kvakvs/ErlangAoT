@@ -1,9 +1,9 @@
 #include "cursor.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/compiler/directive.hpp>
+#include <clause/compiler/directive.hpp>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Keep supported directive names separate from arbitrary Erlang attributes.
 constexpr std::array names{U"define", U"undef", U"include", U"include_lib", U"ifdef", U"ifndef", U"if",
@@ -148,4 +148,4 @@ std::variant<Directive, Diagnostic> parse_directive(const std::span<const Token>
         return error.diagnostic;
     }
 }
-} // namespace erlang_aot
+} // namespace clause

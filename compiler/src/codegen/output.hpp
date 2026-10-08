@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 enum class OutputKind : std::uint8_t { object, llvm_ir, llvm_bitcode };
 
 struct OutputBuffer {
@@ -14,7 +14,7 @@ struct OutputBuffer {
     OutputKind kind = OutputKind::object;
     // Retain serialized bytes after LLVM modules and their contexts have been destroyed.
     std::vector<std::byte> bytes;
-    // Mark the batch's startup object, published as `eav1_start` instead of a module name.
+    // Mark the batch's startup object, published as `clausev1_start` instead of a module name.
     bool startup = false;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

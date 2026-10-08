@@ -1,8 +1,8 @@
 #include "entry.hpp"
 #include <algorithm>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/compiler/source.hpp>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 using Modules = std::span<const std::unique_ptr<semantic::Module>>;
 
@@ -116,4 +116,4 @@ bool resolve_entry(const Modules modules, const EntryRequest &request, const sem
     }
     return !entry.has_value();
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

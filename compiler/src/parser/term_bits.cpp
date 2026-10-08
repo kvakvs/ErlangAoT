@@ -1,6 +1,6 @@
 #include "term_value.hpp"
 
-namespace erlang_aot {
+namespace clause {
 void TermNormalizer::segment(Value &output, const ast::BinarySegment &value) const {
     std::vector<Token> modifiers;
     if (value.modifiers) {
@@ -39,4 +39,4 @@ Value TermNormalizer::operator()(const ast::Bitstring &value) const {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

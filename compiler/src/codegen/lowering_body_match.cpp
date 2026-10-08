@@ -2,7 +2,7 @@
 #include <array>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern,
                                       const semantic::GeneratorPattern generator) {
     auto plan = semantic::make_match_plan(
@@ -30,4 +30,4 @@ llvm::Value *lower_body_match(ExpressionLowering &state, const ast::MatchExpress
     state.builder.SetInsertPoint(success);
     return value;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

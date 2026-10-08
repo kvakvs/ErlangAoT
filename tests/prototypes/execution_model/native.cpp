@@ -18,7 +18,7 @@ struct Context {
     std::uintptr_t deepest = UINTPTR_MAX;
 };
 
-// Push and pop one root frame of `count` slots, as erlang_aot_roots_enter/leave do.
+// Push and pop one root frame of `count` slots, as clause_roots_enter/leave do.
 Word *enter(Context &context, std::size_t count) {
     context.roots.resize(context.roots.size() + count);
     return context.roots.data() + context.roots.size() - count;

@@ -2,7 +2,7 @@
 #include "token_syntax.hpp"
 #include <span>
 
-namespace erlang_aot {
+namespace clause {
 // Share delimiter/fun-prefix recognition between macro arguments and parser diagnostics.
 class Delimiters {
   public:
@@ -25,4 +25,4 @@ class Delimiters {
     // Distinguish named/anonymous fun bodies from external/local references and fun types.
     void fun(std::span<const Token> input);
 };
-} // namespace erlang_aot
+} // namespace clause

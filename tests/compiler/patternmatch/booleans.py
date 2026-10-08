@@ -24,7 +24,7 @@ def inspection(tool, work):
     (work / "width.erl").write_bytes(b"-module(width). -export([f/2,g/1]).\nf(X,Y) -> X andalso Y. g(X) -> not X.\n")
     for bits, triple in [(32, "i686-pc-windows-msvc"), (64, "x86_64-pc-windows-msvc")]:
         ir = run([tool, "--target-triple", triple, "--print-ir", str(work / "width.erl")])
-        assert f"phi i{bits}" in ir and "erlang_aot_immediate_v1" in ir, ir
+        assert f"phi i{bits}" in ir and "CLAUSE_immediate_v1" in ir, ir
         run([tool, "--target-triple", triple, "--emit", "obj", "--artifact-dir", str(work / f"width{bits}"),
              str(work / "width.erl")])
         widths.append({"bits": bits, "triple": triple, "objects_and_verified_ir": "passed", "execution": "not attempted"})

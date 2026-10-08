@@ -1,13 +1,13 @@
 #include <array>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/startup.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/startup.hpp>
 #include <iostream>
 #include <span>
 #include <stdexcept>
 
 // Startup invariants that compiled source cannot reach: mismatched or failing descriptors never run the entry.
 namespace {
-using namespace erlang_aot::abi::v1;
+using namespace clause::abi::v1;
 
 // Count entry invocations to prove that failed startups stop before Erlang code.
 int calls = 0;
@@ -38,7 +38,7 @@ StartupDescriptor program(std::span<const ModuleDescriptor *const> modules) {
 // Run one program from a clean call count and return its exit status.
 int run(const StartupDescriptor &startup) {
     calls = 0;
-    return erlang_aot_main_v1(0, nullptr, &startup);
+    return CLAUSE_main_v1(0, nullptr, &startup);
 }
 
 // Every rejected startup reports a runtime failure without calling the entry.
@@ -67,7 +67,7 @@ int main() {
         changed = program(valid);
         changed.entry_function_size = 3;
         rejected(changed, "missing entry function reached a different export");
-        require(erlang_aot_main_v1(0, nullptr, nullptr) == exit_runtime_failure, "null startup accepted");
+        require(CLAUSE_main_v1(0, nullptr, nullptr) == exit_runtime_failure, "null startup accepted");
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

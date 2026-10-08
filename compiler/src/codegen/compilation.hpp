@@ -3,7 +3,7 @@
 #include "result.hpp"
 #include <memory>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 class Compilation;
 
 namespace detail {
@@ -38,4 +38,4 @@ class Compilation {
     // Keep nonmovable LLVM context/module state at a stable address across owner moves.
     std::unique_ptr<detail::CompilationState> state_;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

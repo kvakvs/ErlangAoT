@@ -1,6 +1,6 @@
 #include "capabilities.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // The input expression of every generator kind; filters have none.
 struct GeneratorInput {
@@ -93,4 +93,4 @@ std::vector<ast::ExprId> comprehension_children(const ast::ExprValue &value) {
     result.insert(result.end(), templates.begin(), templates.end());
     return result;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

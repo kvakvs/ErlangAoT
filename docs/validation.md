@@ -29,7 +29,7 @@ cmake --build build/debug --target check-quality      # changed files + dependen
 cmake --build build/debug --target check-quality-all  # whole tree
 ```
 
-- `ERLANG_AOT_TEST_MODE=fast` runs golden corpora at O0 positional plus O2
+- `CLAUSE_TEST_MODE=fast` runs golden corpora at O0 positional plus O2
   specialization-off project, runs mutations once and skips `full_only` tests.
   Full mode (default) runs all driver/policy combinations.
 - `check-quality`, `make format` and `make-format.bat` cover files changed since
@@ -37,9 +37,9 @@ cmake --build build/debug --target check-quality-all  # whole tree
   that include a changed header. Changes to `.clang-tidy`, `cmake/` or production
   CMake select everything.
 - Test programs carry no debug information (no PDBs); configure with
-  `-DERLANG_AOT_TEST_DEBUG_INFO=ON` to rebuild them for a debugger. Nested
+  `-DCLAUSE_TEST_DEBUG_INFO=ON` to rebuild them for a debugger. Nested
   native consumers link the parent build's runtime through
-  `ErlangAoTRuntimeTargets.cmake` instead of compiling it again; only
+  `ClauseRuntimeTargets.cmake` instead of compiling it again; only
   `runtime_link` builds the runtime standalone.
 - Thresholds and suppressions are never raised to pass the gate.
 
@@ -72,7 +72,7 @@ cmake --build build/debug --target check-quality-all  # whole tree
   `regenerate.py --check` reproduces them under OTP
   ([case notes](../tests/fixtures/executables/README.md)).
 - Regeneration and live audits are explicit:
-  `-DERLANG_AOT_OTP_AUDITS=ON` and `tests/compiler/patternmatch/regenerate.py`
+  `-DCLAUSE_OTP_AUDITS=ON` and `tests/compiler/patternmatch/regenerate.py`
   ([instructions](../tests/fixtures/patternmatch/generated/README.md)).
   Nothing refreshes goldens or the pin silently.
 
@@ -171,7 +171,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-06 | Plan 11 step 28 graph copies between heaps, shared off-heap buffers | 166 (162 fast) | 71 changed | Fast 162/162; full `-j 12` 166/166 in 130 s; Lizard 0 warnings; tidy passed |
 | 2026-10-07 | Plan 11 step 29 record updates | 167 (163 fast) | 38 changed | Fast 163/163; Lizard 0 warnings; tidy passed; records corpus reproduces under OTP |
 | 2026-10-07 | Plan 11 step 30 `record_info/2` | 168 (164 fast) | 42 changed | Fast 164/164; full `-j 12` 168/168 in 119 s; Lizard 0 warnings; tidy passed |
-| 2026-10-07 | Plan 11 step 31B native record cells and `erlang_aot_record_v1` (ABI 6) | 169 (165 fast) | 283 changed | Fast 165/165; full `-j 12` 169/169 in 122 s; Lizard 0 warnings; tidy passed after two fixes |
+| 2026-10-07 | Plan 11 step 31B native record cells and `CLAUSE_record_v1` (ABI 6) | 169 (165 fast) | 283 changed | Fast 165/165; full `-j 12` 169/169 in 122 s; Lizard 0 warnings; tidy passed after two fixes |
 | 2026-10-07 | Plan 11 step 31C local native records | 170 (166 fast) | 285 changed | Fast 166/166; full `-j 12` 170/170 in 146 s; Lizard and tidy passed after complexity fixes |
 | 2026-10-07 | Plan 11 step 31D qualified and imported native records | 171 (167 fast) | 124 changed | Fast 167/167; full `-j 12` 171/171 in 129 s; Lizard 0 warnings; tidy passed after three fixes |
 | 2026-10-07 | Plan 11 step 31E anonymous native records (step 31 closed) | 172 (168 fast) | 33 changed | Fast 168/168; full `-j 12` 172/172 in 124 s; Lizard 0 warnings; tidy passed after one fix |

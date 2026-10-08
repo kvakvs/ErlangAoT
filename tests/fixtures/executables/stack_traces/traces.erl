@@ -288,7 +288,7 @@ first(4, [F1, F2, F3, F4 | _]) ->
 first(8, [F1, F2, F3, F4, F5, F6, F7, F8 | _]) ->
     [frame(F1), frame(F2), frame(F3), frame(F4), frame(F5), frame(F6), frame(F7), frame(F8)].
 
-%% OTP shows the arguments of a function_clause frame; ErlangAoT shows its arity.
+%% OTP shows the arguments of a function_clause frame; Clause shows its arity.
 frame({M, F, A, Location}) when is_list(Location) -> {M, F, arity(A)}.
 
 arity(A) when is_integer(A) -> A;

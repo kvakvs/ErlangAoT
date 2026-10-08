@@ -1,12 +1,12 @@
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
 #include <source_location>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot;
+using namespace clause;
 static_assert(!std::is_convertible_v<ast::ExprId, ast::TermId>);
 
 // Keep assertions active and identify the failed contract without debugger setup.

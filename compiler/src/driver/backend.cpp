@@ -11,9 +11,9 @@
 #include "progress.hpp"
 #include "publication.hpp"
 #include "type_report.hpp"
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/compiler/source.hpp>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Carry invocation policy into the private backend without exposing LLVM types to the driver.
 codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInput> inputs,
@@ -162,4 +162,4 @@ bool compile_batch(std::vector<codegen::CompilationInput> inputs, const Frontend
     }
     return true;
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

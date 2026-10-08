@@ -1,13 +1,13 @@
 #pragma once
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 #include <llvm/IR/IRBuilder.h>
 #include <map>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct Module;
 }
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 // Retain physical source buffers by LLVM scope identity across optimization and inlining.
 using SourceScopes = std::map<const llvm::MDNode *, SourcePtr>;
 // Recover physical invocation coordinates independently of logical -file mappings.
@@ -17,4 +17,4 @@ void prepare_source_locations(llvm::Module &output, const semantic::Module &modu
                               SourceScopes &sources);
 // Locate the next expression's instructions; absent function scopes keep ordinary code generation unchanged.
 void locate_source(llvm::IRBuilder<> &builder, const ast::Module &syntax, const ast::NodeSource &source);
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

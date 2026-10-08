@@ -1,7 +1,7 @@
 #include "result.hpp"
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 CompilationStatus CompilationResult::status() const { return status_; }
 
 std::span<const CompilationDiagnostic> CompilationResult::diagnostics() const { return diagnostics_; }
@@ -41,4 +41,4 @@ void CompilationResult::fail_diagnostic_capture() noexcept {
     diagnostic_capture_failed_ = true;
     outputs_.clear();
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

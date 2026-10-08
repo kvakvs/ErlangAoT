@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 void TreePrinter::qualifier_child(std::string role, const ast::Qualifier &value) { child(std::move(role), &value); }
 
 void TreePrinter::qualifier_child(std::string role, const ast::ZippedQualifier &value) {
@@ -63,4 +63,4 @@ void TreePrinter::operator()(const ast::MapGenerator &value) {
     child("value", value.value);
     child("input", value.input);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

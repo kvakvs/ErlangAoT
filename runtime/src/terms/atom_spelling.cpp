@@ -1,6 +1,6 @@
-#include <erlang_aot/runtime/atoms.hpp>
+#include <clause/runtime/atoms.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Decode continuation bytes with explicit bounds and reject noncanonical scalar encodings.
 bool continuation(std::string_view text, std::size_t &offset, unsigned length, std::uint32_t value) noexcept {
@@ -47,4 +47,4 @@ bool valid_atom_spelling(std::string_view spelling) noexcept {
     }
     return true;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

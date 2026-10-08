@@ -3,7 +3,7 @@
 #include <charconv>
 #include <map>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 struct Types {
     // Canonical categories detect contradictory aliases and preserve omitted unit/type distinctions.
@@ -134,4 +134,4 @@ void pattern_binary(BindingAnalysis &state, const ast::ExprId &id, const ast::Bi
         segment(state, binary.segments[i], i + 1 == binary.segments.size(), pattern);
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -1,7 +1,7 @@
 #include "builder.hpp"
 #include "storage.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 namespace {
 // Copy source metadata without retaining decoded token values in every node.
 TokenOrigin origin(const Token &token) {
@@ -106,4 +106,4 @@ Module Builder::finish(FeatureSnapshot features) && {
     module_.storage_->features = std::move(features);
     return std::move(module_);
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

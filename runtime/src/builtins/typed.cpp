@@ -1,6 +1,6 @@
 #include "typed.hpp"
 
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 TermResult<std::optional<detail::Integer>> Argument<detail::Integer>::convert(const Term &term) {
     if (!term.is_integer()) {
         return std::nullopt;
@@ -53,4 +53,4 @@ TermResult<std::optional<AtomArgument>> Argument<AtomArgument>::convert(const Te
     return term.atom_spelling().transform(
         [&](std::string_view spelling) { return std::optional{AtomArgument{term, spelling}}; });
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

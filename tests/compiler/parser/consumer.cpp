@@ -1,7 +1,7 @@
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Embedders may return the owner without retaining lexer or preprocessing sessions.
 ast::Module load() {

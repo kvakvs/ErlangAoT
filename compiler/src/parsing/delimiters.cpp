@@ -1,7 +1,7 @@
 #include "delimiters.hpp"
 #include <map>
 
-namespace erlang_aot {
+namespace clause {
 bool Delimiters::boundary(const Token &token) {
     if (!stack_.empty() && stack_.back().close == U"fun") {
         if (syntax(token, U"->") || syntax(token, U"when")) {
@@ -44,4 +44,4 @@ void Delimiters::fun(std::span<const Token> input) {
 }
 
 const Token *Delimiters::opener() const { return stack_.empty() ? nullptr : stack_.back().open; }
-} // namespace erlang_aot
+} // namespace clause

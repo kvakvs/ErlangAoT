@@ -3,10 +3,10 @@
 #include "funs.hpp"
 #include "records.hpp"
 #include <charconv>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <limits>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 ast::ExprId ungroup(const ast::Module &syntax, ast::ExprId expression) {
     while (const auto *group = std::get_if<ast::Group>(&syntax.expression(expression).value)) {
         expression = group->expression;
@@ -276,4 +276,4 @@ std::vector<ast::ExprId> function_roots(const ast::Function &function) {
     }
     return result;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

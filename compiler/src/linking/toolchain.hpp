@@ -4,7 +4,7 @@
 #include <span>
 #include <string>
 
-namespace erlang_aot::linking {
+namespace clause::linking {
 struct LinkerRun {
     // Exit status of the Clang driver and its combined stdout/stderr text (bounded).
     int status = 0;
@@ -22,4 +22,4 @@ LinkerRun run_linker(const std::string &program, std::span<const std::string> ar
 std::filesystem::path find_runtime_library(const std::optional<std::filesystem::path> &library);
 // Require every native object in the runtime archive to match the target architecture and format.
 void check_runtime_target(const std::filesystem::path &library, const std::string &target_triple);
-} // namespace erlang_aot::linking
+} // namespace clause::linking

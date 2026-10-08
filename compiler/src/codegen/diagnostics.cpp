@@ -3,7 +3,7 @@
 #include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/Support/raw_ostream.h>
 
-namespace erlang_aot::codegen::detail {
+namespace clause::codegen::detail {
 namespace {
 // Preserve all LLVM severity categories without treating informational remarks as errors.
 DiagnosticLevel level(const llvm::DiagnosticSeverity severity) {
@@ -42,4 +42,4 @@ void capture_diagnostic(const llvm::DiagnosticInfo *diagnostic, void *destinatio
         result.fail_diagnostic_capture();
     }
 }
-} // namespace erlang_aot::codegen::detail
+} // namespace clause::codegen::detail

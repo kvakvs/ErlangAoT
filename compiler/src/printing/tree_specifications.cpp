@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 void TreePrinter::operator()(const ast::Specification &value) {
     output_ << (value.callback ? "Callback" : "Specification") << " name=" << atom(value.name)
             << " arity=" << value.arity;
@@ -20,4 +20,4 @@ void TreePrinter::operator()(const ast::TypeConstraint &value) {
     output_ << "TypeConstraint variable=" << utf8(value.variable.name) << " legacy=" << value.legacy;
     child("bound", value.bound);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

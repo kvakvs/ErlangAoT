@@ -29,7 +29,7 @@ standard output. They are runtime builtins of module `io` in the bridge catalog
 - Control sequences `~F.P.PadModC`: field width `F` (negative or `-`: left
   adjusted), precision `P`, pad character, `*` taking an integer (or the pad)
   from the arguments, modifiers `t` (Unicode), `l` (no string detection) and
-  `k` (ordered maps; ErlangAoT always prints maps in key order).
+  `k` (ordered maps; Clause always prints maps in key order).
 - Supported `C`: `~w`, `~p`, `~s`, `~c`, `~b`, `~B`, `~i`, `~n`, `~~`, with
   OTP's field rules: `~s` truncates or pads to `P` within `F`; `~w` and `~b`
   print `*` characters when the text does not fit `F`; `~c` repeats the

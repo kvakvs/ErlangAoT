@@ -6,7 +6,7 @@
 #include <llvm/IR/Module.h>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Reject unrepresentable line numbers instead of attaching a different source line after narrowing.
 unsigned line_number(const Span &site) {
@@ -57,7 +57,7 @@ void prepare_source_locations(llvm::Module &output, const semantic::Module &modu
     llvm::DIBuilder debug(output);
     auto *file = debug.createFile(output.getSourceFileName(), "");
     // Erlang uses a private language code here; these scopes describe source lines, not debugger types.
-    debug.createCompileUnit(llvm::dwarf::DW_LANG_lo_user, file, "erlangaot", optimized, "", 0, "",
+    debug.createCompileUnit(llvm::dwarf::DW_LANG_lo_user, file, "clau", optimized, "", 0, "",
                             llvm::DICompileUnit::LineTablesOnly);
     output.addModuleFlag(llvm::Module::Warning, "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
     for (const auto &function : module.functions) {
@@ -85,4 +85,4 @@ void locate_source(llvm::IRBuilder<> &builder, const ast::Module &syntax, const 
     auto *location_scope = llvm::DILexicalBlockFile::get(context, scope, file, 0);
     builder.SetCurrentDebugLocation(llvm::DILocation::get(context, line_number(site), 0, location_scope));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

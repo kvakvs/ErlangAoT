@@ -2,16 +2,16 @@
 #include "support.hpp"
 #include "text.hpp"
 #include <algorithm>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/output.hpp>
 #include <cstdlib>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/output.hpp>
 #include <variant>
 #include <vector>
 
 // io_lib:format(Format, Args) for the control sequences ~w ~p ~s ~c ~b ~B ~i ~n ~~ with field width, precision,
 // pad character and the t, l and k modifiers. Format errors and unsupported sequences are badarg (docs/io.md).
 // Formatting runs to completion, unlike OTP's io_lib in Erlang code (docs/builtins.md#portions).
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // Largest field width or precision accepted; larger values would only exhaust memory.
 constexpr std::int64_t MAX_FIELD = std::int64_t{1} << 24;
@@ -486,4 +486,4 @@ std::u32string format_text(const Term &format, std::optional<Term> arguments) {
     }
     return out;
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

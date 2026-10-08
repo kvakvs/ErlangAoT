@@ -1,6 +1,6 @@
 # Compilation
 
-`erlangaot` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
+`clau` compiles Erlang/OTP 29 modules through LLVM to verified IR, bitcode
 or native objects. `-o/--output` links positional inputs (or one selected
 project target), their [entry](executables.md) startup object and the runtime
 into an executable ([linking](executables.md#linking)); project builds link
@@ -51,7 +51,7 @@ Type/spec forms are analyzed but never change generated code. Syntax-only modes
 `client:main/1` makes the example a program:
 
 ```sh
-./build/debug/bin/erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
+./build/debug/bin/clau -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
 ./build/demo     # prints 42, -7 and {record,map,binary,list,integer,other}
 ```
 
@@ -59,7 +59,7 @@ The same modules also run through a C++ harness. From a Windows x64 Developer
 PowerShell with the built compiler:
 
 ```powershell
-$tool = './build/debug/bin/erlangaot.exe'
+$tool = './build/debug/bin/clau.exe'
 & $tool -O0 --emit obj --artifact-dir build/example-aot examples/compile/answer.erl examples/compile/client.erl
 cmake -S examples/compile -B build/example-native -G Ninja -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_BUILD_TYPE=Debug "-DGENERATED_DIR:PATH=$((Resolve-Path build/example-aot).Path)"
 cmake --build build/example-native
@@ -69,7 +69,7 @@ cmake --build build/example-native
 It prints `42`, `-7`, `record`, `map`, `binary`, `list`, `integer`, `other`, one
 per line. The harness registers modules explicitly, creates a context and
 decodes results; it is an example host, not a production entry point. On Unix
-use `build/debug/bin/erlangaot`, `clang++` and `-DGENERATED_DIR="$PWD/build/example-aot"`
+use `build/debug/bin/clau`, `clang++` and `-DGENERATED_DIR="$PWD/build/example-aot"`
 (native runs there are not yet validated).
 
 Other actions on the same sources:
@@ -111,7 +111,7 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
 | `--artifact-dir DIR` | Artifact root (requires `--emit`) |
 | `-o PATH` / `--output PATH` | Link an executable ([linking](executables.md#linking)); conflicts with `--emit` |
 | `--linker PATH`, `--runtime-library PATH` | Clang driver and runtime archive for `-o` |
-| `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode and adds the `eav1_start` startup artifact ([executables](executables.md#startup-object)) |
+| `--entry MODULE[:FUNCTION]` | Executable entry function/1; validated in every compiling mode and adds the `clausev1_start` startup artifact ([executables](executables.md#startup-object)) |
 | `--target-triple TRIPLE` | Target machine; `--target` is project target selection |
 | `-O0` / `-O2` / `-Os` | Default generic code + LLVM O0 / bounded specialization + LLVM O2 / LLVM Os, no specialization, one section per symbol and linker dead-stripping of unreferenced code and data |
 | `--no-type-specialization` | Disable variants regardless of option order |
@@ -124,8 +124,8 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
 - Positional inputs form one batch; each project target is its own batch.
 - Artifact roots: `build/aot` (positional) or `build/aot/<hex-target>` under the
   manifest directory. Explicit roots are invocation-relative.
-- Names are reversible hex: `answer` → `eav1_616e73776572__0.obj` (`.o` for
-  ELF/Mach-O, `.ll`, `.bc`); the startup object is `eav1_start.obj`.
+- Names are reversible hex: `answer` → `clausev1_616e73776572__0.obj` (`.o` for
+  ELF/Mach-O, `.ll`, `.bc`); the startup object is `clausev1_start.obj`.
 - All batches compile and stage before publication. Failures publish nothing
   and keep earlier outputs; replacement is atomic per file, not per batch.
 - `--emit` conflicts with `-o`; compilation switches conflict with frontend-only
@@ -160,7 +160,7 @@ uses LLVM.
 - `LLVM_DIR` selects an SDK explicitly; invalid selections fail without fallback.
 - If none is found, CMake downloads the pinned **23.1.2** archive (SHA-256
   checked) into `thirdparty/` for Windows x64/ARM64, Linux x64/ARM64 or macOS
-  ARM64. `ERLANG_AOT_DOWNLOAD_LLVM=OFF` disables downloads.
+  ARM64. `CLAUSE_DOWNLOAD_LLVM=OFF` disables downloads.
 - A configure-time link probe checks ABI compatibility.
 
 Reference Windows x64 setup (2026-09-29): host clang-cl 23.1.2 in

@@ -1,7 +1,7 @@
-#include <erlang_aot/compiler/diagnostic.hpp>
+#include <clause/compiler/diagnostic.hpp>
 #include <utility>
 
-namespace erlang_aot {
+namespace clause {
 DiagnosticError::DiagnosticError(Diagnostic value) : std::runtime_error(value.message), diagnostic(std::move(value)) {}
 
 LexicalError::LexicalError(Diagnostic value) : std::runtime_error(value.message), diagnostic(std::move(value)) {}
@@ -31,4 +31,4 @@ std::string render(const Diagnostic &diagnostic) {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

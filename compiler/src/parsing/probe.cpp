@@ -1,7 +1,7 @@
 #include "boost_parser.hpp"
-#include <erlang_aot/compiler/probe.hpp>
+#include <clause/compiler/probe.hpp>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 namespace bp = boost::parser;
 
@@ -31,4 +31,4 @@ std::optional<DirectiveProbe> probe_directive(std::string_view source) {
                           .begin = begin,
                           .end = begin + static_cast<std::size_t>(parsed->size())};
 }
-} // namespace erlang_aot
+} // namespace clause

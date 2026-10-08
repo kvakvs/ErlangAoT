@@ -1,17 +1,16 @@
 #include "service_errors.hpp"
 #include "structural_order.hpp"
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<bool> Term::exactly_equal(const Term &other) const {
     return detail::structural_order(*this, other, true).transform([](int order) { return order == 0; });
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-std::uint8_t erlang_aot_exact_v1(void *context, erlang_aot::abi::v1::TermWord left,
-                                 erlang_aot::abi::v1::TermWord right) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_exact_v1(void *context, clause::abi::v1::TermWord left, clause::abi::v1::TermWord right) noexcept {
+    using namespace clause;
     if (!context) {
         return static_cast<std::uint8_t>(abi::v1::Equality::failure);
     }

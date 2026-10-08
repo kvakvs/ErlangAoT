@@ -41,7 +41,7 @@
         "build"
       ],
       "authored": true,
-      "stderr": "^erlangaot: runtime failure: entry call failed: resource_limit\n$",
+      "stderr": "^clau: runtime failure: entry call failed: resource_limit\n$",
       "exit_status": 70,
       "stdout": ""
     }

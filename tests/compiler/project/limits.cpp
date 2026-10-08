@@ -6,7 +6,7 @@
 #include "support.hpp"
 #include <cstdio>
 #include <fstream>
-using namespace erlang_aot::project;
+using namespace clause::project;
 
 // Keep injected budgets and read failures that the product CLI deliberately does not expose.
 template <typename Action> void rejects(Action action, std::string_view message) {

@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace erlang_aot {
+namespace clause {
 class ImplementationDebug {
   public:
     // Enable one implementation step without duplicating an earlier selection.
@@ -21,4 +21,4 @@ class ImplementationDebug {
     // Keep sorted unique selections value-owned and allocation-free to move between requests.
     std::vector<std::int32_t> steps_;
 };
-} // namespace erlang_aot
+} // namespace clause

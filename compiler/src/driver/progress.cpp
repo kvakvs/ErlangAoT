@@ -4,7 +4,7 @@
 #include "frontend.hpp"
 #include <iostream>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 codegen::ProgressCallback progress_callback(const FrontendRequest &request) {
     if (!request.verbose) {
         return {};
@@ -21,4 +21,4 @@ codegen::ProgressCallback progress_callback(const FrontendRequest &request) {
         std::cerr << '\n';
     };
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

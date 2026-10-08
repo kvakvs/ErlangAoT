@@ -1,8 +1,8 @@
 #pragma once
 #include "arena.hpp"
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 
-namespace erlang_aot::ast::detail {
+namespace clause::ast::detail {
 struct OriginTable {
     // Token origins are owned once per form; empty ranges use the separate EOF origin.
     std::vector<TokenOrigin> tokens;
@@ -27,4 +27,4 @@ struct Storage {
 
 // Validate a node's half-open range and anchor before any origin-table indexing.
 const OriginTable &source_table(const Storage &storage, const NodeSource &source);
-} // namespace erlang_aot::ast::detail
+} // namespace clause::ast::detail

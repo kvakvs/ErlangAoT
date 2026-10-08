@@ -4,7 +4,7 @@
 #include <atomic>
 #include <stdexcept>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 std::atomic<std::uint64_t> next_owner{1};
 
@@ -80,4 +80,4 @@ Id Graph::join(const std::span<const Id> members) {
 }
 
 Id Graph::widen(const Id previous, const Id next) { return join(std::array{previous, next}); }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

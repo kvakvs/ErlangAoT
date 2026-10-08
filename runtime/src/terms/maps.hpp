@@ -1,7 +1,7 @@
 #pragma once
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/terms.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 using MapEntry = std::pair<Term, Term>;
 using MapEntries = std::vector<MapEntry>;
 
@@ -39,4 +39,4 @@ struct MapAccess {
     // Publish only an already validated canonical table, using stable owner-indexed backing.
     static TermResult<Term> publish(ProcessHeap &heap, std::span<const MapEntry> entries);
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -1,7 +1,7 @@
 #include "text.hpp"
 #include <array>
 
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // Digits of integer_digits, uppercase like OTP's integer_to_list/2.
 constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -118,4 +118,4 @@ std::string integer_digits(const detail::Integer &value, unsigned base) {
     }
     return {reversed.rbegin(), reversed.rend()};
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

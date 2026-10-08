@@ -5,7 +5,7 @@
 #include <limits>
 #include <sstream>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 std::string integer_text(const Integer &value) {
     std::ostringstream output;
     output.exceptions(std::ios_base::badbit | std::ios_base::failbit);
@@ -57,4 +57,4 @@ TermResult<Integer> integer_parse(std::string_view text) {
     }
     return result;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -18,7 +18,7 @@
 #include <typeindex>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 // Report invocation failures separately from registry lookup failures.
 enum class CallError : std::uint8_t {
     bad_arity,
@@ -107,4 +107,4 @@ class ModuleRegistry final {
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

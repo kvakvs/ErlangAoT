@@ -8,7 +8,7 @@
 #include <string_view>
 
 // Character and digit text shared by the conversion and io builtins.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 // Largest Unicode code point.
 inline constexpr std::int64_t MAX_CODE_POINT = 0x10FFFF;
 
@@ -34,4 +34,4 @@ std::string utf8(std::u32string_view codes);
 
 // The digits of `value` in `base` (2..36), uppercase, most significant first, with a leading '-' when negative.
 std::string integer_digits(const detail::Integer &value, unsigned base);
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

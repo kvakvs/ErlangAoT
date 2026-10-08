@@ -1,9 +1,9 @@
 #include "builtins/typed.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/generated_calls.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/generated_calls.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <new>
 #include <stdexcept>
@@ -13,10 +13,10 @@
 // never call the body, foreign and expired words are failures rather than badarg, and nothing a body throws
 // escapes call_builtin.
 namespace {
-using namespace erlang_aot::runtime;
-using namespace erlang_aot::runtime::builtins;
-using erlang_aot::abi::v1::ErrorReason;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using namespace clause::runtime::builtins;
+using clause::abi::v1::ErrorReason;
+using clause::abi::v1::Status;
 
 // Keep validation active in optimized builds.
 void require(bool value, const std::string &message) {
@@ -131,7 +131,7 @@ void check_handles(Runtime &runtime, ProcessContext &context, const BuiltinRegis
 
 // Whatever a body throws stays inside call_builtin and becomes the matching failure or Erlang error.
 void check_throwing(ProcessContext &context, const BuiltinRegistry &registry) {
-    const auto kind = [](std::int64_t value) { return *erlang_aot::abi::v1::NativeIntegerEncoding::encode(value); };
+    const auto kind = [](std::int64_t value) { return *clause::abi::v1::NativeIntegerEncoding::encode(value); };
     auto outcome = call(context, registry, "throwing", std::array{kind(0)});
     require(outcome.failure && outcome.failure->status == Status::internal_error, "host exception not contained");
     outcome = call(context, registry, "throwing", std::array{kind(1)});

@@ -3,7 +3,7 @@
 #include "symbols.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 bool fun_value(const ast::ExprValue &value) {
     return std::holds_alternative<ast::LocalFunReference>(value) ||
            std::holds_alternative<ast::RemoteFunReference>(value) || std::holds_alternative<ast::FunExpression>(value);
@@ -163,4 +163,4 @@ void add_builtin_fun(Module &module, const ast::Expression &expression, const Fu
 const FunEntry &fun_entry(const Module &module, const ast::Expression &expression) {
     return module.funs.at(module.fun_entries.at(&expression));
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -3,15 +3,15 @@
 #include "terms.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/abi/frames.hpp>
-#include <erlang_aot/abi/funs.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/abi/frames.hpp>
+#include <clause/abi/funs.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <vector>
 
-// erlang_aot_make_fun_v1 and erlang_aot_apply_v1: building funs and preparing their calls (docs/funs.md).
-namespace erlang_aot::runtime::detail {
+// CLAUSE_make_fun_v1 and CLAUSE_apply_v1: building funs and preparing their calls (docs/funs.md).
+namespace clause::runtime::detail {
 using abi::v1::ErrorReason;
 using abi::v1::Status;
 
@@ -132,23 +132,22 @@ const void *apply(ProcessContext &context, Word fun, Word *arguments, std::size_
     return nullptr;
 }
 } // namespace
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_make_fun_v1(void *context, const void *descriptor,
-                                    const erlang_aot::abi::v1::TermWord *captures, std::size_t count,
-                                    erlang_aot::abi::v1::TermWord *output) noexcept {
+std::uint8_t CLAUSE_make_fun_v1(void *context, const void *descriptor, const clause::abi::v1::TermWord *captures,
+                                std::size_t count, clause::abi::v1::TermWord *output) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(clause::abi::v1::Status::invalid_argument);
     }
-    return erlang_aot::runtime::detail::make_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                     descriptor, captures, count, output);
+    return clause::runtime::detail::make_service(*static_cast<clause::runtime::ProcessContext *>(context), descriptor,
+                                                 captures, count, output);
 }
 
-const void *erlang_aot_apply_v1(void *context, erlang_aot::abi::v1::TermWord fun, std::size_t arity,
-                                erlang_aot::abi::v1::TermWord *arguments) noexcept {
+const void *CLAUSE_apply_v1(void *context, clause::abi::v1::TermWord fun, std::size_t arity,
+                            clause::abi::v1::TermWord *arguments) noexcept {
     if (!context) {
         return nullptr;
     }
-    return erlang_aot::runtime::detail::apply(*static_cast<erlang_aot::runtime::ProcessContext *>(context), fun,
-                                              arguments, arity);
+    return clause::runtime::detail::apply(*static_cast<clause::runtime::ProcessContext *>(context), fun, arguments,
+                                          arity);
 }

@@ -4,7 +4,7 @@
 #include "diagnostics.hpp"
 #include "paths.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Complete a missing manifest filename without masking errors on an existing path.
 std::filesystem::path resolve_project_file(std::filesystem::path file) {
@@ -33,13 +33,13 @@ int run(const Request &request, const PlanOptions &options, const TargetExecutor
         settings.selectors = request.targets;
         const auto invocation = prepare(manifest, settings);
         return execute(invocation, executor,
-                       [&](const std::string_view message) { diagnostics << "erlangaot: " << message << '\n'; });
+                       [&](const std::string_view message) { diagnostics << "clau: " << message << '\n'; });
     } catch (const Failure &error) {
-        diagnostics << "erlangaot: error: " << error.what() << '\n';
+        diagnostics << "clau: error: " << error.what() << '\n';
         return error.detail.exit_code;
     } catch (const std::exception &error) {
-        diagnostics << "erlangaot: error: " << error.what() << '\n';
+        diagnostics << "clau: error: " << error.what() << '\n';
         return 1;
     }
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

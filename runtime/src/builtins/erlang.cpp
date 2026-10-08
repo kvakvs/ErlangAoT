@@ -1,22 +1,22 @@
 #include "typed.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/abi/output.hpp>
-#include <erlang_aot/abi/startup.hpp>
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/abi/output.hpp>
+#include <clause/abi/startup.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/process_context.hpp>
 
 // The erlang builtins of the bridge (docs/builtins.md): adapters over the services generated code calls inline,
 // raising the errors the inline lowering raises in a body. They pass argument words to those services unconverted
 // (the services admit them); builtins checking their own arguments are typed (typed.hpp).
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 using abi::v1::ErrorReason;
 using Op = abi::v1::ImmediateOperation;
@@ -42,7 +42,7 @@ Word immediate(ProcessContext &context, Arguments arguments) {
     const auto left = arguments.empty() ? Word{abi::v1::empty_list} : arguments[0];
     const auto right = arguments.size() > 1 ? arguments[1] : Word{0};
     const auto outcome = static_cast<abi::v1::ValueOutcome>(
-        erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(operation), left, right, &result));
+        CLAUSE_immediate_v1(&context, static_cast<std::uint8_t>(operation), left, right, &result));
     if (failed(context) || outcome == abi::v1::ValueOutcome::success) {
         return result;
     }
@@ -60,7 +60,7 @@ template <abi::v1::MapOperation operation> Word map_query(ProcessContext &contex
     const std::array values{arguments.back(), arguments.front()};
     Word result = 0;
     const auto outcome = static_cast<abi::v1::MapOutcome>(
-        erlang_aot_map_v1(&context, static_cast<std::uint8_t>(operation), values.data(), arguments.size(), &result));
+        CLAUSE_map_v1(&context, static_cast<std::uint8_t>(operation), values.data(), arguments.size(), &result));
     if (failed(context) || outcome == abi::v1::MapOutcome::success) {
         return result;
     }
@@ -71,8 +71,8 @@ template <abi::v1::MapOperation operation> Word map_query(ProcessContext &contex
 // arguments raise badarg.
 Word binary_part(ProcessContext &context, std::array<Word, 3> values) {
     std::array<Word, 2> result{};
-    const auto outcome = erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(abi::v1::BitOperation::part),
-                                            values.data(), values.size(), result.data());
+    const auto outcome = CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(abi::v1::BitOperation::part), values.data(),
+                                        values.size(), result.data());
     return failed(context) || outcome == 0 ? result[0] : raise(context, ErrorReason::badarg);
 }
 
@@ -92,13 +92,13 @@ Word binary_part2(ProcessContext &context, const Term &binary, const builtins::T
 // display(Term) prints one line and returns true.
 Word display(ProcessContext &context, Arguments arguments) {
     Word result = 0;
-    erlang_aot_display_v1(&context, arguments[0], &result);
+    CLAUSE_display_v1(&context, arguments[0], &result);
     return result;
 }
 
 // halt/0 is halt(0); the service always records the halt or badarg.
 Word halt(ProcessContext &context, Arguments arguments) {
-    erlang_aot_halt_v1(&context, arguments.empty() ? abi::v1::small_integer_tag : arguments[0]);
+    CLAUSE_halt_v1(&context, arguments.empty() ? abi::v1::small_integer_tag : arguments[0]);
     return 0;
 }
 
@@ -109,13 +109,13 @@ template <ErrorReason reason> Word raise_reason(ProcessContext &context, Argumen
 
 // error/2,3: the arguments replace the arity in the top frame; error/3 options add nothing recorded.
 Word error_arguments(ProcessContext &context, Arguments arguments) {
-    erlang_aot_error_v1(&context, arguments[0], arguments[1]);
+    CLAUSE_error_v1(&context, arguments[0], arguments[1]);
     return 0;
 }
 
 // raise(Class, Reason, Stack): an invalid class or stack makes the call return badarg instead.
 Word raise_stack(ProcessContext &context, Arguments arguments) {
-    if (erlang_aot_reraise_v2(&context, arguments[0], arguments[1], arguments[2]) == 0 || failed(context)) {
+    if (CLAUSE_reraise_v2(&context, arguments[0], arguments[1], arguments[2]) == 0 || failed(context)) {
         return 0;
     }
     const auto badarg = context.atom_storage().intern("badarg");
@@ -221,9 +221,8 @@ constexpr std::array ERLANG_BUILTINS{
 std::span<const BuiltinEntry> erlang_builtins() noexcept { return ERLANG_BUILTINS; }
 
 std::span<const std::span<const BuiltinEntry>> production_builtins() noexcept {
-    static const std::array families{erlang_builtins(),     term_access_builtins(), list_builtins(),
-                                     conversion_builtins(), io_builtins(),          process_builtins(),
-                                     port_builtins(),       os_builtins()};
+    static const std::array families{erlang_builtins(), term_access_builtins(), list_builtins(), conversion_builtins(),
+                                     io_builtins(),     process_builtins(),     port_builtins(), os_builtins()};
     return families;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

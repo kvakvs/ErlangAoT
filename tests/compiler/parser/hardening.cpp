@@ -1,12 +1,12 @@
 #include <chrono>
-#include <erlang_aot/compiler/parser.hpp>
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/parser.hpp>
+#include <clause/compiler/printing.hpp>
 #include <iostream>
 #include <limits>
 #include <source_location>
 #include <sstream>
 
-using namespace erlang_aot;
+using namespace clause;
 
 // Assertions remain active in optimized, sanitizer and fuzz regression configurations.
 void require(bool value, std::source_location where = std::source_location::current()) {

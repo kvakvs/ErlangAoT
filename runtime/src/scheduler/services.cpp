@@ -1,6 +1,6 @@
 #include "state.hpp"
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 SchedulerResult<void> SchedulerService::run(DiagnosticSink sink) noexcept {
     if (impl_->stopping) {
         return std::unexpected(SchedulerError::stopped);
@@ -22,4 +22,4 @@ SchedulerResult<StepResult> SchedulerService::execute(ProcessIdentity process, D
     }
     return deferred_service<SchedulerError>(abi::v1::FeatureId::process_execution, "SchedulerService::execute", sink);
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,8 +1,8 @@
 #pragma once
 
 // One heap block plus heap fragments supports transactional construction and copying collection.
-#include <erlang_aot/runtime/features.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/features.hpp>
+#include <clause/runtime/terms.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -12,7 +12,7 @@
 #include <span>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 // Distinguish invalid requests, configured limits and backing allocation failures.
 enum class HeapError : std::uint8_t {
     invalid_size,
@@ -193,4 +193,4 @@ class ProcessHeap final {
     // Pin stable backing independently of the context address; liveness still controls admission.
     std::shared_ptr<detail::HeapStorage> storage_;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

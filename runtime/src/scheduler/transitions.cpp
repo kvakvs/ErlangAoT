@@ -1,6 +1,6 @@
 #include "state.hpp"
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Validate a reported return before changing the registry; malformed inputs leave the dispatch in flight.
 SchedulerResult<ProcessState> returned_state(StepResult result) noexcept {
@@ -70,4 +70,4 @@ SchedulerResult<void> SchedulerService::set_suspended(ProcessIdentity process, b
     lifecycle.suspended = suspended;
     return {};
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -3,14 +3,14 @@
 #include "service_errors.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/records.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/records.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
 #include <vector>
 
-// erlang_aot_record_v1: native record construction, access, update, matching and tests (docs/native-records.md).
-namespace erlang_aot::runtime::detail {
+// CLAUSE_record_v1: native record construction, access, update, matching and tests (docs/native-records.md).
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::RecordOperation;
 using Check = abi::v1::RecordCheck;
@@ -232,12 +232,12 @@ std::uint8_t service(ProcessContext &context, std::uint8_t operation, std::uint8
     return static_cast<std::uint8_t>(Outcome::failure);
 }
 } // namespace
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_record_v1(void *context, std::uint8_t operation, std::uint8_t check, const void *descriptor,
-                                  const erlang_aot::abi::v1::TermWord *values, std::size_t count,
-                                  erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_record_v1(void *context, std::uint8_t operation, std::uint8_t check, const void *descriptor,
+                              const clause::abi::v1::TermWord *values, std::size_t count,
+                              clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause;
     if (!context) {
         return static_cast<std::uint8_t>(abi::v1::RecordOutcome::failure);
     }

@@ -1,9 +1,9 @@
 #include "../memory/heap_object.hpp"
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/terms.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // The decoded header supplies both shape and extent before any field load.
 TermResult<detail::HeapObject> container(const Term &value, TermKind expected) {
@@ -111,4 +111,4 @@ TermResult<bool> Term::is_proper_list() const {
     }
     return std::unexpected(length.error());
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

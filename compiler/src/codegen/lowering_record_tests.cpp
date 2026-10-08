@@ -1,10 +1,10 @@
 #include "../semantic/capabilities.hpp"
 #include "../semantic/records.hpp"
 #include "lowering_state.hpp"
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 using Op = abi::v1::ImmediateOperation;
 
@@ -182,4 +182,4 @@ llvm::Value *lower_integer_range(ExpressionLowering &state, const ast::CallExpre
     state.builder.SetInsertPoint(merge);
     return joined(state, {result, yes_path, falsehood, no});
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

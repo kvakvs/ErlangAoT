@@ -8,7 +8,7 @@ endif()
 math(EXPR last "${count}-1")
 # Fast development runs keep every case; full runs repeat each to check determinism.
 set(passes 2)
-if("$ENV{ERLANG_AOT_TEST_MODE}" STREQUAL "fast")
+if("$ENV{CLAUSE_TEST_MODE}" STREQUAL "fast")
     set(passes 1)
 endif()
 # A shard checks every SHARDS-th case starting at SHARD; without them one run checks all cases.

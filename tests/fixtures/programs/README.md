@@ -9,7 +9,7 @@ build into executables and behave like OTP. Each directory holds:
 | `src/*.erl` | Locally authored modules (no OTP source) |
 | `fixture.json` | Entry module and argv strings |
 | `expected/stdout.txt`, `expected/golden.json` | OTP-generated stdout and exit status, with input, generator and oracle hashes |
-| `compile.txt` | Today's `erlangaot --project project.toml` exit status and exact stderr (paths shown as `<fixture>`) |
+| `compile.txt` | Today's `clau --project project.toml` exit status and exact stderr (paths shown as `<fixture>`) |
 
 The goldens assume the proposed [step-3](../../../.agents/11-plan.md#step-3)
 contract: `Entry:main(Argv)` receives a list of strings; normal return exits 0;
@@ -22,17 +22,17 @@ messages, so output is deterministic.
 - `programs_compile` (normal CTest, OTP-free) verifies every golden hash, then
   compiles each fixture and compares exit status and stderr with `compile.txt`.
   When a plan step enables a feature, rerun
-  `python tests/compiler/programs/programs.py <erlangaot> build/programs --update-diagnostics`
+  `python tests/compiler/programs/programs.py <clau> build/programs --update-diagnostics`
   and review the `compile.txt` changes with that step.
 - Regeneration is an explicit maintainer action using an installed OTP 29;
   `--check` writes nothing and fails on drift (also CTest `programs_oracle`
-  with `-DERLANG_AOT_OTP_AUDITS=ON`):
+  with `-DCLAUSE_OTP_AUDITS=ON`):
 
 ```powershell
 python tests/compiler/programs/regenerate.py --escript 'C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe' --check
 ```
 
-Never regenerate to make an ErlangAoT comparison pass. Step 58 will run these
+Never regenerate to make a Clause comparison pass. Step 58 will run these
 goldens against linked executables with the
 [step-8 runner](../executables/README.md).
 

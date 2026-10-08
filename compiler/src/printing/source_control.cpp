@@ -1,6 +1,6 @@
 #include "source_printer.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // Clause lines start four columns right of their block keyword; bodies four more.
 constexpr std::size_t STEP = 4;
@@ -244,4 +244,4 @@ std::string comprehension_text(const SourcePrinter &printer, const ast::ExprValu
     return "<< " + printer.expression(binary.expression, {.indent = indent}) + " || " +
            qualifiers_text(printer, binary.qualifiers, indent) + " >>";
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

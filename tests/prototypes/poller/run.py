@@ -43,7 +43,7 @@ def wsl():
     """Build and run under WSL with its own clang++ and pthreads."""
     source = subprocess.run(["wsl", "-e", "wslpath", "-a", str(HERE / "poller.cpp")], capture_output=True,
                             text=True).stdout.strip()
-    script = f'clang++ -std=c++23 -O1 -pthread "{source}" -o /tmp/erlang_aot_poller && /tmp/erlang_aot_poller'
+    script = f'clang++ -std=c++23 -O1 -pthread "{source}" -o /tmp/clause_poller && /tmp/clause_poller'
     return run(["wsl", "-e", "bash", "-c", script])
 
 

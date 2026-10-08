@@ -9,8 +9,8 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "BUILD_TESTING": "OFF",
-        "ERLANG_AOT_BUILD_COMPILER": "ON",
-        "ERLANG_AOT_BUILD_RUNTIME": "ON"
+        "CLAUSE_BUILD_COMPILER": "ON",
+        "CLAUSE_BUILD_RUNTIME": "ON"
       }
     },
     {
@@ -25,8 +25,8 @@
         "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "BUILD_TESTING": "OFF",
-        "ERLANG_AOT_BUILD_COMPILER": "ON",
-        "ERLANG_AOT_BUILD_RUNTIME": "ON"
+        "CLAUSE_BUILD_COMPILER": "ON",
+        "CLAUSE_BUILD_RUNTIME": "ON"
       }
     }
   ],
@@ -64,14 +64,14 @@
     {
       "name": "debug-fast",
       "inherits": "debug",
-      "environment": { "ERLANG_AOT_TEST_MODE": "fast" },
+      "environment": { "CLAUSE_TEST_MODE": "fast" },
       "filter": { "exclude": { "label": "full_only" } },
       "execution": { "jobs": 0 }
     },
     {
       "name": "windows-debug-fast",
       "inherits": "windows-debug",
-      "environment": { "ERLANG_AOT_TEST_MODE": "fast" },
+      "environment": { "CLAUSE_TEST_MODE": "fast" },
       "filter": { "exclude": { "label": "full_only" } },
       "execution": { "jobs": 0 }
     }

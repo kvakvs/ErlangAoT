@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <set>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Reuse the collision-free symbol encoding for private literal-slot metadata.
 std::string slot_name(const std::string &spelling) { return "atom.slot." + semantic::encode_symbol({spelling, "", 0}); }
@@ -281,4 +281,4 @@ llvm::Value *lower_atom(ExpressionLowering &state, const ast::Atom &atom) {
     propagate_failure(state);
     return value;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

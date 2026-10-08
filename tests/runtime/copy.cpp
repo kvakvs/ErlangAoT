@@ -1,9 +1,9 @@
 #include "terms.hpp"
 #include "terms/term_layout.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -14,10 +14,10 @@
 // compare equal, keep internal sharing, share off-heap buffers, outlive the source process, and a failed copy
 // leaves both heaps and every charge unchanged.
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 using detail::layout::BinaryBuffer;
 using detail::layout::RefcBinaryCell;
-using Status = erlang_aot::abi::v1::Status;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {
@@ -45,8 +45,8 @@ Term slice(ProcessContext &context, const Term &value, std::size_t offset, std::
                            factory.integer(0)->word()};
     std::array<Word, 2> output{};
     GeneratedInvocation call(context.generated_calls());
-    require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(erlang_aot::abi::v1::BitOperation::extract),
-                               input.data(), input.size(), output.data()) == 0,
+    require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(clause::abi::v1::BitOperation::extract), input.data(),
+                           input.size(), output.data()) == 0,
             "slice failed");
     return Term::from_word(output[0], context).value();
 }

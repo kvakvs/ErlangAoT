@@ -1,10 +1,10 @@
 #include <array>
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/builtins.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/builtins.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/builtins.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::abi::v1 {
+namespace clause::abi::v1 {
 namespace {
 using namespace runtime;
 
@@ -106,9 +106,9 @@ Status dispatch_builtin(Context *context, const char *module, std::size_t module
     return status;
 }
 
-} // namespace erlang_aot::abi::v1
+} // namespace clause::abi::v1
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 Word call_builtin_portion(ProcessContext &context, const BuiltinFrame &builtin, const Word *arguments) noexcept {
     auto &calls = context.generated_calls();
     try {
@@ -135,13 +135,13 @@ Word call_builtin(ProcessContext &context, const BuiltinFrame &builtin, const Wo
     }
     return result;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-const void *erlang_aot_builtin_frame_v1(void *context, std::size_t builtin) noexcept {
-    auto &process = *static_cast<erlang_aot::runtime::ProcessContext *>(context);
+const void *CLAUSE_builtin_frame_v1(void *context, std::size_t builtin) noexcept {
+    auto &process = *static_cast<clause::runtime::ProcessContext *>(context);
     const auto *frame = process.code_server().builtins().bridge(builtin);
     if (!frame) {
-        process.generated_calls().fail_service(erlang_aot::abi::v1::Status::invalid_argument);
+        process.generated_calls().fail_service(clause::abi::v1::Status::invalid_argument);
         return nullptr;
     }
     return &frame->frame;

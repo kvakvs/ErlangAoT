@@ -1,7 +1,7 @@
 #pragma once
 #include "integers.hpp"
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Convert finite binary64 values exactly to truncated integers, without host-width narrowing.
 Integer float_integer(double value);
 // Round arbitrary integers to nearest binary64, ties to even; overflow is a semantic range error.
@@ -19,4 +19,4 @@ struct FloatAccess {
     // Publish finite binary64 bits into immutable checked heap storage.
     static TermResult<Term> make(ProcessHeap &heap, double value);
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

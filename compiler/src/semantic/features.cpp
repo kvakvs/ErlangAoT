@@ -1,7 +1,7 @@
 #include "features.hpp"
-#include <erlang_aot/abi/feature_diagnostic.hpp>
+#include <clause/abi/feature_diagnostic.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 abi::v1::FeatureId capability_feature(const std::string_view reason) {
     for (const auto &feature : abi::v1::feature_catalog) {
         if (feature.owner == abi::v1::FeatureOwner::compiler && feature.name == reason) {
@@ -16,4 +16,4 @@ void reject_capability(const Module &module, const ast::NodeSource &source, cons
     const auto name = utf8(module.name);
     report(module, &source, abi::v1::format_feature_failure(capability_feature(reason), {.module = name}), out);
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

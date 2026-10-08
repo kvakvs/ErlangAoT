@@ -6,7 +6,7 @@
 #include <set>
 #include <span>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 enum class Action : std::uint8_t {
     expression,
@@ -611,4 +611,4 @@ void bind_expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &ro
         }
     }
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

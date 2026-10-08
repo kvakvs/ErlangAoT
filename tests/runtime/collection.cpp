@@ -2,9 +2,9 @@
 #include "terms.hpp"
 #include "terms/term_layout.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <span>
 #include <stdexcept>
@@ -16,13 +16,13 @@
 // ERTS size policy, and host Terms taken before a collection become stale. At a declared safe point
 // inside generated frames, every root owner of the execution model is rewritten too.
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
+using clause::abi::v1::frame_header_words;
+using clause::abi::v1::frame_resume_word;
+using clause::abi::v1::FrameDescriptor;
 using detail::layout::BinaryBuffer;
 using detail::layout::RefcBinaryCell;
-using erlang_aot::abi::v1::frame_header_words;
-using erlang_aot::abi::v1::frame_resume_word;
-using erlang_aot::abi::v1::FrameDescriptor;
-using Status = erlang_aot::abi::v1::Status;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {
@@ -50,8 +50,8 @@ Term slice(ProcessContext &context, const Term &value, std::size_t offset, std::
                            factory.integer(0)->word()};
     std::array<Word, 2> output{};
     GeneratedInvocation call(context.generated_calls());
-    require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(erlang_aot::abi::v1::BitOperation::extract),
-                               input.data(), input.size(), output.data()) == 0,
+    require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(clause::abi::v1::BitOperation::extract), input.data(),
+                           input.size(), output.data()) == 0,
             "slice failed");
     return Term::from_word(output[0], context).value();
 }
@@ -294,7 +294,7 @@ struct Owners {
 Owners owners;
 
 // Run continuation code; hand-written bodies use ordinary calls where generated code uses tail calls.
-void run(erlang_aot::abi::v1::Code *code, void *context) { code(context); }
+void run(clause::abi::v1::Code *code, void *context) { code(context); }
 
 // Count the root words the context enumerates beyond the given explicit ones.
 std::size_t root_count(std::span<Word> explicit_roots) {
@@ -317,7 +317,7 @@ void collecting_body(void *) {
     stack.registers()[1] = roots[0];
     stack.keep_registers(2);
     calls.fail({.code = CallError::erlang_exception,
-                .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
+                .reason = clause::abi::v1::ErrorReason::badmatch,
                 .value = current(context, roots[1]),
                 .arguments = current(context, roots[5]),
                 .stack = current(context, roots[3])});
@@ -397,7 +397,7 @@ void safepoint_body(void *context) {
     owners.current = {slots[0]};
     garbage(*owners.context, 1000);
     const auto before = current(*owners.context, slots[0]);
-    erlang_aot_safepoint_v1(context);
+    CLAUSE_safepoint_v1(context);
     owners.visited_inside = before.tuple_size() == std::unexpected(TermError::stale_term) ? 1 : 0;
     owners.current.push_back(slots[0]);
     run(stack.leave(slots[0]), context);

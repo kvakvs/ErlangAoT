@@ -1,6 +1,6 @@
 #include "inference_bindings.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Every event or alias step consumes the shared inference budget before adding a fact.
 bool spend(const Inference &inference, std::size_t &work) {
@@ -69,4 +69,4 @@ void BindingFacts::publish(const ast::ExprId &pattern, Fact fact, std::size_t &w
         pending.insert(pending.end(), children.begin(), children.end());
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

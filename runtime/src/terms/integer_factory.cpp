@@ -2,11 +2,11 @@
 #include "integers.hpp"
 #include "term_layout.hpp"
 #include "terms.hpp"
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
     const auto bits = integer_bits(value);
     if (bits > integer_bit_limit) {
@@ -28,9 +28,9 @@ TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
     boost::multiprecision::export_bits(magnitude, words + 2, sizeof(Word) * 8, false);
     return publish(heap.storage_, *reserved, reinterpret_cast<Word>(words) | static_cast<Word>(TermKindPrimary::boxed));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<Term> TermFactory::integer(std::int64_t value) {
     const auto owner = heap();
     if (!owner) {
@@ -59,4 +59,4 @@ TermResult<Term> TermFactory::integer_decimal(std::string_view value) {
         return std::unexpected(TermError::resource_limit);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,12 +1,12 @@
 #include <array>
-#include <erlang_aot/runtime/modules.hpp>
+#include <clause/runtime/modules.hpp>
 
-extern erlang_aot::abi::v1::GeneratedRegistration register_guards asm("eav1_677561726473__0.register");
-extern erlang_aot::abi::v1::GeneratedFunction reference_select asm("eav1_677561726473_73656c656374_2.reference");
+extern clause::abi::v1::GeneratedRegistration register_guards asm("clausev1_677561726473__0.register");
+extern clause::abi::v1::GeneratedFunction reference_select asm("clausev1_677561726473_73656c656374_2.reference");
 
 // Compare native guarded dispatch against the untouched generic body over hits, misses and word boundaries.
 int main() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     auto runtime = Runtime::start().value();
     if (register_guards(runtime.get()) != 0) {
         return 1;

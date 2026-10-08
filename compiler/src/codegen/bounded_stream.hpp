@@ -3,7 +3,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <vector>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 // Let LLVM serialize normally while bounding retained bytes before each allocation.
 class BoundedStream final : public llvm::raw_pwrite_stream {
   public:
@@ -28,4 +28,4 @@ class BoundedStream final : public llvm::raw_pwrite_stream {
     // Report the logical unbuffered write cursor expected by LLVM object writers.
     std::uint64_t current_pos() const override;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

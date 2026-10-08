@@ -1,8 +1,8 @@
 #pragma once
+#include <clause/compiler/preprocessor.hpp>
 #include <deque>
-#include <erlang_aot/compiler/preprocessor.hpp>
 
-namespace erlang_aot {
+namespace clause {
 struct Arguments {
     // Preserve raw arguments for substitution/stringification and consumed token count.
     std::vector<std::vector<Token>> values;
@@ -48,4 +48,4 @@ class MacroExpander {
     std::vector<Token> rescan(std::span<const Token> input);
     void budget(std::size_t count, const Token &call);
 };
-} // namespace erlang_aot
+} // namespace clause

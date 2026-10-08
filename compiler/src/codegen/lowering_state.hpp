@@ -4,17 +4,17 @@
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/abi/containers.hpp>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/abi/messages.hpp>
-#include <erlang_aot/abi/records.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/abi/containers.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/abi/messages.hpp>
+#include <clause/abi/records.hpp>
 #include <map>
 #include <set>
 #include <string_view>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 using BindingReads = std::map<const ast::Expression *, semantic::BindingId>;
 
 struct ExpressionLowering {
@@ -249,4 +249,4 @@ llvm::Value *lower_wait(ExpressionLowering &state, llvm::Value *timeout);
 llvm::Value *lower_builtin(ExpressionLowering &state, std::size_t builtin, std::span<llvm::Value *const> values);
 // Emit one resolved call after its arguments have been evaluated in source order.
 llvm::Value *lower_call(ExpressionLowering &state, const ast::Expression &expression, const ast::CallExpression &call);
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

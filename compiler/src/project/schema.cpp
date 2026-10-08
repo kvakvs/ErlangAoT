@@ -1,7 +1,7 @@
 #include "schema.hpp"
 #include <algorithm>
 
-namespace erlang_aot::project::schema {
+namespace clause::project::schema {
 Site site(const toml::node &node, const Context &context, std::string key) {
     return {context.file, std::move(key), context.target, node.source().begin.line, node.source().begin.column};
 }
@@ -68,4 +68,4 @@ void budget(const toml::node &node, std::size_t &remaining, const Context &conte
         }
     }
 }
-} // namespace erlang_aot::project::schema
+} // namespace clause::project::schema

@@ -1,8 +1,8 @@
 #include "term_layout.hpp"
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 
-using namespace erlang_aot::runtime;
-using Encoding = erlang_aot::abi::v1::NativeIntegerEncoding;
+using namespace clause::runtime;
+using Encoding = clause::abi::v1::NativeIntegerEncoding;
 
 // Compile private prefix assertions and shared low-bit tags without a runnable smoke test.
 namespace {

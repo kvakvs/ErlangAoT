@@ -3,8 +3,8 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace artifacts = erlang_aot::artifacts;
-namespace cg = erlang_aot::codegen;
+namespace artifacts = clause::artifacts;
+namespace cg = clause::codegen;
 
 // Preserve complete output and remove every owned temporary after a partial write or close failure.
 void check(const std::filesystem::path &root, const artifacts::PublicationIO &io) {

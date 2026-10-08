@@ -3,7 +3,7 @@
 #include "heap_walk.hpp"
 
 // Full-sweep copying collection of one process heap (docs/runtime-heap.md#collection).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Return the smallest ERTS heap size of at least words: 12, 38, then Fibonacci-like steps, then 20% steps.
 std::size_t heap_size_at_least(std::size_t words) noexcept;
 
@@ -31,4 +31,4 @@ class Copier final {
     // The new heap block; copies are appended at its top.
     HeapArea to_;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

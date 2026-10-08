@@ -1,7 +1,7 @@
 #include "portions.hpp"
 #include <array>
 
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 Word build_continue(ProcessContext &context, Arguments state);
 
@@ -37,4 +37,4 @@ Word build_list(ProcessContext &context, const Term &tail) {
     stack.drop_trap_state();
     return list.word();
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

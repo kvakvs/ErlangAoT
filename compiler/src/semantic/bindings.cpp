@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 std::optional<BindingId> BindingCandidate::find(const std::u32string &name) const {
     const auto added = tentative.find(name);
     if (fresh && added != tentative.end()) {
@@ -231,4 +231,4 @@ std::optional<std::size_t> binding_argument(const Function &function, const ast:
     const auto identity = found->identity;
     return function.clause_bindings.at(identity.clause).definitions.at(identity.local).argument;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -2,7 +2,7 @@
 
 End-to-end cases for the executable golden runner
 ([plan 11 step 8](../../../.agents/11-plan.md#step-8)): Erlang sources are
-linked into a program by `erlangaot`, run with arguments, and stdout, exit
+linked into a program by `clau`, run with arguments, and stdout, exit
 status and a stderr pattern are compared with an OTP-generated golden.
 
 ## A case
@@ -15,15 +15,15 @@ is registered.
 | --- | --- | --- |
 | `schema` | author | Always 1 |
 | `entry` | author | Entry module; `main/1` receives argv strings ([contract](../../../docs/executables.md)) |
-| `data` | author, optional | Case-relative files the program uses at run time (helper scripts), staged beside the sources and hashed with them; runs start in the staged directory, and `ERLANG_AOT_TEST_PYTHON` names the Python that runs the tests |
-| `workers` | author, optional | Scheduler counts: every run is made once per count with `ERLANG_AOT_FLAGS=--schedulers N`, instead of once with the default of one worker per logical processor ([workers](../../../docs/processes.md#workers)) |
+| `data` | author, optional | Case-relative files the program uses at run time (helper scripts), staged beside the sources and hashed with them; runs start in the staged directory, and `CLAUSE_TEST_PYTHON` names the Python that runs the tests |
+| `workers` | author, optional | Scheduler counts: every run is made once per count with `CLAUSE_FLAGS=--schedulers N`, instead of once with the default of one worker per logical processor ([workers](../../../docs/processes.md#workers)) |
 | `sources` | author, optional | Case-relative source paths instead of the directory's `.erl`/`.hrl` files (the `demo` case uses `examples/compile/`) |
 | `runs[].args` | author | Argument strings of one invocation |
 | `runs[].stdin` | author, optional | Text written to standard input, which is then closed; empty when missing |
-| `runs[].stderr` | author, or `^$` | Python regular expression searched in stderr; required when OTP writes stderr, because ErlangAoT's report text differs |
+| `runs[].stderr` | author, or `^$` | Python regular expression searched in stderr; required when OTP writes stderr, because Clause's report text differs |
 | `runs[].exit_status`, `runs[].stdout` | OTP | Observed under the pinned OTP with the program-fixture [oracle](../../compiler/programs/oracle.escript) |
-| `runs[].env` | author, optional (authored runs only) | Environment entries for the run, such as `ERLANG_AOT_FLAGS`; the runner always drops an inherited `ERLANG_AOT_FLAGS` |
-| `runs[].authored` | author, optional | `true` keeps the run's `exit_status`, `stdout` and `stderr` as written: ErlangAoT-only behavior OTP cannot show, such as the runtime options of `runtime_options` |
+| `runs[].env` | author, optional (authored runs only) | Environment entries for the run, such as `CLAUSE_FLAGS`; the runner always drops an inherited `CLAUSE_FLAGS` |
+| `runs[].authored` | author, optional | `true` keeps the run's `exit_status`, `stdout` and `stderr` as written: Clause-only behavior OTP cannot show, such as the runtime options of `runtime_options` |
 | `oracle_version`, `reference`, `inputs` | OTP | Oracle release, `maint-29` pin, and source hashes that make a stale golden fail before linking |
 
 To add a case, write the sources and a golden with the author fields, then
@@ -35,11 +35,11 @@ python tests/compiler/executables/regenerate.py --escript 'C:/Program Files/Erla
 python tests/compiler/executables/regenerate.py --escript '...' --check   # writes nothing; also CTest executables_oracle
 ```
 
-Never regenerate to make an ErlangAoT comparison pass.
+Never regenerate to make a Clause comparison pass.
 
 ## Runner
 
-`tests/compiler/executables/run.py <erlangaot> <work> <case> --suffix=<.exe>`
+`tests/compiler/executables/run.py <clau> <work> <case> --suffix=<.exe>`
 stages the sources, links them under each combination of
 `tests/compiler/patternmatch/matrix.py` (full mode: O0/O2 × specialization
 on/off × positional `--entry … -o` and project manifest `entry`/`output`; fast

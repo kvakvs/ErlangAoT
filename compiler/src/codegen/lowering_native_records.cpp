@@ -4,13 +4,13 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/records.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/records.hpp>
 #include <llvm/IR/Module.h>
 #include <stdexcept>
 
-// Native records through erlang_aot_record_v1 (docs/native-records.md#operations).
-namespace erlang_aot::codegen {
+// Native records through CLAUSE_record_v1 (docs/native-records.md#operations).
+namespace clause::codegen {
 namespace {
 using Op = abi::v1::RecordOperation;
 using Check = abi::v1::RecordCheck;
@@ -276,4 +276,4 @@ llvm::Value *lower_native_test(ExpressionLowering &state, abi::v1::RecordCheck c
         llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ, result.outcome,
                               state.builder.getInt8(static_cast<std::uint8_t>(Outcome::success))));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

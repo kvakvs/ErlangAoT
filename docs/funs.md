@@ -53,14 +53,14 @@ and probes on OTP 29.1.1.
   words; hash-map indexes are plan step 62A. A name no module exports is
   then looked up among the [builtins](builtins.md), so `M:F(...)`, `apply/3`
   and runtime `fun M:F/A` reach `erlang` builtins of the bridge catalog.
-- **Services.** `erlang_aot_call_v1(context, module, function, arity)` checks
+- **Services.** `CLAUSE_call_v1(context, module, function, arity)` checks
   the names and returns the `FrameDescriptor` of the export (ABI revision 8
   adds it to `ExportDescriptor`); the arguments are already in the registers.
-  `erlang_aot_apply_list_v1(context, fun, list, registers)` and
-  `erlang_aot_call_list_v1(context, module, function, list, registers)` copy
+  `CLAUSE_apply_list_v1(context, fun, list, registers)` and
+  `CLAUSE_call_list_v1(context, module, function, list, registers)` copy
   the list into the registers first. All three return null after recording
-  the error, and generated code then transfers through the `erlang_aot.apply`
-  marker as for `F(Args)`. `erlang_aot_make_external_fun_v1` builds the fun of
+  the error, and generated code then transfers through the `clause.apply`
+  marker as for `F(Args)`. `CLAUSE_make_external_fun_v1` builds the fun of
   an external `FunDefinition` the code server creates once per `M:F/A`
   (`CodeServer::external_fun`).
 
@@ -93,7 +93,7 @@ and probes on OTP 29.1.1.
 
 - **Descriptor.** Each distinct value a module creates compiles to one
   `abi::v1::FunDescriptor` in the module's private `<prefix>.funs` table
-  ([funs.hpp](../abi/include/erlang_aot/abi/funs.hpp)): module descriptor,
+  ([funs.hpp](../abi/include/clause/abi/funs.hpp)): module descriptor,
   module and function atom slots, Erlang arity, index, external flag and the
   `FrameDescriptor` a call enters (null for an external fun outside the
   program). Registration binds them to `FunDefinition`s
@@ -103,15 +103,15 @@ and probes on OTP 29.1.1.
   `const FunDefinition *`, then `n` captured values. Walking,
   collection, copying and verification skip the definition word, as for
   native records.
-- **Services.** `erlang_aot_make_fun_v1(context, descriptor, captures, count,
-  output)` builds a fun. `erlang_aot_apply_v1(context, fun, arity, arguments)`
+- **Services.** `CLAUSE_make_fun_v1(context, descriptor, captures, count,
+  output)` builds a fun. `CLAUSE_apply_v1(context, fun, arity, arguments)`
   checks a called value, records the errors above in the failure channel
   (`ErrorReason` 22-24) and otherwise appends the captured values after the
   arguments and returns the `FrameDescriptor` to enter.
 - **Calls.** Native form passes the arguments in a word array and calls the
-  `erlang_aot.apply` marker with the descriptor; `lower_frames` makes the
+  `clause.apply` marker with the descriptor; `lower_frames` makes the
   array the process registers and the marker a transfer through
-  `erlang_aot_enter_v1` or, in tail position, `erlang_aot_tail_v1`.
+  `CLAUSE_enter_v1` or, in tail position, `CLAUSE_tail_v1`.
 
 ## Comparison and printing
 
@@ -132,7 +132,7 @@ Recorded in [differences](differences.md):
 
 - A local fun prints `#Fun<m.Index.0>`: OTP's index follows its compiler's
   lambda numbering and its third part is a hash of the module code.
-  ErlangAoT numbers local funs in source order, so the order of two local funs
+  Clause numbers local funs in source order, so the order of two local funs
   of different functions of a module can also differ.
 - Calling an external fun of a module outside the program raises `undef`; OTP
   would first try to load the module from the code path. The same holds for

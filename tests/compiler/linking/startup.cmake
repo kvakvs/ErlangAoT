@@ -1,4 +1,4 @@
-# Startup objects (docs/executables.md): emit modules plus eav1_start, link them with the runtime through the
+# Startup objects (docs/executables.md): emit modules plus clausev1_start, link them with the runtime through the
 # native harness recipe, then check argv, return, halt and uncaught-error exit paths, and inspect startup IR.
 include("${HOST_SETTINGS}")
 file(REMOVE_RECURSE "${WORK}")
@@ -18,7 +18,7 @@ endfunction()
 function(emit name)
     compile(${name} ${ARGN} --emit obj --artifact-dir "${WORK}/${name}")
     file(GLOB_RECURSE objects "${WORK}/${name}/*.o" "${WORK}/${name}/*.obj")
-    if(NOT objects MATCHES "eav1_start\\.(o|obj)")
+    if(NOT objects MATCHES "clausev1_start\\.(o|obj)")
         message(FATAL_ERROR "${name}: no startup object among ${objects}")
     endif()
     set(objects_${name} "${objects}" PARENT_SCOPE)
@@ -32,12 +32,12 @@ emit(escript -O0 --entry boom boom.escript)
 file(WRITE "${WORK}/consumer/CMakeLists.txt" [=[
 cmake_minimum_required(VERSION 3.28)
 project(StartupConsumer LANGUAGES CXX)
-# Link the runtime the parent build already compiled (ErlangAoT::generated_program).
+# Link the runtime the parent build already compiled (Clause::generated_program).
 include("${RUNTIME_TARGETS}")
 foreach(name IN ITEMS positional project escript)
     add_executable(${name} ${OBJECTS_${name}})
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
-    target_link_libraries(${name} PRIVATE ErlangAoT::generated_program)
+    target_link_libraries(${name} PRIVATE Clause::generated_program)
 endforeach()
 ]=])
 execute_process(COMMAND "${CMAKE_COMMAND}" -S "${WORK}/consumer" -B "${WORK}/build" "-DSOURCE_ROOT=${SOURCE_ROOT}"
@@ -87,10 +87,10 @@ run(escript 127 "" "^escript: exception throw: oops\n$" throw)
 # Startup IR keeps the descriptor layout and service spelling of each target width and ABI.
 set(word_64 i64)
 set(word_32 i32)
-foreach(target IN ITEMS "x86_64-pc-windows-msvc|64|?erlang_aot_main_v1@@YAHHPEAPEADPEBX@Z"
-        "i686-pc-windows-msvc|32|?erlang_aot_main_v1@@YAHHPAPADPBX@Z"
-        "x86_64-unknown-linux-gnu|64|_Z18erlang_aot_main_v1iPPcPKv"
-        "armv7-unknown-linux-gnueabihf|32|_Z18erlang_aot_main_v1iPPcPKv")
+foreach(target IN ITEMS "x86_64-pc-windows-msvc|64|?CLAUSE_main_v1@@YAHHPEAPEADPEBX@Z"
+        "i686-pc-windows-msvc|32|?CLAUSE_main_v1@@YAHHPAPADPBX@Z"
+        "x86_64-unknown-linux-gnu|64|_Z14CLAUSE_main_v1iPPcPKv"
+        "armv7-unknown-linux-gnueabihf|32|_Z14CLAUSE_main_v1iPPcPKv")
     string(REPLACE "|" ";" target "${target}")
     list(GET target 0 triple)
     list(GET target 1 bits)
@@ -100,19 +100,19 @@ foreach(target IN ITEMS "x86_64-pc-windows-msvc|64|?erlang_aot_main_v1@@YAHHPEAP
         set(directory "${WORK}/ir/${triple}-${level}")
         compile(ir -${level} --target-triple ${triple} --entry app --emit llvm-ir --artifact-dir "${directory}"
             app.erl helper.erl)
-        file(READ "${directory}/eav1_start.ll" ir)
+        file(READ "${directory}/clausev1_start.ll" ir)
         string(REPLACE "?" "\\?" pattern "${symbol}")
         set(descriptor "{ i32 8, i32 ${bits}, ptr @startup.modules, ${word} 2, ptr @startup.module, ${word} 3, ptr @startup.function, ${word} 4, i32 0 }")
         string(FIND "${ir}" "${descriptor}" found)
         if(found EQUAL -1 OR NOT ir MATCHES "define [a-z_ ]*i32 @main\\(i32 %0, ptr %1\\)"
                 OR NOT ir MATCHES "call i32 @\"?${pattern}\"?\\(i32 %0, ptr %1, ptr [a-z ]*@startup.descriptor\\)"
-                OR NOT ir MATCHES "\\[ptr @eav1_617070__0.descriptor, ptr @eav1_68656c706572__0.descriptor\\]")
+                OR NOT ir MATCHES "\\[ptr @clausev1_617070__0.descriptor, ptr @clausev1_68656c706572__0.descriptor\\]")
             message(FATAL_ERROR "${triple} ${level}: unexpected startup IR:\n${ir}")
         endif()
     endforeach()
 endforeach()
 compile(ir --entry boom --emit llvm-ir --artifact-dir "${WORK}/ir/escript" boom.escript)
-file(READ "${WORK}/ir/escript/eav1_start.ll" ir)
+file(READ "${WORK}/ir/escript/clausev1_start.ll" ir)
 if(NOT ir MATCHES "ptr @startup.function, i(32|64) 4, i32 1 }")
     message(FATAL_ERROR "Escript startup flag missing:\n${ir}")
 endif()

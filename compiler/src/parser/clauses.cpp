@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 // Wrap the selected grammar entry point without claiming semantic pattern validity.
 ast::PatternSyntaxId FormParser::pattern(const bool permissive) {
     const auto begin = cursor_.offset();
@@ -91,4 +91,4 @@ void FormParser::check_clause(const std::u32string_view actual, const std::u32st
         throw DiagnosticError(token_diagnostic(DiagnosticCode::parser_syntax, "function head mismatch", site));
     }
 }
-} // namespace erlang_aot
+} // namespace clause

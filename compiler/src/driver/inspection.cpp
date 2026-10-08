@@ -7,7 +7,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Capture only requested stages so optimized-only inspection never retains an unnecessary pre-pipeline copy.
 bool capture(codegen::Compilation &compilation, const bool requested, std::vector<codegen::OutputBuffer> &outputs) {
@@ -26,7 +26,7 @@ bool capture(codegen::Compilation &compilation, const bool requested, std::vecto
 void print_snapshot(const codegen::OutputBuffer &output, const std::filesystem::path &source,
                     const std::string_view target, const std::string_view stage, const bool headers) {
     if (headers) {
-        std::cout << "; erlangaot target=" << quote_text(target) << " module=" << quote_text(output.module_name)
+        std::cout << "; clau target=" << quote_text(target) << " module=" << quote_text(output.module_name)
                   << " source=" << quote_text(project::path_text(source)) << " stage=" << stage << '\n';
     }
     if (output.bytes.size() > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max())) {
@@ -72,4 +72,4 @@ bool inspect_ir(codegen::Compilation &compilation, const FrontendRequest &reques
     print_snapshots(compilation, request, before, after);
     return true;
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

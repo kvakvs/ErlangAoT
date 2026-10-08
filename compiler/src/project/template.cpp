@@ -1,10 +1,10 @@
 #include "template.hpp"
 #include <string_view>
 
-namespace erlang_aot::project {
+namespace clause::project {
 std::string starter_template(const bool windows) {
-    std::string result = R"PROJECT(# ErlangAoT project. Paths are relative to this TOML file's directory.
-# Check with: erlangaot --parse-check --project <this-file.toml>
+    std::string result = R"PROJECT(# Clause project. Paths are relative to this TOML file's directory.
+# Check with: clau --parse-check --project <this-file.toml>
 # Also available: --preprocess-check, --print-pp, and --print-ast.
 schema_version = 1
 
@@ -19,7 +19,7 @@ sources = []
 # Recursively collect .erl files. Create/populate src or edit these selections.
 # Set source_dirs = [] when selecting files exclusively through sources.
 source_dirs = ["src"]
-# Executable linked by `erlangaot --project`; --emit/checks/printing do not write it. Windows: build/app.exe.
+# Executable linked by `clau --project`; --emit/checks/printing do not write it. Windows: build/app.exe.
 output = "@OUTPUT@"
 
 [targets.options]
@@ -54,4 +54,4 @@ std::string starter_template() {
     return starter_template(false);
 #endif
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

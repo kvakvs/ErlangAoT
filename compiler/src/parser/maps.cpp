@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 // Consume map fields as general expressions even when the enclosing root is a pattern.
 ast::ExprValue FormParser::map(std::optional<ast::ExprId> base, const bool comprehension) {
     expect(U"{");
@@ -36,4 +36,4 @@ ast::MapField FormParser::map_field() {
             .value = std::move(value),
             .source = builder_.source(begin, cursor_.offset(), anchor)};
 }
-} // namespace erlang_aot
+} // namespace clause

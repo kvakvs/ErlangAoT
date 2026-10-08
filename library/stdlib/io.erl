@@ -3,7 +3,7 @@
 
 % Input functions of the project-owned io module (docs/library.md, docs/ports.md#standard-io-and-files); io:format/1,2
 % and io:put_chars/1 are builtins of the runtime. Standard input is read by one server process, registered as
-% erlang_aot_stdin, which owns an {fd, 0, 1} port.
+% clause_stdin, which owns an {fd, 0, 1} port.
 
 % Write Prompt, then read a line of standard input with its newline; the rest without one at the end, then eof.
 get_line(Prompt) -> get_line(standard_io, Prompt).
@@ -58,7 +58,7 @@ request(Request) ->
 
 % The standard input server; two first users race to register it, the loser's server stops.
 server() ->
-    case whereis(erlang_aot_stdin) of
+    case whereis(clause_stdin) of
         undefined ->
             Self = self(),
             Pid = spawn(fun() -> start(Self) end),
@@ -70,7 +70,7 @@ server() ->
     end.
 
 start(Starter) ->
-    try register(erlang_aot_stdin, self()) of
+    try register(clause_stdin, self()) of
         true ->
             Starter ! {self(), started},
             serve(open_port({fd, 0, 1}, [binary, eof, in]), <<>>, false, [])

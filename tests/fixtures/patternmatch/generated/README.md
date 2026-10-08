@@ -1,8 +1,8 @@
 # Project-owned native oracle fixtures
 
-These checked-in corpora are the inputs and expected results used by ErlangAoT's
+These checked-in corpora are the inputs and expected results used by Clause's
 native regression tests. Routine native tests verify the recorded hashes, copy
-the fixtures to their build directory, and compare ErlangAoT execution with
+the fixtures to their build directory, and compare Clause execution with
 `expected.txt`. They do not extract OTP source or run OTP to recalculate results.
 
 Each directory contains expected values/error reasons, fixed call inputs and a
@@ -38,7 +38,7 @@ a failing native comparison pass. Temporary generation directories stay under
 the ignored `build/` directory.
 
 `--check` regenerates into temporary storage and detects drift without changing
-committed expectations. Configure with `-DERLANG_AOT_OTP_AUDITS=ON` to enable
+committed expectations. Configure with `-DCLAUSE_OTP_AUDITS=ON` to enable
 separate live grammar, semantic-acceptance, provenance and fixture drift audits.
 The default OFF leaves building and testing independent of OTP and its checkout.
 Historical validation records retain their original live-oracle methodology.

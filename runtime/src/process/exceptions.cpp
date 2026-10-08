@@ -3,11 +3,11 @@
 #include "terms.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/abi/calls.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
+#include <clause/abi/calls.hpp>
+#include <clause/runtime/code_server.hpp>
 #include <new>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
 using abi::v1::FrameDescriptor;
@@ -306,24 +306,23 @@ TermResult<Term> exception_reason_term(ProcessContext &context, const CallFailur
     }
     return factory.tuple(std::array{*atom, *failure.value});
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_catch_v1(void *context, erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot::runtime;
+std::uint8_t CLAUSE_catch_v1(void *context, clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause::runtime;
     if (!context || !output) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(clause::abi::v1::Status::invalid_argument);
     }
     const auto store = [output](const Term &value) { *output = value.word(); };
     return static_cast<std::uint8_t>(
         detail::take_exception(*static_cast<ProcessContext *>(context), detail::catch_value, store));
 }
 
-std::uint8_t erlang_aot_exception_v2(void *context, erlang_aot::abi::v1::TermWord *exception_class,
-                                     erlang_aot::abi::v1::TermWord *reason,
-                                     erlang_aot::abi::v1::TermWord *stack) noexcept {
-    using namespace erlang_aot::runtime;
+std::uint8_t CLAUSE_exception_v2(void *context, clause::abi::v1::TermWord *exception_class,
+                                 clause::abi::v1::TermWord *reason, clause::abi::v1::TermWord *stack) noexcept {
+    using namespace clause::runtime;
     if (!context || !exception_class || !reason || !stack) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(clause::abi::v1::Status::invalid_argument);
     }
     const auto store = [exception_class, reason, stack](const std::array<Term, 3> &value) {
         *exception_class = value[0].word();
@@ -334,15 +333,15 @@ std::uint8_t erlang_aot_exception_v2(void *context, erlang_aot::abi::v1::TermWor
         detail::take_exception(*static_cast<ProcessContext *>(context), detail::class_reason_stack, store));
 }
 
-std::uint8_t erlang_aot_reraise_v2(void *context, erlang_aot::abi::v1::TermWord exception_class,
-                                   erlang_aot::abi::v1::TermWord reason, erlang_aot::abi::v1::TermWord stack) noexcept {
-    using erlang_aot::abi::v1::Status;
+std::uint8_t CLAUSE_reraise_v2(void *context, clause::abi::v1::TermWord exception_class,
+                               clause::abi::v1::TermWord reason, clause::abi::v1::TermWord stack) noexcept {
+    using clause::abi::v1::Status;
     if (!context) {
         return static_cast<std::uint8_t>(Status::invalid_argument);
     }
-    auto &owner = *static_cast<erlang_aot::runtime::ProcessContext *>(context);
+    auto &owner = *static_cast<clause::runtime::ProcessContext *>(context);
     try {
-        return static_cast<std::uint8_t>(erlang_aot::runtime::detail::reraise(owner, exception_class, reason, stack));
+        return static_cast<std::uint8_t>(clause::runtime::detail::reraise(owner, exception_class, reason, stack));
     } catch (const std::bad_alloc &) {
         owner.generated_calls().fail_service(Status::out_of_memory);
         return static_cast<std::uint8_t>(Status::out_of_memory);
@@ -352,11 +351,11 @@ std::uint8_t erlang_aot_reraise_v2(void *context, erlang_aot::abi::v1::TermWord 
     }
 }
 
-std::uint8_t erlang_aot_error_v1(void *context, erlang_aot::abi::v1::TermWord reason,
-                                 erlang_aot::abi::v1::TermWord arguments) noexcept {
+std::uint8_t CLAUSE_error_v1(void *context, clause::abi::v1::TermWord reason,
+                             clause::abi::v1::TermWord arguments) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(clause::abi::v1::Status::invalid_argument);
     }
-    return static_cast<std::uint8_t>(erlang_aot::runtime::detail::raise_error(
-        *static_cast<erlang_aot::runtime::ProcessContext *>(context), reason, arguments));
+    return static_cast<std::uint8_t>(clause::runtime::detail::raise_error(
+        *static_cast<clause::runtime::ProcessContext *>(context), reason, arguments));
 }

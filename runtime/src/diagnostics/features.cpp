@@ -1,7 +1,7 @@
+#include <clause/runtime/features.hpp>
 #include <cstdio>
-#include <erlang_aot/runtime/features.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 using abi::v1::Status;
 
 namespace {
@@ -33,4 +33,4 @@ Status FeatureFailure::report(abi::v1::FeatureId feature, const abi::v1::Feature
     }
     return status_;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

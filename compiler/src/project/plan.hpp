@@ -3,7 +3,7 @@
 #include "entry.hpp"
 #include "options.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 struct PlanOptions {
     // Preserve CLI target order, invocation path base, and per-invocation overrides.
     std::vector<std::string> selectors;
@@ -37,4 +37,4 @@ struct Invocation {
 
 // Resolve and validate all selected target work before any frontend processing.
 Invocation prepare(const Manifest &manifest, const PlanOptions &options);
-} // namespace erlang_aot::project
+} // namespace clause::project

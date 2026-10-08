@@ -1,9 +1,9 @@
 #pragma once
 #include "integers.hpp"
-#include <erlang_aot/abi/bits.hpp>
+#include <clause/abi/bits.hpp>
 #include <process_heap.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 
 struct BitView {
     // Borrow only while the checked source Term retains the live owning heap cell.
@@ -85,4 +85,4 @@ TermResult<Integer> bit_float_bits(const Term &value, std::size_t width);
 TermResult<Term> bit_read_float(ProcessContext &context, const Integer &bits, std::size_t width);
 // Decode proved bounded bits to an owned arbitrary integer without narrowing.
 Integer bit_integer(const BitView &view, bool little);
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

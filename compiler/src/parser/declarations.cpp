@@ -2,7 +2,7 @@
 #include "forms.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 ast::RecordDeclaration FormParser::record_declaration() {
     const auto enclosed = cursor_.take_syntax(U"(");
     const auto native = cursor_.take_syntax(U"#");
@@ -98,4 +98,4 @@ ast::TypeDeclaration FormParser::type_declaration(const ast::Atom &name, const a
         fail(DiagnosticCode::parser_syntax, "bad type declaration");
     }
 }
-} // namespace erlang_aot
+} // namespace clause

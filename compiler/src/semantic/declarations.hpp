@@ -1,14 +1,14 @@
 #pragma once
 #include "patterns.hpp"
 #include <array>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/compiler/ast/module.hpp>
 #include <functional>
 #include <map>
 #include <optional>
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Compare decoded names and arities without host-dependent hashes.
 struct FunctionKey {
     // Preserve exact Erlang identity, including quoted and Unicode names.
@@ -162,4 +162,4 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
                               bool escript = false);
 // Parse an Erlang declaration arity without narrowing arbitrary precision integers.
 std::optional<std::size_t> arity(const Integer &value);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

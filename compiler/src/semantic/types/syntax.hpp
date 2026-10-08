@@ -1,8 +1,8 @@
 #pragma once
 #include "domain.hpp"
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 struct Description {
     // Preserve syntax children separately until they have semantic identities.
     Node node;
@@ -13,4 +13,4 @@ struct Description {
 Description describe(const ast::TypeValue &value);
 // Translate a bounded syntax graph iteratively; provenance stays on the borrowed AST.
 Id translate(Graph &graph, const ast::Module &syntax, const ast::TypeId &root);
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

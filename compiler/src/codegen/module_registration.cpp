@@ -3,12 +3,12 @@
 #include "../semantic/symbols.hpp"
 #include "module_atoms.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/v1.hpp>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/abi/v1.hpp>
+#include <clause/compiler/source.hpp>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Transforms/Utils/ModuleUtils.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Retain exact UTF-8 bytes, including embedded NULs, using explicit lengths in every descriptor.
 llvm::Constant *spelling(llvm::Module &output, const std::string &name) {
@@ -152,4 +152,4 @@ void emit_registration(llvm::Module &output, const semantic::Module &module, llv
     builder.CreateRet(builder.CreateCall(service, {entry->getArg(0), descriptor}));
     llvm::appendToUsed(output, {entry, descriptor});
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

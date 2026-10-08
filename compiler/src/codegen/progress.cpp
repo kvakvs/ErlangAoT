@@ -1,7 +1,7 @@
 #include "progress.hpp"
 #include "llvm_state.hpp"
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 void progress(const CompilationRequest &request, const std::string_view phase, const std::filesystem::path &source,
               const std::string_view module, const std::string_view detail) {
     if (request.progress) {
@@ -29,4 +29,4 @@ void progress_modules(const Compilation &compilation, const std::string_view pha
         progress_module(compilation, i, phase, message);
     }
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

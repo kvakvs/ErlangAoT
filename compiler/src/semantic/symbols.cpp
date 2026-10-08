@@ -2,8 +2,11 @@
 #include <charconv>
 #include <stdexcept>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
+// Version prefix of every generated Erlang function symbol.
+constexpr std::string_view SYMBOL_PREFIX = "clausev1_";
+
 // Only ASCII hex enters native symbols, including for quoted names and delimiter bytes.
 std::string hex(const std::string_view text) {
     constexpr std::string_view digits = "0123456789abcdef";
@@ -54,14 +57,15 @@ std::string encode_symbol(const SymbolIdentity &identity) {
     if (identity.arity > 255) {
         throw std::invalid_argument("symbol arity exceeds 255");
     }
-    return "eav1_" + hex(identity.module) + "_" + hex(identity.function) + "_" + std::to_string(identity.arity);
+    return std::string(SYMBOL_PREFIX) + hex(identity.module) + "_" + hex(identity.function) + "_" +
+           std::to_string(identity.arity);
 }
 
 std::optional<SymbolIdentity> decode_symbol(std::string_view symbol) {
-    if (!symbol.starts_with("eav1_")) {
+    if (!symbol.starts_with(SYMBOL_PREFIX)) {
         return {};
     }
-    symbol.remove_prefix(5);
+    symbol.remove_prefix(SYMBOL_PREFIX.size());
     const auto first = symbol.find('_');
     const auto second = symbol.find('_', first == symbol.npos ? first : first + 1);
     if (second == symbol.npos) {
@@ -76,4 +80,4 @@ std::optional<SymbolIdentity> decode_symbol(std::string_view symbol) {
     SymbolIdentity result{*module, *function, *count};
     return result;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

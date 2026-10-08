@@ -6,7 +6,7 @@
 
 // io:format/1,2 and io:put_chars/1 text (docs/io.md): OTP's io_lib_format and io_lib_pretty rules applied by the
 // standard output device, producing characters that the device writes as UTF-8.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 // The characters of `format` with each control sequence replaced, as io_lib:format(Format, Args) (no `arguments`:
 // io:format/1, Args = []); throws BuiltinFailure.
 std::u32string format_text(const Term &format, std::optional<Term> arguments);
@@ -29,4 +29,4 @@ struct PrettyOptions {
 
 // io_lib_pretty:print/2 of `term`; throws BuiltinFailure.
 std::u32string pretty(const Term &term, const PrettyOptions &options);
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

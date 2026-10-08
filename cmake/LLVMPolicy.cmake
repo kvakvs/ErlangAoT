@@ -2,7 +2,7 @@
 include_guard(GLOBAL)
 
 # Limit SDK discovery to conventional global installation and package-manager roots.
-function(erlang_aot_llvm_roots output)
+function(clause_llvm_roots output)
     if(CMAKE_HOST_WIN32)
         set(roots "$ENV{ProgramFiles}/LLVM" "$ENV{ProgramW6432}/LLVM")
     else()
@@ -13,7 +13,7 @@ function(erlang_aot_llvm_roots output)
 endfunction()
 
 # Accept installed SDKs (including thirdparty downloads), but never LLVM build trees.
-function(erlang_aot_check_llvm_location directory)
+function(clause_check_llvm_location directory)
     if(NOT IS_DIRECTORY "${directory}")
         message(FATAL_ERROR "LLVM SDK directory does not exist: ${directory}")
     endif()
@@ -32,15 +32,15 @@ function(erlang_aot_check_llvm_location directory)
 endfunction()
 
 # Reject development snapshots and other release lines even if LLVM accepts their package version.
-function(erlang_aot_check_llvm_version version)
+function(clause_check_llvm_version version)
     if(NOT version MATCHES "^23\\.1\\.[0-9]+$" OR version VERSION_LESS "23.1.1")
         message(FATAL_ERROR "LLVM 23.1.x >=23.1.1 (stable) is required; found ${version}.")
     endif()
 endfunction()
 
 # List installed layouts only; do not consult repository hints or the CMake package registry.
-function(erlang_aot_llvm_search_paths output)
-    erlang_aot_llvm_roots(roots)
+function(clause_llvm_search_paths output)
+    clause_llvm_roots(roots)
     set(paths)
     foreach(root IN LISTS roots)
         list(APPEND paths "${root}" "${root}/lib/cmake/llvm" "${root}/lib64/cmake/llvm")

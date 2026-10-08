@@ -1,7 +1,7 @@
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Validate every argument before entering native code, preserving its exact failure index.
 CallResult<void> validate_arguments(ProcessContext &context, std::span<const Term> arguments) {
@@ -78,4 +78,4 @@ CallResult<Term> ResolvedFunction::call(ProcessContext &context, std::span<const
         return std::unexpected(CallFailure{CallError::native_exception});
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

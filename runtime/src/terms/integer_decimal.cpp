@@ -1,6 +1,6 @@
 #include "integers.hpp"
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Digits consumed per pass over the limbs: 10^9 times a 32-bit half limb plus a carry fits in 64 bits.
 constexpr std::size_t CHUNK_DIGITS = 9;
@@ -40,4 +40,4 @@ Integer integer_digits(std::string_view digits) {
     }
     return integer_words(limbs, false);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

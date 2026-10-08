@@ -9,10 +9,10 @@
 #include <thread>
 #include <vector>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Environment variable whose words are parsed like the leading command-line arguments.
-constexpr const char *FLAGS_VARIABLE = "ERLANG_AOT_FLAGS";
+constexpr const char *FLAGS_VARIABLE = "CLAUSE_FLAGS";
 
 // The value of an option and how many arguments carried it.
 struct OptionValue {
@@ -200,4 +200,4 @@ std::expected<ProgramOptions, std::string> program_options(int argc, char **argv
     result.consumed = *used;
     return result;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

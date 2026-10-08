@@ -2,13 +2,13 @@
 #include "service_errors.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/maps.hpp>
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/maps.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::MapOperation;
 using Outcome = abi::v1::MapOutcome;
@@ -216,11 +216,11 @@ std::uint8_t map_service(ProcessContext &context, std::uint8_t operation, const 
     }
     return static_cast<std::uint8_t>(Outcome::failure);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_map_v1(void *opaque, std::uint8_t operation, const erlang_aot::abi::v1::TermWord *values,
-                               std::size_t count, erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_map_v1(void *opaque, std::uint8_t operation, const clause::abi::v1::TermWord *values,
+                           std::size_t count, clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause;
     if (!opaque) {
         return static_cast<std::uint8_t>(abi::v1::MapOutcome::failure);
     }

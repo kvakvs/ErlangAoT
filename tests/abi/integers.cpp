@@ -1,11 +1,11 @@
 #include <array>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot::abi::v1;
+using namespace clause::abi::v1;
 static_assert(sizeof(NativeIntegerEncoding::Word) == sizeof(TermWord));
 static_assert(alignof(NativeIntegerEncoding::Word) == alignof(TermWord));
 static_assert(IntegerEncoding<32>::minimum == -134217728);

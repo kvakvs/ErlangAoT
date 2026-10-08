@@ -1,6 +1,6 @@
 #include "children.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 void Children::body(const std::vector<ExprId> &values) const {
     if (values.empty()) {
         throw std::invalid_argument("empty expression body");
@@ -78,4 +78,4 @@ void Children::operator()(const ReceiveExpression &value) const {
         body(value.after->body);
     }
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

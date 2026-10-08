@@ -7,14 +7,14 @@
 ; Frame slots after the 4-word header: 0 = L (argument), 1 = cursor, 2 = accumulator, 3 = Y. All four are term
 ; slots (roots), so a collection at the safepoint rewrites them; Y is the SSA value that crosses the safepoint.
 
-declare ptr @erlang_aot_frame_v1(ptr)
-declare void @erlang_aot_safepoint_v1(ptr)
+declare ptr @CLAUSE_frame_v1(ptr)
+declare void @CLAUSE_safepoint_v1(ptr)
 declare WORD @make(ptr, WORD, WORD)
 declare WORD @next(ptr, WORD)
 
 define WORD @f.body(ptr %context) {
 frame:
-  %header = call ptr @erlang_aot_frame_v1(ptr %context)
+  %header = call ptr @CLAUSE_frame_v1(ptr %context)
   %slots = getelementptr inbounds WORD, ptr %header, i32 4
   %cursor.slot = getelementptr inbounds WORD, ptr %slots, i32 1
   %acc.slot = getelementptr inbounds WORD, ptr %slots, i32 2
@@ -29,7 +29,7 @@ frame:
 
 head:
   ; May move every heap object and rewrite the term slots; the stack itself never moves here.
-  call void @erlang_aot_safepoint_v1(ptr %context)
+  call void @CLAUSE_safepoint_v1(ptr %context)
   br label %step
 
 step:

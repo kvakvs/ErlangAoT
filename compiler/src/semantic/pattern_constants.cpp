@@ -3,7 +3,7 @@
 #include "pattern_state.hpp"
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Canonical decimal digits must not pass through Boost's octal/prefix parser; the lexer admitted only literals within
 // the integer size limit.
@@ -137,4 +137,4 @@ std::optional<PatternLiteral> pattern_constant(BindingAnalysis &state, const ast
     }
     return {};
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

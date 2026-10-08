@@ -41,7 +41,7 @@ def dominance(ir):
         branches={}
         for b,content in blocks.items():
             for line in content:
-                inspect=re.search(r'%([\w.]+) = call i8 .*erlang_aot_inspect_v1.*i8 ([0-4]), i64 %([\w.]+), i64 \d+, ptr %([\w.]+)\)',line)
+                inspect=re.search(r'%([\w.]+) = call i8 .*CLAUSE_inspect_v1.*i8 ([0-4]), i64 %([\w.]+), i64 \d+, ptr %([\w.]+)\)',line)
                 if inspect: inspections.append((inspect[1],int(inspect[2]),inspect[3],b))
                 call=re.search(r'%([\w.]+) = call i8 .*ptr %([\w.]+)\)',line)
                 if call and '.outcome' in call[1]: outcomes[call[2]]=(call[1],b)

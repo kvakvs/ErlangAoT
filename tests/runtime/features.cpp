@@ -1,11 +1,11 @@
+#include <clause/abi/v1.hpp>
+#include <clause/runtime/features.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/v1.hpp>
-#include <erlang_aot/runtime/features.hpp>
 #include <stdexcept>
 #include <vector>
 
-using namespace erlang_aot::runtime;
-using namespace erlang_aot::abi::v1;
+using namespace clause::runtime;
+using namespace clause::abi::v1;
 
 // Preserve assertions in release builds.
 void require(bool condition, const char *message) {

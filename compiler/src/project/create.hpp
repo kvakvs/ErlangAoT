@@ -4,7 +4,7 @@
 #include <functional>
 #include <string_view>
 
-namespace erlang_aot::project {
+namespace clause::project {
 struct NewProjectFilename {
     // Keep a requested filename distinct from its invocation-directory base.
     std::filesystem::path value;
@@ -23,4 +23,4 @@ std::filesystem::path creation_path(const std::filesystem::path &base, const New
 // Exclusively create a complete annotated starter; never overwrite an existing destination.
 std::filesystem::path create_project(const std::filesystem::path &base, const NewProjectFilename &filename,
                                      const CreationIO &io = {});
-} // namespace erlang_aot::project
+} // namespace clause::project

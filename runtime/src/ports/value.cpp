@@ -1,7 +1,7 @@
 #include "value.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Bytes as a binary or a list of small integers.
 TermResult<Term> bytes_term(TermFactory &factory, const PortValue &value) {
@@ -42,4 +42,4 @@ TermResult<Term> build_value(ProcessContext &process, const PortValue &value) {
     }
     return factory.tuple(elements);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

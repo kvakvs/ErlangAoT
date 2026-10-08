@@ -1,6 +1,6 @@
 #include "resolver.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Resolve one overload in its own variable scope, keeping constraints as declared provenance.
 Overload overload(Registry &registry, const Contract &contract, const ast::SpecificationSignature &signature,
@@ -82,4 +82,4 @@ std::unique_ptr<Registry> resolve_declarations(const std::span<const std::unique
     }
     return registry;
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

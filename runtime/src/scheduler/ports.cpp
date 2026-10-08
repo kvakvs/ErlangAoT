@@ -8,7 +8,7 @@
 // The executor's port table (docs/ports.md): opening, output, closing, the port protocol of messages, and the links,
 // monitors and exit signals of ports. A port's signals to processes hold no heap term when their target runs on
 // another worker, so they wait for its slice to end (post) instead of making a builtin run again.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // The data of an input message, a byte list or a binary, built in the heap of `process`; {eol, D} or {noeol, D} for
 // a line or a line part.
@@ -167,7 +167,7 @@ void Executor::accept_connection(Word listen, SocketEvent event) {
     port->driver->attach(word);
     ports_.emplace(*number, std::move(port));
     owner->signals().link(word);
-    // {erlang_aot_socket, Listen, ok} becomes {erlang_aot_socket, Listen, {ok, Socket}}.
+    // {clause_socket, Listen, ok} becomes {clause_socket, Listen, {ok, Socket}}.
     event.value.elements.back() = PortValue::of_tuple({PortValue::of_atom("ok"), PortValue::of_identity(word)});
     post(*owner, PortEvent::term(listen, std::move(event.value)));
 }
@@ -585,4 +585,4 @@ void Executor::notify_ports(ProcessContext &process, const Term &reason, const s
         }
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

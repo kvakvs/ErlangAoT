@@ -4,7 +4,7 @@
 #include "services.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 std::string_view ExpressionCapability::operator()(const ast::RecordExpression &value) const {
     const auto *layout = record_layout(module, value.identity);
     const bool native = anonymous_record(value.identity) || external_record(module, value.identity);
@@ -63,4 +63,4 @@ std::string_view ExpressionCapability::operator()(const ast::RemoteFunReference 
     const auto &[owner, name, count] = *names;
     return external_fun_capability(owner, {name, count});
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

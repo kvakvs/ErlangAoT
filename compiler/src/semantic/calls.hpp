@@ -1,7 +1,7 @@
 #pragma once
 #include "declarations.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct FunctionRef {
     // Borrow stable batch-owned declarations; no syntax or LLVM ownership is transferred.
     Module *module;
@@ -35,4 +35,4 @@ CallGraph resolve_calls(std::span<const std::unique_ptr<Module>> modules, const 
 std::optional<std::u32string> declared_module(const ast::Module &syntax);
 // The modules a module's functions name with a literal atom: M:F(...), fun M:F/A and apply(M, F, Args).
 std::set<std::u32string> referenced_modules(const ast::Module &syntax);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -1,6 +1,6 @@
 #include "specialization_lowering.hpp"
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 struct ModuleBudget {
     // Limit total added pre-optimization IR and committed variants in this module.
@@ -100,4 +100,4 @@ void lower_specializations(llvm::Module &module, SpecializationPlan &plan) {
         }
     }
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

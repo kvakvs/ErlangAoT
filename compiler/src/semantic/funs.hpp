@@ -2,7 +2,7 @@
 #include "declarations.hpp"
 #include <tuple>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Whether an expression builds a fun: fun F/A, fun M:F/A or an anonymous fun.
 bool fun_value(const ast::ExprValue &value);
 // Whether a call applies a value (F(Args), (fun f/1)(Args)) instead of naming a function or Module:Function.
@@ -23,4 +23,4 @@ void index_funs(Module &module);
 void add_builtin_fun(Module &module, const ast::Expression &expression, const FunctionKey &key);
 // The entry a fun expression creates.
 const FunEntry &fun_entry(const Module &module, const ast::Expression &expression);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -3,13 +3,13 @@
 #include "semantic/match_plan.hpp"
 #include "semantic/services.hpp"
 #include <algorithm>
+#include <clause/compiler/parser.hpp>
 #include <cstdio>
-#include <erlang_aot/compiler/parser.hpp>
 #include <source_location>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::semantic;
+using namespace clause;
+using namespace clause::semantic;
 
 // Source cannot reach private plan ceilings cheaply; verify transaction failure with a deliberately tiny budget.
 void match_budget() {

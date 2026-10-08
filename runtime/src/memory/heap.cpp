@@ -1,11 +1,11 @@
 #include "heap_collect.hpp"
 #include "off_heap.hpp"
 #include <algorithm>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Preserve exact infrastructure statuses; these failures never become Erlang guard rejection.
 abi::v1::Status status(HeapError error) {
@@ -180,4 +180,4 @@ std::expected<void, HeapError> ProcessHeap::hold_off_heap(const std::vector<std:
     report(failure);
     return std::unexpected(failure);
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

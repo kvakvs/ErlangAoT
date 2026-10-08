@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <array>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // OTP maint-29 erl_internal:is_type/2; local declarations take precedence over builtins.
 bool builtin(const std::string &name, const std::size_t arity) {
@@ -171,4 +171,4 @@ Id Resolver::finish(Node node, const ast::NodeSource &source) {
         return registry.graph.intern(std::move(node));
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

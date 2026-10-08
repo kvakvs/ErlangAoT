@@ -1,7 +1,7 @@
 #include "value.hpp"
 #include <cmath>
 
-namespace erlang_aot {
+namespace clause {
 // Keep decimal serialization independent of the surrounding recursive term structure.
 std::string decimal_integer(const BigInt &number) { return number.str(); }
 
@@ -57,4 +57,4 @@ BigInt integer_from_double(const double number) {
     return number < 0 ? -result : result;
 }
 
-} // namespace erlang_aot
+} // namespace clause

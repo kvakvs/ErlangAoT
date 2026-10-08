@@ -6,13 +6,13 @@
 #include "../terms/funs.hpp"
 #include <array>
 #include <chrono>
-#include <erlang_aot/abi/equality.hpp>
+#include <clause/abi/equality.hpp>
 #include <exception>
 #include <new>
 #include <optional>
 #include <thread>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::FrameDescriptor;
 using abi::v1::Status;
@@ -425,4 +425,4 @@ void Executor::clear() noexcept {
     main_ = finished_ = nullptr;
     failed_ = false;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

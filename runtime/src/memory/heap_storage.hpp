@@ -4,12 +4,12 @@
 #include "heap_policy.hpp"
 #include "process_heap.hpp"
 #include "runtime_memory.hpp"
+#include <clause/runtime/process_context.hpp>
 #include <cstdint>
-#include <erlang_aot/runtime/process_context.hpp>
 #include <unordered_map>
 #include <vector>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace layout {
 struct RefcBinaryCell;
 } // namespace layout
@@ -114,4 +114,4 @@ class HeapStorage final {
 // Commit fully initialized objects and admit value; failure rolls the reservation back.
 TermResult<Term> publish(const std::shared_ptr<HeapStorage> &storage, HeapReservation &reservation,
                          Word value) noexcept;
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

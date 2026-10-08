@@ -12,17 +12,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 include("${SOURCE_ROOT}/cmake/LLVMPolicy.cmake")
 if(CASE STREQUAL "version")
-    erlang_aot_check_llvm_version("${TEST_VERSION}")
+    clause_check_llvm_version("${TEST_VERSION}")
     return()
 endif()
 if(CASE STREQUAL "absent" OR CASE STREQUAL "private_only")
-    erlang_aot_llvm_roots(CMAKE_IGNORE_PREFIX_PATH)
-    erlang_aot_llvm_search_paths(CMAKE_IGNORE_PATH)
-    set(ERLANG_AOT_DOWNLOAD_LLVM OFF CACHE BOOL "")
+    clause_llvm_roots(CMAKE_IGNORE_PREFIX_PATH)
+    clause_llvm_search_paths(CMAKE_IGNORE_PATH)
+    set(CLAUSE_DOWNLOAD_LLVM OFF CACHE BOOL "")
 endif()
 include("${SOURCE_ROOT}/cmake/LLVMDependencies.cmake")
 add_executable(smoke "${SOURCE_ROOT}/cmake/probes/llvm.cpp")
-target_link_libraries(smoke PRIVATE erlang_llvm_sdk)
+target_link_libraries(smoke PRIVATE clause_llvm_sdk)
 set_target_properties(smoke PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 ]=])
 
@@ -60,9 +60,9 @@ execute_process(COMMAND "${TEST_DIR}/selected/bin/${HOST_CONFIG}/smoke${HOST_SUF
 if(NOT ran STREQUAL "0" OR NOT output STREQUAL "" OR NOT error STREQUAL "")
     message(FATAL_ERROR "Selected SDK consumer failed: ${ran}: ${output}${error}")
 endif()
-configure_case(absent "No global LLVM.*SDK found.*ERLANG_AOT_DOWNLOAD_LLVM is OFF")
+configure_case(absent "No global LLVM.*SDK found.*CLAUSE_DOWNLOAD_LLVM is OFF")
 configure_case(private "LLVM build-tree SDK is not supported" "-DLLVM_DIR=${TEST_DIR}/private-sdk/lib/cmake/llvm")
-configure_case(private_only "No global LLVM.*SDK found.*ERLANG_AOT_DOWNLOAD_LLVM is OFF"
+configure_case(private_only "No global LLVM.*SDK found.*CLAUSE_DOWNLOAD_LLVM is OFF"
     "-DCMAKE_PREFIX_PATH=${TEST_DIR}/private-sdk")
 configure_case(missing "directory does not exist" "-DLLVM_DIR=${TEST_DIR}/nonexistent-sdk")
 foreach(version IN ITEMS 23.1.0 22.1.1 24.1.1 23.1.1git)
@@ -73,8 +73,8 @@ configure_case(version_success success "-DCASE=version" "-DTEST_VERSION=23.1.2")
 
 execute_process(COMMAND "${CMAKE_COMMAND}" -E env "CXXFLAGS=" "${CMAKE_COMMAND}"
     -S "${SOURCE_ROOT}" -B "${TEST_DIR}/runtime" ${host_configure_args}
-    -DERLANG_AOT_BUILD_COMPILER=OFF
-    -DERLANG_AOT_BUILD_RUNTIME=ON -DBUILD_TESTING=OFF
+    -DCLAUSE_BUILD_COMPILER=OFF
+    -DCLAUSE_BUILD_RUNTIME=ON -DBUILD_TESTING=OFF
     "-DLLVM_DIR=${TEST_DIR}/private-sdk/lib/cmake/llvm" -DCMAKE_DISABLE_FIND_PACKAGE_LLVM=TRUE
     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
 if(NOT result EQUAL 0 OR "${output}${error}" MATCHES "LLVM .*global SDK search")

@@ -3,7 +3,7 @@
 #include "term_value.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Restrict documentation scalars to the forms recognized by build_attribute.
 bool documentation_literal(const ast::Module &module, const ast::ExprId &id, const Value &value) {
@@ -76,4 +76,4 @@ ast::DocumentationAttribute FormParser::documentation(const bool module, const a
     }
     return {.module = module, .value = term_value(value, builder_.view().expression(id).source)};
 }
-} // namespace erlang_aot
+} // namespace clause

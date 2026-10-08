@@ -1,11 +1,11 @@
 #include "bitstrings.hpp"
 #include "service_errors.hpp"
 #include "terms.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 #include <stdexcept>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Op = abi::v1::BitOperation;
 using Outcome = abi::v1::ValueOutcome;
@@ -216,13 +216,13 @@ std::uint8_t bits_service(ProcessContext &context, std::uint8_t operation, const
     }
     return static_cast<std::uint8_t>(Outcome::failure);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-std::uint8_t erlang_aot_bits_v1(void *context, std::uint8_t operation, const erlang_aot::abi::v1::TermWord *values,
-                                std::size_t count, erlang_aot::abi::v1::TermWord *output) noexcept {
+std::uint8_t CLAUSE_bits_v1(void *context, std::uint8_t operation, const clause::abi::v1::TermWord *values,
+                            std::size_t count, clause::abi::v1::TermWord *output) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::ValueOutcome::failure);
+        return static_cast<std::uint8_t>(clause::abi::v1::ValueOutcome::failure);
     }
-    return erlang_aot::runtime::detail::bits_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                     operation, values, count, output);
+    return clause::runtime::detail::bits_service(*static_cast<clause::runtime::ProcessContext *>(context), operation,
+                                                 values, count, output);
 }

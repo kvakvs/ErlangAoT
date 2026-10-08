@@ -1,16 +1,16 @@
 add_executable(runtime_term_tag_tests term_tag.cpp)
-erlang_aot_project_options(runtime_term_tag_tests)
-target_link_libraries(runtime_term_tag_tests PRIVATE erlang_runtime)
+clause_project_options(runtime_term_tag_tests)
+target_link_libraries(runtime_term_tag_tests PRIVATE clause_runtime)
 add_test(NAME runtime_term_tag COMMAND runtime_term_tag_tests)
 
 add_library(runtime_term_layout_tests OBJECT term_layout.cpp)
-erlang_aot_project_options(runtime_term_layout_tests)
-target_link_libraries(runtime_term_layout_tests PRIVATE erlang_runtime)
+clause_project_options(runtime_term_layout_tests)
+target_link_libraries(runtime_term_layout_tests PRIVATE clause_runtime)
 target_include_directories(runtime_term_layout_tests PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src/terms")
 
 add_executable(runtime_feature_tests features.cpp)
-erlang_aot_project_options(runtime_feature_tests)
-target_link_libraries(runtime_feature_tests PRIVATE erlang_runtime)
+clause_project_options(runtime_feature_tests)
+target_link_libraries(runtime_feature_tests PRIVATE clause_runtime)
 add_test(NAME runtime_features COMMAND runtime_feature_tests)
 add_test(NAME runtime_feature_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_feature_tests>" "-DFEATURE_NAME=garbage collection"
@@ -19,8 +19,8 @@ add_test(NAME runtime_feature_output COMMAND "${CMAKE_COMMAND}"
 
 foreach(suite IN ITEMS lifecycle_failure memory stack containers integers floats maps bitstrings admission heap_fragments scheduler registration startup)
     add_executable(runtime_${suite} ${suite}.cpp)
-    erlang_aot_project_options(runtime_${suite})
-    target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)
+    clause_project_options(runtime_${suite})
+    target_link_libraries(runtime_${suite} PRIVATE Clause::generated_program)
     add_test(NAME runtime_${suite} COMMAND runtime_${suite})
 endforeach()
 add_test(NAME runtime_generated_link COMMAND "${CMAKE_COMMAND}"
@@ -32,45 +32,45 @@ set_tests_properties(runtime_generated_link PROPERTIES TIMEOUT 120)
 
 # Off-heap binary ownership needs private layout headers; source cannot observe buffer references.
 add_executable(runtime_off_heap off_heap.cpp)
-erlang_aot_project_options(runtime_off_heap)
-target_link_libraries(runtime_off_heap PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_off_heap)
+target_link_libraries(runtime_off_heap PRIVATE Clause::generated_program)
 target_include_directories(runtime_off_heap PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_off_heap COMMAND runtime_off_heap)
 
 # Heap walker and verifier invariants over every admitted layout and malformed synthetic areas.
 add_executable(runtime_heap_walk heap_walk.cpp)
-erlang_aot_project_options(runtime_heap_walk)
-target_link_libraries(runtime_heap_walk PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_heap_walk)
+target_link_libraries(runtime_heap_walk PRIVATE Clause::generated_program)
 target_include_directories(runtime_heap_walk PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_heap_walk COMMAND runtime_heap_walk)
 
 # Copying collection: rewritten roots, sharing, binary release, size policy and stale host terms.
 add_executable(runtime_collection collection.cpp)
-erlang_aot_project_options(runtime_collection)
-target_link_libraries(runtime_collection PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_collection)
+target_link_libraries(runtime_collection PRIVATE Clause::generated_program)
 target_include_directories(runtime_collection PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_collection COMMAND runtime_collection)
 
 # Graph copies between heaps: equality, sharing, shared off-heap buffers, survival and failure rollback.
 # Native record cells and services over hand-written descriptors; order checks use the private comparator.
 add_executable(runtime_records records.cpp)
-erlang_aot_project_options(runtime_records)
-target_link_libraries(runtime_records PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_records)
+target_link_libraries(runtime_records PRIVATE Clause::generated_program)
 target_include_directories(runtime_records PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_records COMMAND runtime_records)
 
 # Fun cells and services over hand-written descriptors: printing, order, call preparation, copy and collection.
 add_executable(runtime_funs funs.cpp)
-erlang_aot_project_options(runtime_funs)
-target_link_libraries(runtime_funs PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_funs)
+target_link_libraries(runtime_funs PRIVATE Clause::generated_program)
 target_include_directories(runtime_funs PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_funs COMMAND runtime_funs)
 
 # Pid and reference identities: admission of issued, forged, foreign and exited pids; references through
 # collection, copying and teardown.
 add_executable(runtime_identities identities.cpp)
-erlang_aot_project_options(runtime_identities)
-target_link_libraries(runtime_identities PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_identities)
+target_link_libraries(runtime_identities PRIVATE Clause::generated_program)
 target_include_directories(runtime_identities PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_identities COMMAND runtime_identities)
 
@@ -78,59 +78,59 @@ add_test(NAME runtime_identities COMMAND runtime_identities)
 # module publication, lookup, calls and external funs, and module pins outliving the runtime.
 find_package(Threads REQUIRED)
 add_executable(runtime_concurrency concurrency.cpp)
-erlang_aot_project_options(runtime_concurrency)
-target_link_libraries(runtime_concurrency PRIVATE ErlangAoT::generated_program Threads::Threads)
+clause_project_options(runtime_concurrency)
+target_link_libraries(runtime_concurrency PRIVATE Clause::generated_program Threads::Threads)
 add_test(NAME runtime_concurrency COMMAND runtime_concurrency)
 
 # Cooperative executor over hand-written frames: time slices, crash isolation, halts, host invocations and
 # releasing processes that never ended.
 add_executable(runtime_processes processes.cpp)
-erlang_aot_project_options(runtime_processes)
-target_link_libraries(runtime_processes PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_processes)
+target_link_libraries(runtime_processes PRIVATE Clause::generated_program)
 target_include_directories(runtime_processes PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_processes COMMAND runtime_processes)
 
 # Messages between contexts: order, self-send, ended receivers, collections, receive positions, refused copies.
 add_executable(runtime_messages messages.cpp)
-erlang_aot_project_options(runtime_messages)
-target_link_libraries(runtime_messages PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_messages)
+target_link_libraries(runtime_messages PRIVATE Clause::generated_program)
 target_include_directories(runtime_messages PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_messages COMMAND runtime_messages)
 
 # Builtins that run in portions as a process's first call, with a collection between every two portions.
 add_executable(runtime_portions portions.cpp)
-erlang_aot_project_options(runtime_portions)
-target_link_libraries(runtime_portions PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_portions)
+target_link_libraries(runtime_portions PRIVATE Clause::generated_program)
 add_test(NAME runtime_portions COMMAND runtime_portions)
 
 add_executable(runtime_copy copy.cpp)
-erlang_aot_project_options(runtime_copy)
-target_link_libraries(runtime_copy PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_copy)
+target_link_libraries(runtime_copy PRIVATE Clause::generated_program)
 target_include_directories(runtime_copy PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_copy COMMAND runtime_copy)
 
 # Descriptive heap kernel/footprint numbers for docs/runtime-heap.md; printed, not gated.
 add_executable(runtime_heap_measurements heap_measurements.cpp)
-erlang_aot_project_options(runtime_heap_measurements)
-target_link_libraries(runtime_heap_measurements PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_heap_measurements)
+target_link_libraries(runtime_heap_measurements PRIVATE Clause::generated_program)
 add_test(NAME runtime_heap_measurements COMMAND runtime_heap_measurements)
 set_tests_properties(runtime_heap_measurements PROPERTIES TIMEOUT 240 LABELS full_only)
 
 add_executable(runtime_immediate_tests immediate.cpp)
-erlang_aot_project_options(runtime_immediate_tests)
-target_link_libraries(runtime_immediate_tests PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_immediate_tests)
+target_link_libraries(runtime_immediate_tests PRIVATE Clause::generated_program)
 add_test(NAME runtime_immediate COMMAND runtime_immediate_tests)
 
 foreach(suite IN ITEMS builtins builtin_bridge)
     add_executable(runtime_${suite} ${suite}.cpp)
-    erlang_aot_project_options(runtime_${suite})
-    target_link_libraries(runtime_${suite} PRIVATE ErlangAoT::generated_program)
+    clause_project_options(runtime_${suite})
+    target_link_libraries(runtime_${suite} PRIVATE Clause::generated_program)
     add_test(NAME runtime_${suite} COMMAND runtime_${suite})
 endforeach()
 # Typed builtin adapters: conversion failures, foreign and expired words, throwing bodies.
 add_executable(runtime_typed_builtins typed_builtins.cpp)
-erlang_aot_project_options(runtime_typed_builtins)
-target_link_libraries(runtime_typed_builtins PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_typed_builtins)
+target_link_libraries(runtime_typed_builtins PRIVATE Clause::generated_program)
 target_include_directories(runtime_typed_builtins PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
 add_test(NAME runtime_typed_builtins COMMAND runtime_typed_builtins)
 add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
@@ -139,8 +139,8 @@ add_test(NAME runtime_builtin_output COMMAND "${CMAKE_COMMAND}"
 
 # OTP-generated ~w/erlang:display/1 goldens over every corpus result value, plus bounded-work checks.
 add_executable(runtime_printing printing.cpp)
-erlang_aot_project_options(runtime_printing)
-target_link_libraries(runtime_printing PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_printing)
+target_link_libraries(runtime_printing PRIVATE Clause::generated_program)
 add_test(NAME runtime_printing COMMAND runtime_printing
     "${PROJECT_SOURCE_DIR}/tests/fixtures/printing/values.txt"
     "${PROJECT_SOURCE_DIR}/tests/fixtures/printing/write.txt"
@@ -148,8 +148,8 @@ add_test(NAME runtime_printing COMMAND runtime_printing
 set_tests_properties(runtime_printing PROPERTIES TIMEOUT 120)
 
 add_executable(runtime_services services.cpp)
-erlang_aot_project_options(runtime_services)
-target_link_libraries(runtime_services PRIVATE ErlangAoT::generated_program)
+clause_project_options(runtime_services)
+target_link_libraries(runtime_services PRIVATE Clause::generated_program)
 add_test(NAME runtime_services COMMAND runtime_services)
 add_test(NAME runtime_service_output COMMAND "${CMAKE_COMMAND}"
     "-DPROGRAM=$<TARGET_FILE:runtime_services>"

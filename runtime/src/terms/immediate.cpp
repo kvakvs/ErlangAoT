@@ -1,7 +1,7 @@
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/terms.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<TermKind> classify_immediate(Word value) noexcept {
     const auto kind = TermTag{value}.get_kind();
     switch (kind) {
@@ -35,4 +35,4 @@ TermResult<std::int64_t> decode_integer(Word value) noexcept {
     return abi::v1::NativeIntegerEncoding::decode(value).transform_error(
         [](abi::v1::IntegerError) { return TermError::wrong_type; });
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -8,11 +8,11 @@ main([Root, Fixtures, Work, Report]) ->
     {ok, Bytes} = file:read_file(Grammar),
     Lines = binary:split(Bytes, <<"\n">>, [global]),
     {Instrumented, _} = lists:mapfoldl(fun instrument/2, {1, none}, Lines),
-    Target = filename:join(Work, "erlangaot_coverage.yrl"),
+    Target = filename:join(Work, "clause_coverage.yrl"),
     ok = file:write_file(Target, lists:join(<<"\n">>, Instrumented)),
     {ok, Generated} = yecc:file(Target),
-    {ok, erlangaot_coverage, Binary, _} = compile:file(Generated, [binary, return_errors, return_warnings]),
-    {module, erlangaot_coverage} = code:load_binary(erlangaot_coverage, Generated, Binary),
+    {ok, clause_coverage, Binary, _} = compile:file(Generated, [binary, return_errors, return_warnings]),
+    {module, clause_coverage} = code:load_binary(clause_coverage, Generated, Binary),
     Candidates = filelib:fold_files(Fixtures, "\\.(erl|reject|builder-reject)$", true,
                                     fun(Path, Acc) -> [Path | Acc] end, []),
     Inputs = lists:sort([Path || Path <- Candidates, reference_fixture(Path, Fixtures)]),
@@ -39,7 +39,7 @@ instrument(Line, {N, Previous}) ->
         {none,_} -> {Line,{N+1,none}};
         {_,{match, [Prefix]}} ->
             <<Prefix:(byte_size(Prefix))/binary, Rest/binary>> = Line,
-            {[Prefix, io_lib:format(" put({erlangaot_row,~B},true), ",[Pending]), Rest],{N+1,none}};
+            {[Prefix, io_lib:format(" put({clause_row,~B},true), ",[Pending]), Rest],{N+1,none}};
         {_,nomatch} -> {Line,{N+1,Pending}}
     end.
 
@@ -49,7 +49,7 @@ scan(Path, Fixtures) ->
     try forms(Epp, filename:extension(Path) =:= ".builder-reject") after epp:close(Epp) end,
     Prefix = Fixtures ++ "/",
     Relative = lists:nthtail(length(Prefix), Path),
-    lists:foreach(fun({{erlangaot_row,N},true}) ->
+    lists:foreach(fun({{clause_row,N},true}) ->
                           Existing = persistent_term:get({?MODULE,N}, []),
                           persistent_term:put({?MODULE,N}, [Relative | Existing]);
                      (_) -> ok
@@ -60,7 +60,7 @@ forms(Epp, BuilderException) ->
         {eof,_} -> ok;
         {ok,Tokens} ->
             %% Record exceptional builder inputs explicitly alongside rejection fixtures.
-            try erlangaot_coverage:parse_form(Tokens)
+            try clause_coverage:parse_form(Tokens)
             catch error:function_clause when BuilderException -> ok;
                   error:{badmatch,_} when BuilderException -> ok
             end,

@@ -3,7 +3,7 @@
 #include <array>
 #include <fstream>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // Bound allocation during reading instead of checking only after loading a file.
 std::string read_bounded(const std::filesystem::path &file, const std::size_t limit) {
@@ -54,4 +54,4 @@ Document load(const std::filesystem::path &file, const Limits &limits, const Rea
         fail({file, {}, {}, 0, 0}, "cannot read manifest: " + std::string(error.what()));
     }
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

@@ -24,8 +24,8 @@ See [outstanding work](#outstanding-work-to-finish) and [the backlog](01-todo.md
 
 Targets Erlang/OTP 29 on Windows x86-family, Linux x86/ARM and macOS Apple
 Silicon. C++23, CMake 3.28+, warnings as errors, Clang reference toolchain.
-`erlang_aot` builds `erlangaot`; `erlang_runtime` builds independently and never
-depends on LLVM or compiler internals; `erlang_aot_abi` carries shared
+`clau` builds the compiler; `clause_runtime` builds independently and never
+depends on LLVM or compiler internals; `clause_abi` carries shared
 contracts. Stages exchange owned internal data; only directory locations are
 reserved for `compiler/src/stage_readers/{preprocessed,abstract,ir}/`. APIs stay
 project-internal C++23 (earlier C wrappers and C++26 options were superseded).
@@ -132,7 +132,7 @@ wins. `--emit obj|llvm-ir|llvm-bc`, `--artifact-dir`, `--target-triple`,
 earlier outputs; multi-file replacement is not atomic. ABI v1: unsigned target
 words, checked 28/60-bit small integers, collision-free symbols, generic entries
 take a context and aligned term array. Every runnable program links one
-matching runtime through `ErlangAoT::generated_program`.
+matching runtime through `Clause::generated_program`.
 
 Validation: macOS arm64 for steps 1–14 (65 to 93 CTests), Windows x64 for steps
 15–46 (76 to 103 CTests, up to 182 quality commands), Clang/SDK 23.1.2,
@@ -174,7 +174,7 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   OTP-goldened program fixtures with a feature map.
 - **Executables (3–8):** entry/argv/exit contract (`docs/executables.md`),
   escript mode, `~w`/`erlang:display/1` printing, startup object
-  (`erlang_aot_main_v1`) and `erlang:halt/0,1`, Clang linking for positional
+  (`CLAUSE_main_v1`) and `erlang:halt/0,1`, Clang linking for positional
   and project builds with staged all-or-nothing publication, and the executable
   golden runner (`tests/fixtures/executables/`). Phase B close: full 138/138
   CTests, 272 quality units.
@@ -192,15 +192,15 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - **`if` (10):** guard-only clauses share the `case` scoping and joins;
   exhaustion raises `if_clause`; golden `if_select`, four `if_*` binding rows.
 - **Raise (11):** `error/1,2,3`, `exit/1`, `throw/1` (qualified or auto-imported)
-  raise through `erlang_aot_raise_v2` with `raised_*` reasons; startup reports
+  raise through `CLAUSE_raise_v2` with `raised_*` reasons; startup reports
   `uncaught exception <class>: <reason>`; golden `raise_classes`.
 - **`catch Expr` (12):** failures inside reach a handler that calls
-  `erlang_aot_catch_v1` (thrown term, `{'EXIT', R}`, `{'EXIT', {R, []}}`);
+  `CLAUSE_catch_v1` (thrown term, `{'EXIT', R}`, `{'EXIT', {R, []}}`);
   halts and runtime failures pass through; inner bindings unsafe afterwards;
   golden `catch_values`, four `catch_*` binding rows; `nowarn_*` compile options.
 - **`try ... of ... catch` (13):** the body's handler takes `{Class, Reason}`
-  via `erlang_aot_exception_v1`; catch clauses match class (default `throw`),
-  reason and guard; unmatched re-raise via `erlang_aot_reraise_v1`; `of` clauses
+  via `CLAUSE_exception_v1`; catch clauses match class (default `throw`),
+  reason and guard; unmatched re-raise via `CLAUSE_reraise_v1`; `of` clauses
   raise `{try_clause, V}`; everything bound inside is unsafe afterwards; golden
   `try_catch`, six `try_*` binding rows. Catch class/stacktrace are AST
   expressions.
@@ -210,12 +210,12 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   `codegen_after_fault_O0/O2` (budget failure in the after body), three
   `try_after*` binding rows.
 - **Stack traces and `erlang:raise/3` (15):** root frames carry a
-  `FrameDescriptor` (`erlang_aot_roots_enter_v5`); an Erlang exception copies
+  `FrameDescriptor` (`CLAUSE_roots_enter_v5`); an Erlang exception copies
   the innermost 8 named frames, built into `[{M, F, Arity, []}]` only for
   `catch`, handlers and reports; `Class:Reason:Stack` binds it
-  (`erlang_aot_exception_v2`), re-raise keeps it (`erlang_aot_reraise_v2`, also
+  (`CLAUSE_exception_v2`), re-raise keeps it (`CLAUSE_reraise_v2`, also
   `raise/3` with BEAM's stack validation and `badarg` result), `error/2,3`
-  show their argument list (`erlang_aot_error_v1`); `stacktrace_bound`/
+  show their argument list (`CLAUSE_error_v1`); `stacktrace_bound`/
   `stacktrace_guard` lint, `get_stacktrace/0` rejected; golden `stack_traces`,
   three `try_stack*` binding rows. The `exceptions` capability is implemented.
 - **`maybe` (16):** each `?=` is a match whose mismatch edge leaves for the

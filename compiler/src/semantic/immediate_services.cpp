@@ -1,9 +1,9 @@
 #include "capabilities.hpp"
 #include "services.hpp"
 #include <array>
-#include <erlang_aot/abi/builtins.hpp>
+#include <clause/abi/builtins.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 using Op = abi::v1::ImmediateOperation;
 
 std::optional<Op> immediate_operator(const ast::BinaryOperator operation) {
@@ -131,4 +131,4 @@ std::optional<Op> immediate_unary(const ast::UnaryOperator operation) {
     const auto found = operators.find(operation);
     return found == operators.end() ? std::nullopt : std::optional{found->second};
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

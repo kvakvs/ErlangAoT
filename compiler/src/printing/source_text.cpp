@@ -4,7 +4,7 @@
 #include <ostream>
 #include <utility>
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 namespace {
 // Whether a form is a function.
 bool function_form(const ast::Form &form) { return std::holds_alternative<ast::Function>(form.value); }
@@ -78,9 +78,9 @@ std::string unary_text(ast::UnaryOperator operation, const std::string &operand)
     const bool sign = !operand.empty() && (operand.front() == '+' || operand.front() == '-');
     return spelling + (word || sign ? " " : "") + operand;
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing
 
-namespace erlang_aot {
+namespace clause {
 void print_source(std::ostream &output, const ast::Module &module, const SourceNotes &notes) {
     const printing::SourcePrinter printer(module, notes);
     const ast::Form *previous = nullptr;
@@ -119,4 +119,4 @@ std::string type_source(const ast::Module &module, const ast::TypeId &id) {
     const SourceNotes notes;
     return printing::SourcePrinter(module, notes).type(id);
 }
-} // namespace erlang_aot
+} // namespace clause

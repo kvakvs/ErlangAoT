@@ -1,6 +1,6 @@
 # Executables
 
-Contract for programs built by `erlangaot -o` or a project build. Positional
+Contract for programs built by `clau -o` or a project build. Positional
 inputs, or exactly one selected project target, link into the `-o` path; a
 project build links each selected executable target to its manifest `output`
 ([linking](#linking), [projects](projects.md#executables)).
@@ -60,7 +60,7 @@ otherwise unchanged and in order, like `escript`.
 
 ## Runtime options
 
-The runtime reads its options from the `ERLANG_AOT_FLAGS` environment variable
+The runtime reads its options from the `CLAUSE_FLAGS` environment variable
 (words split on spaces and tabs, no quoting) and then from the leading
 command-line arguments, so the command line wins. Both are parsed the same
 way; a value goes in the next argument or after `=`.
@@ -77,9 +77,9 @@ way; a value goes in the next argument or after `=`.
 
 On the command line, parsing stops at the first argument that is not a runtime
 option, so `prog data --max-atoms 9` passes all three arguments to the program.
-In `ERLANG_AOT_FLAGS` every word must be a runtime option. An invalid value, a
+In `CLAUSE_FLAGS` every word must be a runtime option. An invalid value, a
 word that is not an option in the variable, or `--args-file` stops the program
-before any module is registered: `erlangaot: runtime failure: <reason>`,
+before any module is registered: `clau: runtime failure: <reason>`,
 exit 70. Process counts are not limited and memory is uncapped by default.
 Byte values are decimal without suffixes and round down to whole words; a
 program reaching a cap fails with `resource_limit`, exit 70
@@ -97,7 +97,7 @@ program reaching a cap fails with `resource_limit`, exit 70
 | Any exception escaping the entry, including `throw` and `exit(normal)` | Report on stderr, 1 |
 | Entry process ended by an exit signal ([processes](processes.md#exit-signals)) | Reported as an uncaught `exit`, 1; reason `normal`: 0 |
 | Runtime startup or infrastructure failure (ABI mismatch, registration, memory before entry) | Message on stderr, 70 |
-| Host memory exhausted (heap, off-heap binary or stack growth refused; no memory cap by default, [memory exhaustion](runtime-heap.md#failure-behavior)) | `erlangaot: runtime failure: entry call failed: out_of_memory`, 70 |
+| Host memory exhausted (heap, off-heap binary or stack growth refused; no memory cap by default, [memory exhaustion](runtime-heap.md#failure-behavior)) | `clau: runtime failure: entry call failed: out_of_memory`, 70 |
 
 Invalid `halt/1` arguments raise `badarg` in the caller. When the entry
 finishes, the program exits: other processes are stopped without running
@@ -130,12 +130,12 @@ only after generated cleanup.
 
 Compiling with an explicit entry (`--entry` or manifest `entry`) adds a startup
 module after the batch's modules. With `--emit` it is published
-as `eav1_start.{obj,o,ll,bc}` next to the module artifacts (the name cannot
+as `clausev1_start.{obj,o,ll,bc}` next to the module artifacts (the name cannot
 collide with a module artifact). It contains a constant
-`abi::v1::StartupDescriptor` ([startup.hpp](../abi/include/erlang_aot/abi/startup.hpp)):
+`abi::v1::StartupDescriptor` ([startup.hpp](../abi/include/clause/abi/startup.hpp)):
 ABI revision, term width, every module descriptor in source order, the entry
 module/function spellings and an escript flag. Its `int main(int, char **)`
-calls the runtime's `erlang_aot_main_v1`, which:
+calls the runtime's `CLAUSE_main_v1`, which:
 
 1. Checks the startup and every module descriptor for ABI revision and width
    before anything is registered; a mismatch exits 70.
@@ -149,26 +149,26 @@ calls the runtime's `erlang_aot_main_v1`, which:
    stdout, then releases every process and shuts the runtime down on every
    path (except `halt(abort)`).
 
-`erlangaot -o` links these objects itself ([linking](#linking)). Manual
+`clau -o` links these objects itself ([linking](#linking)). Manual
 linking (the [native harness recipe](compile.md#run-the-compiled-module-example)
 without a harness source):
 
 ```powershell
 & $tool --emit obj --entry app --artifact-dir build/app app.erl helper.erl
-clang-cl /MT build/app/*.obj build/debug/lib/erlang_runtime.lib /Fe:app.exe
+clang-cl /MT build/app/*.obj build/debug/lib/clause_runtime.lib /Fe:app.exe
 ```
 
-Any Clang-compatible link of the objects with `ErlangAoT::generated_program`
+Any Clang-compatible link of the objects with `Clause::generated_program`
 works the same way (see `tests/compiler/linking/startup.cmake`).
 
 ## Linking
 
-`erlangaot [-O0|-O2|-Os] -o PATH a.erl b.erl ...` (or `--project FILE [--target T] -o PATH`
+`clau [-O0|-O2|-Os] -o PATH a.erl b.erl ...` (or `--project FILE [--target T] -o PATH`
 for one selected target) compiles the batch in memory, adds the startup object
 for the [entry](#entry-selection) and links an executable:
 
 ```sh
-erlangaot -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
+clau -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
 ./build/demo          # build/demo.exe on Windows
 ```
 
@@ -183,12 +183,12 @@ its own section and links with `--gc-sections` (ELF), `-dead_strip` (Mach-O) or
   `<clang> --driver-mode=g++ --target=<triple> -o <staged> <objects> <runtime>`,
   so Clang chooses the platform linker and C/C++ runtime libraries (on Windows it
   locates MSVC and the SDK itself; no developer shell is needed).
-- Runtime: `--runtime-library PATH`, else the `erlang_runtime` archive of the
-  build that produced `erlangaot` (path recorded relative to the executable, e.g.
-  `bin/../lib/erlang_runtime.lib`). Every native object in the archive must match
+- Runtime: `--runtime-library PATH`, else the `clause_runtime` archive of the
+  build that produced `clau` (path recorded relative to the executable, e.g.
+  `bin/../lib/clause_runtime.lib`). Every native object in the archive must match
   the target's architecture and object format; `--target-triple` for another
   target therefore needs a runtime built for it.
-- Objects and the executable are staged in a private `.erlangaot-link-*`
+- Objects and the executable are staged in a private `.clause-link-*`
   directory beside the output, which is removed afterwards. The output is
   replaced only after a successful link, so every failure keeps an existing
   file unchanged. The output must not be a directory or alias an input.
@@ -202,7 +202,7 @@ its own section and links with `--gc-sections` (ELF), `-dead_strip` (Mach-O) or
 | Failure (exit 1) | Diagnostic |
 | --- | --- |
 | No Clang | `cannot find clang++ or clang on PATH; install LLVM/Clang or pass --linker` / `linker not found: X` |
-| No runtime | `runtime library not found: P; build the erlang_runtime target or pass --runtime-library` |
+| No runtime | `runtime library not found: P; build the clause_runtime target or pass --runtime-library` |
 | Not an archive | `runtime library is not a static library: P: ...` |
 | Wrong target | `runtime library P contains x86_64 coff objects, but the executable targets T; ...` |
 | Link error | `linking O failed: <clang> exited with status N:` followed by the linker output (first 64 KiB) |
@@ -219,7 +219,7 @@ Rules follow OTP 29 `escript` for source scripts:
   cannot apply to compiled code and produce a warning.
 - If the first form is not `-module(...)`, the module is
   `<file name with '.' replaced by '_'>__escript` (`?MODULE` included). OTP adds
-  a timestamp/unique suffix; ErlangAoT keeps the name deterministic. The
+  a timestamp/unique suffix; Clause keeps the name deterministic. The
   synthesized declaration occupies line 1, so later line numbers are unchanged.
 - `main/1` is required (`escript does not define main/1`) and implicitly
   exported; other functions follow normal export rules.
@@ -231,7 +231,7 @@ Rules follow OTP 29 `escript` for source scripts:
   127 with `escript: exception <class>: <reason>` on stderr; other rows of the
   exit-status table apply unchanged.
 - Files without `#!` are ordinary modules. (OTP `escript file.erl` would skip
-  their first line; ErlangAoT does not.) Precompiled beam and archive escripts
+  their first line; Clause does not.) Precompiled beam and archive escripts
   are not supported.
 
 ## OTP comparison

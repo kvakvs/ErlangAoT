@@ -1,27 +1,27 @@
 #include <array>
-#include <erlang_aot/runtime/modules.hpp>
+#include <clause/runtime/modules.hpp>
 #include <iostream>
 #include <process_heap.hpp>
 #include <string>
 #include <vector>
 
-extern erlang_aot::abi::v1::GeneratedRegistration register_answer asm("eav1_616e73776572__0.register");
-extern erlang_aot::abi::v1::GeneratedRegistration register_client asm("eav1_636c69656e74__0.register");
+extern clause::abi::v1::GeneratedRegistration register_answer asm("clausev1_616e73776572__0.register");
+extern clause::abi::v1::GeneratedRegistration register_client asm("clausev1_636c69656e74__0.register");
 
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 // Reject incompatible descriptors before reading metadata or publishing callable entries.
 bool rejects_incompatible(Runtime &runtime) {
-    erlang_aot::abi::v1::ModuleDescriptor bad{};
-    bad.abi_version = erlang_aot::abi::v1::version + 1;
+    clause::abi::v1::ModuleDescriptor bad{};
+    bad.abi_version = clause::abi::v1::version + 1;
     bad.term_bits = sizeof(Word) * 8;
-    if (erlang_aot_register_module_v4(&runtime, &bad) == 0) {
+    if (CLAUSE_register_module_v4(&runtime, &bad) == 0) {
         return false;
     }
-    bad.abi_version = erlang_aot::abi::v1::version;
+    bad.abi_version = clause::abi::v1::version;
     bad.term_bits = sizeof(Word) == 8 ? 32 : 64;
-    return erlang_aot_register_module_v4(&runtime, &bad) != 0;
+    return CLAUSE_register_module_v4(&runtime, &bad) != 0;
 }
 
 // Exercise identity with every supported immediate family and native integer endpoints.
@@ -73,8 +73,8 @@ bool calls(Runtime &runtime, ProcessContext &context) {
 int execute(Runtime &runtime) {
     auto *context = runtime.create_context().value();
     const bool success = identity_boundaries(runtime, *context) && calls(runtime, *context);
-    if (runtime.destroy_context(context) != erlang_aot::abi::v1::Status::ok ||
-        runtime.shutdown() != erlang_aot::abi::v1::Status::ok) {
+    if (runtime.destroy_context(context) != clause::abi::v1::Status::ok ||
+        runtime.shutdown() != clause::abi::v1::Status::ok) {
         return 2;
     }
     return success ? 0 : 3;
@@ -83,7 +83,7 @@ int execute(Runtime &runtime) {
 
 // Own explicit startup and registration around real CLI-generated objects.
 int main() {
-    using namespace erlang_aot::runtime;
+    using namespace clause::runtime;
     auto runtime = Runtime::start().value();
     if (!rejects_incompatible(*runtime) || register_answer(runtime.get()) != 0 || register_client(runtime.get()) != 0) {
         return 1;

@@ -2,11 +2,11 @@
 #include "../semantic/symbols.hpp"
 #include "llvm_state.hpp"
 #include "runtime_symbols.hpp"
-#include <erlang_aot/abi/startup.hpp>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/abi/startup.hpp>
+#include <clause/compiler/source.hpp>
 #include <llvm/IR/IRBuilder.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Private constant with exact UTF-8 bytes; the descriptor stores its size separately.
 llvm::Constant *spelling(llvm::Module &output, const std::string_view text, const char *name) {
@@ -73,4 +73,4 @@ void emit_startup(Compilation &compilation, const std::span<const std::unique_pt
     define_main(*output, descriptor(*output, modules, request, word));
     state.modules.push_back(std::move(output));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

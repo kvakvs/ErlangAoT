@@ -3,11 +3,11 @@
 #include "lowering_state.hpp"
 #include "source_locations.hpp"
 #include <array>
-#include <erlang_aot/abi/calls.hpp>
+#include <clause/abi/calls.hpp>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 #include <span>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 enum class Action : std::uint8_t {
     enter,
@@ -930,4 +930,4 @@ llvm::Value *lower_body(ExpressionLowering &state, const ast::ExprId &root) {
     }
     return state.values.at(&state.module.syntax->expression(root));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

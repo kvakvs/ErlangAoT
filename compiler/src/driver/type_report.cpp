@@ -1,7 +1,7 @@
 #include "type_report.hpp"
 #include "../semantic/types/printing.hpp"
 #include "display.hpp"
-#include <erlang_aot/compiler/printing.hpp>
+#include <clause/compiler/printing.hpp>
 #include <iostream>
 #include <map>
 #include <span>
@@ -10,7 +10,7 @@
 // --print-types (docs/semantic.md#--print-types): each module as Erlang source, its functions headed by their
 // declared and inferred signatures and its expressions annotated `Expression :: Type` where inference knows more than
 // term().
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 namespace types = semantic::types;
 
@@ -147,4 +147,4 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
         throw std::runtime_error("cannot write type inspection output");
     }
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

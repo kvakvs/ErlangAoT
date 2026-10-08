@@ -5,7 +5,7 @@
 #include <cmath>
 #include <map>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 struct Segment {
     // Default binary syntax encodes an integer in eight big-endian bits.
@@ -42,8 +42,7 @@ void set_modifier(std::optional<std::u32string> &slot, std::u32string_view name)
 
 // Decode modifier categories independently from defaults and compatibility checks.
 void read_modifier(Segment &result, std::array<std::optional<std::u32string>, 3> &seen,
-                   const std::span<const Token> tokens,
-                   std::size_t &position) {
+                   const std::span<const Token> tokens, std::size_t &position) {
     auto name = tokens[position].text();
     if (name == U"bytes") {
         name = U"binary";
@@ -214,4 +213,4 @@ void append_literal_bits(Value &output, const Value &value, const std::optional<
         append_value(output, value, settings, count);
     }
 }
-} // namespace erlang_aot
+} // namespace clause

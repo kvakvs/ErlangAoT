@@ -18,10 +18,10 @@
 #endif
 
 // The file driver (docs/ports.md#standard-io-and-files): the project library's file module opens it with
-// {spawn_driver, "erlang_aot_file"} and works through port_control/3 operations, each a synchronous system call on
-// the caller's worker. The operations and their replies are an ErlangAoT protocol (FileOperation): a reply starts
+// {spawn_driver, "clause_file"} and works through port_control/3 operations, each a synchronous system call on
+// the caller's worker. The operations and their replies are a Clause protocol (FileOperation): a reply starts
 // with 0 (ok, then the result), 1 (error, then the POSIX reason) or 2 (end of file).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using Bytes = std::vector<std::byte>;
 
@@ -471,4 +471,4 @@ class FileDriver final : public PortDriver {
 } // namespace
 
 std::unique_ptr<PortDriver> file_driver() { return std::make_unique<FileDriver>(); }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

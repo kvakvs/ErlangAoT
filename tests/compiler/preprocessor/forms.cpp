@@ -1,7 +1,7 @@
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/preprocessor.hpp>
 #include <iostream>
 #include <stdexcept>
-using namespace erlang_aot;
+using namespace clause;
 
 // Raw reader events are an embedding API; the production CLI expands macros instead.
 void require(bool condition) {

@@ -9,7 +9,7 @@ alone does not establish implementation. Graphs copy between heaps of one runtim
 (`copy_to`); collection runs at safepoints or on host request
 ([heap contract](../../docs/runtime-heap.md)).
 
-Host [Term](../include/erlang_aot/runtime/terms.hpp) contains an ABI word, an optional
+Host [Term](../include/clause/runtime/terms.hpp) contains an ABI word, an optional
 atom spelling pin and a borrowed heap with a lifetime token and collection count.
 It is not a generated or heap layout. Private layouts use target Word slots that a
 walker parses from headers; admission checks owned range and header shape.
@@ -23,8 +23,8 @@ Compound handles pin stable backing but deny access after context expiration.
 The default zero word is invalid. Root scopes preserve allocating call lifetimes;
 moving GC remains future work.
 
-The implemented term representation retains [v1 names](../../abi/include/erlang_aot/abi/v1.hpp)
-with checked C++ integer helpers in [term.hpp](../../abi/include/erlang_aot/abi/term.hpp).
+The implemented term representation retains [v1 names](../../abi/include/clause/abi/v1.hpp)
+with checked C++ integer helpers in [term.hpp](../../abi/include/clause/abi/term.hpp).
 A generated function uses the native free-function calling convention and returns
 an unsigned pointer-width term, accepting a forward-declared live project context
 and a borrowed term-array pointer. Arity belongs to the resolved identity; a zero-arity array may be null.
@@ -253,7 +253,7 @@ before adding iterators. Immediate tag allocation is fixed by ABI v1; GC/root ma
 and runtime bridging remain implementation decisions.
 
 Continue implementing host services in small steps under `runtime/src/terms/` and
-move each implemented declaration into `runtime/include/erlang_aot/runtime/`.
+move each implemented declaration into `runtime/include/clause/runtime/`.
 Heap structs now reside privately under `runtime/src/terms/`. Define all opaque
 dependencies and review their lifetimes before enabling identity/descriptor APIs.
 Keep unsupported capabilities explicit; a declaration does not expand the compiler

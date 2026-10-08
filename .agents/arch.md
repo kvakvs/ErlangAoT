@@ -1,7 +1,7 @@
 # Architecture
 
-- C++23, project-internal APIs, CMake, warnings as errors. `erlangaot` owns the
-  compiler pipeline; `erlang_runtime` is separately linkable and LLVM-free.
+- C++23, project-internal APIs, CMake, warnings as errors. `clau` owns the
+  compiler pipeline; `clause_runtime` is separately linkable and LLVM-free.
   Stage boundaries exchange owned internal data. Public interchange and readers
   remain deferred; only reader directory locations are reserved.
 
@@ -46,16 +46,16 @@
   `if` (step 10) takes the same paths with no scrutinee or pattern: `semantic::branch_clauses` gives every
   consumer one case/if clause view; exhaustion raises the atom-only `if_clause` (ErrorReason 10).
   Source raises (step 11): `error/1,2,3`, `exit/1`, `throw/1` are body builtins (`semantic::body_builtin`,
-  unqualified via auto-import unless shadowed or suppressed) lowered by `lower_raise` to `erlang_aot_raise_v2`
+  unqualified via auto-import unless shadowed or suppressed) lowered by `lower_raise` to `CLAUSE_raise_v2`
   with `raised_error/exit/throw` (11-13); the payload is the whole reason and the ID the class.
   `catch Expr` (step 12): the walker sets `ExpressionLowering::handler` (and fresh badarg/badarith exits) while
-  `Expr` lowers, so `propagate_failure` and `raise_reason` branch to it; the handler calls `erlang_aot_catch_v1`
+  `Expr` lowers, so `propagate_failure` and `raise_reason` branch to it; the handler calls `CLAUSE_catch_v1`
   (runtime `process/exceptions`: catch value, clears the channel) and re-checks to reach the outer exit for
   halts/runtime failures; a PHI joins the value and the pre-catch bindings are restored (inner names unsafe).
   `try ... of ... catch` (step 13): `semantic::branch_clauses` lists of clauses then catch clauses (`Branch::handler`,
   `first_handler`); the walker protects only the body (`ProtectedScope`), selects of clauses on its value
-  (`try_clause` on exhaustion), and from the handler takes `{class, reason}` (`erlang_aot_exception_v1`) and matches
-  catch clauses from the pre-try bindings; no match re-raises (`erlang_aot_reraise_v1`). All try names stay unsafe.
+  (`try_clause` on exhaustion), and from the handler takes `{class, reason}` (`CLAUSE_exception_v1`) and matches
+  catch clauses from the pre-try bindings; no match re-raises (`CLAUSE_reraise_v1`). All try names stay unsafe.
   `try ... after` (step 14): a second `ProtectedScope` (`afters`) encloses body and clauses; after the join the after
   body is lowered on the normal path (value kept in `AfterPath`), and, when its handler is used, again from the
   handler between `lower_exception` and `reraise`.
@@ -79,12 +79,12 @@
   Binary/map producers finish with `BitOperation::concat` / `MapOperation::from_list`.
 
 - Execution model (step 17 decision, implemented in step 19; `docs/execution-model.md#implementation`):
-  lowering emits native form (`Word f(ctx, args)`, ordinary calls, `erlang_aot.frame` slot marker, `erlang-arity`
+  lowering emits native form (`Word f(ctx, args)`, ordinary calls, `clause.frame` slot marker, `erlang-arity`
   attribute, tail calls as `ret call`); `codegen/frames` (`lower_frames`, run by the backend before inspection and by
   `optimize`) moves each body to `<sym>.body` (`void(ctx)`), prologue = frame header/registers services + resume
   switch, splits after non-tail calls, spills cross-call SSA values to raw slots, hoists constant slot GEPs, and emits
-  only `musttail` transfers via `erlang_aot_enter/tail/return_v1`. Descriptors `<sym>.frame` (7 words: names, arity,
-  body, slots, roots); exported `<sym>` = host wrapper over `erlang_aot_invoke_v1`. Runtime `ProcessStack`
+  only `musttail` transfers via `clause_enter/tail/return_v1`. Descriptors `<sym>.frame` (7 words: names, arity,
+  body, slots, roots); exported `<sym>` = host wrapper over `CLAUSE_invoke_v1`. Runtime `ProcessStack`
   (`process/stack`): flat `std::vector<Word>`, 4-word headers linked by offsets, 256 X registers, uncapped
   by default (opt-in `StackOptions::limit_words` -> `resource_limit`; host refusal `out_of_memory` -> exit 70), bottom frame per invocation contains native exceptions. Exceptions still return
   through callers (channel check). Step 43 yields: `ProcessStack::enter` spends a reduction per entry (4,000 per
@@ -95,7 +95,7 @@
   Bounded per-use expansion reuses tuple matching and rooted construction. Checked
   access validates tag/arity; guard mismatch rejects, body badrecord owns its payload.
   Updates evaluate values, then the record, check it, copy the other fields; `record_info/2` folds to
-  constants. Local native records (31C) lower to `erlang_aot_record_v1` with the module's
+  constants. Local native records (31C) lower to `CLAUSE_record_v1` with the module's
   `<prefix>.records` descriptor table; patterns plan `record_test`/`record_field` nodes; construction
   evaluates explicit fields in source order, native updates the record first. 31D: `-export_record`/
   `-import_record` (`Module::exported_records`/`imported_records`), `semantic::external_record` resolves
@@ -109,8 +109,8 @@
   `<prefix>.funs` (`abi::v1::FunDescriptor`: atom slots, arity, index, external flag, entered `FrameDescriptor`,
   null for an external fun the batch does not export), bound to runtime `FunDefinition`s. Cells `fun_closure` =
   header, untraced `const FunDefinition *`, captured values. `F(Args)` (`semantic::fun_call`: target neither atom
-  nor remote) evaluates the target first; lowering stores the arguments in an array, calls `erlang_aot_apply_v1`
-  (badfun/badarity/undef, appends captures, returns the frame) and the `erlang_aot.apply` marker, which
+  nor remote) evaluates the target first; lowering stores the arguments in an array, calls `CLAUSE_apply_v1`
+  (badfun/badarity/undef, appends captures, returns the frame) and the `clause.apply` marker, which
   `lower_frames` turns into an enter/tail transfer with the array as the registers. Funs order after atoms;
   local < external. Builtin funs and `fun M:F/A` with variables stay `dynamic calls`.
   Closures (step 33): binding analysis gives each anonymous fun clause the scope at the fun (fresh shadowing heads,
@@ -126,10 +126,10 @@
   Dynamic calls (step 35, ABI 8): `ExportDescriptor::frame`; registration binds `ModuleAtoms::module/exports`.
   `semantic::dynamic_call` (non-literal module or function) is no direct call; its children are module, function,
   arguments. `apply/2,3` resolve as body builtins (`ServiceResolution::apply()`, no immediate operation). Codegen
-  `transfer` shares the fun-call path: a preparation service returns the frame (`erlang_aot_call_v1`,
-  `erlang_aot_apply_list_v1`/`erlang_aot_call_list_v1` unpack the list into a 256-word register array), then the
+  `transfer` shares the fun-call path: a preparation service returns the frame (`CLAUSE_call_v1`,
+  `CLAUSE_apply_list_v1`/`CLAUSE_call_list_v1` unpack the list into a 256-word register array), then the
   apply marker. `fun M:F/A` with variables: binding reads in `Function::fun_operands`, built by
-  `erlang_aot_make_external_fun_v1` over `CodeServer::external_fun` (interned, `owns()` admits it).
+  `CLAUSE_make_external_fun_v1` over `CodeServer::external_fun` (interned, `owns()` admits it).
   Builtin bridge (step 36, `docs/builtins.md`): append-only ABI catalog `abi::v1::bridge_builtins` shared by compiler
   and runtime; `CodeServer::builtins()` (`BuiltinRegistry`, transactional batches, registered at runtime startup
   from `erlang_builtins()`, adapters over the inline services) maps names to `BuiltinFrame`s = `FrameDescriptor`
@@ -137,7 +137,7 @@
   into the caller's body. Lookups: `CodeServer::function_frame` (exports, then builtins by atom spelling) for
   `M:F(Args)`/`apply/3`/runtime `fun M:F/A`; registration binds external `FunDescriptor`s without a frame to the
   builtin of their name. Compiler: catalog builtins without an inline operation (`function_exported/3`) are body
-  builtins with `ServiceResolution::builtin` lowered to `erlang_aot_builtin_v1`; `fun F/A` of an auto-imported
+  builtins with `ServiceResolution::builtin` lowered to `CLAUSE_builtin_v1`; `fun F/A` of an auto-imported
   catalog builtin is recorded by `resolve_services` (`Function::builtin_funs`) and becomes the external entry
   `erlang:F/A` (`add_builtin_fun`); `halt/0,1` auto-imported. Step 37: term-access family (`term_access_builtins()`:
   `setelement`, `make_tuple/2,3`, `tuple_to_list`, `list_to_tuple`, `'++'`, `'--'`); `A ++ B`/`A -- B` lower to the
@@ -146,7 +146,7 @@
   OTP's Ryu notation rules). Step 39: library modules (`library/stdlib/{lists,maps}.erl`, original Erlang) join a
   batch in `driver/frontend` `add_library`: modules named by literal atoms (`semantic::referenced_modules`) that no
   input declares (`semantic::declared_module`) are parsed from `linking::library_directory()` (relative to
-  `erlangaot`, `ERLANG_AOT_DEFAULT_LIBRARY`) until closed; they compile, link and publish like inputs.
+  `clau`, `CLAUSE_DEFAULT_LIBRARY`) until closed; they compile, link and publish like inputs.
   Step 40 (`docs/io.md`): catalog entries of module `io` (`io_builtins()`); a qualified call of another module's
   catalog builtin is a service (`semantic::module_builtin`) ahead of call resolution. Runtime `builtins/io_format`
   (scan, control sequences, column tracking, chardata walks), `builtins/io_pretty` (OTP intermediate form with
@@ -171,7 +171,7 @@
   a context, copy the fun/args into it and prepare the first call in the child with the dynamic call services
   (`apply_list_service`/`call_list_service`), so badarity/undef crash the child. Startup queues the entry frame as
   the main process; host `invoke` resumes its own yields without running other processes.
-  Step 43A (`docs/builtins.md#portions`): body bridge builtins lower to `erlang_aot_builtin_frame_v1` + the apply
+  Step 43A (`docs/builtins.md#portions`): body bridge builtins lower to `CLAUSE_builtin_frame_v1` + the apply
   marker (entered like functions; body `length/1` too, `guard_analysis` `portioned`). A builtin portion spends
   `ProcessStack::budget()` units (16 per reduction left), then `trap(continuation, state registers)`; `enter` takes
   the trap, zeroes reductions and suspends at the continuation (`continuation_frame`). Native state = `TrapState`
@@ -186,7 +186,7 @@
   queue + saved position (`peek` splices arrivals, `skip`, `take`, `restart`, `unexamined`); words are roots.
   Step 46 (`docs/processes.md#receive`): receive = `branch_clauses` case on the message; walker `receive()` builds
   loop (peek into root slot) -> match (clauses; `take` before body; last mismatch `skip` + br loop, `CaseJoin::loop`)
-  / wait (`lower_wait` = call transfer into `erlang_aot_wait_frame_v1`'s builtin, then br loop). Runtime
+  / wait (`lower_wait` = call transfer into `CLAUSE_wait_frame_v1`'s builtin, then br loop). Runtime
   `process/receive`: wait -> `ProcessStack::wait` (trap + waiting); executor `parked_`, send wakes, empty queue
   blocks forever, `slice()` runs one process.
   Step 47: after body = last `branch_clauses` clause (no pattern/guard; `first_handler` = message clauses); timeout
@@ -249,7 +249,7 @@
   Step 57F: `SocketService` (`ports/sockets.*`) runs one Boost.Asio io_context thread owning every socket; workers
   post port_control ops and wait; async replies/active messages are `PortValue`s (`ports/value.*`) delivered as
   `PortEvent::Kind::value` via `Executor::socket_event`; accepts create ports (`accept_connection`); drivers learn
-  their port word through `PortDriver::attach`. Library `erlang_aot_socket.erl` + `gen_tcp`/`gen_udp`/`inet`.
+  their port word through `PortDriver::attach`. Library `clause_socket.erl` + `gen_tcp`/`gen_udp`/`inet`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 
@@ -308,7 +308,7 @@
   explicit span (`ProcessContext::visit_roots`); raw spill slots are never roots. `memory/heap_collect`
   `Copier`: Cheney copy of heap+fragments into one new block at a safe point (`ProcessHeap::collect(roots)`
   outside generated code, or inside a `SafePoint` scope). Generated code collects at function entry
-  (`ProcessStack::enter` -> `safepoint(arity)`) and comprehension loop heads (`erlang_aot_safepoint_v1`) when
+  (`ProcessStack::enter` -> `safepoint(arity)`) and comprehension loop heads (`CLAUSE_safepoint_v1`) when
   `wants_collection()` (fragments, or off-heap words >= `binary_limit_words_`); all services are critical
   sections. `lower_frames` spills crossing terms to term slots (`term_value`, `place_slots`). Forwarding words, off-heap sweep, ERTS size sequence, second copy
   to shrink a block under 25% live or above `block_limit` (step 27: a block and the virtual binary heap keep
@@ -323,7 +323,7 @@
   (`HeapStorage::buffers_`) and charges a buffer once to its own budget. Step 31B: native record cells
   (`native_record`: header, untraced `const RecordDefinition *`, values in definition order); module
   registration binds `abi::v1::RecordDescriptor`s into `ModuleAtoms::records` (code server
-  `record_definition`); `erlang_aot_record_v1` (`terms/record_services`) makes/gets/updates/matches/tests
+  `record_definition`); `CLAUSE_record_v1` (`terms/record_services`) makes/gets/updates/matches/tests
   under a `RecordCheck`; walker slots skip the definition word. Revision-6 generated frames
   hold arguments/temporaries in term slots and clear failed candidates; invocations restore the stack
   after native exceptions. Constructors publish initialized cells
@@ -380,16 +380,16 @@
   `driver/entry` right after semantic indexing; contract in `docs/executables.md`. `#!` sources are escripts: `driver/escript` rewrites
   the header, `semantic/escript` exports `main/1`; entry detection prefers them.
 - Startup: a resolved entry sets `CompilationRequest::startup`; `codegen/startup` appends a
-  module (after the inputs, no syntax; artifact `eav1_start`) whose `main` hands a
-  `StartupDescriptor` to runtime `erlang_aot_main_v1`. The runtime ABI-checks all descriptors,
-  parses runtime options (`ERLANG_AOT_FLAGS`, then leading `--max-atoms`/`--args-file`/`--`, `startup/options`),
+  module (after the inputs, no syntax; artifact `clausev1_start`) whose `main` hands a
+  `StartupDescriptor` to runtime `CLAUSE_main_v1`. The runtime ABI-checks all descriptors,
+  parses runtime options (`CLAUSE_FLAGS`, then leading `--max-atoms`/`--args-file`/`--`, `startup/options`),
   registers every module before entry, builds argv, runs the entry in one context and maps
   return/halt/exception/infrastructure outcomes to exit 0/N/1|127/70. `erlang:halt/0,1` records
   `CallError::halted` in the checked channel, so halts unwind like errors.
 - Linking (`linking/`, LLVM-private): positional `-o` keeps objects in memory, stages them in a
-  private `.erlangaot-link-*` directory beside the output, runs `clang --driver-mode=g++
+  private `.clause-link-*` directory beside the output, runs `clang --driver-mode=g++
   --target=<triple>` (`--linker`, else PATH/`%ProgramFiles%/LLVM/bin`) with the runtime archive
-  (`--runtime-library`, else the build's own path relative to `erlangaot`, checked member by member
+  (`--runtime-library`, else the build's own path relative to `clau`, checked member by member
   for arch/object format via LLVM Object), then replaces the output. Project builds (step 7) stage every executable target (manifest `output`/`entry`, CLI `-o`/`--entry`; planner `project/plan`) via `linking::stage_executable`, queue `PendingExecutable`s and `publish_executable` them only after all targets succeed; library targets compile in memory.
 
 - Source printing (`docs/compile.md#source-printing`): frontend `print_source` prints parsed syntax as Erlang source

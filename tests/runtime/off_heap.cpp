@@ -1,19 +1,19 @@
 #include "memory/off_heap.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/bits.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/bits.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 // Off-heap binary ownership invariants that Erlang source cannot observe: buffer references held by
 // refc_binary cells, the per-process off-heap list, budget rollback and the relocation hook.
 namespace {
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 using detail::layout::BinaryBuffer;
 using detail::layout::RefcBinaryCell;
-using Op = erlang_aot::abi::v1::BitOperation;
-using Status = erlang_aot::abi::v1::Status;
+using Op = clause::abi::v1::BitOperation;
+using Status = clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {
@@ -44,8 +44,8 @@ Term slice(ProcessContext &context, const Term &value, std::size_t offset, std::
                            factory.integer(0)->word()};
     std::array<Word, 2> output{};
     GeneratedInvocation call(context.generated_calls());
-    require(erlang_aot_bits_v1(&context, static_cast<std::uint8_t>(Op::extract), input.data(), input.size(),
-                               output.data()) == 0,
+    require(CLAUSE_bits_v1(&context, static_cast<std::uint8_t>(Op::extract), input.data(), input.size(),
+                           output.data()) == 0,
             "slice failed");
     return Term::from_word(output[0], context).value();
 }

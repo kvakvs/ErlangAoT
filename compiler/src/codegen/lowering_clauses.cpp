@@ -4,7 +4,7 @@
 #include "source_locations.hpp"
 #include <algorithm>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Index validated reads once without transferring bindings between candidate environments.
 BindingReads read_bindings(const semantic::Module &module, const semantic::Function &function) {
@@ -177,4 +177,4 @@ void lower_lambda(llvm::IRBuilder<> &builder, llvm::Function &entry, const seman
     initial.lambda = &lambda;
     lower_clauses(initial, *semantic::fun_clauses(lambda.expression->value));
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

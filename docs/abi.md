@@ -4,11 +4,11 @@ Private contract between compiler output and the runtime. It is project-internal
 C++23, not BEAM-compatible and not a general FFI. Objects and runtime must come
 from the same build; older descriptor revisions are rejected before use.
 
-Headers: [v1.hpp](../abi/include/erlang_aot/abi/v1.hpp) (term/context/function
-types), [term.hpp](../abi/include/erlang_aot/abi/term.hpp) (immediate integer
-codec), [status.hpp](../abi/include/erlang_aot/abi/status.hpp),
-[builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp),
-[startup.hpp](../abi/include/erlang_aot/abi/startup.hpp) (program startup).
+Headers: [v1.hpp](../abi/include/clause/abi/v1.hpp) (term/context/function
+types), [term.hpp](../abi/include/clause/abi/term.hpp) (immediate integer
+codec), [status.hpp](../abi/include/clause/abi/status.hpp),
+[builtins.hpp](../abi/include/clause/abi/builtins.hpp),
+[startup.hpp](../abi/include/clause/abi/startup.hpp) (program startup).
 
 ## Terms
 
@@ -37,20 +37,20 @@ Arguments are a borrowed, word-aligned array in source order (null at arity 0).
 The context is live and passed unchanged through calls. A returned word is
 usable only after checking the failure channel.
 
-Symbols: `eav1_<hex module>_<hex function>_<arity>`, lowercase hex of UTF-8
+Symbols: `clausev1_<hex module>_<hex function>_<arity>`, lowercase hex of UTF-8
 bytes, canonical decimal arity; reversible and host-independent. Exported entries
 are external, others internal.
 
 ## Module registration
 
-Each module emits `eav1_<hex module>__0.descriptor` and `.register`. The
+Each module emits `clausev1_<hex module>__0.descriptor` and `.register`. The
 descriptor holds ABI version, term width, export table (name, arity, host
 entry and the `FrameDescriptor` dynamic calls enter), atom spellings
 (UTF-8 pointer/size pairs), native record descriptors (module, name and field
 atom slots, export flag; [native records](native-records.md#representation)) in
 an external `<prefix>.records` table that other modules of a batch reference,
 and fun descriptors in a private `<prefix>.funs` table ([funs](funs.md#representation)). Registration calls
-`erlang_aot_register_module_v4(Runtime*)`, which validates version/width and all
+`CLAUSE_register_module_v4(Runtime*)`, which validates version/width and all
 exports, interns atoms, builds a frozen registry and publishes it with the code
 image in one transaction. Duplicate modules never replace code; any failure
 publishes nothing (already interned atoms stay in the bounded table).
@@ -61,16 +61,16 @@ publishes nothing (already interned atoms stay in the bounded table).
   on the missing service symbol.
 - The descriptor address is the atom-binding key; its image must stay mapped for
   the module lifetime. Each runtime has its own bindings for the same image.
-- Atom expressions read slots via `erlang_aot_atom_v3`; they never intern.
-- A startup object (`eav1_start`) lists every descriptor in a
+- Atom expressions read slots via `CLAUSE_atom_v3`; they never intern.
+- A startup object (`clausev1_start`) lists every descriptor in a
   `StartupDescriptor` and its native `main` calls
-  `erlang_aot_main_v1(argc, argv, descriptor)`, which registers all modules
+  `CLAUSE_main_v1(argc, argv, descriptor)`, which registers all modules
   and runs the entry ([executables](executables.md#startup-object)).
 
 ## Failure channel (revision 2)
 
 Errors are not encoded in term bits. After every non-tail generated call the
-caller checks `erlang_aot_call_failed_v2(context)` before using the result or
+caller checks `CLAUSE_call_failed_v2(context)` before using the result or
 evaluating the next argument. On failure the callee returns an invalid zero word.
 
 | Outcome | Transport |
@@ -81,7 +81,7 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | Comprehensions | `error:{bad_generator, Tail}`, `error:{bad_filter, Value}`, `error:{bad_generators, Inputs}` (`ErrorReason` 16-18); a strict generator's rejection is `{badmatch, Element}` |
 | Record access, bad arguments, arithmetic, maps | `badrecord`, `badarg`, `badarith`, `badmap`/`badkey` |
 | Native record field missing | `ErrorReason::badfield` (20), payload `{{Module, Name}, Field}` |
-| Calling a value (`F(Args)`) | `ErrorReason::badfun` (22, payload the value), `badarity` (23, payload `{Fun, Args}`), `undef` (24), recorded by `erlang_aot_apply_v1` ([funs](funs.md)) |
+| Calling a value (`F(Args)`) | `ErrorReason::badfun` (22, payload the value), `badarity` (23, payload `{Fun, Args}`), `undef` (24), recorded by `CLAUSE_apply_v1` ([funs](funs.md)) |
 | Dynamic calls (`M:F(Args)`, `apply/2,3`, `fun M:F/A` with variables) | `badarg` for a non-atom module or function, an improper argument list or an invalid arity; `undef` when no module of the program exports the function; `badfun`/`badarity` as above ([funs](funs.md#dynamic-calls)) |
 | External native construction without a value | `ErrorReason::novalue` (21), payload `{{Module, Name}, Field}` |
 | Integer result past the size limit | Service outcome `ValueOutcome::system_limit` (3): a guard rejects, a body raises `error:system_limit` (`ErrorReason` 19) |
@@ -90,9 +90,9 @@ evaluating the next argument. On failure the callee returns an invalid zero word
 | `erlang:error/1,2,3`, `exit/1`, `throw/1`, `erlang:raise/3` | `raised_error`/`raised_exit`/`raised_throw`: class from the ID, owned payload is the whole reason |
 | `erlang:halt/0,1` | `CallError::halted` with `halt_status` (and slogan) |
 
-Reasons are typed IDs recorded by `erlang_aot_raise_v2`; the three `raised_*`
+Reasons are typed IDs recorded by `CLAUSE_raise_v2`; the three `raised_*`
 IDs select class `exit` or `throw` (otherwise `error`) and carry any term as the
-reason. `error/2,3` raise through `erlang_aot_error_v1(context, reason, args)`,
+reason. `error/2,3` raise through `CLAUSE_error_v1(context, reason, args)`,
 which also keeps a list `args` for the top stack frame. First failure wins;
 nested invocations share
 the channel. `GeneratedInvocation` is the host scope: it checks pending failures
@@ -102,7 +102,7 @@ Raw entry callers must open a `GeneratedInvocation`; normal hosts use
 `ResolvedFunction::call`.
 
 `catch Expr` redirects every failure check and raise inside `Expr` to a handler
-block that calls `erlang_aot_catch_v1(context, slot)`. For a pending Erlang
+block that calls `CLAUSE_catch_v1(context, slot)`. For a pending Erlang
 exception it writes the catch value to the root slot and clears the channel:
 the thrown term, `{'EXIT', Reason}` for an exit, or `{'EXIT', {Reason, []}}`
 for an error (typed reasons become their OTP terms such as `{badmatch, V}`;
@@ -112,12 +112,12 @@ function exit. Bindings made inside `Expr` are unsafe afterwards, so the join
 only merges the value.
 
 `try Body of ... catch ... end` protects only `Body` the same way. Its handler
-calls `erlang_aot_exception_v2(context, class_slot, reason_slot, stack_slot)`,
+calls `CLAUSE_exception_v2(context, class_slot, reason_slot, stack_slot)`,
 which writes the class atom (`error`, `exit` or `throw`), the reason and the
 stack trace term to root slots and clears the channel (halts and infrastructure failures stay pending as for
 `catch`). Catch clauses then match `Class:Reason` with ordinary patterns and
 guards; an omitted class matches `throw`, and a named stack variable binds the
-stack term. When none matches, `erlang_aot_reraise_v2(context, class, reason,
+stack term. When none matches, `CLAUSE_reraise_v2(context, class, reason,
 stack)` records the exception again with a `raised_*` reason and the same
 stack, which reports and catches exactly like the original.
 `of` clauses select on the body value and raise `{try_clause, Value}`
@@ -144,8 +144,8 @@ Bitstring generators use ordinary pattern extraction plus a final
 `try ... after A end` adds a second protection around the body and all `of`
 and catch clauses. On the normal path `A` runs after the selected value is
 rooted and its value is discarded. The after handler takes the exception with
-`erlang_aot_exception_v2`, runs a second copy of `A` and re-raises with
-`erlang_aot_reraise_v2`; an exception or failure inside `A` leaves through the
+`CLAUSE_exception_v2`, runs a second copy of `A` and re-raises with
+`CLAUSE_reraise_v2`; an exception or failure inside `A` leaves through the
 enclosing handler instead, replacing the original. Halts and infrastructure
 failures skip `A`. Root slots belong to the function frame, so every path
 releases them at the function exit.
@@ -160,7 +160,7 @@ innermost 8 named frames (BEAM's default `backtrace_depth`); the term
 or report asks for it. The top frame shows the `error/2,3` argument list
 instead of the arity when that argument is a list.
 
-`erlang:raise(Class, Reason, Stack)` (`erlang_aot_reraise_v2`) accepts the
+`erlang:raise(Class, Reason, Stack)` (`CLAUSE_reraise_v2`) accepts the
 stacks BEAM accepts: a proper list of `{M, F, A}` (completed with a `[]`
 location) or `{M, F, A, Location}` with atom `M`, `F` and a list `Location`,
 cut to 8 entries; the stack is then kept as given and frames are no longer
@@ -178,25 +178,25 @@ Differences from OTP, all visible only in the stack term:
   function appears.
 - A tail call releases the caller's frame (step 19), so, as in OTP, a caller
   that ended in a tail call is missing from the trace. OTP also turns calls to
-  functions that never return into tail calls; ErlangAoT does not.
+  functions that never return into tail calls; Clause does not.
 - `{Fun, Args}` stack entries of `erlang:raise/3` are still rejected.
 
 ## Frames and transfers
 
 Generated functions run on explicit frames ([execution model](execution-model.md),
-step 19; services in [frames.hpp](../abi/include/erlang_aot/abi/frames.hpp)).
+step 19; services in [frames.hpp](../abi/include/clause/abi/frames.hpp)).
 Each function has a `<symbol>.frame` descriptor (`FrameDescriptor`: module
 descriptor, module and function atom slots, arity, body code, slot count, term
 slot count; external for exported functions) and an internal `<symbol>.body`
 of type `void(void *context)`. An exported `<symbol>` keeps the `TermWord(Context *,
 const TermWord *)` signature as a host entry calling
-`erlang_aot_invoke_v1(context, frame, arguments)`.
+`CLAUSE_invoke_v1(context, frame, arguments)`.
 
-- A body reads its frame header (`erlang_aot_frame_v1`) and the registers
-  (`erlang_aot_registers_v1`) on entry and switches on the header's resume
+- A body reads its frame header (`CLAUSE_frame_v1`) and the registers
+  (`CLAUSE_registers_v1`) on entry and switches on the header's resume
   word. It leaves only by `musttail` calls of the code that
-  `erlang_aot_enter_v1` (call), `erlang_aot_tail_v1` (tail call) or
-  `erlang_aot_return_v1` (return) give back.
+  `CLAUSE_enter_v1` (call), `CLAUSE_tail_v1` (tail call) or
+  `CLAUSE_return_v1` (return) give back.
 - Arguments occupy the first frame slots; every evaluated value is stored in a
   term slot before the next expression or call. Failed candidates clear their
   slots. Values a body still needs after a call or a loop-head safepoint are
@@ -210,32 +210,32 @@ const TermWord *)` signature as a host entry calling
   `StackOptions::limit_words` records `resource_limit` (infrastructure
   failures).
 - A call of a function value passes its arguments, and the fun's captured
-  values after them, in the registers; `erlang_aot_apply_v1` returns the
+  values after them, in the registers; `CLAUSE_apply_v1` returns the
   `FrameDescriptor` the transfer enters ([funs](funs.md#representation)).
-- Safepoints: `erlang_aot_enter_v1`/`erlang_aot_tail_v1` collect before
+- Safepoints: `CLAUSE_enter_v1`/`CLAUSE_tail_v1` collect before
   pushing the callee frame (its arguments are register roots), and
-  `erlang_aot_safepoint_v1(context)` at each comprehension loop head collects
+  `CLAUSE_safepoint_v1(context)` at each comprehension loop head collects
   in place, when the heap asks for it. Every other service is a critical
   section that never moves the heap
   ([collection in generated code](runtime-heap.md#collection-in-generated-code)).
 
 ## Runtime services
 
-Generated code calls checked C++ services: `erlang_aot_exact_v1` (exact
-equality), `erlang_aot_immediate_v1` (immediate predicates/queries),
-`erlang_aot_construct_v1`, `erlang_aot_inspect_v1`, `erlang_aot_integer_v1`,
-`erlang_aot_float_v1`, `erlang_aot_map_v1`, `erlang_aot_bits_v1`,
-`erlang_aot_record_v1` (native record make/get/update/match/test under a
+Generated code calls checked C++ services: `CLAUSE_exact_v1` (exact
+equality), `CLAUSE_immediate_v1` (immediate predicates/queries),
+`CLAUSE_construct_v1`, `CLAUSE_inspect_v1`, `CLAUSE_integer_v1`,
+`CLAUSE_float_v1`, `CLAUSE_map_v1`, `CLAUSE_bits_v1`,
+`CLAUSE_record_v1` (native record make/get/update/match/test under a
 `RecordCheck`; outcomes `bad_record`, `bad_field`, `no_match`),
-`erlang_aot_make_fun_v1` (build a fun of a `FunDescriptor`). Each returns
+`CLAUSE_make_fun_v1` (build a fun of a `FunDescriptor`). Each returns
 success, semantic error (`badarg`/`badarith`/...) or infrastructure failure and
-writes output only on success. `erlang_aot_display_v1` ([output.hpp](../abi/include/erlang_aot/abi/output.hpp))
+writes output only on success. `CLAUSE_display_v1` ([output.hpp](../abi/include/clause/abi/output.hpp))
 prints one `erlang:display/1` line and yields `true`; it has no semantic error.
-`erlang_aot_halt_v1` never succeeds: it records a halt request
+`CLAUSE_halt_v1` never succeeds: it records a halt request
 (`CallError::halted` with the exit status) or `badarg`, so the caller unwinds.
 Linker spellings follow the target's Itanium or Microsoft C++ mangling.
 
-`erlang_aot_builtin_frame_v1(context, builtin)` ([builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp))
+`CLAUSE_builtin_frame_v1(context, builtin)` ([builtins.hpp](../abi/include/clause/abi/builtins.hpp))
 returns the `FrameDescriptor` of the production builtin with index `builtin` in
 `abi::v1::bridge_builtins` (append-only); generated code enters it like a
 function with the arguments in the registers, and errors and failures go to the
@@ -274,6 +274,6 @@ success.
 | 3 | Atom spellings and slots in descriptors |
 | 4 | Mandatory generated root scopes |
 | 5 | Explicit process frames and transfers |
-| 6 | Native record descriptors in module descriptors, `erlang_aot_record_v1` |
-| 7 | Fun descriptors in module descriptors, `erlang_aot_make_fun_v1`, `erlang_aot_apply_v1` |
-| 8 | Export descriptors name their `FrameDescriptor`; dynamic call services `erlang_aot_call_v1`, `erlang_aot_apply_list_v1`, `erlang_aot_call_list_v1`, `erlang_aot_make_external_fun_v1` |
+| 6 | Native record descriptors in module descriptors, `CLAUSE_record_v1` |
+| 7 | Fun descriptors in module descriptors, `CLAUSE_make_fun_v1`, `CLAUSE_apply_v1` |
+| 8 | Export descriptors name their `FrameDescriptor`; dynamic call services `CLAUSE_call_v1`, `CLAUSE_apply_list_v1`, `CLAUSE_call_list_v1`, `CLAUSE_make_external_fun_v1` |

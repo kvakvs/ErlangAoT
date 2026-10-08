@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Type-only punctuation is handled before requiring a shared arithmetic identity.
 ast::BinaryOperator type_operation(const OperatorInfo &info) {
@@ -86,4 +86,4 @@ std::vector<ast::TypeId> FormParser::type_elements(const std::u32string_view clo
     expect(close);
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

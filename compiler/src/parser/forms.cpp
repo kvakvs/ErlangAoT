@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 FormParser::FormParser(const std::span<const Token> tokens, const Token &end, ast::Builder &builder,
                        GrammarBudget budget)
     : cursor_(tokens, end), builder_(builder), nodes_(budget.nodes), nesting_(budget.nesting), work_(budget.work),
@@ -98,4 +98,4 @@ ast::FormValue FormParser::attribute_body(ast::Atom name, const std::vector<ast:
     return type_declaration(name, arguments.front());
 }
 
-} // namespace erlang_aot
+} // namespace clause

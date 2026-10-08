@@ -144,7 +144,7 @@ errors() ->
         {"~w", x}
     ].
 
-%% Valid OTP control sequences ErlangAoT does not implement (docs/io.md).
+%% Valid OTP control sequences Clause does not implement (docs/io.md).
 unsupported() ->
     [
         {"~e", [1.0]},

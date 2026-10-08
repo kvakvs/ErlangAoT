@@ -4,7 +4,7 @@
 #include <utility>
 
 // Terms of exit signals and monitor messages, shared by process signals (signals.cpp) and ports (ports.cpp).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Whether `term` is the atom spelled `name`.
 bool is_atom(const Term &term, std::string_view name);
 // The atom `name`; a full atom table fails like exhausted memory (throws std::bad_alloc).
@@ -33,4 +33,4 @@ class Executor::Running final {
     // The running process before the scope: itself on a worker, none for a host invocation.
     ProcessContext *saved_;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

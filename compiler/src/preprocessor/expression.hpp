@@ -3,7 +3,7 @@
 #include "value.hpp"
 #include <functional>
 
-namespace erlang_aot {
+namespace clause {
 enum class ExprKind : std::uint8_t {
     literal,
     variable,
@@ -77,4 +77,4 @@ bool guard_signature(std::u32string_view name, std::size_t arity);
 bool condition(std::span<const Token> input, std::size_t depth,
                const std::function<bool(std::u32string_view)> &defined);
 Value parse_term(std::span<const Token> input, std::size_t depth);
-} // namespace erlang_aot
+} // namespace clause

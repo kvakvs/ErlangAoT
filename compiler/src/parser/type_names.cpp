@@ -1,7 +1,7 @@
 #include "forms.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Pin parser-only builtin classification to erl_internal:is_type/2 at the grammar baseline.
 bool predefined(std::u32string_view name, std::size_t arity) {
@@ -97,4 +97,4 @@ ast::TypeValue FormParser::type_application(std::optional<ast::Atom> module, ast
     return ast::TypeApplication{
         .module = std::move(module), .name = std::move(name), .predefined = builtin, .arguments = std::move(arguments)};
 }
-} // namespace erlang_aot
+} // namespace clause

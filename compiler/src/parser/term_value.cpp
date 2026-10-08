@@ -3,7 +3,7 @@
 #include "parsing/operator_info.hpp"
 #include <charconv>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Apply exact map replacement independently of literal traversal.
 void map_entry(Value &result, const Value &key, Value mapped, std::size_t &work) {
@@ -36,7 +36,7 @@ Value TermNormalizer::operator()(const ast::IntegerLiteral &value) const {
     Token token;
     token.kind = TokenKind::integer;
     token.value = value.value;
-    return erlang_aot::literal_value(token);
+    return clause::literal_value(token);
 }
 
 Value TermNormalizer::operator()(const ast::FloatLiteral &value) const { return floating(value.value); }
@@ -144,4 +144,4 @@ Value TermNormalizer::operator()(const ast::RemoteFunReference &value) const {
     result.elements = {atom(module->name), atom(name->name), integer(count)};
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

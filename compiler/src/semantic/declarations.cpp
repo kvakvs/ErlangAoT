@@ -3,9 +3,9 @@
 #include "records.hpp"
 #include "symbols.hpp"
 #include <charconv>
-#include <erlang_aot/compiler/source.hpp>
+#include <clause/compiler/source.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 void report(const Module &module, const ast::NodeSource *source, std::string message, const Reporter &reporter,
             const Severity severity) {
     Diagnostic diagnostic{.code = DiagnosticCode::invalid_context,
@@ -140,4 +140,4 @@ std::unique_ptr<Module> index(const ast::Module &syntax, std::string file, const
     }
     return module;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

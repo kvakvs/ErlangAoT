@@ -4,7 +4,7 @@
 #include "paths.hpp"
 #include <unordered_set>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 struct Collection {
     // Preserve first-spelling order while identifying physical aliases in expected linear time.
@@ -40,4 +40,4 @@ std::vector<std::filesystem::path> target_sources(const std::filesystem::path &b
     }
     return result.paths;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

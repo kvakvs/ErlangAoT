@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-using namespace erlang_aot::codegen;
+using namespace clause::codegen;
 static_assert(!std::is_copy_constructible_v<CompilationRequest>);
 static_assert(!std::is_copy_constructible_v<CompilationInput>);
 static_assert(!std::is_copy_constructible_v<CompilationResult>);
@@ -28,7 +28,7 @@ CompilationResult successful_result() {
     Compilation compilation(CompilationRequest{});
     auto &result = compilation.result();
     require(result.status() == CompilationStatus::incomplete, "new owner reported success");
-    result.report({DiagnosticLevel::warning, "owned warning", erlang_aot::LogicalLocation{"a.erl", 2, 3}, "a"});
+    result.report({DiagnosticLevel::warning, "owned warning", clause::LogicalLocation{"a.erl", 2, 3}, "a"});
     require(result.add_output(output()), "incomplete result refused output");
     require(result.complete(), "warning incorrectly failed compilation");
     require(!result.add_output(output()), "completed result accepted more output");

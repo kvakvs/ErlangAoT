@@ -1,10 +1,10 @@
 // Source syntax and recovery goldens live in frontend_cli; this suite retains API-only invariants.
 #include "ast/builder.hpp"
-#include <erlang_aot/compiler/parser.hpp>
+#include <clause/compiler/parser.hpp>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot;
+using namespace clause;
 static_assert(!std::is_convertible_v<ast::ExprId, ast::PatternSyntaxId>);
 
 // Keep syntax, ownership and provenance checks active outside assertion builds.

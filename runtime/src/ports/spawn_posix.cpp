@@ -12,7 +12,7 @@ extern char **environ;
 
 // Spawned programs on Linux and macOS (docs/ports.md#drivers): posix_spawn with pipes for stdin and stdout;
 // {spawn, Command} runs `/bin/sh -c Command`, as OTP does.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // The POSIX reason of an error number from posix_spawn or pipe.
 std::string reason(int error) {
@@ -171,4 +171,4 @@ std::expected<Spawned, DriverError> spawn_program(const SpawnRequest &request, c
     }
     return handles.parent_ends(*pid);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

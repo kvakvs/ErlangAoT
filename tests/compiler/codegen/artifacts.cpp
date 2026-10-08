@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 
-using namespace erlang_aot;
+using namespace clause;
 namespace fs = std::filesystem;
 
 // Keep filesystem checks active in all configurations.
@@ -79,7 +79,7 @@ void failure(const fs::path &root) {
     rejects([&] { artifacts::publish(outputs, root, {}, ".obj"); });
     require(read(root / (artifacts::encoded_name("preserve") + ".ll")) == "sentinel", "failed batch replaced output");
     for (const auto &entry : fs::directory_iterator(root)) {
-        require(!entry.path().filename().string().starts_with(".erlangaot-stage-"), "staging directory leaked");
+        require(!entry.path().filename().string().starts_with(".clause-stage-"), "staging directory leaked");
     }
 }
 

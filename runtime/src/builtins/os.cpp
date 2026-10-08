@@ -12,7 +12,7 @@
 
 // The os builtins of the bridge (docs/ports.md#subprocesses): os:type/0 and os:getenv/1; os:cmd/1 is library
 // Erlang over a port.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // The atom `name`.
 Term atom(ProcessContext &context, std::string_view name) { return need(TermFactory(context).atom(name)); }
@@ -84,8 +84,8 @@ constexpr std::array OS_BUILTINS{
     typed_entry<getenv>("os", "getenv"),
 };
 } // namespace
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 std::span<const BuiltinEntry> os_builtins() noexcept { return builtins::OS_BUILTINS; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,16 +1,16 @@
 #include <algorithm>
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Code;
-using erlang_aot::abi::v1::frame_header_words;
-using erlang_aot::abi::v1::frame_resume_word;
-using erlang_aot::abi::v1::FrameDescriptor;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Code;
+using clause::abi::v1::frame_header_words;
+using clause::abi::v1::frame_resume_word;
+using clause::abi::v1::FrameDescriptor;
+using clause::abi::v1::Status;
 
 namespace {
 // These checks remain active in optimized native consumers.
@@ -159,7 +159,7 @@ void trace_body(void *context) {
 void traces(ProcessContext &context) {
     GeneratedInvocation scope(context.generated_calls());
     active = &context.stack();
-    const erlang_aot::abi::v1::ModuleDescriptor module{};
+    const clause::abi::v1::ModuleDescriptor module{};
     const FrameDescriptor named{&module, 0, 0, 0, &trace_body, 2, 1};
     active->invoke(named, nullptr);
     require(observed == std::vector<Word>{1, 1, 0}, "trace or term slot enumeration changed");
@@ -180,7 +180,7 @@ void root_set(Runtime &runtime) {
     {
         GeneratedInvocation invocation(context.generated_calls());
         context.generated_calls().fail({.code = CallError::erlang_exception,
-                                        .reason = erlang_aot::abi::v1::ErrorReason::badmatch,
+                                        .reason = clause::abi::v1::ErrorReason::badmatch,
                                         .value = payload,
                                         .arguments = arguments,
                                         .stack = stack});

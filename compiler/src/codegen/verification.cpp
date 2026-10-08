@@ -5,7 +5,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <string>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Preserve verifier text and the LLVM module identifier without inventing Erlang source coordinates.
 bool reject(CompilationResult &result, const llvm::Module &module, const std::string &reason) {
@@ -78,4 +78,4 @@ bool verify_ir(Compilation &compilation) {
     }
     return true;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

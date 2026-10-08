@@ -14,7 +14,7 @@
 
 // The I/O service of a runtime (docs/ports.md#io-thread): it reads the input of ports and hands it, framed, to the
 // executor, writes queued port output, and reports the exit status of spawned programs.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // One unit of port input after framing: data (a stream chunk, a packet or a whole line), a line part (eol, noeol),
 // the end of input, a read or write error with its POSIX reason, or a spawned program's exit status.
 struct PortInput final {
@@ -135,4 +135,4 @@ class IoService {
 
 // The I/O service of this platform.
 std::unique_ptr<IoService> make_io_service(IoService::Deliver deliver);
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

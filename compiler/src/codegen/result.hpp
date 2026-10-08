@@ -1,13 +1,13 @@
 #pragma once
 #include "output.hpp"
+#include <clause/compiler/diagnostic.hpp>
 #include <cstdint>
-#include <erlang_aot/compiler/diagnostic.hpp>
 #include <optional>
 #include <span>
 #include <string>
 #include <vector>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 enum class DiagnosticLevel : std::uint8_t { note, warning, error };
 enum class CompilationStatus : std::uint8_t { incomplete, succeeded, failed };
 
@@ -62,4 +62,4 @@ class CompilationResult {
     // Make lost diagnostic details observable when reporting itself fails.
     bool diagnostic_capture_failed_ = false;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -12,7 +12,7 @@
 
 // Spawned programs on Windows (docs/ports.md#drivers): CreateProcessW with anonymous pipes for stdin and stdout; the
 // child inherits exactly its three standard handles.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // A handle closed when it goes out of scope unless released.
 class Handle final {
@@ -303,4 +303,4 @@ std::expected<Spawned, DriverError> spawn_program(const SpawnRequest &request, c
                    .child = std::bit_cast<std::intptr_t>(process->hProcess),
                    .os_pid = process->dwProcessId};
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

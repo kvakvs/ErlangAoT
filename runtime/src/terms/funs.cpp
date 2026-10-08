@@ -3,10 +3,10 @@
 #include "../memory/heap_storage.hpp"
 #include "term_layout.hpp"
 #include "terms.hpp"
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Keep allocation failures distinct from the configured backing ceiling.
 TermError heap_error(HeapError error) {
@@ -139,4 +139,4 @@ TermResult<void> print_fun(const Term &value, TermStyle, TextOutput &out) {
     return {};
 }
 } // namespace detail
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

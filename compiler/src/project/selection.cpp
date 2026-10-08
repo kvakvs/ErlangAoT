@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 // List available names in manifest order for actionable selector diagnostics.
 std::string available(const Manifest &manifest) {
@@ -43,4 +43,4 @@ std::vector<std::size_t> select_targets(const Manifest &manifest, const std::spa
     }
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

@@ -1,7 +1,7 @@
 #pragma once
-#include <erlang_aot/runtime/output.hpp>
+#include <clause/runtime/output.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Accumulate rendered bytes, latching overflow instead of growing past the caller's limit.
 class TextOutput final {
   public:
@@ -32,4 +32,4 @@ TermResult<void> print_float(const Term &value, TermStyle style, TextOutput &out
 TermResult<void> print_bits(const Term &value, TermStyle style, TextOutput &out);
 // Display style prints a flat list of printable Latin-1 bytes as a string; false leaves output untouched.
 TermResult<bool> print_display_string(const Term &list, TextOutput &out);
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

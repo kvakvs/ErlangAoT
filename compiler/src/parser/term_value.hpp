@@ -1,8 +1,8 @@
 #pragma once
 #include "preprocessor/expression.hpp"
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 
-namespace erlang_aot {
+namespace clause {
 // Literal normalization shares the module work allowance, including rejected forms.
 inline void literal_work(std::size_t &remaining, const std::size_t amount) {
     if (amount > remaining) {
@@ -42,4 +42,4 @@ class TermNormalizer {
     Value child(const ast::ExprId &id) const;
     void segment(Value &output, const ast::BinarySegment &value) const;
 };
-} // namespace erlang_aot
+} // namespace clause

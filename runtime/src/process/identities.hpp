@@ -1,6 +1,6 @@
 #pragma once
 #include <atomic>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/runtime/terms.hpp>
 #include <shared_mutex>
 #include <utility>
 #include <vector>
@@ -8,7 +8,7 @@
 // Pid and port numbers (docs/terms.md#pids-and-references, docs/ports.md#identity): one process-wide sequence of
 // each kind that is never recycled, so the pid or port word of another runtime or a number never issued is
 // rejected like a forged word.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 class IdentityNumbers final {
   public:
     // Reserve the next pid or port number for this runtime; resource_limit once the payload is exhausted.
@@ -44,4 +44,4 @@ Word pid_number(Word word) noexcept;
 // The immediate port word of a port number, and the number of a port word.
 Word port_word(Word number) noexcept;
 Word port_number(Word word) noexcept;
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

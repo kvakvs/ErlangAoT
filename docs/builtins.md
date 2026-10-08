@@ -8,7 +8,7 @@ dynamic calls and as fun values.
 ## Which builtins exist
 
 The bridge catalog `abi::v1::bridge_builtins`
-([builtins.hpp](../abi/include/erlang_aot/abi/builtins.hpp)) lists every
+([builtins.hpp](../abi/include/clause/abi/builtins.hpp)) lists every
 builtin both the compiler and the runtime know:
 
 - the guard BIFs: type tests (`is_atom/1` … `is_tuple/1`, `is_function/1,2`),
@@ -55,7 +55,7 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
 | Source | Path |
 | --- | --- |
 | `abs(X)`, `X + Y`, `erlang:display(X)`, `halt()`, `error(R)` | Inline services, as before the bridge |
-| `erlang:function_exported(M, F, A)`, `setelement(I, T, V)`, `A ++ B`, `A -- B`, `length(L)` in a body (catalog builtins without an inline service) | Entered like a function: `erlang_aot_builtin_frame_v1(context, index)` gives the builtin's frame, the arguments go in the registers ([portions](#portions)) |
+| `erlang:function_exported(M, F, A)`, `setelement(I, T, V)`, `A ++ B`, `A -- B`, `length(L)` in a body (catalog builtins without an inline service) | Entered like a function: `CLAUSE_builtin_frame_v1(context, index)` gives the builtin's frame, the arguments go in the registers ([portions](#portions)) |
 | `fun abs/1`, `fun erlang:'+'/2` | External fun `erlang:F/A`; registration binds it to the builtin |
 | `M:F(Args)`, `apply(M, F, Args)`, runtime `fun M:F/A` | The code server finds a module's export first, then a builtin |
 
@@ -68,7 +68,7 @@ a direct call of an unknown one is `unknown module erlang`, `fun erlang:F/A` or
   OTP's; `display/1`, `raise/3`, `function_exported/3`, `make_tuple/2,3`, `port_info/1,2`, `port_call/2,3` and
   `ports/0` need the `erlang:` prefix ([ports](ports.md#builtins-and-port-messages)).
 - A builtin has a `FrameDescriptor` with a null body (`BuiltinFrame`). Entering
-  it (`erlang_aot_enter_v1`, `erlang_aot_tail_v1`) pushes no frame: the
+  it (`CLAUSE_enter_v1`, `CLAUSE_tail_v1`) pushes no frame: the
   builtin runs on the registers and its result returns into the caller's
   body, so a builtin in tail position returns to the caller's caller.
 - Errors are the ones the inline lowering raises in a body: `badarg`,
@@ -169,7 +169,7 @@ functions of typed parameters ([typed.hpp](../runtime/src/builtins/typed.hpp)),
 
 ## Registration
 
-- `BuiltinRegistry` ([builtin_registry.hpp](../runtime/include/erlang_aot/runtime/builtin_registry.hpp)),
+- `BuiltinRegistry` ([builtin_registry.hpp](../runtime/include/clause/runtime/builtin_registry.hpp)),
   owned by the `CodeServer`, maps exact module/function/arity to a
   `BuiltinFrame`. `add` takes a batch of `BuiltinEntry`s and registers all or
   none: an empty name, more than 255 arguments, a missing implementation, or a

@@ -1,6 +1,6 @@
 #include "children.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 void Children::qualifier(const Qualifier &value) const {
     source(value.source);
     std::visit([this](const auto &item) { qualifier_value(item); }, value.value);
@@ -67,4 +67,4 @@ void Children::operator()(const BinaryComprehension &value) const {
     child(value.expression);
     qualifiers(value.qualifiers);
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

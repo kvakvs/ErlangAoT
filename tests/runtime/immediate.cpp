@@ -1,13 +1,13 @@
 #include <array>
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/terms.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 
 namespace {
-using namespace erlang_aot::runtime;
-using Encoding = erlang_aot::abi::v1::NativeIntegerEncoding;
+using namespace clause::runtime;
+using Encoding = clause::abi::v1::NativeIntegerEncoding;
 
 // Keep behavior assertions active in optimized runtime-only builds too.
 void require(bool condition, const char *message) {

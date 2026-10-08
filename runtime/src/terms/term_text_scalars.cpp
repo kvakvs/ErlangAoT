@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <span>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Decode one code point from validated atom UTF-8, advancing past its bytes.
 char32_t next_code_point(std::string_view text, std::size_t &position) {
@@ -279,4 +279,4 @@ TermResult<bool> print_display_string(const Term &list, TextOutput &out) {
     out.append("\"");
     return true;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

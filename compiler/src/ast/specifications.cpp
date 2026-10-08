@@ -1,6 +1,6 @@
 #include "children.hpp"
 
-namespace erlang_aot::ast {
+namespace clause::ast {
 void Children::signature(const SpecificationSignature &value) const {
     source(value.source);
     if (!value.function.result) {
@@ -28,4 +28,4 @@ void Children::operator()(const Specification &value) const {
         signature(overload);
     }
 }
-} // namespace erlang_aot::ast
+} // namespace clause::ast

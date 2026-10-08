@@ -2,12 +2,12 @@
 #include "terms.hpp"
 #include "terms/structural_order.hpp"
 #include <array>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/funs.hpp>
-#include <erlang_aot/abi/modules.hpp>
-#include <erlang_aot/runtime/modules.hpp>
-#include <erlang_aot/runtime/output.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/funs.hpp>
+#include <clause/abi/modules.hpp>
+#include <clause/runtime/modules.hpp>
+#include <clause/runtime/output.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -15,11 +15,11 @@
 #include <utility>
 #include <vector>
 
-// Fun cells, erlang_aot_make_fun_v1, erlang_aot_apply_v1 and the dynamic call services over hand-written
+// Fun cells, CLAUSE_make_fun_v1, CLAUSE_apply_v1 and the dynamic call services over hand-written
 // descriptors (docs/funs.md).
 namespace {
-using namespace erlang_aot;
-using namespace erlang_aot::runtime;
+using namespace clause;
+using namespace clause::runtime;
 using abi::v1::FrameDescriptor;
 using abi::v1::FunDescriptor;
 
@@ -56,8 +56,8 @@ TermResult<Term> make(ProcessContext &context, const FunDescriptor &descriptor, 
     }
     Word output = 0;
     GeneratedInvocation scope(context.generated_calls());
-    const auto status = static_cast<abi::v1::Status>(
-        erlang_aot_make_fun_v1(&context, &descriptor, words.data(), words.size(), &output));
+    const auto status =
+        static_cast<abi::v1::Status>(CLAUSE_make_fun_v1(&context, &descriptor, words.data(), words.size(), &output));
     if (status != abi::v1::Status::ok) {
         return std::unexpected(status == abi::v1::Status::wrong_owner ? TermError::wrong_owner
                                                                       : TermError::invalid_argument);
@@ -79,7 +79,7 @@ Applied apply(ProcessContext &context, const Term &fun, std::span<const Term> ar
         registers[i] = arguments[i].word();
     }
     GeneratedInvocation scope(context.generated_calls());
-    const auto *frame = erlang_aot_apply_v1(&context, fun.word(), arguments.size(), registers.data());
+    const auto *frame = CLAUSE_apply_v1(&context, fun.word(), arguments.size(), registers.data());
     const auto &failure = context.generated_calls().failure();
     std::string error;
     if (failure && failure->reason) {
@@ -168,7 +168,7 @@ std::string pending(ProcessContext &context) {
 std::pair<const void *, std::string> lookup(ProcessContext &context, const Term &module, const Term &function,
                                             std::size_t arity) {
     GeneratedInvocation scope(context.generated_calls());
-    const auto *frame = erlang_aot_call_v1(&context, module.word(), function.word(), arity);
+    const auto *frame = CLAUSE_call_v1(&context, module.word(), function.word(), arity);
     return {frame, pending(context)};
 }
 
@@ -177,7 +177,7 @@ std::pair<std::optional<Term>, std::string> external(ProcessContext &context, co
                                                      const Term &arity) {
     GeneratedInvocation scope(context.generated_calls());
     Word output = 0;
-    erlang_aot_make_external_fun_v1(&context, module.word(), function.word(), arity.word(), &output);
+    CLAUSE_make_external_fun_v1(&context, module.word(), function.word(), arity.word(), &output);
     if (const auto error = pending(context); !error.empty()) {
         return {std::nullopt, error};
     }
@@ -202,7 +202,7 @@ void dynamic(ProcessContext &context) {
                 external(context, module, one, one).second == "3",
             "invalid external fun accepted");
     GeneratedInvocation scope(context.generated_calls());
-    require(!erlang_aot_apply_list_v1(&context, first.word(), abi::v1::empty_list, nullptr) &&
+    require(!CLAUSE_apply_list_v1(&context, first.word(), abi::v1::empty_list, nullptr) &&
                 pending(context) == "failure",
             "missing registers accepted");
 }

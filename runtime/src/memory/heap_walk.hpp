@@ -4,7 +4,7 @@
 #include <span>
 
 // Parse heap areas object by object from their words alone (docs/runtime-heap.md#word-layout).
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Why an area failed to parse; any of these means the heap is corrupt.
 enum class WalkError : std::uint8_t {
     // A header names a kind that is not admitted on the heap.
@@ -51,4 +51,4 @@ template <typename Visitor> std::expected<void, WalkError> walk(std::span<const 
     }
     return {};
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

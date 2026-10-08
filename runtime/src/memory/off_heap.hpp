@@ -4,7 +4,7 @@
 #include <expected>
 
 // Per-process list of off-heap binary cells (BEAM MSO list); see docs/runtime-heap.md#off-heap-binaries.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 class HeapStorage;
 struct HeapArea;
 
@@ -34,4 +34,4 @@ layout::RefcBinaryCell &relocate_off_heap(layout::RefcBinaryCell &from, std::byt
 void sweep_off_heap(HeapStorage &storage, HeapArea &copies) noexcept;
 // Drop every reference held by the owner's cells at teardown, newest first.
 void release_off_heap(HeapStorage &storage) noexcept;
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

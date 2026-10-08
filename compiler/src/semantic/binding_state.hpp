@@ -1,7 +1,7 @@
 #pragma once
 #include "bindings.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct BindingAnalysis {
     // Borrow analysis owners and keep a single budget across every clause in the module.
     const Module &module;
@@ -49,4 +49,4 @@ void bind_expressions(BindingAnalysis &state, const std::vector<ast::ExprId> &ro
                       BindingContext context);
 // Enumerate ordinary value children; scope-introducing syntax is handled separately or deferred.
 std::vector<ast::ExprId> binding_children(const ast::ExprValue &value);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

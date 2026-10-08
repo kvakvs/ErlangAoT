@@ -30,10 +30,10 @@ project(GeneratedConsumer LANGUAGES CXX)
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "The native harness requires the configured Clang driver")
 endif()
-# Link the runtime the parent build already compiled (ErlangAoT::generated_program).
+# Link the runtime the parent build already compiled (Clause::generated_program).
 include("${RUNTIME_TARGETS}")
 add_executable(linked "${SOURCE_ROOT}/tests/compiler/codegen/match_consumer.cpp" ${OBJECTS})
-target_link_libraries(linked PRIVATE ErlangAoT::generated_program)
+target_link_libraries(linked PRIVATE Clause::generated_program)
 set_target_properties(linked PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
 add_executable(unlinked EXCLUDE_FROM_ALL empty.cpp ${OBJECTS})
 ]=])
@@ -61,7 +61,7 @@ foreach(repeat RANGE 1 2)
 endforeach()
 execute_process(COMMAND "${CMAKE_COMMAND}" --build "${TEST_DIR}/build" --config "${HOST_CONFIG}" --target unlinked
     RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE errors)
-if(result STREQUAL "0" OR NOT "${output}${errors}" MATCHES "erlang_aot_register_module_v4")
+if(result STREQUAL "0" OR NOT "${output}${errors}" MATCHES "CLAUSE_register_module_v4")
     message(FATAL_ERROR "Missing runtime did not fail at the ABI reference: ${output}${errors}")
 endif()
 

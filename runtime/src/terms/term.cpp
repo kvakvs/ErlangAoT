@@ -1,9 +1,9 @@
 #include "../memory/heap_object.hpp"
 #include "../memory/heap_storage.hpp"
-#include <erlang_aot/runtime/atoms.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/runtime/atoms.hpp>
+#include <clause/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 TermResult<Term> Term::from_word(Word value) noexcept {
     const auto kind = classify_immediate(value);
     if (!kind) {
@@ -80,4 +80,4 @@ TermKind Term::kind() const {
     return TermTag{value_}.get_kind();
 }
 
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

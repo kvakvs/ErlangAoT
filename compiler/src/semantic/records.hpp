@@ -1,7 +1,7 @@
 #pragma once
 #include "declarations.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Index included declarations and validate closed defaults before function binding analysis.
 void index_records(Module &module, const Reporter &out);
 // Charge expanded fields at every source use, including omitted undefined/default fields.
@@ -56,4 +56,4 @@ std::optional<RecordInfo> record_info(const Module &module, const ast::Expressio
 // Enforce record test literal rules separately from ordinary body BIF argument errors.
 void validate_record_test(const Module &module, const ast::Expression &expression, const ast::CallExpression &call,
                           bool guard, const Reporter &out);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

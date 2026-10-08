@@ -6,7 +6,7 @@
 #include "services.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 using Modules = std::map<std::u32string, Module *>;
 
@@ -329,4 +329,4 @@ CallGraph resolve_calls(const std::span<const std::unique_ptr<Module>> modules, 
     order(graph, functions);
     return graph;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

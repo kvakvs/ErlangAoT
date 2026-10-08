@@ -1,15 +1,15 @@
 #include "terms.hpp"
 #include <array>
 #include <chrono>
+#include <clause/runtime/runtime.hpp>
 #include <cstdlib>
-#include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <new>
 #include <stdexcept>
 #include <vector>
 
 // Descriptive heap measurements for docs/runtime-heap.md; values are printed, never gated.
-using namespace erlang_aot::runtime;
+using namespace clause::runtime;
 
 namespace {
 // Count live host bytes so heap backing and side metadata (fragment chain, buffers) are both visible.
@@ -111,7 +111,7 @@ void kernel(Runtime &runtime) {
               << " host_bytes=" << (live_bytes - before) << " side_bytes=" << (live_bytes - before - heap_bytes)
               << '\n';
     collection(*context, list, before);
-    require(runtime.destroy_context(context) == erlang_aot::abi::v1::Status::ok, "kernel teardown failed");
+    require(runtime.destroy_context(context) == clause::abi::v1::Status::ok, "kernel teardown failed");
 }
 
 // Per-context footprint: many processes each holding one small tuple.
@@ -132,7 +132,7 @@ void footprint(Runtime &runtime) {
               << " host_bytes_per_context=" << (live_bytes - before) / footprint_contexts
               << " heap_capacity_words_per_context=" << capacity / footprint_contexts << '\n';
     for (auto *context : contexts) {
-        require(runtime.destroy_context(context) == erlang_aot::abi::v1::Status::ok, "footprint teardown failed");
+        require(runtime.destroy_context(context) == clause::abi::v1::Status::ok, "footprint teardown failed");
     }
 }
 } // namespace

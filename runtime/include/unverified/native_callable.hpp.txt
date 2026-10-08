@@ -3,7 +3,7 @@
 // Optional spelling for a typed std::function registration.
 #include "callable.hpp"
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 // Pass exact value arguments and return CallResult<Term>; callers wrap other result types explicitly.
 template <CallableArgument... Arguments> using NativeCallable = TypedCallable<Arguments...>;
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

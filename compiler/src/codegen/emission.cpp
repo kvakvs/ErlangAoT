@@ -10,7 +10,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Retain module context and discard the entire batch if code generation cannot produce an object.
 bool reject(detail::CompilationState &state, const llvm::Module &module, const std::string &reason) {
@@ -67,4 +67,4 @@ bool emit_objects(Compilation &compilation) {
     }
     return true;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -2,8 +2,8 @@
 should infer) and, while inference falls short of it, `%% today: Signature` (what it infers now). The check compares
 --print-types with `today` when present, else with `expect`, and fails when a `today` line went stale.
 
-    expectations.py <erlangaot> <fixture.erl>             check
-    expectations.py <erlangaot> <fixture.erl> --record    rewrite the today lines from the current output
+    expectations.py <clau> <fixture.erl>             check
+    expectations.py <clau> <fixture.erl> --record    rewrite the today lines from the current output
 """
 import pathlib
 import re

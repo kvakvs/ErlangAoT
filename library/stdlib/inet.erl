@@ -10,11 +10,11 @@ port(Socket) ->
         Error -> Error
     end.
 
-sockname(Socket) -> erlang_aot_socket:names(Socket, false).
+sockname(Socket) -> clause_socket:names(Socket, false).
 
-peername(Socket) -> erlang_aot_socket:names(Socket, true).
+peername(Socket) -> clause_socket:names(Socket, true).
 
 % Change active, packet and binary or list; other options are accepted and not applied.
-setopts(Socket, Options) -> erlang_aot_socket:setopts(Socket, Options).
+setopts(Socket, Options) -> clause_socket:setopts(Socket, Options).
 
-close(Socket) -> erlang_aot_socket:close(Socket).
+close(Socket) -> clause_socket:close(Socket).

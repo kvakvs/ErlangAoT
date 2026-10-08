@@ -1,8 +1,8 @@
-#include <erlang_aot/abi/frames.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/callable.hpp>
+#include <clause/abi/frames.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/callable.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Construct the only supported signature without inferring types from term contents.
 FunctionKey generic_key(std::string_view name, std::size_t arity) {
@@ -56,9 +56,9 @@ std::vector<FunctionKey> ModuleRegistry::keys() const {
 bool ModuleRegistry::frozen() const noexcept { return frozen_; }
 
 void ModuleRegistry::freeze() noexcept { frozen_ = true; }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // A registrable builtin names its module and function, takes at most 255 arguments and has an implementation.
 bool valid(const BuiltinEntry &entry) {
@@ -124,4 +124,4 @@ const BuiltinFrame *BuiltinRegistry::find(std::string_view module, std::string_v
 const BuiltinFrame *BuiltinRegistry::bridge(std::size_t index) const noexcept {
     return index < bridge_.size() ? bridge_[index] : nullptr;
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

@@ -1,14 +1,14 @@
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/immediate_services.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/abi/immediate_services.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
 
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::ImmediateOperation;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::ImmediateOperation;
+using clause::abi::v1::Status;
 
 namespace {
 // Source tests cover numeric answers; this consumer covers host ownership, canonicalization and limits.
@@ -22,8 +22,8 @@ void require(bool condition, const char *message) {
 Term arithmetic(ProcessContext &context, ImmediateOperation operation, const Term &left, const Term &right) {
     GeneratedInvocation call(context.generated_calls());
     Word output = 0;
-    require(erlang_aot_immediate_v1(&context, static_cast<std::uint8_t>(operation), left.word(), right.word(),
-                                    &output) == 0,
+    require(CLAUSE_immediate_v1(&context, static_cast<std::uint8_t>(operation), left.word(), right.word(), &output) ==
+                0,
             "integer service failed");
     return Term::from_word(output, context).value();
 }

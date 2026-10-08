@@ -3,7 +3,7 @@
 #include "../linking/link.hpp"
 #include <filesystem>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct Publication {
     // Keep complete serialized batches independent of destroyed LLVM/AST ownership until project success.
     codegen::CompilationResult result;
@@ -26,4 +26,4 @@ Publication publication(codegen::Compilation compilation, const std::filesystem:
                         std::vector<std::filesystem::path> protected_inputs);
 // Publish only complete batches; a platform replacement failure may leave earlier complete files installed.
 void publish(const Publication &pending);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

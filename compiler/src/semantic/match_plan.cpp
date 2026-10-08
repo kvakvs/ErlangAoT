@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <span>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // Decode owned folded decimal text without arbitrary-size narrowing or host-width assumptions.
 std::optional<MatchLiteral> integer(const ast::IntegerLiteral &integer, const unsigned bits) {
@@ -217,4 +217,4 @@ std::optional<MatchPlan> make_match_plan(const Module &module, const Function &f
                                          const Reporter &out, MatchOptions options) {
     return build_plan(module, function, std::array{pattern}, pattern, out, options);
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

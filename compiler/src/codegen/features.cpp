@@ -1,7 +1,7 @@
 #include "features.hpp"
 #include <utility>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Copy borrowed context into the existing owned diagnostic model before the reporter returns.
 CompilationDiagnostic diagnostic(const abi::v1::FeatureId feature, const abi::v1::FeatureContext &context) {
@@ -36,4 +36,4 @@ bool reject_feature(CompilationResult &result, const abi::v1::FeatureId feature,
     }
     return false;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

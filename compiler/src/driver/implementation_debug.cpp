@@ -2,7 +2,7 @@
 #include <charconv>
 #include <string_view>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 namespace {
 // Accept one signed decimal int32 with complete consumption and checked overflow.
 std::optional<std::int32_t> step_number(std::string_view text) {
@@ -52,4 +52,4 @@ std::optional<std::string> parse_implementation_debug(std::span<char *> &remaini
     remaining = remaining.subspan(1);
     return {};
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

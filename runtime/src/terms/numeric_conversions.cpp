@@ -1,7 +1,7 @@
 #include "floats.hpp"
 #include <cmath>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 Integer float_integer(double value) {
     int exponent = 0;
     const double fraction = std::frexp(std::abs(value), &exponent);
@@ -42,4 +42,4 @@ TermResult<double> number_float(const Term &value) {
     }
     return integer_read(value).and_then(integer_float);
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

@@ -1,7 +1,7 @@
 #pragma once
 #include "capabilities.hpp"
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 // Closed overloads force each newly added expression family to choose a capability policy.
 struct ExpressionCapability {
     // Borrow immutable syntax to distinguish literal call targets from dynamic expressions.
@@ -78,4 +78,4 @@ struct ExpressionCapability {
 
     std::string_view operator()(const ast::BinaryComprehension &) const { return {}; }
 };
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

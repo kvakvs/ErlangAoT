@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace erlang_aot::project {
+namespace clause::project {
 namespace {
 namespace fs = std::filesystem;
 
@@ -124,4 +124,4 @@ std::vector<fs::path> wildcard_sources(const fs::path &base, const Text &pattern
     }
     return result;
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

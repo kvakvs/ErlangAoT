@@ -35,7 +35,7 @@ def main():
     load(source, "atoms", work)
     # Make repeated CTest runs deterministic without deleting unrelated build artifacts.
     failed = work / "failed"
-    for path in failed.glob("eav1_*"):
+    for path in failed.glob("clausev1_*"):
         path.unlink()
     failed_batch(tool, work)
     for level, extra, _, project in combinations():

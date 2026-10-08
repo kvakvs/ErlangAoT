@@ -1,8 +1,8 @@
 #include "atoms.hpp"
 #include <array>
-#include <erlang_aot/runtime/modules.hpp>
+#include <clause/runtime/modules.hpp>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 namespace {
 // Validate the fixed prefix before inspecting target-width-dependent descriptor fields.
 CodeResult<void> validate(const abi::v1::ModuleDescriptor &descriptor) {
@@ -104,10 +104,10 @@ register_module(Runtime &runtime, const abi::v1::ModuleDescriptor &descriptor, s
         return std::unexpected(CodeError::resource_limit);
     }
 }
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime
 
-std::uint8_t erlang_aot_register_module_v4(void *runtime, const void *descriptor) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_register_module_v4(void *runtime, const void *descriptor) noexcept {
+    using namespace clause;
     using abi::v1::Status;
     if (!runtime || !descriptor) {
         return static_cast<std::uint8_t>(Status::invalid_argument);

@@ -2,12 +2,12 @@
 #include "../implementation_debug.hpp"
 #include "backend_options.hpp"
 #include "project/entry.hpp"
-#include <erlang_aot/compiler/diagnostic.hpp>
-#include <erlang_aot/compiler/preprocessor.hpp>
+#include <clause/compiler/diagnostic.hpp>
+#include <clause/compiler/preprocessor.hpp>
 #include <functional>
 #include <span>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct Publication;
 struct PendingExecutable;
 
@@ -48,4 +48,4 @@ struct FrontendRequest {
 // Process one isolated batch; project targets never share declaration tables.
 bool process_files(std::span<const std::filesystem::path> paths, const FrontendRequest &request,
                    const DiagnosticSink &diagnostics);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

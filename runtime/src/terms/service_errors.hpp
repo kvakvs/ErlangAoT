@@ -1,8 +1,8 @@
 #pragma once
-#include <erlang_aot/abi/status.hpp>
-#include <erlang_aot/runtime/terms.hpp>
+#include <clause/abi/status.hpp>
+#include <clause/runtime/terms.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Keep ownership and resource failures separate from Erlang bad arguments in checked runtime services.
 inline abi::v1::Status term_status(TermError error) noexcept {
     using abi::v1::Status;
@@ -21,4 +21,4 @@ inline abi::v1::Status term_status(TermError error) noexcept {
     }
     return Status::invalid_argument;
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

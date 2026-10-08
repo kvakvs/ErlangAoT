@@ -2,9 +2,9 @@
 #include <algorithm>
 #include <array>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
-// OTP escript accepts these modes; ErlangAoT always compiles, so the value is only validated.
+// OTP escript accepts these modes; Clause always compiles, so the value is only validated.
 bool valid_mode(const ast::Module &syntax, const ast::GenericAttribute &attribute) {
     constexpr std::array<std::u32string_view, 4> modes{U"compile", U"interpret", U"debug", U"native"};
     const auto *atom = std::get_if<ast::Atom>(&syntax.term(attribute.value).value);
@@ -40,4 +40,4 @@ void index_escript(Module &module, const Reporter &out) {
     }
     module.functions[found->second].exported = true;
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

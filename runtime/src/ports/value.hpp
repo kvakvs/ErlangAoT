@@ -1,17 +1,17 @@
 #pragma once
+#include <clause/runtime/terms.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <erlang_aot/runtime/terms.hpp>
 #include <string>
 #include <vector>
 
 // A message a driver sends from an I/O thread, described without any heap term so it can wait while its receiver
 // runs, and built in the receiver's heap when delivered (docs/ports.md#sockets).
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 class ProcessContext;
 }
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 struct PortValue final {
     enum class Kind : std::uint8_t { atom, integer, bytes, identity, tuple };
     Kind kind = Kind::atom;
@@ -63,4 +63,4 @@ struct PortValue final {
 
 // The term of `value` built in the heap of `process`.
 TermResult<Term> build_value(ProcessContext &process, const PortValue &value);
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

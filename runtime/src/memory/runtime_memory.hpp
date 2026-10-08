@@ -3,7 +3,7 @@
 #include <atomic>
 #include <cstddef>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 // Words of all process memory of one runtime (heap blocks, fragments, off-heap buffers and stacks) and its optional
 // limit (docs/runtime-heap.md#runtime-memory-limit). Processes on every scheduler worker charge it concurrently.
 class RuntimeMemory final {
@@ -52,4 +52,4 @@ class RuntimeMemory final {
     // Words charged and not yet released.
     std::atomic<std::size_t> used_words_ = 0;
 };
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

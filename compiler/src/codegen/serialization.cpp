@@ -11,7 +11,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <stdexcept>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Use LLVM's own writers for both serialized formats, retaining owned bytes after teardown.
 // A null `syntax` marks the startup module, which has no Erlang source to annotate.
@@ -83,4 +83,4 @@ bool emit_ir(Compilation &compilation, const OutputKind kind) {
     }
     return true;
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

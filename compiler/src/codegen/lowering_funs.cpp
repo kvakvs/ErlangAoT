@@ -4,17 +4,17 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include <algorithm>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/frames.hpp>
-#include <erlang_aot/abi/messages.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/frames.hpp>
+#include <clause/abi/messages.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 #include <optional>
 #include <stdexcept>
 #include <variant>
 
-// Function values through erlang_aot_make_fun_v1 and erlang_aot_apply_v1 (docs/funs.md).
-namespace erlang_aot::codegen {
+// Function values through CLAUSE_make_fun_v1 and CLAUSE_apply_v1 (docs/funs.md).
+namespace clause::codegen {
 namespace {
 // The FunDescriptor of a fun expression in this module's `<prefix>.funs` table.
 llvm::Constant *descriptor(ExpressionLowering &state, const ast::Expression &expression) {
@@ -129,7 +129,7 @@ llvm::Value *arity_operand(ExpressionLowering &state, const std::variant<Integer
                                                   : *abi::v1::IntegerEncoding<64>::encode(value));
 }
 
-// Build fun M:F/A with variables through erlang_aot_make_external_fun_v1; badarg raises.
+// Build fun M:F/A with variables through CLAUSE_make_external_fun_v1; badarg raises.
 llvm::Value *dynamic_fun(ExpressionLowering &state, const ast::Expression &expression,
                          const ast::RemoteFunReference &reference) {
     auto &builder = state.builder;
@@ -253,4 +253,4 @@ llvm::Value *lower_apply(ExpressionLowering &state, const ast::Expression &expre
                                                     : frame_service<services::CallList>(state, 3, true);
     return transfer(state, in_tail(state, expression), service, operands, array);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

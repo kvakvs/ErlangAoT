@@ -1,14 +1,14 @@
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 
 // Admission checks ownership: a heap word is accepted only inside this process's used heap and only when
 // the object it names matches its tag. Process pointers always name object starts, so no interior case.
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::Status;
+using namespace clause::runtime;
+using clause::abi::v1::Status;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {

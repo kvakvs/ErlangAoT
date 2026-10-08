@@ -1,6 +1,6 @@
 #include "diagnostics.hpp"
 
-namespace erlang_aot::project {
+namespace clause::project {
 std::string where(const Site &site) {
     const auto bytes = site.file.generic_u8string();
     std::string result(bytes.begin(), bytes.end());
@@ -23,4 +23,4 @@ Failure::Failure(Error error) : std::runtime_error(render(error)), detail(std::m
 void fail(const Site &site, std::string message, const int exit_code) {
     throw Failure({site, std::move(message), exit_code});
 }
-} // namespace erlang_aot::project
+} // namespace clause::project

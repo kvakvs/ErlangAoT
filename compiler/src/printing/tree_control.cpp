@@ -1,6 +1,6 @@
 #include "tree.hpp"
 
-namespace erlang_aot::printing {
+namespace clause::printing {
 void TreePrinter::operator()(const ast::BlockExpression &value) {
     output_ << "BlockExpression body=" << value.body.size();
     handles("body", value.body);
@@ -45,4 +45,4 @@ void TreePrinter::operator()(const ast::ReceiveTimeout &value) {
     child("timeout", value.timeout);
     handles("body", value.body);
 }
-} // namespace erlang_aot::printing
+} // namespace clause::printing

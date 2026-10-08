@@ -9,7 +9,7 @@ C++23 declarations are review sketches, not a claim of OTP scheduling compatibil
 
 Read [scheduler.hpp](../include/scheduler.hpp) for creation/control and worker lifecycle,
 [process.hpp](../include/process.hpp) for process state, signals and cooperative execution,
-[process_context.hpp](../include/erlang_aot/runtime/process_context.hpp) for the implemented context,
+[process_context.hpp](../include/clause/runtime/process_context.hpp) for the implemented context,
 [process_heap.hpp](../include/process_heap.hpp) for term storage/copying and the GC boundary,
 and [mailbox.hpp](../include/mailbox.hpp) for selective-receive cursors and asynchronous reads.
 Review headers live in `runtime/include/`; design notes live in this directory.
@@ -327,7 +327,7 @@ The OS-thread process backend is only an enum/forward declaration, with no launc
 
 After review, implement heap and process state, then the deterministic queue/worker
 step function, then pool threading and command routing under `runtime/src/` with
-approved headers under `runtime/include/erlang_aot/runtime/`. Keep deterministic
+approved headers under `runtime/include/clause/runtime/`. Keep deterministic
 tests independent of real timing. Test 1:8:9 service with unequal class populations,
 idle with other waiting/suspended processes, realtime ownership through every return,
 duplicate enqueue prevention, wait/wake races, exit cleanup, stale identities,

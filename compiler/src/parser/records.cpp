@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 // Convert names only in record_name positions; never change the scanner's classification.
 ast::Atom FormParser::record_name() {
     const auto &token = cursor_.anchor();
@@ -91,4 +91,4 @@ ast::RecordField FormParser::record_field() {
     return {
         .name = std::move(name), .value = std::move(child), .source = builder_.source(begin, cursor_.offset(), begin)};
 }
-} // namespace erlang_aot
+} // namespace clause

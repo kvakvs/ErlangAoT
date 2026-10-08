@@ -2,7 +2,7 @@
 #include "llvm_state.hpp"
 #include <llvm/IR/DerivedTypes.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 llvm::IntegerType *term_type(Compilation &compilation) {
     auto &state = detail::state(compilation);
     if (state.result.status() != CompilationStatus::incomplete) {
@@ -44,4 +44,4 @@ llvm::FunctionType *generated_function_type(Compilation &compilation) {
     auto *pointer = llvm::PointerType::get(*detail::state(compilation).context, 0);
     return llvm::FunctionType::get(word, {pointer, pointer}, false);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -58,7 +58,7 @@ struct Pipe {
 };
 
 Pipe make_pipe() {
-    const auto name = "\\\\.\\pipe\\erlang_aot_poller_" + std::to_string(GetCurrentProcessId());
+    const auto name = "\\\\.\\pipe\\clause_poller_" + std::to_string(GetCurrentProcessId());
     Pipe pipe;
     pipe.read =
         CreateNamedPipeA(name.c_str(), PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED | FILE_FLAG_FIRST_PIPE_INSTANCE,

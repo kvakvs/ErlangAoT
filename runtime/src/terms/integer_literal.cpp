@@ -1,12 +1,12 @@
 #include "integers.hpp"
 #include "service_errors.hpp"
 #include "terms.hpp"
-#include <erlang_aot/abi/integers.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/integers.hpp>
+#include <clause/runtime/process_context.hpp>
 
-std::uint8_t erlang_aot_integer_v1(void *opaque, const char *digits, std::size_t size,
-                                   erlang_aot::abi::v1::TermWord *output) noexcept {
-    using namespace erlang_aot;
+std::uint8_t CLAUSE_integer_v1(void *opaque, const char *digits, std::size_t size,
+                               clause::abi::v1::TermWord *output) noexcept {
+    using namespace clause;
     using Outcome = abi::v1::ValueOutcome;
     if (!opaque) {
         return static_cast<std::uint8_t>(Outcome::failure);

@@ -2,7 +2,7 @@
 #include "../artifacts/artifacts.hpp"
 #include "../codegen/target.hpp"
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 Publication publication(codegen::Compilation compilation, const std::filesystem::path &root,
                         std::vector<std::filesystem::path> protected_inputs) {
     protected_inputs.reserve(protected_inputs.size() + compilation.request().inputs.size());
@@ -17,4 +17,4 @@ Publication publication(codegen::Compilation compilation, const std::filesystem:
 void publish(const Publication &pending) {
     artifacts::publish(pending.result.outputs(), pending.root, pending.inputs, pending.object_extension);
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

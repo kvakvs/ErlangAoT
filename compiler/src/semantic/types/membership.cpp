@@ -3,7 +3,7 @@
 #include <array>
 #include <set>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Compare canonical decimal integers exactly, including bounds larger than a host word.
 bool less(std::string_view left, std::string_view right) {
@@ -95,4 +95,4 @@ bool excludes_integer(Registry &declared, const std::string_view value, const Id
     }
     return true;
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

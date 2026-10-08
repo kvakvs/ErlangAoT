@@ -4,7 +4,7 @@
 #include <array>
 #include <charconv>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Erlang io_lib uses printable Latin-1 directly and named/control escapes otherwise.
 std::u32string escaped(const char32_t value, const char32_t quote) {
@@ -138,4 +138,4 @@ std::u32string stringify(const std::span<const Token> tokens) {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

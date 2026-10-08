@@ -28,7 +28,7 @@ Plan: [3](11-plan.md#step-3)â€“[8](11-plan.md#step-8), [43](11-plan.md#step-43),
 - [x] Clang linking for positional and project builds with staged publication
   (steps 6, 6A, 7); missing-runtime/ABI/link failures tested.
 - [x] Connect startup to cooperative process execution (F22, step 43).
-- [x] Runtime options `--max-atoms` and `ERLANG_AOT_FLAGS` (step 27 follow-up).
+- [x] Runtime options `--max-atoms` and `CLAUSE_FLAGS` (step 27 follow-up).
 - [ ] `--args-file` options file like `vm.args` (reserved; reports not
   implemented).
 
@@ -349,7 +349,7 @@ Plan: [2](11-plan.md#step-2), [4](11-plan.md#step-4), [36](11-plan.md#step-36)â€
 - [x] Console output (step 40): `io:format/1,2` (`~w ~p ~s ~c ~b ~B ~i ~n ~~`,
   widths, precisions, pads, `t`/`l`/`k`, OTP `~p` layout) and `io:put_chars/1`.
 - [x] Interruptible long-running builtins (step 43A): bridge builtins are
-  entered like functions (`erlang_aot_builtin_frame_v1`); `length/1` in bodies,
+  entered like functions (`CLAUSE_builtin_frame_v1`); `length/1` in bodies,
   `++`, `--`, `binary_to_list/1`, `list_to_binary/1` and `iolist_to_binary/1`
   run in portions with rooted state and yield between them.
 - [x] Registered process names (step 50): `register/2`, `unregister/1`,

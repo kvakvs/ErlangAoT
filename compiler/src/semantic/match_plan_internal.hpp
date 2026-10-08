@@ -2,7 +2,7 @@
 #include "match_plan.hpp"
 #include <set>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct PatternVisit {
     // Match a normalized source node against one candidate; literal prefixes defer their terminus to suffix.
     ast::ExprId id;
@@ -52,4 +52,4 @@ bool container_pattern(const NormalizedPattern &pattern);
 // Schedule shape/extraction and child constraints without recursive calls or unbounded pending work.
 bool expand_container(MatchPlanner &state, const PatternVisit &visit, const NormalizedPattern &pattern,
                       std::vector<MatchTask> &pending);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

@@ -2,10 +2,10 @@
 #include "floats.hpp"
 #include "terms.hpp"
 #include <bit>
+#include <clause/runtime/process_context.hpp>
 #include <cmath>
-#include <erlang_aot/runtime/process_context.hpp>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 // Round a nonnegative finite significand to nearest integer with ties to even.
 std::uint32_t nearest(double value) {
@@ -81,4 +81,4 @@ TermResult<Term> bit_read_float(ProcessContext &context, const Integer &bits, st
         return std::unexpected(TermError::invalid_argument);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

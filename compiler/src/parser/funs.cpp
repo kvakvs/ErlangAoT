@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 std::variant<ast::Atom, ast::Variable> FormParser::atom_or_variable() {
     if (cursor_.anchor().kind == TokenKind::variable) {
         return ast::Variable{value<std::u32string>(*cursor_.consume())};
@@ -59,4 +59,4 @@ ast::FunExpression FormParser::fun_clauses() {
     expect(U"end");
     return {.name = std::move(name), .clauses = std::move(clauses)};
 }
-} // namespace erlang_aot
+} // namespace clause

@@ -1,7 +1,7 @@
 #include "../features.hpp"
 #include "contracts.hpp"
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 // Quote control bytes and delimiters so filenames and atoms cannot inject debug lines.
 std::string escaped(const std::string_view text) {
@@ -52,4 +52,4 @@ void trace_inference(const Inference &inferred, const CallGraph &calls, const Di
         sink("[impldebug " + std::to_string(step) + "] inference budget exhausted; widened to term()");
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

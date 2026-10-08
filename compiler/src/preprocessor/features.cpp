@@ -1,7 +1,7 @@
 #include "engine.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // OTP's query macros expand to ordinary comparisons, preserving arbitrary argument syntax.
 Definition query_definition(const std::string_view name, const std::vector<std::string> &features) {
@@ -53,4 +53,4 @@ void PreprocessorSession::State::keywords() {
     lexer.set_keyword(U"maybe", features.at("maybe_expr").enabled);
     lexer.set_keyword(U"else", features.at("maybe_expr").enabled);
 }
-} // namespace erlang_aot
+} // namespace clause

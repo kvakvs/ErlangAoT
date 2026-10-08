@@ -4,7 +4,7 @@
 #include "signal_messages.hpp"
 #include <algorithm>
 #include <array>
-#include <erlang_aot/runtime/runtime.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <new>
 #include <utility>
 
@@ -12,7 +12,7 @@
 // once under its lock: links, monitors and names of any process, exits and messages of a process that does not run
 // on another worker (a builtin aimed at one runs again after its slice). A process a signal ends is finished before
 // the sending builtin returns, or once the peers it must signal have left their slices.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
 
@@ -404,4 +404,4 @@ void Executor::fail_main() noexcept {
     finished_ = main_;
     work_.notify_all();
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

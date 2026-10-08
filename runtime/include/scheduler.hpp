@@ -3,7 +3,7 @@
 // Worker/pool declarations remain sketches; the included SchedulerService is implemented without workers.
 // See processes.md for ordering, queue invariants and literal realtime ownership.
 #include "process.hpp"
-#include <erlang_aot/runtime/scheduler.hpp>
+#include <clause/runtime/scheduler.hpp>
 
 #include <cstddef>
 #include <future>
@@ -11,7 +11,7 @@
 #include <stop_token>
 #include <vector>
 
-namespace erlang_aot::runtime {
+namespace clause::runtime {
 // Configure one new process without exposing queue or worker internals.
 struct ProcessOptions final {
     // Use normal weighted service unless the caller explicitly chooses another policy.
@@ -120,4 +120,4 @@ class SchedulerPool final {
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
-} // namespace erlang_aot::runtime
+} // namespace clause::runtime

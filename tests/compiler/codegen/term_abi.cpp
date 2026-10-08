@@ -2,15 +2,15 @@
 #include "codegen/emission.hpp"
 #include "codegen/llvm_state.hpp"
 #include "codegen/target.hpp"
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/term.hpp>
 #include <iostream>
 #include <llvm/IR/IRBuilder.h>
 #include <stdexcept>
 #include <type_traits>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
-using namespace erlang_aot::abi::v1;
+using namespace clause;
+using namespace clause::codegen;
+using namespace clause::abi::v1;
 static_assert(std::is_same_v<decltype(std::declval<GeneratedFunction &>()(nullptr, nullptr)), TermWord>);
 
 // Keep assertions active in release builds.
@@ -79,15 +79,15 @@ void check_unconfigured() {
 int main() {
     try {
         check_target({}, sizeof(TermWord) * 8);
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
         check_target("i686-unknown-linux-gnu", 32);
         check_target("i686-pc-windows-msvc", 32);
         check_target("x86_64-pc-windows-msvc", 64);
 #endif
-#ifdef ERLANG_AOT_LLVM_ARM
+#ifdef CLAUSE_LLVM_ARM
         check_target("armv7-unknown-linux-gnueabihf", 32);
 #endif
-#ifdef ERLANG_AOT_LLVM_AArch64
+#ifdef CLAUSE_LLVM_AArch64
         check_target("aarch64-unknown-linux-gnu", 64);
 #endif
         check_unconfigured();

@@ -1,11 +1,11 @@
 #pragma once
 #include "../semantic/declarations.hpp"
 #include "project/entry.hpp"
-#include <erlang_aot/compiler/diagnostic.hpp>
+#include <clause/compiler/diagnostic.hpp>
 #include <memory>
 #include <span>
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 struct EntryRequest {
     // Explicit selection, validated whenever the batch is analyzed.
     std::optional<project::SelectedEntry> selected;
@@ -26,4 +26,4 @@ struct ResolvedEntry {
 // Resolve the entry against indexed modules, reporting located errors; returns true on failure.
 bool resolve_entry(std::span<const std::unique_ptr<semantic::Module>> modules, const EntryRequest &request,
                    const semantic::Reporter &report, const DiagnosticSink &sink, std::optional<ResolvedEntry> &entry);
-} // namespace erlang_aot::cli
+} // namespace clause::cli

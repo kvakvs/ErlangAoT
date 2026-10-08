@@ -8,16 +8,16 @@
 #include "semantic/symbols.hpp"
 #include "semantic/types/contracts.hpp"
 #include <algorithm>
+#include <clause/compiler/parser.hpp>
 #include <cstdio>
-#include <erlang_aot/compiler/parser.hpp>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/Object/ObjectFile.h>
 #include <llvm/Support/Error.h>
 #include <stdexcept>
 
-using namespace erlang_aot;
-namespace cg = erlang_aot::codegen;
+using namespace clause;
+namespace cg = clause::codegen;
 
 // Exercise real source until the artifact-producing CLI replaces this stage adapter.
 void require(bool condition, const char *message) {

@@ -1,11 +1,11 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
 #include <array>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/abi/term.hpp>
+#include <clause/abi/equality.hpp>
+#include <clause/abi/term.hpp>
 #include <llvm/IR/Module.h>
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 namespace {
 // Large constructors use bounded runtime scratch roots, keeping source width off the native stack.
 llvm::Value *construct(ExpressionLowering &state, abi::v1::ContainerConstruction operation,
@@ -108,4 +108,4 @@ llvm::Value *lower_inspection(ExpressionLowering &state, abi::v1::ContainerInspe
                                        "inspect.outcome");
     return checked_value(state, {outcome, slot}, mismatch);
 }
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

@@ -9,8 +9,8 @@
 #include <llvm/Support/Error.h>
 #include <stdexcept>
 
-using namespace erlang_aot;
-using namespace erlang_aot::codegen;
+using namespace clause;
+using namespace clause::codegen;
 
 // Keep assertions active in release builds as well as debug builds.
 void require(bool condition, const char *message) {
@@ -126,14 +126,14 @@ int main(int argc, char **argv) {
         if (argc == 2) {
             save(native, argv[1]);
         }
-#ifdef ERLANG_AOT_LLVM_X86
+#ifdef CLAUSE_LLVM_X86
         check_valid("i686-unknown-linux-gnu");
         check_valid("x86_64-pc-windows-msvc");
 #endif
-#ifdef ERLANG_AOT_LLVM_ARM
+#ifdef CLAUSE_LLVM_ARM
         check_valid("armv7-unknown-linux-gnueabihf");
 #endif
-#ifdef ERLANG_AOT_LLVM_AArch64
+#ifdef CLAUSE_LLVM_AArch64
         check_valid("aarch64-unknown-linux-gnu");
 #endif
         check_reverification();

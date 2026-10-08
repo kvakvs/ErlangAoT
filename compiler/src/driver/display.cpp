@@ -1,6 +1,6 @@
 #include "display.hpp"
 
-namespace erlang_aot::cli {
+namespace clause::cli {
 std::string quote_text(const std::string_view text) {
     constexpr std::string_view hex = "0123456789abcdef";
     std::string result;
@@ -17,4 +17,4 @@ std::string quote_text(const std::string_view text) {
     }
     return result + '"';
 }
-} // namespace erlang_aot::cli
+} // namespace clause::cli

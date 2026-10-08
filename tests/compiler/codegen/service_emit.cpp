@@ -5,19 +5,19 @@
 // Rename only the checked service declaration; source-generated selection/error continuations stay intact.
 void seam(llvm::Module &module) {
     for (auto &function : module) {
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_bits_v1")) {
+        if (function.isDeclaration() && function.getName().contains("CLAUSE_bits_v1")) {
             function.setName("step16_bits");
         }
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_map_v1")) {
+        if (function.isDeclaration() && function.getName().contains("CLAUSE_map_v1")) {
             function.setName("step15_map");
         }
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_immediate_v1")) {
+        if (function.isDeclaration() && function.getName().contains("CLAUSE_immediate_v1")) {
             function.setName("step7_service");
         }
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_construct_v1")) {
+        if (function.isDeclaration() && function.getName().contains("CLAUSE_construct_v1")) {
             function.setName("step12_construct");
         }
-        if (function.isDeclaration() && function.getName().contains("erlang_aot_inspect_v1")) {
+        if (function.isDeclaration() && function.getName().contains("CLAUSE_inspect_v1")) {
             function.setName("step12_inspect");
         }
     }

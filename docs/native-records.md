@@ -2,7 +2,7 @@
 
 Decision of plan 11 step 31A (2026-10-07). It scopes the OTP 29 record forms
 beyond ordinary tuple records and fixes their representation, operations and
-errors. Step 31B implemented the runtime cells and `erlang_aot_record_v1`;
+errors. Step 31B implemented the runtime cells and `CLAUSE_record_v1`;
 31C compiles local native records, 31D qualified and imported forms with
 `-export_record`/`-import_record`, 31E anonymous forms. Tuple records are in
 [terms](terms.md#records).
@@ -117,7 +117,7 @@ Messages follow `erl_lint`:
 
 ## Differences kept
 
-| OTP | ErlangAoT |
+| OTP | Clause |
 | --- | --- |
 | `display` field order follows atom indexes | Definition order |
 | External construction of a module that is not loaded fails until it is loaded | Every batch module is loaded at startup; a module outside the batch always fails |

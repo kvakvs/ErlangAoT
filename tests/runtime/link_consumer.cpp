@@ -1,22 +1,22 @@
 #include <array>
+#include <clause/abi/builtins.hpp>
+#include <clause/abi/term.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
+#include <clause/runtime/scheduler.hpp>
+#include <clause/runtime/terms.hpp>
 #include <cstdio>
-#include <erlang_aot/abi/builtins.hpp>
-#include <erlang_aot/abi/term.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
-#include <erlang_aot/runtime/scheduler.hpp>
-#include <erlang_aot/runtime/terms.hpp>
 #include <stdexcept>
 #include <type_traits>
 
-using erlang_aot::abi::v1::GeneratedFunction;
-using erlang_aot::abi::v1::Status;
-using erlang_aot::abi::v1::TermWord;
-using erlang_aot::runtime::ProcessContext;
-using erlang_aot::runtime::Runtime;
-using namespace erlang_aot::runtime;
+using clause::abi::v1::GeneratedFunction;
+using clause::abi::v1::Status;
+using clause::abi::v1::TermWord;
+using clause::runtime::ProcessContext;
+using clause::runtime::Runtime;
+using namespace clause::runtime;
 
-static_assert(std::is_same_v<erlang_aot::abi::v1::Context, ProcessContext>);
+static_assert(std::is_same_v<clause::abi::v1::Context, ProcessContext>);
 static_assert(std::is_same_v<std::underlying_type_t<Status>, std::uint8_t>);
 static_assert(!std::is_convertible_v<Status, std::uint32_t>);
 
@@ -36,7 +36,7 @@ void invalid_options(Runtime &runtime) {
     RuntimeOptions options;
     ++options.abi_version;
     require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "ABI version mismatch accepted");
-    options.abi_version = erlang_aot::abi::v1::version;
+    options.abi_version = clause::abi::v1::version;
     options.term_bits = sizeof(TermWord) == 8 ? 32 : 64;
     require(Runtime::start(options) == std::unexpected(Status::abi_mismatch), "word width mismatch accepted");
     for (const HeapOptions heap :
@@ -98,7 +98,7 @@ ResolvedFunction install(Runtime &runtime) {
 void roundtrips(ProcessContext &context, const ResolvedFunction &target) {
     require(context.code_server().resolve({"consumer", "copy", 0}).value().call(context, {})->integer_value() == 42,
             "zero-arity dispatch failed");
-    using Encoding = erlang_aot::abi::v1::NativeIntegerEncoding;
+    using Encoding = clause::abi::v1::NativeIntegerEncoding;
     const std::array values{Encoding::minimum, Encoding::minimum + 1, std::int64_t{-42},
                             std::int64_t{-1},  std::int64_t{0},       std::int64_t{1},
                             std::int64_t{42},  Encoding::maximum - 1, Encoding::maximum};
@@ -110,8 +110,7 @@ void roundtrips(ProcessContext &context, const ResolvedFunction &target) {
         const std::array arguments{Term::from_word(word).value()};
         require(target.call(context, arguments)->integer_value() == value, "native copy changed value");
         TermWord output = 0;
-        require(erlang_aot::abi::v1::dispatch_builtin(&context, "consumer", 8, "copy", 4, &word, 1, &output) ==
-                    Status::ok,
+        require(clause::abi::v1::dispatch_builtin(&context, "consumer", 8, "copy", 4, &word, 1, &output) == Status::ok,
                 "dispatch bridge failed");
         require(output == word, "dispatch bridge changed encoding");
     }

@@ -14,7 +14,7 @@
 // The adapter admits each argument word, converts it to its parameter type (a mismatch raises badarg), calls the
 // function and publishes its result. Errors are returned (BuiltinResult) or thrown (BuiltinFailure); every other
 // C++ exception is contained by call_builtin, so none crosses the generated-code ABI.
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 // A proper list argument and its elements.
 struct ListArgument {
     Term term;
@@ -158,4 +158,4 @@ inline constexpr BuiltinBody typed =
 template <auto Function> constexpr BuiltinEntry typed_entry(std::string_view module, std::string_view function) {
     return BuiltinEntry{module, function, typed_detail::Signature<decltype(Function)>::arity, typed<Function>};
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

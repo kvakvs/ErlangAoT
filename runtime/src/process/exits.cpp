@@ -4,13 +4,13 @@
 #include "exceptions.hpp"
 #include <array>
 #include <chrono>
+#include <clause/runtime/output.hpp>
 #include <cstdio>
 #include <ctime>
-#include <erlang_aot/runtime/output.hpp>
 #include <format>
 #include <string>
 
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
 
@@ -95,4 +95,4 @@ void report_exit(ProcessContext &process) noexcept {
         std::fputs("Error in process: its exit value cannot be printed\n\n", stderr);
     }
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail

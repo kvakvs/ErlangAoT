@@ -2,7 +2,7 @@
 #include "resolver.hpp"
 #include <algorithm>
 
-namespace erlang_aot::semantic::types {
+namespace clause::semantic::types {
 namespace {
 struct Frame {
     // Keep syntax provenance and partially resolved children on a bounded explicit stack.
@@ -90,4 +90,4 @@ void check_scope(const Scope &scope, const Module &module, const ast::NodeSource
         }
     }
 }
-} // namespace erlang_aot::semantic::types
+} // namespace clause::semantic::types

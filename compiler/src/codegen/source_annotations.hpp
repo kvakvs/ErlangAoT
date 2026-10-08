@@ -1,7 +1,7 @@
 #pragma once
 #include "source_locations.hpp"
+#include <clause/compiler/ast/module.hpp>
 #include <cstddef>
-#include <erlang_aot/compiler/ast/module.hpp>
 #include <llvm/IR/AssemblyAnnotationWriter.h>
 #include <map>
 #include <vector>
@@ -11,7 +11,7 @@ class Module;
 class raw_ostream;
 } // namespace llvm
 
-namespace erlang_aot::codegen {
+namespace clause::codegen {
 // Prepare source comments before entering LLVM's assembly writer, which must not receive C++ exceptions.
 class SourceAnnotations final : public llvm::AssemblyAnnotationWriter {
   public:
@@ -29,4 +29,4 @@ class SourceAnnotations final : public llvm::AssemblyAnnotationWriter {
     // Own preformatted comments for this snapshot; LLVM instructions remain borrowed until printing ends.
     std::map<const llvm::Value *, std::vector<std::byte>> comments_;
 };
-} // namespace erlang_aot::codegen
+} // namespace clause::codegen

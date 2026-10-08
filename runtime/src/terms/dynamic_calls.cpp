@@ -2,14 +2,14 @@
 #include "service_errors.hpp"
 #include "terms.hpp"
 #include <array>
-#include <erlang_aot/abi/frames.hpp>
-#include <erlang_aot/abi/funs.hpp>
-#include <erlang_aot/runtime/process_context.hpp>
+#include <clause/abi/frames.hpp>
+#include <clause/abi/funs.hpp>
+#include <clause/runtime/process_context.hpp>
 #include <new>
 
 // Dynamic calls (docs/funs.md#dynamic-calls): M:F(Args) and apply/2,3 with runtime operands, and fun M:F/A with
 // variables. Each service records its Erlang error or failure in the checked channel.
-namespace erlang_aot::runtime::detail {
+namespace clause::runtime::detail {
 namespace {
 using abi::v1::ErrorReason;
 using abi::v1::Status;
@@ -180,44 +180,41 @@ std::uint8_t make_external_service(ProcessContext &context, Word module, Word fu
     }
     return static_cast<std::uint8_t>(status.value_or(Status::internal_error));
 }
-} // namespace erlang_aot::runtime::detail
+} // namespace clause::runtime::detail
 
-const void *erlang_aot_call_v1(void *context, erlang_aot::abi::v1::TermWord module,
-                               erlang_aot::abi::v1::TermWord function, std::size_t arity) noexcept {
+const void *CLAUSE_call_v1(void *context, clause::abi::v1::TermWord module, clause::abi::v1::TermWord function,
+                           std::size_t arity) noexcept {
     if (!context) {
         return nullptr;
     }
-    return erlang_aot::runtime::detail::call_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                     module, function, arity);
+    return clause::runtime::detail::call_service(*static_cast<clause::runtime::ProcessContext *>(context), module,
+                                                 function, arity);
 }
 
-const void *erlang_aot_apply_list_v1(void *context, erlang_aot::abi::v1::TermWord fun,
-                                     erlang_aot::abi::v1::TermWord list,
-                                     erlang_aot::abi::v1::TermWord *registers) noexcept {
+const void *CLAUSE_apply_list_v1(void *context, clause::abi::v1::TermWord fun, clause::abi::v1::TermWord list,
+                                 clause::abi::v1::TermWord *registers) noexcept {
     if (!context) {
         return nullptr;
     }
-    return erlang_aot::runtime::detail::apply_list_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                           fun, list, registers);
+    return clause::runtime::detail::apply_list_service(*static_cast<clause::runtime::ProcessContext *>(context), fun,
+                                                       list, registers);
 }
 
-const void *erlang_aot_call_list_v1(void *context, erlang_aot::abi::v1::TermWord module,
-                                    erlang_aot::abi::v1::TermWord function, erlang_aot::abi::v1::TermWord list,
-                                    erlang_aot::abi::v1::TermWord *registers) noexcept {
+const void *CLAUSE_call_list_v1(void *context, clause::abi::v1::TermWord module, clause::abi::v1::TermWord function,
+                                clause::abi::v1::TermWord list, clause::abi::v1::TermWord *registers) noexcept {
     if (!context) {
         return nullptr;
     }
-    return erlang_aot::runtime::detail::call_list_service(*static_cast<erlang_aot::runtime::ProcessContext *>(context),
-                                                          module, function, list, registers);
+    return clause::runtime::detail::call_list_service(*static_cast<clause::runtime::ProcessContext *>(context), module,
+                                                      function, list, registers);
 }
 
-std::uint8_t erlang_aot_make_external_fun_v1(void *context, erlang_aot::abi::v1::TermWord module,
-                                             erlang_aot::abi::v1::TermWord function,
-                                             erlang_aot::abi::v1::TermWord arity,
-                                             erlang_aot::abi::v1::TermWord *output) noexcept {
+std::uint8_t CLAUSE_make_external_fun_v1(void *context, clause::abi::v1::TermWord module,
+                                         clause::abi::v1::TermWord function, clause::abi::v1::TermWord arity,
+                                         clause::abi::v1::TermWord *output) noexcept {
     if (!context) {
-        return static_cast<std::uint8_t>(erlang_aot::abi::v1::Status::invalid_argument);
+        return static_cast<std::uint8_t>(clause::abi::v1::Status::invalid_argument);
     }
-    return erlang_aot::runtime::detail::make_external_service(
-        *static_cast<erlang_aot::runtime::ProcessContext *>(context), module, function, arity, output);
+    return clause::runtime::detail::make_external_service(*static_cast<clause::runtime::ProcessContext *>(context),
+                                                          module, function, arity, output);
 }

@@ -11,12 +11,14 @@ rem CTest slots default to every logical CPU; each test takes two slots, so half
 if not defined TEST_JOBS set "TEST_JOBS=%NUMBER_OF_PROCESSORS%"
 set "TEST_FILTER="
 if /i "%TEST_MODE%"=="fast" set "TEST_FILTER=-LE full_only"
-set "ERLANG_AOT_TEST_MODE=%TEST_MODE%"
+set "CLAUSE_TEST_MODE=%TEST_MODE%"
 rem An omitted count requests the native build tool's default parallelism.
 set "PARALLEL_JOBS="
 if defined JOBS set PARALLEL_JOBS="%JOBS%"
 pushd "%~dp0" || exit /b 1
-call "%CMAKE%" -S . -B "%BUILD_DIR%" %CMAKE_ARGS% -DCMAKE_BUILD_TYPE="%BUILD_TYPE%" -DBUILD_TESTING=ON -DERLANG_AOT_BUILD_COMPILER=ON -DERLANG_AOT_BUILD_RUNTIME=ON
+call tools\windows-toolchain.cmd
+if errorlevel 1 goto finish
+call "%CMAKE%" -S . -B "%BUILD_DIR%" %CLAUSE_CONFIGURE_ARGS% %CMAKE_ARGS% -DCMAKE_BUILD_TYPE="%BUILD_TYPE%" -DBUILD_TESTING=ON -DCLAUSE_BUILD_COMPILER=ON -DCLAUSE_BUILD_RUNTIME=ON
 if errorlevel 1 goto finish
 set "MAKEFLAGS="
 call "%CMAKE%" --build "%BUILD_DIR%" --config "%BUILD_TYPE%" --parallel %PARALLEL_JOBS%

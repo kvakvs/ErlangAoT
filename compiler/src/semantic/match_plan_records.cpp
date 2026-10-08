@@ -1,9 +1,9 @@
 #include "features.hpp"
 #include "match_plan_internal.hpp"
 #include "records.hpp"
-#include <erlang_aot/abi/records.hpp>
+#include <clause/abi/records.hpp>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 namespace {
 // The identity a native pattern tests: its module, name and check.
 struct NativeIdentity {
@@ -115,4 +115,4 @@ bool expand_record(MatchPlanner &state, const PatternVisit &visit, const Normali
     }
     return expand_tuple(state, visit, pattern, record, *layout, pending);
 }
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

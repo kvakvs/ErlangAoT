@@ -1,8 +1,8 @@
 #pragma once
 #include "preprocessor/value.hpp"
-#include <erlang_aot/compiler/ast/module.hpp>
+#include <clause/compiler/ast/module.hpp>
 
-namespace erlang_aot {
+namespace clause {
 // Parentheses do not change OTP's attribute builder shapes.
 inline const ast::Expression &ungroup(const ast::Module &module, ast::ExprId id) {
     while (const auto *group = std::get_if<ast::Group>(&module.expression(id).value)) {
@@ -22,4 +22,4 @@ template <typename T> const T &attribute_as(const ast::Module &module, const ast
 // Flatten explicit list tails while rejecting improper or non-list envelopes.
 std::vector<ast::ExprId> attribute_list(const ast::Module &module, const ast::ExprId &id);
 std::vector<ast::NameArity> attribute_arities(const ast::Module &module, const ast::ExprId &id);
-} // namespace erlang_aot
+} // namespace clause

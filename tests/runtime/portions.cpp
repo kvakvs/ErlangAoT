@@ -1,8 +1,8 @@
+#include <clause/abi/equality.hpp>
+#include <clause/runtime/builtin_registry.hpp>
+#include <clause/runtime/code_server.hpp>
+#include <clause/runtime/runtime.hpp>
 #include <cstddef>
-#include <erlang_aot/abi/equality.hpp>
-#include <erlang_aot/runtime/builtin_registry.hpp>
-#include <erlang_aot/runtime/code_server.hpp>
-#include <erlang_aot/runtime/runtime.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -10,8 +10,8 @@
 // Builtins that run in portions (docs/builtins.md#portions) as a process's first call: each portion ends in a yield,
 // a collection runs between every two portions and moves every heap term, and the results stay exact.
 namespace {
-using namespace erlang_aot::runtime;
-using erlang_aot::abi::v1::empty_list;
+using namespace clause::runtime;
+using clause::abi::v1::empty_list;
 
 // Keep every check active in optimized builds.
 void require(bool condition, const char *message) {

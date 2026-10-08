@@ -2,7 +2,7 @@
 #include "parsing/operator_info.hpp"
 #include <algorithm>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Preserve the preprocessor's restricted operator set over shared grammar metadata.
 int precedence(const Token &token) {
@@ -289,4 +289,4 @@ Expr ExpressionParser::segment() {
     }
     return result;
 }
-} // namespace erlang_aot
+} // namespace clause

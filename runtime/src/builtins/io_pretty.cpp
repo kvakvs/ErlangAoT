@@ -3,13 +3,13 @@
 #include "support.hpp"
 #include "text.hpp"
 #include <algorithm>
-#include <erlang_aot/runtime/output.hpp>
+#include <clause/runtime/output.hpp>
 #include <vector>
 
 // ~p: io_lib_pretty:print/2 with unlimited depth and characters. A term becomes OTP's intermediate format (each
 // value with its one-line length), then is laid out: what fits on the line is written whole, tagged tuples, maps
 // and records choose an indentation, and other containers break between elements (docs/io.md).
-namespace erlang_aot::runtime::builtins {
+namespace clause::runtime::builtins {
 namespace {
 // Containers nested deeper than this raise system_limit: the layout recurses once per level on the native stack,
 // about 1.2 KiB per level in Debug builds (docs/differences.md).
@@ -707,4 +707,4 @@ std::u32string pretty(const Term &term, const PrettyOptions &options) {
     }
     return layout.take();
 }
-} // namespace erlang_aot::runtime::builtins
+} // namespace clause::runtime::builtins

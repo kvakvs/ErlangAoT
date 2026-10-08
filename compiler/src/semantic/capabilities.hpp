@@ -2,7 +2,7 @@
 #include "declarations.hpp"
 #include <span>
 
-namespace erlang_aot::semantic {
+namespace clause::semantic {
 struct Branch {
     // One case, if, receive or try clause seen uniformly: if clauses have no pattern, case clauses may omit the
     // guard.
@@ -55,4 +55,4 @@ ast::ExprId pattern_root(const ast::Module &syntax, const ast::PatternSyntaxId &
 ast::ExprId ungroup(const ast::Module &syntax, ast::ExprId expression);
 // Decode supported signed literals using the eventual target word width, never unchecked casts.
 std::optional<std::int64_t> integer_literal(const ast::Module &syntax, ast::ExprId expression, unsigned word_bits);
-} // namespace erlang_aot::semantic
+} // namespace clause::semantic

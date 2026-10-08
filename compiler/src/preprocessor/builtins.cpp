@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <charconv>
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // LINE and function placeholders are special even after undefining their table entries.
 std::optional<std::vector<Token>> special_builtin(const Token &name) {
@@ -169,4 +169,4 @@ void PreprocessorSession::State::ordinary(std::vector<Token> tokens) {
     }
     pending.emplace_back(OrdinaryForm{std::move(tokens), feature_snapshot});
 }
-} // namespace erlang_aot
+} // namespace clause

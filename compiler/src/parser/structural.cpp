@@ -1,6 +1,6 @@
 #include "forms.hpp"
 
-namespace erlang_aot {
+namespace clause {
 namespace {
 // Structural postfixes bind only to expr_max or their own recursive production family.
 bool is_map(const ast::ExprValue &value) { return std::holds_alternative<ast::MapExpression>(value); }
@@ -68,4 +68,4 @@ ast::ExprValue FormParser::hash(std::optional<ast::ExprId> base, const bool comp
     }
     return record(std::move(base), std::move(identity));
 }
-} // namespace erlang_aot
+} // namespace clause
