@@ -29,6 +29,8 @@ Plan: [3](11-plan.md#step-3)–[8](11-plan.md#step-8), [43](11-plan.md#step-43),
   (steps 6, 6A, 7); missing-runtime/ABI/link failures tested.
 - [x] Connect startup to cooperative process execution (F22, step 43).
 - [x] Runtime options `--max-atoms` and `CLAUSE_FLAGS` (step 27 follow-up).
+- [x] The step-2 program fixtures run end to end through their manifests and match OTP at O0/O2 on 1 and 4
+  workers (step 58, CTests `programs_<fixture>`).
 - [ ] `--args-file` options file like `vm.args` (reserved; reports not
   implemented).
 
@@ -419,7 +421,8 @@ Keep historical results with their original hosts and revisions.
   suppressions.
 - **V03 — Broader OTP compatibility** ([1](11-plan.md#step-1),
   [2](11-plan.md#step-2), [58](11-plan.md#step-58), [69](11-plan.md#step-69)):
-  [x] pin refreshed and program fixtures goldened (steps 1–2); [ ] upstream
+  [x] pin refreshed and program fixtures goldened (steps 1–2); [x] program fixtures match their goldens as
+  linked executables (step 58); [ ] upstream
   Common Test suites and wider differential comparisons.
 - **V04 — Remaining test migration** ([8](11-plan.md#step-8),
   [70](11-plan.md#step-70)): [x] executable golden runner (step 8); [ ] audit

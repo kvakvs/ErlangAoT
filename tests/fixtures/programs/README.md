@@ -19,6 +19,13 @@ messages, so output is deterministic.
 
 ## Tests
 
+- `programs_<fixture>` (normal CTest, OTP-free, plan step 58) runs a fixture
+  through the [step-8 runner](../executables/README.md): it builds the program
+  under every policy of the test matrix, the project builds through the
+  fixture's own `project.toml` (`clau --project project.toml --entry Entry
+  -o Output`), runs it with its argv on one and four scheduler workers and
+  compares the exit status and stdout with the OTP golden (stderr is not
+  compared).
 - `programs_compile` (normal CTest, OTP-free) verifies every golden hash, then
   compiles each fixture and compares exit status and stderr with `compile.txt`.
   When a plan step enables a feature, rerun
@@ -32,9 +39,7 @@ messages, so output is deterministic.
 python tests/compiler/programs/regenerate.py --escript 'C:/Program Files/Erlang OTP/erts-17.1/bin/escript.exe' --check
 ```
 
-Never regenerate to make a Clause comparison pass. Step 58 will run these
-goldens against linked executables with the
-[step-8 runner](../executables/README.md).
+Never regenerate to make a Clause comparison pass.
 
 ## Feature map
 

@@ -1,7 +1,8 @@
 # Executable golden cases
 
 End-to-end cases for the executable golden runner
-([plan 11 step 8](../../../.agents/11-plan.md#step-8)): Erlang sources are
+([plan 11 step 8](../../../.agents/11-plan.md#step-8)); the runner also runs the
+[program fixtures](../programs/README.md) (step 58). Erlang sources are
 linked into a program by `clau`, run with arguments, and stdout, exit
 status and a stderr pattern are compared with an OTP-generated golden.
 

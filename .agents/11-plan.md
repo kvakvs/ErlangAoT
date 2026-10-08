@@ -1378,11 +1378,26 @@ functions, clang-tidy 324 units).
 Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57). Ports (J2) are not required by the step-2 fixtures.
 
 - Success criteria
-  - [ ] Every step-2 fixture builds through its project manifest and matches
+  - [x] Every step-2 fixture builds through its project manifest and matches
     its OTP golden at O0/O2 with 1 and N workers.
-  - [ ] Remaining gaps found by fixtures are added to the backlog with owners.
+  - [x] Remaining gaps found by fixtures are added to the backlog with owners
+    (none found).
 - Tests
-  - [ ] Fixtures run through the step-8 runner in normal CTest.
+  - [x] Fixtures run through the step-8 runner in normal CTest.
+
+Done 2026-10-09. `tests/compiler/executables/run.py` takes a program fixture
+directory too (`prepare`, `program_golden`): golden from `fixture.json`,
+`expected/golden.json` and `expected/stdout.txt` (hashes verified by
+`programs/fixtures.py`), stderr not compared, workers 1 and 4; its project
+builds run `clau --project project.toml --entry Entry -o Output` on the
+fixture's own manifest, positional builds take every `src/**/*.erl`. CTests
+`programs_<fixture>` (`tests/compiler/programs/CMakeLists.txt`). All six
+fixtures (`avltree`, `frames`, `kvstore`, `ring`, `supervise`,
+`textstats`) matched their OTP goldens under all eight policies and both
+worker counts on the first run: the steps before them closed every gap the
+fixtures were written to expose, so no backlog item was added.
+Phase K closed: fresh configure, full CTest 224/224 (-j 32); no C++ changed
+since 57G3's `check-quality-all`, so the changed-scope check was empty.
 
 ## L. Optimization and tooling
 

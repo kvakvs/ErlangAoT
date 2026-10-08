@@ -1,4 +1,5 @@
-"""Link one executable golden case under every test policy, run it and compare with its OTP golden."""
+"""Link one executable golden case, or one program fixture (tests/fixtures/programs), under every test policy, run it
+and compare with its OTP golden."""
 import argparse
 import concurrent.futures
 import difflib
@@ -12,10 +13,16 @@ import sys
 import cases
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'patternmatch'))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'programs'))
+import fixtures as programs  # noqa: E402  (program fixtures and their goldens)
 import matrix  # noqa: E402  (shared fast/full policy selection)
 
 # Policy combinations linked and run at once; each is independent, so a case takes about one combination's time.
 COMBINATION_JOBS = 4
+# Scheduler counts every program fixture runs with (plan step 58: one and several workers).
+PROGRAM_WORKERS = [1, 4]
+# What a program fixture's copy leaves out: its golden and its compile diagnostics.
+PROGRAM_EXTRAS = ('expected', 'compile.txt')
 
 
 def manifest(case, entry, output):
@@ -25,16 +32,19 @@ def manifest(case, entry, output):
 
 
 def command(tool, work, case, golden, policy):
-    """Compiler invocation for one policy; returns its label and argument list."""
+    """Compiler invocation for one policy; returns its label and argument list. A program fixture's project build uses
+    its own manifest, with the entry and output given on the command line."""
     level, extra, name, project = policy
     label = f'{name}-{"project" if project else "positional"}'
     options = [f'-{level}', *([extra] if extra else [])]
     output = f'{label}/{case}'
-    if project:
+    if project and 'manifest' not in golden:
         (work / f'{label}.toml').write_bytes(manifest(case, golden['entry'], output).encode())
         return label, [tool, '--project', f'{label}.toml', *options]
     (work / label).mkdir()
-    inputs = sorted(f'src/{path.name}' for path in (work / 'src').glob('*.erl'))
+    if project:
+        return label, [tool, '--project', golden['manifest'], *options, '--entry', golden['entry'], '-o', output]
+    inputs = sorted(path.relative_to(work).as_posix() for path in (work / 'src').rglob('*.erl'))
     return label, [tool, *options, '--entry', golden['entry'], '-o', output, *inputs]
 
 
@@ -102,7 +112,7 @@ def check_policy(tool, work, case, golden, policy, suffix):
     # Each combination runs in its own directory beside its executable, with the case's data files, so programs that
     # write files do not meet each other.
     for path in (work / 'src').iterdir():
-        if path.suffix not in ('.erl', '.hrl'):
+        if path.is_file() and path.suffix not in ('.erl', '.hrl'):
             shutil.copyfile(path, work / label / path.name)
     failures, lines = 0, []
     for run, variant in variants(golden):
@@ -114,18 +124,40 @@ def check_policy(tool, work, case, golden, policy, suffix):
     return failures, lines
 
 
+def program_golden(case_dir):
+    """A program fixture as a golden: its entry and argv and OTP's exit status and stdout, built through its own
+    project.toml; stderr is not compared (tests/fixtures/programs/README.md)."""
+    manifest_data, stdout = programs.verify(case_dir.name)
+    spec = programs.spec(case_dir.name)
+    run = {'args': spec['args'], 'stderr': '', 'exit_status': manifest_data['exit_status'],
+           'stdout': stdout.decode('utf8')}
+    return {'schema': 1, 'entry': spec['entry'], 'workers': PROGRAM_WORKERS, 'manifest': 'project.toml',
+            'runs': [run]}
+
+
+def prepare(case_dir, work):
+    """Recreates `work` holding the case's inputs; returns the case's golden."""
+    shutil.rmtree(work, ignore_errors=True)
+    if (case_dir / 'fixture.json').exists():
+        golden = program_golden(case_dir)
+        shutil.copytree(case_dir, work, ignore=shutil.ignore_patterns(*PROGRAM_EXTRAS))
+        return golden
+    golden = cases.verify(case_dir)
+    cases.stage(case_dir, golden, work / 'src')
+    return golden
+
+
 def main():
-    """Checks one case directory against its golden under the fast or full policy matrix."""
+    """Checks one case or program directory against its golden under the fast or full policy matrix."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('tool', help='clau executable')
     parser.add_argument('work', type=pathlib.Path, help='scratch directory, recreated')
-    parser.add_argument('case', type=pathlib.Path, help='case directory holding golden.json')
+    parser.add_argument('case', type=pathlib.Path,
+                        help='case directory holding golden.json, or program fixture directory holding fixture.json')
     parser.add_argument('--suffix', default='', help='host executable suffix appended by the linker')
     options = parser.parse_args()
     case_dir, work, tool = options.case.resolve(), options.work.resolve(), str(pathlib.Path(options.tool).resolve())
-    golden = cases.verify(case_dir)
-    shutil.rmtree(work, ignore_errors=True)
-    cases.stage(case_dir, golden, work / 'src')
+    golden = prepare(case_dir, work)
     policies = matrix.combinations()
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(COMBINATION_JOBS, len(policies))) as pool:
         outcomes = list(pool.map(lambda policy: check_policy(tool, work, case_dir.name, golden, policy, options.suffix),
