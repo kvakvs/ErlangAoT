@@ -192,6 +192,14 @@ sum() -> 1 + 2.
   strings, tuples, maps with atom and other keys, funs returned and applied,
   binaries and argument relations. Today inference finds integer constants,
   integer joins and argument relations (7 of 39 functions).
+- `base_types.erl` has a function per base and built-in type of the
+  [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
+  `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
+  `non_neg_integer()`, `boolean()`, `string()`, `iolist()`, `mfa()`,
+  `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
+  built-in type is checked to resolve, and its body produces such a value.
+  Categories are expected under their built-in names, bounded integer sets as
+  ranges. Today 3 of 46 functions reach their expected type.
 
 ### Printing types
 

@@ -1411,9 +1411,11 @@ Backlog: F01, V03. Depends on: [2](#step-2), [57](#step-57).
 ## L. Optimization and tooling
 
 Steps 58A–58G (added 2026-10-08, user request) make type inference precise
-enough that `tests/fixtures/inference/values.erl` reaches its `expect:`
-signatures: today only integer constants, integer joins and argument
-relations are inferred (7 of 39 functions). They depend only on the existing
+enough that `tests/fixtures/inference/values.erl` and `base_types.erl` (every
+base and built-in type of the [type language](https://www.erlang.org/doc/system/typespec.html))
+reach their `expect:` signatures: today only integer constants, integer joins
+and argument relations are inferred (7 of 39 and 3 of 46 functions). Every
+built-in type already resolves in declarations. They depend only on the existing
 inference (steps 18, 21) and may move earlier. Each step removes the `today:`
 lines it closes, adds fixtures for its own cases, and keeps facts sound:
 specialization (step 59) may only rely on proven facts, and every widening,
@@ -1435,8 +1437,13 @@ representation).
 
 - Success criteria
   - [ ] The contract names every fact kind, its join and widening rule and its
-    budget; `--print-types` text for each matches the `values.erl`
-    expectations or the expectations are updated with the contract.
+    budget; `--print-types` text for each matches the `values.erl` and
+    `base_types.erl` expectations or the expectations are updated with the
+    contract. Categories print by their built-in names (`boolean()`,
+    `binary()`, `nonempty_binary()`, `string()`, `nonempty_string()`,
+    `non_neg_integer()`, `pos_integer()`, `neg_integer()`, `number()`), bounded
+    integer sets as ranges (`0..255`, `1..10`); the contract covers `pid()`,
+    `port()`, `reference()`, `dynamic()` (as `term()`) and `none()`.
 - Tests
   - [ ] Focused unit tests of joins and widening at the documented thresholds
     (`semantic_inference`).
@@ -1455,8 +1462,10 @@ literal binaries (`<<_:16>>`) get their facts; integer literals already do.
     joins of mixed literals follow the 58A rules (`1 | float()`).
 - Tests
   - [ ] `values.erl` literal rows (`float`, `atom`, `string`, `empty_list`,
-    `binary`, `integer_or_float`) reach `expect:`; new rows for characters,
-    negative floats and long strings at the widening threshold.
+    `binary`, `integer_or_float`) and `base_types.erl` literal rows (`nil`,
+    singleton atoms, `?MODULE`, `<<>>`, `<<_:3>>`, `{}`, `#{}`, `mfa`) reach
+    `expect:`; new rows for characters, negative floats and long strings at
+    the widening threshold.
 
 <a id="step-58c"></a>
 
@@ -1466,18 +1475,26 @@ Backlog: F34. Depends on: [58B](#step-58b).
 
 Arithmetic on known integers folds within the integer limit and otherwise
 yields `integer()`, `float()` or `number()` by operand facts (`/` is always
-`float()`); comparisons, `andalso`/`orelse`/`not` and type tests yield `true`,
-`false` or `boolean()`; bridge builtins with fixed result categories
-(`length/1`, `tuple_size/1`, `atom_to_list/1`, ...) get them. Raising paths
-contribute nothing to a join.
+`float()`, `band 255` is `0..255`, `abs/1` of an integer `non_neg_integer()`);
+comparisons, `andalso`/`orelse`/`not` and type tests yield `true`, `false` or
+`boolean()`. A table gives every bridge builtin its result category: `self/0`,
+`spawn/1,3` -> `pid()`, `make_ref/0` -> `reference()`, `length/1`,
+`byte_size/1`, `tuple_size/1` -> `non_neg_integer()`, `float/1` ->
+`float()`, `trunc/1` -> `integer()`, `list_to_atom/1` -> `atom()`,
+`atom_to_list/1` -> `string()`, `integer_to_list/1` -> `nonempty_string()`,
+`list_to_binary/1` -> `binary()`, `tuple_to_list/1` -> `list()`,
+`list_to_tuple/1` -> `tuple()`, ... Raising paths contribute nothing to a
+join, so a function that always raises infers `none()`.
 
 - Success criteria
   - [ ] `sum() -> 3`, `product() -> 42`, `division() -> float()`,
     `comparison() -> true`, `conjunction() -> false`; folding never changes
     runtime behavior (overflow to bignums, badarith stay runtime outcomes).
 - Tests
-  - [ ] `values.erl` operator rows reach `expect:`; new rows for bignum
-    folding, `div`/`rem`, mixed integer/float arithmetic and builtin results.
+  - [ ] `values.erl` operator rows and the `base_types.erl` builtin, boolean,
+    number and `no_return` rows reach `expect:`; new rows for bignum folding,
+    `div`/`rem`, mixed integer/float arithmetic and the rest of the builtin
+    table.
 
 <a id="step-58d"></a>
 
@@ -1496,8 +1513,11 @@ an unknown map is `map()`; records keep their tuple shape. Element access
     `{ok, 1} | {error, bad}` joins print as their `values.erl` expectations;
     width and depth past the 58A budgets widen to the category.
 - Tests
-  - [ ] `values.erl` container rows reach `expect:`; new rows for records,
-    element access, cons cells and containers at the budget limits.
+  - [ ] `values.erl` container rows and the `base_types.erl` list, string,
+    iolist, improper list, map update, binary construction and comprehension
+    rows (`binary()`, `nonempty_binary()`, `nonempty_bitstring()`) reach
+    `expect:`; new rows for records, element access, cons cells and
+    containers at the budget limits.
 
 <a id="step-58e"></a>
 
@@ -1514,8 +1534,9 @@ whose fact is a known fun uses that result.
     `applies_fun() -> 6`, closures with captured facts; unknown funs and
     `apply/2,3` stay `term()`.
 - Tests
-  - [ ] `values.erl` fun rows reach `expect:`; new rows for named funs,
-    funs passed to library functions and funs stored in containers.
+  - [ ] `values.erl` fun rows and `base_types.erl` `fun_value`/`remote_fun`
+    reach `expect:`; new rows for named funs, funs passed to library functions
+    and funs stored in containers.
 
 <a id="step-58f"></a>
 
@@ -1552,9 +1573,11 @@ values they test: `is_integer(X), X >= 1, X =< 10` makes `X` the range
   - [ ] `bounded(term()) -> 1..10`, `scaled(term()) -> number()`; a refined
     fact never escapes the clause that proved it.
 - Tests
-  - [ ] `values.erl` reaches `expect:` for every row (no `today:` lines
-    left); new rows for range guards, tuple and list patterns, map patterns
-    and refinements that must not leak.
+  - [ ] `values.erl` and `base_types.erl` reach `expect:` for every row (no
+    `today:` lines left: `1..10`, `0..255`, `pos_integer()`,
+    `neg_integer()`, `infinity | non_neg_integer()`); new rows for range
+    guards, tuple and list patterns, map patterns and refinements that must
+    not leak.
 
 <a id="step-59"></a>
 
