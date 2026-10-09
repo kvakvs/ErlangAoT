@@ -18,7 +18,22 @@
     named/0,
     same_funs/1,
     different_funs/1,
-    raising/1
+    raising/1,
+    selected/0,
+    first_branch/0,
+    unknown_argument/1,
+    no_type/0,
+    narrowed_after/1,
+    literal_argument/0,
+    overlapping/1,
+    below_ten/0,
+    nested_calls/0,
+    several_callers/0,
+    recursive_call/0,
+    bound_fun/0,
+    fun_in_tuple/0,
+    passed_fun/0,
+    unknown_fun_argument/1
 ]).
 
 %% Type tests per clause.
@@ -146,3 +161,93 @@ different_funs(X) ->
 %% expect: raising(0) -> none(); (N) -> N
 raising(0) -> error(zero);
 raising(N) -> N.
+
+%% Calls read the function types their arguments select (step 58L).
+%% expect: selected() -> integer()
+selected() -> type_tests(5).
+
+%% An exact clause whose inputs hold the arguments hides the later ones.
+%% expect: first_branch() -> one
+first_branch() -> case_split(1).
+
+%% Unknown arguments select every function type: the union.
+%% expect: unknown_argument(_) -> integer() | one | other
+unknown_argument(X) -> case_split(X).
+
+%% A call no function type admits never returns.
+%% expect: no_type() -> none()
+no_type() -> type_tests(1.5).
+
+%% After the call, the argument narrows to the inputs of the types it entered.
+%% expect: narrowed_after(integer()) -> integer()
+narrowed_after(X) when is_number(X) ->
+    _ = type_tests(X),
+    X.
+
+%% expect: literal_argument() -> two
+literal_argument() -> literals(2).
+
+%% A range overlapping two clauses selects both.
+%% expect: overlapping(0..20) -> big | small
+overlapping(X) when is_integer(X), X >= 0, X =< 20 -> small_big(X).
+
+%% expect: below_ten() -> small
+below_ten() -> small_big(5).
+
+%% A plain variable after a single comparison sees it false (58H1).
+%% expect: small_big(0..9) -> small; (10..20) -> big
+small_big(N) when N < 10 -> small;
+small_big(N) -> big.
+
+%% expect: nested_calls() -> integer()
+nested_calls() -> type_tests(type_tests(1)).
+
+%% A local function's inputs join its callers' arguments; each call still selects by its own.
+%% expect: several_callers() -> {one, other}
+several_callers() -> {pick_local(1), pick_local(a)}.
+
+%% expect: pick_local(1) -> one; (1 | a) -> other
+pick_local(1) -> one;
+pick_local(_) -> other.
+
+%% expect: recursive_call() -> done
+recursive_call() -> countdown(3).
+
+%% A bound fun evaluated for a call enters only the clauses its arguments can match.
+%% expect: bound_fun() -> other
+bound_fun() ->
+    F = fun
+        (1) -> one;
+        (X) when is_atom(X) -> X;
+        (_) -> other
+    end,
+    F(2).
+
+%% Funs elsewhere select by their function types.
+%% expect: fun_in_tuple() -> other
+fun_in_tuple() ->
+    {F} = {
+        fun
+            (1) -> one;
+            (_) -> other
+        end
+    },
+    F(2).
+
+%% expect: passed_fun() -> other
+passed_fun() ->
+    apply_two(fun
+        (1) -> one;
+        (_) -> other
+    end).
+
+%% expect: apply_two(fun((1) -> one; (_) -> other)) -> other
+apply_two(F) -> F(2).
+
+%% expect: unknown_fun_argument(_) -> one | other
+unknown_fun_argument(X) ->
+    F = fun
+        (1) -> one;
+        (_) -> other
+    end,
+    F(X).

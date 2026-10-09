@@ -81,8 +81,9 @@ class Lattice {
     Id association(Id key, Id value);
     Id fun(std::size_t arity, Id result);
     Id bitstring(std::uint64_t base, std::uint64_t unit);
-    // A fun of one function type: arguments of the facts `inputs` returning `result`.
-    Id fun(std::vector<Id> inputs, Id result);
+    // A fun of one function type: arguments of the facts `inputs` returning `result`; `exact` when every argument
+    // within the inputs enters its clause.
+    Id fun(std::vector<Id> inputs, Id result, bool exact = false);
     // A fun of several function types, funs of one arity with inputs; a single one is that fun itself.
     Id overloaded(std::vector<Id> types);
     // The fun of today a fun fact stands for: its arity, any inputs, its function types' joined results; another
@@ -102,6 +103,8 @@ class Lattice {
     Id subtract_numbers(Id member, Id removed);
     // The rank of a fact's family in Erlang term order: numbers 0, atoms 1, ..., bitstrings 10, other facts 11.
     int family(Id fact) const;
+    // Whether every value of `inner` is surely a value of `outer`.
+    bool within(Id inner, Id outer);
     // The members of a fact: a union's members, or the fact itself.
     std::vector<Id> members(Id fact) const;
     // The numbers `fact` holds, and whether it may hold the atom `name`.

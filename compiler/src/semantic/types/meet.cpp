@@ -121,6 +121,10 @@ class Meet final {
     Id numbers(Id left, Id right);
     Id atoms(Id left, Id right);
     Id funs(Id left, Id right);
+    // Whether a fun fact has one function type of any inputs: the funs of today.
+    bool plain(Id fun) const;
+    // The function types of `fun` of the arity of plain fun `plain`, their results met with its result.
+    Id restricted(Id fun, Id plain);
     Id tuples(Id left, Id right);
     Id maps(Id left, Id right);
     // The meet of two exact maps: the same keys with values that meet.
@@ -235,10 +239,36 @@ Id Meet::funs(const Id left, const Id right) {
     if (any(left, "fun") || any(right, "fun")) {
         return any(left, "fun") ? right : left;
     }
+    if (plain(right) || plain(left)) {
+        return plain(right) ? restricted(left, right) : restricted(right, left);
+    }
     // Different funs meet as the funs of today: their function types and inputs are given up.
     const auto a = graph_.get(lattice_.joined_fun(left)).children;
     const auto b = graph_.get(lattice_.joined_fun(right)).children;
     return a.size() != b.size() ? graph_.bottom() : lattice_.fun(a.size() - 1, lattice_.meet(a.back(), b.back()));
+}
+
+bool Meet::plain(const Id fun) const {
+    const auto &node = graph_.get(fun);
+    return node.name == "product" &&
+           std::all_of(node.children.begin(), node.children.end() - 1, [&](Id input) { return input == graph_.top(); });
+}
+
+Id Meet::restricted(const Id fun, const Id plain) {
+    if (fun == plain) {
+        return fun;
+    }
+    const auto bound = graph_.get(plain).children;
+    std::vector<Id> types;
+    for (const auto type : lattice_.function_types(fun)) {
+        const auto node = graph_.get(type);
+        const auto result = lattice_.meet(node.children.back(), bound.back());
+        if (node.children.size() == bound.size() && result != graph_.bottom()) {
+            std::vector<Id> inputs(node.children.begin(), node.children.end() - 1);
+            types.push_back(lattice_.fun(std::move(inputs), result, std::ranges::contains(node.labels, "exact")));
+        }
+    }
+    return types.empty() ? graph_.bottom() : lattice_.overloaded(std::move(types));
 }
 
 Id Meet::tuples(const Id left, const Id right) {
@@ -479,6 +509,11 @@ Id Lattice::meet(Id left, Id right) {
         }
     }
     return join(results, 0);
+}
+
+bool Lattice::within(Id inner, Id outer) {
+    Meet meet(*this);
+    return meet.contained(inner, outer);
 }
 
 Id Lattice::subtract(Id fact, Id removed) {

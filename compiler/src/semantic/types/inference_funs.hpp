@@ -10,7 +10,8 @@ namespace clause::semantic::types {
 std::optional<Id> fun_reference_fact(Inference &inference, FunctionRef function, const ast::Expression &expression);
 // The fact of a fun of a function: its function types, else a fun of `arity` returning its result.
 Id summary_fun(Lattice &lattice, const Summary &summary, std::size_t arity);
-// The result of calling a value of fact `callee` with `arity` arguments: the joined results of its funs of that
-// arity, term() for an unknown fun, none() when no member can be called so.
-Id call_value(Lattice &lattice, Id callee, std::size_t arity);
+// The result of calling a value of fact `callee` with arguments of facts `arguments`: the joined results of the
+// function types of its funs of that arity the arguments select, term() for an unknown fun, none() when no member
+// can be called so.
+Id call_value(Lattice &lattice, Id callee, const std::vector<Fact> &arguments);
 } // namespace clause::semantic::types

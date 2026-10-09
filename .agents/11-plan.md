@@ -922,17 +922,39 @@ component, a dynamic call or `apply`) also uses its union summary.
 - Argument relations (`f(X) -> X`) instantiate per function type as they do
   per call today.
 - Success criteria
-  - [ ] `use() -> f(5)` infers `integer()`, `g(1)` infers `one`, calls with
+  - [x] `use() -> f(5)` infers `integer()`, `g(1)` infers `one`, calls with
     unknown arguments the union; a call no function type admits is
     `none()`; nothing narrows on a function type the call cannot enter; fun
-    calls (bound, stored, passed) select by their clauses.
+    calls (bound, stored, passed) select by their clauses. Evidence
+    2026-10-09: `function_types::select` (in order: admitted when every
+    argument fact meets the input; stops after an exact type whose inputs
+    hold the arguments, `FunctionType::exact` from `exact_shape` patterns and
+    `exact_guard` type tests of plain arguments, case scrutinee an
+    argument), relations instantiated as the argument's fact met with the
+    type's result; `call_fact` narrows arguments to the success domain and
+    the selected inputs; `call_value` selects over fun function types
+    (`exact` label on product funs); `instantiate` walks the lambda's clause
+    frames (`expand_clauses`, `BindingFacts::instances`) and restores
+    impossible marks; `Meet::restricted` keeps function types when a use
+    meets a fun with a plain fun; components converge on types too.
+    `g(1) -> one` needs first-match (an exact earlier type), since `1`
+    also meets the later `integer()` input. The optional report of a call
+    no inferred type can enter (58I) is not added.
 - Tests
-  - [ ] `clauses.erl` rows for each case above, a call through a literal
+  - [x] `clauses.erl` rows for each case above, a call through a literal
     argument, a call with a range overlapping two clauses, nested calls,
     local functions whose 58F inputs are joined from several callers, a
     recursive call, the multi-clause fun calls above (bound, in a tuple,
     passed to a local function) and a fun call with unknown arguments;
-    specialization profiles unchanged in the codegen tests.
+    specialization profiles unchanged in the codegen tests. Evidence:
+    clauses 35/35 (`selected`, `first_branch`, `unknown_argument`,
+    `no_type`, `narrowed_after`, `literal_argument`, `overlapping`,
+    `below_ten`, `nested_calls`, `several_callers`, `recursive_call`,
+    `bound_fun`, `fun_in_tuple`, `passed_fun`, `unknown_fun_argument`);
+    narrower results accepted in `complement_start -> int` and
+    `mapped -> [_, ...]`; `consecutive` takes an argument to keep showing
+    `1..3 | 5 | 7..8`; fast CTest 223/223 (codegen and specialization tests
+    unchanged).
 
 <a id="step-58m"></a>
 

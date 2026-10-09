@@ -128,17 +128,17 @@ void BindingFacts::bind_lambda(const ast::MatchExpression &match) {
     }
     if (fun_clauses(fun.value) && event != events.end() && event->second->use == BindingUse::definition &&
         !shared.contains(event->second->identity)) {
-        lambdas.insert_or_assign(event->second->identity, &fun);
+        lambdas.insert_or_assign(event->second->identity, ungroup(syntax, match.right));
     }
 }
 
-const ast::Expression *BindingFacts::lambda(const ast::ExprId &read) const {
+std::optional<ast::ExprId> BindingFacts::lambda(const ast::ExprId &read) const {
     const auto event = events.find(&function.module->syntax->expression(read));
     if (event == events.end() || event->second->use != BindingUse::read) {
-        return nullptr;
+        return std::nullopt;
     }
     const auto found = lambdas.find(event->second->identity);
-    return found == lambdas.end() ? nullptr : found->second;
+    return found == lambdas.end() ? std::nullopt : std::optional{found->second};
 }
 
 void BindingFacts::narrow(const ast::ExprId &read, const Id fact) {

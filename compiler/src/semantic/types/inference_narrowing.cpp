@@ -613,3 +613,33 @@ std::optional<std::pair<BindingId, Id>> single_test(BindingFacts &bindings, cons
     return identity ? std::optional{std::pair{*identity, tested->second}} : std::nullopt;
 }
 } // namespace clause::semantic::types
+
+namespace clause::semantic::types {
+namespace {
+// Whether a guard test holds for every value of the facts it narrows: `true`, or a type test of a name of
+// `arguments` (is_map_key/2 also needs the key, so it is not).
+bool exact_test(BindingFacts &bindings, const ast::ExprId &test, const std::set<BindingId> &arguments) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &expression = syntax.expression(ungroup(syntax, test));
+    if (const auto *atom = std::get_if<ast::Atom>(&expression.value)) {
+        return atom->name == U"true";
+    }
+    const auto service = bindings.function.function->services.find(&expression);
+    if (service != bindings.function.function->services.end() && service->second.identity.name == U"is_map_key") {
+        return false;
+    }
+    const auto tested = Assume(bindings).type_test(expression);
+    const auto identity = tested ? variable(bindings, tested->first) : std::nullopt;
+    return identity && arguments.contains(*identity);
+}
+} // namespace
+
+bool exact_guard(BindingFacts &bindings, const ast::GuardSyntax *guard, const std::set<BindingId> &arguments) {
+    if (!guard) {
+        return true;
+    }
+    return guard->alternatives.size() == 1 &&
+           std::ranges::all_of(guard->alternatives.front().tests,
+                               [&](const ast::ExprId &test) { return exact_test(bindings, test, arguments); });
+}
+} // namespace clause::semantic::types

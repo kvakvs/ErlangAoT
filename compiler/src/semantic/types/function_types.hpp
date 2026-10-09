@@ -17,4 +17,15 @@ std::vector<FunctionType> next_round(Graph &graph, const std::vector<FunctionTyp
                                      std::vector<FunctionType> next, bool widening);
 // The fun fact of function types (at least one); a result equal to an argument is that argument's input.
 Id fun_fact(Lattice &lattice, const std::vector<FunctionType> &types);
+
+// The function types a call enters: their joined results, each relation to an argument instantiated with that
+// argument's fact, and their joined inputs; none() and no inputs when it enters none.
+struct Selection {
+    Fact result;
+    std::vector<Id> inputs = {};
+};
+
+// A call's selection of function types: in order, each type whose inputs every argument fact meets, up to an exact
+// one whose inputs hold the arguments (docs/semantic.md#inference).
+Selection select(Graph &graph, const std::vector<FunctionType> &types, const std::vector<Fact> &arguments);
 } // namespace clause::semantic::types

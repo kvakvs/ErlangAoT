@@ -172,7 +172,8 @@ Inference is separate from declared types and never trusts specs.
   variable arity, `fun()`), `fun M:F/A` one returning `term()`, and an
   anonymous fun one returning its clauses' joined results, captured values
   included. A call of a value joins the results of its funs of that arity
-  (`term()` for an unknown fun, `none()` when no member can be called so).
+  that its arguments select (step 58L; `term()` for an unknown fun, `none()`
+  when no member can be called so).
   An anonymous fun bound whole to a variable and called through it is
   evaluated again for that call with its patterns matching the arguments'
   facts, at most 4 such calls deep, and its first evaluation's facts are
@@ -281,9 +282,27 @@ Inference is separate from declared types and never trusts specs.
   one function type per possible clause (its patterns and guard over any
   argument), `fun F/A` the function types of `F/A`; funs that join keep their
   function types only when they are equal, otherwise they join as one fun of
-  their joined results with any inputs. Every other consumer
-  (specialization, domains, calls, specification checks) reads the union
-  summary.
+  their joined results with any inputs (meeting a fun of any inputs, as the
+  use `F(A)` does, keeps them). Specialization, domains and specification
+  checks read the union summary.
+- Calls select function types (step 58L): a call of a function with
+  function types reads, in order, each type whose inputs every argument fact
+  meets, and stops after an exact one (patterns of new variables used once,
+  literal atoms and integers, `[]` and tuples of them; no guard or only
+  `true` and type tests of plain argument variables; for a branch, an
+  argument as the `case` scrutinee) whose inputs hold the arguments: no
+  later clause can be entered. Its result is the join of the selected
+  types' results, a result equal to an argument being that argument's fact
+  within the type's result; none selected makes the call `none()` (it can
+  only raise `function_clause`). Unknown arguments select every type, the
+  union; a function without function types (budget, unconverged component)
+  uses its union summary. After a call returns, its variable arguments
+  narrow to the success domain and to the selected types' joined inputs.
+  Calls of fun values select the fun fact's function types the same way,
+  and an anonymous fun evaluated again for a call (see Funs) enters, guards
+  and leaves its clauses like a `case`, so a clause its arguments cannot
+  match adds nothing (`F = fun(1) -> one; (_) -> other end, F(2)` is
+  `other`). Recursive components converge on results and function types.
 - A `receive` is the join of its clauses and its `after` body, which a
   timeout of `infinity` never runs.
 - A recursive component starts every member's result at `none()` and re-infers
@@ -462,7 +481,12 @@ sum() -> 1 + 2.
   more clauses than the budget, a recursive function, a single clause, a
   `case` and an `if` ending the body, a nested `case` and a `case` that is
   not last, multi-clause anonymous funs, `fun F/A`, joins of equal and of
-  different funs, and a clause that always raises.
+  different funs, and a clause that always raises; and call selection (step
+  58L): a type test, a first exact branch, unknown arguments, no admitted
+  type, narrowing after the call, a literal argument, a range over two
+  clauses, nested calls, a local with several callers, a recursive callee,
+  and multi-clause funs bound, in a tuple, passed to a local and called with
+  an unknown argument.
 
 ### Printing types
 

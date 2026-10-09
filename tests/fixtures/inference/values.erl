@@ -58,7 +58,7 @@
     string/0,
     eight_letters/0,
     nine_letters/0,
-    consecutive/0,
+    consecutive/1,
     same_tuple/0,
     mixed_tuple/0,
     nested_tuple/0,
@@ -351,8 +351,8 @@ eight_letters() -> "acegikmo".
 %% expect: nine_letters() -> [97..113, ...]
 nine_letters() -> "acegikmoq".
 
-%% expect: consecutive() -> 1..3 | 5 | 7..8
-consecutive() -> pick_number(1).
+%% expect: consecutive(_) -> 1..3 | 5 | 7..8
+consecutive(X) -> pick_number(X).
 
 %% expect: pick_number(1) -> 1; (2) -> 2; (3) -> 3; (5) -> 5; (7) -> 7; (_) -> 8
 pick_number(X) ->
@@ -549,7 +549,7 @@ named_fun() ->
         Fact(N) -> N * Fact(N - 1)
     end.
 
-%% expect: mapped() -> list()
+%% expect: mapped() -> [_, ...]
 mapped() -> lists:map(fun(X) -> X * 2 end, [1, 2]).
 
 %% expect: stored_fun() -> {fun(() -> 1)}

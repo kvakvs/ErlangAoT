@@ -167,7 +167,7 @@ contradiction(_) -> ok.
 either(X) when is_integer(X); is_float(X) -> X.
 
 %% A clause after one whose whole guard was a single type test sees the value without that category.
-%% expect: complement_start() -> float() | int
+%% expect: complement_start() -> int
 complement_start() ->
     {complement(1), complement(2.5)},
     complement(3).

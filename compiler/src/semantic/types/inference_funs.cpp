@@ -54,16 +54,32 @@ Id summary_fun(Lattice &lattice, const Summary &summary, const std::size_t arity
     return summary.types.empty() ? lattice.fun(arity, summary.result.type) : fun_fact(lattice, summary.types);
 }
 
-Id call_value(Lattice &lattice, const Id callee, const std::size_t arity) {
+namespace {
+// The function types of a fun member as a function's: inputs, result and exactness, or none for another arity.
+std::vector<FunctionType> member_types(Lattice &lattice, const Id member, const std::size_t arity) {
+    std::vector<FunctionType> types;
+    for (const auto type : lattice.function_types(member)) {
+        const auto node = lattice.graph().get(type);
+        if (node.kind != Kind::function || node.children.size() != arity + 1) {
+            continue;
+        }
+        std::vector<Id> inputs(node.children.begin(), node.children.end() - 1);
+        types.push_back({std::move(inputs), {node.children.back()}, std::ranges::contains(node.labels, "exact")});
+    }
+    return types;
+}
+} // namespace
+
+Id call_value(Lattice &lattice, const Id callee, const std::vector<Fact> &arguments) {
     auto &graph = lattice.graph();
     std::vector<Id> results;
     for (const auto member : lattice.members(callee)) {
-        const auto &node = graph.get(lattice.joined_fun(member));
+        const auto &node = graph.get(member);
         if (member == graph.top() || (node.kind == Kind::function && node.name == "any_arguments")) {
             return graph.top();
         }
-        if (node.kind == Kind::function && node.children.size() == arity + 1) {
-            results.push_back(node.children.back());
+        if (node.kind == Kind::function) {
+            results.push_back(select(graph, member_types(lattice, member, arguments.size()), arguments).result.type);
         }
     }
     return lattice.join(results, 0);

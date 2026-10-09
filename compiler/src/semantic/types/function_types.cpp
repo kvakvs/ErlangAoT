@@ -10,12 +10,57 @@ void absorb(Graph &graph, FunctionType &into, const FunctionType &type) {
         into.inputs[index] = lattice.join(into.inputs[index], type.inputs[index]);
     }
     into.result = merged(graph, into.result, type.result);
+    into.exact = false;
 }
 
 // Whether two lists of function types have the same inputs, type by type.
 bool same_inputs(const std::vector<FunctionType> &left, const std::vector<FunctionType> &right) {
     return std::ranges::equal(left, right,
                               [](const FunctionType &a, const FunctionType &b) { return a.inputs == b.inputs; });
+}
+
+// Whether a call with these argument facts can enter a function type: each fact meets its input.
+bool admits(Lattice &lattice, const FunctionType &type, const std::vector<Fact> &arguments) {
+    for (std::size_t index = 0; index < type.inputs.size() && index < arguments.size(); ++index) {
+        if (lattice.meet(arguments[index].type, type.inputs[index]) == lattice.graph().bottom()) {
+            return false;
+        }
+    }
+    return type.inputs.size() == arguments.size();
+}
+
+// Whether a call with these argument facts surely enters an exact function type, so no later one.
+bool settles(Lattice &lattice, const FunctionType &type, const std::vector<Fact> &arguments) {
+    if (!type.exact) {
+        return false;
+    }
+    for (std::size_t index = 0; index < type.inputs.size(); ++index) {
+        if (!lattice.within(arguments[index].type, type.inputs[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Join a selected type's inputs into the inputs selected so far (none at first).
+void join_inputs(Lattice &lattice, std::vector<Id> &selected, const std::vector<Id> &inputs) {
+    if (selected.empty()) {
+        selected = inputs;
+        return;
+    }
+    for (std::size_t index = 0; index < inputs.size() && index < selected.size(); ++index) {
+        selected[index] = lattice.join(selected[index], inputs[index]);
+    }
+}
+
+// A function type's result for a call: a result equal to an argument is that argument's fact, within the result.
+Fact instance(Lattice &lattice, const FunctionType &type, const std::vector<Fact> &arguments) {
+    const auto argument = type.result.argument;
+    if (!argument || *argument >= arguments.size() || type.result.type == lattice.graph().bottom()) {
+        return type.result;
+    }
+    const auto &actual = arguments[*argument];
+    return {lattice.meet(actual.type, type.result.type), actual.argument};
 }
 } // namespace
 
@@ -66,11 +111,27 @@ Id fun_fact(Lattice &lattice, const std::vector<FunctionType> &types) {
     for (const auto &type : types) {
         const auto argument = type.result.argument;
         const bool related = argument && *argument < type.inputs.size() && type.result.type == lattice.graph().top();
-        const auto fun = lattice.fun(type.inputs, related ? type.inputs[*argument] : type.result.type);
+        const auto fun = lattice.fun(type.inputs, related ? type.inputs[*argument] : type.result.type, type.exact);
         if (!std::ranges::contains(funs, fun)) {
             funs.push_back(fun);
         }
     }
     return lattice.overloaded(std::move(funs));
+}
+
+Selection select(Graph &graph, const std::vector<FunctionType> &types, const std::vector<Fact> &arguments) {
+    Lattice lattice(graph);
+    Selection selection{{graph.bottom()}};
+    for (const auto &type : types) {
+        if (!admits(lattice, type, arguments)) {
+            continue;
+        }
+        selection.result = merged(graph, selection.result, instance(lattice, type, arguments));
+        join_inputs(lattice, selection.inputs, type.inputs);
+        if (settles(lattice, type, arguments)) {
+            break;
+        }
+    }
+    return selection;
 }
 } // namespace clause::semantic::types

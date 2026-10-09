@@ -991,12 +991,16 @@ Id Lattice::fun(std::size_t arity, Id result) {
     return graph_.intern({Kind::function, "product", {}, std::move(children), {"result"}});
 }
 
-Id Lattice::fun(std::vector<Id> inputs, Id result) {
+Id Lattice::fun(std::vector<Id> inputs, Id result, bool exact) {
     for (auto &input : inputs) {
         input = within_depth(input);
     }
     inputs.push_back(within_depth(result));
-    return graph_.intern({Kind::function, "product", {}, std::move(inputs), {"result"}});
+    std::vector<std::string> labels{"result"};
+    if (exact && std::ranges::any_of(inputs, [&](Id input) { return input != graph_.top(); })) {
+        labels.emplace_back("exact");
+    }
+    return graph_.intern({Kind::function, "product", {}, std::move(inputs), std::move(labels)});
 }
 
 Id Lattice::overloaded(std::vector<Id> types) {

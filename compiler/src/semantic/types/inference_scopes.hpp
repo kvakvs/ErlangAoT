@@ -40,6 +40,9 @@ struct Frame {
 // Push the frames that evaluate an expression: its operands in evaluation order with the scope steps they need, then
 // its ready step.
 void expand(const Module &module, const ast::ExprId &id, std::vector<Frame> &pending);
+// Push the frames of an anonymous fun's clauses, without the fun's own evaluation: each entered, guarded, evaluated
+// and left.
+void expand_clauses(const Module &module, const ast::ExprId &fun, std::vector<Frame> &pending);
 // Push the frames of a function's clauses: each head, guard and body.
 void expand_heads(const ast::Function &definition, std::vector<Frame> &pending);
 // Run a scope step (anything but visit and ready).

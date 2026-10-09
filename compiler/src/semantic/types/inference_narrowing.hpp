@@ -24,6 +24,9 @@ Id pattern_shape(BindingFacts &bindings, const ast::ExprId &pattern);
 // Whether a pattern matches every value of its shape (new variables used once, literal atoms and integers, [] and
 // tuples of them), so the values it fails on are those outside its shape.
 bool exact_shape(const BindingFacts &bindings, const ast::ExprId &pattern);
+// Whether a guard (none: no guard) is true for every value of the facts it narrows: a single conjunction of `true`
+// and type tests of the names in `arguments`, whose narrowed facts are what the clause is entered with.
+bool exact_guard(BindingFacts &bindings, const ast::GuardSyntax *guard, const std::set<BindingId> &arguments);
 // The variable and category of a guard that is a single type test on a variable.
 std::optional<std::pair<BindingId, Id>> single_test(BindingFacts &bindings, const ast::GuardSyntax &guard);
 // The comparison of a guard that is a single comparison of a variable with an integer constant.

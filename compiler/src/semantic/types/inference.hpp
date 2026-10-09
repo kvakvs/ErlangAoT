@@ -16,6 +16,9 @@ struct FunctionType {
     // its result.
     std::vector<Id> inputs;
     Fact result;
+    // Whether every argument value within `inputs` that reaches the clause enters it (exact patterns, type tests):
+    // a call whose arguments are within them can enter no later function type.
+    bool exact = false;
     bool operator==(const FunctionType &) const = default;
 };
 

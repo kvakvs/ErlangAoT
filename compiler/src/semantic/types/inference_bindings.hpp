@@ -42,11 +42,13 @@ struct BindingFacts {
     // bound to another one's value.
     void bind_lambda(const ast::MatchExpression &match);
     // The anonymous fun bound to the variable a read names, if any.
-    const ast::Expression *lambda(const ast::ExprId &read) const;
+    std::optional<ast::ExprId> lambda(const ast::ExprId &read) const;
 
     // The anonymous funs bound to variables, and how many of them are being evaluated for a call.
-    std::map<BindingId, const ast::Expression *> lambdas;
+    std::map<BindingId, ast::ExprId> lambdas;
     std::size_t depth = 0;
+    // The argument facts of the anonymous funs being evaluated for a call, which their clauses' patterns match.
+    std::map<const ast::Expression *, std::vector<Fact>> instances;
     // Narrow the variable a read names, and the names bound to the same value, to their meet with `fact`.
     void narrow(const ast::ExprId &read, Id fact);
     // Narrow a name and the names bound to the same value to their meet with `fact`, in `facts` (the current values or
@@ -71,15 +73,17 @@ struct BindingFacts {
     std::vector<Id> entry;
     std::vector<Id> domain;
 
-    // The function clause being walked and its arguments' facts after its head and guard.
+    // The function clause being walked, its arguments' facts after its head and guard, and whether every value of
+    // them enters it.
     std::size_t head = 0;
     std::vector<Id> arguments;
-    // The arguments' facts after each guard of the case or if ending the clause's body, by branch: its function types.
-    std::map<std::size_t, std::vector<Id>> branches;
+    bool exact = false;
+    // The function types (results still unknown) of the branches of the case or if ending the clause's body.
+    std::map<std::size_t, FunctionType> branches;
     // The function types of the clauses walked so far, in source order.
     std::vector<FunctionType> types;
-    // The arguments' facts after the head and guard of each anonymous fun clause, by fun and clause.
-    std::map<std::pair<const ast::Expression *, std::size_t>, std::vector<Id>> fun_inputs;
+    // The function types (results still unknown) of each anonymous fun clause, by fun and clause.
+    std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> fun_inputs;
     // The patterns waiting for each expression's value.
     std::map<const ast::Expression *, std::vector<Waiting>> waiting;
 

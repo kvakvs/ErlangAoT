@@ -380,6 +380,18 @@ void enter_try(BindingFacts &bindings, const ast::TryExpression &attempt, const 
     match(bindings, pattern_root(syntax, handler.reason), {lattice.graph().top()}, &handler.body, work);
 }
 
+// Enter a fun clause: its patterns match the arguments' facts of a fun evaluated for a call, otherwise any terms.
+void enter_fun(BindingFacts &bindings, const ast::Expression &fun, const std::size_t index, std::size_t &work) {
+    const auto &clause = fun_clauses(fun.value)->at(index);
+    const auto instance = bindings.instances.find(&fun);
+    const auto patterns = argument_roots(*bindings.function.module->syntax, clause);
+    for (std::size_t position = 0; position < patterns.size(); ++position) {
+        const bool known = instance != bindings.instances.end() && position < instance->second.size();
+        const auto fact = known ? instance->second[position] : Fact{bindings.inference.graph.top()};
+        match(bindings, patterns[position], fact, &clause.body, work);
+    }
+}
+
 // Enter a clause of a case, receive, try, maybe or fun: its patterns narrow what they match.
 void enter(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index, std::size_t &work) {
     const auto &syntax = *bindings.function.module->syntax;
@@ -394,10 +406,8 @@ void enter(BindingFacts &bindings, const ast::Expression &expression, const std:
     } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         const auto &clause = receive->clauses[index];
         match(bindings, pattern_root(syntax, clause.pattern), {bindings.inference.graph.top()}, &clause.body, work);
-    } else if (const auto *clauses = fun_clauses(value)) {
-        for (const auto &pattern : argument_roots(syntax, clauses->at(index))) {
-            match(bindings, pattern, {bindings.inference.graph.top()}, &clauses->at(index).body, work);
-        }
+    } else if (fun_clauses(value)) {
+        enter_fun(bindings, expression, index, work);
     }
 }
 
@@ -444,15 +454,56 @@ const ast::Expression *trailing(const BindingFacts &bindings, const ast::Functio
 void add_types(BindingFacts &bindings, const ast::FunctionClause &clause) {
     const auto *tail = trailing(bindings, clause);
     if (!tail || bindings.branches.empty()) {
-        bindings.types.push_back({bindings.arguments, body_fact(bindings, clause.body)});
+        bindings.types.push_back({bindings.arguments, body_fact(bindings, clause.body), bindings.exact});
         return;
     }
     const bool reached = !stops(bindings, std::span(clause.body).first(clause.body.size() - 1));
-    for (const auto &[branch, inputs] : bindings.branches) {
+    for (auto [branch, type] : bindings.branches) {
         const auto &body = *clause_parts(tail->value, branch).second;
-        bindings.types.push_back(
-            {inputs, reached ? body_fact(bindings, body) : Fact{bindings.inference.graph.bottom()}});
+        type.result = reached ? body_fact(bindings, body) : Fact{bindings.inference.graph.bottom()};
+        bindings.types.push_back(std::move(type));
     }
+}
+
+// The names of a clause's plain variable arguments and the names bound to the same values: what guards testing them
+// narrow is what the clause is entered with.
+std::set<BindingId> argument_names(const BindingFacts &bindings, const std::vector<ast::ExprId> &patterns) {
+    std::set<BindingId> result;
+    for (const auto &pattern : patterns) {
+        const auto identity = variable(bindings, pattern);
+        if (!identity) {
+            continue;
+        }
+        result.insert(*identity);
+        if (const auto linked = bindings.aliases.find(*identity); linked != bindings.aliases.end()) {
+            result.insert(linked->second.begin(), linked->second.end());
+        }
+    }
+    return result;
+}
+
+// Whether every value of a clause's arguments' facts enters it: exact patterns and an exact guard.
+bool exact_clause(BindingFacts &bindings, const std::vector<ast::ExprId> &patterns, const ast::GuardSyntax *guard) {
+    return std::ranges::all_of(patterns, [&](const ast::ExprId &pattern) { return exact_shape(bindings, pattern); }) &&
+           exact_guard(bindings, guard, argument_names(bindings, patterns));
+}
+
+// Whether every value of the arguments' facts after a branch of the case or if ending the function clause enters
+// that branch once the clause is entered: an if's guard is exact, or a case reads an argument with an exact pattern
+// and guard.
+bool exact_branch(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index,
+                  const std::vector<ast::ExprId> &patterns) {
+    const auto names = argument_names(bindings, patterns);
+    const auto *guard = clause_parts(expression.value, index).first;
+    const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
+    if (!selection) {
+        return exact_guard(bindings, guard, names);
+    }
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto scrutinee = variable(bindings, selection->value);
+    return scrutinee && names.contains(*scrutinee) &&
+           exact_shape(bindings, pattern_root(syntax, selection->clauses[index].pattern)) &&
+           exact_guard(bindings, guard, names);
 }
 
 // The arguments' facts after a fun clause's head and guard: a plain variable's narrowed fact, else its pattern's
@@ -474,14 +525,20 @@ void record_clause(BindingFacts &bindings, const ast::Expression &expression, co
     if (bindings.impossible.contains(clause_parts(expression.value, index).second)) {
         return;
     }
+    const auto &syntax = *bindings.function.module->syntax;
+    const Fact unknown{bindings.inference.graph.bottom()};
     if (const auto *clauses = fun_clauses(expression.value)) {
-        bindings.fun_inputs.insert_or_assign({&expression, index}, fun_arguments(bindings, clauses->at(index)));
+        const auto &clause = clauses->at(index);
+        const auto exact = exact_clause(bindings, argument_roots(syntax, clause), guard_of(clause.guard));
+        bindings.fun_inputs.insert_or_assign({&expression, index},
+                                             FunctionType{fun_arguments(bindings, clause), unknown, exact});
         return;
     }
     const auto &clause = heads(bindings).at(bindings.head);
     if (trailing(bindings, clause) == &expression) {
-        const auto &syntax = *bindings.function.module->syntax;
-        bindings.branches.insert_or_assign(index, argument_facts(bindings, argument_roots(syntax, clause)));
+        const auto patterns = argument_roots(syntax, clause);
+        const auto exact = bindings.exact && exact_branch(bindings, expression, index, patterns);
+        bindings.branches.insert_or_assign(index, FunctionType{argument_facts(bindings, patterns), unknown, exact});
     }
 }
 
@@ -523,7 +580,9 @@ void guarded_head(BindingFacts &bindings, const std::size_t index) {
         return;
     }
     Lattice lattice(bindings.inference.graph);
-    bindings.arguments = argument_facts(bindings, argument_roots(syntax, clause));
+    const auto patterns = argument_roots(syntax, clause);
+    bindings.arguments = argument_facts(bindings, patterns);
+    bindings.exact = exact_clause(bindings, patterns, guard_of(clause.guard));
     for (std::size_t position = 0; position < bindings.arguments.size(); ++position) {
         bindings.domain.at(position) = lattice.join(bindings.domain.at(position), bindings.arguments[position]);
     }
@@ -664,6 +723,12 @@ void expand(const Module &module, const ast::ExprId &id, std::vector<Frame> &pen
         !comprehension(order, id, value)) {
         order.visit(expression_children(module, module.syntax->expression(id)));
     }
+    order.push(pending);
+}
+
+void expand_clauses(const Module &module, const ast::ExprId &fun, std::vector<Frame> &pending) {
+    Order order(module);
+    order.clauses(fun, *fun_clauses(module.syntax->expression(fun).value));
     order.push(pending);
 }
 

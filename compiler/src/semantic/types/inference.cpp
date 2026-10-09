@@ -181,48 +181,76 @@ std::vector<const ast::Expression *> subtree(const Module &module, const std::ve
     return result;
 }
 
-// The result of calling anonymous fun `lambda` with arguments of facts `arguments`: its clauses are evaluated again
-// with their patterns matching the arguments, then the facts of its first evaluation are restored.
-Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts &bindings,
-                 const ast::Expression &lambda, const std::vector<Fact> &arguments, std::size_t &work) {
+// The facts of a function's walk that evaluating an anonymous fun again for a call changes, restored afterwards.
+struct Instance {
+    std::map<BindingId, Fact> values;
+    std::map<const ast::Expression *, std::vector<Waiting>> waiting;
+    std::map<std::pair<const ast::Expression *, std::size_t>, BindingFacts::Conditional> conditionals;
+    Impossible impossible;
+    std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> fun_inputs;
+    std::map<const ast::Expression *, std::vector<Fact>> instances;
+};
+
+// Keep the facts an evaluation for a call changes.
+Instance keep(const BindingFacts &bindings) {
+    return {bindings.values,     bindings.waiting,    bindings.conditionals,
+            bindings.impossible, bindings.fun_inputs, bindings.instances};
+}
+
+// Restore the facts kept before an evaluation for a call.
+void restore(BindingFacts &bindings, const Instance &kept) {
+    bindings.values = kept.values;
+    bindings.waiting = kept.waiting;
+    bindings.conditionals = kept.conditionals;
+    bindings.impossible = kept.impossible;
+    bindings.fun_inputs = kept.fun_inputs;
+    bindings.instances = kept.instances;
+}
+
+// The result of calling anonymous fun `lambda` with arguments of facts `arguments`: its clauses are entered, guarded
+// and left again like a case's, their patterns matching the arguments (a clause they cannot match adds nothing),
+// then the facts of its first evaluation are restored.
+Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts &bindings, const ast::ExprId &lambda,
+                 const std::vector<Fact> &arguments, std::size_t &work) {
     const auto &syntax = *function.module->syntax;
-    const auto &clauses = *fun_clauses(lambda.value);
+    const auto &expression = syntax.expression(lambda);
+    const auto &clauses = *fun_clauses(expression.value);
     if (clauses.front().arguments.size() != arguments.size()) {
         return {inference.graph.bottom()};
     }
-    const auto roots = clause_roots(clauses);
     std::vector<std::pair<const ast::Expression *, Fact>> saved;
-    for (const auto *expression : subtree(*function.module, roots)) {
-        if (const auto found = inference.expressions.find(expression); found != inference.expressions.end()) {
+    for (const auto *evaluated : subtree(*function.module, clause_roots(clauses))) {
+        if (const auto found = inference.expressions.find(evaluated); found != inference.expressions.end()) {
             saved.emplace_back(*found);
             inference.expressions.erase(found);
         }
     }
-    const auto values = bindings.values;
-    const auto waiting = bindings.waiting;
-    const auto conditionals = bindings.conditionals;
+    const auto kept = keep(bindings);
+    bindings.instances.insert_or_assign(&expression, arguments);
     ++bindings.depth;
-    for (const auto &clause : clauses) {
-        for (std::size_t index = 0; index < arguments.size(); ++index) {
-            bindings.publish(pattern_root(syntax, clause.arguments[index]), arguments[index], work);
-        }
-    }
     std::vector<const ast::Expression *> scratch;
     std::vector<Frame> frames;
-    for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
-        frames.push_back({*root});
-    }
+    expand_clauses(*function.module, lambda, frames);
     const auto result = walk(inference, function, bindings, std::move(frames), work, scratch)
-                            ? joined(inference, syntax, clauses)
+                            ? joined(inference, syntax, clauses, &bindings.impossible)
                             : Fact{inference.graph.exhausted()};
-    for (const auto *expression : scratch) {
-        inference.expressions.erase(expression);
+    for (const auto *evaluated : scratch) {
+        inference.expressions.erase(evaluated);
     }
     inference.expressions.insert(saved.begin(), saved.end());
-    bindings.values = values;
-    bindings.waiting = waiting;
-    bindings.conditionals = conditionals;
+    restore(bindings, kept);
     --bindings.depth;
+    return result;
+}
+
+// The facts of a call's arguments.
+std::vector<Fact> argument_facts(const Inference &inference, const ast::Module &syntax,
+                                 const ast::CallExpression &call) {
+    std::vector<Fact> result;
+    result.reserve(call.arguments.size());
+    for (const auto &argument : call.arguments) {
+        result.push_back(recorded_fact(inference, syntax, argument));
+    }
     return result;
 }
 
@@ -232,16 +260,12 @@ Fact value_call(Inference &inference, const FunctionRef function, const ast::Cal
                 BindingFacts &bindings, std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto target = ungroup(syntax, call.target);
-    if (const auto *lambda = bindings.lambda(target); lambda && bindings.depth < INSTANCE_DEPTH) {
-        std::vector<Fact> arguments;
-        arguments.reserve(call.arguments.size());
-        for (const auto &argument : call.arguments) {
-            arguments.push_back({recorded_fact(inference, syntax, argument).type});
-        }
+    const auto arguments = argument_facts(inference, syntax, call);
+    if (const auto lambda = bindings.lambda(target); lambda && bindings.depth < INSTANCE_DEPTH) {
         return instantiate(inference, function, bindings, *lambda, arguments, work);
     }
     Lattice lattice(inference.graph);
-    return {call_value(lattice, recorded_fact(inference, syntax, target).type, call.arguments.size())};
+    return {call_value(lattice, recorded_fact(inference, syntax, target).type, arguments)};
 }
 
 // A fun value: fun F/A and fun M:F/A by the function they name, an anonymous fun by the function types of its
@@ -263,16 +287,25 @@ std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef funct
             continue;
         }
         const auto found = bindings.fun_inputs.find({&expression, index});
-        auto inputs =
-            found == bindings.fun_inputs.end() ? std::vector<Id>(arity, inference.graph.top()) : found->second;
+        auto type = found == bindings.fun_inputs.end()
+                        ? FunctionType{std::vector<Id>(arity, inference.graph.top()), {inference.graph.bottom()}}
+                        : found->second;
         // A relation of the result is to the enclosing function's arguments, not the fun's.
-        types.push_back({std::move(inputs), {sequence(inference, *function.module->syntax, clause.body).type}});
+        type.result = {sequence(inference, *function.module->syntax, clause.body).type};
+        types.push_back(std::move(type));
     }
     Lattice lattice(inference.graph);
     if (types.empty()) {
         return Fact{lattice.fun(arity, inference.graph.bottom())};
     }
     return Fact{fun_fact(lattice, merge_types(inference.graph, std::move(types)))};
+}
+
+// Narrow a returned call's variable arguments to `facts`, position by position.
+void narrow_arguments(BindingFacts &bindings, const ast::CallExpression &call, const std::vector<Id> &facts) {
+    for (std::size_t index = 0; index < call.arguments.size() && index < facts.size(); ++index) {
+        bindings.narrow(call.arguments[index], facts[index]);
+    }
 }
 
 // A call: none() when it never happens, else by its callee: a value, a function or an unknown target.
@@ -288,16 +321,19 @@ Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expr
     if (opaque_call(function, expression, call)) {
         return {inference.graph.top()};
     }
-    const auto result = call_result(inference, syntax, expression, call);
     const auto *callee = inference.callees.at(&expression).function;
-    // A call that returned had arguments within the callee's success domain, once that domain is final.
-    if (result.type != inference.graph.bottom() && !inference.solving.contains(callee)) {
-        const auto &inputs = inference.functions.at(callee).inputs;
-        for (std::size_t index = 0; index < call.arguments.size() && index < inputs.size(); ++index) {
-            bindings.narrow(call.arguments[index], inputs[index]);
-        }
+    const auto &summary = inference.functions.at(callee);
+    // A function with function types: the call reads those its arguments select (docs/semantic.md#inference).
+    auto selection = summary.types.empty()
+                         ? Selection{call_result(inference, syntax, expression, call)}
+                         : select(inference.graph, summary.types, argument_facts(inference, syntax, call));
+    // A call that returned had arguments within the callee's success domain and the selected types' inputs, once
+    // they are final.
+    if (selection.result.type != inference.graph.bottom() && !inference.solving.contains(callee)) {
+        narrow_arguments(bindings, call, summary.inputs);
+        narrow_arguments(bindings, call, selection.inputs);
     }
-    return result;
+    return selection.result;
 }
 
 // Groups, matches and blocks have the value of the expression they end with; a match publishes its pattern.
@@ -435,12 +471,13 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
         auto evaluated = body(inference, member, work, recorded);
         auto &summary = inference.functions.at(member.function);
         const auto next = merged(inference.graph, summary.result, evaluated.result, widening);
-        changed = changed || next != summary.result;
+        // Calls read the function types too: they converge with the results.
+        auto types = next_round(inference.graph, summary.types, std::move(evaluated.types), widening);
+        changed = changed || next != summary.result || types != summary.types;
         summary.result = next;
         summary.inputs = std::move(evaluated.domain);
         summary.entry = std::move(evaluated.entry);
-        // Function types follow the results; only results decide convergence.
-        summary.types = next_round(inference.graph, summary.types, std::move(evaluated.types), widening);
+        summary.types = std::move(types);
     }
     return changed;
 }
