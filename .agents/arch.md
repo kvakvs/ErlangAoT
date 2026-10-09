@@ -405,6 +405,8 @@
   metadata and bounded comments annotate textual IR. Artifact publication checks
   encoded paths/aliases, stages exclusive writes and replaces complete files;
   multi-file publication is not atomic. Startup objects exist; positional `-o` links executables.
+  `-g` (step 60) turns the same line scopes into CodeView/DWARF line tables; linking keeps them (PDB published
+  beside MSVC executables); debuggers print the Erlang stack via `clause::runtime::debug_erlang_stack()`.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,

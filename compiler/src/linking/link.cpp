@@ -85,6 +85,14 @@ std::vector<std::string> strip_arguments(const llvm::Triple &triple) {
     return {"-Wl,--gc-sections"};
 }
 
+// Keep debug information: -g, and for MSVC targets a PDB that the executable names without its staging directory.
+std::vector<std::string> debug_arguments(const llvm::Triple &triple) {
+    if (triple.isWindowsMSVCEnvironment()) {
+        return {"-g", "-Wl,/PDBALTPATH:%_PDB%"};
+    }
+    return {"-g"};
+}
+
 // Build the Clang driver command: C++ link mode, explicit target, staged output, objects, then the runtime.
 std::vector<std::string> link_arguments(const LinkRequest &request, const std::filesystem::path &staged,
                                         std::vector<std::string> objects, const std::filesystem::path &runtime) {
@@ -94,6 +102,9 @@ std::vector<std::string> link_arguments(const LinkRequest &request, const std::f
                      {"--driver-mode=g++", "--target=" + request.target_triple, "-o", utf8_path(staged)});
     if (request.strip_unused) {
         std::ranges::move(strip_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
+    }
+    if (request.debug_info) {
+        std::ranges::move(debug_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
     }
     arguments.insert(arguments.end(), std::make_move_iterator(objects.begin()), std::make_move_iterator(objects.end()));
     arguments.push_back(utf8_path(runtime));
@@ -145,16 +156,27 @@ StagedExecutable stage_executable(const LinkRequest &request) {
     if (run.status != 0 || !std::filesystem::is_regular_file(staged, error)) {
         throw link_failure(output, linker, run);
     }
+    auto symbols = std::filesystem::path(staged).replace_extension(".pdb");
+    const bool pdb = request.debug_info && llvm::Triple(request.target_triple).isWindowsMSVCEnvironment();
+    if (pdb && !std::filesystem::is_regular_file(symbols, error)) {
+        throw std::runtime_error("linking " + project::path_text(output) + " produced no PDB");
+    }
     return {std::move(staging),
             std::move(staged),
             output,
             {request.protected_inputs.begin(), request.protected_inputs.end()},
-            std::move(run.output)};
+            std::move(run.output),
+            pdb ? std::move(symbols) : std::filesystem::path{}};
 }
 
 void publish_executable(const StagedExecutable &executable) {
     check_destination(executable.output, executable.protected_inputs);
     artifacts::detail::replace(executable.staged, executable.output);
+    if (!executable.symbols.empty()) {
+        const auto symbols = std::filesystem::path(executable.output).replace_extension(".pdb");
+        check_destination(symbols, executable.protected_inputs);
+        artifacts::detail::replace(executable.symbols, symbols);
+    }
 }
 
 std::string link_executable(const LinkRequest &request) {

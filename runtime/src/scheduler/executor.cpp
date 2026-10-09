@@ -7,9 +7,12 @@
 #include <array>
 #include <chrono>
 #include <clause/abi/equality.hpp>
+#include <clause/abi/modules.hpp>
+#include <cstdio>
 #include <exception>
 #include <new>
 #include <optional>
+#include <string>
 #include <thread>
 
 namespace clause::runtime::detail {
@@ -451,3 +454,42 @@ void Executor::clear() noexcept {
     failed_ = false;
 }
 } // namespace clause::runtime::detail
+
+namespace clause::runtime {
+namespace {
+// Append the spelling of a compiled atom slot without touching runtime atom tables.
+void append_atom(std::string &text, const abi::v1::ModuleDescriptor &module, const std::size_t slot) {
+    if (slot < module.atom_count && module.atoms[slot].spelling) {
+        text.append(module.atoms[slot].spelling, module.atoms[slot].size);
+    }
+}
+
+// The Erlang frames of `process`, one `  module:function/arity` line each, innermost first.
+std::string erlang_stack(ProcessContext &process, std::size_t &count) {
+    std::string text;
+    process.stack().named_frames([&](const abi::v1::FrameDescriptor &frame) {
+        text += "  ";
+        append_atom(text, *frame.module, frame.module_atom);
+        text += ':';
+        append_atom(text, *frame.module, frame.function_atom);
+        text += '/' + std::to_string(frame.arity) + '\n';
+        ++count;
+    });
+    return text;
+}
+} // namespace
+
+std::size_t debug_erlang_stack() noexcept {
+    auto *process = detail::Executor::running();
+    std::size_t count = 0;
+    try {
+        // One write, so a debugger forwarding the program's output never splits the stack.
+        const auto text = process ? erlang_stack(*process, count) : "clause: no Erlang process runs on this thread\n";
+        static_cast<void>(std::fwrite(text.data(), 1, text.size(), stderr));
+        static_cast<void>(std::fflush(stderr));
+    } catch (...) {
+        return 0;
+    }
+    return count;
+}
+} // namespace clause::runtime

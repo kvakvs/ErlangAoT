@@ -132,6 +132,15 @@ class ProcessStack final {
     // Name the innermost named frames, up to the stack trace limit, for a newly raised exception.
     StackTrace trace() const noexcept;
 
+    // Visit the descriptor of every frame that names an Erlang function, innermost first (for debuggers).
+    template <typename Visitor> void named_frames(Visitor &&visit) const {
+        for (auto at = frame_; at != none; at = words_[at]) {
+            if (descriptor(at).module) {
+                visit(descriptor(at));
+            }
+        }
+    }
+
     // Visit every term slot of every frame, then the live registers and a trapping builtin's state words, so a
     // collector can rewrite them in place.
     template <typename Visitor> void visit(Visitor &&visit) {

@@ -1,4 +1,5 @@
 # Executable entry selection, startup and linking workflows (F01) through the public CLI.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME linking_entry COMMAND "${CMAKE_COMMAND}"
     "-DTOOL=$<TARGET_FILE:clau>" "-DFIXTURES=${PROJECT_SOURCE_DIR}/tests/fixtures/linking/entry"
     "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/entry/$<CONFIG>"
@@ -9,6 +10,11 @@ add_test(NAME linking_escript COMMAND "${CMAKE_COMMAND}"
     "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/escript/$<CONFIG>"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/escript.cmake")
 set_tests_properties(linking_escript PROPERTIES TIMEOUT 120)
+# -g line tables through includes and macros, as IR metadata and object sections of every target format (F30).
+add_test(NAME linking_debug_info COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug_info.py"
+    "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/linking/debug"
+    "${CMAKE_CURRENT_BINARY_DIR}/debug_info/$<CONFIG>")
+set_tests_properties(linking_debug_info PROPERTIES TIMEOUT 300)
 # Startup objects linked with the runtime by the native harness recipe; exit paths and startup IR.
 if(CLAUSE_BUILD_RUNTIME)
     add_test(NAME linking_startup COMMAND "${CMAKE_COMMAND}"
@@ -30,4 +36,9 @@ if(CLAUSE_BUILD_RUNTIME)
         "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/project/$<CONFIG>" "-DHOST_SUFFIX=${CMAKE_EXECUTABLE_SUFFIX}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/project.cmake")
     set_tests_properties(linking_project PROPERTIES TIMEOUT 300)
+    # A scripted LLDB/GDB session on a -g program: Erlang line breakpoints and the Erlang stack; skipped without one.
+    add_test(NAME linking_debugger COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debugger.py"
+        "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/linking/debug"
+        "${CMAKE_CURRENT_BINARY_DIR}/debugger/$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
+    set_tests_properties(linking_debugger PROPERTIES TIMEOUT 600 SKIP_RETURN_CODE 77)
 endif()

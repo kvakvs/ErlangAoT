@@ -4,6 +4,7 @@
 #include <llvm/BinaryFormat/Dwarf.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/Module.h>
+#include <llvm/TargetParser/Triple.h>
 #include <stdexcept>
 
 namespace clause::codegen {
@@ -50,6 +51,14 @@ const Span &source_site(const ast::TokenOrigin &origin) {
         return origin.related[1];
     }
     return origin.related.empty() ? origin.spelling : origin.related.front();
+}
+
+void request_debug_format(llvm::Module &output) {
+    if (llvm::Triple(output.getTargetTriple()).isWindowsMSVCEnvironment()) {
+        output.addModuleFlag(llvm::Module::Warning, "CodeView", 1);
+    } else {
+        output.addModuleFlag(llvm::Module::Warning, "Dwarf Version", 5);
+    }
 }
 
 void prepare_source_locations(llvm::Module &output, const semantic::Module &module, const bool optimized,

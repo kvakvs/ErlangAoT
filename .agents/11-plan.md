@@ -302,11 +302,25 @@ Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g); benefits from [58L](
 Backlog: F30. Depends on: [58](#step-58).
 
 - Success criteria
-  - [ ] Executables carry line tables through macros/includes; a debugger
-    breaks on an Erlang line and shows the Erlang call stack.
+  - [x] Executables carry line tables through macros/includes; a debugger
+    breaks on an Erlang line and shows the Erlang call stack. Evidence
+    2026-10-09: `-g` (request `debug_info`: CodeView module flag on MSVC
+    targets, DWARF 5 elsewhere, existing line-only scopes named by Erlang
+    functions in their declaring files, macro code at its invocation); link
+    adds `-g` and `/PDBALTPATH:%_PDB%`, the PDB is published beside the
+    executable. The Erlang stack comes from the runtime helper
+    `clause::runtime::debug_erlang_stack()` (frames of the thread's running
+    process), since tail transfers leave only the current function natively.
+    Gap: Mach-O needs `dsymutil` (not run; docs/debugging.md).
 - Tests
-  - [ ] Scripted debugger session (LLDB/GDB where available) on a golden
-    program; line-table inspection test runs everywhere.
+  - [x] Scripted debugger session (LLDB/GDB where available) on a golden
+    program; line-table inspection test runs everywhere. Evidence:
+    `linking_debugger` (LLDB 23 on Windows x64, O0/O2: stops at
+    `twice at debug.hrl:5` and `leaf at debug.erl:8`, helper prints
+    `debug:twice/1`/`debug:leaf/1` above `debug:middle/1`, `debug:main/1`;
+    skips with 77 without a debugger; GDB path unexercised until step 63);
+    `linking_debug_info` (6 targets, IR scopes/lines incl. macro in the
+    include, object sections with and without `-g`, O0/O2).
 
 <a id="step-61"></a>
 

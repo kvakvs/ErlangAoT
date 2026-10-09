@@ -284,6 +284,7 @@ clau [options] <source.erl>...
   --target-triple <triple>  Select the machine/OS/ABI
   -O0 / -O2 / -Os         Generic O0 (default) / speed / size optimization
   --no-type-specialization  Disable compiler variants at either optimization level
+  -g                      Emit Erlang line tables; executables keep them for debuggers
   --verbose               Trace files and compilation phases to stderr
   --impldebug <n[,n...]>   Enable debug output for selected implementation steps
   -I, --include <dir>      Add an include directory (last supplied searched first)

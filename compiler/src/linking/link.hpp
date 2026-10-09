@@ -23,6 +23,8 @@ struct LinkRequest {
     bool create_directory = false;
     // Ask the linker to drop unreferenced sections (-Os); objects then carry one section per symbol.
     bool strip_unused = false;
+    // Keep the objects' line tables (-g): in the executable, or for MSVC targets in a PDB beside it.
+    bool debug_info = false;
 };
 
 // Own a uniquely created directory beside an output; it is removed with its contents on destruction.
@@ -53,12 +55,15 @@ struct StagedExecutable {
     std::vector<std::filesystem::path> protected_inputs;
     // Output of the successful linker run, forwarded as warnings by the caller.
     std::string warnings;
+    // A staged PDB published beside the output (MSVC targets with debug information); empty otherwise.
+    std::filesystem::path symbols = {};
 };
 
 // Link in a private staging directory beside the output without touching the output.
 // Failures throw std::runtime_error; the staging directory is removed.
 StagedExecutable stage_executable(const LinkRequest &request);
-// Replace the destination with a staged executable; any failure keeps an existing output unchanged.
+// Replace the destination with a staged executable, then its PDB beside it; a failure keeps an existing output
+// unchanged.
 void publish_executable(const StagedExecutable &executable);
 // Stage and immediately publish one executable; returns linker warnings.
 std::string link_executable(const LinkRequest &request);

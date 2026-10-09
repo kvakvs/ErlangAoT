@@ -176,6 +176,9 @@ clau -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
 its own section and links with `--gc-sections` (ELF), `-dead_strip` (Mach-O) or
 `/OPT:REF /OPT:ICF` (MSVC), so code no entry path reaches is removed.
 
+`-g` keeps Erlang line tables for debuggers: in the executable (ELF), or in a
+`<name>.pdb` published beside it (MSVC targets) ([debugging](debugging.md)).
+
 - `PATH` is invocation-relative. For Windows targets, `.exe` is appended when
   the file name has no extension. Its directory must exist.
 - Linker: `--linker PATH` (a path or program name), else `clang++` or `clang`

@@ -244,6 +244,9 @@ class Executor final {
     // Release every process the executor started except the one run() returned, without running it further.
     void clear() noexcept;
 
+    // The process the calling thread runs a slice of; null between slices and on other threads.
+    static ProcessContext *running() noexcept { return running_; }
+
   private:
     // Scheduling state of one process the executor started.
     struct Schedule final {
@@ -483,3 +486,9 @@ class Executor final {
     bool failed_ = false;
 };
 } // namespace clause::runtime::detail
+
+namespace clause::runtime {
+// Called from a debugger stopped in generated code (docs/debugging.md): print the Erlang frames of the process this
+// thread runs to stderr, innermost first, as module:function/arity; returns how many. Programs never call it.
+std::size_t debug_erlang_stack() noexcept;
+} // namespace clause::runtime

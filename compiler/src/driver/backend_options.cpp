@@ -67,7 +67,8 @@ bool inspection_flag(const std::string_view option, BackendOptions &options) {
     static const std::map<std::string_view, bool BackendOptions::*> flags{
         {"--print-types", &BackendOptions::print_types},
         {"--print-ir", &BackendOptions::print_ir},
-        {"--print-optimized-ir", &BackendOptions::print_optimized_ir}};
+        {"--print-optimized-ir", &BackendOptions::print_optimized_ir},
+        {"-g", &BackendOptions::debug_info}};
     const auto found = flags.find(option);
     if (found == flags.end()) {
         return false;
@@ -80,7 +81,8 @@ bool inspection_flag(const std::string_view option, BackendOptions &options) {
 bool type_conflict_options(const Options &options) {
     const auto &backend = options.backend;
     return backend.inspect_ir() || backend.emit || backend.artifact_directory || options.output_explicit ||
-           !backend.target_triple.empty() || backend.optimization || backend.disable_type_specialization;
+           !backend.target_triple.empty() || backend.optimization || backend.disable_type_specialization ||
+           backend.debug_info;
 }
 
 // Inspection has no filesystem outputs and keeps executable output reserved.
@@ -129,7 +131,7 @@ std::optional<codegen::OptimizationLevel> optimization_level(const std::string_v
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
-           options.disable_type_specialization || options.inspect_ir() || options.print_types;
+           options.disable_type_specialization || options.inspect_ir() || options.print_types || options.debug_info;
 }
 } // namespace
 
@@ -141,6 +143,7 @@ bool is_backend_option(const std::string_view option) {
                                                     "-O2",
                                                     "-Os",
                                                     "--no-type-specialization",
+                                                    "-g",
                                                     "--print-ir",
                                                     "--print-optimized-ir",
                                                     "--print-types",

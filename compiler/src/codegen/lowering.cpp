@@ -84,6 +84,23 @@ void validate_inputs(const Compilation &compilation, const std::span<const std::
         require(modules[i] && modules[i]->syntax == &inputs[i].syntax, "lowering: foreign syntax owner");
     }
 }
+
+// Declare one module's functions and funs, with their source scopes when locations or debug information are asked.
+void declare_module(Compilation &compilation, const std::size_t index, const semantic::Module &module,
+                    llvm::FunctionType *signature, const semantic::types::Inference &inferred) {
+    const auto &request = compilation.request();
+    auto &output = *detail::state(compilation).modules[index];
+    progress(request, "lowering", request.inputs[index].source_path, utf8(module.name));
+    declare(output, module, signature, inferred);
+    declare_lambdas(output, module, signature);
+    if (request.annotate_source) {
+        prepare_source_locations(output, module, request.optimization != OptimizationLevel::none,
+                                 detail::state(compilation).source_scopes);
+    }
+    if (request.debug_info) {
+        request_debug_format(output);
+    }
+}
 } // namespace
 
 bool lower(Compilation &compilation, const std::span<const std::unique_ptr<semantic::Module>> modules,
@@ -100,15 +117,7 @@ bool lower(Compilation &compilation, const std::span<const std::unique_ptr<seman
         auto &outputs = detail::state(compilation).modules;
         auto *word = llvm::cast<llvm::IntegerType>(signature->getReturnType());
         for (std::size_t i = 0; i < modules.size(); ++i) {
-            progress(compilation.request(), "lowering", compilation.request().inputs[i].source_path,
-                     utf8(modules[i]->name));
-            declare(*outputs[i], *modules[i], signature, inferred);
-            declare_lambdas(*outputs[i], *modules[i], signature);
-            if (compilation.request().annotate_source) {
-                prepare_source_locations(*outputs[i], *modules[i],
-                                         compilation.request().optimization != OptimizationLevel::none,
-                                         detail::state(compilation).source_scopes);
-            }
+            declare_module(compilation, i, *modules[i], signature, inferred);
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
             emit_registration(*outputs[i], *modules[i], word);

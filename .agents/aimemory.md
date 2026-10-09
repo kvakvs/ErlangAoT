@@ -486,3 +486,8 @@ Host and tool gotchas:
   stale after GC: wakeups golden). Proofs read Inference::inputs (caller-joined) never Summary entry domains (those
   come from the patterns themselves). Fast mode matrix now O0 positional + O2 (spec on) project. Inference loses
   range precision for products of unions with negatives ((-5|1|3)^2 -> integer()).
+- 60 (2026-10-09): -g = request.debug_info (implies annotate_source) + CodeView/Dwarf module flag; link -g plus
+  /PDBALTPATH:%_PDB%, StagedExecutable::symbols published beside exe. LLDB at C:/Program Files/LLVM/bin/lldb.exe
+  works with our PDB (break file.erl:N, `expr -- clause::runtime::debug_erlang_stack()`). Python text capture of a
+  Windows console tool doubles CR: drop blank lines. Bash heredocs turn \n in C++/Python string literals into real
+  newlines: use Edit/Write for code with escapes.

@@ -403,8 +403,9 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 - **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [x] remove
   real checks for new operations with generic fallback and existing caps
   (inferred proofs for arithmetic, tuple access and list loops at O2).
-- **F30 — Debug information** ([60](11-plan.md#step-60)): [ ] LLVM debug
-  metadata mapped to Erlang source through macros/includes.
+- **F30 — Debug information** ([60](11-plan.md#step-60)): [x] LLVM debug
+  metadata mapped to Erlang source through macros/includes (`-g`; macOS
+  `dsymutil` and Linux GDB pending steps 66/63).
 - **F31 — Profiling** ([61](11-plan.md#step-61)): [ ] bounded-overhead cost
   attribution with deliberate enablement.
 - **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [ ] LTO modes

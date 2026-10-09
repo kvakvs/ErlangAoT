@@ -88,6 +88,8 @@ struct CompilationRequest {
     bool disable_type_specialization = false;
     // Preserve instruction locations for source comments in requested human-readable IR.
     bool annotate_source = false;
+    // Emit those locations as debugger line tables (CodeView on MSVC targets, DWARF elsewhere), step 60.
+    bool debug_info = false;
     // Select future in-memory serialization; filesystem publication belongs to the driver.
     OutputKind output_kind = OutputKind::object;
     // Add a startup module with a native `main` after the batch's modules when an entry is selected.

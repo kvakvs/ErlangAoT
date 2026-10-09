@@ -12,6 +12,8 @@ namespace clause::codegen {
 using SourceScopes = std::map<const llvm::MDNode *, SourcePtr>;
 // Recover physical invocation coordinates independently of logical -file mappings.
 const Span &source_site(const ast::TokenOrigin &origin);
+// Select the line-table format debuggers of the module's target read: CodeView for MSVC targets, else DWARF.
+void request_debug_format(llvm::Module &output);
 // Attach line-only function scopes before lowering so LLVM can retain provenance through optimization.
 void prepare_source_locations(llvm::Module &output, const semantic::Module &module, bool optimized,
                               SourceScopes &sources);
