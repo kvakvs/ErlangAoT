@@ -102,11 +102,11 @@ facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
 assert re.search(r'%% inferred: keep\(term\(\), term\(\)\) -> [^\n]*argument 1\n', facts), facts
 for signature in ('zero(term()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
-                  'even(term()) -> 0 | 1', 'odd(term()) -> 0 | 1', 'fact(term()) -> term()',
+                  'even(term()) -> 0 | 1', 'odd(term()) -> 0 | 1', 'fact(term()) -> number()',
                   'outer(term()) -> 0 | 5'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
-assert '    odd(N - 1) :: 0 | 1.\n' in facts, facts
+assert '    odd((N - 1 :: number())) :: 0 | 1.\n' in facts, facts
 
 
 # A cycle of n functions gains one result member per round (docs/semantic.md#inference-domain): a cycle of 8, the

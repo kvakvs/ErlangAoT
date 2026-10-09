@@ -116,7 +116,6 @@ class Construct final {
         return value.elements.empty() && !value.tail ? std::optional{lattice_.nil()} : std::nullopt;
     }
 
-    std::optional<Id> operator()(const ast::UnaryExpression &value);
     std::optional<Id> operator()(const ast::Tuple &value);
     std::optional<Id> operator()(const ast::MapExpression &value);
     std::optional<Id> operator()(const ast::Bitstring &value);
@@ -142,20 +141,6 @@ class Construct final {
     const ast::Module &syntax_;
     Lattice lattice_{inference_.graph};
 };
-
-std::optional<Id> Construct::operator()(const ast::UnaryExpression &value) {
-    if (value.operation != ast::UnaryOperator::negative && value.operation != ast::UnaryOperator::positive) {
-        return std::nullopt;
-    }
-    const auto operand = fact(value.operand);
-    const auto &node = inference_.graph.get(operand);
-    if (node.kind == Kind::integer) {
-        const auto &digits = node.name;
-        const bool negate = value.operation == ast::UnaryOperator::negative && digits != "0";
-        return negate ? lattice_.integer(digits.starts_with('-') ? digits.substr(1) : '-' + digits) : operand;
-    }
-    return operand == lattice_.category("float") ? std::optional{operand} : std::nullopt;
-}
 
 std::optional<Id> Construct::operator()(const ast::Tuple &value) {
     std::vector<Id> elements;

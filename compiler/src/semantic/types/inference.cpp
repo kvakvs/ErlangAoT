@@ -4,6 +4,7 @@
 #include "../funs.hpp"
 #include "../records.hpp"
 #include "inference_bindings.hpp"
+#include "inference_operators.hpp"
 #include "inference_values.hpp"
 #include "lattice.hpp"
 #include <algorithm>
@@ -52,13 +53,33 @@ Fact merged(Graph &graph, const Fact previous, const Fact next, bool widening = 
     return {type, previous.argument == next.argument ? previous.argument : std::nullopt};
 }
 
+// The value of a body: its last expression's, or none() when an expression before it never completes.
+Fact sequence(const Inference &inference, const ast::Module &syntax, const std::vector<ast::ExprId> &body) {
+    for (const auto &expression : body) {
+        const auto fact = inference.expressions.at(&syntax.expression(expression));
+        if (fact.type == inference.graph.bottom()) {
+            return fact;
+        }
+    }
+    return inference.expressions.at(&syntax.expression(body.back()));
+}
+
 // Only relations common to every successful function candidate or case/if clause survive the join.
 template <typename Clauses> Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses) {
     Fact result{inference.graph.bottom()};
     for (const auto &clause : clauses) {
-        result = merged(inference.graph, result, inference.expressions.at(&syntax.expression(clause.body.back())));
+        result = merged(inference.graph, result, sequence(inference, syntax, clause.body));
     }
     return result;
+}
+
+// Whether a call never happens: one of its arguments never produces a value.
+bool unreachable_call(const Inference &inference, const ast::Module &syntax, const ast::CallExpression &call) {
+    // record_info/2 has no evaluated arguments.
+    return std::ranges::any_of(call.arguments, [&](const ast::ExprId &argument) {
+        const auto found = inference.expressions.find(&syntax.expression(argument));
+        return found != inference.expressions.end() && found->second.type == inference.graph.bottom();
+    });
 }
 
 // Whether a call's result is unknown: a service, record_info/2, a call of a value or a dynamic call.
@@ -88,7 +109,13 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
               std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
+    if (const auto fact = operation_fact(inference, function, expression)) {
+        return {*fact};
+    }
     if (const auto *call = std::get_if<ast::CallExpression>(&expression.value)) {
+        if (unreachable_call(inference, syntax, *call)) {
+            return {inference.graph.bottom()};
+        }
         return opaque_call(function, expression, *call) ? Fact{inference.graph.top()}
                                                         : call_result(inference, syntax, expression, *call);
     }
@@ -104,7 +131,7 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
         return *fact;
     }
     if (const auto *block = std::get_if<ast::BlockExpression>(&expression.value)) {
-        return inference.expressions.at(&syntax.expression(block->body.back()));
+        return sequence(inference, syntax, block->body);
     }
     return leaf(inference, function, id, bindings);
 }

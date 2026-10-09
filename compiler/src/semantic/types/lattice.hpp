@@ -2,7 +2,9 @@
 #include "domain.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -27,6 +29,17 @@ struct FactLimits {
     std::size_t depth = 4;
     // Tuple elements and map keys a fact keeps before it becomes tuple() or map().
     std::size_t elements = 16;
+};
+
+// The numbers a fact holds, for arithmetic on facts.
+struct Numbers {
+    // Whether it holds integers, from `low` to `high` (canonical decimals; unbounded when missing).
+    bool integers = false;
+    std::optional<std::string> low;
+    std::optional<std::string> high;
+    // Whether it holds floats, and whether it holds values that are no numbers.
+    bool floats = false;
+    bool others = false;
 };
 
 class Lattice {
@@ -56,6 +69,12 @@ class Lattice {
     Id map(std::vector<Id> fields);
     Id fun(std::size_t arity, Id result);
     Id bitstring(std::uint64_t base, std::uint64_t unit);
+
+    // The integers from `low` to `high` as a fact: a singleton, a range or the category of an unbounded interval.
+    Id interval(const std::optional<std::string> &low, const std::optional<std::string> &high);
+    // The numbers `fact` holds, and whether it may hold the atom `name`.
+    Numbers numbers(Id fact);
+    bool holds_atom(Id fact, std::string_view name);
 
     // The facts of a graph and its budgets, for the helpers of lattice.cpp.
     Graph &graph() noexcept { return graph_; }

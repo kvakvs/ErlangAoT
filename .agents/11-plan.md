@@ -240,8 +240,8 @@ behavior. Phases A–K are closed; L continues below.
 
 ## L. Optimization and tooling
 
-Steps 58A–58I (added 2026-10-08, user request; 58H and the entry domains of
-58G added 2026-10-09) make type inference precise
+Steps 58A–58I (added 2026-10-08, user request; 58H, 58H1 and the entry
+domains of 58G added 2026-10-09) make type inference precise
 enough that `tests/fixtures/inference/values.erl` and `base_types.erl` (every
 base and built-in type of the [type language](https://www.erlang.org/doc/system/typespec.html))
 reach their `expect:` signatures: today only integer constants, integer joins
@@ -297,14 +297,20 @@ comparisons, `andalso`/`orelse`/`not` and type tests yield `true`, `false` or
 join, so a function that always raises infers `none()`.
 
 - Success criteria
-  - [ ] `sum() -> 3`, `product() -> 42`, `division() -> float()`,
+  - [x] `sum() -> 3`, `product() -> 42`, `division() -> float()`,
     `comparison() -> true`, `conjunction() -> false`; folding never changes
     runtime behavior (overflow to bignums, badarith stay runtime outcomes).
+    Evidence 2026-10-09: `semantic/types/inference_operators` (folding through
+    the preprocessor evaluator, interval arithmetic, truth sets, builtin
+    tables); facts feed no code generation beyond small-integer profiles.
 - Tests
-  - [ ] `values.erl` operator rows and the `base_types.erl` builtin, boolean,
+  - [x] `values.erl` operator rows and the `base_types.erl` builtin, boolean,
     number and `no_return` rows reach `expect:`; new rows for bignum folding,
     `div`/`rem`, mixed integer/float arithmetic and the rest of the builtin
-    table.
+    table. Evidence: 24 new rows (`big_product`, `shifted`, `remainder_range`,
+    `masked`, `bad_sum`, `raised`, ...); values 58 of 70, base_types 33 of 46.
+    `non_neg_integer_value` gained `when is_integer(X)`: `abs/1` of an
+    unknown value may be a float, so its old expectation was unsound (58G).
 
 <a id="step-58d"></a>
 
@@ -415,9 +421,10 @@ guard-like condition (the right operand of `andalso` after a true test, the
   was a single type test sees the tested variable without that category (the
   earlier clause can only have failed on the test: `scaled/1`'s second clause
   sees a non-integer).
-- Comparisons in guards narrow integer facts to ranges (`X >= 1, X =< 10`)
-  only once a test or fact made the value an integer; on other values they
-  prove nothing, as terms of every type compare.
+- Comparisons with integer constants in guards narrow integer facts to
+  ranges (`X >= 1, X =< 10`) only once a test or fact made the value an
+  integer; on other values they prove nothing, as terms of every type
+  compare. Step [58H1](#step-58h1) extends comparison narrowing.
 
 A function is never entered with arguments no clause's patterns and guards
 accept (`function_clause`), so each argument's entry domain is the join over
@@ -491,11 +498,53 @@ their arguments to it after the call returns, as for entry domains.
     narrow after it, a use in one `case` branch only, `hd/1`, `element/2`,
     map updates, fun calls and remote calls with a variable module.
 
+<a id="step-58h1"></a>
+
+### 58H1. Narrow integer ranges by guard comparisons
+
+Backlog: F34. Depends on: [58G](#step-58g), [58H](#step-58h). Added
+2026-10-09 (user direction).
+
+A guard (function clause, `case`, `if`, `receive`, comprehension filter, the
+right operand of `andalso`) that compares a value whose fact is an integer
+(from a type test, a pattern, an entry or success domain, a local input or a
+use) with an integer narrows its range wherever the result can be computed
+reliably: `<`, `=<`, `>`, `>=` against a constant or another value with a
+known range (each side narrows by the other's bounds, `X > Y` with `Y` in
+`0..5` makes `X` at least 1), `==` and `=:=` with an integer meet the two
+facts, and `/=`, `=/=` with a constant drop it when it is a range bound
+(`X =/= 0` on `0..10` gives `1..10`). Operands are flipped as needed
+(`10 >= X`), integer constants include folded constant expressions (58C), and
+`;`/`orelse` alternatives join what each proves.
+
+- A value that may be a float, or anything other than an integer, is not
+  narrowed (`1.0 == 1`; terms of every type compare), and neither is a
+  comparison with a non-integer or unknown operand.
+- A clause following one whose patterns are all plain variables and whose
+  whole guard was a single such comparison sees the complement on the same
+  integer value (`f(N) when N > 10 -> ...; f(N) when is_integer(N) -> ...`:
+  the second clause sees `N =< 10`); the narrowing never leaks out of its
+  clause or branch except through entry domains (58G).
+- Recursive loops over a guarded counter (`loop(N) when N > 0 ->
+  loop(N - 1); loop(0) -> done`) keep the bounds the guards prove, so
+  widening (58A) stops at the guard bound instead of the category.
+
+- Success criteria
+  - [ ] Each comparison form narrows a proven integer to the exact range it
+    implies; an operand that may be a non-integer is never narrowed; entry
+    domains and specialization profiles stay sound.
+- Tests
+  - [ ] New `values.erl` rows: each operator with a constant on either side,
+    a comparison between two bounded variables, `=/=` at a bound and inside a
+    range, a complement in a following clause, a guarded countdown loop, a
+    `case` and an `if` guard, an `orelse` disjunction, and a `number()` or
+    `term()` operand that must not narrow.
+
 <a id="step-58i"></a>
 
 ### 58I. Reject specifications that contradict inferred types
 
-Backlog: F34. Depends on: [58A](#step-58a), [58H](#step-58h). Added
+Backlog: F34. Depends on: [58A](#step-58a), [58H](#step-58h), [58H1](#step-58h1). Added
 2026-10-08 (user request); renumbered from 58H on 2026-10-09 when 58H (uses)
 was inserted.
 

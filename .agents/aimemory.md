@@ -411,6 +411,7 @@ User directions (keep):
   2026-10-09 user direction: guards/patterns define a function's entry domain (never entered otherwise) and uses
   (arithmetic, builtins, calls) narrow operands after them, else crash: 58G entry domains, new 58H uses/success
   domains, spec rejection renumbered 58I. Inputs in --print-types become these domains.
+  2026-10-09 user direction: new step 58H1 (before 58I) narrows proven-integer ranges by guard comparisons.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

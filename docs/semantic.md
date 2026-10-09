@@ -117,11 +117,36 @@ Inference is separate from declared types and never trusts specs.
   segment by its value's fact or any multiple of its unit
   (`<<1, Rest/binary>>` is `nonempty_binary()`). An operand that never
   produces a value (`none()`) makes the construction `none()`.
+- Operators and builtins (step 58C, `semantic/types/inference_operators`)
+  compute their result from their operands' facts. Integer singletons fold
+  exactly up to 4,096 bits per operand and result (bignums included; a larger one is
+  `integer()`); other integers use interval arithmetic for `+`, `-`, `*` of
+  nonnegative ranges, `band` with a nonnegative operand (`X band 15` is
+  `0..15`), `rem` by a bounded divisor (`X rem 10` is `-9..9`), `bnot`,
+  unary `-` and `abs/1`; a float operand makes `float()`, an unknown one
+  `number()`, and `/` is always `float()`. Comparisons fold when the operands'
+  values can only compare one way (singleton atoms or integers, disjoint
+  integer ranges, numbers against non-numbers) and are `boolean()` otherwise;
+  `and`/`or`/`xor`/`not` and `andalso`/`orelse` combine the truth values their
+  operands can have (the right operand of `andalso` is the result when the
+  left one is `true`). A table gives each bridge builtin its result: `pid()`
+  for `self/0` and `spawn/1,3`, `reference()`, `port()`,
+  `non_neg_integer()` for sizes, `string()`, `nonempty_string()`,
+  `binary()`, `list()`, `tuple()`, `atom()`, `boolean()` for type tests,
+  `true`/`ok` for side-effect builtins, the message for `!` and `send/2`;
+  `trunc/1` and friends keep integer operands; unknown builtins are
+  `term()`. An operation that always raises (`1 + a`, `1 div 0`, `error/1`,
+  `exit/1`, `throw/1`, `halt/0,1`) is `none()`, and `erlang:raise/3` returns
+  only `badarg`. Folding never changes the generated code: overflow and
+  failures stay runtime outcomes.
+- A body whose expression never completes (`none()`) is `none()`; so is a call
+  with such an argument. Raising paths add nothing to a join, so a function
+  that always raises infers `none()`.
 - Identity/projection functions keep exact argument relations, propagated
   through nested local and remote calls with fresh variables per call.
 - Whole-value body assignments and aliases copy the RHS fact
-  (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements,
-  service results and unproved values stay `term()` without relations.
+  (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements
+  and unproved values stay `term()` without relations.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
@@ -252,8 +277,8 @@ sum() -> 1 + 2.
   other functions, integer joins and ranges, integers or floats, lists,
   strings, tuples, maps with atom and other keys, funs returned and applied,
   binaries and argument relations. Today inference finds literal and
-  constructed values, integer joins and argument relations (28 of 46
-  functions).
+  constructed values, operator and builtin results, integer joins and
+  argument relations (58 of 70 functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
@@ -261,7 +286,7 @@ sum() -> 1 + 2.
   `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
-  ranges. Today 13 of 46 functions reach their expected type.
+  ranges. Today 33 of 46 functions reach their expected type.
 
 ### Printing types
 

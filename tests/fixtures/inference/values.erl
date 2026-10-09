@@ -16,6 +16,30 @@
     division/0,
     comparison/0,
     conjunction/0,
+    big_product/0,
+    shifted/0,
+    quotient/0,
+    remainder/0,
+    remainder_range/1,
+    masked/1,
+    mixed_sum/0,
+    bad_sum/0,
+    divide_by_zero/0,
+    negated/1,
+    complemented/0,
+    exclusive/0,
+    negation/0,
+    atom_order/0,
+    number_below_atom/0,
+    unknown_order/1,
+    absolute/0,
+    rounded/0,
+    minimum/0,
+    displayed/0,
+    formatted/0,
+    sent/1,
+    raised/0,
+    node_name/0,
     call_integer/0,
     call_local/0,
     pick/1,
@@ -77,24 +101,98 @@ big_integer() -> 123456789012345678901234567890.
 quoted_atom() -> 'hello world'.
 
 %% expect: sum() -> 3
-%% today: sum() -> term()
 sum() -> 1 + 2.
 
 %% expect: product() -> 42
-%% today: product() -> term()
 product() -> 6 * 7.
 
 %% expect: division() -> float()
-%% today: division() -> term()
 division() -> 7 / 2.
 
 %% expect: comparison() -> true
-%% today: comparison() -> term()
 comparison() -> 1 < 2.
 
 %% expect: conjunction() -> false
-%% today: conjunction() -> term()
 conjunction() -> true andalso false.
+
+%% Integer arithmetic folds exactly, also past a word, and keeps runtime failures: a result that always raises is
+%% none().
+%% expect: big_product() -> 1219326311370217952237463801111263526900
+big_product() -> 12345678901234567890 * 98765432109876543210.
+
+%% expect: shifted() -> 1267650600228229401496703205376
+shifted() -> 1 bsl 100.
+
+%% expect: quotient() -> 3
+quotient() -> 17 div 5.
+
+%% expect: remainder() -> -2
+remainder() -> -17 rem 5.
+
+%% expect: remainder_range(term()) -> -9..9
+remainder_range(X) -> X rem 10.
+
+%% expect: masked(term()) -> 0..15
+masked(X) -> X band 15.
+
+%% expect: mixed_sum() -> float()
+mixed_sum() -> 1 + 2.5.
+
+%% expect: bad_sum() -> none()
+bad_sum() -> 1 + a.
+
+%% expect: divide_by_zero() -> none()
+divide_by_zero() -> 1 div 0.
+
+%% expect: negated(term()) -> number()
+negated(X) -> -X.
+
+%% expect: complemented() -> -6
+complemented() -> bnot 5.
+
+%% Booleans and comparisons.
+
+%% expect: exclusive() -> true
+exclusive() -> true xor false.
+
+%% expect: negation() -> false
+negation() -> not true.
+
+%% expect: atom_order() -> true
+atom_order() -> a < b.
+
+%% expect: number_below_atom() -> true
+number_below_atom() -> 1 < a.
+
+%% expect: unknown_order(term()) -> boolean()
+unknown_order(X) -> X =< 1.
+
+%% Builtins.
+
+%% expect: absolute() -> 5
+absolute() -> abs(-5).
+
+%% expect: rounded() -> integer()
+rounded() -> round(2.5).
+
+%% expect: minimum() -> 1 | 2
+minimum() -> min(1, 2).
+
+%% expect: displayed() -> true
+displayed() -> erlang:display(x).
+
+%% expect: formatted() -> ok
+formatted() -> io:format("x~n").
+
+%% expect: sent(term()) -> hello
+sent(Pid) -> Pid ! hello.
+
+%% erlang:raise/3 returns only for an invalid class.
+%% expect: raised() -> badarg
+raised() -> erlang:raise(bad, reason, []).
+
+%% expect: node_name() -> atom()
+node_name() -> node().
 
 %% Functions returning what other functions return.
 
@@ -102,11 +200,11 @@ conjunction() -> true andalso false.
 call_integer() -> integer().
 
 %% expect: call_local() -> 4
-%% today: call_local() -> term()
+%% today: call_local() -> number()
 call_local() -> increment(3).
 
 %% expect: increment(3) -> 4
-%% today: increment(term()) -> term()
+%% today: increment(term()) -> number()
 increment(X) -> X + 1.
 
 %% Integers, integer ranges and integers or floats.
@@ -135,7 +233,6 @@ integer_or_float(X) ->
     end.
 
 %% expect: scaled(term()) -> number()
-%% today: scaled(term()) -> term()
 scaled(X) when is_integer(X) -> X * 2;
 scaled(X) when is_float(X) -> X / 2.
 

@@ -105,6 +105,8 @@ struct Families {
     bool any_tuple = false;
     bool any_map = false;
     bool nil = false;
+    // Whether a member is no number.
+    bool nonnumeric = false;
 
     void add_interval(const Interval &added) { interval = interval ? hull(*interval, added) : added; }
 
@@ -127,6 +129,8 @@ std::uint64_t bit_count(std::string_view decimal) {
     return parsed.ec == std::errc{} ? value : UINT64_MAX;
 }
 
+int family_rank(const Node &node);
+
 // Sorts the members of facts into their families. Nothing is interned while it walks the graph.
 class Gather final {
   public:
@@ -139,7 +143,10 @@ class Gather final {
             for (const auto member : node.children) {
                 add(member);
             }
-        } else if (!scalar(node) && !container(fact, node)) {
+            return;
+        }
+        families.nonnumeric = families.nonnumeric || (node.kind != Kind::bottom && family_rank(node) != 0);
+        if (!scalar(node) && !container(fact, node)) {
             families.others.push_back(fact);
         }
     }
@@ -663,6 +670,37 @@ Id Lattice::widen(Id previous, Id next) {
     after.families.integers.clear();
     after.families.interval = relaxed;
     return relaxed == *new_bounds ? joined : fact_of(*this, after.families, 0);
+}
+
+Id Lattice::interval(const std::optional<std::string> &low, const std::optional<std::string> &high) {
+    return interval_fact(*this, {low, high});
+}
+
+Numbers Lattice::numbers(Id fact) {
+    if (fact == graph_.top()) {
+        return {true, std::nullopt, std::nullopt, true, true};
+    }
+    Gather gather(*this);
+    gather.add(fact);
+    const auto &families = gather.families;
+    Numbers result;
+    if (const auto bounds = families.bounds(); bounds || families.numbers) {
+        result.integers = true;
+        result.low = families.numbers ? std::nullopt : bounds->low;
+        result.high = families.numbers ? std::nullopt : bounds->high;
+    }
+    result.floats = families.floats || families.numbers;
+    result.others = families.nonnumeric;
+    return result;
+}
+
+bool Lattice::holds_atom(Id fact, std::string_view name) {
+    if (fact == graph_.top()) {
+        return true;
+    }
+    Gather gather(*this);
+    gather.add(fact);
+    return gather.families.any_atom || gather.families.atoms.contains(std::string(name));
 }
 
 Id Lattice::integer(std::string_view decimal) { return graph_.intern({Kind::integer, std::string(decimal)}); }

@@ -71,7 +71,6 @@
 any_value(X) -> X.
 
 %% expect: no_return_value() -> none()
-%% today: no_return_value() -> term()
 -spec no_return_value() -> no_return().
 no_return_value() -> erlang:error(stop).
 
@@ -82,22 +81,18 @@ dynamic_value(X) -> X.
 %% Processes and references.
 
 %% expect: pid_value() -> pid()
-%% today: pid_value() -> term()
 -spec pid_value() -> pid().
 pid_value() -> self().
 
 %% expect: spawned_pid() -> pid()
-%% today: spawned_pid() -> term()
 -spec spawned_pid() -> pid().
 spawned_pid() -> spawn(fun() -> ok end).
 
 %% expect: reference_value() -> reference()
-%% today: reference_value() -> term()
 -spec reference_value() -> reference().
 reference_value() -> make_ref().
 
 %% expect: identifier_value(term()) -> reference() | pid()
-%% today: identifier_value(term()) -> term()
 -spec identifier_value(term()) -> identifier().
 identifier_value(X) ->
     case X of
@@ -112,7 +107,6 @@ identifier_value(X) ->
 nil_value() -> [].
 
 %% expect: atom_value(term()) -> atom()
-%% today: atom_value(term()) -> term()
 -spec atom_value(string()) -> atom().
 atom_value(Name) -> list_to_atom(Name).
 
@@ -135,7 +129,6 @@ empty_bitstring() -> <<>>.
 sized_bitstring() -> <<5:3>>.
 
 %% expect: binary_value(term()) -> binary()
-%% today: binary_value(term()) -> term()
 -spec binary_value(iolist()) -> binary().
 binary_value(Data) -> list_to_binary(Data).
 
@@ -155,17 +148,14 @@ bitstring_value(Rest) -> <<1:1, Rest/bitstring>>.
 %% Floats, integers and numbers.
 
 %% expect: float_value(term()) -> float()
-%% today: float_value(term()) -> term()
 -spec float_value(number()) -> float().
 float_value(X) -> float(X).
 
 %% expect: divided(term()) -> float()
-%% today: divided(term()) -> term()
 -spec divided(number()) -> float().
 divided(X) -> X / 2.
 
 %% expect: integer_value(term()) -> integer()
-%% today: integer_value(term()) -> term()
 -spec integer_value(number()) -> integer().
 integer_value(X) -> trunc(X).
 
@@ -175,7 +165,6 @@ integer_value(X) -> trunc(X).
 integer_range(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
 %% expect: byte_value(term()) -> 0..255
-%% today: byte_value(term()) -> term()
 -spec byte_value(integer()) -> byte().
 byte_value(X) -> X band 255.
 
@@ -189,9 +178,9 @@ char_value() -> $a.
 arity_value(X) when is_integer(X), X >= 0, X =< 255 -> X.
 
 %% expect: non_neg_integer_value(term()) -> non_neg_integer()
-%% today: non_neg_integer_value(term()) -> term()
+%% today: non_neg_integer_value(term()) -> number()
 -spec non_neg_integer_value(integer()) -> non_neg_integer().
-non_neg_integer_value(X) -> abs(X).
+non_neg_integer_value(X) when is_integer(X) -> abs(X).
 
 %% expect: pos_integer_value(term()) -> pos_integer()
 %% today: pos_integer_value(term()) -> argument 1
@@ -204,36 +193,30 @@ pos_integer_value(X) when is_integer(X), X > 0 -> X.
 neg_integer_value(X) when is_integer(X), X < 0 -> X.
 
 %% expect: length_value(term()) -> non_neg_integer()
-%% today: length_value(term()) -> term()
 -spec length_value(list()) -> non_neg_integer().
 length_value(List) -> length(List).
 
 %% expect: byte_size_value(term()) -> non_neg_integer()
-%% today: byte_size_value(term()) -> term()
 -spec byte_size_value(binary()) -> non_neg_integer().
 byte_size_value(Binary) -> byte_size(Binary).
 
 %% expect: number_value(term()) -> number()
-%% today: number_value(term()) -> term()
 -spec number_value(number()) -> number().
 number_value(X) when is_number(X) -> X * 2.
 
 %% Booleans.
 
 %% expect: boolean_test(term()) -> boolean()
-%% today: boolean_test(term()) -> term()
 -spec boolean_test(term()) -> boolean().
 boolean_test(X) -> is_atom(X).
 
 %% expect: boolean_comparison(term()) -> boolean()
-%% today: boolean_comparison(term()) -> term()
 -spec boolean_comparison(term()) -> boolean().
 boolean_comparison(X) -> X > 1.
 
 %% Lists and strings.
 
 %% expect: list_value(term()) -> list()
-%% today: list_value(term()) -> term()
 -spec list_value(tuple()) -> list().
 list_value(Tuple) -> tuple_to_list(Tuple).
 
@@ -248,12 +231,10 @@ nonempty_list_value(X) -> [X].
 improper_list() -> [1 | a].
 
 %% expect: string_value(term()) -> string()
-%% today: string_value(term()) -> term()
 -spec string_value(atom()) -> string().
 string_value(Atom) -> atom_to_list(Atom).
 
 %% expect: nonempty_string_value(term()) -> nonempty_string()
-%% today: nonempty_string_value(term()) -> term()
 -spec nonempty_string_value(integer()) -> nonempty_string().
 nonempty_string_value(Integer) -> integer_to_list(Integer).
 
@@ -278,7 +259,6 @@ map_value(Map) -> Map#{key => value}.
 empty_tuple() -> {}.
 
 %% expect: tuple_value(term()) -> tuple()
-%% today: tuple_value(term()) -> term()
 -spec tuple_value(list()) -> tuple().
 tuple_value(List) -> list_to_tuple(List).
 
