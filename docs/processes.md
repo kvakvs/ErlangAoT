@@ -59,7 +59,8 @@ the default is one worker per logical processor, as OTP's `+S`.
 - Every worker takes the first process of the one shared queue (the
   documented alternative to per-worker queues with work stealing: one queue
   keeps OTP's first-in, first-out order and needs no stealing). Idle workers
-  sleep until a process is queued or the earliest receive timeout expires.
+  sleep until a process is queued; the timer thread queues processes whose
+  receive timeout expires ([receive timeouts](#receive-timeouts)).
 - One executor mutex guards the queue, the waiting processes, the timers, the
   registered names, the links and monitors of every process, and every
   process that is not running. A running process's heap, stack, mailbox and
@@ -98,10 +99,10 @@ change of a process's scheduling state happens under the executor mutex:
   that is still in the slice in which it began to wait cannot get a message
   then (its senders wait for the slice to end), so the delivery always finds
   it parked.
-- A worker that finds no runnable process sleeps until another worker queues
-  one, the earliest receive timeout, or the program's end; parking a process
-  with a timeout wakes every idle worker so they wait for the new deadline.
-  Busy workers check the timers before every slice.
+- A worker that finds no runnable process sleeps until another worker, a
+  send or the timer thread queues one, or the program ends. Workers never read
+  the clock for timers; parking a process with a timeout earlier than every
+  other wakes only the timer thread.
 - A message and an expiring timeout of one receive may race: whichever comes
   first queues the process and cancels the other, and the receive takes a
   message that arrived before it resumed, as OTP's does.
@@ -116,6 +117,37 @@ change of a process's scheduling state happens under the executor mutex:
   member monitored, monitored processes ending as their watcher wakes, a
   program ending while processes spin, wait and flood each other, and a halt
   in another process.
+
+### Receive timeouts
+
+Plan step 62B replaced step 47's ordered deadline map, read before every time
+slice, with a hierarchical hashed timer wheel as ERTS keeps timers
+(`scheduler/timer_wheel`):
+
+- Ticks are milliseconds since the executor started. Six levels of 64 slots
+  cover 2^36 ticks, more than the longest timeout (4,294,967,295 ms). A timer
+  sits in the slot of the highest 6-bit digit in which its tick differs from
+  the wheel's current tick; occupied slots are bitmaps per level.
+- Arming (a waiting process is parked) and cancelling (a message, an exit
+  signal or the process's end comes first) unlink or link an intrusive list
+  node kept with the process's scheduling state: constant time. A deadline
+  becomes the tick at or after it, so no timeout fires early.
+- One timer thread per run sleeps until the next occupied slot (the first
+  occupied slot after the current one on any level), reads the clock once
+  when it wakes and advances the wheel to that tick: higher-level slots
+  reached at their start move their timers down, and the level-0 slot fires.
+  Only slots whose time has come are consulted; waiting processes are never
+  scanned. Expired processes are queued in tick order.
+- The wheel is shared by the workers under the executor mutex. `after 0`
+  never waits and `infinity` never arms a timer, as before.
+- Measured on the `wakeups` golden: 64 clock readings for 2,046 time slices
+  (68 for 1,745 with one worker), where the old executor read the clock
+  before every slice; `--profile` reports both counts
+  ([profiling](profiling.md)). Timers still fire only as precisely as the
+  host's timed waits (on Windows the default timer resolution).
+- `runtime_timer_wheel` arms 20,000 timers over every level, cancels 90% and
+  advances in uneven steps: each remaining timer fires once, in the first
+  advance that reaches its tick, in tick order; no cancelled one fires.
 
 ## Exits
 
@@ -208,10 +240,10 @@ messages of the mailbox:
   and loops; with no message left the loop enters the wait with the timeout,
   which answers `true` (scan again) or `false` (timed out: `restart`, then the
   `after` body).
-- The executor keeps a timer per waiting process with a finite timeout: an
-  expired one puts the process back in the queue, and when no process can run
-  the executor sleeps until the earliest timer. Timeouts are measured on a
-  monotonic clock in milliseconds and never fire early.
+- The executor keeps a timer per waiting process with a finite timeout in a
+  timer wheel ([below](#receive-timeouts)): an expired one puts the process
+  back in the queue. Timeouts are measured on a monotonic clock in
+  milliseconds and never fire early.
 - When every process waits without a timeout for a message nothing can send,
   the program waits forever, as OTP's does. A host invocation (`CLAUSE_invoke_v1`)
   that would wait fails with `busy` instead: no other process runs during it.

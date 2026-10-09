@@ -30,7 +30,7 @@ call-dense loop in Debug); disabled stacks pay one branch per transfer.
 ## Report
 
 ```text
-Clause profile: 2 processes
+Clause profile: 2 processes, 503 time slices, 0 timer clock readings
 Functions by self time:
      time_us   share      entries  function
      1193261  100.0%      2000001  profile:spin/2
@@ -43,9 +43,11 @@ Processes by time:
          206    0.0%            2  <0.1.0>: profile:main/1
 ```
 
-Functions are `module:function/arity` (anonymous funs by their generated
-names, whose arity counts captured values); ties sort by name, processes by
-time then pid. Times are in microseconds and vary between runs; entries are
+The first line also counts the time slices the scheduler workers ran and the
+clock readings of the receive-timeout timer thread
+([timer wheel](processes.md#receive-timeouts)). Functions are
+`module:function/arity` (anonymous funs by their generated names, whose arity
+counts captured values); ties sort by name, processes by time then pid. Times are in microseconds and vary between runs; entries are
 exact.
 
 ## Tests

@@ -89,6 +89,13 @@ clause_project_options(runtime_code_lookup)
 target_link_libraries(runtime_code_lookup PRIVATE Clause::generated_program)
 add_test(NAME runtime_code_lookup COMMAND runtime_code_lookup)
 
+# The receive-timeout timer wheel: many timers, most cancelled, fire once each, never early, in tick order (62B).
+add_executable(runtime_timer_wheel timer_wheel.cpp)
+clause_project_options(runtime_timer_wheel)
+target_link_libraries(runtime_timer_wheel PRIVATE Clause::generated_program)
+target_include_directories(runtime_timer_wheel PRIVATE "${PROJECT_SOURCE_DIR}/runtime/src")
+add_test(NAME runtime_timer_wheel COMMAND runtime_timer_wheel)
+
 # Port I/O on the reactor: thousands of pipe ports open at once start no thread of their own, and each pipe's
 # queued output reaches its reader before the end of input.
 add_executable(runtime_port_io port_io.cpp)

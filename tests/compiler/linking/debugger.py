@@ -51,10 +51,15 @@ def session(command, dialect, executable):
     }[dialect]
     flag = "-o" if dialect == "lldb" else "-ex"
     arguments = [part for step in steps for part in (flag, step)]
-    result = subprocess.run([*command, *arguments, str(executable)], cwd=work, capture_output=True, text=True,
-                            encoding="utf-8", errors="replace", timeout=180)
-    # Windows consoles end the helper's stderr lines with CR CR LF: drop the empty lines that leaves.
-    return "\n".join(line for line in (result.stdout + result.stderr).splitlines() if line.strip()) + "\n"
+    for _ in range(3):
+        result = subprocess.run([*command, *arguments, str(executable)], cwd=work, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace", timeout=180)
+        # Windows consoles end the helper's stderr lines with CR CR LF: drop the empty lines that leaves.
+        output = "\n".join(line for line in (result.stdout + result.stderr).splitlines() if line.strip()) + "\n"
+        # A crash of the debugger's own server (seen once under full parallel CTest load) is retried.
+        if "PLEASE submit a bug report" not in output:
+            break
+    return output
 
 
 plain = link("plain")

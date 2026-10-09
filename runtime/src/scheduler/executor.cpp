@@ -226,45 +226,69 @@ TermResult<void> Executor::wake(ProcessContext &receiver) {
 }
 
 void Executor::cancel(ProcessContext &process) noexcept {
-    const auto deadline = process.mailbox().deadline();
-    if (!deadline) {
-        return;
-    }
-    for (auto [at, end] = timers_.equal_range(*deadline); at != end; ++at) {
-        if (at->second == &process) {
-            timers_.erase(at);
-            return;
-        }
+    if (const auto found = schedules_.find(&process); found != schedules_.end()) {
+        wheel_.cancel(found->second.timer);
     }
 }
 
-void Executor::expire() {
-    const auto now = std::chrono::steady_clock::now();
-    while (!timers_.empty() && timers_.begin()->first <= now) {
-        auto &process = *timers_.begin()->second;
-        timers_.erase(timers_.begin());
-        parked_.erase(&process);
-        process.stack().wake();
-        push(process);
-    }
+void Executor::expire(ProcessContext &process) {
+    parked_.erase(&process);
+    process.stack().wake();
+    push(process);
 }
 
-void Executor::idle(std::unique_lock<std::mutex> &lock) {
-    if (timers_.empty()) {
-        // Every process waits for a message; only a worker still running a process can queue one.
-        work_.wait(lock);
-        return;
+void Executor::idle(std::unique_lock<std::mutex> &lock) { work_.wait(lock); }
+
+std::uint64_t Executor::tick_of(const std::chrono::steady_clock::time_point deadline) const noexcept {
+    if (deadline <= epoch_) {
+        return 0;
     }
-    const auto deadline = timers_.begin()->first;
-    work_.wait_until(lock, deadline);
+    const auto elapsed = std::chrono::ceil<std::chrono::milliseconds>(deadline - epoch_);
+    return static_cast<std::uint64_t>(elapsed.count());
 }
 
 void Executor::park(ProcessContext &process) {
     parked_.insert(&process);
     if (const auto deadline = process.mailbox().deadline()) {
-        timers_.emplace(*deadline, &process);
-        // An idle worker may sleep until a later deadline.
-        work_.notify_all();
+        auto &timer = schedule(process).timer;
+        timer.owner = &process;
+        const auto earliest = wheel_.next();
+        wheel_.arm(timer, tick_of(*deadline));
+        // The timer thread sleeps until the earliest slot; an earlier one makes it plan again.
+        if (!earliest || timer.tick < *earliest) {
+            timer_signal_.notify_one();
+        }
+    }
+}
+
+void Executor::tick(std::unique_lock<std::mutex> &lock) {
+    const auto next = wheel_.next();
+    if (!next) {
+        timer_signal_.wait(lock);
+        return;
+    }
+    const auto wake = epoch_ + std::chrono::milliseconds(*next);
+    if (timer_signal_.wait_until(lock, wake) == std::cv_status::no_timeout) {
+        return;
+    }
+    // One clock reading per wake: the wheel moves to the tick it shows and fires what is due.
+    ++clock_reads_;
+    const auto reached = std::chrono::floor<std::chrono::milliseconds>(std::chrono::steady_clock::now() - epoch_);
+    for (auto *timer : wheel_.advance(static_cast<std::uint64_t>(reached.count()))) {
+        expire(*static_cast<ProcessContext *>(timer->owner));
+    }
+}
+
+void Executor::time() noexcept {
+    std::unique_lock lock(mutex_);
+    while (!timers_stop_) {
+        try {
+            tick(lock);
+        } catch (const std::bad_alloc &) {
+            fail_program();
+        } catch (...) {
+            std::terminate();
+        }
     }
 }
 
@@ -272,7 +296,6 @@ void Executor::work() noexcept {
     std::unique_lock lock(mutex_);
     while (!finished_) {
         try {
-            expire();
             if (const auto port = next_port()) {
                 run_port(*port);
                 continue;
@@ -284,6 +307,7 @@ void Executor::work() noexcept {
             auto &process = *queue_.front();
             queue_.pop_front();
             schedule(process).running = true;
+            ++slices_;
             lock.unlock();
             running_ = &process;
             const bool ended = process.stack().run(SLICE_REDUCTIONS);
@@ -387,6 +411,14 @@ ProcessContext &Executor::run(ProcessContext &main) noexcept {
         finished_ = nullptr;
         failed_ = false;
     }
+    std::optional<std::thread> timers;
+    try {
+        timers.emplace([this] { time(); });
+    } catch (const std::exception &) {
+        // Without the timer thread receive timeouts cannot expire: the program fails like an allocation failure.
+        const std::scoped_lock lock(mutex_);
+        fail_program();
+    }
     std::vector<std::thread> helpers;
     const auto workers = main.runtime().impl_->options.schedulers;
     for (std::size_t count = 1; count < workers; ++count) {
@@ -401,10 +433,26 @@ ProcessContext &Executor::run(ProcessContext &main) noexcept {
     for (auto &helper : helpers) {
         helper.join();
     }
+    {
+        const std::scoped_lock lock(mutex_);
+        timers_stop_ = true;
+        timer_signal_.notify_one();
+    }
+    if (timers) {
+        timers->join();
+    }
+    {
+        const std::scoped_lock lock(mutex_);
+        timers_stop_ = false;
+        if (runtime_.profile) {
+            runtime_.profile->scheduling({.slices = slices_, .clock_reads = clock_reads_});
+        }
+    }
     return *finished_;
 }
 
 void Executor::destroy(ProcessContext &process) noexcept {
+    cancel(process);
     schedules_.erase(&process);
     process.runtime().destroy_context(&process);
 }
@@ -441,7 +489,7 @@ void Executor::clear() noexcept {
     queue_.clear();
     port_queue_.clear();
     parked_.clear();
-    timers_.clear();
+    wheel_.clear();
     ending_.clear();
     stopped_.clear();
     names_.clear();

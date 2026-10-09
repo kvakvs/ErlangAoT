@@ -106,10 +106,17 @@ void RuntimeProfile::add(const Word pid, const ProcessProfile &profile) noexcept
     }
 }
 
+void RuntimeProfile::scheduling(const SchedulerCounts &counts) noexcept {
+    const std::scoped_lock lock(mutex_);
+    scheduling_ = counts;
+}
+
 std::string RuntimeProfile::report() const {
     const std::scoped_lock lock(mutex_);
     const auto sum = total(functions_);
-    std::string text = "Clause profile: " + std::to_string(processes_.size()) + " processes\n";
+    std::string text = "Clause profile: " + std::to_string(processes_.size()) + " processes, " +
+                       std::to_string(scheduling_.slices) + " time slices, " + std::to_string(scheduling_.clock_reads) +
+                       " timer clock readings\n";
     if (lost_ != 0) {
         text += "Samples lost to memory exhaustion: " + std::to_string(lost_.load()) + "\n";
     }

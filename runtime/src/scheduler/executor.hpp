@@ -4,6 +4,7 @@
 #include "../ports/reactor.hpp"
 #include "../ports/sockets.hpp"
 #include "../ports/value.hpp"
+#include "timer_wheel.hpp"
 #include <chrono>
 #include <clause/abi/frames.hpp>
 #include <clause/runtime/process_context.hpp>
@@ -13,6 +14,7 @@
 #include <map>
 #include <mutex>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -270,6 +272,8 @@ class Executor final {
         Word port_wait = 0;
         // Numbers of the ports whose tasks wait until this process's slice ends to deliver more.
         std::vector<Word> throttling;
+        // The receive timeout of this parked process in the timer wheel, armed while it waits with one.
+        TimerWheel::Timer timer;
     };
 
     // How an exit signal was sent (docs/processes.md#exit-signals): by a link, by exit_signal/2 or exit/2 to another
@@ -368,8 +372,15 @@ class Executor final {
 
     // Run processes from the queue until the program ends; every worker thread runs this.
     void work() noexcept;
-    // Wait until a process is queued or the earliest receive timeout; with neither, until another worker queues one.
+    // Wait until a process is queued, by another worker, a send, or the timer thread.
     void idle(std::unique_lock<std::mutex> &lock);
+    // The timer thread: sleep until the next occupied slot of the wheel, read the clock once, and queue the parked
+    // processes whose receive timeout expired, until the program ends.
+    void time() noexcept;
+    // One step of the timer thread: wait for the next occupied slot or a new earlier timer, then fire what is due.
+    void tick(std::unique_lock<std::mutex> &lock);
+    // The wheel tick of a deadline: whole milliseconds since the executor started, rounded up so none fires early.
+    std::uint64_t tick_of(std::chrono::steady_clock::time_point deadline) const noexcept;
     // Account for a process whose time slice ended: wake its blockers, then finish, block, park or queue it.
     void after(ProcessContext &process, bool ended);
     // Let each live blocker of `holder` hold it: `holder` is not queued again before their next slices end.
@@ -403,8 +414,8 @@ class Executor final {
     void park(ProcessContext &process);
     // Run a parked receiver again after a message arrived for it.
     TermResult<void> wake(ProcessContext &receiver);
-    // Queue the parked processes whose receive timeout has expired.
-    void expire();
+    // Queue a parked process whose receive timeout expired.
+    void expire(ProcessContext &process);
     // Forget a parked process's timer.
     void cancel(ProcessContext &process) noexcept;
 
@@ -448,8 +459,19 @@ class Executor final {
     Runtime::Impl &runtime_;
     // Guards everything below and every process that is not running.
     mutable std::mutex mutex_;
-    // Wakes idle workers: a process was queued, a timer added, or the program ended.
+    // Wakes idle workers: a process was queued or the program ended.
     std::condition_variable work_;
+    // Wakes the timer thread: an earlier timer was armed, or run() ends.
+    std::condition_variable timer_signal_;
+    // Tick 0 of the wheel.
+    std::chrono::steady_clock::time_point epoch_ = std::chrono::steady_clock::now();
+    // Receive timeouts of parked processes (plan step 62B); only the timer thread advances it.
+    TimerWheel wheel_;
+    // Set by run() when its workers stopped, so the timer thread ends too.
+    bool timers_stop_ = false;
+    // Time slices run and clock readings of the timer thread, for the profile report (descriptive).
+    std::uint64_t slices_ = 0;
+    std::uint64_t clock_reads_ = 0;
     // Scheduling state of every process started and not yet released.
     std::unordered_map<ProcessContext *, Schedule> schedules_;
     // Runnable processes in the order they run; a running process is in none of them.
@@ -460,8 +482,6 @@ class Executor final {
     bool port_turn_ = false;
     // Processes waiting for a message.
     std::unordered_set<ProcessContext *> parked_;
-    // Parked processes whose receive has a finite timeout, by its deadline.
-    std::multimap<std::chrono::steady_clock::time_point, ProcessContext *> timers_;
     // Processes ended by exit signals that drain() has not finished yet.
     std::deque<ProcessContext *> ending_;
     // The main process during run(): its end ends the program.

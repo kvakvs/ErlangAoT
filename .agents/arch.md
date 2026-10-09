@@ -410,6 +410,8 @@
   `--profile FILE` (step 61, runtime option) attributes entries and self time at frame transfers per function
   and process (`process/profile`), merged at context destruction; no generated-code change.
   `--lto` (step 62) links bitcode outputs with `-flto -fuse-ld=lld` (MSVC/ELF only).
+  Code server lookups are hash indexes built at registration (62A). Receive timeouts live in a hierarchical
+  timer wheel advanced by one timer thread per run (62B); workers never read the clock for timers.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,

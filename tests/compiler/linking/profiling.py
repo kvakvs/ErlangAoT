@@ -48,7 +48,9 @@ def check(report):
     assert functions[0][0] > sum(row[0] for row in functions[1:]), functions
     processes = rows(report, "Processes by time")
     assert len(processes) == 2 and processes[0][2].endswith(": profile:spin/2"), processes
-    assert report.startswith("Clause profile: 2 processes\n"), report
+    header = re.match(r"Clause profile: 2 processes, (\d+) time slices, (\d+) timer clock readings\n", report)
+    assert header and int(header[1]) > 0, report
+    print("scheduling:", header[0].strip())
 
 
 for level in ("O0", "O2"):

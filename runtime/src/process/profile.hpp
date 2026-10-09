@@ -21,6 +21,12 @@ struct FunctionCost final {
 
 using FunctionCosts = std::unordered_map<const abi::v1::FrameDescriptor *, FunctionCost>;
 
+// What the executor did in one run: time slices run and clock readings of its timer thread.
+struct SchedulerCounts final {
+    std::uint64_t slices = 0;
+    std::uint64_t clock_reads = 0;
+};
+
 // The profile of one process, kept by its stack while it runs; only that process's worker touches it.
 class ProcessProfile final {
   public:
@@ -49,6 +55,8 @@ class RuntimeProfile final {
   public:
     // Merge the profile of process `pid` when its context is destroyed.
     void add(Word pid, const ProcessProfile &profile) noexcept;
+    // Record the executor's time slices and timer-thread clock readings of the run (descriptive).
+    void scheduling(const SchedulerCounts &counts) noexcept;
     // Functions by self time, then processes by time, as text (docs/profiling.md#report).
     std::string report() const;
 
@@ -66,5 +74,7 @@ class RuntimeProfile final {
     std::vector<ProcessRecord> processes_;
     // Samples and processes lost to memory exhaustion; atomic, since a failed merge counts outside the lock.
     std::atomic<std::uint64_t> lost_ = 0;
+    // Time slices and timer clock readings of the last run.
+    SchedulerCounts scheduling_;
 };
 } // namespace clause::runtime::detail

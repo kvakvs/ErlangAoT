@@ -102,8 +102,8 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K close, step 58,
-2026-10-09): 224 full-mode CTests; `check-quality-all` at phase J2's close (324 units).
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase L close, step 62B,
+2026-10-09): 235 full-mode CTests; `check-quality-all` clean (338 units).
 
 ## Step overview
 
@@ -423,19 +423,32 @@ are consulted when a scheduled timer must fire; waiting processes are never
 scanned for deadlines.
 
 - Success criteria
-  - [ ] Arming, cancelling (a message arrives first) and firing timers cost
+  - [x] Arming, cancelling (a message arrives first) and firing timers cost
     constant expected time per timer; the clock is read at most once per tick
     while processes run, and an idle scheduler sleeps exactly until the next
-    occupied slot.
-  - [ ] Timeouts never fire early and fire within one tick of their deadline;
+    occupied slot. Evidence 2026-10-09: `scheduler/timer_wheel` (6 levels x 64
+    slots of 1 ms, occupancy bitmaps, intrusive node in `Schedule::timer`);
+    workers no longer call `expire()` per slice; one timer thread per
+    `run()` waits until the next occupied slot (`TimerWheel::next`), reads the
+    clock once per wake and advances; idle workers wait for queued work only.
+  - [x] Timeouts never fire early and fire within one tick of their deadline;
     `after 0`, `infinity` and the 0..4294967295 range keep their step-47
     behavior; with multiple workers (phase J) each worker's wheel, or a shared
-    one under its synchronization, keeps these guarantees.
+    one under its synchronization, keeps these guarantees. Evidence: deadlines
+    round up to ticks (`tick_of`), a past tick fires at the next one; one
+    wheel shared under the executor mutex; receive.cpp unchanged. "Within one
+    tick" is bounded by the host's timed-wait resolution (documented).
 - Tests
-  - [ ] Existing goldens (`executables_receive_after`,
+  - [x] Existing goldens (`executables_receive_after`,
     `executables_selective_receive`) pass unchanged; a focused runtime test arms
     many timers, cancels most, and checks firing order and that cancelled ones
     never fire; clock readings per slice recorded descriptively, not gated.
+    Evidence: both goldens, wakeups, processes, monitors, links, send pass;
+    `runtime_timer_wheel` (20,000 timers to 2^32 ticks, 90% cancelled, uneven
+    advances, edge ticks); `--profile` header: wakeups 64 clock readings for
+    2,046 slices (68/1,745 with one worker). Phase L close: full CTest
+    235/235 and `check-quality-all` clean; `linking_debugger` retries a
+    session only when lldb-server itself crashes (seen once under full load).
 
 ## M. Validation closure
 

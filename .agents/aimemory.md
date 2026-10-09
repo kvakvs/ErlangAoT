@@ -493,3 +493,6 @@ Host and tool gotchas:
   newlines: use Edit/Write for code with escapes.
 - 61 (2026-10-09): profiling is runtime-only (`--profile FILE`, RuntimeOptions::profile non-empty enables):
   ProcessStack::profile_ hooks in enter (Erlang bodies only)/leave/run; merged in Runtime::destroy_context.
+- 62A/62B (2026-10-09): CodeServer hash indexes (publish() indexes then emplaces, unindex on throw). Timer wheel:
+  executor timer thread (time()) started/joined in run(); destroy() cancels the timer before erasing Schedule.
+  Phase L closed after 62B (full CTest + check-quality-all).
