@@ -197,12 +197,20 @@ Inference is separate from declared types and never trusts specs.
   `is_map/1`, `is_function/1,2`, `is_pid/1`, `is_port/1`, `is_reference/1`,
   `is_record/2,3` to the record's tuple, `is_map_key/2` its map to `map()`,
   and the old guard names) meet their argument's fact; comparisons with
-  integer constants (`<`, `=<`, `>`, `>=`, `==`, `=:=`, either side) narrow a
-  value already proven to be an integer to a range. A conjunction applies
+  integer constants (`<`, `=<`, `>`, `>=`, `==`, `=:=`, either side, folded
+  constants included) narrow a value already proven to be an integer to a
+  range, the bounds of one test accumulating (`10 >= X, X >= 0` is `0..10`);
+  two proven integers compared narrow each other by their bounds (`X > Y`
+  with `Y` in `0..5` makes `X` at least 1), and `/=`, `=/=` with a constant
+  move a range bound equal to it inward (step 58H1). A value that may be a
+  float or another term is not narrowed. A conjunction applies
   each test in turn, a disjunction joins what each alternative proves, `not`
   and false tests prove nothing. A clause after one whose patterns are all
   plain variables and whose whole guard was a single type test sees that
-  value without the tested category. The right operand of `andalso`, the
+  value without the tested category; after a single comparison with an
+  integer constant, the same value (a plain variable of this clause) proven
+  to be an integer sees the comparison false (`f(N) when N >= 0 -> ...;
+  f(N) when is_integer(N) -> ...`: the second clause sees `neg_integer()`). The right operand of `andalso`, the
   `true` clause of `case Test of`, and what follows a comprehension filter
   see the test as true. An empty meet makes the clause impossible: it adds
   nothing to the result. Narrowed facts hold only inside their clause or
@@ -377,8 +385,10 @@ sum() -> 1 + 2.
 - `narrowing.erl` covers each type test, case guards, true-test scrutinees,
   `andalso`, comprehension filters, tuple/list/map patterns, catch-all
   clauses, range guards, contradictions, disjunctions, the clause after a
-  single type test, narrowing after a call, and narrowings that must not
-  leak (36 of 36).
+  single type test, narrowing after a call, narrowings that must not leak,
+  and comparison ranges: each operator either side, two variables, `=/=` at
+  and inside a bound, complements, case and if guards, an `orelse`, a
+  guarded countdown, and operands that must not narrow (51 of 51).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,

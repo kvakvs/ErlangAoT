@@ -196,6 +196,27 @@ std::optional<Id> left_out(BindingFacts &bindings, const Clause &previous, const
     return tested->second;
 }
 
+// After a clause's guard: when the previous clause's patterns were all plain variables and its whole guard a single
+// comparison of one of them with an integer constant, it can only have failed that comparison, so the value at the
+// same position (a plain variable in this clause) narrows by the comparison being false.
+template <typename Clause>
+void complement(BindingFacts &bindings, const Clause &previous, const std::vector<ast::ExprId> &before,
+                const std::vector<ast::ExprId> &now) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto plain = [&](const ast::ExprId &pattern) {
+        return std::holds_alternative<ast::Variable>(syntax.expression(ungroup(syntax, pattern)).value);
+    };
+    const auto compared = std::ranges::all_of(before, plain) && previous.guard
+                              ? single_comparison(bindings, *previous.guard)
+                              : std::nullopt;
+    for (std::size_t position = 0; compared && position < before.size() && position < now.size(); ++position) {
+        const auto target = plain(now[position]) ? variable(bindings, now[position]) : std::nullopt;
+        if (target && variable(bindings, before[position]) == compared->identity) {
+            assume_false(bindings, *compared, *target);
+        }
+    }
+}
+
 // The roots of a clause's argument patterns.
 std::vector<ast::ExprId> argument_roots(const ast::Module &syntax, const ast::FunctionClause &clause) {
     std::vector<ast::ExprId> result;
@@ -307,6 +328,10 @@ void guarded_head(BindingFacts &bindings, const std::size_t index) {
     if (clause.guard && !assume_guard(bindings, *clause.guard)) {
         bindings.impossible.insert(&clause.body);
     }
+    if (index > 0) {
+        const auto &previous = heads(bindings)[index - 1];
+        complement(bindings, previous, argument_roots(syntax, previous), argument_roots(syntax, clause));
+    }
     if (bindings.impossible.contains(&clause.body)) {
         return;
     }
@@ -385,11 +410,18 @@ void restore(BindingFacts &bindings, const bool keep) {
     }
 }
 
-// Narrow by a clause's guard.
+// Narrow by a clause's guard, and in a case by the previous clause's failed comparison.
 void guard_clause(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index) {
     const auto [guard, body] = clause_parts(value, index);
     if (guard && !assume_guard(bindings, *guard)) {
         bindings.impossible.insert(body);
+    }
+    const auto *selection = std::get_if<ast::CaseExpression>(&value);
+    if (selection && index > 0) {
+        const auto &syntax = *bindings.function.module->syntax;
+        const auto &previous = selection->clauses[index - 1];
+        complement(bindings, previous, {pattern_root(syntax, previous.pattern)},
+                   {pattern_root(syntax, selection->clauses[index].pattern)});
     }
 }
 } // namespace

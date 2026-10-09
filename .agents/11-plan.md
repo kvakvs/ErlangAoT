@@ -594,15 +594,22 @@ facts, and `/=`, `=/=` with a constant drop it when it is a range bound
   widening (58A) stops at the guard bound instead of the category.
 
 - Success criteria
-  - [ ] Each comparison form narrows a proven integer to the exact range it
+  - [x] Each comparison form narrows a proven integer to the exact range it
     implies; an operand that may be a non-integer is never narrowed; entry
-    domains and specialization profiles stay sound.
+    domains and specialization profiles stay sound. Evidence 2026-10-09:
+    `inference_narrowing` (`apply`, `exclude`, `compare_variables`/`relate`/
+    `order`, per-test `Values::bounds` for one-sided bounds, `assume_false`),
+    complements in `inference_scopes` (function and case clauses).
 - Tests
-  - [ ] New `values.erl` rows: each operator with a constant on either side,
+  - [x] New `values.erl` rows: each operator with a constant on either side,
     a comparison between two bounded variables, `=/=` at a bound and inside a
     range, a complement in a following clause, a guarded countdown loop, a
     `case` and an `if` guard, an `orelse` disjunction, and a `number()` or
-    `term()` operand that must not narrow.
+    `term()` operand that must not narrow. Evidence: 15 rows in
+    `narrowing.erl` (kept with the other narrowing rows): `below`, `at_most`
+    (`10 >= X, X >= 0`), `above`, `equal_to`, `between`, `nonzero`,
+    `not_five`, `classify`, `case_range`, `if_range`, `either_range`,
+    `loop_start`/`loop(0..10)`, `number_compare`, `term_compare`.
 
 <a id="step-58i"></a>
 

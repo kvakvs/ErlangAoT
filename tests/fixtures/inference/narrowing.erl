@@ -36,7 +36,21 @@
     complement_start/0,
     after_call/1,
     no_leak/1,
-    no_leak_andalso/1
+    no_leak_andalso/1,
+    below/1,
+    at_most/1,
+    above/1,
+    equal_to/1,
+    between/2,
+    nonzero/1,
+    not_five/1,
+    classify/1,
+    case_range/1,
+    if_range/1,
+    either_range/1,
+    loop_start/0,
+    number_compare/1,
+    term_compare/1
 ]).
 
 -record(point, {x, y}).
@@ -185,3 +199,65 @@ no_leak(X) ->
 no_leak_andalso(X) ->
     _ = is_integer(X) andalso X,
     X.
+
+%% Comparisons narrow a proven integer to the range they imply, the constant on either side.
+
+%% expect: below(neg_integer()) -> neg_integer()
+below(X) when is_integer(X), X < 0 -> X.
+
+%% expect: at_most(0..10) -> 0..10
+at_most(X) when is_integer(X), 10 >= X, X >= 0 -> X.
+
+%% expect: above(pos_integer()) -> pos_integer()
+above(X) when is_integer(X), 0 < X -> X.
+
+%% expect: equal_to(5) -> 5
+equal_to(X) when is_integer(X), X == 5 -> X.
+
+%% Two proven integers narrow each other by their bounds.
+%% expect: between(pos_integer(), 0..5) -> pos_integer()
+between(X, Y) when is_integer(X), is_integer(Y), Y >= 0, Y =< 5, X > Y -> X.
+
+%% Excluding a range's bound moves it inward; excluding a value inside it proves nothing.
+%% expect: nonzero(1..10) -> 1..10
+nonzero(X) when is_integer(X), X >= 0, X =< 10, X =/= 0 -> X.
+
+%% expect: not_five(0..10) -> 0..10
+not_five(X) when is_integer(X), X >= 0, X =< 10, X =/= 5 -> X.
+
+%% A clause after one whose whole guard was a single comparison sees it false.
+%% expect: classify(term()) -> neg_integer() | positive
+classify(N) when N >= 0 -> positive;
+classify(N) when is_integer(N) -> N.
+
+%% expect: case_range(term()) -> 0..3
+case_range(X) ->
+    case X of
+        Y when is_integer(Y), Y > 0, Y < 4 -> Y;
+        _ -> 0
+    end.
+
+%% expect: if_range(integer()) -> 0..3
+if_range(X) when is_integer(X) ->
+    if
+        X > 0, X < 4 -> X;
+        true -> 0
+    end.
+
+%% expect: either_range(1 | 3) -> 1 | 3
+either_range(X) when is_integer(X), X >= 0, X =< 10, (X == 1 orelse X == 3) -> X.
+
+%% A guarded countdown keeps the bound its guards prove.
+%% expect: loop_start() -> done
+loop_start() -> loop(10).
+
+%% expect: loop(0..10) -> done
+loop(N) when N > 0 -> loop(N - 1);
+loop(0) -> done.
+
+%% A value that may be a float, or any term, does not narrow.
+%% expect: number_compare(number()) -> number()
+number_compare(X) when is_number(X), X > 0 -> X.
+
+%% expect: term_compare(term()) -> argument 1
+term_compare(X) when X > 0 -> X.

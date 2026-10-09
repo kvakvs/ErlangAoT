@@ -9,8 +9,6 @@
 
 namespace clause::semantic::types {
 namespace {
-using Values = std::map<BindingId, Fact>;
-
 // Patterns nested deeper than this match any term as far as their shape goes.
 constexpr std::size_t SHAPE_DEPTH = 8;
 
@@ -42,6 +40,16 @@ struct Interval {
     std::optional<std::string> high;
 };
 
+// Narrowed facts by name, with the integer bounds proven so far in the test: a bound on one side only is no fact of
+// its own, so it waits here for the other side.
+struct Values {
+    std::map<BindingId, Fact> facts;
+    std::map<BindingId, Interval> bounds;
+};
+
+// Facts to narrow, starting from `facts`.
+Values narrowing(const std::map<BindingId, Fact> &facts) { return {facts, {}}; }
+
 // The larger of two lower bounds and the smaller of two upper bounds.
 std::optional<std::string> higher(const std::optional<std::string> &left, const std::optional<std::string> &right) {
     if (!left || !right) {
@@ -57,21 +65,33 @@ std::optional<std::string> lower(const std::optional<std::string> &left, const s
     return decimal_less(*left, *right) ? left : right;
 }
 
+// The integer after (`up`) or before a bound; a missing bound stays unbounded.
+std::optional<std::string> next(const std::optional<std::string> &bound, const bool up) {
+    if (!bound) {
+        return std::nullopt;
+    }
+    const auto value = decimal_number(*bound);
+    return decimal_integer(up ? value + 1 : value - 1);
+}
+
 // Join into `into` the facts `other` gives the same variables: either of two narrowings may hold.
 void merge(Lattice &lattice, Values &into, const Values &other) {
     const auto top = Fact{lattice.graph().top()};
-    for (auto &[identity, fact] : into) {
-        const auto found = other.find(identity);
-        const auto second = found == other.end() ? top : found->second;
+    for (auto &[identity, fact] : into.facts) {
+        const auto found = other.facts.find(identity);
+        const auto second = found == other.facts.end() ? top : found->second;
         fact = {lattice.join(fact.type, second.type), fact.argument == second.argument ? fact.argument : std::nullopt};
     }
+    into.bounds.clear();
 }
 
-// A comparison of a variable with an integer constant, the variable on the left.
-struct Comparison {
-    BindingId identity;
-    BigInt constant;
-    ast::BinaryOperator operation;
+// Two proven integers, `small` below `large` (`strict`) or at most `large`, with their integer bounds.
+struct Ordered {
+    BindingId small;
+    BindingId large;
+    Interval small_bounds;
+    Interval large_bounds;
+    bool strict;
 };
 
 // Narrows variables by tests assumed true.
@@ -89,14 +109,27 @@ class Assume final {
     // The argument a type test checks and the fact of the values it accepts; none for another expression.
     std::optional<std::pair<ast::ExprId, Id>> type_test(const ast::Expression &expression);
 
+    // The variable, constant and operator (variable first) of a comparison of a variable with an integer constant.
+    std::optional<Comparison> comparison(const ast::BinaryExpression &value) const;
+    // Narrow by a comparison of a variable with a constant being true.
+    bool apply(Values &values, const Comparison &compared);
+
   private:
     bool binary(const ast::BinaryExpression &value, Values &values);
+    // A comparison of two variables proven to be integers: each narrows by the other's bounds.
+    bool compare_variables(const ast::BinaryExpression &value, Values &values);
+    // Narrow two proven integers (as `small` and `large`) by a comparison of them being true.
+    bool relate(Values &values, ast::BinaryOperator operation, const Ordered &pair);
+    // Narrow two proven integers known to be ordered.
+    bool order(Values &values, const Ordered &ordered);
+    // Narrow a proven integer variable to exclude `constant` where it is a bound of its ranges.
+    bool exclude(Values &values, BindingId identity, const BigInt &constant);
+    // The integer bounds of a variable proven to be an integer; none for another one.
+    std::optional<Interval> integer_bounds(const Values &values, BindingId identity);
     // A comparison of a proven integer variable with an integer constant.
     bool compare(const ast::BinaryExpression &value, Values &values);
     // Narrow a variable proven to be an integer to the integers of `range`.
     bool narrow_range(Values &values, BindingId identity, const Interval &range);
-    // The variable, constant and operator (variable first) of a comparison of a variable with an integer constant.
-    std::optional<Comparison> comparison(const ast::BinaryExpression &value) const;
     // is_record/2,3: a tuple of the record's size whose first element is its name.
     std::optional<Id> record_test(const ast::Expression &expression, const ast::CallExpression &call);
     // The bounds `operation` against `constant` proves for its left operand; none for others.
@@ -145,7 +178,7 @@ template <typename Left, typename Right> bool Assume::either(Values &values, Lef
         return a || b;
     }
     merge(lattice_, first, second);
-    values = std::move(first);
+    values = first;
     return true;
 }
 
@@ -198,7 +231,9 @@ std::optional<Comparison> Assume::comparison(const ast::BinaryExpression &value)
         {ast::BinaryOperator::greater, ast::BinaryOperator::less},
         {ast::BinaryOperator::greater_equal, ast::BinaryOperator::less_equal},
         {ast::BinaryOperator::equal, ast::BinaryOperator::equal},
-        {ast::BinaryOperator::exact_equal, ast::BinaryOperator::exact_equal}};
+        {ast::BinaryOperator::exact_equal, ast::BinaryOperator::exact_equal},
+        {ast::BinaryOperator::not_equal, ast::BinaryOperator::not_equal},
+        {ast::BinaryOperator::exact_not_equal, ast::BinaryOperator::exact_not_equal}};
     const auto flipped = FLIPPED.find(value.operation);
     if (flipped == FLIPPED.end()) {
         return std::nullopt;
@@ -214,27 +249,101 @@ std::optional<Comparison> Assume::comparison(const ast::BinaryExpression &value)
 
 bool Assume::compare(const ast::BinaryExpression &value, Values &values) {
     const auto compared = comparison(value);
-    const auto range = compared ? bound(compared->operation, compared->constant) : std::nullopt;
-    return !range || narrow_range(values, compared->identity, *range);
+    return compared ? apply(values, *compared) : compare_variables(value, values);
+}
+
+bool Assume::apply(Values &values, const Comparison &compared) {
+    using Op = ast::BinaryOperator;
+    if (compared.operation == Op::not_equal || compared.operation == Op::exact_not_equal) {
+        return exclude(values, compared.identity, compared.constant);
+    }
+    const auto range = bound(compared.operation, compared.constant);
+    return !range || narrow_range(values, compared.identity, *range);
+}
+
+std::optional<Interval> Assume::integer_bounds(const Values &values, const BindingId identity) {
+    const auto current = values.facts.contains(identity) ? values.facts.at(identity).type : lattice_.graph().top();
+    const auto numbers = lattice_.numbers(current);
+    if (!numbers.integers || numbers.floats || numbers.others) {
+        return std::nullopt;
+    }
+    return Interval{numbers.low, numbers.high};
+}
+
+bool Assume::exclude(Values &values, const BindingId identity, const BigInt &constant) {
+    if (!integer_bounds(values, identity)) {
+        return true;
+    }
+    const auto value = decimal_integer(constant);
+    std::vector<Id> kept;
+    for (const auto member : lattice_.members(values.facts.at(identity).type)) {
+        const auto numbers = lattice_.numbers(member);
+        // A bound equal to the excluded value moves inward; a singleton equal to it goes.
+        const auto low = numbers.low == value ? next(numbers.low, true) : numbers.low;
+        const auto high = numbers.high == value ? next(numbers.high, false) : numbers.high;
+        if (!low || !high || !decimal_less(*high, *low)) {
+            kept.push_back(lattice_.interval(low, high));
+        }
+    }
+    return narrow(values, identity, lattice_.join(kept, 0));
+}
+
+bool Assume::compare_variables(const ast::BinaryExpression &value, Values &values) {
+    const auto left = variable(bindings_, value.left);
+    const auto right = variable(bindings_, value.right);
+    const auto a = left ? integer_bounds(values, *left) : std::nullopt;
+    const auto b = right ? integer_bounds(values, *right) : std::nullopt;
+    return !a || !b || relate(values, value.operation, {*left, *right, *a, *b, false});
+}
+
+bool Assume::relate(Values &values, const ast::BinaryOperator operation, const Ordered &pair) {
+    using Op = ast::BinaryOperator;
+    // Whether each order swaps the operands so the first is the smaller, and whether it is strict.
+    static const std::map<Op, std::pair<bool, bool>> ORDERS{{Op::less, {false, true}},
+                                                            {Op::less_equal, {false, false}},
+                                                            {Op::greater, {true, true}},
+                                                            {Op::greater_equal, {true, false}}};
+    if (operation == Op::equal || operation == Op::exact_equal) {
+        return narrow_range(values, pair.small, pair.large_bounds) &&
+               narrow_range(values, pair.large, pair.small_bounds);
+    }
+    const auto found = ORDERS.find(operation);
+    if (found == ORDERS.end()) {
+        return true;
+    }
+    const auto [swapped, strict] = found->second;
+    return order(values, swapped ? Ordered{pair.large, pair.small, pair.large_bounds, pair.small_bounds, strict}
+                                 : Ordered{pair.small, pair.large, pair.small_bounds, pair.large_bounds, strict});
+}
+
+bool Assume::order(Values &values, const Ordered &ordered) {
+    // A strict order moves each bound past the other's: small is at most large's highest less one.
+    const auto high = ordered.strict ? next(ordered.large_bounds.high, false) : ordered.large_bounds.high;
+    const auto low = ordered.strict ? next(ordered.small_bounds.low, true) : ordered.small_bounds.low;
+    return narrow_range(values, ordered.small, {std::nullopt, high}) &&
+           narrow_range(values, ordered.large, {low, std::nullopt});
 }
 
 bool Assume::narrow_range(Values &values, const BindingId identity, const Interval &range) {
-    const auto current = values.contains(identity) ? values.at(identity).type : lattice_.graph().top();
+    const auto current = values.facts.contains(identity) ? values.facts.at(identity).type : lattice_.graph().top();
     const auto numbers = lattice_.numbers(current);
     // Terms of every type compare: only a value proven to be an integer narrows to a range.
     if (!numbers.integers || numbers.floats || numbers.others) {
         return true;
     }
-    // Intersect the bounds directly: a range bounded on one side only is no fact of its own.
-    const auto low = higher(numbers.low, range.low);
-    const auto high = lower(numbers.high, range.high);
+    // Intersect the bounds directly, with those the test proved before: a range bounded on one side only is no
+    // fact of its own.
+    const auto proven = values.bounds.contains(identity) ? values.bounds.at(identity) : Interval{};
+    const auto low = higher(higher(numbers.low, proven.low), range.low);
+    const auto high = lower(lower(numbers.high, proven.high), range.high);
+    values.bounds.insert_or_assign(identity, Interval{low, high});
     const bool empty = low && high && decimal_less(*high, *low);
     return narrow(values, identity, empty ? lattice_.graph().bottom() : lattice_.interval(low, high));
 }
 
 bool Assume::narrow(Values &values, const BindingId identity, const Id fact) {
-    const auto current = values.contains(identity) ? values.at(identity).type : lattice_.graph().top();
-    const auto next = bindings_.narrow_identity(values, identity, fact);
+    const auto current = values.facts.contains(identity) ? values.facts.at(identity).type : lattice_.graph().top();
+    const auto next = bindings_.narrow_identity(values.facts, identity, fact);
     return next != lattice_.graph().bottom() || current == lattice_.graph().bottom();
 }
 
@@ -402,32 +511,58 @@ std::optional<BindingId> variable(const BindingFacts &bindings, const ast::ExprI
     return event == bindings.events.end() ? std::nullopt : std::optional{event->second->identity};
 }
 
-bool assume(BindingFacts &bindings, const ast::ExprId &test) { return Assume(bindings).test(test, bindings.values); }
+bool assume(BindingFacts &bindings, const ast::ExprId &test) {
+    auto values = narrowing(bindings.values);
+    const bool possible = Assume(bindings).test(test, values);
+    bindings.values = std::move(values.facts);
+    return possible;
+}
 
 bool assume_guard(BindingFacts &bindings, const ast::GuardSyntax &guard) {
     Assume assumption(bindings);
     std::optional<Values> result;
     bool possible = false;
     for (const auto &alternative : guard.alternatives) {
-        auto values = bindings.values;
+        auto values = narrowing(bindings.values);
         if (!assumption.conjunction(alternative.tests, values)) {
             continue;
         }
         possible = true;
         if (!result) {
-            result = std::move(values);
+            result = values;
             continue;
         }
         Lattice lattice(bindings.inference.graph);
         merge(lattice, *result, values);
     }
     if (result) {
-        bindings.values = std::move(*result);
+        bindings.values = std::move(result->facts);
     }
     return possible;
 }
 
 Id pattern_shape(BindingFacts &bindings, const ast::ExprId &pattern) { return Shape(bindings).of(pattern, 0); }
+
+std::optional<Comparison> single_comparison(BindingFacts &bindings, const ast::GuardSyntax &guard) {
+    if (guard.alternatives.size() != 1 || guard.alternatives.front().tests.size() != 1) {
+        return std::nullopt;
+    }
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &test = syntax.expression(ungroup(syntax, guard.alternatives.front().tests.front())).value;
+    const auto *compared = std::get_if<ast::BinaryExpression>(&test);
+    return compared ? Assume(bindings).comparison(*compared) : std::nullopt;
+}
+
+void assume_false(BindingFacts &bindings, const Comparison &compared, const BindingId target) {
+    using Op = ast::BinaryOperator;
+    static const std::map<Op, Op> NEGATED{{Op::less, Op::greater_equal},    {Op::less_equal, Op::greater},
+                                          {Op::greater, Op::less_equal},    {Op::greater_equal, Op::less},
+                                          {Op::equal, Op::not_equal},       {Op::exact_equal, Op::not_equal},
+                                          {Op::not_equal, Op::exact_equal}, {Op::exact_not_equal, Op::exact_equal}};
+    auto values = narrowing(bindings.values);
+    (void)Assume(bindings).apply(values, {target, compared.constant, NEGATED.at(compared.operation)});
+    bindings.values = std::move(values.facts);
+}
 
 std::optional<std::pair<BindingId, Id>> single_test(BindingFacts &bindings, const ast::GuardSyntax &guard) {
     if (guard.alternatives.size() != 1 || guard.alternatives.front().tests.size() != 1) {
