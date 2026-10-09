@@ -5,6 +5,7 @@
 #include "../records.hpp"
 #include "inference_bindings.hpp"
 #include "inference_funs.hpp"
+#include "inference_inputs.hpp"
 #include "inference_operators.hpp"
 #include "inference_values.hpp"
 #include "lattice.hpp"
@@ -43,10 +44,11 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
 // Bottom (a recursive call not yet summarized) adds nothing; otherwise only a relation common to both survives and
 // the types join (docs/semantic.md#inference-domain), or widen between rounds of a recursive component.
 Fact merged(Graph &graph, const Fact previous, const Fact next, bool widening = false) {
-    if (previous == Fact{graph.bottom()}) {
-        return next;
+    // A value that never exists relates to no argument.
+    if (previous.type == graph.bottom()) {
+        return next.type == graph.bottom() ? Fact{graph.bottom()} : next;
     }
-    if (next == Fact{graph.bottom()}) {
+    if (next.type == graph.bottom()) {
         return previous;
     }
     Lattice lattice(graph);
@@ -313,6 +315,13 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work,
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
     BindingFacts bindings(function, inference, work);
+    // Each clause's head matches the inputs; a whole argument keeps its relation to the argument.
+    const auto inputs = inputs_of(inference, *function.function);
+    for (const auto &clause : definition.clauses) {
+        for (std::size_t index = 0; index < inputs.size(); ++index) {
+            bindings.publish(pattern_root(syntax, clause.arguments[index]), {inputs[index], index}, work);
+        }
+    }
     if (!walk(inference, function, bindings, function_roots(definition), work, recorded)) {
         return {inference.graph.exhausted()};
     }
@@ -327,10 +336,9 @@ constexpr std::size_t JOIN_ROUNDS = 8;
 // converged by then widens every member to top.
 constexpr std::size_t WIDENING_PASSES = 4;
 
-// Replace a summary result, keeping every input unknown as for exported functions.
+// Replace a summary result, with the inputs the body started from.
 void summarize(Inference &inference, const FunctionRef function, const Fact result) {
-    inference.functions.insert_or_assign(
-        function.function, Summary{std::vector<Id>(function.function->key.arity, inference.graph.top()), result});
+    inference.functions.insert_or_assign(function.function, Summary{inputs_of(inference, *function.function), result});
 }
 
 // Re-infer every member from the current assumptions, discarding the previous round's expression facts; results
@@ -369,8 +377,9 @@ void solve(Inference &inference, const Component &component, std::size_t &work) 
     (void)refine(inference, component, work, recorded, false);
 }
 
-// Passes over the batch before fun references stop reading the summaries of an earlier pass.
-constexpr std::size_t PASSES = 8;
+// Passes over the batch that join local inputs, then passes that widen them, before inputs and fun references are
+// given up as unknown.
+constexpr std::size_t PASSES = JOIN_ROUNDS + 2 * WIDENING_PASSES;
 
 // Infer every component in callee-before-caller order, from fresh expression facts and its own work budget.
 void infer_pass(Inference &inference, const CallGraph &calls) {
@@ -402,12 +411,19 @@ std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
     for (const auto &call : calls.calls) {
         result->callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
     }
-    // A fun F/A reads its function's summary as far as it is known; passes repeat until each read the final one.
+    // Local inputs grow from their calls and a fun F/A reads its function's summary as far as it is known: passes
+    // repeat until the inputs stop changing and each fun read its function's final result.
+    prepare_inputs(*result, calls);
     for (std::size_t pass = 0; pass < PASSES; ++pass) {
         infer_pass(*result, calls);
-        if (settled(*result)) {
+        const bool changed = gather_inputs(*result, calls, pass >= JOIN_ROUNDS);
+        if (!changed && settled(*result)) {
             return result;
         }
+    }
+    for (auto &[function, inputs] : result->inputs) {
+        (void)function;
+        std::ranges::fill(inputs, result->graph.exhausted());
     }
     result->opaque_funs = true;
     infer_pass(*result, calls);

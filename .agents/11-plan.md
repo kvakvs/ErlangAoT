@@ -379,12 +379,19 @@ components of step 18 (inputs widen like results after the round limit);
 exported and fun-referenced functions keep `term()` inputs.
 
 - Success criteria
-  - [ ] `increment(3) -> 4` and `call_local() -> 4`; recursive local loops
+  - [x] `increment(3) -> 4` and `call_local() -> 4`; recursive local loops
     converge or widen as results do; specialization profiles stay sound.
+    Evidence 2026-10-09: `semantic/types/inference_inputs`; `infer` repeats
+    batch passes (8 joining, 8 widening) until inputs settle, else a last pass
+    with `term()` inputs; profiles still come only from recorded call facts.
 - Tests
-  - [ ] `values.erl` local rows reach `expect:`; new rows for several call
+  - [x] `values.erl` local rows reach `expect:`; new rows for several call
     sites, recursive locals, a local referenced by `fun f/1` and the widening
-    limit.
+    limit. Evidence: `two_callers`/`add_one(10 | 20) -> 11..21`,
+    `countdown(integer())` (widened recursive input), `fun_target`/`doubled`
+    (term() inputs), `uncalled(none()) -> none()`; values 105 of 106.
+    `frontend_cli`'s inference trace module now exports the functions it
+    checks (an uncalled local is `none()`).
 
 <a id="step-58g"></a>
 
@@ -491,6 +498,9 @@ success domain per argument is the join over its clauses of the argument's
 fact at each normal return; `--print-types` prints it as the input
 (`inc(X) -> X + 1` exported: `inc(number()) -> number()`) and callers narrow
 their arguments to it after the call returns, as for entry domains.
+
+Inferring an integer with a range >= 0 becomes non_neg_integer(), and inferring
+an integer > 0 becomes pos_integer(). The < 0 will become neg_integer().
 
 - Soundness: a narrowing holds only on the normal-completion path after the
   use and never crosses an exception edge (a `catch`, `try` handler or

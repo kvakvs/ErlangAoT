@@ -30,11 +30,12 @@ std::string fact_text(const Inference &inferred, const Fact fact) {
     return node.kind == Kind::integer ? node.name : "term()";
 }
 
-// Preserve exact arity even for zero-argument functions, with every external input unknown.
-std::string input_text(const Summary &summary) {
+// Preserve exact arity even for zero-argument functions; integer singleton inputs show their value.
+std::string input_text(const Inference &inferred, const Summary &summary) {
     std::string result = "[";
     for (std::size_t i = 0; i < summary.inputs.size(); ++i) {
-        result += i == 0 ? "term()" : ",term()";
+        result += i == 0 ? "" : ",";
+        result += fact_text(inferred, {summary.inputs[i]});
     }
     return result + ']';
 }
@@ -45,7 +46,7 @@ void trace_inference(const Inference &inferred, const CallGraph &calls, const Di
         const auto &summary = inferred.functions.at(function.function);
         sink("[impldebug " + std::to_string(step) + "] " + escaped(function.module->file) + " inference " +
              escaped(utf8(function.module->name)) + ":" + escaped(utf8(function.function->key.name)) + "/" +
-             std::to_string(function.function->key.arity) + " inputs=" + input_text(summary) +
+             std::to_string(function.function->key.arity) + " inputs=" + input_text(inferred, summary) +
              " result=" + fact_text(inferred, summary.result));
     }
     if (inferred.graph.widened()) {

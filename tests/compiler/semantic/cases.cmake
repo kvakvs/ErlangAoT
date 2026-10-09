@@ -416,7 +416,7 @@ semantic_case(infer_nonnegative "-module(a). -spec f() -> non_neg_integer(). f()
 semantic_case(infer_byte "-module(a). -spec f() -> byte(). f() -> 256." 0 "warning:.*inferred result contradicts")
 semantic_case(infer_valid_singleton "-module(a). -spec f() -> 42 | atom(). f() -> 42." 0 "^$")
 file(WRITE "${semantic_work}/inference_owner.erl" "-module(inference_owner). -export([id/1,value/0]). id(X) -> X. value() -> 42.")
-file(WRITE "${semantic_work}/inference_user.erl" "-module(inference_user). first() -> inference_owner:id(inference_owner:value()). second() -> inference_owner:id(-7). third(X) -> inference_owner:id(X). project(_,Y,_) -> Y. fourth() -> project(1,second(),1).")
+file(WRITE "${semantic_work}/inference_user.erl" "-module(inference_user). -export([first/0,second/0,third/1,fourth/0]). first() -> inference_owner:id(inference_owner:value()). second() -> inference_owner:id(-7). third(X) -> inference_owner:id(X). project(_,Y,_) -> Y. fourth() -> project(1,second(),1).")
 execute_process(COMMAND "${TOOL}" --impldebug 23 inference_user.erl inference_owner.erl WORKING_DIRECTORY "${semantic_work}" RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err)
 if(NOT result STREQUAL "0" OR NOT out STREQUAL "" OR
    NOT err MATCHES "inference_user.*first.*result=42" OR NOT err MATCHES "inference_user.*second.*result=-7" OR

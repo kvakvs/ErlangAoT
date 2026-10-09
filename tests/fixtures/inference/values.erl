@@ -42,6 +42,9 @@
     node_name/0,
     call_integer/0,
     call_local/0,
+    two_callers/0,
+    countdown_start/0,
+    fun_target/0,
     pick/1,
     clauses/1,
     bounded/1,
@@ -230,12 +233,35 @@ node_name() -> node().
 call_integer() -> integer().
 
 %% expect: call_local() -> 4
-%% today: call_local() -> number()
 call_local() -> increment(3).
 
 %% expect: increment(3) -> 4
-%% today: increment(term()) -> number()
 increment(X) -> X + 1.
+
+%% A local function's inputs join its call sites' arguments; recursive calls count too, widening as results do.
+%% expect: two_callers() -> {11..21, 11..21}
+two_callers() -> {add_one(10), add_one(20)}.
+
+%% expect: add_one(10 | 20) -> 11..21
+add_one(X) -> X + 1.
+
+%% expect: countdown_start() -> done
+countdown_start() -> countdown(3).
+
+%% expect: countdown(integer()) -> done
+countdown(0) -> done;
+countdown(N) -> countdown(N - 1).
+
+%% A local function that fun F/A names may be called from anywhere.
+%% expect: fun_target() -> fun((term()) -> number())
+fun_target() -> fun doubled/1.
+
+%% expect: doubled(term()) -> number()
+doubled(X) -> X * 2.
+
+%% A local function nothing calls never runs.
+%% expect: uncalled(none()) -> none()
+uncalled(X) -> X.
 
 %% Integers, integer ranges and integers or floats.
 

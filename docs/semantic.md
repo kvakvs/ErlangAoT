@@ -104,7 +104,16 @@ pinned `erl_lint`/`erl_internal`/`erl_types` behavior:
 
 Inference is separate from declared types and never trusts specs.
 
-- Exported inputs are arbitrary terms. Literals have exact facts (step 58B):
+- Exported inputs, and inputs of functions that `fun F/A` names, are
+  arbitrary terms. A function entered only by direct calls of the batch
+  (neither exported nor named by a fun) takes the join of its call sites'
+  argument facts as inputs (step 58F, `semantic/types/inference_inputs`),
+  matched by each clause's head patterns; recursive calls count too. Inputs
+  start at `none()` (a function nothing calls never runs and infers
+  `none()`) and grow over passes of the batch: 8 passes join, later ones
+  widen like recursive results; inputs that have not settled after 16 passes
+  become `term()` (reported as widened).
+- Literals have exact facts (step 58B):
   integers of any size and characters are singletons, atoms singleton atoms,
   floats `float()`, strings nonempty lists of their characters (`[]` for
   `""`), and `-`/`+` of a literal number keep its fact. Tuples keep their
@@ -168,9 +177,9 @@ Inference is separate from declared types and never trusts specs.
   facts, at most 4 such calls deep, and its first evaluation's facts are
   restored afterwards (`Double = fun(Y) -> Y * 2 end, Double(3)` is 6).
   `apply/2,3` and dynamic calls stay `term()`. Since `fun F/A` may name a
-  function inferred later, inference repeats passes over the batch until
-  every such fun read its function's final result; after 8 passes a last
-  pass gives them `term()` results.
+  function inferred later, the passes over the batch also repeat until every
+  such fun read its function's final result; otherwise a last pass gives
+  them `term()` results.
 - Whole-value body assignments and aliases copy the RHS fact
   (`Y = 42, Z = Y, id(Z)` infers 42); tuple, list, map and tuple-record
   patterns give their variables the facts of the parts they match, in body
@@ -272,8 +281,8 @@ mixed(X) ->
 - Above each function, `%% declared: f(Inputs) -> Result` gives each overload
   of its `-spec` as resolved (with its `when` constraints), and
   `%% inferred: f(Inputs) -> Result` what inference found, so the two can be
-  compared. Inputs of exported functions and of functions with
-  specifications stay `term()`. A `-spec` stays with the function right after
+  compared. Inputs of exported functions and of functions `fun F/A` names
+  stay `term()`; other functions show their callers' joined arguments. A `-spec` stays with the function right after
   it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
   `Expression :: Type`: in parentheses inside other expressions, without them
@@ -309,8 +318,8 @@ sum() -> 1 + 2.
   strings, tuples, maps with atom and other keys, funs returned and applied,
   binaries and argument relations. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
-  parts, funs and their calls, integer joins and argument relations (96 of
-  99 functions).
+  parts, funs and their calls, local inputs from callers, integer joins and
+  argument relations (105 of 106 functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,

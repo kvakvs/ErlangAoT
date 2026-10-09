@@ -272,7 +272,8 @@
   `inference_operators` (operators/builtins), `inference_values` (literals, containers, records, comprehensions),
   `inference_funs` (fun values, calls of values); `BindingFacts` publishes pattern parts (body matches, case/of
   clauses, generators via `expect`/`matched`) and re-evaluates bound lambdas per call (`instantiate`). `infer` repeats
-  passes until every `fun F/A` read its function's final result (`fun_reads`), else a last `opaque_funs` pass.
+  passes until local inputs (`inference_inputs`, 58F: non-exported, not fun-named) stop changing and every `fun F/A`
+  read its function's final result (`fun_reads`), else a last pass with `term()` inputs and `opaque_funs`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 
