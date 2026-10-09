@@ -1,5 +1,6 @@
 #include "inference_scopes.hpp"
 #include "../capabilities.hpp"
+#include "dependent.hpp"
 #include "inference_narrowing.hpp"
 #include "lattice.hpp"
 #include <span>
@@ -441,27 +442,11 @@ std::vector<Id> argument_facts(const BindingFacts &bindings, const std::vector<a
     return result;
 }
 
-// The case or if a function clause's body ends in, which splits it into function types; null for another end.
-const ast::Expression *trailing(const BindingFacts &bindings, const ast::FunctionClause &clause) {
-    const auto &syntax = *bindings.function.module->syntax;
-    const auto &last = syntax.expression(ungroup(syntax, clause.body.back()));
-    const bool splits = std::holds_alternative<ast::CaseExpression>(last.value) ||
-                        std::holds_alternative<ast::IfExpression>(last.value);
-    return splits ? &last : nullptr;
-}
-
-// Add a possible function clause's function types: one per possible branch of the case or if ending its body, else
-// one for the whole clause.
+// Add a possible function clause's function types: one per clause of a dependent result whose parameters name its
+// arguments, else one for the whole clause.
 void add_types(BindingFacts &bindings, const ast::FunctionClause &clause) {
-    const auto *tail = trailing(bindings, clause);
-    if (!tail || bindings.branches.empty()) {
-        bindings.types.push_back({bindings.arguments, body_fact(bindings, clause.body), bindings.exact});
-        return;
-    }
-    const bool reached = !stops(bindings, std::span(clause.body).first(clause.body.size() - 1));
-    for (auto [branch, type] : bindings.branches) {
-        const auto &body = *clause_parts(tail->value, branch).second;
-        type.result = reached ? body_fact(bindings, body) : Fact{bindings.inference.graph.bottom()};
+    const auto &syntax = *bindings.function.module->syntax;
+    for (auto &type : clause_types(bindings, argument_roots(syntax, clause), body_fact(bindings, clause.body))) {
         bindings.types.push_back(std::move(type));
     }
 }
@@ -489,24 +474,6 @@ bool exact_clause(BindingFacts &bindings, const std::vector<ast::ExprId> &patter
            exact_guard(bindings, guard, argument_names(bindings, patterns));
 }
 
-// Whether every value of the arguments' facts after a branch of the case or if ending the function clause enters
-// that branch once the clause is entered: an if's guard is exact, or a case reads an argument with an exact pattern
-// and guard.
-bool exact_branch(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index,
-                  const std::vector<ast::ExprId> &patterns) {
-    const auto names = argument_names(bindings, patterns);
-    const auto *guard = clause_parts(expression.value, index).first;
-    const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
-    if (!selection) {
-        return exact_guard(bindings, guard, names);
-    }
-    const auto &syntax = *bindings.function.module->syntax;
-    const auto scrutinee = variable(bindings, selection->value);
-    return scrutinee && names.contains(*scrutinee) &&
-           exact_shape(bindings, pattern_root(syntax, selection->clauses[index].pattern)) &&
-           exact_guard(bindings, guard, names);
-}
-
 // The arguments' facts after a fun clause's head and guard: a plain variable's narrowed fact, else its pattern's
 // shape.
 std::vector<Id> fun_arguments(BindingFacts &bindings, const ast::FunctionClause &clause) {
@@ -520,8 +487,8 @@ std::vector<Id> fun_arguments(BindingFacts &bindings, const ast::FunctionClause 
     return result;
 }
 
-// After a possible clause's guard: keep an anonymous fun clause's argument facts, or a branch's of the case or if
-// ending the function clause being walked.
+// After a possible clause's guard: keep an anonymous fun clause's argument facts, or the parameters' facts of a case
+// or if clause (docs/semantic.md#dependent-facts).
 void record_clause(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index) {
     if (bindings.impossible.contains(clause_parts(expression.value, index).second)) {
         return;
@@ -535,12 +502,7 @@ void record_clause(BindingFacts &bindings, const ast::Expression &expression, co
                                              FunctionType{fun_arguments(bindings, clause), unknown, exact});
         return;
     }
-    const auto &clause = heads(bindings).at(bindings.head);
-    if (trailing(bindings, clause) == &expression) {
-        const auto patterns = argument_roots(syntax, clause);
-        const auto exact = bindings.exact && exact_branch(bindings, expression, index, patterns);
-        bindings.branches.insert_or_assign(index, FunctionType{argument_facts(bindings, patterns), unknown, exact});
-    }
+    record_key(bindings, expression, index);
 }
 
 // Enter a function clause: its head patterns narrow the inputs, which the previous clause's single type test may
@@ -551,7 +513,6 @@ void enter_head(BindingFacts &bindings, const std::size_t index, std::size_t &wo
     const auto patterns = argument_roots(syntax, clauses[index]);
     Lattice lattice(bindings.inference.graph);
     bindings.head = index;
-    bindings.branches.clear();
     bindings.entry.assign(patterns.size(), bindings.inference.graph.top());
     for (std::size_t position = 0; position < patterns.size(); ++position) {
         auto input = bindings.inputs.at(position);

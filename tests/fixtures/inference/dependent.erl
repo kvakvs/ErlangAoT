@@ -1,0 +1,138 @@
+%% Dependent facts (tests/compiler/inference/expectations.py, docs/semantic.md#dependent-facts): the value of a case
+%% or if depends on the variables its clauses narrow, one function type per clause, and a function whose result
+%% depends on its arguments splits into one function type per clause of that value.
+-module(dependent).
+-export([
+    bound_read/1,
+    narrowed_read/1,
+    typed_read/1,
+    alias/1,
+    local/1,
+    both/2,
+    many/5,
+    tens/1,
+    raising/1,
+    nested_if/2,
+    used/1
+]).
+
+%% A variable bound to a case value keeps its dependence.
+%% expect: bound_read(1) -> one; (_) -> other
+bound_read(X) ->
+    Y =
+        case X of
+            1 -> one;
+            _ -> other
+        end,
+    Y.
+
+%% A read selects the clauses the parameter's narrowed fact enters.
+%% expect: narrowed_read(1) -> one; (_) -> none
+narrowed_read(X) ->
+    Y =
+        case X of
+            1 -> one;
+            2 -> two;
+            _ -> other
+        end,
+    case X of
+        1 -> Y;
+        _ -> none
+    end.
+
+%% A type test leaves out the clauses of other types.
+%% expect: typed_read(integer()) -> integer(); (_) -> zero
+typed_read(X) ->
+    Y =
+        case X of
+            N when is_integer(N) -> N + 1;
+            _ -> 0
+        end,
+    if
+        is_integer(X) -> Y;
+        true -> zero
+    end.
+
+%% A parameter bound to an argument's value names that argument.
+%% expect: alias(1) -> one; (_) -> other
+alias(X) ->
+    Y = X,
+    case Y of
+        1 -> one;
+        _ -> other
+    end.
+
+%% A parameter that is no argument adds no function type.
+%% expect: local(tuple()) -> 1..2
+local(X) ->
+    Z = element(1, X),
+    case Z of
+        a -> 1;
+        _ -> 2
+    end.
+
+%% An if depends on every variable its guards test.
+%% expect: both(integer(), atom()) -> both; (integer(), _) -> int; (_, _) -> other
+both(X, Y) ->
+    if
+        is_integer(X), is_atom(Y) -> both;
+        is_integer(X) -> int;
+        true -> other
+    end.
+
+%% At most 4 parameters: the fifth variable's test is forgotten.
+%% expect: many(atom(), atom(), atom(), atom(), _) -> atoms; (_, _, _, _, _) -> other
+many(A, B, C, D, E) ->
+    if
+        is_atom(A), is_atom(B), is_atom(C), is_atom(D), is_atom(E) -> atoms;
+        true -> other
+    end.
+
+%% At most 8 function types: the last ones merge.
+%% expect: tens(1) -> a; (2) -> b; (3) -> c; (4) -> d; (5) -> e; (6) -> f; (7) -> g; (8..10) -> h | i | j
+tens(X) ->
+    case X of
+        1 -> a;
+        2 -> b;
+        3 -> c;
+        4 -> d;
+        5 -> e;
+        6 -> f;
+        7 -> g;
+        8 -> h;
+        9 -> i;
+        10 -> j
+    end.
+
+%% A clause that always raises keeps its type with none().
+%% expect: raising(0) -> none(); (X) -> X
+raising(X) ->
+    case X of
+        0 -> error(zero);
+        _ -> X
+    end.
+
+%% An if inside a case clause flattens into the case's parameters.
+%% expect: nested_if(ok, integer()) -> int; (ok, _) -> other; (_, _) -> error
+nested_if(X, Y) ->
+    case X of
+        ok ->
+            if
+                is_integer(Y) -> int;
+                true -> other
+            end;
+        _ ->
+            error
+    end.
+
+%% A use that narrows a dependent variable keeps the clauses whose values it can have.
+%% expect: used(a) -> 1
+%% today: used(_) -> 1
+used(X) ->
+    Y =
+        case X of
+            a -> 1;
+            _ -> two
+        end,
+    _ = Y + 1,
+    Y.

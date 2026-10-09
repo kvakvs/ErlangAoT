@@ -3,6 +3,7 @@
 #include "../capabilities.hpp"
 #include "../funs.hpp"
 #include "../records.hpp"
+#include "dependent.hpp"
 #include "function_types.hpp"
 #include "inference_bindings.hpp"
 #include "inference_funs.hpp"
@@ -138,16 +139,17 @@ Fact maybe_fact(Inference &inference, const ast::Module &syntax, const ast::Expr
     return merged(inference.graph, body, rest);
 }
 
-// The joined clause values of a case, if, receive, try or maybe; none for other expressions.
+// The value of a case, if, receive, try or maybe: its clauses' joined values, a case's or if's dependent on the
+// variables its clauses narrow; none for other expressions.
 std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
-                                   const BindingFacts &bindings) {
+                                   BindingFacts &bindings) {
     const auto &value = expression.value;
     const auto &impossible = bindings.impossible;
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        return joined(inference, syntax, selection->clauses, &impossible);
+        return dependent_value(bindings, expression, joined(inference, syntax, selection->clauses, &impossible));
     }
     if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
-        return joined(inference, syntax, choice->clauses, &impossible);
+        return dependent_value(bindings, expression, joined(inference, syntax, choice->clauses, &impossible));
     }
     if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         return receive_fact(inference, syntax, *receive, impossible);
@@ -231,12 +233,13 @@ struct Instance {
     Impossible impossible;
     std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> fun_inputs;
     std::map<const ast::Expression *, std::vector<Fact>> instances;
+    std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> keys;
 };
 
 // Keep the facts an evaluation for a call changes.
 Instance keep(const BindingFacts &bindings) {
-    return {bindings.values,     bindings.waiting,    bindings.conditionals,
-            bindings.impossible, bindings.fun_inputs, bindings.instances};
+    return {bindings.values,     bindings.waiting,   bindings.conditionals, bindings.impossible,
+            bindings.fun_inputs, bindings.instances, bindings.keys};
 }
 
 // Restore the facts kept before an evaluation for a call.
@@ -247,6 +250,7 @@ void restore(BindingFacts &bindings, const Instance &kept) {
     bindings.impossible = kept.impossible;
     bindings.fun_inputs = kept.fun_inputs;
     bindings.instances = kept.instances;
+    bindings.keys = kept.keys;
 }
 
 // The result of calling anonymous fun `lambda` with arguments of facts `arguments`: its clauses are entered, guarded
@@ -523,8 +527,9 @@ std::optional<Body> run_body(Inference &inference, const FunctionRef function, s
     if (!walk(inference, function, bindings, std::move(frames), work, recorded)) {
         return std::nullopt;
     }
-    // A function that returns shows its success domain; one that never does, its entry domain.
-    const auto result = joined(inference, syntax, definition.clauses, &bindings.impossible);
+    // A function that returns shows its success domain; one that never does, its entry domain. Its dependent facts
+    // name its own variables: callers see their join.
+    const auto result = erased(joined(inference, syntax, definition.clauses, &bindings.impossible));
     return Body{result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain,
                 merge_types(inference.graph, std::move(bindings.types))};
 }

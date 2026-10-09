@@ -78,8 +78,10 @@ struct BindingFacts {
     std::size_t head = 0;
     std::vector<Id> arguments;
     bool exact = false;
-    // The function types (results still unknown) of the branches of the case or if ending the clause's body.
-    std::map<std::size_t, FunctionType> branches;
+    // The parameters' facts entering each possible clause of a case or if (results still unknown), by construct and
+    // clause, and each construct's parameters (docs/semantic.md#dependent-facts).
+    std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> keys;
+    std::map<const ast::Expression *, std::vector<BindingId>> parameters;
     // The function types of the clauses walked so far, in source order.
     std::vector<FunctionType> types;
     // The function types (results still unknown) of each anonymous fun clause, by fun and clause.

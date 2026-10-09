@@ -86,13 +86,14 @@ alike(X) -> if is_atom(X) -> X; true -> X end.
 bound(X) -> if X > 0 -> Y = 5; true -> Y = 6 end, Y.
 ''', encoding='utf-8')
 facts = run('--print-types', 'branches.erl').stdout
-# A case or if ending a body splits it into one function type per branch (step 58K); equal inputs merge.
-for signature in ('pick(1) -> 7; (_) -> 7', 'same({_}) -> {_}; (X) -> X', 'mixed(1) -> 1; (_) -> 2',
+# A case or if ending a body splits it into one function type per branch of a different value (steps 58K, 58N1).
+for signature in ('pick(_) -> 7', 'same({_}) -> {_}; (X) -> X', 'mixed(1) -> 1; (_) -> 2',
                   'shared(_) -> _', 'guarded(_) -> 1..2', 'alike(atom()) -> atom(); (X) -> X',
                   'bound(_) -> _'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
-# The case value joins its clauses, though the name its clauses bind stays unknown.
-assert '    end :: 5..6,\n    Y.\n' in facts, facts
+# The case value depends on the variable its clauses narrow, printed like a function type of $case_operator, though
+# the name its clauses bind stays unknown.
+assert '    end :: $case_operator(X :: 1) -> 5; (X :: _) -> 6,\n    Y.\n' in facts, facts
 
 # Recursive components iterate from none() to a fixed point; pending recursive calls add nothing to a join.
 (work / 'recursive.erl').write_text('''-module(recursive).

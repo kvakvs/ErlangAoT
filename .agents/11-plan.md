@@ -265,6 +265,96 @@ the union summaries; every widening, budget or unknown construct yields
 `term()`. Not done: the optional 58L report of a call no inferred function
 type can enter (specification checks still compare overloads only).
 
+Dependent facts 58N1–58N3 (added 2026-10-10 by user direction): a `case`,
+`if` or `try ... of` behaves like a fun of the variables its clauses narrow,
+applied to them. Its value keeps one function type per possible clause (the
+variables' facts entering the clause and its result) beside the erased union
+every other consumer reads, prints like a function type named
+`$case_operator`, `$if_operator` or `$try_of_operator`, and resolves against
+the variables' facts where it is read.
+
+<a id="step-58n1"></a>
+
+### 58N1. Keep dependent facts of case and if
+
+Backlog: F34. Depends on: [58K](#step-58k), [58L](#step-58l).
+
+- A `case` or `if` value is a dependent fact: its parameters are the
+  variables bound before it that its scrutinee and guards read, each clause
+  keeps their facts after its pattern and guard (exact like 58L), and its
+  result. A clause result that is itself dependent flattens into the
+  parameters' product. Budgets: 4 parameters, 8 function types (58K merge).
+- Reading a variable bound to a dependent fact keeps the clauses its
+  parameters' current facts select (58L order, exact clauses stop), and
+  narrows the fact to their results.
+- A function clause whose result is dependent on its arguments splits into
+  one function type per dependent clause, at any depth; this replaces the
+  one-level split of a trailing `case`/`if` (58K).
+- `--print-types` annotates dependent values as
+  `$case_operator(X :: 1) -> one; (X :: _) -> other`.
+- Success criteria
+  - [x] `nested_case` infers `(1, spanish) -> uno; (1, _) -> one;
+    (_, _) -> other`; `Y = case X of 1 -> one; _ -> other end, Y` infers
+    `(1) -> one; (_) -> other` through the read; earlier expectations stay.
+    Evidence 2026-10-10: `semantic/types/dependent` (`record_key` at each
+    clause's guarded step, `dependent_value` for case/if values with nested
+    flattening and pruning, `resolved` on every variable read,
+    `clause_types` replacing the 58K trailing-branch split); `Fact::type`
+    stays the erased join, so specialization and contracts are unchanged.
+    Changed expectations: `nested_case` splits; `different_funs` now
+    scrutinizes `X > 0` to keep testing a fun join (a read of `F` splits
+    otherwise); `pick(_) -> 7` no longer splits into equal results.
+- Tests
+  - [x] `tests/fixtures/inference/dependent.erl` rows for nesting, reads
+    after narrowing, non-argument parameters, the parameter and type
+    budgets; `type_inspection.py` checks the printed annotation. Evidence:
+    dependent 11 rows (10 at expect, `used` waits for 58N2), clauses 53/53,
+    values 141/141, narrowing 51/51, base_types 46/46; fast CTest 232/232;
+    check-quality clean (all 339 tidy units).
+
+<a id="step-58n2"></a>
+
+### 58N2. Carry dependent facts through operations and bindings
+
+Backlog: F34. Depends on: [58N1](#step-58n1).
+
+- Operators, builtins, containers and calls of batch functions evaluate
+  once per clause of a dependent operand (two different dependent operands:
+  their product within the type budget), keeping a dependent result.
+- A variable bound by several clauses of a `case` or `if` (stays `term()`
+  today) becomes dependent on the construct's parameters.
+- Narrowing a dependent variable drops the clauses whose results no longer
+  meet it and narrows the parameters to the join of the kept clauses'
+  inputs.
+- Success criteria
+  - [ ] `shared(X) -> case X of 1 -> Y = 5; _ -> Y = 6 end, Y` infers
+    `(1) -> 5; (_) -> 6`; `not_last` infers `(1) -> {one}; (_) -> {other}`;
+    `R = case X of a -> 1; b -> 2 end, R + 1` infers
+    `(a) -> 2; (b) -> 3`; `case R of 1 -> X end` sees `X` as `a`.
+- Tests
+  - [ ] `dependent.erl` rows for lifting, products, bound variables and
+    narrowing back to parameters.
+
+<a id="step-58n3"></a>
+
+### 58N3. Dependent facts of tuple scrutinees and try ... of
+
+Backlog: F34. Depends on: [58N2](#step-58n2).
+
+- A `case` on a tuple of variables narrows each variable by its element
+  (`case {X, Y} of {1, _} -> ...`) and depends on them.
+- A `try ... of` depends on its body's value like a `case`; catch clauses
+  can follow any value, so their results join into every clause.
+- `receive` and `maybe ... else` stay unions: their clauses match a message
+  or a failed value nothing outside can name (recorded in
+  `docs/semantic.md`).
+- Success criteria
+  - [ ] `case {X, Y} of {1, a} -> one; _ -> other end` on arguments infers
+    `(1, a) -> one; (_, _) -> other`; a `try X of` splits like a case.
+- Tests
+  - [ ] `dependent.erl` rows for tuple scrutinees, `try ... of` with and
+    without catch clauses, and `receive` staying a union.
+
 <a id="step-59"></a>
 
 ### 59. Make specialization remove real source checks

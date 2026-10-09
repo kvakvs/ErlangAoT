@@ -294,7 +294,34 @@ std::string type_text(const Graph &graph, const FunctionText &type, std::span<co
         related ? argument_name(names, *type.argument) : type_source(graph, type.result, DEFAULT_BUDGET, records);
     return '(' + inputs + ") -> " + output;
 }
+
+// `X :: 1, Y :: _`: a dependent clause's parameter facts, each after its parameter's name.
+std::string dependent_inputs(const Graph &graph, std::span<const std::string> parameters, const FunctionText &type,
+                             const RecordFields *records) {
+    std::string result;
+    for (std::size_t index = 0; index < type.inputs.size() && index < parameters.size(); ++index) {
+        result += result.empty() ? "" : ", ";
+        result += parameters[index];
+        result += " :: ";
+        result += type_source(graph, type.inputs[index], DEFAULT_BUDGET, records);
+    }
+    return result;
+}
 } // namespace
+
+std::string dependent_source(const Graph &graph, const DependentText &dependent, std::span<const std::string> names,
+                             const RecordFields *records) {
+    std::string result(dependent.name);
+    for (const auto &type : dependent.types) {
+        result += result.size() == dependent.name.size() ? "(" : "; (";
+        result += dependent_inputs(graph, dependent.parameters, type, records);
+        result += ") -> ";
+        const bool related = type.argument && graph.get(type.result).kind == Kind::top;
+        result +=
+            related ? argument_name(names, *type.argument) : type_source(graph, type.result, DEFAULT_BUDGET, records);
+    }
+    return result;
+}
 
 std::string function_source(const Graph &graph, std::span<const FunctionText> types, std::span<const std::string> names,
                             const RecordFields *records) {

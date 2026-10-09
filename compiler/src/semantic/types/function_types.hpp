@@ -28,6 +28,10 @@ struct Selection {
     std::vector<Id> inputs = {};
 };
 
+// The indices of the function types a call with these argument facts enters, in order: each type whose inputs every
+// argument fact meets, up to an exact one whose inputs hold the arguments.
+std::vector<std::size_t> entered(Graph &graph, const std::vector<FunctionType> &types,
+                                 const std::vector<Fact> &arguments);
 // A call's selection of function types: in order, each type whose inputs every argument fact meets, up to an exact
 // one whose inputs hold the arguments (docs/semantic.md#inference).
 Selection select(Graph &graph, const std::vector<FunctionType> &types, const std::vector<Fact> &arguments);

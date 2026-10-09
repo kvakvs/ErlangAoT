@@ -271,10 +271,11 @@ Inference is separate from declared types and never trusts specs.
   clause, like the overloads of a `-spec`: the arguments' facts after the
   head and guard (a plain variable's narrowed fact, else the pattern's) and
   the clause's result (`none()` for a clause that always raises; impossible
-  clauses add none). A clause whose body ends in a `case` or `if` splits into
-  one function type per possible branch, with the arguments' facts after that
-  branch's pattern and guard and the branch's result (one level: a nested
-  `case` does not split further). Function types of equal inputs merge
+  clauses add none). A clause whose result is a
+  [dependent fact](#dependent-facts) on its arguments (a `case` or `if`
+  ending it, or a variable bound to one, nested at any depth) splits into one
+  function type per clause of that fact, its parameters' facts met with the
+  arguments they name. Function types of equal inputs merge
   (their results join); past 8 the last ones merge into one, inputs and
   results joined. Recursive components iterate them with the results, each
   round joining (then widening) each type's result; a component that does
@@ -347,6 +348,48 @@ Inference is separate from declared types and never trusts specs.
   accepted. `-callback` specifications are not checked. OTP's compiler does
   not check specifications ([differences](differences.md#language-edge-cases)).
 
+### Dependent facts
+
+Steps 58N1–58N3 (`semantic/types/dependent`). A `case` or `if` behaves like a
+fun of the variables its clauses narrow, applied to them: its value is a
+dependent fact, one function type per possible clause.
+
+- Parameters: the variables bound before the construct that its scrutinee
+  and guards read, in source order (variables its clause patterns bind are
+  new in each clause, not parameters); at most 4, a later one's narrowing is
+  forgotten. Each possible clause keeps the parameters' facts after its
+  pattern and guard and its value (`none()` for a clause that never
+  completes); it is exact, like a function type (58L), when a `case` reads a
+  parameter with an exact pattern and guard or an `if` has an exact guard.
+- A clause whose value is itself dependent (a nested `case` or `if`, or a
+  read of a dependent variable) contributes one function type per clause of
+  it over the union of both parameter lists, inputs met. Types that can
+  never be entered (an input `none()`, or within an earlier exact type's
+  inputs) are dropped, so are parameters whose facts are the same in every
+  type; equal inputs merge and past 8 types the last ones merge (58K). A
+  construct whose remaining types all give the same value, or that narrows
+  no parameter, is its plain join.
+- Every other consumer reads the erased fact, the join of the clauses'
+  values. Facts that leave the walked function (results, function types,
+  fun facts) are erased; joins keep a dependence only when both sides have
+  the same one.
+- A variable bound to a dependent value keeps it. Reading the variable
+  selects the clauses its parameters' current facts enter (58L order, an
+  exact clause whose inputs hold them stops) and whose values meet the
+  variable's own narrowed fact, and the read's fact is the join of their
+  values (`Y = case X of 1 -> one; _ -> other end, case X of 1 -> Y end`
+  reads `one`).
+- A function clause's dependent result splits it (see Function types):
+  parameters that name an argument, or a name bound to its value, meet its
+  input; others are dropped (such a type is exact only if their input is any
+  term). `nested_case(X, L)` with `case X of 1 -> case L of spanish -> uno;
+  _ -> one end; _ -> other end` infers `(1, spanish) -> uno; (1, _) -> one;
+  (_, _) -> other`.
+- `--print-types` annotates a dependent value as a function type named by
+  its construct, each input after its parameter's name:
+  `case X of 1 -> one; _ -> other end :: $case_operator(X :: 1) -> one;
+  (X :: _) -> other`; an `if` prints `$if_operator`.
+
 ### Inference domain
 
 Decision of plan 11 step 58A (`semantic/types/lattice`). A fact is a set of
@@ -409,14 +452,14 @@ not an interchange format. Warnings stay on stderr.
 -module(branches).
 -export([mixed/1]).
 
-%% inferred: mixed(_) -> 1..2
+%% inferred: mixed(1) -> 1; (_) -> 2
 mixed(X) ->
     case X of
         1 ->
             1;
         _ ->
             2
-    end :: 1..2.
+    end :: $case_operator(X :: 1) -> 1; (X :: _) -> 2.
 ```
 
 - A `%% module` line names the module, its source, the project target and
@@ -438,7 +481,8 @@ mixed(X) ->
   expressions, without them
   for a whole body expression. Literal terms (literals, and tuples, lists,
   constructed maps and bitstrings of literals) and matches are not annotated
-  (the right side of a match is).
+  (the right side of a match is). A dependent value prints like a function
+  type of its construct ([dependent facts](#dependent-facts)).
 - A value inference proved equal to one of the function's arguments, and known
   as nothing more, prints as that argument's name, a type variable: the
   variable the first clause binding the whole argument gives it, else

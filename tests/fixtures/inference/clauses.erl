@@ -119,8 +119,8 @@ if_split(X) ->
         true -> other
     end.
 
-%% A nested case does not split further.
-%% expect: nested_case(1, _) -> one | uno; (_, _) -> other
+%% A nested case splits further (docs/semantic.md#dependent-facts).
+%% expect: nested_case(1, spanish) -> uno; (1, _) -> one; (_, _) -> other
 nested_case(X, Language) ->
     case X of
         1 ->
@@ -169,9 +169,9 @@ same_funs(X) ->
 %% expect: different_funs(_) -> fun((_) -> integer() | {_})
 different_funs(X) ->
     F =
-        case X of
-            1 -> fun(A) when is_integer(A) -> A end;
-            _ -> fun(B) -> {B} end
+        case X > 0 of
+            true -> fun(A) when is_integer(A) -> A end;
+            false -> fun(B) -> {B} end
         end,
     F.
 

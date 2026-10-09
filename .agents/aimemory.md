@@ -423,6 +423,11 @@ Step facts beyond the plan record:
 - 58L/58M (2026-10-09): call selection needs FunctionType::exact for first-match (`g(1) -> one`); per-call
   re-analysis uses its own work pool so base inference never widens; plan 11 inference series 58A-58M done
   (next: 59 specialization). Optional 58L spec report of calls no type admits was not added.
+- 58N1 (2026-10-10): dependent facts = Fact::dependent index into interned Inference::dependents; BindingIds are
+  per-function, so every Fact leaving a function must be `erased` (run_body result, clause_types, fun facts use
+  .type). Selection without relation instantiation: function_types::entered (indices). Expectation runner needs an
+  absolute clau path on Windows (F:/CLAUSE/clau/build/debug/bin/Debug/clau.exe). erlfmt: erts-17.1 escript +
+  build/plan11/fmt.escript thirdparty/tools/erlfmt/_build/local <files>.
 User directions (keep):
 - Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
   57A-57F, backlog F35); step 53 decision superseded.
@@ -440,6 +445,8 @@ User directions (keep):
   58L call matching (meet with clause inputs, union fallback, none() when nothing matches), 58M per-call re-analysis.
   Then (user): 58J1 try/maybe values; 58K also splits case/if on arguments and gives funs function types; 58L
   matches fun calls and makes per-call fun evaluation clause-aware.
+  2026-10-10 user direction: case/if/try-of values are dependent facts (fun of the narrowed variables), printed as
+  function types named $case_operator/$if_operator/$try_of_operator; steps 58N1-58N3.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

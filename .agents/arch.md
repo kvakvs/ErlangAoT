@@ -287,8 +287,8 @@
   Step 58J1: try/maybe frames (`attempt_frames`/`maybe_frames`): `of` and `else` clauses enter like case clauses
   (`enter_branch`), `finish` completes a body, `bind` matches a ?= pattern and keeps its failed values
   (`BindingFacts::conditionals`); `try_fact`/`maybe_fact` join their paths' values.
-  Step 58K: `Summary::types` (one `FunctionType` per possible clause or trailing case/if branch, from
-  `BindingFacts::arguments`/`branches`/`types`, merged by `function_types::merge_types`, rounds `next_round`);
+  Step 58K: `Summary::types` (one `FunctionType` per possible clause, from `BindingFacts::arguments`/`types`, split
+  by `dependent::clause_types` (58N1), merged by `function_types::merge_types`, rounds `next_round`);
   funs carry them as `Kind::function` "clauses" nodes of product funs with inputs; `Lattice::joined_fun` gives
   every other consumer today's fun; `function_source` prints `f(A) -> R; (B) -> S`.
   Step 58L: `call_fact`/`call_value` use `function_types::select` (ordered, meet admits, exact type holding the
@@ -296,6 +296,11 @@
   Step 58M: `function_call` re-runs a non-recursive callee's body (`run_body` with the call's argument facts) via
   `reanalyse`, setting its expression facts aside and putting them back; budgets in `Inference::reanalyses`/
   `reanalysis_work` (own pool per pass), so summaries and recorded facts never change.
+  Step 58N1 (docs/semantic.md#dependent-facts): `Fact::dependent` indexes an interned `Dependent` (construct,
+  parameter `BindingId`s/names, one `FunctionType` per clause) in `Inference::dependents`; `Fact::type` stays the
+  erased join every other consumer reads. `record_key` (guarded step) keeps parameters' facts per clause
+  (`BindingFacts::keys`), `dependent_value` builds case/if values (nested dependents flatten, `prune`, merge),
+  `BindingFacts::read` → `resolved` (selection by `function_types::entered`), `run_body`/`clause_types` erase.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

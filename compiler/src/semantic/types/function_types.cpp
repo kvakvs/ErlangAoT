@@ -65,7 +65,8 @@ Fact merged(Graph &graph, const Fact previous, const Fact next, const bool widen
     }
     Lattice lattice(graph);
     const auto type = widening ? lattice.widen(previous.type, next.type) : lattice.join(previous.type, next.type);
-    return {type, previous.argument == next.argument ? previous.argument : std::nullopt};
+    return {type, previous.argument == next.argument ? previous.argument : std::nullopt,
+            previous.dependent == next.dependent ? previous.dependent : std::nullopt};
 }
 
 std::vector<FunctionType> merge_types(Graph &graph, std::vector<FunctionType> types) {
@@ -119,18 +120,29 @@ Fact instantiated(Lattice &lattice, const Fact result, const std::vector<Fact> &
     return {lattice.meet(actual.type, result.type), actual.argument};
 }
 
+std::vector<std::size_t> entered(Graph &graph, const std::vector<FunctionType> &types,
+                                 const std::vector<Fact> &arguments) {
+    Lattice lattice(graph);
+    std::vector<std::size_t> result;
+    for (std::size_t index = 0; index < types.size(); ++index) {
+        if (!admits(lattice, types[index], arguments)) {
+            continue;
+        }
+        result.push_back(index);
+        if (settles(lattice, types[index], arguments)) {
+            break;
+        }
+    }
+    return result;
+}
+
 Selection select(Graph &graph, const std::vector<FunctionType> &types, const std::vector<Fact> &arguments) {
     Lattice lattice(graph);
     Selection selection{{graph.bottom()}};
-    for (const auto &type : types) {
-        if (!admits(lattice, type, arguments)) {
-            continue;
-        }
+    for (const auto index : entered(graph, types, arguments)) {
+        const auto &type = types[index];
         selection.result = merged(graph, selection.result, instantiated(lattice, type.result, arguments));
         join_inputs(lattice, selection.inputs, type.inputs);
-        if (settles(lattice, type, arguments)) {
-            break;
-        }
     }
     return selection;
 }

@@ -1,6 +1,7 @@
 #include "inference_bindings.hpp"
 #include "../capabilities.hpp"
 #include "../records.hpp"
+#include "dependent.hpp"
 #include "inference_containers.hpp"
 
 namespace clause::semantic::types {
@@ -110,7 +111,7 @@ Fact BindingFacts::read(const ast::ExprId &id) const {
     if (event != events.end() && event->second->use == BindingUse::read) {
         const auto fact = values.find(event->second->identity);
         if (fact != values.end()) {
-            return fact->second;
+            return resolved(inference, fact->second, values);
         }
     }
     return {inference.graph.top()};

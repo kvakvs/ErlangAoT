@@ -2,13 +2,17 @@
 #include "../calls.hpp"
 #include "domain.hpp"
 #include <set>
+#include <string>
+#include <string_view>
 
 namespace clause::semantic::types {
 struct Fact {
     // A top-valued parameter may still carry an exact input/result relation.
     Id type;
     std::optional<std::size_t> argument = {};
-    bool operator==(const Fact &) const = default;
+    // The clauses of a case or if the value depends on (Inference::dependents); `type` is their erased join.
+    std::optional<std::size_t> dependent = {};
+    auto operator<=>(const Fact &) const = default;
 };
 
 struct FunctionType {
@@ -19,7 +23,35 @@ struct FunctionType {
     // Whether every argument value within `inputs` that reaches the clause enters it (exact patterns, type tests):
     // a call whose arguments are within them can enter no later function type.
     bool exact = false;
-    bool operator==(const FunctionType &) const = default;
+    auto operator<=>(const FunctionType &) const = default;
+};
+
+// The construct a dependent fact comes from, printed as its function name: $case_operator, ...
+enum class Operator : std::uint8_t { case_operator, if_operator, try_of_operator };
+
+// The function name a dependent fact of `construct` prints with.
+inline std::string_view operator_name(const Operator construct) {
+    switch (construct) {
+    case Operator::case_operator:
+        return "$case_operator";
+    case Operator::if_operator:
+        return "$if_operator";
+    case Operator::try_of_operator:
+        return "$try_of_operator";
+    }
+    return "$operator";
+}
+
+// A value that depends on variables narrowed by the clauses of a case, if or try ... of
+// (docs/semantic.md#dependent-facts): like a fun applied to them, one function type per possible clause.
+struct Dependent {
+    Operator construct;
+    // The variables of the walked function the clauses narrow, and their names for printing.
+    std::vector<BindingId> parameters;
+    std::vector<std::string> names;
+    // Per clause: the parameters' facts entering it, and its value (never dependent itself).
+    std::vector<FunctionType> types;
+    auto operator<=>(const Dependent &) const = default;
 };
 
 // Function types a function or fun keeps at most; past it the last ones merge into one.
@@ -58,6 +90,9 @@ struct Inference {
     // How many callee re-analyses for a call are nested now, and the work they spent in the current pass.
     std::size_t reanalyses = 0;
     std::size_t reanalysis_work = 0;
+    // Dependent facts by the index facts carry, each kept once.
+    std::vector<Dependent> dependents;
+    std::map<Dependent, std::size_t> dependent_indices;
 };
 
 // Infer supported bodies iteratively; recursive components iterate from bottom to a fixed point and widen

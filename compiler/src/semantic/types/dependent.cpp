@@ -1,0 +1,419 @@
+#include "dependent.hpp"
+#include "../capabilities.hpp"
+#include "function_types.hpp"
+#include "inference_narrowing.hpp"
+#include "lattice.hpp"
+#include <algorithm>
+
+namespace clause::semantic::types {
+namespace {
+// Every expression under `roots`, each before its operands, in source order.
+std::vector<const ast::Expression *> preorder(const Module &module, const std::vector<ast::ExprId> &roots) {
+    std::vector<const ast::Expression *> result;
+    std::vector<ast::ExprId> pending(roots.rbegin(), roots.rend());
+    while (!pending.empty()) {
+        const auto &expression = module.syntax->expression(pending.back());
+        pending.pop_back();
+        result.push_back(&expression);
+        const auto children = expression_children(module, expression);
+        pending.insert(pending.end(), children.rbegin(), children.rend());
+    }
+    return result;
+}
+
+// The expressions a construct's parameters are read in: a case's scrutinee and guard tests, an if's guard tests.
+std::vector<ast::ExprId> parameter_roots(const ast::ExprValue &value) {
+    std::vector<ast::ExprId> result;
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        result.push_back(selection->value);
+    }
+    for (const auto &clause : branch_clauses(value)) {
+        for (const auto &alternative :
+             clause.guard ? clause.guard->alternatives : std::vector<ast::GuardConjunction>{}) {
+            result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
+        }
+    }
+    return result;
+}
+
+// The identities a case's clause patterns bind: new in each clause, they are no parameters.
+std::set<BindingId> pattern_definitions(const BindingFacts &bindings, const ast::ExprValue &value) {
+    const auto *selection = std::get_if<ast::CaseExpression>(&value);
+    std::vector<ast::ExprId> patterns;
+    for (const auto &clause : selection ? selection->clauses : std::vector<ast::BranchClause>{}) {
+        patterns.push_back(pattern_root(*bindings.function.module->syntax, clause.pattern));
+    }
+    std::set<BindingId> result;
+    for (const auto *expression : preorder(*bindings.function.module, patterns)) {
+        const auto event = bindings.events.find(expression);
+        if (event != bindings.events.end() && event->second->use == BindingUse::definition) {
+            result.insert(event->second->identity);
+        }
+    }
+    return result;
+}
+
+// Add the variable a read names to `parameters` unless it is bound by the construct's clauses or already there.
+void add_read(const BindingFacts &bindings, const ast::Expression &read, const std::set<BindingId> &local,
+              std::vector<BindingId> &parameters) {
+    const auto event = bindings.events.find(&read);
+    if (event == bindings.events.end() || event->second->use != BindingUse::read) {
+        return;
+    }
+    const auto identity = event->second->identity;
+    if (!local.contains(identity) && !std::ranges::contains(parameters, identity)) {
+        parameters.push_back(identity);
+    }
+}
+
+// The variables a case or if depends on: those bound before it that its scrutinee and guards read, in source order;
+// none for other constructs.
+std::vector<BindingId> find_parameters(const BindingFacts &bindings, const ast::Expression &construct) {
+    const auto &value = construct.value;
+    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
+        return {};
+    }
+    const auto local = pattern_definitions(bindings, value);
+    std::vector<BindingId> result;
+    for (const auto *expression : preorder(*bindings.function.module, parameter_roots(value))) {
+        add_read(bindings, *expression, local, result);
+        if (result.size() == DEPENDENT_PARAMETERS) {
+            break;
+        }
+    }
+    return result;
+}
+
+// The parameters of a case or if, found once per construct.
+const std::vector<BindingId> &parameters_of(BindingFacts &bindings, const ast::Expression &construct) {
+    const auto found = bindings.parameters.find(&construct);
+    if (found != bindings.parameters.end()) {
+        return found->second;
+    }
+    return bindings.parameters.emplace(&construct, find_parameters(bindings, construct)).first->second;
+}
+
+// The current fact of a variable; term() when it has none.
+Id current(const Inference &inference, const std::map<BindingId, Fact> &values, const BindingId identity) {
+    const auto found = values.find(identity);
+    return found == values.end() ? inference.graph.top() : found->second.type;
+}
+
+// The names bound to the same values as `identities`, themselves included.
+std::set<BindingId> same_values(const BindingFacts &bindings, const std::vector<BindingId> &identities) {
+    std::set<BindingId> result(identities.begin(), identities.end());
+    std::vector<BindingId> pending(identities.begin(), identities.end());
+    while (!pending.empty()) {
+        const auto linked = bindings.aliases.find(pending.back());
+        pending.pop_back();
+        for (const auto other : linked == bindings.aliases.end() ? std::set<BindingId>{} : linked->second) {
+            if (result.insert(other).second) {
+                pending.push_back(other);
+            }
+        }
+    }
+    return result;
+}
+
+// Whether every parameter value within a clause's key that reaches the clause enters it: a case reads a parameter
+// with an exact pattern and guard, an if has an exact guard (docs/semantic.md#inference).
+bool exact_key(BindingFacts &bindings, const ast::Expression &construct, const std::size_t index,
+               const std::vector<BindingId> &parameters) {
+    const auto names = same_values(bindings, parameters);
+    const auto clause = branch_clauses(construct.value).at(index);
+    const auto *selection = std::get_if<ast::CaseExpression>(&construct.value);
+    if (!selection) {
+        return exact_guard(bindings, clause.guard, names);
+    }
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto scrutinee = variable(bindings, selection->value);
+    return scrutinee && names.contains(*scrutinee) && exact_shape(bindings, pattern_root(syntax, *clause.pattern)) &&
+           exact_guard(bindings, clause.guard, names);
+}
+
+// The value of a clause body: its last expression's, none() when an expression of it never completes.
+Fact clause_value(const BindingFacts &bindings, const std::vector<ast::ExprId> &body) {
+    const auto &syntax = *bindings.function.module->syntax;
+    Fact result{bindings.inference.graph.top()};
+    for (const auto &expression : body) {
+        const auto found = bindings.inference.expressions.find(&syntax.expression(expression));
+        result = found == bindings.inference.expressions.end() ? Fact{bindings.inference.graph.top()} : found->second;
+        if (result.type == bindings.inference.graph.bottom()) {
+            return result;
+        }
+    }
+    return result;
+}
+
+// The clauses of a dependent fact being built: their parameters (by identity) and function types.
+struct Table {
+    std::vector<BindingId> parameters;
+    std::vector<FunctionType> types;
+};
+
+// The index a dependent fact is kept at.
+std::size_t intern(Inference &inference, Dependent dependent) {
+    const auto found = inference.dependent_indices.find(dependent);
+    if (found != inference.dependent_indices.end()) {
+        return found->second;
+    }
+    inference.dependents.push_back(dependent);
+    inference.dependent_indices.emplace(std::move(dependent), inference.dependents.size() - 1);
+    return inference.dependents.size() - 1;
+}
+
+// Inputs over `from` placed over `to`, met with `into` (term() for parameters `from` lacks); false when a parameter
+// of `from` that `to` drops was narrowed, so the type can no longer be exact.
+bool place(Lattice &lattice, const Table &from, const std::vector<Id> &inputs, const std::vector<BindingId> &to,
+           std::vector<Id> &into) {
+    bool kept = true;
+    for (std::size_t index = 0; index < from.parameters.size() && index < inputs.size(); ++index) {
+        const auto position = std::ranges::find(to, from.parameters[index]) - to.begin();
+        if (static_cast<std::size_t>(position) < to.size()) {
+            into[position] = lattice.meet(into[position], inputs[index]);
+        } else {
+            kept = kept && inputs[index] == lattice.graph().top();
+        }
+    }
+    return kept;
+}
+
+// Add the parameters of a clause's dependent result to `table`, within the parameter budget.
+void add_parameters(Table &table, const Dependent &result) {
+    for (const auto identity : result.parameters) {
+        if (table.parameters.size() < DEPENDENT_PARAMETERS && !std::ranges::contains(table.parameters, identity)) {
+            table.parameters.push_back(identity);
+        }
+    }
+}
+
+// One clause of a case or if: its key over the construct's parameters and its value.
+struct Clause {
+    FunctionType key;
+    Fact value;
+};
+
+// Add a clause's function types to `table`: one per clause of a dependent value (the key met with each of its
+// clauses' inputs), else one.
+void add_clause(Inference &inference, Table &table, const Table &outer, const Clause &clause) {
+    Lattice lattice(inference.graph);
+    std::vector<Id> inputs(table.parameters.size(), inference.graph.top());
+    const bool exact = place(lattice, outer, clause.key.inputs, table.parameters, inputs) && clause.key.exact;
+    if (!clause.value.dependent) {
+        table.types.push_back({std::move(inputs), clause.value, exact});
+        return;
+    }
+    const auto inner = inference.dependents.at(*clause.value.dependent);
+    const Table nested{inner.parameters, inner.types};
+    for (const auto &type : inner.types) {
+        auto combined = inputs;
+        const bool kept = place(lattice, nested, type.inputs, table.parameters, combined);
+        table.types.push_back({std::move(combined), type.result, exact && kept && type.exact});
+    }
+}
+
+// Whether a function type can be entered: no input is none() and no earlier exact type holds all its inputs.
+bool reachable(Lattice &lattice, const std::vector<FunctionType> &earlier, const FunctionType &type) {
+    if (std::ranges::contains(type.inputs, lattice.graph().bottom())) {
+        return false;
+    }
+    return std::ranges::none_of(earlier, [&](const FunctionType &other) {
+        return other.exact && std::ranges::equal(type.inputs, other.inputs,
+                                                 [&](Id inner, Id outer) { return lattice.within(inner, outer); });
+    });
+}
+
+// Drop the types that can never be entered and the parameters whose inputs are the same in every type.
+void prune(Lattice &lattice, Table &table) {
+    std::vector<FunctionType> types;
+    for (auto &type : table.types) {
+        if (reachable(lattice, types, type)) {
+            types.push_back(std::move(type));
+        }
+    }
+    table.types = std::move(types);
+    for (std::size_t index = table.parameters.size(); index-- > 0;) {
+        const auto same = std::ranges::all_of(table.types, [&](const FunctionType &type) {
+            return type.inputs[index] == table.types.front().inputs[index];
+        });
+        if (same) {
+            table.parameters.erase(table.parameters.begin() + static_cast<std::ptrdiff_t>(index));
+            for (auto &type : table.types) {
+                type.inputs.erase(type.inputs.begin() + static_cast<std::ptrdiff_t>(index));
+            }
+        }
+    }
+}
+
+// Whether a table tells more than its join: two or more types over parameters, not all of the same value.
+bool telling(const Table &table) {
+    return !table.parameters.empty() && table.types.size() > 1 &&
+           std::ranges::any_of(table.types,
+                               [&](const FunctionType &type) { return type.result != table.types.front().result; });
+}
+
+// The clauses of a case or if that can run, each with its key and value.
+std::vector<Clause> possible_clauses(const BindingFacts &bindings, const ast::Expression &construct) {
+    const auto &parameters = bindings.parameters.at(&construct);
+    std::vector<Clause> result;
+    const auto clauses = branch_clauses(construct.value);
+    for (std::size_t index = 0; index < clauses.size(); ++index) {
+        if (bindings.impossible.contains(clauses[index].body)) {
+            continue;
+        }
+        const auto key = bindings.keys.find({&construct, index});
+        const FunctionType unknown{std::vector<Id>(parameters.size(), bindings.inference.graph.top()), {}, false};
+        result.push_back(
+            {key == bindings.keys.end() ? unknown : key->second, clause_value(bindings, *clauses[index].body)});
+    }
+    return result;
+}
+
+// The names of a function's variables, for printing.
+std::vector<std::string> names_of(const BindingFacts &bindings, const std::vector<BindingId> &identities) {
+    std::vector<std::string> result;
+    result.reserve(identities.size());
+    for (const auto identity : identities) {
+        const auto &clause = bindings.function.function->clause_bindings.at(identity.clause);
+        result.push_back(utf8(clause.definitions.at(identity.local).name));
+    }
+    return result;
+}
+
+// The argument each parameter of a dependent fact names, through the names bound to the same value; none for a
+// parameter that names no argument.
+std::vector<std::optional<std::size_t>>
+argument_positions(const BindingFacts &bindings, const std::vector<ast::ExprId> &patterns, const Dependent &dependent) {
+    std::vector<std::optional<std::size_t>> result(dependent.parameters.size());
+    for (std::size_t position = 0; position < patterns.size(); ++position) {
+        const auto identity = variable(bindings, patterns[position]);
+        const auto names = identity ? same_values(bindings, {*identity}) : std::set<BindingId>{};
+        for (std::size_t index = 0; index < result.size(); ++index) {
+            if (!result[index] && names.contains(dependent.parameters[index])) {
+                result[index] = position;
+            }
+        }
+    }
+    return result;
+}
+
+// The function type of a dependent clause: the clause's argument facts met with the parameters' inputs at their
+// `positions`; exact only when every parameter it narrows is an argument. None when it can never be entered.
+std::optional<FunctionType> argument_type(const BindingFacts &bindings,
+                                          const std::vector<std::optional<std::size_t>> &positions,
+                                          const FunctionType &type) {
+    Lattice lattice(bindings.inference.graph);
+    FunctionType result{bindings.arguments, type.result, bindings.exact && type.exact};
+    for (std::size_t index = 0; index < positions.size(); ++index) {
+        if (!positions[index]) {
+            result.exact = result.exact && type.inputs[index] == bindings.inference.graph.top();
+            continue;
+        }
+        auto &input = result.inputs.at(*positions[index]);
+        input = lattice.meet(input, type.inputs[index]);
+        if (input == bindings.inference.graph.bottom()) {
+            return std::nullopt;
+        }
+    }
+    return result;
+}
+} // namespace
+
+Fact erased(const Fact fact) { return {fact.type, fact.argument}; }
+
+void record_key(BindingFacts &bindings, const ast::Expression &construct, const std::size_t index) {
+    const auto parameters = parameters_of(bindings, construct);
+    if (parameters.empty()) {
+        return;
+    }
+    std::vector<Id> inputs;
+    inputs.reserve(parameters.size());
+    for (const auto identity : parameters) {
+        inputs.push_back(current(bindings.inference, bindings.values, identity));
+    }
+    const auto exact = exact_key(bindings, construct, index, parameters);
+    bindings.keys.insert_or_assign({&construct, index},
+                                   FunctionType{std::move(inputs), {bindings.inference.graph.bottom()}, exact});
+}
+
+Fact dependent_value(BindingFacts &bindings, const ast::Expression &construct, const Fact joined) {
+    const Table outer{parameters_of(bindings, construct), {}};
+    if (outer.parameters.empty() || joined.type == bindings.inference.graph.bottom()) {
+        return joined;
+    }
+    auto &inference = bindings.inference;
+    const auto clauses = possible_clauses(bindings, construct);
+    Table table{outer.parameters, {}};
+    for (const auto &clause : clauses) {
+        if (clause.value.dependent) {
+            add_parameters(table, inference.dependents.at(*clause.value.dependent));
+        }
+    }
+    for (const auto &clause : clauses) {
+        add_clause(inference, table, outer, clause);
+    }
+    Lattice lattice(inference.graph);
+    prune(lattice, table);
+    table.types = merge_types(inference.graph, std::move(table.types));
+    if (!telling(table)) {
+        return erased(joined);
+    }
+    const auto construct_kind =
+        std::holds_alternative<ast::IfExpression>(construct.value) ? Operator::if_operator : Operator::case_operator;
+    auto names = names_of(bindings, table.parameters);
+    const auto index =
+        intern(inference, {construct_kind, std::move(table.parameters), std::move(names), std::move(table.types)});
+    return {joined.type, joined.argument, index};
+}
+
+Fact resolved(Inference &inference, const Fact fact, const std::map<BindingId, Fact> &values) {
+    if (!fact.dependent) {
+        return fact;
+    }
+    auto dependent = inference.dependents.at(*fact.dependent);
+    std::vector<Fact> arguments;
+    arguments.reserve(dependent.parameters.size());
+    for (const auto identity : dependent.parameters) {
+        arguments.push_back({current(inference, values, identity)});
+    }
+    Lattice lattice(inference.graph);
+    std::vector<FunctionType> kept;
+    auto result = inference.graph.bottom();
+    for (const auto index : entered(inference.graph, dependent.types, arguments)) {
+        const auto &type = dependent.types[index];
+        if (lattice.meet(type.result.type, fact.type) != inference.graph.bottom()) {
+            kept.push_back(type);
+            result = lattice.join(result, type.result.type);
+        }
+    }
+    if (kept.empty() || kept.size() == dependent.types.size()) {
+        return fact;
+    }
+    const auto type = lattice.meet(fact.type, result);
+    if (kept.size() == 1) {
+        return {type, fact.argument ? fact.argument : kept.front().result.argument};
+    }
+    dependent.types = std::move(kept);
+    return {type, fact.argument, intern(inference, std::move(dependent))};
+}
+
+std::vector<FunctionType> clause_types(const BindingFacts &bindings, const std::vector<ast::ExprId> &patterns,
+                                       const Fact result) {
+    const FunctionType whole{bindings.arguments, erased(result), bindings.exact};
+    if (!result.dependent) {
+        return {whole};
+    }
+    const auto &dependent = bindings.inference.dependents.at(*result.dependent);
+    const auto positions = argument_positions(bindings, patterns, dependent);
+    if (std::ranges::none_of(positions, [](const auto &position) { return position.has_value(); })) {
+        return {whole};
+    }
+    std::vector<FunctionType> types;
+    for (const auto &type : dependent.types) {
+        if (auto split = argument_type(bindings, positions, type)) {
+            types.push_back(std::move(*split));
+        }
+    }
+    return types.empty() ? std::vector<FunctionType>{whole} : types;
+}
+} // namespace clause::semantic::types

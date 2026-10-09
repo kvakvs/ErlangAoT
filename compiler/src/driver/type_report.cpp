@@ -161,9 +161,24 @@ types::RecordFields record_fields(const semantic::Module &module) {
     return result;
 }
 
+// A dependent fact as annotation text, a function type of its construct's name over its parameters
+// (docs/semantic.md#dependent-facts).
+std::string dependent_text(const types::Inference &inferred, const types::Dependent &dependent, const Names *names,
+                           const types::RecordFields &records) {
+    types::DependentText text{types::operator_name(dependent.construct), dependent.names, {}};
+    for (const auto &type : dependent.types) {
+        text.types.push_back({type.inputs, type.result.type, type.result.argument});
+    }
+    return types::dependent_source(
+        inferred.graph, text, names ? std::span<const std::string>(*names) : std::span<const std::string>(), &records);
+}
+
 // A fact as annotation text: its type, or the name of the argument it equals when only that relation is known.
 std::string fact_source(const types::Inference &inferred, const types::Fact &fact, const Names *names,
                         const types::RecordFields &records) {
+    if (fact.dependent) {
+        return dependent_text(inferred, inferred.dependents.at(*fact.dependent), names, records);
+    }
     if (inferred.graph.get(fact.type).kind != types::Kind::top) {
         return types::type_source(inferred.graph, fact.type, 1024, &records);
     }
