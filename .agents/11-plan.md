@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
@@ -760,11 +760,113 @@ keys `map()`, a list only its joined element, and a record a plain tuple.
     lists and associations; values 127/127, base_types 46/46, narrowing
     51/51.
 
+<a id="step-58k"></a>
+
+### 58K. Keep per-clause function types and print them
+
+Backlog: F34. Depends on: [58J](#step-58j). Added 2026-10-09 (user
+direction).
+
+A function's summary is one input/result pair joined over its clauses, so a
+caller of `f(X) when is_integer(X) -> X + 1; f(X) when is_atom(X) ->
+atom_to_list(X)` learns only `integer() | string()`. Keep, beside that union
+summary, a function type per possible clause, like the overloads of a
+`-spec`: the clause's entry facts (after head and guard, 58G) as inputs and
+the clause body's result.
+
+- Clauses whose input facts are equal merge into one function type (their
+  results join); a function keeps at most 8 function types, the rest merging
+  into the last; impossible clauses contribute none. Inputs of an argument
+  the clause binds to a plain variable come from that variable's narrowed
+  fact, as for entry domains.
+- Recursive components iterate the function types with the results: each
+  round joins (and after the join rounds widens) each clause's result; a
+  component that does not converge keeps only its widened union summary.
+- The union summary stays what every other consumer reads (fun F/A facts,
+  specialization, success domains); the function types are an addition.
+- A new printer for function types: `%% inferred:` shows one signature per
+  function type, `f(integer()) -> integer(); (atom()) -> string()`, with the
+  argument names of 58I2 for relations; a function with one function type
+  prints as today. `semantic::types::function_source` prints a list of
+  function types for `--print-types` and diagnostics.
+- Success criteria
+  - [ ] Every function's summary lists its clauses' function types within
+    the budget; `--print-types` prints them; union summaries are unchanged.
+- Tests
+  - [ ] New `tests/fixtures/inference/clauses.erl` rows: type tests per
+    clause, literal patterns, merged equal inputs, an impossible clause, more
+    clauses than the budget, a recursive function and a single-clause
+    function; existing expectations updated where functions now print
+    several function types.
+
+<a id="step-58l"></a>
+
+### 58L. Match calls against function types
+
+Backlog: F34. Depends on: [58K](#step-58k). Added 2026-10-09 (user
+direction).
+
+A call of a function with function types reads only those its argument
+facts can enter: a function type counts when every argument fact meets its
+input (`Lattice::meet` is not `none()`), and the call's result is the join of
+the counting function types' results. When no function type counts the call
+can only raise `function_clause` and its result is `none()`. Unknown
+argument facts meet every input, so the result falls back to the union
+summary ("take the union and hope for the best" is the case where nothing
+selects); a function without function types (budget exhausted, unconverged
+component, a fun or dynamic call) also uses its union summary.
+
+- After the call returns, its variable arguments narrow to the join of the
+  counting function types' inputs (instead of the whole success domain).
+- Specification checks (58I) compare a call's arguments with each
+  overload as before and may also report a call that no inferred function
+  type can enter; result checks keep using the union.
+- Argument relations (`f(X) -> X`) instantiate per function type as they do
+  per call today.
+- Success criteria
+  - [ ] `use() -> f(5)` infers `integer()`, `g(1)` the result of the clause
+    matching 1, calls with unknown arguments the union; a call no function
+    type admits is `none()`; nothing narrows on a function type the call
+    cannot enter.
+- Tests
+  - [ ] `clauses.erl` rows for each case above, a call through a literal
+    argument, a call with a range overlapping two clauses, nested calls,
+    local functions whose 58F inputs are joined from several callers, and a
+    recursive call; specialization profiles unchanged in the codegen tests.
+
+<a id="step-58m"></a>
+
+### 58M. Re-analyse callees for each call
+
+Backlog: F34. Depends on: [58L](#step-58l), [58F](#step-58f). Added
+2026-10-09 (user direction).
+
+Function types are fixed per clause, so a result built from an argument the
+clause does not narrow stays coarse: `local(X) -> {X}` called with `a` gives
+`{_}`. Extend the per-call evaluation of bound anonymous funs (58E) to named
+functions: a call whose argument facts are narrower than the callee's
+inputs evaluates the callee's body again with those facts and uses that
+result, restoring the callee's own facts afterwards.
+
+- Budgets: at most 4 nested re-analyses, a work budget per call shared with
+  the batch, callees of at most a bounded size; past a budget the call uses
+  58L's matching. Recursive components (and calls into the one being
+  solved) are not re-analysed.
+- Re-analysis never changes the callee's summary, its function types or its
+  recorded expression facts; specialization reads only recorded facts.
+- Success criteria
+  - [ ] `{local(3), local(a)}` infers `{3, {a}}`; `two_callers()` (58F)
+    infers `{11, 21}`; results stay sound when a budget stops re-analysis.
+- Tests
+  - [ ] `clauses.erl` rows for per-call results, nested re-analysis up to
+    and past the depth budget, a large callee past the size budget, a
+    recursive callee, and a callee called with unknown arguments.
+
 <a id="step-59"></a>
 
 ### 59. Make specialization remove real source checks
 
-Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g).
+Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g); benefits from [58L](#step-58l) and [58M](#step-58m).
 
 - Success criteria
   - [ ] Proven profiles remove tag/shape checks in new operations (arithmetic,
