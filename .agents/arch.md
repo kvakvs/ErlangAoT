@@ -284,6 +284,9 @@
   call arguments as errors. Step 58J: `Kind::positional` lists (elements then tail; `Lattice::plain` degrades them when
   joins mix shapes), `#{K => V}` associations (`Lattice::association`) past the key budget or when key sets differ,
   tuples of known elements past the element budget, records printed via `RecordFields` (`type_report::record_fields`).
+  Step 58J1: try/maybe frames (`attempt_frames`/`maybe_frames`): `of` and `else` clauses enter like case clauses
+  (`enter_branch`), `finish` completes a body, `bind` matches a ?= pattern and keeps its failed values
+  (`BindingFacts::conditionals`); `try_fact`/`maybe_fact` join their paths' values.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

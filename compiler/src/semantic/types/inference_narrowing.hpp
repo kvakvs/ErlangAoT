@@ -21,6 +21,9 @@ bool assume_guard(BindingFacts &bindings, const ast::GuardSyntax &guard);
 // The values a pattern can match: literals, tuples, lists, records, maps and bitstrings by their shape, a bound
 // variable by its fact, a new one any term.
 Id pattern_shape(BindingFacts &bindings, const ast::ExprId &pattern);
+// Whether a pattern matches every value of its shape (new variables used once, literal atoms and integers, [] and
+// tuples of them), so the values it fails on are those outside its shape.
+bool exact_shape(const BindingFacts &bindings, const ast::ExprId &pattern);
 // The variable and category of a guard that is a single type test on a variable.
 std::optional<std::pair<BindingId, Id>> single_test(BindingFacts &bindings, const ast::GuardSyntax &guard);
 // The comparison of a guard that is a single comparison of a variable with an integer constant.

@@ -43,14 +43,21 @@ class Order final {
         }
     }
 
-    // Each clause of a case, if, receive or fun: entered, guarded, evaluated and left.
-    template <typename Clauses> void clauses(const ast::ExprId &id, const Clauses &clauses) {
+    // A clause of a case, if, receive, try, maybe or fun, `index` among its construct's clauses: entered, guarded,
+    // evaluated and left.
+    template <typename Clause> void clause(const ast::ExprId &id, const Clause &clause, const std::size_t index) {
+        step(id, Step::enter, index);
+        guard(guard_of(clause.guard));
+        step(id, Step::guarded, index);
+        visit(clause.body);
+        step(id, Step::leave, index);
+    }
+
+    // Each clause of a construct, numbered from `first`.
+    template <typename Clauses>
+    void clauses(const ast::ExprId &id, const Clauses &clauses, const std::size_t first = 0) {
         for (std::size_t index = 0; index < clauses.size(); ++index) {
-            step(id, Step::enter, index);
-            guard(guard_of(clauses[index].guard));
-            step(id, Step::guarded, index);
-            visit(clauses[index].body);
-            step(id, Step::leave, index);
+            clause(id, clauses[index], first + index);
         }
     }
 
@@ -120,7 +127,63 @@ bool waiting(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
     return false;
 }
 
-// The frames of a catch or try: nothing narrowed inside them holds after them or in a handler; false for others.
+// The frames of a try: its body, its of clauses from the body's value and end, its catch clauses and after body from
+// the facts before it. The facts after it join those at the end of the body (without of) and of each completed clause.
+void attempt_frames(Order &order, const ast::ExprId &id, const ast::TryExpression &attempt) {
+    order.step(id, Step::save);
+    order.visit(attempt.body);
+    order.step(id, Step::open);
+    if (attempt.of) {
+        order.clauses(id, *attempt.of);
+    } else {
+        order.step(id, Step::finish);
+    }
+    const auto first = attempt.of ? attempt.of->size() : 0;
+    for (std::size_t index = 0; attempt.handlers && index < attempt.handlers->size(); ++index) {
+        order.step(id, Step::reset);
+        order.clause(id, attempt.handlers->at(index), first + index);
+    }
+    if (attempt.after) {
+        order.step(id, Step::reset);
+        order.visit(*attempt.after);
+    }
+    order.step(id, Step::restore);
+    order.step(id, Step::close);
+}
+
+// Whether a maybe body has a ?= match, which can leave the maybe early.
+bool conditional_match(const ast::MaybeExpression &conditional) {
+    return std::ranges::any_of(conditional.body,
+                               [](const auto &item) { return std::holds_alternative<ast::MaybeMatch>(item); });
+}
+
+// The frames of a maybe: its body, each ?= match narrowing what follows it, then its else clauses from the facts
+// before it. The facts after it join those at the end of the body, of each completed else clause and, without else,
+// those before it (a failed ?= match).
+void maybe_frames(Order &order, const ast::ExprId &id, const ast::MaybeExpression &conditional) {
+    order.step(id, Step::save);
+    order.step(id, Step::open);
+    for (std::size_t position = 0; position < conditional.body.size(); ++position) {
+        const auto *match = std::get_if<ast::MaybeMatch>(&conditional.body[position]);
+        order.visit(match ? match->value : std::get<ast::ExprId>(conditional.body[position]));
+        if (match) {
+            order.step(id, Step::bind, position);
+        }
+    }
+    order.step(id, Step::finish);
+    for (std::size_t index = 0; conditional.otherwise && index < conditional.otherwise->size(); ++index) {
+        order.step(id, Step::reset);
+        order.clause(id, conditional.otherwise->at(index), index);
+    }
+    if (!conditional.otherwise && conditional_match(conditional)) {
+        order.step(id, Step::reset);
+        order.step(id, Step::complete);
+    }
+    order.step(id, Step::restore);
+    order.step(id, Step::close);
+}
+
+// The frames of a catch, try or maybe: nothing narrowed inside a catch holds after it; false for others.
 bool guarded(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
     if (const auto *caught = std::get_if<ast::CatchExpression>(&value)) {
         order.step(id, Step::save);
@@ -128,25 +191,15 @@ bool guarded(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
         order.step(id, Step::restore);
         return true;
     }
-    const auto *attempt = std::get_if<ast::TryExpression>(&value);
-    const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
-    if (!attempt && !conditional) {
-        return false;
+    if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        attempt_frames(order, id, *attempt);
+        return true;
     }
-    // A maybe body stops at its first failed ?= match: what it narrows holds neither in its else clauses nor after.
-    order.step(id, Step::save);
-    order.visit(attempt ? attempt->body : maybe_operands(*conditional));
-    for (const auto &clause : branch_clauses(value)) {
-        order.step(id, Step::reset);
-        order.guard(clause.guard);
-        order.visit(*clause.body);
+    if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value)) {
+        maybe_frames(order, id, *conditional);
+        return true;
     }
-    if (attempt && attempt->after) {
-        order.step(id, Step::reset);
-        order.visit(*attempt->after);
-    }
-    order.step(id, Step::restore);
-    return true;
+    return false;
 }
 
 // The frames of a comprehension: generator inputs, filters (each narrowing what follows it) and templates; false
@@ -241,39 +294,91 @@ Id match(BindingFacts &bindings, const ast::ExprId &pattern, const Fact value, c
     return narrowed;
 }
 
-// Enter a case clause: its pattern narrows the scrutinee, and a true pattern assumes a test scrutinee.
-void enter_case(BindingFacts &bindings, const ast::CaseExpression &selection, const std::size_t index,
-                std::size_t &work) {
+// The value the clauses of a case, a try's of part or a maybe's else part match: the expression it was read from
+// (none for a maybe's failed values) and its fact.
+struct Scrutinee {
+    std::optional<ast::ExprId> expression;
+    Id fact;
+};
+
+// After a clause's pattern narrowed the scrutinee expression: a variable pattern names its value, so narrowing either
+// narrows both, and a true pattern assumes a test scrutinee.
+void relate(BindingFacts &bindings, const ast::ExprId &scrutinee, const ast::ExprId &pattern,
+            const std::vector<ast::ExprId> &body) {
     const auto &syntax = *bindings.function.module->syntax;
-    const auto &clause = selection.clauses[index];
+    const auto bound = variable(bindings, pattern);
+    const auto read = variable(bindings, scrutinee);
+    if (bound && read && std::holds_alternative<ast::Variable>(syntax.expression(pattern).value)) {
+        bindings.link(*bound, *read);
+    }
+    const auto *atom = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, pattern)).value);
+    if (atom && atom->name == U"true" && !assume(bindings, scrutinee)) {
+        bindings.impossible.insert(&body);
+    }
+}
+
+// Enter a clause of a case, a try's of part or a maybe's else part: its pattern narrows the scrutinee, which the
+// previous clause's single type test may already have narrowed.
+void enter_branch(BindingFacts &bindings, const Scrutinee &scrutinee, const std::vector<ast::BranchClause> &clauses,
+                  const std::size_t index, std::size_t &work) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &clause = clauses[index];
     Lattice lattice(bindings.inference.graph);
-    auto value = recorded(bindings, selection.value);
+    auto value = scrutinee.fact;
     if (index > 0) {
-        const auto &previous = selection.clauses[index - 1];
+        const auto &previous = clauses[index - 1];
         if (const auto removed = left_out(bindings, previous, {pattern_root(syntax, previous.pattern)}, 0)) {
             value = lattice.subtract(value, *removed);
         }
     }
     const auto pattern = pattern_root(syntax, clause.pattern);
     const auto narrowed = match(bindings, pattern, {value}, &clause.body, work);
-    bindings.narrow(selection.value, narrowed);
-    // A variable pattern names the scrutinee's value: narrowing it narrows a scrutinee variable too.
-    const auto bound = variable(bindings, pattern);
-    const auto scrutinee = variable(bindings, selection.value);
-    if (bound && scrutinee && std::holds_alternative<ast::Variable>(syntax.expression(pattern).value)) {
-        bindings.link(*bound, *scrutinee);
-    }
-    const auto *atom = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, pattern)).value);
-    if (atom && atom->name == U"true" && !assume(bindings, selection.value)) {
-        bindings.impossible.insert(&clause.body);
+    if (scrutinee.expression) {
+        bindings.narrow(*scrutinee.expression, narrowed);
+        relate(bindings, *scrutinee.expression, pattern, clause.body);
     }
 }
 
-// Enter a clause of a case, receive or fun: its patterns narrow what they match.
-void enter(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index, std::size_t &work) {
+// The value of a try or maybe body: its last expression's, none() when an expression of it never completes.
+Id body_value(const BindingFacts &bindings, const std::vector<ast::ExprId> &body) {
+    const auto never = [&](const ast::ExprId &expression) {
+        return recorded(bindings, expression) == bindings.inference.graph.bottom();
+    };
+    return std::ranges::any_of(body, never) ? bindings.inference.graph.bottom() : recorded(bindings, body.back());
+}
+
+// Enter a clause of a try: an of clause matches the body's value, a catch clause its class (error, exit or throw)
+// and reason.
+void enter_try(BindingFacts &bindings, const ast::TryExpression &attempt, const std::size_t index, std::size_t &work) {
+    const auto first = attempt.of ? attempt.of->size() : 0;
+    if (attempt.of && index < first) {
+        enter_branch(bindings, {attempt.body.back(), body_value(bindings, attempt.body)}, *attempt.of, index, work);
+        return;
+    }
+    if (!attempt.handlers) {
+        return;
+    }
+    const auto &handler = attempt.handlers->at(index - first);
+    Lattice lattice(bindings.inference.graph);
+    if (handler.exception_class) {
+        const std::vector<Id> classes{lattice.atom("error"), lattice.atom("exit"), lattice.atom("throw")};
+        match(bindings, *handler.exception_class, {lattice.join(classes, 0)}, &handler.body, work);
+    }
     const auto &syntax = *bindings.function.module->syntax;
+    match(bindings, pattern_root(syntax, handler.reason), {lattice.graph().top()}, &handler.body, work);
+}
+
+// Enter a clause of a case, receive, try, maybe or fun: its patterns narrow what they match.
+void enter(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index, std::size_t &work) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &value = expression.value;
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        enter_case(bindings, *selection, index, work);
+        enter_branch(bindings, {selection->value, recorded(bindings, selection->value)}, selection->clauses, index,
+                     work);
+    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        enter_try(bindings, *attempt, index, work);
+    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value)) {
+        enter_branch(bindings, {std::nullopt, bindings.failures(expression)}, *conditional->otherwise, index, work);
     } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         const auto &clause = receive->clauses[index];
         match(bindings, pattern_root(syntax, clause.pattern), {bindings.inference.graph.top()}, &clause.body, work);
@@ -368,14 +473,44 @@ void complete(BindingFacts &bindings) {
     }
 }
 
-// Leave a clause of a case, if or receive: the facts at its end join the construct's when it completed.
+// Leave a clause of a case, if, receive, try or maybe: the facts at its end join the construct's when it completed.
 void leave(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index) {
-    const bool selection = std::holds_alternative<ast::CaseExpression>(value) ||
-                           std::holds_alternative<ast::IfExpression>(value) ||
-                           std::holds_alternative<ast::ReceiveExpression>(value);
-    if (selection && completes(bindings, clause_parts(value, index).second)) {
+    if (!fun_clauses(value) && completes(bindings, clause_parts(value, index).second)) {
         complete(bindings);
     }
+}
+
+// After a try body without of clauses, or a maybe body: its end facts join the construct's when it completed.
+void finish(BindingFacts &bindings, const ast::Expression &expression) {
+    if (const auto *attempt = std::get_if<ast::TryExpression>(&expression.value)) {
+        if (body_value(bindings, attempt->body) != bindings.inference.graph.bottom()) {
+            complete(bindings);
+        }
+        return;
+    }
+    const auto &conditional = std::get<ast::MaybeExpression>(expression.value);
+    if (!bindings.stopped(expression) &&
+        body_value(bindings, maybe_operands(conditional)) != bindings.inference.graph.bottom()) {
+        complete(bindings);
+    }
+}
+
+// Match a maybe's ?= pattern with its value: its variables and a variable value narrow to what matches; the values
+// it fails on are kept for the else clauses and the maybe's value.
+void bind(BindingFacts &bindings, const ast::Expression &expression, const std::size_t position, std::size_t &work) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &item = std::get<ast::MaybeMatch>(std::get<ast::MaybeExpression>(expression.value).body.at(position));
+    const auto pattern = pattern_root(syntax, item.pattern);
+    const auto found = bindings.inference.expressions.find(&syntax.expression(item.value));
+    const auto value =
+        found == bindings.inference.expressions.end() ? Fact{bindings.inference.graph.top()} : found->second;
+    Lattice lattice(bindings.inference.graph);
+    const auto shape = pattern_shape(bindings, pattern);
+    const auto failed = exact_shape(bindings, pattern) ? lattice.subtract(value.type, shape) : value.type;
+    const auto matched = lattice.meet(value.type, shape);
+    bindings.publish(pattern, {matched, value.argument}, work);
+    bindings.narrow(item.value, matched);
+    bindings.conditionals.insert_or_assign({&expression, position}, BindingFacts::Conditional{matched, failed});
 }
 
 // Close a construct: the facts after it are the join of its completed clauses' facts, if any completed.
@@ -411,18 +546,33 @@ void restore(BindingFacts &bindings, const bool keep) {
     }
 }
 
-// Narrow by a clause's guard, and in a case by the previous clause's failed comparison.
+// The clauses of a case, a try's of part or a maybe's else part, which match one value, when clause `index` is
+// one of them.
+const std::vector<ast::BranchClause> *matching(const ast::ExprValue &value, const std::size_t index) {
+    const std::vector<ast::BranchClause> *clauses = nullptr;
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        clauses = &selection->clauses;
+    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value); attempt && attempt->of) {
+        clauses = &*attempt->of;
+    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
+               conditional && conditional->otherwise) {
+        clauses = &*conditional->otherwise;
+    }
+    return clauses && index < clauses->size() ? clauses : nullptr;
+}
+
+// Narrow by a clause's guard, and in clauses matching one value by the previous clause's failed comparison.
 void guard_clause(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index) {
     const auto [guard, body] = clause_parts(value, index);
     if (guard && !assume_guard(bindings, *guard)) {
         bindings.impossible.insert(body);
     }
-    const auto *selection = std::get_if<ast::CaseExpression>(&value);
-    if (selection && index > 0) {
+    const auto *clauses = matching(value, index);
+    if (clauses && index > 0) {
         const auto &syntax = *bindings.function.module->syntax;
-        const auto &previous = selection->clauses[index - 1];
+        const auto &previous = clauses->at(index - 1);
         complement(bindings, previous, {pattern_root(syntax, previous.pattern)},
-                   {pattern_root(syntax, selection->clauses[index].pattern)});
+                   {pattern_root(syntax, clauses->at(index).pattern)});
     }
 }
 } // namespace
@@ -472,6 +622,12 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
         {Step::open, [](BindingFacts &b, const Frame &, std::size_t &) { b.merged.emplace_back(); }},
         {Step::close, [](BindingFacts &b, const Frame &, std::size_t &) { close(b); }},
         {Step::complete, [](BindingFacts &b, const Frame &, std::size_t &) { complete(b); }},
+        {Step::finish, [](BindingFacts &b, const Frame &f,
+                          std::size_t &) { finish(b, b.function.module->syntax->expression(f.expression)); }},
+        {Step::bind,
+         [](BindingFacts &b, const Frame &f, std::size_t &work) {
+             bind(b, b.function.module->syntax->expression(f.expression), f.clause, work);
+         }},
         {Step::assume,
          [](BindingFacts &b, const Frame &f, std::size_t &) {
              b.saved.push_back(b.values);
@@ -480,7 +636,7 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
         {Step::enter,
          [](BindingFacts &b, const Frame &f, std::size_t &work) {
              b.saved.push_back(b.values);
-             enter(b, b.function.module->syntax->expression(f.expression).value, f.clause, work);
+             enter(b, b.function.module->syntax->expression(f.expression), f.clause, work);
          }},
         {Step::guarded,
          [](BindingFacts &b, const Frame &f, std::size_t &) {

@@ -129,9 +129,34 @@ Fact receive_fact(Inference &inference, const ast::Module &syntax, const ast::Re
     return merged(inference.graph, clauses, sequence(inference, syntax, receive.after->body));
 }
 
-// The joined clause values of a case, if or receive; none for other expressions.
-std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value,
-                                   const Impossible &impossible) {
+// A try's value: its of clauses' joined values (its body's without of) joined with its catch clauses' values.
+Fact try_fact(Inference &inference, const ast::Module &syntax, const ast::TryExpression &attempt,
+              const Impossible &impossible) {
+    const auto result =
+        attempt.of ? joined(inference, syntax, *attempt.of, &impossible) : sequence(inference, syntax, attempt.body);
+    if (!attempt.handlers) {
+        return result;
+    }
+    return merged(inference.graph, result, joined(inference, syntax, *attempt.handlers, &impossible));
+}
+
+// A maybe's value: its body's when every ?= match can succeed, joined with its else clauses' values, or without
+// else, with the values its ?= matches fail on.
+Fact maybe_fact(Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
+                const BindingFacts &bindings) {
+    const auto &conditional = std::get<ast::MaybeExpression>(expression.value);
+    const auto body = bindings.stopped(expression) ? Fact{inference.graph.bottom()}
+                                                   : sequence(inference, syntax, maybe_operands(conditional));
+    const auto rest = conditional.otherwise ? joined(inference, syntax, *conditional.otherwise, &bindings.impossible)
+                                            : Fact{bindings.failures(expression)};
+    return merged(inference.graph, body, rest);
+}
+
+// The joined clause values of a case, if, receive, try or maybe; none for other expressions.
+std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
+                                   const BindingFacts &bindings) {
+    const auto &value = expression.value;
+    const auto &impossible = bindings.impossible;
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         return joined(inference, syntax, selection->clauses, &impossible);
     }
@@ -140,6 +165,12 @@ std::optional<Fact> selection_fact(Inference &inference, const ast::Module &synt
     }
     if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         return receive_fact(inference, syntax, *receive, impossible);
+    }
+    if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
+        return try_fact(inference, syntax, *attempt, impossible);
+    }
+    if (std::holds_alternative<ast::MaybeExpression>(value)) {
+        return maybe_fact(inference, syntax, expression, bindings);
     }
     return std::nullopt;
 }
@@ -183,6 +214,7 @@ Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts 
     }
     const auto values = bindings.values;
     const auto waiting = bindings.waiting;
+    const auto conditionals = bindings.conditionals;
     ++bindings.depth;
     for (const auto &clause : clauses) {
         for (std::size_t index = 0; index < arguments.size(); ++index) {
@@ -203,6 +235,7 @@ Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts 
     inference.expressions.insert(saved.begin(), saved.end());
     bindings.values = values;
     bindings.waiting = waiting;
+    bindings.conditionals = conditionals;
     --bindings.depth;
     return result;
 }
@@ -301,7 +334,7 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     if (const auto fact = fun_value_fact(inference, function, expression, bindings.impossible)) {
         return *fact;
     }
-    if (const auto fact = selection_fact(inference, syntax, expression.value, bindings.impossible)) {
+    if (const auto fact = selection_fact(inference, syntax, expression, bindings)) {
         return *fact;
     }
     return leaf(inference, function, id, bindings);

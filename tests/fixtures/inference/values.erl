@@ -123,6 +123,20 @@
     bits/1,
     both/1,
     orelse_use/2,
+    try_of/1,
+    try_body/1,
+    try_classes/0,
+    try_impossible/1,
+    try_after/1,
+    try_nested/1,
+    try_of_use/1,
+    try_catch_use/1,
+    maybe_else/1,
+    maybe_failed/1,
+    maybe_chain/1,
+    maybe_impossible/0,
+    maybe_plain/0,
+    maybe_after/1,
     second/2
 ]).
 
@@ -645,3 +659,143 @@ identity(X) -> X.
 
 %% expect: second(_, Y) -> Y
 second(_, Y) -> Y.
+
+%% try and maybe values (step 58J1).
+
+%% A try joins its of clauses' and catch clauses' values.
+%% expect: try_of(_) -> error | two | {number()}
+try_of(X) ->
+    try X + 1 of
+        2 -> two;
+        N -> {N}
+    catch
+        _:_ -> error
+    end.
+
+%% Without of, the body's value.
+%% expect: try_body(_) -> number()
+try_body(X) ->
+    try
+        X * 2
+    catch
+        _:_ -> 0
+    end.
+
+%% A class variable is one of error, exit and throw.
+%% expect: try_classes() -> error | exit | throw
+try_classes() ->
+    try
+        error(failed)
+    catch
+        Class:_ -> Class
+    end.
+
+%% An of clause the body's value cannot match adds nothing.
+%% expect: try_impossible(integer()) -> integer() | none
+try_impossible(X) when is_integer(X) ->
+    try X of
+        a -> atom;
+        N -> N
+    catch
+        _ -> none
+    end.
+
+%% The after body adds nothing.
+%% expect: try_after(atom()) -> atom()
+try_after(X) when is_atom(X) ->
+    try
+        X
+    after
+        ok
+    end.
+
+%% expect: try_nested(_) -> inner | one | outer
+try_nested(X) ->
+    try
+        try X of
+            1 -> one
+        catch
+            _:_ -> inner
+        end
+    catch
+        _:_ -> outer
+    end.
+
+%% Of clauses run after the body returned: its uses hold there.
+%% expect: try_of_use(_) -> number()
+try_of_use(X) ->
+    try X + 1 of
+        _ -> X
+    catch
+        _:_ -> 0
+    end.
+
+%% A catch clause sees the facts from before the try.
+%% expect: try_catch_use(_) -> _
+try_catch_use(X) ->
+    try
+        X + 1
+    catch
+        _:_ -> X
+    end.
+
+%% A maybe joins its body's value and its else clauses' values.
+%% expect: maybe_else(_) -> number() | bad
+maybe_else(X) ->
+    maybe
+        {ok, V} ?= X,
+        V + 1
+    else
+        _ -> bad
+    end.
+
+%% Without else, the values a ?= match fails on are the maybe's value.
+%% expect: maybe_failed(_) -> 1 | error
+maybe_failed(X) ->
+    V =
+        case X of
+            1 -> {ok, 1};
+            _ -> error
+        end,
+    maybe
+        {ok, Y} ?= V,
+        Y
+    end.
+
+%% Else clauses match the values every ?= match of the chain fails on.
+%% expect: maybe_chain(_) -> failed | {_} | {other, _}
+maybe_chain(X) ->
+    maybe
+        {ok, A} ?= X,
+        {ok, B} ?= A,
+        {B}
+    else
+        error -> failed;
+        Other -> {other, Other}
+    end.
+
+%% A ?= match that never succeeds stops the body.
+%% expect: maybe_impossible() -> {failed, error}
+maybe_impossible() ->
+    maybe
+        {ok, V} ?= error,
+        V
+    else
+        E -> {failed, E}
+    end.
+
+%% expect: maybe_plain() -> 2
+maybe_plain() ->
+    maybe
+        1,
+        2
+    end.
+
+%% A ?= match narrows only within the maybe body.
+%% expect: maybe_after(X) -> X
+maybe_after(X) ->
+    _ =
+        maybe
+            ok ?= X
+        end,
+    X.

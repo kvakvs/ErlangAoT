@@ -83,7 +83,12 @@ class Meet final {
 
     bool any_fun(Id, Id outer) { return any(outer, "fun"); }
 
-    bool any_tuple(Id, Id outer) { return any(outer, "tuple"); }
+    bool any_tuple(Id inner, Id outer) { return any(outer, "tuple") || elements_within(inner, outer); }
+
+    // Tuples of one size whose every element is within the other's element at its position.
+    bool elements_within(Id inner, Id outer);
+    // Whether every member of fact `inner` is within some member of fact `outer`.
+    bool contained(Id inner, Id outer);
 
     bool any_map(Id, Id outer) { return any(outer, "map"); }
 
@@ -414,6 +419,34 @@ Sizes Meet::sizes(const Id fact) const {
 Id Meet::bitstrings(const Id left, const Id right) {
     // The narrower of two nested size sets; overlapping ones keep the left side, which holds the shared sizes.
     return sizes_within(sizes(right), sizes(left)) ? right : left;
+}
+
+bool Meet::elements_within(const Id inner, const Id outer) {
+    if (inner == outer) {
+        return true;
+    }
+    // Copies: `within` may grow the graph.
+    const auto a = graph_.get(inner).children;
+    const auto b = graph_.get(outer).children;
+    if (any(inner, "tuple") || a.size() != b.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < a.size(); ++index) {
+        if (!contained(a[index], b[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Meet::contained(const Id inner, const Id outer) {
+    if (inner == outer) {
+        return true;
+    }
+    const auto outers = lattice_.members(outer);
+    return std::ranges::all_of(lattice_.members(inner), [&](const Id member) {
+        return std::ranges::any_of(outers, [&](const Id candidate) { return within(member, candidate); });
+    });
 }
 
 bool Meet::within(const Id inner, const Id outer) {

@@ -141,13 +141,6 @@ const ast::Expression *BindingFacts::lambda(const ast::ExprId &read) const {
     return found == lambdas.end() ? nullptr : found->second;
 }
 
-void BindingFacts::expect_clauses(const ast::ExprId &value, const std::vector<ast::BranchClause> &clauses) {
-    const auto &syntax = *function.module->syntax;
-    for (const auto &clause : clauses) {
-        waiting[&syntax.expression(value)].push_back({pattern_root(syntax, clause.pattern), Part::whole});
-    }
-}
-
 void BindingFacts::narrow(const ast::ExprId &read, const Id fact) {
     const auto &syntax = *function.module->syntax;
     const auto event = events.find(&syntax.expression(ungroup(syntax, read)));
@@ -182,10 +175,36 @@ void BindingFacts::link(const BindingId first, const BindingId second) {
     }
 }
 
+bool BindingFacts::stopped(const ast::Expression &maybe) const {
+    const auto &body = std::get<ast::MaybeExpression>(maybe.value).body;
+    for (std::size_t position = 0; position < body.size(); ++position) {
+        const auto found = conditionals.find({&maybe, position});
+        if (found != conditionals.end() && found->second.matched == inference.graph.bottom()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Id BindingFacts::failures(const ast::Expression &maybe) const {
+    Lattice lattice(inference.graph);
+    const auto &body = std::get<ast::MaybeExpression>(maybe.value).body;
+    auto result = inference.graph.bottom();
+    for (std::size_t position = 0; position < body.size(); ++position) {
+        const auto found = conditionals.find({&maybe, position});
+        if (found == conditionals.end()) {
+            continue;
+        }
+        result = lattice.join(result, found->second.failed);
+        if (found->second.matched == inference.graph.bottom()) {
+            break;
+        }
+    }
+    return result;
+}
+
 void BindingFacts::expect(const ast::ExprValue &value) {
-    if (const auto *attempt = std::get_if<ast::TryExpression>(&value); attempt && attempt->of) {
-        expect_clauses(attempt->body.back(), *attempt->of);
-    } else if (const auto *qualifiers = comprehension_qualifiers(value)) {
+    if (const auto *qualifiers = comprehension_qualifiers(value)) {
         for (const auto &qualifier : *qualifiers) {
             for (const auto &simple : zipped(qualifier)) {
                 expect_generator(simple);

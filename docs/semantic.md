@@ -215,12 +215,29 @@ Inference is separate from declared types and never trusts specs.
   `true` clause of `case Test of`, and what follows a comprehension filter
   see the test as true. An empty meet makes the clause impossible: it adds
   nothing to the result. Narrowed facts hold only inside their clause or
-  operand; `catch`, `try`, `maybe`, the right operand of `orelse` and every
-  clause restore the facts from before them. After a `case`, `if` or
-  `receive`, a variable's fact is the join of its facts at the end of each
+  operand; `catch`, the right operand of `orelse` and every clause restore
+  the facts from before them. After a `case`, `if`, `receive`, `try` or
+  `maybe`, a variable's fact is the join of its facts at the end of each
   clause that completes (step 58H), so `case X of forever -> ...; N when
   is_integer(N), N >= 0 -> ... end` leaves `X` as
   `non_neg_integer() | forever`.
+- `try` and `maybe` (step 58J1): a `try` is the join of its `of` clauses'
+  values (its body's without `of`) and its catch clauses' values; the
+  `after` body adds nothing. `of` clauses start from the facts at the end of
+  the body and match its value like `case` clauses (an impossible clause
+  adds nothing); catch clauses and the `after` body start from the facts
+  before the `try`, a class pattern matching `error | exit | throw`. A
+  `maybe` is the join of its body's value, its `else` clauses' values and,
+  without `else`, the values its `?=` matches can fail on: the matched
+  value's fact without the pattern's shape when the pattern matches all of
+  its shape (new variables used once, literal atoms and integers, `[]`,
+  tuples of them), else the whole fact. Each `?=` pattern meets its value
+  and publishes its variables for the rest of the body; a `?=` that can
+  never match stops the body. `else` clauses start from the facts before the
+  `maybe` and match the joined failing values like `case` clauses. The facts
+  after a `try` join those at the end of its body (without `of`) and of
+  each completing clause; after a `maybe`, those at the end of its body, of
+  each completing `else` clause and, without `else`, those before it.
 - Uses (step 58H, `semantic/types/inference_uses`): an operation that raises
   unless an operand has a type proves that type for the variable it read,
   after the operation returns: arithmetic and unary `-`/`+` a `number()`,

@@ -2,12 +2,13 @@
 #include "inference_bindings.hpp"
 
 // Scopes of narrowed facts in the body walk (docs/semantic.md#inference): clauses narrow by their patterns and guards,
-// the right operand of andalso by its left one, comprehension elements by their filters; catch, try and every
-// clause restore the facts from before them.
+// the right operand of andalso by its left one, comprehension elements by their filters, maybe bodies by their ?=
+// matches; catch, try and every clause restore the facts from before them.
 namespace clause::semantic::types {
 // What a walk frame does: evaluate an expression's operands or the expression itself, save, restore or reset the
-// facts of a scope, assume a test, enter, guard and leave a clause (`head`: a function clause), or open and close
-// the join of the facts at the end of a construct's completed clauses (`complete`: add the current facts to it).
+// facts of a scope, assume a test, enter, guard and leave a clause (`head`: a function clause), open and close the
+// join of the facts at the end of a construct's completed clauses (`complete`: add the current facts to it;
+// `finish`: add them when a try or maybe body completed), or match a maybe's ?= pattern (`bind`).
 enum class Step : std::uint8_t {
     visit,
     ready,
@@ -23,11 +24,14 @@ enum class Step : std::uint8_t {
     leave_head,
     open,
     close,
-    complete
+    complete,
+    finish,
+    bind
 };
 
 struct Frame {
-    // The expression evaluated, the test assumed or the construct whose clause `clause` is entered.
+    // The expression evaluated, the test assumed or the construct whose clause `clause` is entered (for `bind`, the
+    // position of the ?= match in its maybe's body).
     ast::ExprId expression;
     Step step = Step::visit;
     std::size_t clause = 0;

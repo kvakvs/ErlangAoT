@@ -788,13 +788,28 @@ both print `_`.
   body matches for the expressions after them; else clauses are entered like
   `case` clauses over the joined failing values.
 - Success criteria
-  - [ ] `t(_) -> error | two | {number()}`, `m(_) -> bad | number()`-like
+  - [x] `t(_) -> error | two | {number()}`, `m(_) -> bad | number()`-like
     results; narrowings never cross an exception edge or a failed `?=`.
+    Evidence 2026-10-09: `inference_scopes` (`attempt_frames`,
+    `maybe_frames`, `enter_branch` shared by case, `of` and `else` clauses,
+    `enter_try` for catch classes, `finish`/`bind` steps,
+    `BindingFacts::conditionals`), `try_fact`/`maybe_fact` in `inference.cpp`,
+    `exact_shape` in `inference_narrowing` (failed values without the
+    pattern's shape only for patterns matching all of it), element-wise tuple
+    `within` in `meet` (so `{ok, 1} | error` without `{ok, _}` is `error`).
+    Catch clauses, `else` clauses and the `after` body start from the facts
+    before the construct; `of` clauses from the body's end; the facts after it
+    join those of every completing path.
 - Tests
-  - [ ] `clauses.erl` (58K) or `values.erl` rows: `try` with and without
+  - [x] `clauses.erl` (58K) or `values.erl` rows: `try` with and without
     `of`, catch clauses by class, an impossible `of` clause, `after`, nested
     `try`, `maybe` with and without `else`, a `?=` chain, and uses inside a
-    `try` body that must not narrow in a catch clause.
+    `try` body that must not narrow in a catch clause. Evidence: 14
+    `values.erl` rows (`try_of`, `try_body`, `try_classes`,
+    `try_impossible`, `try_after`, `try_nested`, `try_of_use`,
+    `try_catch_use`, `maybe_else`, `maybe_failed -> 1 | error`,
+    `maybe_chain`, `maybe_impossible`, `maybe_plain`, `maybe_after`); values
+    141/141; fast CTest 222/222.
 
 <a id="step-58k"></a>
 

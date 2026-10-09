@@ -503,6 +503,22 @@ Id Shape::variable(const ast::Expression &expression) {
     const auto found = bindings_.values.find(event->second->identity);
     return found == bindings_.values.end() ? lattice_.graph().top() : found->second.type;
 }
+
+// Whether a pattern node matches every value of its own shape: a literal atom or integer, [], a new variable or `_`;
+// none for groups and tuples, whose parts decide.
+std::optional<bool> exact_leaf(const BindingFacts &bindings, const ast::Expression &expression) {
+    const auto &value = expression.value;
+    if (std::holds_alternative<ast::Group>(value) || std::holds_alternative<ast::Tuple>(value)) {
+        return std::nullopt;
+    }
+    if (std::holds_alternative<ast::Variable>(value)) {
+        const auto event = bindings.events.find(&expression);
+        return event == bindings.events.end() || event->second->use == BindingUse::definition;
+    }
+    const auto *list = std::get_if<ast::List>(&value);
+    return std::holds_alternative<ast::Atom>(value) || std::holds_alternative<ast::IntegerLiteral>(value) ||
+           std::holds_alternative<ast::CharacterLiteral>(value) || (list && list->elements.empty() && !list->tail);
+}
 } // namespace
 
 std::optional<BindingId> variable(const BindingFacts &bindings, const ast::ExprId &expression) {
@@ -542,6 +558,28 @@ bool assume_guard(BindingFacts &bindings, const ast::GuardSyntax &guard) {
 }
 
 Id pattern_shape(BindingFacts &bindings, const ast::ExprId &pattern) { return Shape(bindings).of(pattern, 0); }
+
+bool exact_shape(const BindingFacts &bindings, const ast::ExprId &pattern) {
+    const auto &syntax = *bindings.function.module->syntax;
+    std::vector<ast::ExprId> pending{pattern};
+    for (std::size_t visited = 0; !pending.empty(); ++visited) {
+        const auto &expression = syntax.expression(pending.back());
+        pending.pop_back();
+        if (const auto exact = exact_leaf(bindings, expression)) {
+            if (!*exact) {
+                return false;
+            }
+        } else if (const auto *tuple = std::get_if<ast::Tuple>(&expression.value)) {
+            pending.insert(pending.end(), tuple->elements.begin(), tuple->elements.end());
+        } else {
+            pending.push_back(std::get<ast::Group>(expression.value).expression);
+        }
+        if (visited > SHAPE_DEPTH * SHAPE_DEPTH) {
+            return false;
+        }
+    }
+    return true;
+}
 
 std::optional<Comparison> single_comparison(BindingFacts &bindings, const ast::GuardSyntax &guard) {
     if (guard.alternatives.size() != 1 || guard.alternatives.front().tests.size() != 1) {

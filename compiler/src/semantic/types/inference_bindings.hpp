@@ -29,14 +29,12 @@ struct BindingFacts {
     Fact read(const ast::ExprId &id) const;
     // Publish the definitions of a pattern with the facts of the values they match, after its successful match.
     void publish(const ast::ExprId &pattern, Fact fact, std::size_t &work);
-    // Register the patterns that match an expression's operand once its value is known: case clauses wait for the
-    // scrutinee, a try's of clauses for its body's value, generator patterns for their input.
+    // Register the patterns that match an expression's operand once its value is known: generator patterns wait for
+    // their input.
     void expect(const ast::ExprValue &value);
     // Publish the patterns waiting for `expression`, whose value has `fact`.
     void matched(const ast::Expression &expression, Fact fact, std::size_t &work);
 
-    // Register clauses' patterns with the expression whose value they match.
-    void expect_clauses(const ast::ExprId &value, const std::vector<ast::BranchClause> &clauses);
     // Register a generator's patterns with its input.
     void expect_generator(const ast::Qualifier &qualifier);
 
@@ -74,5 +72,18 @@ struct BindingFacts {
     std::vector<Id> domain;
     // The patterns waiting for each expression's value.
     std::map<const ast::Expression *, std::vector<Waiting>> waiting;
+
+    // What a ?= match of a maybe let through and the values it failed on, in the latest walk of the maybe.
+    struct Conditional {
+        Id matched;
+        Id failed;
+    };
+
+    // The ?= matches walked, by maybe and position in its body.
+    std::map<std::pair<const ast::Expression *, std::size_t>, Conditional> conditionals;
+    // Whether a ?= match of a maybe can never succeed, so its body never completes.
+    bool stopped(const ast::Expression &maybe) const;
+    // The join of the values the ?= matches of a maybe can fail on, up to the first that can never succeed.
+    Id failures(const ast::Expression &maybe) const;
 };
 } // namespace clause::semantic::types
