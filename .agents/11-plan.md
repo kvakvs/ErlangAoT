@@ -550,10 +550,26 @@ Use a host/SDK combination without the recorded MSVC annotation and allocator
 conflicts (Linux is the likely choice).
 
 - Success criteria
-  - [ ] Full compiler+runtime ASan, UBSan and LeakSanitizer runs pass; findings
-    are fixed, not suppressed; instrumentation scope is documented.
+  - [x] Full compiler+runtime ASan, UBSan and LeakSanitizer runs pass; findings
+    are fixed, not suppressed; instrumentation scope is documented. Evidence
+    2026-10-09: Linux x86-64 (WSL2), one combined Debug configuration
+    `-fsanitize=address,undefined -fno-sanitize=vptr -fno-sanitize-recover=undefined`
+    (LeakSanitizer with ASan; `vptr` off because the LLVM boundary builds
+    without RTTI): `clau`, the runtime and every test program are
+    instrumented; programs `clau` links get the sanitizer runtime through a
+    `clang++` wrapper, their generated code is not instrumented. No sanitizer
+    report. Out of scope: the four injected host-refusal tests
+    (`codegen_failure_*`, `runtime_lifecycle_failure`, `runtime_memory`
+    request an impossible allocation; ASan's `operator new` aborts instead of
+    throwing). Script `build/plan11-wsl/sanitize.sh asan` (docs/validation.md).
 - Tests
-  - [ ] Full CTest under each sanitizer configuration.
+  - [x] Full CTest under each sanitizer configuration. Evidence: 220/235 at
+    first; the eleven others were run limits too short for instrumented code
+    (`CLAUSE_TEST_TIMEOUT_SCALE` now stretches the golden and semantic case
+    limits) and pass with scale 10 (`frontend_cli` alone, its CTest limit is
+    90 s). One `port_spawn` run once returned `os:cmd` output `[]` under full
+    load; not reproduced in 4,000 plain, 2,000 ASan or 150 parallel ASan
+    runs, no sanitizer report: watched in step 68.
 
 <a id="step-68"></a>
 

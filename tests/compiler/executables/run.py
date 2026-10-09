@@ -26,8 +26,9 @@ PROGRAM_WORKERS = [1, 4]
 LTO_POLICIES = [('O2', '--lto', 'O2-lto', False), ('O2', '--lto', 'O2-lto', True)]
 # The word width of this host's executables; runs of goldens that hold on one width only ('word_bits') follow it.
 HOST_WORD_BITS = struct.calcsize('P') * 8
-# Seconds one golden invocation may run; --run-timeout raises it for emulated targets.
-RUN_TIMEOUT = 60
+# Seconds one golden invocation may run; --run-timeout raises it for emulated targets, and CLAUSE_TEST_TIMEOUT_SCALE
+# multiplies the default for slower instrumented builds (sanitizers).
+RUN_TIMEOUT = 60 * int(os.environ.get('CLAUSE_TEST_TIMEOUT_SCALE', '1'))
 # What a program fixture's copy leaves out: its golden and its compile diagnostics.
 PROGRAM_EXTRAS = ('expected', 'compile.txt')
 

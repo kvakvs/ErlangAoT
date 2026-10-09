@@ -1,10 +1,15 @@
 # Run declaration checks through the default compiler action; syntax-only modes stay broader.
 set(semantic_work "${WORK}/semantics")
 file(MAKE_DIRECTORY "${semantic_work}")
+# Seconds per case; CLAUSE_TEST_TIMEOUT_SCALE multiplies it for slower instrumented builds (sanitizers).
+set(semantic_timeout 15)
+if(DEFINED ENV{CLAUSE_TEST_TIMEOUT_SCALE})
+    math(EXPR semantic_timeout "15 * $ENV{CLAUSE_TEST_TIMEOUT_SCALE}")
+endif()
 function(semantic_case name source status pattern)
     file(WRITE "${semantic_work}/${name}.erl" "${source}")
     execute_process(COMMAND "${TOOL}" "${name}.erl" WORKING_DIRECTORY "${semantic_work}"
-        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err ENCODING UTF-8 TIMEOUT 15)
+        RESULT_VARIABLE result OUTPUT_VARIABLE out ERROR_VARIABLE err ENCODING UTF-8 TIMEOUT ${semantic_timeout})
     if(NOT result STREQUAL "${status}" OR NOT out STREQUAL "" OR NOT err MATCHES "${pattern}")
         message(FATAL_ERROR "Semantic ${name}: ${result}: ${out}${err}")
     endif()
