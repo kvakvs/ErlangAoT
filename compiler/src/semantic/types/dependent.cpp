@@ -4,6 +4,7 @@
 #include "inference_narrowing.hpp"
 #include "lattice.hpp"
 #include <algorithm>
+#include <functional>
 
 namespace clause::semantic::types {
 namespace {
@@ -252,21 +253,48 @@ bool telling(const Table &table) {
                                [&](const FunctionType &type) { return type.result != table.types.front().result; });
 }
 
+// The key of a clause of a case or if: the parameters' facts entering it, any terms when it was not recorded.
+FunctionType key_of(const BindingFacts &bindings, const ast::Expression &construct, const std::size_t index) {
+    const auto key = bindings.keys.find({&construct, index});
+    if (key != bindings.keys.end()) {
+        return key->second;
+    }
+    const auto &parameters = bindings.parameters.at(&construct);
+    return {std::vector<Id>(parameters.size(), bindings.inference.graph.top()), {}, false};
+}
+
 // The clauses of a case or if that can run, each with its key and value.
 std::vector<Clause> possible_clauses(const BindingFacts &bindings, const ast::Expression &construct) {
-    const auto &parameters = bindings.parameters.at(&construct);
     std::vector<Clause> result;
     const auto clauses = branch_clauses(construct.value);
     for (std::size_t index = 0; index < clauses.size(); ++index) {
-        if (bindings.impossible.contains(clauses[index].body)) {
-            continue;
+        if (!bindings.impossible.contains(clauses[index].body)) {
+            result.push_back({key_of(bindings, construct, index), clause_value(bindings, *clauses[index].body)});
         }
-        const auto key = bindings.keys.find({&construct, index});
-        const FunctionType unknown{std::vector<Id>(parameters.size(), bindings.inference.graph.top()), {}, false};
-        result.push_back(
-            {key == bindings.keys.end() ? unknown : key->second, clause_value(bindings, *clauses[index].body)});
     }
     return result;
+}
+
+// The clauses of a case or if that completed, each with its key and the fact `identity` had at its end.
+std::vector<Clause> exit_clauses(const BindingFacts &bindings, const ast::Expression &construct,
+                                 const BindingId identity) {
+    std::vector<Clause> result;
+    const auto clauses = branch_clauses(construct.value);
+    for (std::size_t index = 0; index < clauses.size(); ++index) {
+        const auto exit = bindings.exits.find({&construct, index});
+        if (exit == bindings.exits.end()) {
+            continue;
+        }
+        const auto found = exit->second.find(identity);
+        result.push_back({key_of(bindings, construct, index),
+                          found == exit->second.end() ? Fact{bindings.inference.graph.top()} : found->second});
+    }
+    return result;
+}
+
+// The construct a case's or if's dependent facts print with.
+Operator construct_of(const ast::Expression &construct) {
+    return std::holds_alternative<ast::IfExpression>(construct.value) ? Operator::if_operator : Operator::case_operator;
 }
 
 // The names of a function's variables, for printing.
@@ -317,6 +345,149 @@ std::optional<FunctionType> argument_type(const BindingFacts &bindings,
     }
     return result;
 }
+
+// The fact of a table of clauses beside `plain`, its erased join: dependent once its unreachable types and constant
+// parameters are dropped and its types merged, unless every remaining type gives the same value.
+Fact finished(BindingFacts &bindings, const Operator construct, Table table, const Fact plain) {
+    auto &inference = bindings.inference;
+    Lattice lattice(inference.graph);
+    prune(lattice, table);
+    table.types = merge_types(inference.graph, std::move(table.types));
+    if (!telling(table)) {
+        return {plain.type, plain.argument};
+    }
+    auto names = names_of(bindings, table.parameters);
+    const auto index =
+        intern(inference, {construct, std::move(table.parameters), std::move(names), std::move(table.types)});
+    return {plain.type, plain.argument, index};
+}
+
+// The fact of a case's or if's clauses (keys over `parameters`, values) beside `plain`, their join; a value that is
+// itself dependent adds its own parameters.
+Fact clause_fact(BindingFacts &bindings, const Operator construct, const std::vector<BindingId> &parameters,
+                 const std::vector<Clause> &clauses, const Fact plain) {
+    auto &inference = bindings.inference;
+    const Table outer{parameters, {}};
+    Table table{parameters, {}};
+    for (const auto &clause : clauses) {
+        if (clause.value.dependent) {
+            add_parameters(table, inference.dependents.at(*clause.value.dependent));
+        }
+    }
+    for (const auto &clause : clauses) {
+        add_clause(inference, table, outer, clause);
+    }
+    return finished(bindings, construct, std::move(table), plain);
+}
+
+// The current facts of a dependent fact's parameters.
+std::vector<Fact> parameter_facts(const Inference &inference, const Dependent &dependent,
+                                  const std::map<BindingId, Fact> &values) {
+    std::vector<Fact> result;
+    result.reserve(dependent.parameters.size());
+    for (const auto identity : dependent.parameters) {
+        result.push_back({current(inference, values, identity)});
+    }
+    return result;
+}
+
+// The operands of a use that read one dependent value: reads of one variable share its clause, other operands
+// combine with each other.
+struct Factor {
+    std::size_t dependent;
+    std::vector<const ast::Expression *> operands;
+    std::optional<BindingId> name;
+};
+
+// The dependent operands of a use, grouped into factors.
+std::vector<Factor> factors(const BindingFacts &bindings, const std::vector<ast::ExprId> &operands) {
+    const auto &syntax = *bindings.function.module->syntax;
+    std::vector<Factor> result;
+    for (const auto &operand : operands) {
+        const auto *expression = &syntax.expression(operand);
+        const auto found = bindings.inference.expressions.find(expression);
+        if (found == bindings.inference.expressions.end() || !found->second.dependent) {
+            continue;
+        }
+        const auto name = variable(bindings, operand);
+        const auto same = std::ranges::find_if(result, [&](const Factor &factor) {
+            return name && factor.name == name && factor.dependent == *found->second.dependent;
+        });
+        if (same != result.end()) {
+            same->operands.push_back(expression);
+        } else {
+            result.push_back({*found->second.dependent, {expression}, name});
+        }
+    }
+    return result;
+}
+
+// How many combinations of clauses the factors have, counted up to just past LIFT_ROWS.
+std::size_t rows(const Inference &inference, const std::vector<Factor> &parts) {
+    std::size_t result = 1;
+    for (const auto &part : parts) {
+        result *= inference.dependents.at(part.dependent).types.size();
+        if (result > LIFT_ROWS) {
+            break;
+        }
+    }
+    return result;
+}
+
+// The next combination of clauses, the last factor's first; false after the last one.
+bool advance(const Inference &inference, const std::vector<Factor> &parts, std::vector<std::size_t> &choice) {
+    for (std::size_t index = parts.size(); index-- > 0;) {
+        if (++choice[index] < inference.dependents.at(parts[index].dependent).types.size()) {
+            return true;
+        }
+        choice[index] = 0;
+    }
+    return false;
+}
+
+// The value of a use with its dependent operands' facts set to the clauses `choice` picks, restored afterwards.
+std::optional<Id> substituted(Inference &inference, const std::vector<Factor> &parts,
+                              const std::vector<std::size_t> &choice, const std::function<std::optional<Id>()> &again) {
+    std::vector<std::pair<const ast::Expression *, Fact>> saved;
+    for (std::size_t index = 0; index < parts.size(); ++index) {
+        const auto result = inference.dependents.at(parts[index].dependent).types.at(choice[index]).result;
+        for (const auto *operand : parts[index].operands) {
+            auto &fact = inference.expressions.at(operand);
+            saved.emplace_back(operand, fact);
+            fact = {result.type, result.argument};
+        }
+    }
+    const auto value = again();
+    for (const auto &[operand, fact] : saved) {
+        inference.expressions.at(operand) = fact;
+    }
+    return value;
+}
+
+// Add the function type of one combination of the factors' clauses to `table`: their inputs met, the use's value
+// with their values; false when the use cannot be evaluated again.
+bool add_row(BindingFacts &bindings, const std::vector<Factor> &parts, const std::vector<std::size_t> &choice,
+             const Fact plain, const std::function<std::optional<Id>()> &again, Table &table) {
+    auto &inference = bindings.inference;
+    Lattice lattice(inference.graph);
+    FunctionType row{std::vector<Id>(table.parameters.size(), inference.graph.top()), {}, true};
+    for (std::size_t index = 0; index < parts.size(); ++index) {
+        const auto dependent = inference.dependents.at(parts[index].dependent);
+        const auto &type = dependent.types.at(choice[index]);
+        const Table from{dependent.parameters, {}};
+        row.exact = place(lattice, from, type.inputs, table.parameters, row.inputs) && row.exact && type.exact;
+    }
+    if (std::ranges::contains(row.inputs, inference.graph.bottom())) {
+        return true;
+    }
+    const auto value = substituted(inference, parts, choice, again);
+    if (!value) {
+        return false;
+    }
+    row.result = {lattice.meet(*value, plain.type)};
+    table.types.push_back(std::move(row));
+    return true;
+}
 } // namespace
 
 Fact erased(const Fact fact) { return {fact.type, fact.argument}; }
@@ -337,33 +508,87 @@ void record_key(BindingFacts &bindings, const ast::Expression &construct, const 
 }
 
 Fact dependent_value(BindingFacts &bindings, const ast::Expression &construct, const Fact joined) {
-    const Table outer{parameters_of(bindings, construct), {}};
-    if (outer.parameters.empty() || joined.type == bindings.inference.graph.bottom()) {
+    const auto &parameters = parameters_of(bindings, construct);
+    if (parameters.empty() || joined.type == bindings.inference.graph.bottom()) {
         return joined;
     }
-    auto &inference = bindings.inference;
-    const auto clauses = possible_clauses(bindings, construct);
-    Table table{outer.parameters, {}};
-    for (const auto &clause : clauses) {
-        if (clause.value.dependent) {
-            add_parameters(table, inference.dependents.at(*clause.value.dependent));
+    return clause_fact(bindings, construct_of(construct), parameters, possible_clauses(bindings, construct), joined);
+}
+
+void record_exit(BindingFacts &bindings, const ast::Expression &construct, const std::size_t index) {
+    const auto exported = bindings.function.function->exports.find(&construct);
+    if (exported == bindings.function.function->exports.end() || parameters_of(bindings, construct).empty()) {
+        return;
+    }
+    std::map<BindingId, Fact> facts;
+    for (const auto identity : exported->second) {
+        if (const auto found = bindings.values.find(identity); found != bindings.values.end()) {
+            facts.emplace(identity, found->second);
         }
     }
-    for (const auto &clause : clauses) {
-        add_clause(inference, table, outer, clause);
+    bindings.exits.insert_or_assign({&construct, index}, std::move(facts));
+}
+
+void export_dependents(BindingFacts &bindings, const ast::Expression &construct) {
+    const auto exported = bindings.function.function->exports.find(&construct);
+    if (exported == bindings.function.function->exports.end() || parameters_of(bindings, construct).empty()) {
+        return;
     }
+    const auto parameters = parameters_of(bindings, construct);
+    for (const auto identity : exported->second) {
+        const auto found = bindings.values.find(identity);
+        if (found != bindings.values.end() && found->second.type != bindings.inference.graph.bottom()) {
+            found->second = clause_fact(bindings, construct_of(construct), parameters,
+                                        exit_clauses(bindings, construct, identity), found->second);
+        }
+    }
+}
+
+Fact lifted(BindingFacts &bindings, const std::vector<ast::ExprId> &operands, const Fact plain,
+            const std::function<std::optional<Id>()> &again) {
+    auto &inference = bindings.inference;
+    const auto parts = factors(bindings, operands);
+    if (parts.empty() || plain.type == inference.graph.bottom() || rows(inference, parts) > LIFT_ROWS) {
+        return plain;
+    }
+    Table table;
+    for (const auto &part : parts) {
+        add_parameters(table, inference.dependents.at(part.dependent));
+    }
+    std::vector<std::size_t> choice(parts.size(), 0);
+    do {
+        if (!add_row(bindings, parts, choice, plain, again, table)) {
+            return plain;
+        }
+    } while (advance(inference, parts, choice));
+    const auto construct = inference.dependents.at(parts.front().dependent).construct;
+    return finished(bindings, construct, std::move(table), plain);
+}
+
+std::vector<std::pair<BindingId, Id>> implied(Inference &inference, const Fact &fact,
+                                              const std::map<BindingId, Fact> &values) {
+    if (!fact.dependent) {
+        return {};
+    }
+    const auto dependent = inference.dependents.at(*fact.dependent);
     Lattice lattice(inference.graph);
-    prune(lattice, table);
-    table.types = merge_types(inference.graph, std::move(table.types));
-    if (!telling(table)) {
-        return erased(joined);
+    std::vector<Id> joined(dependent.parameters.size(), inference.graph.bottom());
+    bool any = false;
+    for (const auto index : entered(inference.graph, dependent.types, parameter_facts(inference, dependent, values))) {
+        const auto &type = dependent.types[index];
+        if (lattice.meet(type.result.type, fact.type) == inference.graph.bottom()) {
+            continue;
+        }
+        any = true;
+        for (std::size_t position = 0; position < joined.size(); ++position) {
+            joined[position] = lattice.join(joined[position], type.inputs[position]);
+        }
     }
-    const auto construct_kind =
-        std::holds_alternative<ast::IfExpression>(construct.value) ? Operator::if_operator : Operator::case_operator;
-    auto names = names_of(bindings, table.parameters);
-    const auto index =
-        intern(inference, {construct_kind, std::move(table.parameters), std::move(names), std::move(table.types)});
-    return {joined.type, joined.argument, index};
+    std::vector<std::pair<BindingId, Id>> result;
+    for (std::size_t position = 0; any && position < joined.size(); ++position) {
+        result.emplace_back(dependent.parameters[position], joined[position]);
+    }
+    return result;
 }
 
 Fact resolved(Inference &inference, const Fact fact, const std::map<BindingId, Fact> &values) {
@@ -371,15 +596,10 @@ Fact resolved(Inference &inference, const Fact fact, const std::map<BindingId, F
         return fact;
     }
     auto dependent = inference.dependents.at(*fact.dependent);
-    std::vector<Fact> arguments;
-    arguments.reserve(dependent.parameters.size());
-    for (const auto identity : dependent.parameters) {
-        arguments.push_back({current(inference, values, identity)});
-    }
     Lattice lattice(inference.graph);
     std::vector<FunctionType> kept;
     auto result = inference.graph.bottom();
-    for (const auto index : entered(inference.graph, dependent.types, arguments)) {
+    for (const auto index : entered(inference.graph, dependent.types, parameter_facts(inference, dependent, values))) {
         const auto &type = dependent.types[index];
         if (lattice.meet(type.result.type, fact.type) != inference.graph.bottom()) {
             kept.push_back(type);

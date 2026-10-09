@@ -13,7 +13,14 @@
     tens/1,
     raising/1,
     nested_if/2,
-    used/1
+    used/1,
+    shared/1,
+    plus_one/1,
+    back/1,
+    pair/2,
+    twice/1,
+    called/1,
+    wide/3
 ]).
 
 %% A variable bound to a case value keeps its dependence.
@@ -127,7 +134,6 @@ nested_if(X, Y) ->
 
 %% A use that narrows a dependent variable keeps the clauses whose values it can have.
 %% expect: used(a) -> 1
-%% today: used(_) -> 1
 used(X) ->
     Y =
         case X of
@@ -136,3 +142,97 @@ used(X) ->
         end,
     _ = Y + 1,
     Y.
+
+%% A variable every clause binds depends on the parameters like the case value.
+%% expect: shared(1) -> 5; (_) -> 6
+shared(X) ->
+    case X of
+        1 -> Y = 5;
+        _ -> Y = 6
+    end,
+    Y.
+
+%% An operation on a dependent value is evaluated once per clause.
+%% expect: plus_one(a) -> 2; (b) -> 3
+plus_one(X) ->
+    R =
+        case X of
+            a -> 1;
+            b -> 2
+        end,
+    R + 1.
+
+%% Narrowing a dependent value narrows its parameters.
+%% expect: back(a | b) -> a | other
+back(X) ->
+    R =
+        case X of
+            a -> 1;
+            b -> 2
+        end,
+    case R of
+        1 -> X;
+        _ -> other
+    end.
+
+%% Two dependent operands combine clause by clause.
+%% expect: pair(1, 1) -> {one, one}; (1, _) -> {one, many}; (_, 1) -> {many, one}; (_, _) -> {many, many}
+pair(X, Y) ->
+    A =
+        case X of
+            1 -> one;
+            _ -> many
+        end,
+    B =
+        case Y of
+            1 -> one;
+            _ -> many
+        end,
+    {A, B}.
+
+%% Reads of one variable take the same clause.
+%% expect: twice(1) -> 2; (_) -> 4
+twice(X) ->
+    Y =
+        case X of
+            1 -> 1;
+            _ -> 2
+        end,
+    Y + Y.
+
+%% A call of a batch function selects its function types once per clause.
+%% expect: called(1) -> 1; (_) -> 2
+called(X) ->
+    Y =
+        case X of
+            1 -> one;
+            _ -> other
+        end,
+    tag(Y).
+
+%% expect: tag(one) -> 1; (other) -> 2
+tag(one) -> 1;
+tag(other) -> 2.
+
+%% Past 16 combinations a use is the plain join.
+%% expect: wide(_, _, _) -> {a | b | c, a | b | c, a | b | c}
+wide(A, B, C) ->
+    X =
+        case A of
+            1 -> a;
+            2 -> b;
+            _ -> c
+        end,
+    Y =
+        case B of
+            1 -> a;
+            2 -> b;
+            _ -> c
+        end,
+    Z =
+        case C of
+            1 -> a;
+            2 -> b;
+            _ -> c
+        end,
+    {X, Y, Z}.

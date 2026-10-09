@@ -568,14 +568,17 @@ void complete(BindingFacts &bindings) {
     for (auto &[identity, fact] : *merged) {
         const auto found = bindings.values.find(identity);
         const auto other = found == bindings.values.end() ? Fact{bindings.inference.graph.top()} : found->second;
-        fact = {lattice.join(fact.type, other.type), fact.argument == other.argument ? fact.argument : std::nullopt};
+        fact = {lattice.join(fact.type, other.type), fact.argument == other.argument ? fact.argument : std::nullopt,
+                fact.dependent == other.dependent ? fact.dependent : std::nullopt};
     }
 }
 
-// Leave a clause of a case, if, receive, try or maybe: the facts at its end join the construct's when it completed.
-void leave(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index) {
-    if (!fun_clauses(value) && completes(bindings, clause_parts(value, index).second)) {
+// Leave a clause of a case, if, receive, try or maybe: the facts at its end join the construct's when it completed,
+// and a case or if keeps the facts of the variables its clauses bind.
+void leave(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index) {
+    if (!fun_clauses(expression.value) && completes(bindings, clause_parts(expression.value, index).second)) {
         complete(bindings);
+        record_exit(bindings, expression, index);
     }
 }
 
@@ -717,7 +720,7 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
         {Step::reset, [](BindingFacts &b, const Frame &, std::size_t &) { restore(b, true); }},
         {Step::leave,
          [](BindingFacts &b, const Frame &f, std::size_t &) {
-             leave(b, b.function.module->syntax->expression(f.expression).value, f.clause);
+             leave(b, b.function.module->syntax->expression(f.expression), f.clause);
              restore(b, false);
          }},
         {Step::leave_head,
@@ -726,7 +729,11 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
              restore(b, false);
          }},
         {Step::open, [](BindingFacts &b, const Frame &, std::size_t &) { b.merged.emplace_back(); }},
-        {Step::close, [](BindingFacts &b, const Frame &, std::size_t &) { close(b); }},
+        {Step::close,
+         [](BindingFacts &b, const Frame &f, std::size_t &) {
+             close(b);
+             export_dependents(b, b.function.module->syntax->expression(f.expression));
+         }},
         {Step::complete, [](BindingFacts &b, const Frame &, std::size_t &) { complete(b); }},
         {Step::finish, [](BindingFacts &b, const Frame &f,
                           std::size_t &) { finish(b, b.function.module->syntax->expression(f.expression)); }},
@@ -742,7 +749,9 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
         {Step::enter,
          [](BindingFacts &b, const Frame &f, std::size_t &work) {
              b.saved.push_back(b.values);
-             enter(b, b.function.module->syntax->expression(f.expression), f.clause, work);
+             const auto &expression = b.function.module->syntax->expression(f.expression);
+             b.exits.erase({&expression, f.clause});
+             enter(b, expression, f.clause, work);
          }},
         {Step::guarded,
          [](BindingFacts &b, const Frame &f, std::size_t &) {

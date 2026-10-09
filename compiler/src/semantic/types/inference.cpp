@@ -185,6 +185,8 @@ struct Body {
 
 bool walk(Inference &inference, FunctionRef function, BindingFacts &bindings, std::vector<Frame> pending,
           std::size_t &work, std::vector<const ast::Expression *> &recorded);
+Fact plain_fact(Inference &inference, FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
+                std::size_t &work);
 std::optional<Body> run_body(Inference &inference, FunctionRef function, std::size_t &work,
                              std::vector<const ast::Expression *> &recorded, const std::vector<Id> *inputs);
 
@@ -234,12 +236,13 @@ struct Instance {
     std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> fun_inputs;
     std::map<const ast::Expression *, std::vector<Fact>> instances;
     std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> keys;
+    std::map<std::pair<const ast::Expression *, std::size_t>, std::map<BindingId, Fact>> exits;
 };
 
 // Keep the facts an evaluation for a call changes.
 Instance keep(const BindingFacts &bindings) {
     return {bindings.values,     bindings.waiting,   bindings.conditionals, bindings.impossible,
-            bindings.fun_inputs, bindings.instances, bindings.keys};
+            bindings.fun_inputs, bindings.instances, bindings.keys,         bindings.exits};
 }
 
 // Restore the facts kept before an evaluation for a call.
@@ -251,6 +254,7 @@ void restore(BindingFacts &bindings, const Instance &kept) {
     bindings.fun_inputs = kept.fun_inputs;
     bindings.instances = kept.instances;
     bindings.keys = kept.keys;
+    bindings.exits = kept.exits;
 }
 
 // The result of calling anonymous fun `lambda` with arguments of facts `arguments`: its clauses are entered, guarded
@@ -456,9 +460,60 @@ std::optional<Fact> passed_fact(Inference &inference, const FunctionRef function
     return std::nullopt;
 }
 
+// The result a call of a batch function selects from the callee's function types (its summary without them), with
+// no narrowing of its arguments; none() when it never happens.
+Id selected_call(Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
+                 const ast::CallExpression &call) {
+    if (unreachable_call(inference, syntax, call)) {
+        return inference.graph.bottom();
+    }
+    const auto &summary = inference.functions.at(inference.callees.at(&expression).function);
+    return summary.types.empty()
+               ? call_result(inference, syntax, expression, call).type
+               : select(inference.graph, summary.types, argument_facts(inference, syntax, call)).result.type;
+}
+
+// Whether an expression constructs a container from its operands: a tuple, list, map or record.
+bool construction(const ast::ExprValue &value) {
+    return std::holds_alternative<ast::Tuple>(value) || std::holds_alternative<ast::List>(value) ||
+           std::holds_alternative<ast::MapExpression>(value) || std::holds_alternative<ast::RecordExpression>(value);
+}
+
+// An operation, a construction or a call of a batch function whose operands are dependent evaluates once per
+// combination of their clauses (docs/semantic.md#dependent-facts); other expressions keep `fact`.
+Fact lift(Inference &inference, const FunctionRef function, const ast::Expression &expression, BindingFacts &bindings,
+          const Fact fact) {
+    const auto &syntax = *function.module->syntax;
+    const auto *call = std::get_if<ast::CallExpression>(&expression.value);
+    const bool operation = std::holds_alternative<ast::BinaryExpression>(expression.value) ||
+                           std::holds_alternative<ast::UnaryExpression>(expression.value) ||
+                           (call && function.function->services.contains(&expression));
+    if (operation) {
+        return lifted(bindings, expression_children(*function.module, expression), fact,
+                      [&] { return operation_fact(inference, function, expression); });
+    }
+    if (construction(expression.value)) {
+        return lifted(bindings, expression_children(*function.module, expression), fact,
+                      [&] { return constructed_fact(inference, function, expression.value); });
+    }
+    if (call && inference.callees.contains(&expression) && !fun_call(syntax, *call) &&
+        !opaque_call(function, expression, *call)) {
+        return lifted(bindings, call->arguments, fact,
+                      [&]() -> std::optional<Id> { return selected_call(inference, syntax, expression, *call); });
+    }
+    return fact;
+}
+
 // Evaluate a postorder node only after all source-order argument facts are available.
 Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
               std::size_t &work) {
+    const auto &expression = function.module->syntax->expression(id);
+    return lift(inference, function, expression, bindings, plain_fact(inference, function, id, bindings, work));
+}
+
+// The fact of an expression from its operands' facts as they are.
+Fact plain_fact(Inference &inference, const FunctionRef function, const ast::ExprId &id, BindingFacts &bindings,
+                std::size_t &work) {
     const auto &syntax = *function.module->syntax;
     const auto &expression = syntax.expression(id);
     if (const auto fact = operation_fact(inference, function, expression)) {

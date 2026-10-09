@@ -301,6 +301,10 @@
   erased join every other consumer reads. `record_key` (guarded step) keeps parameters' facts per clause
   (`BindingFacts::keys`), `dependent_value` builds case/if values (nested dependents flatten, `prune`, merge),
   `BindingFacts::read` → `resolved` (selection by `function_types::entered`), `run_body`/`clause_types` erase.
+  Step 58N2: `inference.cpp` `evaluate` = `plain_fact` then `lift` (operations, constructions, batch calls via
+  `dependent::lifted`: operand facts substituted per clause combination, `selected_call` without narrowing);
+  exported variables are published in every clause, `record_exit` (leave) + `export_dependents` (close) make them
+  dependent; `narrow_identity` narrows a dependent's parameters through `implied`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

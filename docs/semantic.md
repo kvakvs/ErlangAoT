@@ -379,6 +379,25 @@ dependent fact, one function type per possible clause.
   variable's own narrowed fact, and the read's fact is the join of their
   values (`Y = case X of 1 -> one; _ -> other end, case X of 1 -> Y end`
   reads `one`).
+- A variable every clause of a `case` or `if` binds (step 58N2) is the join
+  of its facts at the end of the clauses that complete, dependent on the
+  construct's parameters like its value:
+  `case X of 1 -> Y = 5; _ -> Y = 6 end, Y` infers `(1) -> 5; (_) -> 6`.
+  The same join applies after `receive`, `try` and `maybe`, without
+  dependence.
+- Operators, builtins, tuple, list, map and record constructions, and calls
+  of batch functions (their function types selected as in 58L, the
+  arguments not narrowed again) with dependent operands are evaluated once
+  per combination of the operands' clauses, with those clauses' values in
+  place of the operands' facts and their inputs met (step 58N2): reads of
+  one variable take the same clause, other operands combine, at most 16
+  combinations (past that the use is the plain join). `R + 1` with
+  `R = case X of a -> 1; b -> 2 end` infers `(a) -> 2; (b) -> 3`.
+- Narrowing a dependent variable (a pattern, a guard, a use) also narrows
+  its parameters to the join of the inputs of the clauses entered whose
+  values meet the narrowed fact, and their parameters in turn, 4 levels
+  deep: after `R = case X of a -> 1; b -> 2 end`, `case R of 1 -> X end`
+  reads `X` as `a`.
 - A function clause's dependent result splits it (see Function types):
   parameters that name an argument, or a name bound to its value, meet its
   input; others are dropped (such a type is exact only if their input is any

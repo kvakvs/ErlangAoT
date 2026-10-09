@@ -3,9 +3,28 @@
 #include "../records.hpp"
 #include "dependent.hpp"
 #include "inference_containers.hpp"
+#include <algorithm>
 
 namespace clause::semantic::types {
 namespace {
+// Narrowing a dependent variable narrows its parameters, theirs in turn, at most this many levels deep.
+constexpr std::size_t IMPLIED_DEPTH = 4;
+
+// A name and the names bound to the same value through `aliases`, in the order they are found.
+std::vector<BindingId> bound_together(const std::map<BindingId, std::set<BindingId>> &aliases,
+                                      const BindingId identity) {
+    std::vector<BindingId> result{identity};
+    for (std::size_t index = 0; index < result.size(); ++index) {
+        const auto linked = aliases.find(result[index]);
+        for (const auto other : linked == aliases.end() ? std::set<BindingId>{} : linked->second) {
+            if (!std::ranges::contains(result, other)) {
+                result.push_back(other);
+            }
+        }
+    }
+    return result;
+}
+
 // Every event or alias step consumes the shared inference budget before adding a fact.
 bool spend(const Inference &inference, std::size_t &work) {
     if (work >= inference.graph.limits().syntax_work) {
@@ -150,21 +169,20 @@ void BindingFacts::narrow(const ast::ExprId &read, const Id fact) {
     }
 }
 
-Id BindingFacts::narrow_identity(std::map<BindingId, Fact> &facts, const BindingId identity, const Id fact) const {
+Id BindingFacts::narrow_identity(std::map<BindingId, Fact> &facts, const BindingId identity, const Id fact,
+                                 const std::size_t depth) const {
     Lattice lattice(inference.graph);
-    std::set<BindingId> seen{identity};
-    std::vector<BindingId> pending{identity};
-    while (!pending.empty()) {
-        const auto current = pending.back();
-        pending.pop_back();
-        auto &value = facts.try_emplace(current, Fact{inference.graph.top()}).first->second;
+    std::vector<std::pair<BindingId, Id>> proven;
+    for (const auto name : bound_together(aliases, identity)) {
+        auto &value = facts.try_emplace(name, Fact{inference.graph.top()}).first->second;
         value.type = lattice.meet(value.type, fact);
-        const auto linked = aliases.find(current);
-        for (const auto other : linked == aliases.end() ? std::set<BindingId>{} : linked->second) {
-            if (seen.insert(other).second) {
-                pending.push_back(other);
-            }
+        if (depth < IMPLIED_DEPTH) {
+            const auto implies = implied(inference, value, facts);
+            proven.insert(proven.end(), implies.begin(), implies.end());
         }
+    }
+    for (const auto &[parameter, input] : proven) {
+        (void)narrow_identity(facts, parameter, input, depth + 1);
     }
     return facts.at(identity).type;
 }
@@ -253,8 +271,7 @@ void BindingFacts::publish(const ast::ExprId &pattern, Fact fact, std::size_t &w
         pending.pop_back();
         const auto &expression = function.module->syntax->expression(id);
         const auto event = events.find(&expression);
-        if (event != events.end() && event->second->use == BindingUse::definition &&
-            !shared.contains(event->second->identity)) {
+        if (event != events.end() && event->second->use == BindingUse::definition) {
             values.insert_or_assign(event->second->identity, value);
         }
         std::visit(PatternParts{*this, lattice, value, pending}, expression.value);

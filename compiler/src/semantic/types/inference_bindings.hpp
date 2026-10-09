@@ -20,7 +20,8 @@ struct BindingFacts {
     std::map<const ast::Expression *, const Binding *> events;
     // Track the facts of successful definitions, parts of matched values included; unproved values remain top.
     std::map<BindingId, Fact> values;
-    // Identities defined by several case/if clauses stay top; their clause-specific facts are not joined.
+    // Identities defined by several clauses of a case, if, receive, try or maybe: their facts after it are the join
+    // of the completed clauses' (or dependent on a case's or if's parameters).
     std::set<BindingId> shared;
 
     // Index validated bindings within the same batch inference ceiling.
@@ -52,8 +53,9 @@ struct BindingFacts {
     // Narrow the variable a read names, and the names bound to the same value, to their meet with `fact`.
     void narrow(const ast::ExprId &read, Id fact);
     // Narrow a name and the names bound to the same value to their meet with `fact`, in `facts` (the current values or
-    // a copy of them); the name's new fact.
-    Id narrow_identity(std::map<BindingId, Fact> &facts, BindingId identity, Id fact) const;
+    // a copy of them), and the parameters of a dependent one to what that proves, `depth` levels deep at most; the
+    // name's new fact.
+    Id narrow_identity(std::map<BindingId, Fact> &facts, BindingId identity, Id fact, std::size_t depth = 0) const;
     // Record that two names are bound to the same value.
     void link(BindingId first, BindingId second);
 
@@ -82,6 +84,8 @@ struct BindingFacts {
     // clause, and each construct's parameters (docs/semantic.md#dependent-facts).
     std::map<std::pair<const ast::Expression *, std::size_t>, FunctionType> keys;
     std::map<const ast::Expression *, std::vector<BindingId>> parameters;
+    // The facts of the variables every clause of a case or if binds, at the end of each clause that completed.
+    std::map<std::pair<const ast::Expression *, std::size_t>, std::map<BindingId, Fact>> exits;
     // The function types of the clauses walked so far, in source order.
     std::vector<FunctionType> types;
     // The function types (results still unknown) of each anonymous fun clause, by fun and clause.

@@ -327,13 +327,23 @@ Backlog: F34. Depends on: [58N1](#step-58n1).
   meet it and narrows the parameters to the join of the kept clauses'
   inputs.
 - Success criteria
-  - [ ] `shared(X) -> case X of 1 -> Y = 5; _ -> Y = 6 end, Y` infers
+  - [x] `shared(X) -> case X of 1 -> Y = 5; _ -> Y = 6 end, Y` infers
     `(1) -> 5; (_) -> 6`; `not_last` infers `(1) -> {one}; (_) -> {other}`;
     `R = case X of a -> 1; b -> 2 end, R + 1` infers
     `(a) -> 2; (b) -> 3`; `case R of 1 -> X end` sees `X` as `a`.
+    Evidence 2026-10-10: `dependent::lifted` (operations, constructions and
+    batch calls via `inference.cpp` `lift`, operand facts substituted per
+    combination, 16 at most), `record_exit`/`export_dependents` (exported
+    variables, now published in every clause and joined by `close`;
+    `complete` keeps a dependence both sides share), `implied` in
+    `BindingFacts::narrow_identity` (4 levels). `bound(X)` with an `if` on
+    an unnarrowed `X > 0` now infers `5..6` instead of `_`.
 - Tests
-  - [ ] `dependent.erl` rows for lifting, products, bound variables and
-    narrowing back to parameters.
+  - [x] `dependent.erl` rows for lifting, products, bound variables and
+    narrowing back to parameters. Evidence: dependent 19/19 (`shared`,
+    `plus_one`, `back`, `pair`, `twice`, `called`, `wide` past the budget,
+    `used(a) -> 1`), clauses 53/53 (`not_last(1) -> {one}; (_) -> {other}`);
+    fast CTest 232/232; check-quality clean.
 
 <a id="step-58n3"></a>
 

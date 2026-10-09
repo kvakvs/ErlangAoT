@@ -132,8 +132,8 @@ nested_case(X, Language) ->
             other
     end.
 
-%% A case that does not end the body does not split it.
-%% expect: not_last(_) -> {one | other}
+%% A case that does not end the body splits it through the values that depend on it.
+%% expect: not_last(1) -> {one}; (_) -> {other}
 not_last(X) ->
     Y =
         case X of
