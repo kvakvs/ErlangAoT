@@ -578,9 +578,26 @@ conflicts (Linux is the likely choice).
 Backlog: V02. Depends on: [57](#step-57), [67](#step-67).
 
 - Success criteria
-  - [ ] Process, scheduler and code-server stress tests report no races.
+  - [x] Process, scheduler and code-server stress tests report no races.
+    Evidence 2026-10-10: Linux x86-64, Debug `-fsanitize=thread`, compiler,
+    runtime and tests instrumented, linked programs through the `clang++`
+    wrapper (`build/plan11-wsl/sanitize.sh tsan`). The first full run reported
+    one lock-order inversion (204 reports, every port program):
+    `Executor::clear` destroyed the I/O service under the executor lock, and
+    that takes the I/O gate, which the I/O thread holds while it takes the
+    executor lock (a deadlock with Windows blocking readers). The services are
+    now destroyed after the lock. Out of scope: `runtime_lifecycle_failure`
+    and `runtime_heap_measurements` replace `operator new` (TSan defines it)
+    and the four injected host-refusal tests (TSan's allocator aborts).
 - Tests
-  - [ ] Step-56/57 stress tests under TSan, repeated.
+  - [x] Step-56/57 stress tests under TSan, repeated. Evidence: 15
+    concurrency tests (`runtime_{concurrency,processes,messages,timer_wheel,
+    code_lookup,portions,port_io}`, `executables_{wakeups,fairness,processes,
+    send,selective_receive,receive_after,links,monitors}`) five times each:
+    no report; full CTest under TSan 228/233 with `CLAUSE_TEST_TIMEOUT_SCALE=20`,
+    the rest out of scope plus `runtime_printing` over its 120 s limit (passes
+    alone in 79 s). Plain gates after the fix: Linux and Windows full CTest
+    235/235.
 
 <a id="step-69"></a>
 

@@ -479,6 +479,13 @@ void Executor::clear() noexcept {
     if (io) {
         io->close();
     }
+    // The services are destroyed after the lock (stopping one takes the I/O gate, which the I/O thread holds while it
+    // takes this lock), in member order reversed: I/O, sockets, then the reactor's io_context.
+    struct Services {
+        std::unique_ptr<Reactor> reactor;
+        std::unique_ptr<SocketService> sockets;
+        std::unique_ptr<IoService> io;
+    } services;
     const std::scoped_lock lock(mutex_);
     // The wheel links timers embedded in the schedules: unlink them while the schedules still exist.
     wheel_.clear();
@@ -494,11 +501,9 @@ void Executor::clear() noexcept {
     ending_.clear();
     stopped_.clear();
     names_.clear();
-    // Drivers go before the services, and the reactor's io_context last.
+    // Drivers go before the services.
     ports_.clear();
-    io_.reset();
-    sockets_.reset();
-    reactor_.reset();
+    services = {std::move(reactor_), std::move(sockets_), std::move(io_)};
     main_ = finished_ = nullptr;
     failed_ = false;
 }

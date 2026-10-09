@@ -509,3 +509,8 @@ Host and tool gotchas:
   linkage name); 32-bit `size >> 32` UB in packet framing; Executor::clear freed schedules before wheel_.clear();
   32-bit installer detection needs embedded manifest (/MANIFEST:EMBED); qemu-user posix_spawn never reports
   ENOENT; nested test consumers need CMAKE_CXX_COMPILER_TARGET forwarded. Goldens may mark runs word_bits 64.
+- 67-68 (2026-10-10): build/plan11-wsl/sanitize.sh asan|tsan (flags in CMAKE_*_FLAGS, clang/clang++ wrappers on PATH
+  for clau-linked programs, CLAUSE_TEST_TIMEOUT_SCALE 10/20). Sanitizers abort on impossible allocations (host-refusal
+  tests out of scope); TSan defines operator new (lifecycle_failure, heap_measurements don't link). TSan found
+  Executor::clear destroying IoService under the executor lock (gate lock-order inversion): services die after it.
+  One unexplained port_spawn os:cmd [] under ASan full load, never reproduced. Tidy runs on Windows only (user).

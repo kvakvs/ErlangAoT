@@ -154,6 +154,10 @@ never stand in for a whole-test pass.
   instrumented. The four injected host-refusal tests (`codegen_failure_*`,
   `runtime_lifecycle_failure`, `runtime_memory`) are outside ASan's scope:
   its `operator new` aborts on an impossible size instead of throwing.
+- ThreadSanitizer (plan 11 step 68): Linux x86-64, the same instrumentation
+  scope with `-fsanitize=thread`; full CTest and the concurrency tests five
+  times each report no race after the `Executor::clear` lock-order fix. Out of
+  scope as well: the two tests that replace `operator new`.
 - On Windows the prebuilt LLVM SDK still conflicts with instrumented code
   (`annotate_string` 0 vs 1).
 - Runtime-only ASan passes on Windows with Release probes,
@@ -236,6 +240,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-09 | Plan 11 step 64 32-bit: Windows x86 (WoW64, clang-cl) and Linux i386 (Debian 13 chroot, clang 19) | 42 + 65 goldens | — | Runtime/ABI tests 42/42 natively on both; `cross.py` goldens 65/65 on both (`integer_limit` 64-bit-only runs skipped) |
 | 2026-10-09 | Plan 11 step 65 Linux arm64 and armhf (Debian 13 sysroots, qemu-user 9.2) | 42 + 65 goldens | — | Runtime/ABI tests 42/42 each; goldens 64/65 each (`port_spawn` `enoent`: qemu `posix_spawn` gap), run limit 900 s |
 | 2026-10-10 | Plan 11 step 67 ASan + UBSan + LeakSanitizer (Linux x86-64) | 235 | — | No sanitizer report; four injected host-refusal tests outside ASan's scope; `CLAUSE_TEST_TIMEOUT_SCALE=10` |
+| 2026-10-10 | Plan 11 step 68 ThreadSanitizer (Linux x86-64) | 233 | — | One lock-order inversion fixed (`Executor::clear`); then no report in full CTest and 15 concurrency tests x5 |
 | 2026-10-06 | Plan 11 step 27E ERTS big integer limit, `error:system_limit` | 165 (161 fast) | 157 changed | Fast 161/161; full `-j 12` 165/165 in 130 s; Lizard 0 warnings; tidy passed; 21 executable goldens reproduce under OTP |
 | 2026-10-06 | Plan 11 step 27D no map size or key-work caps | 164 (160 fast) | 13 changed | Fast 160/160; full `-j 12` 164/164 in 115 s; after a tidy fix in `bit_order`, 35 affected tests pass; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |
