@@ -410,7 +410,7 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   attribution with deliberate enablement (runtime option `--profile FILE`).
 - **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [x] LTO modes
   preserving descriptors, startup and exports (`--lto`, LLD targets).
-- **F33 — Indexed code lookups** ([62A](11-plan.md#step-62a)): [ ] hash maps
+- **F33 — Indexed code lookups** ([62A](11-plan.md#step-62a)): [x] hash maps
   for module/function name lookups of dynamic calls and descriptor lookups,
   replacing the linear scans of `CodeServer`.
 

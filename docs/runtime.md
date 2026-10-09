@@ -116,6 +116,14 @@ auto fn = context.code_server().resolve({.module = "native_demo", .function = "i
 
 - A `ModuleRegistry` maps exact name/arity (≤ 255) to one all-`Term` callable.
   `load` freezes and publishes it; duplicates or failures publish nothing.
+- Registration also indexes generated modules' bindings in hash maps (plan
+  step 62A): module, record and fun descriptors to their bindings and
+  definitions, and `Module:Function/Arity` atom words to export frames. Dynamic
+  calls, `apply/3`, runtime `fun M:F/A` and descriptor lookups therefore take
+  constant expected time in the number of modules and exports (about 80 ns per
+  export lookup in Debug with 10 or 400 modules). The indexes are built inside
+  the registration: a rejected module adds no entry, and they change only under
+  the server's exclusive lock.
 - `resolve` distinguishes missing module and missing export. `ResolvedFunction`
   pins the module image; `call` checks arity, arguments and results, and turns
   host exceptions into failures.

@@ -5,6 +5,7 @@
 #include <compare>
 #include <memory>
 #include <shared_mutex>
+#include <unordered_map>
 
 namespace clause::runtime {
 enum class CodeError : std::uint8_t {
@@ -67,6 +68,11 @@ struct FunctionAtoms final {
     Word function = 0;
     std::size_t arity = 0;
     auto operator<=>(const FunctionAtoms &) const = default;
+};
+
+// Hash of a FunctionAtoms key for the export index.
+struct FunctionAtomsHash final {
+    std::size_t operator()(const FunctionAtoms &name) const noexcept;
 };
 
 // One exported function a dynamic call can enter, bound to runtime atoms.
@@ -207,12 +213,25 @@ class CodeServer final {
     const void *find_export(const FunctionAtoms &name) const noexcept;
     // Find an export's frame, else a builtin's.
     const void *find_function(const Term &module, const Term &function, std::size_t arity) const noexcept;
+    // Add a module's descriptor, records, funs and exports to the indexes; on failure remove them again and rethrow.
+    void index(const ModuleAtoms &atoms);
+    // Remove the index entries of a module that index() added.
+    void unindex(const ModuleAtoms &atoms) noexcept;
+    // Index a new module and add it to modules_; a failure leaves neither changed.
+    void publish(const std::shared_ptr<const LoadedModule> &module);
     // Guards modules_ and external_funs_: shared for lookups, exclusive for publication.
     mutable std::shared_mutex mutex_;
     // One registry per exact module spelling; no secondary BIF overload table exists.
     std::map<std::string, std::shared_ptr<const LoadedModule>, std::less<>> modules_;
     // External funs built from runtime operands, by module, function and arity; fun cells point at them.
     std::map<FunctionAtoms, std::unique_ptr<FunDefinition>> external_funs_;
+    // Indexes built at registration (plan step 62A), so lookups take constant expected time in the number of
+    // modules and exports: module descriptors to their bindings, record and fun descriptors to their definitions,
+    // and Module:Function/Arity atoms to export frames. Entries point into modules_, which never shrinks.
+    std::unordered_map<const void *, const ModuleAtoms *> modules_by_descriptor_;
+    std::unordered_map<const void *, const RecordDefinition *> records_;
+    std::unordered_map<const void *, const FunDefinition *> funs_;
+    std::unordered_map<FunctionAtoms, const void *, FunctionAtomsHash> exports_;
     // Registered once at runtime startup; external fun definitions may point at its frames.
     BuiltinRegistry builtins_;
 };

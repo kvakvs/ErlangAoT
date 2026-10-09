@@ -383,18 +383,28 @@ scans with hash maps built at registration: module atom word to its module,
 bindings.
 
 - Success criteria
-  - [ ] Dynamic call, apply/3 and runtime `fun M:F/A` lookups take constant
+  - [x] Dynamic call, apply/3 and runtime `fun M:F/A` lookups take constant
     expected time in the number of modules and exports; descriptor lookups
-    likewise.
-  - [ ] Maps are built inside the registration transaction (a failed
+    likewise. Evidence 2026-10-09: `CodeServer` keeps
+    `modules_by_descriptor_`, `records_`, `funs_` and `exports_`
+    (`FunctionAtoms` with `FunctionAtomsHash`); `find_atoms`, `find_fun`,
+    `record_definition` and `find_export` are single hash lookups.
+  - [x] Maps are built inside the registration transaction (a failed
     registration publishes none of them) and stay valid while modules stay
     registered; when the code server becomes concurrent (phase J), lookups
-    stay safe under its synchronization.
+    stay safe under its synchronization. Evidence: `load` indexes under the
+    exclusive lock before publishing and `unindex`es when indexing or
+    publication throws; entries point into never-removed modules; lookups
+    keep the shared lock.
 - Tests
-  - [ ] Existing goldens (`executables_dynamic_calls`, `runtime_funs`) pass
+  - [x] Existing goldens (`executables_dynamic_calls`, `runtime_funs`) pass
     unchanged; a focused runtime test registers many modules with many
     exports and checks lookups of present, missing and wrong-arity names.
-  - [ ] Lookup cost with many modules recorded descriptively, not gated.
+    Evidence: `runtime_code_lookup` (400 modules x 40 exports; records, funs,
+    atom slots; duplicate-name and reused-descriptor registrations index
+    nothing); dynamic_calls, fun_values, funs, records, concurrency pass.
+  - [x] Lookup cost with many modules recorded descriptively, not gated.
+    Evidence: 75.6 ns with 10 modules, 83.3 ns with 400 (Debug, Windows x64).
 
 <a id="step-62b"></a>
 

@@ -14,14 +14,62 @@ const ModuleRegistry &LoadedModule::functions() const noexcept { return *definit
 
 const ModuleAtoms *LoadedModule::atoms() const noexcept { return definition_.atoms.get(); }
 
-const ModuleAtoms *CodeServer::find_atoms(const void *descriptor) const noexcept {
-    for (const auto &[name, module] : modules_) {
-        const auto *atoms = module->atoms();
-        if (atoms && atoms->descriptor == descriptor) {
-            return atoms;
-        }
+std::size_t FunctionAtomsHash::operator()(const FunctionAtoms &name) const noexcept {
+    // Boost-style combination of the three word hashes.
+    auto seed = std::hash<Word>{}(name.module);
+    for (const auto part : {std::hash<Word>{}(name.function), std::hash<std::size_t>{}(name.arity)}) {
+        seed ^= part + 0x9e3779b9U + (seed << 6U) + (seed >> 2U);
     }
-    return nullptr;
+    return seed;
+}
+
+namespace {
+// The value `map` holds for `key`, or null.
+template <typename Map> auto found(const Map &map, const typename Map::key_type &key) noexcept {
+    const auto entry = map.find(key);
+    return entry == map.end() ? nullptr : entry->second;
+}
+} // namespace
+
+const ModuleAtoms *CodeServer::find_atoms(const void *descriptor) const noexcept {
+    return found(modules_by_descriptor_, descriptor);
+}
+
+void CodeServer::index(const ModuleAtoms &atoms) {
+    try {
+        modules_by_descriptor_.emplace(atoms.descriptor, &atoms);
+        for (const auto &record : atoms.records) {
+            records_.emplace(record.descriptor, &record);
+        }
+        for (const auto &fun : atoms.funs) {
+            funs_.emplace(fun.descriptor, &fun);
+        }
+        for (const auto &item : atoms.exports) {
+            exports_.emplace(FunctionAtoms{atoms.module, item.function, item.arity}, item.frame);
+        }
+    } catch (...) {
+        unindex(atoms);
+        throw;
+    }
+}
+
+void CodeServer::unindex(const ModuleAtoms &atoms) noexcept {
+    // Erase only entries of this module: a key another module holds is left alone.
+    const auto erase = [](auto &map, const auto &key, const auto *value) {
+        if (const auto entry = map.find(key); entry != map.end() && entry->second == value) {
+            map.erase(entry);
+        }
+    };
+    erase(modules_by_descriptor_, atoms.descriptor, &atoms);
+    for (const auto &record : atoms.records) {
+        erase(records_, record.descriptor, &record);
+    }
+    for (const auto &fun : atoms.funs) {
+        erase(funs_, fun.descriptor, &fun);
+    }
+    for (const auto &item : atoms.exports) {
+        erase(exports_, FunctionAtoms{atoms.module, item.function, item.arity}, item.frame);
+    }
 }
 
 TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot) const noexcept {
@@ -38,18 +86,7 @@ TermResult<Word> CodeServer::atom_word(const void *descriptor, std::size_t slot)
 
 const RecordDefinition *CodeServer::record_definition(const void *descriptor) const noexcept {
     const std::shared_lock lock(mutex_);
-    for (const auto &[name, module] : modules_) {
-        const auto *atoms = module->atoms();
-        if (!atoms) {
-            continue;
-        }
-        for (const auto &record : atoms->records) {
-            if (record.descriptor == descriptor) {
-                return &record;
-            }
-        }
-    }
-    return nullptr;
+    return found(records_, descriptor);
 }
 
 const FunDefinition *CodeServer::fun_definition(const void *descriptor) const noexcept {
@@ -57,40 +94,14 @@ const FunDefinition *CodeServer::fun_definition(const void *descriptor) const no
     return find_fun(descriptor);
 }
 
-const FunDefinition *CodeServer::find_fun(const void *descriptor) const noexcept {
-    for (const auto &[name, module] : modules_) {
-        const auto *atoms = module->atoms();
-        if (!atoms) {
-            continue;
-        }
-        for (const auto &fun : atoms->funs) {
-            if (fun.descriptor == descriptor) {
-                return &fun;
-            }
-        }
-    }
-    return nullptr;
-}
+const FunDefinition *CodeServer::find_fun(const void *descriptor) const noexcept { return found(funs_, descriptor); }
 
 const void *CodeServer::export_frame(const FunctionAtoms &name) const noexcept {
     const std::shared_lock lock(mutex_);
     return find_export(name);
 }
 
-const void *CodeServer::find_export(const FunctionAtoms &name) const noexcept {
-    for (const auto &[spelling, loaded] : modules_) {
-        const auto *atoms = loaded->atoms();
-        if (!atoms || atoms->module != name.module) {
-            continue;
-        }
-        for (const auto &item : atoms->exports) {
-            if (item.function == name.function && item.arity == name.arity) {
-                return item.frame;
-            }
-        }
-    }
-    return nullptr;
-}
+const void *CodeServer::find_export(const FunctionAtoms &name) const noexcept { return found(exports_, name); }
 
 const void *CodeServer::function_frame(const Term &module, const Term &function, std::size_t arity) const noexcept {
     const std::shared_lock lock(mutex_);
@@ -136,6 +147,21 @@ bool CodeServer::owns(const FunDefinition &definition) const noexcept {
     return found != external_funs_.end() && found->second.get() == &definition;
 }
 
+void CodeServer::publish(const std::shared_ptr<const LoadedModule> &module) {
+    const auto *atoms = module->atoms();
+    if (!atoms) {
+        modules_.emplace(module->name(), module);
+        return;
+    }
+    index(*atoms);
+    try {
+        modules_.emplace(module->name(), module);
+    } catch (...) {
+        unindex(*atoms);
+        throw;
+    }
+}
+
 CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinition &&definition) {
     if (definition.name.empty() || !definition.image || !definition.functions) {
         return std::unexpected(CodeError::invalid_module);
@@ -150,7 +176,7 @@ CodeResult<std::shared_ptr<const LoadedModule>> CodeServer::load(ModuleDefinitio
     try {
         auto module = std::shared_ptr<LoadedModule>(new LoadedModule(std::move(definition)));
         module->definition_.functions->freeze();
-        modules_.emplace(module->name(), module);
+        publish(module);
         return module;
     } catch (const std::bad_alloc &) {
         return std::unexpected(CodeError::resource_limit);
