@@ -106,9 +106,14 @@ void check_lto(const std::string &target) {
 std::vector<std::string> link_arguments(const LinkRequest &request, const std::filesystem::path &staged,
                                         std::vector<std::string> objects, const std::filesystem::path &runtime) {
     std::vector<std::string> arguments;
-    arguments.reserve(objects.size() + 7);
+    arguments.reserve(objects.size() + 8);
     arguments.insert(arguments.end(),
                      {"--driver-mode=g++", "--target=" + request.target_triple, "-o", utf8_path(staged)});
+    // An embedded manifest runs Windows programs as the invoking user; without one Windows asks to elevate 32-bit
+    // programs whose names look like installers (record_update.exe), and a separate manifest file would be left out.
+    if (llvm::Triple(request.target_triple).isWindowsMSVCEnvironment()) {
+        arguments.emplace_back("-Wl,/MANIFEST:EMBED");
+    }
     if (request.strip_unused) {
         std::ranges::move(strip_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
     }

@@ -29,6 +29,8 @@ def load(case_dir):
     assert golden.get('runs'), f'{case_dir.name}: golden needs at least one run'
     assert all(isinstance(count, int) and count > 0 for count in golden.get('workers', [])), case_dir.name
     assert all(isinstance(arg, str) for run in golden['runs'] for arg in run['args']), case_dir.name
+    # A run whose output holds on hosts of one word width only names it (the OTP oracle is a 64-bit host).
+    assert all(run.get('word_bits', 64) in (32, 64) for run in golden['runs']), f'{case_dir.name}: word_bits'
     # OTP never sees a run's environment, so only authored runs may set one.
     assert all(run.get('authored') for run in golden['runs'] if 'env' in run), f'{case_dir.name}: env needs authored'
     return golden

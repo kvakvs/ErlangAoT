@@ -24,7 +24,7 @@ TermError heap_error(HeapError error) {
 }
 
 // Every tuple arity fits the header's word count on 32-bit targets too.
-static_assert(MAX_TUPLE_ARITY <= static_cast<Word>(~Word{0}) >> detail::layout::BoxHeader::CONTENT_SHIFT);
+static_assert(MAX_TUPLE_ARITY <= detail::layout::BoxHeader::MAX_COUNT);
 
 // The ABI word of a tuple field given as a Term or as a word.
 Word word_of(const Term &value) { return value.word(); }

@@ -102,7 +102,7 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (step 63, 2026-10-09):
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-64, 2026-10-09):
 235 full-mode CTests; `check-quality-all` clean (338 units, headers now checked); Linux x86-64 235/235.
 
 ## Step overview
@@ -488,10 +488,25 @@ Backlog: V01. Depends on: [58](#step-58).
 Backlog: V01. Depends on: [63](#step-63).
 
 - Success criteria
-  - [ ] Same as step 63 with 32-bit word width; 28-bit small-integer boundaries
-    exercised natively.
+  - [x] Same as step 63 with 32-bit word width; 28-bit small-integer boundaries
+    exercised natively. Evidence 2026-10-09: no LLVM SDK exists for 32-bit
+    hosts, so `clau` stays x64 and the 32-bit side is the runtime: runtime-only
+    Debug builds run the runtime and ABI tests natively (Windows x86 under
+    WoW64 with clang-cl; Linux i386 in a Debian 13 chroot with its clang 19),
+    and `tests/compiler/executables/cross.py` links every golden with
+    `--target-triple` against that runtime ([other targets](../docs/validation.md#other-targets)).
+    Fixed: `{packet, 4}` framing shifted a 32-bit `size_t` by 32 (every write
+    failed); Windows x86 programs named like installers (`record_update.exe`)
+    asked for elevation (executables now embed an `asInvoker` manifest);
+    nested test builds lost `CMAKE_CXX_COMPILER_TARGET`. Goldens may mark a
+    run `word_bits: 64` (ERTS allows 32 more integer bits on 32-bit hosts).
 - Tests
-  - [ ] Full gate plus integer-boundary and fixture goldens.
+  - [x] Full gate plus integer-boundary and fixture goldens. Evidence: runtime
+    and ABI tests 42/42 on both (`runtime_immediate` with the native 28-bit
+    encoding, `abi_integers`); goldens 65/65 for `i686-pc-windows-msvc` and
+    `i686-unknown-linux-gnu` (`integer_limit` runs its 64-bit-only boundary
+    runs on 64-bit targets only). Header word counts (25 bits on 32-bit) bound
+    every producer by static assertion or a check (`BoxHeader::MAX_COUNT`).
 
 <a id="step-65"></a>
 

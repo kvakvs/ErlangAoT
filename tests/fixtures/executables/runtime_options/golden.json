@@ -127,10 +127,10 @@
     {
       "args": [
         "--max-heap",
-        "1000"
+        "900"
       ],
       "authored": true,
-      "stderr": "^clau: runtime failure: invalid --max-heap value '1000' \\(bytes, at least [0-9]+\\)\n$",
+      "stderr": "^clau: runtime failure: invalid --max-heap value '900' \\(bytes, at least [0-9]+\\)\n$",
       "exit_status": 70,
       "stdout": ""
     },

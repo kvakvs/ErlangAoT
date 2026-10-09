@@ -36,12 +36,14 @@ std::optional<std::vector<std::byte>> framed(const PortOptions &options, std::ve
         return bytes;
     }
     const auto header = options.packet_bytes;
-    if (header < sizeof(std::uint64_t) && bytes.size() >> (8 * header) != 0) {
+    // 64-bit arithmetic: on 32-bit targets a 4-byte header shifts a size_t by its whole width.
+    const auto size = static_cast<std::uint64_t>(bytes.size());
+    if (header < sizeof(std::uint64_t) && size >> (8 * header) != 0) {
         return std::nullopt;
     }
     std::vector<std::byte> result(header);
     for (std::size_t at = 0; at < header; ++at) {
-        result[header - 1 - at] = static_cast<std::byte>((bytes.size() >> (8 * at)) & 0xff);
+        result[header - 1 - at] = static_cast<std::byte>((size >> (8 * at)) & 0xff);
     }
     result.insert(result.end(), bytes.begin(), bytes.end());
     return result;

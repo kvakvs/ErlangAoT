@@ -6,6 +6,7 @@
       "args": [
         "limit"
       ],
+      "word_bits": 64,
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "1\n255\n{error,system_limit}\n{ok,true}\n{error,system_limit}\n{error,system_limit}\n{ok,true}\n{ok,1}\n{error,system_limit}\n{ok,3}\n{error,system_limit}\n{error,system_limit}\n{ok,0}\n"
@@ -14,6 +15,7 @@
       "args": [
         "guard"
       ],
+      "word_bits": 64,
       "stderr": "^$",
       "exit_status": 0,
       "stdout": "failed\nfits\nsecond\n"
@@ -30,6 +32,7 @@
       "args": [
         "extract"
       ],
+      "word_bits": 64,
       "authored": true,
       "stderr": "^$",
       "exit_status": 0,
@@ -39,6 +42,7 @@
       "args": [
         "uncaught"
       ],
+      "word_bits": 64,
       "stderr": "^uncaught exception error: system_limit\n$",
       "exit_status": 1,
       "stdout": ""

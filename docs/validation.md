@@ -73,6 +73,19 @@ only; other hosts build and run the tests. Step 63 ran it once on Linux, which
 found what the Windows run could not see (POSIX-only sources, libstdc++
 `std::optional`), and left it clean.
 
+### Other targets
+
+32-bit and ARM targets are checked without a compiler built for them (no LLVM
+SDK exists for those hosts):
+
+- A runtime-only build (`-DCLAUSE_BUILD_COMPILER=OFF -DBUILD_TESTING=ON`) for
+  the target runs the runtime and ABI tests there: natively, in a target
+  userland (chroot), or through the host's emulator (qemu binfmt).
+- `tests/compiler/executables/cross.py` runs every executable golden and
+  program fixture with this host's `clau`, `--target-triple`, that build's
+  runtime archive and a `--linker` that reaches the target's libraries
+  (`run.py --target-option` passes them through).
+
 ## Fixtures and provenance
 
 - Normal builds and tests need neither OTP nor its source checkout. Goldens were
@@ -127,8 +140,7 @@ never stand in for a whole-test pass.
 ## Platform and sanitizer status
 
 - Native generated-code execution: Windows x64; Linux x86-64 (plan 11
-  step 63).
-- 32-bit and ARM execution: pending (steps 64-65).
+  step 63). 32-bit and ARM results are in the history.
 - Apple Silicon: pending (step 66).
 - Compiler/frontend ASan, UBSan and LeakSanitizer: pending. The prebuilt Windows
   LLVM SDK conflicts with instrumented code (`annotate_string` 0 vs 1; earlier
@@ -211,6 +223,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-07 | Plan 11 step 34 named funs | 176 (172 fast) | 132 changed | Fast 172/172; full `-j 12` 176/176 in 152 s; Lizard 0 warnings; tidy passed |
 | 2026-10-07 | Plan 11 step 35 dynamic calls `M:F(Args)`, `apply/2,3`, runtime `fun M:F/A` (ABI 8) | 177 (173 fast) | 290 (analyzer config changed) | Fast 173/173; full `-j 12` 177/177 in 142 s; Lizard 0 warnings and tidy passed after one complexity and three tidy fixes |
 | 2026-10-09 | Plan 11 step 63 Linux x86-64 (WSL2 Ubuntu 25.04, glibc 2.41, LLVM 23.1.2 SDK clang, libstdc++ 14, GDB 16.2) | 235 | 338 | Full CTest 235/235 in 161 s; Lizard and clang-tidy clean (7 analyzer reports in Boost headers ignored); Windows gate 235/235 with headers checked |
+| 2026-10-09 | Plan 11 step 64 32-bit: Windows x86 (WoW64, clang-cl) and Linux i386 (Debian 13 chroot, clang 19) | 42 + 65 goldens | — | Runtime/ABI tests 42/42 natively on both; `cross.py` goldens 65/65 on both (`integer_limit` 64-bit-only runs skipped) |
 | 2026-10-06 | Plan 11 step 27E ERTS big integer limit, `error:system_limit` | 165 (161 fast) | 157 changed | Fast 161/161; full `-j 12` 165/165 in 130 s; Lizard 0 warnings; tidy passed; 21 executable goldens reproduce under OTP |
 | 2026-10-06 | Plan 11 step 27D no map size or key-work caps | 164 (160 fast) | 13 changed | Fast 160/160; full `-j 12` 164/164 in 115 s; after a tidy fix in `bit_order`, 35 affected tests pass; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |

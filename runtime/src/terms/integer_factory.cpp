@@ -7,6 +7,9 @@
 #include <stdexcept>
 
 namespace clause::runtime::detail {
+// The largest bignum (sign word and limbs of integer_bit_limit bits) fits a header count on both word widths.
+static_assert((integer_bit_limit + sizeof(Word) * 8 - 1) / (sizeof(Word) * 8) + 1 <= layout::BoxHeader::MAX_COUNT);
+
 TermResult<Term> IntegerAccess::make(ProcessHeap &heap, const Integer &value) {
     const auto bits = integer_bits(value);
     if (bits > integer_bit_limit) {

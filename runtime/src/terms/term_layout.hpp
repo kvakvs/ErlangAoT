@@ -24,6 +24,9 @@ struct alignas(Word) BoxHeader final {
     // Reserve low primary tag 00, then five kind bits, then the count of words AFTER this header.
     static constexpr unsigned BOXED_KIND_BITS = 5;
     static constexpr unsigned CONTENT_SHIFT = 2 + BOXED_KIND_BITS;
+    // The largest count of following words: 2^25 - 1 on 32-bit targets, 2^57 - 1 on 64-bit ones. Every producer's
+    // size limit stays within it (static assertions beside the tuple, bignum and map producers).
+    static constexpr std::size_t MAX_COUNT = static_cast<std::size_t>(~Word{0} >> CONTENT_SHIFT);
     // Future checked heap constructors encode this word; bitfields and union type-punning are forbidden.
     Word value_;
 

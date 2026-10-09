@@ -42,8 +42,9 @@ def generated_run(case, run, result):
         sys.exit(f'{case}: OTP wrote stderr for args {run["args"]}; author a "stderr" pattern for '
                  f'the Clause report:\n{result.stderr.decode(errors="replace")}')
     stdout = result.stdout.replace(b'\r\n', b'\n').decode('utf8')
-    stdin = {'stdin': run['stdin']} if 'stdin' in run else {}
-    return {'args': run['args'], **stdin, 'stderr': pattern or '^$', 'exit_status': result.returncode, 'stdout': stdout}
+    authored = {key: run[key] for key in ('stdin', 'word_bits') if key in run}
+    return {'args': run['args'], **authored, 'stderr': pattern or '^$', 'exit_status': result.returncode,
+            'stdout': stdout}
 
 
 def regenerate(escript, case_dir, work):

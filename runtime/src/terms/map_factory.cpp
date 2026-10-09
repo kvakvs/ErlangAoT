@@ -11,7 +11,7 @@
 namespace clause::runtime::detail {
 namespace {
 // Most entries a map header can count: key and value words; on 32-bit targets 2^24 - 1, on 64-bit beyond memory.
-constexpr std::size_t MAX_MAP_SIZE = (static_cast<Word>(~Word{0}) >> layout::BoxHeader::CONTENT_SHIFT) / 2;
+constexpr std::size_t MAX_MAP_SIZE = layout::BoxHeader::MAX_COUNT / 2;
 
 // A failed key comparison inside a sort, carried out of the comparator.
 struct OrderFailure final : std::exception {

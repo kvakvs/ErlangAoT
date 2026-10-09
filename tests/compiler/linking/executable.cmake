@@ -41,6 +41,14 @@ math(EXPR size_O2_aligned "${size_O2} + 4096")
 if(NOT size_Os LESS size_O0 OR size_Os GREATER size_O2_aligned)
     message(FATAL_ERROR "-Os executable is not smaller: O0=${size_O0} O2=${size_O2} Os=${size_Os}")
 endif()
+# Windows programs embed a manifest that runs them as the invoking user (32-bit installer detection otherwise asks
+# to elevate names like record_update.exe).
+if(HOST_SUFFIX STREQUAL ".exe")
+    file(STRINGS "${WORK}/demo-O2.exe" invoker REGEX "asInvoker")
+    if(NOT invoker)
+        message(FATAL_ERROR "demo-O2.exe has no embedded asInvoker manifest")
+    endif()
+endif()
 # Arguments and exit statuses reach the linked startup; escripts keep exit 127.
 file(MAKE_DIRECTORY "${WORK}/sub dir")
 compile(app 0 "^$" -O2 -o "sub dir/app" app.erl helper.erl)

@@ -26,7 +26,11 @@ parses from its first word:
 - **Header word** (primary tag `00`): bits 2–6 hold the `BoxedKind`, bits 7 and
   up the number of words that follow the header. A boxed term points at its
   header. The count covers every prefix, payload and padding word, so the walker
-  skips untraced payload without interpreting it.
+  skips untraced payload without interpreting it. It has 25 bits on 32-bit
+  targets (at most 33,554,431 words) and 57 on 64-bit ones
+  (`BoxHeader::MAX_COUNT`): the tuple arity limit (2^24 - 1) and the largest
+  bignum (131,072 words on 32-bit) fit by static assertion, maps check it
+  when built, and cons cells and fixed-size cells have no large count.
 - **Cons cell**: two term words (head, tail) with no header. A list term points
   at the head. A head is never a header because no term has tag `00`.
 - **Filler**: the all-zero word (kind `tuple`, count 0) is a one-word filler;
