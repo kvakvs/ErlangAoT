@@ -50,7 +50,9 @@
     either_range/1,
     loop_start/0,
     number_compare/1,
-    term_compare/1
+    term_compare/1,
+    head_pattern/1,
+    cons_case/1
 ]).
 
 -record(point, {x, y}).
@@ -261,3 +263,14 @@ number_compare(X) when is_number(X), X > 0 -> X.
 
 %% expect: term_compare(X) -> X
 term_compare(X) when X > 0 -> X.
+
+%% A list pattern with a head matches only nonempty lists.
+%% expect: head_pattern(nonempty_maybe_improper_list()) -> _
+head_pattern([H | _]) -> H.
+
+%% expect: cons_case([]) -> empty; (nonempty_maybe_improper_list()) -> cell
+cons_case(L) ->
+    case L of
+        [] -> empty;
+        [_ | _] -> cell
+    end.

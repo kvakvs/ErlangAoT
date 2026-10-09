@@ -446,7 +446,7 @@ User directions (keep):
   Then (user): 58J1 try/maybe values; 58K also splits case/if on arguments and gives funs function types; 58L
   matches fun calls and makes per-call fun evaluation clause-aware.
   2026-10-10 user direction: case/if/try-of values are dependent facts (fun of the narrowed variables), printed as
-  function types named $case_operator/$if_operator/$try_of_operator; steps 58N1-58N3.
+  function types named $case_of_operator/$if_operator/$try_of_operator; steps 58N1-58N3.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

@@ -134,7 +134,7 @@ struct Control {
     }
 
     std::string operator()(const ast::CaseExpression &value) const {
-        return "case " + printer.expression(value.value, {.indent = indent}) + " of\n" +
+        return "case " + printer.expression(value.value, {indent, true, true}) + " of\n" +
                branch_clauses(printer, value.clauses, indent + STEP) + '\n' + spaces(indent) + "end";
     }
 

@@ -72,6 +72,8 @@ class Lattice {
     Id plain(Id fact);
     // The list fact of `element` cells in front of `tail`.
     Id prepend(Id element, Id tail);
+    // The join of `element` cells in front of each member of a union tail.
+    Id prepend_members(Id element, std::span<const Id> members);
     // `prepend` in front of a named list category (or another named fact) `node`.
     Id prepend_named(Id element, const Node &node, Id tail);
     // A list of at least one `head` cell ending in a `tail` that is no list: nonempty_improper_list(Head, Tail).

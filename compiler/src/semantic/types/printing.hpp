@@ -37,7 +37,7 @@ struct DependentText {
     std::vector<FunctionText> types;
 };
 
-// `$case_operator(X :: 1) -> one; (X :: _) -> other`: each clause's parameter facts, named, and its result; a result
+// `$case_of_operator(X :: 1) -> one; (X :: _) -> other`: each clause's parameter facts, named, and its result; a result
 // known only as equal to an argument prints as that argument's name in `names`.
 std::string dependent_source(const Graph &graph, const DependentText &dependent, std::span<const std::string> names,
                              const RecordFields *records = nullptr);

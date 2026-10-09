@@ -174,7 +174,9 @@ Id cons(Lattice &lattice, const Cell &cell) {
         const auto list = view(lattice, member);
         switch (list.shape) {
         case ListView::Shape::unknown:
-            return lattice.graph().top();
+            // A cell in front of any tail is never empty, though it may end improperly.
+            results.push_back(lattice.category("nonempty_maybe_improper_list"));
+            break;
         case ListView::Shape::nil:
             results.push_back(lattice.list(head, true));
             break;

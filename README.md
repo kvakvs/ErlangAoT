@@ -331,7 +331,7 @@ clau --print-types answer.erl client.erl
 IR inspection allows both stages together and stops before object emission. Multiple
 snapshots are separate modules; use `--emit llvm-ir` for individual assembly files.
 Type inspection stops before LLVM and prints each module as source with inferred
-function signatures and `Expression :: Type` annotations. It accepts preprocessing/project/verbosity options, but rejects other
+function signatures and trailing `% Type` comments on each line's outermost expression. It accepts preprocessing/project/verbosity options, but rejects other
 actions, output destinations and backend policy. See [compilation options](docs/compile.md).
 
 `--verbose` prints `[pp] <filename>` for source files and resolved preprocessor

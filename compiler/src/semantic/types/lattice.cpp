@@ -925,8 +925,12 @@ Id Lattice::plain(Id fact) {
 
 Id Lattice::prepend(Id element, Id tail) {
     const auto node = graph_.get(tail);
-    if (tail == graph_.top() || tail == graph_.bottom() || node.kind == Kind::union_type) {
-        return tail == graph_.bottom() ? tail : graph_.top();
+    if (tail == graph_.top() || tail == graph_.bottom()) {
+        // A cell in front of any tail is never empty, though it may end improperly.
+        return tail == graph_.bottom() ? tail : category("nonempty_maybe_improper_list");
+    }
+    if (node.kind == Kind::union_type) {
+        return prepend_members(element, node.children);
     }
     if (node.kind == Kind::positional) {
         return prepend(element, plain(tail));
@@ -935,6 +939,15 @@ Id Lattice::prepend(Id element, Id tail) {
         return list(node.children.empty() ? element : join(element, node.children.front()), true);
     }
     return node.kind == Kind::application ? prepend_named(element, node, tail) : improper(element, tail);
+}
+
+Id Lattice::prepend_members(Id element, std::span<const Id> members) {
+    std::vector<Id> cells;
+    cells.reserve(members.size());
+    for (const auto member : members) {
+        cells.push_back(prepend(element, member));
+    }
+    return join(cells, 0);
 }
 
 Id Lattice::prepend_named(Id element, const Node &node, Id tail) {
@@ -946,8 +959,9 @@ Id Lattice::prepend_named(Id element, const Node &node, Id tail) {
     if (node.name == "nonempty_improper_list") {
         return improper(join(element, node.children.front()), node.children.back());
     }
-    // Any other list category leaves the shape unknown; a value that is no list ends an improper list.
-    return node.name.find("list") != std::string::npos ? graph_.top() : improper(element, tail);
+    // Any other list category leaves the shape unknown but nonempty; a value that is no list ends an improper list.
+    return node.name.find("list") != std::string::npos ? category("nonempty_maybe_improper_list")
+                                                       : improper(element, tail);
 }
 
 Id Lattice::nil() { return graph_.intern({Kind::list, "possibly_empty"}); }

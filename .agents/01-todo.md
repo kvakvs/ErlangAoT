@@ -2,7 +2,7 @@
 
 Stable feature owners for the remaining work (created 2026-09-30 from
 [outstanding work](00-finished.md#outstanding-work-to-finish), compacted
-2026-10-04). [Plan 11](11-plan.md) orders it into small steps. IDs are
+2026-10-04, synced with plan 11 on 2026-10-10). [Plan 11](11-plan.md) orders it into small steps. IDs are
 references, not priorities. Checked items are delivered scoped slices; parsed
 syntax, API sketches and placeholders do not count as support.
 
@@ -85,7 +85,7 @@ Plan: [8A](11-plan.md#step-8a), [8C](11-plan.md#step-8c),
   `out_of_memory`; opt-in per-process budgets fail after collection (27).
 - [x] Optional runtime-wide memory limit (uncapped by default) and
   program-facing caps `--max-heap`, `--max-stack`, `--max-memory` (27A).
-- [ ] `erlang:garbage_collect/0` with the builtins.
+- [x] `erlang:garbage_collect/0` with the builtins (docs/runtime.md).
 - [x] Stress with continuations and mailbox roots as they arrive (step 51:
   `executables_mailbox_collection`).
 - [ ] Optional later: generational old heap with minor collections.
@@ -194,7 +194,7 @@ Contract: [patterns](../docs/patterns.md).
 - [x] `catch`/`try` and `maybe` binding contexts (steps 12, 13, 16).
 - [x] List comprehension generators, filters and zip groups (step 21).
 - [x] Binary and map generators and producers (step 22).
-- [ ] Fun and receive contexts.
+- [x] Fun clause and receive clause contexts (steps 32–34, 46).
 
 ### F14 — Guards
 
@@ -398,15 +398,18 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   positional lists, joined map keys and records printed as records (58J); [x] try and maybe values (58J1); [x] per-clause function types (case/if
   branches on arguments and fun clauses included) and their printer (58K); [x] calls matched against function types, union fallback (58L); [x] callees re-analysed per call
   (58M); [x] dependent facts of case/if values, split at any depth (58N1); [x] carried through operations and
-  bindings (58N2); [x] tuple scrutinees and try ... of (58N3). Expectations: `tests/fixtures/inference/values.erl`,
-  `base_types.erl` and `narrowing.erl` (7 of 39 and 3 of 46 functions at their expected type on
-  2026-10-08; all 121, 46 and 51 on 2026-10-09), contradictions in `tests/fixtures/inference/contracts/`.
+  bindings (58N2); [x] tuple scrutinees and try ... of (58N3); [x] a list cell `[H | T]` is never empty
+  (`nonempty_maybe_improper_list()` for an unknown tail, in constructions and patterns); [x] `--print-types`
+  notes each line's outermost expression as a trailing `% Type` comment; [ ] a `case` on a variable that
+  itself depends on an argument splitting over that argument; [ ] optional report of calls no function type
+  admits. Expectations: `tests/fixtures/inference/` values 143, base_types 46, narrowing 53, clauses 53,
+  dependent 25 functions, all at their expected type; contradictions in `tests/fixtures/inference/contracts/`.
 - **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [x] remove
   real checks for new operations with generic fallback and existing caps
   (inferred proofs for arithmetic, tuple access and list loops at O2).
 - **F30 — Debug information** ([60](11-plan.md#step-60)): [x] LLVM debug
-  metadata mapped to Erlang source through macros/includes (`-g`; macOS
-  `dsymutil` and Linux GDB pending steps 66/63).
+  metadata mapped to Erlang source through macros/includes (`-g`; Linux GDB
+  verified in step 63; macOS `dsymutil` pending step 66).
 - **F31 — Profiling** ([61](11-plan.md#step-61)): [x] bounded-overhead cost
   attribution with deliberate enablement (runtime option `--profile FILE`).
 - **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [x] LTO modes
@@ -420,11 +423,13 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 Keep historical results with their original hosts and revisions.
 
 - **V01 — Native platform matrix** ([63](11-plan.md#step-63)–[66](11-plan.md#step-66)):
-  [ ] Linux x86/x64/ARM/AArch64, macOS Apple Silicon, Windows x86 builds,
-  quality and executable workflows at O0/O2.
+  [x] Linux x86-64 full gate (63); [x] 32-bit x86 runtime on Windows x86 and
+  Linux i386 with cross-linked goldens (64); [x] Linux AArch64 and 32-bit ARM
+  under qemu-user (65; `port_spawn` `enoent` gap under emulation); [ ] native
+  ARM hardware; [ ] macOS Apple Silicon (66).
 - **V02 — Compiler/frontend sanitizers** ([67](11-plan.md#step-67),
-  [68](11-plan.md#step-68)): [ ] ASan/UBSan/LSan with a compatible SDK, no
-  suppressions.
+  [68](11-plan.md#step-68)): [x] ASan/UBSan/LSan on Linux x86-64, no
+  suppressions (67); [x] TSan on the multi-worker runtime (68).
 - **V03 — Broader OTP compatibility** ([1](11-plan.md#step-1),
   [2](11-plan.md#step-2), [58](11-plan.md#step-58), [69](11-plan.md#step-69)):
   [x] pin refreshed and program fixtures goldened (steps 1–2); [x] program fixtures match their goldens as

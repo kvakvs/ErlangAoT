@@ -1,5 +1,5 @@
 """--print-types: each module printed as source with its declarations, inferred function signatures and
-`Expression :: Type` annotations, without entering LLVM lowering."""
+trailing `% Type` comments on each line's outermost expression, without entering LLVM lowering."""
 from pathlib import Path
 import re
 import shutil
@@ -57,10 +57,11 @@ for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, cha
 assert '-spec run() -> integer().\n%% declared: run() -> integer()\n%% inferred: run() -> 42\nrun() ->\n' in text
 assert '%% declared: id(T) -> T when T :: _\n%% inferred: id(X) -> X\n' in text
 assert '%% declared: value() -> integer()\n%% inferred: value() -> 42\n' in text
-assert '%% inferred: local() -> 7\nlocal() ->\n    id(7) :: 7.\n' in text
+assert '%% inferred: local() -> 7\nlocal() ->\n    id(7). % 7\n' in text
 assert '%% inferred: id(X) -> X\n' in text
 assert '%% inferred: projection(_, X) -> X\n' in text
-assert '    owner:id((owner:value() :: 42)) :: 42.\n' in text
+# Only the outermost expression of a line is noted, after the line's punctuation.
+assert '    owner:id(owner:value()). % 42\n' in text
 assert 'target datalayout' not in text and 'define i' not in text
 verbose = run('--verbose', *args)
 assert verbose.stdout == text and 'phase=inference' in verbose.stderr
@@ -93,9 +94,9 @@ for signature in ('pick(_) -> 7', 'same({_}) -> {_}; (X) -> X', 'mixed(1) -> 1; 
                   'bound(_) -> 5..6'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # The case value and the name its clauses bind depend on the variable they narrow, printed like a function type of
-# $case_operator.
-assert ('    end :: $case_operator(X :: 1) -> 5; (X :: _) -> 6,\n'
-        '    Y :: $case_operator(X :: 1) -> 5; (X :: _) -> 6.\n') in facts, facts
+# $case_of_operator.
+assert ('    end, % $case_of_operator(X :: 1) -> 5; (X :: _) -> 6\n'
+        '    Y. % $case_of_operator(X :: 1) -> 5; (X :: _) -> 6\n') in facts, facts
 
 # Recursive components iterate from none() to a fixed point; pending recursive calls add nothing to a join.
 (work / 'recursive.erl').write_text('''-module(recursive).
@@ -118,7 +119,7 @@ for signature in ('zero(0) -> 0; (_) -> 0', 'swap(A, 0) -> A; (_, _) -> _', 'for
                   'outer(0) -> 5; (_) -> 0'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
-assert '    odd((N - 1 :: number())) :: 0..1.\n' in facts, facts
+assert '    odd(N - 1). % 0..1\n' in facts, facts
 
 
 # A cycle of n functions gains one result member per round (docs/semantic.md#inference-domain): a cycle of 8, the

@@ -2,14 +2,16 @@
 #include <clause/compiler/printing.hpp>
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // Erlang source text of parsed syntax (docs/compile.md#source-printing): forms one after another, clauses and
 // block expressions on indented lines, everything else on one line. Parentheses come only from the syntax's own
 // groups, so the printed text parses back to the same tree.
 namespace clause::printing {
-// Where an expression is printed: its line indentation, and whether it is a whole body expression or may carry an
-// annotation at all (patterns and guards do not).
+// Where an expression is printed: its line indentation, whether it is the outermost expression of its lines (a
+// whole body expression or a case's scrutinee), which alone carries a note, and whether it may carry a note at all
+// (patterns and guards do not).
 struct Place {
     std::size_t indent = 0;
     bool statement = false;
@@ -46,6 +48,13 @@ class SourcePrinter final {
     const ast::Module &syntax_;
     const SourceNotes &notes_;
 };
+
+// The marks around a note inside printed text, moved to the end of its line by trailing_notes.
+inline constexpr char NOTE_START = '\x01';
+inline constexpr char NOTE_END = '\x02';
+// Text with each line's notes removed and the last one (its outermost expression's) written after the line as a
+// `% Note` comment.
+std::string trailing_notes(std::string_view text);
 
 // Spaces for an indentation level.
 inline std::string spaces(std::size_t indent) { return std::string(indent, ' '); }

@@ -157,7 +157,8 @@ Inference is separate from declared types and never trusts specs.
 - Containers (step 58D, `semantic/types/inference_containers`): a list
   `[E1, ..., En | T]` joins its elements in front of the tail's fact (a
   proper list when the tail is one, `nonempty_improper_list(H, T)` when it
-  is no list, `term()` when it is unknown); `++`, `--`, `hd/1`, `tl/1`,
+  is no list, `nonempty_maybe_improper_list()` when it is unknown or may be
+  improper: a cell is never empty, also in a pattern such as `[H | _]`); `++`, `--`, `hd/1`, `tl/1`,
   `element/2`, `setelement/3`, `tuple_to_list/1` and `map_get/2` read and
   rebuild element facts member by member of a union, a member that would
   raise adding nothing. A map update keeps exact keys (`:=` of a missing key
@@ -418,11 +419,11 @@ clause.
   term). `nested_case(X, L)` with `case X of 1 -> case L of spanish -> uno;
   _ -> one end; _ -> other end` infers `(1, spanish) -> uno; (1, _) -> one;
   (_, _) -> other`.
-- `--print-types` annotates a dependent value as a function type named by
+- `--print-types` notes a dependent value as a function type named by
   its construct, each input after its parameter's name:
-  `case X of 1 -> one; _ -> other end :: $case_operator(X :: 1) -> one;
-  (X :: _) -> other`; an `if` prints `$if_operator`, a `try ... of`
-  `$try_of_operator`.
+  `case X of 1 -> one; _ -> other end` ends in
+  `end. % $case_of_operator(X :: 1) -> one; (X :: _) -> other`; an `if`
+  prints `$if_operator`, a `try ... of` `$try_of_operator`.
 
 ### Inference domain
 
@@ -493,7 +494,7 @@ mixed(X) ->
             1;
         _ ->
             2
-    end :: $case_operator(X :: 1) -> 1; (X :: _) -> 2.
+    end. % $case_of_operator(X :: 1) -> 1; (X :: _) -> 2
 ```
 
 - A `%% module` line names the module, its source, the project target and
@@ -509,14 +510,16 @@ mixed(X) ->
   `f(integer()) -> integer(); (atom()) -> string()`
   (`semantic::types::function_source`). A `-spec` stays with the function right after
   it, set apart from other forms by a blank line.
-- Expressions whose fact says more than `term()` are annotated
-  `Expression :: Type` (a known type hides an argument relation, which shows
-  only for a value known as nothing else): in parentheses inside other
-  expressions, without them
-  for a whole body expression. Literal terms (literals, and tuples, lists,
-  constructed maps and bitstrings of literals) and matches are not annotated
-  (the right side of a match is). A dependent value prints like a function
-  type of its construct ([dependent facts](#dependent-facts)).
+- Each line's outermost expression (a body expression, or a `case`'s
+  scrutinee) whose fact says more than `term()` is noted with a trailing
+  `% Type` comment after the line's punctuation (a known type hides an
+  argument relation, which shows only for a value known as nothing else):
+  at most one note per line, none for the expressions nested in it, so the
+  output stays valid Erlang. A body expression on several lines carries its
+  note on its last line (`end, % ...`). Literal terms (literals, and tuples,
+  lists, constructed maps and bitstrings of literals) are not noted; a match
+  shows its value. A dependent value prints like a function type of its
+  construct ([dependent facts](#dependent-facts)).
 - A value inference proved equal to one of the function's arguments, and known
   as nothing more, prints as that argument's name, a type variable: the
   variable the first clause binding the whole argument gives it, else

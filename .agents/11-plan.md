@@ -121,18 +121,19 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2), [58J1](#step-58j1)), [58N1](#step-58n1)–[58N3](#step-58n3), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58N3](#step-58n3), [59](#step-59)–[62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
 ---
 
-## Completed steps 1–58M
+## Completed steps
 
 Each step's full text, criteria and evidence are in Git: the commit named
 here, and the plan as it stood there. Contracts in `docs/` hold the current
-behavior. Phases A–K are closed; L continues below.
+behavior. Phases A–L are closed; phase M continues with steps 66, 69 and 70
+below.
 
 | Step | Title | Commit |
 | --- | --- | --- |
@@ -247,397 +248,51 @@ behavior. Phases A–K are closed; L continues below.
 | <a id="step-58k"></a>58K | Keep per-clause function types and print them | `c7f52b6` |
 | <a id="step-58l"></a>58L | Match calls against function types | `01fbba5` |
 | <a id="step-58m"></a>58M | Re-analyse callees for each call | `06042fa` |
+| <a id="step-58n1"></a>58N1 | Keep dependent facts of case and if | `e63e14c` |
+| <a id="step-58n2"></a>58N2 | Carry dependent facts through operations and bindings | `60a5dd4` |
+| <a id="step-58n3"></a>58N3 | Dependent facts of tuple scrutinees and try ... of | `175b545` |
+| <a id="step-59"></a>59 | Make specialization remove real source checks | `8a5ace2` |
+| <a id="step-60"></a>60 | Emit source-level debug information | `116cff1` |
+| <a id="step-61"></a>61 | Add opt-in profiling | `ecb8de5` |
+| <a id="step-62"></a>62 | Integrate link-time optimization | `5ec3645` |
+| <a id="step-62a"></a>62A | Index code server lookups with hash maps | `aa0198b` |
+| <a id="step-62b"></a>62B | Keep receive timers in a timer wheel | `eccd7c4` |
+| <a id="step-63"></a>63 | Validate on Linux x86-64 | `5948a44` |
+| <a id="step-64"></a>64 | Validate 32-bit x86 (Windows x86 and Linux x86) | `9eef9cc` |
+| <a id="step-65"></a>65 | Validate Linux AArch64 and 32-bit ARM | `ab5943b` |
+| <a id="step-67"></a>67 | Run compiler and frontend sanitizers | `58b3243` |
+| <a id="step-68"></a>68 | Run ThreadSanitizer on the multi-worker runtime | `9679aea` |
 
-## L. Optimization and tooling
+### Notes kept from completed steps
 
-Inference series 58A–58M (added 2026-10-08/09 by user direction, completed
-2026-10-09): the fact domain, literal, operator, container and fun facts,
-local inputs from callers, narrowing by patterns, guards, uses and integer
-comparisons with entry and success domains, specification contradictions as
-errors, try/maybe values, per-clause function types, call selection and
-per-call re-analysis. The contract is
-[semantic analysis](../docs/semantic.md#inference) (domain budgets in
-[inference domain](../docs/semantic.md#inference-domain)); expectations are
-`tests/fixtures/inference/` (values 141, base_types 46, narrowing 51,
-clauses 53 functions, 13 contract fixtures), all at their `expect:` types.
-Facts stay sound: specialization (step 59) may rely only on proven facts and
-the union summaries; every widening, budget or unknown construct yields
-`term()`. Not done: the optional 58L report of a call no inferred function
-type can enter (specification checks still compare overloads only).
-
-Dependent facts 58N1–58N3 (added 2026-10-10 by user direction, completed
-the same day; expectations `tests/fixtures/inference/dependent.erl`, 25
-functions): a `case`,
-`if` or `try ... of` behaves like a fun of the variables its clauses narrow,
-applied to them. Its value keeps one function type per possible clause (the
-variables' facts entering the clause and its result) beside the erased union
-every other consumer reads, prints like a function type named
-`$case_operator`, `$if_operator` or `$try_of_operator`, and resolves against
-the variables' facts where it is read.
-
-<a id="step-58n1"></a>
-
-### 58N1. Keep dependent facts of case and if
-
-Backlog: F34. Depends on: [58K](#step-58k), [58L](#step-58l).
-
-- A `case` or `if` value is a dependent fact: its parameters are the
-  variables bound before it that its scrutinee and guards read, each clause
-  keeps their facts after its pattern and guard (exact like 58L), and its
-  result. A clause result that is itself dependent flattens into the
-  parameters' product. Budgets: 4 parameters, 8 function types (58K merge).
-- Reading a variable bound to a dependent fact keeps the clauses its
-  parameters' current facts select (58L order, exact clauses stop), and
-  narrows the fact to their results.
-- A function clause whose result is dependent on its arguments splits into
-  one function type per dependent clause, at any depth; this replaces the
-  one-level split of a trailing `case`/`if` (58K).
-- `--print-types` annotates dependent values as
-  `$case_operator(X :: 1) -> one; (X :: _) -> other`.
-- Success criteria
-  - [x] `nested_case` infers `(1, spanish) -> uno; (1, _) -> one;
-    (_, _) -> other`; `Y = case X of 1 -> one; _ -> other end, Y` infers
-    `(1) -> one; (_) -> other` through the read; earlier expectations stay.
-    Evidence 2026-10-10: `semantic/types/dependent` (`record_key` at each
-    clause's guarded step, `dependent_value` for case/if values with nested
-    flattening and pruning, `resolved` on every variable read,
-    `clause_types` replacing the 58K trailing-branch split); `Fact::type`
-    stays the erased join, so specialization and contracts are unchanged.
-    Changed expectations: `nested_case` splits; `different_funs` now
-    scrutinizes `X > 0` to keep testing a fun join (a read of `F` splits
-    otherwise); `pick(_) -> 7` no longer splits into equal results.
-- Tests
-  - [x] `tests/fixtures/inference/dependent.erl` rows for nesting, reads
-    after narrowing, non-argument parameters, the parameter and type
-    budgets; `type_inspection.py` checks the printed annotation. Evidence:
-    dependent 11 rows (10 at expect, `used` waits for 58N2), clauses 53/53,
-    values 141/141, narrowing 51/51, base_types 46/46; fast CTest 232/232;
-    check-quality clean (all 339 tidy units).
-
-<a id="step-58n2"></a>
-
-### 58N2. Carry dependent facts through operations and bindings
-
-Backlog: F34. Depends on: [58N1](#step-58n1).
-
-- Operators, builtins, containers and calls of batch functions evaluate
-  once per clause of a dependent operand (two different dependent operands:
-  their product within the type budget), keeping a dependent result.
-- A variable bound by several clauses of a `case` or `if` (stays `term()`
-  today) becomes dependent on the construct's parameters.
-- Narrowing a dependent variable drops the clauses whose results no longer
-  meet it and narrows the parameters to the join of the kept clauses'
-  inputs.
-- Success criteria
-  - [x] `shared(X) -> case X of 1 -> Y = 5; _ -> Y = 6 end, Y` infers
-    `(1) -> 5; (_) -> 6`; `not_last` infers `(1) -> {one}; (_) -> {other}`;
-    `R = case X of a -> 1; b -> 2 end, R + 1` infers
-    `(a) -> 2; (b) -> 3`; `case R of 1 -> X end` sees `X` as `a`.
-    Evidence 2026-10-10: `dependent::lifted` (operations, constructions and
-    batch calls via `inference.cpp` `lift`, operand facts substituted per
-    combination, 16 at most), `record_exit`/`export_dependents` (exported
-    variables, now published in every clause and joined by `close`;
-    `complete` keeps a dependence both sides share), `implied` in
-    `BindingFacts::narrow_identity` (4 levels). `bound(X)` with an `if` on
-    an unnarrowed `X > 0` now infers `5..6` instead of `_`.
-- Tests
-  - [x] `dependent.erl` rows for lifting, products, bound variables and
-    narrowing back to parameters. Evidence: dependent 19/19 (`shared`,
-    `plus_one`, `back`, `pair`, `twice`, `called`, `wide` past the budget,
-    `used(a) -> 1`), clauses 53/53 (`not_last(1) -> {one}; (_) -> {other}`);
-    fast CTest 232/232; check-quality clean.
-
-<a id="step-58n3"></a>
-
-### 58N3. Dependent facts of tuple scrutinees and try ... of
-
-Backlog: F34. Depends on: [58N2](#step-58n2).
-
-- A `case` on a tuple of variables narrows each variable by its element
-  (`case {X, Y} of {1, _} -> ...`) and depends on them.
-- A `try ... of` depends on its body's value like a `case`; catch clauses
-  can follow any value, so their results join into every clause.
-- `receive` and `maybe ... else` stay unions: their clauses match a message
-  or a failed value nothing outside can name (recorded in
-  `docs/semantic.md`).
-- Success criteria
-  - [x] `case {X, Y} of {1, a} -> one; _ -> other end` on arguments infers
-    `(1, a) -> one; (_, _) -> other`; a `try X of` splits like a case.
-    Evidence 2026-10-10: `inference_scopes` `narrow_scrutinee` (tuple
-    elements) and `element_pairs` in `relate` (tuple pattern variables
-    linked to scrutinee elements); `dependent` `matching_clauses`,
-    `scrutinee_of`, `keyed_count` (case, if, try `of` clauses),
-    `parameter_scrutinee` for exactness, `handled` joining catch values into
-    every `of` clause; `receive`/`maybe` documented as unions.
-- Tests
-  - [x] `dependent.erl` rows for tuple scrutinees, `try ... of` with and
-    without catch clauses, and `receive` staying a union. Evidence:
-    dependent 25/25 (`tuple_case`, `tuple_bound`, `try_plain`, `try_caught`,
-    `try_tuple`, `received`); fast CTest 232/232; check-quality clean.
-
-<a id="step-59"></a>
-
-### 59. Make specialization remove real source checks
-
-Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g); benefits from [58L](#step-58l) and [58M](#step-58m).
-
-- Success criteria
-  - [x] Proven profiles remove tag/shape checks in new operations (arithmetic,
-    tuple access, list loops) with generic fallback and existing limits.
-    Evidence 2026-10-09: `codegen/proofs` (facts of caller-joined arguments and
-    expressions: small ranges, tuple arity, list shape) and `lowering_proofs`
-    at O2 with specialization: proven `+ - *` skip tag tests and, with a
-    fitting result range, the overflow fallback; tuple and list patterns skip
-    proven shape tests, read elements/head/tail inline after a proof or a
-    dominating shape test (stored to root slots); immediate literals compare
-    words; proven list generators walk inline. Unproven operands keep the
-    generic service path. Variants: profiles accept small ranges, argument tag
-    tests are found anywhere; limits unchanged (source variants still rarely
-    fit 2x).
-- Tests
-  - [x] Same goldens pass with specialization on/off; code size and compile
-    time recorded descriptively, not gated. Evidence: new
-    `executables_proofs` (OTP golden) and `codegen_proofs` (no
-    inspect/immediate/exact services left in proven functions, generic ones
-    keep them); fast mode now runs O2 with specialization; full-mode
-    executables/programs 67/67 (many_ports timed out once under load, passes
-    alone); `codegen_measurements` records proven reads and drops the
-    byte-identity assertion. The wakeups golden caught inline reads held in
-    raw spill slots across a collection: fixed by rooting them.
-
-<a id="step-60"></a>
-
-### 60. Emit source-level debug information
-
-Backlog: F30. Depends on: [58](#step-58).
-
-- Success criteria
-  - [x] Executables carry line tables through macros/includes; a debugger
-    breaks on an Erlang line and shows the Erlang call stack. Evidence
-    2026-10-09: `-g` (request `debug_info`: CodeView module flag on MSVC
-    targets, DWARF 5 elsewhere, existing line-only scopes named by Erlang
-    functions in their declaring files, macro code at its invocation); link
-    adds `-g` and `/PDBALTPATH:%_PDB%`, the PDB is published beside the
-    executable. The Erlang stack comes from the runtime helper
-    `clause::runtime::debug_erlang_stack()` (frames of the thread's running
-    process), since tail transfers leave only the current function natively.
-    Gap: Mach-O needs `dsymutil` (not run; docs/debugging.md).
-- Tests
-  - [x] Scripted debugger session (LLDB/GDB where available) on a golden
-    program; line-table inspection test runs everywhere. Evidence:
-    `linking_debugger` (LLDB 23 on Windows x64, O0/O2: stops at
-    `twice at debug.hrl:5` and `leaf at debug.erl:8`, helper prints
-    `debug:twice/1`/`debug:leaf/1` above `debug:middle/1`, `debug:main/1`;
-    skips with 77 without a debugger; GDB path unexercised until step 63);
-    `linking_debug_info` (6 targets, IR scopes/lines incl. macro in the
-    include, object sections with and without `-g`, O0/O2).
-
-<a id="step-61"></a>
-
-### 61. Add opt-in profiling
-
-Backlog: F31. Depends on: [58](#step-58).
-
-- Success criteria
-  - [x] An opt-in mode attributes time/reductions per function and per
-    process; disabled mode leaves output and artifacts unchanged. Evidence
-    2026-10-09: runtime option `--profile FILE` (also `CLAUSE_FLAGS`);
-    `ProcessStack` keeps a `detail::ProcessProfile` (entries at every
-    function entry, self time between transfers: entry, return, slice
-    start/end) merged into `RuntimeProfile` with its pid when the context is
-    destroyed; startup writes the report (docs/profiling.md). No compiler or
-    generated-code change, so artifacts are identical by construction;
-    disabled stacks cost one branch per transfer.
-- Tests
-  - [x] Profile a known hot function in a golden program and check it ranks
-    first; byte-identical artifacts when disabled. Evidence:
-    `linking_profiling` (O0/O2): `profile:spin/2` first by self time with
-    exactly 2,000,001 entries, spinning process first; stdout/exit/no files
-    identical with and without profiling (CLI and `CLAUSE_FLAGS`); about 8%
-    overhead on that loop.
-
-<a id="step-62"></a>
-
-### 62. Integrate link-time optimization
-
-Backlog: F32. Depends on: [7](#step-7), [58](#step-58).
-
-- Success criteria
-  - [x] An `--lto` option links bitcode with descriptors, exports and startup
-    intact on supported toolchains; unsupported targets report it. Evidence
-    2026-10-09: `--lto` sets the in-memory output kind to bitcode (modules and
-    startup) and links with `-flto -fuse-ld=lld`; Windows MSVC and ELF targets
-    only (`check_lto` before runtime lookup: "--lto is not supported for
-    target ..."); without an executable output it is a usage error.
-- Tests
-  - [x] Fixture goldens pass with LTO; size/build time recorded. Evidence:
-    `linking_lto` runs the six program fixtures and eight executable goldens
-    (demo, proofs, closures, dynamic_calls, try_catch, native_records,
-    selective_receive, tail_calls) under `-O2 --lto`, positional and
-    project: all pass; `lto.json` records the demo at 2,266,112 bytes either
-    way (Debug runtime dominates; .text 0x18d866 vs 0x18d916) and link
-    0.18 s vs 0.22 s; macOS target, missing `-o` and `--emit` are refused.
-
-<a id="step-62a"></a>
-
-### 62A. Index code server lookups with hash maps
-
-Backlog: F33. Depends on: [35](#step-35); independent of the other phase L
-steps, so it may move earlier. Added 2026-10-07 after step 35.
-
-`CodeServer::export_frame` (dynamic calls, runtime `fun M:F/A`) scans every
-registered module and then its export list; `fun_definition`,
-`record_definition` and `atom_word` scan modules by descriptor. Replace the
-scans with hash maps built at registration: module atom word to its module,
-`(function atom, arity)` to the export frame, and descriptor address to its
-bindings.
-
-- Success criteria
-  - [x] Dynamic call, apply/3 and runtime `fun M:F/A` lookups take constant
-    expected time in the number of modules and exports; descriptor lookups
-    likewise. Evidence 2026-10-09: `CodeServer` keeps
-    `modules_by_descriptor_`, `records_`, `funs_` and `exports_`
-    (`FunctionAtoms` with `FunctionAtomsHash`); `find_atoms`, `find_fun`,
-    `record_definition` and `find_export` are single hash lookups.
-  - [x] Maps are built inside the registration transaction (a failed
-    registration publishes none of them) and stay valid while modules stay
-    registered; when the code server becomes concurrent (phase J), lookups
-    stay safe under its synchronization. Evidence: `load` indexes under the
-    exclusive lock before publishing and `unindex`es when indexing or
-    publication throws; entries point into never-removed modules; lookups
-    keep the shared lock.
-- Tests
-  - [x] Existing goldens (`executables_dynamic_calls`, `runtime_funs`) pass
-    unchanged; a focused runtime test registers many modules with many
-    exports and checks lookups of present, missing and wrong-arity names.
-    Evidence: `runtime_code_lookup` (400 modules x 40 exports; records, funs,
-    atom slots; duplicate-name and reused-descriptor registrations index
-    nothing); dynamic_calls, fun_values, funs, records, concurrency pass.
-  - [x] Lookup cost with many modules recorded descriptively, not gated.
-    Evidence: 75.6 ns with 10 modules, 83.3 ns with 400 (Debug, Windows x64).
-
-<a id="step-62b"></a>
-
-### 62B. Keep receive timers in a timer wheel
-
-Backlog: F23, F25. Depends on: [47](#step-47), [57](#step-57). Added
-2026-10-08 during step 47 (user request).
-
-Step 47 keeps one ordered map of deadlines and reads the monotonic clock
-before every time slice to find expired receive timeouts. Replace it with a
-runtime timer wheel (hashed, hierarchical slots of millisecond ticks, as ERTS
-`erl_time_sup`/`erl_hl_timer` do): arming and cancelling a timer is constant
-time, the scheduler advances the wheel from a coarse clock reading taken at
-most once per tick (not per slice), and only the slots whose time has come
-are consulted when a scheduled timer must fire; waiting processes are never
-scanned for deadlines.
-
-- Success criteria
-  - [x] Arming, cancelling (a message arrives first) and firing timers cost
-    constant expected time per timer; the clock is read at most once per tick
-    while processes run, and an idle scheduler sleeps exactly until the next
-    occupied slot. Evidence 2026-10-09: `scheduler/timer_wheel` (6 levels x 64
-    slots of 1 ms, occupancy bitmaps, intrusive node in `Schedule::timer`);
-    workers no longer call `expire()` per slice; one timer thread per
-    `run()` waits until the next occupied slot (`TimerWheel::next`), reads the
-    clock once per wake and advances; idle workers wait for queued work only.
-  - [x] Timeouts never fire early and fire within one tick of their deadline;
-    `after 0`, `infinity` and the 0..4294967295 range keep their step-47
-    behavior; with multiple workers (phase J) each worker's wheel, or a shared
-    one under its synchronization, keeps these guarantees. Evidence: deadlines
-    round up to ticks (`tick_of`), a past tick fires at the next one; one
-    wheel shared under the executor mutex; receive.cpp unchanged. "Within one
-    tick" is bounded by the host's timed-wait resolution (documented).
-- Tests
-  - [x] Existing goldens (`executables_receive_after`,
-    `executables_selective_receive`) pass unchanged; a focused runtime test arms
-    many timers, cancels most, and checks firing order and that cancelled ones
-    never fire; clock readings per slice recorded descriptively, not gated.
-    Evidence: both goldens, wakeups, processes, monitors, links, send pass;
-    `runtime_timer_wheel` (20,000 timers to 2^32 ticks, 90% cancelled, uneven
-    advances, edge ticks); `--profile` header: wakeups 64 clock readings for
-    2,046 slices (68/1,745 with one worker). Phase L close: full CTest
-    235/235 and `check-quality-all` clean; `linking_debugger` retries a
-    session only when lldb-server itself crashes (seen once under full load).
+- Inference 58A–58N3 (user direction 2026-10-08/10): contract
+  [semantic analysis](../docs/semantic.md#inference), domain budgets in
+  [inference domain](../docs/semantic.md#inference-domain), dependent facts
+  of `case`/`if`/`try ... of` in
+  [dependent facts](../docs/semantic.md#dependent-facts) (printed as
+  `$case_of_operator`, `$if_operator`, `$try_of_operator`). Expectations
+  `tests/fixtures/inference/` (values 143, base_types 46, narrowing 53,
+  clauses 53, dependent 25 functions, 13 contract fixtures). Facts stay
+  sound: specialization reads only proven facts and the erased union
+  summaries. Not done: the optional 58L report of a call no inferred
+  function type can enter; a `case` on a variable that itself depends on an
+  argument does not split over that argument.
+- 59: proofs at O2 with specialization only; source variants still rarely
+  fit the 2x size limit.
+- 60: Mach-O needs `dsymutil` (not run; step 66, docs/debugging.md).
+- 62: `--lto` on Windows MSVC and ELF targets only.
+- 62B: "within one tick" is bounded by the host's timed-wait resolution.
+- 63: clang-tidy runs on the Windows host only (user); `cmake/tidy_filter.py`
+  ignores Boost `cpp_int` analyzer reports (user decision).
+- 64: no 32-bit LLVM SDK, so `clau` stays x64 and 32-bit coverage is the
+  runtime plus cross-linked goldens (`cross.py`).
+- 65: ARM ran under qemu-user only; qemu's `posix_spawn` never reports a
+  missing program (`port_spawn` `enoent` fails there). Native ARM is open.
+- 67/68: ASan/UBSan/LSan and TSan on Linux x86-64 found and fixed one
+  shutdown use-after-free and one lock-order inversion; injected
+  host-refusal tests and allocator-replacing tests are out of scope.
 
 ## M. Validation closure
-
-<a id="step-63"></a>
-
-### 63. Validate on Linux x86-64
-
-Backlog: V01. Depends on: [58](#step-58).
-
-- Success criteria
-  - [x] Fresh build, full gate and executable goldens pass; versions and counts
-    published in `docs/validation.md`. Evidence 2026-10-09: WSL2 Ubuntu 25.04
-    (kernel 6.6.87, glibc 2.41), LLVM 23.1.2 Linux SDK clang as host compiler,
-    libstdc++ 14, CMake 3.31, GDB 16.2. Fixed for Linux: three missing
-    standard includes and a vector range insert only the MSVC STL accepted;
-    GDB named frames by symbol (a `LineTablesOnly` unit loses its subprograms
-    in DWARF: units are `FullDebug` now, without linkage names); `debugger.py`
-    passes over a debugger that cannot start. Lizard clean; clang-tidy
-    revealed findings the Windows gate never reported (its header filter did
-    not match backslash paths; libstdc++ optional/POSIX-only code): all fixed;
-    by user decision `cmake/tidy_filter.py` ignores analyzer reports located in
-    Boost (`cpp_int` limb-storage false positives) and exception-escape ignores
-    MSVC's `bad_array_new_length` (map/set moves). Also fixed: a shutdown
-    use-after-free (`Executor::clear` freed timers before unlinking the wheel)
-    and a test destroying a process the executor still scheduled. Tidy runs on
-    the Windows host only from now on (user).
-- Tests
-  - [x] Full gate plus fixture projects at O0/O2. Evidence: full CTest
-    235/235 (161 s, 16 slots), including every executable golden and program
-    fixture over the eight-combination matrix. The release SDK's `ld.lld`
-    needs Ubuntu 22.04's ICU 70 (private `LD_LIBRARY_PATH` for `linking_lto`).
-
-<a id="step-64"></a>
-
-### 64. Validate 32-bit x86 (Windows x86 and Linux x86)
-
-Backlog: V01. Depends on: [63](#step-63).
-
-- Success criteria
-  - [x] Same as step 63 with 32-bit word width; 28-bit small-integer boundaries
-    exercised natively. Evidence 2026-10-09: no LLVM SDK exists for 32-bit
-    hosts, so `clau` stays x64 and the 32-bit side is the runtime: runtime-only
-    Debug builds run the runtime and ABI tests natively (Windows x86 under
-    WoW64 with clang-cl; Linux i386 in a Debian 13 chroot with its clang 19),
-    and `tests/compiler/executables/cross.py` links every golden with
-    `--target-triple` against that runtime ([other targets](../docs/validation.md#other-targets)).
-    Fixed: `{packet, 4}` framing shifted a 32-bit `size_t` by 32 (every write
-    failed); Windows x86 programs named like installers (`record_update.exe`)
-    asked for elevation (executables now embed an `asInvoker` manifest);
-    nested test builds lost `CMAKE_CXX_COMPILER_TARGET`. Goldens may mark a
-    run `word_bits: 64` (ERTS allows 32 more integer bits on 32-bit hosts).
-- Tests
-  - [x] Full gate plus integer-boundary and fixture goldens. Evidence: runtime
-    and ABI tests 42/42 on both (`runtime_immediate` with the native 28-bit
-    encoding, `abi_integers`); goldens 65/65 for `i686-pc-windows-msvc` and
-    `i686-unknown-linux-gnu` (`integer_limit` runs its 64-bit-only boundary
-    runs on 64-bit targets only). Header word counts (25 bits on 32-bit) bound
-    every producer by static assertion or a check (`BoxHeader::MAX_COUNT`).
-
-<a id="step-65"></a>
-
-### 65. Validate Linux AArch64 and 32-bit ARM
-
-Backlog: V01. Depends on: [63](#step-63).
-
-- Success criteria
-  - [x] Same as step 63 on each architecture, or the missing runner recorded
-    as a gap. Evidence 2026-10-09: no ARM hardware; Debian 13 arm64/armhf
-    sysroots, runtimes cross-built by the host's clang 23 and run under
-    qemu-user 9.2 (binfmt). Gap: qemu-user's `posix_spawn` never reports a
-    missing program, so `port_spawn`'s `enoent` run fails there (a C probe
-    returns 0 under qemu, 2 natively). Native ARM runs remain open (the
-    Apple Silicon host of step 66 covers arm64 natively for macOS).
-- Tests
-  - [x] Full gate plus fixture goldens per architecture. Evidence: runtime and
-    ABI tests 42/42 on arm64 and armhf (`runtime_printing` exceeds its 120 s
-    limit under emulation and passes alone in 173 s); goldens 64/65 on each,
-    all but `port_spawn`, with `cross.py --run-timeout 900` for the CPU-bound
-    cases.
 
 <a id="step-66"></a>
 
@@ -649,65 +304,6 @@ Backlog: V01. Depends on: [63](#step-63).
   - [ ] Same as step 63 on macOS arm64.
 - Tests
   - [ ] Full gate plus fixture goldens.
-
-<a id="step-67"></a>
-
-### 67. Run compiler and frontend sanitizers
-
-Backlog: V02. Depends on: [63](#step-63).
-
-Use a host/SDK combination without the recorded MSVC annotation and allocator
-conflicts (Linux is the likely choice).
-
-- Success criteria
-  - [x] Full compiler+runtime ASan, UBSan and LeakSanitizer runs pass; findings
-    are fixed, not suppressed; instrumentation scope is documented. Evidence
-    2026-10-09: Linux x86-64 (WSL2), one combined Debug configuration
-    `-fsanitize=address,undefined -fno-sanitize=vptr -fno-sanitize-recover=undefined`
-    (LeakSanitizer with ASan; `vptr` off because the LLVM boundary builds
-    without RTTI): `clau`, the runtime and every test program are
-    instrumented; programs `clau` links get the sanitizer runtime through a
-    `clang++` wrapper, their generated code is not instrumented. No sanitizer
-    report. Out of scope: the four injected host-refusal tests
-    (`codegen_failure_*`, `runtime_lifecycle_failure`, `runtime_memory`
-    request an impossible allocation; ASan's `operator new` aborts instead of
-    throwing). Script `build/plan11-wsl/sanitize.sh asan` (docs/validation.md).
-- Tests
-  - [x] Full CTest under each sanitizer configuration. Evidence: 220/235 at
-    first; the eleven others were run limits too short for instrumented code
-    (`CLAUSE_TEST_TIMEOUT_SCALE` now stretches the golden and semantic case
-    limits) and pass with scale 10 (`frontend_cli` alone, its CTest limit is
-    90 s). One `port_spawn` run once returned `os:cmd` output `[]` under full
-    load; not reproduced in 4,000 plain, 2,000 ASan or 150 parallel ASan
-    runs, no sanitizer report: watched in step 68.
-
-<a id="step-68"></a>
-
-### 68. Run ThreadSanitizer on the multi-worker runtime
-
-Backlog: V02. Depends on: [57](#step-57), [67](#step-67).
-
-- Success criteria
-  - [x] Process, scheduler and code-server stress tests report no races.
-    Evidence 2026-10-10: Linux x86-64, Debug `-fsanitize=thread`, compiler,
-    runtime and tests instrumented, linked programs through the `clang++`
-    wrapper (`build/plan11-wsl/sanitize.sh tsan`). The first full run reported
-    one lock-order inversion (204 reports, every port program):
-    `Executor::clear` destroyed the I/O service under the executor lock, and
-    that takes the I/O gate, which the I/O thread holds while it takes the
-    executor lock (a deadlock with Windows blocking readers). The services are
-    now destroyed after the lock. Out of scope: `runtime_lifecycle_failure`
-    and `runtime_heap_measurements` replace `operator new` (TSan defines it)
-    and the four injected host-refusal tests (TSan's allocator aborts).
-- Tests
-  - [x] Step-56/57 stress tests under TSan, repeated. Evidence: 15
-    concurrency tests (`runtime_{concurrency,processes,messages,timer_wheel,
-    code_lookup,portions,port_io}`, `executables_{wakeups,fairness,processes,
-    send,selective_receive,receive_after,links,monitors}`) five times each:
-    no report; full CTest under TSan 228/233 with `CLAUSE_TEST_TIMEOUT_SCALE=20`,
-    the rest out of scope plus `runtime_printing` over its 120 s limit (passes
-    alone in 79 s). Plain gates after the fix: Linux and Windows full CTest
-    235/235.
 
 <a id="step-69"></a>
 

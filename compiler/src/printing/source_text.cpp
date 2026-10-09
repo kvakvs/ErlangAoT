@@ -71,6 +71,24 @@ std::string operator_text(ast::UnaryOperator operation) {
     return std::string(spellings.at(static_cast<std::size_t>(operation)));
 }
 
+std::string trailing_notes(std::string_view text) {
+    std::string result;
+    std::string note;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        if (text[at] == NOTE_START) {
+            const auto end = text.find(NOTE_END, at);
+            note = std::string(text.substr(at + 1, end - at - 1));
+            at = end;
+        } else {
+            if (text[at] == '\n' && !note.empty()) {
+                result += " % " + std::exchange(note, {});
+            }
+            result += text[at];
+        }
+    }
+    return note.empty() ? result : result + " % " + note;
+}
+
 std::string unary_text(ast::UnaryOperator operation, const std::string &operand) {
     const auto spelling = operator_text(operation);
     // Word operators need a space; a sign before another sign would lex as ++ or --.
@@ -92,7 +110,7 @@ void print_source(std::ostream &output, const ast::Module &module, const SourceN
         if (previous && printing::blank_between(*previous, form)) {
             output << '\n';
         }
-        output << printing::comments(notes, form) << printer.form(form) << '\n';
+        output << printing::comments(notes, form) << printing::trailing_notes(printer.form(form)) << '\n';
         previous = &form;
     }
 }

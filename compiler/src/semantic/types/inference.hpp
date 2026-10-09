@@ -26,14 +26,14 @@ struct FunctionType {
     auto operator<=>(const FunctionType &) const = default;
 };
 
-// The construct a dependent fact comes from, printed as its function name: $case_operator, ...
+// The construct a dependent fact comes from, printed as its function name: $case_of_operator, ...
 enum class Operator : std::uint8_t { case_operator, if_operator, try_of_operator };
 
 // The function name a dependent fact of `construct` prints with.
 inline std::string_view operator_name(const Operator construct) {
     switch (construct) {
     case Operator::case_operator:
-        return "$case_operator";
+        return "$case_of_operator";
     case Operator::if_operator:
         return "$if_operator";
     case Operator::try_of_operator:

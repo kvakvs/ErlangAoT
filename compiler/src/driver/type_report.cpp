@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 // --print-types (docs/semantic.md#--print-types): each module as Erlang source, its functions headed by their
-// declared and inferred signatures and its expressions annotated `Expression :: Type` where inference knows more than
+// declared and inferred signatures and each line's outermost expression noted `% Type` where inference knows more than
 // term().
 namespace clause::cli {
 namespace {
@@ -81,12 +81,8 @@ struct LiteralOperands {
     }
 };
 
-// Literal terms, signed numbers included, already show their type; a match's value is its right side's, which
-// carries the annotation.
+// Literal terms, signed numbers included, already show their type.
 bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
-    if (std::holds_alternative<ast::MatchExpression>(value)) {
-        return true;
-    }
     std::vector<ast::ExprId> pending;
     if (!std::visit(LiteralOperands{syntax, pending}, value)) {
         return false;

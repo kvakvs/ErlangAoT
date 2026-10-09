@@ -1,7 +1,8 @@
 # Completed implementation work
 
 Compact record of completed work, compatibility decisions and historical
-evidence (consolidated 2026-09-30, compacted 2026-10-04). Current behavior lives
+evidence (consolidated 2026-09-30, compacted 2026-10-04, plan 11 phases F–M
+added 2026-10-10). Current behavior lives
 in the linked `docs/`; architecture and file ownership are in [arch.md](arch.md)
 and [files.md](files.md). Full earlier wording is in Git history.
 
@@ -11,13 +12,14 @@ and [files.md](files.md). Full earlier wording is in Git history.
 | Preprocessor | Steps 1–13, 2026-09-18 | Focused OTP comparisons; no full upstream Common Test run. |
 | Parser | Steps 1–18, 2026-09-19 | Platform matrix not closed. |
 | Projects | Steps 1–22, 2026-09-20 | Historical macOS and later Windows evidence stay distinct. |
-| Test migration | Frontend/project/runtime migrations, 2026-09-28 | Frontend sanitizers pending. |
+| Test migration | Frontend/project/runtime migrations, 2026-09-28 | Ledger audit (plan 11 step 70). |
 | Compiler/runtime milestone | Steps 1–46, 2026-09-29 | Immediate-only subset and runtime skeleton. |
 | Pattern matching and guards | Steps 1–20 and 15a, 2026-10-01–03 | Function clauses and body matches over the admitted domain. |
-| Plan 11 | Steps 1–10 and 8A–8I, 2026-10-03–05 | Linked executables, golden runner, ERTS-style heap with a copying collector on host request, `case`/`begin`/`if`. |
+| Plan 11 | Steps 1–68 (phases A–L, M without 66/69/70), 2026-10-03–10 | Linked executables, ERTS-style heaps and collection, exceptions, recursion, comprehensions, records, funs, processes, multi-worker scheduling, ports, precise inference, specialization, tooling, Linux/x86/ARM validation and sanitizers. |
 
-**Still unfinished:** GC and graph copying, process execution/messaging, more
-Erlang source contexts and representations, native platform/sanitizer closure.
+**Still unfinished:** macOS Apple Silicon validation, upstream OTP Common Test
+evidence, the test-migration ledger audit, the optional scope decisions (D01–D07)
+and final closure (plan 11 steps 66, 69–78).
 See [outstanding work](#outstanding-work-to-finish) and [the backlog](01-todo.md).
 
 ## Foundations
@@ -165,7 +167,7 @@ Windows x64 Debug 124/124 CTests and 258 quality units. Descriptors use ABI
 revision 4; the revision-2 failure channel is unchanged. Normal builds and tests
 need no OTP.
 
-## Plan 11 (steps 1–17, 2026-10-03–05, Windows x64)
+## Plan 11 (steps 1–22, 2026-10-03–05, Windows x64)
 
 Compact per-step record: [11-plan.md](11-plan.md#step-1).
 
@@ -247,6 +249,54 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
   (`MapOperation::iterator`). Golden `bit_map_comprehensions` covers every
   generator/producer combination. Phase E closed.
 
+## Plan 11 (steps 23–68, 2026-10-05–10)
+
+Commits per step: [11-plan.md](11-plan.md#completed-steps). Contracts in the
+linked `docs/`.
+
+- **Memory (23–28, phase F):** root inventory for frames, registers and the
+  failure channel; collection triggers and safepoints in generated code;
+  collection from generated code; heap exhaustion as `out_of_memory` with no
+  default cap, an optional runtime-wide limit and `--max-heap`/`--max-stack`/
+  `--max-memory`; list length, map size and key-work caps removed, tuple arity
+  and big-integer limits matched to OTP; sharing-preserving graph copies
+  between heaps ([runtime-heap](../docs/runtime-heap.md)).
+- **Records and function values (29–35, phase G):** record updates,
+  `record_info/2`, native/qualified/anonymous native records (31A–31E); funs
+  without and with captures, named funs, dynamic calls and `apply`.
+- **Builtins (36–41, phase H):** generic production builtin bridge,
+  term-access and conversion families, project-owned `lists`/`maps` subset,
+  console output through `io`, typed native callables.
+- **Processes (42–53, phase I):** pid/reference identities, cooperative
+  executor with interruptible builtins, exit reasons and crash reports, signal
+  inbox and send, selective receive and `after` timeouts, links, exit signals
+  and `trap_exit`, monitors, registered names, collection with mailboxes and
+  suspended processes, identity guards.
+- **Multi-worker scheduling (54–57, phase J):** synchronized atom table and
+  code server, several scheduler workers, cross-worker wakeups, timers and
+  shutdown.
+- **Ports (57A–57G3, phase J2):** port contract, identities and table, I/O
+  poller, subprocess, file, standard I/O and socket ports, one event-driven
+  I/O thread, port tasks on scheduler workers, busy-port suspension and
+  bounded input ([ports](../docs/ports.md)).
+- **End-to-end (58, phase K):** the six program fixtures run through their
+  manifests and match OTP at O0/O2 on 1 and 4 workers.
+- **Inference (58A–58N3, phase L):** fact domain, literal/operator/container/
+  fun facts, caller-joined inputs, narrowing by patterns, guards, uses and
+  integer comparisons, entry/success domains, specification contradictions
+  as errors, per-clause function types, call selection, per-call
+  re-analysis, and dependent facts of `case`/`if`/`try ... of`
+  ([semantic](../docs/semantic.md#inference)); `--print-types` shows them.
+- **Tooling (59–62B, phase L):** inferred proofs remove tag/shape checks at
+  O2, source-level debug info (`-g`), opt-in profiling (`--profile`), LTO
+  (`--lto`), hash-indexed code-server lookups, receive timers in a timer
+  wheel.
+- **Validation (63–65, 67–68, phase M):** Linux x86-64 full gate (WSL2);
+  32-bit runtime on Windows x86 and Linux i386 with cross-linked goldens;
+  arm64/armhf under qemu-user; ASan/UBSan/LSan and TSan clean on Linux after
+  fixing a shutdown use-after-free and a lock-order inversion
+  ([validation](../docs/validation.md)).
+
 <a id="outstanding-work-to-finish"></a>
 
 ## Outstanding work to finish
@@ -263,29 +313,29 @@ Compact per-step record: [11-plan.md](11-plan.md#step-1).
 - [x] **Parseable process heap:** ERTS word layout, off-heap binaries, header
   admission, raw-word host terms, root stack, heap block plus fragments,
   copying collector on host request (8A–8I).
-- [ ] **Collection and copying:** generated-code safepoints, graph copying
-  between heaps, mailbox/transit roots (host-requested copying collection done
-  in 8H; frame, register and failure-channel roots enumerated in plan 11
-  step 23).
+- [x] **Collection and copying:** generated-code safepoints, graph copying
+  between heaps, mailbox roots (plan 11 phase F, step 51).
 - [x] **More Erlang semantics:** maybe, comprehensions, exceptions and
   handlers, recursion and tail calls (plan 11 phases D and E); record updates,
   `record_info/2` and native records (steps 29–31E); function values,
   closures, named funs and dynamic calls (steps 32–35); builtins as values and
   through dynamic calls via the production builtin bridge (step 36).
-- [ ] **Identities and atoms:** pid/port/reference services; synchronized atom
-  access before workers; atom collection is a scope decision (D02).
-- [ ] **Processes and scheduling:** cooperative execution, reductions, workers,
-  signals, send and selective receive (all messages enter the signal inbox).
-- [ ] **Runtime services:** builtin families, typed callables, concurrent code
-  server (generic production builtin registration done in plan 11 step 36);
-  dynamic loading is D01.
-- [ ] **Tooling:** source-driven specialization, debug info, profiling, LTO.
-- [ ] **Native platform validation:** Linux x86/x64/ARM/AArch64, macOS Apple
-  Silicon, Windows x86.
-- [ ] **Sanitizers and compatibility:** compiler/frontend ASan/UBSan/LSan;
-  upstream OTP Common Test suites.
+- [x] **Identities and atoms:** pid/port/reference identities, synchronized
+  atom table (steps 42, 54, 57B); atom collection stays a scope decision (D02).
+- [x] **Processes and scheduling:** cooperative execution, reductions,
+  workers, signals, send, selective receive, timers, ports (phases I, J, J2).
+- [x] **Runtime services:** builtin families, typed callables, concurrent and
+  indexed code server (steps 36–41, 55, 62A); dynamic loading is D01.
+- [x] **Tooling:** source-driven specialization, debug info, profiling, LTO,
+  precise inference (steps 58A–62B).
+- [ ] **Native platform validation:** Linux x86-64, 32-bit x86 and ARM done
+  (steps 63–65, ARM under emulation); macOS Apple Silicon open (step 66).
+- [x] **Sanitizers:** compiler/frontend ASan/UBSan/LSan and runtime TSan
+  (steps 67–68).
+- [ ] **OTP compatibility:** upstream Common Test suites and wider
+  differential comparisons (step 69).
 - [ ] **Test migration closure:** retire adapters only after equivalent public
-  coverage.
+  coverage (step 70).
 
 Deferred, not required: public interchange (D04), stage readers (D05), C/FFI
 (D06), project-schema extensions (D07). Every change keeps formatting,

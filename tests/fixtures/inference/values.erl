@@ -137,7 +137,9 @@
     maybe_impossible/0,
     maybe_plain/0,
     maybe_after/1,
-    second/2
+    second/2,
+    cons_unknown/2,
+    cons_list/1
 ]).
 
 -record(point, {x = 0, y}).
@@ -800,3 +802,11 @@ maybe_after(X) ->
             ok ?= X
         end,
     X.
+
+%% A cell in front of an unknown tail is never empty, though it may end improperly.
+%% expect: cons_unknown(_, _) -> nonempty_maybe_improper_list()
+cons_unknown(H, T) -> [H | T].
+
+%% In front of a possibly empty list: a nonempty list.
+%% expect: cons_list(maybe_improper_list()) -> nonempty_maybe_improper_list()
+cons_list(T) when is_list(T) -> [1 | T].

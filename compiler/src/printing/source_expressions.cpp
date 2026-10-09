@@ -155,10 +155,8 @@ struct Inline {
 std::string SourcePrinter::expression(const ast::ExprId &id, Place place) const {
     const auto &node = syntax_.expression(id);
     auto text = std::visit(Inline{*this, place, node.value}, node.value);
-    const auto note = place.annotated && notes_.expression ? notes_.expression(node) : std::nullopt;
-    if (!note) {
-        return text;
-    }
-    return place.statement ? text + " :: " + *note : '(' + text + " :: " + *note + ')';
+    // Only an expression that is a whole line's outermost one carries its note, moved to that line's end.
+    const auto note = place.annotated && place.statement && notes_.expression ? notes_.expression(node) : std::nullopt;
+    return note ? text + NOTE_START + *note + NOTE_END : text;
 }
 } // namespace clause::printing

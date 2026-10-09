@@ -18,8 +18,9 @@ void print_preprocessed(std::ostream &output, const OrdinaryForm &form);
 // A scheduled-object budget also bounds repeated visits to shared syntax; exhaustion throws length_error.
 void print_ast(std::ostream &output, const ast::Module &module, std::size_t visits = 4000000);
 
-// Optional text added while printing source: an expression's annotation, printed as `Expression :: Text` (not
-// Erlang), and comment lines (without the leading %) written above a form.
+// Optional text added while printing source: an expression's note, printed as a trailing `% Text` comment on the
+// line of a whole-line expression (a body expression or a case's scrutinee; the outermost one per line), and comment
+// lines (without the leading %) written above a form.
 struct SourceNotes {
     std::function<std::optional<std::string>(const ast::Expression &)> expression = {};
     std::function<std::vector<std::string>(const ast::Form &)> form = {};

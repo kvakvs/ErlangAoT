@@ -98,10 +98,12 @@ in `printing.hpp`; `compiler/src/printing/source_*`) is reusable:
   on one line. Parentheses come only from the source's own groups.
 - Printed text parses back to the same syntax tree, and printing it again
   gives the same text (CTest `printing_source` over the parseable fixtures).
-- `SourceNotes` adds an annotation to an expression, printed as
-  `Expression :: Text` (in parentheses unless it is a whole body expression;
-  not Erlang), and comment lines above a form. Patterns, guards and the left
-  side of a match carry none.
+- `SourceNotes` adds a note to an expression, printed as a trailing
+  `% Text` comment after the punctuation of the line where the expression
+  ends, and comment lines above a form. Only whole-line expressions carry
+  notes (body expressions and a `case`'s scrutinee; one per line, the
+  outermost), so long nested expressions stay readable and the text stays
+  Erlang. Patterns and guards carry none.
 
 ## Options
 
