@@ -430,6 +430,8 @@ User directions (keep):
   records) added after 58I; implemented next. 78B (user direction): rename runtime/src/builtins files to builtin_<name>.
   2026-10-09 user direction: clause-dependent function types before 59: 58K per-clause function types + printer,
   58L call matching (meet with clause inputs, union fallback, none() when nothing matches), 58M per-call re-analysis.
+  Then (user): 58J1 try/maybe values; 58K also splits case/if on arguments and gives funs function types; 58L
+  matches fun calls and makes per-call fun evaluation clause-aware.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2), [58J1](#step-58j1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
@@ -760,12 +760,48 @@ keys `map()`, a list only its joined element, and a record a plain tuple.
     lists and associations; values 127/127, base_types 46/46, narrowing
     51/51.
 
+<a id="step-58j1"></a>
+
+### 58J1. Infer try and maybe values
+
+Backlog: F34. Depends on: [58H](#step-58h). Added 2026-10-09 (user
+direction).
+
+Today `try` and `maybe` infer `_`: `t(X) -> try X + 1 of 2 -> two; N -> {N}
+catch _:_ -> error end` and `maybe {ok, V} ?= X, V + 1 else _ -> bad end`
+both print `_`.
+
+- `try`: the value is the join of the `of` clauses' results (the body's
+  value when there is no `of`) and the catch clauses' results; the `after`
+  body adds nothing. `of` clauses are entered, guarded and left like `case`
+  clauses, their patterns meeting the body's value (impossible clauses add
+  nothing, a variable body value narrows with the pattern); catch clauses
+  start from the facts before the `try`, their class pattern an atom of
+  `error | exit | throw`, their reason and stack trace any term unless their
+  pattern says more. Narrowings inside the body still never reach a catch
+  clause or the code after the `try`; the code after joins the facts at the
+  end of every completing `of` and catch clause.
+- `maybe`: the value is the join of the last body expression's value, the
+  else clauses' results and, without `else`, every value a `?=` match can
+  fail on (its expression's fact without the pattern's shape where that is
+  representable, else the fact itself); `?=` patterns narrow and publish like
+  body matches for the expressions after them; else clauses are entered like
+  `case` clauses over the joined failing values.
+- Success criteria
+  - [ ] `t(_) -> error | two | {number()}`, `m(_) -> bad | number()`-like
+    results; narrowings never cross an exception edge or a failed `?=`.
+- Tests
+  - [ ] `clauses.erl` (58K) or `values.erl` rows: `try` with and without
+    `of`, catch clauses by class, an impossible `of` clause, `after`, nested
+    `try`, `maybe` with and without `else`, a `?=` chain, and uses inside a
+    `try` body that must not narrow in a catch clause.
+
 <a id="step-58k"></a>
 
 ### 58K. Keep per-clause function types and print them
 
-Backlog: F34. Depends on: [58J](#step-58j). Added 2026-10-09 (user
-direction).
+Backlog: F34. Depends on: [58J](#step-58j), [58J1](#step-58j1). Added 2026-10-09
+(user direction).
 
 A function's summary is one input/result pair joined over its clauses, so a
 caller of `f(X) when is_integer(X) -> X + 1; f(X) when is_atom(X) ->
@@ -782,22 +818,39 @@ the clause body's result.
 - Recursive components iterate the function types with the results: each
   round joins (and after the join rounds widens) each clause's result; a
   component that does not converge keeps only its widened union summary.
-- The union summary stays what every other consumer reads (fun F/A facts,
-  specialization, success domains); the function types are an addition.
+- A function clause whose body is (or ends in) a `case` or `if` on one of
+  its arguments splits into one function type per branch: the argument's
+  input narrowed by that branch's pattern and guard, the branch's result.
+  `g(X) -> case X of 1 -> one; N when is_integer(N) -> N * 2; _ -> other end`
+  has the function types `(1) -> one`, `(integer()) -> integer()` and
+  `(_) -> other`.
+- Funs carry function types too: an anonymous fun's fact keeps one function
+  type per clause (its patterns and guard over any argument, or the
+  narrowed captured facts), and `fun F/A` the function types of `F/A`, within
+  the same budget; joins of funs of one arity keep function types only when
+  they are equal, otherwise the joined fun of today.
+- The union summary stays what every other consumer reads (specialization,
+  success domains, specification result checks); the function types are an
+  addition.
 - A new printer for function types: `%% inferred:` shows one signature per
   function type, `f(integer()) -> integer(); (atom()) -> string()`, with the
   argument names of 58I2 for relations; a function with one function type
-  prints as today. `semantic::types::function_source` prints a list of
-  function types for `--print-types` and diagnostics.
+  prints as today. Funs with several function types print in a Clause
+  notation, `fun((1) -> one; (_) -> other)` (Erlang type syntax has no
+  overloaded fun type, and a union of fun types means something else).
+  `semantic::types::function_source` prints a list of function types for
+  `--print-types` and diagnostics.
 - Success criteria
   - [ ] Every function's summary lists its clauses' function types within
     the budget; `--print-types` prints them; union summaries are unchanged.
 - Tests
   - [ ] New `tests/fixtures/inference/clauses.erl` rows: type tests per
     clause, literal patterns, merged equal inputs, an impossible clause, more
-    clauses than the budget, a recursive function and a single-clause
-    function; existing expectations updated where functions now print
-    several function types.
+    clauses than the budget, a recursive function, a single-clause
+    function, a `case` and an `if` on an argument, a nested `case` that does
+    not split, multi-clause anonymous funs, `fun F/A` and a join of funs;
+    existing expectations updated where functions now print several
+    function types.
 
 <a id="step-58l"></a>
 
@@ -814,7 +867,14 @@ can only raise `function_clause` and its result is `none()`. Unknown
 argument facts meet every input, so the result falls back to the union
 summary ("take the union and hope for the best" is the case where nothing
 selects); a function without function types (budget exhausted, unconverged
-component, a fun or dynamic call) also uses its union summary.
+component, a dynamic call or `apply`) also uses its union summary.
+
+- Calls of fun values match the fun fact's function types the same way, so a
+  fun stored in a container or passed to a function selects by its clauses.
+  Re-evaluating a bound anonymous fun per call (58E) enters, guards and
+  leaves its clauses like a `case`: a clause the arguments cannot match adds
+  nothing (`F = fun(1) -> one; (X) when is_atom(X) -> X; (_) -> other end,
+  F(2)` infers `other`, not `2 | one | other`).
 
 - After the call returns, its variable arguments narrow to the join of the
   counting function types' inputs (instead of the whole success domain).
@@ -824,15 +884,17 @@ component, a fun or dynamic call) also uses its union summary.
 - Argument relations (`f(X) -> X`) instantiate per function type as they do
   per call today.
 - Success criteria
-  - [ ] `use() -> f(5)` infers `integer()`, `g(1)` the result of the clause
-    matching 1, calls with unknown arguments the union; a call no function
-    type admits is `none()`; nothing narrows on a function type the call
-    cannot enter.
+  - [ ] `use() -> f(5)` infers `integer()`, `g(1)` infers `one`, calls with
+    unknown arguments the union; a call no function type admits is
+    `none()`; nothing narrows on a function type the call cannot enter; fun
+    calls (bound, stored, passed) select by their clauses.
 - Tests
   - [ ] `clauses.erl` rows for each case above, a call through a literal
     argument, a call with a range overlapping two clauses, nested calls,
-    local functions whose 58F inputs are joined from several callers, and a
-    recursive call; specialization profiles unchanged in the codegen tests.
+    local functions whose 58F inputs are joined from several callers, a
+    recursive call, the multi-clause fun calls above (bound, in a tuple,
+    passed to a local function) and a fun call with unknown arguments;
+    specialization profiles unchanged in the codegen tests.
 
 <a id="step-58m"></a>
 
