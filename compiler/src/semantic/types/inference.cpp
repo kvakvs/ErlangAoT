@@ -163,9 +163,28 @@ std::optional<Fact> selection_fact(Inference &inference, const ast::Module &synt
 
 // Anonymous funs called where they are bound are evaluated again for each call, at most this many deep.
 constexpr std::size_t INSTANCE_DEPTH = 4;
+// Calls evaluate their callee again at most this many deep, for callees of at most this many expressions, within
+// this much work per call and per pass over the batch (docs/semantic.md#inference).
+constexpr std::size_t REANALYSIS_DEPTH = 4;
+constexpr std::size_t CALLEE_SIZE = 256;
+constexpr std::size_t CALL_WORK = 4096;
+constexpr std::size_t PASS_WORK = 262144;
+
+// A function body's result and the entry domain of its arguments.
+struct Body {
+    Fact result;
+    // The inputs a summary shows (the success domain, or the entry domain of a function that never returns) and the
+    // entry domain.
+    std::vector<Id> domain;
+    std::vector<Id> entry;
+    // The function types of its possible clauses, merged within their budget.
+    std::vector<FunctionType> types = {};
+};
 
 bool walk(Inference &inference, FunctionRef function, BindingFacts &bindings, std::vector<Frame> pending,
           std::size_t &work, std::vector<const ast::Expression *> &recorded);
+std::optional<Body> run_body(Inference &inference, FunctionRef function, std::size_t &work,
+                             std::vector<const ast::Expression *> &recorded, const std::vector<Id> *inputs);
 
 // Every expression evaluated under `roots`.
 std::vector<const ast::Expression *> subtree(const Module &module, const std::vector<ast::ExprId> &roots) {
@@ -179,6 +198,29 @@ std::vector<const ast::Expression *> subtree(const Module &module, const std::ve
         pending.insert(pending.end(), children.begin(), children.end());
     }
     return result;
+}
+
+// Expression facts set aside while a body is evaluated again.
+using SetAside = std::vector<std::pair<const ast::Expression *, Fact>>;
+
+// Remove the recorded facts of `expressions`, so evaluating them again records fresh ones; the removed facts.
+SetAside set_aside(Inference &inference, const std::vector<const ast::Expression *> &expressions) {
+    SetAside saved;
+    for (const auto *expression : expressions) {
+        if (const auto found = inference.expressions.find(expression); found != inference.expressions.end()) {
+            saved.emplace_back(*found);
+            inference.expressions.erase(found);
+        }
+    }
+    return saved;
+}
+
+// Drop the facts recorded again (`scratch`) and restore the facts set aside.
+void put_back(Inference &inference, const std::vector<const ast::Expression *> &scratch, const SetAside &saved) {
+    for (const auto *expression : scratch) {
+        inference.expressions.erase(expression);
+    }
+    inference.expressions.insert(saved.begin(), saved.end());
 }
 
 // The facts of a function's walk that evaluating an anonymous fun again for a call changes, restored afterwards.
@@ -218,13 +260,7 @@ Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts 
     if (clauses.front().arguments.size() != arguments.size()) {
         return {inference.graph.bottom()};
     }
-    std::vector<std::pair<const ast::Expression *, Fact>> saved;
-    for (const auto *evaluated : subtree(*function.module, clause_roots(clauses))) {
-        if (const auto found = inference.expressions.find(evaluated); found != inference.expressions.end()) {
-            saved.emplace_back(*found);
-            inference.expressions.erase(found);
-        }
-    }
+    const auto saved = set_aside(inference, subtree(*function.module, clause_roots(clauses)));
     const auto kept = keep(bindings);
     bindings.instances.insert_or_assign(&expression, arguments);
     ++bindings.depth;
@@ -233,11 +269,8 @@ Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts 
     expand_clauses(*function.module, lambda, frames);
     const auto result = walk(inference, function, bindings, std::move(frames), work, scratch)
                             ? joined(inference, syntax, clauses, &bindings.impossible)
-                            : Fact{inference.graph.exhausted()};
-    for (const auto *evaluated : scratch) {
-        inference.expressions.erase(evaluated);
-    }
-    inference.expressions.insert(saved.begin(), saved.end());
+                            : Fact{inference.reanalyses > 0 ? inference.graph.top() : inference.graph.exhausted()};
+    put_back(inference, scratch, saved);
     restore(bindings, kept);
     --bindings.depth;
     return result;
@@ -308,6 +341,82 @@ void narrow_arguments(BindingFacts &bindings, const ast::CallExpression &call, c
     }
 }
 
+// Whether a call evaluates its callee again with its argument facts: a callee outside recursive components whose
+// inputs hold the arguments and are wider than one, within the depth and work budgets.
+bool reanalysable(Inference &inference, const Function &callee, const std::vector<Fact> &arguments) {
+    if (inference.recursive.contains(&callee) || inference.reanalyses >= REANALYSIS_DEPTH ||
+        inference.reanalysis_work + CALL_WORK > PASS_WORK) {
+        return false;
+    }
+    const auto inputs = inputs_of(inference, callee);
+    Lattice lattice(inference.graph);
+    bool narrower = false;
+    for (std::size_t index = 0; index < inputs.size() && index < arguments.size(); ++index) {
+        if (!lattice.within(arguments[index].type, inputs[index])) {
+            return false;
+        }
+        narrower = narrower || arguments[index].type != inputs[index];
+    }
+    return narrower && inputs.size() == arguments.size();
+}
+
+// The callee's body evaluated again with a call's argument facts as its inputs, within the call's work, and the
+// callee's own expression facts restored; none past a budget. Its summary never changes.
+std::optional<Body> reanalyse(Inference &inference, const FunctionRef callee, const std::vector<Fact> &arguments) {
+    const auto &definition = std::get<ast::Function>(callee.module->syntax->form(callee.function->form).value);
+    const auto expressions = subtree(*callee.module, function_roots(definition));
+    if (expressions.size() > CALLEE_SIZE) {
+        return std::nullopt;
+    }
+    const auto saved = set_aside(inference, expressions);
+    std::vector<Id> inputs;
+    inputs.reserve(arguments.size());
+    for (const auto &argument : arguments) {
+        inputs.push_back(argument.type);
+    }
+    // The call's own work: the walk stops once it has spent CALL_WORK.
+    const auto limit = inference.graph.limits().syntax_work;
+    const auto start = limit - std::min(limit, CALL_WORK);
+    auto work = start;
+    std::vector<const ast::Expression *> scratch;
+    ++inference.reanalyses;
+    auto result = run_body(inference, callee, work, scratch, &inputs);
+    --inference.reanalyses;
+    inference.reanalysis_work += work - start;
+    put_back(inference, scratch, saved);
+    return result;
+}
+
+// A call of a function of the batch: the function types its arguments select, narrowed by the callee's body
+// evaluated again for them; a call that returned narrows its variable arguments to what the callee accepted.
+Fact function_call(Inference &inference, const FunctionRef function, const ast::Expression &expression,
+                   const ast::CallExpression &call, BindingFacts &bindings) {
+    const auto &syntax = *function.module->syntax;
+    const auto callee = inference.callees.at(&expression);
+    const auto &summary = inference.functions.at(callee.function);
+    const auto arguments = argument_facts(inference, syntax, call);
+    auto selection = summary.types.empty() ? Selection{call_result(inference, syntax, expression, call)}
+                                           : select(inference.graph, summary.types, arguments);
+    const auto again =
+        selection.result.type != inference.graph.bottom() && reanalysable(inference, *callee.function, arguments)
+            ? reanalyse(inference, callee, arguments)
+            : std::nullopt;
+    if (again) {
+        Lattice lattice(inference.graph);
+        const auto result = instantiated(lattice, again->result, arguments);
+        selection.result = {lattice.meet(selection.result.type, result.type),
+                            result.argument ? result.argument : selection.result.argument};
+        narrow_arguments(bindings, call, again->domain);
+    }
+    // A call that returned had arguments within the callee's success domain and the selected types' inputs, once
+    // they are final.
+    if (selection.result.type != inference.graph.bottom() && !inference.solving.contains(callee.function)) {
+        narrow_arguments(bindings, call, summary.inputs);
+        narrow_arguments(bindings, call, selection.inputs);
+    }
+    return selection.result;
+}
+
 // A call: none() when it never happens, else by its callee: a value, a function or an unknown target.
 Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expression &expression,
                const ast::CallExpression &call, BindingFacts &bindings, std::size_t &work) {
@@ -321,19 +430,7 @@ Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expr
     if (opaque_call(function, expression, call)) {
         return {inference.graph.top()};
     }
-    const auto *callee = inference.callees.at(&expression).function;
-    const auto &summary = inference.functions.at(callee);
-    // A function with function types: the call reads those its arguments select (docs/semantic.md#inference).
-    auto selection = summary.types.empty()
-                         ? Selection{call_result(inference, syntax, expression, call)}
-                         : select(inference.graph, summary.types, argument_facts(inference, syntax, call));
-    // A call that returned had arguments within the callee's success domain and the selected types' inputs, once
-    // they are final.
-    if (selection.result.type != inference.graph.bottom() && !inference.solving.contains(callee)) {
-        narrow_arguments(bindings, call, summary.inputs);
-        narrow_arguments(bindings, call, selection.inputs);
-    }
-    return selection.result;
+    return function_call(inference, function, expression, call, bindings);
 }
 
 // Groups, matches and blocks have the value of the expression they end with; a match publishes its pattern.
@@ -410,37 +507,36 @@ bool walk(Inference &inference, const FunctionRef function, BindingFacts &bindin
     return true;
 }
 
-// A function body's result and the entry domain of its arguments.
-struct Body {
-    Fact result;
-    // The inputs a summary shows (the success domain, or the entry domain of a function that never returns) and the
-    // entry domain.
-    std::vector<Id> domain;
-    std::vector<Id> entry;
-    // The function types of its possible clauses, merged within their budget.
-    std::vector<FunctionType> types = {};
-};
-
-// A shared work budget bounds the entire batch and erases relations as well as concrete types.
-// Every recorded expression is listed so a later fixed-point round can discard it.
-Body body(Inference &inference, const FunctionRef function, std::size_t &work,
-          std::vector<const ast::Expression *> &recorded) {
+// A function's body from `inputs` (by default the ones it starts from); none when the work budget ran out. Every
+// recorded expression is listed so a later fixed-point round can discard it.
+std::optional<Body> run_body(Inference &inference, const FunctionRef function, std::size_t &work,
+                             std::vector<const ast::Expression *> &recorded, const std::vector<Id> *inputs) {
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
     BindingFacts bindings(function, inference, work);
     // Each clause's head matches the inputs; the arguments' facts at clause entry join into the entry domain.
-    bindings.inputs = inputs_of(inference, *function.function);
+    bindings.inputs = inputs ? *inputs : inputs_of(inference, *function.function);
     bindings.domain.assign(bindings.inputs.size(), inference.graph.bottom());
     bindings.success = bindings.domain;
     std::vector<Frame> frames;
     expand_heads(definition, frames);
     if (!walk(inference, function, bindings, std::move(frames), work, recorded)) {
-        return {{inference.graph.exhausted()}, bindings.inputs, bindings.inputs};
+        return std::nullopt;
     }
     // A function that returns shows its success domain; one that never does, its entry domain.
     const auto result = joined(inference, syntax, definition.clauses, &bindings.impossible);
-    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain,
-            merge_types(inference.graph, std::move(bindings.types))};
+    return Body{result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain,
+                merge_types(inference.graph, std::move(bindings.types))};
+}
+
+// A shared work budget bounds the entire batch and erases relations as well as concrete types.
+Body body(Inference &inference, const FunctionRef function, std::size_t &work,
+          std::vector<const ast::Expression *> &recorded) {
+    if (auto evaluated = run_body(inference, function, work, recorded, nullptr)) {
+        return std::move(*evaluated);
+    }
+    const auto inputs = inputs_of(inference, *function.function);
+    return {{inference.graph.exhausted()}, inputs, inputs};
 }
 
 // Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
@@ -522,6 +618,7 @@ constexpr std::size_t PASSES = JOIN_ROUNDS + 2 * WIDENING_PASSES;
 void infer_pass(Inference &inference, const CallGraph &calls) {
     inference.expressions.clear();
     inference.fun_reads.clear();
+    inference.reanalysis_work = 0;
     std::size_t work = 0;
     std::vector<const ast::Expression *> recorded;
     for (const auto &component : calls.components) {
@@ -546,13 +643,23 @@ bool settled(Inference &inference) {
         return summary_fun(lattice, inference.functions.at(read.first), read.first->key.arity) == read.second;
     });
 }
+
+// Index each call's callee and the members of recursive components.
+void index_calls(Inference &inference, const CallGraph &calls) {
+    for (const auto &call : calls.calls) {
+        inference.callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
+    }
+    for (const auto &component : calls.components) {
+        for (const auto member : component.recursive ? component.members : std::vector<FunctionRef>{}) {
+            inference.recursive.insert(member.function);
+        }
+    }
+}
 } // namespace
 
 std::unique_ptr<Inference> infer(const CallGraph &calls, const Limits limits) {
     auto result = std::make_unique<Inference>(limits);
-    for (const auto &call : calls.calls) {
-        result->callees.emplace(&call.caller.module->syntax->expression(call.expression), call.callee);
-    }
+    index_calls(*result, calls);
     // Local inputs grow from their calls and a fun F/A reads its function's summary as far as it is known: passes
     // repeat until the inputs stop changing and each fun read its function's final result.
     prepare_inputs(*result, calls);

@@ -273,8 +273,9 @@ call_local() -> increment(3).
 %% expect: increment(3) -> 4
 increment(X) -> X + 1.
 
-%% A local function's inputs join its call sites' arguments; recursive calls count too, widening as results do.
-%% expect: two_callers() -> {11..21, 11..21}
+%% A local function's inputs join its call sites' arguments; recursive calls count too, widening as results do. Each
+%% call evaluates the callee again with its own arguments (58M).
+%% expect: two_callers() -> {11, 21}
 two_callers() -> {add_one(10), add_one(20)}.
 
 %% expect: add_one(10 | 20) -> 11..21

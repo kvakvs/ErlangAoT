@@ -293,6 +293,9 @@
   every other consumer today's fun; `function_source` prints `f(A) -> R; (B) -> S`.
   Step 58L: `call_fact`/`call_value` use `function_types::select` (ordered, meet admits, exact type holding the
   arguments stops); `instantiate` re-walks a bound lambda's clause frames with `BindingFacts::instances`.
+  Step 58M: `function_call` re-runs a non-recursive callee's body (`run_body` with the call's argument facts) via
+  `reanalyse`, setting its expression facts aside and putting them back; budgets in `Inference::reanalyses`/
+  `reanalysis_work` (own pool per pass), so summaries and recorded facts never change.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

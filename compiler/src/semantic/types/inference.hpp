@@ -53,6 +53,11 @@ struct Inference {
     std::set<const Function *> solving;
     // Set for a last pass in which fun F/A has an unknown result, when passes did not settle.
     bool opaque_funs = false;
+    // Members of recursive components, whose calls are never re-analysed.
+    std::set<const Function *> recursive;
+    // How many callee re-analyses for a call are nested now, and the work they spent in the current pass.
+    std::size_t reanalyses = 0;
+    std::size_t reanalysis_work = 0;
 };
 
 // Infer supported bodies iteratively; recursive components iterate from bottom to a fixed point and widen

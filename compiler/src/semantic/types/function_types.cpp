@@ -53,15 +53,6 @@ void join_inputs(Lattice &lattice, std::vector<Id> &selected, const std::vector<
     }
 }
 
-// A function type's result for a call: a result equal to an argument is that argument's fact, within the result.
-Fact instance(Lattice &lattice, const FunctionType &type, const std::vector<Fact> &arguments) {
-    const auto argument = type.result.argument;
-    if (!argument || *argument >= arguments.size() || type.result.type == lattice.graph().bottom()) {
-        return type.result;
-    }
-    const auto &actual = arguments[*argument];
-    return {lattice.meet(actual.type, type.result.type), actual.argument};
-}
 } // namespace
 
 Fact merged(Graph &graph, const Fact previous, const Fact next, const bool widening) {
@@ -119,6 +110,15 @@ Id fun_fact(Lattice &lattice, const std::vector<FunctionType> &types) {
     return lattice.overloaded(std::move(funs));
 }
 
+Fact instantiated(Lattice &lattice, const Fact result, const std::vector<Fact> &arguments) {
+    const auto argument = result.argument;
+    if (!argument || *argument >= arguments.size() || result.type == lattice.graph().bottom()) {
+        return result;
+    }
+    const auto &actual = arguments[*argument];
+    return {lattice.meet(actual.type, result.type), actual.argument};
+}
+
 Selection select(Graph &graph, const std::vector<FunctionType> &types, const std::vector<Fact> &arguments) {
     Lattice lattice(graph);
     Selection selection{{graph.bottom()}};
@@ -126,7 +126,7 @@ Selection select(Graph &graph, const std::vector<FunctionType> &types, const std
         if (!admits(lattice, type, arguments)) {
             continue;
         }
-        selection.result = merged(graph, selection.result, instance(lattice, type, arguments));
+        selection.result = merged(graph, selection.result, instantiated(lattice, type.result, arguments));
         join_inputs(lattice, selection.inputs, type.inputs);
         if (settles(lattice, type, arguments)) {
             break;

@@ -303,6 +303,18 @@ Inference is separate from declared types and never trusts specs.
   and leaves its clauses like a `case`, so a clause its arguments cannot
   match adds nothing (`F = fun(1) -> one; (_) -> other end, F(2)` is
   `other`). Recursive components converge on results and function types.
+- Calls evaluate their callee again (step 58M): when a call's argument facts
+  are within the callee's inputs and narrower in one, the callee's body is
+  evaluated again with them as its inputs, like a bound anonymous fun, and
+  the call's result is the selected function types' result met with that
+  evaluation's (`two_callers() -> {add_one(10), add_one(20)}` is
+  `{11, 21}`); the call's arguments also narrow to that evaluation's success
+  domain. The callee's summary, function types and recorded expression
+  facts never change (specialization reads only those). Budgets: 4 nested
+  evaluations, callees of at most 256 expressions, 4,096 work units per call
+  from a pool of 262,144 per pass over the batch (separate from the batch's
+  own budget); recursive components are never evaluated again. Past a
+  budget the call keeps the selected function types' result.
 - A `receive` is the join of its clauses and its `after` body, which a
   timeout of `infinity` never runs.
 - A recursive component starts every member's result at `none()` and re-infers
@@ -486,7 +498,9 @@ sum() -> 1 + 2.
   type, narrowing after the call, a literal argument, a range over two
   clauses, nested calls, a local with several callers, a recursive callee,
   and multi-clause funs bound, in a tuple, passed to a local and called with
-  an unknown argument.
+  an unknown argument; and evaluation per call (step 58M): per-call
+  results, nesting up to and past the depth budget, a callee past the size
+  budget, a recursive callee and unknown arguments.
 
 ### Printing types
 

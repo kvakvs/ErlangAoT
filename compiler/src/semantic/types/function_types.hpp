@@ -18,6 +18,9 @@ std::vector<FunctionType> next_round(Graph &graph, const std::vector<FunctionTyp
 // The fun fact of function types (at least one); a result equal to an argument is that argument's input.
 Id fun_fact(Lattice &lattice, const std::vector<FunctionType> &types);
 
+// A result for a call: a result equal to an argument is that argument's fact, within the result's type.
+Fact instantiated(Lattice &lattice, Fact result, const std::vector<Fact> &arguments);
+
 // The function types a call enters: their joined results, each relation to an argument instantiated with that
 // argument's fact, and their joined inputs; none() and no inputs when it enters none.
 struct Selection {

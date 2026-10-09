@@ -420,6 +420,9 @@ Step facts beyond the plan record:
   Kind::function "clauses" node; joined_fun() for old consumers. Scratch helpers: rep.py (exact <<<OLD/===/>>> spec
   replacements; avoids heredoc escaping), accept.py (set expect lines to current --print-types output; review diff).
   Compiler CMakeLists source edit makes check-quality run all 334 tidy units (~6 batches).
+- 58L/58M (2026-10-09): call selection needs FunctionType::exact for first-match (`g(1) -> one`); per-call
+  re-analysis uses its own work pool so base inference never widens; plan 11 inference series 58A-58M done
+  (next: 59 specialization). Optional 58L spec report of calls no type admits was not added.
 User directions (keep):
 - Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
   57A-57F, backlog F35); step 53 decision superseded.

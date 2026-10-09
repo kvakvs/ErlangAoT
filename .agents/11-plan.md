@@ -977,12 +977,26 @@ result, restoring the callee's own facts afterwards.
 - Re-analysis never changes the callee's summary, its function types or its
   recorded expression facts; specialization reads only recorded facts.
 - Success criteria
-  - [ ] `{local(3), local(a)}` infers `{3, {a}}`; `two_callers()` (58F)
+  - [x] `{local(3), local(a)}` infers `{3, {a}}`; `two_callers()` (58F)
     infers `{11, 21}`; results stay sound when a budget stops re-analysis.
+    Evidence 2026-10-09: `function_call` in `inference.cpp`
+    (`reanalysable`: callee outside `Inference::recursive`, arguments within
+    its inputs and narrower in one; `reanalyse`: `run_body` with the
+    arguments as inputs on the callee's facts set aside and put back; result
+    met with the 58L selection, relation instantiated, arguments narrowed to
+    its success domain). Budgets: depth 4 (`Inference::reanalyses`), 256
+    expressions, 4,096 work per call from a 262,144 pool per pass
+    (`reanalysis_work`), separate from the batch budget so base facts never
+    lose precision; an instantiation that runs out inside one returns
+    `term()` without marking the graph widened.
 - Tests
-  - [ ] `clauses.erl` rows for per-call results, nested re-analysis up to
+  - [x] `clauses.erl` rows for per-call results, nested re-analysis up to
     and past the depth budget, a large callee past the size budget, a
-    recursive callee, and a callee called with unknown arguments.
+    recursive callee, and a callee called with unknown arguments. Evidence:
+    clauses 53/53 (`per_call -> {3, {a}}`, `deep_enough -> {a}` through 4
+    hops, `too_deep -> {_}` through 5, `large_callee`, `recursive_callee`,
+    `unknown_callee`); `selected -> 6`, `nested_calls -> 3`, values
+    `two_callers -> {11, 21}`; fast CTest 223/223.
 
 <a id="step-59"></a>
 
