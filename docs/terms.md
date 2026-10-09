@@ -51,6 +51,9 @@ records; native records ([native records](native-records.md)); funs
 - Values in the target's 28/60-bit payload are immediates; larger ones are
   immutable sign/magnitude cells. Zero and small values always normalize to
   immediates. No host-width narrowing of literals.
+- At `-O2`, operands inference proves small skip their tag tests, and a proven
+  result range skips the overflow check and fallback too
+  ([proofs](specialization.md#proofs)).
 - Generated `+`, `-`, `*` try an inline fast path on two immediates (double-width
   compute with explicit bounds), otherwise call the runtime service.
 - `div` truncates toward zero; `rem` takes the dividend's sign; bitwise ops use

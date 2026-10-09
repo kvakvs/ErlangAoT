@@ -389,10 +389,14 @@
   assignment/alias facts. Extracted/unproved values remain top, candidate joins
   retain common relations, and indexing/publication share the inference budget.
   Lowering borrows one read index but retains isolated candidate SSA maps.
-  Specialization uses actual profiles and guarded generic fallback: 3 variants per
-  function, 32/module, 128/target and at most 2x measured generic IR. Current source
-  offers no profitable removable checks; the admitted-domain proof audit passes
-  without adding speculative check removal.
+  At O2 with specialization (step 59) `codegen/proofs` reads caller-joined argument
+  facts and expression facts (`ExpressionLowering::proofs`): proven small operands
+  skip tag tests (proven result ranges also the overflow fallback), proven or
+  shape-tested tuples/cons cells are read inline (`lowering_proofs`, stored to root
+  slots), immediate literals compare words, proven list generators walk inline.
+  Variants keep actual profiles (small-integer ranges) and guarded generic fallback:
+  3 variants per function, 32/module, 128/target and at most 2x measured generic IR;
+  one argument tag test rarely pays for a dispatcher, so source variants are rare.
 
 - LLVM lowering uses target-derived layouts, collision-free symbols and checked
   runtime services. Standard O0/O2 PassBuilder pipelines verify fresh batches on

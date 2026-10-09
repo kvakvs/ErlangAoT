@@ -5,6 +5,7 @@
 #include "terms.hpp"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <clause/abi/term.hpp>
 #include <clause/runtime/base_types.hpp>
 #include <cstddef>
 #include <memory>
@@ -154,6 +155,11 @@ struct alignas(Word) NativeRecordCell final {
 static_assert(static_cast<unsigned>(BoxedKind::empty_list) < (1U << BoxHeader::BOXED_KIND_BITS));
 static_assert(BoxHeader::kind(BoxHeader::make(BoxedKind::refc_binary, 5)) == BoxedKind::refc_binary);
 static_assert(BoxHeader::count(BoxHeader::make(BoxedKind::map, 6)) == 6);
+// Generated code reads tuple headers and cons cells inline after a proof (abi/term.hpp).
+static_assert(BoxHeader::CONTENT_SHIFT == abi::v1::header_count_shift);
+static_assert(BoxHeader::make(BoxedKind::tuple, 3) == Word{3} << abi::v1::header_count_shift);
+static_assert(static_cast<unsigned>(TermKindPrimary::list) == abi::v1::list_tag &&
+              static_cast<unsigned>(TermKindPrimary::boxed) == abi::v1::boxed_tag);
 static_assert(sizeof(BoxHeader) == sizeof(Word));
 static_assert(alignof(BoxHeader) == alignof(Word));
 static_assert(sizeof(ConsCell) == 2 * sizeof(Word));

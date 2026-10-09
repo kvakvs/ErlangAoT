@@ -187,7 +187,9 @@ llvm::Value *binary_value(ExpressionLowering &state, const ast::BinaryExpression
     if (const auto builtin = operator_builtin(binary.operation)) {
         return lower_builtin(state, *builtin, values);
     }
-    return lower_operation(state, operation(semantic::immediate_operator(binary.operation)), values[0], values[1]);
+    const OperandProofs proofs{small_expression(state, binary.left), small_expression(state, binary.right)};
+    return lower_operation(state, operation(semantic::immediate_operator(binary.operation)), values[0], values[1],
+                           proofs);
 }
 
 // Parentheses and begin/end blocks yield the value of their (last) inner expression.

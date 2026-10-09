@@ -193,6 +193,9 @@ add_test(NAME codegen_inspection COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURREN
 add_test(NAME codegen_types COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/type_inspection.py"
     "$<TARGET_FILE:clau>" "${CMAKE_CURRENT_BINARY_DIR}/types/$<CONFIG>")
 
+add_test(NAME codegen_proofs COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/proofs.py"
+    "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/executables/proofs")
+
 if(CLAUSE_BUILD_RUNTIME)
     foreach(level IN ITEMS O0 O2)
         add_test(NAME codegen_native_${level} COMMAND "${CMAKE_COMMAND}"

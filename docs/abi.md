@@ -24,6 +24,11 @@ from the configured LLVM target, so cross-target code uses target widths.
   when the runtime issued it ([pids and references](terms.md#pids-and-references)).
 - Boxed and list words point into the owning process heap and are admitted only
   after the runtime proves ownership (see [terms](terms.md)).
+- Primary tags: list `0x1`, boxed `0x2`. A header keeps its kind from bit 2 and
+  the count of following words from bit 7 (`header_count_shift`); a tuple's kind
+  is 0. Generated code reads tuple elements and cons cells inline only after
+  inference or a dominating shape test proved the cell
+  ([proofs](specialization.md#proofs)); the runtime asserts these constants.
 
 ## Functions and symbols
 

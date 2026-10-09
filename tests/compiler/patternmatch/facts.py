@@ -49,7 +49,9 @@ def dominance(ir):
                 if check: conditions[check[2]]=(check[1],b)
                 edge=re.search(r'br i1 %([\w.]+), label %([\w.]+), label %([\w.]+)',line)
                 if edge: branches[edge[1]]=(b,edge[2],edge[3])
-        assert 'inttoptr' not in body, 'Generated source contains an unchecked heap pointer conversion'
+        # Pointer conversions exist only for reads that inference or a dominating shape test proved (step 59).
+        assert all(re.match(r'\s*%proven\.cell[\w.]* = inttoptr', line) for line in lines if 'inttoptr' in line), \
+            'Generated source contains an unchecked heap pointer conversion'
         for b,content in blocks.items():
             for line in content:
                 loaded=re.search(r'%service.value[\w.]* = load i64, ptr %([\w.]+)',line)

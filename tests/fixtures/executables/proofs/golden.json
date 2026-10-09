@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "entry": "proofs",
+  "runs": [
+    {
+      "args": [],
+      "stderr": "^$",
+      "exit_status": 0,
+      "stdout": "[5,25,169]\n55\n[1,4,9]\n{1,a}\n{7,none}\n{576460752303423488,134217728,-576460752303423487}\n{12,3.000000e+00,18446744073709551616}\n"
+    }
+  ],
+  "oracle_version": [
+    "29",
+    "29.1.1"
+  ],
+  "reference": {
+    "branch": "maint-29",
+    "revision": "21776803ecd11f5fa948732c0ec66b8f325dedfc"
+  },
+  "inputs": {
+    "proofs.erl": "8cc31cbc1e6f37ad063f6ebef3e0e8c1da4b9fe07a29c46ef4f3e60a1b5949e8"
+  }
+}

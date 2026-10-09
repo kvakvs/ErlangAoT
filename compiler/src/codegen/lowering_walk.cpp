@@ -66,6 +66,8 @@ struct CaseJoin {
     llvm::BasicBlock *loop = nullptr;
     // A receive's expired timeout: its after body starts here.
     llvm::BasicBlock *timeout = nullptr;
+    // The expression whose value the clauses match (a case scrutinee or a try body), for its inferred fact.
+    const ast::Expression *scrutinee = nullptr;
 };
 
 struct ProtectedScope {
@@ -360,6 +362,7 @@ struct Walk {
         }
         auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "try.join");
         auto &join = cases.try_emplace(&expression, value, state.bindings, merge).first->second;
+        join.scrutinee = &state.module.syntax->expression(attempt.body.back());
         if (attempt.of) {
             start_clause(id, 0);
             return;
@@ -563,8 +566,9 @@ struct Walk {
         }
         const auto *selection = std::get_if<ast::CaseExpression>(&expression.value);
         auto *merge = llvm::BasicBlock::Create(state.entry.getContext(), "case.join");
-        auto *value = selection ? state.values.at(&state.module.syntax->expression(selection->value)) : nullptr;
-        cases.try_emplace(&expression, value, state.bindings, merge);
+        const auto *scrutinee = selection ? &state.module.syntax->expression(selection->value) : nullptr;
+        auto *value = scrutinee ? state.values.at(scrutinee) : nullptr;
+        cases.try_emplace(&expression, value, state.bindings, merge).first->second.scrutinee = scrutinee;
         start_clause(id, 0);
     }
 
@@ -671,7 +675,8 @@ struct Walk {
             }
         }
         const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, *clause.pattern));
-        lower_match_plan(state, plan, std::array{input}, matched, join.next);
+        const auto known = clause.handler || !join.scrutinee ? std::nullopt : known_expression(state, *join.scrutinee);
+        lower_match_plan(state, plan, std::array{input}, matched, join.next, std::array{known});
         if (matched != success) {
             // The stack variable is always new, so binding it cannot fail.
             state.builder.SetInsertPoint(matched);

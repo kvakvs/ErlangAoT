@@ -272,11 +272,28 @@ type can enter (specification checks still compare overloads only).
 Backlog: F29. Depends on: [58](#step-58), [58G](#step-58g); benefits from [58L](#step-58l) and [58M](#step-58m).
 
 - Success criteria
-  - [ ] Proven profiles remove tag/shape checks in new operations (arithmetic,
+  - [x] Proven profiles remove tag/shape checks in new operations (arithmetic,
     tuple access, list loops) with generic fallback and existing limits.
+    Evidence 2026-10-09: `codegen/proofs` (facts of caller-joined arguments and
+    expressions: small ranges, tuple arity, list shape) and `lowering_proofs`
+    at O2 with specialization: proven `+ - *` skip tag tests and, with a
+    fitting result range, the overflow fallback; tuple and list patterns skip
+    proven shape tests, read elements/head/tail inline after a proof or a
+    dominating shape test (stored to root slots); immediate literals compare
+    words; proven list generators walk inline. Unproven operands keep the
+    generic service path. Variants: profiles accept small ranges, argument tag
+    tests are found anywhere; limits unchanged (source variants still rarely
+    fit 2x).
 - Tests
-  - [ ] Same goldens pass with specialization on/off; code size and compile
-    time recorded descriptively, not gated.
+  - [x] Same goldens pass with specialization on/off; code size and compile
+    time recorded descriptively, not gated. Evidence: new
+    `executables_proofs` (OTP golden) and `codegen_proofs` (no
+    inspect/immediate/exact services left in proven functions, generic ones
+    keep them); fast mode now runs O2 with specialization; full-mode
+    executables/programs 67/67 (many_ports timed out once under load, passes
+    alone); `codegen_measurements` records proven reads and drops the
+    byte-identity assertion. The wakeups golden caught inline reads held in
+    raw spill slots across a collection: fixed by rooting them.
 
 <a id="step-60"></a>
 

@@ -16,11 +16,12 @@ semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast
 }
 
 llvm::Value *lower_body_match(ExpressionLowering &state, const ast::MatchExpression &match) {
-    auto *value = state.values.at(&state.module.syntax->expression(match.right));
+    const auto &right = state.module.syntax->expression(match.right);
+    auto *value = state.values.at(&right);
     const auto plan = body_pattern_plan(state, match.left);
     auto *success = llvm::BasicBlock::Create(state.entry.getContext(), "body.match.success", &state.entry);
     auto *mismatch = llvm::BasicBlock::Create(state.entry.getContext(), "body.match.failure", &state.entry);
-    lower_match_plan(state, plan, std::array{value}, success, mismatch);
+    lower_match_plan(state, plan, std::array{value}, success, mismatch, std::array{known_expression(state, right)});
     if (mismatch->use_empty()) {
         mismatch->eraseFromParent();
     } else {

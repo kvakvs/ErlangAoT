@@ -3,6 +3,7 @@
 #include "../semantic/records.hpp"
 #include "lowering_expressions.hpp"
 #include "lowering_roots.hpp"
+#include "proofs.hpp"
 #include <array>
 #include <clause/abi/bits.hpp>
 #include <clause/abi/calls.hpp>
@@ -56,7 +57,22 @@ struct ExpressionLowering {
     const semantic::Module *atom_owner = nullptr;
     // Capture each evaluated record field immediately, including repeated wildcard/default source nodes.
     std::map<const ast::Expression *, std::vector<llvm::Value *>> record_values = {};
+    // Inferred facts and dominating shape tests replace checks (O2 with type specialization, step 59); null keeps
+    // every check generic.
+    const Proofs *proofs = nullptr;
 };
+
+// The fact inference recorded for an expression, or the fact of argument `index` joined from the function's callers;
+// none without proofs.
+std::optional<Known> known_expression(const ExpressionLowering &state, const ast::Expression &expression);
+std::optional<Known> known_argument(const ExpressionLowering &state, std::size_t index);
+// The small integers an expression is proven to be one of.
+std::optional<SmallRange> small_expression(const ExpressionLowering &state, const ast::ExprId &id);
+// An i1 that holds when a word proven to be a proper list is a cons cell.
+llvm::Value *inline_cons_test(ExpressionLowering &state, llvm::Value *value);
+// Word `index` (head 0, tail 1) of a proven cons cell, and element `index` (zero-based) of a proven tuple.
+llvm::Value *inline_cons_word(ExpressionLowering &state, llvm::Value *value, std::size_t index);
+llvm::Value *inline_tuple_element(ExpressionLowering &state, llvm::Value *value, std::size_t index);
 
 // Branch to the shared failure exit before consuming a fallible service result.
 void propagate_failure(ExpressionLowering &state);
@@ -70,10 +86,11 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
 // Preserve compact projection/direct-call IR when the normalized plan has no rejection tests.
 bool lower_unconditional_head(ExpressionLowering &state);
 // Lower the reusable matcher against caller-supplied values and selection continuations; the result holds every
-// candidate value, defined where the success continuation can read it.
+// candidate value, defined where the success continuation can read it. `known` holds proven facts of the inputs.
 std::vector<llvm::Value *> lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan,
                                             std::span<llvm::Value *const> values, llvm::BasicBlock *success,
-                                            llvm::BasicBlock *mismatch);
+                                            llvm::BasicBlock *mismatch,
+                                            std::span<const std::optional<Known>> known = {});
 // Plan a one-input body or case pattern; semantic analysis accepted it, so failure is a phase-contract error.
 semantic::MatchPlan body_pattern_plan(const ExpressionLowering &state, const ast::ExprId &pattern,
                                       semantic::GeneratorPattern generator = semantic::GeneratorPattern::none);
@@ -112,9 +129,17 @@ llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state);
 // Materialize finite IEEE bits through a rooted checked runtime service.
 llvm::Value *lower_float(ExpressionLowering &state, double value);
 llvm::Value *lower_integer(ExpressionLowering &state, std::string_view decimal);
-// Use checked small arithmetic where safe, retaining the common runtime fallback for all other values.
+
+struct OperandProofs {
+    // The small integers each operand is proven to be one of; none keeps its tag check.
+    std::optional<SmallRange> left;
+    std::optional<SmallRange> right;
+};
+
+// Use checked small arithmetic where safe, retaining the common runtime fallback for all other values; proven
+// operands skip their tag checks, and a proven result range also skips the overflow check and the fallback.
 llvm::Value *lower_operation(ExpressionLowering &state, abi::v1::ImmediateOperation operation, llvm::Value *left,
-                             llvm::Value *right = nullptr);
+                             llvm::Value *right = nullptr, OperandProofs proofs = {});
 
 struct ServiceOutput {
     // Pair the status byte with its success-only rooted word slot, without interchangeable positional pointers.

@@ -1,11 +1,8 @@
 #include "integer_guards.hpp"
 #include <llvm/IR/Module.h>
-#include <set>
 
 namespace clause::codegen {
 namespace {
-using Users = std::set<const llvm::User *>;
-
 // Ask LLVM to compare exact operations, keeping intrusive operand layout inside the SDK implementation.
 bool tag_mask(llvm::BinaryOperator &mask, llvm::LoadInst &load) {
     auto *expected = llvm::BinaryOperator::CreateAnd(&load, llvm::ConstantInt::get(load.getType(), 15));
@@ -22,47 +19,34 @@ bool tag_comparison(llvm::ICmpInst &check, llvm::BinaryOperator &mask) {
     return matches;
 }
 
-// Only entry-block observations before side effects may use an invocation-entry representation proof.
-Users safe_users(llvm::Function &function) {
-    Users result;
-    for (auto &instruction : function.getEntryBlock()) {
-        if (instruction.mayHaveSideEffects()) {
-            break;
-        }
-        result.insert(&instruction);
-    }
-    return result;
-}
-
 // Find exact equality users of an argument's low-tag mask through LLVM's stable use lists.
-void comparisons(llvm::BinaryOperator &mask, std::size_t index, const Users &safe, IntegerGuards &result) {
+void comparisons(llvm::BinaryOperator &mask, std::size_t index, IntegerGuards &result) {
     for (const auto &use : mask.uses()) {
         auto *check = llvm::dyn_cast<llvm::ICmpInst>(use.getUser());
-        if (check && use.getOperandNo() == 0 && safe.contains(check) && tag_comparison(*check, mask)) {
+        if (check && use.getOperandNo() == 0 && tag_comparison(*check, mask)) {
             result.emplace(check, index);
         }
     }
 }
 
-// Require a side-effect-free word load and an exact mask rather than broad integer annotations.
-void masks(llvm::LoadInst &load, const std::size_t index, const Users &safe, IntegerGuards &result) {
+// Require an exact mask of an argument word rather than broad integer annotations.
+void masks(llvm::LoadInst &load, const std::size_t index, IntegerGuards &result) {
     for (const auto &use : load.uses()) {
         auto *mask = llvm::dyn_cast<llvm::BinaryOperator>(use.getUser());
-        if (mask && use.getOperandNo() == 0 && safe.contains(mask) && tag_mask(*mask, load)) {
-            comparisons(*mask, index, safe, result);
+        if (mask && use.getOperandNo() == 0 && tag_mask(*mask, load)) {
+            comparisons(*mask, index, result);
         }
     }
 }
 
-// Reject volatile/atomic and mismatched-width loads before considering their checks.
-void loads(llvm::GetElementPtrInst &slot, const std::size_t index, const Users &safe, IntegerGuards &result) {
+// Reject volatile/atomic and mismatched-width loads before considering their checks. The argument array is never
+// written and a collection never changes a small integer, so a load anywhere in the body reads the entry tag.
+void loads(llvm::GetElementPtrInst &slot, const std::size_t index, IntegerGuards &result) {
     for (const auto &use : slot.uses()) {
         auto *load = llvm::dyn_cast<llvm::LoadInst>(use.getUser());
-        if (!load || use.getOperandNo() != 0 || !safe.contains(load)) {
-            continue;
-        }
-        if (!load->isVolatile() && !load->isAtomic() && load->getType() == slot.getSourceElementType()) {
-            masks(*load, index, safe, result);
+        if (load && use.getOperandNo() == 0 && !load->isVolatile() && !load->isAtomic() &&
+            load->getType() == slot.getSourceElementType()) {
+            masks(*load, index, result);
         }
     }
 }
@@ -93,14 +77,13 @@ IntegerGuards integer_guards(llvm::Function &function, const std::size_t arity) 
     if (function.isDeclaration() || function.arg_size() != 2) {
         return result;
     }
-    const auto safe = safe_users(function);
     for (const auto &use : function.getArg(1)->uses()) {
         auto *slot = llvm::dyn_cast<llvm::GetElementPtrInst>(use.getUser());
-        if (!slot || use.getOperandNo() != 0 || !safe.contains(slot)) {
+        if (!slot || use.getOperandNo() != 0) {
             continue;
         }
         if (const auto index = slot_index(*slot, function, arity)) {
-            loads(*slot, *index, safe, result);
+            loads(*slot, *index, result);
         }
     }
     return result;

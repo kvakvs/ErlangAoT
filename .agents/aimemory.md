@@ -481,3 +481,8 @@ Host and tool gotchas:
 - ADL can pick std::quoted for a local `quoted`: rename. No make here; gmake at C:/Strawberry/c/bin.
 - OTP oracle: erts-17.1/bin/escript.exe directly (bin/escript.exe segfaults). erlfmt: escript with
   code:add_path("thirdparty/tools/erlfmt/_build/local") + erlfmt:format_file(F, []).
+- 59 (2026-10-09): proofs = ExpressionLowering::proofs (O2 + specialization, functions only, not lambdas). Inline
+  heap reads MUST be stored into root_slot (frames classify only term-slot/register loads as terms; raw spill went
+  stale after GC: wakeups golden). Proofs read Inference::inputs (caller-joined) never Summary entry domains (those
+  come from the patterns themselves). Fast mode matrix now O0 positional + O2 (spec on) project. Inference loses
+  range precision for products of unions with negatives ((-5|1|3)^2 -> integer()).

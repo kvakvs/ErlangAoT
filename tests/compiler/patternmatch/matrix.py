@@ -15,12 +15,13 @@ def fast():
 
 
 def combinations():
-    """Full: four policies with both drivers. Fast: O0 positional and O2-off project still cover each axis."""
+    """Full: four policies with both drivers. Fast: O0 positional (generic code) and O2 project (inferred proofs and
+    variants, step 59) still cover each axis."""
     full = [(level, extra, name, project) for level, extra, name in POLICIES for project in (False, True)]
     if not fast():
         return full
-    print("fast mode: O0 positional and O2-off project runs only; 'four policies' below means this subset")
-    return [full[0], full[7]]
+    print("fast mode: O0 positional and O2 project runs only; 'four policies' below means this subset")
+    return [full[0], full[5]]
 
 
 def option_lists():

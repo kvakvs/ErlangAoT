@@ -400,8 +400,9 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   (58M). Expectations: `tests/fixtures/inference/values.erl`,
   `base_types.erl` and `narrowing.erl` (7 of 39 and 3 of 46 functions at their expected type on
   2026-10-08; all 121, 46 and 51 on 2026-10-09), contradictions in `tests/fixtures/inference/contracts/`.
-- **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [ ] remove
-  real checks for new operations with generic fallback and existing caps.
+- **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [x] remove
+  real checks for new operations with generic fallback and existing caps
+  (inferred proofs for arithmetic, tuple access and list loops at O2).
 - **F30 — Debug information** ([60](11-plan.md#step-60)): [ ] LLVM debug
   metadata mapped to Erlang source through macros/includes.
 - **F31 — Profiling** ([61](11-plan.md#step-61)): [ ] bounded-overhead cost

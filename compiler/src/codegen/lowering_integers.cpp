@@ -1,6 +1,9 @@
 #include "lowering_state.hpp"
 #include "runtime_symbols.hpp"
+#include <algorithm>
+#include <array>
 #include <clause/abi/term.hpp>
+#include <llvm/ADT/APInt.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Transforms/Utils/SSAUpdater.h>
 
@@ -76,6 +79,50 @@ llvm::Value *joined(ExpressionLowering &state, llvm::BasicBlock *fast, llvm::Val
     boundary->eraseFromParent();
     return value;
 }
+
+// One bound of an arithmetic result on a pair of proven operand bounds; none when it leaves int64.
+std::optional<std::int64_t> bound(const llvm::Instruction::BinaryOps operation,
+                                  const std::array<std::int64_t, 2> &operands) {
+    bool overflow = false;
+    const llvm::APInt lhs(64, static_cast<std::uint64_t>(operands[0]), true);
+    const llvm::APInt rhs(64, static_cast<std::uint64_t>(operands[1]), true);
+    const auto result = operation == llvm::Instruction::Add   ? lhs.sadd_ov(rhs, overflow)
+                        : operation == llvm::Instruction::Sub ? lhs.ssub_ov(rhs, overflow)
+                                                              : lhs.smul_ov(rhs, overflow);
+    return overflow ? std::nullopt : std::optional{result.getSExtValue()};
+}
+
+// Whether every result of the operation on the proven operand ranges is a small integer of the target.
+bool fits(const ExpressionLowering &state, const llvm::Instruction::BinaryOps operation, const SmallRange &left,
+          const SmallRange &right) {
+    const std::array corners{bound(operation, {left.low, right.low}), bound(operation, {left.low, right.high}),
+                             bound(operation, {left.high, right.low}), bound(operation, {left.high, right.high})};
+    const auto minimum =
+        state.word->getBitWidth() == 32 ? abi::v1::IntegerEncoding<32>::minimum : abi::v1::IntegerEncoding<64>::minimum;
+    return std::ranges::all_of(
+        corners, [minimum](const auto &corner) { return corner && *corner >= minimum && *corner <= -minimum - 1; });
+}
+
+// Two proven small operands whose every result is small: decode, compute and encode in the word, with no check.
+llvm::Value *direct(ExpressionLowering &state, const llvm::Instruction::BinaryOps operation, llvm::Value *left,
+                    llvm::Value *right) {
+    auto &builder = state.builder;
+    auto *shift = llvm::ConstantInt::get(state.word, 4);
+    auto *number = builder.CreateBinOp(operation, builder.CreateAShr(left, shift), builder.CreateAShr(right, shift),
+                                       "integer.proven");
+    return builder.CreateOr(builder.CreateShl(number, shift), llvm::ConstantInt::get(state.word, 15));
+}
+
+// The tag test of the operands not proven small integers; null when both are proven.
+llvm::Value *unproven_tags(ExpressionLowering &state, llvm::Value *left, llvm::Value *right,
+                           const OperandProofs &proofs) {
+    llvm::Value *left_tag = proofs.left ? nullptr : small(state, left);
+    llvm::Value *right_tag = proofs.right ? nullptr : small(state, right);
+    if (left_tag && right_tag) {
+        return state.builder.CreateAnd(left_tag, right_tag);
+    }
+    return left_tag ? left_tag : right_tag;
+}
 } // namespace
 
 llvm::BasicBlock *bad_arithmetic_exit(ExpressionLowering &state) {
@@ -140,7 +187,8 @@ llvm::Value *lower_integer(ExpressionLowering &state, const std::string_view dec
     return checked_value(state, {outcome, slot}, bad_arithmetic_exit(state));
 }
 
-llvm::Value *lower_operation(ExpressionLowering &state, const Op operation, llvm::Value *left, llvm::Value *right) {
+llvm::Value *lower_operation(ExpressionLowering &state, const Op operation, llvm::Value *left, llvm::Value *right,
+                             const OperandProofs proofs) {
     if (auto *map = lower_map_query(state, operation, left, right)) {
         return map;
     }
@@ -148,13 +196,20 @@ llvm::Value *lower_operation(ExpressionLowering &state, const Op operation, llvm
     if (!checked) {
         return lower_immediate(state, operation, left, right);
     }
+    if (proofs.left && proofs.right && fits(state, *checked, *proofs.left, *proofs.right)) {
+        return direct(state, *checked, left, right);
+    }
     auto &builder = state.builder;
     auto &context = state.entry.getContext();
     auto *attempt = llvm::BasicBlock::Create(context, "integer.small", &state.entry);
     auto *fast = llvm::BasicBlock::Create(context, "integer.small.success", &state.entry);
     auto *fallback = llvm::BasicBlock::Create(context, "integer.fallback", &state.entry);
     auto *join = llvm::BasicBlock::Create(context, "integer.join", &state.entry);
-    builder.CreateCondBr(builder.CreateAnd(small(state, left), small(state, right)), attempt, fallback);
+    if (auto *tags = unproven_tags(state, left, right, proofs)) {
+        builder.CreateCondBr(tags, attempt, fallback);
+    } else {
+        builder.CreateBr(attempt);
+    }
     builder.SetInsertPoint(attempt);
     const auto result = calculate(state, *checked, left, right);
     builder.CreateCondBr(result.valid, fast, fallback);

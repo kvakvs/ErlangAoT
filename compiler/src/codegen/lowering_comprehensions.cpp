@@ -23,6 +23,8 @@ struct Generator {
     // What this step reads: the rest of a list or bitstring, or a map and its position.
     llvm::Value *input = nullptr;
     llvm::Value *map = nullptr;
+    // A list input inference proved a proper list: every rest is one, so cells are tested and read inline.
+    bool proven = false;
 };
 
 // A new block of the function being lowered.
@@ -96,8 +98,11 @@ void start_map(ExpressionLowering &state, Generator &generator, llvm::Value *inp
 // Before the loop: keep the generator's input in its slot.
 Generator start(ExpressionLowering &state, const ast::Qualifier &part) {
     Generator generator{&part, source(part), semantic::strict_generator(part), root_slot(state)};
-    auto *input = value_of(state, *semantic::generator_input(part));
+    const auto &syntax = state.module.syntax->expression(*semantic::generator_input(part));
+    auto *input = state.values.at(&syntax);
     store(state, input, generator.slot);
+    const auto known = known_expression(state, syntax);
+    generator.proven = generator.source == Source::list && known && state.proofs->list(*known) != ListShape::unknown;
     if (generator.source == Source::map) {
         start_map(state, generator, input);
     }
@@ -156,6 +161,18 @@ llvm::Value *take_entry(ExpressionLowering &state, const Generator &generator, c
     return lower_operation(state, abi::v1::ImmediateOperation::add, generator.input, lower_integer(state, "1"));
 }
 
+// Take the head of a proven list's cons cell inline, matching it unless `skip`; return the tail.
+llvm::Value *take_cell(ExpressionLowering &state, const Generator &generator, const bool skip,
+                       llvm::BasicBlock *mismatch) {
+    require(state, inline_cons_test(state, generator.input), mismatch);
+    auto *rest = inline_cons_word(state, generator.input, 1);
+    if (!skip) {
+        match(state, semantic::generator_patterns(*generator.part).front(), inline_cons_word(state, generator.input, 0),
+              mismatch);
+    }
+    return rest;
+}
+
 // Take one element, matching it unless `skip`; return what the input continues with, or go to `mismatch`.
 llvm::Value *take(ExpressionLowering &state, const Generator &generator, const bool skip, llvm::BasicBlock *mismatch) {
     if (generator.source == Source::binary) {
@@ -163,6 +180,9 @@ llvm::Value *take(ExpressionLowering &state, const Generator &generator, const b
     }
     if (generator.source == Source::map) {
         return take_entry(state, generator, skip, mismatch);
+    }
+    if (generator.proven) {
+        return take_cell(state, generator, skip, mismatch);
     }
     auto *rest = lower_inspection(state, abi::v1::ContainerInspection::cons_tail, generator.input, 0, mismatch);
     if (!skip) {

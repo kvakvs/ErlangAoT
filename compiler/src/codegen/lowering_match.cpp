@@ -125,12 +125,125 @@ bool extraction(ExpressionLowering &state, const semantic::MatchNode &node, std:
     return true;
 }
 
+struct Proven {
+    // The inferred facts of the candidate values, and the candidates an earlier shape test proved a tuple or a cons
+    // cell: plan nodes run in a line (each test's success is the next node), so every earlier test dominates.
+    std::vector<std::optional<Known>> known;
+    std::vector<bool> tuples;
+    std::vector<bool> conses;
+};
+
+// A shape test inferred facts prove: skipped, or reduced to a primary tag test for a proven proper list.
+bool proven_shape(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *const> values,
+                  const Proven &proven, const std::vector<llvm::BasicBlock *> &blocks) {
+    const auto &known = proven.known[node.input];
+    if (!known) {
+        return false;
+    }
+    if (node.operation == semantic::MatchOperation::tuple_shape) {
+        if (state.proofs->arity(*known) != node.index) {
+            return false;
+        }
+        state.builder.CreateBr(blocks.at(node.success));
+        return true;
+    }
+    const auto shape = state.proofs->list(*known);
+    if (shape == ListShape::cons) {
+        state.builder.CreateBr(blocks.at(node.success));
+    } else if (shape == ListShape::list) {
+        state.builder.CreateCondBr(inline_cons_test(state, values[node.input]), blocks.at(node.success),
+                                   blocks.at(node.mismatch));
+    }
+    return shape != ListShape::unknown;
+}
+
+// The fact of an extracted value: a tuple element, a list head or a list tail.
+std::optional<Known> extracted_fact(const ExpressionLowering &state, const semantic::MatchNode &node,
+                                    const std::optional<Known> &known) {
+    if (!known) {
+        return {};
+    }
+    if (node.operation == semantic::MatchOperation::tuple_element) {
+        return state.proofs->element(*known, node.index);
+    }
+    return node.operation == semantic::MatchOperation::cons_head ? state.proofs->head(*known)
+                                                                 : state.proofs->tail(*known);
+}
+
+// Read a tuple element or a cons cell's head or tail inline once a shape test or a fact proved the cell.
+bool proven_extraction(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
+                       Proven &proven, const std::vector<llvm::BasicBlock *> &blocks) {
+    const auto &known = proven.known[node.input];
+    auto *input = values[node.input];
+    if (node.operation == semantic::MatchOperation::tuple_element) {
+        if (!proven.tuples[node.input] && !(known && state.proofs->arity(*known))) {
+            return false;
+        }
+        values[node.output] = inline_tuple_element(state, input, node.index);
+    } else {
+        if (!proven.conses[node.input] && !(known && state.proofs->list(*known) == ListShape::cons)) {
+            return false;
+        }
+        values[node.output] =
+            inline_cons_word(state, input, node.operation == semantic::MatchOperation::cons_head ? 0 : 1);
+    }
+    proven.known[node.output] = extracted_fact(state, node, known);
+    state.builder.CreateBr(blocks.at(node.success));
+    return true;
+}
+
+// An exact match with an immediate literal ([], {}, a small integer or an atom) compares words: equal immediates
+// are the same word, and no other term equals one exactly.
+bool immediate_literal(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *const> values,
+                       const std::vector<llvm::BasicBlock *> &blocks) {
+    const auto &value = *node.literal;
+    if (!std::holds_alternative<semantic::EmptyValue>(value) && !std::holds_alternative<std::int64_t>(value) &&
+        !std::holds_alternative<ast::Atom>(value)) {
+        return false;
+    }
+    auto *test = state.builder.Insert(llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ,
+                                                            values[node.input], literal(state, value)));
+    state.builder.CreateCondBr(test, blocks.at(node.success), blocks.at(node.mismatch));
+    return true;
+}
+
+// The nodes after a shape test run only when it passed: its input is then a tuple or a cons cell.
+void mark_shape(const semantic::MatchNode &node, Proven &proven) {
+    if (node.operation == semantic::MatchOperation::tuple_shape) {
+        proven.tuples[node.input] = true;
+    } else if (node.operation == semantic::MatchOperation::cons_shape) {
+        proven.conses[node.input] = true;
+    }
+}
+
+// Emit a node from proofs instead of a runtime service; false leaves it to the generic path.
+bool proven_node(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *> values,
+                 Proven &proven, const std::vector<llvm::BasicBlock *> &blocks) {
+    using Op = semantic::MatchOperation;
+    switch (node.operation) {
+    case Op::tuple_shape:
+    case Op::cons_shape:
+        return proven_shape(state, node, values, proven, blocks);
+    case Op::tuple_element:
+    case Op::cons_head:
+    case Op::cons_tail:
+        return proven_extraction(state, node, values, proven, blocks);
+    case Op::exact_literal:
+        return immediate_literal(state, node, values, blocks);
+    default:
+        return false;
+    }
+}
+
 // Bindings remain tentative; every failed constraint reaches the caller-owned mismatch continuation.
 void node(ExpressionLowering &state, const semantic::MatchNode &node, const std::span<llvm::Value *> values,
-          const std::vector<llvm::BasicBlock *> &blocks) {
+          const std::vector<llvm::BasicBlock *> &blocks, Proven *proven) {
     locate_source(state.builder, *state.module.syntax, state.module.syntax->expression(node.source).source);
     if (node.input >= values.size()) {
         throw std::invalid_argument("lowering: match input is out of range");
+    }
+    if (proven && proven_node(state, node, values, *proven, blocks)) {
+        return;
     }
     if (extraction(state, node, values, blocks)) {
         return;
@@ -144,6 +257,35 @@ void node(ExpressionLowering &state, const semantic::MatchNode &node, const std:
     auto *expected = node.operation == semantic::MatchOperation::exact_binding ? state.bindings.at(*node.binding)
                                                                                : literal(state, *node.literal);
     state.builder.CreateCondBr(lower_exact(state, input, expected), blocks.at(node.success), blocks.at(node.mismatch));
+}
+
+// What proofs know of a plan's candidates before its first node: the inputs' facts; none without proofs.
+std::optional<Proven> proven_values(const ExpressionLowering &state, const semantic::MatchPlan &plan,
+                                    std::span<const std::optional<Known>> known) {
+    if (!state.proofs) {
+        return std::nullopt;
+    }
+    Proven proven{std::vector<std::optional<Known>>(plan.values), std::vector<bool>(plan.values),
+                  std::vector<bool>(plan.values)};
+    std::ranges::copy(known.first(std::min(known.size(), plan.values)), proven.known.begin());
+    return proven;
+}
+
+// One block per plan node: new test blocks, and the caller's continuations for the success and mismatch terminals.
+std::vector<llvm::BasicBlock *> node_blocks(const ExpressionLowering &state, const semantic::MatchPlan &plan,
+                                            llvm::BasicBlock *success, llvm::BasicBlock *mismatch) {
+    std::vector<llvm::BasicBlock *> blocks;
+    blocks.reserve(plan.nodes.size());
+    for (const auto &node : plan.nodes) {
+        if (node.operation == semantic::MatchOperation::success) {
+            blocks.push_back(success);
+        } else if (node.operation == semantic::MatchOperation::mismatch) {
+            blocks.push_back(mismatch);
+        } else {
+            blocks.push_back(llvm::BasicBlock::Create(state.entry.getContext(), "match.test", &state.entry));
+        }
+    }
+    return blocks;
 }
 
 // The head plan of the current candidate: a clause of the function, or of the anonymous fun being lowered.
@@ -205,29 +347,27 @@ void lower_head(ExpressionLowering &state, llvm::BasicBlock *success, llvm::Basi
     if (!plan) {
         throw std::invalid_argument("lowering: unavailable match plan");
     }
-    lower_match_plan(state, *plan, inputs(state, *plan), success, mismatch);
+    std::vector<std::optional<Known>> known;
+    for (std::size_t i = 0; state.proofs && !state.lambda && i < plan->inputs; ++i) {
+        known.push_back(known_argument(state, i));
+    }
+    lower_match_plan(state, *plan, inputs(state, *plan), success, mismatch, known);
 }
 
 std::vector<llvm::Value *> lower_match_plan(ExpressionLowering &state, const semantic::MatchPlan &plan,
                                             std::span<llvm::Value *const> values, llvm::BasicBlock *success,
-                                            llvm::BasicBlock *mismatch) {
+                                            llvm::BasicBlock *mismatch, std::span<const std::optional<Known>> known) {
     std::vector<llvm::Value *> candidates(plan.values);
     std::ranges::copy(values, candidates.begin());
-    std::vector<llvm::BasicBlock *> blocks;
-    blocks.reserve(plan.nodes.size());
-    for (const auto &node : plan.nodes) {
-        if (node.operation == semantic::MatchOperation::success) {
-            blocks.push_back(success);
-        } else if (node.operation == semantic::MatchOperation::mismatch) {
-            blocks.push_back(mismatch);
-        } else {
-            blocks.push_back(llvm::BasicBlock::Create(state.entry.getContext(), "match.test", &state.entry));
-        }
-    }
+    auto proven = proven_values(state, plan, known);
+    const auto blocks = node_blocks(state, plan, success, mismatch);
     state.builder.CreateBr(blocks.front());
     for (std::size_t i = 0; i + 2 < plan.nodes.size(); ++i) {
         state.builder.SetInsertPoint(blocks[i]);
-        node(state, plan.nodes[i], candidates, blocks);
+        node(state, plan.nodes[i], candidates, blocks, proven ? &*proven : nullptr);
+        if (proven) {
+            mark_shape(plan.nodes[i], *proven);
+        }
     }
     return candidates;
 }

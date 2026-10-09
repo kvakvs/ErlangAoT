@@ -4,37 +4,21 @@
 #include "integer_guards.hpp"
 #include "llvm_state.hpp"
 #include "progress.hpp"
+#include "proofs.hpp"
 #include <algorithm>
-#include <charconv>
-#include <clause/abi/term.hpp>
 
 namespace clause::codegen {
 namespace {
-// Prove only bounded implementation singletons; broad integer types and unions stay generic.
-Representation representation(const semantic::types::Graph &graph, const semantic::types::Id id, const unsigned bits) {
-    const auto &node = graph.get(id);
-    if (node.kind != semantic::types::Kind::integer) {
-        return Representation::generic;
-    }
-    std::int64_t value = 0;
-    const auto parsed = std::from_chars(node.name.data(), node.name.data() + node.name.size(), value);
-    if (parsed.ec != std::errc{} || parsed.ptr != node.name.data() + node.name.size()) {
-        return Representation::generic;
-    }
-    const auto fits = bits == 32 ? abi::v1::IntegerEncoding<32>::encode(value).has_value()
-                                 : abi::v1::IntegerEncoding<64>::encode(value).has_value();
-    return fits ? Representation::small_integer : Representation::generic;
-}
-
-// Copy only observed per-argument representation proofs, never literal values or union combinations.
+// Copy only observed per-argument representation proofs: integers (singletons or ranges) that are all immediates.
 TypeProfile call_profile(const ast::Module &syntax, const ast::CallExpression &call,
                          const semantic::types::Inference &inferred, const unsigned bits) {
+    const Proofs proofs(inferred.graph, bits);
     TypeProfile result;
     result.reserve(call.arguments.size());
     for (const auto &id : call.arguments) {
         const auto fact = inferred.expressions.find(&syntax.expression(id));
-        result.push_back(fact == inferred.expressions.end() ? Representation::generic
-                                                            : representation(inferred.graph, fact->second.type, bits));
+        const bool small = fact != inferred.expressions.end() && proofs.small(fact->second.type);
+        result.push_back(small ? Representation::small_integer : Representation::generic);
     }
     return result;
 }

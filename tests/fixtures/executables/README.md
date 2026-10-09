@@ -44,7 +44,7 @@ Never regenerate to make a Clause comparison pass.
 stages the sources, links them under each combination of
 `tests/compiler/patternmatch/matrix.py` (full mode: O0/O2 × specialization
 on/off × positional `--entry … -o` and project manifest `entry`/`output`; fast
-mode: O0 positional and O2-off project), runs every `runs[]` entry and prints a
+mode: O0 positional and O2 project, so inferred proofs run in fast mode too), runs every `runs[]` entry and prints a
 unified stdout diff, exit-status and stderr-pattern mismatches.
 `executables_selfcheck` proves a wrong golden fails with that diff and a stale
 golden fails before linking. The tests need the runtime library and Clang, as

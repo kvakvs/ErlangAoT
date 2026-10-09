@@ -43,4 +43,11 @@ struct IntegerEncoding {
 
 // Native runtime consumers share the contract; cross compilers must select 32 or 64 explicitly.
 using NativeIntegerEncoding = IntegerEncoding<sizeof(TermWord) * 8>;
+
+// Primary tags of list and boxed words, and the header layout generated code reads once inference or a dominating
+// shape test proved a tuple or cons cell (docs/runtime-heap.md#word-layout).
+inline constexpr unsigned list_tag = 0x1;
+inline constexpr unsigned boxed_tag = 0x2;
+// A header holds its kind from bit 2 and the count of following words from this bit; a tuple's kind is 0.
+inline constexpr unsigned header_count_shift = 7;
 } // namespace clause::abi::v1

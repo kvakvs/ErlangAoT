@@ -58,13 +58,14 @@ void declare_lambdas(llvm::Module &output, const semantic::Module &module, llvm:
     }
 }
 
-// Keep generic bodies independent of declared types and inferred representation guesses.
+// Bodies never trust declared types; with `proven` (O2 with type specialization) inferred facts replace checks.
 void define(llvm::Module &output, const semantic::Module &module, llvm::IntegerType *word,
-            const semantic::types::Inference &inferred) {
+            const semantic::types::Inference &inferred, const bool proven) {
+    const Proofs proofs(inferred.graph, word->getBitWidth());
     for (const auto &function : module.functions) {
         auto *entry = output.getFunction(function.symbol);
         llvm::IRBuilder<> builder(llvm::BasicBlock::Create(output.getContext(), "entry", entry));
-        lower_function(builder, *entry, module, function, word, inferred);
+        lower_function(builder, *entry, module, function, word, inferred, proven ? &proofs : nullptr);
     }
     for (const auto &fun : module.funs) {
         if (fun.expression) {
@@ -111,7 +112,9 @@ bool lower(Compilation &compilation, const std::span<const std::unique_ptr<seman
         }
         for (std::size_t i = 0; i < modules.size(); ++i) {
             emit_registration(*outputs[i], *modules[i], word);
-            define(*outputs[i], *modules[i], word, inferred);
+            const auto &request = compilation.request();
+            define(*outputs[i], *modules[i], word, inferred,
+                   request.optimization == OptimizationLevel::speed && !request.disable_type_specialization);
         }
         progress_modules(compilation, "specialization");
         detail::state(compilation).specializations = analyze_specializations(compilation, modules, inferred);

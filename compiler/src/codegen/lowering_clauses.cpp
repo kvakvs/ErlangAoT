@@ -144,6 +144,7 @@ void lower_clauses(ExpressionLowering &initial, const std::vector<ast::FunctionC
         state.tail_calls = &tails;
         state.failure = failure;
         state.lambda = initial.lambda;
+        state.proofs = initial.proofs;
         reset_candidate_roots(state);
         candidate(state, clauses[index], next);
         failure = state.failure;
@@ -161,10 +162,11 @@ void lower_clauses(ExpressionLowering &initial, const std::vector<ast::FunctionC
 
 void lower_function(llvm::IRBuilder<> &builder, llvm::Function &entry, const semantic::Module &module,
                     const semantic::Function &function, llvm::IntegerType *word,
-                    const semantic::types::Inference &inferred) {
+                    const semantic::types::Inference &inferred, const Proofs *proofs) {
     const auto reads = read_bindings(module, function);
     ExpressionLowering initial{builder, entry, module, function, inferred, word, {}};
     initial.reads = &reads;
+    initial.proofs = proofs;
     lower_clauses(initial, std::get<ast::Function>(module.syntax->form(function.form).value).clauses);
 }
 

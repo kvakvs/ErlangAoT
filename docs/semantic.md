@@ -390,9 +390,11 @@ Facts print as Erlang types, categories by their built-in names.
 - Specifications never add to facts: inferred facts come only from code and
   never decide a representation on a spec's word.
 
-Lowering consumes these facts. Generated IR never converts an integer to a heap
-pointer; each fallible service result is loaded only on its success path, and
-shape checks dominate extraction. Specialization policy:
+Lowering consumes these facts. At `-O2` with type specialization, facts of
+caller-joined arguments and of expressions remove tag, shape and service checks
+([proofs](specialization.md#proofs)); the only heap pointer conversions are
+those proven reads. Each fallible service result is loaded only on its success
+path, and shape checks dominate extraction. Specialization policy:
 [specialization.md](specialization.md).
 
 ## `--print-types`
