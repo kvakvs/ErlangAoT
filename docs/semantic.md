@@ -218,7 +218,7 @@ Facts print as Erlang types, categories by their built-in names.
 | --- | --- | --- | --- |
 | Nothing | `none()` | Identity | A function that never returns stays `none()` |
 | Anything | `term()` | Absorbs every fact | `dynamic()` and `any()` are `term()` |
-| Integers | `42`, `1 \| 2 \| 3` | Union of singletons | More than 8 singletons become their range |
+| Integers | `42`, `1 \| 3 \| 7` | Union of singletons | More than 8 singletons become their range |
 | Integer range | `1..10`, `0..255` | Smallest range holding both | A bound that moved between rounds goes to the next threshold: a lower one to 1, then 0, then unbounded; an upper one to -1, then unbounded |
 | Unbounded integers | `pos_integer()` (1 and up), `non_neg_integer()` (0 and up), `neg_integer()` (-1 and down), `integer()` | Smallest interval holding both, printed by its category | — |
 | Floats | `float()` | — | — |
@@ -265,14 +265,14 @@ not an interchange format. Warnings stay on stderr.
 -module(branches).
 -export([mixed/1]).
 
-%% inferred: mixed(term()) -> 1 | 2
+%% inferred: mixed(term()) -> 1..2
 mixed(X) ->
     case X of
         1 ->
             1;
         _ ->
             2
-    end :: 1 | 2.
+    end :: 1..2.
 ```
 
 - A `%% module` line names the module, its source, the project target and
@@ -319,7 +319,7 @@ sum() -> 1 + 2.
   binaries and argument relations. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
   parts, funs and their calls, local inputs from callers, integer joins and
-  argument relations (105 of 106 functions).
+  argument relations (107 of 108 functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
@@ -334,7 +334,10 @@ sum() -> 1 + 2.
 `semantic::types::type_source(graph, type)` (`semantic/types/printing`) renders
 a type of the type graph in Erlang type syntax: `term()`, `none()`, atoms and
 integers, `1..5`, `{ok, T}`, `tuple()`, `[T]`, `[T, ...]`, `#{K => V, K := V}`,
-`#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. Predefined `erlang`
+`#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. A union's integers
+print in value order where its first integer stands, consecutive ones as a
+range (`1 | 2 | 3 | 5` prints `1..3 | 5`; the fact keeps the singletons).
+Predefined `erlang`
 types drop their module; references to declared types stay named. A budget of
 nodes bounds the text; past it, and below 32 levels of nesting, `...` stands in.
 

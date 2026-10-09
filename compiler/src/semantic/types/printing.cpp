@@ -1,4 +1,5 @@
 #include "printing.hpp"
+#include "../../preprocessor/value.hpp"
 #include <algorithm>
 #include <clause/compiler/printing.hpp>
 #include <span>
@@ -127,6 +128,49 @@ class Printer final {
         return node.name.empty() ? '(' + inner + ')' : node.name + " :: " + inner;
     }
 
+    // A union's members separated by ` | `, its integers in value order where the first one stood, consecutive
+    // ones as a range (1 | 2 | 3 | 7 prints 1..3 | 7).
+    std::string alternatives(const Node &node, std::size_t depth) {
+        std::string result;
+        bool integers = false;
+        for (const auto child : node.children) {
+            const bool integer = graph_.get(child).kind == Kind::integer;
+            if (integer && integers) {
+                continue;
+            }
+            result += (result.empty() ? "" : " | ") + (integer ? runs(sorted_integers(node)) : text(child, depth));
+            integers = integers || integer;
+        }
+        return result;
+    }
+
+    // The integer members of a union in value order.
+    std::vector<BigInt> sorted_integers(const Node &node) const {
+        std::vector<BigInt> result;
+        for (const auto child : node.children) {
+            if (graph_.get(child).kind == Kind::integer) {
+                result.push_back(decimal_number(graph_.get(child).name));
+            }
+        }
+        std::ranges::sort(result);
+        return result;
+    }
+
+    // Sorted integers as ranges of consecutive values and single values, separated by ` | `.
+    static std::string runs(const std::vector<BigInt> &integers) {
+        std::string result;
+        for (std::size_t first = 0; first < integers.size();) {
+            auto last = first;
+            while (last + 1 < integers.size() && integers[last + 1] == integers[last] + 1) {
+                ++last;
+            }
+            result += (result.empty() ? "" : " | ") + decimal_integer(integers[first]);
+            result += last == first ? std::string() : ".." + decimal_integer(integers[last]);
+            first = last + 1;
+        }
+        return result;
+    }
+
     // Containers and ranges; the other kinds go to `operations`.
     std::string compound(const Node &node, std::size_t depth) {
         switch (node.kind) {
@@ -158,7 +202,7 @@ class Printer final {
         case Kind::annotation:
             return annotation(node, depth);
         case Kind::union_type:
-            return join(node.children, depth, " | ");
+            return alternatives(node, depth);
         default:
             return named(node, depth);
         }

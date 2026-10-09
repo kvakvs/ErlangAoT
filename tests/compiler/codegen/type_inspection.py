@@ -79,12 +79,12 @@ alike(X) -> if is_atom(X) -> X; true -> X end.
 bound(X) -> if X > 0 -> Y = 5; true -> Y = 6 end, Y.
 ''', encoding='utf-8')
 facts = run('--print-types', 'branches.erl').stdout
-for signature in ('pick(term()) -> 7', 'same(term()) -> argument 1', 'mixed(term()) -> 1 | 2',
-                  'shared(term()) -> term()', 'guarded(term()) -> 1 | 2', 'alike(term()) -> argument 1',
+for signature in ('pick(term()) -> 7', 'same(term()) -> argument 1', 'mixed(term()) -> 1..2',
+                  'shared(term()) -> term()', 'guarded(term()) -> 1..2', 'alike(term()) -> argument 1',
                   'bound(term()) -> term()'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # The case value joins its clauses, though the name its clauses bind stays unknown.
-assert '    end :: 5 | 6,\n    Y.\n' in facts, facts
+assert '    end :: 5..6,\n    Y.\n' in facts, facts
 
 # Recursive components iterate from none() to a fixed point; pending recursive calls add nothing to a join.
 (work / 'recursive.erl').write_text('''-module(recursive).
@@ -102,11 +102,11 @@ facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
 assert re.search(r'%% inferred: keep\(term\(\), term\(\)\) -> [^\n]*argument 1\n', facts), facts
 for signature in ('zero(term()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
-                  'even(term()) -> 0 | 1', 'odd(term()) -> 0 | 1', 'fact(term()) -> number()',
+                  'even(term()) -> 0..1', 'odd(term()) -> 0..1', 'fact(term()) -> number()',
                   'outer(term()) -> 0 | 5'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
-assert '    odd((N - 1 :: number())) :: 0 | 1.\n' in facts, facts
+assert '    odd((N - 1 :: number())) :: 0..1.\n' in facts, facts
 
 
 # A cycle of n functions gains one result member per round (docs/semantic.md#inference-domain): a cycle of 8, the
@@ -120,7 +120,7 @@ def ring(size):
 
 
 exact, widened = ring(8), ring(16)
-assert 'inferred=complete' in exact and '%% inferred: w1(term()) -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8\n' in exact, exact
+assert 'inferred=complete' in exact and '%% inferred: w1(term()) -> 1..8\n' in exact, exact
 assert 'inferred=complete' in widened, widened
 assert '%% inferred: w1(term()) -> pos_integer()\n' in widened, widened
 

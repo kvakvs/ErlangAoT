@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58I](#step-58i), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58I](#step-58i) (with [58F1](#step-58f1), [58H1](#step-58h1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -392,6 +392,27 @@ exported and fun-referenced functions keep `term()` inputs.
     (term() inputs), `uncalled(none()) -> none()`; values 105 of 106.
     `frontend_cli`'s inference trace module now exports the functions it
     checks (an uncalled local is `none()`).
+
+<a id="step-58f1"></a>
+
+### 58F1. Print consecutive integers as ranges
+
+Backlog: F34. Depends on: [58A](#step-58a). Added 2026-10-09 (user
+direction).
+
+A union's integer singletons print in value order, runs of consecutive
+values as `N..M` (`1 | 2 | 3 | 5` prints `1..3 | 5`); the fact itself keeps
+its singletons, so joins and budgets are unchanged.
+
+- Success criteria
+  - [x] Inferred and declared unions print consecutive integers as ranges.
+    Evidence 2026-10-09: `semantic/types/printing` (`alternatives`, `runs`).
+- Tests
+  - [x] `values.erl` expectations updated (`pick -> 1..3`, strings
+    `[97..99, ...]`); new `consecutive`/`pick_number` row
+    (`1..3 | 5 | 7..8`); the eight-letter string uses gaps so the 8-singleton
+    budget stays visible; `codegen_types` and `patternmatch_clauses` expect
+    the new spelling.
 
 <a id="step-58g"></a>
 

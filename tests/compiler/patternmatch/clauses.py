@@ -48,7 +48,7 @@ def main():
                          re.finditer(r'%% inferred: (\w+)\([^\n]*\) -> ([^\n]+)', result)}
             assert summaries["common"].endswith("argument 1"), summaries["common"]
             assert "argument" not in summaries["rollback"], summaries["rollback"]
-    assert summaries["join"] in {"1 | 2", "2 | 1"}, summaries["join"]
+    assert summaries["join"] == "1..2", summaries["join"]
     (work / "evidence.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
     print(f'{records["calls"]} OTP/native ordered-clause calls; later-body diagnostics and retry passed.')
 

@@ -57,6 +57,7 @@
     string/0,
     eight_letters/0,
     nine_letters/0,
+    consecutive/0,
     same_tuple/0,
     mixed_tuple/0,
     nested_tuple/0,
@@ -208,7 +209,7 @@ absolute() -> abs(-5).
 %% expect: rounded() -> integer()
 rounded() -> round(2.5).
 
-%% expect: minimum() -> 1 | 2
+%% expect: minimum() -> 1..2
 minimum() -> min(1, 2).
 
 %% expect: displayed() -> true
@@ -265,7 +266,7 @@ uncalled(X) -> X.
 
 %% Integers, integer ranges and integers or floats.
 
-%% expect: pick(term()) -> 1 | 2 | 3
+%% expect: pick(term()) -> 1..3
 pick(X) ->
     case X of
         a -> 1;
@@ -294,27 +295,42 @@ scaled(X) when is_float(X) -> X / 2.
 
 %% Lists.
 
-%% expect: same_list() -> [1 | 2 | 3, ...]
+%% expect: same_list() -> [1..3, ...]
 same_list() -> [1, 2, 3].
 
 %% expect: mixed_list() -> [1 | float() | a, ...]
 mixed_list() -> [1, a, 2.5].
 
-%% expect: nested_list() -> [[1 | 2 | 3, ...], ...]
+%% expect: nested_list() -> [[1..3, ...], ...]
 nested_list() -> [[1], [2, 3]].
 
 %% expect: empty_list() -> []
 empty_list() -> [].
 
-%% expect: string() -> [97 | 98 | 99, ...]
+%% expect: string() -> [97..99, ...]
 string() -> "abc".
 
-%% A string of eight different characters keeps them; a ninth makes their range.
-%% expect: eight_letters() -> [97 | 98 | 99 | 100 | 101 | 102 | 103 | 104, ...]
-eight_letters() -> "abcdefgh".
+%% A string of eight different characters keeps them; a ninth makes their range, gaps included. Consecutive
+%% integers print as a range.
+%% expect: eight_letters() -> [97 | 99 | 101 | 103 | 105 | 107 | 109 | 111, ...]
+eight_letters() -> "acegikmo".
 
-%% expect: nine_letters() -> [97..105, ...]
-nine_letters() -> "abcdefghi".
+%% expect: nine_letters() -> [97..113, ...]
+nine_letters() -> "acegikmoq".
+
+%% expect: consecutive() -> 1..3 | 5 | 7..8
+consecutive() -> pick_number(1).
+
+%% expect: pick_number(1) -> 1..3 | 5 | 7..8
+pick_number(X) ->
+    case X of
+        1 -> 1;
+        2 -> 2;
+        3 -> 3;
+        5 -> 5;
+        7 -> 7;
+        _ -> 8
+    end.
 
 %% Tuples.
 
@@ -379,16 +395,16 @@ case_element() ->
         {A, _} -> A
     end.
 
-%% expect: head_value() -> 1 | 2
+%% expect: head_value() -> 1..2
 head_value() -> hd([1, 2]).
 
-%% expect: tail_value() -> [1 | 2]
+%% expect: tail_value() -> [1..2]
 tail_value() -> tl([1, 2]).
 
 %% expect: cons_cell() -> [a | b, ...]
 cons_cell() -> [a | [b]].
 
-%% expect: appended() -> [1 | 2 | 3, ...]
+%% expect: appended() -> [1..3, ...]
 appended() -> [1] ++ [2, 3].
 
 %% expect: map_lookup() -> 1
