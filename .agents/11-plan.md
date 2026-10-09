@@ -102,7 +102,7 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-64, 2026-10-09):
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-65, 2026-10-09):
 235 full-mode CTests; `check-quality-all` clean (338 units, headers now checked); Linux x86-64 235/235.
 
 ## Step overview
@@ -515,10 +515,19 @@ Backlog: V01. Depends on: [63](#step-63).
 Backlog: V01. Depends on: [63](#step-63).
 
 - Success criteria
-  - [ ] Same as step 63 on each architecture, or the missing runner recorded
-    as a gap.
+  - [x] Same as step 63 on each architecture, or the missing runner recorded
+    as a gap. Evidence 2026-10-09: no ARM hardware; Debian 13 arm64/armhf
+    sysroots, runtimes cross-built by the host's clang 23 and run under
+    qemu-user 9.2 (binfmt). Gap: qemu-user's `posix_spawn` never reports a
+    missing program, so `port_spawn`'s `enoent` run fails there (a C probe
+    returns 0 under qemu, 2 natively). Native ARM runs remain open (the
+    Apple Silicon host of step 66 covers arm64 natively for macOS).
 - Tests
-  - [ ] Full gate plus fixture goldens per architecture.
+  - [x] Full gate plus fixture goldens per architecture. Evidence: runtime and
+    ABI tests 42/42 on arm64 and armhf (`runtime_printing` exceeds its 120 s
+    limit under emulation and passes alone in 173 s); goldens 64/65 on each,
+    all but `port_spawn`, with `cross.py --run-timeout 900` for the CPU-bound
+    cases.
 
 <a id="step-66"></a>
 

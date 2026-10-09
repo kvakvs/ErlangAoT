@@ -496,3 +496,16 @@ Host and tool gotchas:
 - 62A/62B (2026-10-09): CodeServer hash indexes (publish() indexes then emplaces, unindex on throw). Timer wheel:
   executor timer thread (time()) started/joined in run(); destroy() cancels the timer before erasing Schedule.
   Phase L closed after 62B (full CTest + check-quality-all).
+- 63-65 (2026-10-09, user: do everything doable on WSL/Windows; M1 Mac later for 66): WSL Ubuntu 25.04 has
+  passwordless sudo, cmake/ninja/qemu-user-static/debootstrap installed. Scripts build/plan11-wsl/: sync.sh (Windows
+  git.exe diff -> ~/clau-stage -> rsync -c into ~/clau; Linux git over /mnt/f stalls), gate.sh (Linux x64 gate, SDK
+  clang 23, LD_LIBRARY_PATH ~/clau-hostlibs = Ubuntu 22.04 ICU70 for SDK ld.lld; SDK lldb needs libpython3.14 ->
+  GDB), target.sh (runtime-only build/tests in Debian trixie chroots /srv/clause-{i386,arm64,armhf}, i386 native),
+  cross-setup.sh + cross.sh (host clang --target + sysroot, absolute loader path -> ARM runs via binfmt qemu; ARM
+  compiling under qemu was 20x slow and overloaded the CPUs), win-x86.cmd (clang-cl i686 runtime-only, WoW64),
+  win-phase.cmd/win-test.cmd/win-repeat.cmd (JOBS cap). User: keep 20-25% CPUs free (memory cpu-headroom).
+  Findings: Windows tidy HeaderFilterRegex never matched backslash paths (headers unchecked on Windows); libstdc++
+  exposes unchecked-optional findings MSVC STL hides; LineTablesOnly CU drops DWARF subprograms (FullDebug, no
+  linkage name); 32-bit `size >> 32` UB in packet framing; Executor::clear freed schedules before wheel_.clear();
+  32-bit installer detection needs embedded manifest (/MANIFEST:EMBED); qemu-user posix_spawn never reports
+  ENOENT; nested test consumers need CMAKE_CXX_COMPILER_TARGET forwarded. Goldens may mark runs word_bits 64.
