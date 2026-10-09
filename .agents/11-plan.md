@@ -329,11 +329,22 @@ Backlog: F30. Depends on: [58](#step-58).
 Backlog: F31. Depends on: [58](#step-58).
 
 - Success criteria
-  - [ ] An opt-in mode attributes time/reductions per function and per
-    process; disabled mode leaves output and artifacts unchanged.
+  - [x] An opt-in mode attributes time/reductions per function and per
+    process; disabled mode leaves output and artifacts unchanged. Evidence
+    2026-10-09: runtime option `--profile FILE` (also `CLAUSE_FLAGS`);
+    `ProcessStack` keeps a `detail::ProcessProfile` (entries at every
+    function entry, self time between transfers: entry, return, slice
+    start/end) merged into `RuntimeProfile` with its pid when the context is
+    destroyed; startup writes the report (docs/profiling.md). No compiler or
+    generated-code change, so artifacts are identical by construction;
+    disabled stacks cost one branch per transfer.
 - Tests
-  - [ ] Profile a known hot function in a golden program and check it ranks
-    first; byte-identical artifacts when disabled.
+  - [x] Profile a known hot function in a golden program and check it ranks
+    first; byte-identical artifacts when disabled. Evidence:
+    `linking_profiling` (O0/O2): `profile:spin/2` first by self time with
+    exactly 2,000,001 entries, spinning process first; stdout/exit/no files
+    identical with and without profiling (CLI and `CLAUSE_FLAGS`); about 8%
+    overhead on that loop.
 
 <a id="step-62"></a>
 

@@ -407,6 +407,8 @@
   multi-file publication is not atomic. Startup objects exist; positional `-o` links executables.
   `-g` (step 60) turns the same line scopes into CodeView/DWARF line tables; linking keeps them (PDB published
   beside MSVC executables); debuggers print the Erlang stack via `clause::runtime::debug_erlang_stack()`.
+  `--profile FILE` (step 61, runtime option) attributes entries and self time at frame transfers per function
+  and process (`process/profile`), merged at context destruction; no generated-code change.
 
 - Runtime lifecycle/context ownership, generic registration, stable backing and roots
   are implemented. GC, workers, messaging, process identities,

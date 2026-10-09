@@ -11,6 +11,7 @@ and limits that exist today; plans and step history live in `.agents/`.
 | Compiler CLI, artifacts, LLVM SDK, example | [compile.md](compile.md) |
 | Executable entry, arguments, exit status, output streams, linking | [executables.md](executables.md) |
 | Debug information (`-g`), debuggers and the Erlang call stack | [debugging.md](debugging.md) |
+| Opt-in profiling (`--profile FILE`): entries and self time per function and process | [profiling.md](profiling.md) |
 | Semantic analysis, types, inference, bindings | [semantic.md](semantic.md) |
 | Type specialization policy | [specialization.md](specialization.md) |
 | Generated-code ABI: terms, symbols, registration, failures, roots | [abi.md](abi.md) |

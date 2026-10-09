@@ -491,3 +491,5 @@ Host and tool gotchas:
   works with our PDB (break file.erl:N, `expr -- clause::runtime::debug_erlang_stack()`). Python text capture of a
   Windows console tool doubles CR: drop blank lines. Bash heredocs turn \n in C++/Python string literals into real
   newlines: use Edit/Write for code with escapes.
+- 61 (2026-10-09): profiling is runtime-only (`--profile FILE`, RuntimeOptions::profile non-empty enables):
+  ProcessStack::profile_ hooks in enter (Erlang bodies only)/leave/run; merged in Runtime::destroy_context.

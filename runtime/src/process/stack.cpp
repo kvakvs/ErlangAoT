@@ -1,4 +1,5 @@
 #include "../memory/runtime_memory.hpp"
+#include "profile.hpp"
 #include <algorithm>
 #include <bit>
 #include <clause/runtime/builtin_registry.hpp>
@@ -122,6 +123,9 @@ abi::v1::Code *ProcessStack::enter(const FrameDescriptor &function) noexcept {
     }
     std::copy_n(registers_.begin(), function.arity,
                 words_.begin() + static_cast<std::ptrdiff_t>(frame_ + frame_header_words));
+    if (profile_) {
+        profile_->enter(function);
+    }
     return function.body;
 }
 
@@ -147,8 +151,13 @@ abi::v1::Code *ProcessStack::tail(const FrameDescriptor &function) noexcept {
 abi::v1::Code *ProcessStack::leave(Word result) noexcept {
     registers_[0] = result;
     pop();
+    if (profile_) {
+        profile_->run(&descriptor(frame_));
+    }
     return descriptor(frame_).body;
 }
+
+void ProcessStack::enable_profile() { profile_ = std::make_unique<detail::ProcessProfile>(); }
 
 Word ProcessStack::invoke(const FrameDescriptor &function, const Word *arguments) noexcept {
     auto &calls = owner_.generated_calls();
@@ -190,6 +199,9 @@ bool ProcessStack::run(std::size_t reductions) noexcept {
     }
     reductions_ = reductions;
     auto &calls = owner_.generated_calls();
+    if (profile_) {
+        profile_->run(frame_ == none ? nullptr : &descriptor(frame_));
+    }
     try {
         enter (*function)(&owner_);
     } catch (const std::bad_alloc &) {
@@ -198,6 +210,9 @@ bool ProcessStack::run(std::size_t reductions) noexcept {
     } catch (...) {
         calls.fail({CallError::native_exception});
         resume_ = nullptr;
+    }
+    if (profile_) {
+        profile_->run(nullptr);
     }
     return resume_ == nullptr;
 }

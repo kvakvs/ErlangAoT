@@ -406,8 +406,8 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 - **F30 — Debug information** ([60](11-plan.md#step-60)): [x] LLVM debug
   metadata mapped to Erlang source through macros/includes (`-g`; macOS
   `dsymutil` and Linux GDB pending steps 66/63).
-- **F31 — Profiling** ([61](11-plan.md#step-61)): [ ] bounded-overhead cost
-  attribution with deliberate enablement.
+- **F31 — Profiling** ([61](11-plan.md#step-61)): [x] bounded-overhead cost
+  attribution with deliberate enablement (runtime option `--profile FILE`).
 - **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [ ] LTO modes
   preserving descriptors, startup and exports.
 - **F33 — Indexed code lookups** ([62A](11-plan.md#step-62a)): [ ] hash maps

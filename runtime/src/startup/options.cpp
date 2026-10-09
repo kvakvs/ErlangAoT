@@ -153,6 +153,13 @@ std::expected<std::size_t, std::string> apply(std::span<const std::string> args,
         options.schedulers = *count;
         return schedulers->used;
     }
+    if (const auto profile = match(args, at, "--profile")) {
+        if (profile->value.empty()) {
+            return std::unexpected(std::string("--profile needs the file the report is written to"));
+        }
+        options.profile = profile->value;
+        return profile->used;
+    }
     // Entry point for a vm.args-like options file; reading it is not implemented yet.
     if (match(args, at, "--args-file")) {
         return std::unexpected(std::string("runtime option --args-file is not implemented"));

@@ -4,6 +4,7 @@
 #include "process_context.hpp"
 #include <clause/abi/status.hpp>
 #include <expected>
+#include <string>
 
 namespace clause::runtime {
 class SchedulerService;
@@ -35,13 +36,16 @@ struct RuntimeOptions {
     // Scheduler worker threads that run processes, 1 to MAX_SCHEDULERS (docs/processes.md#workers); programs set it
     // with --schedulers and default to one per logical processor.
     std::size_t schedulers = 1;
+    // File the program writes its profile report to at exit (--profile FILE, docs/profiling.md); empty disables
+    // profiling. The runtime itself only collects the costs.
+    std::string profile = {};
 };
 
 // Own stable process contexts and reserved runtime-wide services; calls require host-side serialization.
 class Runtime final {
   public:
     // Construct privately and publish only a fully initialized owner; contain allocation failures.
-    static std::expected<std::unique_ptr<Runtime>, abi::v1::Status> start(RuntimeOptions options = {}) noexcept;
+    static std::expected<std::unique_ptr<Runtime>, abi::v1::Status> start(const RuntimeOptions &options = {}) noexcept;
     // Invalidate/destroy any remaining contexts before runtime-wide services as a host RAII fallback.
     ~Runtime();
     Runtime(const Runtime &) = delete;
@@ -62,6 +66,8 @@ class Runtime final {
     std::size_t context_count() const noexcept;
     // Report the bytes all processes hold now: heap blocks, fragments, off-heap buffers and stacks.
     std::size_t memory_bytes() const noexcept;
+    // The profile of every process destroyed so far as report text (docs/profiling.md); empty when not profiling.
+    std::string profile_report() const;
 
     // Borrow the runtime-wide server while active; stopped runtimes return null.
     CodeServer *code_server() noexcept;

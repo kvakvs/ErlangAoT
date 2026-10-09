@@ -41,4 +41,9 @@ if(CLAUSE_BUILD_RUNTIME)
         "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/linking/debug"
         "${CMAKE_CURRENT_BINARY_DIR}/debugger/$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(linking_debugger PROPERTIES TIMEOUT 600 SKIP_RETURN_CODE 77)
+    # --profile on a program with a known hot function: it ranks first; unprofiled runs are unchanged (F31).
+    add_test(NAME linking_profiling COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/profiling.py"
+        "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/linking/profile"
+        "${CMAKE_CURRENT_BINARY_DIR}/profiling/$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
+    set_tests_properties(linking_profiling PROPERTIES TIMEOUT 600)
 endif()

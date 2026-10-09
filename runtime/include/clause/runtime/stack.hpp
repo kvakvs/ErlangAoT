@@ -9,6 +9,10 @@
 #include <utility>
 
 namespace clause::runtime {
+namespace detail {
+class ProcessProfile;
+}
+
 // Reductions of one time slice, OTP's CONTEXT_REDS: every function entry spends one (docs/processes.md).
 inline constexpr std::size_t SLICE_REDUCTIONS = 4000;
 // Units of builtin work (list cells walked or built, comparisons, bytes) one reduction pays for
@@ -132,6 +136,13 @@ class ProcessStack final {
     // Name the innermost named frames, up to the stack trace limit, for a newly raised exception.
     StackTrace trace() const noexcept;
 
+    // Attribute entries and self time of this process's functions from now on (docs/profiling.md); may throw
+    // std::bad_alloc.
+    void enable_profile();
+
+    // The costs collected since enable_profile(); null when profiling is off.
+    const detail::ProcessProfile *profile() const noexcept { return profile_.get(); }
+
     // Visit the descriptor of every frame that names an Erlang function, innermost first (for debuggers).
     template <typename Visitor> void named_frames(Visitor &&visit) const {
         for (auto at = frame_; at != none; at = words_[at]) {
@@ -199,5 +210,7 @@ class ProcessStack final {
     std::unique_ptr<TrapState> trap_state_;
     // Set by wait(): the suspended process is not runnable until woken.
     bool waiting_ = false;
+    // Costs of this process's functions when the program profiles (docs/profiling.md); null otherwise.
+    std::unique_ptr<detail::ProcessProfile> profile_;
 };
 } // namespace clause::runtime

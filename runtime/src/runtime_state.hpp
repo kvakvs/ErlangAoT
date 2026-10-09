@@ -1,6 +1,7 @@
 #pragma once
 #include "memory/runtime_memory.hpp"
 #include "process/identities.hpp"
+#include "process/profile.hpp"
 #include "scheduler/executor.hpp"
 #include <clause/runtime/code_server.hpp>
 #include <clause/runtime/runtime.hpp>
@@ -12,7 +13,7 @@ namespace clause::runtime {
 class Runtime::Impl final {
   public:
     // Preserve validated limits and the unique runtime identity before creating any contexts.
-    Impl(RuntimeOptions options, std::uint64_t identity);
+    Impl(const RuntimeOptions &options, std::uint64_t identity);
     // Retire scheduling records before contexts, then release code while the stopped service still exists.
     ~Impl();
     // Own the bounded spelling table after contexts and module bindings are released.
@@ -33,6 +34,8 @@ class Runtime::Impl final {
     std::unordered_map<const ProcessContext *, std::unique_ptr<ProcessContext>> contexts;
     // Live processes by pid number, for is_process_alive/1 and later routing.
     std::unordered_map<Word, ProcessContext *> processes;
+    // Costs of ended processes when RuntimeOptions::profile names a report; null otherwise.
+    std::unique_ptr<detail::RuntimeProfile> profile;
     // Run processes on the scheduler workers (RuntimeOptions::schedulers) while the program runs.
     detail::Executor executor;
 };

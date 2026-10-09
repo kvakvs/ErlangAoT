@@ -30,9 +30,10 @@ bool valid_options(const RuntimeOptions &options) noexcept {
 } // namespace
 
 // Construction runs inside Runtime::start's catch boundary, so container allocation failures stay contained.
-Runtime::Impl::Impl(RuntimeOptions options, std::uint64_t identity)
+Runtime::Impl::Impl(const RuntimeOptions &options, std::uint64_t identity)
     : atom_storage(options.max_atoms), scheduler(identity), options(options), identity(identity),
-      memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))), executor(*this) {
+      memory(std::make_shared<detail::RuntimeMemory>(options.memory_limit_bytes / sizeof(Word))),
+      profile(options.profile.empty() ? nullptr : std::make_unique<detail::RuntimeProfile>()), executor(*this) {
     for (const auto family : production_builtins()) {
         if (!code_server.builtins().add(family)) {
             // Only allocation can fail for the fixed production tables.
@@ -47,7 +48,7 @@ Runtime::Runtime(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {
 
 Runtime::~Runtime() = default;
 
-std::expected<std::unique_ptr<Runtime>, Status> Runtime::start(RuntimeOptions options) noexcept {
+std::expected<std::unique_ptr<Runtime>, Status> Runtime::start(const RuntimeOptions &options) noexcept {
     if (options.abi_version != abi::v1::version || options.term_bits != sizeof(abi::v1::TermWord) * 8) {
         return std::unexpected(Status::abi_mismatch);
     }
@@ -87,4 +88,6 @@ OutputSink Runtime::standard_output() const noexcept { return impl_ ? impl_->opt
 std::size_t Runtime::context_count() const noexcept { return impl_ ? impl_->contexts.size() : 0; }
 
 std::size_t Runtime::memory_bytes() const noexcept { return impl_ ? impl_->memory->used() * sizeof(Word) : 0; }
+
+std::string Runtime::profile_report() const { return impl_ && impl_->profile ? impl_->profile->report() : ""; }
 } // namespace clause::runtime

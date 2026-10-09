@@ -7,6 +7,7 @@
 #include <clause/runtime/modules.hpp>
 #include <clause/runtime/output.hpp>
 #include <cstdio>
+#include <fstream>
 #include <span>
 
 namespace clause::runtime::detail {
@@ -175,6 +176,20 @@ int run_program(Runtime &runtime, const StartupDescriptor &startup, int argc, ch
     return run_entry(runtime, **context, startup, argc, argv, skip);
 }
 
+// Write the profile report (--profile FILE) once every process ended; a failure is reported on stderr but keeps
+// the program's exit status.
+void write_profile(const Runtime &runtime, const std::string &file) {
+    if (file.empty()) {
+        return;
+    }
+    std::ofstream out(file, std::ios::binary);
+    out << runtime.profile_report();
+    out.close();
+    if (!out) {
+        static_cast<void>(std::fprintf(stderr, "clau: cannot write profile %s\n", file.c_str()));
+    }
+}
+
 // Own the runtime for one program run and shut it down in order on every path.
 int run(const StartupDescriptor &startup, int argc, char **argv) {
     if (!compatible(startup)) {
@@ -189,6 +204,7 @@ int run(const StartupDescriptor &startup, int argc, char **argv) {
         return runtime_failure("cannot start the runtime: " + status_name(runtime.error()));
     }
     const int status = run_program(**runtime, startup, argc, argv, options->consumed);
+    write_profile(**runtime, options->runtime.profile);
     const auto stopped = (*runtime)->shutdown();
     std::fflush(stdout);
     return stopped == Status::ok ? status : runtime_failure("shutdown: " + status_name(stopped));
