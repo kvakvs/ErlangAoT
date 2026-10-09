@@ -133,7 +133,6 @@ sized_bitstring() -> <<5:3>>.
 binary_value(Data) -> list_to_binary(Data).
 
 %% expect: comprehended_binary(term()) -> binary()
-%% today: comprehended_binary(term()) -> term()
 -spec comprehended_binary([byte()]) -> binary().
 comprehended_binary(Bytes) -> <<<<B>> || B <- Bytes>>.
 
@@ -221,12 +220,10 @@ boolean_comparison(X) -> X > 1.
 list_value(Tuple) -> tuple_to_list(Tuple).
 
 %% expect: nonempty_list_value(term()) -> [term(), ...]
-%% today: nonempty_list_value(term()) -> term()
 -spec nonempty_list_value(term()) -> nonempty_list().
 nonempty_list_value(X) -> [X].
 
 %% expect: improper_list() -> nonempty_improper_list(1, a)
-%% today: improper_list() -> term()
 -spec improper_list() -> nonempty_improper_list(integer(), atom()).
 improper_list() -> [1 | a].
 
@@ -239,7 +236,6 @@ string_value(Atom) -> atom_to_list(Atom).
 nonempty_string_value(Integer) -> integer_to_list(Integer).
 
 %% expect: iolist_value() -> [[98, ...] | <<_:8>>, ...]
-%% today: iolist_value() -> term()
 -spec iolist_value() -> iolist().
 iolist_value() -> [<<"a">>, "b"].
 
@@ -250,7 +246,6 @@ iolist_value() -> [<<"a">>, "b"].
 empty_map() -> #{}.
 
 %% expect: map_value(term()) -> map()
-%% today: map_value(term()) -> term()
 -spec map_value(map()) -> map().
 map_value(Map) -> Map#{key => value}.
 

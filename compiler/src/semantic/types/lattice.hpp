@@ -66,12 +66,16 @@ class Lattice {
     Id tuple(std::vector<Id> elements);
     Id list(Id element, bool nonempty);
     Id nil();
+    // A list of at least one `head` cell ending in a `tail` that is no list: nonempty_improper_list(Head, Tail).
+    Id improper(Id head, Id tail);
     Id map(std::vector<Id> fields);
     Id fun(std::size_t arity, Id result);
     Id bitstring(std::uint64_t base, std::uint64_t unit);
 
     // The integers from `low` to `high` as a fact: a singleton, a range or the category of an unbounded interval.
     Id interval(const std::optional<std::string> &low, const std::optional<std::string> &high);
+    // The members of a fact: a union's members, or the fact itself.
+    std::vector<Id> members(Id fact) const;
     // The numbers `fact` holds, and whether it may hold the atom `name`.
     Numbers numbers(Id fact);
     bool holds_atom(Id fact, std::string_view name);

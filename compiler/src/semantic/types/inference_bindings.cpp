@@ -1,4 +1,7 @@
 #include "inference_bindings.hpp"
+#include "../capabilities.hpp"
+#include "../records.hpp"
+#include "inference_containers.hpp"
 
 namespace clause::semantic::types {
 namespace {
@@ -11,16 +14,78 @@ bool spend(const Inference &inference, std::size_t &work) {
     return true;
 }
 
-// Containers require extraction proofs, so only groups and whole-value aliases preserve this fact.
-std::vector<ast::ExprId> aliases(const ast::ExprValue &value) {
-    if (const auto *group = std::get_if<ast::Group>(&value)) {
-        return {group->expression};
+// A pattern and the fact of the value it matches.
+using Matched = std::pair<ast::ExprId, Fact>;
+
+// The fact of a map pattern's key: a literal atom or integer, or a bound variable's fact; term() otherwise.
+Id key_fact(const BindingFacts &bindings, Lattice &lattice, const ast::ExprId &key) {
+    const auto &value = bindings.function.module->syntax->expression(key).value;
+    if (const auto *atom = std::get_if<ast::Atom>(&value)) {
+        return lattice.atom(utf8(atom->name));
     }
-    if (const auto *match = std::get_if<ast::MatchExpression>(&value)) {
-        return {match->left, match->right};
+    if (const auto *integer = std::get_if<ast::IntegerLiteral>(&value)) {
+        return lattice.integer(integer->value.decimal);
     }
-    return {};
+    return std::holds_alternative<ast::Variable>(value) ? bindings.read(key).type : lattice.graph().top();
 }
+
+// Adds the parts of a pattern with the facts of the values they match: aliases and groups match the whole value,
+// tuple, list, map and tuple-record patterns their elements (docs/semantic.md#inference).
+struct PatternParts {
+    const BindingFacts &bindings;
+    Lattice &lattice;
+    // The value the pattern matches and the parts found.
+    Fact value;
+    std::vector<Matched> &pending;
+
+    template <typename T> void operator()(const T &) const {}
+
+    void operator()(const ast::Group &pattern) const { pending.emplace_back(pattern.expression, value); }
+
+    void operator()(const ast::MatchExpression &pattern) const {
+        pending.emplace_back(pattern.left, value);
+        pending.emplace_back(pattern.right, value);
+    }
+
+    void operator()(const ast::Tuple &pattern) const {
+        for (std::size_t index = 0; index < pattern.elements.size(); ++index) {
+            const auto element = tuple_element(lattice, value.type, index + 1, pattern.elements.size());
+            pending.emplace_back(pattern.elements[index], Fact{element});
+        }
+    }
+
+    void operator()(const ast::List &pattern) const {
+        auto rest = value.type;
+        for (const auto &element : pattern.elements) {
+            pending.emplace_back(element, Fact{head(lattice, rest)});
+            rest = tail(lattice, rest);
+        }
+        if (pattern.tail) {
+            pending.emplace_back(*pattern.tail, Fact{rest});
+        }
+    }
+
+    void operator()(const ast::MapExpression &pattern) const {
+        for (const auto &field : pattern.fields) {
+            pending.emplace_back(field.value,
+                                 Fact{map_value(lattice, {value.type, key_fact(bindings, lattice, field.key)})});
+        }
+    }
+
+    void operator()(const ast::RecordExpression &pattern) const {
+        const auto *layout = record_layout(*bindings.function.module, pattern.identity);
+        if (!layout || layout->native) {
+            return;
+        }
+        const auto fields = record_values(*bindings.function.module, pattern, true);
+        for (std::size_t position = 0; position < fields.size(); ++position) {
+            if (fields[position]) {
+                const auto element = tuple_element(lattice, value.type, position + 2, fields.size() + 1);
+                pending.emplace_back(*fields[position], Fact{element});
+            }
+        }
+    }
+};
 } // namespace
 
 BindingFacts::BindingFacts(const FunctionRef owner, Inference &facts, std::size_t &work)
@@ -51,22 +116,71 @@ Fact BindingFacts::read(const ast::ExprId &id) const {
     return {inference.graph.top()};
 }
 
+void BindingFacts::expect_clauses(const ast::ExprId &value, const std::vector<ast::BranchClause> &clauses) {
+    const auto &syntax = *function.module->syntax;
+    for (const auto &clause : clauses) {
+        waiting[&syntax.expression(value)].push_back({pattern_root(syntax, clause.pattern), Part::whole});
+    }
+}
+
+void BindingFacts::expect(const ast::ExprValue &value) {
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        expect_clauses(selection->value, selection->clauses);
+    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value); attempt && attempt->of) {
+        expect_clauses(attempt->body.back(), *attempt->of);
+    } else if (const auto *qualifiers = comprehension_qualifiers(value)) {
+        for (const auto &qualifier : *qualifiers) {
+            for (const auto &simple : zipped(qualifier)) {
+                expect_generator(simple);
+            }
+        }
+    }
+}
+
+void BindingFacts::expect_generator(const ast::Qualifier &qualifier) {
+    const auto &syntax = *function.module->syntax;
+    if (const auto *list = std::get_if<ast::ListGenerator>(&qualifier.value)) {
+        waiting[&syntax.expression(list->input)].push_back({pattern_root(syntax, list->pattern), Part::elements});
+    } else if (const auto *map = std::get_if<ast::MapGenerator>(&qualifier.value)) {
+        auto &patterns = waiting[&syntax.expression(map->input)];
+        patterns.push_back({pattern_root(syntax, map->key), Part::keys});
+        patterns.push_back({pattern_root(syntax, map->value), Part::values});
+    }
+}
+
+void BindingFacts::matched(const ast::Expression &expression, const Fact fact, std::size_t &work) {
+    const auto found = waiting.find(&expression);
+    if (found == waiting.end()) {
+        return;
+    }
+    Lattice lattice(inference.graph);
+    for (const auto &[pattern, part] : found->second) {
+        if (part == Part::whole) {
+            publish(pattern, fact, work);
+        } else {
+            const auto parts = part == Part::elements ? elements(lattice, fact.type)
+                                                      : map_entries(lattice, fact.type, part == Part::keys);
+            publish(pattern, Fact{parts}, work);
+        }
+    }
+}
+
 void BindingFacts::publish(const ast::ExprId &pattern, Fact fact, std::size_t &work) {
-    std::vector<ast::ExprId> pending{pattern};
+    Lattice lattice(inference.graph);
+    std::vector<Matched> pending{{pattern, fact}};
     while (!pending.empty()) {
         if (!spend(inference, work)) {
             return;
         }
-        const auto id = pending.back();
+        const auto [id, value] = pending.back();
         pending.pop_back();
         const auto &expression = function.module->syntax->expression(id);
         const auto event = events.find(&expression);
         if (event != events.end() && event->second->use == BindingUse::definition &&
             !shared.contains(event->second->identity)) {
-            values.insert_or_assign(event->second->identity, fact);
+            values.insert_or_assign(event->second->identity, value);
         }
-        const auto children = aliases(expression.value);
-        pending.insert(pending.end(), children.begin(), children.end());
+        std::visit(PatternParts{*this, lattice, value, pending}, expression.value);
     }
 }
 } // namespace clause::semantic::types

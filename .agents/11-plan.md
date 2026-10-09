@@ -325,15 +325,22 @@ an unknown map is `map()`; records keep their tuple shape. Element access
 (`element/2`, patterns, `hd/1`) reads element facts back.
 
 - Success criteria
-  - [ ] Same-type and mixed-type tuples, lists and maps, nested containers and
+  - [x] Same-type and mixed-type tuples, lists and maps, nested containers and
     `{ok, 1} | {error, bad}` joins print as their `values.erl` expectations;
-    width and depth past the 58A budgets widen to the category.
+    width and depth past the 58A budgets widen to the category. Evidence
+    2026-10-09: `semantic/types/inference_containers` (list cells, element
+    access, map updates), records and comprehensions in `inference_values`,
+    pattern parts in `inference_bindings` (body matches, case and `of`
+    clauses, generators).
 - Tests
-  - [ ] `values.erl` container rows and the `base_types.erl` list, string,
+  - [x] `values.erl` container rows and the `base_types.erl` list, string,
     iolist, improper list, map update, binary construction and comprehension
     rows (`binary()`, `nonempty_binary()`, `nonempty_bitstring()`) reach
     `expect:`; new rows for records, element access, cons cells and
-    containers at the budget limits.
+    containers at the budget limits. Evidence: 19 new rows (`record`,
+    `record_update`, `matched_element`, `case_element`, `cons_cell`,
+    `appended`, `map_exact_update`, `comprehension -> [2..6]`, `wide_tuple`,
+    `deep_tuple`, `wide_map`, ...); values 81 of 89, base_types 38 of 46.
 
 <a id="step-58e"></a>
 

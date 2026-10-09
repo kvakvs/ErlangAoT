@@ -15,7 +15,7 @@ namespace {
 // Infer only implementation syntax; specifications never narrow an input or result.
 Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &id, const BindingFacts &bindings) {
     const auto &syntax = *function.module->syntax;
-    if (const auto fact = constructed_fact(inference, syntax, syntax.expression(id).value)) {
+    if (const auto fact = constructed_fact(inference, function, syntax.expression(id).value)) {
         return {*fact};
     }
     return bindings.read(id);
@@ -157,9 +157,13 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work,
         pending.pop_back();
         const auto &expression = syntax.expression(visit.expression);
         if (visit.ready) {
-            inference.expressions.emplace(&expression, evaluate(inference, function, visit.expression, bindings, work));
+            const auto [fact, added] = inference.expressions.emplace(
+                &expression, evaluate(inference, function, visit.expression, bindings, work));
+            (void)added;
             recorded.push_back(&expression);
+            bindings.matched(expression, fact->second, work);
         } else {
+            bindings.expect(expression.value);
             pending.push_back({visit.expression, true});
             const auto children = expression_children(*function.module, expression);
             for (auto child = children.rbegin(); child != children.rend(); ++child) {

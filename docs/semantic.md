@@ -144,9 +144,26 @@ Inference is separate from declared types and never trusts specs.
   that always raises infers `none()`.
 - Identity/projection functions keep exact argument relations, propagated
   through nested local and remote calls with fresh variables per call.
+- Containers (step 58D, `semantic/types/inference_containers`): a list
+  `[E1, ..., En | T]` joins its elements in front of the tail's fact (a
+  proper list when the tail is one, `nonempty_improper_list(H, T)` when it
+  is no list, `term()` when it is unknown); `++`, `--`, `hd/1`, `tl/1`,
+  `element/2`, `setelement/3`, `tuple_to_list/1` and `map_get/2` read and
+  rebuild element facts member by member of a union, a member that would
+  raise adding nothing. A map update keeps exact keys (`:=` of a missing key
+  drops that member) and makes `map()` of an unknown map. Tuple records are
+  tuples: construction fills defaults (`undefined` without one), access and
+  update read and set the field of the matching tuples, and `#r.f` is the
+  field's index. A list comprehension is a possibly empty list of its
+  templates' facts, a binary comprehension any number of copies of its
+  template's size, a map comprehension `map()`.
 - Whole-value body assignments and aliases copy the RHS fact
-  (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements
-  and unproved values stay `term()` without relations.
+  (`Y = 42, Z = Y, id(Z)` infers 42); tuple, list, map and tuple-record
+  patterns give their variables the facts of the parts they match, in body
+  matches, `case` clauses (from the scrutinee), a `try`'s `of` clauses (from
+  its body's value) and generators (from their input's elements or map keys
+  and values). Guard refinements and unproved values stay `term()` without
+  relations.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
@@ -277,8 +294,8 @@ sum() -> 1 + 2.
   other functions, integer joins and ranges, integers or floats, lists,
   strings, tuples, maps with atom and other keys, funs returned and applied,
   binaries and argument relations. Today inference finds literal and
-  constructed values, operator and builtin results, integer joins and
-  argument relations (58 of 70 functions).
+  constructed values, operator and builtin results, containers and their
+  parts, integer joins and argument relations (81 of 89 functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
@@ -286,7 +303,7 @@ sum() -> 1 + 2.
   `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
-  ranges. Today 33 of 46 functions reach their expected type.
+  ranges. Today 38 of 46 functions reach their expected type.
 
 ### Printing types
 

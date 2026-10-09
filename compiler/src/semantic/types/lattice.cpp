@@ -193,9 +193,20 @@ class Gather final {
         case Kind::bitstring:
             families.add_bits(bits(node));
             return true;
+        case Kind::application:
+            return improper(fact, node);
         default:
             return false;
         }
+    }
+
+    // An improper list nonempty_improper_list(Head, Tail); false for another named type.
+    bool improper(Id fact, const Node &node) {
+        if (node.name != "nonempty_improper_list" || node.module != "erlang" || node.children.size() != 2) {
+            return false;
+        }
+        families.improper.push_back(fact);
+        return true;
     }
 
     // A tuple of known elements, or tuple().
@@ -312,6 +323,7 @@ int family_rank(const Node &node) {
                                                             {"list", 9},
                                                             {"string", 9},
                                                             {"nonempty_string", 9},
+                                                            {"nonempty_improper_list", 9},
                                                             {"binary", 10},
                                                             {"bitstring", 10},
                                                             {"nonempty_binary", 10},
@@ -582,7 +594,7 @@ class Assemble final {
         }
         const auto head = lattice_.join(heads, depth_ + 1);
         const auto tail = lattice_.join(tails, depth_ + 1);
-        out.push_back(graph_.intern({Kind::application, "nonempty_improper_list", "erlang", {head, tail}}));
+        out.push_back(lattice_.improper(head, tail));
     }
 
     Lattice &lattice_;
@@ -676,6 +688,11 @@ Id Lattice::interval(const std::optional<std::string> &low, const std::optional<
     return interval_fact(*this, {low, high});
 }
 
+std::vector<Id> Lattice::members(Id fact) const {
+    const auto &node = graph_.get(fact);
+    return node.kind == Kind::union_type ? node.children : std::vector<Id>{fact};
+}
+
 Numbers Lattice::numbers(Id fact) {
     if (fact == graph_.top()) {
         return {true, std::nullopt, std::nullopt, true, true};
@@ -761,6 +778,14 @@ Id Lattice::list(Id element, bool nonempty) {
         return category("list");
     }
     return graph_.intern({Kind::list, nonempty ? "nonempty" : "possibly_empty", {}, {element}});
+}
+
+Id Lattice::improper(Id head, Id tail) {
+    if (head == graph_.bottom() || tail == graph_.bottom()) {
+        return graph_.bottom();
+    }
+    return graph_.intern(
+        {Kind::application, "nonempty_improper_list", "erlang", {within_depth(head), within_depth(tail)}});
 }
 
 Id Lattice::nil() { return graph_.intern({Kind::list, "possibly_empty"}); }

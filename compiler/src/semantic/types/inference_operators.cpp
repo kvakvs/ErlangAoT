@@ -1,6 +1,7 @@
 #include "inference_operators.hpp"
 #include "../../parsing/operator_info.hpp"
 #include "../../preprocessor/expression.hpp"
+#include "inference_containers.hpp"
 #include "lattice.hpp"
 #include <clause/abi/builtins.hpp>
 #include <set>
@@ -134,6 +135,7 @@ class Operations final {
     Id compare(std::u32string_view name, const Operands &operands);
     Id logical(std::u32string_view name, const Operands &operands);
     Id second(std::u32string_view name, const Operands &operands);
+    Id concatenate(std::u32string_view name, const Operands &operands);
     Id negate(Id operand);
     Id plus(Id operand);
     Id complement(Id operand);
@@ -143,6 +145,24 @@ class Operations final {
     Id to_float(std::span<const Id> arguments);
     Id either(std::span<const Id> arguments);
     Id message(std::span<const Id> arguments);
+
+    Id list_head(std::span<const Id> arguments) { return head(lattice_, arguments[0]); }
+
+    Id list_tail(std::span<const Id> arguments) { return tail(lattice_, arguments[0]); }
+
+    Id tuple_at(std::span<const Id> arguments) { return element(lattice_, {arguments[0], arguments[1]}); }
+
+    Id tuple_set(std::span<const Id> arguments) {
+        return set_element(lattice_, {arguments[0], arguments[1]}, arguments[2]);
+    }
+
+    Id tuple_elements(std::span<const Id> arguments) { return tuple_list(lattice_, arguments[0]); }
+
+    Id map_lookup(std::span<const Id> arguments) { return map_value(lattice_, {arguments[1], arguments[0]}); }
+
+    Id list_append(std::span<const Id> arguments) { return append(lattice_, {arguments[0], arguments[1]}); }
+
+    Id list_subtract(std::span<const Id> arguments) { return subtract(lattice_, arguments[0]); }
 
     // Integer results of +, - and * on ranges: folded singletons, else interval arithmetic.
     Id integer_arithmetic(std::u32string_view name, const Range &left, const Range &right);
@@ -181,14 +201,15 @@ Id Operations::unary(const std::u32string_view name, const Id operand) {
 
 Id Operations::binary(const std::u32string_view name, const Id left, const Id right) {
     static const std::map<std::u32string_view, Binary> RULES{
-        {U"+", &Operations::arithmetic}, {U"-", &Operations::arithmetic}, {U"*", &Operations::arithmetic},
-        {U"/", &Operations::divide},     {U"div", &Operations::bitwise},  {U"rem", &Operations::bitwise},
-        {U"band", &Operations::bitwise}, {U"bor", &Operations::bitwise},  {U"bxor", &Operations::bitwise},
-        {U"bsl", &Operations::bitwise},  {U"bsr", &Operations::bitwise},  {U"==", &Operations::compare},
-        {U"/=", &Operations::compare},   {U"=:=", &Operations::compare},  {U"=/=", &Operations::compare},
-        {U"<", &Operations::compare},    {U"=<", &Operations::compare},   {U">", &Operations::compare},
-        {U">=", &Operations::compare},   {U"and", &Operations::logical},  {U"or", &Operations::logical},
-        {U"xor", &Operations::logical},  {U"!", &Operations::second}};
+        {U"+", &Operations::arithmetic},  {U"-", &Operations::arithmetic}, {U"*", &Operations::arithmetic},
+        {U"/", &Operations::divide},      {U"div", &Operations::bitwise},  {U"rem", &Operations::bitwise},
+        {U"band", &Operations::bitwise},  {U"bor", &Operations::bitwise},  {U"bxor", &Operations::bitwise},
+        {U"bsl", &Operations::bitwise},   {U"bsr", &Operations::bitwise},  {U"==", &Operations::compare},
+        {U"/=", &Operations::compare},    {U"=:=", &Operations::compare},  {U"=/=", &Operations::compare},
+        {U"<", &Operations::compare},     {U"=<", &Operations::compare},   {U">", &Operations::compare},
+        {U">=", &Operations::compare},    {U"and", &Operations::logical},  {U"or", &Operations::logical},
+        {U"xor", &Operations::logical},   {U"!", &Operations::second},     {U"++", &Operations::concatenate},
+        {U"--", &Operations::concatenate}};
     const auto found = RULES.find(name);
     return found == RULES.end() ? graph_.top() : (this->*found->second)(name, {left, right});
 }
@@ -376,6 +397,10 @@ Id Operations::short_circuit(const bool conjunction, const Operands &operands) {
 
 Id Operations::second(std::u32string_view, const Operands &operands) { return operands.right; }
 
+Id Operations::concatenate(const std::u32string_view name, const Operands &operands) {
+    return name == U"++" ? append(lattice_, {operands.left, operands.right}) : subtract(lattice_, operands.left);
+}
+
 Id Operations::negate(const Id operand) {
     const auto numbers = lattice_.numbers(operand);
     std::vector<Id> results;
@@ -508,11 +533,9 @@ const std::map<std::string, std::string_view, std::less<>> &categories() {
         {"erlang:iolist_to_binary/1", "binary"},
         {"erlang:binary_part/2", "binary"},
         {"erlang:binary_part/3", "binary"},
-        {"erlang:tuple_to_list/1", "list"},
         {"erlang:list_to_tuple/1", "tuple"},
         {"erlang:make_tuple/2", "tuple"},
         {"erlang:make_tuple/3", "tuple"},
-        {"erlang:setelement/3", "tuple"},
         {"erlang:is_process_alive/1", "boolean"},
         {"erlang:function_exported/3", "boolean"},
         {"erlang:demonitor/2", "boolean"},
@@ -551,11 +574,15 @@ const std::map<std::string, std::string_view, std::less<>> &atoms() {
 
 Id Operations::builtin(const std::string &signature, const std::span<const Id> arguments) {
     static const std::map<std::string, Builtin, std::less<>> RULES{
-        {"erlang:abs/1", &Operations::absolute},  {"erlang:trunc/1", &Operations::rounded},
-        {"erlang:round/1", &Operations::rounded}, {"erlang:floor/1", &Operations::rounded},
-        {"erlang:ceil/1", &Operations::rounded},  {"erlang:float/1", &Operations::to_float},
-        {"erlang:min/2", &Operations::either},    {"erlang:max/2", &Operations::either},
-        {"erlang:send/2", &Operations::message}};
+        {"erlang:abs/1", &Operations::absolute},         {"erlang:trunc/1", &Operations::rounded},
+        {"erlang:round/1", &Operations::rounded},        {"erlang:floor/1", &Operations::rounded},
+        {"erlang:ceil/1", &Operations::rounded},         {"erlang:float/1", &Operations::to_float},
+        {"erlang:min/2", &Operations::either},           {"erlang:max/2", &Operations::either},
+        {"erlang:send/2", &Operations::message},         {"erlang:hd/1", &Operations::list_head},
+        {"erlang:tl/1", &Operations::list_tail},         {"erlang:element/2", &Operations::tuple_at},
+        {"erlang:setelement/3", &Operations::tuple_set}, {"erlang:tuple_to_list/1", &Operations::tuple_elements},
+        {"erlang:map_get/2", &Operations::map_lookup},   {"erlang:++/2", &Operations::list_append},
+        {"erlang:--/2", &Operations::list_subtract}};
     if (const auto rule = RULES.find(signature); rule != RULES.end()) {
         return (this->*rule->second)(arguments);
     }

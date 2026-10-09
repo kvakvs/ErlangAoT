@@ -63,6 +63,25 @@
     tuple_key_map/0,
     mixed_map/0,
     updated_map/1,
+    record/0,
+    record_field/0,
+    record_update/0,
+    record_index/0,
+    first_element/0,
+    matched_element/0,
+    case_element/0,
+    head_value/0,
+    tail_value/0,
+    cons_cell/0,
+    appended/0,
+    map_lookup/0,
+    map_known_update/0,
+    map_exact_update/0,
+    comprehension/0,
+    list_of_tuple/0,
+    wide_tuple/0,
+    deep_tuple/0,
+    wide_map/0,
     returns_fun/0,
     returns_remote_fun/0,
     returns_closure/1,
@@ -73,6 +92,8 @@
     identity/1,
     second/2
 ]).
+
+-record(point, {x = 0, y}).
 
 %% Simple expressions.
 
@@ -239,15 +260,12 @@ scaled(X) when is_float(X) -> X / 2.
 %% Lists.
 
 %% expect: same_list() -> [1 | 2 | 3, ...]
-%% today: same_list() -> term()
 same_list() -> [1, 2, 3].
 
 %% expect: mixed_list() -> [1 | float() | a, ...]
-%% today: mixed_list() -> term()
 mixed_list() -> [1, a, 2.5].
 
 %% expect: nested_list() -> [[1 | 2 | 3, ...], ...]
-%% today: nested_list() -> term()
 nested_list() -> [[1], [2, 3]].
 
 %% expect: empty_list() -> []
@@ -296,8 +314,92 @@ tuple_key_map() -> #{{a, 1} => x}.
 mixed_map() -> #{a => 1, 2 => b, {k} => 3.0}.
 
 %% expect: updated_map(term()) -> map()
-%% today: updated_map(term()) -> term()
 updated_map(M) -> M#{a => 1}.
+
+%% Records are tuples; containers taken apart give back their elements' facts.
+
+%% expect: record() -> {point, 0, undefined}
+record() -> #point{}.
+
+%% expect: record_field() -> 3
+record_field() -> (#point{x = 3})#point.x.
+
+%% expect: record_update() -> {point, 0, 5}
+record_update() -> (#point{})#point{y = 5}.
+
+%% expect: record_index() -> 3
+record_index() -> #point.y.
+
+%% expect: first_element() -> a
+first_element() -> element(1, {a, 1}).
+
+%% expect: matched_element() -> 2
+matched_element() ->
+    {_, B} = {1, 2},
+    B.
+
+%% expect: case_element() -> 1
+case_element() ->
+    case {1, 2} of
+        {A, _} -> A
+    end.
+
+%% expect: head_value() -> 1 | 2
+head_value() -> hd([1, 2]).
+
+%% expect: tail_value() -> [1 | 2]
+tail_value() -> tl([1, 2]).
+
+%% expect: cons_cell() -> [a | b, ...]
+cons_cell() -> [a | [b]].
+
+%% expect: appended() -> [1 | 2 | 3, ...]
+appended() -> [1] ++ [2, 3].
+
+%% expect: map_lookup() -> 1
+map_lookup() -> map_get(a, #{a => 1}).
+
+%% expect: map_known_update() -> #{a := 2, b := 1}
+map_known_update() -> (#{a => 1})#{a => 2, b => 1}.
+
+%% expect: map_exact_update() -> #{a := 2}
+map_exact_update() -> (#{a => 1})#{a := 2}.
+
+%% Generator patterns see the elements of their input.
+%% expect: comprehension() -> [2..6]
+comprehension() -> [X * 2 || X <- [1, 2, 3]].
+
+%% expect: list_of_tuple() -> [1 | a, ...]
+list_of_tuple() -> tuple_to_list({1, a}).
+
+%% Past 16 elements a tuple is tuple() and a map map(); past 4 levels an inner value is term().
+%% expect: wide_tuple() -> tuple()
+wide_tuple() -> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}.
+
+%% expect: deep_tuple() -> {{{{term()}}}}
+deep_tuple() -> {{{{{1}}}}}.
+
+%% expect: wide_map() -> map()
+wide_map() ->
+    #{
+        1 => a,
+        2 => a,
+        3 => a,
+        4 => a,
+        5 => a,
+        6 => a,
+        7 => a,
+        8 => a,
+        9 => a,
+        10 => a,
+        11 => a,
+        12 => a,
+        13 => a,
+        14 => a,
+        15 => a,
+        16 => a,
+        17 => a
+    }.
 
 %% Functions returning functions, and local funs.
 

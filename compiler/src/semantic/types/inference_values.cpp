@@ -1,6 +1,8 @@
 #include "inference_values.hpp"
 #include "../binary_options.hpp"
 #include "../capabilities.hpp"
+#include "../records.hpp"
+#include "inference_containers.hpp"
 #include "lattice.hpp"
 #include <algorithm>
 #include <array>
@@ -96,7 +98,8 @@ void put(std::vector<Id> &fields, const Id key, const Id value) {
 // Builds the facts of literals and constructed values from their operands' recorded facts.
 class Construct final {
   public:
-    Construct(Inference &inference, const ast::Module &syntax) : inference_(inference), syntax_(syntax) {}
+    Construct(Inference &inference, const FunctionRef function)
+        : inference_(inference), module_(*function.module), syntax_(*function.module->syntax) {}
 
     template <typename T> std::optional<Id> operator()(const T &) { return std::nullopt; }
 
@@ -112,21 +115,42 @@ class Construct final {
 
     std::optional<Id> operator()(const ast::StringLiteral &value) { return string(value.value); }
 
-    std::optional<Id> operator()(const ast::List &value) {
-        return value.elements.empty() && !value.tail ? std::optional{lattice_.nil()} : std::nullopt;
-    }
+    std::optional<Id> operator()(const ast::MapComprehension &) { return lattice_.category("map"); }
 
+    std::optional<Id> operator()(const ast::RecordIndex &value);
+    std::optional<Id> operator()(const ast::List &value);
     std::optional<Id> operator()(const ast::Tuple &value);
     std::optional<Id> operator()(const ast::MapExpression &value);
     std::optional<Id> operator()(const ast::Bitstring &value);
+    std::optional<Id> operator()(const ast::RecordExpression &value);
+    std::optional<Id> operator()(const ast::RecordAccess &value);
+    std::optional<Id> operator()(const ast::ListComprehension &value);
+    std::optional<Id> operator()(const ast::BinaryComprehension &value);
 
   private:
-    // The recorded fact of an operand.
-    Id fact(const ast::ExprId &id) const { return inference_.expressions.at(&syntax_.expression(id)).type; }
+    // The recorded fact of an operand; term() for one that is not evaluated.
+    Id fact(const ast::ExprId &id) const {
+        const auto found = inference_.expressions.find(&syntax_.expression(id));
+        return found == inference_.expressions.end() ? inference_.graph.top() : found->second.type;
+    }
+
+    // Whether any operand never produces a value.
+    bool never(const std::vector<ast::ExprId> &operands) const {
+        return std::ranges::any_of(operands, [&](const ast::ExprId &operand) { return never(operand); });
+    }
 
     // Whether an operand never produces a value: then neither does the expression.
     bool never(const ast::ExprId &id) const { return fact(id) == inference_.graph.bottom(); }
 
+    // A map update: each field of each map the base can be.
+    Id update(const ast::MapExpression &value);
+    // A tuple record update: the base's matching tuples with the given fields set.
+    Id record_update(const RecordLayout &layout, const ast::RecordExpression &value);
+    // A tuple record's layout, or null for a native or unknown record.
+    const RecordLayout *tuple_record(const ast::RecordIdentity &identity) const;
+    // The members of a fact that can be tuple record `layout`: its tuples of the record's size and tag, and the
+    // record with unknown fields for an unknown value.
+    Id record_members(const RecordLayout &layout, Id fact);
     // A nonempty list of the characters of a string literal; [] for "".
     Id string(const std::u32string &text);
     // The sizes of one segment of a bitstring construction; none for sizes too large to count.
@@ -138,9 +162,109 @@ class Construct final {
                                    const BinaryOptions &options);
 
     Inference &inference_;
+    const Module &module_;
     const ast::Module &syntax_;
     Lattice lattice_{inference_.graph};
 };
+
+std::optional<Id> Construct::operator()(const ast::List &value) {
+    if (value.elements.empty() && !value.tail) {
+        return lattice_.nil();
+    }
+    if (never(value.elements) || (value.tail && never(*value.tail))) {
+        return inference_.graph.bottom();
+    }
+    // [E1, ..., En | T] is a cell of the joined elements in front of the tail.
+    std::vector<Id> elements;
+    elements.reserve(value.elements.size());
+    for (const auto &element : value.elements) {
+        elements.push_back(fact(element));
+    }
+    return cons(lattice_, {lattice_.join(elements, 0), value.tail ? fact(*value.tail) : lattice_.nil()});
+}
+
+std::optional<Id> Construct::operator()(const ast::RecordIndex &value) {
+    const auto *layout = record_layout(module_, value.record, value.name_source);
+    const auto field = layout && !layout->native ? record_field(*layout, value.field) : std::nullopt;
+    return field ? std::optional{lattice_.integer(std::to_string(*field + 2))} : std::nullopt;
+}
+
+const RecordLayout *Construct::tuple_record(const ast::RecordIdentity &identity) const {
+    const auto *layout = record_layout(module_, identity);
+    return layout && !layout->native ? layout : nullptr;
+}
+
+Id Construct::record_members(const RecordLayout &layout, const Id fact) {
+    const auto size = layout.fields.size() + 1;
+    const auto tag = lattice_.atom(utf8(layout.name.name));
+    // A value that is not the record fails the access or update, so only matching tuples stay.
+    std::vector<Id> results;
+    for (const auto member : lattice_.members(fact)) {
+        const auto first = tuple_element(lattice_, member, 1, size);
+        if (first == inference_.graph.top()) {
+            std::vector<Id> generic(size, inference_.graph.top());
+            generic.front() = tag;
+            results.push_back(lattice_.tuple(std::move(generic)));
+        } else if (lattice_.holds_atom(first, utf8(layout.name.name))) {
+            results.push_back(set_element(lattice_, {lattice_.integer("1"), member}, tag));
+        }
+    }
+    return lattice_.join(results, 0);
+}
+
+Id Construct::record_update(const RecordLayout &layout, const ast::RecordExpression &value) {
+    auto record = record_members(layout, fact(*value.base));
+    for (const auto &field : value.fields) {
+        const auto *name = std::get_if<ast::Atom>(&field.name);
+        const auto position = name ? record_field(layout, *name) : std::nullopt;
+        if (position) {
+            const auto index = lattice_.integer(std::to_string(*position + 2));
+            record = set_element(lattice_, {index, record}, fact(field.value));
+        }
+    }
+    return record;
+}
+
+std::optional<Id> Construct::operator()(const ast::RecordExpression &value) {
+    const auto *layout = tuple_record(value.identity);
+    if (!layout) {
+        return std::nullopt;
+    }
+    if (value.base) {
+        return record_update(*layout, value);
+    }
+    std::vector<Id> elements{lattice_.atom(utf8(layout->name.name))};
+    for (const auto &field : record_values(module_, value, false)) {
+        // A field without a value or default is undefined.
+        elements.push_back(field ? fact(*field) : lattice_.atom("undefined"));
+    }
+    return std::ranges::contains(elements, inference_.graph.bottom()) ? inference_.graph.bottom()
+                                                                      : lattice_.tuple(std::move(elements));
+}
+
+std::optional<Id> Construct::operator()(const ast::RecordAccess &value) {
+    const auto *layout = tuple_record(value.identity);
+    const auto position = layout ? record_field(*layout, value.field) : std::nullopt;
+    if (!position) {
+        return std::nullopt;
+    }
+    return tuple_element(lattice_, record_members(*layout, fact(value.base)), *position + 2, layout->fields.size() + 1);
+}
+
+std::optional<Id> Construct::operator()(const ast::ListComprehension &value) {
+    std::vector<Id> templates;
+    templates.reserve(value.templates.size());
+    for (const auto &item : value.templates) {
+        templates.push_back(fact(item));
+    }
+    return lattice_.list(lattice_.join(templates, 0), false);
+}
+
+std::optional<Id> Construct::operator()(const ast::BinaryComprehension &value) {
+    // Any number of copies of the template: every copy's sizes share its base and unit.
+    const auto bits = value_bits(inference_.graph, fact(value.expression), 1);
+    return lattice_.bitstring(0, std::gcd(bits.base, bits.unit));
+}
 
 std::optional<Id> Construct::operator()(const ast::Tuple &value) {
     std::vector<Id> elements;
@@ -156,7 +280,7 @@ std::optional<Id> Construct::operator()(const ast::Tuple &value) {
 
 std::optional<Id> Construct::operator()(const ast::MapExpression &value) {
     if (value.base) {
-        return std::nullopt;
+        return update(value);
     }
     std::vector<Id> fields;
     for (const auto &field : value.fields) {
@@ -170,6 +294,19 @@ std::optional<Id> Construct::operator()(const ast::MapExpression &value) {
         put(fields, key, fact(field.value));
     }
     return lattice_.map(std::move(fields));
+}
+
+Id Construct::update(const ast::MapExpression &value) {
+    std::vector<Id> fields;
+    std::vector<bool> exact;
+    for (const auto &field : value.fields) {
+        fields.insert(fields.end(), {fact(field.key), fact(field.value)});
+        exact.push_back(field.kind == ast::MapFieldKind::exact);
+    }
+    if (never(*value.base) || std::ranges::contains(fields, inference_.graph.bottom())) {
+        return inference_.graph.bottom();
+    }
+    return map_update(lattice_, fact(*value.base), fields, exact);
 }
 
 std::optional<Id> Construct::operator()(const ast::Bitstring &value) {
@@ -242,8 +379,8 @@ std::optional<Bits> Construct::characters(const std::u32string &text, const ast:
 }
 } // namespace
 
-std::optional<Id> constructed_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value) {
-    Construct construct(inference, syntax);
+std::optional<Id> constructed_fact(Inference &inference, const FunctionRef function, const ast::ExprValue &value) {
+    Construct construct(inference, function);
     return std::visit(construct, value);
 }
 
