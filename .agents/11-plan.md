@@ -876,6 +876,14 @@ component, a dynamic call or `apply`) also uses its union summary.
   nothing (`F = fun(1) -> one; (X) when is_atom(X) -> X; (_) -> other end,
   F(2)` infers `other`, not `2 | one | other`).
 
+- Selection principle: the narrower the argument facts, the fewer function
+  types count and the narrower the result; a call whose arguments select
+  one branch gets that branch's result, one that selects several joins
+  theirs, and one whose arguments cannot be narrowed (unknown or overlapping
+  every input) assumes the worst and gets the old joined result of all
+  clauses. Operators and builtins already follow it through their operand
+  facts (58C: `X + 1` is `integer()` for an integer `X`, `number()` for an
+  unknown one).
 - After the call returns, its variable arguments narrow to the join of the
   counting function types' inputs (instead of the whole success domain).
 - Specification checks (58I) compare a call's arguments with each
