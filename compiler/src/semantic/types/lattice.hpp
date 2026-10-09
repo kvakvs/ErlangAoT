@@ -66,9 +66,19 @@ class Lattice {
     Id tuple(std::vector<Id> elements);
     Id list(Id element, bool nonempty);
     Id nil();
+    // A list of known elements at fixed positions followed by `children.back()`, its tail (at least two elements).
+    Id positional(std::vector<Id> children);
+    // The plain list fact of a positional list: its elements joined in front of its tail.
+    Id plain(Id fact);
+    // The list fact of `element` cells in front of `tail`.
+    Id prepend(Id element, Id tail);
+    // `prepend` in front of a named list category (or another named fact) `node`.
+    Id prepend_named(Id element, const Node &node, Id tail);
     // A list of at least one `head` cell ending in a `tail` that is no list: nonempty_improper_list(Head, Tail).
     Id improper(Id head, Id tail);
     Id map(std::vector<Id> fields);
+    // Maps whose keys are all of `key` with values of `value`, any of them possibly missing: #{Key => Value}.
+    Id association(Id key, Id value);
     Id fun(std::size_t arity, Id result);
     Id bitstring(std::uint64_t base, std::uint64_t unit);
 

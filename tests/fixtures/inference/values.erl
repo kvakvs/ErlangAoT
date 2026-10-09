@@ -87,6 +87,12 @@
     wide_tuple/0,
     deep_tuple/0,
     wide_map/0,
+    with_tail/1,
+    list_same_shape/1,
+    list_other_shape/1,
+    map_join/1,
+    record_match/1,
+    not_record/0,
     returns_fun/0,
     returns_remote_fun/0,
     returns_closure/1,
@@ -308,13 +314,13 @@ scaled(X) when is_float(X) -> X / 2.
 
 %% Lists.
 
-%% expect: same_list() -> [1..3, ...]
+%% expect: same_list() -> [1, 2, 3]
 same_list() -> [1, 2, 3].
 
-%% expect: mixed_list() -> [1 | float() | a, ...]
+%% expect: mixed_list() -> [1, a, float()]
 mixed_list() -> [1, a, 2.5].
 
-%% expect: nested_list() -> [[1..3, ...], ...]
+%% expect: nested_list() -> [[1, ...], [2, 3]]
 nested_list() -> [[1], [2, 3]].
 
 %% expect: empty_list() -> []
@@ -382,13 +388,13 @@ updated_map(M) -> M#{a => 1}.
 
 %% Records are tuples; containers taken apart give back their elements' facts.
 
-%% expect: record() -> {point, 0, undefined}
+%% expect: record() -> #point{x :: 0, y :: undefined}
 record() -> #point{}.
 
 %% expect: record_field() -> 3
 record_field() -> (#point{x = 3})#point.x.
 
-%% expect: record_update() -> {point, 0, 5}
+%% expect: record_update() -> #point{x :: 0, y :: 5}
 record_update() -> (#point{})#point{y = 5}.
 
 %% expect: record_index() -> 3
@@ -408,16 +414,16 @@ case_element() ->
         {A, _} -> A
     end.
 
-%% expect: head_value() -> 1..2
+%% expect: head_value() -> 1
 head_value() -> hd([1, 2]).
 
-%% expect: tail_value() -> [1..2]
+%% expect: tail_value() -> [2, ...]
 tail_value() -> tl([1, 2]).
 
 %% expect: cons_cell() -> [a | b, ...]
 cons_cell() -> [a | [b]].
 
-%% expect: appended() -> [1..3, ...]
+%% expect: appended() -> [1, 2, 3]
 appended() -> [1] ++ [2, 3].
 
 %% expect: map_lookup() -> 1
@@ -433,17 +439,18 @@ map_exact_update() -> (#{a => 1})#{a := 2}.
 %% expect: comprehension() -> [2..6]
 comprehension() -> [X * 2 || X <- [1, 2, 3]].
 
-%% expect: list_of_tuple() -> [1 | a, ...]
+%% expect: list_of_tuple() -> [1, a]
 list_of_tuple() -> tuple_to_list({1, a}).
 
-%% Past 16 elements a tuple is tuple() and a map map(); past 4 levels an inner value is term().
-%% expect: wide_tuple() -> tuple()
+%% A tuple of more than 16 known elements keeps them; a map of more than 16 keys joins them into one association;
+%% past 4 levels an inner value is _.
+%% expect: wide_tuple() -> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}
 wide_tuple() -> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}.
 
 %% expect: deep_tuple() -> {{{{_}}}}
 deep_tuple() -> {{{{{1}}}}}.
 
-%% expect: wide_map() -> map()
+%% expect: wide_map() -> #{1..17 => a}
 wide_map() ->
     #{
         1 => a,
@@ -464,6 +471,40 @@ wide_map() ->
         16 => a,
         17 => a
     }.
+
+%% Lists of two or more known elements keep their positions (a Clause notation: the type language has none), unions
+%% among them in parentheses; shapes of other lengths join as plain lists. Maps of other keys join into one
+%% association; a tuple of a record's name and size prints as the record.
+
+%% expect: with_tail(_) -> [a, b | _]
+with_tail(T) -> [a, b | T].
+
+%% expect: list_same_shape(_) -> [1..2, (a | b)]
+list_same_shape(X) ->
+    case X of
+        1 -> [1, a];
+        _ -> [2, b]
+    end.
+
+%% expect: list_other_shape(_) -> [1..2 | a, ...]
+list_other_shape(X) ->
+    case X of
+        1 -> [1, 2];
+        _ -> [a]
+    end.
+
+%% expect: map_join(_) -> #{a | b => 1..2}
+map_join(X) ->
+    case X of
+        1 -> #{a => 1};
+        _ -> #{b => 2}
+    end.
+
+%% expect: record_match(#point{x :: _, y :: _}) -> _
+record_match(#point{x = X}) -> X.
+
+%% expect: not_record() -> {other, 1, 2}
+not_record() -> {other, 1, 2}.
 
 %% Functions returning functions, and local funs.
 

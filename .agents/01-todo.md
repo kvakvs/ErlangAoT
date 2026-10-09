@@ -394,7 +394,7 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   [x] fact domain decision (58A); [x] literals (58B); [x] operators and builtins (58C);
   [x] containers (58D); [x] funs (58E); [x] local inputs from callers (58F); [x] pattern and
   guard narrowing (`is_*` type tests included) with entry domains (58G); [x] narrowing by uses and success
-  domains (58H); [x] integer ranges from guard comparisons (58H1); [x] specs that contradict inferred types are errors (58I); [ ] wide known tuples,
+  domains (58H); [x] integer ranges from guard comparisons (58H1); [x] specs that contradict inferred types are errors (58I); [x] wide known tuples,
   positional lists, joined map keys and records printed as records (58J). Expectations: `tests/fixtures/inference/values.erl`,
   `base_types.erl` and `narrowing.erl` (7 of 39 and 3 of 46 functions at their expected type on
   2026-10-08; all 121, 46 and 51 on 2026-10-09), contradictions in `tests/fixtures/inference/contracts/`.

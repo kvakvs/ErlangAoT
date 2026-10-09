@@ -40,6 +40,9 @@ ListView view(Lattice &lattice, const Id member) {
     if (member == top) {
         return {ListView::Shape::unknown, top, top};
     }
+    if (node.kind == Kind::positional) {
+        return view(lattice, lattice.plain(member));
+    }
     if (node.kind == Kind::list) {
         return node.children.empty()
                    ? ListView{ListView::Shape::nil, top, top}
@@ -49,6 +52,27 @@ ListView view(Lattice &lattice, const Id member) {
         return named_view(lattice, node);
     }
     return {ListView::Shape::other, top, top};
+}
+
+// A list of known elements at fixed positions: positional for two or more known ones, else a plain list.
+Id positional_list(Lattice &lattice, std::vector<Id> elements) {
+    if (elements.empty()) {
+        return lattice.nil();
+    }
+    if (elements.size() < 2 || std::ranges::contains(elements, lattice.graph().top())) {
+        return lattice.list(lattice.join(elements, 0), true);
+    }
+    elements.push_back(lattice.nil());
+    return lattice.positional(std::move(elements));
+}
+
+// A positional list without its first element: positional while two remain, else that element's cell.
+Id rest(Lattice &lattice, const Id positional) {
+    const auto children = lattice.graph().get(positional).children;
+    if (children.size() > 3) {
+        return lattice.positional({children.begin() + 1, children.end()});
+    }
+    return lattice.prepend(children[1], children[2]);
 }
 
 // A tuple index as a host size; none for one no tuple can have.
@@ -82,6 +106,34 @@ std::optional<Id> replace(Lattice &lattice, const Id member, const std::optional
     return lattice.tuple(std::move(elements));
 }
 
+// Add to `results` the values of a map member that `key` may read: an exact map's at that key (every value for a key
+// of several values), an association's when its keys and the key share a value.
+void add_values(Lattice &lattice, const Lookup &lookup, std::vector<Id> &results) {
+    const auto [map, key] = lookup;
+    const auto node = lattice.graph().get(map);
+    const bool exact = singular(lattice.graph(), key);
+    for (std::size_t index = 0; index + 1 < node.children.size(); index += 2) {
+        const auto &stored = node.children[index];
+        const bool holds = node.name == "association" ? lattice.meet(stored, key) != lattice.graph().bottom()
+                                                      : !exact || stored == key;
+        if (holds) {
+            results.push_back(node.children[index + 1]);
+        }
+    }
+}
+
+// An association updated by `fields`: its keys and values join the new ones.
+Id widen_association(Lattice &lattice, const Id map, const std::span<const Id> fields) {
+    const auto children = lattice.graph().get(map).children;
+    std::vector<Id> keys{children[0]};
+    std::vector<Id> values{children[1]};
+    for (std::size_t field = 0; 2 * field + 1 < fields.size(); ++field) {
+        keys.push_back(fields[2 * field]);
+        values.push_back(fields[2 * field + 1]);
+    }
+    return lattice.association(lattice.join(keys, 0), lattice.join(values, 0));
+}
+
 // An exact map's fields updated by `fields`; none when a := key is missing, map() for a key of several values.
 std::optional<Id> update_exact(Lattice &lattice, const Id map, const std::span<const Id> fields,
                                const std::vector<bool> &exact) {
@@ -111,6 +163,13 @@ Id cons(Lattice &lattice, const Cell &cell) {
     const auto [head, tail] = cell;
     std::vector<Id> results;
     for (const auto member : lattice.members(tail)) {
+        if (lattice.graph().get(member).kind == Kind::positional && head != lattice.graph().top()) {
+            // A known head in front of a positional list keeps the positions.
+            auto children = lattice.graph().get(member).children;
+            children.insert(children.begin(), head);
+            results.push_back(lattice.positional(std::move(children)));
+            continue;
+        }
         const auto list = view(lattice, member);
         switch (list.shape) {
         case ListView::Shape::unknown:
@@ -168,6 +227,10 @@ Id subtract(Lattice &lattice, const Id left) {
 Id head(Lattice &lattice, const Id list) {
     std::vector<Id> results;
     for (const auto member : lattice.members(list)) {
+        if (lattice.graph().get(member).kind == Kind::positional) {
+            results.push_back(lattice.graph().get(member).children.front());
+            continue;
+        }
         const auto cell = view(lattice, member);
         if (cell.shape == ListView::Shape::unknown || cell.shape == ListView::Shape::proper ||
             cell.shape == ListView::Shape::improper) {
@@ -180,6 +243,10 @@ Id head(Lattice &lattice, const Id list) {
 Id tail(Lattice &lattice, const Id list) {
     std::vector<Id> results;
     for (const auto member : lattice.members(list)) {
+        if (lattice.graph().get(member).kind == Kind::positional) {
+            results.push_back(rest(lattice, member));
+            continue;
+        }
         const auto cell = view(lattice, member);
         if (cell.shape == ListView::Shape::unknown) {
             return lattice.graph().top();
@@ -194,7 +261,15 @@ Id tail(Lattice &lattice, const Id list) {
     return lattice.join(results, 0);
 }
 
-Id elements(Lattice &lattice, const Id list) { return head(lattice, list); }
+Id elements(Lattice &lattice, const Id list) {
+    // A generator visits every position: a positional list as its plain list.
+    std::vector<Id> results;
+    for (const auto member : lattice.members(list)) {
+        const bool positional = lattice.graph().get(member).kind == Kind::positional;
+        results.push_back(head(lattice, positional ? lattice.plain(member) : member));
+    }
+    return lattice.join(results, 0);
+}
 
 Id tuple_element(Lattice &lattice, const Id tuple, const std::size_t index, const std::size_t size) {
     std::vector<Id> results;
@@ -260,26 +335,20 @@ Id tuple_list(Lattice &lattice, const Id tuple) {
         }
         const auto node = lattice.graph().get(member);
         if (node.kind == Kind::tuple) {
-            results.push_back(node.children.empty() ? lattice.nil()
-                                                    : lattice.list(lattice.join(node.children, 0), true));
+            results.push_back(positional_list(lattice, node.children));
         }
     }
     return lattice.join(results, 0);
 }
 
 Id map_value(Lattice &lattice, const Lookup &lookup) {
-    const auto [map, key] = lookup;
-    const bool exact = singular(lattice.graph(), key);
     std::vector<Id> results;
-    for (const auto member : lattice.members(map)) {
+    for (const auto member : lattice.members(lookup.map)) {
         if (any_of_category(lattice.graph(), member, "map")) {
             return lattice.graph().top();
         }
-        const auto &node = lattice.graph().get(member);
-        for (std::size_t index = 0; node.kind == Kind::map && index + 1 < node.children.size(); index += 2) {
-            if (!exact || node.children[index] == key) {
-                results.push_back(node.children[index + 1]);
-            }
+        if (lattice.graph().get(member).kind == Kind::map) {
+            add_values(lattice, {member, lookup.key}, results);
         }
     }
     return lattice.join(results, 0);
@@ -304,6 +373,8 @@ Id map_update(Lattice &lattice, const Id map, const std::span<const Id> fields, 
     for (const auto member : lattice.members(map)) {
         if (any_of_category(lattice.graph(), member, "map")) {
             results.push_back(lattice.category("map"));
+        } else if (lattice.graph().get(member).name == "association") {
+            results.push_back(widen_association(lattice, member, fields));
         } else if (lattice.graph().get(member).kind == Kind::map) {
             if (const auto updated = update_exact(lattice, member, fields, exact)) {
                 results.push_back(*updated);

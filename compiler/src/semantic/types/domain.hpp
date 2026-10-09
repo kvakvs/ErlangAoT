@@ -26,7 +26,9 @@ enum class Kind : std::uint8_t {
     binary,
     annotation,
     union_type,
-    reference
+    reference,
+    // An inferred list of known elements at fixed positions: children are the elements, then the tail.
+    positional
 };
 
 struct Id {

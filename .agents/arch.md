@@ -281,7 +281,9 @@
   of case/if/receive (`open`/`complete`/`close`), `aliases` narrow together, `Inference::solving` stops callers
   narrowing by an unsolved component's domains. Step 58I: `contracts.cpp` `Declared` converts declared types to facts
   in the inference graph, `Checker` reports disjoint (meet = none()) results, entry domains (`Summary::entry`) and
-  call arguments as errors.
+  call arguments as errors. Step 58J: `Kind::positional` lists (elements then tail; `Lattice::plain` degrades them when
+  joins mix shapes), `#{K => V}` associations (`Lattice::association`) past the key budget or when key sets differ,
+  tuples of known elements past the element budget, records printed via `RecordFields` (`type_report::record_fields`).
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

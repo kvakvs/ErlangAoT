@@ -95,6 +95,7 @@ struct Families {
     std::vector<Id> maps;
     std::vector<ListShape> lists;
     std::vector<Id> improper;
+    std::vector<Id> positional;
     std::vector<Id> others;
     std::optional<Interval> interval;
     std::optional<Bits> bits;
@@ -134,9 +135,10 @@ int family_rank(const Node &node);
 // Sorts the members of facts into their families. Nothing is interned while it walks the graph.
 class Gather final {
   public:
-    explicit Gather(Lattice &lattice)
-        : graph_(lattice.graph()), characters_(lattice.range({"0", CHAR_LIMIT})),
-          any_improper_(lattice.improper(lattice.graph().top(), lattice.graph().top())) {}
+    // With `plain`, positional lists are added as their plain list facts.
+    explicit Gather(Lattice &lattice, bool plain = false)
+        : lattice_(lattice), graph_(lattice.graph()), characters_(lattice.range({"0", CHAR_LIMIT})),
+          any_improper_(lattice.improper(lattice.graph().top(), lattice.graph().top())), plain_(plain) {}
 
     // Add every member of `fact`: a union's members, or the fact itself.
     void add(Id fact) {
@@ -147,8 +149,14 @@ class Gather final {
             }
             return;
         }
+        if (node.kind == Kind::positional && plain_) {
+            add(lattice_.plain(fact));
+            return;
+        }
         families.nonnumeric = families.nonnumeric || (node.kind != Kind::bottom && family_rank(node) != 0);
-        if (!scalar(node) && !container(fact, node)) {
+        if (node.kind == Kind::positional) {
+            families.positional.push_back(fact);
+        } else if (!scalar(node) && !container(fact, node)) {
             families.others.push_back(fact);
         }
     }
@@ -273,10 +281,12 @@ class Gather final {
 
     static std::map<std::string_view, Rule> rules();
 
+    Lattice &lattice_;
     const Graph &graph_;
     // The fact char(): 0..CHAR_LIMIT, and any improper list.
     Id characters_;
     Id any_improper_;
+    bool plain_;
 };
 
 std::map<std::string_view, Gather::Rule> Gather::rules() {
@@ -343,9 +353,9 @@ int family_rank(const Node &node) {
                                                             {"bitstring", 10},
                                                             {"nonempty_binary", 10},
                                                             {"nonempty_bitstring", 10}};
-    static const std::map<Kind, int> KINDS{{Kind::integer, 0},  {Kind::range, 0},     {Kind::atom, 1},
-                                           {Kind::function, 3}, {Kind::tuple, 6},     {Kind::map, 7},
-                                           {Kind::list, 9},     {Kind::bitstring, 10}};
+    static const std::map<Kind, int> KINDS{{Kind::integer, 0},  {Kind::range, 0},      {Kind::atom, 1},
+                                           {Kind::function, 3}, {Kind::tuple, 6},      {Kind::map, 7},
+                                           {Kind::list, 9},     {Kind::bitstring, 10}, {Kind::positional, 9}};
     if (node.kind == Kind::application) {
         const auto found = CATEGORIES.find(node.name);
         return found == CATEGORIES.end() ? 11 : found->second;
@@ -429,6 +439,7 @@ class Assemble final {
         tuples(families, out);
         maps(families, out);
         lists(families, out);
+        positional(families, out);
         improper(families, out);
         maybe_improper(out);
         if (families.bits) {
@@ -547,11 +558,15 @@ class Assemble final {
         if (!families.any_map && families.maps.empty()) {
             return;
         }
-        const auto keys = families.any_map ? std::vector<Id>{} : keys_of(families.maps.front());
-        const bool same =
-            !families.any_map && std::ranges::all_of(families.maps, [&](Id map) { return keys_of(map) == keys; });
-        if (!same) {
+        if (families.any_map) {
             out.push_back(lattice_.category("map"));
+            return;
+        }
+        const auto keys = keys_of(families.maps.front());
+        const bool same = std::ranges::all_of(
+            families.maps, [&](Id map) { return graph_.get(map).name == "exact" && keys_of(map) == keys; });
+        if (!same) {
+            out.push_back(associations(families));
             return;
         }
         std::vector<Id> fields;
@@ -566,6 +581,20 @@ class Assemble final {
             fields.push_back(lattice_.join(values, depth_ + 1));
         }
         out.push_back(lattice_.map(std::move(fields)));
+    }
+
+    // Maps of different keys as one association of their joined keys and values.
+    Id associations(const Families &families) {
+        std::vector<Id> keys;
+        std::vector<Id> values;
+        for (const auto map : families.maps) {
+            const auto children = graph_.get(map).children;
+            for (std::size_t index = 0; index + 1 < children.size(); index += 2) {
+                keys.push_back(children[index]);
+                values.push_back(children[index + 1]);
+            }
+        }
+        return lattice_.association(lattice_.join(keys, depth_ + 1), lattice_.join(values, depth_ + 1));
     }
 
     // The keys of an exact map fact, in their order.
@@ -593,6 +622,25 @@ class Assemble final {
             nonempty = nonempty && shape.nonempty;
         }
         out.push_back(lattice_.list(lattice_.join(elements, depth_ + 1), nonempty));
+    }
+
+    // Positional lists of one length (the only list facts present) join position by position, tails too.
+    void positional(const Families &families, std::vector<Id> &out) {
+        if (families.positional.empty()) {
+            return;
+        }
+        const auto size = graph_.get(families.positional.front()).children.size();
+        std::vector<Id> children;
+        children.reserve(size);
+        for (std::size_t index = 0; index < size; ++index) {
+            std::vector<Id> facts;
+            facts.reserve(families.positional.size());
+            for (const auto list : families.positional) {
+                facts.push_back(graph_.get(list).children[index]);
+            }
+            children.push_back(lattice_.join(facts, depth_ + 1));
+        }
+        out.push_back(lattice_.positional(std::move(children)));
     }
 
     // Any list and any improper list together are maybe_improper_list(), or nonempty_maybe_improper_list() without
@@ -653,9 +701,20 @@ Id fact_of(Lattice &lattice, const Families &families, std::size_t depth) {
     return graph.intern({Kind::union_type, {}, {}, std::move(members)});
 }
 
+// Whether positional lists, if any, can join position by position: they are the only list facts and of one length.
+bool positional_fits(const Graph &graph, const Families &families) {
+    if (families.positional.empty()) {
+        return true;
+    }
+    const auto size = graph.get(families.positional.front()).children.size();
+    return families.lists.empty() && !families.nil && families.improper.empty() &&
+           std::ranges::all_of(families.positional, [&](Id list) { return graph.get(list).children.size() == size; });
+}
+
 // Whether a fact node is a container whose children are facts nested one level deeper.
 bool is_container(const Node &node) {
-    constexpr std::array containers{Kind::tuple, Kind::list, Kind::map, Kind::function, Kind::application};
+    constexpr std::array containers{Kind::tuple,    Kind::list,        Kind::map,
+                                    Kind::function, Kind::application, Kind::positional};
     return std::ranges::contains(containers, node.kind) && !node.children.empty();
 }
 
@@ -688,7 +747,15 @@ Id Lattice::join(std::span<const Id> members, std::size_t depth) {
         }
         gather.add(member);
     }
-    return fact_of(*this, gather.families, depth);
+    if (positional_fits(graph_, gather.families)) {
+        return fact_of(*this, gather.families, depth);
+    }
+    // Positional lists that join with other list facts, or of other lengths, become plain lists.
+    Gather plain(*this, true);
+    for (const auto member : members) {
+        plain.add(member);
+    }
+    return fact_of(*this, plain.families, depth);
 }
 
 Id Lattice::widen(Id previous, Id next) {
@@ -792,11 +859,12 @@ Id Lattice::truncate(Id fact, std::size_t levels) {
 }
 
 Id Lattice::tuple(std::vector<Id> elements) {
-    if (elements.size() > limits_.elements) {
-        return category("tuple");
-    }
     for (auto &element : elements) {
         element = within_depth(element);
+    }
+    // Past the element budget a tuple keeps its elements only when every one is known.
+    if (elements.size() > limits_.elements && std::ranges::contains(elements, graph_.top())) {
+        return category("tuple");
     }
     return graph_.intern({Kind::tuple, "exact", {}, std::move(elements)});
 }
@@ -823,11 +891,58 @@ Id Lattice::improper(Id head, Id tail) {
         {Kind::application, "nonempty_improper_list", "erlang", {within_depth(head), within_depth(tail)}});
 }
 
+Id Lattice::positional(std::vector<Id> children) {
+    for (auto &child : children) {
+        child = within_depth(child);
+    }
+    return graph_.intern({Kind::positional, {}, {}, std::move(children)});
+}
+
+Id Lattice::plain(Id fact) {
+    const auto children = graph_.get(fact).children;
+    const std::span elements(children.begin(), children.end() - 1);
+    return prepend(join(elements, 0), children.back());
+}
+
+Id Lattice::prepend(Id element, Id tail) {
+    const auto node = graph_.get(tail);
+    if (tail == graph_.top() || tail == graph_.bottom() || node.kind == Kind::union_type) {
+        return tail == graph_.bottom() ? tail : graph_.top();
+    }
+    if (node.kind == Kind::positional) {
+        return prepend(element, plain(tail));
+    }
+    if (node.kind == Kind::list) {
+        return list(node.children.empty() ? element : join(element, node.children.front()), true);
+    }
+    return node.kind == Kind::application ? prepend_named(element, node, tail) : improper(element, tail);
+}
+
+Id Lattice::prepend_named(Id element, const Node &node, Id tail) {
+    static const std::map<std::string_view, std::string_view> LISTS{
+        {"list", ""}, {"string", "string"}, {"nonempty_string", "string"}};
+    if (const auto found = LISTS.find(node.name); found != LISTS.end()) {
+        return list(join(element, found->second.empty() ? graph_.top() : range({"0", CHAR_LIMIT})), true);
+    }
+    if (node.name == "nonempty_improper_list") {
+        return improper(join(element, node.children.front()), node.children.back());
+    }
+    // Any other list category leaves the shape unknown; a value that is no list ends an improper list.
+    return node.name.find("list") != std::string::npos ? graph_.top() : improper(element, tail);
+}
+
 Id Lattice::nil() { return graph_.intern({Kind::list, "possibly_empty"}); }
 
 Id Lattice::map(std::vector<Id> fields) {
     if (fields.size() / 2 > limits_.elements) {
-        return category("map");
+        // Past the key budget the keys join into one association.
+        std::vector<Id> keys;
+        std::vector<Id> values;
+        for (std::size_t index = 0; index + 1 < fields.size(); index += 2) {
+            keys.push_back(fields[index]);
+            values.push_back(fields[index + 1]);
+        }
+        return association(join(keys, 0), join(values, 0));
     }
     std::vector<std::pair<Id, Id>> pairs;
     for (std::size_t index = 0; index + 1 < fields.size(); index += 2) {
@@ -842,6 +957,13 @@ Id Lattice::map(std::vector<Id> fields) {
         node.labels.emplace_back("1");
     }
     return graph_.intern(std::move(node));
+}
+
+Id Lattice::association(Id key, Id value) {
+    if (key == graph_.bottom() || value == graph_.bottom()) {
+        return map({});
+    }
+    return graph_.intern({Kind::map, "association", {}, {within_depth(key), within_depth(value)}, {"0"}});
 }
 
 Id Lattice::fun(std::size_t arity, Id result) {

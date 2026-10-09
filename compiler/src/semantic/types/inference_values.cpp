@@ -174,13 +174,19 @@ std::optional<Id> Construct::operator()(const ast::List &value) {
     if (never(value.elements) || (value.tail && never(*value.tail))) {
         return inference_.graph.bottom();
     }
-    // [E1, ..., En | T] is a cell of the joined elements in front of the tail.
+    // Two or more known elements keep their positions in front of the tail; otherwise the joined elements are one
+    // cell in front of it.
     std::vector<Id> elements;
-    elements.reserve(value.elements.size());
+    elements.reserve(value.elements.size() + 1);
     for (const auto &element : value.elements) {
         elements.push_back(fact(element));
     }
-    return cons(lattice_, {lattice_.join(elements, 0), value.tail ? fact(*value.tail) : lattice_.nil()});
+    const auto tail = value.tail ? fact(*value.tail) : lattice_.nil();
+    if (elements.size() >= 2 && !std::ranges::contains(elements, inference_.graph.top())) {
+        elements.push_back(tail);
+        return lattice_.positional(std::move(elements));
+    }
+    return cons(lattice_, {lattice_.join(elements, 0), tail});
 }
 
 std::optional<Id> Construct::operator()(const ast::RecordIndex &value) {
@@ -392,6 +398,8 @@ bool singular(const Graph &graph, const Id fact) {
         return true;
     case Kind::list:
         return node.children.empty();
+    case Kind::positional:
+        return std::ranges::all_of(node.children, [&](const Id child) { return singular(graph, child); });
     case Kind::tuple:
     case Kind::map:
         return node.name == "exact" &&

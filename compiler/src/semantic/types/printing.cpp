@@ -11,7 +11,8 @@ constexpr std::size_t MAX_DEPTH = 32;
 
 class Printer final {
   public:
-    Printer(const Graph &graph, std::size_t budget) : graph_(graph), budget_(budget) {}
+    Printer(const Graph &graph, std::size_t budget, const RecordFields *records)
+        : graph_(graph), budget_(budget), records_(records) {}
 
     // The text of one node and, within the budget, its children.
     std::string text(Id id, std::size_t depth) {
@@ -177,13 +178,15 @@ class Printer final {
         case Kind::range:
             return join(node.children, depth, "..");
         case Kind::tuple:
-            return node.name == "any" ? "tuple()" : '{' + join(node.children, depth) + '}';
+            return node.name == "any" ? "tuple()" : tuple(node, depth);
         case Kind::list:
             return list(node, depth);
         case Kind::map:
             return map(node, depth);
         case Kind::record:
             return record(node, depth);
+        case Kind::positional:
+            return positional(node, depth);
         default:
             return operations(node, depth);
         }
@@ -208,13 +211,52 @@ class Printer final {
         }
     }
 
-    // The graph whose nodes are printed and the nodes left to print.
+    // A positional list: [A, B] with an empty tail, else [A, B | Tail].
+    std::string positional(const Node &node, std::size_t depth) {
+        const std::span elements(node.children.begin(), node.children.end() - 1);
+        const auto &tail = graph_.get(node.children.back());
+        const bool proper = tail.kind == Kind::list && tail.children.empty();
+        std::string text_elements;
+        for (const auto element : elements) {
+            // An element printed with `|` is parenthesized, so it cannot read as the tail's.
+            const auto part = text(element, depth);
+            const bool grouped = part.find(" | ") != std::string::npos;
+            text_elements += (text_elements.empty() ? "" : ", ") + (grouped ? '(' + part + ')' : part);
+        }
+        return '[' + text_elements + (proper ? "" : " | " + text(node.children.back(), depth)) + ']';
+    }
+
+    // A tuple, or the record of the same name and size: #r{f :: T}.
+    std::string tuple(const Node &node, std::size_t depth) {
+        const auto *fields = record_fields(node);
+        if (!fields) {
+            return '{' + join(node.children, depth) + '}';
+        }
+        std::string text_fields;
+        for (std::size_t index = 1; index < node.children.size(); ++index) {
+            text_fields += (text_fields.empty() ? "" : ", ") + atom_source(fields->at(index - 1)) +
+                           " :: " + text(node.children[index], depth);
+        }
+        return '#' + atom_source(graph_.get(node.children.front()).name) + '{' + text_fields + '}';
+    }
+
+    // The field names of the record a tuple's tag and size name; null when none does.
+    const std::vector<std::string> *record_fields(const Node &node) const {
+        if (!records_ || node.children.empty() || graph_.get(node.children.front()).kind != Kind::atom) {
+            return nullptr;
+        }
+        const auto found = records_->find({graph_.get(node.children.front()).name, node.children.size()});
+        return found == records_->end() ? nullptr : &found->second;
+    }
+
+    // The graph whose nodes are printed, the nodes left to print, and the records tuples print as.
     const Graph &graph_;
     std::size_t budget_;
+    const RecordFields *records_;
 };
 } // namespace
 
-std::string type_source(const Graph &graph, Id type, std::size_t budget) {
-    return Printer(graph, budget).text(type, 0);
+std::string type_source(const Graph &graph, Id type, std::size_t budget, const RecordFields *records) {
+    return Printer(graph, budget, records).text(type, 0);
 }
 } // namespace clause::semantic::types

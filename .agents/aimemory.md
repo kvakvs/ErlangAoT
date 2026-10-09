@@ -427,7 +427,7 @@ User directions (keep):
   2026-10-09 user direction: printed types write term() as `_` (TERM_SOURCE, step 58I1).
   2026-10-09 user direction: argument relations print as variable names / _argumentN (step 58I2).
   2026-10-09 user direction: step 58J (wide known tuples, positional lists, #{1..17 => a} maps, records printed as
-  records) added after 58I; not implemented in the 58B-58I run.
+  records) added after 58I; implemented next. 78B (user direction): rename runtime/src/builtins files to builtin_<name>.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

@@ -102,10 +102,10 @@ port_test(X) when is_port(X) -> X.
 %% expect: reference_test(reference()) -> reference()
 reference_test(X) when is_reference(X) -> X.
 
-%% expect: record_test({point, _, _}) -> {point, _, _}
+%% expect: record_test(#point{x :: _, y :: _}) -> #point{x :: _, y :: _}
 record_test(X) when is_record(X, point) -> X.
 
-%% expect: record_size_test({point, _, _}) -> {point, _, _}
+%% expect: record_size_test(#point{x :: _, y :: _}) -> #point{x :: _, y :: _}
 record_size_test(X) when is_record(X, point, 3) -> X.
 
 %% expect: map_key_test(_, map()) -> map()

@@ -144,10 +144,28 @@ std::map<const ast::Expression *, Names> expression_owners(const semantic::Modul
     return result;
 }
 
+// The module's tuple records, which tuple facts of their name and size print as.
+types::RecordFields record_fields(const semantic::Module &module) {
+    types::RecordFields result;
+    for (const auto &[name, layout] : module.records) {
+        if (layout.native) {
+            continue;
+        }
+        std::vector<std::string> fields;
+        fields.reserve(layout.fields.size());
+        for (const auto &field : layout.fields) {
+            fields.push_back(utf8(field.name.name));
+        }
+        result.emplace(std::pair{utf8(name), layout.fields.size() + 1}, std::move(fields));
+    }
+    return result;
+}
+
 // A fact as annotation text: its type, or the name of the argument it equals when only that relation is known.
-std::string fact_source(const types::Inference &inferred, const types::Fact &fact, const Names *names) {
+std::string fact_source(const types::Inference &inferred, const types::Fact &fact, const Names *names,
+                        const types::RecordFields &records) {
     if (inferred.graph.get(fact.type).kind != types::Kind::top) {
-        return types::type_source(inferred.graph, fact.type);
+        return types::type_source(inferred.graph, fact.type, 1024, &records);
     }
     if (!fact.argument) {
         return {};
@@ -159,7 +177,8 @@ std::string fact_source(const types::Inference &inferred, const types::Fact &fac
 // The annotation of an expression: none for literals, for facts that say nothing, and for the argument relation of
 // a variable, which its name already shows.
 std::optional<std::string> expression_note(const ast::Module &syntax, const types::Inference &inferred,
-                                           const ast::Expression &expression, const Names *names) {
+                                           const ast::Expression &expression, const Names *names,
+                                           const types::RecordFields &records) {
     const auto found = inferred.expressions.find(&expression);
     if (found == inferred.expressions.end() || self_describing(syntax, expression.value)) {
         return std::nullopt;
@@ -168,22 +187,23 @@ std::optional<std::string> expression_note(const ast::Module &syntax, const type
     if (std::holds_alternative<ast::Variable>(expression.value)) {
         fact.argument.reset();
     }
-    auto text = fact_source(inferred, fact, names);
+    auto text = fact_source(inferred, fact, names, records);
     return text.empty() ? std::nullopt : std::optional{std::move(text)};
 }
 
 // `name(Inputs) -> Result` of a function summary; an argument the result equals shows its name, as a type variable.
 std::string signature(const types::Inference &inferred, const std::string &name, const types::Summary &summary,
-                      const Names &names) {
+                      const Names &names, const types::RecordFields &records) {
     std::string inputs;
     for (std::size_t index = 0; index < summary.inputs.size(); ++index) {
         const auto input = summary.inputs[index];
         const bool named =
             summary.result.argument == index && inferred.graph.get(summary.result.type).kind == types::Kind::top;
         inputs += inputs.empty() ? "" : ", ";
-        inputs += named && input == inferred.graph.top() ? names.at(index) : types::type_source(inferred.graph, input);
+        inputs += named && input == inferred.graph.top() ? names.at(index)
+                                                         : types::type_source(inferred.graph, input, 1024, &records);
     }
-    const auto result = fact_source(inferred, summary.result, &names);
+    const auto result = fact_source(inferred, summary.result, &names, records);
     return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? std::string(types::TERM_SOURCE) : result);
 }
 
@@ -210,7 +230,7 @@ std::string declared_signature(const types::Graph &graph, const std::string &nam
 // The comment above a function: its specification's overloads, if any, then its inferred signature.
 std::vector<std::string> function_note(const semantic::Module &module, const Analysis &analysis,
                                        const std::map<types::Key, const types::Contract *> &specified,
-                                       const ast::Form &form) {
+                                       const types::RecordFields &records, const ast::Form &form) {
     for (const auto &function : module.functions) {
         if (&module.syntax->form(function.form) != &form) {
             continue;
@@ -225,7 +245,7 @@ std::vector<std::string> function_note(const semantic::Module &module, const Ana
         }
         const auto &inferred = *analysis.inferred;
         const auto names = argument_names(*module.syntax, std::get<ast::Function>(form.value));
-        lines.push_back("inferred: " + signature(inferred, name, inferred.functions.at(&function), names));
+        lines.push_back("inferred: " + signature(inferred, name, inferred.functions.at(&function), names, records));
         return lines;
     }
     return {};
@@ -247,14 +267,15 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
                   << " declared=" << completeness(analysis.declared->graph)
                   << " inferred=" << completeness(inferred.graph) << '\n';
         const auto owners = expression_owners(*module);
+        const auto records = record_fields(*module);
         const SourceNotes notes{
             .expression =
                 [&](const ast::Expression &expression) {
                     const auto owner = owners.find(&expression);
                     return expression_note(*module->syntax, inferred, expression,
-                                           owner == owners.end() ? nullptr : &owner->second);
+                                           owner == owners.end() ? nullptr : &owner->second, records);
                 },
-            .form = [&](const ast::Form &form) { return function_note(*module, analysis, specified, form); }};
+            .form = [&](const ast::Form &form) { return function_note(*module, analysis, specified, records, form); }};
         print_source(std::cout, *module->syntax, notes);
         std::cout << '\n';
     }

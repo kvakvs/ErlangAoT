@@ -124,7 +124,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
-| O. Final closure | [78A](#step-78a), [78](#step-78) | all |
+| O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
 
 ---
 
@@ -740,14 +740,25 @@ keys `map()`, a list only its joined element, and a record a plain tuple.
   `#point{x :: 0, y :: undefined}`; facts stay tuples.
 
 - Success criteria
-  - [ ] The four forms infer and print as above; budgets still widen
+  - [x] The four forms infer and print as above; budgets still widen
     unknown or oversized facts; joins, meets and specification checks stay
-    sound.
+    sound. Evidence 2026-10-09: `Lattice::tuple` (known elements past the
+    budget), `Lattice::association` and association joins, `Kind::positional`
+    with `positional`/`plain`/`prepend` in the lattice and containers (cons,
+    hd/tl, generators, `tuple_to_list/1`), meets of positional lists and
+    associations, record printing through `RecordFields` in
+    `type_source`.
 - Tests
-  - [ ] `values.erl` `wide_tuple` and `wide_map` expectations updated; new
+  - [x] `values.erl` `wide_tuple` and `wide_map` expectations updated; new
     rows for positional lists (literal, with a tail, joined with another
     shape), a map join of different key sets, records constructed, updated
     and matched, and a tuple of a record's size whose tag is another atom.
+    Evidence: rows `with_tail`, `list_same_shape -> [1..2, (a | b)]`,
+    `list_other_shape`, `map_join -> #{a | b => 1..2}`, `record_match`,
+    `not_record`; list rows now positional (`same_list() -> [1, 2, 3]`,
+    `head_value() -> 1`); `semantic_inference` joins and meets of positional
+    lists and associations; values 127/127, base_types 46/46, narrowing
+    51/51.
 
 <a id="step-59"></a>
 
@@ -1078,11 +1089,30 @@ revision tables in the docs.
     v1 names, checked against Clang for every target ABI and width.
   - [ ] Fresh full gate and `check-quality-all` pass.
 
+<a id="step-78b"></a>
+
+### 78B. Rename runtime builtin modules to builtin_<name>
+
+Backlog: all. Depends on: [78A](#step-78a). Added 2026-10-09 (user
+direction).
+
+Rename the C++ sources and headers of `runtime/src/builtins/` to
+`builtin_<name>.cpp` / `builtin_<name>.hpp` (`erlang.cpp` to
+`builtin_erlang.cpp`, `io_format.hpp` to `builtin_io_format.hpp`, ...) and
+update includes, CMake lists, `files.md`, `arch.md` and every document
+naming them.
+
+- Success criteria
+  - [ ] Every file of `runtime/src/builtins/` is named `builtin_<name>`; no
+    reference to an old name remains.
+- Tests
+  - [ ] Fresh full gate and `check-quality-all` pass.
+
 <a id="step-78"></a>
 
 ### 78. Publish the final implementation and validation boundary
 
-Backlog: all. Depends on: steps 1–70, [78A](#step-78a) and any selected optional work.
+Backlog: all. Depends on: steps 1–70, [78A](#step-78a), [78B](#step-78b) and any selected optional work.
 
 - Success criteria
   - [ ] `00-finished.md`, `01-todo.md`, `arch.md`, `files.md`, contracts and

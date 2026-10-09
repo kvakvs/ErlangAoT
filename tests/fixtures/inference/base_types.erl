@@ -230,7 +230,7 @@ string_value(Atom) -> atom_to_list(Atom).
 -spec nonempty_string_value(integer()) -> nonempty_string().
 nonempty_string_value(Integer) -> integer_to_list(Integer).
 
-%% expect: iolist_value() -> [[98, ...] | <<_:8>>, ...]
+%% expect: iolist_value() -> [<<_:8>>, [98, ...]]
 -spec iolist_value() -> iolist().
 iolist_value() -> [<<"a">>, "b"].
 

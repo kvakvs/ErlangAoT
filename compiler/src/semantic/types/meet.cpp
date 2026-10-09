@@ -93,6 +93,9 @@ class Meet final {
         }
         const auto kind = list_shape(outer).kind;
         const auto shape = list_shape(inner);
+        if (graph_.get(inner).kind == Kind::positional) {
+            return kind == ListShape::Kind::any || kind == ListShape::Kind::nonempty;
+        }
         return kind == ListShape::Kind::any ||
                (kind == ListShape::Kind::nonempty && (shape.nonempty || shape.kind == ListShape::Kind::improper));
     }
@@ -115,10 +118,16 @@ class Meet final {
     Id funs(Id left, Id right);
     Id tuples(Id left, Id right);
     Id maps(Id left, Id right);
+    // The meet of two exact maps: the same keys with values that meet.
+    Id exact_maps(Id left, Id right);
+    // The meet of two maps one of which is an association.
+    Id associated(Id left, Id right);
     Id lists(Id left, Id right);
     Id bitstrings(Id left, Id right);
     // The meet of list shapes `a` and `b` (of `facts`) when one is any list or any nonempty list; none otherwise.
     std::optional<Id> loose(const ListShape &a, const ListShape &b, const std::pair<Id, Id> &facts);
+    // The meet of a positional list with another list fact.
+    Id positional(Id fact, Id other);
     // The meet of any nonempty list with `other` (the shape of `fact`).
     Id nonempty(const ListShape &other, Id fact);
     // The meet of two proper lists, of a proper list and the empty list, and of two improper lists.
@@ -247,6 +256,16 @@ Id Meet::maps(const Id left, const Id right) {
     if (any(left, "map") || any(right, "map")) {
         return any(left, "map") ? right : left;
     }
+    if (graph_.get(left).name == "association" || graph_.get(right).name == "association") {
+        return associated(left, right);
+    }
+    return exact_maps(left, right);
+}
+
+Id Meet::exact_maps(const Id left, const Id right) {
+    if (left == right) {
+        return left;
+    }
     auto fields = graph_.get(left).children;
     const auto other = graph_.get(right).children;
     if (fields.size() != other.size()) {
@@ -258,6 +277,29 @@ Id Meet::maps(const Id left, const Id right) {
             return graph_.bottom();
         }
         fields[index + 1] = lattice_.meet(fields[index + 1], other[index + 1]);
+    }
+    return std::ranges::contains(fields, graph_.bottom()) ? graph_.bottom() : lattice_.map(std::move(fields));
+}
+
+Id Meet::associated(const Id left, const Id right) {
+    if (left == right) {
+        return left;
+    }
+    const auto a = graph_.get(left);
+    const auto b = graph_.get(right);
+    if (a.name == "association" && b.name == "association") {
+        return lattice_.association(lattice_.meet(a.children[0], b.children[0]),
+                                    lattice_.meet(a.children[1], b.children[1]));
+    }
+    // An exact map within an association: every key among its keys, every value among its values.
+    const auto &exact = a.name == "association" ? b : a;
+    const auto &association = a.name == "association" ? a : b;
+    auto fields = exact.children;
+    for (std::size_t index = 0; index + 1 < fields.size(); index += 2) {
+        fields[index + 1] = lattice_.meet(fields[index + 1], association.children[1]);
+        if (lattice_.meet(fields[index], association.children[0]) == graph_.bottom()) {
+            return graph_.bottom();
+        }
     }
     return std::ranges::contains(fields, graph_.bottom()) ? graph_.bottom() : lattice_.map(std::move(fields));
 }
@@ -283,6 +325,9 @@ ListShape Meet::list_shape(const Id fact) {
 }
 
 Id Meet::lists(const Id left, const Id right) {
+    if (graph_.get(left).kind == Kind::positional || graph_.get(right).kind == Kind::positional) {
+        return graph_.get(left).kind == Kind::positional ? positional(left, right) : positional(right, left);
+    }
     const auto a = list_shape(left);
     const auto b = list_shape(right);
     if (const auto result = loose(a, b, {left, right})) {
@@ -313,6 +358,29 @@ std::optional<Id> Meet::loose(const ListShape &a, const ListShape &b, const std:
         return std::nullopt;
     }
     return a.kind == ListShape::Kind::nonempty ? nonempty(b, facts.second) : nonempty(a, facts.first);
+}
+
+Id Meet::positional(const Id fact, const Id other) {
+    auto children = graph_.get(fact).children;
+    const auto node = graph_.get(other);
+    const auto shape = node.kind == Kind::positional ? ListShape{ListShape::Kind::any, fact, fact} : list_shape(other);
+    if (node.kind == Kind::positional && node.children.size() == children.size()) {
+        for (std::size_t index = 0; index < children.size(); ++index) {
+            children[index] = lattice_.meet(children[index], node.children[index]);
+        }
+    } else if (shape.kind == ListShape::Kind::nil) {
+        return graph_.bottom();
+    } else if (shape.kind == ListShape::Kind::proper) {
+        // Every element is one of the list's; the tail is the rest of such a list.
+        for (std::size_t index = 0; index + 1 < children.size(); ++index) {
+            children[index] = lattice_.meet(children[index], shape.head);
+        }
+        children.back() = lattice_.meet(children.back(), lattice_.list(shape.head, false));
+    }
+    // Positional lists of other lengths, improper lists and any list keep the positional side: it holds the values
+    // both share.
+    return std::ranges::contains(children, graph_.bottom()) ? graph_.bottom()
+                                                            : lattice_.positional(std::move(children));
 }
 
 Id Meet::nonempty(const ListShape &other, const Id fact) {

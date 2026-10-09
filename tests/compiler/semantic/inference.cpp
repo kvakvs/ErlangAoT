@@ -137,7 +137,12 @@ void container_joins() {
     prints(joined(lattice, {lattice.list(graph.top(), false)}), "list()");
     const auto a = lattice.atom("a");
     prints(joined(lattice, {lattice.map({a, one}), lattice.map({a, two})}), "#{a := 1..2}");
-    prints(joined(lattice, {lattice.map({a, one}), lattice.map({ok, one})}), "map()");
+    prints(joined(lattice, {lattice.map({a, one}), lattice.map({ok, one})}), "#{a | ok => 1}");
+    prints(joined(lattice, {lattice.map({a, one}), lattice.category("map")}), "map()");
+    const auto pair = [&](t::Id first, t::Id second) { return lattice.positional({first, second, lattice.nil()}); };
+    prints(joined(lattice, {pair(one, a), pair(two, ok)}), "[1..2, (a | ok)]");
+    prints(joined(lattice, {pair(one, two), lattice.list(a, true)}), "[1..2 | a, ...]");
+    prints(t::type_source(graph, lattice.positional({one, a, lattice.list(two, false)})), "[1, a | [2]]");
     prints(joined(lattice, {lattice.map({two, a, a, one})}), "#{2 := a, a := 1}");
     prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((_) -> 1..2)");
     prints(joined(lattice, {lattice.fun(0, one), lattice.fun(1, one)}), "fun()");
@@ -156,9 +161,10 @@ void budgets() {
     const auto one = lattice.integer("1");
     prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid")}), "1 | a | pid()");
     prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid"), lattice.nil()}), "_");
-    prints(t::type_source(graph, lattice.tuple({one, one, one})), "tuple()");
+    prints(t::type_source(graph, lattice.tuple({one, one, one})), "{1, 1, 1}");
+    prints(t::type_source(graph, lattice.tuple({one, graph.top(), one})), "tuple()");
     prints(t::type_source(graph, lattice.map({one, one, lattice.integer("2"), one, lattice.integer("3"), one})),
-           "map()");
+           "#{1..3 => 1}");
     prints(t::type_source(graph, lattice.tuple({lattice.tuple({lattice.tuple({one})})})), "{{_}}");
     std::vector<t::Id> shapes;
     for (const auto *tag : {"a", "b", "c", "d"}) {
@@ -211,6 +217,13 @@ void meets() {
     prints(met(category("fun"), lattice.fun(2, i(1))), "fun((_, _) -> 1)");
     prints(met(lattice.fun(1, graph.top()), lattice.fun(2, graph.top())), "none()");
     prints(met(category("binary"), lattice.bitstring(16, 0)), "<<_:16>>");
+    const auto pair = lattice.positional({i(1), lattice.atom("a"), lattice.nil()});
+    prints(met(pair, lattice.list(category("integer"), false)), "none()");
+    prints(met(pair, lattice.list(lattice.join(i(1), lattice.atom("a")), true)), "[1, a]");
+    prints(met(pair, lattice.nil()), "none()");
+    const auto association = lattice.association(lattice.range({"1", "3"}), lattice.atom("x"));
+    prints(met(association, lattice.map({i(2), lattice.atom("x")})), "#{2 := x}");
+    prints(met(association, lattice.map({i(5), lattice.atom("x")})), "none()");
     prints(met(category("pid"), category("port")), "none()");
     prints(t::type_source(graph, lattice.subtract(category("number"), category("integer"))), "float()");
     prints(t::type_source(graph, lattice.subtract(lattice.join(i(1), lattice.atom("a")), category("integer"))), "a");
