@@ -264,6 +264,10 @@
   once; busy senders `suspend()` (`Schedule::port_wait`, Blocked) and `resume_senders()`; input bounds pause the
   channel at 64 KiB held and `owner_full()` throttles a task while a runnable owner holds 1,024 messages
   (`Schedule::throttling`, released in `after()`).
+- Inference fact domain (step 58A, docs/semantic.md#inference-domain): `semantic/types/lattice` joins facts by family
+  (Gather -> Families -> Assemble, term-ordered unions, budgets in `FactLimits`) and widens recursive results with
+  integer thresholds; `inference.cpp` `merged()` joins clauses, widens after `JOIN_ROUNDS` (8), caps rounds at
+  8 + 4 per member.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

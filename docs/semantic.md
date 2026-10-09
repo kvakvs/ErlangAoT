@@ -115,18 +115,61 @@ Inference is separate from declared types and never trusts specs.
   the same way; a binding defined by several of its clauses stays `term()`.
 - A recursive component starts every member's result at `none()` and re-infers
   all members until no result changes; each round joins the new result with the
-  previous one, and a pending recursive call adds nothing to a join. A function
-  that can never return stays `none()`. After 16 rounds without convergence
-  every member widens to `term()` (reported as widened, like budget
-  exhaustion) and a final round recomputes the expression
-  facts; earlier rounds' expression facts are discarded, so only facts from the
-  final assumptions remain.
+  previous one (widens it after the first 8 rounds,
+  [inference domain](#inference-domain)), and a pending recursive call adds
+  nothing to a join. A function that can never return stays `none()`. A
+  component that has not converged after 8 rounds plus 4 per member widens
+  every member to `term()` (reported as widened, like budget exhaustion) and a
+  final round recomputes the expression facts; earlier rounds' expression
+  facts are discarded, so only facts from the final assumptions remain.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
 - Specs are checked only for provable contradictions with known integer
   results/arguments, producing warnings. This is not success typing. Plan
-  step 58H makes any contradiction between a `-spec` and the inferred types an
+  step 58I makes any contradiction between a `-spec` and the inferred types an
   error (inferred must be the declared type or narrower).
+
+### Inference domain
+
+Decision of plan 11 step 58A (`semantic/types/lattice`). A fact is a set of
+values a variable or result can have. Facts join where control flow meets
+(clauses, branches) and widen between the rounds of a recursive component;
+every budget below widens soundly to a larger set, never rejects a program.
+Facts print as Erlang types, categories by their built-in names.
+
+| Fact | Printed | Join | Budget and widening |
+| --- | --- | --- | --- |
+| Nothing | `none()` | Identity | A function that never returns stays `none()` |
+| Anything | `term()` | Absorbs every fact | `dynamic()` and `any()` are `term()` |
+| Integers | `42`, `1 \| 2 \| 3` | Union of singletons | More than 8 singletons become their range |
+| Integer range | `1..10`, `0..255` | Smallest range holding both | A bound that moved between rounds goes to the next threshold: a lower one to 1, then 0, then unbounded; an upper one to -1, then unbounded |
+| Unbounded integers | `pos_integer()` (1 and up), `non_neg_integer()` (0 and up), `neg_integer()` (-1 and down), `integer()` | Smallest interval holding both, printed by its category | — |
+| Floats | `float()` | — | — |
+| Numbers | `number()` | A range or category of integers joined with `float()` | Singleton integers with `float()` stay `1 \| float()` |
+| Atoms | `ok`, `error \| ok`, `boolean()` | Union of singletons; exactly `false` and `true` print `boolean()` | More than 8 singletons become `atom()` |
+| Identifiers | `pid()`, `port()`, `reference()` | — | — |
+| Tuples | `{ok, 1}`, `tuple()` | Tuples of the same size whose first elements are not two different atoms (their tag) join element by element; others stay separate members | More than 16 elements, or more than 8 separate shapes, become `tuple()` |
+| Lists | `[]`, `[T]`, `[T, ...]`, `nonempty_improper_list(H, T)` | Elements join; `[]` with a nonempty list gives a possibly empty one; improper lists join heads and tails | A list of `0..1114111` (`char()`) prints `string()` or `nonempty_string()`; a possibly empty list of `term()` prints `list()` |
+| Maps | `#{}`, `#{a := 1}`, `map()` | Maps with the same keys join value by value; other keys give `map()` | More than 16 keys become `map()` |
+| Funs | `fun((term()) -> 1)`, `fun()` | Funs of one arity join their results; other arities give `fun()` | — |
+| Bitstrings | `<<_:16>>`, `<<_:3, _:_*2>>`, `binary()` | The shorter size plus every difference of sizes as a unit | Base and unit 0/8, 8/8, 0/1, 1/1 print `binary()`, `nonempty_binary()`, `bitstring()`, `nonempty_bitstring()` |
+
+- A union keeps one member per joined shape, in Erlang term order of their
+  values: numbers, atoms, `reference()`, funs, `port()`, `pid()`, tuples, maps,
+  `[]`, lists, bitstrings, then declared named types; more than 8 members
+  become `term()`.
+- Containers nest at most 4 levels; a fact deeper inside becomes `term()`.
+- A recursive component joins results for 8 rounds (cycles of up to 8
+  functions converge exactly), then widens them. A component that has not
+  converged after 4 further rounds per member widens every member to `term()`
+  and is reported as widened, like an exhausted budget.
+- Narrowing (plan steps 58G, 58H) is the meet of facts, the values both hold:
+  patterns and guards (type tests such as `is_integer/1` narrow their argument
+  to the category) narrow within their clause and set a function's entry
+  domain; a use that raises unless its operand has a type narrows the operand
+  after it on the normal path. An empty meet means the path cannot run.
+- Specifications never add to facts: inferred facts come only from code and
+  never decide a representation on a spec's word.
 
 Lowering consumes these facts. Generated IR never converts an integer to a heap
 pointer; each fallible service result is loaded only on its success path, and

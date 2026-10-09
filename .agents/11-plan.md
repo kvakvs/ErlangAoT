@@ -13,6 +13,7 @@ draft with smaller, single-commit steps.
 - Each single step ends with one focused commit titled `[plan11] <full step title with step number>`. A step that
   grows beyond one reviewable change is split into lettered sub-steps (`12a`,
   `12b`) before coding, not widened silently.
+  - IMPORTANT: Do not add "co-authored by" in commit messages.
 - **Decision** steps publish a short contract in `docs/` (plus a prototype where
   stated) and enable no source feature by themselves.
 - Check a success or test box only with recorded evidence. Update the backlog
@@ -120,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase J c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58H](#step-58h), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58I](#step-58i), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -1401,7 +1402,8 @@ since 57G3's `check-quality-all`, so the changed-scope check was empty.
 
 ## L. Optimization and tooling
 
-Steps 58A–58G (added 2026-10-08, user request) make type inference precise
+Steps 58A–58I (added 2026-10-08, user request; 58H and the entry domains of
+58G added 2026-10-09) make type inference precise
 enough that `tests/fixtures/inference/values.erl` and `base_types.erl` (every
 base and built-in type of the [type language](https://www.erlang.org/doc/system/typespec.html))
 reach their `expect:` signatures: today only integer constants, integer joins
@@ -1427,7 +1429,7 @@ element budgets), and how facts relate to specs (never trusted for
 representation).
 
 - Success criteria
-  - [ ] The contract names every fact kind, its join and widening rule and its
+  - [x] The contract names every fact kind, its join and widening rule and its
     budget; `--print-types` text for each matches the `values.erl` and
     `base_types.erl` expectations or the expectations are updated with the
     contract. Categories print by their built-in names (`boolean()`,
@@ -1436,8 +1438,24 @@ representation).
     integer sets as ranges (`0..255`, `1..10`); the contract covers `pid()`,
     `port()`, `reference()`, `dynamic()` (as `term()`) and `none()`.
 - Tests
-  - [ ] Focused unit tests of joins and widening at the documented thresholds
+  - [x] Focused unit tests of joins and widening at the documented thresholds
     (`semantic_inference`).
+
+Done 2026-10-09 (contract `docs/semantic.md#inference-domain`). The domain is
+code as well as text so 58B-58G only add producers: `semantic/types/lattice`
+(`Lattice::join`/`widen`, fact constructors, `FactLimits` singletons 8,
+members 8, depth 4, elements 16; categories are `erlang` application nodes,
+`fun()` the plain function node since `fun` is a reserved word) and the
+shared `decimal_less` (`types/decimal.hpp`, also used by `membership.cpp`).
+Inference joins clause and branch results with it and widens recursive
+results after 8 join rounds; the round cap became 8 + 4 per member (a
+widened fact moves around a cycle one member per round). Widening uses
+thresholds (lower bound 1, 0, unbounded; upper -1, unbounded), so a cycle of
+9-16 functions now converges to `pos_integer()` instead of hitting the cap;
+`codegen_types` checks a ring of 8 (exact) and of 16 (`pos_integer()`).
+Union members print in term order: three `base_types.erl` expectations were
+reordered (`reference() | pid()`, `non_neg_integer() | infinity`,
+`[[98, ...] | <<_:8>>, ...]`). No `today:` line changed.
 
 <a id="step-58b"></a>
 
@@ -1550,37 +1568,142 @@ exported and fun-referenced functions keep `term()` inputs.
 
 <a id="step-58g"></a>
 
-### 58G. Narrow facts by patterns and guards
+### 58G. Narrow facts by patterns and guards; infer entry domains
 
-Backlog: F34. Depends on: [58C](#step-58c), [58D](#step-58d).
+Backlog: F34. Depends on: [58C](#step-58c), [58D](#step-58d). Entry domains
+added 2026-10-09 (user direction).
 
-Inside a clause, a matched pattern and the guard refine the facts of the
+Inside a clause, a matched pattern and the guard narrow the facts of the
 values they test: `is_integer(X), X >= 1, X =< 10` makes `X` the range
 `1..10`, `{ok, V}` makes the matched value a two-tuple, `is_float` /
-`is_integer` split number joins. Refinements apply only within the clause
-(and the guarded branch of `case`/`if`/`receive`).
+`is_integer` split number joins. Narrowing is the meet of facts
+(`Lattice::meet`: the values both facts hold; an empty meet means the clause
+or branch can never run). Narrowed facts apply only within the clause (and the
+guarded branch of `case`/`if`/`receive`, and the body after a body match).
+
+Type tests narrow their argument (user direction 2026-10-09), wherever a
+guard (function clause, `case`, `if`, `receive`, comprehension filter) or a
+guard-like condition (the right operand of `andalso` after a true test, the
+`true` branch of `case is_integer(X) of true -> ...`) has proved them true:
+
+| Test | Argument narrows to |
+| --- | --- |
+| `is_atom/1` | `atom()` |
+| `is_boolean/1` | `boolean()` |
+| `is_integer/1` | `integer()` |
+| `is_float/1` | `float()` |
+| `is_number/1` | `number()` |
+| `is_binary/1` | `binary()` |
+| `is_bitstring/1` | `bitstring()` |
+| `is_list/1` | `maybe_improper_list()` (proper and improper lists and `[]`; 58G adds this category to the 58A list family) |
+| `is_tuple/1` | `tuple()` |
+| `is_map/1` | `map()` |
+| `is_function/1` | `fun()` |
+| `is_function/2` with a literal arity `N` | a fun of arity `N` |
+| `is_pid/1`, `is_port/1`, `is_reference/1` | `pid()`, `port()`, `reference()` |
+| `is_record/2,3` with a literal name (and size) | a tuple of that size whose first element is the name |
+| `is_map_key/2` | its map argument to `map()` |
+| The old guard names (`integer/1`, `atom/1`, ...) | as their `is_` forms |
+
+- A test meets the argument's current fact, so a test that contradicts it
+  (`is_atom(X)` where `X` is `1..10`) makes the clause or branch impossible.
+- A conjunction (`,` and `andalso`) applies every test; a disjunction (`;`,
+  `orelse`) narrows to the join of what each alternative proves; `not` and a
+  false test prove nothing about the argument's type, except that a clause
+  following one whose patterns are all plain variables and whose whole guard
+  was a single type test sees the tested variable without that category (the
+  earlier clause can only have failed on the test: `scaled/1`'s second clause
+  sees a non-integer).
+- Comparisons in guards narrow integer facts to ranges (`X >= 1, X =< 10`)
+  only once a test or fact made the value an integer; on other values they
+  prove nothing, as terms of every type compare.
+
+A function is never entered with arguments no clause's patterns and guards
+accept (`function_clause`), so each argument's entry domain is the join over
+the clauses of its narrowed fact at clause entry. The domain is the function's
+input in `--print-types` (exported functions too: `bounded(1..10) -> 1..10`,
+`scaled(number()) -> number()`), the body of each clause starts from it, and a
+call that returns narrows the caller's argument variables to the callee's
+domain (`f(X), g(X)`: `g` sees `X` within `f`'s domain). A local function's
+inputs (58F) meet its domain. Specs never add to a domain.
 
 - Success criteria
-  - [ ] `bounded(term()) -> 1..10`, `scaled(term()) -> number()`; a refined
-    fact never escapes the clause that proved it.
+  - [ ] `bounded(1..10) -> 1..10`, `scaled(number()) -> number()`; a narrowed
+    fact never escapes the clause that proved it, except as the entry domain
+    and as the caller's narrowing after a call returns.
 - Tests
-  - [ ] `values.erl` and `base_types.erl` reach `expect:` for every row (no
-    `today:` lines left: `1..10`, `0..255`, `pos_integer()`,
-    `neg_integer()`, `infinity | non_neg_integer()`); new rows for range
-    guards, tuple and list patterns, map patterns and refinements that must
-    not leak.
+  - [ ] `values.erl` and `base_types.erl` rows with guards and patterns reach
+    `expect:` with their inputs updated to the entry domains
+    (`integer_range(1..10)`, `pos_integer_value(pos_integer())`,
+    `timeout_value(forever | non_neg_integer())`, ...); new rows for range
+    guards, tuple, list and map patterns, a catch-all clause (domain
+    `term()`), narrowing after a call returns, and narrowings that must not
+    leak; one row per type test of the table (in a function guard, a `case`
+    guard and an `andalso` condition), a contradicting test, a disjunction and
+    a clause after a single type test; unit tests of `meet` in
+    `semantic_inference`.
 
 <a id="step-58h"></a>
 
-### 58H. Reject specifications that contradict inferred types
+### 58H. Narrow facts by their uses
 
-Backlog: F34. Depends on: [58A](#step-58a), [58G](#step-58g). Added
-2026-10-08 (user request).
+Backlog: F34. Depends on: [58G](#step-58g). Added 2026-10-09 (user
+direction).
+
+An operation or call that raises unless an operand has a type proves that
+type for every point it dominates on its normal path: after `X + 1` returns,
+`X` is `number()` (or the code crashed with `badarith`). Uses narrow
+arithmetic operands to `number()` (`div`, `rem`, `band`, `bsl`, ... to
+`integer()`), `andalso`/`orelse` left operands and `not` to `boolean()`,
+`hd/1`/`tl/1` to a nonempty list, `length/1` to `list()`, `element(N, T)` to
+`tuple()` and `pos_integer()`, `tuple_size/1` to `tuple()`, `map_get/2`,
+`is_map_key/2` and `M#{K := V}` to `map()`, `atom_to_list/1` to `atom()`,
+segments of binary construction to their type (`<<X:8>>`: `integer()`), a fun
+call `F(A, B)` to a fun of arity 2, a remote call with a variable module or
+name to `atom()`, record field access to the record's tuple, and a call of a
+function whose domain is known (58G entry domain, or success domain below) to
+that domain. The operand table follows the bridge builtins' argument checks
+(`badarg` conditions), one row per builtin.
+
+A function returns normally only for arguments its body's uses accept, so its
+success domain per argument is the join over its clauses of the argument's
+fact at each normal return; `--print-types` prints it as the input
+(`inc(X) -> X + 1` exported: `inc(number()) -> number()`) and callers narrow
+their arguments to it after the call returns, as for entry domains.
+
+- Soundness: a narrowing holds only on the normal-completion path after the
+  use and never crosses an exception edge (a `catch`, `try` handler or
+  `after` sees the facts from before the use); paths narrowed differently join
+  at merge points; every name bound to the same value narrows with it; the
+  operation keeps its runtime check (specialization, step 59, may drop a check
+  only where a proven fact makes it redundant); widened and over-budget facts
+  narrow to the use's type, never to more.
+- Success criteria
+  - [ ] Every use in the table narrows its operand after it on the normal
+    path, success domains print as inputs and narrow callers, and no narrowing
+    holds on an exception path or before the use.
+- Tests
+  - [ ] New `values.erl` rows: `increment` exported as
+    `increment(number()) -> number()`, `len(L) -> length(L)` as
+    `len(list()) -> non_neg_integer()`, `g(X) -> _ = inc(X), X` as
+    `g(number()) -> number()`, a use inside `try ... catch` that must not
+    narrow after it, a use in one `case` branch only, `hd/1`, `element/2`,
+    map updates, fun calls and remote calls with a variable module.
+
+<a id="step-58i"></a>
+
+### 58I. Reject specifications that contradict inferred types
+
+Backlog: F34. Depends on: [58A](#step-58a), [58H](#step-58h). Added
+2026-10-08 (user request); renumbered from 58H on 2026-10-09 when 58H (uses)
+was inserted.
 
 A `-spec` must not contradict what inference proves: a function's inferred
 result must be a subtype of (equal to or narrower than) the union of its
-overloads' declared results, and a call whose inferred arguments fit no
-overload's declared arguments contradicts the callee's spec. Today
+overloads' declared results, a declared argument type that shares no value with
+the function's entry or success domain (58G, 58H) contradicts it, and a call
+whose inferred arguments fit no overload's declared arguments contradicts the
+callee's spec. Today
 `types/contracts.cpp` only warns, and only for known integer singletons.
 Replace it with a subtype relation over the whole 58A fact domain
 (`semantic::types::subtype(declared_graph, declared, inferred_graph,

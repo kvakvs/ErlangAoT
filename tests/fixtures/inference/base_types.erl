@@ -96,7 +96,7 @@ spawned_pid() -> spawn(fun() -> ok end).
 -spec reference_value() -> reference().
 reference_value() -> make_ref().
 
-%% expect: identifier_value(term()) -> pid() | reference()
+%% expect: identifier_value(term()) -> reference() | pid()
 %% today: identifier_value(term()) -> term()
 -spec identifier_value(term()) -> identifier().
 identifier_value(X) ->
@@ -264,7 +264,7 @@ string_value(Atom) -> atom_to_list(Atom).
 -spec nonempty_string_value(integer()) -> nonempty_string().
 nonempty_string_value(Integer) -> integer_to_list(Integer).
 
-%% expect: iolist_value() -> [<<_:8>> | [98, ...], ...]
+%% expect: iolist_value() -> [[98, ...] | <<_:8>>, ...]
 %% today: iolist_value() -> term()
 -spec iolist_value() -> iolist().
 iolist_value() -> [<<"a">>, "b"].
@@ -310,7 +310,7 @@ remote_fun() -> fun lists:reverse/1.
 
 %% Unions of categories.
 
-%% expect: timeout_value(term()) -> infinity | non_neg_integer()
+%% expect: timeout_value(term()) -> non_neg_integer() | infinity
 %% today: timeout_value(term()) -> term()
 -spec timeout_value(term()) -> timeout().
 timeout_value(X) ->

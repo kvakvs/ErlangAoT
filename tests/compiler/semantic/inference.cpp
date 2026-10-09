@@ -3,8 +3,11 @@
 #include "semantic/capabilities.hpp"
 #include "semantic/services.hpp"
 #include "semantic/types/declarations.hpp"
+#include "semantic/types/lattice.hpp"
+#include "semantic/types/printing.hpp"
 #include <clause/compiler/parser.hpp>
 #include <cstdio>
+#include <initializer_list>
 #include <source_location>
 #include <stdexcept>
 using namespace clause;
@@ -62,9 +65,134 @@ unknown(X) -> id(X).
     require(node_limited->functions.at(&module.functions[0]).result.type == node_limited->graph.top());
 }
 
+// The printed fact of the join of every fact in `facts`.
+std::string joined(t::Lattice &lattice, std::initializer_list<t::Id> facts) {
+    auto result = lattice.graph().bottom();
+    for (const auto fact : facts) {
+        result = lattice.join(result, fact);
+    }
+    return t::type_source(lattice.graph(), result);
+}
+
+// Require that `actual` prints as `expected`, naming both when it does not.
+void prints(const std::string &actual, const std::string &expected,
+            const std::source_location site = std::source_location::current()) {
+    if (actual != expected) {
+        throw std::runtime_error("line " + std::to_string(site.line()) + ": expected " + expected + ", got " + actual);
+    }
+}
+
+// Integers stay singletons up to the budget, then become their range; unbounded intervals print as categories.
+void integer_joins() {
+    t::Graph graph;
+    t::Lattice lattice(graph);
+    const auto i = [&](int value) { return lattice.integer(std::to_string(value)); };
+    prints(joined(lattice, {i(3), i(1), i(2), i(1)}), "1 | 2 | 3");
+    prints(joined(lattice, {i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8)}), "1 | 2 | 3 | 4 | 5 | 6 | 7 | 8");
+    prints(joined(lattice, {i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8), i(20)}), "1..20");
+    prints(joined(lattice, {lattice.range({"1", "10"}), i(-3)}), "-3..10");
+    prints(joined(lattice, {lattice.range({"0", "255"}), lattice.category("pos_integer")}), "non_neg_integer()");
+    prints(joined(lattice, {lattice.category("neg_integer"), i(-7)}), "neg_integer()");
+    prints(joined(lattice, {lattice.category("neg_integer"), i(0)}), "integer()");
+    prints(joined(lattice, {i(1), lattice.category("float")}), "1 | float()");
+    prints(joined(lattice, {lattice.range({"1", "2"}), lattice.category("float")}), "number()");
+    prints(joined(lattice, {lattice.category("number"), i(5)}), "number()");
+}
+
+// Atoms stay singletons up to the budget; true and false print as boolean(); identifiers are categories.
+void atom_joins() {
+    t::Graph graph;
+    t::Lattice lattice(graph);
+    prints(joined(lattice, {lattice.atom("ok"), lattice.atom("error")}), "error | ok");
+    prints(joined(lattice, {lattice.atom("true"), lattice.atom("false")}), "boolean()");
+    prints(joined(lattice, {lattice.category("boolean"), lattice.atom("unknown")}), "false | true | unknown");
+    std::vector<t::Id> nine;
+    for (const auto *name : {"a", "b", "c", "d", "e", "f", "g", "h", "i"}) {
+        nine.push_back(lattice.atom(name));
+    }
+    prints(joined(lattice, {nine[0], nine[1], nine[2], nine[3], nine[4], nine[5], nine[6], nine[7], nine[8]}),
+           "atom()");
+    prints(joined(lattice, {lattice.category("pid"), lattice.category("reference")}), "reference() | pid()");
+    prints(joined(lattice, {lattice.atom("infinity"), lattice.category("non_neg_integer")}),
+           "non_neg_integer() | infinity");
+    prints(joined(lattice, {graph.top(), lattice.atom("ok")}), "term()");
+    prints(joined(lattice, {graph.bottom(), lattice.atom("ok")}), "ok");
+}
+
+// Tuples join element by element when size and tag agree; lists, maps, funs and bitstrings by their rules.
+void container_joins() {
+    t::Graph graph;
+    t::Lattice lattice(graph);
+    const auto ok = lattice.atom("ok");
+    const auto one = lattice.integer("1");
+    const auto two = lattice.integer("2");
+    prints(joined(lattice, {lattice.tuple({ok, one}), lattice.tuple({ok, two})}), "{ok, 1 | 2}");
+    prints(joined(lattice, {lattice.tuple({ok, one}), lattice.tuple({lattice.atom("error"), lattice.atom("bad")})}),
+           "{error, bad} | {ok, 1}");
+    prints(joined(lattice, {lattice.tuple({one}), lattice.tuple({one, two})}), "{1} | {1, 2}");
+    prints(joined(lattice, {lattice.nil(), lattice.list(one, true)}), "[1]");
+    prints(joined(lattice, {lattice.list(one, true), lattice.list(two, true)}), "[1 | 2, ...]");
+    prints(joined(lattice, {lattice.list(lattice.range({"0", "1114111"}), true)}), "nonempty_string()");
+    prints(joined(lattice, {lattice.list(graph.top(), false)}), "list()");
+    const auto a = lattice.atom("a");
+    prints(joined(lattice, {lattice.map({a, one}), lattice.map({a, two})}), "#{a := 1 | 2}");
+    prints(joined(lattice, {lattice.map({a, one}), lattice.map({ok, one})}), "map()");
+    prints(joined(lattice, {lattice.map({two, a, a, one})}), "#{2 := a, a := 1}");
+    prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((term()) -> 1 | 2)");
+    prints(joined(lattice, {lattice.fun(0, one), lattice.fun(1, one)}), "fun()");
+    prints(joined(lattice, {lattice.bitstring(16, 0), lattice.bitstring(16, 0)}), "<<_:16>>");
+    prints(joined(lattice, {lattice.bitstring(8, 0), lattice.bitstring(16, 0)}), "nonempty_binary()");
+    prints(joined(lattice, {lattice.bitstring(8, 0), lattice.bitstring(24, 0)}), "<<_:8, _:_*16>>");
+    prints(joined(lattice, {lattice.bitstring(0, 0), lattice.bitstring(8, 0)}), "binary()");
+    prints(joined(lattice, {lattice.bitstring(0, 0), lattice.bitstring(16, 0)}), "<<_:_*16>>");
+    prints(joined(lattice, {lattice.bitstring(3, 0), lattice.bitstring(5, 0)}), "<<_:3, _:_*2>>");
+}
+
+// Unions past the member budget, containers past the depth and element budgets, become term(), tuple(), map().
+void budgets() {
+    t::Graph graph;
+    t::Lattice lattice(graph, {.singletons = 8, .members = 3, .depth = 2, .elements = 2});
+    const auto one = lattice.integer("1");
+    prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid")}), "1 | a | pid()");
+    prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid"), lattice.nil()}), "term()");
+    prints(t::type_source(graph, lattice.tuple({one, one, one})), "tuple()");
+    prints(t::type_source(graph, lattice.map({one, one, lattice.integer("2"), one, lattice.integer("3"), one})),
+           "map()");
+    prints(t::type_source(graph, lattice.tuple({lattice.tuple({lattice.tuple({one})})})), "{{term()}}");
+    std::vector<t::Id> shapes;
+    for (const auto *tag : {"a", "b", "c", "d"}) {
+        shapes.push_back(lattice.tuple({lattice.atom(tag)}));
+    }
+    prints(joined(lattice, {shapes[0], shapes[1], shapes[2], shapes[3]}), "tuple()");
+}
+
+// Widening sends integer bounds that moved since the previous round to their category; unchanged facts stay.
+void widening() {
+    t::Graph graph;
+    t::Lattice lattice(graph);
+    const auto i = [&](int value) { return lattice.integer(std::to_string(value)); };
+    const auto widened = [&](t::Id previous, t::Id next) {
+        return t::type_source(graph, lattice.widen(previous, next));
+    };
+    prints(widened(graph.bottom(), lattice.join(i(1), i(2))), "1 | 2");
+    prints(widened(lattice.join(i(1), i(2)), i(2)), "1 | 2");
+    prints(widened(i(1), i(2)), "pos_integer()");
+    prints(widened(i(0), i(1)), "non_neg_integer()");
+    prints(widened(i(-1), i(-2)), "neg_integer()");
+    prints(widened(i(0), i(-1)), "integer()");
+    prints(widened(i(3), i(2)), "1..3");
+    prints(widened(lattice.range({"-5", "-1"}), i(-9)), "neg_integer()");
+    prints(widened(i(5), lattice.atom("done")), "5 | done");
+}
+
 int main() {
     try {
         local_inference();
+        integer_joins();
+        atom_joins();
+        container_joins();
+        budgets();
+        widening();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

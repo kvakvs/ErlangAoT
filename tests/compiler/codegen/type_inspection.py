@@ -109,7 +109,8 @@ for signature in ('zero(term()) -> 0', 'swap(term(), term()) -> term()', 'foreve
 assert '    odd(N - 1) :: 0 | 1.\n' in facts, facts
 
 
-# A cycle of n functions gains one result member per round: 15 converge, 16 hit the round limit and widen.
+# A cycle of n functions gains one result member per round (docs/semantic.md#inference-domain): a cycle of 8, the
+# join rounds, converges exactly; a longer one widens to the integers' category and still converges.
 def ring(size):
     name = f'ring{size}'
     lines = [f'-module({name}).', '-export([w1/1]).']
@@ -118,10 +119,10 @@ def ring(size):
     return run('--print-types', f'{name}.erl').stdout
 
 
-converged, widened = ring(15), ring(16)
-assert 'inferred=complete' in converged and '-> 1 | 2 | 3 | ' in converged and ' | 15\n' in converged, converged
-assert 'inferred=widened' in widened, widened
-assert '%% inferred: w1(term()) -> term()\n' in widened, widened
+exact, widened = ring(8), ring(16)
+assert 'inferred=complete' in exact and '%% inferred: w1(term()) -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8\n' in exact, exact
+assert 'inferred=complete' in widened, widened
+assert '%% inferred: w1(term()) -> pos_integer()\n' in widened, widened
 
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')

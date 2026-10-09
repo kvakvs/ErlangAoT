@@ -90,6 +90,7 @@ skeleton and test migration are archived in `.agents/00-finished.md`.
   of [erlfmt](https://github.com/WhatsApp/erlfmt) under 'thirdparty/tools/', if
   missing it should be installed. Always run erlfmt on new and modified .ERL and
   terms files which did not have a syntax error in them planted intentionally.
+- IMPORTANT: Do not add "co-authored by" in commit messages.
 
 ## Windows Toolchain
 

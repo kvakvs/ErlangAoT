@@ -407,7 +407,10 @@ Step facts beyond the plan record:
 User directions (keep):
 - Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
   57A-57F, backlog F35); step 53 decision superseded.
-- Inference plan (2026-10-08): steps 58A-58G before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
+- Inference plan (2026-10-08): steps 58A-58I before specialization 59 (F34); each closes its today: lines in tests/fixtures/inference/values.erl.
+  2026-10-09 user direction: guards/patterns define a function's entry domain (never entered otherwise) and uses
+  (arithmetic, builtins, calls) narrow operands after them, else crash: 58G entry domains, new 58H uses/success
+  domains, spec rejection renumbered 58I. Inputs in --print-types become these domains.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

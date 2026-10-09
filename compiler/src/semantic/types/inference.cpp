@@ -4,6 +4,7 @@
 #include "../funs.hpp"
 #include "../records.hpp"
 #include "inference_bindings.hpp"
+#include "lattice.hpp"
 #include <algorithm>
 #include <optional>
 
@@ -36,16 +37,18 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
     return inference.expressions.at(&syntax.expression(argument));
 }
 
-// Bottom (a recursive call not yet summarized) adds nothing; otherwise only a relation common to both survives.
-Fact merged(Graph &graph, const Fact previous, const Fact next) {
+// Bottom (a recursive call not yet summarized) adds nothing; otherwise only a relation common to both survives and
+// the types join (docs/semantic.md#inference-domain), or widen between rounds of a recursive component.
+Fact merged(Graph &graph, const Fact previous, const Fact next, bool widening = false) {
     if (previous == Fact{graph.bottom()}) {
         return next;
     }
     if (next == Fact{graph.bottom()}) {
         return previous;
     }
-    return {graph.widen(previous.type, next.type),
-            previous.argument == next.argument ? previous.argument : std::nullopt};
+    Lattice lattice(graph);
+    const auto type = widening ? lattice.widen(previous.type, next.type) : lattice.join(previous.type, next.type);
+    return {type, previous.argument == next.argument ? previous.argument : std::nullopt};
 }
 
 // Only relations common to every successful function candidate or case/if clause survive the join.
@@ -139,8 +142,13 @@ Fact body(Inference &inference, const FunctionRef function, std::size_t &work,
     return joined(inference, syntax, definition.clauses);
 }
 
-// Rounds after which a recursive component that has not converged widens every member to top.
-constexpr std::size_t WIDENING_ROUNDS = 16;
+// Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
+// cycles of up to that many functions converge exactly.
+constexpr std::size_t JOIN_ROUNDS = 8;
+// Widening passes over a component after the join rounds: a widened fact moves around a cycle one member per round,
+// and an integer fact widens at most three times (to a threshold, the next, unbounded). A component that has not
+// converged by then widens every member to top.
+constexpr std::size_t WIDENING_PASSES = 4;
 
 // Replace a summary result, keeping every input unknown as for exported functions.
 void summarize(Inference &inference, const FunctionRef function, const Fact result) {
@@ -148,9 +156,10 @@ void summarize(Inference &inference, const FunctionRef function, const Fact resu
         function.function, Summary{std::vector<Id>(function.function->key.arity, inference.graph.top()), result});
 }
 
-// Re-infer every member from the current assumptions, discarding the previous round's expression facts.
+// Re-infer every member from the current assumptions, discarding the previous round's expression facts; results
+// join with the previous round's, or widen once `widening`.
 bool refine(Inference &inference, const Component &component, std::size_t &work,
-            std::vector<const ast::Expression *> &recorded) {
+            std::vector<const ast::Expression *> &recorded, bool widening) {
     for (const auto *expression : recorded) {
         inference.expressions.erase(expression);
     }
@@ -158,7 +167,7 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
     bool changed = false;
     for (const auto member : component.members) {
         auto &summary = inference.functions.at(member.function);
-        const auto next = merged(inference.graph, summary.result, body(inference, member, work, recorded));
+        const auto next = merged(inference.graph, summary.result, body(inference, member, work, recorded), widening);
         changed = changed || next != summary.result;
         summary.result = next;
     }
@@ -171,15 +180,16 @@ void solve(Inference &inference, const Component &component, std::size_t &work) 
         summarize(inference, member, {inference.graph.bottom()});
     }
     std::vector<const ast::Expression *> recorded;
-    for (std::size_t round = 0; round < WIDENING_ROUNDS; ++round) {
-        if (!refine(inference, component, work, recorded)) {
+    const auto rounds = JOIN_ROUNDS + WIDENING_PASSES * component.members.size();
+    for (std::size_t round = 0; round < rounds; ++round) {
+        if (!refine(inference, component, work, recorded, round >= JOIN_ROUNDS)) {
             return;
         }
     }
     for (const auto member : component.members) {
         summarize(inference, member, {inference.graph.exhausted()});
     }
-    (void)refine(inference, component, work, recorded);
+    (void)refine(inference, component, work, recorded, false);
 }
 } // namespace
 

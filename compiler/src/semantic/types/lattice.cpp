@@ -1,0 +1,774 @@
+#include "lattice.hpp"
+#include "decimal.hpp"
+#include <algorithm>
+#include <array>
+#include <charconv>
+#include <map>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <string>
+#include <tuple>
+
+// Joins and widening of facts (docs/semantic.md#inference-domain): the members of the joined facts are sorted into
+// families (atoms, numbers, identifiers, funs, tuples, maps, lists, bitstrings), each family is rebuilt by its rule
+// and the members are assembled in term order.
+namespace clause::semantic::types {
+namespace {
+// The largest character code: a list of 0..CHAR_LIMIT is string().
+constexpr std::string_view CHAR_LIMIT = "1114111";
+
+// Orders canonical decimal integers by value.
+struct DecimalOrder {
+    bool operator()(const std::string &left, const std::string &right) const { return decimal_less(left, right); }
+};
+
+// An integer interval; a missing bound is unbounded.
+struct Interval {
+    std::optional<std::string> low;
+    std::optional<std::string> high;
+    bool operator==(const Interval &) const = default;
+};
+
+// Whether lower bound `left` is below `right`; a missing bound is below every other.
+bool lower_below(const std::optional<std::string> &left, const std::optional<std::string> &right) {
+    return right && (!left || decimal_less(*left, *right));
+}
+
+// Whether upper bound `left` is above `right`; a missing bound is above every other.
+bool upper_above(const std::optional<std::string> &left, const std::optional<std::string> &right) {
+    return right && (!left || decimal_less(*right, *left));
+}
+
+// A lower bound that moved down, moved on to the next threshold: 1 (pos_integer()), 0 (non_neg_integer()), else
+// unbounded.
+std::optional<std::string> lower_threshold(const std::optional<std::string> &low) {
+    if (low && !decimal_less(*low, "1")) {
+        return "1";
+    }
+    if (low && !decimal_less(*low, "0")) {
+        return "0";
+    }
+    return std::nullopt;
+}
+
+// An upper bound that moved up, moved on to the next threshold: -1 (neg_integer()), else unbounded.
+std::optional<std::string> upper_threshold(const std::optional<std::string> &high) {
+    return high && decimal_less(*high, "0") ? std::optional<std::string>("-1") : std::nullopt;
+}
+
+// The smallest interval holding both.
+Interval hull(const Interval &left, const Interval &right) {
+    return {lower_below(left.low, right.low) ? left.low : right.low,
+            upper_above(left.high, right.high) ? left.high : right.high};
+}
+
+// A proper list's element fact and whether it is never empty.
+struct ListShape {
+    Id element;
+    bool nonempty = false;
+};
+
+// A bitstring of `base` bits plus any multiple of `unit` bits; unit 0 is exactly `base` bits.
+struct Bits {
+    std::uint64_t base = 0;
+    std::uint64_t unit = 0;
+};
+
+// The smallest bitstring set holding both: the shorter base, and every difference of sizes as a unit.
+Bits combine(Bits left, Bits right) {
+    const auto base = std::min(left.base, right.base);
+    const auto difference = std::max(left.base, right.base) - base;
+    return {base, std::gcd(std::gcd(left.unit, right.unit), difference)};
+}
+
+// The members of facts grouped by family: singleton atoms and integers, an integer interval, the identifier
+// categories (pid, port, reference), funs, tuples, maps, proper and improper lists, a bitstring set, and facts of no
+// family (declared named types, records), kept as they are. The flags record categories: atom(), float(),
+// number(), fun(), tuple(), map(), and the empty list.
+struct Families {
+    std::set<std::string> atoms;
+    std::set<std::string, DecimalOrder> integers;
+    std::set<std::string> identifiers;
+    std::vector<Id> funs;
+    std::vector<Id> tuples;
+    std::vector<Id> maps;
+    std::vector<ListShape> lists;
+    std::vector<Id> improper;
+    std::vector<Id> others;
+    std::optional<Interval> interval;
+    std::optional<Bits> bits;
+    bool any_atom = false;
+    bool floats = false;
+    bool numbers = false;
+    bool any_fun = false;
+    bool any_tuple = false;
+    bool any_map = false;
+    bool nil = false;
+
+    void add_interval(const Interval &added) { interval = interval ? hull(*interval, added) : added; }
+
+    void add_bits(Bits added) { bits = bits ? combine(*bits, added) : added; }
+
+    // The integers as one interval, if there are any.
+    std::optional<Interval> bounds() const {
+        auto result = interval;
+        for (const auto &value : integers) {
+            result = result ? hull(*result, {value, value}) : Interval{value, value};
+        }
+        return result;
+    }
+};
+
+// A non-negative decimal as a bit count; a size too large for one saturates.
+std::uint64_t bit_count(std::string_view decimal) {
+    std::uint64_t value = 0;
+    const auto parsed = std::from_chars(decimal.data(), decimal.data() + decimal.size(), value);
+    return parsed.ec == std::errc{} ? value : UINT64_MAX;
+}
+
+// Sorts the members of facts into their families. Nothing is interned while it walks the graph.
+class Gather final {
+  public:
+    explicit Gather(Lattice &lattice) : graph_(lattice.graph()), characters_(lattice.range({"0", CHAR_LIMIT})) {}
+
+    // Add every member of `fact`: a union's members, or the fact itself.
+    void add(Id fact) {
+        const auto node = graph_.get(fact);
+        if (node.kind == Kind::union_type) {
+            for (const auto member : node.children) {
+                add(member);
+            }
+        } else if (!scalar(node) && !container(fact, node)) {
+            families.others.push_back(fact);
+        }
+    }
+
+    Families families;
+
+  private:
+    // Atoms, integers, ranges and categories; false for another kind.
+    bool scalar(const Node &node) {
+        switch (node.kind) {
+        case Kind::bottom:
+            return true;
+        case Kind::atom:
+            families.atoms.insert(node.name);
+            return true;
+        case Kind::integer:
+            families.integers.insert(node.name);
+            return true;
+        case Kind::range:
+            families.add_interval({graph_.get(node.children.at(0)).name, graph_.get(node.children.at(1)).name});
+            return true;
+        case Kind::application:
+            return category(node);
+        default:
+            return false;
+        }
+    }
+
+    // Tuples, lists, maps, funs and bitstrings; false for another kind.
+    bool container(Id fact, const Node &node) {
+        switch (node.kind) {
+        case Kind::tuple:
+            add_tuple(fact, node);
+            return true;
+        case Kind::list:
+            add_list(node);
+            return true;
+        case Kind::map:
+            add_map(fact, node);
+            return true;
+        case Kind::function:
+            add_fun(fact, node);
+            return true;
+        case Kind::bitstring:
+            families.add_bits(bits(node));
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    // A tuple of known elements, or tuple().
+    void add_tuple(Id fact, const Node &node) {
+        if (node.name == "any") {
+            families.any_tuple = true;
+        } else {
+            families.tuples.push_back(fact);
+        }
+    }
+
+    // The empty list, or a proper list of an element.
+    void add_list(const Node &node) {
+        if (node.children.empty()) {
+            families.nil = true;
+        } else {
+            families.lists.push_back({node.children.front(), node.name == "nonempty"});
+        }
+    }
+
+    // A map of exact keys, or map().
+    void add_map(Id fact, const Node &node) {
+        if (node.name == "any") {
+            families.any_map = true;
+        } else {
+            families.maps.push_back(fact);
+        }
+    }
+
+    // A fun with a known result, or fun().
+    void add_fun(Id fact, const Node &node) {
+        if (std::ranges::contains(node.labels, std::string("result"))) {
+            families.funs.push_back(fact);
+        } else {
+            families.any_fun = true;
+        }
+    }
+
+    // The base and unit of a bitstring node.
+    Bits bits(const Node &node) const {
+        Bits result;
+        for (std::size_t index = 0; index < node.children.size() && index < node.labels.size(); ++index) {
+            const auto size = bit_count(graph_.get(node.children[index]).name);
+            (node.labels[index] == "unit" ? result.unit : result.base) = size;
+        }
+        return result;
+    }
+
+    // What a category adds to the families, by its name.
+    using Rule = void (*)(Gather &, const Node &);
+
+    // A built-in category; false for any other named type.
+    bool category(const Node &node) {
+        static const std::map<std::string_view, Rule> RULES = rules();
+        const auto found = RULES.find(node.name);
+        if (node.module != "erlang" || found == RULES.end()) {
+            return false;
+        }
+        found->second(*this, node);
+        return true;
+    }
+
+    static std::map<std::string_view, Rule> rules();
+
+    const Graph &graph_;
+    // The fact char(): 0..CHAR_LIMIT.
+    Id characters_;
+};
+
+std::map<std::string_view, Gather::Rule> Gather::rules() {
+    return {
+        {"atom", [](Gather &g, const Node &) { g.families.any_atom = true; }},
+        {"boolean", [](Gather &g, const Node &) { g.families.atoms.insert({"false", "true"}); }},
+        {"integer", [](Gather &g, const Node &) { g.families.add_interval({}); }},
+        {"non_neg_integer", [](Gather &g, const Node &) { g.families.add_interval({"0", std::nullopt}); }},
+        {"pos_integer", [](Gather &g, const Node &) { g.families.add_interval({"1", std::nullopt}); }},
+        {"neg_integer", [](Gather &g, const Node &) { g.families.add_interval({std::nullopt, "-1"}); }},
+        {"float", [](Gather &g, const Node &) { g.families.floats = true; }},
+        {"number", [](Gather &g, const Node &) { g.families.numbers = true; }},
+        {"pid", [](Gather &g, const Node &node) { g.families.identifiers.insert(node.name); }},
+        {"port", [](Gather &g, const Node &node) { g.families.identifiers.insert(node.name); }},
+        {"reference", [](Gather &g, const Node &node) { g.families.identifiers.insert(node.name); }},
+        {"tuple", [](Gather &g, const Node &) { g.families.any_tuple = true; }},
+        {"map", [](Gather &g, const Node &) { g.families.any_map = true; }},
+        {"fun", [](Gather &g, const Node &) { g.families.any_fun = true; }},
+        {"function", [](Gather &g, const Node &) { g.families.any_fun = true; }},
+        {"list", [](Gather &g, const Node &) { g.families.lists.push_back({g.graph_.top(), false}); }},
+        {"string", [](Gather &g, const Node &) { g.families.lists.push_back({g.characters_, false}); }},
+        {"nonempty_string", [](Gather &g, const Node &) { g.families.lists.push_back({g.characters_, true}); }},
+        {"binary", [](Gather &g, const Node &) { g.families.add_bits({0, 8}); }},
+        {"nonempty_binary", [](Gather &g, const Node &) { g.families.add_bits({8, 8}); }},
+        {"bitstring", [](Gather &g, const Node &) { g.families.add_bits({0, 1}); }},
+        {"nonempty_bitstring", [](Gather &g, const Node &) { g.families.add_bits({1, 1}); }},
+    };
+}
+
+// The rank of a fact's family in Erlang term order: number < atom < reference < fun < port < pid < tuple < map
+// < nil < list < bitstring, then facts of no family.
+int family_rank(const Node &node) {
+    static const std::map<std::string_view, int> CATEGORIES{{"integer", 0},
+                                                            {"non_neg_integer", 0},
+                                                            {"pos_integer", 0},
+                                                            {"neg_integer", 0},
+                                                            {"float", 0},
+                                                            {"number", 0},
+                                                            {"atom", 1},
+                                                            {"boolean", 1},
+                                                            {"reference", 2},
+                                                            {"fun", 3},
+                                                            {"port", 4},
+                                                            {"pid", 5},
+                                                            {"tuple", 6},
+                                                            {"map", 7},
+                                                            {"list", 9},
+                                                            {"string", 9},
+                                                            {"nonempty_string", 9},
+                                                            {"binary", 10},
+                                                            {"bitstring", 10},
+                                                            {"nonempty_binary", 10},
+                                                            {"nonempty_bitstring", 10}};
+    static const std::map<Kind, int> KINDS{{Kind::integer, 0},  {Kind::range, 0},     {Kind::atom, 1},
+                                           {Kind::function, 3}, {Kind::tuple, 6},     {Kind::map, 7},
+                                           {Kind::list, 9},     {Kind::bitstring, 10}};
+    if (node.kind == Kind::application) {
+        const auto found = CATEGORIES.find(node.name);
+        return found == CATEGORIES.end() ? 11 : found->second;
+    }
+    const auto found = KINDS.find(node.kind);
+    return found == KINDS.end() ? 11 : (node.kind == Kind::list && node.children.empty() ? 8 : found->second);
+}
+
+bool term_less(const Graph &graph, Id left, Id right);
+
+// Tuples by size, then element by element.
+bool tuple_less(const Graph &graph, const Node &a, const Node &b) {
+    if (a.children.size() != b.children.size()) {
+        return a.children.size() < b.children.size();
+    }
+    const auto order = std::ranges::mismatch(a.children, b.children);
+    return order.in1 != a.children.end() && term_less(graph, *order.in1, *order.in2);
+}
+
+// The order of two facts of one kind whose values have an order: integers by value, atoms by name, tuples; none for
+// other facts.
+std::optional<bool> value_less(const Graph &graph, const Node &a, const Node &b) {
+    if (a.kind != b.kind) {
+        return std::nullopt;
+    }
+    switch (a.kind) {
+    case Kind::integer:
+        return decimal_less(a.name, b.name);
+    case Kind::atom:
+        return a.name < b.name;
+    case Kind::tuple:
+        return tuple_less(graph, a, b);
+    default:
+        return std::nullopt;
+    }
+}
+
+// Orders facts as their values are ordered (Erlang term order) where that is defined: by family, then by value;
+// other facts by kind, children and graph identity, so the order is total.
+bool term_less(const Graph &graph, Id left, Id right) {
+    const auto &a = graph.get(left);
+    const auto &b = graph.get(right);
+    if (family_rank(a) != family_rank(b)) {
+        return family_rank(a) < family_rank(b);
+    }
+    if (const auto order = value_less(graph, a, b)) {
+        return *order;
+    }
+    return std::tie(a.kind, a.children, left) < std::tie(b.kind, b.children, right);
+}
+
+// The fact of an integer interval: a singleton, a range, or the category of an unbounded one.
+Id interval_fact(Lattice &lattice, const Interval &bounds) {
+    if (bounds.low && bounds.high) {
+        return *bounds.low == *bounds.high ? lattice.integer(*bounds.low) : lattice.range({*bounds.low, *bounds.high});
+    }
+    if (bounds.low && !decimal_less(*bounds.low, "0")) {
+        return lattice.category(decimal_less(*bounds.low, "1") ? "non_neg_integer" : "pos_integer");
+    }
+    if (bounds.high && decimal_less(*bounds.high, "0")) {
+        return lattice.category("neg_integer");
+    }
+    return lattice.category("integer");
+}
+
+// Rebuilds each family of joined facts by its rule; members come out in term order.
+class Assemble final {
+  public:
+    Assemble(Lattice &lattice, std::size_t depth) noexcept
+        : lattice_(lattice), graph_(lattice.graph()), limits_(lattice.limits()), depth_(depth) {}
+
+    // The members of the joined fact.
+    std::vector<Id> members(const Families &families) {
+        std::vector<Id> out;
+        numbers(families, out);
+        atoms(families, out);
+        identifier(families, "reference", out);
+        funs(families, out);
+        identifier(families, "port", out);
+        identifier(families, "pid", out);
+        tuples(families, out);
+        maps(families, out);
+        lists(families, out);
+        improper(families, out);
+        if (families.bits) {
+            out.push_back(lattice_.bitstring(families.bits->base, families.bits->unit));
+        }
+        auto others = families.others;
+        std::ranges::sort(others);
+        others.erase(std::unique(others.begin(), others.end()), others.end());
+        out.insert(out.end(), others.begin(), others.end());
+        return out;
+    }
+
+  private:
+    // Integers and floats; with an interval of integers as well as floats, number().
+    void numbers(const Families &families, std::vector<Id> &out) {
+        const bool interval = families.interval.has_value() || families.integers.size() > limits_.singletons;
+        if (families.numbers || (families.floats && interval)) {
+            out.push_back(lattice_.category("number"));
+            return;
+        }
+        if (interval) {
+            out.push_back(interval_fact(lattice_, *families.bounds()));
+        } else {
+            for (const auto &value : families.integers) {
+                out.push_back(lattice_.integer(value));
+            }
+        }
+        if (families.floats) {
+            out.push_back(lattice_.category("float"));
+        }
+    }
+
+    // Singleton atoms up to the budget, true and false as boolean(), else atom().
+    void atoms(const Families &families, std::vector<Id> &out) {
+        if (families.any_atom || families.atoms.size() > limits_.singletons) {
+            out.push_back(lattice_.category("atom"));
+        } else if (families.atoms == std::set<std::string>{"false", "true"}) {
+            out.push_back(lattice_.category("boolean"));
+        } else {
+            for (const auto &name : families.atoms) {
+                out.push_back(lattice_.atom(name));
+            }
+        }
+    }
+
+    void identifier(const Families &families, const std::string &name, std::vector<Id> &out) {
+        if (families.identifiers.contains(name)) {
+            out.push_back(lattice_.category(name));
+        }
+    }
+
+    // Funs of one arity join their results; funs of several arities are fun().
+    void funs(const Families &families, std::vector<Id> &out) {
+        if (families.funs.empty() && !families.any_fun) {
+            return;
+        }
+        const auto arity = families.any_fun ? 0 : graph_.get(families.funs.front()).children.size();
+        const bool same = !families.any_fun && std::ranges::all_of(families.funs, [&](Id fun) {
+            return graph_.get(fun).children.size() == arity;
+        });
+        if (!same) {
+            out.push_back(lattice_.category("fun"));
+            return;
+        }
+        std::vector<Id> results;
+        results.reserve(families.funs.size());
+        for (const auto fun : families.funs) {
+            results.push_back(graph_.get(fun).children.back());
+        }
+        out.push_back(lattice_.fun(arity - 1, lattice_.join(results, depth_ + 1)));
+    }
+
+    // Tuples of one size and tag (their first element when it is an atom) join element by element; more shapes than
+    // the member budget are tuple().
+    void tuples(const Families &families, std::vector<Id> &out) {
+        std::vector<Id> merged;
+        for (const auto tuple : families.tuples) {
+            merge_tuple(merged, tuple);
+        }
+        if (families.any_tuple || merged.size() > limits_.members) {
+            out.push_back(lattice_.category("tuple"));
+            return;
+        }
+        std::ranges::sort(merged, [&](Id left, Id right) { return term_less(graph_, left, right); });
+        out.insert(out.end(), merged.begin(), merged.end());
+    }
+
+    // The tag of a tuple: its first element's name when that is an atom, else empty.
+    std::string tag(Id tuple) const {
+        const auto &node = graph_.get(tuple);
+        const auto *first = node.children.empty() ? nullptr : &graph_.get(node.children.front());
+        return first && first->kind == Kind::atom ? first->name : std::string();
+    }
+
+    // Join `tuple` into the first shape of its size and tag, or add it as a shape.
+    void merge_tuple(std::vector<Id> &merged, Id tuple) {
+        const auto size = graph_.get(tuple).children.size();
+        for (auto &shape : merged) {
+            if (graph_.get(shape).children.size() == size && tag(shape) == tag(tuple)) {
+                const auto left = graph_.get(shape).children;
+                const auto right = graph_.get(tuple).children;
+                std::vector<Id> elements;
+                elements.reserve(size);
+                for (std::size_t index = 0; index < size; ++index) {
+                    elements.push_back(lattice_.join(std::array{left[index], right[index]}, depth_ + 1));
+                }
+                shape = lattice_.tuple(std::move(elements));
+                return;
+            }
+        }
+        merged.push_back(tuple);
+    }
+
+    // Maps with the same keys join value by value; maps with other keys are map().
+    void maps(const Families &families, std::vector<Id> &out) {
+        if (!families.any_map && families.maps.empty()) {
+            return;
+        }
+        const auto keys = families.any_map ? std::vector<Id>{} : keys_of(families.maps.front());
+        const bool same =
+            !families.any_map && std::ranges::all_of(families.maps, [&](Id map) { return keys_of(map) == keys; });
+        if (!same) {
+            out.push_back(lattice_.category("map"));
+            return;
+        }
+        std::vector<Id> fields;
+        fields.reserve(2 * keys.size());
+        for (std::size_t index = 0; index < keys.size(); ++index) {
+            std::vector<Id> values;
+            values.reserve(families.maps.size());
+            for (const auto map : families.maps) {
+                values.push_back(graph_.get(map).children.at(2 * index + 1));
+            }
+            fields.push_back(keys[index]);
+            fields.push_back(lattice_.join(values, depth_ + 1));
+        }
+        out.push_back(lattice_.map(std::move(fields)));
+    }
+
+    // The keys of an exact map fact, in their order.
+    std::vector<Id> keys_of(Id map) const {
+        const auto &children = graph_.get(map).children;
+        std::vector<Id> keys;
+        for (std::size_t index = 0; index < children.size(); index += 2) {
+            keys.push_back(children[index]);
+        }
+        return keys;
+    }
+
+    // Proper lists join their elements; possibly empty when one is or [] joins them.
+    void lists(const Families &families, std::vector<Id> &out) {
+        if (families.lists.empty()) {
+            if (families.nil) {
+                out.push_back(lattice_.nil());
+            }
+            return;
+        }
+        std::vector<Id> elements;
+        bool nonempty = !families.nil;
+        for (const auto &shape : families.lists) {
+            elements.push_back(shape.element);
+            nonempty = nonempty && shape.nonempty;
+        }
+        out.push_back(lattice_.list(lattice_.join(elements, depth_ + 1), nonempty));
+    }
+
+    // Improper lists join their elements and their tails.
+    void improper(const Families &families, std::vector<Id> &out) {
+        if (families.improper.empty()) {
+            return;
+        }
+        std::vector<Id> heads;
+        std::vector<Id> tails;
+        heads.reserve(families.improper.size());
+        tails.reserve(families.improper.size());
+        for (const auto list : families.improper) {
+            heads.push_back(graph_.get(list).children.at(0));
+            tails.push_back(graph_.get(list).children.at(1));
+        }
+        const auto head = lattice_.join(heads, depth_ + 1);
+        const auto tail = lattice_.join(tails, depth_ + 1);
+        out.push_back(graph_.intern({Kind::application, "nonempty_improper_list", "erlang", {head, tail}}));
+    }
+
+    Lattice &lattice_;
+    Graph &graph_;
+    const FactLimits &limits_;
+    // Containers around the facts being joined.
+    std::size_t depth_;
+};
+
+// The fact whose members are `families`, joined `depth` containers deep.
+Id fact_of(Lattice &lattice, const Families &families, std::size_t depth) {
+    auto &graph = lattice.graph();
+    auto members = Assemble(lattice, depth).members(families);
+    if (members.empty()) {
+        return graph.bottom();
+    }
+    if (members.size() == 1) {
+        return members.front();
+    }
+    if (members.size() > lattice.limits().members) {
+        return graph.top();
+    }
+    return graph.intern({Kind::union_type, {}, {}, std::move(members)});
+}
+
+// Whether a fact node is a container whose children are facts nested one level deeper.
+bool is_container(const Node &node) {
+    constexpr std::array containers{Kind::tuple, Kind::list, Kind::map, Kind::function, Kind::application};
+    return std::ranges::contains(containers, node.kind) && !node.children.empty();
+}
+
+// How many containers deep a fact nests, counted no further than `limit`.
+std::size_t nesting(const Graph &graph, Id fact, std::size_t limit) {
+    const auto &node = graph.get(fact);
+    const bool container = is_container(node);
+    if (limit == 0 || (!container && node.kind != Kind::union_type)) {
+        return 0;
+    }
+    std::size_t inner = 0;
+    const auto children = node.children;
+    for (const auto child : children) {
+        inner = std::max(inner, nesting(graph, child, limit - 1));
+    }
+    return (container ? 1 : 0) + inner;
+}
+} // namespace
+
+Id Lattice::join(Id left, Id right) { return join(std::array{left, right}, 0); }
+
+Id Lattice::join(std::span<const Id> members, std::size_t depth) {
+    if (depth > limits_.depth) {
+        return graph_.top();
+    }
+    Gather gather(*this);
+    for (const auto member : members) {
+        if (member == graph_.top()) {
+            return graph_.top();
+        }
+        gather.add(member);
+    }
+    return fact_of(*this, gather.families, depth);
+}
+
+Id Lattice::widen(Id previous, Id next) {
+    const auto joined = join(previous, next);
+    if (previous == graph_.bottom() || joined == previous || joined == graph_.top()) {
+        return joined;
+    }
+    Gather before(*this);
+    before.add(previous);
+    Gather after(*this);
+    after.add(joined);
+    const auto old_bounds = before.families.bounds();
+    const auto new_bounds = after.families.bounds();
+    if (!old_bounds || !new_bounds) {
+        return joined;
+    }
+    auto relaxed = *new_bounds;
+    if (lower_below(new_bounds->low, old_bounds->low)) {
+        relaxed.low = lower_threshold(new_bounds->low);
+    }
+    if (upper_above(new_bounds->high, old_bounds->high)) {
+        relaxed.high = upper_threshold(new_bounds->high);
+    }
+    after.families.integers.clear();
+    after.families.interval = relaxed;
+    return relaxed == *new_bounds ? joined : fact_of(*this, after.families, 0);
+}
+
+Id Lattice::integer(std::string_view decimal) { return graph_.intern({Kind::integer, std::string(decimal)}); }
+
+Id Lattice::atom(std::string_view name) { return graph_.intern({Kind::atom, std::string(name)}); }
+
+Id Lattice::category(std::string_view name) {
+    // fun() is a type of its own syntax, as a declaration makes it; its name is a reserved word.
+    if (name == "fun") {
+        return graph_.intern({Kind::function, "any_arguments"});
+    }
+    return graph_.intern({Kind::application, std::string(name), "erlang"});
+}
+
+Id Lattice::range(IntegerBounds bounds) {
+    const auto first = integer(bounds.low);
+    const auto last = integer(bounds.high);
+    return graph_.intern({Kind::range, {}, {}, {first, last}});
+}
+
+Id Lattice::within_depth(Id fact) { return limits_.depth == 0 ? graph_.top() : truncate(fact, limits_.depth - 1); }
+
+Id Lattice::truncate(Id fact, std::size_t levels) {
+    if (nesting(graph_, fact, levels + 1) <= levels) {
+        return fact;
+    }
+    auto node = graph_.get(fact);
+    const bool container = is_container(node);
+    if (container && levels == 0) {
+        return graph_.top();
+    }
+    for (auto &child : node.children) {
+        child = truncate(child, container ? levels - 1 : levels);
+    }
+    // A union's truncated members may now overlap: join them again.
+    return node.kind == Kind::union_type ? join(node.children, 0) : graph_.intern(std::move(node));
+}
+
+Id Lattice::tuple(std::vector<Id> elements) {
+    if (elements.size() > limits_.elements) {
+        return category("tuple");
+    }
+    for (auto &element : elements) {
+        element = within_depth(element);
+    }
+    return graph_.intern({Kind::tuple, "exact", {}, std::move(elements)});
+}
+
+Id Lattice::list(Id element, bool nonempty) {
+    element = within_depth(element);
+    if (element == graph_.bottom()) {
+        return nonempty ? graph_.bottom() : nil();
+    }
+    if (element == range({"0", CHAR_LIMIT})) {
+        return category(nonempty ? "nonempty_string" : "string");
+    }
+    if (element == graph_.top() && !nonempty) {
+        return category("list");
+    }
+    return graph_.intern({Kind::list, nonempty ? "nonempty" : "possibly_empty", {}, {element}});
+}
+
+Id Lattice::nil() { return graph_.intern({Kind::list, "possibly_empty"}); }
+
+Id Lattice::map(std::vector<Id> fields) {
+    if (fields.size() / 2 > limits_.elements) {
+        return category("map");
+    }
+    std::vector<std::pair<Id, Id>> pairs;
+    for (std::size_t index = 0; index + 1 < fields.size(); index += 2) {
+        pairs.emplace_back(fields[index], within_depth(fields[index + 1]));
+    }
+    std::ranges::sort(pairs,
+                      [&](const auto &left, const auto &right) { return term_less(graph_, left.first, right.first); });
+    Node node{Kind::map, "exact"};
+    for (const auto &[key, value] : pairs) {
+        node.children.push_back(key);
+        node.children.push_back(value);
+        node.labels.emplace_back("1");
+    }
+    return graph_.intern(std::move(node));
+}
+
+Id Lattice::fun(std::size_t arity, Id result) {
+    std::vector<Id> children(arity, graph_.top());
+    children.push_back(within_depth(result));
+    return graph_.intern({Kind::function, "product", {}, std::move(children), {"result"}});
+}
+
+Id Lattice::bitstring(std::uint64_t base, std::uint64_t unit) {
+    static constexpr std::array<std::tuple<std::uint64_t, std::uint64_t, std::string_view>, 4> NAMED{
+        {{0, 8, "binary"}, {8, 8, "nonempty_binary"}, {0, 1, "bitstring"}, {1, 1, "nonempty_bitstring"}}};
+    for (const auto &[named_base, named_unit, name] : NAMED) {
+        if (base == named_base && unit == named_unit) {
+            return category(name);
+        }
+    }
+    Node node{Kind::bitstring};
+    if (base > 0) {
+        node.children.push_back(integer(std::to_string(base)));
+        node.labels.emplace_back("base");
+    }
+    if (unit > 0) {
+        node.children.push_back(integer(std::to_string(unit)));
+        node.labels.emplace_back("unit");
+    }
+    return graph_.intern(std::move(node));
+}
+} // namespace clause::semantic::types
