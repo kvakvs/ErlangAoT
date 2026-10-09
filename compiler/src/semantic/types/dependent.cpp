@@ -22,26 +22,55 @@ std::vector<const ast::Expression *> preorder(const Module &module, const std::v
     return result;
 }
 
-// The expressions a construct's parameters are read in: a case's scrutinee and guard tests, an if's guard tests.
+// The clauses whose patterns match a construct's scrutinee: a case's, a try's of clauses; null for other constructs.
+const std::vector<ast::BranchClause> *matching_clauses(const ast::ExprValue &value) {
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        return &selection->clauses;
+    }
+    const auto *attempt = std::get_if<ast::TryExpression>(&value);
+    return attempt && attempt->of ? &*attempt->of : nullptr;
+}
+
+// The value a construct's clauses match: a case's scrutinee, a try's body's last expression; none for an if.
+std::optional<ast::ExprId> scrutinee_of(const ast::ExprValue &value) {
+    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
+        return selection->value;
+    }
+    const auto *attempt = std::get_if<ast::TryExpression>(&value);
+    return attempt && attempt->of ? std::optional{attempt->body.back()} : std::nullopt;
+}
+
+// How many of a construct's clauses (branch_clauses order) its value depends on: every clause of a case or if, the
+// of clauses of a try; none for other constructs.
+std::size_t keyed_count(const ast::ExprValue &value) {
+    if (std::holds_alternative<ast::IfExpression>(value)) {
+        return std::get<ast::IfExpression>(value).clauses.size();
+    }
+    const auto *clauses = matching_clauses(value);
+    return clauses ? clauses->size() : 0;
+}
+
+// The expressions a construct's parameters are read in: its scrutinee and its keyed clauses' guard tests.
 std::vector<ast::ExprId> parameter_roots(const ast::ExprValue &value) {
     std::vector<ast::ExprId> result;
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        result.push_back(selection->value);
+    if (const auto scrutinee = scrutinee_of(value)) {
+        result.push_back(*scrutinee);
     }
-    for (const auto &clause : branch_clauses(value)) {
-        for (const auto &alternative :
-             clause.guard ? clause.guard->alternatives : std::vector<ast::GuardConjunction>{}) {
+    const auto clauses = branch_clauses(value);
+    for (std::size_t index = 0; index < keyed_count(value); ++index) {
+        const auto *guard = clauses[index].guard;
+        for (const auto &alternative : guard ? guard->alternatives : std::vector<ast::GuardConjunction>{}) {
             result.insert(result.end(), alternative.tests.begin(), alternative.tests.end());
         }
     }
     return result;
 }
 
-// The identities a case's clause patterns bind: new in each clause, they are no parameters.
+// The identities a construct's clause patterns bind: new in each clause, they are no parameters.
 std::set<BindingId> pattern_definitions(const BindingFacts &bindings, const ast::ExprValue &value) {
-    const auto *selection = std::get_if<ast::CaseExpression>(&value);
+    const auto *clauses = matching_clauses(value);
     std::vector<ast::ExprId> patterns;
-    for (const auto &clause : selection ? selection->clauses : std::vector<ast::BranchClause>{}) {
+    for (const auto &clause : clauses ? *clauses : std::vector<ast::BranchClause>{}) {
         patterns.push_back(pattern_root(*bindings.function.module->syntax, clause.pattern));
     }
     std::set<BindingId> result;
@@ -67,11 +96,11 @@ void add_read(const BindingFacts &bindings, const ast::Expression &read, const s
     }
 }
 
-// The variables a case or if depends on: those bound before it that its scrutinee and guards read, in source order;
-// none for other constructs.
+// The variables a case, if or try ... of depends on: those bound before it that its scrutinee and guards read, in
+// source order; none for other constructs.
 std::vector<BindingId> find_parameters(const BindingFacts &bindings, const ast::Expression &construct) {
     const auto &value = construct.value;
-    if (!std::holds_alternative<ast::CaseExpression>(value) && !std::holds_alternative<ast::IfExpression>(value)) {
+    if (keyed_count(value) == 0) {
         return {};
     }
     const auto local = pattern_definitions(bindings, value);
@@ -116,20 +145,34 @@ std::set<BindingId> same_values(const BindingFacts &bindings, const std::vector<
     return result;
 }
 
-// Whether every parameter value within a clause's key that reaches the clause enters it: a case reads a parameter
-// with an exact pattern and guard, an if has an exact guard (docs/semantic.md#inference).
+// Whether a scrutinee is a parameter or a tuple of parameters, among `names`.
+bool parameter_scrutinee(const BindingFacts &bindings, const ast::ExprId &scrutinee, const std::set<BindingId> &names) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto named = [&](const ast::ExprId &read) {
+        const auto identity = variable(bindings, read);
+        return identity && names.contains(*identity);
+    };
+    const auto *tuple = std::get_if<ast::Tuple>(&syntax.expression(ungroup(syntax, scrutinee)).value);
+    return named(scrutinee) || (tuple && std::ranges::all_of(tuple->elements, named));
+}
+
+// Whether every parameter value within a clause's key that reaches the clause enters it: a case or try reads
+// parameters with an exact pattern and guard, an if has an exact guard (docs/semantic.md#inference); a try's catch
+// clause never is.
 bool exact_key(BindingFacts &bindings, const ast::Expression &construct, const std::size_t index,
                const std::vector<BindingId> &parameters) {
+    if (index >= keyed_count(construct.value)) {
+        return false;
+    }
     const auto names = same_values(bindings, parameters);
     const auto clause = branch_clauses(construct.value).at(index);
-    const auto *selection = std::get_if<ast::CaseExpression>(&construct.value);
-    if (!selection) {
+    const auto scrutinee = scrutinee_of(construct.value);
+    if (!scrutinee) {
         return exact_guard(bindings, clause.guard, names);
     }
     const auto &syntax = *bindings.function.module->syntax;
-    const auto scrutinee = variable(bindings, selection->value);
-    return scrutinee && names.contains(*scrutinee) && exact_shape(bindings, pattern_root(syntax, *clause.pattern)) &&
-           exact_guard(bindings, clause.guard, names);
+    return parameter_scrutinee(bindings, *scrutinee, names) &&
+           exact_shape(bindings, pattern_root(syntax, *clause.pattern)) && exact_guard(bindings, clause.guard, names);
 }
 
 // The value of a clause body: its last expression's, none() when an expression of it never completes.
@@ -263,13 +306,29 @@ FunctionType key_of(const BindingFacts &bindings, const ast::Expression &constru
     return {std::vector<Id>(parameters.size(), bindings.inference.graph.top()), {}, false};
 }
 
-// The clauses of a case or if that can run, each with its key and value.
+// The joined values of a try's catch clauses that can run, which can follow any value of its body; none() for other
+// constructs.
+Fact handled(const BindingFacts &bindings, const ast::Expression &construct) {
+    const auto clauses = branch_clauses(construct.value);
+    Fact result{bindings.inference.graph.bottom()};
+    for (std::size_t index = keyed_count(construct.value); index < clauses.size(); ++index) {
+        if (!bindings.impossible.contains(clauses[index].body)) {
+            result = merged(bindings.inference.graph, result, clause_value(bindings, *clauses[index].body));
+        }
+    }
+    return result;
+}
+
+// The keyed clauses of a construct that can run, each with its key and value (a try's joined with its catch
+// clauses').
 std::vector<Clause> possible_clauses(const BindingFacts &bindings, const ast::Expression &construct) {
     std::vector<Clause> result;
     const auto clauses = branch_clauses(construct.value);
-    for (std::size_t index = 0; index < clauses.size(); ++index) {
+    const auto handlers = handled(bindings, construct);
+    for (std::size_t index = 0; index < keyed_count(construct.value); ++index) {
         if (!bindings.impossible.contains(clauses[index].body)) {
-            result.push_back({key_of(bindings, construct, index), clause_value(bindings, *clauses[index].body)});
+            const auto value = clause_value(bindings, *clauses[index].body);
+            result.push_back({key_of(bindings, construct, index), merged(bindings.inference.graph, value, handlers)});
         }
     }
     return result;
@@ -292,9 +351,13 @@ std::vector<Clause> exit_clauses(const BindingFacts &bindings, const ast::Expres
     return result;
 }
 
-// The construct a case's or if's dependent facts print with.
+// The construct a dependent fact of a case, if or try ... of prints with.
 Operator construct_of(const ast::Expression &construct) {
-    return std::holds_alternative<ast::IfExpression>(construct.value) ? Operator::if_operator : Operator::case_operator;
+    if (std::holds_alternative<ast::IfExpression>(construct.value)) {
+        return Operator::if_operator;
+    }
+    return std::holds_alternative<ast::TryExpression>(construct.value) ? Operator::try_of_operator
+                                                                       : Operator::case_operator;
 }
 
 // The names of a function's variables, for printing.

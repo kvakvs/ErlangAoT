@@ -20,7 +20,13 @@
     pair/2,
     twice/1,
     called/1,
-    wide/3
+    wide/3,
+    tuple_case/2,
+    tuple_bound/2,
+    try_plain/1,
+    try_caught/1,
+    try_tuple/2,
+    received/1
 ]).
 
 %% A variable bound to a case value keeps its dependence.
@@ -236,3 +242,57 @@ wide(A, B, C) ->
             _ -> c
         end,
     {X, Y, Z}.
+
+%% A tuple of variables narrows each variable by its element.
+%% expect: tuple_case(1, a) -> one; (_, _) -> other
+tuple_case(X, Y) ->
+    case {X, Y} of
+        {1, a} -> one;
+        _ -> other
+    end.
+
+%% A tuple pattern's variable names the scrutinee's element: its guard narrows that variable too.
+%% expect: tuple_bound(integer(), b) -> integer(); (_, _) -> none
+tuple_bound(X, Y) ->
+    case {X, Y} of
+        {A, b} when is_integer(A) -> A + 1;
+        _ -> none
+    end.
+
+%% A try ... of depends on its body's value like a case.
+%% expect: try_plain(1) -> one; (_) -> other
+try_plain(X) ->
+    try X of
+        1 -> one;
+        _ -> other
+    after
+        ok
+    end.
+
+%% Catch clauses can follow any value: their values join into every clause.
+%% expect: try_caught(1) -> error | one; (_) -> error | other
+try_caught(X) ->
+    try X of
+        1 -> one;
+        _ -> other
+    catch
+        _:_ -> error
+    end.
+
+%% A try ... of on a tuple of variables.
+%% expect: try_tuple(1, _) -> one; (_, _) -> other
+try_tuple(X, Y) ->
+    try {X, Y} of
+        {1, _} -> one;
+        _ -> other
+    after
+        ok
+    end.
+
+%% A receive matches a message nothing outside can name: its value stays the join.
+%% expect: received(_) -> one | other
+received(X) ->
+    receive
+        X -> one;
+        _ -> other
+    end.

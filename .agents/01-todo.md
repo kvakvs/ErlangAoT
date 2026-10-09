@@ -398,7 +398,7 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   positional lists, joined map keys and records printed as records (58J); [x] try and maybe values (58J1); [x] per-clause function types (case/if
   branches on arguments and fun clauses included) and their printer (58K); [x] calls matched against function types, union fallback (58L); [x] callees re-analysed per call
   (58M); [x] dependent facts of case/if values, split at any depth (58N1); [x] carried through operations and
-  bindings (58N2); [ ] tuple scrutinees and try ... of (58N3). Expectations: `tests/fixtures/inference/values.erl`,
+  bindings (58N2); [x] tuple scrutinees and try ... of (58N3). Expectations: `tests/fixtures/inference/values.erl`,
   `base_types.erl` and `narrowing.erl` (7 of 39 and 3 of 46 functions at their expected type on
   2026-10-08; all 121, 46 and 51 on 2026-10-09), contradictions in `tests/fixtures/inference/contracts/`.
 - **F29 — Source-driven specialization** ([59](11-plan.md#step-59)): [x] remove

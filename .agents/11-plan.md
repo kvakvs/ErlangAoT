@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (steps 63-
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2), [58J1](#step-58j1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58M](#step-58m) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2), [58J1](#step-58j1)), [58N1](#step-58n1)–[58N3](#step-58n3), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78B](#step-78b), [78](#step-78) | all |
@@ -265,7 +265,9 @@ the union summaries; every widening, budget or unknown construct yields
 `term()`. Not done: the optional 58L report of a call no inferred function
 type can enter (specification checks still compare overloads only).
 
-Dependent facts 58N1–58N3 (added 2026-10-10 by user direction): a `case`,
+Dependent facts 58N1–58N3 (added 2026-10-10 by user direction, completed
+the same day; expectations `tests/fixtures/inference/dependent.erl`, 25
+functions): a `case`,
 `if` or `try ... of` behaves like a fun of the variables its clauses narrow,
 applied to them. Its value keeps one function type per possible clause (the
 variables' facts entering the clause and its result) beside the erased union
@@ -359,11 +361,19 @@ Backlog: F34. Depends on: [58N2](#step-58n2).
   or a failed value nothing outside can name (recorded in
   `docs/semantic.md`).
 - Success criteria
-  - [ ] `case {X, Y} of {1, a} -> one; _ -> other end` on arguments infers
+  - [x] `case {X, Y} of {1, a} -> one; _ -> other end` on arguments infers
     `(1, a) -> one; (_, _) -> other`; a `try X of` splits like a case.
+    Evidence 2026-10-10: `inference_scopes` `narrow_scrutinee` (tuple
+    elements) and `element_pairs` in `relate` (tuple pattern variables
+    linked to scrutinee elements); `dependent` `matching_clauses`,
+    `scrutinee_of`, `keyed_count` (case, if, try `of` clauses),
+    `parameter_scrutinee` for exactness, `handled` joining catch values into
+    every `of` clause; `receive`/`maybe` documented as unions.
 - Tests
-  - [ ] `dependent.erl` rows for tuple scrutinees, `try ... of` with and
-    without catch clauses, and `receive` staying a union.
+  - [x] `dependent.erl` rows for tuple scrutinees, `try ... of` with and
+    without catch clauses, and `receive` staying a union. Evidence:
+    dependent 25/25 (`tuple_case`, `tuple_bound`, `try_plain`, `try_caught`,
+    `try_tuple`, `received`); fast CTest 232/232; check-quality clean.
 
 <a id="step-59"></a>
 

@@ -1,6 +1,7 @@
 #include "inference_scopes.hpp"
 #include "../capabilities.hpp"
 #include "dependent.hpp"
+#include "inference_containers.hpp"
 #include "inference_narrowing.hpp"
 #include "lattice.hpp"
 #include <span>
@@ -317,15 +318,44 @@ struct Scrutinee {
     Id fact;
 };
 
-// After a clause's pattern narrowed the scrutinee expression: a variable pattern names its value, so narrowing either
-// narrows both, and a true pattern assumes a test scrutinee.
+// The scrutinee and pattern matched whole, then, for a tuple scrutinee and a tuple pattern of its size, each element
+// of the scrutinee with the pattern's.
+std::vector<std::pair<ast::ExprId, ast::ExprId>> element_pairs(const ast::Module &syntax, const ast::ExprId &scrutinee,
+                                                               const ast::ExprId &pattern) {
+    std::vector<std::pair<ast::ExprId, ast::ExprId>> result{{scrutinee, pattern}};
+    const auto *reads = std::get_if<ast::Tuple>(&syntax.expression(ungroup(syntax, scrutinee)).value);
+    const auto *parts = std::get_if<ast::Tuple>(&syntax.expression(ungroup(syntax, pattern)).value);
+    for (std::size_t index = 0;
+         reads && parts && index < reads->elements.size() && reads->elements.size() == parts->elements.size();
+         ++index) {
+        result.emplace_back(reads->elements[index], ungroup(syntax, parts->elements[index]));
+    }
+    return result;
+}
+
+// Narrow the scrutinee expression to `narrowed`: a variable, or each variable of a tuple of them to its element.
+void narrow_scrutinee(BindingFacts &bindings, const ast::ExprId &scrutinee, const Id narrowed) {
+    const auto &syntax = *bindings.function.module->syntax;
+    bindings.narrow(scrutinee, narrowed);
+    const auto *tuple = std::get_if<ast::Tuple>(&syntax.expression(ungroup(syntax, scrutinee)).value);
+    Lattice lattice(bindings.inference.graph);
+    for (std::size_t index = 0; tuple && index < tuple->elements.size(); ++index) {
+        bindings.narrow(tuple->elements[index], tuple_element(lattice, narrowed, index + 1, tuple->elements.size()));
+    }
+}
+
+// After a clause's pattern narrowed the scrutinee expression: a variable pattern names its value (and a tuple
+// pattern's variable a tuple scrutinee's element), so narrowing either narrows both, and a true pattern assumes a
+// test scrutinee.
 void relate(BindingFacts &bindings, const ast::ExprId &scrutinee, const ast::ExprId &pattern,
             const std::vector<ast::ExprId> &body) {
     const auto &syntax = *bindings.function.module->syntax;
-    const auto bound = variable(bindings, pattern);
-    const auto read = variable(bindings, scrutinee);
-    if (bound && read && std::holds_alternative<ast::Variable>(syntax.expression(pattern).value)) {
-        bindings.link(*bound, *read);
+    for (const auto &[read_part, pattern_part] : element_pairs(syntax, scrutinee, pattern)) {
+        const auto bound = variable(bindings, pattern_part);
+        const auto read = variable(bindings, read_part);
+        if (bound && read && std::holds_alternative<ast::Variable>(syntax.expression(pattern_part).value)) {
+            bindings.link(*bound, *read);
+        }
     }
     const auto *atom = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, pattern)).value);
     if (atom && atom->name == U"true" && !assume(bindings, scrutinee)) {
@@ -350,7 +380,7 @@ void enter_branch(BindingFacts &bindings, const Scrutinee &scrutinee, const std:
     const auto pattern = pattern_root(syntax, clause.pattern);
     const auto narrowed = match(bindings, pattern, {value}, &clause.body, work);
     if (scrutinee.expression) {
-        bindings.narrow(*scrutinee.expression, narrowed);
+        narrow_scrutinee(bindings, *scrutinee.expression, narrowed);
         relate(bindings, *scrutinee.expression, pattern, clause.body);
     }
 }

@@ -139,8 +139,8 @@ Fact maybe_fact(Inference &inference, const ast::Module &syntax, const ast::Expr
     return merged(inference.graph, body, rest);
 }
 
-// The value of a case, if, receive, try or maybe: its clauses' joined values, a case's or if's dependent on the
-// variables its clauses narrow; none for other expressions.
+// The value of a case, if, receive, try or maybe: its clauses' joined values, a case's, if's or try ... of's
+// dependent on the variables its clauses narrow; none for other expressions.
 std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
                                    BindingFacts &bindings) {
     const auto &value = expression.value;
@@ -155,7 +155,7 @@ std::optional<Fact> selection_fact(Inference &inference, const ast::Module &synt
         return receive_fact(inference, syntax, *receive, impossible);
     }
     if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
-        return try_fact(inference, syntax, *attempt, impossible);
+        return dependent_value(bindings, expression, try_fact(inference, syntax, *attempt, impossible));
     }
     if (std::holds_alternative<ast::MaybeExpression>(value)) {
         return maybe_fact(inference, syntax, expression, bindings);

@@ -350,17 +350,31 @@ Inference is separate from declared types and never trusts specs.
 
 ### Dependent facts
 
-Steps 58N1–58N3 (`semantic/types/dependent`). A `case` or `if` behaves like a
-fun of the variables its clauses narrow, applied to them: its value is a
-dependent fact, one function type per possible clause.
+Steps 58N1–58N3 (`semantic/types/dependent`). A `case`, `if` or
+`try ... of` behaves like a fun of the variables its clauses narrow, applied
+to them: its value is a dependent fact, one function type per possible
+clause.
 
 - Parameters: the variables bound before the construct that its scrutinee
-  and guards read, in source order (variables its clause patterns bind are
-  new in each clause, not parameters); at most 4, a later one's narrowing is
-  forgotten. Each possible clause keeps the parameters' facts after its
-  pattern and guard and its value (`none()` for a clause that never
-  completes); it is exact, like a function type (58L), when a `case` reads a
-  parameter with an exact pattern and guard or an `if` has an exact guard.
+  (a `try`'s body's last expression) and guards read, in source order
+  (variables its clause patterns bind are new in each clause, not
+  parameters); at most 4, a later one's narrowing is forgotten. Each
+  possible clause keeps the parameters' facts after its pattern and guard
+  and its value (`none()` for a clause that never completes); it is exact,
+  like a function type (58L), when a `case` or `try` matches a parameter or
+  a tuple of parameters with an exact pattern and guard, or an `if` has an
+  exact guard.
+- A scrutinee that is a tuple of variables narrows each variable to its
+  element of the matched value, and a tuple pattern's variable is bound to
+  the same value as the scrutinee's element at its position
+  (`case {X, Y} of {A, b} when is_integer(A) -> ...` narrows `X` and `Y`).
+- A `try ... of` depends on its `of` clauses; its catch clauses can follow
+  any value of its body, so their joined values join into every clause's
+  value (`try X of 1 -> one; _ -> other catch _:_ -> error end` is
+  `$try_of_operator(X :: 1) -> error | one; (X :: _) -> error | other`).
+- `receive` and `maybe ... else` stay the join of their clauses: their
+  clauses match a message or a failed `?=` value that nothing outside them
+  can name, so no read could select among them.
 - A clause whose value is itself dependent (a nested `case` or `if`, or a
   read of a dependent variable) contributes one function type per clause of
   it over the union of both parameter lists, inputs met. Types that can
@@ -407,7 +421,8 @@ dependent fact, one function type per possible clause.
 - `--print-types` annotates a dependent value as a function type named by
   its construct, each input after its parameter's name:
   `case X of 1 -> one; _ -> other end :: $case_operator(X :: 1) -> one;
-  (X :: _) -> other`; an `if` prints `$if_operator`.
+  (X :: _) -> other`; an `if` prints `$if_operator`, a `try ... of`
+  `$try_of_operator`.
 
 ### Inference domain
 

@@ -305,6 +305,8 @@
   `dependent::lifted`: operand facts substituted per clause combination, `selected_call` without narrowing);
   exported variables are published in every clause, `record_exit` (leave) + `export_dependents` (close) make them
   dependent; `narrow_identity` narrows a dependent's parameters through `implied`.
+  Step 58N3: `try ... of` keys its `of` clauses (`keyed_count`; catch values join into each), tuple scrutinees narrow
+  per element (`narrow_scrutinee`) and link tuple pattern variables (`element_pairs`); receive/maybe stay unions.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 
