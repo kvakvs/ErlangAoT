@@ -67,11 +67,15 @@ class Order final {
 bool selection(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
         order.visit(selection->value);
+        order.step(id, Step::open);
         order.clauses(id, selection->clauses);
+        order.step(id, Step::close);
         return true;
     }
     if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
+        order.step(id, Step::open);
         order.clauses(id, choice->clauses);
+        order.step(id, Step::close);
         return true;
     }
     if (const auto *clauses = fun_clauses(value)) {
@@ -81,25 +85,34 @@ bool selection(Order &order, const ast::ExprId &id, const ast::ExprValue &value)
     return false;
 }
 
-// The frames of a receive (its timeout first, its after body last) or of andalso; false for other expressions.
+// The frames of a receive: its timeout first, its clauses, its after body last.
+void receive_frames(Order &order, const ast::ExprId &id, const ast::ReceiveExpression &receive) {
+    if (receive.after) {
+        order.visit(receive.after->timeout);
+    }
+    order.step(id, Step::open);
+    order.clauses(id, receive.clauses);
+    if (receive.after) {
+        order.step(id, Step::save);
+        order.visit(receive.after->body);
+        order.step(id, Step::complete);
+        order.step(id, Step::restore);
+    }
+    order.step(id, Step::close);
+}
+
+// The frames of a receive, andalso or orelse; false for other expressions.
 bool waiting(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
     if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
-        if (receive->after) {
-            order.visit(receive->after->timeout);
-        }
-        order.clauses(id, receive->clauses);
-        if (receive->after) {
-            order.step(id, Step::save);
-            order.visit(receive->after->body);
-            order.step(id, Step::restore);
-        }
+        receive_frames(order, id, *receive);
         return true;
     }
     const auto *binary = std::get_if<ast::BinaryExpression>(&value);
-    if (binary && binary->operation == ast::BinaryOperator::and_also) {
-        // The right operand runs only when the left one is true.
+    const bool orelse = binary && binary->operation == ast::BinaryOperator::or_else;
+    if (binary && (orelse || binary->operation == ast::BinaryOperator::and_also)) {
+        // The right operand runs only when the left one is true (andalso) or false (orelse, which proves nothing).
         order.visit(binary->left);
-        order.step(binary->left, Step::assume);
+        order.step(binary->left, orelse ? Step::save : Step::assume);
         order.visit(binary->right);
         order.step(id, Step::restore);
         return true;
@@ -116,17 +129,19 @@ bool guarded(Order &order, const ast::ExprId &id, const ast::ExprValue &value) {
         return true;
     }
     const auto *attempt = std::get_if<ast::TryExpression>(&value);
-    if (!attempt) {
+    const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
+    if (!attempt && !conditional) {
         return false;
     }
+    // A maybe body stops at its first failed ?= match: what it narrows holds neither in its else clauses nor after.
     order.step(id, Step::save);
-    order.visit(attempt->body);
+    order.visit(attempt ? attempt->body : maybe_operands(*conditional));
     for (const auto &clause : branch_clauses(value)) {
         order.step(id, Step::reset);
         order.guard(clause.guard);
         order.visit(*clause.body);
     }
-    if (attempt->after) {
+    if (attempt && attempt->after) {
         order.step(id, Step::reset);
         order.visit(*attempt->after);
     }
@@ -220,6 +235,12 @@ void enter_case(BindingFacts &bindings, const ast::CaseExpression &selection, co
     const auto pattern = pattern_root(syntax, clause.pattern);
     const auto narrowed = match(bindings, pattern, {value}, &clause.body, work);
     bindings.narrow(selection.value, narrowed);
+    // A variable pattern names the scrutinee's value: narrowing it narrows a scrutinee variable too.
+    const auto bound = variable(bindings, pattern);
+    const auto scrutinee = variable(bindings, selection.value);
+    if (bound && scrutinee && std::holds_alternative<ast::Variable>(syntax.expression(pattern).value)) {
+        bindings.link(*bound, *scrutinee);
+    }
     const auto *atom = std::get_if<ast::Atom>(&syntax.expression(ungroup(syntax, pattern)).value);
     if (atom && atom->name == U"true" && !assume(bindings, selection.value)) {
         bindings.impossible.insert(&clause.body);
@@ -299,6 +320,63 @@ void guarded_head(BindingFacts &bindings, const std::size_t index) {
     }
 }
 
+// Whether a clause body can run and complete normally: it is not impossible and none of its expressions is none().
+bool completes(const BindingFacts &bindings, const std::vector<ast::ExprId> *body) {
+    return !bindings.impossible.contains(body) && std::ranges::none_of(*body, [&](const ast::ExprId &expression) {
+        return recorded(bindings, expression) == bindings.inference.graph.bottom();
+    });
+}
+
+// Add the current facts to the join of the innermost construct's completed clauses.
+void complete(BindingFacts &bindings) {
+    auto &merged = bindings.merged.back();
+    if (!merged) {
+        merged = bindings.values;
+        return;
+    }
+    Lattice lattice(bindings.inference.graph);
+    for (auto &[identity, fact] : *merged) {
+        const auto found = bindings.values.find(identity);
+        const auto other = found == bindings.values.end() ? Fact{bindings.inference.graph.top()} : found->second;
+        fact = {lattice.join(fact.type, other.type), fact.argument == other.argument ? fact.argument : std::nullopt};
+    }
+}
+
+// Leave a clause of a case, if or receive: the facts at its end join the construct's when it completed.
+void leave(BindingFacts &bindings, const ast::ExprValue &value, const std::size_t index) {
+    const bool selection = std::holds_alternative<ast::CaseExpression>(value) ||
+                           std::holds_alternative<ast::IfExpression>(value) ||
+                           std::holds_alternative<ast::ReceiveExpression>(value);
+    if (selection && completes(bindings, clause_parts(value, index).second)) {
+        complete(bindings);
+    }
+}
+
+// Close a construct: the facts after it are the join of its completed clauses' facts, if any completed.
+void close(BindingFacts &bindings) {
+    if (bindings.merged.back()) {
+        bindings.values = std::move(*bindings.merged.back());
+    }
+    bindings.merged.pop_back();
+}
+
+// Leave a function clause: the arguments' facts at its normal return join the success domain.
+void leave_head(BindingFacts &bindings, const std::size_t index) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &clause = heads(bindings)[index];
+    if (!completes(bindings, &clause.body)) {
+        return;
+    }
+    Lattice lattice(bindings.inference.graph);
+    const auto patterns = argument_roots(syntax, clause);
+    for (std::size_t position = 0; position < patterns.size(); ++position) {
+        const auto identity = variable(bindings, patterns[position]);
+        const auto found = identity ? bindings.values.find(*identity) : bindings.values.end();
+        const auto fact = found == bindings.values.end() ? bindings.entry.at(position) : found->second.type;
+        bindings.success.at(position) = lattice.join(bindings.success.at(position), fact);
+    }
+}
+
 // Restore the facts saved when the scope began, keeping them saved when `keep`.
 void restore(BindingFacts &bindings, const bool keep) {
     bindings.values = bindings.saved.back();
@@ -348,8 +426,19 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
         {Step::save, [](BindingFacts &b, const Frame &, std::size_t &) { b.saved.push_back(b.values); }},
         {Step::restore, [](BindingFacts &b, const Frame &, std::size_t &) { restore(b, false); }},
         {Step::reset, [](BindingFacts &b, const Frame &, std::size_t &) { restore(b, true); }},
-        {Step::leave, [](BindingFacts &b, const Frame &, std::size_t &) { restore(b, false); }},
-        {Step::leave_head, [](BindingFacts &b, const Frame &, std::size_t &) { restore(b, false); }},
+        {Step::leave,
+         [](BindingFacts &b, const Frame &f, std::size_t &) {
+             leave(b, b.function.module->syntax->expression(f.expression).value, f.clause);
+             restore(b, false);
+         }},
+        {Step::leave_head,
+         [](BindingFacts &b, const Frame &f, std::size_t &) {
+             leave_head(b, f.clause);
+             restore(b, false);
+         }},
+        {Step::open, [](BindingFacts &b, const Frame &, std::size_t &) { b.merged.emplace_back(); }},
+        {Step::close, [](BindingFacts &b, const Frame &, std::size_t &) { close(b); }},
+        {Step::complete, [](BindingFacts &b, const Frame &, std::size_t &) { complete(b); }},
         {Step::assume,
          [](BindingFacts &b, const Frame &f, std::size_t &) {
              b.saved.push_back(b.values);

@@ -541,16 +541,26 @@ an integer > 0 becomes pos_integer(). The < 0 will become neg_integer().
   only where a proven fact makes it redundant); widened and over-budget facts
   narrow to the use's type, never to more.
 - Success criteria
-  - [ ] Every use in the table narrows its operand after it on the normal
+  - [x] Every use in the table narrows its operand after it on the normal
     path, success domains print as inputs and narrow callers, and no narrowing
-    holds on an exception path or before the use.
+    holds on an exception path or before the use. Evidence 2026-10-09:
+    `semantic/types/inference_uses`; success domains at `leave_head`, clause
+    facts joined after case/if/receive (`open`/`complete`/`close` frames),
+    aliases in `BindingFacts`, scopes for orelse and maybe; callers in the
+    component being solved do not narrow by its domains.
 - Tests
-  - [ ] New `values.erl` rows: `increment` exported as
+  - [x] New `values.erl` rows: `increment` exported as
     `increment(number()) -> number()`, `len(L) -> length(L)` as
     `len(list()) -> non_neg_integer()`, `g(X) -> _ = inc(X), X` as
     `g(number()) -> number()`, a use inside `try ... catch` that must not
     narrow after it, a use in one `case` branch only, `hd/1`, `element/2`,
     map updates, fun calls and remote calls with a variable module.
+    Evidence: rows `inc`, `len`, `after_inc`, `caught`, `branch`, `first`,
+    `second_element`, `lookup`, `remote`, `aliased`, `bits`, `both`,
+    `orelse_use`; every fixture function reaches its expectation (values 121,
+    base_types 46 including `timeout_value(non_neg_integer() | forever)`,
+    narrowing 36); expectations whose results held got success-domain
+    inputs; `codegen_types` expects `zero(number())` and friends.
 
 <a id="step-58h1"></a>
 

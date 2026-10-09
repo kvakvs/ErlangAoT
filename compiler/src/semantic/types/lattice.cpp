@@ -304,6 +304,11 @@ std::map<std::string_view, Gather::Rule> Gather::rules() {
              g.families.lists.push_back({g.graph_.top(), false});
              g.families.improper.push_back(g.any_improper_);
          }},
+        {"nonempty_maybe_improper_list",
+         [](Gather &g, const Node &) {
+             g.families.lists.push_back({g.graph_.top(), true});
+             g.families.improper.push_back(g.any_improper_);
+         }},
         {"binary", [](Gather &g, const Node &) { g.families.add_bits({0, 8}); }},
         {"nonempty_binary", [](Gather &g, const Node &) { g.families.add_bits({8, 8}); }},
         {"bitstring", [](Gather &g, const Node &) { g.families.add_bits({0, 1}); }},
@@ -333,6 +338,7 @@ int family_rank(const Node &node) {
                                                             {"nonempty_string", 9},
                                                             {"nonempty_improper_list", 9},
                                                             {"maybe_improper_list", 9},
+                                                            {"nonempty_maybe_improper_list", 9},
                                                             {"binary", 10},
                                                             {"bitstring", 10},
                                                             {"nonempty_binary", 10},
@@ -589,13 +595,20 @@ class Assemble final {
         out.push_back(lattice_.list(lattice_.join(elements, depth_ + 1), nonempty));
     }
 
-    // Any list and any improper list together are maybe_improper_list().
+    // Any list and any improper list together are maybe_improper_list(), or nonempty_maybe_improper_list() without
+    // the empty list.
     void maybe_improper(std::vector<Id> &out) {
-        const auto list = std::ranges::find(out, lattice_.category("list"));
         const auto improper = std::ranges::find(out, lattice_.improper(graph_.top(), graph_.top()));
-        if (list != out.end() && improper != out.end()) {
-            out.erase(improper);
-            *std::ranges::find(out, lattice_.category("list")) = lattice_.category("maybe_improper_list");
+        if (improper == out.end()) {
+            return;
+        }
+        for (const auto &[list, merged] : {std::pair{lattice_.category("list"), "maybe_improper_list"},
+                                           {lattice_.list(graph_.top(), true), "nonempty_maybe_improper_list"}}) {
+            if (std::ranges::contains(out, list)) {
+                out.erase(std::ranges::find(out, lattice_.improper(graph_.top(), graph_.top())));
+                *std::ranges::find(out, list) = lattice_.category(merged);
+                return;
+            }
         }
     }
 

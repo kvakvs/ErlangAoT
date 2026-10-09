@@ -206,12 +206,36 @@ Inference is separate from declared types and never trusts specs.
   `true` clause of `case Test of`, and what follows a comprehension filter
   see the test as true. An empty meet makes the clause impossible: it adds
   nothing to the result. Narrowed facts hold only inside their clause or
-  operand; `catch`, `try` and every clause restore the facts from before them.
-- Entry domains: each argument's domain is the join over the possible
-  function clauses of its fact after the head and guard (a plain variable's
-  narrowed fact, else the pattern's); `--print-types` shows the domains as
-  inputs (`bounded(1..10) -> 1..10`). A call that returns narrows its
-  variable arguments to the callee's domain.
+  operand; `catch`, `try`, `maybe`, the right operand of `orelse` and every
+  clause restore the facts from before them. After a `case`, `if` or
+  `receive`, a variable's fact is the join of its facts at the end of each
+  clause that completes (step 58H), so `case X of forever -> ...; N when
+  is_integer(N), N >= 0 -> ... end` leaves `X` as
+  `non_neg_integer() | forever`.
+- Uses (step 58H, `semantic/types/inference_uses`): an operation that raises
+  unless an operand has a type proves that type for the variable it read,
+  after the operation returns: arithmetic and unary `-`/`+` a `number()`,
+  `div`, `rem`, bit operators and `bnot` an `integer()`, `and`/`or`/`xor`,
+  `not` and the left operand of `andalso`/`orelse` a `boolean()`, `++` and
+  `--` a `list()`, a called value a fun of that arity, a variable module or
+  function name an `atom()`, a map update `map()`, a tuple-record access or
+  update the record's tuple, a binary segment its type (`<<X:8>>`:
+  `integer()`) and its size a `non_neg_integer()`, and one row per bridge
+  builtin argument check (`hd/1`, `tl/1` `nonempty_maybe_improper_list()`,
+  `length/1` `list()`, `element/2` `pos_integer()` and `tuple()`,
+  `map_get/2` and `is_map_key/2` `map()`, `atom_to_list/1` `atom()`, ...).
+  The operation keeps its runtime check. Names bound to the same value
+  (`Y = X`, a variable `case` pattern on a variable scrutinee) narrow
+  together.
+- Entry and success domains: each argument's entry domain is the join over
+  the possible function clauses of its fact after the head and guard (a
+  plain variable's narrowed fact, else the pattern's); its success domain
+  (step 58H) the join over the clauses that complete of its fact at their
+  normal return. `--print-types` shows the success domain as the inputs
+  (`bounded(1..10) -> 1..10`, `inc(X) -> X + 1` as
+  `inc(number()) -> number()`), or the entry domain of a function that never
+  returns. A call that returns narrows its variable arguments to the
+  callee's domain, except within a recursive component still being solved.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
@@ -307,8 +331,9 @@ mixed(X) ->
 - Above each function, `%% declared: f(Inputs) -> Result` gives each overload
   of its `-spec` as resolved (with its `when` constraints), and
   `%% inferred: f(Inputs) -> Result` what inference found, so the two can be
-  compared. Inputs of exported functions and of functions `fun F/A` names
-  stay `term()`; other functions show their callers' joined arguments. A `-spec` stays with the function right after
+  compared. The inputs are each argument's success domain (from `term()`
+  for exported functions and those `fun F/A` names, from the callers'
+  joined arguments for other functions). A `-spec` stays with the function right after
   it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
   `Expression :: Type` (a known type hides an argument relation, which shows
@@ -347,7 +372,8 @@ sum() -> 1 + 2.
   binaries and argument relations. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
   parts, funs and their calls, local inputs from callers, integer joins and
-  argument relations (108 of 108 functions).
+  argument relations, narrowing by uses and success domains (121 of 121
+  functions).
 - `narrowing.erl` covers each type test, case guards, true-test scrutinees,
   `andalso`, comprehension filters, tuple/list/map patterns, catch-all
   clauses, range guards, contradictions, disjunctions, the clause after a
@@ -360,7 +386,7 @@ sum() -> 1 + 2.
   `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
-  ranges. Today 40 of 46 functions reach their expected type.
+  ranges. Every function reaches its expected type.
 
 ### Printing types
 

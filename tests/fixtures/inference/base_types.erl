@@ -106,7 +106,7 @@ identifier_value(X) ->
 -spec nil_value() -> nil().
 nil_value() -> [].
 
-%% expect: atom_value(term()) -> atom()
+%% expect: atom_value(string()) -> atom()
 -spec atom_value(string()) -> atom().
 atom_value(Name) -> list_to_atom(Name).
 
@@ -136,25 +136,25 @@ binary_value(Data) -> list_to_binary(Data).
 -spec comprehended_binary([byte()]) -> binary().
 comprehended_binary(Bytes) -> <<<<B>> || B <- Bytes>>.
 
-%% expect: nonempty_binary_value(term()) -> nonempty_binary()
+%% expect: nonempty_binary_value(binary()) -> nonempty_binary()
 -spec nonempty_binary_value(binary()) -> nonempty_binary().
 nonempty_binary_value(Rest) -> <<1, Rest/binary>>.
 
-%% expect: bitstring_value(term()) -> nonempty_bitstring()
+%% expect: bitstring_value(bitstring()) -> nonempty_bitstring()
 -spec bitstring_value(bitstring()) -> bitstring().
 bitstring_value(Rest) -> <<1:1, Rest/bitstring>>.
 
 %% Floats, integers and numbers.
 
-%% expect: float_value(term()) -> float()
+%% expect: float_value(number()) -> float()
 -spec float_value(number()) -> float().
 float_value(X) -> float(X).
 
-%% expect: divided(term()) -> float()
+%% expect: divided(number()) -> float()
 -spec divided(number()) -> float().
 divided(X) -> X / 2.
 
-%% expect: integer_value(term()) -> integer()
+%% expect: integer_value(number()) -> integer()
 -spec integer_value(number()) -> integer().
 integer_value(X) -> trunc(X).
 
@@ -162,7 +162,7 @@ integer_value(X) -> trunc(X).
 -spec integer_range(integer()) -> 1..10.
 integer_range(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
-%% expect: byte_value(term()) -> 0..255
+%% expect: byte_value(integer()) -> 0..255
 -spec byte_value(integer()) -> byte().
 byte_value(X) -> X band 255.
 
@@ -186,11 +186,11 @@ pos_integer_value(X) when is_integer(X), X > 0 -> X.
 -spec neg_integer_value(integer()) -> neg_integer().
 neg_integer_value(X) when is_integer(X), X < 0 -> X.
 
-%% expect: length_value(term()) -> non_neg_integer()
+%% expect: length_value(list()) -> non_neg_integer()
 -spec length_value(list()) -> non_neg_integer().
 length_value(List) -> length(List).
 
-%% expect: byte_size_value(term()) -> non_neg_integer()
+%% expect: byte_size_value(bitstring()) -> non_neg_integer()
 -spec byte_size_value(binary()) -> non_neg_integer().
 byte_size_value(Binary) -> byte_size(Binary).
 
@@ -210,7 +210,7 @@ boolean_comparison(X) -> X > 1.
 
 %% Lists and strings.
 
-%% expect: list_value(term()) -> list()
+%% expect: list_value(tuple()) -> list()
 -spec list_value(tuple()) -> list().
 list_value(Tuple) -> tuple_to_list(Tuple).
 
@@ -222,11 +222,11 @@ nonempty_list_value(X) -> [X].
 -spec improper_list() -> nonempty_improper_list(integer(), atom()).
 improper_list() -> [1 | a].
 
-%% expect: string_value(term()) -> string()
+%% expect: string_value(atom()) -> string()
 -spec string_value(atom()) -> string().
 string_value(Atom) -> atom_to_list(Atom).
 
-%% expect: nonempty_string_value(term()) -> nonempty_string()
+%% expect: nonempty_string_value(integer()) -> nonempty_string()
 -spec nonempty_string_value(integer()) -> nonempty_string().
 nonempty_string_value(Integer) -> integer_to_list(Integer).
 
@@ -240,7 +240,7 @@ iolist_value() -> [<<"a">>, "b"].
 -spec empty_map() -> #{}.
 empty_map() -> #{}.
 
-%% expect: map_value(term()) -> map()
+%% expect: map_value(map()) -> map()
 -spec map_value(map()) -> map().
 map_value(Map) -> Map#{key => value}.
 
@@ -248,7 +248,7 @@ map_value(Map) -> Map#{key => value}.
 -spec empty_tuple() -> {}.
 empty_tuple() -> {}.
 
-%% expect: tuple_value(term()) -> tuple()
+%% expect: tuple_value(list()) -> tuple()
 -spec tuple_value(list()) -> tuple().
 tuple_value(List) -> list_to_tuple(List).
 
@@ -269,7 +269,6 @@ remote_fun() -> fun lists:reverse/1.
 %% Unions of categories.
 
 %% expect: timeout_value(non_neg_integer() | forever) -> non_neg_integer() | infinity
-%% today: timeout_value(term()) -> non_neg_integer() | infinity
 -spec timeout_value(term()) -> timeout().
 timeout_value(X) ->
     case X of

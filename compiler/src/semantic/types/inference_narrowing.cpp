@@ -233,10 +233,9 @@ bool Assume::narrow_range(Values &values, const BindingId identity, const Interv
 }
 
 bool Assume::narrow(Values &values, const BindingId identity, const Id fact) {
-    const auto current = values.contains(identity) ? values.at(identity) : Fact{lattice_.graph().top()};
-    const auto next = lattice_.meet(current.type, fact);
-    values.insert_or_assign(identity, Fact{next, current.argument});
-    return next != lattice_.graph().bottom() || current.type == lattice_.graph().bottom();
+    const auto current = values.contains(identity) ? values.at(identity).type : lattice_.graph().top();
+    const auto next = bindings_.narrow_identity(values, identity, fact);
+    return next != lattice_.graph().bottom() || current == lattice_.graph().bottom();
 }
 
 std::optional<Id> Assume::named_category(const ast::Expression &expression, const ServiceResolution &service) {

@@ -120,6 +120,12 @@ void BindingFacts::bind_lambda(const ast::MatchExpression &match) {
     const auto &syntax = *function.module->syntax;
     const auto &fun = syntax.expression(ungroup(syntax, match.right));
     const auto event = events.find(&syntax.expression(ungroup(syntax, match.left)));
+    const auto source = events.find(&fun);
+    // Y = X binds Y to X's value: narrowing either narrows both.
+    if (event != events.end() && source != events.end() && event->second->use == BindingUse::definition &&
+        source->second->use == BindingUse::read) {
+        link(event->second->identity, source->second->identity);
+    }
     if (fun_clauses(fun.value) && event != events.end() && event->second->use == BindingUse::definition &&
         !shared.contains(event->second->identity)) {
         lambdas.insert_or_assign(event->second->identity, &fun);
@@ -145,11 +151,34 @@ void BindingFacts::expect_clauses(const ast::ExprId &value, const std::vector<as
 void BindingFacts::narrow(const ast::ExprId &read, const Id fact) {
     const auto &syntax = *function.module->syntax;
     const auto event = events.find(&syntax.expression(ungroup(syntax, read)));
-    if (event == events.end() || event->second->use != BindingUse::read) {
-        return;
+    if (event != events.end() && event->second->use == BindingUse::read) {
+        (void)narrow_identity(values, event->second->identity, fact);
     }
-    if (const auto found = values.find(event->second->identity); found != values.end()) {
-        found->second.type = Lattice(inference.graph).meet(found->second.type, fact);
+}
+
+Id BindingFacts::narrow_identity(std::map<BindingId, Fact> &facts, const BindingId identity, const Id fact) const {
+    Lattice lattice(inference.graph);
+    std::set<BindingId> seen{identity};
+    std::vector<BindingId> pending{identity};
+    while (!pending.empty()) {
+        const auto current = pending.back();
+        pending.pop_back();
+        auto &value = facts.try_emplace(current, Fact{inference.graph.top()}).first->second;
+        value.type = lattice.meet(value.type, fact);
+        const auto linked = aliases.find(current);
+        for (const auto other : linked == aliases.end() ? std::set<BindingId>{} : linked->second) {
+            if (seen.insert(other).second) {
+                pending.push_back(other);
+            }
+        }
+    }
+    return facts.at(identity).type;
+}
+
+void BindingFacts::link(const BindingId first, const BindingId second) {
+    if (first != second) {
+        aliases[first].insert(second);
+        aliases[second].insert(first);
     }
 }
 

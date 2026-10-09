@@ -25,7 +25,8 @@ constexpr int OTHER = 11;
 
 // One member of a list fact: the empty list, a proper list, an improper list or any list.
 struct ListShape {
-    enum class Kind : std::uint8_t { nil, proper, improper, any };
+    // `nonempty`: any list but the empty one.
+    enum class Kind : std::uint8_t { nil, proper, improper, any, nonempty };
     Kind kind;
     // A proper list's element or an improper list's head, and an improper list's tail.
     Id head;
@@ -86,7 +87,15 @@ class Meet final {
 
     bool any_map(Id, Id outer) { return any(outer, "map"); }
 
-    bool any_list(Id, Id outer) { return list_shape(outer).kind == ListShape::Kind::any; }
+    bool any_list(Id inner, Id outer) {
+        if (inner == outer) {
+            return true;
+        }
+        const auto kind = list_shape(outer).kind;
+        const auto shape = list_shape(inner);
+        return kind == ListShape::Kind::any ||
+               (kind == ListShape::Kind::nonempty && (shape.nonempty || shape.kind == ListShape::Kind::improper));
+    }
 
     bool fewer_sizes(Id inner, Id outer) { return sizes_within(sizes(inner), sizes(outer)); }
 
@@ -108,6 +117,10 @@ class Meet final {
     Id maps(Id left, Id right);
     Id lists(Id left, Id right);
     Id bitstrings(Id left, Id right);
+    // The meet of list shapes `a` and `b` (of `facts`) when one is any list or any nonempty list; none otherwise.
+    std::optional<Id> loose(const ListShape &a, const ListShape &b, const std::pair<Id, Id> &facts);
+    // The meet of any nonempty list with `other` (the shape of `fact`).
+    Id nonempty(const ListShape &other, Id fact);
     // The meet of two proper lists, of a proper list and the empty list, and of two improper lists.
     Id proper(const ListShape &left, const ListShape &right);
 
@@ -263,14 +276,17 @@ ListShape Meet::list_shape(const Id fact) {
     if (node.name == "string" || node.name == "nonempty_string") {
         return {ListShape::Kind::proper, lattice_.range({"0", CHAR_LIMIT}), top, node.name == "nonempty_string"};
     }
+    if (node.name == "nonempty_maybe_improper_list") {
+        return {ListShape::Kind::nonempty, top, top, true};
+    }
     return {node.name == "list" ? ListShape::Kind::proper : ListShape::Kind::any, top, top};
 }
 
 Id Meet::lists(const Id left, const Id right) {
     const auto a = list_shape(left);
     const auto b = list_shape(right);
-    if (a.kind == ListShape::Kind::any || b.kind == ListShape::Kind::any) {
-        return a.kind == ListShape::Kind::any ? right : left;
+    if (const auto result = loose(a, b, {left, right})) {
+        return *result;
     }
     if ((a.kind == ListShape::Kind::improper) != (b.kind == ListShape::Kind::improper)) {
         return graph_.bottom();
@@ -287,6 +303,27 @@ Id Meet::proper(const ListShape &left, const ListShape &right) {
         return other.nonempty ? graph_.bottom() : lattice_.nil();
     }
     return lattice_.list(lattice_.meet(left.head, right.head), left.nonempty || right.nonempty);
+}
+
+std::optional<Id> Meet::loose(const ListShape &a, const ListShape &b, const std::pair<Id, Id> &facts) {
+    if (a.kind == ListShape::Kind::any || b.kind == ListShape::Kind::any) {
+        return a.kind == ListShape::Kind::any ? facts.second : facts.first;
+    }
+    if (a.kind != ListShape::Kind::nonempty && b.kind != ListShape::Kind::nonempty) {
+        return std::nullopt;
+    }
+    return a.kind == ListShape::Kind::nonempty ? nonempty(b, facts.second) : nonempty(a, facts.first);
+}
+
+Id Meet::nonempty(const ListShape &other, const Id fact) {
+    switch (other.kind) {
+    case ListShape::Kind::nil:
+        return graph_.bottom();
+    case ListShape::Kind::proper:
+        return lattice_.list(other.head, true);
+    default:
+        return fact;
+    }
 }
 
 Sizes Meet::sizes(const Id fact) const {

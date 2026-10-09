@@ -104,6 +104,19 @@
     binary/0,
     unicode_binary/0,
     identity/1,
+    inc/1,
+    len/1,
+    after_inc/1,
+    caught/1,
+    branch/2,
+    first/1,
+    second_element/1,
+    lookup/1,
+    remote/1,
+    aliased/1,
+    bits/1,
+    both/1,
+    orelse_use/2,
     second/2
 ]).
 
@@ -164,10 +177,10 @@ quotient() -> 17 div 5.
 %% expect: remainder() -> -2
 remainder() -> -17 rem 5.
 
-%% expect: remainder_range(term()) -> -9..9
+%% expect: remainder_range(integer()) -> -9..9
 remainder_range(X) -> X rem 10.
 
-%% expect: masked(term()) -> 0..15
+%% expect: masked(integer()) -> 0..15
 masked(X) -> X band 15.
 
 %% expect: mixed_sum() -> float()
@@ -179,7 +192,7 @@ bad_sum() -> 1 + a.
 %% expect: divide_by_zero() -> none()
 divide_by_zero() -> 1 div 0.
 
-%% expect: negated(term()) -> number()
+%% expect: negated(number()) -> number()
 negated(X) -> -X.
 
 %% expect: complemented() -> -6
@@ -258,7 +271,7 @@ countdown(N) -> countdown(N - 1).
 %% expect: fun_target() -> fun((term()) -> number())
 fun_target() -> fun doubled/1.
 
-%% expect: doubled(term()) -> number()
+%% expect: doubled(number()) -> number()
 doubled(X) -> X * 2.
 
 %% A local function nothing calls never runs.
@@ -364,7 +377,7 @@ tuple_key_map() -> #{{a, 1} => x}.
 %% expect: mixed_map() -> #{2 := b, a := 1, {k} := float()}
 mixed_map() -> #{a => 1, 2 => b, {k} => 3.0}.
 
-%% expect: updated_map(term()) -> map()
+%% expect: updated_map(map()) -> map()
 updated_map(M) -> M#{a => 1}.
 
 %% Records are tuples; containers taken apart give back their elements' facts.
@@ -490,7 +503,7 @@ stored_fun() -> {fun() -> 1 end}.
 %% expect: called_from_tuple() -> 1
 called_from_tuple() -> (element(1, {fun() -> 1 end}))().
 
-%% expect: unknown_call(term()) -> term()
+%% expect: unknown_call(fun((term()) -> term())) -> term()
 unknown_call(F) -> F(1).
 
 %% expect: applied() -> term()
@@ -520,6 +533,71 @@ binary() -> <<1, 2>>.
 %% UTF-8 sizes are exact for literal characters: 1 + 2 bytes.
 %% expect: unicode_binary() -> <<_:24>>
 unicode_binary() -> <<"a\x{e9}"/utf8>>.
+
+%% An operation that raises unless its operand has a type proves that type after it returns; a function's inputs are
+%% its success domain, what its arguments are when it returns.
+
+%% expect: inc(number()) -> number()
+inc(X) -> X + 1.
+
+%% expect: len(list()) -> non_neg_integer()
+len(L) -> length(L).
+
+%% expect: after_inc(number()) -> number()
+after_inc(X) ->
+    _ = inc(X),
+    X.
+
+%% A use inside try, or in one case branch, proves nothing after it.
+%% expect: caught(term()) -> argument 1
+caught(X) ->
+    _ =
+        try
+            X + 1
+        catch
+            _:_ -> 0
+        end,
+    X.
+
+%% expect: branch(term(), term()) -> argument 2
+branch(A, X) ->
+    _ =
+        case A of
+            1 -> X + 1;
+            _ -> 0
+        end,
+    X.
+
+%% expect: first(nonempty_maybe_improper_list()) -> term()
+first(L) -> hd(L).
+
+%% expect: second_element(tuple()) -> term()
+second_element(T) -> element(2, T).
+
+%% expect: lookup(map()) -> term()
+lookup(M) -> map_get(a, M).
+
+%% expect: remote(atom()) -> term()
+remote(M) -> M:start().
+
+%% Every name bound to the same value narrows with it.
+%% expect: aliased(number()) -> number()
+aliased(X) ->
+    Y = X,
+    _ = Y + 1,
+    X.
+
+%% expect: bits(integer()) -> <<_:8>>
+bits(X) -> <<X:8>>.
+
+%% expect: both(boolean()) -> boolean()
+both(X) -> X andalso true.
+
+%% The right operand of orelse may not run.
+%% expect: orelse_use(boolean(), term()) -> argument 2
+orelse_use(X, Y) ->
+    _ = X orelse Y + 1 > 0,
+    Y.
 
 %% expect: identity(term()) -> argument 1
 identity(X) -> X.

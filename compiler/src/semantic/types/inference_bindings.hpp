@@ -40,7 +40,8 @@ struct BindingFacts {
     // Register a generator's patterns with its input.
     void expect_generator(const ast::Qualifier &qualifier);
 
-    // Remember an anonymous fun bound whole to a variable, so calls of the variable can evaluate it.
+    // Remember an anonymous fun bound whole to a variable, so calls of the variable can evaluate it, and a variable
+    // bound to another one's value.
     void bind_lambda(const ast::MatchExpression &match);
     // The anonymous fun bound to the variable a read names, if any.
     const ast::Expression *lambda(const ast::ExprId &read) const;
@@ -48,8 +49,20 @@ struct BindingFacts {
     // The anonymous funs bound to variables, and how many of them are being evaluated for a call.
     std::map<BindingId, const ast::Expression *> lambdas;
     std::size_t depth = 0;
-    // Narrow the variable a read names to its meet with `fact`.
+    // Narrow the variable a read names, and the names bound to the same value, to their meet with `fact`.
     void narrow(const ast::ExprId &read, Id fact);
+    // Narrow a name and the names bound to the same value to their meet with `fact`, in `facts` (the current values or
+    // a copy of them); the name's new fact.
+    Id narrow_identity(std::map<BindingId, Fact> &facts, BindingId identity, Id fact) const;
+    // Record that two names are bound to the same value.
+    void link(BindingId first, BindingId second);
+
+    // Names bound to the same value as each name.
+    std::map<BindingId, std::set<BindingId>> aliases;
+    // For each case, if and receive being walked, the join of the facts at the end of each clause that completed.
+    std::vector<std::optional<std::map<BindingId, Fact>>> merged;
+    // Each argument's join of its facts at the normal return of every clause: the success domain.
+    std::vector<Id> success;
 
     // Narrowing scopes: the facts saved when a clause, andalso operand, catch, try or comprehension began.
     std::vector<std::map<BindingId, Fact>> saved;

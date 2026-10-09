@@ -100,10 +100,11 @@ outer(X) -> case X of 0 -> 5; _ -> zero(X) end.
 ''', encoding='utf-8')
 facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
-assert re.search(r'%% inferred: keep\(term\(\), term\(\)\) -> [^\n]*argument 1\n', facts), facts
-for signature in ('zero(term()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
-                  'even(term()) -> 0..1', 'odd(term()) -> 0..1', 'fact(term()) -> number()',
-                  'outer(term()) -> 0 | 5'):
+# Inputs are success domains: N - 1 makes N a number() in every clause that returns.
+assert re.search(r'%% inferred: keep\(term\(\), number\(\)\) -> [^\n]*argument 1\n', facts), facts
+for signature in ('zero(number()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
+                  'even(number()) -> 0..1', 'odd(number()) -> 0..1', 'fact(number()) -> number()',
+                  'outer(number()) -> 0 | 5'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
 assert '    odd((N - 1 :: number())) :: 0..1.\n' in facts, facts

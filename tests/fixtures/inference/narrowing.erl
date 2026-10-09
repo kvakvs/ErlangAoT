@@ -163,7 +163,7 @@ complement(X) when is_integer(X) -> int;
 complement(X) -> X.
 
 %% A call that returns narrows its argument variables to the callee's entry domain.
-%% expect: after_call(term()) -> non_neg_integer()
+%% expect: after_call(non_neg_integer()) -> non_neg_integer()
 after_call(X) ->
     _ = natural(X),
     X.

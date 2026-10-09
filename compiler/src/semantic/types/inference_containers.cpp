@@ -27,6 +27,9 @@ ListView named_view(Lattice &lattice, const Node &node) {
     if (node.name == "string" || node.name == "nonempty_string") {
         return {ListView::Shape::proper, lattice.range({"0", CHAR_LIMIT}), top, node.name == "nonempty_string"};
     }
+    if (node.name == "maybe_improper_list" || node.name == "nonempty_maybe_improper_list") {
+        return {ListView::Shape::unknown, top, top};
+    }
     return {node.name == "list" ? ListView::Shape::proper : ListView::Shape::other, top, top};
 }
 

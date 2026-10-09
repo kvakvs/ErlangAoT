@@ -8,6 +8,7 @@
 #include "inference_inputs.hpp"
 #include "inference_operators.hpp"
 #include "inference_scopes.hpp"
+#include "inference_uses.hpp"
 #include "inference_values.hpp"
 #include "lattice.hpp"
 #include <algorithm>
@@ -240,9 +241,10 @@ Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expr
         return {inference.graph.top()};
     }
     const auto result = call_result(inference, syntax, expression, call);
-    if (result.type != inference.graph.bottom()) {
-        // A call that returned was entered: its arguments are within the callee's entry domain.
-        const auto &inputs = inference.functions.at(inference.callees.at(&expression).function).inputs;
+    const auto *callee = inference.callees.at(&expression).function;
+    // A call that returned had arguments within the callee's success domain, once that domain is final.
+    if (result.type != inference.graph.bottom() && !inference.solving.contains(callee)) {
+        const auto &inputs = inference.functions.at(callee).inputs;
         for (std::size_t index = 0; index < call.arguments.size() && index < inputs.size(); ++index) {
             bindings.narrow(call.arguments[index], inputs[index]);
         }
@@ -311,6 +313,9 @@ bool walk(Inference &inference, const FunctionRef function, BindingFacts &bindin
             (void)added;
             recorded.push_back(&expression);
             bindings.matched(expression, fact->second, work);
+            if (fact->second.type != inference.graph.bottom()) {
+                narrow_uses(bindings, expression);
+            }
         } else if (frame.step == Step::visit) {
             bindings.expect(expression.value);
             expand(*function.module, frame.expression, pending);
@@ -337,12 +342,15 @@ Body body(Inference &inference, const FunctionRef function, std::size_t &work,
     // Each clause's head matches the inputs; the arguments' facts at clause entry join into the entry domain.
     bindings.inputs = inputs_of(inference, *function.function);
     bindings.domain.assign(bindings.inputs.size(), inference.graph.bottom());
+    bindings.success = bindings.domain;
     std::vector<Frame> frames;
     expand_heads(definition, frames);
     if (!walk(inference, function, bindings, std::move(frames), work, recorded)) {
         return {{inference.graph.exhausted()}, bindings.inputs};
     }
-    return {joined(inference, syntax, definition.clauses, &bindings.impossible), bindings.domain};
+    // A function that returns shows its success domain; one that never does, its entry domain.
+    const auto result = joined(inference, syntax, definition.clauses, &bindings.impossible);
+    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success};
 }
 
 // Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
@@ -380,15 +388,24 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
     return changed;
 }
 
+// The members of a solved component have final summaries.
+void finish(Inference &inference, const Component &component) {
+    for (const auto member : component.members) {
+        inference.solving.erase(member.function);
+    }
+}
+
 // Iterate from bottom to a fixed point; non-convergence visibly widens all members to top and records final facts.
 void solve(Inference &inference, const Component &component, std::size_t &work) {
     for (const auto member : component.members) {
         summarize(inference, member, {inference.graph.bottom()});
+        inference.solving.insert(member.function);
     }
     std::vector<const ast::Expression *> recorded;
     const auto rounds = JOIN_ROUNDS + WIDENING_PASSES * component.members.size();
     for (std::size_t round = 0; round < rounds; ++round) {
         if (!refine(inference, component, work, recorded, round >= JOIN_ROUNDS)) {
+            finish(inference, component);
             return;
         }
     }
@@ -396,6 +413,7 @@ void solve(Inference &inference, const Component &component, std::size_t &work) 
         summarize(inference, member, {inference.graph.exhausted()});
     }
     (void)refine(inference, component, work, recorded, false);
+    finish(inference, component);
 }
 
 // Passes over the batch that join local inputs, then passes that widen them, before inputs and fun references are

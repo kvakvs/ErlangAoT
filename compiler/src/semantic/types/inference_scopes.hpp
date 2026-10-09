@@ -6,7 +6,8 @@
 // clause restore the facts from before them.
 namespace clause::semantic::types {
 // What a walk frame does: evaluate an expression's operands or the expression itself, save, restore or reset the
-// facts of a scope, assume a test, or enter, guard and leave a clause (`head`: a function clause).
+// facts of a scope, assume a test, enter, guard and leave a clause (`head`: a function clause), or open and close
+// the join of the facts at the end of a construct's completed clauses (`complete`: add the current facts to it).
 enum class Step : std::uint8_t {
     visit,
     ready,
@@ -19,7 +20,10 @@ enum class Step : std::uint8_t {
     leave,
     enter_head,
     guarded_head,
-    leave_head
+    leave_head,
+    open,
+    close,
+    complete
 };
 
 struct Frame {

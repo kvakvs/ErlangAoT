@@ -276,7 +276,10 @@
   read its function's final result (`fun_reads`), else a last pass with `term()` inputs and `opaque_funs`.
   Step 58G: the walk runs `Frame`s (`inference_scopes`: visit/ready plus save/restore/reset, assume, enter/guarded/
   leave for case/if/receive/fun clauses and `*_head` for function clauses); `BindingFacts::saved` is the scope stack,
-  `impossible` the clause bodies `joined` skips, `domain` the entry domain that becomes `Summary::inputs`.
+  `impossible` the clause bodies `joined` skips, `domain` the entry domain. Step 58H: `narrow_uses` after each
+  non-none() ready step, `success` (joined at `leave_head`) becomes `Summary::inputs`, `merged` joins clause-end facts
+  of case/if/receive (`open`/`complete`/`close`), `aliases` narrow together, `Inference::solving` stops callers
+  narrowing by an unsolved component's domains.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

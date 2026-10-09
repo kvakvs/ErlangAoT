@@ -1,6 +1,7 @@
 #pragma once
 #include "../calls.hpp"
 #include "domain.hpp"
+#include <set>
 
 namespace clause::semantic::types {
 struct Fact {
@@ -30,6 +31,8 @@ struct Inference {
     std::map<const Function *, std::vector<Id>> inputs;
     // The results fun F/A read in the current pass, by function, to check they were final.
     std::map<const Function *, Id> fun_reads;
+    // The members of the recursive component being solved: their domains are not final yet.
+    std::set<const Function *> solving;
     // Set for a last pass in which fun F/A has an unknown result, when passes did not settle.
     bool opaque_funs = false;
 };
