@@ -104,8 +104,20 @@ pinned `erl_lint`/`erl_internal`/`erl_types` behavior:
 
 Inference is separate from declared types and never trusts specs.
 
-- Exported inputs are arbitrary terms. Integer literals keep singleton values;
-  identity/projection functions keep exact argument relations, propagated
+- Exported inputs are arbitrary terms. Literals have exact facts (step 58B):
+  integers of any size and characters are singletons, atoms singleton atoms,
+  floats `float()`, strings nonempty lists of their characters (`[]` for
+  `""`), and `-`/`+` of a literal number keep its fact. Tuples keep their
+  elements' facts; maps built with constant keys (a fact of one value: an
+  integer, an atom, `[]`, or a tuple or map of such) keep each key's value
+  fact, a key given twice keeping its last value, and any other key makes
+  `map()`. A bitstring construction counts its size: literal, sized and
+  UTF-encoded literal characters exactly, a UTF segment of another value by
+  its encoding (UTF-8: 8 to 32 bits by bytes), and a `binary`/`bitstring`
+  segment by its value's fact or any multiple of its unit
+  (`<<1, Rest/binary>>` is `nonempty_binary()`). An operand that never
+  produces a value (`none()`) makes the construction `none()`.
+- Identity/projection functions keep exact argument relations, propagated
   through nested local and remote calls with fresh variables per call.
 - Whole-value body assignments and aliases copy the RHS fact
   (`Y = 42, Z = Y, id(Z)` infers 42). Extracted fields, guard refinements,
@@ -209,8 +221,9 @@ mixed(X) ->
   it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
   `Expression :: Type`: in parentheses inside other expressions, without them
-  for a whole body expression. Literals and matches are not annotated (the
-  right side of a match is).
+  for a whole body expression. Literal terms (literals, and tuples, lists,
+  constructed maps and bitstrings of literals) and matches are not annotated
+  (the right side of a match is).
 - `argument N` means the value is the function's N-th argument (1-based), as
   inference proved; a variable shows only its type, its name already says
   which argument it is.
@@ -238,8 +251,9 @@ sum() -> 1 + 2.
 - `values.erl` covers literals, arithmetic and comparisons, calls of local and
   other functions, integer joins and ranges, integers or floats, lists,
   strings, tuples, maps with atom and other keys, funs returned and applied,
-  binaries and argument relations. Today inference finds integer constants,
-  integer joins and argument relations (7 of 39 functions).
+  binaries and argument relations. Today inference finds literal and
+  constructed values, integer joins and argument relations (28 of 46
+  functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
@@ -247,7 +261,7 @@ sum() -> 1 + 2.
   `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
-  ranges. Today 3 of 46 functions reach their expected type.
+  ranges. Today 13 of 46 functions reach their expected type.
 
 ### Printing types
 

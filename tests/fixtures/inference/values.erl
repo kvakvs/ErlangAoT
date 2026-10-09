@@ -7,6 +7,10 @@
     negative/0,
     float/0,
     atom/0,
+    character/0,
+    negative_float/0,
+    big_integer/0,
+    quoted_atom/0,
     sum/0,
     product/0,
     division/0,
@@ -24,6 +28,8 @@
     nested_list/0,
     empty_list/0,
     string/0,
+    eight_letters/0,
+    nine_letters/0,
     same_tuple/0,
     mixed_tuple/0,
     nested_tuple/0,
@@ -39,6 +45,7 @@
     applies_fun/0,
     local_fun/0,
     binary/0,
+    unicode_binary/0,
     identity/1,
     second/2
 ]).
@@ -52,12 +59,22 @@ integer() -> 42.
 negative() -> -7.
 
 %% expect: float() -> float()
-%% today: float() -> term()
 float() -> 2.5.
 
 %% expect: atom() -> ok
-%% today: atom() -> term()
 atom() -> ok.
+
+%% expect: character() -> 120
+character() -> $x.
+
+%% expect: negative_float() -> float()
+negative_float() -> -2.5.
+
+%% expect: big_integer() -> 123456789012345678901234567890
+big_integer() -> 123456789012345678901234567890.
+
+%% expect: quoted_atom() -> 'hello world'
+quoted_atom() -> 'hello world'.
 
 %% expect: sum() -> 3
 %% today: sum() -> term()
@@ -111,7 +128,6 @@ clauses(_) -> 20.
 bounded(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
 %% expect: integer_or_float(term()) -> 1 | float()
-%% today: integer_or_float(term()) -> term()
 integer_or_float(X) ->
     case X of
         1 -> 1;
@@ -138,29 +154,30 @@ mixed_list() -> [1, a, 2.5].
 nested_list() -> [[1], [2, 3]].
 
 %% expect: empty_list() -> []
-%% today: empty_list() -> term()
 empty_list() -> [].
 
 %% expect: string() -> [97 | 98 | 99, ...]
-%% today: string() -> term()
 string() -> "abc".
+
+%% A string of eight different characters keeps them; a ninth makes their range.
+%% expect: eight_letters() -> [97 | 98 | 99 | 100 | 101 | 102 | 103 | 104, ...]
+eight_letters() -> "abcdefgh".
+
+%% expect: nine_letters() -> [97..105, ...]
+nine_letters() -> "abcdefghi".
 
 %% Tuples.
 
 %% expect: same_tuple() -> {1, 2, 3}
-%% today: same_tuple() -> term()
 same_tuple() -> {1, 2, 3}.
 
 %% expect: mixed_tuple() -> {ok, 1, float()}
-%% today: mixed_tuple() -> term()
 mixed_tuple() -> {ok, 1, 2.5}.
 
 %% expect: nested_tuple() -> {{a, 1}, {b, 2}}
-%% today: nested_tuple() -> term()
 nested_tuple() -> {{a, 1}, {b, 2}}.
 
 %% expect: tagged(term()) -> {error, bad} | {ok, 1}
-%% today: tagged(term()) -> term()
 tagged(X) ->
     case X of
         1 -> {ok, 1};
@@ -170,19 +187,15 @@ tagged(X) ->
 %% Maps.
 
 %% expect: atom_map() -> #{a := 1, b := 2}
-%% today: atom_map() -> term()
 atom_map() -> #{a => 1, b => 2}.
 
 %% expect: integer_map() -> #{1 := one, 2 := two}
-%% today: integer_map() -> term()
 integer_map() -> #{1 => one, 2 => two}.
 
 %% expect: tuple_key_map() -> #{{a, 1} := x}
-%% today: tuple_key_map() -> term()
 tuple_key_map() -> #{{a, 1} => x}.
 
 %% expect: mixed_map() -> #{2 := b, a := 1, {k} := float()}
-%% today: mixed_map() -> term()
 mixed_map() -> #{a => 1, 2 => b, {k} => 3.0}.
 
 %% expect: updated_map(term()) -> map()
@@ -218,8 +231,11 @@ local_fun() ->
 %% Other values.
 
 %% expect: binary() -> <<_:16>>
-%% today: binary() -> term()
 binary() -> <<1, 2>>.
+
+%% UTF-8 sizes are exact for literal characters: 1 + 2 bytes.
+%% expect: unicode_binary() -> <<_:24>>
+unicode_binary() -> <<"a\x{e9}"/utf8>>.
 
 %% expect: identity(term()) -> argument 1
 identity(X) -> X.

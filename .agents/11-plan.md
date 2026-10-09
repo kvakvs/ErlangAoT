@@ -262,14 +262,20 @@ Atoms, floats, characters, strings (`[97 | 98 | 99, ...]`), `[]` and
 literal binaries (`<<_:16>>`) get their facts; integer literals already do.
 
 - Success criteria
-  - [ ] Every literal and every function returning one infers its fact;
-    joins of mixed literals follow the 58A rules (`1 | float()`).
+  - [x] Every literal and every function returning one infers its fact;
+    joins of mixed literals follow the 58A rules (`1 | float()`). Evidence
+    2026-10-09: `semantic/types/inference_values` (literals, tuples, maps with
+    constant keys, bitstring sizes); `integer_or_float() -> 1 | float()`.
 - Tests
-  - [ ] `values.erl` literal rows (`float`, `atom`, `string`, `empty_list`,
+  - [x] `values.erl` literal rows (`float`, `atom`, `string`, `empty_list`,
     `binary`, `integer_or_float`) and `base_types.erl` literal rows (`nil`,
     singleton atoms, `?MODULE`, `<<>>`, `<<_:3>>`, `{}`, `#{}`, `mfa`) reach
     `expect:`; new rows for characters, negative floats and long strings at
-    the widening threshold.
+    the widening threshold. Evidence: new `character`, `negative_float`,
+    `big_integer`, `quoted_atom`, `eight_letters`, `nine_letters`,
+    `unicode_binary` rows; tuple and map rows (58D) and
+    `nonempty_binary_value`/`bitstring_value` close early; values 28 of 46,
+    base_types 13 of 46.
 
 <a id="step-58c"></a>
 

@@ -25,17 +25,78 @@ std::map<types::Key, const types::Contract *> specifications(const types::Regist
     return result;
 }
 
-// Literals, signed numbers included, already show their type; a match's value is its right side's, which carries
-// the annotation.
-bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
-    if (const auto *unary = std::get_if<ast::UnaryExpression>(&value)) {
-        const auto &operand = syntax.expression(unary->operand).value;
+// Adds the operands of a literal term to `pending`: literals have none, tuples, lists, constructed maps and
+// bitstrings their elements; false for an expression that is no literal term.
+struct LiteralOperands {
+    const ast::Module &syntax;
+    std::vector<ast::ExprId> &pending;
+
+    template <typename T> bool operator()(const T &) const { return false; }
+
+    bool operator()(const ast::Atom &) const { return true; }
+
+    bool operator()(const ast::IntegerLiteral &) const { return true; }
+
+    bool operator()(const ast::FloatLiteral &) const { return true; }
+
+    bool operator()(const ast::CharacterLiteral &) const { return true; }
+
+    bool operator()(const ast::StringLiteral &) const { return true; }
+
+    bool operator()(const ast::Group &value) const { return add({value.expression}); }
+
+    bool operator()(const ast::Tuple &value) const { return add(value.elements); }
+
+    bool operator()(const ast::UnaryExpression &value) const {
+        const auto &operand = syntax.expression(value.operand).value;
         return std::holds_alternative<ast::IntegerLiteral>(operand) ||
                std::holds_alternative<ast::FloatLiteral>(operand);
     }
-    return std::holds_alternative<ast::Atom>(value) || std::holds_alternative<ast::IntegerLiteral>(value) ||
-           std::holds_alternative<ast::FloatLiteral>(value) || std::holds_alternative<ast::CharacterLiteral>(value) ||
-           std::holds_alternative<ast::StringLiteral>(value) || std::holds_alternative<ast::MatchExpression>(value);
+
+    bool operator()(const ast::List &value) const { return add(value.elements) && (!value.tail || add({*value.tail})); }
+
+    bool operator()(const ast::MapExpression &value) const {
+        for (const auto &field : value.fields) {
+            add({field.key, field.value});
+        }
+        return !value.base;
+    }
+
+    bool operator()(const ast::Bitstring &value) const {
+        for (const auto &segment : value.segments) {
+            add({segment.value});
+            if (segment.size) {
+                add({*segment.size});
+            }
+        }
+        return true;
+    }
+
+    // Queue operands; always true.
+    bool add(const std::vector<ast::ExprId> &operands) const {
+        pending.insert(pending.end(), operands.begin(), operands.end());
+        return true;
+    }
+};
+
+// Literal terms, signed numbers included, already show their type; a match's value is its right side's, which
+// carries the annotation.
+bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
+    if (std::holds_alternative<ast::MatchExpression>(value)) {
+        return true;
+    }
+    std::vector<ast::ExprId> pending;
+    if (!std::visit(LiteralOperands{syntax, pending}, value)) {
+        return false;
+    }
+    while (!pending.empty()) {
+        const auto &operand = syntax.expression(pending.back()).value;
+        pending.pop_back();
+        if (!std::visit(LiteralOperands{syntax, pending}, operand)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // A fact as annotation text: its type, and the argument it equals (1-based) when inference proved one.

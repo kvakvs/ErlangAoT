@@ -4,6 +4,7 @@
 #include "../funs.hpp"
 #include "../records.hpp"
 #include "inference_bindings.hpp"
+#include "inference_values.hpp"
 #include "lattice.hpp"
 #include <algorithm>
 #include <optional>
@@ -12,9 +13,9 @@ namespace clause::semantic::types {
 namespace {
 // Infer only implementation syntax; specifications never narrow an input or result.
 Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &id, const BindingFacts &bindings) {
-    auto &graph = inference.graph;
-    if (const auto value = integer_literal(*function.module->syntax, id, 64)) {
-        return {graph.intern({Kind::integer, std::to_string(*value)})};
+    const auto &syntax = *function.module->syntax;
+    if (const auto fact = constructed_fact(inference, syntax, syntax.expression(id).value)) {
+        return {*fact};
     }
     return bindings.read(id);
 }

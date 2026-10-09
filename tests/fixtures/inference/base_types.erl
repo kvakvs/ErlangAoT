@@ -108,7 +108,6 @@ identifier_value(X) ->
 %% Atoms.
 
 %% expect: nil_value() -> []
-%% today: nil_value() -> term()
 -spec nil_value() -> nil().
 nil_value() -> [].
 
@@ -118,24 +117,20 @@ nil_value() -> [].
 atom_value(Name) -> list_to_atom(Name).
 
 %% expect: singleton_atom() -> ok
-%% today: singleton_atom() -> term()
 -spec singleton_atom() -> ok.
 singleton_atom() -> ok.
 
 %% expect: module_value() -> base_types
-%% today: module_value() -> term()
 -spec module_value() -> module().
 module_value() -> ?MODULE.
 
 %% Bitstrings and binaries.
 
 %% expect: empty_bitstring() -> <<>>
-%% today: empty_bitstring() -> term()
 -spec empty_bitstring() -> <<>>.
 empty_bitstring() -> <<>>.
 
 %% expect: sized_bitstring() -> <<_:3>>
-%% today: sized_bitstring() -> term()
 -spec sized_bitstring() -> <<_:3>>.
 sized_bitstring() -> <<5:3>>.
 
@@ -150,12 +145,10 @@ binary_value(Data) -> list_to_binary(Data).
 comprehended_binary(Bytes) -> <<<<B>> || B <- Bytes>>.
 
 %% expect: nonempty_binary_value(term()) -> nonempty_binary()
-%% today: nonempty_binary_value(term()) -> term()
 -spec nonempty_binary_value(binary()) -> nonempty_binary().
 nonempty_binary_value(Rest) -> <<1, Rest/binary>>.
 
 %% expect: bitstring_value(term()) -> nonempty_bitstring()
-%% today: bitstring_value(term()) -> term()
 -spec bitstring_value(bitstring()) -> bitstring().
 bitstring_value(Rest) -> <<1:1, Rest/bitstring>>.
 
@@ -272,7 +265,6 @@ iolist_value() -> [<<"a">>, "b"].
 %% Maps and tuples.
 
 %% expect: empty_map() -> #{}
-%% today: empty_map() -> term()
 -spec empty_map() -> #{}.
 empty_map() -> #{}.
 
@@ -282,7 +274,6 @@ empty_map() -> #{}.
 map_value(Map) -> Map#{key => value}.
 
 %% expect: empty_tuple() -> {}
-%% today: empty_tuple() -> term()
 -spec empty_tuple() -> {}.
 empty_tuple() -> {}.
 
@@ -292,7 +283,6 @@ empty_tuple() -> {}.
 tuple_value(List) -> list_to_tuple(List).
 
 %% expect: mfa_value() -> {lists, reverse, 1}
-%% today: mfa_value() -> term()
 -spec mfa_value() -> mfa().
 mfa_value() -> {lists, reverse, 1}.
 
