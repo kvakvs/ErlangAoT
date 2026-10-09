@@ -157,6 +157,20 @@ Inference is separate from declared types and never trusts specs.
   field's index. A list comprehension is a possibly empty list of its
   templates' facts, a binary comprehension any number of copies of its
   template's size, a map comprehension `map()`.
+- Funs (step 58E, `semantic/types/inference_funs`): `fun F/A` is a fun of
+  its arity returning the function's inferred result (a builtin's, or with a
+  variable arity, `fun()`), `fun M:F/A` one returning `term()`, and an
+  anonymous fun one returning its clauses' joined results, captured values
+  included. A call of a value joins the results of its funs of that arity
+  (`term()` for an unknown fun, `none()` when no member can be called so).
+  An anonymous fun bound whole to a variable and called through it is
+  evaluated again for that call with its patterns matching the arguments'
+  facts, at most 4 such calls deep, and its first evaluation's facts are
+  restored afterwards (`Double = fun(Y) -> Y * 2 end, Double(3)` is 6).
+  `apply/2,3` and dynamic calls stay `term()`. Since `fun F/A` may name a
+  function inferred later, inference repeats passes over the batch until
+  every such fun read its function's final result; after 8 passes a last
+  pass gives them `term()` results.
 - Whole-value body assignments and aliases copy the RHS fact
   (`Y = 42, Z = Y, id(Z)` infers 42); tuple, list, map and tuple-record
   patterns give their variables the facts of the parts they match, in body
@@ -295,7 +309,8 @@ sum() -> 1 + 2.
   strings, tuples, maps with atom and other keys, funs returned and applied,
   binaries and argument relations. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
-  parts, integer joins and argument relations (81 of 89 functions).
+  parts, funs and their calls, integer joins and argument relations (96 of
+  99 functions).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,
@@ -303,7 +318,7 @@ sum() -> 1 + 2.
   `timeout()`, `no_return()`, ...): its `-spec` names the type, so every
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
-  ranges. Today 38 of 46 functions reach their expected type.
+  ranges. Today 40 of 46 functions reach their expected type.
 
 ### Printing types
 

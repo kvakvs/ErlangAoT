@@ -26,6 +26,10 @@ struct Inference {
     std::map<const ast::Expression *, Fact> expressions;
     // Preserve validated call targets for fresh instantiation at each expression.
     std::map<const ast::Expression *, FunctionRef> callees;
+    // The results fun F/A read in the current pass, by function, to check they were final.
+    std::map<const Function *, Id> fun_reads;
+    // Set for a last pass in which fun F/A has an unknown result, when passes did not settle.
+    bool opaque_funs = false;
 };
 
 // Infer supported bodies iteratively; recursive components iterate from bottom to a fixed point and widen

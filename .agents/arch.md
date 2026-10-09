@@ -268,6 +268,11 @@
   (Gather -> Families -> Assemble, term-ordered unions, budgets in `FactLimits`) and widens recursive results with
   integer thresholds; `inference.cpp` `merged()` joins clauses, widens after `JOIN_ROUNDS` (8), caps rounds at
   8 + 4 per member.
+- Inference facts (steps 58B-58E): `inference.cpp` walks each body in postorder (`walk`), `evaluate` dispatches to
+  `inference_operators` (operators/builtins), `inference_values` (literals, containers, records, comprehensions),
+  `inference_funs` (fun values, calls of values); `BindingFacts` publishes pattern parts (body matches, case/of
+  clauses, generators via `expect`/`matched`) and re-evaluates bound lambdas per call (`instantiate`). `infer` repeats
+  passes until every `fun F/A` read its function's final result (`fun_reads`), else a last `opaque_funs` pass.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

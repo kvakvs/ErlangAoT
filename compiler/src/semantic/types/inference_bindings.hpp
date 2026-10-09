@@ -40,6 +40,14 @@ struct BindingFacts {
     // Register a generator's patterns with its input.
     void expect_generator(const ast::Qualifier &qualifier);
 
+    // Remember an anonymous fun bound whole to a variable, so calls of the variable can evaluate it.
+    void bind_lambda(const ast::MatchExpression &match);
+    // The anonymous fun bound to the variable a read names, if any.
+    const ast::Expression *lambda(const ast::ExprId &read) const;
+
+    // The anonymous funs bound to variables, and how many of them are being evaluated for a call.
+    std::map<BindingId, const ast::Expression *> lambdas;
+    std::size_t depth = 0;
     // The patterns waiting for each expression's value.
     std::map<const ast::Expression *, std::vector<Waiting>> waiting;
 };

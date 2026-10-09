@@ -116,6 +116,25 @@ Fact BindingFacts::read(const ast::ExprId &id) const {
     return {inference.graph.top()};
 }
 
+void BindingFacts::bind_lambda(const ast::MatchExpression &match) {
+    const auto &syntax = *function.module->syntax;
+    const auto &fun = syntax.expression(ungroup(syntax, match.right));
+    const auto event = events.find(&syntax.expression(ungroup(syntax, match.left)));
+    if (fun_clauses(fun.value) && event != events.end() && event->second->use == BindingUse::definition &&
+        !shared.contains(event->second->identity)) {
+        lambdas.insert_or_assign(event->second->identity, &fun);
+    }
+}
+
+const ast::Expression *BindingFacts::lambda(const ast::ExprId &read) const {
+    const auto event = events.find(&function.module->syntax->expression(read));
+    if (event == events.end() || event->second->use != BindingUse::read) {
+        return nullptr;
+    }
+    const auto found = lambdas.find(event->second->identity);
+    return found == lambdas.end() ? nullptr : found->second;
+}
+
 void BindingFacts::expect_clauses(const ast::ExprId &value, const std::vector<ast::BranchClause> &clauses) {
     const auto &syntax = *function.module->syntax;
     for (const auto &clause : clauses) {

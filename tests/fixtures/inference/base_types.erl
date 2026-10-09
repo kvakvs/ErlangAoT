@@ -264,12 +264,10 @@ mfa_value() -> {lists, reverse, 1}.
 %% Funs.
 
 %% expect: fun_value() -> fun(() -> ok)
-%% today: fun_value() -> term()
 -spec fun_value() -> fun(() -> ok).
 fun_value() -> fun() -> ok end.
 
 %% expect: remote_fun() -> fun((term()) -> term())
-%% today: remote_fun() -> term()
 -spec remote_fun() -> function().
 remote_fun() -> fun lists:reverse/1.
 

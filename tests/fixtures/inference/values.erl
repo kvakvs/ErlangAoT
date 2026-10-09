@@ -87,6 +87,15 @@
     returns_closure/1,
     applies_fun/0,
     local_fun/0,
+    named_fun/0,
+    mapped/0,
+    stored_fun/0,
+    called_from_tuple/0,
+    unknown_call/1,
+    applied/0,
+    wrong_arity/0,
+    builtin_fun/0,
+    forward_fun/0,
     binary/0,
     unicode_binary/0,
     identity/1,
@@ -404,28 +413,62 @@ wide_map() ->
 %% Functions returning functions, and local funs.
 
 %% expect: returns_fun() -> fun(() -> 42)
-%% today: returns_fun() -> term()
 returns_fun() -> fun integer/0.
 
 %% expect: returns_remote_fun() -> fun((term()) -> term())
-%% today: returns_remote_fun() -> term()
 returns_remote_fun() -> fun lists:reverse/1.
 
 %% expect: returns_closure(term()) -> fun((term()) -> number())
-%% today: returns_closure(term()) -> term()
 returns_closure(X) -> fun(Y) -> X + Y end.
 
 %% expect: applies_fun() -> 6
-%% today: applies_fun() -> term()
 applies_fun() ->
     Double = fun(Y) -> Y * 2 end,
     Double(3).
 
 %% expect: local_fun() -> fun(() -> 5)
-%% today: local_fun() -> term()
 local_fun() ->
     Five = fun() -> 5 end,
     Five.
+
+%% A named fun's calls of itself are unknown.
+%% expect: named_fun() -> fun((term()) -> number())
+named_fun() ->
+    fun
+        Fact(0) -> 1;
+        Fact(N) -> N * Fact(N - 1)
+    end.
+
+%% expect: mapped() -> list()
+mapped() -> lists:map(fun(X) -> X * 2 end, [1, 2]).
+
+%% expect: stored_fun() -> {fun(() -> 1)}
+stored_fun() -> {fun() -> 1 end}.
+
+%% expect: called_from_tuple() -> 1
+called_from_tuple() -> (element(1, {fun() -> 1 end}))().
+
+%% expect: unknown_call(term()) -> term()
+unknown_call(F) -> F(1).
+
+%% expect: applied() -> term()
+applied() -> apply(fun() -> 1 end, []).
+
+%% A call with the wrong number of arguments raises badarity.
+%% expect: wrong_arity() -> none()
+wrong_arity() ->
+    F = fun() -> 1 end,
+    F(2).
+
+%% expect: builtin_fun() -> fun((term()) -> term())
+builtin_fun() -> fun abs/1.
+
+%% A fun of a function inferred later reads its final result.
+%% expect: forward_fun() -> fun(() -> 7)
+forward_fun() -> fun later/0.
+
+%% expect: later() -> 7
+later() -> 7.
 
 %% Other values.
 

@@ -392,7 +392,7 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
 
 - **F34 — Precise type inference** ([58A](11-plan.md#step-58a)–[58I](11-plan.md#step-58i)):
   [x] fact domain decision (58A); [x] literals (58B); [x] operators and builtins (58C);
-  [x] containers (58D); [ ] funs; [ ] local inputs from callers; [ ] pattern and
+  [x] containers (58D); [x] funs (58E); [ ] local inputs from callers; [ ] pattern and
   guard narrowing (`is_*` type tests included) with entry domains (58G); [ ] narrowing by uses and success
   domains (58H); [ ] integer ranges from guard comparisons (58H1); [ ] specs that contradict inferred types are errors (58I). Expectations: `tests/fixtures/inference/values.erl` and
   `base_types.erl` (7 of 39 and 3 of 46 functions at their expected type on

@@ -353,13 +353,19 @@ with their arity and the callee's or body's result fact; a call of a value
 whose fact is a known fun uses that result.
 
 - Success criteria
-  - [ ] `returns_fun() -> fun(() -> 42)`, `local_fun() -> fun(() -> 5)`,
+  - [x] `returns_fun() -> fun(() -> 42)`, `local_fun() -> fun(() -> 5)`,
     `applies_fun() -> 6`, closures with captured facts; unknown funs and
-    `apply/2,3` stay `term()`.
+    `apply/2,3` stay `term()`. Evidence 2026-10-09:
+    `semantic/types/inference_funs` (fun references, calls of values),
+    instantiation of bound anonymous funs per call and repeated batch passes
+    for `fun F/A` in `inference.cpp`.
 - Tests
-  - [ ] `values.erl` fun rows and `base_types.erl` `fun_value`/`remote_fun`
+  - [x] `values.erl` fun rows and `base_types.erl` `fun_value`/`remote_fun`
     reach `expect:`; new rows for named funs, funs passed to library functions
-    and funs stored in containers.
+    and funs stored in containers. Evidence: 10 new rows (`named_fun`,
+    `mapped -> list()`, `stored_fun`, `called_from_tuple -> 1`,
+    `unknown_call`, `applied`, `wrong_arity -> none()`, `builtin_fun`,
+    `forward_fun`, `later`); values 96 of 99, base_types 40 of 46.
 
 <a id="step-58f"></a>
 
