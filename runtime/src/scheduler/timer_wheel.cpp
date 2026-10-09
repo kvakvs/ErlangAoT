@@ -1,6 +1,7 @@
 #include "timer_wheel.hpp"
 #include <algorithm>
 #include <bit>
+#include <utility>
 
 namespace clause::runtime::detail {
 namespace {

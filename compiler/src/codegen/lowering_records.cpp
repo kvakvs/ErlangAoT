@@ -36,19 +36,19 @@ llvm::Value *access(ExpressionLowering &state, const ast::RecordAccess &access) 
     auto *mismatch = bad_record(state, value);
     check_record(state, layout, value, mismatch);
     return lower_inspection(state, abi::v1::ContainerInspection::tuple_element, value,
-                            *semantic::record_field(layout, access.field) + 1, mismatch);
+                            analyzed(semantic::record_field(layout, access.field)) + 1, mismatch);
 }
 
 // Build a new tuple from the already evaluated update values and the record's other fields.
 llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &record) {
     const auto &layout = *semantic::record_layout(state.module, record.identity);
-    auto *value = state.values.at(&state.module.syntax->expression(*record.base));
+    auto *value = state.values.at(&state.module.syntax->expression(analyzed(record.base)));
     auto *mismatch = bad_record(state, value);
     check_record(state, layout, value, mismatch);
     std::vector<llvm::Value *> values(layout.fields.size() + 1);
     values[0] = lower_atom(state, layout.name);
     for (const auto &field : record.fields) {
-        const auto position = *semantic::record_field(layout, std::get<ast::Atom>(field.name)) + 1;
+        const auto position = analyzed(semantic::record_field(layout, std::get<ast::Atom>(field.name))) + 1;
         values[position] = state.values.at(&state.module.syntax->expression(field.value));
     }
     for (std::size_t i = 1; i < values.size(); ++i) {
@@ -119,7 +119,7 @@ llvm::Value *lower_record(ExpressionLowering &state, const ast::ExprId &id) {
     }
     if (const auto *index = std::get_if<ast::RecordIndex>(&expression.value)) {
         const auto &layout = *semantic::record_layout(state.module, index->record, expression.source);
-        return lower_integer(state, std::to_string(*semantic::record_field(layout, index->field) + 2));
+        return lower_integer(state, std::to_string(analyzed(semantic::record_field(layout, index->field)) + 2));
     }
     return nullptr;
 }

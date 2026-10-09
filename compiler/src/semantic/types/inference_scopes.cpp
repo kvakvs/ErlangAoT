@@ -401,7 +401,8 @@ void enter(BindingFacts &bindings, const ast::Expression &expression, const std:
                      work);
     } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value)) {
         enter_try(bindings, *attempt, index, work);
-    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value)) {
+    } else if (const auto *conditional = std::get_if<ast::MaybeExpression>(&value);
+               conditional && conditional->otherwise) {
         enter_branch(bindings, {std::nullopt, bindings.failures(expression)}, *conditional->otherwise, index, work);
     } else if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         const auto &clause = receive->clauses[index];
@@ -652,8 +653,8 @@ void bind(BindingFacts &bindings, const ast::Expression &expression, const std::
 
 // Close a construct: the facts after it are the join of its completed clauses' facts, if any completed.
 void close(BindingFacts &bindings) {
-    if (bindings.merged.back()) {
-        bindings.values = std::move(*bindings.merged.back());
+    if (auto &merged = bindings.merged.back()) {
+        bindings.values = std::move(*merged);
     }
     bindings.merged.pop_back();
 }

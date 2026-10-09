@@ -150,6 +150,14 @@ struct Control {
     std::optional<Term> argument;
 };
 
+// The argument a control consumes; the scanner gave one to every control that reads it.
+const Term &argument_of(const Control &control) {
+    if (!control.argument) {
+        bad_argument();
+    }
+    return *control.argument;
+}
+
 // A format split into literal pieces and control sequences.
 using Element = std::variant<Piece, Control>;
 
@@ -360,7 +368,7 @@ std::u32string string_text(std::u32string text, const Control &control) {
 
 // ~s: an atom, or chardata (Latin-1 without t).
 std::u32string string_control(const Control &control) {
-    const auto &argument = *control.argument;
+    const auto &argument = argument_of(control);
     auto text = argument.is_atom() ? code_points(need(argument.atom_spelling()))
                                    : chardata(argument, control.unicode ? Charset::lenient : Charset::latin1);
     if (!control.unicode && std::ranges::any_of(text, [](char32_t c) { return c > 0xFF; })) {
@@ -371,7 +379,7 @@ std::u32string string_control(const Control &control) {
 
 // ~b and ~B: an integer in base P (2..36, default 10), lowercase for ~b.
 std::u32string integer_control(const Control &control) {
-    const auto &argument = *control.argument;
+    const auto &argument = argument_of(control);
     const auto base = control.precision.value_or(10);
     if (!argument.is_integer() || base < 2 || base > 36) {
         bad_argument();
@@ -385,7 +393,7 @@ std::u32string integer_control(const Control &control) {
 
 // ~c: a character, reduced to its low byte (two's complement) without t.
 std::u32string char_control(const Control &control) {
-    const auto &argument = *control.argument;
+    const auto &argument = argument_of(control);
     if (!argument.is_integer()) {
         bad_argument();
     }
@@ -411,7 +419,7 @@ std::u32string newline_control(const Control &control) {
 // ~w: io_lib:write/1 text in the field.
 std::u32string write_control(const Control &control) {
     const auto style = control.unicode ? TermStyle::write_unicode : TermStyle::write;
-    return term_field(code_points(need(format_term(*control.argument, style))), control, control.precision);
+    return term_field(code_points(need(format_term(argument_of(control), style))), control, control.precision);
 }
 
 // ~p: pretty printed from the current column (or the precision) within a line of the field width (default 80).
@@ -421,7 +429,7 @@ std::u32string print_control(const Control &control, std::int64_t column) {
     }
     const PrettyOptions options{control.precision.value_or(column + 1), control.width.value_or(80), control.unicode,
                                 control.strings};
-    return pretty(*control.argument, options);
+    return pretty(argument_of(control), options);
 }
 
 // The text of one control sequence; `column` is where it starts.

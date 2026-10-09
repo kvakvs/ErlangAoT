@@ -47,7 +47,7 @@ def scope_file(nodes, number):
 def check_ir(triple, flag):
     """Functions keep their Erlang names and declaring files; macro code is located at its invocation."""
     ir = compile_to("llvm-ir", triple, f"ir-{triple}", "-g").decode("utf-8")
-    assert f'!"{flag}"' in ir and "emissionKind: LineTablesOnly" in ir, triple
+    assert f'!"{flag}"' in ir and "emissionKind: FullDebug" in ir, triple
     nodes = metadata(ir)
     twice = next(number for number, node in nodes.items() if node.startswith("distinct !DISubprogram(name: \"twice\""))
     assert 'debug.hrl"' in scope_file(nodes, twice) and "line: 4," in nodes[twice], nodes[twice]

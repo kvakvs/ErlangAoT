@@ -33,8 +33,9 @@ void function_scope(llvm::DIBuilder &debug, llvm::Module &output, const semantic
     auto *type = debug.createSubroutineType(debug.getOrCreateTypeArray({}));
     const auto line = line_number(site);
     const auto flags = llvm::DISubprogram::toSPFlags(false, true, optimized);
-    auto *scope = debug.createFunction(file, utf8(definition.name), definition.symbol, file, line, type, line,
-                                       llvm::DINode::FlagZero, flags);
+    // No linkage name: GDB would name frames by the native symbol instead of the Erlang name.
+    auto *scope =
+        debug.createFunction(file, utf8(definition.name), "", file, line, type, line, llvm::DINode::FlagZero, flags);
     output.getFunction(definition.symbol)->setSubprogram(scope);
     for (const auto &origin : module.syntax->extent(definition.source)) {
         const auto &physical = source_site(origin);
@@ -65,9 +66,10 @@ void prepare_source_locations(llvm::Module &output, const semantic::Module &modu
                               SourceScopes &sources) {
     llvm::DIBuilder debug(output);
     auto *file = debug.createFile(output.getSourceFileName(), "");
-    // Erlang uses a private language code here; these scopes describe source lines, not debugger types.
+    // Erlang uses a private language code here; these scopes describe source lines, not debugger types. Full
+    // emission keeps the named function scopes in DWARF, which drops them from line-only units that inline nothing.
     debug.createCompileUnit(llvm::dwarf::DW_LANG_lo_user, file, "clau", optimized, "", 0, "",
-                            llvm::DICompileUnit::LineTablesOnly);
+                            llvm::DICompileUnit::FullDebug);
     output.addModuleFlag(llvm::Module::Warning, "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
     for (const auto &function : module.functions) {
         const auto &source = module.syntax->form(function.form).source;

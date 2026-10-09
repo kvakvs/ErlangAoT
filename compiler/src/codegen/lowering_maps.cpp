@@ -105,7 +105,7 @@ llvm::Value *lower_map_pattern(ExpressionLowering &state, const semantic::MatchN
     if (node.operation == semantic::MatchOperation::map_shape) {
         value = service(state, Op::test, std::array{input});
     } else {
-        auto *key = lower_body(state, *node.key);
+        auto *key = lower_body(state, analyzed(node.key));
         value = service(state, Op::get, std::array{input, key});
     }
     state.rejection = saved;

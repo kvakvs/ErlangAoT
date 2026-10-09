@@ -29,6 +29,8 @@ const std::vector<ast::ComprehensionQualifier> *comprehension_qualifiers(const a
 std::span<const ast::Qualifier> zipped(const ast::ComprehensionQualifier &qualifier);
 // A generator's input expression; empty for a filter.
 std::optional<ast::ExprId> generator_input(const ast::Qualifier &qualifier);
+// The expression a simple qualifier evaluates first: a generator's input or a filter's test.
+ast::ExprId qualifier_expression(const ast::Qualifier &qualifier);
 // The patterns a generator matches each element with (a map generator's key, then its value); none for a filter.
 std::vector<ast::PatternSyntaxId> generator_patterns(const ast::Qualifier &qualifier);
 // Whether a generator is strict (<:-, <:=): a mismatching element raises instead of being skipped.

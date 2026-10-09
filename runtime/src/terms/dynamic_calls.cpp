@@ -111,7 +111,7 @@ std::optional<std::size_t> arguments(ProcessContext &context, const Term &list, 
         raise_call_error(context, ErrorReason::badarg);
         return std::nullopt;
     }
-    return **count;
+    return *count;
 }
 
 // Build fun M:F/A from runtime operands: badarg unless M and F are atoms and A is an integer in 0..255.

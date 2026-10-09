@@ -6,15 +6,17 @@ project targets.
 
 ## Line tables
 
-- Each generated function and anonymous fun gets a line-only debug scope named
-  by its Erlang name (`leaf`, `-main/1-fun-0-`) with its native symbol as the
-  linkage name, in the file that declares it, so a function from an included
-  `.hrl` belongs to that file.
+- Each generated function and anonymous fun gets a debug scope named by its
+  Erlang name (`leaf`, `-main/1-fun-0-`), in the file that declares it, so a
+  function from an included `.hrl` belongs to that file. It has no linkage
+  name: GDB would show the native symbol (`clausev1_...`) instead.
 - Every expression is located at its physical source line. Code a macro
   expands to is located at the macro's invocation; included code at its line
   in the included file.
-- No variables or types are described: the compile unit is
-  `LineTablesOnly`, language `DW_LANG_lo_user`.
+- No variables or types are described, language `DW_LANG_lo_user`. The
+  compile unit is `FullDebug` all the same: LLVM leaves the function scopes of
+  a `LineTablesOnly` unit out of DWARF unless something was inlined, and
+  debuggers then name frames by symbol.
 - Format: CodeView for MSVC targets, DWARF 5 elsewhere. Without `-g` objects
   carry no line tables (IR inspection and `--emit llvm-ir` still keep the
   locations their source comments need).
@@ -50,8 +52,10 @@ compiled names, never runtime atom tables:
   debug:main/1
 ```
 
-GDB spells the call `call clause::runtime::debug_erlang_stack()`. `-Os`
-executables may drop the helper with other unreferenced code.
+GDB spells the call `call clause::runtime::debug_erlang_stack()` after
+`set language c++` (frames of Erlang code have no language GDB parses C++ names
+in). It names the frames `twice () at /path/debug.hrl:5`. `-Os` executables may
+drop the helper with other unreferenced code.
 
 ## Tests
 
@@ -62,6 +66,7 @@ executables may drop the helper with other unreferenced code.
 - `linking_debugger`: links the fixture with `-g` at O0/O2 (and a PDB beside it
   on Windows), then drives LLDB (the LLVM installation's on Windows) or GDB:
   breakpoints in `debug.hrl` and `debug.erl` stop in `twice` and `leaf`, and
-  the helper prints their Erlang stacks. Exit 77 (skipped) when no debugger
-  exists. Validated with LLDB on Windows x64; GDB on Linux awaits
-  [step 63](../.agents/11-plan.md#step-63).
+  the helper prints their Erlang stacks. A debugger that does not start (an
+  LLVM release's LLDB without its Python library) is passed over; exit 77
+  (skipped) when none exists. Validated with LLDB on Windows x64 and GDB 16 on
+  Linux x86-64 ([step 63](../.agents/11-plan.md#step-63)).

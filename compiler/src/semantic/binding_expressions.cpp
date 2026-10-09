@@ -140,6 +140,13 @@ bool protect(const ast::ExprValue &value, std::vector<Visit> &pending) {
     return true;
 }
 
+// Queues expression visits so the first expression is analyzed first.
+void push_reversed(std::vector<Visit> &pending, const std::vector<ast::ExprId> &expressions) {
+    for (auto item = expressions.rbegin(); item != expressions.rend(); ++item) {
+        pending.push_back({*item});
+    }
+}
+
 // Everything a try binds is unsafe afterwards: its body and clauses form one conditional scope, then the after body
 // another. Of and catch clauses start once the body is analyzed.
 bool attempt(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Visit> &pending) {
@@ -149,14 +156,14 @@ bool attempt(const ast::ExprId &id, const ast::ExprValue &value, std::vector<Vis
     }
     if (guarded->after) {
         pending.push_back({id, Action::conditional_exit});
-        pending.insert(pending.end(), guarded->after->rbegin(), guarded->after->rend());
+        push_reversed(pending, *guarded->after);
         pending.push_back({id, Action::conditional_enter});
     }
     pending.push_back({id, Action::conditional_exit});
     if (!branch_clauses(value).empty()) {
         pending.push_back({id, Action::branch});
     }
-    pending.insert(pending.end(), guarded->body.rbegin(), guarded->body.rend());
+    push_reversed(pending, guarded->body);
     pending.push_back({id, Action::conditional_enter});
     return true;
 }

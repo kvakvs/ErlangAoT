@@ -143,6 +143,8 @@ void endings(Runtime &runtime) {
     auto &executor = detail::Executor::of(main);
     require(&executor.run(main) == &main && !detail::Executor::alive(main, pid.word()) && runtime.context_count() == 1,
             "a crashed process was not released alone");
+    // The executor forgets its schedules before the finished process goes, as after every run.
+    executor.clear();
     require(runtime.destroy_context(&main) == Status::ok, "teardown failed");
     auto &waiting = process(runtime, spin);
     auto &halting = process(runtime, halt);

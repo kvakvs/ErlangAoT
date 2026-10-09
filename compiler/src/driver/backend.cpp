@@ -93,15 +93,16 @@ bool generate(codegen::Compilation &compilation, const Analysis &analysis, const
     return codegen::optimize(compilation) && emit(compilation);
 }
 
-// Link the in-memory module and startup objects; project executables wait for the whole invocation.
-void link(const codegen::Compilation &compilation, const FrontendRequest &frontend, const DiagnosticSink &sink) {
+// Link the in-memory module and startup objects into `output`; project executables wait for the whole invocation.
+void link(const codegen::Compilation &compilation, const FrontendRequest &frontend, const std::filesystem::path &output,
+          const DiagnosticSink &sink) {
     auto inputs = frontend.protected_inputs;
     inputs.reserve(inputs.size() + compilation.request().inputs.size());
     for (const auto &input : compilation.request().inputs) {
         inputs.push_back(input.source_path);
     }
     auto executable = linking::stage_executable(
-        {.output = *frontend.executable_output,
+        {.output = output,
          .target_triple = codegen::target_triple(compilation),
          .objects = compilation.result().outputs(),
          .linker = frontend.backend.linker,
@@ -151,7 +152,7 @@ bool compile(std::vector<codegen::CompilationInput> inputs, const FrontendReques
         return true;
     }
     if (frontend.executable_output) {
-        link(compilation, frontend, sink);
+        link(compilation, frontend, *frontend.executable_output, sink);
         return false;
     }
     deliver(std::move(compilation), frontend);

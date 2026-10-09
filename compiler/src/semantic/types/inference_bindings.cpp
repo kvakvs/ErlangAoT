@@ -79,9 +79,9 @@ struct PatternParts {
         }
         const auto fields = record_values(*bindings.function.module, pattern, true);
         for (std::size_t position = 0; position < fields.size(); ++position) {
-            if (fields[position]) {
+            if (const auto &field = fields[position]) {
                 const auto element = tuple_element(lattice, value.type, position + 2, fields.size() + 1);
-                pending.emplace_back(*fields[position], Fact{element});
+                pending.emplace_back(*field, Fact{element});
             }
         }
     }

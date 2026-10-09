@@ -480,6 +480,8 @@ void Executor::clear() noexcept {
         io->close();
     }
     const std::scoped_lock lock(mutex_);
+    // The wheel links timers embedded in the schedules: unlink them while the schedules still exist.
+    wheel_.clear();
     for (const auto &[process, state] : schedules_) {
         if (process != finished_) {
             process->runtime().destroy_context(process);
@@ -489,7 +491,6 @@ void Executor::clear() noexcept {
     queue_.clear();
     port_queue_.clear();
     parked_.clear();
-    wheel_.clear();
     ending_.clear();
     stopped_.clear();
     names_.clear();

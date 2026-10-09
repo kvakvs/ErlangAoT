@@ -196,7 +196,7 @@ bool proven_extraction(ExpressionLowering &state, const semantic::MatchNode &nod
 // are the same word, and no other term equals one exactly.
 bool immediate_literal(ExpressionLowering &state, const semantic::MatchNode &node, std::span<llvm::Value *const> values,
                        const std::vector<llvm::BasicBlock *> &blocks) {
-    const auto &value = *node.literal;
+    const auto &value = analyzed(node.literal);
     if (!std::holds_alternative<semantic::EmptyValue>(value) && !std::holds_alternative<std::int64_t>(value) &&
         !std::holds_alternative<ast::Atom>(value)) {
         return false;
@@ -250,12 +250,13 @@ void node(ExpressionLowering &state, const semantic::MatchNode &node, const std:
     }
     auto *input = values[node.input];
     if (node.operation == semantic::MatchOperation::bind) {
-        state.bindings.emplace(*node.binding, input);
+        state.bindings.emplace(analyzed(node.binding), input);
         state.builder.CreateBr(blocks.at(node.success));
         return;
     }
-    auto *expected = node.operation == semantic::MatchOperation::exact_binding ? state.bindings.at(*node.binding)
-                                                                               : literal(state, *node.literal);
+    auto *expected = node.operation == semantic::MatchOperation::exact_binding
+                         ? state.bindings.at(analyzed(node.binding))
+                         : literal(state, analyzed(node.literal));
     state.builder.CreateCondBr(lower_exact(state, input, expected), blocks.at(node.success), blocks.at(node.mismatch));
 }
 

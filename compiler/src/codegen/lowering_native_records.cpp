@@ -111,7 +111,7 @@ llvm::Value *construct(ExpressionLowering &state, const ast::Expression &express
 llvm::Value *update(ExpressionLowering &state, const ast::RecordExpression &record, const Identity &identity) {
     std::vector<llvm::Value *> values;
     values.reserve(3 + 2 * record.fields.size());
-    values.push_back(value_of(state, *record.base));
+    values.push_back(value_of(state, analyzed(record.base)));
     values.push_back(identity.module);
     values.push_back(identity.name);
     for (const auto &field : record.fields) {
@@ -252,10 +252,10 @@ llvm::Value *lower_anonymous_record(ExpressionLowering &state, const ast::Expres
 
 llvm::Value *lower_record_pattern(ExpressionLowering &state, const semantic::MatchNode &node, llvm::Value *input,
                                   llvm::BasicBlock *mismatch) {
-    const auto &name = std::get<ast::Atom>(*node.literal);
+    const auto &name = std::get<ast::Atom>(analyzed(node.literal));
     if (node.operation == semantic::MatchOperation::record_test) {
         auto *test = lower_native_test(state, static_cast<Check>(node.index), input,
-                                       lower_atom(state, *node.record_module), lower_atom(state, name));
+                                       lower_atom(state, analyzed(node.record_module)), lower_atom(state, name));
         auto *matched = llvm::BasicBlock::Create(state.entry.getContext(), "record.matched", &state.entry);
         state.builder.CreateCondBr(test, matched, mismatch);
         state.builder.SetInsertPoint(matched);

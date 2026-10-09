@@ -142,10 +142,10 @@ class Construct final {
     // Whether an operand never produces a value: then neither does the expression.
     bool never(const ast::ExprId &id) const { return fact(id) == inference_.graph.bottom(); }
 
-    // A map update: each field of each map the base can be.
-    Id update(const ast::MapExpression &value);
-    // A tuple record update: the base's matching tuples with the given fields set.
-    Id record_update(const RecordLayout &layout, const ast::RecordExpression &value);
+    // A map update of `base`: each field of each map the base can be.
+    Id update(const ast::ExprId &base, const ast::MapExpression &value);
+    // A tuple record update of `base`: the base's matching tuples with the given fields set.
+    Id record_update(const RecordLayout &layout, const ast::ExprId &base, const ast::RecordExpression &value);
     // A tuple record's layout, or null for a native or unknown record.
     const RecordLayout *tuple_record(const ast::RecordIdentity &identity) const;
     // The members of a fact that can be tuple record `layout`: its tuples of the record's size and tag, and the
@@ -218,8 +218,8 @@ Id Construct::record_members(const RecordLayout &layout, const Id fact) {
     return lattice_.join(results, 0);
 }
 
-Id Construct::record_update(const RecordLayout &layout, const ast::RecordExpression &value) {
-    auto record = record_members(layout, fact(*value.base));
+Id Construct::record_update(const RecordLayout &layout, const ast::ExprId &base, const ast::RecordExpression &value) {
+    auto record = record_members(layout, fact(base));
     for (const auto &field : value.fields) {
         const auto *name = std::get_if<ast::Atom>(&field.name);
         const auto position = name ? record_field(layout, *name) : std::nullopt;
@@ -237,7 +237,7 @@ std::optional<Id> Construct::operator()(const ast::RecordExpression &value) {
         return std::nullopt;
     }
     if (value.base) {
-        return record_update(*layout, value);
+        return record_update(*layout, *value.base, value);
     }
     std::vector<Id> elements{lattice_.atom(utf8(layout->name.name))};
     for (const auto &field : record_values(module_, value, false)) {
@@ -286,7 +286,7 @@ std::optional<Id> Construct::operator()(const ast::Tuple &value) {
 
 std::optional<Id> Construct::operator()(const ast::MapExpression &value) {
     if (value.base) {
-        return update(value);
+        return update(*value.base, value);
     }
     std::vector<Id> fields;
     for (const auto &field : value.fields) {
@@ -302,17 +302,17 @@ std::optional<Id> Construct::operator()(const ast::MapExpression &value) {
     return lattice_.map(std::move(fields));
 }
 
-Id Construct::update(const ast::MapExpression &value) {
+Id Construct::update(const ast::ExprId &base, const ast::MapExpression &value) {
     std::vector<Id> fields;
     std::vector<bool> exact;
     for (const auto &field : value.fields) {
         fields.insert(fields.end(), {fact(field.key), fact(field.value)});
         exact.push_back(field.kind == ast::MapFieldKind::exact);
     }
-    if (never(*value.base) || std::ranges::contains(fields, inference_.graph.bottom())) {
+    if (never(base) || std::ranges::contains(fields, inference_.graph.bottom())) {
         return inference_.graph.bottom();
     }
-    return map_update(lattice_, fact(*value.base), fields, exact);
+    return map_update(lattice_, fact(base), fields, exact);
 }
 
 std::optional<Id> Construct::operator()(const ast::Bitstring &value) {

@@ -12,11 +12,29 @@
 #include <clause/abi/messages.hpp>
 #include <clause/abi/records.hpp>
 #include <map>
+#include <optional>
 #include <set>
+#include <stdexcept>
 #include <string_view>
 
 namespace clause::codegen {
 using BindingReads = std::map<const ast::Expression *, semantic::BindingId>;
+
+// The value semantic analysis guarantees `value` holds; a missing one is an internal compiler error.
+template <typename Value> const Value &analyzed(const std::optional<Value> &value) {
+    if (!value) {
+        throw std::logic_error("code generation reached a value semantic analysis did not provide");
+    }
+    return *value;
+}
+
+// The same for a temporary, returned by value so no reference outlives it.
+template <typename Value> Value analyzed(std::optional<Value> &&value) {
+    if (!value) {
+        throw std::logic_error("code generation reached a value semantic analysis did not provide");
+    }
+    return std::move(*value);
+}
 
 struct ExpressionLowering {
     // Borrow the current generic entry, immutable source/analysis and target-word builder.

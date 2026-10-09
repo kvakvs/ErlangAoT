@@ -132,8 +132,9 @@ void patterns(const Module &module, const Function &function, const ast::Express
     }
     scope_patterns(module, function, expression, out, bits);
     for (const auto &clause : branch_clauses(expression.value)) {
-        if (clause.handler && clause.handler->exception_class) {
-            (void)make_match_plan(module, function, *clause.handler->exception_class, out, {.word_bits = bits});
+        const auto exception = clause.handler ? clause.handler->exception_class : std::nullopt;
+        if (exception) {
+            (void)make_match_plan(module, function, *exception, out, {.word_bits = bits});
         }
         if (clause.pattern) {
             (void)make_match_plan(module, function, pattern_root(*module.syntax, *clause.pattern), out,

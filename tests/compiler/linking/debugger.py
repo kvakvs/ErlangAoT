@@ -4,6 +4,7 @@ Uses LLDB (on Windows the LLVM installation's), else GDB; exits 77 (CTest skip) 
 """
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -27,16 +28,24 @@ def link(name, *options):
     return executable
 
 
+def runs(candidate):
+    """Whether the debugger starts at all (an LLVM release's LLDB may lack the Python library it links)."""
+    try:
+        return subprocess.run([candidate, "--version"], capture_output=True, timeout=60).returncode == 0
+    except OSError:
+        return False
+
+
 def debugger():
     """The debugger command line prefix and its dialect, or None."""
     candidates = [shutil.which("lldb")]
     if os.name == "nt":
         candidates.append(str(Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "LLVM/bin/lldb.exe"))
     for candidate in candidates:
-        if candidate and Path(candidate).is_file():
+        if candidate and Path(candidate).is_file() and runs(candidate):
             return [candidate, "-b"], "lldb"
     gdb = shutil.which("gdb")
-    return ([gdb, "-batch", "-nx"], "gdb") if gdb and os.name != "nt" else (None, None)
+    return ([gdb, "-batch", "-nx"], "gdb") if gdb and os.name != "nt" and runs(gdb) else (None, None)
 
 
 def session(command, dialect, executable):
@@ -45,7 +54,7 @@ def session(command, dialect, executable):
         "lldb": ["breakpoint set --file debug.hrl --line 5", "breakpoint set --file debug.erl --line 8", "run",
                  "bt 1", "expr -- clause::runtime::debug_erlang_stack()", "continue", "bt 1",
                  "expr -- clause::runtime::debug_erlang_stack()", "kill"],
-        "gdb": ["break debug.hrl:5", "break debug.erl:8", "run", "bt 1",
+        "gdb": ["set language c++", "break debug.hrl:5", "break debug.erl:8", "run", "bt 1",
                 "call clause::runtime::debug_erlang_stack()", "continue", "bt 1",
                 "call clause::runtime::debug_erlang_stack()", "kill"],
     }[dialect]
@@ -72,9 +81,10 @@ for level in ("O0", "O2"):
     if not command:
         continue
     output = session(command, dialect, executable)
-    # Both stops show the Erlang function and line, then the Erlang frames of the stopped process.
+    # Both stops show the Erlang function and line (GDB may name the file by its full path), then the Erlang frames of
+    # the stopped process.
     for function, place in (("twice", "debug.hrl:5"), ("leaf", "debug.erl:8")):
-        assert f"{function} at {place}" in output or f"{function} () at {place}" in output, (level, output)
+        assert re.search(rf"\b{function}( \(\))? at (\S*[/\\])?{re.escape(place)}", output), (level, output)
     stacks = output.count("debug:middle/1\n  debug:main/1")
     assert "debug:twice/1\n  debug:middle/1" in output and "debug:leaf/1\n  debug:middle/1" in output, output
     assert stacks == 2, (level, output)

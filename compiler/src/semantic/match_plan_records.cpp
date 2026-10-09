@@ -80,10 +80,11 @@ bool expand_tuple(MatchPlanner &state, const PatternVisit &visit, const Normaliz
     state.plan.values += count + 1;
     auto output = base + count;
     for (std::size_t i = fields.size(); i != 0; --i) {
-        if (!fields[i - 1]) {
+        const auto &value = fields[i - 1];
+        if (!value) {
             continue;
         }
-        pending.emplace_back(PatternVisit{*fields[i - 1], --output});
+        pending.emplace_back(PatternVisit{*value, --output});
         MatchNode field{pattern.origin, MatchOperation::tuple_element, visit.input};
         field.output = output;
         field.index = i;

@@ -2,6 +2,7 @@
 #include <array>
 #include <cerrno>
 #include <csignal>
+#include <optional>
 
 #include <poll.h>
 #include <sys/wait.h>
@@ -227,22 +228,31 @@ void prepare_io() noexcept {
     static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
 }
 
+namespace {
+// The reason the write of `fd` that just failed failed (errno), or none when it should be retried: it was
+// interrupted, or another holder of the descriptor made it non-blocking (then wait until it takes more).
+std::optional<DriverError> write_failure(int fd) {
+    const auto error = errno;
+    if (error == EINTR) {
+        return std::nullopt;
+    }
+    if (error == EAGAIN) {
+        pollfd ready{fd, POLLOUT, 0};
+        static_cast<void>(poll(&ready, 1, -1));
+        return std::nullopt;
+    }
+    return DriverError{error == EPIPE ? "epipe" : (error == EBADF ? "ebadf" : "eio")};
+}
+} // namespace
+
 std::expected<void, DriverError> write_all(int fd, std::span<const std::byte> bytes) {
     while (!bytes.empty()) {
         const auto written = write(fd, bytes.data(), bytes.size());
-        if (written < 0 && errno == EINTR) {
-            continue;
+        if (written >= 0) {
+            bytes = bytes.subspan(static_cast<std::size_t>(written));
+        } else if (auto failure = write_failure(fd)) {
+            return std::unexpected(std::move(*failure));
         }
-        if (written < 0 && errno == EAGAIN) {
-            // Another holder of the descriptor made it non-blocking: wait until it takes more.
-            pollfd ready{fd, POLLOUT, 0};
-            static_cast<void>(poll(&ready, 1, -1));
-            continue;
-        }
-        if (written < 0) {
-            return std::unexpected(DriverError{errno == EPIPE ? "epipe" : (errno == EBADF ? "ebadf" : "eio")});
-        }
-        bytes = bytes.subspan(static_cast<std::size_t>(written));
     }
     return {};
 }

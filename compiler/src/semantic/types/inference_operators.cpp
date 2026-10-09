@@ -35,11 +35,16 @@ std::optional<std::string> printed(const std::optional<BigInt> &value) {
 // The integers a fact's numbers hold, as a range.
 Range range(const Numbers &numbers) { return {parsed(numbers.low), parsed(numbers.high)}; }
 
-// Whether a range holds one integer.
-bool singleton(const Range &range) { return range.low && range.high && *range.low == *range.high; }
+// The one integer a range holds, if it holds exactly one.
+std::optional<BigInt> single(const Range &range) {
+    return range.low && range.high && *range.low == *range.high ? range.low : std::nullopt;
+}
 
 // Whether every integer of a range is zero or more.
 bool non_negative(const Range &range) { return range.low && *range.low >= 0; }
+
+// The lower bound of a range of integers that are all zero or more; none for any other range.
+std::optional<BigInt> non_negative_low(const Range &range) { return non_negative(range) ? range.low : std::nullopt; }
 
 // `operation` of two bounds that are both known; unbounded otherwise.
 template <typename Operation>
@@ -232,8 +237,8 @@ Id Operations::arithmetic(const std::u32string_view name, const Operands &operan
 }
 
 Id Operations::integer_arithmetic(const std::u32string_view name, const Range &left, const Range &right) {
-    if (singleton(left) && singleton(right)) {
-        return fold(name, *left.low, *right.low);
+    if (const auto x = single(left), y = single(right); x && y) {
+        return fold(name, *x, *y);
     }
     if (name == U"+") {
         return integers({combine(left.low, right.low, std::plus<>()), combine(left.high, right.high, std::plus<>())});
@@ -241,8 +246,8 @@ Id Operations::integer_arithmetic(const std::u32string_view name, const Range &l
     if (name == U"-") {
         return integers({combine(left.low, right.high, std::minus<>()), combine(left.high, right.low, std::minus<>())});
     }
-    if (non_negative(left) && non_negative(right)) {
-        return integers({*left.low * *right.low, combine(left.high, right.high, std::multiplies<>())});
+    if (const auto x = non_negative_low(left), y = non_negative_low(right); x && y) {
+        return integers({*x * *y, combine(left.high, right.high, std::multiplies<>())});
     }
     return lattice_.category("integer");
 }
@@ -252,7 +257,8 @@ Id Operations::divide(std::u32string_view, const Operands &operands) {
     const auto a = lattice_.numbers(left);
     const auto b = lattice_.numbers(right);
     const auto divisor = range(b);
-    const bool zero = !b.floats && singleton(divisor) && *divisor.low == 0;
+    const auto only = single(divisor);
+    const bool zero = !b.floats && only && *only == 0;
     return !numeric(a) || !numeric(b) || zero ? graph_.bottom() : lattice_.category("float");
 }
 
@@ -265,7 +271,9 @@ Id Operations::bitwise(const std::u32string_view name, const Operands &operands)
     }
     const auto x = range(a);
     const auto y = range(b);
-    return singleton(x) && singleton(y) ? fold(name, *x.low, *y.low) : integer_bits(name, x, y);
+    const auto one_x = single(x);
+    const auto one_y = single(y);
+    return one_x && one_y ? fold(name, *one_x, *one_y) : integer_bits(name, x, y);
 }
 
 Id Operations::integer_bits(const std::u32string_view name, const Range &left, const Range &right) {
@@ -468,7 +476,8 @@ Id Operations::absolute(const std::span<const Id> arguments) {
         const auto magnitude = combine(bounds.low, bounds.high, [](const BigInt &low, const BigInt &high) {
             return std::max(abs(low), abs(high));
         });
-        const auto low = non_negative(bounds) ? *bounds.low : BigInt(0);
+        const auto lowest = non_negative_low(bounds);
+        const auto low = lowest ? *lowest : BigInt(0);
         const bool negative = bounds.high && *bounds.high <= 0;
         results.push_back(negative ? negate(integers(bounds)) : integers({low, magnitude}));
     }

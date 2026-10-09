@@ -11,6 +11,13 @@ struct GeneratorInput {
     }
 };
 
+// The expression a qualifier evaluates first: a filter's test or a generator's input.
+struct QualifierExpression {
+    ast::ExprId operator()(const ast::FilterQualifier &value) const { return value.expression; }
+
+    template <typename Generator> ast::ExprId operator()(const Generator &value) const { return value.input; }
+};
+
 // Patterns a generator matches each element with, in match order.
 struct GeneratorPatterns {
     std::vector<ast::PatternSyntaxId> operator()(const ast::FilterQualifier &) const { return {}; }
@@ -56,6 +63,10 @@ std::optional<ast::ExprId> generator_input(const ast::Qualifier &qualifier) {
     return std::visit(GeneratorInput{}, qualifier.value);
 }
 
+ast::ExprId qualifier_expression(const ast::Qualifier &qualifier) {
+    return std::visit(QualifierExpression{}, qualifier.value);
+}
+
 std::vector<ast::PatternSyntaxId> generator_patterns(const ast::Qualifier &qualifier) {
     return std::visit(GeneratorPatterns{}, qualifier.value);
 }
@@ -85,8 +96,7 @@ std::vector<ast::ExprId> comprehension_children(const ast::ExprValue &value) {
     std::vector<ast::ExprId> result;
     for (const auto &qualifier : *comprehension_qualifiers(value)) {
         for (const auto &simple : zipped(qualifier)) {
-            const auto *filter = std::get_if<ast::FilterQualifier>(&simple.value);
-            result.push_back(filter ? filter->expression : *generator_input(simple));
+            result.push_back(qualifier_expression(simple));
         }
     }
     const auto templates = comprehension_templates(value);

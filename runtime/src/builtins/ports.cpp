@@ -145,7 +145,7 @@ std::optional<std::pair<std::string, std::optional<std::string>>> variable(const
         return std::pair{*name, std::optional<std::string>{}};
     }
     const auto text = text_of(value);
-    return text ? std::optional{std::pair{*name, std::optional{*text}}} : std::nullopt;
+    return text ? std::optional{std::pair{*name, text}} : std::nullopt;
 }
 
 // Apply {env, Env}; false when Env is not a list of {Name, Value | false}.
@@ -508,7 +508,11 @@ TermResult<Term> port_info1(ProcessContext &context, const Term &port) {
     }
     std::vector<Term> items;
     for (const auto name : {"name", "links", "id", "connected", "input", "output", "os_pid"}) {
-        items.push_back(need(item(context, name, *info_value(context, name, *info))));
+        const auto value = info_value(context, name, *info);
+        if (!value) {
+            bad_argument();
+        }
+        items.push_back(need(item(context, name, *value)));
     }
     return TermFactory(context).list(items);
 }

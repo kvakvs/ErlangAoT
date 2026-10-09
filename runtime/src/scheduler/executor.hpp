@@ -110,9 +110,7 @@ struct PortEvent final {
 
     // A message {Port, {exit_status, Status}}.
     static PortEvent exited(Word port, std::int64_t status) noexcept {
-        auto event = message(Kind::exit_status, port);
-        event.status = status;
-        return event;
+        return {Kind::exit_status, port, 0, std::nullopt, 0, {}, PortInput::Kind::data, false, status};
     }
 
     // A message {Port, {data, Data}} of one input unit (data, eol or noeol).
@@ -354,6 +352,8 @@ class Executor final {
     void accept_connection(Word listen, SocketEvent event);
     // Act on a port signal at a process that does not run elsewhere.
     void apply(ProcessContext &target, const PortEvent &event);
+    // Deliver the 'DOWN' of a port monitor event with its `reason`; PortEvent::down always names the monitor.
+    void deliver_down(ProcessContext &target, const PortEvent &event, const Term &reason);
     // link(Port), unlink(Port), monitor(port, Port), demonitor of a port monitor and exit/2 to a port of `process`.
     bool link_port(ProcessContext &process, Word port);
     void unlink_port(ProcessContext &process, Word port) noexcept;

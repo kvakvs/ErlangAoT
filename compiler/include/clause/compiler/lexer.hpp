@@ -54,7 +54,7 @@ class Lexer {
     // EOF.
     void recover_form();
     // Change keyword classification before scanning the next form.
-    void set_keywords(std::set<std::u32string> keywords);
+    void set_keywords(const std::set<std::u32string> &keywords);
     // Toggle one feature-sensitive reserved word before the next physical form.
     void set_keyword(std::u32string keyword, bool enabled);
     // Map subsequent tokens to a logical filename and line at the current

@@ -202,7 +202,7 @@ void schedule_qualifier(BindingAnalysis &state, const ast::Qualifier &part, cons
                         std::vector<Visit> &pending) {
     const auto *filter = std::get_if<ast::FilterQualifier>(&part.value);
     if (!filter) {
-        pending.push_back({*generator_input(part), false, visit.guard});
+        pending.push_back({qualifier_expression(part), false, visit.guard});
     } else if (!visit.guard && guard_test(state, filter->expression)) {
         state.function.guard_filters.insert(&state.module.syntax->expression(filter->expression));
         pending.push_back({filter->expression, true, true});

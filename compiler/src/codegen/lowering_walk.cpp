@@ -141,9 +141,10 @@ bool record_enter(ExpressionLowering &state, const ast::ExprId &id, std::vector<
     state.record_values.insert_or_assign(&expression, std::vector<llvm::Value *>(fields.size()));
     pending.push_back({id, Action::value});
     for (auto position = order.rbegin(); position != order.rend(); ++position) {
-        pending.push_back({id, Action::record_field, *position, fields[*position]});
-        if (fields[*position]) {
-            pending.push_back({*fields[*position]});
+        const auto &field = fields[*position];
+        pending.push_back({id, Action::record_field, *position, field});
+        if (field) {
+            pending.push_back({*field});
         }
     }
     return true;
@@ -432,7 +433,7 @@ struct Walk {
     void schedule_operand(const ast::Qualifier &part) {
         const auto *filter = std::get_if<ast::FilterQualifier>(&part.value);
         if (!filter) {
-            pending.push_back({*semantic::generator_input(part)});
+            pending.push_back({semantic::qualifier_expression(part)});
         } else if (!state.function.guard_filters.contains(&state.module.syntax->expression(filter->expression))) {
             pending.push_back({filter->expression});
         }

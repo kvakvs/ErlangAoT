@@ -112,8 +112,16 @@ template <typename Parameter> bool convert(ProcessContext &context, Word word, s
         static_cast<void>(value ? badarg(context) : fail(context, BuiltinFailure{.term = value.error()}));
         return false;
     }
-    out = std::move(**value);
+    out = std::move(*value);
     return true;
+}
+
+// A converted argument; convert() filled every one before the call.
+template <typename Parameter> Parameter converted(std::optional<Parameter> &value) {
+    if (!value) {
+        bad_argument();
+    }
+    return std::move(*value);
 }
 
 // Convert the arguments in order, call `Function` and publish its result.
@@ -124,7 +132,7 @@ Word call(ProcessContext &context, std::span<const Word> words, std::index_seque
         return 0;
     }
     try {
-        return result_word(context, Function(context, std::move(*std::get<Index>(values))...));
+        return result_word(context, Function(context, converted(std::get<Index>(values))...));
     } catch (const BuiltinFailure &failure) {
         return fail(context, failure);
     }

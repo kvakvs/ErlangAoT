@@ -40,10 +40,11 @@ std::optional<SelectedEntry> entry_selection(const Target &target, const PlanOpt
     if (options.entry) {
         return SelectedEntry{*options.entry, "--entry"};
     }
-    if (target.entry) {
-        return SelectedEntry{*parse_entry(target.entry->value), where(target.entry->site)};
+    if (!target.entry) {
+        return std::nullopt;
     }
-    return std::nullopt;
+    const auto entry = parse_entry(target.entry->value);
+    return entry ? std::optional{SelectedEntry{*entry, where(target.entry->site)}} : std::nullopt;
 }
 
 // Identify existing aliases and normalize unresolved paths without writing directories.

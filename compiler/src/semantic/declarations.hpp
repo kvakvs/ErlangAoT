@@ -3,6 +3,7 @@
 #include <array>
 #include <clause/abi/immediate_services.hpp>
 #include <clause/compiler/ast/module.hpp>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <optional>
@@ -24,8 +25,8 @@ struct BindingId {
     auto operator<=>(const BindingId &) const = default;
 };
 
-enum class BindingUse { read, definition, exact_check };
-enum class BindingContext { head, guard, body };
+enum class BindingUse : std::uint8_t { read, definition, exact_check };
+enum class BindingContext : std::uint8_t { head, guard, body };
 
 struct Binding {
     // Locate each read, definition or exact-equality obligation in the original owned syntax.

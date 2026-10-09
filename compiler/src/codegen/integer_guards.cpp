@@ -13,7 +13,8 @@ bool tag_mask(llvm::BinaryOperator &mask, llvm::LoadInst &load) {
 
 // Match the low-tag equality through LLVM's comparison API; temporary probes never enter a module.
 bool tag_comparison(llvm::ICmpInst &check, llvm::BinaryOperator &mask) {
-    auto *expected = new llvm::ICmpInst(llvm::CmpInst::ICMP_EQ, &mask, llvm::ConstantInt::get(mask.getType(), 15));
+    auto *expected = llvm::CmpInst::Create(llvm::Instruction::ICmp, llvm::CmpInst::ICMP_EQ, &mask,
+                                           llvm::ConstantInt::get(mask.getType(), 15));
     const auto matches = check.isIdenticalTo(expected);
     expected->deleteValue();
     return matches;

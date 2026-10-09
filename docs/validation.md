@@ -41,7 +41,37 @@ cmake --build build/debug --target check-quality-all  # whole tree
   native consumers link the parent build's runtime through
   `ClauseRuntimeTargets.cmake` instead of compiling it again; only
   `runtime_link` builds the runtime standalone.
-- Thresholds and suppressions are never raised to pass the gate.
+- Thresholds and suppressions are never raised to pass the gate. Two
+  third-party exceptions are configured (plan 11 steps 63-64, user decision):
+  `cmake/tidy_filter.py` drops static analyzer reports located in Boost
+  headers (Boost.Multiprecision limb-storage false positives on Linux that
+  rewriting the calling code only moves) and counts them in the output, and
+  `bugprone-exception-escape` ignores `bad_array_new_length` (MSVC's map/set
+  move constructors allocate; allocation failure is fatal anyway).
+- clang-tidy checks project headers on every host: the header filter accepts
+  `/` and `\` separators (Windows paths never matched before step 63).
+
+### Linux
+
+The same gate runs on Linux with the pinned LLVM 23.1.2 Linux SDK as host
+compiler (`CC`/`CXX` from its `bin/`), the system libstdc++, Ninja and CMake
+3.28 or newer. Boost 1.90 and toml++ 3.4.0 come from installed packages or
+are extracted into `thirdparty/` (`boost_1_90_0/`, `tomlplusplus-3.4.0/`);
+only Windows downloads them. The release archive's `ld.lld` links ICU 70
+(Ubuntu 22.04) and its `lldb` links Python 3.14; on hosts without them
+`linking_lto` needs ICU 70 on `LD_LIBRARY_PATH`, and `linking_debugger` uses
+GDB.
+
+```sh
+cmake --preset debug --fresh -G Ninja -DBUILD_TESTING=ON
+cmake --build build/debug
+ctest --preset debug -j 16
+```
+
+`check-quality` (Lizard, clang-tidy) runs on the Windows development host
+only; other hosts build and run the tests. Step 63 ran it once on Linux, which
+found what the Windows run could not see (POSIX-only sources, libstdc++
+`std::optional`), and left it clean.
 
 ## Fixtures and provenance
 
@@ -96,9 +126,10 @@ never stand in for a whole-test pass.
 
 ## Platform and sanitizer status
 
-- Native generated-code execution: Windows x64 only.
-- Linux, Apple Silicon and native 32-bit execution: pending (objects are only
-  inspected).
+- Native generated-code execution: Windows x64; Linux x86-64 (plan 11
+  step 63).
+- 32-bit and ARM execution: pending (steps 64-65).
+- Apple Silicon: pending (step 66).
 - Compiler/frontend ASan, UBSan and LeakSanitizer: pending. The prebuilt Windows
   LLVM SDK conflicts with instrumented code (`annotate_string` 0 vs 1; earlier
   also duplicate rpmalloc/ASan allocator symbols). No check was disabled to
@@ -179,6 +210,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Test counts are full CTest passes with zero skips
 | 2026-10-07 | Plan 11 step 33 closures with captured variables | 175 (171 fast) | 134 changed | Fast 171/171; full `-j 12` 175/175 in 126 s; Lizard and tidy passed after complexity fixes |
 | 2026-10-07 | Plan 11 step 34 named funs | 176 (172 fast) | 132 changed | Fast 172/172; full `-j 12` 176/176 in 152 s; Lizard 0 warnings; tidy passed |
 | 2026-10-07 | Plan 11 step 35 dynamic calls `M:F(Args)`, `apply/2,3`, runtime `fun M:F/A` (ABI 8) | 177 (173 fast) | 290 (analyzer config changed) | Fast 173/173; full `-j 12` 177/177 in 142 s; Lizard 0 warnings and tidy passed after one complexity and three tidy fixes |
+| 2026-10-09 | Plan 11 step 63 Linux x86-64 (WSL2 Ubuntu 25.04, glibc 2.41, LLVM 23.1.2 SDK clang, libstdc++ 14, GDB 16.2) | 235 | 338 | Full CTest 235/235 in 161 s; Lizard and clang-tidy clean (7 analyzer reports in Boost headers ignored); Windows gate 235/235 with headers checked |
 | 2026-10-06 | Plan 11 step 27E ERTS big integer limit, `error:system_limit` | 165 (161 fast) | 157 changed | Fast 161/161; full `-j 12` 165/165 in 130 s; Lizard 0 warnings; tidy passed; 21 executable goldens reproduce under OTP |
 | 2026-10-06 | Plan 11 step 27D no map size or key-work caps | 164 (160 fast) | 13 changed | Fast 160/160; full `-j 12` 164/164 in 115 s; after a tidy fix in `bit_order`, 35 affected tests pass; Lizard 0 warnings; tidy passed |
 | 2026-10-06 | Plan 11 step 27C tuple arity limit 16,777,215 | 164 (160 fast) | 51 changed | Fast 160/160; full `-j 12` 164/164 in 121 s; Lizard 0 warnings; tidy passed |

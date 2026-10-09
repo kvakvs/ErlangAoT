@@ -29,6 +29,8 @@ if(quality_frontend STREQUAL "MSVC")
     list(APPEND quality_implicit_includes ${quality_msvc_includes})
 endif()
 list(REMOVE_DUPLICATES quality_implicit_includes)
+# clang-tidy brings its own compiler builtin headers; another Clang release's would not match its builtins.
+list(FILTER quality_implicit_includes EXCLUDE REGEX "/lib/clang/[0-9]+/include$")
 foreach(directory IN LISTS quality_implicit_includes)
     if(quality_frontend STREQUAL "MSVC")
         list(APPEND toolchain_args "--extra-arg=/imsvc${directory}")
@@ -137,6 +139,14 @@ while(start LESS end_unit)
         COMMAND ${tidy_runner} "-p=${selected_database}" "-j=${QUALITY_JOBS}" -quiet
             "-clang-tidy-binary=${CLANG_TIDY_EXECUTABLE}" "-config-file=${project_root}/.clang-tidy" ${toolchain_args}
         WORKING_DIRECTORY "${project_root}"
+        RESULT_VARIABLE runner_result
+        OUTPUT_FILE "${selected_database}/output.txt"
+        ERROR_FILE "${selected_database}/output.txt"
+    )
+    # Print the batch's diagnostics without analyzer reports located in Boost; the filter decides the result.
+    execute_process(
+        COMMAND "${QUALITY_PYTHON}" "${CMAKE_CURRENT_LIST_DIR}/tidy_filter.py" "${selected_database}/output.txt"
+            "${runner_result}"
         RESULT_VARIABLE tidy_result
     )
     math(EXPR shown_start "${start} + 1")

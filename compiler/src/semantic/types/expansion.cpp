@@ -21,6 +21,8 @@ struct Substitution {
     // Borrow one bounded graph/declaration and retain actual arguments for one-layer expansion.
     Registry &registry;
     const Declaration &declaration;
+    // The declaration's body, which the expansion rebuilds.
+    Id body;
     std::span<const Id> arguments;
     // Memoized nodes and an explicit postorder stack avoid repeated work or host recursion.
     std::map<Id, Id> memo;
@@ -61,15 +63,12 @@ struct Substitution {
                 visit(id, ready);
             }
         }
-        return memo.at(*declaration.body);
+        return memo.at(body);
     }
 };
 
 // Opaque and nominal structure is visible only inside the defining module; elsewhere the name stays closed.
 bool can_expand(const Declaration &decl, const std::string_view requesting_module) {
-    if (!decl.body) {
-        return false;
-    }
     const bool closed = decl.kind == ast::TypeDeclarationKind::opaque || decl.kind == ast::TypeDeclarationKind::nominal;
     return !closed || requesting_module == decl.key.module;
 }
@@ -85,13 +84,14 @@ std::optional<Id> expand_reference(Registry &registry, const Id reference, const
         return {};
     }
     const auto &decl = registry.declarations[found->second];
-    if (!can_expand(decl, requesting_module)) {
+    if (!decl.body || !can_expand(decl, requesting_module)) {
         return {};
     }
+    const auto body = *decl.body;
     if (const auto cached = registry.expansions.find(reference); cached != registry.expansions.end()) {
         return cached->second;
     }
-    Substitution substitution{registry, decl, node.children, {}, {{*decl.body, false}}};
+    Substitution substitution{registry, decl, body, node.children, {}, {{body, false}}};
     const auto result = substitution.run();
     registry.expansions.emplace(reference, result);
     return result;

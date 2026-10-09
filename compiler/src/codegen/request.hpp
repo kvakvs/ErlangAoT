@@ -58,8 +58,8 @@ struct CompilationLimits {
     std::size_t module_nodes = 250000;
     std::size_t batch_nodes = 1000000;
     // Stop serialization before buffers exceed per-module or aggregate byte budgets.
-    std::size_t module_bytes = 64 * 1024 * 1024;
-    std::size_t batch_bytes = 256 * 1024 * 1024;
+    std::size_t module_bytes = std::size_t{64} * 1024 * 1024;
+    std::size_t batch_bytes = std::size_t{256} * 1024 * 1024;
 };
 
 struct CompilationRequest {

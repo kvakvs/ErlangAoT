@@ -42,7 +42,9 @@ std::u32string_view Lexer::rest() const { return std::u32string_view(source_->te
 
 std::size_t Lexer::offset() const { return cursor_; }
 
-void Lexer::set_keywords(std::set<std::u32string> keywords) { keywords_.assign(keywords.begin(), keywords.end()); }
+void Lexer::set_keywords(const std::set<std::u32string> &keywords) {
+    keywords_.assign(keywords.begin(), keywords.end());
+}
 
 void Lexer::set_keyword(std::u32string keyword, const bool enabled) {
     std::erase(keywords_, keyword);

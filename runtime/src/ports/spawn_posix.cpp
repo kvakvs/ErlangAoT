@@ -61,8 +61,11 @@ std::vector<std::string> environment(const PortOptions &options) {
         }
     }
     std::vector<std::string> result;
+    result.reserve(variables.size());
     for (const auto &[name, value] : variables) {
-        result.push_back(name + "=" + value);
+        auto &entry = result.emplace_back(name);
+        entry += '=';
+        entry += value;
     }
     return result;
 }
@@ -70,6 +73,7 @@ std::vector<std::string> environment(const PortOptions &options) {
 // A null-terminated array of pointers into `strings`, as execve takes.
 std::vector<char *> pointers(std::vector<std::string> &strings) {
     std::vector<char *> result;
+    result.reserve(strings.size() + 1);
     for (auto &text : strings) {
         result.push_back(text.data());
     }

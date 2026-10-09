@@ -683,8 +683,7 @@ void Executor::apply(ProcessContext &target, const PortEvent &event) {
         signal(target, event.port, reason.value(), SignalKind::link);
         break;
     case PortEvent::Kind::down:
-        deliver(target,
-                down_message(target, *event.reference, {.pid = event.port, .name = event.name}, reason.value()));
+        deliver_down(target, event, reason.value());
         break;
     case PortEvent::Kind::closed:
         deliver(target, port_message(target, event.port, "closed"));
@@ -704,6 +703,12 @@ void Executor::apply(ProcessContext &target, const PortEvent &event) {
     case PortEvent::Kind::data:
         deliver(target, data_message(target, event));
         break;
+    }
+}
+
+void Executor::deliver_down(ProcessContext &target, const PortEvent &event, const Term &reason) {
+    if (event.reference) {
+        deliver(target, down_message(target, *event.reference, {.pid = event.port, .name = event.name}, reason));
     }
 }
 

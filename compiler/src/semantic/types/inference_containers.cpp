@@ -1,5 +1,6 @@
 #include "inference_containers.hpp"
 #include "inference_values.hpp"
+#include <algorithm>
 #include <charconv>
 
 namespace clause::semantic::types {

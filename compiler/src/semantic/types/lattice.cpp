@@ -460,8 +460,8 @@ class Assemble final {
             out.push_back(lattice_.category("number"));
             return;
         }
-        if (interval) {
-            out.push_back(interval_fact(lattice_, *families.bounds()));
+        if (const auto bounds = families.bounds(); interval && bounds) {
+            out.push_back(interval_fact(lattice_, *bounds));
         } else {
             for (const auto &value : families.integers) {
                 out.push_back(lattice_.integer(value));

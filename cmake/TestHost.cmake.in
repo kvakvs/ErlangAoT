@@ -30,6 +30,8 @@ foreach(variable IN ITEMS CMAKE_MAKE_PROGRAM CMAKE_C_COMPILER CMAKE_CXX_COMPILER
 endforeach()
 # Nested test programs link the parent build's runtime (`include("${RUNTIME_TARGETS}")` gives
 # Clause::generated_program) and, like the parent's tests, carry debug information only on request.
+# Nested builds use no C++ modules either (no clang-scan-deps needed).
+list(APPEND host_configure_args -DCMAKE_CXX_SCAN_FOR_MODULES=OFF)
 set(host_runtime_targets [==[@PROJECT_BINARY_DIR@/ClauseRuntimeTargets.cmake]==])
 list(APPEND host_configure_args "-DRUNTIME_TARGETS=${host_runtime_targets}")
 set(host_test_debug_info [==[@CLAUSE_TEST_DEBUG_INFO@]==])

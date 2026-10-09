@@ -214,7 +214,9 @@ std::vector<ast::ExprId> update_children(const Module &module, const ast::Record
     for (const auto &field : record.fields) {
         result.push_back(field.value);
     }
-    result.insert(native ? result.begin() : result.end(), *record.base);
+    if (record.base) {
+        result.insert(native ? result.begin() : result.end(), *record.base);
+    }
     return result;
 }
 
@@ -261,8 +263,8 @@ std::vector<ast::ExprId> expression_children(const Module &module, const ast::Ex
     }
     const auto fields = record_values(module, *record, false);
     for (const auto position : record_order(module, *record)) {
-        if (fields[position]) {
-            result.push_back(*fields[position]);
+        if (const auto &field = fields[position]) {
+            result.push_back(*field);
         }
     }
     return result;

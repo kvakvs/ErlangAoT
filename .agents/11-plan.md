@@ -102,8 +102,8 @@ Invariants that later steps must keep:
 | Owned fixtures and history | [Validation](../docs/validation.md), [fixture instructions](../tests/fixtures/patternmatch/generated/README.md) |
 
 Last reviewed `maint-29` pin: `21776803ecd11f5fa948732c0ec66b8f325dedfc`;
-oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase L close, step 62B,
-2026-10-09): 235 full-mode CTests; `check-quality-all` clean (338 units).
+oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (step 63, 2026-10-09):
+235 full-mode CTests; `check-quality-all` clean (338 units, headers now checked); Linux x86-64 235/235.
 
 ## Step overview
 
@@ -459,10 +459,27 @@ scanned for deadlines.
 Backlog: V01. Depends on: [58](#step-58).
 
 - Success criteria
-  - [ ] Fresh build, full gate and executable goldens pass; versions and counts
-    published in `docs/validation.md`.
+  - [x] Fresh build, full gate and executable goldens pass; versions and counts
+    published in `docs/validation.md`. Evidence 2026-10-09: WSL2 Ubuntu 25.04
+    (kernel 6.6.87, glibc 2.41), LLVM 23.1.2 Linux SDK clang as host compiler,
+    libstdc++ 14, CMake 3.31, GDB 16.2. Fixed for Linux: three missing
+    standard includes and a vector range insert only the MSVC STL accepted;
+    GDB named frames by symbol (a `LineTablesOnly` unit loses its subprograms
+    in DWARF: units are `FullDebug` now, without linkage names); `debugger.py`
+    passes over a debugger that cannot start. Lizard clean; clang-tidy
+    revealed findings the Windows gate never reported (its header filter did
+    not match backslash paths; libstdc++ optional/POSIX-only code): all fixed;
+    by user decision `cmake/tidy_filter.py` ignores analyzer reports located in
+    Boost (`cpp_int` limb-storage false positives) and exception-escape ignores
+    MSVC's `bad_array_new_length` (map/set moves). Also fixed: a shutdown
+    use-after-free (`Executor::clear` freed timers before unlinking the wheel)
+    and a test destroying a process the executor still scheduled. Tidy runs on
+    the Windows host only from now on (user).
 - Tests
-  - [ ] Full gate plus fixture projects at O0/O2.
+  - [x] Full gate plus fixture projects at O0/O2. Evidence: full CTest
+    235/235 (161 s, 16 slots), including every executable golden and program
+    fixture over the eight-combination matrix. The release SDK's `ld.lld`
+    needs Ubuntu 22.04's ICU 70 (private `LD_LIBRARY_PATH` for `linking_lto`).
 
 <a id="step-64"></a>
 

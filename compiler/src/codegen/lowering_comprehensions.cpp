@@ -98,7 +98,7 @@ void start_map(ExpressionLowering &state, Generator &generator, llvm::Value *inp
 // Before the loop: keep the generator's input in its slot.
 Generator start(ExpressionLowering &state, const ast::Qualifier &part) {
     Generator generator{&part, source(part), semantic::strict_generator(part), root_slot(state)};
-    const auto &syntax = state.module.syntax->expression(*semantic::generator_input(part));
+    const auto &syntax = state.module.syntax->expression(semantic::qualifier_expression(part));
     auto *input = state.values.at(&syntax);
     store(state, input, generator.slot);
     const auto known = known_expression(state, syntax);
@@ -144,7 +144,7 @@ llvm::Value *take_bits(ExpressionLowering &state, const Generator &generator, co
     const auto plan = body_pattern_plan(state, semantic::pattern_root(*state.module.syntax, pattern), mode);
     const auto values = lower_match_plan(state, plan, std::array{generator.input}, matched, mismatch);
     state.builder.SetInsertPoint(matched);
-    return values.at(*plan.rest);
+    return values.at(analyzed(plan.rest));
 }
 
 // A map element is the key and value at the position, unless the map is exhausted.

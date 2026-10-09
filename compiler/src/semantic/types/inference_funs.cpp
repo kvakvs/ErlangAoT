@@ -1,6 +1,7 @@
 #include "inference_funs.hpp"
 #include "../funs.hpp"
 #include "function_types.hpp"
+#include <algorithm>
 #include <charconv>
 
 namespace clause::semantic::types {

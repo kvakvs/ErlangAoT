@@ -96,9 +96,8 @@ Status dispatch_builtin(Context *context, const char *module, std::size_t module
         context->generated_calls().fail_service(Status::invalid_argument);
         return Status::invalid_argument;
     }
-    if (context->generated_calls().failure()) {
-        const auto &failure = *context->generated_calls().failure();
-        return failure.status.value_or(call_status(failure.code));
+    if (const auto &failure = context->generated_calls().failure()) {
+        return failure->status.value_or(call_status(failure->code));
     }
     const auto status = dispatch(*context, {module, module_size}, {function, function_size}, arguments, arity, *result);
     context->generated_calls().fail_service(status,

@@ -107,8 +107,8 @@ Modules module_index(const std::span<const std::unique_ptr<Module>> modules, con
     Modules result;
     for (const auto &module : modules) {
         if (!result.emplace(module->name, module.get()).second) {
-            report(*module, &module->syntax->form(*module->declaration).source,
-                   "duplicate module in compilation batch: " + utf8(module->name), out);
+            const auto *source = module->declaration ? &module->syntax->form(*module->declaration).source : nullptr;
+            report(*module, source, "duplicate module in compilation batch: " + utf8(module->name), out);
         }
     }
     return result;

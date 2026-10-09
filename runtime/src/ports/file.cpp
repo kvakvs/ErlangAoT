@@ -1,11 +1,11 @@
 #include "port.hpp"
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <cerrno>
 #include <cstring>
 #include <filesystem>
-#include <mutex>
 #include <system_error>
 
 #ifdef _WIN32
@@ -333,16 +333,41 @@ class FileDriver final : public PortDriver {
     bool controllable() const noexcept override { return true; }
 
     std::optional<Bytes> control(std::uint32_t operation, std::span<const std::byte> bytes, Word) override {
-        const std::scoped_lock lock(mutex_);
         const auto kind = static_cast<FileOperation>(operation);
         if (operation >= static_cast<std::uint32_t>(FileOperation::read_file) &&
             operation <= static_cast<std::uint32_t>(FileOperation::delete_dir)) {
             return path_operation(kind, bytes);
         }
+        const Turn turn(*this);
         return file_operation(kind, bytes);
     }
 
   private:
+    // Holds the open file for one operation: another caller waits until it ends.
+    class Turn {
+      public:
+        explicit Turn(FileDriver &driver) : driver_(driver) {
+            while (driver_.busy_.test_and_set(std::memory_order_acquire)) {
+                driver_.busy_.wait(true, std::memory_order_relaxed);
+            }
+        }
+
+        Turn(const Turn &) = delete;
+        Turn &operator=(const Turn &) = delete;
+        Turn(Turn &&) = delete;
+        Turn &operator=(Turn &&) = delete;
+
+        // Give the file to the next waiting caller.
+        ~Turn() {
+            driver_.busy_.clear(std::memory_order_release);
+            driver_.busy_.notify_one();
+        }
+
+      private:
+        // The driver whose open file this operation holds.
+        FileDriver &driver_;
+    };
+
     // An operation on the open file; none for an unknown operation.
     std::optional<Bytes> file_operation(FileOperation operation, std::span<const std::byte> bytes) {
         switch (operation) {
@@ -462,8 +487,8 @@ class FileDriver final : public PortDriver {
         return end;
     }
 
-    // Guards the descriptor against two processes using the port at once.
-    std::mutex mutex_;
+    // Set while one process's operation on the open file runs; another process waits for it to clear.
+    std::atomic_flag busy_;
     // The open file, or -1, and the mode byte it was opened with.
     int fd_ = -1;
     unsigned mode_ = 0;
