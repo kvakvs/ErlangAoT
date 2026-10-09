@@ -97,7 +97,8 @@ pinned `erl_lint`/`erl_internal`/`erl_types` behavior:
 - Each alias or overload has its own variable scope; repeated formals follow
   OTP's last-argument substitution.
 - Recursive aliases stay finite named references; opaque bodies expand only in
-  their module; nominal names are kept everywhere.
+  their module; nominal names are kept everywhere, and only the
+  specification check reads a nominal type's definition, inside its module.
 - Constant evaluation is exact, limited to 10,000 decimal digits per value.
 
 ## Inference
@@ -247,6 +248,8 @@ Inference is separate from declared types and never trusts specs.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
+- A `receive` is the join of its clauses and its `after` body, which a
+  timeout of `infinity` never runs.
 - A recursive component starts every member's result at `none()` and re-infers
   all members until no result changes; each round joins the new result with the
   previous one (widens it after the first 8 rounds,
@@ -258,10 +261,24 @@ Inference is separate from declared types and never trusts specs.
   facts are discarded, so only facts from the final assumptions remain.
 - A shared work budget bounds inference; exhaustion loses precision and falls
   back to generic code, never rejects a program.
-- Specs are checked only for provable contradictions with known integer
-  results/arguments, producing warnings. This is not success typing. Plan
-  step 58I makes any contradiction between a `-spec` and the inferred types an
-  error (inferred must be the declared type or narrower).
+- Specifications that contradict inference are errors (step 58I,
+  `semantic/types/contracts`). A declared type becomes the facts it holds (or
+  more): built-in types by name (`byte()` is `0..255`, `timeout()` is
+  `non_neg_integer() | infinity`, `iodata()` and `iolist()` lists of any
+  shape), aliases by their definition, opaque and nominal types by their
+  definition inside their module and as any term outside it, remote types
+  through the batch, type variables through their `when` bounds (an
+  unconstrained one is any term), maps and records by their category. A
+  specification contradicts the code when its facts share no value with what
+  inference proves: the inferred result (unless unknown, or `none()`: a
+  function that never returns fits any result), an argument's entry domain,
+  or a call's argument facts against every overload. `none()`/`no_return()`
+  admits only a function that never returns. The error names the function,
+  the declared type as written and the inferred one. Because inferred facts
+  may hold more values than the code produces, only a disjoint pair is a
+  contradiction: a declared type narrower than the inferred one is
+  accepted. `-callback` specifications are not checked. OTP's compiler does
+  not check specifications ([differences](differences.md#language-edge-cases)).
 
 ### Inference domain
 

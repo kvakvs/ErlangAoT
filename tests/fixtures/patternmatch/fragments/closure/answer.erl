@@ -1,7 +1,7 @@
 -module(answer).
 -export([identity/1, repeat/2, compare/2, staged/1, select/1, guard/1, wide/0, alternatives/1]).
 -record(r, {a, b}).
--spec staged(integer()) -> integer().
+-spec staged(integer()) -> integer() | tuple().
 identity(X) -> X.
 repeat(X, X) -> {same, X};
 repeat(X, Y) -> {different, X, Y}.

@@ -115,6 +115,20 @@ std::vector<ast::ExprId> clause_roots(const std::vector<ast::FunctionClause> &cl
     return result;
 }
 
+// A receive's value: its clauses' joined values, and its after body's unless the timeout is infinity.
+Fact receive_fact(Inference &inference, const ast::Module &syntax, const ast::ReceiveExpression &receive,
+                  const Impossible &impossible) {
+    const auto clauses = joined(inference, syntax, receive.clauses, &impossible);
+    if (!receive.after) {
+        return clauses;
+    }
+    const auto &timeout = inference.graph.get(recorded_fact(inference, syntax, receive.after->timeout).type);
+    if (timeout.kind == Kind::atom && timeout.name == "infinity") {
+        return clauses;
+    }
+    return merged(inference.graph, clauses, sequence(inference, syntax, receive.after->body));
+}
+
 // The joined clause values of a case, if or receive; none for other expressions.
 std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value,
                                    const Impossible &impossible) {
@@ -125,8 +139,7 @@ std::optional<Fact> selection_fact(Inference &inference, const ast::Module &synt
         return joined(inference, syntax, choice->clauses, &impossible);
     }
     if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
-        // The after body is no BranchClause: a receive with one keeps no common fact.
-        return receive->after ? Fact{inference.graph.top()} : joined(inference, syntax, receive->clauses, &impossible);
+        return receive_fact(inference, syntax, *receive, impossible);
     }
     return std::nullopt;
 }
@@ -329,7 +342,10 @@ bool walk(Inference &inference, const FunctionRef function, BindingFacts &bindin
 // A function body's result and the entry domain of its arguments.
 struct Body {
     Fact result;
+    // The inputs a summary shows (the success domain, or the entry domain of a function that never returns) and the
+    // entry domain.
     std::vector<Id> domain;
+    std::vector<Id> entry;
 };
 
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
@@ -346,11 +362,11 @@ Body body(Inference &inference, const FunctionRef function, std::size_t &work,
     std::vector<Frame> frames;
     expand_heads(definition, frames);
     if (!walk(inference, function, bindings, std::move(frames), work, recorded)) {
-        return {{inference.graph.exhausted()}, bindings.inputs};
+        return {{inference.graph.exhausted()}, bindings.inputs, bindings.inputs};
     }
     // A function that returns shows its success domain; one that never does, its entry domain.
     const auto result = joined(inference, syntax, definition.clauses, &bindings.impossible);
-    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success};
+    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain};
 }
 
 // Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
@@ -384,6 +400,7 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
         changed = changed || next != summary.result;
         summary.result = next;
         summary.inputs = std::move(evaluated.domain);
+        summary.entry = std::move(evaluated.entry);
     }
     return changed;
 }
@@ -434,6 +451,7 @@ void infer_pass(Inference &inference, const CallGraph &calls) {
             recorded.clear();
             auto evaluated = body(inference, function, work, recorded);
             summarize(inference, function, evaluated.result, std::move(evaluated.domain));
+            inference.functions.at(function.function).entry = std::move(evaluated.entry);
         }
     }
 }

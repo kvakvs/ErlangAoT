@@ -233,7 +233,8 @@ Id match(BindingFacts &bindings, const ast::ExprId &pattern, const Fact value, c
          std::size_t &work) {
     Lattice lattice(bindings.inference.graph);
     const auto narrowed = lattice.meet(value.type, pattern_shape(bindings, pattern));
-    if (narrowed == lattice.graph().bottom() && value.type != narrowed) {
+    // A value that never exists, or that the pattern cannot match, never enters the clause.
+    if (narrowed == lattice.graph().bottom()) {
         bindings.impossible.insert(body);
     }
     bindings.publish(pattern, {narrowed, value.argument}, work);

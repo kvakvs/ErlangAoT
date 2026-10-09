@@ -1,6 +1,6 @@
 -module(answer).
 -export([id/1, truth/0, falsity/0, ok_value/0, unicode/0, empty/0, nul/0, projected/0]).
--spec truth() -> integer().
+-spec truth() -> integer() | atom().
 truth() -> true.
 falsity() -> false.
 ok_value() -> ok.

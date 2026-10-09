@@ -30,10 +30,10 @@ def expression(rng, depth):
 
 
 def generate(source, work):
-    """Pair annotated/unannotated functions and deliberately false contracts."""
+    """Pair annotated/unannotated functions and deliberately loose contracts (a contradicting one is an error)."""
     fixtures = source / "tests/fixtures/codegen/native"
     answer = (fixtures / "answer.erl").read_text(encoding="utf-8")
-    answer += "\n-spec value() -> atom().\n-spec identity(integer()) -> integer().\n"
+    answer += "\n-spec value() -> atom() | integer().\n-spec identity(integer()) -> integer().\n"
     (work / "answer.erl").write_text(answer, encoding="utf-8")
     client = (fixtures / "client.erl").read_text(encoding="utf-8")
     calls = (fixtures / "calls.txt").read_text(encoding="utf-8")

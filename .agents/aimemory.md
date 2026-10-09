@@ -404,6 +404,17 @@ Step facts beyond the plan record:
 - 53: decided no ports; feature `ports` (26) deferred; adding a FeatureId needs tests/abi/features.cpp names snapshot
   and a codegen_placeholders CASE for deferred compiler features. Phase I closed: full CTest 206/206 (131 s, -j 32);
   check-quality-all found one tidy complexity issue (fixed, changed-scope rerun clean). Phase script build/plan11/phase.cmd.
+- 58B-58I (2026-10-09): inference = postorder Frame walk (inference_scopes) + evaluate dispatch (operators, values,
+  containers, funs) + BindingFacts (publish pattern parts, saved scope stack, aliases, merged clause-end facts,
+  entry/success domains). Expectations: python tests/compiler/inference/expectations.py <clau> <fixture> [--record];
+  scratchpad update_inputs.py pattern = set expect to inferred when only inputs differ. Specs (58I) are errors only
+  when DISJOINT (meet none()) from inferred facts: subtype would give false errors since facts over-approximate.
+  Deliberately false specs in patternmatch fragments must overlap now; editing a fragment needs
+  regenerate.py --corpus X (hash-only change). build/plan11/fmt.escript crashes (badarg) on fragments with
+  non-ASCII atoms (atoms, bits): format those by hand. clang-tidy flags easily-swappable (Id, Id) params unless
+  used together: pass structs (Operands, Cell, Slot, Lookup) or compare them first; it also flags implicit move of
+  structs holding std::map (exception-escape): copy instead. Boost cpp_int `x + var` in narrowing tripped the
+  analyzer (ArrayBound): use fixed +1/-1 helpers.
 User directions (keep):
 - Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
   57A-57F, backlog F35); step 53 decision superseded.
@@ -413,6 +424,8 @@ User directions (keep):
   domains, spec rejection renumbered 58I. Inputs in --print-types become these domains.
   2026-10-09 user direction: new step 58H1 (before 58I) narrows proven-integer ranges by guard comparisons.
   2026-10-09 user direction: consecutive integers print as N..M (step 58F1, printing only).
+  2026-10-09 user direction: step 58J (wide known tuples, positional lists, #{1..17 => a} maps, records printed as
+  records) added after 58I; not implemented in the 58B-58I run.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.
 - Test/gate time (2026-10-08): per step fast CTest + check-quality; full CTest only at phase/major completion and
   then INSTEAD of fast (no duplicate runs). Tidy default jobs = half the logical cores. Keep slow tests parallel

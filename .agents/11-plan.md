@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58I](#step-58i) (with [58F1](#step-58f1), [58H1](#step-58h1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -245,7 +245,8 @@ domains of 58G added 2026-10-09) make type inference precise
 enough that `tests/fixtures/inference/values.erl` and `base_types.erl` (every
 base and built-in type of the [type language](https://www.erlang.org/doc/system/typespec.html))
 reach their `expect:` signatures: today only integer constants, integer joins
-and argument relations are inferred (7 of 39 and 3 of 46 functions). Every
+and argument relations are inferred (7 of 39 and 3 of 46 functions; after 58I every
+expectation holds). Every
 built-in type already resolves in declarations. They depend only on the existing
 inference (steps 18, 21) and may move earlier. Each step removes the `today:`
 lines it closes, adds fixtures for its own cases, and keeps facts sound:
@@ -644,18 +645,68 @@ inferred)`) and make a contradiction a compile error at the `-spec`.
   acceptable) and report the declared and inferred types in the diagnostic.
 
 - Success criteria
-  - [ ] Every inferred result and every call with known arguments that
+  - [x] Every inferred result and every call with known arguments that
     contradicts a spec is a compile error naming the function, the declared
     type and the inferred type; a narrower inferred type, an unknown fact and
-    every construct in the rules above compile without one.
+    every construct in the rules above compile without one. Evidence
+    2026-10-09: `semantic/types/contracts` turns declared types into facts
+    (over-approximating) and reports disjoint result, entry-domain and call
+    facts; inferred facts over-approximate, so "contradicts" means "shares no
+    value" (a wider inferred result than declared is no proof and is
+    accepted). Nominal types expand inside their module;
+    `receive ... after infinity` ignores its after body; never-entered clauses
+    are impossible.
 - Tests
-  - [ ] Fixtures (`tests/fixtures/inference/contracts/`) with one
+  - [x] Fixtures (`tests/fixtures/inference/contracts/`) with one
     contradiction per fact kind of 58A (literal, operator result, container,
     fun, range, union, overloads, constraints, opaque/nominal, remote type,
     `no_return()`) each fail with the expected diagnostic; `values.erl`,
     `base_types.erl` and every existing program and fixture compile without
     one (their specs hold); `codegen_types`' deliberate `value() -> 42` vs
-    `atom()` case becomes an error test.
+    `atom()` case becomes an error test. Evidence: 13 fixtures checked by
+    `inference_contracts` (`tests/compiler/inference/contracts.py`); the
+    `frontend_cli` `infer_*` cases are errors now; deliberately false specs
+    in the patternmatch fragments (atoms, bits, closure, differential, facts)
+    and `tests/fixtures/codegen/constants64.erl` became overlapping ones and
+    those corpora were regenerated (hashes only, results unchanged).
+
+<a id="step-58j"></a>
+
+### 58J. Keep wide known containers and print records
+
+Backlog: F34. Depends on: [58D](#step-58d), [58I](#step-58i). Added
+2026-10-09 (user direction).
+
+Today a tuple of more than 16 elements is `tuple()`, a map of more than 16
+keys `map()`, a list only its joined element, and a record a plain tuple.
+
+- Tuples whose element facts are all known (literals or known types, none
+  `term()`) keep every element past the element budget:
+  `wide_tuple() -> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+  17}`; the graph's node budget still bounds them.
+- Lists built from known elements at fixed positions with a known minimal
+  length (literals, `[A, B | T]` with known parts) keep a positional fact,
+  like a tuple's, that joins to the plain list fact where shapes differ;
+  `--print-types` shows it in a documented Clause notation (the Erlang type
+  language has no positional list type), and specification checks and
+  joins treat it as its plain list fact.
+- Maps past the key budget join their keys into one association:
+  `wide_map() -> #{1..17 => a}` (keys and values joined, `=>` because a map
+  of those keys may lack some of them); the same applies when maps of
+  different key sets join.
+- A tuple fact whose first element is a record name and whose size is that
+  record's (a visible tuple record of the module) prints as the record:
+  `#point{x :: 0, y :: undefined}`; facts stay tuples.
+
+- Success criteria
+  - [ ] The four forms infer and print as above; budgets still widen
+    unknown or oversized facts; joins, meets and specification checks stay
+    sound.
+- Tests
+  - [ ] `values.erl` `wide_tuple` and `wide_map` expectations updated; new
+    rows for positional lists (literal, with a tail, joined with another
+    shape), a map join of different key sets, records constructed, updated
+    and matched, and a tuple of a record's size whose tag is another atom.
 
 <a id="step-59"></a>
 

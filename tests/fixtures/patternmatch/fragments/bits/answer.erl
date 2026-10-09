@@ -193,7 +193,7 @@ alias(<<1, T/bitstring>> = B) -> {B, T};
 alias(_) -> no.
 duplicate(B, B) -> same;
 duplicate(_, _) -> different.
--spec wrong_spec(integer()) -> integer().
+-spec wrong_spec(integer()) -> integer() | tuple().
 wrong_spec(<<X, T/binary>>) -> {X, T};
 wrong_spec(_) -> no.
 ordered(X) -> <<X:0, (1 div 0)>>.

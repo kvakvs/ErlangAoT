@@ -11,7 +11,7 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
+    "fixtures_manifest_sha256": "cda30e0f0eaa5d7f81fc6b2f924399519a11e9ba4c6b12fdc451953ca13c642b"
   },
   "generator_sha256": {
     "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
@@ -23,7 +23,7 @@
   },
   "input_manifest_sha256": "9e84f593df1ae4dfa50b63a788d161a69eb55796cf6c53961eaa92eb16cf584e",
   "files": {
-    "answer.erl": "a8ead737ac8cb20275ee3ce209b864951f15be4ccff201f870c958d5c352f5f4",
+    "answer.erl": "c48fd0cf333232c238eaf20f468d56beafbc559ffa8f3ffdd60bd2e85f979304",
     "client.erl": "3190a2b71be1af3571919c451e44797d906c79947a50ac44b0987e33cf6dd7e1",
     "expected.txt": "36c7f747578dd9fdf68e5d8e7424b590edbbf403c5ee725284290d747c5dcdd4",
     "project.toml": "382b41f836b0a4a8d6c87022e1addffe8acb616d43361be2777c6779401c32c3"
@@ -31,7 +31,7 @@
   "evidence": {
     "source_origin": "locally authored fragments; OTP supplies observations only",
     "source_sha256": {
-      "answer.erl": "a8ead737ac8cb20275ee3ce209b864951f15be4ccff201f870c958d5c352f5f4",
+      "answer.erl": "c48fd0cf333232c238eaf20f468d56beafbc559ffa8f3ffdd60bd2e85f979304",
       "client.erl": "3190a2b71be1af3571919c451e44797d906c79947a50ac44b0987e33cf6dd7e1"
     }
   }

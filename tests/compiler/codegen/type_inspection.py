@@ -18,7 +18,7 @@ owner = '''-module(owner).
 -opaque secret() :: integer().
 -nominal nominal_id() :: integer().
 -spec id(T) -> T when T :: term().
--spec value() -> atom().
+-spec value() -> integer().
 -callback cb(integer()) -> integer().
 -optional_callbacks([cb/1]).
 id(X) -> X.
@@ -46,7 +46,7 @@ def run(*args, expected=0):
 args = ('--print-types', 'user.erl', 'owner å.erl')
 result = run(*args)
 assert result.stdout == run(*args).stdout
-assert 'warning:' in result.stderr and 'contradicts specification' in result.stderr
+assert result.stderr == '', result.stderr
 text = result.stdout
 assert text.index('%% module "user"') < text.index('%% module "owner"')
 for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, chain(T)}.',
@@ -56,7 +56,7 @@ for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, cha
     assert declaration in text, declaration
 assert '-spec run() -> integer().\n%% declared: run() -> integer()\n%% inferred: run() -> 42\nrun() ->\n' in text
 assert '%% declared: id(T) -> T when T :: term()\n%% inferred: id(term()) -> argument 1\n' in text
-assert '%% declared: value() -> atom()\n%% inferred: value() -> 42\n' in text
+assert '%% declared: value() -> integer()\n%% inferred: value() -> 42\n' in text
 assert '%% inferred: local() -> 7\nlocal() ->\n    id(7) :: 7.\n' in text
 assert '%% inferred: id(term()) -> argument 1\n' in text
 assert '%% inferred: projection(term(), term()) -> argument 2\n' in text
@@ -66,6 +66,13 @@ verbose = run('--verbose', *args)
 assert verbose.stdout == text and 'phase=inference' in verbose.stderr
 assert not re.search(r'phase=(lowering|specialization|verification|optimization|emission)', verbose.stderr)
 assert not (work / 'build').exists()
+
+# A specification that shares no value with the inferred result is an error naming both types.
+(work / 'contradiction.erl').write_text('-module(contradiction).\n-export([value/0]).\n-spec value() -> atom().\n'
+                                       'value() -> 42.\n', encoding='utf-8')
+contradiction = run('--print-types', 'contradiction.erl', expected=1)
+assert ('contradiction.erl:3:1: inferred result contradicts specification for value: declared atom(), inferred 42'
+        in contradiction.stderr), contradiction.stderr
 
 # Case and if results join like clause results; a name bound by several of their clauses stays unknown.
 (work / 'branches.erl').write_text('''-module(branches).

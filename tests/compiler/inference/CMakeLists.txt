@@ -8,3 +8,9 @@ foreach(fixture IN LISTS fixtures)
         "$<TARGET_FILE:clau>" "${fixture}")
     set_tests_properties(inference_${name} PROPERTIES TIMEOUT 120)
 endforeach()
+
+# Specifications that contradict inference are errors: each fixture of tests/fixtures/inference/contracts lists the
+# diagnostics --print-types must report.
+add_test(NAME inference_contracts COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/contracts.py"
+    "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/inference/contracts")
+set_tests_properties(inference_contracts PROPERTIES TIMEOUT 120)

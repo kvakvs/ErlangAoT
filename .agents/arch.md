@@ -279,7 +279,9 @@
   `impossible` the clause bodies `joined` skips, `domain` the entry domain. Step 58H: `narrow_uses` after each
   non-none() ready step, `success` (joined at `leave_head`) becomes `Summary::inputs`, `merged` joins clause-end facts
   of case/if/receive (`open`/`complete`/`close`), `aliases` narrow together, `Inference::solving` stops callers
-  narrowing by an unsolved component's domains.
+  narrowing by an unsolved component's domains. Step 58I: `contracts.cpp` `Declared` converts declared types to facts
+  in the inference graph, `Checker` reports disjoint (meet = none()) results, entry domains (`Summary::entry`) and
+  call arguments as errors.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

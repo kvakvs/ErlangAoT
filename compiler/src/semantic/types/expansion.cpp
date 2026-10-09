@@ -65,12 +65,13 @@ struct Substitution {
     }
 };
 
-// A nominal name is never erased; opaque structure is visible only inside its defining module.
+// Opaque and nominal structure is visible only inside the defining module; elsewhere the name stays closed.
 bool can_expand(const Declaration &decl, const std::string_view requesting_module) {
-    if (!decl.body || decl.kind == ast::TypeDeclarationKind::nominal) {
+    if (!decl.body) {
         return false;
     }
-    return decl.kind != ast::TypeDeclarationKind::opaque || requesting_module == decl.key.module;
+    const bool closed = decl.kind == ast::TypeDeclarationKind::opaque || decl.kind == ast::TypeDeclarationKind::nominal;
+    return !closed || requesting_module == decl.key.module;
 }
 } // namespace
 

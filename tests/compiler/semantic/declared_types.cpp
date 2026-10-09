@@ -51,7 +51,7 @@ id(X) -> X.
     const auto nominal = graph.intern({t::Kind::reference, "distinct", "owner"});
     require(nominal != secret && nominal != integer);
     require(!t::expand_reference(*registry, nominal, "outside"));
-    require(!t::expand_reference(*registry, nominal, "owner"));
+    require(t::expand_reference(*registry, nominal, "owner").has_value());
     const auto tree = graph.intern({t::Kind::reference, "tree", "owner", {integer}});
     require(t::expand_reference(*registry, tree, "outside").has_value() && !graph.widened());
     require(registry->contracts.size() == 1 && registry->contracts[0].overloads[0].constraints.size() == 1);

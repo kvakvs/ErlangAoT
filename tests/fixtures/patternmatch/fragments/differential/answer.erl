@@ -9,5 +9,5 @@ first(Selected, Discarded) ->
 second(_, Y) -> Y.
 negative() -> -17.
 
--spec value() -> atom().
+-spec value() -> atom() | integer().
 -spec identity(integer()) -> integer().

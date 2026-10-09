@@ -48,7 +48,7 @@ constant_spec() ->
 alias_plain(X) ->
     (A = B) = X,
     {A, B}.
--spec alias_spec(integer()) -> integer().
+-spec alias_spec(integer()) -> integer() | tuple().
 alias_spec(X) ->
     (A = B) = X,
     {A, B}.
@@ -66,7 +66,7 @@ projected_spec(X, Y) ->
 extracted_plain({X, {Y, Z}}) when is_integer(X), is_integer(Y, 0, 10) -> {X, Y, Z};
 extracted_plain([X | Y]) -> {X, Y};
 extracted_plain(X) -> {fallback, X}.
--spec extracted_spec(integer()) -> integer().
+-spec extracted_spec(integer()) -> integer() | tuple().
 extracted_spec({X, {Y, Z}}) when is_integer(X), is_integer(Y, 0, 10) -> {X, Y, Z};
 extracted_spec([X | Y]) -> {X, Y};
 extracted_spec(X) -> {fallback, X}.
@@ -80,13 +80,13 @@ joined_spec(X) -> X.
 map_plain(K, M) ->
     #{K := V} = M,
     [V, map_get(K, M)].
--spec map_spec(integer(), integer()) -> integer().
+-spec map_spec(integer(), integer()) -> integer() | list().
 map_spec(K, M) ->
     #{K := V} = M,
     [V, map_get(K, M)].
 bits_plain(<<N:8, V:N, T/bitstring>>) -> {N, V, T};
 bits_plain(_) -> no.
--spec bits_spec(integer()) -> integer().
+-spec bits_spec(integer()) -> integer() | tuple() | atom().
 bits_spec(<<N:8, V:N, T/bitstring>>) -> {N, V, T};
 bits_spec(_) -> no.
 record_plain(#r{a = X, b = Y}) when is_tuple(X) ->
@@ -106,7 +106,7 @@ allocation_plain(X) ->
     A = {X, [X], #{key => X}, <<3:2>>},
     {_, [Y], #{key := Z}, <<V:2>>} = A,
     {Y, Z, V}.
--spec allocation_spec(integer()) -> integer().
+-spec allocation_spec(integer()) -> integer() | tuple().
 allocation_spec(X) ->
     A = {X, [X], #{key => X}, <<3:2>>},
     {_, [Y], #{key := Z}, <<V:2>>} = A,
@@ -127,7 +127,7 @@ guards_plain(X) when
     Y;
 guards_plain(X) ->
     {fallback, X}.
--spec guards_spec(integer()) -> integer().
+-spec guards_spec(integer()) -> integer() | tuple().
 guards_spec(X) when
     element(1, X) == true;
     map_get(ok, X) == true;

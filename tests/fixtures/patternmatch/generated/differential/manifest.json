@@ -11,7 +11,7 @@
     "hash_policy": "SHA256 UTF-8 source bytes with CRLF normalized to LF",
     "stale_hash": "rejected",
     "otp_manifest_sha256": "04542af7c61ec725f1268d4826e9796f834fec4aabcbdb43b6cb563d30d1da9e",
-    "fixtures_manifest_sha256": "54e126570ce3824862f95bd0e6bbafb03b3672b9392d6b7ca83ad9bb45de596f"
+    "fixtures_manifest_sha256": "cda30e0f0eaa5d7f81fc6b2f924399519a11e9ba4c6b12fdc451953ca13c642b"
   },
   "generator_sha256": {
     "regenerate.py": "f0a849074145194805ea5f1ebdc550b60db8c17e45c3915efa7a24436bad4891",
@@ -22,7 +22,7 @@
   },
   "input_manifest_sha256": "24bf3411259a889aaf0b855b129e02b753032cfe39030443cbe9f3eddfef27f6",
   "files": {
-    "answer.erl": "7e55e48d13f92c8ca8df50fee694c24c2c59161ed852be5f8e28b3470b14cf7c",
+    "answer.erl": "bd9c22b78cdc8508e48a59575ce2f72956397add3eb8b55452808cf45810f013",
     "calls.txt": "b67d19dcfbd9e386867cf812b0df8bd94090122ca9a71e7db1ae94d2d50ddea4",
     "client.erl": "8bbc7dba47d54adc759ab8ebb2238802521f5084850886667163c47ee1ad122b",
     "expected.txt": "3703dbe013e565198bf586501124078b31fb098e0e59b04531282597c97193ea"
@@ -32,7 +32,7 @@
     "seed": 290041,
     "source_origin": "locally authored fragments; OTP supplies observations only",
     "source_sha256": {
-      "answer.erl": "7e55e48d13f92c8ca8df50fee694c24c2c59161ed852be5f8e28b3470b14cf7c",
+      "answer.erl": "bd9c22b78cdc8508e48a59575ce2f72956397add3eb8b55452808cf45810f013",
       "client.erl": "8bbc7dba47d54adc759ab8ebb2238802521f5084850886667163c47ee1ad122b"
     }
   }

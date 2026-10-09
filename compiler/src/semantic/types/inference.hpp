@@ -15,6 +15,8 @@ struct Summary {
     // Inputs are term() for exported functions and functions fun F/A names, else their callers' joined arguments.
     std::vector<Id> inputs;
     Fact result;
+    // The entry domain: each argument's join over the possible clauses of its fact after the head and guard.
+    std::vector<Id> entry = {};
 };
 
 struct Inference {
