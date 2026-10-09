@@ -142,10 +142,19 @@ void BindingFacts::expect_clauses(const ast::ExprId &value, const std::vector<as
     }
 }
 
+void BindingFacts::narrow(const ast::ExprId &read, const Id fact) {
+    const auto &syntax = *function.module->syntax;
+    const auto event = events.find(&syntax.expression(ungroup(syntax, read)));
+    if (event == events.end() || event->second->use != BindingUse::read) {
+        return;
+    }
+    if (const auto found = values.find(event->second->identity); found != values.end()) {
+        found->second.type = Lattice(inference.graph).meet(found->second.type, fact);
+    }
+}
+
 void BindingFacts::expect(const ast::ExprValue &value) {
-    if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        expect_clauses(selection->value, selection->clauses);
-    } else if (const auto *attempt = std::get_if<ast::TryExpression>(&value); attempt && attempt->of) {
+    if (const auto *attempt = std::get_if<ast::TryExpression>(&value); attempt && attempt->of) {
         expect_clauses(attempt->body.back(), *attempt->of);
     } else if (const auto *qualifiers = comprehension_qualifiers(value)) {
         for (const auto &qualifier : *qualifiers) {

@@ -158,8 +158,7 @@ divided(X) -> X / 2.
 -spec integer_value(number()) -> integer().
 integer_value(X) -> trunc(X).
 
-%% expect: integer_range(term()) -> 1..10
-%% today: integer_range(term()) -> argument 1
+%% expect: integer_range(1..10) -> 1..10
 -spec integer_range(integer()) -> 1..10.
 integer_range(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
@@ -171,23 +170,19 @@ byte_value(X) -> X band 255.
 -spec char_value() -> char().
 char_value() -> $a.
 
-%% expect: arity_value(term()) -> 0..255
-%% today: arity_value(term()) -> argument 1
+%% expect: arity_value(0..255) -> 0..255
 -spec arity_value(integer()) -> arity().
 arity_value(X) when is_integer(X), X >= 0, X =< 255 -> X.
 
-%% expect: non_neg_integer_value(term()) -> non_neg_integer()
-%% today: non_neg_integer_value(term()) -> number()
+%% expect: non_neg_integer_value(integer()) -> non_neg_integer()
 -spec non_neg_integer_value(integer()) -> non_neg_integer().
 non_neg_integer_value(X) when is_integer(X) -> abs(X).
 
-%% expect: pos_integer_value(term()) -> pos_integer()
-%% today: pos_integer_value(term()) -> argument 1
+%% expect: pos_integer_value(pos_integer()) -> pos_integer()
 -spec pos_integer_value(integer()) -> pos_integer().
 pos_integer_value(X) when is_integer(X), X > 0 -> X.
 
-%% expect: neg_integer_value(term()) -> neg_integer()
-%% today: neg_integer_value(term()) -> argument 1
+%% expect: neg_integer_value(neg_integer()) -> neg_integer()
 -spec neg_integer_value(integer()) -> neg_integer().
 neg_integer_value(X) when is_integer(X), X < 0 -> X.
 
@@ -199,7 +194,7 @@ length_value(List) -> length(List).
 -spec byte_size_value(binary()) -> non_neg_integer().
 byte_size_value(Binary) -> byte_size(Binary).
 
-%% expect: number_value(term()) -> number()
+%% expect: number_value(number()) -> number()
 -spec number_value(number()) -> number().
 number_value(X) when is_number(X) -> X * 2.
 
@@ -273,8 +268,8 @@ remote_fun() -> fun lists:reverse/1.
 
 %% Unions of categories.
 
-%% expect: timeout_value(term()) -> non_neg_integer() | infinity
-%% today: timeout_value(term()) -> term()
+%% expect: timeout_value(non_neg_integer() | forever) -> non_neg_integer() | infinity
+%% today: timeout_value(term()) -> non_neg_integer() | infinity
 -spec timeout_value(term()) -> timeout().
 timeout_value(X) ->
     case X of

@@ -99,15 +99,12 @@ bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
     return true;
 }
 
-// A fact as annotation text: its type, and the argument it equals (1-based) when inference proved one.
+// A fact as annotation text: its type, or the argument it equals (1-based) when only that relation is known.
 std::string fact_source(const types::Inference &inferred, const types::Fact &fact) {
-    const bool known = inferred.graph.get(fact.type).kind != types::Kind::top;
-    auto type = known ? types::type_source(inferred.graph, fact.type) : std::string();
-    if (!fact.argument) {
-        return type;
+    if (inferred.graph.get(fact.type).kind != types::Kind::top) {
+        return types::type_source(inferred.graph, fact.type);
     }
-    const auto argument = "argument " + std::to_string(*fact.argument + 1);
-    return known ? type + " (" + argument + ')' : argument;
+    return fact.argument ? "argument " + std::to_string(*fact.argument + 1) : std::string();
 }
 
 // The annotation of an expression: none for literals, for facts that say nothing, and for the argument relation of

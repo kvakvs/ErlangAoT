@@ -7,6 +7,7 @@
 #include "inference_funs.hpp"
 #include "inference_inputs.hpp"
 #include "inference_operators.hpp"
+#include "inference_scopes.hpp"
 #include "inference_values.hpp"
 #include "lattice.hpp"
 #include <algorithm>
@@ -23,11 +24,8 @@ Fact leaf(Inference &inference, const FunctionRef function, const ast::ExprId &i
     return bindings.read(id);
 }
 
-struct Visit {
-    // Explicit enter/exit frames avoid host recursion for deeply nested expressions.
-    ast::ExprId expression;
-    bool ready = false;
-};
+// Clause bodies that can never run.
+using Impossible = std::set<const std::vector<ast::ExprId> *>;
 
 // Instantiate each projection with this call's actual fact, never a shared mutable type variable.
 Fact call_result(const Inference &inference, const ast::Module &syntax, const ast::Expression &expression,
@@ -67,11 +65,16 @@ Fact sequence(const Inference &inference, const ast::Module &syntax, const std::
     return inference.expressions.at(&syntax.expression(body.back()));
 }
 
-// Only relations common to every successful function candidate or case/if clause survive the join.
-template <typename Clauses> Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses) {
+// Only relations common to every successful function candidate or case/if clause survive the join; a clause that
+// can never run adds nothing.
+template <typename Clauses>
+Fact joined(Inference &inference, const ast::Module &syntax, const Clauses &clauses,
+            const Impossible *impossible = nullptr) {
     Fact result{inference.graph.bottom()};
     for (const auto &clause : clauses) {
-        result = merged(inference.graph, result, sequence(inference, syntax, clause.body));
+        if (!impossible || !impossible->contains(&clause.body)) {
+            result = merged(inference.graph, result, sequence(inference, syntax, clause.body));
+        }
     }
     return result;
 }
@@ -112,16 +115,17 @@ std::vector<ast::ExprId> clause_roots(const std::vector<ast::FunctionClause> &cl
 }
 
 // The joined clause values of a case, if or receive; none for other expressions.
-std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value) {
+std::optional<Fact> selection_fact(Inference &inference, const ast::Module &syntax, const ast::ExprValue &value,
+                                   const Impossible &impossible) {
     if (const auto *selection = std::get_if<ast::CaseExpression>(&value)) {
-        return joined(inference, syntax, selection->clauses);
+        return joined(inference, syntax, selection->clauses, &impossible);
     }
     if (const auto *choice = std::get_if<ast::IfExpression>(&value)) {
-        return joined(inference, syntax, choice->clauses);
+        return joined(inference, syntax, choice->clauses, &impossible);
     }
     if (const auto *receive = std::get_if<ast::ReceiveExpression>(&value)) {
         // The after body is no BranchClause: a receive with one keeps no common fact.
-        return receive->after ? Fact{inference.graph.top()} : joined(inference, syntax, receive->clauses);
+        return receive->after ? Fact{inference.graph.top()} : joined(inference, syntax, receive->clauses, &impossible);
     }
     return std::nullopt;
 }
@@ -129,7 +133,7 @@ std::optional<Fact> selection_fact(Inference &inference, const ast::Module &synt
 // Anonymous funs called where they are bound are evaluated again for each call, at most this many deep.
 constexpr std::size_t INSTANCE_DEPTH = 4;
 
-bool walk(Inference &inference, FunctionRef function, BindingFacts &bindings, const std::vector<ast::ExprId> &roots,
+bool walk(Inference &inference, FunctionRef function, BindingFacts &bindings, std::vector<Frame> pending,
           std::size_t &work, std::vector<const ast::Expression *> &recorded);
 
 // Every expression evaluated under `roots`.
@@ -172,8 +176,13 @@ Fact instantiate(Inference &inference, const FunctionRef function, BindingFacts 
         }
     }
     std::vector<const ast::Expression *> scratch;
-    const auto result = walk(inference, function, bindings, roots, work, scratch) ? joined(inference, syntax, clauses)
-                                                                                  : Fact{inference.graph.exhausted()};
+    std::vector<Frame> frames;
+    for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
+        frames.push_back({*root});
+    }
+    const auto result = walk(inference, function, bindings, std::move(frames), work, scratch)
+                            ? joined(inference, syntax, clauses)
+                            : Fact{inference.graph.exhausted()};
     for (const auto *expression : scratch) {
         inference.expressions.erase(expression);
     }
@@ -203,8 +212,8 @@ Fact value_call(Inference &inference, const FunctionRef function, const ast::Cal
 }
 
 // A fun value: fun F/A and fun M:F/A by the function they name, an anonymous fun by its clauses' results.
-std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef function,
-                                   const ast::Expression &expression) {
+std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef function, const ast::Expression &expression,
+                                   const Impossible &impossible) {
     if (const auto fact = fun_reference_fact(inference, function, expression)) {
         return Fact{*fact};
     }
@@ -213,7 +222,7 @@ std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef funct
         return std::nullopt;
     }
     Lattice lattice(inference.graph);
-    const auto result = joined(inference, *function.module->syntax, *clauses);
+    const auto result = joined(inference, *function.module->syntax, *clauses, &impossible);
     return Fact{lattice.fun(clauses->front().arguments.size(), result.type)};
 }
 
@@ -227,8 +236,18 @@ Fact call_fact(Inference &inference, const FunctionRef function, const ast::Expr
     if (fun_call(syntax, call)) {
         return value_call(inference, function, call, bindings, work);
     }
-    return opaque_call(function, expression, call) ? Fact{inference.graph.top()}
-                                                   : call_result(inference, syntax, expression, call);
+    if (opaque_call(function, expression, call)) {
+        return {inference.graph.top()};
+    }
+    const auto result = call_result(inference, syntax, expression, call);
+    if (result.type != inference.graph.bottom()) {
+        // A call that returned was entered: its arguments are within the callee's entry domain.
+        const auto &inputs = inference.functions.at(inference.callees.at(&expression).function).inputs;
+        for (std::size_t index = 0; index < call.arguments.size() && index < inputs.size(); ++index) {
+            bindings.narrow(call.arguments[index], inputs[index]);
+        }
+    }
+    return result;
 }
 
 // Groups, matches and blocks have the value of the expression they end with; a match publishes its pattern.
@@ -264,68 +283,66 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     if (const auto fact = passed_fact(inference, function, expression, bindings, work)) {
         return *fact;
     }
-    if (const auto fact = fun_value_fact(inference, function, expression)) {
+    if (const auto fact = fun_value_fact(inference, function, expression, bindings.impossible)) {
         return *fact;
     }
-    if (const auto fact = selection_fact(inference, syntax, expression.value)) {
+    if (const auto fact = selection_fact(inference, syntax, expression.value, bindings.impossible)) {
         return *fact;
     }
     return leaf(inference, function, id, bindings);
 }
 
-// Evaluate the expressions under `roots` in postorder, recording each one's fact and listing it in `recorded`;
-// false when the shared work budget ran out.
-bool walk(Inference &inference, const FunctionRef function, BindingFacts &bindings,
-          const std::vector<ast::ExprId> &roots, std::size_t &work, std::vector<const ast::Expression *> &recorded) {
+// Run the walk's frames: evaluate expressions in postorder, recording each one's fact and listing it in `recorded`,
+// and run the scope steps between them; false when the shared work budget ran out.
+bool walk(Inference &inference, const FunctionRef function, BindingFacts &bindings, std::vector<Frame> pending,
+          std::size_t &work, std::vector<const ast::Expression *> &recorded) {
     const auto &syntax = *function.module->syntax;
-    std::vector<Visit> pending;
-    for (auto root = roots.rbegin(); root != roots.rend(); ++root) {
-        pending.push_back({*root});
-    }
     while (!pending.empty()) {
         if (work >= inference.graph.limits().syntax_work) {
             return false;
         }
         ++work;
-        const auto visit = pending.back();
+        const auto frame = pending.back();
         pending.pop_back();
-        const auto &expression = syntax.expression(visit.expression);
-        if (visit.ready) {
+        const auto &expression = syntax.expression(frame.expression);
+        if (frame.step == Step::ready) {
             const auto [fact, added] = inference.expressions.emplace(
-                &expression, evaluate(inference, function, visit.expression, bindings, work));
+                &expression, evaluate(inference, function, frame.expression, bindings, work));
             (void)added;
             recorded.push_back(&expression);
             bindings.matched(expression, fact->second, work);
-        } else {
+        } else if (frame.step == Step::visit) {
             bindings.expect(expression.value);
-            pending.push_back({visit.expression, true});
-            const auto children = expression_children(*function.module, expression);
-            for (auto child = children.rbegin(); child != children.rend(); ++child) {
-                pending.push_back({*child});
-            }
+            expand(*function.module, frame.expression, pending);
+        } else {
+            scope_step(bindings, frame, work);
         }
     }
     return true;
 }
 
+// A function body's result and the entry domain of its arguments.
+struct Body {
+    Fact result;
+    std::vector<Id> domain;
+};
+
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
 // Every recorded expression is listed so a later fixed-point round can discard it.
-Fact body(Inference &inference, const FunctionRef function, std::size_t &work,
+Body body(Inference &inference, const FunctionRef function, std::size_t &work,
           std::vector<const ast::Expression *> &recorded) {
     const auto &syntax = *function.module->syntax;
     const auto &definition = std::get<ast::Function>(syntax.form(function.function->form).value);
     BindingFacts bindings(function, inference, work);
-    // Each clause's head matches the inputs; a whole argument keeps its relation to the argument.
-    const auto inputs = inputs_of(inference, *function.function);
-    for (const auto &clause : definition.clauses) {
-        for (std::size_t index = 0; index < inputs.size(); ++index) {
-            bindings.publish(pattern_root(syntax, clause.arguments[index]), {inputs[index], index}, work);
-        }
+    // Each clause's head matches the inputs; the arguments' facts at clause entry join into the entry domain.
+    bindings.inputs = inputs_of(inference, *function.function);
+    bindings.domain.assign(bindings.inputs.size(), inference.graph.bottom());
+    std::vector<Frame> frames;
+    expand_heads(definition, frames);
+    if (!walk(inference, function, bindings, std::move(frames), work, recorded)) {
+        return {{inference.graph.exhausted()}, bindings.inputs};
     }
-    if (!walk(inference, function, bindings, function_roots(definition), work, recorded)) {
-        return {inference.graph.exhausted()};
-    }
-    return joined(inference, syntax, definition.clauses);
+    return {joined(inference, syntax, definition.clauses, &bindings.impossible), bindings.domain};
 }
 
 // Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
@@ -336,9 +353,11 @@ constexpr std::size_t JOIN_ROUNDS = 8;
 // converged by then widens every member to top.
 constexpr std::size_t WIDENING_PASSES = 4;
 
-// Replace a summary result, with the inputs the body started from.
-void summarize(Inference &inference, const FunctionRef function, const Fact result) {
-    inference.functions.insert_or_assign(function.function, Summary{inputs_of(inference, *function.function), result});
+// Replace a summary: its result and the entry domain of its arguments (by default the inputs the body starts from).
+void summarize(Inference &inference, const FunctionRef function, const Fact result,
+               std::optional<std::vector<Id>> domain = std::nullopt) {
+    inference.functions.insert_or_assign(
+        function.function, Summary{domain ? std::move(*domain) : inputs_of(inference, *function.function), result});
 }
 
 // Re-infer every member from the current assumptions, discarding the previous round's expression facts; results
@@ -351,10 +370,12 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
     recorded.clear();
     bool changed = false;
     for (const auto member : component.members) {
+        auto evaluated = body(inference, member, work, recorded);
         auto &summary = inference.functions.at(member.function);
-        const auto next = merged(inference.graph, summary.result, body(inference, member, work, recorded), widening);
+        const auto next = merged(inference.graph, summary.result, evaluated.result, widening);
         changed = changed || next != summary.result;
         summary.result = next;
+        summary.inputs = std::move(evaluated.domain);
     }
     return changed;
 }
@@ -393,7 +414,8 @@ void infer_pass(Inference &inference, const CallGraph &calls) {
         } else {
             const auto function = component.members.front();
             recorded.clear();
-            summarize(inference, function, body(inference, function, work, recorded));
+            auto evaluated = body(inference, function, work, recorded);
+            summarize(inference, function, evaluated.result, std::move(evaluated.domain));
         }
     }
 }

@@ -48,6 +48,17 @@ struct BindingFacts {
     // The anonymous funs bound to variables, and how many of them are being evaluated for a call.
     std::map<BindingId, const ast::Expression *> lambdas;
     std::size_t depth = 0;
+    // Narrow the variable a read names to its meet with `fact`.
+    void narrow(const ast::ExprId &read, Id fact);
+
+    // Narrowing scopes: the facts saved when a clause, andalso operand, catch, try or comprehension began.
+    std::vector<std::map<BindingId, Fact>> saved;
+    // Clause bodies that can never run: their patterns or guard contradict the facts.
+    std::set<const std::vector<ast::ExprId> *> impossible;
+    // A function's inputs, each argument's fact at the current clause's entry, and the entry domain.
+    std::vector<Id> inputs;
+    std::vector<Id> entry;
+    std::vector<Id> domain;
     // The patterns waiting for each expression's value.
     std::map<const ast::Expression *, std::vector<Waiting>> waiting;
 };

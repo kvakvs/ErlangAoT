@@ -46,6 +46,7 @@
     countdown_start/0,
     fun_target/0,
     pick/1,
+    pick_number/1,
     clauses/1,
     bounded/1,
     integer_or_float/1,
@@ -278,8 +279,7 @@ pick(X) ->
 clauses(X) when X > 0 -> 10;
 clauses(_) -> 20.
 
-%% expect: bounded(term()) -> 1..10
-%% today: bounded(term()) -> argument 1
+%% expect: bounded(1..10) -> 1..10
 bounded(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
 %% expect: integer_or_float(term()) -> 1 | float()
@@ -289,7 +289,7 @@ integer_or_float(X) ->
         _ -> 2.5
     end.
 
-%% expect: scaled(term()) -> number()
+%% expect: scaled(number()) -> number()
 scaled(X) when is_integer(X) -> X * 2;
 scaled(X) when is_float(X) -> X / 2.
 
@@ -321,7 +321,7 @@ nine_letters() -> "acegikmoq".
 %% expect: consecutive() -> 1..3 | 5 | 7..8
 consecutive() -> pick_number(1).
 
-%% expect: pick_number(1) -> 1..3 | 5 | 7..8
+%% expect: pick_number(term()) -> 1..3 | 5 | 7..8
 pick_number(X) ->
     case X of
         1 -> 1;

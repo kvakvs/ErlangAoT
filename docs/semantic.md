@@ -185,8 +185,33 @@ Inference is separate from declared types and never trusts specs.
   patterns give their variables the facts of the parts they match, in body
   matches, `case` clauses (from the scrutinee), a `try`'s `of` clauses (from
   its body's value) and generators (from their input's elements or map keys
-  and values). Guard refinements and unproved values stay `term()` without
-  relations.
+  and values). Unproved values stay `term()` without relations.
+- Narrowing (step 58G, `semantic/types/inference_narrowing`,
+  `inference_scopes`, `meet`): inside a function, `case`, `receive` or fun
+  clause, each pattern meets the value it matches (a literal, tuple, list,
+  tuple-record, map or bitstring shape; a bound variable's fact), a
+  `case` scrutinee variable narrows with it, and the guard narrows the
+  variables it tests. Type tests (`is_atom/1` to `atom()`, `is_boolean/1`,
+  `is_integer/1`, `is_float/1`, `is_number/1`, `is_binary/1`,
+  `is_bitstring/1`, `is_list/1` to `maybe_improper_list()`, `is_tuple/1`,
+  `is_map/1`, `is_function/1,2`, `is_pid/1`, `is_port/1`, `is_reference/1`,
+  `is_record/2,3` to the record's tuple, `is_map_key/2` its map to `map()`,
+  and the old guard names) meet their argument's fact; comparisons with
+  integer constants (`<`, `=<`, `>`, `>=`, `==`, `=:=`, either side) narrow a
+  value already proven to be an integer to a range. A conjunction applies
+  each test in turn, a disjunction joins what each alternative proves, `not`
+  and false tests prove nothing. A clause after one whose patterns are all
+  plain variables and whose whole guard was a single type test sees that
+  value without the tested category. The right operand of `andalso`, the
+  `true` clause of `case Test of`, and what follows a comprehension filter
+  see the test as true. An empty meet makes the clause impossible: it adds
+  nothing to the result. Narrowed facts hold only inside their clause or
+  operand; `catch`, `try` and every clause restore the facts from before them.
+- Entry domains: each argument's domain is the join over the possible
+  function clauses of its fact after the head and guard (a plain variable's
+  narrowed fact, else the pattern's); `--print-types` shows the domains as
+  inputs (`bounded(1..10) -> 1..10`). A call that returns narrows its
+  variable arguments to the callee's domain.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
@@ -240,7 +265,8 @@ Facts print as Erlang types, categories by their built-in names.
   functions converge exactly), then widens them. A component that has not
   converged after 4 further rounds per member widens every member to `term()`
   and is reported as widened, like an exhausted budget.
-- Narrowing (plan steps 58G, 58H) is the meet of facts, the values both hold:
+- Narrowing (plan steps 58G, 58H, `Lattice::meet`) is the meet of facts, the
+  values both hold (or more, but `none()` only when they share none):
   patterns and guards (type tests such as `is_integer/1` narrow their argument
   to the category) narrow within their clause and set a function's entry
   domain; a use that raises unless its operand has a type narrows the operand
@@ -285,7 +311,9 @@ mixed(X) ->
   stay `term()`; other functions show their callers' joined arguments. A `-spec` stays with the function right after
   it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
-  `Expression :: Type`: in parentheses inside other expressions, without them
+  `Expression :: Type` (a known type hides an argument relation, which shows
+  only for a value known as nothing else): in parentheses inside other
+  expressions, without them
   for a whole body expression. Literal terms (literals, and tuples, lists,
   constructed maps and bitstrings of literals) and matches are not annotated
   (the right side of a match is).
@@ -319,7 +347,12 @@ sum() -> 1 + 2.
   binaries and argument relations. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
   parts, funs and their calls, local inputs from callers, integer joins and
-  argument relations (107 of 108 functions).
+  argument relations (108 of 108 functions).
+- `narrowing.erl` covers each type test, case guards, true-test scrutinees,
+  `andalso`, comprehension filters, tuple/list/map patterns, catch-all
+  clauses, range guards, contradictions, disjunctions, the clause after a
+  single type test, narrowing after a call, and narrowings that must not
+  leak (36 of 36).
 - `base_types.erl` has a function per base and built-in type of the
   [type language](https://www.erlang.org/doc/system/typespec.html) (`pid()`,
   `reference()`, bitstrings and binaries, ranges, `byte()`, `char()`,

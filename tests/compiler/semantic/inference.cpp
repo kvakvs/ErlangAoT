@@ -26,7 +26,7 @@ void local_inference() {
     SourceManager sources;
     PreprocessorSession pp(sources.add("facts.erl", R"(
 -module(facts).
--export([constant/0,id/1,project/3]).
+-export([constant/0,id/1,project/3,unknown/1]).
 -spec constant() -> atom().
 constant() -> -42.
 id(X) -> (X).
@@ -87,8 +87,9 @@ void integer_joins() {
     t::Graph graph;
     t::Lattice lattice(graph);
     const auto i = [&](int value) { return lattice.integer(std::to_string(value)); };
-    prints(joined(lattice, {i(3), i(1), i(2), i(1)}), "1 | 2 | 3");
-    prints(joined(lattice, {i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8)}), "1 | 2 | 3 | 4 | 5 | 6 | 7 | 8");
+    prints(joined(lattice, {i(3), i(1), i(2), i(1)}), "1..3");
+    prints(joined(lattice, {i(7), i(1), i(3)}), "1 | 3 | 7");
+    prints(joined(lattice, {i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8)}), "1..8");
     prints(joined(lattice, {i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8), i(20)}), "1..20");
     prints(joined(lattice, {lattice.range({"1", "10"}), i(-3)}), "-3..10");
     prints(joined(lattice, {lattice.range({"0", "255"}), lattice.category("pos_integer")}), "non_neg_integer()");
@@ -126,19 +127,19 @@ void container_joins() {
     const auto ok = lattice.atom("ok");
     const auto one = lattice.integer("1");
     const auto two = lattice.integer("2");
-    prints(joined(lattice, {lattice.tuple({ok, one}), lattice.tuple({ok, two})}), "{ok, 1 | 2}");
+    prints(joined(lattice, {lattice.tuple({ok, one}), lattice.tuple({ok, two})}), "{ok, 1..2}");
     prints(joined(lattice, {lattice.tuple({ok, one}), lattice.tuple({lattice.atom("error"), lattice.atom("bad")})}),
            "{error, bad} | {ok, 1}");
     prints(joined(lattice, {lattice.tuple({one}), lattice.tuple({one, two})}), "{1} | {1, 2}");
     prints(joined(lattice, {lattice.nil(), lattice.list(one, true)}), "[1]");
-    prints(joined(lattice, {lattice.list(one, true), lattice.list(two, true)}), "[1 | 2, ...]");
+    prints(joined(lattice, {lattice.list(one, true), lattice.list(two, true)}), "[1..2, ...]");
     prints(joined(lattice, {lattice.list(lattice.range({"0", "1114111"}), true)}), "nonempty_string()");
     prints(joined(lattice, {lattice.list(graph.top(), false)}), "list()");
     const auto a = lattice.atom("a");
-    prints(joined(lattice, {lattice.map({a, one}), lattice.map({a, two})}), "#{a := 1 | 2}");
+    prints(joined(lattice, {lattice.map({a, one}), lattice.map({a, two})}), "#{a := 1..2}");
     prints(joined(lattice, {lattice.map({a, one}), lattice.map({ok, one})}), "map()");
     prints(joined(lattice, {lattice.map({two, a, a, one})}), "#{2 := a, a := 1}");
-    prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((term()) -> 1 | 2)");
+    prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((term()) -> 1..2)");
     prints(joined(lattice, {lattice.fun(0, one), lattice.fun(1, one)}), "fun()");
     prints(joined(lattice, {lattice.bitstring(16, 0), lattice.bitstring(16, 0)}), "<<_:16>>");
     prints(joined(lattice, {lattice.bitstring(8, 0), lattice.bitstring(16, 0)}), "nonempty_binary()");
@@ -174,8 +175,8 @@ void widening() {
     const auto widened = [&](t::Id previous, t::Id next) {
         return t::type_source(graph, lattice.widen(previous, next));
     };
-    prints(widened(graph.bottom(), lattice.join(i(1), i(2))), "1 | 2");
-    prints(widened(lattice.join(i(1), i(2)), i(2)), "1 | 2");
+    prints(widened(graph.bottom(), lattice.join(i(1), i(2))), "1..2");
+    prints(widened(lattice.join(i(1), i(2)), i(2)), "1..2");
     prints(widened(i(1), i(2)), "pos_integer()");
     prints(widened(i(0), i(1)), "non_neg_integer()");
     prints(widened(i(-1), i(-2)), "neg_integer()");
@@ -183,6 +184,36 @@ void widening() {
     prints(widened(i(3), i(2)), "1..3");
     prints(widened(lattice.range({"-5", "-1"}), i(-9)), "neg_integer()");
     prints(widened(i(5), lattice.atom("done")), "5 | done");
+}
+
+// Narrowing keeps the values both facts hold: none() only when they share none; categories meet their members.
+void meets() {
+    t::Graph graph;
+    t::Lattice lattice(graph);
+    const auto i = [&](int value) { return lattice.integer(std::to_string(value)); };
+    const auto met = [&](t::Id left, t::Id right) { return t::type_source(graph, lattice.meet(left, right)); };
+    const auto category = [&](const char *name) { return lattice.category(name); };
+    prints(met(graph.top(), i(1)), "1");
+    prints(met(lattice.range({"1", "10"}), lattice.range({"5", "20"})), "5..10");
+    prints(met(category("integer"), category("pos_integer")), "pos_integer()");
+    prints(met(category("number"), category("float")), "float()");
+    prints(met(lattice.join(i(1), category("float")), category("integer")), "1");
+    prints(met(category("integer"), category("atom")), "none()");
+    prints(met(category("boolean"), lattice.join(lattice.atom("true"), lattice.atom("ok"))), "true");
+    prints(met(category("atom"), lattice.atom("ok")), "ok");
+    prints(met(category("tuple"), lattice.tuple({i(1), i(2)})), "{1, 2}");
+    prints(met(lattice.tuple({graph.top(), i(2)}), lattice.tuple({i(1), category("integer")})), "{1, 2}");
+    prints(met(lattice.tuple({i(1)}), lattice.tuple({i(1), i(2)})), "none()");
+    prints(met(category("map"), lattice.map({lattice.atom("a"), i(1)})), "#{a := 1}");
+    prints(met(category("maybe_improper_list"), lattice.nil()), "[]");
+    prints(met(category("list"), lattice.list(i(1), true)), "[1, ...]");
+    prints(met(lattice.nil(), lattice.list(i(1), true)), "none()");
+    prints(met(category("fun"), lattice.fun(2, i(1))), "fun((term(), term()) -> 1)");
+    prints(met(lattice.fun(1, graph.top()), lattice.fun(2, graph.top())), "none()");
+    prints(met(category("binary"), lattice.bitstring(16, 0)), "<<_:16>>");
+    prints(met(category("pid"), category("port")), "none()");
+    prints(t::type_source(graph, lattice.subtract(category("number"), category("integer"))), "float()");
+    prints(t::type_source(graph, lattice.subtract(lattice.join(i(1), lattice.atom("a")), category("integer"))), "a");
 }
 
 int main() {
@@ -193,6 +224,7 @@ int main() {
         container_joins();
         budgets();
         widening();
+        meets();
     } catch (const std::exception &error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

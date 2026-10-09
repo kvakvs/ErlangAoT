@@ -74,6 +74,15 @@ class Lattice {
 
     // The integers from `low` to `high` as a fact: a singleton, a range or the category of an unbounded interval.
     Id interval(const std::optional<std::string> &low, const std::optional<std::string> &high);
+    // The values both facts hold, or more: what narrowing proves (semantic/types/meet). none() only when they share
+    // no value.
+    Id meet(Id left, Id right);
+    // The values of `fact` outside `removed`, or more: a member surely within `removed` is dropped.
+    Id subtract(Id fact, Id removed);
+    // `subtract` of a number fact member and a number fact.
+    Id subtract_numbers(Id member, Id removed);
+    // The rank of a fact's family in Erlang term order: numbers 0, atoms 1, ..., bitstrings 10, other facts 11.
+    int family(Id fact) const;
     // The members of a fact: a union's members, or the fact itself.
     std::vector<Id> members(Id fact) const;
     // The numbers `fact` holds, and whether it may hold the atom `name`.

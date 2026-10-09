@@ -134,7 +134,9 @@ int family_rank(const Node &node);
 // Sorts the members of facts into their families. Nothing is interned while it walks the graph.
 class Gather final {
   public:
-    explicit Gather(Lattice &lattice) : graph_(lattice.graph()), characters_(lattice.range({"0", CHAR_LIMIT})) {}
+    explicit Gather(Lattice &lattice)
+        : graph_(lattice.graph()), characters_(lattice.range({"0", CHAR_LIMIT})),
+          any_improper_(lattice.improper(lattice.graph().top(), lattice.graph().top())) {}
 
     // Add every member of `fact`: a union's members, or the fact itself.
     void add(Id fact) {
@@ -272,8 +274,9 @@ class Gather final {
     static std::map<std::string_view, Rule> rules();
 
     const Graph &graph_;
-    // The fact char(): 0..CHAR_LIMIT.
+    // The fact char(): 0..CHAR_LIMIT, and any improper list.
     Id characters_;
+    Id any_improper_;
 };
 
 std::map<std::string_view, Gather::Rule> Gather::rules() {
@@ -296,6 +299,11 @@ std::map<std::string_view, Gather::Rule> Gather::rules() {
         {"list", [](Gather &g, const Node &) { g.families.lists.push_back({g.graph_.top(), false}); }},
         {"string", [](Gather &g, const Node &) { g.families.lists.push_back({g.characters_, false}); }},
         {"nonempty_string", [](Gather &g, const Node &) { g.families.lists.push_back({g.characters_, true}); }},
+        {"maybe_improper_list",
+         [](Gather &g, const Node &) {
+             g.families.lists.push_back({g.graph_.top(), false});
+             g.families.improper.push_back(g.any_improper_);
+         }},
         {"binary", [](Gather &g, const Node &) { g.families.add_bits({0, 8}); }},
         {"nonempty_binary", [](Gather &g, const Node &) { g.families.add_bits({8, 8}); }},
         {"bitstring", [](Gather &g, const Node &) { g.families.add_bits({0, 1}); }},
@@ -324,6 +332,7 @@ int family_rank(const Node &node) {
                                                             {"string", 9},
                                                             {"nonempty_string", 9},
                                                             {"nonempty_improper_list", 9},
+                                                            {"maybe_improper_list", 9},
                                                             {"binary", 10},
                                                             {"bitstring", 10},
                                                             {"nonempty_binary", 10},
@@ -415,6 +424,7 @@ class Assemble final {
         maps(families, out);
         lists(families, out);
         improper(families, out);
+        maybe_improper(out);
         if (families.bits) {
             out.push_back(lattice_.bitstring(families.bits->base, families.bits->unit));
         }
@@ -579,6 +589,16 @@ class Assemble final {
         out.push_back(lattice_.list(lattice_.join(elements, depth_ + 1), nonempty));
     }
 
+    // Any list and any improper list together are maybe_improper_list().
+    void maybe_improper(std::vector<Id> &out) {
+        const auto list = std::ranges::find(out, lattice_.category("list"));
+        const auto improper = std::ranges::find(out, lattice_.improper(graph_.top(), graph_.top()));
+        if (list != out.end() && improper != out.end()) {
+            out.erase(improper);
+            *std::ranges::find(out, lattice_.category("list")) = lattice_.category("maybe_improper_list");
+        }
+    }
+
     // Improper lists join their elements and their tails.
     void improper(const Families &families, std::vector<Id> &out) {
         if (families.improper.empty()) {
@@ -683,6 +703,8 @@ Id Lattice::widen(Id previous, Id next) {
     after.families.interval = relaxed;
     return relaxed == *new_bounds ? joined : fact_of(*this, after.families, 0);
 }
+
+int Lattice::family(Id fact) const { return family_rank(graph_.get(fact)); }
 
 Id Lattice::interval(const std::optional<std::string> &low, const std::optional<std::string> &high) {
     return interval_fact(*this, {low, high});

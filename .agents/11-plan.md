@@ -477,11 +477,14 @@ domain (`f(X), g(X)`: `g` sees `X` within `f`'s domain). A local function's
 inputs (58F) meet its domain. Specs never add to a domain.
 
 - Success criteria
-  - [ ] `bounded(1..10) -> 1..10`, `scaled(number()) -> number()`; a narrowed
+  - [x] `bounded(1..10) -> 1..10`, `scaled(number()) -> number()`; a narrowed
     fact never escapes the clause that proved it, except as the entry domain
-    and as the caller's narrowing after a call returns.
+    and as the caller's narrowing after a call returns. Evidence 2026-10-09:
+    `Lattice::meet`/`subtract` (`semantic/types/meet`), tests and patterns in
+    `inference_narrowing`, scope frames (enter/guarded/leave, save/restore)
+    in `inference_scopes`; catch and try restore facts.
 - Tests
-  - [ ] `values.erl` and `base_types.erl` rows with guards and patterns reach
+  - [x] `values.erl` and `base_types.erl` rows with guards and patterns reach
     `expect:` with their inputs updated to the entry domains
     (`integer_range(1..10)`, `pos_integer_value(pos_integer())`,
     `timeout_value(forever | non_neg_integer())`, ...); new rows for range
@@ -490,7 +493,14 @@ inputs (58F) meet its domain. Specs never add to a domain.
     leak; one row per type test of the table (in a function guard, a `case`
     guard and an `andalso` condition), a contradicting test, a disjunction and
     a clause after a single type test; unit tests of `meet` in
-    `semantic_inference`.
+    `semantic_inference`. Evidence: new `tests/fixtures/inference/narrowing.erl`
+    (36 rows: each type test in a function guard, case guards, a true-test
+    scrutinee, `andalso`, a filter, patterns, `catch_all`, `small`,
+    `contradiction`, `either`, `complement`, `after_call`, `no_leak`);
+    `timeout_value` keeps a today line until 58H's merge of clause facts;
+    `semantic_inference` `meets()`. That unit test had been stale since 58A
+    (build/debug lost BUILD_TESTING); its range spelling (58F1) and uncalled
+    local are fixed here.
 
 <a id="step-58h"></a>
 

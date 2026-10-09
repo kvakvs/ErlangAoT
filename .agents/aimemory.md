@@ -435,7 +435,10 @@ Host and tool gotchas:
   clang++ and nested test caches (clang-cl) fail ("cache to be deleted", missing match_consumer.cpp). Strawberry
   cmake/ninja first on PATH is fine. Scripts build/plan11/{env,gate,build,test,fast}.cmd (test.cmd regex: TESTRE env).
   build/plan11-step8g/{gate,rt,quality,all}.cmd; cmd /c needs full .bat path; run .exe via PowerShell.
-- build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate.
+- build/debug may have BUILD_TESTING=OFF and Ninja may not rerun CMake: use the fresh gate. 2026-10-09: it was OFF
+  from 58A to 58F1 and ctest ran stale C++ unit-test exes (semantic_inference); check
+  `grep BUILD_TESTING build/debug/CMakeCache.txt` before trusting a fast run (likely the IDE CMake Tools reconfiguring
+  from the debug preset); build/plan11/fast.cmd and quality.cmd now reconfigure with tests on first.
 - First run after runtime source edits can time out tests while native sub-builds recompile; rerun.
 - clang-tidy may crash (0xC0000005/0xC0000409) or exit 1 silently with 2 jobs; rerun with one job.
   Tidy runs in batches (QUALITY_BATCH, default 4 x jobs) with per-batch pass/FAIL lines; split long runs with
