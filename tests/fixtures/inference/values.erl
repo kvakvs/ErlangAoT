@@ -549,7 +549,7 @@ after_inc(X) ->
     X.
 
 %% A use inside try, or in one case branch, proves nothing after it.
-%% expect: caught(_) -> argument 1
+%% expect: caught(X) -> X
 caught(X) ->
     _ =
         try
@@ -559,7 +559,7 @@ caught(X) ->
         end,
     X.
 
-%% expect: branch(_, _) -> argument 2
+%% expect: branch(_, X) -> X
 branch(A, X) ->
     _ =
         case A of
@@ -594,13 +594,13 @@ bits(X) -> <<X:8>>.
 both(X) -> X andalso true.
 
 %% The right operand of orelse may not run.
-%% expect: orelse_use(boolean(), _) -> argument 2
+%% expect: orelse_use(boolean(), Y) -> Y
 orelse_use(X, Y) ->
     _ = X orelse Y + 1 > 0,
     Y.
 
-%% expect: identity(_) -> argument 1
+%% expect: identity(X) -> X
 identity(X) -> X.
 
-%% expect: second(_, _) -> argument 2
+%% expect: second(_, Y) -> Y
 second(_, Y) -> Y.

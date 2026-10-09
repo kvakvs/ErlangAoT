@@ -367,9 +367,13 @@ mixed(X) ->
   for a whole body expression. Literal terms (literals, and tuples, lists,
   constructed maps and bitstrings of literals) and matches are not annotated
   (the right side of a match is).
-- `argument N` means the value is the function's N-th argument (1-based), as
-  inference proved; a variable shows only its type, its name already says
-  which argument it is.
+- A value inference proved equal to one of the function's arguments, and known
+  as nothing more, prints as that argument's name, a type variable: the
+  variable the first clause binding the whole argument gives it, else
+  `_argumentN` (1-based, also when an earlier argument took the name). The
+  argument's input shows the same name when it is any term:
+  `second(_, Y) -> Y`, `keep(Acc, number()) -> Acc`. A variable shows only
+  its type, its name already says which argument it is.
 
 ### Inference expectations
 

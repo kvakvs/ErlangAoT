@@ -1,9 +1,11 @@
 #include "type_report.hpp"
+#include "../semantic/capabilities.hpp"
 #include "../semantic/types/printing.hpp"
 #include "display.hpp"
 #include <clause/compiler/printing.hpp>
 #include <iostream>
 #include <map>
+#include <set>
 #include <span>
 #include <stdexcept>
 
@@ -99,18 +101,65 @@ bool self_describing(const ast::Module &syntax, const ast::ExprValue &value) {
     return true;
 }
 
-// A fact as annotation text: its type, or the argument it equals (1-based) when only that relation is known.
-std::string fact_source(const types::Inference &inferred, const types::Fact &fact) {
+// The names a function's arguments print as: the variable the first clause binding the whole argument gives it,
+// else (or when an earlier argument took that name) `_argumentN`, 1-based; both are type variables.
+using Names = std::vector<std::string>;
+
+Names argument_names(const ast::Module &syntax, const ast::Function &definition) {
+    const auto arity = definition.clauses.front().arguments.size();
+    Names names(arity);
+    std::set<std::string> taken;
+    for (std::size_t position = 0; position < arity; ++position) {
+        for (const auto &clause : definition.clauses) {
+            const auto root = semantic::ungroup(syntax, semantic::pattern_root(syntax, clause.arguments[position]));
+            const auto *variable = std::get_if<ast::Variable>(&syntax.expression(root).value);
+            if (variable && variable->name != U"_" && !taken.contains(utf8(variable->name))) {
+                names[position] = utf8(variable->name);
+                break;
+            }
+        }
+        if (names[position].empty()) {
+            names[position] = "_argument" + std::to_string(position + 1);
+        }
+        taken.insert(names[position]);
+    }
+    return names;
+}
+
+// The argument names of the function owning each expression of a module's functions.
+std::map<const ast::Expression *, Names> expression_owners(const semantic::Module &module) {
+    std::map<const ast::Expression *, Names> result;
+    for (const auto &function : module.functions) {
+        const auto &definition = std::get<ast::Function>(module.syntax->form(function.form).value);
+        const auto names = argument_names(*module.syntax, definition);
+        auto pending = semantic::function_roots(definition);
+        while (!pending.empty()) {
+            const auto &expression = module.syntax->expression(pending.back());
+            pending.pop_back();
+            result.try_emplace(&expression, names);
+            const auto children = semantic::expression_children(module, expression);
+            pending.insert(pending.end(), children.begin(), children.end());
+        }
+    }
+    return result;
+}
+
+// A fact as annotation text: its type, or the name of the argument it equals when only that relation is known.
+std::string fact_source(const types::Inference &inferred, const types::Fact &fact, const Names *names) {
     if (inferred.graph.get(fact.type).kind != types::Kind::top) {
         return types::type_source(inferred.graph, fact.type);
     }
-    return fact.argument ? "argument " + std::to_string(*fact.argument + 1) : std::string();
+    if (!fact.argument) {
+        return {};
+    }
+    return names && *fact.argument < names->size() ? names->at(*fact.argument)
+                                                   : "_argument" + std::to_string(*fact.argument + 1);
 }
 
 // The annotation of an expression: none for literals, for facts that say nothing, and for the argument relation of
 // a variable, which its name already shows.
 std::optional<std::string> expression_note(const ast::Module &syntax, const types::Inference &inferred,
-                                           const ast::Expression &expression) {
+                                           const ast::Expression &expression, const Names *names) {
     const auto found = inferred.expressions.find(&expression);
     if (found == inferred.expressions.end() || self_describing(syntax, expression.value)) {
         return std::nullopt;
@@ -119,18 +168,22 @@ std::optional<std::string> expression_note(const ast::Module &syntax, const type
     if (std::holds_alternative<ast::Variable>(expression.value)) {
         fact.argument.reset();
     }
-    auto text = fact_source(inferred, fact);
+    auto text = fact_source(inferred, fact, names);
     return text.empty() ? std::nullopt : std::optional{std::move(text)};
 }
 
-// `name(Inputs) -> Result` of a function summary.
-std::string signature(const types::Inference &inferred, const std::string &name, const types::Summary &summary) {
+// `name(Inputs) -> Result` of a function summary; an argument the result equals shows its name, as a type variable.
+std::string signature(const types::Inference &inferred, const std::string &name, const types::Summary &summary,
+                      const Names &names) {
     std::string inputs;
-    for (const auto input : summary.inputs) {
+    for (std::size_t index = 0; index < summary.inputs.size(); ++index) {
+        const auto input = summary.inputs[index];
+        const bool named =
+            summary.result.argument == index && inferred.graph.get(summary.result.type).kind == types::Kind::top;
         inputs += inputs.empty() ? "" : ", ";
-        inputs += types::type_source(inferred.graph, input);
+        inputs += named && input == inferred.graph.top() ? names.at(index) : types::type_source(inferred.graph, input);
     }
-    const auto result = fact_source(inferred, summary.result);
+    const auto result = fact_source(inferred, summary.result, &names);
     return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? std::string(types::TERM_SOURCE) : result);
 }
 
@@ -171,7 +224,8 @@ std::vector<std::string> function_note(const semantic::Module &module, const Ana
             }
         }
         const auto &inferred = *analysis.inferred;
-        lines.push_back("inferred: " + signature(inferred, name, inferred.functions.at(&function)));
+        const auto names = argument_names(*module.syntax, std::get<ast::Function>(form.value));
+        lines.push_back("inferred: " + signature(inferred, name, inferred.functions.at(&function), names));
         return lines;
     }
     return {};
@@ -192,10 +246,13 @@ void print_types(const Analysis &analysis, const codegen::CompilationRequest &re
                   << " target=" << quote_text(request.project_target)
                   << " declared=" << completeness(analysis.declared->graph)
                   << " inferred=" << completeness(inferred.graph) << '\n';
+        const auto owners = expression_owners(*module);
         const SourceNotes notes{
             .expression =
                 [&](const ast::Expression &expression) {
-                    return expression_note(*module->syntax, inferred, expression);
+                    const auto owner = owners.find(&expression);
+                    return expression_note(*module->syntax, inferred, expression,
+                                           owner == owners.end() ? nullptr : &owner->second);
                 },
             .form = [&](const ast::Form &form) { return function_note(*module, analysis, specified, form); }};
         print_source(std::cout, *module->syntax, notes);

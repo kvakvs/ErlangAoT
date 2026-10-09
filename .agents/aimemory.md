@@ -425,6 +425,7 @@ User directions (keep):
   2026-10-09 user direction: new step 58H1 (before 58I) narrows proven-integer ranges by guard comparisons.
   2026-10-09 user direction: consecutive integers print as N..M (step 58F1, printing only).
   2026-10-09 user direction: printed types write term() as `_` (TERM_SOURCE, step 58I1).
+  2026-10-09 user direction: argument relations print as variable names / _argumentN (step 58I2).
   2026-10-09 user direction: step 58J (wide known tuples, positional lists, #{1..17 => a} maps, records printed as
   records) added after 58I; not implemented in the 58B-58I run.
 - Timer wheel (plan step 62B, 2026-10-08): replace step 47's deadline map + per-slice clock reads with a timer wheel.

@@ -46,7 +46,7 @@ def main():
         if mode == "--print-types":
             summaries = {match.group(1): match.group(2) for match in
                          re.finditer(r'%% inferred: (\w+)\([^\n]*\) -> ([^\n]+)', result)}
-            assert summaries["common"].endswith("argument 1"), summaries["common"]
+            assert summaries["common"] == "X", summaries["common"]
             assert "argument" not in summaries["rollback"], summaries["rollback"]
     assert summaries["join"] == "1..2", summaries["join"]
     (work / "evidence.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")

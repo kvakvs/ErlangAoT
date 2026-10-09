@@ -90,9 +90,9 @@ def main():
     for label in ['constant_plain','constant_spec']:
         assert re.search(r'%% inferred: '+label+r'\(\) -> 42',types),types
     for label in ['identity_plain','identity_spec']:
-        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> argument 1',types),types
+        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> X\n',types),types
     for label in ['projected_plain','projected_spec']:
-        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> argument 2',types),types
+        assert re.search(r'%% inferred: '+label+r'\([^\n]*\) -> Y\n',types),types
     for label in ['joined_plain','joined_spec','extracted_plain','record_spec']:
         line=next(line for line in types.splitlines() if line.startswith('%% inferred: '+label+'('))
         assert 'argument' not in line,line

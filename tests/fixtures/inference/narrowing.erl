@@ -186,7 +186,7 @@ after_call(X) ->
 natural(Y) when is_integer(Y), Y >= 0 -> Y.
 
 %% Narrowings never leak out of the clause or operand that proved them.
-%% expect: no_leak(_) -> argument 1
+%% expect: no_leak(X) -> X
 no_leak(X) ->
     _ =
         case X of
@@ -195,7 +195,7 @@ no_leak(X) ->
         end,
     X.
 
-%% expect: no_leak_andalso(_) -> argument 1
+%% expect: no_leak_andalso(X) -> X
 no_leak_andalso(X) ->
     _ = is_integer(X) andalso X,
     X.
@@ -259,5 +259,5 @@ loop(0) -> done.
 %% expect: number_compare(number()) -> number()
 number_compare(X) when is_number(X), X > 0 -> X.
 
-%% expect: term_compare(_) -> argument 1
+%% expect: term_compare(X) -> X
 term_compare(X) when X > 0 -> X.

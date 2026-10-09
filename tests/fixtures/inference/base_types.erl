@@ -66,7 +66,7 @@
     | nil()
     | term().
 
-%% expect: any_value(_) -> argument 1
+%% expect: any_value(X) -> X
 -spec any_value(any()) -> any().
 any_value(X) -> X.
 
@@ -74,7 +74,7 @@ any_value(X) -> X.
 -spec no_return_value() -> no_return().
 no_return_value() -> erlang:error(stop).
 
-%% expect: dynamic_value(_) -> argument 1
+%% expect: dynamic_value(X) -> X
 -spec dynamic_value(dynamic()) -> dynamic().
 dynamic_value(X) -> X.
 

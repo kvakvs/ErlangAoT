@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1), [58I2](#step-58i2)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -415,6 +415,25 @@ its singletons, so joins and budgets are unchanged.
     budget stays visible; `codegen_types` and `patternmatch_clauses` expect
     the new spelling.
 
+<a id="step-58i1"></a>
+
+### 58I1. Print term() as `_`
+
+Backlog: F34. Depends on: [58F1](#step-58f1). Added 2026-10-09 (user
+direction).
+
+Printed types write any term as `_` (one constant, `TERM_SOURCE` in
+`semantic/types/printing.hpp`), which Erlang type syntax reads as `any()`:
+`f(_) -> argument 1`, `[_, ...]`, `fun((_) -> number())`. Source printing of
+declarations keeps what the source wrote.
+
+- Success criteria
+  - [x] `--print-types` signatures, annotations, declared lines and
+    specification diagnostics print `_`. Evidence 2026-10-09: `TERM_SOURCE`.
+- Tests
+  - [x] Fixture expectations (`values`, `base_types`, `narrowing`,
+    `contracts`), `codegen_types` and `patternmatch_bindings` use `_`.
+
 <a id="step-58g"></a>
 
 ### 58G. Narrow facts by patterns and guards; infer entry domains
@@ -670,24 +689,27 @@ inferred)`) and make a contradiction a compile error at the `-spec`.
     and `tests/fixtures/codegen/constants64.erl` became overlapping ones and
     those corpora were regenerated (hashes only, results unchanged).
 
-<a id="step-58i1"></a>
+<a id="step-58i2"></a>
 
-### 58I1. Print term() as `_`
+### 58I2. Print argument relations as variable names
 
-Backlog: F34. Depends on: [58F1](#step-58f1). Added 2026-10-09 (user
+Backlog: F34. Depends on: [58I1](#step-58i1). Added 2026-10-09 (user
 direction).
 
-Printed types write any term as `_` (one constant, `TERM_SOURCE` in
-`semantic/types/printing.hpp`), which Erlang type syntax reads as `any()`:
-`f(_) -> argument 1`, `[_, ...]`, `fun((_) -> number())`. Source printing of
-declarations keeps what the source wrote.
+A result or annotation known only as equal to an argument prints as that
+argument's name, a type variable valid in Erlang type syntax: the variable
+the first clause binding the whole argument gives it, else `_argumentN`
+(1-based; also when an earlier argument took the name). Its input shows the
+name when it is any term: `identity(X) -> X`, `second(_, Y) -> Y`.
 
 - Success criteria
-  - [x] `--print-types` signatures, annotations, declared lines and
-    specification diagnostics print `_`. Evidence 2026-10-09: `TERM_SOURCE`.
+  - [x] Signatures and annotations print names instead of `argument N`.
+    Evidence 2026-10-09: `driver/type_report` (`argument_names`,
+    `expression_owners`).
 - Tests
-  - [x] Fixture expectations (`values`, `base_types`, `narrowing`,
-    `contracts`), `codegen_types` and `patternmatch_bindings` use `_`.
+  - [x] Fixture expectations, `codegen_types`, `patternmatch_bindings`
+    (`f(_Name, _) -> _Name`), `patternmatch_clauses` and
+    `patternmatch_facts` expect names.
 
 <a id="step-58j"></a>
 
