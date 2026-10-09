@@ -491,25 +491,41 @@ class Assemble final {
         }
     }
 
-    // Funs of one arity join their results; funs of several arities are fun().
+    // Equal funs keep their function types and inputs; other funs of one arity join their results, funs of several
+    // arities are fun().
     void funs(const Families &families, std::vector<Id> &out) {
         if (families.funs.empty() && !families.any_fun) {
             return;
         }
-        const auto arity = families.any_fun ? 0 : graph_.get(families.funs.front()).children.size();
-        const bool same = !families.any_fun && std::ranges::all_of(families.funs, [&](Id fun) {
-            return graph_.get(fun).children.size() == arity;
-        });
-        if (!same) {
+        if (families.any_fun) {
             out.push_back(lattice_.category("fun"));
             return;
         }
+        const auto first = families.funs.front();
+        if (std::ranges::all_of(families.funs, [&](Id fun) { return fun == first; })) {
+            out.push_back(first);
+            return;
+        }
+        out.push_back(joined_funs(families.funs));
+    }
+
+    // Different funs as one fun of any inputs: of their arity returning their joined results, or fun().
+    Id joined_funs(const std::vector<Id> &funs) {
+        std::vector<Id> plain;
+        plain.reserve(funs.size());
+        for (const auto fun : funs) {
+            plain.push_back(lattice_.joined_fun(fun));
+        }
+        const auto arity = graph_.get(plain.front()).children.size();
+        if (!std::ranges::all_of(plain, [&](Id fun) { return graph_.get(fun).children.size() == arity; })) {
+            return lattice_.category("fun");
+        }
         std::vector<Id> results;
-        results.reserve(families.funs.size());
-        for (const auto fun : families.funs) {
+        results.reserve(plain.size());
+        for (const auto fun : plain) {
             results.push_back(graph_.get(fun).children.back());
         }
-        out.push_back(lattice_.fun(arity - 1, lattice_.join(results, depth_ + 1)));
+        return lattice_.fun(arity - 1, lattice_.join(results, depth_ + 1));
     }
 
     // Tuples of one size and tag (their first element when it is an atom) join element by element; more shapes than
@@ -711,18 +727,21 @@ bool positional_fits(const Graph &graph, const Families &families) {
            std::ranges::all_of(families.positional, [&](Id list) { return graph.get(list).children.size() == size; });
 }
 
+// Whether a fact node is an overloaded fun, whose children are funs at its own level.
+bool overloaded_fun(const Node &node) { return node.kind == Kind::function && node.name == "clauses"; }
+
 // Whether a fact node is a container whose children are facts nested one level deeper.
 bool is_container(const Node &node) {
     constexpr std::array containers{Kind::tuple,    Kind::list,        Kind::map,
                                     Kind::function, Kind::application, Kind::positional};
-    return std::ranges::contains(containers, node.kind) && !node.children.empty();
+    return std::ranges::contains(containers, node.kind) && !node.children.empty() && !overloaded_fun(node);
 }
 
 // How many containers deep a fact nests, counted no further than `limit`.
 std::size_t nesting(const Graph &graph, Id fact, std::size_t limit) {
     const auto &node = graph.get(fact);
     const bool container = is_container(node);
-    if (limit == 0 || (!container && node.kind != Kind::union_type)) {
+    if (limit == 0 || (!container && node.kind != Kind::union_type && !overloaded_fun(node))) {
         return 0;
     }
     std::size_t inner = 0;
@@ -970,6 +989,40 @@ Id Lattice::fun(std::size_t arity, Id result) {
     std::vector<Id> children(arity, graph_.top());
     children.push_back(within_depth(result));
     return graph_.intern({Kind::function, "product", {}, std::move(children), {"result"}});
+}
+
+Id Lattice::fun(std::vector<Id> inputs, Id result) {
+    for (auto &input : inputs) {
+        input = within_depth(input);
+    }
+    inputs.push_back(within_depth(result));
+    return graph_.intern({Kind::function, "product", {}, std::move(inputs), {"result"}});
+}
+
+Id Lattice::overloaded(std::vector<Id> types) {
+    if (types.size() == 1) {
+        return types.front();
+    }
+    return graph_.intern({Kind::function, "clauses", {}, std::move(types), {"result"}});
+}
+
+Id Lattice::joined_fun(Id fact) {
+    const auto &node = graph_.get(fact);
+    if (node.kind != Kind::function || node.name != "clauses") {
+        return fact;
+    }
+    const auto types = node.children;
+    std::vector<Id> results;
+    results.reserve(types.size());
+    for (const auto type : types) {
+        results.push_back(graph_.get(type).children.back());
+    }
+    return fun(graph_.get(types.front()).children.size() - 1, join(results, 0));
+}
+
+std::vector<Id> Lattice::function_types(Id fact) const {
+    const auto &node = graph_.get(fact);
+    return node.kind == Kind::function && node.name == "clauses" ? node.children : std::vector<Id>{fact};
 }
 
 Id Lattice::bitstring(std::uint64_t base, std::uint64_t unit) {

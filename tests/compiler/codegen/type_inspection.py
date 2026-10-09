@@ -86,8 +86,9 @@ alike(X) -> if is_atom(X) -> X; true -> X end.
 bound(X) -> if X > 0 -> Y = 5; true -> Y = 6 end, Y.
 ''', encoding='utf-8')
 facts = run('--print-types', 'branches.erl').stdout
-for signature in ('pick(_) -> 7', 'same(X) -> X', 'mixed(_) -> 1..2',
-                  'shared(_) -> _', 'guarded(_) -> 1..2', 'alike(X) -> X',
+# A case or if ending a body splits it into one function type per branch (step 58K); equal inputs merge.
+for signature in ('pick(1) -> 7; (_) -> 7', 'same({_}) -> {_}; (X) -> X', 'mixed(1) -> 1; (_) -> 2',
+                  'shared(_) -> _', 'guarded(_) -> 1..2', 'alike(atom()) -> atom(); (X) -> X',
                   'bound(_) -> _'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # The case value joins its clauses, though the name its clauses bind stays unknown.
@@ -107,11 +108,11 @@ outer(X) -> case X of 0 -> 5; _ -> zero(X) end.
 ''', encoding='utf-8')
 facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
-# Inputs are success domains: N - 1 makes N a number() in every clause that returns.
-assert '%% inferred: keep(Acc, number()) -> Acc\n' in facts, facts
-for signature in ('zero(number()) -> 0', 'swap(_, _) -> _', 'forever() -> none()',
-                  'even(number()) -> 0..1', 'odd(number()) -> 0..1', 'fact(number()) -> number()',
-                  'outer(number()) -> 0 | 5'):
+# Function types iterate with the results; their inputs are each clause's facts after its head and guard.
+assert '%% inferred: keep(Acc, 0) -> Acc; (Acc, _) -> Acc\n' in facts, facts
+for signature in ('zero(0) -> 0; (_) -> 0', 'swap(A, 0) -> A; (_, _) -> _', 'forever() -> none()',
+                  'even(0) -> 1; (_) -> 0..1', 'odd(0) -> 0; (_) -> 0..1', 'fact(0) -> 1; (_) -> number()',
+                  'outer(0) -> 5; (_) -> 0'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # Final expression facts use the converged summaries: the recursive call inside even/1 sees odd's result.
 assert '    odd((N - 1 :: number())) :: 0..1.\n' in facts, facts
@@ -128,9 +129,9 @@ def ring(size):
 
 
 exact, widened = ring(8), ring(16)
-assert 'inferred=complete' in exact and '%% inferred: w1(_) -> 1..8\n' in exact, exact
+assert 'inferred=complete' in exact and '%% inferred: w1(0) -> 1; (_) -> 1..8\n' in exact, exact
 assert 'inferred=complete' in widened, widened
-assert '%% inferred: w1(_) -> pos_integer()\n' in widened, widened
+assert '%% inferred: w1(0) -> 1; (_) -> pos_integer()\n' in widened, widened
 
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')

@@ -235,8 +235,9 @@ Id Meet::funs(const Id left, const Id right) {
     if (any(left, "fun") || any(right, "fun")) {
         return any(left, "fun") ? right : left;
     }
-    const auto a = graph_.get(left).children;
-    const auto b = graph_.get(right).children;
+    // Different funs meet as the funs of today: their function types and inputs are given up.
+    const auto a = graph_.get(lattice_.joined_fun(left)).children;
+    const auto b = graph_.get(lattice_.joined_fun(right)).children;
     return a.size() != b.size() ? graph_.bottom() : lattice_.fun(a.size() - 1, lattice_.meet(a.back(), b.back()));
 }
 

@@ -11,12 +11,25 @@ struct Fact {
     bool operator==(const Fact &) const = default;
 };
 
+struct FunctionType {
+    // One possible clause (or branch of a case or if ending it): the arguments' facts after its head and guard, and
+    // its result.
+    std::vector<Id> inputs;
+    Fact result;
+    bool operator==(const FunctionType &) const = default;
+};
+
+// Function types a function or fun keeps at most; past it the last ones merge into one.
+inline constexpr std::size_t FUNCTION_TYPES = 8;
+
 struct Summary {
     // Inputs are term() for exported functions and functions fun F/A names, else their callers' joined arguments.
     std::vector<Id> inputs;
     Fact result;
     // The entry domain: each argument's join over the possible clauses of its fact after the head and guard.
     std::vector<Id> entry = {};
+    // The function types of the possible clauses, in source order; none when a budget or widening gave them up.
+    std::vector<FunctionType> types = {};
 };
 
 struct Inference {
@@ -31,7 +44,7 @@ struct Inference {
     std::map<const ast::Expression *, FunctionRef> callees;
     // The inputs of functions entered only by direct calls of the batch, joined from those calls.
     std::map<const Function *, std::vector<Id>> inputs;
-    // The results fun F/A read in the current pass, by function, to check they were final.
+    // The facts fun F/A read in the current pass, by function, to check they were final.
     std::map<const Function *, Id> fun_reads;
     // The members of the recursive component being solved: their domains are not final yet.
     std::set<const Function *> solving;

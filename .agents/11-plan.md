@@ -856,16 +856,31 @@ the clause body's result.
   `semantic::types::function_source` prints a list of function types for
   `--print-types` and diagnostics.
 - Success criteria
-  - [ ] Every function's summary lists its clauses' function types within
+  - [x] Every function's summary lists its clauses' function types within
     the budget; `--print-types` prints them; union summaries are unchanged.
+    Evidence 2026-10-09: `Summary::types` (`FunctionType`: inputs, result
+    fact), collected by `inference_scopes` (`argument_facts` after each
+    head guard, `branches` after each guard of the trailing case/if,
+    `add_types` at `leave_head`, `fun_inputs` per fun clause), merged by
+    `semantic/types/function_types` (`merge_types`, `next_round`,
+    `fun_fact`); overloaded funs are `Kind::function` "clauses" nodes of
+    product funs (`Lattice::fun(inputs, result)`, `overloaded`,
+    `joined_fun` for every consumer of today's fun facts); printing through
+    `function_source` and the fun Clause notation. A clause that always
+    raises keeps a `none()` type; types inputs are entry facts, the single
+    summary still prints success domains.
 - Tests
-  - [ ] New `tests/fixtures/inference/clauses.erl` rows: type tests per
+  - [x] New `tests/fixtures/inference/clauses.erl` rows: type tests per
     clause, literal patterns, merged equal inputs, an impossible clause, more
     clauses than the budget, a recursive function, a single-clause
     function, a `case` and an `if` on an argument, a nested `case` that does
     not split, multi-clause anonymous funs, `fun F/A` and a join of funs;
     existing expectations updated where functions now print several
-    function types.
+    function types. Evidence: clauses 17/17 (plus `not_last`, `raising`,
+    `same_funs`/`different_funs`); 21 expectations in values, narrowing and
+    base_types, `codegen_types` (branches, recursive, rings) and
+    `patternmatch_clauses` (`common`, `join`) print per-type signatures;
+    fast CTest 223/223.
 
 <a id="step-58l"></a>
 

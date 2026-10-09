@@ -2,6 +2,7 @@
 #include "../capabilities.hpp"
 #include "inference_narrowing.hpp"
 #include "lattice.hpp"
+#include <span>
 
 namespace clause::semantic::types {
 namespace {
@@ -226,10 +227,24 @@ bool comprehension(Order &order, const ast::ExprId &id, const ast::ExprValue &va
     return true;
 }
 
-// The fact of an expression the walk recorded; term() for one it did not.
-Id recorded(const BindingFacts &bindings, const ast::ExprId &id) {
+// The fact of an expression the walk recorded, with its relation; term() for one it did not.
+Fact recorded_fact(const BindingFacts &bindings, const ast::ExprId &id) {
     const auto found = bindings.inference.expressions.find(&bindings.function.module->syntax->expression(id));
-    return found == bindings.inference.expressions.end() ? bindings.inference.graph.top() : found->second.type;
+    return found == bindings.inference.expressions.end() ? Fact{bindings.inference.graph.top()} : found->second;
+}
+
+Id recorded(const BindingFacts &bindings, const ast::ExprId &id) { return recorded_fact(bindings, id).type; }
+
+// Whether an expression of a body never completes.
+bool stops(const BindingFacts &bindings, const std::span<const ast::ExprId> body) {
+    return std::ranges::any_of(body, [&](const ast::ExprId &expression) {
+        return recorded(bindings, expression) == bindings.inference.graph.bottom();
+    });
+}
+
+// The value of a body: its last expression's, none() when an expression of it never completes.
+Fact body_fact(const BindingFacts &bindings, const std::vector<ast::ExprId> &body) {
+    return stops(bindings, body) ? Fact{bindings.inference.graph.bottom()} : recorded_fact(bindings, body.back());
 }
 
 // The category the previous clause left out of value `position` (an argument, or 0 for a case's scrutinee): when
@@ -339,12 +354,9 @@ void enter_branch(BindingFacts &bindings, const Scrutinee &scrutinee, const std:
     }
 }
 
-// The value of a try or maybe body: its last expression's, none() when an expression of it never completes.
+// The value of a try or maybe body.
 Id body_value(const BindingFacts &bindings, const std::vector<ast::ExprId> &body) {
-    const auto never = [&](const ast::ExprId &expression) {
-        return recorded(bindings, expression) == bindings.inference.graph.bottom();
-    };
-    return std::ranges::any_of(body, never) ? bindings.inference.graph.bottom() : recorded(bindings, body.back());
+    return body_fact(bindings, body).type;
 }
 
 // Enter a clause of a try: an of clause matches the body's value, a catch clause its class (error, exit or throw)
@@ -406,6 +418,73 @@ const std::vector<ast::FunctionClause> &heads(const BindingFacts &bindings) {
     return std::get<ast::Function>(syntax.form(bindings.function.function->form).value).clauses;
 }
 
+// Each argument's fact in the current function clause: a plain variable's current fact, else its pattern's at entry.
+std::vector<Id> argument_facts(const BindingFacts &bindings, const std::vector<ast::ExprId> &patterns) {
+    std::vector<Id> result;
+    result.reserve(patterns.size());
+    for (std::size_t position = 0; position < patterns.size(); ++position) {
+        const auto identity = variable(bindings, patterns[position]);
+        const auto found = identity ? bindings.values.find(*identity) : bindings.values.end();
+        result.push_back(found == bindings.values.end() ? bindings.entry.at(position) : found->second.type);
+    }
+    return result;
+}
+
+// The case or if a function clause's body ends in, which splits it into function types; null for another end.
+const ast::Expression *trailing(const BindingFacts &bindings, const ast::FunctionClause &clause) {
+    const auto &syntax = *bindings.function.module->syntax;
+    const auto &last = syntax.expression(ungroup(syntax, clause.body.back()));
+    const bool splits = std::holds_alternative<ast::CaseExpression>(last.value) ||
+                        std::holds_alternative<ast::IfExpression>(last.value);
+    return splits ? &last : nullptr;
+}
+
+// Add a possible function clause's function types: one per possible branch of the case or if ending its body, else
+// one for the whole clause.
+void add_types(BindingFacts &bindings, const ast::FunctionClause &clause) {
+    const auto *tail = trailing(bindings, clause);
+    if (!tail || bindings.branches.empty()) {
+        bindings.types.push_back({bindings.arguments, body_fact(bindings, clause.body)});
+        return;
+    }
+    const bool reached = !stops(bindings, std::span(clause.body).first(clause.body.size() - 1));
+    for (const auto &[branch, inputs] : bindings.branches) {
+        const auto &body = *clause_parts(tail->value, branch).second;
+        bindings.types.push_back(
+            {inputs, reached ? body_fact(bindings, body) : Fact{bindings.inference.graph.bottom()}});
+    }
+}
+
+// The arguments' facts after a fun clause's head and guard: a plain variable's narrowed fact, else its pattern's
+// shape.
+std::vector<Id> fun_arguments(BindingFacts &bindings, const ast::FunctionClause &clause) {
+    const auto &syntax = *bindings.function.module->syntax;
+    std::vector<Id> result;
+    for (const auto &pattern : argument_roots(syntax, clause)) {
+        const auto identity = variable(bindings, pattern);
+        const auto found = identity ? bindings.values.find(*identity) : bindings.values.end();
+        result.push_back(found == bindings.values.end() ? pattern_shape(bindings, pattern) : found->second.type);
+    }
+    return result;
+}
+
+// After a possible clause's guard: keep an anonymous fun clause's argument facts, or a branch's of the case or if
+// ending the function clause being walked.
+void record_clause(BindingFacts &bindings, const ast::Expression &expression, const std::size_t index) {
+    if (bindings.impossible.contains(clause_parts(expression.value, index).second)) {
+        return;
+    }
+    if (const auto *clauses = fun_clauses(expression.value)) {
+        bindings.fun_inputs.insert_or_assign({&expression, index}, fun_arguments(bindings, clauses->at(index)));
+        return;
+    }
+    const auto &clause = heads(bindings).at(bindings.head);
+    if (trailing(bindings, clause) == &expression) {
+        const auto &syntax = *bindings.function.module->syntax;
+        bindings.branches.insert_or_assign(index, argument_facts(bindings, argument_roots(syntax, clause)));
+    }
+}
+
 // Enter a function clause: its head patterns narrow the inputs, which the previous clause's single type test may
 // already have narrowed.
 void enter_head(BindingFacts &bindings, const std::size_t index, std::size_t &work) {
@@ -413,6 +492,8 @@ void enter_head(BindingFacts &bindings, const std::size_t index, std::size_t &wo
     const auto &clauses = heads(bindings);
     const auto patterns = argument_roots(syntax, clauses[index]);
     Lattice lattice(bindings.inference.graph);
+    bindings.head = index;
+    bindings.branches.clear();
     bindings.entry.assign(patterns.size(), bindings.inference.graph.top());
     for (std::size_t position = 0; position < patterns.size(); ++position) {
         auto input = bindings.inputs.at(position);
@@ -442,12 +523,9 @@ void guarded_head(BindingFacts &bindings, const std::size_t index) {
         return;
     }
     Lattice lattice(bindings.inference.graph);
-    const auto patterns = argument_roots(syntax, clause);
-    for (std::size_t position = 0; position < patterns.size(); ++position) {
-        const auto identity = variable(bindings, patterns[position]);
-        const auto found = identity ? bindings.values.find(*identity) : bindings.values.end();
-        const auto fact = found == bindings.values.end() ? bindings.entry.at(position) : found->second.type;
-        bindings.domain.at(position) = lattice.join(bindings.domain.at(position), fact);
+    bindings.arguments = argument_facts(bindings, argument_roots(syntax, clause));
+    for (std::size_t position = 0; position < bindings.arguments.size(); ++position) {
+        bindings.domain.at(position) = lattice.join(bindings.domain.at(position), bindings.arguments[position]);
     }
 }
 
@@ -525,16 +603,17 @@ void close(BindingFacts &bindings) {
 void leave_head(BindingFacts &bindings, const std::size_t index) {
     const auto &syntax = *bindings.function.module->syntax;
     const auto &clause = heads(bindings)[index];
+    if (bindings.impossible.contains(&clause.body)) {
+        return;
+    }
+    add_types(bindings, clause);
     if (!completes(bindings, &clause.body)) {
         return;
     }
     Lattice lattice(bindings.inference.graph);
-    const auto patterns = argument_roots(syntax, clause);
-    for (std::size_t position = 0; position < patterns.size(); ++position) {
-        const auto identity = variable(bindings, patterns[position]);
-        const auto found = identity ? bindings.values.find(*identity) : bindings.values.end();
-        const auto fact = found == bindings.values.end() ? bindings.entry.at(position) : found->second.type;
-        bindings.success.at(position) = lattice.join(bindings.success.at(position), fact);
+    const auto facts = argument_facts(bindings, argument_roots(syntax, clause));
+    for (std::size_t position = 0; position < facts.size(); ++position) {
+        bindings.success.at(position) = lattice.join(bindings.success.at(position), facts[position]);
     }
 }
 
@@ -640,7 +719,9 @@ void scope_step(BindingFacts &bindings, const Frame &frame, std::size_t &work) {
          }},
         {Step::guarded,
          [](BindingFacts &b, const Frame &f, std::size_t &) {
-             guard_clause(b, b.function.module->syntax->expression(f.expression).value, f.clause);
+             const auto &expression = b.function.module->syntax->expression(f.expression);
+             guard_clause(b, expression.value, f.clause);
+             record_clause(b, expression, f.clause);
          }},
         {Step::enter_head,
          [](BindingFacts &b, const Frame &f, std::size_t &work) {

@@ -415,6 +415,11 @@ Step facts beyond the plan record:
   used together: pass structs (Operands, Cell, Slot, Lookup) or compare them first; it also flags implicit move of
   structs holding std::map (exception-escape): copy instead. Boost cpp_int `x + var` in narrowing tripped the
   analyzer (ArrayBound): use fixed +1/-1 helpers.
+- 58J1/58K (2026-10-09): try/maybe frames join completing paths (of clauses from body end; catch/else/after from
+  before). Function types: Summary::types (entry facts per clause / trailing case-if branch), overloaded funs =
+  Kind::function "clauses" node; joined_fun() for old consumers. Scratch helpers: rep.py (exact <<<OLD/===/>>> spec
+  replacements; avoids heredoc escaping), accept.py (set expect lines to current --print-types output; review diff).
+  Compiler CMakeLists source edit makes check-quality run all 334 tidy units (~6 batches).
 User directions (keep):
 - Ports (2026-10-08): ports must exist later; sockets, file I/O, subprocess stdin/stdout are ports (plan phase J2,
   57A-57F, backlog F35); step 53 decision superseded.

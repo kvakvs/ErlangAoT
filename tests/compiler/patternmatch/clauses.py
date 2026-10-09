@@ -44,11 +44,12 @@ def main():
         options = [] if mode == "--print-types" else ["-O2"]
         result = run([tool, *options, mode, str(work / "answer.erl"), str(work / "client.erl")])
         if mode == "--print-types":
+            # One signature per function type (step 58K): each clause keeps its own result and relation.
             summaries = {match.group(1): match.group(2) for match in
-                         re.finditer(r'%% inferred: (\w+)\([^\n]*\) -> ([^\n]+)', result)}
-            assert summaries["common"] == "X", summaries["common"]
+                         re.finditer(r'%% inferred: (\w+)(\([^\n]+)', result)}
+            assert summaries["common"] == "(0) -> 0; (X) -> X", summaries["common"]
             assert "argument" not in summaries["rollback"], summaries["rollback"]
-    assert summaries["join"] == "1..2", summaries["join"]
+    assert summaries["join"] == "(0) -> 1; (_) -> 2", summaries["join"]
     (work / "evidence.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
     print(f'{records["calls"]} OTP/native ordered-clause calls; later-body diagnostics and retry passed.')
 

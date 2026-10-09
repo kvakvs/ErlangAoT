@@ -191,20 +191,19 @@ std::optional<std::string> expression_note(const ast::Module &syntax, const type
     return text.empty() ? std::nullopt : std::optional{std::move(text)};
 }
 
-// `name(Inputs) -> Result` of a function summary; an argument the result equals shows its name, as a type variable.
+// `name(Inputs) -> Result` of a function summary, or one signature per function type when it keeps several:
+// `f(integer()) -> integer(); (atom()) -> string()`. An argument a result equals shows its name, as a type variable.
 std::string signature(const types::Inference &inferred, const std::string &name, const types::Summary &summary,
                       const Names &names, const types::RecordFields &records) {
-    std::string inputs;
-    for (std::size_t index = 0; index < summary.inputs.size(); ++index) {
-        const auto input = summary.inputs[index];
-        const bool named =
-            summary.result.argument == index && inferred.graph.get(summary.result.type).kind == types::Kind::top;
-        inputs += inputs.empty() ? "" : ", ";
-        inputs += named && input == inferred.graph.top() ? names.at(index)
-                                                         : types::type_source(inferred.graph, input, 1024, &records);
+    std::vector<types::FunctionText> texts;
+    if (summary.types.size() > 1) {
+        for (const auto &type : summary.types) {
+            texts.push_back({type.inputs, type.result.type, type.result.argument});
+        }
+    } else {
+        texts.push_back({summary.inputs, summary.result.type, summary.result.argument});
     }
-    const auto result = fact_source(inferred, summary.result, &names, records);
-    return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? std::string(types::TERM_SOURCE) : result);
+    return atom_source(name) + types::function_source(inferred.graph, texts, names, &records);
 }
 
 // `name(Inputs) -> Result when Constraints` of one overload of a resolved specification.

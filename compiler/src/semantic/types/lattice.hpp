@@ -81,6 +81,15 @@ class Lattice {
     Id association(Id key, Id value);
     Id fun(std::size_t arity, Id result);
     Id bitstring(std::uint64_t base, std::uint64_t unit);
+    // A fun of one function type: arguments of the facts `inputs` returning `result`.
+    Id fun(std::vector<Id> inputs, Id result);
+    // A fun of several function types, funs of one arity with inputs; a single one is that fun itself.
+    Id overloaded(std::vector<Id> types);
+    // The fun of today a fun fact stands for: its arity, any inputs, its function types' joined results; another
+    // fact as it is.
+    Id joined_fun(Id fact);
+    // The function types of a fun fact: the funs of an overloaded fun, else the fact itself.
+    std::vector<Id> function_types(Id fact) const;
 
     // The integers from `low` to `high` as a fact: a singleton, a range or the category of an unbounded interval.
     Id interval(const std::optional<std::string> &low, const std::optional<std::string> &high);

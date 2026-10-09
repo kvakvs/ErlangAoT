@@ -103,14 +103,27 @@ class Printer final {
         return "<<" + parts + ">>";
     }
 
+    // fun((Inputs) -> Result); a fun of several function types in a Clause notation: fun((1) -> one; (_) -> other).
     std::string function(const Node &node, std::size_t depth) {
         const bool result = std::ranges::contains(node.labels, std::string("result"));
         if (!result) {
             return "fun()";
         }
+        if (node.name != "clauses") {
+            return "fun(" + signature(node, depth) + ')';
+        }
+        std::string types;
+        for (const auto type : node.children) {
+            types += (types.empty() ? "" : "; ") + signature(graph_.get(type), depth);
+        }
+        return "fun(" + types + ')';
+    }
+
+    // `(Inputs) -> Result` of a fun of one function type.
+    std::string signature(const Node &node, std::size_t depth) {
         const auto arguments = std::span(node.children).first(node.children.size() - 1);
         const auto input = node.name == "any_arguments" ? std::string("...") : join(arguments, depth);
-        return "fun((" + input + ") -> " + text(node.children.back(), depth) + ')';
+        return '(' + input + ") -> " + text(node.children.back(), depth);
     }
 
     // Unary and binary type operators carry their operator code as the node's name.
@@ -258,5 +271,37 @@ class Printer final {
 
 std::string type_source(const Graph &graph, Id type, std::size_t budget, const RecordFields *records) {
     return Printer(graph, budget, records).text(type, 0);
+}
+
+namespace {
+// The name argument `index` prints as: its name in `names`, else `_argumentN`.
+std::string argument_name(std::span<const std::string> names, const std::size_t index) {
+    return index < names.size() ? names[index] : "_argument" + std::to_string(index + 1);
+}
+
+// `(Inputs) -> Result` of one function type.
+std::string type_text(const Graph &graph, const FunctionText &type, std::span<const std::string> names,
+                      const RecordFields *records) {
+    const bool related = type.argument && graph.get(type.result).kind == Kind::top;
+    std::string inputs;
+    for (std::size_t index = 0; index < type.inputs.size(); ++index) {
+        const bool named = related && *type.argument == index && type.inputs[index] == graph.top();
+        inputs +=
+            (inputs.empty() ? "" : ", ") +
+            (named ? argument_name(names, index) : type_source(graph, type.inputs[index], DEFAULT_BUDGET, records));
+    }
+    const auto output =
+        related ? argument_name(names, *type.argument) : type_source(graph, type.result, DEFAULT_BUDGET, records);
+    return '(' + inputs + ") -> " + output;
+}
+} // namespace
+
+std::string function_source(const Graph &graph, std::span<const FunctionText> types, std::span<const std::string> names,
+                            const RecordFields *records) {
+    std::string result;
+    for (const auto &type : types) {
+        result += (result.empty() ? "" : "; ") + type_text(graph, type, names, records);
+    }
+    return result;
 }
 } // namespace clause::semantic::types

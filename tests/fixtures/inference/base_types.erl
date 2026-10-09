@@ -92,7 +92,7 @@ spawned_pid() -> spawn(fun() -> ok end).
 -spec reference_value() -> reference().
 reference_value() -> make_ref().
 
-%% expect: identifier_value(_) -> reference() | pid()
+%% expect: identifier_value(pid) -> pid(); (_) -> reference()
 -spec identifier_value(term()) -> identifier().
 identifier_value(X) ->
     case X of
@@ -268,7 +268,7 @@ remote_fun() -> fun lists:reverse/1.
 
 %% Unions of categories.
 
-%% expect: timeout_value(non_neg_integer() | forever) -> non_neg_integer() | infinity
+%% expect: timeout_value(forever) -> infinity; (non_neg_integer()) -> non_neg_integer()
 -spec timeout_value(term()) -> timeout().
 timeout_value(X) ->
     case X of

@@ -287,6 +287,10 @@
   Step 58J1: try/maybe frames (`attempt_frames`/`maybe_frames`): `of` and `else` clauses enter like case clauses
   (`enter_branch`), `finish` completes a body, `bind` matches a ?= pattern and keeps its failed values
   (`BindingFacts::conditionals`); `try_fact`/`maybe_fact` join their paths' values.
+  Step 58K: `Summary::types` (one `FunctionType` per possible clause or trailing case/if branch, from
+  `BindingFacts::arguments`/`branches`/`types`, merged by `function_types::merge_types`, rounds `next_round`);
+  funs carry them as `Kind::function` "clauses" nodes of product funs with inputs; `Lattice::joined_fun` gives
+  every other consumer today's fun; `function_source` prints `f(A) -> R; (B) -> S`.
   Step 51: no code change; non-running processes are never collected, a resumed process collects at its resume
   entry safepoint (wait builtin / trap continuation / yielded function); `executables_mailbox_collection`.
 

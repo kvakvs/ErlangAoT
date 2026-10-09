@@ -1,5 +1,6 @@
 #include "inference_funs.hpp"
 #include "../funs.hpp"
+#include "function_types.hpp"
 #include <charconv>
 
 namespace clause::semantic::types {
@@ -14,15 +15,17 @@ std::optional<std::size_t> arity_of(const Integer &arity) {
                : std::nullopt;
 }
 
-// The result fact fun F/A sees: the function's summary as inferred so far, recorded so a later pass can check it.
-Id local_result(Inference &inference, const Function *target) {
+// The fact fun F/A sees: its function's function types (or arity and result) as inferred so far, recorded so a later
+// pass can check it.
+Id local_fun(Inference &inference, const Function *target, const std::size_t arity) {
+    Lattice lattice(inference.graph);
     const auto summary = target ? inference.functions.find(target) : inference.functions.end();
-    const auto result = inference.opaque_funs || summary == inference.functions.end() ? inference.graph.top()
-                                                                                      : summary->second.result.type;
-    if (target && !inference.opaque_funs) {
-        inference.fun_reads.insert_or_assign(target, result);
+    if (inference.opaque_funs || summary == inference.functions.end()) {
+        return lattice.fun(arity, inference.graph.top());
     }
-    return result;
+    const auto fact = summary_fun(lattice, summary->second, arity);
+    inference.fun_reads.insert_or_assign(target, fact);
+    return fact;
 }
 } // namespace
 
@@ -37,7 +40,7 @@ std::optional<Id> fun_reference_fact(Inference &inference, const FunctionRef fun
         // A fun naming an auto-imported builtin is erlang:F/A, whose result is unknown here.
         const bool builtin = function.function->builtin_funs.contains(&expression);
         const auto *target = builtin ? nullptr : fun_target(*function.module, *reference);
-        return lattice.fun(*arity, local_result(inference, target));
+        return local_fun(inference, target, *arity);
     }
     if (const auto *reference = std::get_if<ast::RemoteFunReference>(&expression.value)) {
         const auto *literal = std::get_if<Integer>(&reference->arity);
@@ -47,11 +50,15 @@ std::optional<Id> fun_reference_fact(Inference &inference, const FunctionRef fun
     return std::nullopt;
 }
 
+Id summary_fun(Lattice &lattice, const Summary &summary, const std::size_t arity) {
+    return summary.types.empty() ? lattice.fun(arity, summary.result.type) : fun_fact(lattice, summary.types);
+}
+
 Id call_value(Lattice &lattice, const Id callee, const std::size_t arity) {
     auto &graph = lattice.graph();
     std::vector<Id> results;
     for (const auto member : lattice.members(callee)) {
-        const auto &node = graph.get(member);
+        const auto &node = graph.get(lattice.joined_fun(member));
         if (member == graph.top() || (node.kind == Kind::function && node.name == "any_arguments")) {
             return graph.top();
         }

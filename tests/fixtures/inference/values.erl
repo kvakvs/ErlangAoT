@@ -283,7 +283,7 @@ add_one(X) -> X + 1.
 %% expect: countdown_start() -> done
 countdown_start() -> countdown(3).
 
-%% expect: countdown(integer()) -> done
+%% expect: countdown(0) -> done; (integer()) -> done
 countdown(0) -> done;
 countdown(N) -> countdown(N - 1).
 
@@ -300,7 +300,7 @@ uncalled(X) -> X.
 
 %% Integers, integer ranges and integers or floats.
 
-%% expect: pick(_) -> 1..3
+%% expect: pick(a) -> 1; (b) -> 2; (_) -> 3
 pick(X) ->
     case X of
         a -> 1;
@@ -315,14 +315,14 @@ clauses(_) -> 20.
 %% expect: bounded(1..10) -> 1..10
 bounded(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
-%% expect: integer_or_float(_) -> 1 | float()
+%% expect: integer_or_float(1) -> 1; (_) -> float()
 integer_or_float(X) ->
     case X of
         1 -> 1;
         _ -> 2.5
     end.
 
-%% expect: scaled(number()) -> number()
+%% expect: scaled(integer()) -> integer(); (float()) -> float()
 scaled(X) when is_integer(X) -> X * 2;
 scaled(X) when is_float(X) -> X / 2.
 
@@ -354,7 +354,7 @@ nine_letters() -> "acegikmoq".
 %% expect: consecutive() -> 1..3 | 5 | 7..8
 consecutive() -> pick_number(1).
 
-%% expect: pick_number(_) -> 1..3 | 5 | 7..8
+%% expect: pick_number(1) -> 1; (2) -> 2; (3) -> 3; (5) -> 5; (7) -> 7; (_) -> 8
 pick_number(X) ->
     case X of
         1 -> 1;
@@ -376,7 +376,7 @@ mixed_tuple() -> {ok, 1, 2.5}.
 %% expect: nested_tuple() -> {{a, 1}, {b, 2}}
 nested_tuple() -> {{a, 1}, {b, 2}}.
 
-%% expect: tagged(_) -> {error, bad} | {ok, 1}
+%% expect: tagged(1) -> {ok, 1}; (_) -> {error, bad}
 tagged(X) ->
     case X of
         1 -> {ok, 1};
@@ -493,21 +493,21 @@ wide_map() ->
 %% expect: with_tail(_) -> [a, b | _]
 with_tail(T) -> [a, b | T].
 
-%% expect: list_same_shape(_) -> [1..2, (a | b)]
+%% expect: list_same_shape(1) -> [1, a]; (_) -> [2, b]
 list_same_shape(X) ->
     case X of
         1 -> [1, a];
         _ -> [2, b]
     end.
 
-%% expect: list_other_shape(_) -> [1..2 | a, ...]
+%% expect: list_other_shape(1) -> [1, 2]; (_) -> [a, ...]
 list_other_shape(X) ->
     case X of
         1 -> [1, 2];
         _ -> [a]
     end.
 
-%% expect: map_join(_) -> #{a | b => 1..2}
+%% expect: map_join(1) -> #{a := 1}; (_) -> #{b := 2}
 map_join(X) ->
     case X of
         1 -> #{a => 1};
@@ -542,7 +542,7 @@ local_fun() ->
     Five.
 
 %% A named fun's calls of itself are unknown.
-%% expect: named_fun() -> fun((_) -> number())
+%% expect: named_fun() -> fun((0) -> 1; (_) -> number())
 named_fun() ->
     fun
         Fact(0) -> 1;

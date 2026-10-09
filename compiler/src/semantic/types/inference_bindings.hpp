@@ -70,6 +70,16 @@ struct BindingFacts {
     std::vector<Id> inputs;
     std::vector<Id> entry;
     std::vector<Id> domain;
+
+    // The function clause being walked and its arguments' facts after its head and guard.
+    std::size_t head = 0;
+    std::vector<Id> arguments;
+    // The arguments' facts after each guard of the case or if ending the clause's body, by branch: its function types.
+    std::map<std::size_t, std::vector<Id>> branches;
+    // The function types of the clauses walked so far, in source order.
+    std::vector<FunctionType> types;
+    // The arguments' facts after the head and guard of each anonymous fun clause, by fun and clause.
+    std::map<std::pair<const ast::Expression *, std::size_t>, std::vector<Id>> fun_inputs;
     // The patterns waiting for each expression's value.
     std::map<const ast::Expression *, std::vector<Waiting>> waiting;
 

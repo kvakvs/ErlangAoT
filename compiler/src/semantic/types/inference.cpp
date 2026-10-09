@@ -3,6 +3,7 @@
 #include "../capabilities.hpp"
 #include "../funs.hpp"
 #include "../records.hpp"
+#include "function_types.hpp"
 #include "inference_bindings.hpp"
 #include "inference_funs.hpp"
 #include "inference_inputs.hpp"
@@ -38,21 +39,6 @@ Fact call_result(const Inference &inference, const ast::Module &syntax, const as
     }
     const auto argument = call.arguments.at(*summary.result.argument);
     return inference.expressions.at(&syntax.expression(argument));
-}
-
-// Bottom (a recursive call not yet summarized) adds nothing; otherwise only a relation common to both survives and
-// the types join (docs/semantic.md#inference-domain), or widen between rounds of a recursive component.
-Fact merged(Graph &graph, const Fact previous, const Fact next, bool widening = false) {
-    // A value that never exists relates to no argument.
-    if (previous.type == graph.bottom()) {
-        return next.type == graph.bottom() ? Fact{graph.bottom()} : next;
-    }
-    if (next.type == graph.bottom()) {
-        return previous;
-    }
-    Lattice lattice(graph);
-    const auto type = widening ? lattice.widen(previous.type, next.type) : lattice.join(previous.type, next.type);
-    return {type, previous.argument == next.argument ? previous.argument : std::nullopt};
 }
 
 // The value of a body: its last expression's, or none() when an expression before it never completes.
@@ -258,9 +244,10 @@ Fact value_call(Inference &inference, const FunctionRef function, const ast::Cal
     return {call_value(lattice, recorded_fact(inference, syntax, target).type, call.arguments.size())};
 }
 
-// A fun value: fun F/A and fun M:F/A by the function they name, an anonymous fun by its clauses' results.
+// A fun value: fun F/A and fun M:F/A by the function they name, an anonymous fun by the function types of its
+// possible clauses: their arguments' facts after head and guard, and their results.
 std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef function, const ast::Expression &expression,
-                                   const Impossible &impossible) {
+                                   const BindingFacts &bindings) {
     if (const auto fact = fun_reference_fact(inference, function, expression)) {
         return Fact{*fact};
     }
@@ -268,9 +255,24 @@ std::optional<Fact> fun_value_fact(Inference &inference, const FunctionRef funct
     if (!clauses) {
         return std::nullopt;
     }
+    const auto arity = clauses->front().arguments.size();
+    std::vector<FunctionType> types;
+    for (std::size_t index = 0; index < clauses->size(); ++index) {
+        const auto &clause = clauses->at(index);
+        if (bindings.impossible.contains(&clause.body)) {
+            continue;
+        }
+        const auto found = bindings.fun_inputs.find({&expression, index});
+        auto inputs =
+            found == bindings.fun_inputs.end() ? std::vector<Id>(arity, inference.graph.top()) : found->second;
+        // A relation of the result is to the enclosing function's arguments, not the fun's.
+        types.push_back({std::move(inputs), {sequence(inference, *function.module->syntax, clause.body).type}});
+    }
     Lattice lattice(inference.graph);
-    const auto result = joined(inference, *function.module->syntax, *clauses, &impossible);
-    return Fact{lattice.fun(clauses->front().arguments.size(), result.type)};
+    if (types.empty()) {
+        return Fact{lattice.fun(arity, inference.graph.bottom())};
+    }
+    return Fact{fun_fact(lattice, merge_types(inference.graph, std::move(types)))};
 }
 
 // A call: none() when it never happens, else by its callee: a value, a function or an unknown target.
@@ -331,7 +333,7 @@ Fact evaluate(Inference &inference, const FunctionRef function, const ast::ExprI
     if (const auto fact = passed_fact(inference, function, expression, bindings, work)) {
         return *fact;
     }
-    if (const auto fact = fun_value_fact(inference, function, expression, bindings.impossible)) {
+    if (const auto fact = fun_value_fact(inference, function, expression, bindings)) {
         return *fact;
     }
     if (const auto fact = selection_fact(inference, syntax, expression, bindings)) {
@@ -379,6 +381,8 @@ struct Body {
     // entry domain.
     std::vector<Id> domain;
     std::vector<Id> entry;
+    // The function types of its possible clauses, merged within their budget.
+    std::vector<FunctionType> types = {};
 };
 
 // A shared work budget bounds the entire batch and erases relations as well as concrete types.
@@ -399,7 +403,8 @@ Body body(Inference &inference, const FunctionRef function, std::size_t &work,
     }
     // A function that returns shows its success domain; one that never does, its entry domain.
     const auto result = joined(inference, syntax, definition.clauses, &bindings.impossible);
-    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain};
+    return {result, result.type == inference.graph.bottom() ? bindings.domain : bindings.success, bindings.domain,
+            merge_types(inference.graph, std::move(bindings.types))};
 }
 
 // Rounds of plain joins before results widen (docs/semantic.md#inference-domain), as many as the singleton budget:
@@ -434,6 +439,8 @@ bool refine(Inference &inference, const Component &component, std::size_t &work,
         summary.result = next;
         summary.inputs = std::move(evaluated.domain);
         summary.entry = std::move(evaluated.entry);
+        // Function types follow the results; only results decide convergence.
+        summary.types = next_round(inference.graph, summary.types, std::move(evaluated.types), widening);
     }
     return changed;
 }
@@ -463,6 +470,10 @@ void solve(Inference &inference, const Component &component, std::size_t &work) 
         summarize(inference, member, {inference.graph.exhausted()});
     }
     (void)refine(inference, component, work, recorded, false);
+    // A component that did not converge keeps only its widened union summaries.
+    for (const auto member : component.members) {
+        inference.functions.at(member.function).types.clear();
+    }
     finish(inference, component);
 }
 
@@ -484,15 +495,18 @@ void infer_pass(Inference &inference, const CallGraph &calls) {
             recorded.clear();
             auto evaluated = body(inference, function, work, recorded);
             summarize(inference, function, evaluated.result, std::move(evaluated.domain));
-            inference.functions.at(function.function).entry = std::move(evaluated.entry);
+            auto &summary = inference.functions.at(function.function);
+            summary.entry = std::move(evaluated.entry);
+            summary.types = std::move(evaluated.types);
         }
     }
 }
 
-// Whether every fun F/A of the pass saw the final result of its function.
-bool settled(const Inference &inference) {
+// Whether every fun F/A of the pass saw the final facts of its function.
+bool settled(Inference &inference) {
+    Lattice lattice(inference.graph);
     return std::ranges::all_of(inference.fun_reads, [&](const auto &read) {
-        return inference.functions.at(read.first).result.type == read.second;
+        return summary_fun(lattice, inference.functions.at(read.first), read.first->key.arity) == read.second;
     });
 }
 } // namespace

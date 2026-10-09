@@ -265,6 +265,25 @@ Inference is separate from declared types and never trusts specs.
 - Clause results join conservatively: a projection survives only if every
   clause returns the same argument. A `case` or `if` joins its clause results
   the same way; a binding defined by several of its clauses stays `term()`.
+- Function types (step 58K, `semantic/types/function_types`): beside the
+  union summary above, a function keeps one function type per possible
+  clause, like the overloads of a `-spec`: the arguments' facts after the
+  head and guard (a plain variable's narrowed fact, else the pattern's) and
+  the clause's result (`none()` for a clause that always raises; impossible
+  clauses add none). A clause whose body ends in a `case` or `if` splits into
+  one function type per possible branch, with the arguments' facts after that
+  branch's pattern and guard and the branch's result (one level: a nested
+  `case` does not split further). Function types of equal inputs merge
+  (their results join); past 8 the last ones merge into one, inputs and
+  results joined. Recursive components iterate them with the results, each
+  round joining (then widening) each type's result; a component that does
+  not converge keeps only its union summaries. An anonymous fun's fact keeps
+  one function type per possible clause (its patterns and guard over any
+  argument), `fun F/A` the function types of `F/A`; funs that join keep their
+  function types only when they are equal, otherwise they join as one fun of
+  their joined results with any inputs. Every other consumer
+  (specialization, domains, calls, specification checks) reads the union
+  summary.
 - A `receive` is the join of its clauses and its `after` body, which a
   timeout of `infinity` never runs.
 - A recursive component starts every member's result at `none()` and re-infers
@@ -375,7 +394,10 @@ mixed(X) ->
   `%% inferred: f(Inputs) -> Result` what inference found, so the two can be
   compared. The inputs are each argument's success domain (from `term()`
   for exported functions and those `fun F/A` names, from the callers'
-  joined arguments for other functions). A `-spec` stays with the function right after
+  joined arguments for other functions). A function with several function
+  types prints one signature per type, each with its own inputs:
+  `f(integer()) -> integer(); (atom()) -> string()`
+  (`semantic::types::function_source`). A `-spec` stays with the function right after
   it, set apart from other forms by a blank line.
 - Expressions whose fact says more than `term()` are annotated
   `Expression :: Type` (a known type hides an argument relation, which shows
@@ -415,10 +437,10 @@ sum() -> 1 + 2.
 - `values.erl` covers literals, arithmetic and comparisons, calls of local and
   other functions, integer joins and ranges, integers or floats, lists,
   strings, tuples, maps with atom and other keys, funs returned and applied,
-  binaries and argument relations. Today inference finds literal and
+  binaries, argument relations and `try`/`maybe` values. Today inference finds literal and
   constructed values, operator and builtin results, containers and their
   parts, funs and their calls, local inputs from callers, integer joins and
-  argument relations, narrowing by uses and success domains (121 of 121
+  argument relations, narrowing by uses and success domains (141 of 141
   functions).
 - `narrowing.erl` covers each type test, case guards, true-test scrutinees,
   `andalso`, comprehension filters, tuple/list/map patterns, catch-all
@@ -435,6 +457,12 @@ sum() -> 1 + 2.
   built-in type is checked to resolve, and its body produces such a value.
   Categories are expected under their built-in names, bounded integer sets as
   ranges. Every function reaches its expected type.
+- `clauses.erl` covers function types (step 58K): type tests and literal
+  patterns per clause, merged equal inputs, a clause callers never enter,
+  more clauses than the budget, a recursive function, a single clause, a
+  `case` and an `if` ending the body, a nested `case` and a `case` that is
+  not last, multi-clause anonymous funs, `fun F/A`, joins of equal and of
+  different funs, and a clause that always raises.
 
 ### Printing types
 
@@ -442,7 +470,10 @@ sum() -> 1 + 2.
 a type of the type graph in Erlang type syntax: `_` for any term (`term()`,
 written by `TERM_SOURCE` for brevity; type syntax reads `_` as `any()`), `none()`, atoms and
 integers, `1..5`, `{ok, T}`, `tuple()`, `[T]`, `[T, ...]`, `#{K => V, K := V}`,
-`#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. A union's integers
+`#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. A fun of several
+function types prints them in a Clause notation, `fun((1) -> one; (_) ->
+other)`: Erlang type syntax has no overloaded fun type, and a union of fun
+types means something else. A union's integers
 print in value order where its first integer stands, consecutive ones as a
 range (`1 | 2 | 3 | 5` prints `1..3 | 5`; the fact keeps the singletons).
 Predefined `erlang`

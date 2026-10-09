@@ -117,14 +117,14 @@ legacy_test(X) when integer(X) -> X.
 
 %% Case guards, a true test as the scrutinee, andalso conditions and comprehension filters narrow too.
 
-%% expect: case_guard(_) -> integer() | other
+%% expect: case_guard(integer()) -> integer(); (_) -> other
 case_guard(X) ->
     case X of
         Y when is_integer(Y) -> Y;
         _ -> other
     end.
 
-%% expect: case_test(_) -> 0 | atom()
+%% expect: case_test(atom()) -> atom(); (_) -> 0
 case_test(X) ->
     case is_atom(X) of
         true -> X;
@@ -148,12 +148,12 @@ list_pattern([H]) -> H.
 %% expect: map_pattern(map()) -> _
 map_pattern(#{a := V}) -> V.
 
-%% expect: catch_all(_) -> one | other
+%% expect: catch_all(1) -> one; (_) -> other
 catch_all(1) -> one;
 catch_all(_) -> other.
 
 %% Comparisons narrow a value proven to be an integer to a range.
-%% expect: small(integer()) -> big | small
+%% expect: small(1..9) -> small; (integer()) -> big
 small(X) when is_integer(X), X > 0, X < 10 -> small;
 small(X) when is_integer(X) -> big.
 
@@ -172,7 +172,7 @@ complement_start() ->
     {complement(1), complement(2.5)},
     complement(3).
 
-%% expect: complement(1 | 3 | float()) -> float() | int
+%% expect: complement(1 | 3) -> int; (float()) -> float()
 complement(X) when is_integer(X) -> int;
 complement(X) -> X.
 
@@ -226,18 +226,18 @@ nonzero(X) when is_integer(X), X >= 0, X =< 10, X =/= 0 -> X.
 not_five(X) when is_integer(X), X >= 0, X =< 10, X =/= 5 -> X.
 
 %% A clause after one whose whole guard was a single comparison sees it false.
-%% expect: classify(_) -> neg_integer() | positive
+%% expect: classify(_) -> positive; (neg_integer()) -> neg_integer()
 classify(N) when N >= 0 -> positive;
 classify(N) when is_integer(N) -> N.
 
-%% expect: case_range(_) -> 0..3
+%% expect: case_range(1..3) -> 1..3; (_) -> 0
 case_range(X) ->
     case X of
         Y when is_integer(Y), Y > 0, Y < 4 -> Y;
         _ -> 0
     end.
 
-%% expect: if_range(integer()) -> 0..3
+%% expect: if_range(1..3) -> 1..3; (integer()) -> 0
 if_range(X) when is_integer(X) ->
     if
         X > 0, X < 4 -> X;
@@ -251,7 +251,7 @@ either_range(X) when is_integer(X), X >= 0, X =< 10, (X == 1 orelse X == 3) -> X
 %% expect: loop_start() -> done
 loop_start() -> loop(10).
 
-%% expect: loop(0..10) -> done
+%% expect: loop(1..10) -> done; (0) -> done
 loop(N) when N > 0 -> loop(N - 1);
 loop(0) -> done.
 
