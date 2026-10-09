@@ -27,7 +27,9 @@ codegen::CompilationRequest backend_request(std::vector<codegen::CompilationInpu
     request.target_triple = options.target_triple;
     request.optimization = options.optimization.value_or(codegen::OptimizationLevel::none);
     request.disable_type_specialization = options.disable_type_specialization;
-    request.output_kind = options.emit.value_or(codegen::OutputKind::object);
+    // Link-time optimization links bitcode instead of objects; LLD optimizes it together at link.
+    request.output_kind =
+        options.lto ? codegen::OutputKind::llvm_bitcode : options.emit.value_or(codegen::OutputKind::object);
     request.debug_info = options.debug_info;
     request.annotate_source =
         options.inspect_ir() || request.output_kind == codegen::OutputKind::llvm_ir || request.debug_info;
@@ -107,7 +109,8 @@ void link(const codegen::Compilation &compilation, const FrontendRequest &fronte
          .protected_inputs = inputs,
          .create_directory = frontend.create_output_directory,
          .strip_unused = compilation.request().optimization == codegen::OptimizationLevel::size,
-         .debug_info = compilation.request().debug_info});
+         .debug_info = compilation.request().debug_info,
+         .lto = frontend.backend.lto});
     if (!executable.warnings.empty()) {
         sink(executable.warnings);
     }

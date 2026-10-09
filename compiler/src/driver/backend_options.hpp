@@ -28,6 +28,8 @@ struct BackendOptions {
     bool disable_type_specialization = false;
     // Emit Erlang line tables into objects and keep them in linked executables (-g).
     bool debug_info = false;
+    // Link the modules as bitcode with link-time optimization (--lto); only with an executable output.
+    bool lto = false;
     // Override the Clang driver and runtime archive used to link an explicit --output executable.
     std::optional<std::filesystem::path> linker;
     std::optional<std::filesystem::path> runtime_library;

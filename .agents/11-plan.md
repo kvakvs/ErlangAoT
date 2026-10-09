@@ -353,10 +353,20 @@ Backlog: F31. Depends on: [58](#step-58).
 Backlog: F32. Depends on: [7](#step-7), [58](#step-58).
 
 - Success criteria
-  - [ ] An `--lto` option links bitcode with descriptors, exports and startup
-    intact on supported toolchains; unsupported targets report it.
+  - [x] An `--lto` option links bitcode with descriptors, exports and startup
+    intact on supported toolchains; unsupported targets report it. Evidence
+    2026-10-09: `--lto` sets the in-memory output kind to bitcode (modules and
+    startup) and links with `-flto -fuse-ld=lld`; Windows MSVC and ELF targets
+    only (`check_lto` before runtime lookup: "--lto is not supported for
+    target ..."); without an executable output it is a usage error.
 - Tests
-  - [ ] Fixture goldens pass with LTO; size/build time recorded.
+  - [x] Fixture goldens pass with LTO; size/build time recorded. Evidence:
+    `linking_lto` runs the six program fixtures and eight executable goldens
+    (demo, proofs, closures, dynamic_calls, try_catch, native_records,
+    selective_receive, tail_calls) under `-O2 --lto`, positional and
+    project: all pass; `lto.json` records the demo at 2,266,112 bytes either
+    way (Debug runtime dominates; .text 0x18d866 vs 0x18d916) and link
+    0.18 s vs 0.22 s; macOS target, missing `-o` and `--emit` are refused.
 
 <a id="step-62a"></a>
 

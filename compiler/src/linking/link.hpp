@@ -25,6 +25,8 @@ struct LinkRequest {
     bool strip_unused = false;
     // Keep the objects' line tables (-g): in the executable, or for MSVC targets in a PDB beside it.
     bool debug_info = false;
+    // The objects are bitcode: link with LLD's link-time optimization (Windows MSVC and ELF targets only).
+    bool lto = false;
 };
 
 // Own a uniquely created directory beside an output; it is removed with its contents on destruction.

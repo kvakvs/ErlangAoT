@@ -408,8 +408,8 @@ Plan: [57A](11-plan.md#step-57a)–[57G](11-plan.md#step-57g). Added
   `dsymutil` and Linux GDB pending steps 66/63).
 - **F31 — Profiling** ([61](11-plan.md#step-61)): [x] bounded-overhead cost
   attribution with deliberate enablement (runtime option `--profile FILE`).
-- **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [ ] LTO modes
-  preserving descriptors, startup and exports.
+- **F32 — Link-time optimization** ([62](11-plan.md#step-62)): [x] LTO modes
+  preserving descriptors, startup and exports (`--lto`, LLD targets).
 - **F33 — Indexed code lookups** ([62A](11-plan.md#step-62a)): [ ] hash maps
   for module/function name lookups of dynamic calls and descriptor lookups,
   replacing the linear scans of `CodeServer`.

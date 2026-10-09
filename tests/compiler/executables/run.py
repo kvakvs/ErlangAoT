@@ -21,6 +21,8 @@ import matrix  # noqa: E402  (shared fast/full policy selection)
 COMBINATION_JOBS = 4
 # Scheduler counts every program fixture runs with (plan step 58: one and several workers).
 PROGRAM_WORKERS = [1, 4]
+# The link-time optimization combinations (--lto): bitcode linked by LLD, through both drivers.
+LTO_POLICIES = [('O2', '--lto', 'O2-lto', False), ('O2', '--lto', 'O2-lto', True)]
 # What a program fixture's copy leaves out: its golden and its compile diagnostics.
 PROGRAM_EXTRAS = ('expected', 'compile.txt')
 
@@ -155,10 +157,12 @@ def main():
     parser.add_argument('case', type=pathlib.Path,
                         help='case directory holding golden.json, or program fixture directory holding fixture.json')
     parser.add_argument('--suffix', default='', help='host executable suffix appended by the linker')
+    parser.add_argument('--lto', action='store_true',
+                        help='link only with -O2 --lto, positional and project (plan step 62), instead of the matrix')
     options = parser.parse_args()
     case_dir, work, tool = options.case.resolve(), options.work.resolve(), str(pathlib.Path(options.tool).resolve())
     golden = prepare(case_dir, work)
-    policies = matrix.combinations()
+    policies = LTO_POLICIES if options.lto else matrix.combinations()
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(COMBINATION_JOBS, len(policies))) as pool:
         outcomes = list(pool.map(lambda policy: check_policy(tool, work, case_dir.name, golden, policy, options.suffix),
                                  policies))

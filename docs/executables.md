@@ -177,6 +177,16 @@ clau -O2 -o build/demo examples/compile/answer.erl examples/compile/client.erl
 its own section and links with `--gc-sections` (ELF), `-dead_strip` (Mach-O) or
 `/OPT:REF /OPT:ICF` (MSVC), so code no entry path reaches is removed.
 
+`--lto` (plan 11 step 62) compiles the modules and the startup module to LLVM
+bitcode instead of objects and links with `-flto -fuse-ld=lld`, so LLD optimizes
+the program's generated code as one unit against the native runtime archive.
+Module and startup descriptors, exported entries and `main` stay referenced and
+survive; programs behave as without it. Only LLD reads this compiler's bitcode,
+so `--lto` is accepted for Windows MSVC and ELF targets; others fail before
+linking with `--lto is not supported for target <triple>: it needs LLD`.
+`--lto` needs an executable output (`-o` or a linking project build). The
+installed Clang/LLD must be the same LLVM release as `clau` (23.1).
+
 `-g` keeps Erlang line tables for debuggers: in the executable (ELF), or in a
 `<name>.pdb` published beside it (MSVC targets) ([debugging](debugging.md)).
 

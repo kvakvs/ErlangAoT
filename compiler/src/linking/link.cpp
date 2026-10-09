@@ -93,6 +93,15 @@ std::vector<std::string> debug_arguments(const llvm::Triple &triple) {
     return {"-g"};
 }
 
+// LLD reads this LLVM's bitcode; other linkers may not, so link-time optimization is refused for their targets.
+void check_lto(const std::string &target) {
+    const llvm::Triple triple(target);
+    if (!triple.isWindowsMSVCEnvironment() && !triple.isOSBinFormatELF()) {
+        throw std::runtime_error("--lto is not supported for target " + target +
+                                 ": it needs LLD (Windows MSVC or ELF targets)");
+    }
+}
+
 // Build the Clang driver command: C++ link mode, explicit target, staged output, objects, then the runtime.
 std::vector<std::string> link_arguments(const LinkRequest &request, const std::filesystem::path &staged,
                                         std::vector<std::string> objects, const std::filesystem::path &runtime) {
@@ -105,6 +114,9 @@ std::vector<std::string> link_arguments(const LinkRequest &request, const std::f
     }
     if (request.debug_info) {
         std::ranges::move(debug_arguments(llvm::Triple(request.target_triple)), std::back_inserter(arguments));
+    }
+    if (request.lto) {
+        arguments.insert(arguments.end(), {"-flto", "-fuse-ld=lld"});
     }
     arguments.insert(arguments.end(), std::make_move_iterator(objects.begin()), std::make_move_iterator(objects.end()));
     arguments.push_back(utf8_path(runtime));
@@ -145,6 +157,9 @@ StagedExecutable stage_executable(const LinkRequest &request) {
         create_output_directory(output.parent_path());
     }
     check_destination(output, request.protected_inputs);
+    if (request.lto) {
+        check_lto(request.target_triple);
+    }
     const auto linker = find_linker(request.linker);
     const auto runtime = find_runtime_library(request.runtime_library);
     check_runtime_target(runtime, request.target_triple);

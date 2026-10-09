@@ -46,4 +46,9 @@ if(CLAUSE_BUILD_RUNTIME)
         "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}/tests/fixtures/linking/profile"
         "${CMAKE_CURRENT_BINARY_DIR}/profiling/$<CONFIG>" "${CMAKE_EXECUTABLE_SUFFIX}")
     set_tests_properties(linking_profiling PROPERTIES TIMEOUT 600)
+    # --lto: program fixtures and selected executable goldens linked as bitcode by LLD; sizes recorded (F32).
+    add_test(NAME linking_lto COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/lto.py"
+        "$<TARGET_FILE:clau>" "${PROJECT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lto/$<CONFIG>"
+        "${CMAKE_EXECUTABLE_SUFFIX}")
+    set_tests_properties(linking_lto PROPERTIES TIMEOUT 900)
 endif()

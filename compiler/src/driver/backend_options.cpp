@@ -68,7 +68,8 @@ bool inspection_flag(const std::string_view option, BackendOptions &options) {
         {"--print-types", &BackendOptions::print_types},
         {"--print-ir", &BackendOptions::print_ir},
         {"--print-optimized-ir", &BackendOptions::print_optimized_ir},
-        {"-g", &BackendOptions::debug_info}};
+        {"-g", &BackendOptions::debug_info},
+        {"--lto", &BackendOptions::lto}};
     const auto found = flags.find(option);
     if (found == flags.end()) {
         return false;
@@ -103,6 +104,19 @@ bool links_project(const Options &options) {
            !options.backend.print_types && !options.preprocess;
 }
 
+// Linking options need an invocation that links: an explicit --output or a linking project build.
+std::optional<std::string> linking_conflict(const Options &options) {
+    const auto &backend = options.backend;
+    const bool links = options.output_explicit || links_project(options);
+    if ((backend.linker || backend.runtime_library) && !links) {
+        return "--linker and --runtime-library require --output or a linking project build";
+    }
+    if (backend.lto && !links) {
+        return "--lto requires --output or a linking project build";
+    }
+    return {};
+}
+
 // Keep artifact emission and executable linking options on their own sides of --output.
 std::optional<std::string> output_conflict(const Options &options) {
     const auto &backend = options.backend;
@@ -112,10 +126,7 @@ std::optional<std::string> output_conflict(const Options &options) {
     if (backend.artifact_directory && !backend.emit) {
         return "--artifact-dir requires --emit";
     }
-    if ((backend.linker || backend.runtime_library) && !options.output_explicit && !links_project(options)) {
-        return "--linker and --runtime-library require --output or a linking project build";
-    }
-    return {};
+    return linking_conflict(options);
 }
 
 // Map an -O switch to its pipeline policy; other options yield nothing.
@@ -131,7 +142,8 @@ std::optional<codegen::OptimizationLevel> optimization_level(const std::string_v
 // Remember any explicit backend policy so frontend-only actions cannot silently discard it.
 bool explicit_backend(const BackendOptions &options) {
     return options.emit || options.artifact_directory || !options.target_triple.empty() || options.optimization ||
-           options.disable_type_specialization || options.inspect_ir() || options.print_types || options.debug_info;
+           options.disable_type_specialization || options.inspect_ir() || options.print_types || options.debug_info ||
+           options.lto;
 }
 } // namespace
 
@@ -144,6 +156,7 @@ bool is_backend_option(const std::string_view option) {
                                                     "-Os",
                                                     "--no-type-specialization",
                                                     "-g",
+                                                    "--lto",
                                                     "--print-ir",
                                                     "--print-optimized-ir",
                                                     "--print-types",
