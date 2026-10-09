@@ -116,7 +116,7 @@ void atom_joins() {
     prints(joined(lattice, {lattice.category("pid"), lattice.category("reference")}), "reference() | pid()");
     prints(joined(lattice, {lattice.atom("infinity"), lattice.category("non_neg_integer")}),
            "non_neg_integer() | infinity");
-    prints(joined(lattice, {graph.top(), lattice.atom("ok")}), "term()");
+    prints(joined(lattice, {graph.top(), lattice.atom("ok")}), "_");
     prints(joined(lattice, {graph.bottom(), lattice.atom("ok")}), "ok");
 }
 
@@ -139,7 +139,7 @@ void container_joins() {
     prints(joined(lattice, {lattice.map({a, one}), lattice.map({a, two})}), "#{a := 1..2}");
     prints(joined(lattice, {lattice.map({a, one}), lattice.map({ok, one})}), "map()");
     prints(joined(lattice, {lattice.map({two, a, a, one})}), "#{2 := a, a := 1}");
-    prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((term()) -> 1..2)");
+    prints(joined(lattice, {lattice.fun(1, one), lattice.fun(1, two)}), "fun((_) -> 1..2)");
     prints(joined(lattice, {lattice.fun(0, one), lattice.fun(1, one)}), "fun()");
     prints(joined(lattice, {lattice.bitstring(16, 0), lattice.bitstring(16, 0)}), "<<_:16>>");
     prints(joined(lattice, {lattice.bitstring(8, 0), lattice.bitstring(16, 0)}), "nonempty_binary()");
@@ -155,11 +155,11 @@ void budgets() {
     t::Lattice lattice(graph, {.singletons = 8, .members = 3, .depth = 2, .elements = 2});
     const auto one = lattice.integer("1");
     prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid")}), "1 | a | pid()");
-    prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid"), lattice.nil()}), "term()");
+    prints(joined(lattice, {one, lattice.atom("a"), lattice.category("pid"), lattice.nil()}), "_");
     prints(t::type_source(graph, lattice.tuple({one, one, one})), "tuple()");
     prints(t::type_source(graph, lattice.map({one, one, lattice.integer("2"), one, lattice.integer("3"), one})),
            "map()");
-    prints(t::type_source(graph, lattice.tuple({lattice.tuple({lattice.tuple({one})})})), "{{term()}}");
+    prints(t::type_source(graph, lattice.tuple({lattice.tuple({lattice.tuple({one})})})), "{{_}}");
     std::vector<t::Id> shapes;
     for (const auto *tag : {"a", "b", "c", "d"}) {
         shapes.push_back(lattice.tuple({lattice.atom(tag)}));
@@ -208,7 +208,7 @@ void meets() {
     prints(met(category("maybe_improper_list"), lattice.nil()), "[]");
     prints(met(category("list"), lattice.list(i(1), true)), "[1, ...]");
     prints(met(lattice.nil(), lattice.list(i(1), true)), "none()");
-    prints(met(category("fun"), lattice.fun(2, i(1))), "fun((term(), term()) -> 1)");
+    prints(met(category("fun"), lattice.fun(2, i(1))), "fun((_, _) -> 1)");
     prints(met(lattice.fun(1, graph.top()), lattice.fun(2, graph.top())), "none()");
     prints(met(category("binary"), lattice.bitstring(16, 0)), "<<_:16>>");
     prints(met(category("pid"), category("port")), "none()");

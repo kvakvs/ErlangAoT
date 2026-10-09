@@ -131,7 +131,7 @@ std::string signature(const types::Inference &inferred, const std::string &name,
         inputs += types::type_source(inferred.graph, input);
     }
     const auto result = fact_source(inferred, summary.result);
-    return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? "term()" : result);
+    return atom_source(name) + '(' + inputs + ") -> " + (result.empty() ? std::string(types::TERM_SOURCE) : result);
 }
 
 // `name(Inputs) -> Result when Constraints` of one overload of a resolved specification.

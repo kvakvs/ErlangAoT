@@ -297,7 +297,8 @@ class Checker final {
     // The declared type of an overload at `index` (the result is the last) as written.
     std::string declared_text(const Overload &overload, std::size_t index) const {
         const auto types = signature(declared_, overload);
-        auto text = types && index < types->size() ? type_source(declared_.graph, types->at(index)) : "term()";
+        auto text =
+            types && index < types->size() ? type_source(declared_.graph, types->at(index)) : std::string(TERM_SOURCE);
         std::string constraints;
         for (const auto &[variable, bound] : overload.constraints) {
             constraints +=

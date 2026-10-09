@@ -340,7 +340,7 @@ not an interchange format. Warnings stay on stderr.
 -module(branches).
 -export([mixed/1]).
 
-%% inferred: mixed(term()) -> 1..2
+%% inferred: mixed(_) -> 1..2
 mixed(X) ->
     case X of
         1 ->
@@ -379,7 +379,7 @@ function, and what it finds today. Each module becomes the CTest
 
 ```erlang
 %% expect: sum() -> 3
-%% today: sum() -> term()
+%% today: sum() -> _
 sum() -> 1 + 2.
 ```
 
@@ -418,7 +418,8 @@ sum() -> 1 + 2.
 ### Printing types
 
 `semantic::types::type_source(graph, type)` (`semantic/types/printing`) renders
-a type of the type graph in Erlang type syntax: `term()`, `none()`, atoms and
+a type of the type graph in Erlang type syntax: `_` for any term (`term()`,
+written by `TERM_SOURCE` for brevity; type syntax reads `_` as `any()`), `none()`, atoms and
 integers, `1..5`, `{ok, T}`, `tuple()`, `[T]`, `[T, ...]`, `#{K => V, K := V}`,
 `#r{f :: T}`, `<<_:B, _:_*U>>`, `fun((A) -> R)`, `A | B`. A union's integers
 print in value order where its first integer stands, consecutive ones as a

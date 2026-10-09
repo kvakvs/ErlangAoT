@@ -212,7 +212,7 @@ atom_order() -> a < b.
 %% expect: number_below_atom() -> true
 number_below_atom() -> 1 < a.
 
-%% expect: unknown_order(term()) -> boolean()
+%% expect: unknown_order(_) -> boolean()
 unknown_order(X) -> X =< 1.
 
 %% Builtins.
@@ -232,7 +232,7 @@ displayed() -> erlang:display(x).
 %% expect: formatted() -> ok
 formatted() -> io:format("x~n").
 
-%% expect: sent(term()) -> hello
+%% expect: sent(_) -> hello
 sent(Pid) -> Pid ! hello.
 
 %% erlang:raise/3 returns only for an invalid class.
@@ -268,7 +268,7 @@ countdown(0) -> done;
 countdown(N) -> countdown(N - 1).
 
 %% A local function that fun F/A names may be called from anywhere.
-%% expect: fun_target() -> fun((term()) -> number())
+%% expect: fun_target() -> fun((_) -> number())
 fun_target() -> fun doubled/1.
 
 %% expect: doubled(number()) -> number()
@@ -280,7 +280,7 @@ uncalled(X) -> X.
 
 %% Integers, integer ranges and integers or floats.
 
-%% expect: pick(term()) -> 1..3
+%% expect: pick(_) -> 1..3
 pick(X) ->
     case X of
         a -> 1;
@@ -288,14 +288,14 @@ pick(X) ->
         _ -> 3
     end.
 
-%% expect: clauses(term()) -> 10 | 20
+%% expect: clauses(_) -> 10 | 20
 clauses(X) when X > 0 -> 10;
 clauses(_) -> 20.
 
 %% expect: bounded(1..10) -> 1..10
 bounded(X) when is_integer(X), X >= 1, X =< 10 -> X.
 
-%% expect: integer_or_float(term()) -> 1 | float()
+%% expect: integer_or_float(_) -> 1 | float()
 integer_or_float(X) ->
     case X of
         1 -> 1;
@@ -334,7 +334,7 @@ nine_letters() -> "acegikmoq".
 %% expect: consecutive() -> 1..3 | 5 | 7..8
 consecutive() -> pick_number(1).
 
-%% expect: pick_number(term()) -> 1..3 | 5 | 7..8
+%% expect: pick_number(_) -> 1..3 | 5 | 7..8
 pick_number(X) ->
     case X of
         1 -> 1;
@@ -356,7 +356,7 @@ mixed_tuple() -> {ok, 1, 2.5}.
 %% expect: nested_tuple() -> {{a, 1}, {b, 2}}
 nested_tuple() -> {{a, 1}, {b, 2}}.
 
-%% expect: tagged(term()) -> {error, bad} | {ok, 1}
+%% expect: tagged(_) -> {error, bad} | {ok, 1}
 tagged(X) ->
     case X of
         1 -> {ok, 1};
@@ -440,7 +440,7 @@ list_of_tuple() -> tuple_to_list({1, a}).
 %% expect: wide_tuple() -> tuple()
 wide_tuple() -> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}.
 
-%% expect: deep_tuple() -> {{{{term()}}}}
+%% expect: deep_tuple() -> {{{{_}}}}
 deep_tuple() -> {{{{{1}}}}}.
 
 %% expect: wide_map() -> map()
@@ -470,10 +470,10 @@ wide_map() ->
 %% expect: returns_fun() -> fun(() -> 42)
 returns_fun() -> fun integer/0.
 
-%% expect: returns_remote_fun() -> fun((term()) -> term())
+%% expect: returns_remote_fun() -> fun((_) -> _)
 returns_remote_fun() -> fun lists:reverse/1.
 
-%% expect: returns_closure(term()) -> fun((term()) -> number())
+%% expect: returns_closure(_) -> fun((_) -> number())
 returns_closure(X) -> fun(Y) -> X + Y end.
 
 %% expect: applies_fun() -> 6
@@ -487,7 +487,7 @@ local_fun() ->
     Five.
 
 %% A named fun's calls of itself are unknown.
-%% expect: named_fun() -> fun((term()) -> number())
+%% expect: named_fun() -> fun((_) -> number())
 named_fun() ->
     fun
         Fact(0) -> 1;
@@ -503,10 +503,10 @@ stored_fun() -> {fun() -> 1 end}.
 %% expect: called_from_tuple() -> 1
 called_from_tuple() -> (element(1, {fun() -> 1 end}))().
 
-%% expect: unknown_call(fun((term()) -> term())) -> term()
+%% expect: unknown_call(fun((_) -> _)) -> _
 unknown_call(F) -> F(1).
 
-%% expect: applied() -> term()
+%% expect: applied() -> _
 applied() -> apply(fun() -> 1 end, []).
 
 %% A call with the wrong number of arguments raises badarity.
@@ -515,7 +515,7 @@ wrong_arity() ->
     F = fun() -> 1 end,
     F(2).
 
-%% expect: builtin_fun() -> fun((term()) -> term())
+%% expect: builtin_fun() -> fun((_) -> _)
 builtin_fun() -> fun abs/1.
 
 %% A fun of a function inferred later reads its final result.
@@ -549,7 +549,7 @@ after_inc(X) ->
     X.
 
 %% A use inside try, or in one case branch, proves nothing after it.
-%% expect: caught(term()) -> argument 1
+%% expect: caught(_) -> argument 1
 caught(X) ->
     _ =
         try
@@ -559,7 +559,7 @@ caught(X) ->
         end,
     X.
 
-%% expect: branch(term(), term()) -> argument 2
+%% expect: branch(_, _) -> argument 2
 branch(A, X) ->
     _ =
         case A of
@@ -568,16 +568,16 @@ branch(A, X) ->
         end,
     X.
 
-%% expect: first(nonempty_maybe_improper_list()) -> term()
+%% expect: first(nonempty_maybe_improper_list()) -> _
 first(L) -> hd(L).
 
-%% expect: second_element(tuple()) -> term()
+%% expect: second_element(tuple()) -> _
 second_element(T) -> element(2, T).
 
-%% expect: lookup(map()) -> term()
+%% expect: lookup(map()) -> _
 lookup(M) -> map_get(a, M).
 
-%% expect: remote(atom()) -> term()
+%% expect: remote(atom()) -> _
 remote(M) -> M:start().
 
 %% Every name bound to the same value narrows with it.
@@ -594,13 +594,13 @@ bits(X) -> <<X:8>>.
 both(X) -> X andalso true.
 
 %% The right operand of orelse may not run.
-%% expect: orelse_use(boolean(), term()) -> argument 2
+%% expect: orelse_use(boolean(), _) -> argument 2
 orelse_use(X, Y) ->
     _ = X orelse Y + 1 > 0,
     Y.
 
-%% expect: identity(term()) -> argument 1
+%% expect: identity(_) -> argument 1
 identity(X) -> X.
 
-%% expect: second(term(), term()) -> argument 2
+%% expect: second(_, _) -> argument 2
 second(_, Y) -> Y.

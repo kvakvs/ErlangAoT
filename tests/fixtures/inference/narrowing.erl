@@ -90,7 +90,7 @@ map_test(X) when is_map(X) -> X.
 %% expect: function_test(fun()) -> fun()
 function_test(X) when is_function(X) -> X.
 
-%% expect: function_arity_test(fun((term(), term()) -> term())) -> fun((term(), term()) -> term())
+%% expect: function_arity_test(fun((_, _) -> _)) -> fun((_, _) -> _)
 function_arity_test(X) when is_function(X, 2) -> X.
 
 %% expect: pid_test(pid()) -> pid()
@@ -102,13 +102,13 @@ port_test(X) when is_port(X) -> X.
 %% expect: reference_test(reference()) -> reference()
 reference_test(X) when is_reference(X) -> X.
 
-%% expect: record_test({point, term(), term()}) -> {point, term(), term()}
+%% expect: record_test({point, _, _}) -> {point, _, _}
 record_test(X) when is_record(X, point) -> X.
 
-%% expect: record_size_test({point, term(), term()}) -> {point, term(), term()}
+%% expect: record_size_test({point, _, _}) -> {point, _, _}
 record_size_test(X) when is_record(X, point, 3) -> X.
 
-%% expect: map_key_test(term(), map()) -> map()
+%% expect: map_key_test(_, map()) -> map()
 map_key_test(K, M) when is_map_key(K, M) -> M.
 
 %% The old guard names narrow as their is_ forms.
@@ -117,38 +117,38 @@ legacy_test(X) when integer(X) -> X.
 
 %% Case guards, a true test as the scrutinee, andalso conditions and comprehension filters narrow too.
 
-%% expect: case_guard(term()) -> integer() | other
+%% expect: case_guard(_) -> integer() | other
 case_guard(X) ->
     case X of
         Y when is_integer(Y) -> Y;
         _ -> other
     end.
 
-%% expect: case_test(term()) -> 0 | atom()
+%% expect: case_test(_) -> 0 | atom()
 case_test(X) ->
     case is_atom(X) of
         true -> X;
         false -> 0
     end.
 
-%% expect: andalso_test(term()) -> integer() | false
+%% expect: andalso_test(_) -> integer() | false
 andalso_test(X) -> is_integer(X) andalso X + 1.
 
-%% expect: filter_test(term()) -> [integer()]
+%% expect: filter_test(_) -> [integer()]
 filter_test(L) -> [X + 1 || X <- L, is_integer(X)].
 
 %% Patterns narrow what they match; a catch-all clause makes the domain term().
 
-%% expect: tuple_pattern({ok, term()}) -> term()
+%% expect: tuple_pattern({ok, _}) -> _
 tuple_pattern({ok, V}) -> V.
 
-%% expect: list_pattern([term(), ...]) -> term()
+%% expect: list_pattern([_, ...]) -> _
 list_pattern([H]) -> H.
 
-%% expect: map_pattern(map()) -> term()
+%% expect: map_pattern(map()) -> _
 map_pattern(#{a := V}) -> V.
 
-%% expect: catch_all(term()) -> one | other
+%% expect: catch_all(_) -> one | other
 catch_all(1) -> one;
 catch_all(_) -> other.
 
@@ -158,7 +158,7 @@ small(X) when is_integer(X), X > 0, X < 10 -> small;
 small(X) when is_integer(X) -> big.
 
 %% A test that contradicts what is known makes its clause impossible.
-%% expect: contradiction(term()) -> ok
+%% expect: contradiction(_) -> ok
 contradiction(X) when is_integer(X), X >= 1, X =< 10, is_atom(X) -> never;
 contradiction(_) -> ok.
 
@@ -186,7 +186,7 @@ after_call(X) ->
 natural(Y) when is_integer(Y), Y >= 0 -> Y.
 
 %% Narrowings never leak out of the clause or operand that proved them.
-%% expect: no_leak(term()) -> argument 1
+%% expect: no_leak(_) -> argument 1
 no_leak(X) ->
     _ =
         case X of
@@ -195,7 +195,7 @@ no_leak(X) ->
         end,
     X.
 
-%% expect: no_leak_andalso(term()) -> argument 1
+%% expect: no_leak_andalso(_) -> argument 1
 no_leak_andalso(X) ->
     _ = is_integer(X) andalso X,
     X.
@@ -226,11 +226,11 @@ nonzero(X) when is_integer(X), X >= 0, X =< 10, X =/= 0 -> X.
 not_five(X) when is_integer(X), X >= 0, X =< 10, X =/= 5 -> X.
 
 %% A clause after one whose whole guard was a single comparison sees it false.
-%% expect: classify(term()) -> neg_integer() | positive
+%% expect: classify(_) -> neg_integer() | positive
 classify(N) when N >= 0 -> positive;
 classify(N) when is_integer(N) -> N.
 
-%% expect: case_range(term()) -> 0..3
+%% expect: case_range(_) -> 0..3
 case_range(X) ->
     case X of
         Y when is_integer(Y), Y > 0, Y < 4 -> Y;
@@ -259,5 +259,5 @@ loop(0) -> done.
 %% expect: number_compare(number()) -> number()
 number_compare(X) when is_number(X), X > 0 -> X.
 
-%% expect: term_compare(term()) -> argument 1
+%% expect: term_compare(_) -> argument 1
 term_compare(X) when X > 0 -> X.

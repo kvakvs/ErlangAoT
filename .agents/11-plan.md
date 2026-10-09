@@ -121,7 +121,7 @@ oracle OTP 29.1.1 / ERTS 17.1. Latest combined Windows x64 Debug gate (phase K c
 | J. Multi-worker scheduling | [54](#step-54)–[57](#step-57) | F06, F23, F25, F28 |
 | J2. Ports and port I/O | [57A](#step-57a)–[57G3](#step-57g3) | F07, F23, F26, F35 |
 | K. End-to-end projects | [58](#step-58) | F01, V03 |
-| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
+| L. Optimization and tooling | [58A](#step-58a)–[58J](#step-58j) (with [58F1](#step-58f1), [58H1](#step-58h1), [58I1](#step-58i1)), [59](#step-59)–[62](#step-62), [62A](#step-62a), [62B](#step-62b) | F23, F25, F29–F34 |
 | M. Validation closure | [63](#step-63)–[70](#step-70) | V01–V04 |
 | N. Optional scope decisions | [71](#step-71)–[77](#step-77) | D01–D07 |
 | O. Final closure | [78A](#step-78a), [78](#step-78) | all |
@@ -669,6 +669,25 @@ inferred)`) and make a contradiction a compile error at the `-spec`.
     in the patternmatch fragments (atoms, bits, closure, differential, facts)
     and `tests/fixtures/codegen/constants64.erl` became overlapping ones and
     those corpora were regenerated (hashes only, results unchanged).
+
+<a id="step-58i1"></a>
+
+### 58I1. Print term() as `_`
+
+Backlog: F34. Depends on: [58F1](#step-58f1). Added 2026-10-09 (user
+direction).
+
+Printed types write any term as `_` (one constant, `TERM_SOURCE` in
+`semantic/types/printing.hpp`), which Erlang type syntax reads as `any()`:
+`f(_) -> argument 1`, `[_, ...]`, `fun((_) -> number())`. Source printing of
+declarations keeps what the source wrote.
+
+- Success criteria
+  - [x] `--print-types` signatures, annotations, declared lines and
+    specification diagnostics print `_`. Evidence 2026-10-09: `TERM_SOURCE`.
+- Tests
+  - [x] Fixture expectations (`values`, `base_types`, `narrowing`,
+    `contracts`), `codegen_types` and `patternmatch_bindings` use `_`.
 
 <a id="step-58j"></a>
 

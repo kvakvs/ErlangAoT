@@ -66,7 +66,7 @@
     | nil()
     | term().
 
-%% expect: any_value(term()) -> argument 1
+%% expect: any_value(_) -> argument 1
 -spec any_value(any()) -> any().
 any_value(X) -> X.
 
@@ -74,7 +74,7 @@ any_value(X) -> X.
 -spec no_return_value() -> no_return().
 no_return_value() -> erlang:error(stop).
 
-%% expect: dynamic_value(term()) -> argument 1
+%% expect: dynamic_value(_) -> argument 1
 -spec dynamic_value(dynamic()) -> dynamic().
 dynamic_value(X) -> X.
 
@@ -92,7 +92,7 @@ spawned_pid() -> spawn(fun() -> ok end).
 -spec reference_value() -> reference().
 reference_value() -> make_ref().
 
-%% expect: identifier_value(term()) -> reference() | pid()
+%% expect: identifier_value(_) -> reference() | pid()
 -spec identifier_value(term()) -> identifier().
 identifier_value(X) ->
     case X of
@@ -128,11 +128,11 @@ empty_bitstring() -> <<>>.
 -spec sized_bitstring() -> <<_:3>>.
 sized_bitstring() -> <<5:3>>.
 
-%% expect: binary_value(term()) -> binary()
+%% expect: binary_value(_) -> binary()
 -spec binary_value(iolist()) -> binary().
 binary_value(Data) -> list_to_binary(Data).
 
-%% expect: comprehended_binary(term()) -> binary()
+%% expect: comprehended_binary(_) -> binary()
 -spec comprehended_binary([byte()]) -> binary().
 comprehended_binary(Bytes) -> <<<<B>> || B <- Bytes>>.
 
@@ -200,11 +200,11 @@ number_value(X) when is_number(X) -> X * 2.
 
 %% Booleans.
 
-%% expect: boolean_test(term()) -> boolean()
+%% expect: boolean_test(_) -> boolean()
 -spec boolean_test(term()) -> boolean().
 boolean_test(X) -> is_atom(X).
 
-%% expect: boolean_comparison(term()) -> boolean()
+%% expect: boolean_comparison(_) -> boolean()
 -spec boolean_comparison(term()) -> boolean().
 boolean_comparison(X) -> X > 1.
 
@@ -214,7 +214,7 @@ boolean_comparison(X) -> X > 1.
 -spec list_value(tuple()) -> list().
 list_value(Tuple) -> tuple_to_list(Tuple).
 
-%% expect: nonempty_list_value(term()) -> [term(), ...]
+%% expect: nonempty_list_value(_) -> [_, ...]
 -spec nonempty_list_value(term()) -> nonempty_list().
 nonempty_list_value(X) -> [X].
 
@@ -262,7 +262,7 @@ mfa_value() -> {lists, reverse, 1}.
 -spec fun_value() -> fun(() -> ok).
 fun_value() -> fun() -> ok end.
 
-%% expect: remote_fun() -> fun((term()) -> term())
+%% expect: remote_fun() -> fun((_) -> _)
 -spec remote_fun() -> function().
 remote_fun() -> fun lists:reverse/1.
 

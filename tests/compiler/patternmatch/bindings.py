@@ -52,7 +52,7 @@ def cli(tool, work, rows):
     compile_case(tool, work, rows[0], ["-O2"], False)
     report = run([tool, "--print-types", str(work / "identity.erl")])
     # _Name is an ordinary variable: the result is the first argument.
-    assert "%% inferred: f(term(), term()) -> argument 1\n" in report, report
+    assert "%% inferred: f(_, _) -> argument 1\n" in report, report
 
 
 def locations(tool, work):

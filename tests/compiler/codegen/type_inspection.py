@@ -55,11 +55,11 @@ for declaration in ('-export_type([chain/1]).', '-type chain(T) :: nil | {T, cha
                     '-optional_callbacks([cb/1]).', '-type remote_chain() :: owner:chain(integer()).'):
     assert declaration in text, declaration
 assert '-spec run() -> integer().\n%% declared: run() -> integer()\n%% inferred: run() -> 42\nrun() ->\n' in text
-assert '%% declared: id(T) -> T when T :: term()\n%% inferred: id(term()) -> argument 1\n' in text
+assert '%% declared: id(T) -> T when T :: _\n%% inferred: id(_) -> argument 1\n' in text
 assert '%% declared: value() -> integer()\n%% inferred: value() -> 42\n' in text
 assert '%% inferred: local() -> 7\nlocal() ->\n    id(7) :: 7.\n' in text
-assert '%% inferred: id(term()) -> argument 1\n' in text
-assert '%% inferred: projection(term(), term()) -> argument 2\n' in text
+assert '%% inferred: id(_) -> argument 1\n' in text
+assert '%% inferred: projection(_, _) -> argument 2\n' in text
 assert '    owner:id((owner:value() :: 42)) :: 42.\n' in text
 assert 'target datalayout' not in text and 'define i' not in text
 verbose = run('--verbose', *args)
@@ -86,9 +86,9 @@ alike(X) -> if is_atom(X) -> X; true -> X end.
 bound(X) -> if X > 0 -> Y = 5; true -> Y = 6 end, Y.
 ''', encoding='utf-8')
 facts = run('--print-types', 'branches.erl').stdout
-for signature in ('pick(term()) -> 7', 'same(term()) -> argument 1', 'mixed(term()) -> 1..2',
-                  'shared(term()) -> term()', 'guarded(term()) -> 1..2', 'alike(term()) -> argument 1',
-                  'bound(term()) -> term()'):
+for signature in ('pick(_) -> 7', 'same(_) -> argument 1', 'mixed(_) -> 1..2',
+                  'shared(_) -> _', 'guarded(_) -> 1..2', 'alike(_) -> argument 1',
+                  'bound(_) -> _'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
 # The case value joins its clauses, though the name its clauses bind stays unknown.
 assert '    end :: 5..6,\n    Y.\n' in facts, facts
@@ -108,8 +108,8 @@ outer(X) -> case X of 0 -> 5; _ -> zero(X) end.
 facts = run('--print-types', 'recursive.erl').stdout
 assert 'inferred=complete' in facts, facts
 # Inputs are success domains: N - 1 makes N a number() in every clause that returns.
-assert re.search(r'%% inferred: keep\(term\(\), number\(\)\) -> [^\n]*argument 1\n', facts), facts
-for signature in ('zero(number()) -> 0', 'swap(term(), term()) -> term()', 'forever() -> none()',
+assert re.search(r'%% inferred: keep\(_, number\(\)\) -> [^\n]*argument 1\n', facts), facts
+for signature in ('zero(number()) -> 0', 'swap(_, _) -> _', 'forever() -> none()',
                   'even(number()) -> 0..1', 'odd(number()) -> 0..1', 'fact(number()) -> number()',
                   'outer(number()) -> 0 | 5'):
     assert f'%% inferred: {signature}\n' in facts, (signature, facts)
@@ -128,9 +128,9 @@ def ring(size):
 
 
 exact, widened = ring(8), ring(16)
-assert 'inferred=complete' in exact and '%% inferred: w1(term()) -> 1..8\n' in exact, exact
+assert 'inferred=complete' in exact and '%% inferred: w1(_) -> 1..8\n' in exact, exact
 assert 'inferred=complete' in widened, widened
-assert '%% inferred: w1(term()) -> pos_integer()\n' in widened, widened
+assert '%% inferred: w1(_) -> pos_integer()\n' in widened, widened
 
 # Each target gets independent facts and deterministic selected-target order.
 (work / 'shared.erl').write_text('-module(shared). -export([value/0]). value() -> ?VALUE.\n', encoding='utf-8')

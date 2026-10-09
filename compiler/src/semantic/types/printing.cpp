@@ -31,7 +31,7 @@ class Printer final {
     static std::string scalar(const Node &node) {
         switch (node.kind) {
         case Kind::top:
-            return "term()";
+            return std::string(TERM_SOURCE);
         case Kind::bottom:
             return "none()";
         case Kind::atom:
